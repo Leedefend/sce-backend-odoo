@@ -1,0 +1,36 @@
+<odoo>
+    <!-- 项目类型 demo -->
+    <record id="sc_dict_project_type_municipal" model="sc.dictionary">
+        <field name="name">市政工程</field>
+        <field name="type">project_type</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="sc_dict_project_type_house" model="sc.dictionary">
+        <field name="name">房建工程</field>
+        <field name="type">project_type</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- 工程资料大类 demo -->
+    <record id="sc_dict_doc_type_drawing" model="sc.dictionary">
+        <field name="name">图纸资料</field>
+        <field name="type">doc_type</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="sc_dict_doc_type_tech" model="sc.dictionary">
+        <field name="name">技术资料</field>
+        <field name="type">doc_type</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="sc_dict_doc_type_quality" model="sc.dictionary">
+        <field name="name">质量资料</field>
+        <field name="type">doc_type</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="sc_dict_doc_type_safety" model="sc.dictionary">
+        <field name="name">安全资料</field>
+        <field name="type">doc_type</field>
+        <field name="sequence">40</field>
+    </record>
+</odoo>

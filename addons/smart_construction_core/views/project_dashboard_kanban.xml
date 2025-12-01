@@ -1,0 +1,358 @@
+<odoo>
+    <record id="view_project_project_kanban_dashboard" model="ir.ui.view">
+        <field name="name">project.project.kanban.dashboard</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id"
+                    class="sc_project_dashboard_kanban o_kanban_small">
+                <field name="name"/>
+                <field name="project_code"/>
+                <field name="stage_id"/>
+                <field name="manager_id"/>
+                <field name="owner_id"/>
+                <field name="location"/>
+                <field name="contract_no"/>
+                <field name="lifecycle_state"/>
+                <field name="phase_key"/>
+                <field name="plan_percent"/>
+                <field name="actual_percent"/>
+                <field name="document_missing_count"/>
+                <field name="document_required_count"/>
+
+                <field name="dashboard_revenue_actual"/>
+                <field name="dashboard_cost_actual"/>
+                <field name="dashboard_profit_actual"/>
+                <field name="dashboard_invoice_amount"/>
+                <field name="dashboard_payment_in"/>
+                <field name="dashboard_payment_out"/>
+
+                <field name="budget_active_cost_target"/>
+                <field name="budget_active_revenue_target"/>
+                <field name="cost_ledger_amount_actual"/>
+                <field name="cost_budget_gap"/>
+
+                <field name="dashboard_progress_rate"/>
+                <field name="document_completion_rate"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <t t-set="progress_raw" t-value="+(record.dashboard_progress_rate.raw_value or 0)"/>
+                        <t t-set="progress_clamped" t-value="Math.min(Math.max(progress_raw, 0.0), 100.0)"/>
+                        <t t-set="dashoffset" t-value="100 - progress_clamped"/>
+
+                        <t t-set="doc_rate_raw" t-value="+(record.document_completion_rate.raw_value or 0)"/>
+                        <t t-set="doc_rate_clamped" t-value="Math.min(Math.max(doc_rate_raw, 0.0), 100.0)"/>
+                        <t t-set="doc_missing" t-value="+(record.document_missing_count.raw_value || 0)"/>
+                        <t t-set="doc_required" t-value="+(record.document_required_count.raw_value || 0)"/>
+
+                        <t t-set="plan_rate_raw" t-value="+(record.plan_percent.raw_value or 0)"/>
+                        <t t-set="plan_rate_clamped" t-value="Math.min(Math.max(plan_rate_raw, 0.0), 100.0)"/>
+
+                        <t t-set="gap" t-value="+(record.cost_budget_gap.raw_value or 0.0)"/>
+                        <t t-set="budget_target" t-value="+(record.budget_active_cost_target.raw_value or 0.0)"/>
+                        <t t-set="risk_class"
+                           t-value="gap &lt; 0 and 'sc_risk_high'
+                                    or (gap &lt;= budget_target * 0.1 and 'sc_risk_warn'
+                                        or 'sc_risk_ok')"/>
+                        <t t-set="progress_gap" t-value="progress_clamped - plan_rate_clamped"/>
+
+                        <div t-attf-class="o_kanban_record sc_project_card {{ risk_class }}">
+                            <div class="sc-card-header">
+                                <div class="sc-title-row">
+                                    <span class="sc-project-name" t-esc="record.name.value or ''"/>
+                                    <span class="sc-project-code" t-esc="record.project_code.value or ''"/>
+                                    <t t-if="risk_class == 'sc_risk_high'">
+                                        <span class="sc-badge-icon sc-badge-high">🔴</span>
+                                    </t>
+                                    <t t-elif="risk_class == 'sc_risk_warn'">
+                                        <span class="sc-badge-icon sc-badge-warn">🟠</span>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="sc-badge-icon sc-badge-ok">🟢</span>
+                                    </t>
+                                </div>
+                                <div class="sc-meta-row">
+                                    <span class="badge badge-secondary" t-if="record.stage_id.value">
+                                        <t t-esc="record.stage_id.value"/>
+                                    </span>
+                                    <span class="badge badge-light" t-if="record.lifecycle_state.value">
+                                        <t t-esc="record.lifecycle_state.value"/>
+                                    </span>
+                                    <span class="badge badge-light" t-if="record.phase_key.value">
+                                        <t t-esc="record.phase_key.value"/>
+                                    </span>
+                                    <span class="sc-manager" t-if="record.manager_id.value">
+                                        👤 <t t-esc="record.manager_id.value"/>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="sc-card-body">
+                                <div class="sc-kpi-block">
+                                    <div class="sc-kpi-row sc-kpi-bold">
+                                        <span class="sc-kpi-label">收入</span>
+                                        <span class="sc-kpi-value"
+                                              t-esc="record.dashboard_revenue_actual.value or '0.00'"/>
+                                    </div>
+                                    <div class="sc-kpi-row sc-kpi-bold">
+                                        <span class="sc-kpi-label">成本</span>
+                                        <span class="sc-kpi-value"
+                                              t-esc="record.dashboard_cost_actual.value or '0.00'"/>
+                                    </div>
+                                    <div class="sc-kpi-row">
+                                        <span class="sc-kpi-label">收入目标</span>
+                                        <span class="sc-kpi-value"
+                                              t-esc="record.budget_active_revenue_target.value or '0.00'"/>
+                                    </div>
+                                    <div class="sc-kpi-row sc-kpi-bold">
+                                        <span class="sc-kpi-label">毛利</span>
+                                        <span class="sc-kpi-value"
+                                              t-esc="record.dashboard_profit_actual.value or '0.00'"/>
+                                    </div>
+
+                                    <div class="sc-kpi-row sc-kpi-gap">
+                                        <span class="sc-kpi-label">成本偏差</span>
+                                        <span>
+                                            <t t-if="gap &lt; 0">
+                                                <span class="badge badge-danger">超预算</span>
+                                            </t>
+                                            <t t-elif="risk_class == 'sc_risk_warn'">
+                                                <span class="badge badge-warning">接近上限</span>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="badge badge-success">正常</span>
+                                            </t>
+                                        </span>
+                                    </div>
+                                    <div class="sc-kpi-row">
+                                        <span class="sc-kpi-label">进度偏差</span>
+                                        <span>
+                                            <t t-if="plan_rate_clamped">
+                                                <t t-set="sv" t-value="progress_clamped - plan_rate_clamped"/>
+                                                <t t-if="sv &lt; -5">
+                                                    <span class="badge badge-danger">
+                                                        落后 <t t-esc="Math.abs(Math.round(sv))"/>%
+                                                    </span>
+                                                </t>
+                                                <t t-elif="sv &gt; 5">
+                                                    <span class="badge badge-success">
+                                                        超前 <t t-esc="Math.round(sv)"/>%
+                                                    </span>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="badge badge-success">按计划</span>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="badge badge-secondary">无计划数据</span>
+                                            </t>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="sc-progress-block">
+                                    <svg viewBox="0 0 36 36" width="70" height="70">
+                                        <circle cx="18" cy="18" r="16"
+                                                fill="none"
+                                                stroke="#eeeeee"
+                                                stroke-width="3.5"/>
+                                        <circle cx="18" cy="18" r="16"
+                                                fill="none"
+                                                t-att-stroke="risk_class == 'sc_risk_high' and '#e74c3c'
+                                                              or (risk_class == 'sc_risk_warn' and '#f39c12' or '#7159c1')"
+                                                stroke-width="3.5"
+                                                stroke-linecap="round"
+                                                stroke-dasharray="100"
+                                                t-att-stroke-dashoffset="dashoffset"
+                                                transform="rotate(-90 18 18)"/>
+                                        <text x="18" y="20.5"
+                                              text-anchor="middle"
+                                              font-size="9"
+                                              fill="#333">
+                                            <t t-esc="Math.round(progress_clamped || 0) + '%'"/>
+                                        </text>
+                                    </svg>
+                                    <div class="sc-progress-caption">
+                                        驾驶舱进度
+                                        <t t-if="plan_rate_clamped">
+                                            <br/>计划 <t t-esc="Math.round(plan_rate_clamped)"/>%
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sc-card-footer">
+                                <div class="sc-footer-left">
+                                    <div t-if="record.location.value">
+                                        📍 <span t-esc="record.location.value"/>
+                                    </div>
+                                    <div t-if="record.contract_no.value">
+                                        📄 合同：<span t-esc="record.contract_no.value"/>
+                                    </div>
+                                    <div t-if="doc_missing">
+                                        ⚠ 资料缺口 <t t-esc="doc_missing"/>/<t t-esc="doc_required or '-'"/>
+                                    </div>
+                                    <div t-if="progress_gap &lt; -5">
+                                        ⏳ 进度风险：落后 <t t-esc="Math.abs(Math.round(progress_gap))"/>%
+                                    </div>
+                                </div>
+                                <div class="sc-footer-right">
+                                    <div class="sc-footer-row">
+                                        <span class="sc-footer-label">开票</span>
+                                        <span class="sc-footer-value"
+                                              t-esc="record.dashboard_invoice_amount.value or '0.00'"/>
+                                    </div>
+                                    <div class="sc-footer-row">
+                                        <span class="sc-footer-label">收款</span>
+                                        <span class="sc-footer-value"
+                                              t-esc="record.dashboard_payment_in.value or '0.00'"/>
+                                    </div>
+                                    <div class="sc-footer-row">
+                                        <span class="sc-footer-label">付款</span>
+                                        <span class="sc-footer-value"
+                                              t-esc="record.dashboard_payment_out.value or '0.00'"/>
+                                    </div>
+                                    <div class="sc-footer-row">
+                                        <span class="sc-footer-label">资料</span>
+                                        <span class="sc-footer-value">
+                                            <t t-if="doc_rate_clamped">
+                                                <t t-esc="Math.round(doc_rate_clamped || 0) + '%'"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+
+                <style>
+                    .sc_project_dashboard_kanban .sc_project_card{
+                        border-radius: 10px;
+                        box-shadow: 0 2px 6px rgba(0,0,0,.06);
+                        padding: 8px 10px;
+                        border-left: 4px solid #7159c1;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-height: 170px;
+                        background: #fafafa;
+                        border: 1px solid #eee;
+                    }
+                    .sc_project_dashboard_kanban .sc_project_card.sc_risk_high{
+                        border-left-color: #e74c3c;
+                    }
+                    .sc_project_dashboard_kanban .sc_project_card.sc_risk_warn{
+                        border-left-color: #f39c12;
+                    }
+                    .sc-card-header{
+                        display:flex;
+                        flex-direction: column;
+                        gap:2px;
+                    }
+                    .sc-title-row{
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:baseline;
+                        gap:6px;
+                    }
+                    .sc-project-name{
+                        font-size:14px;
+                        font-weight:600;
+                        color:#303133;
+                        flex:1 1 auto;
+                    }
+                    .sc-project-code{
+                        font-size:11px;
+                        color:#909399;
+                        white-space:nowrap;
+                    }
+                    .sc-meta-row{
+                        display:flex;
+                        justify-content:space-between;
+                        font-size:11px;
+                        color:#666;
+                    }
+                    .sc-card-body{
+                        display:flex;
+                        justify-content:space-between;
+                        gap:10px;
+                    }
+                    .sc-kpi-block{
+                        flex:1 1 auto;
+                        display:flex;
+                        flex-direction:column;
+                        gap:3px;
+                        font-size:11px;
+                    }
+                    .sc-kpi-row{
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                    }
+                    .sc-kpi-bold .sc-kpi-value{
+                        font-weight:600;
+                    }
+                    .sc-kpi-label{
+                        color:#666;
+                    }
+                    .sc-kpi-value{
+                        color:#333;
+                        font-weight:500;
+                    }
+                    .sc-progress-block{
+                        width:80px;
+                        display:flex;
+                        flex-direction:column;
+                        align-items:center;
+                        font-size:10px;
+                        color:#666;
+                        text-align:center;
+                    }
+                    .sc-card-footer{
+                        display:flex;
+                        justify-content:space-between;
+                        gap:8px;
+                        border-top:1px solid #f0f0f0;
+                        padding-top:4px;
+                        font-size:10px;
+                        color:#666;
+                    }
+                    .sc-footer-right{
+                        display:grid;
+                        grid-template-columns:repeat(2, auto);
+                        gap:2px 8px;
+                    }
+                    .sc-footer-row{
+                        display:flex;
+                        justify-content:space-between;
+                    }
+                    .sc-footer-label{
+                        color:#999;
+                        margin-right:2px;
+                    }
+                    .sc-footer-value{
+                        font-weight:600;
+                        color:#444;
+                    }
+                    .sc-badge-icon {
+                        position: absolute;
+                        top: 6px;
+                        right: 6px;
+                        font-size: 14px;
+                    }
+                </style>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_project_dashboard" model="ir.actions.act_window">
+        <field name="name">项目驾驶舱</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_id" ref="view_project_project_kanban_dashboard"/>
+        <field name="context">{'group_by': 'stage_id'}</field>
+        <field name="domain">[]</field>
+    </record>
+</odoo>

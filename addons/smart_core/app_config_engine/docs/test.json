@@ -1,0 +1,4391 @@
+{
+  "ok": true,
+  "data": {
+    "head": {
+      "title": null,
+      "model": "project.project",
+      "view_type": "kanban,tree,form",
+      "action_id": 194,
+      "context": null,
+      "permissions": {
+        "read": true,
+        "write": true,
+        "create": true,
+        "unlink": true
+      }
+    },
+    "views": {
+      "kanban": {
+        "model": "project.project",
+        "view_type": "kanban",
+        "version": 4,
+        "meta": {},
+        "modifiers": {},
+        "toolbar": {
+          "header": [],
+          "sidebar": [],
+          "footer": []
+        },
+        "search": {},
+        "order": "sequence, name, id",
+        "kanban": {
+          "quick_create": true,
+          "stages_field": "stage_id",
+          "template_qweb": "<templates>\n                        <t t-name=\"kanban-menu\">\n                            <div class=\"container\">\n                                <div class=\"row\">\n                                    <div class=\"col-6 o_kanban_card_manage_section o_kanban_manage_view\">\n                                        <h5 role=\"menuitem\" class=\"o_kanban_card_manage_title\">\n                                            <span>查看</span>\n                                        </h5>\n                                        <div role=\"menuitem\">\n                                            <a name=\"action_view_tasks\" type=\"object\">任务</a>\n                                        </div>\n                                        </div>\n                                    <div class=\"col-6 o_kanban_card_manage_section o_kanban_manage_reporting\">\n                                        <h5 role=\"menuitem\" class=\"o_kanban_card_manage_title\">\n                                            <span>报告</span>\n                                        </h5>\n                    <div role=\"menuitem\">\n                        <a name=\"project_update_all_action\" type=\"object\" t-attf-context=\"{'active_id': #{record.id.raw_value} }\">项目更新</a>\n                    </div>\n                                        <div role=\"menuitem\" class=\"o_kanban_task_analysis\">\n                                            <a name=\"action_view_tasks_analysis\" type=\"object\">任务分析</a>\n                                        </div>\n                                        <div role=\"menuitem\" name=\"project_burndown_menu\">\n                                            <a name=\"action_project_task_burndown_chart_report\" type=\"object\">燃尽图</a>\n                                        </div>\n                                    </div>\n                                </div>\n                                <div class=\"o_kanban_card_manage_settings row\">\n                                    <div role=\"menuitem\" aria-haspopup=\"true\" class=\"col-6\">\n                                        <ul class=\"oe_kanban_colorpicker\" data-field=\"color\" role=\"popup\"/>\n                                    </div>\n                                    <div role=\"menuitem\" class=\"col-6\">\n                                        <a t-if=\"record.privacy_visibility.raw_value == 'portal'\" class=\"dropdown-item\" role=\"menuitem\" name=\"187\" type=\"action\" context=\"{'dialog_size': 'medium'}\">分享</a>\n                                        <a class=\"dropdown-item\" role=\"menuitem\" type=\"edit\">设置</a>\n                                    </div>\n                                    </div>\n                            </div>\n                        </t>\n                        <t t-name=\"kanban-box\">\n                            <div t-attf-class=\"#{kanban_color(record.color.raw_value)} oe_kanban_global_click o_has_icon oe_kanban_content oe_kanban_card\">\n                                <div class=\"o_project_kanban_main d-flex align-items-baseline gap-1\">\n                                    <field name=\"is_favorite\" widget=\"boolean_favorite\" nolabel=\"1\" force_save=\"1\"/>\n                                    <div class=\"o_kanban_card_content mw-100\">\n                                        <div class=\"o_kanban_primary_left\">\n                                            <div class=\"o_primary me-5\">\n                                                <span class=\"o_text_overflow\" t-att-title=\"record.display_name.value\"><t t-esc=\"record.display_name.value\"/></span>\n                                                <span class=\"o_text_overflow text-muted\" t-if=\"record.partner_id.value\">\n                                                    <span class=\"fa fa-user me-2\" aria-label=\"Partner\" title=\"Partner\"/><t t-esc=\"record.partner_id.value\"/>\n                                                </span>\n                                                <div t-if=\"record.date.raw_value or record.date_start.raw_value\" class=\"text-muted o_row\">\n                                                    <span class=\"fa fa-clock-o me-2\" title=\"Dates\"/><field name=\"date_start\" on_change=\"1\"/>\n                                                    <i t-if=\"record.date.raw_value and record.date_start.raw_value\" class=\"fa fa-long-arrow-right mx-2 oe_read_only\" aria-label=\"箭头图标\" title=\"箭头\"/>\n                                                    <field name=\"date\" on_change=\"1\"/>\n                                                </div>\n                                                <div t-if=\"record.alias_email.value\" class=\"text-muted text-truncate\" t-att-title=\"record.alias_email.value\">\n                                                    <span class=\"fa fa-envelope-o me-2\" aria-label=\"Domain Alias\" title=\"Domain Alias\"/><t t-esc=\"record.alias_email.value\"/>\n                                                </div>\n                                                <field name=\"tag_ids\" widget=\"many2many_tags\" options=\"{'color_field': 'color'}\"/>\n                                            </div>\n                                        </div>\n                                    </div>\n                                </div>\n                                <div class=\"o_kanban_record_bottom mt-3\">\n                                    <div class=\"oe_kanban_bottom_left\">\n                                        <div class=\"o_project_kanban_boxes d-flex align-items-baseline\">\n                                            <a class=\"o_project_kanban_box\" name=\"action_view_tasks\" type=\"object\">\n                                                <div>\n                                                    <span class=\"o_value\"><t t-esc=\"record.open_task_count.value\"/></span>\n                                                    <span class=\"o_label ms-1\"><t t-esc=\"record.label_tasks.value\"/></span>\n                                                </div>\n                                            </a>\n                                            </div>\n                                        <field name=\"activity_ids\" widget=\"kanban_activity\"/>\n                                    </div>\n                                    <div class=\"oe_kanban_bottom_right\">\n                                        <field name=\"user_id\" widget=\"many2one_avatar_user\" domain=\"[('share', '=', False)]\"/>\n                                        <field t-if=\"record.last_update_status.value &amp;&amp; widget.editable\" name=\"last_update_status\" widget=\"project_state_selection\" on_change=\"1\"/>\n                                        <span t-if=\"record.last_update_status.value &amp;&amp; !widget.editable\" t-att-class=\"'o_status_bubble mx-0 o_color_bubble_' + record.last_update_color.value\" t-att-title=\"record.last_update_status.value\"/>\n                                    </div>\n                                </div>\n                            </div>\n                        </t>\n                    </templates>\n                    "
+        }
+      },
+      "tree": {
+        "model": "project.project",
+        "view_type": "tree",
+        "version": 6,
+        "meta": {},
+        "modifiers": {},
+        "toolbar": {
+          "header": [],
+          "sidebar": [],
+          "footer": []
+        },
+        "search": {},
+        "order": "is_favorite desc, sequence, name, id",
+        "columns": [
+          "sequence",
+          "name",
+          "message_needaction",
+          "active",
+          "is_favorite",
+          "display_name",
+          "partner_id",
+          "company_id",
+          "date_start",
+          "date",
+          "user_id",
+          "last_update_color",
+          "tag_ids",
+          "last_update_status"
+        ],
+        "row_actions": [
+          {
+            "icon": "",
+            "kind": "server",
+            "name": "action_view_tasks",
+            "label": "查看任务",
+            "level": "row",
+            "intent": "execute",
+            "selection": "multi"
+          }
+        ],
+        "page_size": 50,
+        "row_classes": [
+          {
+            "class": "muted",
+            "expr_raw": "active == False"
+          }
+        ]
+      },
+      "form": {
+        "model": "project.project",
+        "view_type": "form",
+        "version": 6,
+        "meta": {},
+        "modifiers": {},
+        "toolbar": {
+          "header": [],
+          "sidebar": [],
+          "footer": []
+        },
+        "search": {},
+        "order": "sequence, name, id",
+        "layout": [
+          {
+            "name": "company_id",
+            "type": "field"
+          },
+          {
+            "name": "analytic_account_id",
+            "type": "field"
+          },
+          {
+            "type": "header"
+          },
+          {
+            "type": "container"
+          }
+        ],
+        "statusbar": {
+          "field": "stage_id"
+        },
+        "header_buttons": [],
+        "button_box": [],
+        "stat_buttons": [],
+        "field_modifiers": {},
+        "subviews": {},
+        "chatter": {
+          "enabled": false
+        },
+        "attachments": {
+          "enabled": false
+        }
+      }
+    },
+    "fields": {
+      "access_instruction_message": {
+        "name": "access_instruction_message",
+        "string": "访问指令消息",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "access_token": {
+        "name": "access_token",
+        "string": "安全令牌",
+        "type": "char",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "access_url": {
+        "name": "access_url",
+        "string": "门户网站访问网址",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "access_warning": {
+        "name": "access_warning",
+        "string": "访问警告信息",
+        "type": "text",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "active": {
+        "name": "active",
+        "string": "已启用",
+        "type": "boolean",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_date_deadline": {
+        "name": "activity_date_deadline",
+        "string": "下一活动截止日期",
+        "type": "date",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_exception_decoration": {
+        "name": "activity_exception_decoration",
+        "string": "活动异常标示",
+        "type": "selection",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_exception_icon": {
+        "name": "activity_exception_icon",
+        "string": "图标",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_ids": {
+        "name": "activity_ids",
+        "string": "活动",
+        "type": "one2many",
+        "relation": "mail.activity",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_state": {
+        "name": "activity_state",
+        "string": "活动状态",
+        "type": "selection",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_summary": {
+        "name": "activity_summary",
+        "string": "下一活动摘要",
+        "type": "char",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_type_icon": {
+        "name": "activity_type_icon",
+        "string": "活动类型图标",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_type_id": {
+        "name": "activity_type_id",
+        "string": "下一活动类型",
+        "type": "many2one",
+        "relation": "mail.activity.type",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "activity_user_id": {
+        "name": "activity_user_id",
+        "string": "责任用户",
+        "type": "many2one",
+        "relation": "res.users",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_bounced_content": {
+        "name": "alias_bounced_content",
+        "string": "自定义退回消息",
+        "type": "html",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_contact": {
+        "name": "alias_contact",
+        "string": "安全联系人别名",
+        "type": "selection",
+        "readonly": false,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_defaults": {
+        "name": "alias_defaults",
+        "string": "默认值",
+        "type": "text",
+        "readonly": true,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_domain": {
+        "name": "alias_domain",
+        "string": "别名域名",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_domain_id": {
+        "name": "alias_domain_id",
+        "string": "别名域",
+        "type": "many2one",
+        "relation": "mail.alias.domain",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_email": {
+        "name": "alias_email",
+        "string": "电子邮件别名",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_force_thread_id": {
+        "name": "alias_force_thread_id",
+        "string": "记录线索ID",
+        "type": "integer",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_full_name": {
+        "name": "alias_full_name",
+        "string": "别名电子邮件",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_id": {
+        "name": "alias_id",
+        "string": "别名",
+        "type": "many2one",
+        "relation": "mail.alias",
+        "readonly": false,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_incoming_local": {
+        "name": "alias_incoming_local",
+        "string": "基于本地部件的来件检测",
+        "type": "boolean",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_model_id": {
+        "name": "alias_model_id",
+        "string": "模型别名",
+        "type": "many2one",
+        "relation": "ir.model",
+        "readonly": false,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_name": {
+        "name": "alias_name",
+        "string": "别名",
+        "type": "char",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_parent_model_id": {
+        "name": "alias_parent_model_id",
+        "string": "上级模型",
+        "type": "many2one",
+        "relation": "ir.model",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_parent_thread_id": {
+        "name": "alias_parent_thread_id",
+        "string": "上级记录ID",
+        "type": "integer",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "alias_status": {
+        "name": "alias_status",
+        "string": "别名状态",
+        "type": "selection",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "allow_milestones": {
+        "name": "allow_milestones",
+        "string": "里程碑",
+        "type": "boolean",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "allow_rating": {
+        "name": "allow_rating",
+        "string": "允许客户评价",
+        "type": "boolean",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "allow_task_dependencies": {
+        "name": "allow_task_dependencies",
+        "string": "任务依赖",
+        "type": "boolean",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "analytic_account_balance": {
+        "name": "analytic_account_balance",
+        "string": "余额",
+        "type": "monetary",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "analytic_account_id": {
+        "name": "analytic_account_id",
+        "string": "分析账户",
+        "type": "many2one",
+        "relation": "account.analytic.account",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "closed_task_count": {
+        "name": "closed_task_count",
+        "string": "已关闭任务数",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "collaborator_count": {
+        "name": "collaborator_count",
+        "string": "# 合作者",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "collaborator_ids": {
+        "name": "collaborator_ids",
+        "string": "合作者",
+        "type": "one2many",
+        "relation": "project.collaborator",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "color": {
+        "name": "color",
+        "string": "颜色指标",
+        "type": "integer",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "company_id": {
+        "name": "company_id",
+        "string": "公司",
+        "type": "many2one",
+        "relation": "res.company",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "create_date": {
+        "name": "create_date",
+        "string": "创建日期",
+        "type": "datetime",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "create_uid": {
+        "name": "create_uid",
+        "string": "创建人",
+        "type": "many2one",
+        "relation": "res.users",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "currency_id": {
+        "name": "currency_id",
+        "string": "币种",
+        "type": "many2one",
+        "relation": "res.currency",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "date": {
+        "name": "date",
+        "string": "有效期",
+        "type": "date",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "date_start": {
+        "name": "date_start",
+        "string": "开始日期",
+        "type": "date",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "description": {
+        "name": "description",
+        "string": "描述",
+        "type": "html",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "display_name": {
+        "name": "display_name",
+        "string": "显示名称",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "doc_count": {
+        "name": "doc_count",
+        "string": "附件数量",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "favorite_user_ids": {
+        "name": "favorite_user_ids",
+        "string": "成员",
+        "type": "many2many",
+        "relation": "res.users",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "has_message": {
+        "name": "has_message",
+        "string": "有消息",
+        "type": "boolean",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "id": {
+        "name": "id",
+        "string": "ID",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "is_favorite": {
+        "name": "is_favorite",
+        "string": "在仪表板上显示项目",
+        "type": "boolean",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "is_milestone_exceeded": {
+        "name": "is_milestone_exceeded",
+        "string": "是否超越了里程碑",
+        "type": "boolean",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "label_tasks": {
+        "name": "label_tasks",
+        "string": "用任务来",
+        "type": "char",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "last_update_color": {
+        "name": "last_update_color",
+        "string": "最后更新颜色",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "last_update_id": {
+        "name": "last_update_id",
+        "string": "最后更新",
+        "type": "many2one",
+        "relation": "project.update",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "last_update_status": {
+        "name": "last_update_status",
+        "string": "最后更新状态",
+        "type": "selection",
+        "readonly": false,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_attachment_count": {
+        "name": "message_attachment_count",
+        "string": "附件计数",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_follower_ids": {
+        "name": "message_follower_ids",
+        "string": "关注者",
+        "type": "one2many",
+        "relation": "mail.followers",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_has_error": {
+        "name": "message_has_error",
+        "string": "消息发送错误",
+        "type": "boolean",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_has_error_counter": {
+        "name": "message_has_error_counter",
+        "string": "错误数量",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_has_sms_error": {
+        "name": "message_has_sms_error",
+        "string": "短信发送错误",
+        "type": "boolean",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_ids": {
+        "name": "message_ids",
+        "string": "消息",
+        "type": "one2many",
+        "relation": "mail.message",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_is_follower": {
+        "name": "message_is_follower",
+        "string": "是关注者",
+        "type": "boolean",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_needaction": {
+        "name": "message_needaction",
+        "string": "所需操作",
+        "type": "boolean",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_needaction_counter": {
+        "name": "message_needaction_counter",
+        "string": "操作数量",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "message_partner_ids": {
+        "name": "message_partner_ids",
+        "string": "关注者（合作伙伴）",
+        "type": "many2many",
+        "relation": "res.partner",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "milestone_count": {
+        "name": "milestone_count",
+        "string": "里程碑计数",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "milestone_count_reached": {
+        "name": "milestone_count_reached",
+        "string": "已达到的里程碑计数",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "milestone_ids": {
+        "name": "milestone_ids",
+        "string": "里程碑",
+        "type": "one2many",
+        "relation": "project.milestone",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "my_activity_date_deadline": {
+        "name": "my_activity_date_deadline",
+        "string": "我的活动截止时间",
+        "type": "date",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "name": {
+        "name": "name",
+        "string": "名称",
+        "type": "char",
+        "readonly": false,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "open_task_count": {
+        "name": "open_task_count",
+        "string": "开放任务计数",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "partner_id": {
+        "name": "partner_id",
+        "string": "客户",
+        "type": "many2one",
+        "relation": "res.partner",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "privacy_visibility": {
+        "name": "privacy_visibility",
+        "string": "可见性",
+        "type": "selection",
+        "readonly": false,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "privacy_visibility_warning": {
+        "name": "privacy_visibility_warning",
+        "string": "隐私可见性警告",
+        "type": "char",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_active": {
+        "name": "rating_active",
+        "string": "客户点评",
+        "type": "boolean",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_avg": {
+        "name": "rating_avg",
+        "string": "平均评价",
+        "type": "float",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_avg_percentage": {
+        "name": "rating_avg_percentage",
+        "string": "平均评价（%）",
+        "type": "float",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_count": {
+        "name": "rating_count",
+        "string": "# 等级",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_ids": {
+        "name": "rating_ids",
+        "string": "点评",
+        "type": "one2many",
+        "relation": "rating.rating",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_percentage_satisfaction": {
+        "name": "rating_percentage_satisfaction",
+        "string": "评级满意度",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_request_deadline": {
+        "name": "rating_request_deadline",
+        "string": "评级请求截止日期",
+        "type": "datetime",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_status": {
+        "name": "rating_status",
+        "string": "客户评价状态",
+        "type": "selection",
+        "readonly": false,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "rating_status_period": {
+        "name": "rating_status_period",
+        "string": "点评频率",
+        "type": "selection",
+        "readonly": false,
+        "required": true,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "resource_calendar_id": {
+        "name": "resource_calendar_id",
+        "string": "工时",
+        "type": "many2one",
+        "relation": "resource.calendar",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "sequence": {
+        "name": "sequence",
+        "string": "序列",
+        "type": "integer",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "stage_id": {
+        "name": "stage_id",
+        "string": "阶段",
+        "type": "many2one",
+        "relation": "project.project.stage",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "tag_ids": {
+        "name": "tag_ids",
+        "string": "标签",
+        "type": "many2many",
+        "relation": "project.tags",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "task_count": {
+        "name": "task_count",
+        "string": "任务统计",
+        "type": "integer",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "task_ids": {
+        "name": "task_ids",
+        "string": "任务",
+        "type": "one2many",
+        "relation": "project.task",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "task_properties_definition": {
+        "name": "task_properties_definition",
+        "string": "任务属性",
+        "type": "properties_definition",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "tasks": {
+        "name": "tasks",
+        "string": "任务活动",
+        "type": "one2many",
+        "relation": "project.task",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "type_ids": {
+        "name": "type_ids",
+        "string": "任务阶段",
+        "type": "many2many",
+        "relation": "project.task.type",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "update_ids": {
+        "name": "update_ids",
+        "string": "更新",
+        "type": "one2many",
+        "relation": "project.update",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "user_id": {
+        "name": "user_id",
+        "string": "项目管理员",
+        "type": "many2one",
+        "relation": "res.users",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "website_message_ids": {
+        "name": "website_message_ids",
+        "string": "网站消息",
+        "type": "one2many",
+        "relation": "mail.message",
+        "readonly": false,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "write_date": {
+        "name": "write_date",
+        "string": "上次更新日期",
+        "type": "datetime",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      },
+      "write_uid": {
+        "name": "write_uid",
+        "string": "最后更新人",
+        "type": "many2one",
+        "relation": "res.users",
+        "readonly": true,
+        "required": false,
+        "domain": [],
+        "context": {},
+        "selection": []
+      }
+    },
+    "search": {
+      "model": "project.project",
+      "version": 1,
+      "facets": {
+        "enabled": true
+      },
+      "filters": [
+        {
+          "key": "activities_today",
+          "help": "",
+          "tags": [],
+          "label": "今日活动",
+          "domain": [],
+          "domain_raw": "[('my_activity_date_deadline', '=', context_today().strftime('%Y-%m-%d'))]",
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "inactive",
+          "help": "",
+          "tags": [],
+          "label": "已存档",
+          "domain": [
+            [
+              "active",
+              "=",
+              false
+            ]
+          ],
+          "domain_raw": "[('active', '=', False)]",
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "start_date",
+          "help": "",
+          "tags": [],
+          "label": "开始日期",
+          "domain": [],
+          "domain_raw": null,
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "my_projects",
+          "help": "",
+          "tags": [],
+          "label": "我的收藏夹",
+          "domain": [],
+          "domain_raw": "[('favorite_user_ids', 'in', uid)]",
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "own_projects",
+          "help": "",
+          "tags": [],
+          "label": "我的项目",
+          "domain": [],
+          "domain_raw": "[('user_id', '=', uid)]",
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "activities_overdue",
+          "help": "显示下一操作日期早于今天的所有记录",
+          "tags": [],
+          "label": "最近活动",
+          "domain": [],
+          "domain_raw": "[('my_activity_date_deadline', '<', context_today().strftime('%Y-%m-%d'))]",
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "unassigned_projects",
+          "help": "",
+          "tags": [],
+          "label": "未指派",
+          "domain": [
+            [
+              "user_id",
+              "=",
+              false
+            ]
+          ],
+          "domain_raw": "[('user_id', '=', False)]",
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "activities_upcoming_all",
+          "help": "",
+          "tags": [],
+          "label": "未来活动",
+          "domain": [],
+          "domain_raw": "[('my_activity_date_deadline', '>', context_today().strftime('%Y-%m-%d'))]",
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "tags",
+          "help": "",
+          "tags": [],
+          "label": "标签",
+          "domain": [],
+          "domain_raw": null,
+          "context_raw": "{'group_by': 'tag_ids'}",
+          "groups_xmlids": []
+        },
+        {
+          "key": "status",
+          "help": "",
+          "tags": [],
+          "label": "状态",
+          "domain": [],
+          "domain_raw": null,
+          "context_raw": "{'group_by': 'last_update_status'}",
+          "groups_xmlids": []
+        },
+        {
+          "key": "end_date",
+          "help": "",
+          "tags": [],
+          "label": "结束日期",
+          "domain": [],
+          "domain_raw": null,
+          "context_raw": null,
+          "groups_xmlids": []
+        },
+        {
+          "key": "manager",
+          "help": "",
+          "tags": [],
+          "label": "项目管理员",
+          "domain": [],
+          "domain_raw": null,
+          "context_raw": "{'group_by': 'user_id'}",
+          "groups_xmlids": []
+        }
+      ],
+      "defaults": {
+        "limit": 80,
+        "order": "sequence, name, id"
+      },
+      "group_by": [
+        {
+          "type": "datetime",
+          "field": "write_date",
+          "label": "上次更新日期",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "alias_parent_model_id",
+          "label": "上级模型",
+          "default": false
+        },
+        {
+          "type": "date",
+          "field": "activity_date_deadline",
+          "label": "下一活动截止日期",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "activity_type_id",
+          "label": "下一活动类型",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "allow_task_dependencies",
+          "label": "任务依赖",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "allow_rating",
+          "label": "允许客户评价",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "company_id",
+          "label": "公司",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "analytic_account_id",
+          "label": "分析账户",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "create_uid",
+          "label": "创建人",
+          "default": false
+        },
+        {
+          "type": "datetime",
+          "field": "create_date",
+          "label": "创建日期",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "alias_id",
+          "label": "别名",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "alias_domain_id",
+          "label": "别名域",
+          "default": false
+        },
+        {
+          "type": "selection",
+          "field": "alias_status",
+          "label": "别名状态",
+          "default": false
+        },
+        {
+          "type": "selection",
+          "field": "privacy_visibility",
+          "label": "可见性",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "is_favorite",
+          "label": "在仪表板上显示项目",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "alias_incoming_local",
+          "label": "基于本地部件的来件检测",
+          "default": false
+        },
+        {
+          "type": "selection",
+          "field": "alias_contact",
+          "label": "安全联系人别名",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "partner_id",
+          "label": "客户",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "rating_active",
+          "label": "客户点评",
+          "default": false
+        },
+        {
+          "type": "selection",
+          "field": "rating_status",
+          "label": "客户评价状态",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "resource_calendar_id",
+          "label": "工时",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "active",
+          "label": "已启用",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "currency_id",
+          "label": "币种",
+          "default": false
+        },
+        {
+          "type": "date",
+          "field": "date_start",
+          "label": "开始日期",
+          "default": false
+        },
+        {
+          "type": "date",
+          "field": "my_activity_date_deadline",
+          "label": "我的活动截止时间",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "message_needaction",
+          "label": "所需操作",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "message_is_follower",
+          "label": "是关注者",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "is_milestone_exceeded",
+          "label": "是否超越了里程碑",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "last_update_id",
+          "label": "最后更新",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "write_uid",
+          "label": "最后更新人",
+          "default": false
+        },
+        {
+          "type": "selection",
+          "field": "last_update_status",
+          "label": "最后更新状态",
+          "default": false
+        },
+        {
+          "type": "date",
+          "field": "date",
+          "label": "有效期",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "has_message",
+          "label": "有消息",
+          "default": false
+        },
+        {
+          "type": "many2many",
+          "field": "tag_ids",
+          "label": "标签",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "alias_model_id",
+          "label": "模型别名",
+          "default": false
+        },
+        {
+          "type": "selection",
+          "field": "activity_exception_decoration",
+          "label": "活动异常标示",
+          "default": false
+        },
+        {
+          "type": "selection",
+          "field": "activity_state",
+          "label": "活动状态",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "message_has_error",
+          "label": "消息发送错误",
+          "default": false
+        },
+        {
+          "type": "selection",
+          "field": "rating_status_period",
+          "label": "点评频率",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "message_has_sms_error",
+          "label": "短信发送错误",
+          "default": false
+        },
+        {
+          "type": "datetime",
+          "field": "rating_request_deadline",
+          "label": "评级请求截止日期",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "activity_user_id",
+          "label": "责任用户",
+          "default": false
+        },
+        {
+          "type": "boolean",
+          "field": "allow_milestones",
+          "label": "里程碑",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "stage_id",
+          "label": "阶段",
+          "default": false
+        },
+        {
+          "type": "many2one",
+          "field": "user_id",
+          "label": "项目管理员",
+          "default": false
+        }
+      ],
+      "saved_filters": []
+    },
+    "permissions": {
+      "model": "project.project",
+      "rules": {
+        "read": {
+          "mode": "OR",
+          "clauses": [
+            {
+              "id": 63,
+              "name": "Project: multi-company",
+              "domain": [],
+              "global": false,
+              "domain_raw": "[('company_id', 'in', company_ids + [False])]",
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 65,
+              "name": "Project: project manager: see all",
+              "domain": [
+                [
+                  1,
+                  "=",
+                  1
+                ]
+              ],
+              "global": false,
+              "domain_raw": "[(1, '=', 1)]",
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 66,
+              "name": "Project: employees: following required for follower-only projects",
+              "domain": [],
+              "global": false,
+              "domain_raw": "['|',\n                                        ('privacy_visibility', '!=', 'followers'),\n                                        ('message_partner_ids', 'in', [user.partner_id.id])\n                                    ]",
+              "groups_xmlids": [
+                "base.group_user",
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 76,
+              "name": "Project: portal users: portal and following",
+              "domain": [],
+              "global": false,
+              "domain_raw": "[\n            '&',\n                ('privacy_visibility', '=', 'portal'),\n                ('message_partner_ids', 'child_of', [user.partner_id.commercial_partner_id.id]),\n        ]",
+              "groups_xmlids": [
+                "base.group_portal",
+                "project.group_project_manager"
+              ]
+            }
+          ]
+        },
+        "write": {
+          "mode": "OR",
+          "clauses": [
+            {
+              "id": 63,
+              "name": "Project: multi-company",
+              "domain": [],
+              "global": false,
+              "domain_raw": "[('company_id', 'in', company_ids + [False])]",
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 65,
+              "name": "Project: project manager: see all",
+              "domain": [
+                [
+                  1,
+                  "=",
+                  1
+                ]
+              ],
+              "global": false,
+              "domain_raw": "[(1, '=', 1)]",
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 66,
+              "name": "Project: employees: following required for follower-only projects",
+              "domain": [],
+              "global": false,
+              "domain_raw": "['|',\n                                        ('privacy_visibility', '!=', 'followers'),\n                                        ('message_partner_ids', 'in', [user.partner_id.id])\n                                    ]",
+              "groups_xmlids": [
+                "base.group_user",
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 76,
+              "name": "Project: portal users: portal and following",
+              "domain": [],
+              "global": false,
+              "domain_raw": "[\n            '&',\n                ('privacy_visibility', '=', 'portal'),\n                ('message_partner_ids', 'child_of', [user.partner_id.commercial_partner_id.id]),\n        ]",
+              "groups_xmlids": [
+                "base.group_portal",
+                "project.group_project_manager"
+              ]
+            }
+          ]
+        },
+        "create": {
+          "mode": "OR",
+          "clauses": [
+            {
+              "id": 63,
+              "name": "Project: multi-company",
+              "domain": [],
+              "global": false,
+              "domain_raw": "[('company_id', 'in', company_ids + [False])]",
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 65,
+              "name": "Project: project manager: see all",
+              "domain": [
+                [
+                  1,
+                  "=",
+                  1
+                ]
+              ],
+              "global": false,
+              "domain_raw": "[(1, '=', 1)]",
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 66,
+              "name": "Project: employees: following required for follower-only projects",
+              "domain": [],
+              "global": false,
+              "domain_raw": "['|',\n                                        ('privacy_visibility', '!=', 'followers'),\n                                        ('message_partner_ids', 'in', [user.partner_id.id])\n                                    ]",
+              "groups_xmlids": [
+                "base.group_user",
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 76,
+              "name": "Project: portal users: portal and following",
+              "domain": [],
+              "global": false,
+              "domain_raw": "[\n            '&',\n                ('privacy_visibility', '=', 'portal'),\n                ('message_partner_ids', 'child_of', [user.partner_id.commercial_partner_id.id]),\n        ]",
+              "groups_xmlids": [
+                "base.group_portal",
+                "project.group_project_manager"
+              ]
+            }
+          ]
+        },
+        "unlink": {
+          "mode": "OR",
+          "clauses": [
+            {
+              "id": 63,
+              "name": "Project: multi-company",
+              "domain": [],
+              "global": false,
+              "domain_raw": "[('company_id', 'in', company_ids + [False])]",
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 65,
+              "name": "Project: project manager: see all",
+              "domain": [
+                [
+                  1,
+                  "=",
+                  1
+                ]
+              ],
+              "global": false,
+              "domain_raw": "[(1, '=', 1)]",
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 66,
+              "name": "Project: employees: following required for follower-only projects",
+              "domain": [],
+              "global": false,
+              "domain_raw": "['|',\n                                        ('privacy_visibility', '!=', 'followers'),\n                                        ('message_partner_ids', 'in', [user.partner_id.id])\n                                    ]",
+              "groups_xmlids": [
+                "base.group_user",
+                "project.group_project_manager"
+              ]
+            },
+            {
+              "id": 76,
+              "name": "Project: portal users: portal and following",
+              "domain": [],
+              "global": false,
+              "domain_raw": "[\n            '&',\n                ('privacy_visibility', '=', 'portal'),\n                ('message_partner_ids', 'child_of', [user.partner_id.commercial_partner_id.id]),\n        ]",
+              "groups_xmlids": [
+                "base.group_portal",
+                "project.group_project_manager"
+              ]
+            }
+          ]
+        }
+      },
+      "field_groups": {
+        "id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "date": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "name": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "color": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "tasks": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "active": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "tag_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "user_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "sequence": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "stage_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "task_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "type_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "doc_count": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "write_uid": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "access_url": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_name": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "company_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "create_uid": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "date_start": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "partner_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_avg": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "task_count": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "update_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "write_date": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_email": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "create_date": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "currency_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "description": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "has_message": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "is_favorite": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "label_tasks": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "access_token": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_domain": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_status": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "allow_rating": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "display_name": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_count": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_contact": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "milestone_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_active": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_status": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "access_warning": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_state": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_defaults": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_model_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "last_update_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_domain_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_full_name": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "milestone_count": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "open_task_count": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_summary": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_type_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_user_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "allow_milestones": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "collaborator_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "closed_task_count": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "favorite_user_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "last_update_color": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_has_error": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_type_icon": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "collaborator_count": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "last_update_status": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_needaction": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "privacy_visibility": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "analytic_account_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_is_follower": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_partner_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "website_message_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_incoming_local": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_follower_ids": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_status_period": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "resource_calendar_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_bounced_content": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_force_thread_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_parent_model_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "is_milestone_exceeded": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_has_sms_error": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_avg_percentage": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_date_deadline": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "alias_parent_thread_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_exception_icon": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "allow_task_dependencies": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "milestone_count_reached": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_request_deadline": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "analytic_account_balance": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_attachment_count": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_has_error_counter": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "my_activity_date_deadline": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "access_instruction_message": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "message_needaction_counter": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "privacy_visibility_warning": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "task_properties_definition": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "activity_exception_decoration": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "rating_percentage_satisfaction": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        }
+      },
+      "order_default": "sequence, name, id",
+      "domain_default": [],
+      "perms_by_group": {
+        "base.group_user": {
+          "read": true,
+          "write": false,
+          "create": false,
+          "unlink": false
+        },
+        "base.group_portal": {
+          "read": true,
+          "write": false,
+          "create": false,
+          "unlink": false
+        },
+        "project.group_project_user": {
+          "read": true,
+          "write": false,
+          "create": false,
+          "unlink": false
+        },
+        "project.group_project_manager": {
+          "read": true,
+          "write": true,
+          "create": true,
+          "unlink": true
+        }
+      },
+      "effective": {
+        "groups": [
+          1,
+          2,
+          3,
+          4,
+          7,
+          8,
+          9,
+          15,
+          16,
+          18,
+          19
+        ],
+        "rights": {
+          "read": true,
+          "write": true,
+          "create": true,
+          "unlink": true
+        },
+        "rules": {
+          "read": {
+            "mode": "OR",
+            "clauses": [
+              {
+                "id": 63,
+                "name": "Project: multi-company",
+                "domain": [],
+                "global": true,
+                "domain_raw": "[('company_id', 'in', company_ids + [False])]",
+                "groups_xmlids": []
+              },
+              {
+                "id": 65,
+                "name": "Project: project manager: see all",
+                "domain": [
+                  [
+                    1,
+                    "=",
+                    1
+                  ]
+                ],
+                "global": false,
+                "domain_raw": "[(1, '=', 1)]",
+                "groups_xmlids": [
+                  "project.group_project_manager"
+                ]
+              },
+              {
+                "id": 66,
+                "name": "Project: employees: following required for follower-only projects",
+                "domain": [],
+                "global": false,
+                "domain_raw": "['|',\n                                        ('privacy_visibility', '!=', 'followers'),\n                                        ('message_partner_ids', 'in', [user.partner_id.id])\n                                    ]",
+                "groups_xmlids": [
+                  "base.group_user"
+                ]
+              }
+            ]
+          },
+          "write": {
+            "mode": "OR",
+            "clauses": [
+              {
+                "id": 63,
+                "name": "Project: multi-company",
+                "domain": [],
+                "global": true,
+                "domain_raw": "[('company_id', 'in', company_ids + [False])]",
+                "groups_xmlids": []
+              },
+              {
+                "id": 65,
+                "name": "Project: project manager: see all",
+                "domain": [
+                  [
+                    1,
+                    "=",
+                    1
+                  ]
+                ],
+                "global": false,
+                "domain_raw": "[(1, '=', 1)]",
+                "groups_xmlids": [
+                  "project.group_project_manager"
+                ]
+              },
+              {
+                "id": 66,
+                "name": "Project: employees: following required for follower-only projects",
+                "domain": [],
+                "global": false,
+                "domain_raw": "['|',\n                                        ('privacy_visibility', '!=', 'followers'),\n                                        ('message_partner_ids', 'in', [user.partner_id.id])\n                                    ]",
+                "groups_xmlids": [
+                  "base.group_user"
+                ]
+              }
+            ]
+          },
+          "create": {
+            "mode": "OR",
+            "clauses": [
+              {
+                "id": 63,
+                "name": "Project: multi-company",
+                "domain": [],
+                "global": true,
+                "domain_raw": "[('company_id', 'in', company_ids + [False])]",
+                "groups_xmlids": []
+              },
+              {
+                "id": 65,
+                "name": "Project: project manager: see all",
+                "domain": [
+                  [
+                    1,
+                    "=",
+                    1
+                  ]
+                ],
+                "global": false,
+                "domain_raw": "[(1, '=', 1)]",
+                "groups_xmlids": [
+                  "project.group_project_manager"
+                ]
+              },
+              {
+                "id": 66,
+                "name": "Project: employees: following required for follower-only projects",
+                "domain": [],
+                "global": false,
+                "domain_raw": "['|',\n                                        ('privacy_visibility', '!=', 'followers'),\n                                        ('message_partner_ids', 'in', [user.partner_id.id])\n                                    ]",
+                "groups_xmlids": [
+                  "base.group_user"
+                ]
+              }
+            ]
+          },
+          "unlink": {
+            "mode": "OR",
+            "clauses": [
+              {
+                "id": 63,
+                "name": "Project: multi-company",
+                "domain": [],
+                "global": true,
+                "domain_raw": "[('company_id', 'in', company_ids + [False])]",
+                "groups_xmlids": []
+              },
+              {
+                "id": 65,
+                "name": "Project: project manager: see all",
+                "domain": [
+                  [
+                    1,
+                    "=",
+                    1
+                  ]
+                ],
+                "global": false,
+                "domain_raw": "[(1, '=', 1)]",
+                "groups_xmlids": [
+                  "project.group_project_manager"
+                ]
+              },
+              {
+                "id": 66,
+                "name": "Project: employees: following required for follower-only projects",
+                "domain": [],
+                "global": false,
+                "domain_raw": "['|',\n                                        ('privacy_visibility', '!=', 'followers'),\n                                        ('message_partner_ids', 'in', [user.partner_id.id])\n                                    ]",
+                "groups_xmlids": [
+                  "base.group_user"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "buttons": [
+      {
+        "key": "act_187_分享可编辑的内容",
+        "kind": "open",
+        "label": "分享可编辑的内容",
+        "level": "header",
+        "model": "project.project",
+        "groups": [
+          19
+        ],
+        "intent": "open",
+        "params": {},
+        "payload": {
+          "ref": "187",
+          "view_id": 547,
+          "view_xmlid": null,
+          "context_raw": "{'default_access_mode': 'edit', 'dialog_size': 'medium'}"
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "none",
+        "target_model": null,
+        "groups_xmlids": [
+          "project.group_project_manager"
+        ]
+      },
+      {
+        "key": "obj_action_view_tasks_创建项目",
+        "kind": "object",
+        "label": "创建项目",
+        "level": "header",
+        "model": "project.project",
+        "groups": [],
+        "intent": "execute",
+        "params": {
+          "confirm": false
+        },
+        "payload": {
+          "method": "action_view_tasks",
+          "view_id": 556,
+          "view_xmlid": null,
+          "context_raw": null
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "single",
+        "target_model": "project.project",
+        "groups_xmlids": []
+      },
+      {
+        "key": "act_190_设置阶段的评分邮件模版",
+        "kind": "open",
+        "label": "设置阶段的评分邮件模版",
+        "level": "header",
+        "model": "project.project",
+        "groups": [],
+        "intent": "open",
+        "params": {},
+        "payload": {
+          "ref": "190",
+          "view_id": 547,
+          "view_xmlid": null,
+          "context_raw": "{'project_id':id}"
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "none",
+        "target_model": null,
+        "groups_xmlids": []
+      },
+      {
+        "key": "obj_action_view_tasks_查看任务",
+        "kind": "object",
+        "label": "查看任务",
+        "level": "row",
+        "model": "project.project",
+        "groups": [],
+        "intent": "execute",
+        "params": {
+          "confirm": false
+        },
+        "payload": {
+          "method": "action_view_tasks",
+          "view_id": 549,
+          "view_xmlid": null,
+          "context_raw": null
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "multi",
+        "target_model": "project.project",
+        "groups_xmlids": []
+      },
+      {
+        "key": "act_188",
+        "kind": "open",
+        "label": "188",
+        "level": "smart",
+        "model": "project.project",
+        "groups": [
+          19
+        ],
+        "intent": "open",
+        "params": {},
+        "payload": {
+          "ref": "188",
+          "view_id": 547,
+          "view_xmlid": null,
+          "context_raw": null
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "none",
+        "target_model": null,
+        "groups_xmlids": [
+          "project.group_project_manager"
+        ]
+      },
+      {
+        "key": "obj_action_view_tasks",
+        "kind": "object",
+        "label": "action_view_tasks",
+        "level": "smart",
+        "model": "project.project",
+        "groups": [],
+        "intent": "execute",
+        "params": {
+          "confirm": false
+        },
+        "payload": {
+          "method": "action_view_tasks",
+          "view_id": 547,
+          "view_xmlid": null,
+          "context_raw": null
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "single",
+        "target_model": "project.project",
+        "groups_xmlids": []
+      },
+      {
+        "key": "obj_project_update_all_action",
+        "kind": "object",
+        "label": "project_update_all_action",
+        "level": "smart",
+        "model": "project.project",
+        "groups": [
+          18
+        ],
+        "intent": "execute",
+        "params": {
+          "confirm": false
+        },
+        "payload": {
+          "method": "project_update_all_action",
+          "view_id": 547,
+          "view_xmlid": null,
+          "context_raw": null
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "single",
+        "target_model": "project.project",
+        "groups_xmlids": [
+          "project.group_project_user"
+        ]
+      },
+      {
+        "key": "project.open_view_project_all_group_stage",
+        "kind": "open",
+        "label": "项目",
+        "level": "toolbar",
+        "model": "project.project",
+        "groups": [],
+        "intent": "open",
+        "params": {
+          "target": "main"
+        },
+        "payload": {
+          "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    找不到项目。 让我们创建一个！\n                </p>\n                <p>\n                    项目包括相同主题的任务，并且每个都有其仪表板。\n                </p>\n            ",
+          "xml_id": "project.open_view_project_all_group_stage",
+          "view_id": 557,
+          "action_id": 195,
+          "view_mode": "kanban,tree,form,calendar,activity",
+          "domain_raw": "[]",
+          "context_raw": "{}"
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "none",
+        "target_model": "project.project",
+        "groups_xmlids": []
+      },
+      {
+        "key": "project.ir_cron_rating_project_ir_actions_server",
+        "kind": "server",
+        "label": "项目：发送评级",
+        "level": "toolbar",
+        "model": "project.project",
+        "groups": [],
+        "intent": "execute",
+        "params": {
+          "server_state": "code"
+        },
+        "payload": {
+          "xml_id": "project.ir_cron_rating_project_ir_actions_server",
+          "server_action_id": 220
+        },
+        "visible": {
+          "domain": [],
+          "states": []
+        },
+        "selection": "multi",
+        "target_model": "project.project",
+        "groups_xmlids": []
+      }
+    ],
+    "toolbar": {
+      "header": [
+        {
+          "key": "project.open_create_project",
+          "kind": "open",
+          "label": "创建项目",
+          "level": "toolbar",
+          "model": "project.project",
+          "groups": [],
+          "intent": "open",
+          "params": {
+            "target": "new"
+          },
+          "payload": {
+            "help": null,
+            "xml_id": "project.open_create_project",
+            "view_id": 556,
+            "action_id": 193,
+            "view_mode": "form",
+            "domain_raw": false,
+            "context_raw": "{\"default_allow_billable\": 0}"
+          },
+          "visible": {
+            "domain": [],
+            "states": []
+          },
+          "selection": "none",
+          "target_model": "project.project",
+          "groups_xmlids": []
+        },
+        {
+          "key": "project.open_view_project_all",
+          "kind": "open",
+          "label": "项目",
+          "level": "toolbar",
+          "model": "project.project",
+          "groups": [],
+          "intent": "open",
+          "params": {
+            "target": "current"
+          },
+          "payload": {
+            "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    找不到项目。 让我们创建一个！\n                </p>\n                <p>\n                    创建项目来组织你的任务。为每个项目定义不同的工作流程。\n                </p>\n            ",
+            "xml_id": "project.open_view_project_all",
+            "view_id": 557,
+            "action_id": 194,
+            "view_mode": "kanban,tree,form",
+            "domain_raw": "[]",
+            "context_raw": "{}"
+          },
+          "visible": {
+            "domain": [],
+            "states": []
+          },
+          "selection": "none",
+          "target_model": "project.project",
+          "groups_xmlids": []
+        },
+        {
+          "key": "project.open_view_project_all_config",
+          "kind": "open",
+          "label": "项目",
+          "level": "toolbar",
+          "model": "project.project",
+          "groups": [],
+          "intent": "open",
+          "params": {
+            "target": "current"
+          },
+          "payload": {
+            "help": "<p class=\"o_view_nocontent_smiling_face\">\n                   找不到项目。 让我们创建一个！\n                </p>\n                <p>\n                    创建项目来组织你的任务，并为每个项目定义不同的工作流程。\n                </p>\n            ",
+            "xml_id": "project.open_view_project_all_config",
+            "view_id": null,
+            "action_id": 196,
+            "view_mode": "tree,kanban,form",
+            "domain_raw": "[]",
+            "context_raw": "{}"
+          },
+          "visible": {
+            "domain": [],
+            "states": []
+          },
+          "selection": "none",
+          "target_model": "project.project",
+          "groups_xmlids": []
+        },
+        {
+          "key": "project.open_view_project_all_config_group_stage",
+          "kind": "open",
+          "label": "项目",
+          "level": "toolbar",
+          "model": "project.project",
+          "groups": [],
+          "intent": "open",
+          "params": {
+            "target": "current"
+          },
+          "payload": {
+            "help": "<p class=\"o_view_nocontent_smiling_face\">\n                   找不到项目。 让我们创建一个！\n                </p>\n                <p>\n                    项目包括相同主题的任务，并且每个都有其仪表板。\n                </p>\n            ",
+            "xml_id": "project.open_view_project_all_config_group_stage",
+            "view_id": null,
+            "action_id": 197,
+            "view_mode": "tree,kanban,form,calendar,activity",
+            "domain_raw": "[]",
+            "context_raw": "{}"
+          },
+          "visible": {
+            "domain": [],
+            "states": []
+          },
+          "selection": "none",
+          "target_model": "project.project",
+          "groups_xmlids": []
+        },
+        {
+          "key": "project.open_view_project_all_group_stage",
+          "kind": "open",
+          "label": "项目",
+          "level": "toolbar",
+          "model": "project.project",
+          "groups": [],
+          "intent": "open",
+          "params": {
+            "target": "main"
+          },
+          "payload": {
+            "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    找不到项目。 让我们创建一个！\n                </p>\n                <p>\n                    项目包括相同主题的任务，并且每个都有其仪表板。\n                </p>\n            ",
+            "xml_id": "project.open_view_project_all_group_stage",
+            "view_id": 557,
+            "action_id": 195,
+            "view_mode": "kanban,tree,form,calendar,activity",
+            "domain_raw": "[]",
+            "context_raw": "{}"
+          },
+          "visible": {
+            "domain": [],
+            "states": []
+          },
+          "selection": "none",
+          "target_model": "project.project",
+          "groups_xmlids": []
+        },
+        {
+          "key": "project.ir_cron_rating_project_ir_actions_server",
+          "kind": "server",
+          "label": "项目：发送评级",
+          "level": "toolbar",
+          "model": "project.project",
+          "groups": [],
+          "intent": "execute",
+          "params": {
+            "server_state": "code"
+          },
+          "payload": {
+            "xml_id": "project.ir_cron_rating_project_ir_actions_server",
+            "server_action_id": 220
+          },
+          "visible": {
+            "domain": [],
+            "states": []
+          },
+          "selection": "multi",
+          "target_model": "project.project",
+          "groups_xmlids": []
+        }
+      ],
+      "sidebar": [],
+      "footer": []
+    },
+    "workflow": {
+      "meta": {
+        "source": "fields_get + form.buttons"
+      },
+      "model": "project.project",
+      "engine": "inferred",
+      "states": [
+        {
+          "key": "__dynamic_stage__",
+          "fold": false,
+          "color": null,
+          "label": "Dynamic Stage",
+          "sequence": 10
+        }
+      ],
+      "activities": [
+        {
+          "id": 1,
+          "name": "电子邮件",
+          "category": "default",
+          "res_model": false
+        },
+        {
+          "id": 2,
+          "name": "电话",
+          "category": "phonecall",
+          "res_model": false
+        },
+        {
+          "id": 3,
+          "name": "会议",
+          "category": "default",
+          "res_model": false
+        },
+        {
+          "id": 4,
+          "name": "待办",
+          "category": "reminder",
+          "res_model": false
+        },
+        {
+          "id": 7,
+          "name": "提醒",
+          "category": "reminder",
+          "res_model": false
+        },
+        {
+          "id": 5,
+          "name": "上传单据",
+          "category": "upload_file",
+          "res_model": false
+        }
+      ],
+      "state_field": "stage_id",
+      "transitions": [
+        {
+          "to": null,
+          "from": [
+            "__dynamic_stage__"
+          ],
+          "notes": "inferred from form buttons",
+          "trigger": {
+            "kind": "open",
+            "name": "187",
+            "label": "共享只读"
+          },
+          "conditions": {
+            "domain": [],
+            "domain_raw": null,
+            "states_attr": []
+          },
+          "groups_xmlids": []
+        },
+        {
+          "to": null,
+          "from": [
+            "__dynamic_stage__"
+          ],
+          "notes": "inferred from form buttons",
+          "trigger": {
+            "kind": "open",
+            "name": "187",
+            "label": "分享可编辑的内容"
+          },
+          "conditions": {
+            "domain": [],
+            "domain_raw": null,
+            "states_attr": []
+          },
+          "groups_xmlids": []
+        },
+        {
+          "to": null,
+          "from": [
+            "__dynamic_stage__"
+          ],
+          "notes": "inferred from form buttons",
+          "trigger": {
+            "kind": "object",
+            "name": "action_view_tasks",
+            "label": "action_view_tasks"
+          },
+          "conditions": {
+            "domain": [],
+            "domain_raw": null,
+            "states_attr": []
+          },
+          "groups_xmlids": []
+        },
+        {
+          "to": null,
+          "from": [
+            "__dynamic_stage__"
+          ],
+          "notes": "inferred from form buttons",
+          "trigger": {
+            "kind": "object",
+            "name": "project_update_all_action",
+            "label": "project_update_all_action"
+          },
+          "conditions": {
+            "domain": [],
+            "domain_raw": null,
+            "states_attr": []
+          },
+          "groups_xmlids": []
+        },
+        {
+          "to": null,
+          "from": [
+            "__dynamic_stage__"
+          ],
+          "notes": "inferred from form buttons",
+          "trigger": {
+            "kind": "open",
+            "name": "188",
+            "label": "188"
+          },
+          "conditions": {
+            "domain": [],
+            "domain_raw": null,
+            "states_attr": []
+          },
+          "groups_xmlids": []
+        }
+      ]
+    },
+    "reports": [],
+    "validator": {
+      "model": "project.project",
+      "version": 27,
+      "field_rules": {
+        "id": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "ID",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "date": {
+          "help": "该项目结束的日期。在查看项目的计划时，会考虑到项目上定义的时间框架。",
+          "size": null,
+          "type": "date",
+          "digits": null,
+          "string": "有效期",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "name": {
+          "help": "",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "名称",
+          "relation": null,
+          "required": true,
+          "selection": [],
+          "domain_raw": null
+        },
+        "color": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "颜色指标",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "tasks": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "任务活动",
+          "relation": "project.task",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "active": {
+          "help": "如不启用此字段，可以不删除数据来隐藏项目.",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "已启用",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "tag_ids": {
+          "help": "",
+          "size": null,
+          "type": "many2many",
+          "digits": null,
+          "string": "标签",
+          "relation": "project.tags",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "user_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "项目管理员",
+          "relation": "res.users",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "alias_id": {
+          "help": "和这个项目相关的内部邮件。收件会自动同步为任务（或者是议题，如果问题模块已经安装过）",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "别名",
+          "relation": "mail.alias",
+          "required": true,
+          "selection": [],
+          "domain_raw": []
+        },
+        "sequence": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "序列",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "stage_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "阶段",
+          "relation": "project.project.stage",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "task_ids": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "任务",
+          "relation": "project.task",
+          "required": false,
+          "selection": [],
+          "domain_raw": [
+            [
+              "state",
+              "in",
+              [
+                "01_in_progress",
+                "03_approved",
+                "04_waiting_normal",
+                "02_changes_requested"
+              ]
+            ]
+          ]
+        },
+        "type_ids": {
+          "help": "",
+          "size": null,
+          "type": "many2many",
+          "digits": null,
+          "string": "任务阶段",
+          "relation": "project.task.type",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "doc_count": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "附件数量",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "write_uid": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "最后更新人",
+          "relation": "res.users",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "access_url": {
+          "help": "客户门户网站网址",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "门户网站访问网址",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "alias_name": {
+          "help": "邮件别名的名称，例如，如果您要收取 <jobs@example.baidu.com> 的EMail,别名就要设为：\"jobs\"",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "别名",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "company_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "公司",
+          "relation": "res.company",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "create_uid": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "创建人",
+          "relation": "res.users",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "date_start": {
+          "help": "",
+          "size": null,
+          "type": "date",
+          "digits": null,
+          "string": "开始日期",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "partner_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "客户",
+          "relation": "res.partner",
+          "required": false,
+          "selection": [],
+          "domain_raw": "['|', ('company_id', '=?', company_id), ('company_id', '=', False)]"
+        },
+        "rating_avg": {
+          "help": "",
+          "size": null,
+          "type": "float",
+          "digits": null,
+          "string": "平均评价",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "rating_ids": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "点评",
+          "relation": "rating.rating",
+          "required": false,
+          "selection": [],
+          "domain_raw": [
+            [
+              "parent_res_model",
+              "=",
+              "project.project"
+            ]
+          ]
+        },
+        "task_count": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "任务统计",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "update_ids": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "更新",
+          "relation": "project.update",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "write_date": {
+          "help": "",
+          "size": null,
+          "type": "datetime",
+          "digits": null,
+          "string": "上次更新日期",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "alias_email": {
+          "help": "",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "电子邮件别名",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "create_date": {
+          "help": "",
+          "size": null,
+          "type": "datetime",
+          "digits": null,
+          "string": "创建日期",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "currency_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "币种",
+          "relation": "res.currency",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "description": {
+          "help": "描述以提供有关此项目的更多信息和上下文",
+          "size": null,
+          "type": "html",
+          "digits": null,
+          "string": "描述",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "has_message": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "有消息",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "is_favorite": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "在仪表板上显示项目",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "label_tasks": {
+          "help": "用来指代项目任务的名称，如任务、票据、冲刺等等……",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "用任务来",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "message_ids": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "消息",
+          "relation": "mail.message",
+          "required": false,
+          "selection": [],
+          "domain_raw": [
+            [
+              "message_type",
+              "!=",
+              "user_notification"
+            ]
+          ]
+        },
+        "access_token": {
+          "help": "",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "安全令牌",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "activity_ids": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "活动",
+          "relation": "mail.activity",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "alias_domain": {
+          "help": "Email domain e.g. 'example.com' in 'odoo@example.com'",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "别名域名",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "alias_status": {
+          "help": "根据收到的最后一条消息评估别名状态。",
+          "size": null,
+          "type": "selection",
+          "digits": null,
+          "string": "别名状态",
+          "relation": null,
+          "required": false,
+          "selection": [
+            [
+              "not_tested",
+              "未测试"
+            ],
+            [
+              "valid",
+              "有效的"
+            ],
+            [
+              "invalid",
+              "无效"
+            ]
+          ],
+          "domain_raw": null
+        },
+        "allow_rating": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "允许客户评价",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "display_name": {
+          "help": "",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "显示名称",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "rating_count": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "# 等级",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "alias_contact": {
+          "help": "使用邮件网关在文档中发布消息的政策：\n- 所有人：任何人都可以发布\n- 合作伙伴：仅限认证通过的合作伙伴\n- 关注者：仅限关联文档或关注频道的成员\n",
+          "size": null,
+          "type": "selection",
+          "digits": null,
+          "string": "安全联系人别名",
+          "relation": null,
+          "required": true,
+          "selection": [
+            [
+              "everyone",
+              "所有人"
+            ],
+            [
+              "partners",
+              "身份验证过的业务伙伴"
+            ],
+            [
+              "followers",
+              "仅关注者"
+            ]
+          ],
+          "domain_raw": null
+        },
+        "milestone_ids": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "里程碑",
+          "relation": "project.milestone",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "rating_active": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "客户点评",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "rating_status": {
+          "help": "当任务进入某个阶段时，通过向客户发送评分请求来收集他们的反馈。为此，在相应的阶段上定义一个评级电子邮件模板。\n分级分级:当任务到达分级邮件模板设置的分级阶段时，会自动发送邮件。\n周期评级:只要任务处于邮件评级模板设置的阶段，邮件就会定期自动发送。",
+          "size": null,
+          "type": "selection",
+          "digits": null,
+          "string": "客户评价状态",
+          "relation": null,
+          "required": true,
+          "selection": [
+            [
+              "stage",
+              "当达到指定阶段时"
+            ],
+            [
+              "periodic",
+              "以定期准则"
+            ]
+          ],
+          "domain_raw": null
+        },
+        "access_warning": {
+          "help": "",
+          "size": null,
+          "type": "text",
+          "digits": null,
+          "string": "访问警告信息",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "activity_state": {
+          "help": "基于活动的状态\n逾期：超出到期日期\n今天：活动日期是今天\n计划：未来活动。",
+          "size": null,
+          "type": "selection",
+          "digits": null,
+          "string": "活动状态",
+          "relation": null,
+          "required": false,
+          "selection": [
+            [
+              "overdue",
+              "Overdue"
+            ],
+            [
+              "today",
+              "Today"
+            ],
+            [
+              "planned",
+              "Planned"
+            ]
+          ],
+          "domain_raw": null
+        },
+        "alias_defaults": {
+          "help": "为该别名创建新记录时，将对其进行评估以提供默认值的Python字典。",
+          "size": null,
+          "type": "text",
+          "digits": null,
+          "string": "默认值",
+          "relation": null,
+          "required": true,
+          "selection": [],
+          "domain_raw": null
+        },
+        "alias_model_id": {
+          "help": "相应于这个别名对应的模型(ERP 单据种类)。任何一封不属于对某个已存在的记录的到来电子邮件，将导致此模型中新记录的创建(例如，一个新的项目任务).",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "模型别名",
+          "relation": "ir.model",
+          "required": true,
+          "selection": [],
+          "domain_raw": "[('field_id.name', '=', 'message_ids')]"
+        },
+        "last_update_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "最后更新",
+          "relation": "project.update",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "alias_domain_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "别名域",
+          "relation": "mail.alias.domain",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "alias_full_name": {
+          "help": "",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "别名电子邮件",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "milestone_count": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "里程碑计数",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "open_task_count": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "开放任务计数",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "activity_summary": {
+          "help": "",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "下一活动摘要",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "activity_type_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "下一活动类型",
+          "relation": "mail.activity.type",
+          "required": false,
+          "selection": [],
+          "domain_raw": "['|', ('res_model', '=', False), ('res_model', '=', res_model)]"
+        },
+        "activity_user_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "责任用户",
+          "relation": "res.users",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "allow_milestones": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "里程碑",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "collaborator_ids": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "合作者",
+          "relation": "project.collaborator",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "closed_task_count": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "已关闭任务数",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "favorite_user_ids": {
+          "help": "",
+          "size": null,
+          "type": "many2many",
+          "digits": null,
+          "string": "成员",
+          "relation": "res.users",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "last_update_color": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "最后更新颜色",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "message_has_error": {
+          "help": "如果勾选此项， 某些消息将出现发送错误。",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "消息发送错误",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "activity_type_icon": {
+          "help": "Font Awesome图标，例如：fa-tasks",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "活动类型图标",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "collaborator_count": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "# 合作者",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "last_update_status": {
+          "help": "",
+          "size": null,
+          "type": "selection",
+          "digits": null,
+          "string": "最后更新状态",
+          "relation": null,
+          "required": true,
+          "selection": [
+            [
+              "on_track",
+              "正在进行中"
+            ],
+            [
+              "at_risk",
+              "有风险"
+            ],
+            [
+              "off_track",
+              "关闭跟踪"
+            ],
+            [
+              "on_hold",
+              "暂停"
+            ],
+            [
+              "to_define",
+              "设定状态"
+            ],
+            [
+              "done",
+              "已完成"
+            ]
+          ],
+          "domain_raw": null
+        },
+        "message_needaction": {
+          "help": "如果勾选此项，则需要查看新消息。",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "所需操作",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "privacy_visibility": {
+          "help": "可以看到此项目及其任务的人员.\n\n- 受邀的内部用户：当关注一个项目时，内部用户将无差别地访问其所有任务。否则，他们将只能访问他们正在执行的特定任务。\n 具有项目 > 管理员访问权限级别的用户仍然可以访问此项目及其任务，即使他们不是明确的追随者\n\n- 所有内部用户：所有内部用户都可以无差别地访问项目及其所有任务。\n\n- 受邀网站用户和所有内部用户：所有内部用户都可以无差别地访问项目及其所有任务。\n关注项目时，网站用户将可以无差别地访问其所有任务。否则，他们将只能访问他们正在执行的特定任务。\n\n当项目以只读方式共享时，网站用户将被重定向到他们的网站。他们可以查看任务，但不能编辑它们。\n当项目以可编辑方式共享时，网站用户将被重定向到任务的看板和列表视图。他们可以修改任务中选定数量的字段。\n\n在任何情况下，没有项目访问权限的内部用户仍然可以访问任务，前提是为他们提供相应的 URL（如果项目是私有的，他们是关注者的一部分）。",
+          "size": null,
+          "type": "selection",
+          "digits": null,
+          "string": "可见性",
+          "relation": null,
+          "required": true,
+          "selection": [
+            [
+              "followers",
+              "受邀内部用户（非公开）"
+            ],
+            [
+              "employees",
+              "所有内部用户"
+            ],
+            [
+              "portal",
+              "受邀网站用户和所有内部用户（公开）"
+            ]
+          ],
+          "domain_raw": null
+        },
+        "analytic_account_id": {
+          "help": "分析账户，这个项目，它的任务和它的时间表都与之相关。\n通过在你相关的文件（如销售订单、结算单、采购订单、供应商账单、费用等）上设置这个分析账户，跟踪你的项目的成本和收入。\n如果有必要，这个分析账户可以在每个任务上单独更改。\n为了使用时间表，需要一个分析账户。",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "分析账户",
+          "relation": "account.analytic.account",
+          "required": false,
+          "selection": [],
+          "domain_raw": "(company_id and ['|', ('company_id', '=', False), ('company_id', 'in', [company_id])] or [('company_id', '=', False)]) + (['|', ('company_id', '=', False), ('company_id', '=?', company_id)])"
+        },
+        "message_is_follower": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "是关注者",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "message_partner_ids": {
+          "help": "",
+          "size": null,
+          "type": "many2many",
+          "digits": null,
+          "string": "关注者（合作伙伴）",
+          "relation": "res.partner",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "website_message_ids": {
+          "help": "网站沟通记录",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "网站消息",
+          "relation": "mail.message",
+          "required": false,
+          "selection": [],
+          "domain_raw": [
+            [
+              "model",
+              "=",
+              "project.project"
+            ],
+            [
+              "message_type",
+              "in",
+              [
+                "comment",
+                "email",
+                "email_outgoing"
+              ]
+            ]
+          ]
+        },
+        "alias_incoming_local": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "基于本地部件的来件检测",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "message_follower_ids": {
+          "help": "",
+          "size": null,
+          "type": "one2many",
+          "digits": null,
+          "string": "关注者",
+          "relation": "mail.followers",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "rating_status_period": {
+          "help": "",
+          "size": null,
+          "type": "selection",
+          "digits": null,
+          "string": "点评频率",
+          "relation": null,
+          "required": true,
+          "selection": [
+            [
+              "daily",
+              "每天"
+            ],
+            [
+              "weekly",
+              "每周"
+            ],
+            [
+              "bimonthly",
+              "一个月两次"
+            ],
+            [
+              "monthly",
+              "一个月一次"
+            ],
+            [
+              "quarterly",
+              "每季度"
+            ],
+            [
+              "yearly",
+              "每年"
+            ]
+          ],
+          "domain_raw": null
+        },
+        "resource_calendar_id": {
+          "help": "",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "工时",
+          "relation": "resource.calendar",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "alias_bounced_content": {
+          "help": "如果设置，此内容将自动发送给未经授权的用户，而不是默认消息。",
+          "size": null,
+          "type": "html",
+          "digits": null,
+          "string": "自定义退回消息",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "alias_force_thread_id": {
+          "help": "无论是否回复，所有的接收的邮件都将附上一条线索（记录）选配的ID。如果设置了，这个将完全阻止新记录的创建。",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "记录线索ID",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "alias_parent_model_id": {
+          "help": "父级模型拥有别名。拥有别名参考的模型不一定是alias_model_id给出的模型 (例如：project(parent_model) 和任务 (模型))",
+          "size": null,
+          "type": "many2one",
+          "digits": null,
+          "string": "上级模型",
+          "relation": "ir.model",
+          "required": false,
+          "selection": [],
+          "domain_raw": []
+        },
+        "is_milestone_exceeded": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "是否超越了里程碑",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "message_has_sms_error": {
+          "help": "如果勾选此项， 某些消息将出现发送错误。",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "短信发送错误",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "rating_avg_percentage": {
+          "help": "",
+          "size": null,
+          "type": "float",
+          "digits": null,
+          "string": "平均评价（%）",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "activity_date_deadline": {
+          "help": "",
+          "size": null,
+          "type": "date",
+          "digits": null,
+          "string": "下一活动截止日期",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "alias_parent_thread_id": {
+          "help": "上级记录ID支持别名(例如:项目支持任务创建别名)",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "上级记录ID",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "activity_exception_icon": {
+          "help": "指示异常活动的图标。",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "图标",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "allow_task_dependencies": {
+          "help": "",
+          "size": null,
+          "type": "boolean",
+          "digits": null,
+          "string": "任务依赖",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "milestone_count_reached": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "已达到的里程碑计数",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "rating_request_deadline": {
+          "help": "",
+          "size": null,
+          "type": "datetime",
+          "digits": null,
+          "string": "评级请求截止日期",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "analytic_account_balance": {
+          "help": "",
+          "size": null,
+          "type": "monetary",
+          "digits": null,
+          "string": "余额",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "message_attachment_count": {
+          "help": "",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "附件计数",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "message_has_error_counter": {
+          "help": "发送错误的消息的数量",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "错误数量",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "my_activity_date_deadline": {
+          "help": "",
+          "size": null,
+          "type": "date",
+          "digits": null,
+          "string": "我的活动截止时间",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "access_instruction_message": {
+          "help": "",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "访问指令消息",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "message_needaction_counter": {
+          "help": "需要采取行动的消息数量",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "操作数量",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "privacy_visibility_warning": {
+          "help": "",
+          "size": null,
+          "type": "char",
+          "digits": null,
+          "string": "隐私可见性警告",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "task_properties_definition": {
+          "help": "",
+          "size": null,
+          "type": "properties_definition",
+          "digits": null,
+          "string": "任务属性",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        },
+        "activity_exception_decoration": {
+          "help": "记录中异常活动的类型。",
+          "size": null,
+          "type": "selection",
+          "digits": null,
+          "string": "活动异常标示",
+          "relation": null,
+          "required": false,
+          "selection": [
+            [
+              "warning",
+              "Alert"
+            ],
+            [
+              "danger",
+              "Error"
+            ]
+          ],
+          "domain_raw": null
+        },
+        "rating_percentage_satisfaction": {
+          "help": "满意度",
+          "size": null,
+          "type": "integer",
+          "digits": null,
+          "string": "评级满意度",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "domain_raw": null
+        }
+      },
+      "record_rules": {
+        "unique": [],
+        "sql_checks": [
+          {
+            "name": "project_date_greater",
+            "message": "The project's start date must be before its end date.",
+            "definition": "check(date >= date_start)"
+          }
+        ]
+      },
+      "defaults_sample": {
+        "active": "dynamic",
+        "user_id": "dynamic",
+        "sequence": "dynamic",
+        "stage_id": "dynamic",
+        "label_tasks": "dynamic",
+        "allow_rating": false,
+        "alias_contact": "dynamic",
+        "rating_active": false,
+        "rating_status": "dynamic",
+        "alias_defaults": "dynamic",
+        "allow_milestones": false,
+        "favorite_user_ids": "dynamic",
+        "last_update_status": "dynamic",
+        "privacy_visibility": "dynamic",
+        "alias_incoming_local": false,
+        "rating_status_period": "dynamic",
+        "allow_task_dependencies": false
+      }
+    },
+    "data": {
+      "list": {
+        "records": [
+          {
+            "id": 1,
+            "sequence": 10,
+            "name": "测试项目",
+            "display_name": "测试项目",
+            "partner_id": false,
+            "company_id": false,
+            "date_start": false,
+            "date": false,
+            "user_id": [
+              2,
+              "Administrator"
+            ],
+            "tag_ids": [],
+            "has_message": true
+          }
+        ],
+        "next_offset": null
+      },
+      "record": {
+        "id": 1,
+        "activity_ids": [],
+        "activity_state": false,
+        "activity_user_id": false,
+        "activity_type_id": false,
+        "activity_type_icon": false,
+        "activity_date_deadline": false,
+        "my_activity_date_deadline": false,
+        "activity_summary": false,
+        "activity_exception_decoration": false,
+        "activity_exception_icon": false,
+        "message_is_follower": true,
+        "message_follower_ids": [
+          2
+        ],
+        "message_partner_ids": [
+          3
+        ],
+        "message_ids": [
+          4
+        ],
+        "has_message": true,
+        "message_needaction": false,
+        "message_needaction_counter": 0,
+        "message_has_error": false,
+        "message_has_error_counter": 0,
+        "message_attachment_count": 0
+      },
+      "form_layout": [
+        {
+          "name": "company_id",
+          "type": "field",
+          "children": [],
+          "fieldInfo": {
+            "help": "",
+            "name": "company_id",
+            "type": "char",
+            "label": "company_id",
+            "domain": [],
+            "widget": "char",
+            "colspan": 1,
+            "context": {},
+            "readonly": false,
+            "required": false,
+            "invisible": false,
+            "modifiers": {
+              "invisible": 1
+            },
+            "selection": []
+          }
+        },
+        {
+          "name": "analytic_account_id",
+          "type": "field",
+          "children": [],
+          "fieldInfo": {
+            "help": "",
+            "name": "analytic_account_id",
+            "type": "char",
+            "label": "analytic_account_id",
+            "domain": [],
+            "widget": "char",
+            "colspan": 1,
+            "context": {},
+            "readonly": false,
+            "required": false,
+            "invisible": false,
+            "modifiers": {
+              "invisible": 1
+            },
+            "selection": []
+          }
+        },
+        {
+          "type": "header",
+          "children": [
+            {
+              "name": "187",
+              "type": "button",
+              "label": "共享只读",
+              "children": [],
+              "buttonType": "action"
+            },
+            {
+              "name": "187",
+              "type": "button",
+              "label": "分享可编辑的内容",
+              "children": [],
+              "buttonType": "action"
+            }
+          ],
+          "attributes": {}
+        },
+        {
+          "type": "container",
+          "children": [
+            {
+              "name": "message_follower_ids",
+              "type": "field",
+              "children": [],
+              "fieldInfo": {
+                "help": "关注此项目的同时，跟踪此项目的任务和问题关联的事件。",
+                "name": "message_follower_ids",
+                "type": "char",
+                "label": "message_follower_ids",
+                "domain": [],
+                "widget": "char",
+                "colspan": 1,
+                "context": {},
+                "readonly": false,
+                "required": false,
+                "invisible": false,
+                "selection": []
+              }
+            },
+            {
+              "name": "activity_ids",
+              "type": "field",
+              "children": [],
+              "fieldInfo": {
+                "help": "",
+                "name": "activity_ids",
+                "type": "char",
+                "label": "activity_ids",
+                "domain": [],
+                "widget": "char",
+                "colspan": 1,
+                "context": {},
+                "readonly": false,
+                "required": false,
+                "invisible": false,
+                "selection": []
+              }
+            },
+            {
+              "name": "message_ids",
+              "type": "field",
+              "children": [],
+              "fieldInfo": {
+                "help": "",
+                "name": "message_ids",
+                "type": "char",
+                "label": "message_ids",
+                "domain": [],
+                "widget": "char",
+                "colspan": 1,
+                "context": {},
+                "readonly": false,
+                "required": false,
+                "invisible": false,
+                "selection": []
+              }
+            }
+          ],
+          "attributes": {
+            "class": "oe_chatter"
+          }
+        }
+      ]
+    }
+  },
+  "meta": {
+    "subject": "action",
+    "version": "model:1|view:4,6,6|perm:2|search:1|actions:1|reports:1|workflow:1|validator:27",
+    "etag": "268674543f3377bba83b46f910eeb98c",
+    "ts": "2025-09-03T06:01:30Z",
+    "elapsed_ms": 434
+  }
+}

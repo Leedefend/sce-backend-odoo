@@ -1,0 +1,29 @@
+<odoo>
+    <record id="view_project_boq_import_wizard" model="ir.ui.view">
+        <field name="name">project.boq.import.wizard.form</field>
+        <field name="model">project.boq.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="工程量清单导入">
+                <group>
+                    <field name="project_id" readonly="1"/>
+                    <field name="file" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                </group>
+                <footer>
+                    <button string="导入" type="object" name="action_import"
+                            class="oe_highlight"/>
+                    <button string="取消" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_project_boq_import_wizard" model="ir.actions.act_window">
+        <field name="name">工程量清单导入</field>
+        <field name="res_model">project.boq.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_project_boq_import_wizard"/>
+        <field name="target">new</field>
+        <field name="context">{'default_project_id': active_id}</field>
+    </record>
+</odoo>

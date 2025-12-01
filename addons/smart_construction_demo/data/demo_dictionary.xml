@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- 项目类型 -->
+        <record id="sc_demo_dict_project_type_municipal" model="sc.dictionary">
+            <field name="name">市政工程</field>
+            <field name="type">project_type</field>
+            <field name="code">MUNICIPAL</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="sc_demo_dict_project_type_building" model="sc.dictionary">
+            <field name="name">房建工程</field>
+            <field name="type">project_type</field>
+            <field name="code">BUILDING</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- 项目类别 -->
+        <record id="sc_demo_dict_project_category_industry" model="sc.dictionary">
+            <field name="name">产业园区</field>
+            <field name="type">project_category</field>
+            <field name="code">INDUSTRY_PARK</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="sc_demo_dict_project_category_public" model="sc.dictionary">
+            <field name="name">公共配套</field>
+            <field name="type">project_category</field>
+            <field name="code">PUBLIC_FAC</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- 成本项 -->
+        <record id="sc_demo_dict_cost_item_earthwork" model="sc.dictionary">
+            <field name="name">土石方工程</field>
+            <field name="type">cost_item</field>
+            <field name="code">COST_EARTHWORK</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="sc_demo_dict_cost_item_structure" model="sc.dictionary">
+            <field name="name">主体结构工程</field>
+            <field name="type">cost_item</field>
+            <field name="code">COST_STRUCTURE</field>
+            <field name="sequence">20</field>
+        </record>
+
+    </data>
+</odoo>

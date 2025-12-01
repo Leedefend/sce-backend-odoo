@@ -1,0 +1,29 @@
+<odoo>
+    <record id="view_project_task_from_boq_wizard" model="ir.ui.view">
+        <field name="name">project.task.from.boq.wizard.form</field>
+        <field name="model">project.task.from.boq.wizard</field>
+        <field name="arch" type="xml">
+            <form string="从清单生成施工任务">
+                <group>
+                    <field name="project_id" readonly="1"/>
+                    <field name="group_mode"/>
+                    <field name="code_prefix_len"/>
+                    <field name="overwrite"/>
+                </group>
+                <footer>
+                    <button string="生成任务" type="object" name="action_generate_tasks" class="oe_highlight"/>
+                    <button string="取消" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_project_task_from_boq_wizard" model="ir.actions.act_window">
+        <field name="name">从清单生成施工任务</field>
+        <field name="res_model">project.task.from.boq.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_project_task_from_boq_wizard"/>
+        <field name="target">new</field>
+        <field name="context">{'default_project_id': active_id}</field>
+    </record>
+</odoo>

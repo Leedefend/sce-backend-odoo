@@ -1,0 +1,99 @@
+<odoo>
+    <record id="view_project_boq_line_tree" model="ir.ui.view">
+        <field name="name">project.boq.line.tree</field>
+        <field name="model">project.boq.line</field>
+        <field name="arch" type="xml">
+            <tree string="工程量清单">
+                <field name="project_id" optional="hide"/>
+                <field name="section_type"/>
+                <field name="sequence"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="spec"/>
+                <field name="uom_id"/>
+                <field name="quantity"/>
+                <field name="price"/>
+                <field name="amount"/>
+                <field name="cost_item_id"/>
+                <field name="category"/>
+                <field name="is_provisional"/>
+                <field name="remark"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_project_boq_line_form" model="ir.ui.view">
+        <field name="name">project.boq.line.form</field>
+        <field name="model">project.boq.line</field>
+        <field name="arch" type="xml">
+            <form string="工程量清单">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="section_type"/>
+                            <field name="category"/>
+                            <field name="is_provisional"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="spec"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="uom_id"/>
+                            <field name="quantity"/>
+                            <field name="price"/>
+                            <field name="amount" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="cost_item_id"/>
+                            <field name="remark"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_project_boq_line_pivot" model="ir.ui.view">
+        <field name="name">project.boq.line.pivot</field>
+        <field name="model">project.boq.line</field>
+        <field name="arch" type="xml">
+            <pivot string="工程量清单分析">
+                <field name="project_id" type="row"/>
+                <field name="section_type" type="row"/>
+                <field name="category" type="row"/>
+                <field name="amount" type="measure"/>
+                <field name="quantity" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_project_boq_line" model="ir.actions.act_window">
+        <field name="name">工程量清单</field>
+        <field name="res_model">project.boq.line</field>
+        <field name="view_mode">tree,form,pivot</field>
+        <field name="view_id" ref="view_project_boq_line_tree"/>
+        <field name="context">{'search_default_group_by_project': 1}</field>
+    </record>
+
+    <record id="view_project_boq_line_search" model="ir.ui.view">
+        <field name="name">project.boq.line.search</field>
+        <field name="model">project.boq.line</field>
+        <field name="arch" type="xml">
+            <search string="工程量清单">
+                <field name="project_id"/>
+                <field name="section_type"/>
+                <field name="category"/>
+                <filter string="按项目" name="group_by_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按工程类别" name="group_by_section" context="{'group_by': 'section_type'}"/>
+                <filter string="按类别" name="group_by_category" context="{'group_by': 'category'}"/>
+            </search>
+        </field>
+    </record>
+
+</odoo>

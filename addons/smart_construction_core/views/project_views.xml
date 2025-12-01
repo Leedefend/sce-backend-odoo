@@ -1,0 +1,247 @@
+<odoo>
+    <record id="action_project_budget_quick" model="ir.actions.act_window">
+        <field name="name">项目预算</field>
+        <field name="res_model">project.budget</field>
+        <field name="view_mode">tree,form,graph</field>
+    </record>
+
+    <record id="action_project_cost_ledger_quick" model="ir.actions.act_window">
+        <field name="name">成本台账</field>
+        <field name="res_model">project.cost.ledger</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+    </record>
+
+    <record id="action_project_progress_quick" model="ir.actions.act_window">
+        <field name="name">进度计量</field>
+        <field name="res_model">project.progress.entry</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- 项目表单扩展：施工信息 + 工程资料 + 合同 -->
+    <record id="view_project_form_sc_core" model="ir.ui.view">
+        <field name="name">project.project.form.sc.core</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+
+            <!-- 在基础信息 group 后插入施工扩展字段 -->
+            <xpath expr="//sheet/div[@name='button_box']" position="inside">
+                <!-- 成本中心 -->
+                <button class="oe_stat_button" type="action"
+                        name="%(smart_construction_core.action_project_budget_quick)d"
+                        icon="fa-line-chart"
+                        context="{'default_project_id': id, 'search_default_project_id': id}">
+                    <field name="budget_count" widget="statinfo" string="预算(成本中心)"/>
+                </button>
+                <button class="oe_stat_button" type="action"
+                        name="%(smart_construction_core.action_project_cost_ledger_quick)d"
+                        icon="fa-credit-card"
+                        context="{'default_project_id': id, 'search_default_project_id': id}">
+                    <field name="cost_ledger_entry_count" widget="statinfo" string="成本台账"/>
+                </button>
+                <!-- 执行中心 -->
+                <button class="oe_stat_button" type="object"
+                        name="action_open_wbs"
+                        icon="fa-sitemap">
+                    <field name="wbs_count" widget="statinfo" string="工程结构"/>
+                </button>
+                <button class="oe_stat_button" type="action"
+                        name="%(smart_construction_core.action_project_progress_quick)d"
+                        icon="fa-area-chart"
+                        context="{'default_project_id': id, 'search_default_project_id': id}">
+                    <field name="progress_entry_count" widget="statinfo" string="进度计量"/>
+                </button>
+                <!-- 报表中心 -->
+                <button class="oe_stat_button" type="object"
+                        name="action_open_cost_compare"
+                        icon="fa-bar-chart">
+                    <field name="cost_budget_gap" widget="statinfo" string="成本对比"/>
+                </button>
+                <button class="oe_stat_button" type="object"
+                        name="action_open_profit_compare"
+                        icon="fa-line-chart">
+                    <field name="budget_active_revenue_target" widget="statinfo" string="利润对比"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//sheet/group" position="after">
+                <group string="施工项目信息">
+                    <field name="project_code" readonly="1"/>
+                    <field name="project_type_id"/>
+                    <field name="project_category_id"/>
+                    <field name="stage_id"/>
+                    <field name="lifecycle_state"/>
+                    <field name="phase_key"/>
+                    <field name="owner_id"/>
+                    <field name="owner_contact"/>
+                    <field name="location"/>
+                    <field name="contract_no"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                </group>
+                <group string="项目责任人">
+                    <field name="manager_id"/>
+                    <field name="cost_manager_id"/>
+                    <field name="doc_manager_id"/>
+                    <field name="responsibility_ids">
+                        <tree editable="bottom">
+                            <field name="role_key"/>
+                            <field name="user_id"/>
+                            <field name="note"/>
+                        </tree>
+                    </field>
+                </group>
+                <group string="成本与进度">
+                    <field name="budget_active_id" readonly="1" options="{'no_create': True}"/>
+                    <field name="budget_active_cost_target" readonly="1"/>
+                    <field name="budget_active_revenue_target" readonly="1"/>
+                    <field name="cost_ledger_amount_actual" readonly="1"/>
+                    <field name="cost_budget_gap" readonly="1"/>
+                    <field name="progress_rate_latest" readonly="1"/>
+                    <field name="progress_entry_count" readonly="1"/>
+                </group>
+            </xpath>
+
+            <!-- notebook 中增加驾驶舱、WBS、工程资料、合同等页签 -->
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="驾驶舱">
+                    <group>
+                        <group>
+                            <field name="contract_amount" readonly="1"/>
+                            <field name="subcontract_amount" readonly="1"/>
+                            <field name="dashboard_revenue_actual" readonly="1"/>
+                            <field name="dashboard_cost_actual" readonly="1"/>
+                            <field name="dashboard_profit_actual" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="dashboard_invoice_amount" readonly="1"/>
+                            <field name="dashboard_payment_in" readonly="1"/>
+                            <field name="dashboard_payment_out" readonly="1"/>
+                            <field name="dashboard_progress_rate" readonly="1"/>
+                            <field name="dashboard_document_completion" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+                <page string="WBS结构">
+                    <field name="wbs_ids" context="{'default_project_id': active_id}">
+                        <tree editable="bottom">
+                            <field name="sequence"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="parent_id"/>
+                            <field name="level"/>
+                            <field name="active"/>
+                        </tree>
+                    </field>
+                </page>
+                <page string="工程量清单" name="boq_tab">
+                    <group>
+                        <button string="导入清单"
+                                type="object"
+                                class="oe_highlight"
+                                name="action_open_boq_import"/>
+                        <button string="生成施工任务"
+                                type="action"
+                                class="btn-secondary"
+                                name="%(smart_construction_core.action_project_task_from_boq_wizard)d"/>
+                    </group>
+                    <group string="清单汇总">
+                        <field name="boq_amount_total" readonly="1"/>
+                        <field name="boq_amount_building" readonly="1"/>
+                        <field name="boq_amount_installation" readonly="1"/>
+                    </group>
+                    <field name="boq_line_ids" context="{'default_project_id': active_id}">
+                        <tree editable="bottom">
+                            <field name="section_type"/>
+                            <field name="sequence"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="spec"/>
+                            <field name="uom_id"/>
+                            <field name="quantity"/>
+                            <field name="price"/>
+                            <field name="amount" readonly="1" sum="清单金额合计"/>
+                            <field name="cost_item_id"/>
+                            <field name="remark"/>
+                        </tree>
+                        <form string="工程量清单">
+                            <group>
+                                <field name="sequence"/>
+                                <field name="code"/>
+                                <field name="name"/>
+                                <field name="spec"/>
+                                <field name="uom_id"/>
+                                <field name="quantity"/>
+                                <field name="price"/>
+                                <field name="amount" readonly="1"/>
+                                <field name="cost_item_id"/>
+                                <field name="remark"/>
+                            </group>
+                        </form>
+                    </field>
+                </page>
+                <page string="工程结构">
+                    <field name="work_ids" context="{'default_project_id': active_id}" domain="[('project_id','=',id)]">
+                        <tree editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="level_type"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="parent_id"/>
+                            <field name="boq_quantity_total"/>
+                            <field name="boq_amount_total"/>
+                        </tree>
+                    </field>
+                </page>
+                <page string="工程资料">
+                    <group>
+                        <field name="document_count" readonly="1"/>
+                        <field name="document_required_count" readonly="1"/>
+                        <field name="document_missing_count" readonly="1"/>
+                    </group>
+                    <field name="document_ids" context="{'default_project_id': active_id}">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="wbs_id"/>
+                            <field name="doc_type_id"/>
+                            <field name="doc_subtype_id"/>
+                            <field name="is_mandatory"/>
+                            <field name="version"/>
+                            <field name="date_doc"/>
+                            <field name="state"/>
+                            <field name="attachment_count"/>
+                        </tree>
+                    </field>
+                </page>
+
+                <!-- 新增：合同页签 -->
+                <page string="合同">
+                    <group>
+                        <field name="contract_count" readonly="1"/>
+                        <field name="contract_income_total" readonly="1"/>
+                        <field name="contract_expense_total" readonly="1"/>
+                    </group>
+                    <field name="contract_ids" context="{'default_project_id': active_id}">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="subject"/>
+                            <field name="type"/>
+                            <field name="category_id"/>
+                            <field name="partner_id"/>
+                            <field name="date_contract"/>
+                            <field name="amount_final"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_project_contract_overview" model="ir.actions.act_window">
+        <field name="name">项目合同汇总</field>
+        <field name="res_model">construction.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'searchpanel_default_project_id': True}</field>
+    </record>
+</odoo>

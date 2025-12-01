@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- 会计科目与销售日记账（demo 用，驱动收入统计） -->
+        <record id="sc_demo_account_receivable" model="account.account">
+            <field name="name">DEMO 应收账款</field>
+            <field name="code">131880</field>
+            <field name="account_type">asset_receivable</field>
+            <field name="reconcile">True</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record id="sc_demo_account_revenue" model="account.account">
+            <field name="name">DEMO 工程收入</field>
+            <field name="code">601880</field>
+            <field name="account_type">income</field>
+            <field name="internal_group">income</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record id="sc_demo_journal_sale" model="account.journal">
+            <field name="name">Demo Construction Sales</field>
+            <field name="code">DCS</field>
+            <field name="type">sale</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="default_account_id" ref="sc_demo_account_revenue"/>
+        </record>
+
+        <!-- 德阳项目发票：两期进度计量 -->
+        <record id="sc_demo_invoice_progress" model="account.move">
+            <field name="name">SC-DEMO-INV-001</field>
+            <field name="move_type">out_invoice</field>
+            <field name="journal_id" ref="sc_demo_journal_sale"/>
+            <field name="partner_id" ref="sc_demo_partner_owner_001"/>
+            <field name="invoice_date">2025-05-30</field>
+            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="state">posted</field>
+            <field name="line_ids" eval="[(0, 0, {
+                'name': '应收工程款',
+                'account_id': ref('sc_demo_account_receivable'),
+                'partner_id': ref('sc_demo_partner_owner_001'),
+                'project_id': ref('sc_demo_project_001'),
+                'debit': 25000000.0,
+                'credit': 0.0,
+            }), (0, 0, {
+                'name': '进度计量收入',
+                'account_id': ref('sc_demo_account_revenue'),
+                'partner_id': ref('sc_demo_partner_owner_001'),
+                'project_id': ref('sc_demo_project_001'),
+                'debit': 0.0,
+                'credit': 25000000.0,
+            })]"/>
+        </record>
+
+        <record id="sc_demo_invoice_progress_2" model="account.move">
+            <field name="name">SC-DEMO-INV-002</field>
+            <field name="move_type">out_invoice</field>
+            <field name="journal_id" ref="sc_demo_journal_sale"/>
+            <field name="partner_id" ref="sc_demo_partner_owner_001"/>
+            <field name="invoice_date">2025-08-20</field>
+            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="state">posted</field>
+            <field name="line_ids" eval="[(0, 0, {
+                'name': '应收工程款',
+                'account_id': ref('sc_demo_account_receivable'),
+                'partner_id': ref('sc_demo_partner_owner_001'),
+                'project_id': ref('sc_demo_project_001'),
+                'debit': 20000000.0,
+                'credit': 0.0,
+            }), (0, 0, {
+                'name': '进度计量收入',
+                'account_id': ref('sc_demo_account_revenue'),
+                'partner_id': ref('sc_demo_partner_owner_001'),
+                'project_id': ref('sc_demo_project_001'),
+                'debit': 0.0,
+                'credit': 20000000.0,
+            })]"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,132 @@
+<odoo>
+    <!-- Demo Contacts -->
+    <record id="sc_demo_owner_partner" model="res.partner">
+        <field name="name">城市建设投资集团</field>
+        <field name="company_type">company</field>
+    </record>
+    <record id="sc_demo_supplier_partner" model="res.partner">
+        <field name="name">建材供应有限公司</field>
+        <field name="company_type">company</field>
+    </record>
+    <record id="sc_demo_subcontract_partner" model="res.partner">
+        <field name="name">桥梁分包工程队</field>
+        <field name="company_type">company</field>
+    </record>
+
+    <!-- Demo Project -->
+    <record id="sc_demo_project" model="project.project">
+        <field name="name">演示项目 · 城市快速路提升工程</field>
+        <field name="partner_id" ref="sc_demo_owner_partner"/>
+        <field name="company_id" ref="base.main_company"/>
+    </record>
+
+    <!-- Demo WBS -->
+    <record id="sc_demo_wbs_root" model="project.wbs">
+        <field name="name">路基工程</field>
+        <field name="code">WBS-001</field>
+        <field name="project_id" ref="sc_demo_project"/>
+        <field name="level">1</field>
+    </record>
+    <record id="sc_demo_wbs_sub" model="project.wbs">
+        <field name="name">桥梁结构</field>
+        <field name="code">WBS-002</field>
+        <field name="project_id" ref="sc_demo_project"/>
+        <field name="parent_id" ref="sc_demo_wbs_root"/>
+        <field name="level">2</field>
+    </record>
+
+    <!-- Demo Budget -->
+    <record id="sc_demo_budget_control" model="project.budget">
+        <field name="name">控制版 V1</field>
+        <field name="project_id" ref="sc_demo_project"/>
+        <field name="version">CTRL-V1</field>
+        <field name="version_date">2025-01-15</field>
+        <field name="amount_revenue_target">2600000</field>
+        <field name="amount_cost_target">2100000</field>
+        <field name="is_active">True</field>
+        <field name="note">包含土建与桥梁两大专业的控制成本</field>
+    </record>
+
+    <record id="sc_demo_budget_line_roadbed" model="project.budget.boq.line">
+        <field name="budget_id" ref="sc_demo_budget_control"/>
+        <field name="sequence">10</field>
+        <field name="boq_code">BOQ-100</field>
+        <field name="name">路基填筑</field>
+        <field name="wbs_id" ref="sc_demo_wbs_root"/>
+        <field name="qty_bidded">1200</field>
+        <field name="uom_id" ref="uom.product_uom_hour"/>
+        <field name="price_bidded">800</field>
+        <field name="measure_rule">qty</field>
+    </record>
+
+    <record id="sc_demo_budget_line_bridge" model="project.budget.boq.line">
+        <field name="budget_id" ref="sc_demo_budget_control"/>
+        <field name="sequence">20</field>
+        <field name="boq_code">BOQ-200</field>
+        <field name="name">桥梁下部结构</field>
+        <field name="wbs_id" ref="sc_demo_wbs_sub"/>
+        <field name="qty_bidded">600</field>
+        <field name="uom_id" ref="uom.product_uom_hour"/>
+        <field name="price_bidded">1500</field>
+        <field name="measure_rule">qty</field>
+    </record>
+
+    <!-- Demo Budget Cost Allocation -->
+    <record id="sc_demo_alloc_roadbed_labor" model="project.budget.cost.alloc">
+        <field name="budget_boq_line_id" ref="sc_demo_budget_line_roadbed"/>
+        <field name="cost_code_id" ref="sc_cost_code_root_labor"/>
+        <field name="ratio">0.35</field>
+        <field name="amount_budget">336000</field>
+    </record>
+    <record id="sc_demo_alloc_roadbed_material" model="project.budget.cost.alloc">
+        <field name="budget_boq_line_id" ref="sc_demo_budget_line_roadbed"/>
+        <field name="cost_code_id" ref="sc_cost_code_root_material"/>
+        <field name="ratio">0.45</field>
+        <field name="amount_budget">432000</field>
+    </record>
+    <record id="sc_demo_alloc_bridge_sub" model="project.budget.cost.alloc">
+        <field name="budget_boq_line_id" ref="sc_demo_budget_line_bridge"/>
+        <field name="cost_code_id" ref="sc_cost_code_root_subcontract"/>
+        <field name="ratio">0.60</field>
+        <field name="amount_budget">540000</field>
+    </record>
+
+    <!-- Demo Cost Ledger -->
+    <record id="sc_demo_cost_ledger_1" model="project.cost.ledger">
+        <field name="project_id" ref="sc_demo_project"/>
+        <field name="wbs_id" ref="sc_demo_wbs_root"/>
+        <field name="cost_code_id" ref="sc_cost_code_root_material"/>
+        <field name="date">2025-02-10</field>
+        <field name="qty">200</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="amount">240000</field>
+        <field name="partner_id" ref="sc_demo_supplier_partner"/>
+        <field name="source_model">purchase.order</field>
+        <field name="source_id">1</field>
+        <field name="note">钢筋采购入库</field>
+    </record>
+    <record id="sc_demo_cost_ledger_2" model="project.cost.ledger">
+        <field name="project_id" ref="sc_demo_project"/>
+        <field name="wbs_id" ref="sc_demo_wbs_sub"/>
+        <field name="cost_code_id" ref="sc_cost_code_root_subcontract"/>
+        <field name="date">2025-03-05</field>
+        <field name="qty">1</field>
+        <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="amount">420000</field>
+        <field name="partner_id" ref="sc_demo_subcontract_partner"/>
+        <field name="source_model">account.move</field>
+        <field name="source_id">1</field>
+        <field name="note">桥梁桩基分包结算</field>
+    </record>
+
+    <!-- Demo Progress Entry -->
+    <record id="sc_demo_progress_entry" model="project.progress.entry">
+        <field name="project_id" ref="sc_demo_project"/>
+        <field name="wbs_id" ref="sc_demo_wbs_sub"/>
+        <field name="date">2025-03-20</field>
+        <field name="qty_done">180</field>
+        <field name="qty_cum">300</field>
+        <field name="progress_rate">35</field>
+        <field name="note">桩基完成 35%，已提交监理确认</field>
+    </record>
+</odoo>

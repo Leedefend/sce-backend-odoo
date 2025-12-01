@@ -1,0 +1,206 @@
+<odoo>
+    <!-- List view -->
+    <record id="view_tender_bid_tree" model="ir.ui.view">
+        <field name="name">tender.bid.tree</field>
+        <field name="model">tender.bid</field>
+        <field name="arch" type="xml">
+            <tree string="投标管理" default_order="project_id, id desc">
+                <field name="project_id"/>
+                <field name="tender_name"/>
+                <field name="tender_round"/>
+                <field name="owner_id"/>
+                <field name="bid_amount"/>
+                <field name="amount_total"/>
+                <field name="state"/>
+                <field name="deadline"/>
+                <field name="open_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form view -->
+    <record id="view_tender_bid_form" model="ir.ui.view">
+        <field name="name">tender.bid.form</field>
+        <field name="model">tender.bid</field>
+        <field name="arch" type="xml">
+            <form string="投标记录">
+                <header>
+                    <!-- 单一状态条：可点击，高亮随状态自动切换 -->
+                    <field name="state" widget="statusbar"
+                           options="{'clickable': '1'}"
+                           statusbar_visible="prepare,estimating,submitted,waiting,won,lost"
+                           statusbar_colors="{'won':'success','lost':'danger','waiting':'warning','estimating':'info'}"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(smart_construction_core.action_project_wbs)d"
+                                type="action"
+                                class="oe_stat_button"
+                                icon="fa-sitemap"
+                                modifiers="{'invisible': [['project_id','=',False]]}">
+                            <field name="project_id" invisible="1"/>
+                            <span class="o_stat_text">工程结构</span>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="project_id" required="1"/>
+                            <field name="tender_name" required="1"/>
+                            <field name="tender_round"/>
+                            <field name="owner_id"/>
+                            <field name="bid_amount"/>
+                            <field name="amount_total" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="deadline"/>
+                            <field name="open_date"/>
+                            <field name="contract_id" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="清单">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="spec"/>
+                                    <field name="uom_id"/>
+                                    <field name="quantity"/>
+                                    <field name="price"/>
+                                    <field name="amount"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="技术标附件">
+                            <field name="tech_attachment_ids" widget="many2many_binary"/>
+                        </page>
+                        <page string="商务标附件">
+                            <field name="biz_attachment_ids" widget="many2many_binary"/>
+                        </page>
+                        <page string="标书购买">
+                            <field name="doc_purchase_ids" context="{'default_bid_id': active_id}">
+                                <tree editable="bottom">
+                                    <field name="applicant_id"/>
+                                    <field name="apply_date"/>
+                                    <field name="amount"/>
+                                    <field name="invoice_no"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="现场踏勘">
+                            <field name="survey_ids" context="{'default_bid_id': active_id}">
+                                <tree editable="bottom">
+                                    <field name="survey_date"/>
+                                    <field name="location"/>
+                                    <field name="member_ids"/>
+                                    <field name="issue_notes"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="文件审查">
+                            <field name="review_ids" context="{'default_bid_id': active_id}">
+                                <tree editable="bottom">
+                                    <field name="version"/>
+                                    <field name="reviewer_ids"/>
+                                    <field name="comment"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="开标登记">
+                            <field name="opening_ids" context="{'default_bid_id': active_id}">
+                                <tree editable="bottom">
+                                    <field name="open_time"/>
+                                    <field name="result"/>
+                                    <field name="win_price"/>
+                                    <field name="remark"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="保证金">
+                            <field name="guarantee_ids" context="{'default_bid_id': active_id}">
+                                <tree editable="bottom">
+                                    <field name="type"/>
+                                    <field name="date"/>
+                                    <field name="amount"/>
+                                    <field name="bank_account_id"/>
+                                    <field name="remark"/>
+                                </tree>
+                            </field>
+                            <group>
+                                <field name="guarantee_total" readonly="1"/>
+                                <field name="guarantee_outstanding" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search view -->
+    <record id="view_tender_bid_search" model="ir.ui.view">
+        <field name="name">tender.bid.search</field>
+        <field name="model">tender.bid</field>
+        <field name="arch" type="xml">
+            <search string="投标管理">
+                <field name="project_id"/>
+                <field name="tender_name"/>
+                <field name="owner_id"/>
+                <filter string="中标" name="won" domain="[('state','=','won')]"/>
+                <group expand="1" string="分组">
+                    <filter string="按项目" name="group_project" context="{'group_by':'project_id'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by':'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_tender_bid" model="ir.actions.act_window">
+        <field name="name">投标管理</field>
+        <field name="res_model">tender.bid</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_tender_bid_search"/>
+        <field name="context">{'default_state': 'prepare'}</field>
+    </record>
+
+    <!-- Project form: 投标页签 -->
+    <record id="view_project_form_inherit_tender" model="ir.ui.view">
+        <field name="name">project.project.form.inherit.tender</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="%(smart_construction_core.action_tender_bid)d"
+                        type="action"
+                        class="oe_stat_button"
+                        icon="fa-gavel"
+                        context="{'search_default_project_id': id, 'default_project_id': id}"
+                        domain="[('project_id','=', id)]">
+                    <field name="tender_count" widget="statinfo" string="投标"/>
+                </button>
+            </xpath>
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="投标管理">
+                    <field name="tender_bid_ids" context="{'default_project_id': id, 'default_state': 'prepare'}">
+                        <tree string="投标记录" editable="bottom">
+                            <field name="tender_name"/>
+                            <field name="tender_round"/>
+                            <field name="owner_id"/>
+                            <field name="bid_amount"/>
+                            <field name="amount_total"/>
+                            <field name="state"/>
+                            <field name="deadline"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

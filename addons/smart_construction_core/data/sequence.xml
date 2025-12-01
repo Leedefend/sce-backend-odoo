@@ -1,0 +1,26 @@
+<odoo>
+    <!-- 预留工程资料编号序列（暂未强制使用） -->
+    <record id="seq_sc_project_document" model="ir.sequence">
+        <field name="name">工程资料</field>
+        <field name="code">sc.project.document</field>
+        <field name="prefix">DOC%(y)s</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_project_code" model="ir.sequence">
+        <field name="name">项目编号</field>
+        <field name="code">project.project.code</field>
+        <field name="prefix">PRJ%(y)s</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_construction_contract" model="ir.sequence">
+        <field name="name">项目合同</field>
+        <field name="code">construction.contract</field>
+        <field name="prefix">CON%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

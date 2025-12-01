@@ -1,0 +1,58 @@
+id: project_management
+label: 智能项目管理
+icon: project,static/description/icon.png
+category: 工程建设
+requires:
+  - project
+  - documents
+plans: [base, pro, enterprise]
+flags: [ai_enabled]
+features:
+  - key: project_overview
+    label: 项目总览
+    kind: work
+    open:
+      odoo_action_xmlid: project.action_project_project
+    required_permissions: [project.view_all]
+
+  - key: task_board
+    label: 任务看板
+    kind: work
+    open:
+      odoo_action_xmlid: project.action_view_task_kanban
+    required_permissions: [project.view_all]
+
+  - key: document_center
+    label: 项目文档中心
+    kind: work
+    open:
+      odoo_action_xmlid: documents.document_action
+    required_permissions: [documents.view_project_docs]
+
+  - key: report_task_analysis
+    label: 任务分析报表
+    kind: reporting
+    open:
+      odoo_action_xmlid: project.action_project_task_report
+    required_permissions: [project.report_task]
+
+  - key: config_stage
+    label: 阶段模板配置
+    kind: config
+    open:
+      odoo_menu_xmlid: project.menu_project_config_project
+    required_permissions: [project.manage_stage]
+
+  - key: ai_risk_summary
+    label: AI 风险摘要
+    kind: ai
+    open:
+      internal_route: /ai/project/risk_summary
+    required_permissions: [ai.analysis]
+
+  - key: ai_invest_insight
+    label: 投资智能洞察
+    kind: ai
+    open:
+      internal_route: /ai/project/invest_insight
+    required_permissions: [ai.analysis]

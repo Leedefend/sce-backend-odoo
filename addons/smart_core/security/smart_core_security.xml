@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- 基础分组：后续可用于 API 访问策略/审计权限控制 -->
+  <record id="group_smart_core_user" model="res.groups">
+    <field name="name">Smart Core User</field>
+    <field name="category_id" ref="base.module_category_hidden"/>
+  </record>
+
+  <record id="group_smart_core_admin" model="res.groups">
+    <field name="name">Smart Core Admin</field>
+    <field name="implied_ids" eval="[(4, ref('group_smart_core_user'))]"/>
+    <field name="category_id" ref="base.module_category_hidden"/>
+  </record>
+</odoo>

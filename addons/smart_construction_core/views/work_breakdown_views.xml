@@ -1,0 +1,107 @@
+<odoo>
+    <record id="view_work_breakdown_tree" model="ir.ui.view">
+        <field name="name">construction.work.breakdown.tree</field>
+        <field name="model">construction.work.breakdown</field>
+        <field name="arch" type="xml">
+            <tree string="工程结构" default_order="project_id, parent_path, sequence">
+                <field name="project_id"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="level_type"/>
+                <field name="parent_id"/>
+                <field name="boq_quantity_total"/>
+                <field name="boq_amount_total"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_work_breakdown_form" model="ir.ui.view">
+        <field name="name">construction.work.breakdown.form</field>
+        <field name="model">construction.work.breakdown</field>
+        <field name="arch" type="xml">
+            <form string="工程结构">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id" required="1" domain="[]"/>
+                            <field name="company_id" invisible="1"/>
+                            <field name="level_type" required="1"/>
+                            <field name="parent_id"/>
+                            <field name="sequence"/>
+                        </group>
+                    <group>
+                        <field name="code"/>
+                        <field name="name" required="1"/>
+                        <field name="boq_quantity_total" readonly="1"/>
+                        <field name="boq_amount_total" readonly="1"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                </group>
+                <notebook>
+                    <page string="下级节点">
+                        <field name="child_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence"/>
+                                    <field name="level_type"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="清单">
+                            <field name="boq_line_ids">
+                                <tree string="关联BOQ" editable="bottom">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="spec"/>
+                                    <field name="quantity"/>
+                                    <field name="uom_id"/>
+                                    <field name="price"/>
+                                    <field name="amount"/>
+                                    <field name="task_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="任务">
+                            <field name="task_ids" context="{'default_work_id': active_id}">
+                                <tree string="关联任务">
+                                    <field name="name"/>
+                                    <field name="boq_quantity_total"/>
+                                    <field name="boq_amount_total"/>
+                                    <field name="stage_id"/>
+                                    <field name="user_ids"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_work_breakdown_search" model="ir.ui.view">
+        <field name="name">construction.work.breakdown.search</field>
+        <field name="model">construction.work.breakdown</field>
+        <field name="arch" type="xml">
+            <search string="工程结构">
+                <field name="project_id"/>
+                <field name="level_type"/>
+                <field name="parent_id"/>
+                <group expand="1" string="分组">
+                    <filter string="按项目" name="group_project" context="{'group_by':'project_id'}"/>
+                    <filter string="按层级" name="group_level" context="{'group_by':'level_type'}"/>
+                    <filter string="按上级" name="group_parent" context="{'group_by':'parent_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_work_breakdown" model="ir.actions.act_window">
+        <field name="name">工程结构</field>
+        <field name="res_model">construction.work.breakdown</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_work_breakdown_search"/>
+        <!-- 使用空 context，避免菜单进入时报 active_id 未定义；项目按钮会覆写 context -->
+        <field name="context">{}</field>
+    </record>
+</odoo>
