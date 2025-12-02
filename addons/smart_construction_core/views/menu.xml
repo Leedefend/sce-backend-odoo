@@ -2,7 +2,8 @@
     <!-- 顶级菜单 -->
     <menuitem id="menu_sc_root"
               name="智能施工 2.0"
-              sequence="30"/>
+              sequence="30"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
     <!-- 财务主动作：默认打开供应商/客户发票列表，作为财务中心入口 -->
     <record id="action_sc_finance_dashboard" model="ir.actions.act_window">
@@ -11,76 +12,90 @@
         <field name="view_mode">tree,form</field>
         <field name="domain">[('move_type', 'in', ['in_invoice', 'out_invoice'])]</field>
         <field name="context">{'default_move_type': 'in_invoice'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
     <!-- 项目中心 -->
     <menuitem id="menu_sc_project_center"
               name="项目中心"
               parent="menu_sc_root"
-              sequence="10"/>
+              sequence="10"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <record id="action_project_initiation" model="ir.actions.act_window">
         <field name="name">项目立项</field>
         <field name="res_model">project.project</field>
         <field name="view_mode">form,tree,kanban</field>
         <field name="context">{'default_project_code': '新项目'}</field>
         <field name="target">current</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
     <menuitem id="menu_sc_project_initiation"
               name="项目立项"
               parent="menu_sc_project_center"
               action="action_project_initiation"
-              sequence="1"/>
+              sequence="1"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_dashboard"
               name="项目驾驶舱"
               parent="menu_sc_project_center"
               action="action_project_dashboard"
-              sequence="5"/>
+              sequence="5"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_project"
               name="项目列表"
               parent="menu_sc_project_center"
               action="project.open_view_project_all"
-              sequence="10"/>
+              sequence="10"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_wbs"
               name="WBS/分部分项"
               parent="menu_sc_project_center"
               action="action_project_wbs"
-              sequence="20"/>
+              sequence="20"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_budget_center"
               name="项目预算"
               parent="menu_sc_project_center"
               action="action_project_budget"
-              sequence="30"/>
+              sequence="30"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_contract_overview"
               name="合同汇总"
               parent="menu_sc_project_center"
               action="action_project_contract_overview"
-              sequence="35"/>
+              sequence="35"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_tender"
               name="投标管理"
               parent="menu_sc_project_center"
               action="action_tender_bid"
-              sequence="38"/>
+              sequence="38"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_work_breakdown"
               name="工程结构"
               parent="menu_sc_project_center"
               action="action_work_breakdown"
-              sequence="45"/>
+              sequence="45"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_boq_root"
               name="工程量清单"
               parent="menu_sc_project_center"
               action="action_project_boq_line"
-              sequence="50"/>
+              sequence="50"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
     <!-- 合同中心 -->
     <menuitem id="menu_sc_contract_center"
               name="合同中心"
               parent="menu_sc_root"
-              sequence="20"/>
+              sequence="20"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_contract_list"
               name="合同列表"
               parent="menu_sc_contract_center"
               action="action_construction_contract"
-              sequence="10"/>
+              sequence="10"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
     <!-- 成控中心 -->
     <menuitem id="menu_sc_cost_center"
@@ -112,7 +127,7 @@
               parent="menu_sc_cost_center"
               action="action_project_progress_entry"
               sequence="40"
-              groups="smart_construction_core.group_sc_manager"/>
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_cost_ledger"
               name="成本台账"
               parent="menu_sc_cost_center"
@@ -136,43 +151,50 @@
     <menuitem id="menu_sc_doc_center"
               name="工程资料中心"
               parent="menu_sc_project_center"
-              sequence="40"/>
+              sequence="40"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_documents"
               name="工程资料"
               parent="menu_sc_doc_center"
               action="action_sc_project_document"
-              sequence="10"/>
+              sequence="10"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
     <!-- 物资中心 -->
     <menuitem id="menu_sc_material_center"
               name="物资中心"
               parent="menu_sc_root"
               action="stock.action_picking_tree_all"
-              sequence="30"/>
+              sequence="30"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
     <!-- 财务中心 -->
     <menuitem id="menu_sc_finance_center"
               name="财务中心"
               parent="menu_sc_root"
               action="action_sc_finance_dashboard"
-              sequence="40"/>
+              sequence="40"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
     <!-- 数据中心 -->
     <menuitem id="menu_sc_data_center"
               name="数据中心"
               parent="menu_sc_root"
-              sequence="80"/>
+              sequence="80"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_dictionary"
               name="业务字典"
               parent="menu_sc_data_center"
               action="action_sc_dictionary"
-              sequence="10"/>
+              sequence="10"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
     <!-- 配置中心 -->
     <menuitem id="menu_sc_config_center"
               name="配置"
               parent="menu_sc_root"
-              sequence="90"/>
+              sequence="90"
+              groups="smart_construction_core.group_sc_manager"/>
     <menuitem id="menu_sc_project_cost_code"
               name="成本科目"
               parent="menu_sc_config_center"

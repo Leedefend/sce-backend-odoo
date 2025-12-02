@@ -117,6 +117,7 @@
         <field name="view_mode">tree,form,graph</field>
         <field name="context">{'search_default_group_by_project': 1}</field>
         <field name="search_view_id" ref="view_project_budget_search"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
     <!-- ===== 成本科目 ===== -->
@@ -160,6 +161,7 @@
         <field name="name">成本科目</field>
         <field name="res_model">project.cost.code</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
     <!-- ===== 预算 vs 实际 报表 ===== -->
@@ -208,6 +210,7 @@
         <field name="name">项目成本预算 vs 实际</field>
         <field name="res_model">project.cost.compare</field>
         <field name="view_mode">tree,pivot</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
     <!-- ===== 项目经营利润 ===== -->
@@ -255,6 +258,7 @@
         <field name="name">项目经营利润</field>
         <field name="res_model">project.profit.compare</field>
         <field name="view_mode">tree,pivot</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
     <!-- ===== 成本台账 ===== -->
@@ -335,6 +339,7 @@
         <field name="res_model">project.cost.ledger</field>
         <field name="view_mode">tree,form,pivot,graph</field>
         <field name="search_view_id" ref="view_project_cost_ledger_search"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
     <record id="view_project_cost_ledger_pivot" model="ir.ui.view">
@@ -402,6 +407,7 @@
         <field name="name">预算清单分摊</field>
         <field name="res_model">project.budget.cost.alloc</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
     <!-- ===== 工程结构树（WBS） ===== -->
@@ -491,6 +497,7 @@
         <field name="res_model">construction.work.breakdown</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_project_wbs_search"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
     <!-- ===== 进度计量 ===== -->
@@ -538,5 +545,6 @@
         <field name="name">进度计量</field>
         <field name="res_model">project.progress.entry</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 </odoo>

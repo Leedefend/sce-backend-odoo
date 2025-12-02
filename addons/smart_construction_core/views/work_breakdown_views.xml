@@ -103,5 +103,6 @@
         <field name="search_view_id" ref="view_work_breakdown_search"/>
         <!-- 使用空 context，避免菜单进入时报 active_id 未定义；项目按钮会覆写 context -->
         <field name="context">{}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 </odoo>

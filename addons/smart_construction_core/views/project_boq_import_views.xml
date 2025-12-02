@@ -25,5 +25,6 @@
         <field name="view_id" ref="view_project_boq_import_wizard"/>
         <field name="target">new</field>
         <field name="context">{'default_project_id': active_id}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 </odoo>

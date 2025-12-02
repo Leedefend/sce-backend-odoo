@@ -119,5 +119,6 @@
         <field name="name">项目合同</field>
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 </odoo>
