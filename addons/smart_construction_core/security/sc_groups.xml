@@ -1,13 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- 基础角色 -->
-    <record id="group_sc_user" model="res.groups">
-        <field name="name">Smart Construction User</field>
-        <field name="category_id" ref="base.module_category_project"/>
-    </record>
+    <data noupdate="1">
 
-    <record id="group_sc_manager" model="res.groups">
-        <field name="name">Smart Construction Manager</field>
-        <field name="category_id" ref="base.module_category_project"/>
-        <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_user'))]"/>
-    </record>
+        <!-- ① 定义 Smart Construction 专用模块分类 -->
+        <record id="module_category_smart_construction" model="ir.module.category">
+            <field name="name">Smart Construction</field>
+            <!-- 越小越靠前；20 介于 base 自带的若干分类之间，自己调也可以 -->
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- ② 普通用户组 -->
+        <record id="group_sc_user" model="res.groups">
+            <field name="name">Smart Construction User</field>
+            <!-- 关键：挂到“自己定义”的分类，不再引用 base.module_category_project -->
+            <field name="category_id" ref="module_category_smart_construction"/>
+            <!-- 平台普通用户：打包各依赖模块的基础权限 -->
+            <field name="implied_ids" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('project.group_project_user')),
+                (4, ref('purchase.group_purchase_user')),
+                (4, ref('stock.group_stock_user')),
+                (4, ref('account.group_account_user'))
+            ]"/>
+        </record>
+
+        <!-- ③ 管理员用户组 -->
+        <record id="group_sc_manager" model="res.groups">
+            <field name="name">Smart Construction Manager</field>
+            <field name="category_id" ref="module_category_smart_construction"/>
+            <!-- 平台管理员：包含普通用户并打包各模块管理权限 -->
+            <field name="implied_ids" eval="[
+                (4, ref('group_sc_user')),
+                (4, ref('project.group_project_manager')),
+                (4, ref('purchase.group_purchase_manager')),
+                (4, ref('stock.group_stock_manager')),
+                (4, ref('account.group_account_manager'))
+            ]"/>
+        </record>
+
+    </data>
 </odoo>
