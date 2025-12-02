@@ -1,45 +1,47 @@
+# -----------------------------------------
 # Python
+# -----------------------------------------
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+*.pyc
+*.pyo
+*.pyd
 
-# MkDocs
-site/
-.cache/
-
-# IDEs
+# -----------------------------------------
+# Odoo runtime
+# -----------------------------------------
+*.log
+*.pid
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 
-# OS
+# -----------------------------------------
+# Docker runtime data
+# -----------------------------------------
+runtime/
+**/postgres/
+**/odoo/
+**/logs/
+
+# -----------------------------------------
+# Environment & secrets
+# -----------------------------------------
+.env
+*.env
+
+# -----------------------------------------
+# Editor junk
+# -----------------------------------------
 .DS_Store
 Thumbs.db
 
-# Node
-node_modules/
-npm-debug.log
-yarn-error.log
-package-lock.json
+# -----------------------------------------
+# Compiled assets
+# -----------------------------------------
+*.zip
+*.tar.gz
+*.dump
 
-# Logs
-*.log
+# -----------------------------------------
+# Node modules (未来前端整合时)
+# -----------------------------------------
+node_modules/

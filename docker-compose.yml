@@ -1,0 +1,111 @@
+version: "3.9"
+
+services:
+
+  # ============================================================
+  # PostgreSQL 数据库（后端核心）
+  # ============================================================
+  db:
+    image: postgres:15
+    container_name: sc-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sc_odoo
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./runtime/postgres:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d sc_odoo || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # Redis（缓存 / 队列）
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: sc-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - ./runtime/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # Odoo 后端服务（核心）
+  # ============================================================
+  odoo:
+    image: odoo17-odoo:latest
+    container_name: sc-odoo
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      HOST: db
+      USER: ${DB_USER}
+      PASSWORD: ${DB_PASSWORD}
+
+      # 自定义接口（JWT 认证）密钥
+      ODOO_JWT_SECRET: ${JWT_SECRET}
+
+      # Redis 配置
+      REDIS_HOST: redis
+
+    volumes:
+      - ./runtime/odoo:/var/lib/odoo
+      - ./addons:/mnt/extra-addons
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+
+    ports:
+      - "8069:8069"
+
+    command: odoo -c /etc/odoo/odoo.conf
+
+  # ============================================================
+  # n8n 自动化引擎
+  # ============================================================
+  n8n:
+    image: n8nio/n8n:1.112.6
+    container_name: sc-n8n
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      N8N_PORT: 5678
+      N8N_PATH: /n8n
+      N8N_PUBLIC_URL: http://localhost/n8n
+      N8N_EDITOR_BASE_URL: http://localhost/n8n
+      N8N_WEBHOOK_URL: http://localhost/n8n
+    volumes:
+      - ./runtime/n8n:/home/node/.n8n
+
+  # ============================================================
+  # NGINX 统一反向代理
+  # ============================================================
+  nginx:
+    image: nginx:latest
+    container_name: sc-nginx
+    restart: unless-stopped
+    depends_on:
+      - odoo
+      - n8n
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
