@@ -1,41 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <!--
+        Smart Construction Core - Security Groups
+        说明：
+        - 本文件只负责定义模块分类与权限组层级结构
+        - 具体模型的读写权限由 ir.model.access.csv + 记录规则(record rule) 控制
+        - noupdate="1" 保证线上环境人工调整权限后，升级模块不会强行覆盖
+    -->
     <data noupdate="1">
 
-        <!-- ① 定义 Smart Construction 专用模块分类 -->
+        <!-- =======================================================
+             模块分类：Smart Construction
+             - 用于在“设置 / 用户 & 公司 / 权限组”中分组显示
+             - sequence 越小越靠前，这里放在常规业务模块附近
+           ======================================================= -->
         <record id="module_category_smart_construction" model="ir.module.category">
             <field name="name">Smart Construction</field>
-            <!-- 越小越靠前；20 介于 base 自带的若干分类之间，自己调也可以 -->
             <field name="sequence">20</field>
         </record>
 
-        <!-- ② 普通用户组 -->
+        <!-- =======================================================
+             基础角色：Smart Construction User
+             - 继承：base.group_user（系统内部用户）
+             - 典型对象：现场工程师、成本专员、商务人员等
+             - 职责：日常录入 / 查询 Smart Construction 相关数据
+           ======================================================= -->
         <record id="group_sc_user" model="res.groups">
             <field name="name">Smart Construction User</field>
-            <!-- 关键：挂到“自己定义”的分类，不再引用 base.module_category_project -->
-            <field name="category_id" ref="module_category_smart_construction"/>
-            <!-- 平台普通用户：打包各依赖模块的基础权限 -->
-            <field name="implied_ids" eval="[
-                (4, ref('base.group_user')),
-                (4, ref('project.group_project_user')),
-                (4, ref('purchase.group_purchase_user')),
-                (4, ref('stock.group_stock_user')),
-                (4, ref('account.group_account_user'))
-            ]"/>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="comment">
+                基础业务用户角色：
+                - 允许访问 Smart Construction 相关菜单和文档
+                - 仅具有日常录入 / 查询权限
+                具体访问范围由 ir.model.access.csv 与记录规则决定。
+            </field>
+            <!-- 继承 Odoo 内部用户角色 -->
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         </record>
 
-        <!-- ③ 管理员用户组 -->
+        <!-- =======================================================
+             管理角色：Smart Construction Manager
+             - 继承：Smart Construction User
+             - 典型对象：项目经理、部门负责人
+             - 职责：在基础权限上增加审批、审核、部分配置能力
+           ======================================================= -->
         <record id="group_sc_manager" model="res.groups">
             <field name="name">Smart Construction Manager</field>
-            <field name="category_id" ref="module_category_smart_construction"/>
-            <!-- 平台管理员：包含普通用户并打包各模块管理权限 -->
-            <field name="implied_ids" eval="[
-                (4, ref('group_sc_user')),
-                (4, ref('project.group_project_manager')),
-                (4, ref('purchase.group_purchase_manager')),
-                (4, ref('stock.group_stock_manager')),
-                (4, ref('account.group_account_manager'))
-            ]"/>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="comment">
+                管理角色：
+                - 在基础用户权限之上，增加审批 / 审核 / 管理操作权限
+                - 通常与更高的模型访问权限（ir.model.access）配合使用
+                注意：不自动继承系统管理员(base.group_system)，避免越权。
+            </field>
+            <!-- 继承 Smart Construction User 权限 -->
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_user'))]"/>
+        </record>
+
+        <!-- =======================================================
+             配置角色：Smart Construction Configurator
+             - 继承：Smart Construction Manager
+             - 典型对象：实施顾问、系统配置负责人
+             - 用途：访问“配置”菜单、维护字典与参数（不等同系统管理员）
+           ======================================================= -->
+        <record id="group_sc_config" model="res.groups">
+            <field name="name">Smart Construction Configurator</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="comment">
+                配置角色：
+                - 允许访问 Smart Construction 相关的配置菜单
+                - 维护业务字典、参数、模版等配置
+                - 不继承 Odoo 全局系统管理员权限，严格限制在本模块域内。
+            </field>
+            <!-- 配置角色站在管理角色之上 -->
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_manager'))]"/>
         </record>
 
     </data>
