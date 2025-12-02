@@ -471,9 +471,13 @@ class ProjectProject(models.Model):
             )
             revenue_line_map = {}
             for rec in invoice_read:
-                project_id = rec['project_id'][0]
+                project = rec.get('project_id')
+                if not project:
+                    continue
+                project_id = project[0]
+                balance_val = rec.get('balance_sum', rec.get('balance', 0.0)) or 0.0
                 # 收入科目 balance 为负数，这里转正
-                revenue_line_map[project_id] = revenue_line_map.get(project_id, 0.0) - (rec['balance_sum'] or 0.0)
+                revenue_line_map[project_id] = revenue_line_map.get(project_id, 0.0) - balance_val
 
             # --- 发票级兜底（避免行级未带 project 或科目未归类收入） ---
             move_read = move_model.read_group(

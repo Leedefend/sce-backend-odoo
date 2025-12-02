@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Smart Construction Demo Data",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "summary": "Demo dataset for Smart Construction Core",
     "category": "Smart Construction",
     "depends": [

@@ -35,21 +35,12 @@
             <field name="partner_id" ref="sc_demo_partner_owner_001"/>
             <field name="invoice_date">2025-05-30</field>
             <field name="project_id" ref="sc_demo_project_001"/>
-            <field name="state">posted</field>
-            <field name="line_ids" eval="[(0, 0, {
-                'name': '应收工程款',
-                'account_id': ref('sc_demo_account_receivable'),
-                'partner_id': ref('sc_demo_partner_owner_001'),
-                'project_id': ref('sc_demo_project_001'),
-                'debit': 25000000.0,
-                'credit': 0.0,
-            }), (0, 0, {
+            <field name="invoice_line_ids" eval="[(0, 0, {
                 'name': '进度计量收入',
                 'account_id': ref('sc_demo_account_revenue'),
-                'partner_id': ref('sc_demo_partner_owner_001'),
                 'project_id': ref('sc_demo_project_001'),
-                'debit': 0.0,
-                'credit': 25000000.0,
+                'quantity': 1.0,
+                'price_unit': 25000000.0,
             })]"/>
         </record>
 
@@ -60,23 +51,19 @@
             <field name="partner_id" ref="sc_demo_partner_owner_001"/>
             <field name="invoice_date">2025-08-20</field>
             <field name="project_id" ref="sc_demo_project_001"/>
-            <field name="state">posted</field>
-            <field name="line_ids" eval="[(0, 0, {
-                'name': '应收工程款',
-                'account_id': ref('sc_demo_account_receivable'),
-                'partner_id': ref('sc_demo_partner_owner_001'),
-                'project_id': ref('sc_demo_project_001'),
-                'debit': 20000000.0,
-                'credit': 0.0,
-            }), (0, 0, {
+            <field name="invoice_line_ids" eval="[(0, 0, {
                 'name': '进度计量收入',
                 'account_id': ref('sc_demo_account_revenue'),
-                'partner_id': ref('sc_demo_partner_owner_001'),
                 'project_id': ref('sc_demo_project_001'),
-                'debit': 0.0,
-                'credit': 20000000.0,
+                'quantity': 1.0,
+                'price_unit': 20000000.0,
             })]"/>
         </record>
+
+        <!-- 创建完成后，执行过账 -->
+        <function model="account.move" name="action_post">
+            <value eval="[ref('smart_construction_demo.sc_demo_invoice_progress'), ref('smart_construction_demo.sc_demo_invoice_progress_2')]"/>
+        </function>
 
     </data>
 </odoo>

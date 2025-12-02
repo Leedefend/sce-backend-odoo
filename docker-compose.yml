@@ -50,12 +50,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
     environment:
+      # ------------- ⬇ 必须传递给 wait-for-psql.py 的变量（关键）⬇ -------------
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # ------------- ⬇ 你原来写在代码里的旧 HOST / USER / PASSWORD 也保留 -------------
       HOST: db
       USER: ${DB_USER}
       PASSWORD: ${DB_PASSWORD}
 
-      # 自定义接口（JWT 认证）密钥
+      # JWT 密钥
       ODOO_JWT_SECRET: ${JWT_SECRET}
 
       # Redis 配置
@@ -69,7 +77,8 @@ services:
     ports:
       - "8069:8069"
 
-    command: odoo -c /etc/odoo/odoo.conf
+    entrypoint: ["odoo"]
+    command: ["-c", "/etc/odoo/odoo.conf"]
 
   # ============================================================
   # n8n 自动化引擎

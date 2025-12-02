@@ -191,3 +191,11 @@ npm run test
 ---
 
 > 💡 如有问题，请查看 [FAQ](docs/faq.md) 或提交 [Issue](issues)
+## Backend Baseline
+
+- Tag: `v0.1-backend-baseline`
+- Description: First stable backend baseline after environment rebuild.
+- Includes:
+  - Dockerized Odoo 17 + PostgreSQL 15 + Redis + n8n + Nginx
+  - Single DB: `sc_odoo`
+  - Clean addons structure under `./addons`
