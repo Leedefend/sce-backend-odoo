@@ -6,8 +6,15 @@
             <form string="工程量清单导入">
                 <group>
                     <field name="project_id" readonly="1"/>
+                    <field name="section_type"/>
+                    <field name="single_name"/>
+                    <field name="unit_name"/>
+                    <field name="source_type"/>
+                    <field name="version"/>
+                    <field name="clear_mode"/>
                     <field name="file" filename="filename"/>
                     <field name="filename" invisible="1"/>
+                    <field name="note" nolabel="1" readonly="1"/>
                 </group>
                 <footer>
                     <button string="导入" type="object" name="action_import"

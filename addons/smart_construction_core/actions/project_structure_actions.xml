@@ -1,0 +1,9 @@
+<odoo>
+    <record id="action_sc_project_structure" model="ir.actions.act_window">
+        <field name="name">工程结构（清单 WBS）</field>
+        <field name="res_model">sc.project.structure</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_project_structure_tree"/>
+        <field name="context">{}</field>
+    </record>
+</odoo>

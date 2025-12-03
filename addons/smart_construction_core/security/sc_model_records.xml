@@ -1,0 +1,8 @@
+<odoo noupdate="1">
+    <!-- Ensure external IDs exist for new models used in access CSV -->
+    <record id="model_sc_project_structure" model="ir.model">
+        <field name="name">sc.project.structure</field>
+        <field name="model">sc.project.structure</field>
+    </record>
+
+</odoo>
