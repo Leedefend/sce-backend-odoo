@@ -6,8 +6,14 @@ DB_CONTAINER   := sc-db
 ODOO_CONTAINER := sc-odoo
 INIT_MODULES   := base
 
+# 默认要升级的模块（可在命令行用 MODULE=xxx 覆盖）
+MODULE ?= smart_construction_core
+
+# 自定义模块集合（升级全部时使用）
+CUSTOM_MODULES := smart_construction_core smart_construction_demo
+
 # ================== 基础操作 ==================
-.PHONY: up down restart ps logs odoo-shell db-reset
+.PHONY: up down restart restart-odoo ps logs odoo-shell db-reset upgrade upgrade-all
 
 # 启动全部服务
 up:
@@ -25,6 +31,11 @@ restart:
 	$(COMPOSE) down
 	$(COMPOSE) up -d
 
+# 仅重启 Odoo 服务（开发期高频操作）
+restart-odoo:
+	@echo "== restart Odoo service only: $(ODOO_CONTAINER) =="
+	docker restart $(ODOO_CONTAINER)
+
 # 查看容器简表
 ps:
 	@echo "== docker ps (table) =="
@@ -33,7 +44,7 @@ ps:
 # 查看 Odoo 日志
 logs:
 	@echo "== docker-compose logs -f $(ODOO_CONTAINER) =="
-	$(COMPOSE) logs -f $(ODOO_CONTAINER)
+	$(COMPOSE) logs -f odoo
 
 # 进入 Odoo 容器
 odoo-shell:
@@ -60,3 +71,32 @@ db-reset:
 	- docker exec $(ODOO_CONTAINER) odoo -c /etc/odoo/odoo.conf -d $(DB_NAME) -i $(INIT_MODULES) --without-demo=all --stop-after-init
 
 	@echo "== ✅ db-reset done. You can now run: make up 或 docker-compose up -d =="
+
+# ================== 模块升级（开发期高频操作） ==================
+
+# 升级指定模块（使用 MODULE 变量，带默认值）
+# 示例：
+#   make upgrade
+#   make upgrade MODULE=smart_construction_demo
+upgrade:
+	@echo "== Upgrading module: $(MODULE) on database: $(DB_NAME) =="
+	docker exec $(ODOO_CONTAINER) \
+		odoo -c /etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		-u $(MODULE) \
+		--stop-after-init
+	@echo "== ✔ Upgrade done =="
+
+# 升级所有自定义模块
+# 示例：
+#   make upgrade-all
+upgrade-all:
+	@echo "== Upgrading all custom modules: $(CUSTOM_MODULES) =="
+	docker exec $(ODOO_CONTAINER) \
+		odoo -c /etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		-u $(CUSTOM_MODULES) \
+		--stop-after-init
+	@echo "== ✔ All modules upgraded =="
+
+

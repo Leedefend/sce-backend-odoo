@@ -83,6 +83,12 @@
               action="action_project_boq_line"
               sequence="50"
               groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
+    <menuitem id="menu_sc_project_structure_wbs"
+              name="工程结构（清单WBS）"
+              parent="menu_sc_project_center"
+              action="smart_construction_core.action_sc_project_structure"
+              sequence="52"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
     <!-- 合同中心 -->
     <menuitem id="menu_sc_contract_center"
