@@ -6,6 +6,85 @@ from odoo.exceptions import UserError
 
 
 # =========================
+# 工程结构 / 清单
+# =========================
+class ScProjectStructure(models.Model):
+    _name = 'sc.project.structure'
+    _description = '项目工程结构（WBS）'
+    _parent_name = 'parent_id'
+    _parent_store = True
+    _order = 'project_id, parent_path, sequence, id'
+
+    name = fields.Char('名称', required=True)
+    code = fields.Char('编码', index=True)
+    project_id = fields.Many2one(
+        'project.project', '项目',
+        required=True, index=True, ondelete='cascade'
+    )
+    parent_id = fields.Many2one(
+        'sc.project.structure', '上级结构',
+        index=True, ondelete='cascade'
+    )
+    child_ids = fields.One2many(
+        'sc.project.structure', 'parent_id',
+        string='下级节点'
+    )
+    parent_path = fields.Char(index=True)
+
+    sequence = fields.Integer('排序', default=10)
+    level = fields.Integer('层级', compute='_compute_level', store=True)
+    structure_type = fields.Selection(
+        [
+            ('single', '单项工程'),
+            ('unit', '单位工程'),
+            ('division', '分部工程'),
+            ('subdivision', '分项工程'),
+            ('item', '清单项目'),
+        ],
+        string='结构类型',
+        default='item',
+        index=True,
+    )
+
+    boq_line_ids = fields.One2many(
+        'project.boq.line', 'structure_id',
+        string='清单行'
+    )
+
+    qty_total = fields.Float('汇总工程量', compute='_compute_totals', store=True)
+    amount_total = fields.Monetary('汇总合价', compute='_compute_totals', store=True)
+    currency_id = fields.Many2one(
+        'res.currency',
+        related='project_id.company_id.currency_id',
+        readonly=True,
+        store=True,
+    )
+
+    @api.depends('parent_id.level')
+    def _compute_level(self):
+        for rec in self:
+            rec.level = (rec.parent_id.level or 0) + 1 if rec.parent_id else 1
+
+    @api.depends(
+        'boq_line_ids.quantity',
+        'boq_line_ids.amount',
+        'child_ids.qty_total',
+        'child_ids.amount_total',
+    )
+    def _compute_totals(self):
+        """自下而上汇总工程量与合价。"""
+        for node in self:
+            if node.structure_type == 'item':
+                qty = sum(node.boq_line_ids.mapped('quantity'))
+                amt = sum(node.boq_line_ids.mapped('amount'))
+            else:
+                qty = sum(node.child_ids.mapped('qty_total'))
+                amt = sum(node.child_ids.mapped('amount_total'))
+            node.qty_total = qty
+            node.amount_total = amt
+
+
+# =========================
 # 项目阶段定义
 # =========================
 class ProjectProjectStage(models.Model):
@@ -159,6 +238,10 @@ class ProjectProject(models.Model):
     boq_line_ids = fields.One2many(
         'project.boq.line', 'project_id',
         string='工程量清单'
+    )
+    structure_ids = fields.One2many(
+        'sc.project.structure', 'project_id',
+        string='工程结构（WBS）'
     )
     wbs_count = fields.Integer(
         '工程结构数', compute='_compute_wbs_count'
@@ -537,10 +620,10 @@ class ProjectProject(models.Model):
             project.dashboard_progress_rate = project.progress_rate_latest or 0.0
 
     # ---------- WBS / 投标统计 ----------
-    @api.depends('work_ids')
+    @api.depends('structure_ids')
     def _compute_wbs_count(self):
         for project in self:
-            project.wbs_count = len(project.work_ids)
+            project.wbs_count = len(project.structure_ids)
 
     @api.depends('tender_bid_ids')
     def _compute_tender_stats(self):
@@ -565,7 +648,7 @@ class ProjectProject(models.Model):
 
     def action_open_wbs(self):
         self.ensure_one()
-        action = self.env.ref('smart_construction_core.action_work_breakdown').read()[0]
+        action = self.env.ref('smart_construction_core.action_sc_project_structure').read()[0]
         action['domain'] = [('project_id', '=', self.id)]
         action['context'] = {'default_project_id': self.id}
         return action
@@ -576,6 +659,118 @@ class ProjectProject(models.Model):
         action = self.env.ref('smart_construction_core.action_project_boq_import_wizard').read()[0]
         action['context'] = {'default_project_id': self.id}
         return action
+
+    def action_generate_structure_from_boq(self):
+        """
+        从工程量清单自动生成工程结构（WBS）
+        规则（v1）：
+          - 单项工程/单位工程来自清单行（导入表头解析）
+          - 编码支持定长分段（默认 2/4/6/9/12）或点分层级
+          - 生成层级：单项 → 单位 → 分部 → 分项工程（= 清单行）
+          - 叶子节点 = 每条 12 位清单编码，对应清单行
+        """
+        Structure = self.env['sc.project.structure']
+
+        def _get_or_create(project_id, s_type, code_val, name_val, parent_node, struct_map, seq=10):
+            """按类型+编码/名称幂等获取节点。"""
+            key = (project_id, s_type, code_val or name_val)
+            node = struct_map.get(key)
+            if not node:
+                node = Structure.create({
+                    'project_id': project_id,
+                    'parent_id': parent_node.id if parent_node else False,
+                    'structure_type': s_type,
+                    'code': code_val or False,
+                    'name': name_val,
+                    'sequence': seq,
+                })
+                struct_map[key] = node
+            else:
+                # 若已有分部节点但名称仍是编码，且有更友好的名称可用，则更新
+                if s_type == 'division' and code_val and name_val and node.name == node.code and node.name != name_val:
+                    node.name = name_val
+            return node
+
+        def _division_from_line(line):
+            """优先取字段，其次从备注中提取“[分部]xxx”"""
+            if line.division_name:
+                return line.division_name
+            remark = (line.remark or '')
+            if '[分部]' in remark:
+                parts = remark.split('[分部]', 1)[1]
+                # 截断后续标点
+                for sep in ['；', ';', '，', ',', ' ']:
+                    parts = parts.split(sep)[0]
+                return parts.strip() or False
+            return False
+
+        for project in self:
+            lines = project.boq_line_ids.filtered(lambda l: (l.code or '').strip())
+            if not lines:
+                continue
+
+            # 预先收集分部编码 -> 分部名称映射，优先使用导入时的分部标题
+            division_name_map = {}
+            for ln in lines:
+                div_name = _division_from_line(ln)
+                if ln.code_division and div_name:
+                    division_name_map[ln.code_division] = div_name
+
+            existing = Structure.search([('project_id', '=', project.id)])
+            struct_map = {
+                (s.project_id.id, s.structure_type, s.code or s.name): s for s in existing
+            }
+            skipped = []
+
+            for ln in lines:
+                code = (ln.code or '').strip()
+                if not code:
+                    skipped.append('(空编码)')
+                    continue
+
+                # 单项/单位工程节点
+                single_name = (ln.single_name or '').strip() or (ln.code_cat or '未分类单项工程')
+                unit_name = (ln.unit_name or '').strip() or '未分类单位工程'
+                node_single = _get_or_create(project.id, 'single', False, single_name, False, struct_map, seq=5)
+                node_unit = _get_or_create(project.id, 'unit', False, unit_name, node_single, struct_map, seq=10)
+
+                # 清单编码分段（按 12 位标准）
+                if not (ln.code_item and len(ln.code_item) == 12):
+                    skipped.append(code)
+                    continue
+
+                # 直接按“分部 -> 分项工程(清单行)”两级建树
+                segments = [
+                    (ln.code_division, 'division'),
+                    (ln.code_item, 'item'),
+                ]
+
+                parent = node_unit
+                for idx, (seg_code, s_type) in enumerate(segments):
+                    if not seg_code:
+                        continue
+                    if s_type == 'item':
+                        node_name = ln.name
+                    elif s_type == 'division':
+                        node_name = division_name_map.get(seg_code) or ln.division_name or seg_code
+                    else:
+                        node_name = seg_code
+                    parent = _get_or_create(project.id, s_type, seg_code, node_name, parent, struct_map, seq=20 + idx)
+
+                if parent and ln.structure_id != parent:
+                    ln.structure_id = parent.id
+
+            if skipped:
+                project.message_post(
+                    body=("生成工程结构时跳过以下编码（格式不符合规则或段解析为空）：<br/>%s"
+                          % "<br/>".join(skipped))
+                )
+
+        return True
+
+    def action_generate_wbs_from_boq(self):
+        """兼容命名：调用标准 WBS 生成逻辑。"""
+        return self.action_generate_structure_from_boq()
 
     # ---------- 项目治理 / 流程控制 ----------
     def _ensure_operation_allowed(self, operation_label="该操作", blocked_states=None):

@@ -23,20 +23,71 @@ class ProjectBoqImportWizard(models.TransientModel):
     _name = "project.boq.import.wizard"
     _description = "工程量清单导入"
 
+    UOM_ALIAS_MAP = {
+        "m2": ["㎡", "m²", "平米", "平方米", "平方"],
+        "m3": ["立方", "立方米"],
+        "item": ["项", "项（包干）", "项(包干)", "item"],
+    }
+
     project_id = fields.Many2one(
         "project.project",
         string="项目",
         required=True,
     )
+    section_type = fields.Selection(
+        [
+            ("building", "建筑"),
+            ("installation", "安装/机电"),
+            ("decoration", "装饰"),
+            ("landscape", "景观"),
+            ("other", "其他"),
+        ],
+        string="工程类别",
+        help="若文件未识别到工程类别，使用此处的默认值。",
+    )
+    single_name = fields.Char("单项工程")
+    unit_name = fields.Char("单位工程")
+    source_type = fields.Selection(
+        [
+            ("tender", "招标清单"),
+            ("contract", "合同清单"),
+            ("settlement", "结算清单"),
+        ],
+        string="清单来源",
+        default="contract",
+    )
+    version = fields.Char("版本号/批次", default="V1")
+    clear_mode = fields.Selection(
+        [
+            ("append", "追加"),
+            ("replace_project", "清空当前项目后导入"),
+            ("replace_code", "按编码覆盖"),
+        ],
+        string="导入策略",
+        default="append",
+        required=True,
+    )
     file = fields.Binary(string="导入文件", required=True)
     filename = fields.Char("文件名")
+    log = fields.Text("导入日志", readonly=True)
+    note = fields.Html(
+        string="导入说明",
+        readonly=True,
+        default=lambda self: (
+            "<ul>"
+            "<li>同一编码在表中多次出现，将导入为多条清单行，并在工程结构中归入同一清单子目节点。</li>"
+            "<li>若单位不存在，将自动规范化并创建新的计量单位。</li>"
+            "<li>导入策略：追加 / 清空项目后导入 / 按编码覆盖。</li>"
+            "</ul>"
+        ),
+    )
 
     def action_import(self):
         self.ensure_one()
         if not self.file:
             raise UserError("请先上传导入文件。")
 
-        rows = self._parse_file()
+        rows, created_uoms, skipped = self._parse_file()
         if not rows:
             raise UserError(
                 "未找到可导入的清单数据：\n"
@@ -45,7 +96,42 @@ class ProjectBoqImportWizard(models.TransientModel):
             )
 
         Boq = self.env["project.boq.line"]
-        Boq.create(rows)
+        created_count = 0
+        updated_count = 0
+        if self.clear_mode == "replace_project":
+            Boq.search([("project_id", "=", self.project_id.id)]).unlink()
+            Boq.create(rows)
+            created_count = len(rows)
+        elif self.clear_mode == "replace_code":
+            for vals in rows:
+                domain = [
+                    ("project_id", "=", vals["project_id"]),
+                    ("code", "=", vals.get("code")),
+                    ("source_type", "=", vals.get("source_type")),
+                    ("version", "=", vals.get("version")),
+                ]
+                existing = Boq.search(domain, limit=1)
+                if existing:
+                    existing.write(vals)
+                    updated_count += 1
+                else:
+                    Boq.create(vals)
+                    created_count += 1
+        else:
+            Boq.create(rows)
+            created_count = len(rows)
+
+        log_lines = []
+        log_lines.append(f"成功导入 {created_count} 条，更新 {updated_count} 条。")
+        if skipped:
+            log_lines.append(f"跳过 {skipped} 行（空行/小计行/无数值行）。")
+        if created_uoms:
+            log_lines.append("自动创建计量单位：\n- " + "\n- ".join(sorted(created_uoms)))
+            self.project_id.message_post(body=log_lines[-1])
+        self.log = "\n".join(log_lines)
+
+        # 导入后自动刷新当前项目的工程结构（WBS）
+        self.project_id.action_generate_structure_from_boq()
 
         return {
             "type": "ir.actions.act_window",
@@ -63,51 +149,69 @@ class ProjectBoqImportWizard(models.TransientModel):
         data = base64.b64decode(self.file)
         filename = (self.filename or "").lower()
 
+        # Excel：xlsx/xls
         if filename.endswith((".xlsx", ".xls")):
             return self._parse_excel(data, filename)
 
-        # 默认按 UTF-8 CSV 解析
+        # 默认按 UTF-8/GBK CSV 解析
         content = self._read_as_csv(data)
         return self._parse_csv_content(content)
 
+
     def _parse_csv_content(self, content):
         reader = csv.reader(io.StringIO(content))
-        try:
-            headers = [h.strip() for h in next(reader)]
-        except StopIteration:
+        rows_data = list(reader)
+        if not rows_data:
             raise UserError("导入文件没有数据，请检查。")
+        # 头部探测：使用第一行作为表头
+        headers = [str(h or "").strip() for h in rows_data[0]]
+        data_rows = rows_data[1:]
         col_map = self._prepare_col_map(headers)
-        data_rows = list(reader)
-        rows = self._build_rows_from_iter(data_rows, col_map, strict_numeric=True)
+        rows, created_uoms, skipped = self._build_rows_from_iter(
+            data_rows, col_map, strict_numeric=True,
+            default_single=self.single_name, default_unit=self.unit_name,
+        )
         if not rows:
-            rows = self._build_rows_from_iter(data_rows, col_map, strict_numeric=False)
-        return rows
+            rows, created_uoms, skipped = self._build_rows_from_iter(
+                data_rows, col_map, strict_numeric=False,
+                default_single=self.single_name, default_unit=self.unit_name,
+            )
+        return rows, created_uoms, skipped
 
     def _parse_excel(self, data, filename):
         col_map_cfg = self._col_map_cfg()
         rows_all = []
+        created_uoms_all = set()
+        skipped_all = 0
 
         if filename.endswith(".xlsx"):
             if not openpyxl:
                 raise UserError("服务器缺少 openpyxl，无法解析 XLSX，请安装依赖或改用 CSV。")
             book = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
             for sheet in book.worksheets:
-                headers, start_row = self._find_header_in_sheet(
-                    (list(row) for row in sheet.iter_rows(values_only=True, max_row=50))
-                )
-                if not headers:
+                header_info = self._extract_excel_header(sheet)
+                if not header_info:
                     continue
-                section_type = self._guess_section_type(sheet.title or "")
+                headers, data_start_row, header_row_idx = header_info
+                parsed_single, parsed_unit = self._parse_engineering_names_excel(sheet, limit=max(5, header_row_idx))
+                default_single = self.single_name or parsed_single
+                default_unit = self.unit_name or parsed_unit
+                section_type = self.section_type or self._guess_section_type(sheet.title or "")
                 col_map = self._prepare_col_map(headers, col_map_cfg)
-                data_rows = [
-                    list(row)
-                    for row in sheet.iter_rows(min_row=start_row + 2, values_only=True)
-                ]
-                rows = self._build_rows_from_iter(data_rows, col_map, section_type, strict_numeric=True)
+                data_rows = [list(row) for row in sheet.iter_rows(min_row=data_start_row, values_only=True)]
+                rows, created_uoms, skipped = self._build_rows_from_iter(
+                    data_rows, col_map, section_type, strict_numeric=True,
+                    default_single=default_single, default_unit=default_unit,
+                )
                 if not rows:
-                    rows = self._build_rows_from_iter(data_rows, col_map, section_type, strict_numeric=False)
+                    rows, created_uoms, skipped = self._build_rows_from_iter(
+                        data_rows, col_map, section_type, strict_numeric=False,
+                        default_single=default_single, default_unit=default_unit,
+                    )
                 rows_all.extend(rows)
-            return rows_all
+                created_uoms_all.update(created_uoms)
+                skipped_all += skipped
+            return rows_all, created_uoms_all, skipped_all
 
         if filename.endswith(".xls"):
             if not xlrd:
@@ -116,25 +220,34 @@ class ProjectBoqImportWizard(models.TransientModel):
             for sheet in book.sheets():
                 if sheet.nrows < 1:
                     continue
-                headers, start_row = self._find_header_in_sheet(
-                    ([sheet.cell_value(r, c) for c in range(sheet.ncols)] for r in range(min(sheet.nrows, 50)))
-                )
+                headers, data_start_row, header_row_idx = self._extract_xls_header(sheet)
                 if not headers:
                     continue
-                section_type = self._guess_section_type(sheet.name or "")
+                parsed_single, parsed_unit = self._parse_engineering_names_xls(sheet, limit=max(5, header_row_idx))
+                default_single = self.single_name or parsed_single
+                default_unit = self.unit_name or parsed_unit
+                section_type = self.section_type or self._guess_section_type(sheet.name or "")
                 col_map = self._prepare_col_map(headers, col_map_cfg)
                 data_rows = [
                     [sheet.cell_value(r, c) for c in range(sheet.ncols)]
-                    for r in range(start_row + 1, sheet.nrows)
+                    for r in range(data_start_row, sheet.nrows)
                 ]
-                rows = self._build_rows_from_iter(data_rows, col_map, section_type, strict_numeric=True)
+                rows, created_uoms, skipped = self._build_rows_from_iter(
+                    data_rows, col_map, section_type, strict_numeric=True,
+                    default_single=default_single, default_unit=default_unit,
+                )
                 if not rows:
-                    rows = self._build_rows_from_iter(data_rows, col_map, section_type, strict_numeric=False)
+                    rows, created_uoms, skipped = self._build_rows_from_iter(
+                        data_rows, col_map, section_type, strict_numeric=False,
+                        default_single=default_single, default_unit=default_unit,
+                    )
                 rows_all.extend(rows)
-            return rows_all
+                created_uoms_all.update(created_uoms)
+                skipped_all += skipped
+            return rows_all, created_uoms_all, skipped_all
 
         # 回退：尝试按 UTF-8/GBK 解码 CSV
-        return self._parse_csv_bytes(data)
+        return self._parse_csv_bytes(data), set(), 0
 
     def _col_map_cfg(self):
         return {
@@ -181,37 +294,159 @@ class ProjectBoqImportWizard(models.TransientModel):
         return col_map
 
     def _find_header_in_sheet(self, row_iter):
-        """Scan rows to find a plausible header row; return (headers, row_index)."""
-        col_map_cfg = self._col_map_cfg()
-        best_headers = []
-        best_idx = 0
-        for idx, row in enumerate(row_iter):
-            headers = [str(v or "").strip() for v in row]
-            if not any(headers):
-                continue
-            hits = 0
-            for title in headers:
-                title_norm = self._normalize_header(title)
-                for aliases in col_map_cfg.values():
-                    if any(alias in title_norm for alias in aliases):
-                        hits += 1
-                        break
-            # 至少两列命中别名才认为是表头，避免误把说明行当表头
-            if hits >= 2:
-                return headers, idx
-            if not best_headers:
-                best_headers = headers
-                best_idx = idx
-        return best_headers, best_idx
+        """Deprecated: use _extract_excel_header/_extract_xls_header."""
+        return [], 0
 
-    def _build_rows_from_iter(self, row_iter, col_map, section_type=None, strict_numeric=True):
+    # ----------------- Excel helpers -----------------
+    def _parse_engineering_names_excel(self, sheet, limit=5):
+        """从前几行提取单项/单位工程名称。"""
+        for row in sheet.iter_rows(min_row=1, max_row=limit, values_only=True):
+            for val in row:
+                if not val:
+                    continue
+                if "工程名称" in str(val):
+                    text = str(val)
+                    text = text.split("工程名称", 1)[-1]
+                    text = text.lstrip("：:").strip()
+                    parts = text.split("\\")
+                    unit_part = parts[1] if len(parts) >= 2 else parts[0]
+                    single = None
+                    unit = unit_part
+                    if "【" in unit_part and "】" in unit_part:
+                        before = unit_part.split("【", 1)[0]
+                        inner = unit_part.split("【", 1)[1].split("】", 1)[0]
+                        # 业务需求：单位工程名称取【】内，单项工程可取前缀
+                        unit = inner.strip() or unit_part
+                        single = before.strip() or None
+                    return single, unit
+        return None, None
+
+    def _parse_engineering_names_xls(self, sheet, limit=5):
+        for r in range(min(limit, sheet.nrows)):
+            for c in range(sheet.ncols):
+                val = sheet.cell_value(r, c)
+                if not val:
+                    continue
+                if "工程名称" in str(val):
+                    text = str(val)
+                    text = text.split("工程名称", 1)[-1]
+                    text = text.lstrip("：:").strip()
+                    parts = text.split("\\")
+                    unit_part = parts[1] if len(parts) >= 2 else parts[0]
+                    single = None
+                    unit = unit_part
+                    if "【" in unit_part and "】" in unit_part:
+                        before = unit_part.split("【", 1)[0]
+                        inner = unit_part.split("【", 1)[1].split("】", 1)[0]
+                        unit = inner.strip() or unit_part
+                        single = before.strip() or None
+                    return single, unit
+        return None, None
+
+    def _extract_excel_header(self, sheet, header_rows=3, scan_rows=8):
+        """处理多行表头+合并单元格，返回(扁平列名列表, 数据起始行号)"""
+        merge_map = {}
+        try:
+            merge_ranges = sheet.merged_cells
+        except Exception:
+            merge_ranges = None
+        if merge_ranges:
+            ranges = getattr(merge_ranges, "ranges", merge_ranges)
+            try:
+                for m in ranges:
+                    min_row, min_col, max_row, max_col = m.min_row, m.min_col, m.max_row, m.max_col
+                    for r in range(min_row, max_row + 1):
+                        for c in range(min_col, max_col + 1):
+                            merge_map[(r, c)] = (min_row, min_col)
+            except Exception:
+                merge_map = {}
+
+        def cell_val(r, c):
+            key = merge_map.get((r, c))
+            if key:
+                r, c = key
+            return sheet.cell(row=r, column=c).value
+
+        max_col = sheet.max_column or 0
+        header_row_idx = 0
+        best_hits = 0
+        keywords = ["编码", "项目编码", "清单编码", "特征", "工程量", "综合单价", "合价", "计量单位"]
+        for idx in range(1, min(scan_rows, sheet.max_row or 0) + 1):
+            row_vals = [str(cell_val(idx, c) or "").strip() for c in range(1, max_col + 1)]
+            hits = sum(1 for v in row_vals if any(k in v for k in keywords))
+            if hits > best_hits:
+                best_hits = hits
+                header_row_idx = idx
+        if not header_row_idx:
+            return None
+
+        header_rows_vals = []
+        for r in range(header_row_idx, min(header_row_idx + header_rows, (sheet.max_row or 0) + 1)):
+            row_vals = []
+            for c in range(1, max_col + 1):
+                row_vals.append(str(cell_val(r, c) or "").strip())
+            header_rows_vals.append(row_vals)
+
+        # 纵向拼接列名
+        flat_headers = []
+        for c in range(max_col):
+            parts = []
+            for r in range(len(header_rows_vals)):
+                v = header_rows_vals[r][c]
+                if v:
+                    parts.append(v)
+            flat_headers.append(" - ".join(parts) if parts else "")
+
+        data_start = header_row_idx + header_rows
+        return flat_headers, data_start, header_row_idx
+
+    def _extract_xls_header(self, sheet, header_rows=3, scan_rows=8):
+        max_col = sheet.ncols
+        header_row_idx = 0
+        best_hits = 0
+        keywords = ["编码", "项目编码", "清单编码", "特征", "工程量", "综合单价", "合价", "计量单位"]
+        for idx in range(min(scan_rows, sheet.nrows)):
+            row_vals = [str(sheet.cell_value(idx, c) or "").strip() for c in range(max_col)]
+            hits = sum(1 for v in row_vals if any(k in v for k in keywords))
+            if hits > best_hits:
+                best_hits = hits
+                header_row_idx = idx
+        if max_col == 0:
+            return None, 0
+        header_rows_vals = []
+        for r in range(header_row_idx, min(header_row_idx + header_rows, sheet.nrows)):
+            row_vals = [str(sheet.cell_value(r, c) or "").strip() for c in range(max_col)]
+            header_rows_vals.append(row_vals)
+        flat_headers = []
+        for c in range(max_col):
+            parts = [row_vals[c] for row_vals in header_rows_vals if row_vals[c]]
+            flat_headers.append(" - ".join(parts) if parts else "")
+        data_start = header_row_idx + header_rows
+        return flat_headers, data_start, header_row_idx
+
+    def _build_rows_from_iter(
+        self, row_iter, col_map, section_type=None, strict_numeric=True,
+        default_single=None, default_unit=None,
+    ):
         Uom = self.env["uom.uom"]
         Dict, dict_domain_key = self._get_dictionary_model()
+
         rows = []
         uom_cache = {}
         cost_item_cache = {}
+        created_uoms = set()
+        skipped_rows = 0
+        current_division = None
+
+        def _default_uom_category():
+            """选用通用“单位”类别，若缺失则取任一类别兜底。"""
+            category = self.env.ref("uom.product_uom_categ_unit", raise_if_not_found=False)
+            if not category:
+                category = self.env["uom.category"].search([], limit=1)
+            return category
 
         for row in row_iter:
+            # 小工具：按字段名取这一行对应列的值
             def get(field):
                 idx = col_map.get(field)
                 if idx is None or idx >= len(row):
@@ -219,17 +454,28 @@ class ProjectBoqImportWizard(models.TransientModel):
                 return row[idx] if not isinstance(row, dict) else row.get(idx)
 
             name = str(get("name") or "").strip()
-            if not name:
+            code = str(get("code") or "").strip()
+            if not (name or code):
+                skipped_rows += 1
+                continue
+
+            # 分部标题行：项目编码空、名称有值（且非数字） -> 记录当前分部，跳过本行
+            if not code and name and not self._is_number(name):
+                current_division = name
                 continue
 
             vals = {
                 "project_id": self.project_id.id,
                 "name": name,
+                "section_type": self.section_type or section_type or False,
+                "single_name": default_single or self.single_name or False,
+                "unit_name": default_unit or self.unit_name or False,
+                "source_type": self.source_type,
+                "version": self.version,
             }
-            if section_type:
+            if section_type and not vals["section_type"]:
                 vals["section_type"] = section_type
 
-            code = str(get("code") or "").strip()
             spec = str(get("spec") or "").strip()
             remark = str(get("remark") or "").strip()
             qty = get("quantity")
@@ -240,8 +486,12 @@ class ProjectBoqImportWizard(models.TransientModel):
                 vals["code"] = code
             if spec:
                 vals["spec"] = spec
-            if remark:
-                vals["remark"] = remark
+            # 记录当前分部名称，便于后续 WBS 直接使用（无需再从 remark 里解析）
+            if current_division:
+                vals["division_name"] = current_division
+            if remark or current_division:
+                prefix = f"[分部]{current_division}" if current_division else ""
+                vals["remark"] = f"{prefix} {remark}".strip() if (prefix or remark) else False
 
             vals["quantity"] = self._to_float(qty)
             vals["price"] = self._to_float(price)
@@ -256,16 +506,72 @@ class ProjectBoqImportWizard(models.TransientModel):
                         self._is_number(amount_val),
                     ]
                 ):
+                    skipped_rows += 1
                     continue
 
+            # 常见小计/合计行过滤
+            lower_name = (name or "").lower()
+            if any(key in lower_name for key in ["合计", "小计", "本页", "本表"]):
+                skipped_rows += 1
+                continue
+
+            # ===== 计量单位处理 =====
+            uom = False
             uom_name = str(get("uom_id") or "").strip()
             if uom_name:
-                uom = uom_cache.get(uom_name)
-                if uom is None:
-                    uom = Uom.search([("name", "=", uom_name)], limit=1)
-                    uom_cache[uom_name] = uom
-                vals["uom_id"] = uom.id or False
+                norm_name = self._normalize_uom_name(uom_name)
+                canonical = self._canonical_uom(norm_name)
+                search_key = canonical or norm_name or uom_name
 
+                uom = uom_cache.get(search_key)
+                create_name = None
+
+                if uom is None:
+                    # 先按规范名找
+                    uom = Uom.search([("name", "=", search_key)], limit=1)
+                    # 再按原始名兜底
+                    if not uom and uom_name != search_key:
+                        uom = Uom.search([("name", "=", uom_name)], limit=1)
+
+                    if not uom:
+                        category = _default_uom_category()
+                        if not category:
+                            raise UserError(
+                                "未找到计量单位类别，无法自动创建单位，请先在系统中创建一个计量单位类别。"
+                            )
+                        create_name = search_key
+                        ref_uom = Uom.search(
+                            [
+                                ("category_id", "=", category.id),
+                                ("uom_type", "=", "reference"),
+                            ],
+                            limit=1,
+                        )
+                        uom_vals = {
+                            "name": create_name,
+                            "category_id": category.id,
+                            "factor": 1.0,
+                            "factor_inv": 1.0,
+                            "rounding": 0.0001,
+                            "active": True,
+                        }
+                        # 如果类别已有参照单位，则新建等效单位用 smaller 并保持 factor=1
+                        if ref_uom:
+                            uom_vals["uom_type"] = "smaller"
+                            uom_vals["factor"] = 1.0
+                            uom_vals["factor_inv"] = 1.0
+                        else:
+                            uom_vals["uom_type"] = "reference"
+                        uom = Uom.create(uom_vals)
+                        if create_name:
+                            created_uoms.add(create_name)
+
+                if uom:
+                    uom_cache[search_key] = uom
+
+            vals["uom_id"] = uom.id if uom else False
+
+            # ===== 成本项字典匹配 =====
             cost_item_name = str(get("cost_item_id") or "").strip()
             if cost_item_name and Dict:
                 cost_item = cost_item_cache.get(cost_item_name)
@@ -280,7 +586,8 @@ class ProjectBoqImportWizard(models.TransientModel):
                 vals["cost_item_id"] = cost_item.id or False
 
             rows.append(vals)
-        return rows
+
+        return rows, created_uoms, skipped_rows
 
     def _read_as_csv(self, data_bytes):
         """Return CSV string from raw bytes."""
@@ -321,6 +628,8 @@ class ProjectBoqImportWizard(models.TransientModel):
         return text.lower()
 
     @staticmethod
+
+
     def _is_number(val):
         try:
             if isinstance(val, str):
@@ -363,3 +672,27 @@ class ProjectBoqImportWizard(models.TransientModel):
         cleaned = str(text or "")
         cleaned = cleaned.replace(",", "").replace("，", "").replace(" ", "").strip()
         return cleaned
+
+    # --- UoM helpers ---
+    def _normalize_uom_name(self, name):
+        """基本规范化：去空格、全角转半角、小写。"""
+        text = misc.ustr(name or "").strip()
+        text = re.sub(r"\s+", "", text)
+        res = []
+        for ch in text:
+            code = ord(ch)
+            if 0xFF01 <= code <= 0xFF5E:
+                code -= 0xfee0
+                ch = chr(code)
+            res.append(ch)
+        return "".join(res).lower()
+
+    def _canonical_uom(self, norm_name):
+        """根据别名映射返回规范名，否则返回原名。"""
+        for main, aliases in self.UOM_ALIAS_MAP.items():
+            if norm_name == main:
+                return main
+            for alias in aliases:
+                if norm_name == self._normalize_uom_name(alias):
+                    return main
+        return norm_name

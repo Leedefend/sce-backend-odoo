@@ -24,6 +24,7 @@
 
         # 安全
         'security/sc_groups.xml',
+        'security/sc_model_records.xml',
         'security/ir.model.access.csv',
 
         # 视图
@@ -31,6 +32,8 @@
         'views/cost_domain_views.xml',
         'views/project_boq_import_views.xml',
         'views/project_task_from_boq_views.xml',
+        'views/project_structure_views.xml',
+        'actions/project_structure_actions.xml',
         'views/project_views.xml',
         'views/boq_views.xml',
         'views/task_boq_views.xml',
