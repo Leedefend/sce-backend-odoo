@@ -28,6 +28,7 @@ class ProjectBoqLine(models.Model):
             ("other", "其他"),
         ],
         string="工程类别",
+        help="按专业大类归类清单，用于统计。",
     )
     code = fields.Char("清单编码", required=True, index=True)
     name = fields.Char("清单名称", required=True)
@@ -35,11 +36,18 @@ class ProjectBoqLine(models.Model):
     division_name = fields.Char("分部工程名称", index=True)
     single_name = fields.Char(
         "单项工程",
-        help="如：建筑与装饰工程、安装工程等；来源于清单表头或导入模板。"
+        help="工程下的单项工程名称；来源于清单表头或导入模板。",
+        index=True,
     )
     unit_name = fields.Char(
         "单位工程",
-        help="如：具体单体名称；来源于清单表头或导入模板。"
+        help="单项工程下的单位工程/单体/标段名称；来源于清单表头或导入模板。",
+        index=True,
+    )
+    major_name = fields.Char(
+        "专业名称",
+        help="如：建筑与装饰工程、消防站给排水工程等；来源于清单表头【】内的内容。",
+        index=True,
     )
     uom_id = fields.Many2one("uom.uom", string="单位", required=True)
     quantity = fields.Float("工程量", default=0.0)
@@ -75,6 +83,7 @@ class ProjectBoqLine(models.Model):
         string="工程结构节点",
         ondelete="set null",
         index=True,
+        recursive=True,
     )
     unit_structure_id = fields.Many2one(
         "sc.project.structure",
@@ -108,6 +117,30 @@ class ProjectBoqLine(models.Model):
         string="项目类别",
         index=True,
     )
+    boq_category = fields.Selection(
+        [
+            ("boq", "分部分项清单"),
+            ("unit_measure", "单价措施清单"),
+            ("total_measure", "总价措施清单"),
+            ("fee", "规费"),
+            ("tax", "税金"),
+            ("other", "其他费用"),
+        ],
+        string="清单类别",
+        default="boq",
+        index=True,
+        help="用于区分分部分项/措施/规费/税金，避免不同类别清单在汇总时混淆。",
+    )
+    fee_type_id = fields.Many2one(
+        "sc.dictionary",
+        string="规费类别",
+        domain=[("type", "=", "fee_type")],
+    )
+    tax_type_id = fields.Many2one(
+        "sc.dictionary",
+        string="税种",
+        domain=[("type", "=", "tax_type")],
+    )
     # 编码分段（按清单规范 12 位编码拆分）
     code_cat = fields.Char("工程分类码", compute="_compute_code_segments", store=True, index=True)
     code_prof = fields.Char("专业工程码", compute="_compute_code_segments", store=True, index=True)
@@ -126,6 +159,8 @@ class ProjectBoqLine(models.Model):
         index=True,
     )
     version = fields.Char("版本号/批次", help="预留给多次导入或版本管理使用", index=True)
+    sheet_index = fields.Integer("来源Sheet序号")
+    sheet_name = fields.Char("来源Sheet名称")
 
     @api.depends("quantity", "price")
     def _compute_amount(self):

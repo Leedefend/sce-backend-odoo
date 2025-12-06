@@ -9,6 +9,7 @@
             <!-- WBS 聚合维度 -->
             <field name="single_name"/>
             <field name="unit_name"/>
+            <field name="major_name" optional="hide"/>
             <field name="code_division" optional="hide"/>
             <field name="code_subdivision" optional="hide"/>
 
@@ -25,7 +26,7 @@
 
             <!-- 计量计价 -->
             <field name="uom_id"/>
-            <field name="quantity" sum="工程量合计"/>
+            <field name="quantity"/>
             <field name="price"/>
             <field name="amount" sum="金额合计"/>
 
@@ -44,14 +45,14 @@
         <field name="arch" type="xml">
             <form string="工程量清单">
                 <sheet>
+                <group>
                     <group>
-                        <group>
-                            <field name="project_id"/>
-                            <field name="section_type"/>
-                            <field name="category"/>
-                            <field name="is_provisional"/>
-                        </group>
-                        <group>
+                        <field name="project_id"/>
+                        <field name="section_type"/>
+                        <field name="category"/>
+                        <field name="is_provisional"/>
+                    </group>
+                    <group>
                         <field name="sequence"/>
                         <field name="code"/>
                         <field name="name"/>
@@ -62,10 +63,13 @@
                     <group>
                         <field name="single_name" readonly="1"/>
                         <field name="unit_name" readonly="1"/>
+                        <field name="major_name" readonly="1"/>
                     </group>
                     <group>
                         <field name="source_type"/>
                         <field name="version"/>
+                        <field name="sheet_index" readonly="1"/>
+                        <field name="sheet_name" readonly="1"/>
                         <field name="structure_id" readonly="1"/>
                         <field name="task_id" readonly="1"/>
                     </group>
@@ -96,6 +100,7 @@
                 <field name="section_type" type="row"/>
                 <field name="category" type="row"/>
                 <field name="single_name" type="col" optional="hide"/>
+                <field name="major_name" type="col" optional="hide"/>
                 <field name="source_type" type="col" optional="hide"/>
                 <field name="amount" type="measure"/>
                 <field name="quantity" type="measure" invisible="1"/>

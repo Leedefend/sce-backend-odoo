@@ -32,7 +32,7 @@
                         type="object"
                         string="生成工程结构"
                         class="btn-primary"
-                        modifiers="{'invisible': [('boq_line_ids','=',[])]}"/>
+                        invisible="not boq_line_ids"/>
             </xpath>
 
             <!-- 在基础信息 group 后插入施工扩展字段 -->
@@ -151,6 +151,11 @@
                                 type="object"
                                 class="oe_highlight"
                                 name="action_open_boq_import"/>
+                        <button string="生成工程结构"
+                                type="object"
+                                class="btn-secondary"
+                                name="action_generate_wbs_from_boq"
+                                invisible="not boq_line_ids"/>
                         <button string="生成施工任务"
                                 type="action"
                                 class="btn-secondary"

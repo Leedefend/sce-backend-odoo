@@ -52,7 +52,7 @@ class ConstructionWorkBreakdown(models.Model):
 
     sequence = fields.Integer("序号", default=10)
     # 便于调试/报表的层级深度，根=0
-    level = fields.Integer("层级", compute="_compute_level", store=True)
+    level = fields.Integer("层级", compute="_compute_level", store=True, recursive=True)
     level_type = fields.Selection(
         [
             ("single", "单项工程"),
@@ -81,12 +81,14 @@ class ConstructionWorkBreakdown(models.Model):
         "清单工程量合计",
         compute="_compute_totals",
         store=True,
+        recursive=True,
     )
     boq_amount_total = fields.Monetary(
         "清单合价合计",
         compute="_compute_totals",
         store=True,
         currency_field="currency_id",
+        recursive=True,
     )
     currency_id = fields.Many2one(
         "res.currency",

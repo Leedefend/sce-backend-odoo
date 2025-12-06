@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
 
+import uuid
+
 from odoo import models, fields, api
 from odoo.exceptions import UserError
 
@@ -15,8 +17,16 @@ class ScProjectStructure(models.Model):
     _parent_store = True
     _order = 'project_id, parent_path, sequence, id'
 
+    _rec_name = 'name'
+    _parent_name = 'parent_id'
+    _parent_store = True
     name = fields.Char('名称', required=True)
     code = fields.Char('编码', index=True)
+    display_label = fields.Char(
+        '显示名称',
+        compute='_compute_display_label',
+        store=True,
+    )
     project_id = fields.Many2one(
         'project.project', '项目',
         required=True, index=True, ondelete='cascade'
@@ -27,16 +37,17 @@ class ScProjectStructure(models.Model):
     )
     child_ids = fields.One2many(
         'sc.project.structure', 'parent_id',
-        string='下级节点'
+        string='下级节点', recursive=True
     )
     parent_path = fields.Char(index=True)
 
     sequence = fields.Integer('排序', default=10)
-    level = fields.Integer('层级', compute='_compute_level', store=True)
+    level = fields.Integer('层级', compute='_compute_level', store=True, recursive=True)
     structure_type = fields.Selection(
         [
             ('single', '单项工程'),
             ('unit', '单位工程'),
+            ('major', '专业工程'),
             ('division', '分部工程'),
             ('subdivision', '分项工程'),
             ('item', '清单项目'),
@@ -45,20 +56,59 @@ class ScProjectStructure(models.Model):
         default='item',
         index=True,
     )
+    biz_scope = fields.Selection(
+        [
+            ('work', '分部分项工程'),
+            ('measure_unit', '单价措施项目'),
+            ('measure_total', '总价措施项目'),
+            ('fee', '规费'),
+            ('tax', '税金'),
+            ('other', '其他费用'),
+        ],
+        string='业务范畴',
+        index=True,
+    )
 
     boq_line_ids = fields.One2many(
         'project.boq.line', 'structure_id',
-        string='清单行'
+        string='清单行', recursive=True
+    )
+    # 包含当前节点及其子节点的全部清单行，用于表单展示
+    boq_line_all_ids = fields.Many2many(
+        'project.boq.line',
+        string='关联清单行（含子节点）',
+        compute='_compute_boq_line_all_ids',
+        store=False,
     )
 
-    qty_total = fields.Float('汇总工程量', compute='_compute_totals', store=True)
-    amount_total = fields.Monetary('汇总合价', compute='_compute_totals', store=True)
+    qty_total = fields.Float(
+        '汇总工程量',
+        compute='_compute_totals',
+        store=True,
+        recursive=True,
+        group_operator=False,  # 工程量跨单位汇总无意义，关闭聚合
+    )
+    amount_total = fields.Monetary(
+        '汇总合价',
+        compute='_compute_totals',
+        store=True,
+        recursive=True,
+        group_operator='sum',  # 仅对金额做合计
+    )
     currency_id = fields.Many2one(
         'res.currency',
         related='project_id.company_id.currency_id',
         readonly=True,
         store=True,
     )
+
+    @api.depends('code', 'name')
+    def _compute_display_label(self):
+        for rec in self:
+            if rec.code and rec.name and rec.code != rec.name:
+                rec.display_label = f"{rec.code} {rec.name}"
+            else:
+                rec.display_label = rec.name or rec.code or ""
 
     @api.depends('parent_id.level')
     def _compute_level(self):
@@ -82,6 +132,23 @@ class ScProjectStructure(models.Model):
                 amt = sum(node.child_ids.mapped('amount_total'))
             node.qty_total = qty
             node.amount_total = amt
+
+    def _compute_boq_line_all_ids(self):
+        BoqLine = self.env['project.boq.line']
+        for node in self:
+            if not node.project_id:
+                node.boq_line_all_ids = False
+                continue
+            # 叶子节点：直接用自身挂接的清单行
+            if node.structure_type == 'item':
+                node.boq_line_all_ids = node.boq_line_ids
+                continue
+            # 其余节点：检索同项目下 structure_id child_of 当前节点 的清单行
+            lines = BoqLine.search([
+                ('project_id', '=', node.project_id.id),
+                ('structure_id', 'child_of', node.id),
+            ])
+            node.boq_line_all_ids = lines
 
 
 # =========================
@@ -117,7 +184,6 @@ class ProjectProject(models.Model):
     # ---------- 基础属性 ----------
     project_code = fields.Char(
         '项目编号',
-        default='新项目',
         copy=False,
         tracking=True,
         readonly=True,
@@ -398,7 +464,11 @@ class ProjectProject(models.Model):
         default_stage = self._default_stage_id()
         for vals in vals_list:
             if not vals.get('project_code'):
-                vals['project_code'] = sequence.next_by_code('project.project.code') or '新项目'
+                code = sequence.next_by_code('project.project.code')
+                if not code:
+                    # 确保即使未配置序列也能生成唯一编号，避免“项目编号不能重复”报错
+                    code = f"PJ-{fields.Datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
+                vals['project_code'] = code
             if not vals.get('stage_id') and default_stage:
                 vals['stage_id'] = default_stage
             if not vals.get('lifecycle_state'):
@@ -665,15 +735,19 @@ class ProjectProject(models.Model):
         从工程量清单自动生成工程结构（WBS）
         规则（v1）：
           - 单项工程/单位工程来自清单行（导入表头解析）
-          - 编码支持定长分段（默认 2/4/6/9/12）或点分层级
-          - 生成层级：单项 → 单位 → 分部 → 分项工程（= 清单行）
+          - 生成层级：单项 → 单位 → 专业 → 分部 → 清单项目（= 清单行）
           - 叶子节点 = 每条 12 位清单编码，对应清单行
         """
         Structure = self.env['sc.project.structure']
 
-        def _get_or_create(project_id, s_type, code_val, name_val, parent_node, struct_map, seq=10):
-            """按类型+编码/名称幂等获取节点。"""
-            key = (project_id, s_type, code_val or name_val)
+        def _get_or_create(project_id, s_type, code_val, name_val, parent_node, struct_map, seq=10, dedup_parent_id=None, key_val=None):
+            """
+            按类型+父节点(可指定去重父)+自定义键幂等获取节点。
+            division：去重键用“名称”，父节点锁定为 unit，避免同名分部被编码拆成多个节点。
+            """
+            parent_key = dedup_parent_id if dedup_parent_id is not None else (parent_node.id if parent_node else 0)
+            dedup_key = key_val or code_val or name_val
+            key = (project_id, s_type, parent_key, dedup_key)
             node = struct_map.get(key)
             if not node:
                 node = Structure.create({
@@ -705,9 +779,28 @@ class ProjectProject(models.Model):
             return False
 
         for project in self:
-            lines = project.boq_line_ids.filtered(lambda l: (l.code or '').strip())
-            if not lines:
+            lines_all = project.boq_line_ids.filtered(
+                lambda l: (l.code or '').strip() or l.boq_category in ('fee', 'tax', 'unit_measure', 'total_measure', 'other')
+            )
+            if not lines_all:
                 continue
+            lines = lines_all
+
+            # 常见措施分组关键词
+            measure_group_rules = [
+                ('脚手架工程', ['脚手架']),
+                ('模板支架工程', ['模板', '支架', '高支模']),
+                ('安全文明施工', ['文明', '安全', '临时设施']),
+                ('拆除工程', ['拆除']),
+            ]
+
+            def _match_measure_group(line):
+                name_text = (line.name or '') + ' ' + (line.division_name or '') + ' ' + (line.sheet_name or '')
+                for group_name, keywords in measure_group_rules:
+                    for kw in keywords:
+                        if kw and kw in name_text:
+                            return group_name
+                return line.sheet_name or line.major_name or line.division_name or '未分类措施'
 
             # 预先收集分部编码 -> 分部名称映射，优先使用导入时的分部标题
             division_name_map = {}
@@ -716,49 +809,188 @@ class ProjectProject(models.Model):
                 if ln.code_division and div_name:
                     division_name_map[ln.code_division] = div_name
 
+            def _dedup_parent_key(structure):
+                """构造去重键父节点：分部按所属单位工程对齐，其余按直接父节点。"""
+                if structure.structure_type == 'division':
+                    ancestor = structure.parent_id
+                    while ancestor:
+                        if ancestor.structure_type == 'unit':
+                            return ancestor.id
+                        ancestor = ancestor.parent_id
+                return structure.parent_id.id if structure.parent_id else 0
+
+            def _dedup_division_nodes():
+                """合并同一单位工程下重复的分部节点，保留最早创建的节点。"""
+                Structure = self.env['sc.project.structure']
+                buckets = defaultdict(list)
+                divisions = Structure.search([('project_id', '=', project.id), ('structure_type', '=', 'division')])
+                for node in divisions:
+                    parent_key = _dedup_parent_key(node)
+                    dedup_key = (parent_key, node.name)
+                    buckets[dedup_key].append(node)
+                BoqLine = self.env['project.boq.line']
+                for nodes in buckets.values():
+                    if len(nodes) <= 1:
+                        continue
+                    nodes_sorted = sorted(nodes, key=lambda n: n.id)
+                    keep = nodes_sorted[0]
+                    duplicates = nodes_sorted[1:]
+                    for dup in duplicates:
+                        # 迁移子节点与清单行到保留节点
+                        if dup.child_ids:
+                            dup.child_ids.write({'parent_id': keep.id})
+                        BoqLine.search([('structure_id', '=', dup.id), ('project_id', '=', project.id)]).write({'structure_id': keep.id})
+                        dup.unlink()
+
+            _dedup_division_nodes()
+
             existing = Structure.search([('project_id', '=', project.id)])
-            struct_map = {
-                (s.project_id.id, s.structure_type, s.code or s.name): s for s in existing
-            }
+            struct_map = {}
+            for s in existing:
+                parent_key = _dedup_parent_key(s)
+                key_val = s.name if s.structure_type == 'division' else (s.code or s.name)
+                struct_map[(s.project_id.id, s.structure_type, parent_key, key_val)] = s
             skipped = []
 
-            for ln in lines:
-                code = (ln.code or '').strip()
-                if not code:
-                    skipped.append('(空编码)')
-                    continue
+            # --- helpers for scope tagging ---
+            def _tag_scope(node, scope):
+                if node and node.biz_scope != scope:
+                    node.biz_scope = scope
 
-                # 单项/单位工程节点
-                single_name = (ln.single_name or '').strip() or (ln.code_cat or '未分类单项工程')
-                unit_name = (ln.unit_name or '').strip() or '未分类单位工程'
-                node_single = _get_or_create(project.id, 'single', False, single_name, False, struct_map, seq=5)
-                node_unit = _get_or_create(project.id, 'unit', False, unit_name, node_single, struct_map, seq=10)
+            # 预先分组：分部分项/措施/规费/税金
+            work_lines = lines_all.filtered(lambda l: (l.boq_category in (False, 'boq') or not l.boq_category))
+            unit_measure_lines = lines_all.filtered(lambda l: l.boq_category == 'unit_measure')
+            total_measure_lines = lines_all.filtered(lambda l: l.boq_category == 'total_measure')
+            fee_lines = lines_all.filtered(lambda l: l.boq_category == 'fee')
+            tax_lines = lines_all.filtered(lambda l: l.boq_category == 'tax')
+            other_lines = lines_all.filtered(lambda l: l.boq_category == 'other')
 
-                # 清单编码分段（按 12 位标准）
-                if not (ln.code_item and len(ln.code_item) == 12):
-                    skipped.append(code)
-                    continue
-
-                # 直接按“分部 -> 分项工程(清单行)”两级建树
-                segments = [
-                    (ln.code_division, 'division'),
-                    (ln.code_item, 'item'),
-                ]
-
-                parent = node_unit
-                for idx, (seg_code, s_type) in enumerate(segments):
-                    if not seg_code:
+            # --- 分部分项（原逻辑） ---
+            def _handle_work_lines(lines_subset):
+                for ln in lines_subset:
+                    code = (ln.code or '').strip()
+                    if not code:
+                        skipped.append('(空编码)')
                         continue
-                    if s_type == 'item':
-                        node_name = ln.name
-                    elif s_type == 'division':
-                        node_name = division_name_map.get(seg_code) or ln.division_name or seg_code
-                    else:
-                        node_name = seg_code
-                    parent = _get_or_create(project.id, s_type, seg_code, node_name, parent, struct_map, seq=20 + idx)
 
-                if parent and ln.structure_id != parent:
-                    ln.structure_id = parent.id
+                    # 单项/单位工程节点
+                    single_name = (ln.single_name or '').strip() or (ln.code_cat or '未分类单项工程')
+                    unit_name = (ln.unit_name or '').strip() or '未分类单位工程'
+                    node_single = _get_or_create(project.id, 'single', False, single_name, False, struct_map, seq=5)
+                    node_unit = _get_or_create(project.id, 'unit', False, unit_name, node_single, struct_map, seq=10)
+                    _tag_scope(node_single, 'work')
+                    _tag_scope(node_unit, 'work')
+
+                    # 清单编码分段（按 12 位标准）
+                    if not (ln.code_item and len(ln.code_item) == 12):
+                        skipped.append(code)
+                        continue
+
+                    # 构建层级：专业 -> 分部 -> 清单项目（清单行）
+                    # 专业层：优先按专业名称聚合，其次 section_type，最后才用编码段
+                    major_code = ln.major_name or ln.section_type or ln.code_prof
+                    major_name = ln.major_name or ln.section_type or major_code
+                    segments = [
+                        (major_code, 'major'),
+                        (ln.code_division, 'division'),
+                        (ln.code_item, 'item'),
+                    ]
+
+                    parent = node_unit
+                    for idx, (seg_code, s_type) in enumerate(segments):
+                        if not seg_code:
+                            continue
+                        if s_type == 'item':
+                            node_name = ln.name
+                        elif s_type == 'major':
+                            node_name = major_name
+                        elif s_type == 'division':
+                            node_name = division_name_map.get(seg_code) or ln.division_name or seg_code
+                        else:
+                            node_name = seg_code
+                        dedup_parent_id = node_unit.id if s_type == 'division' else None
+                        key_val = node_name if s_type == 'division' else None
+                        parent = _get_or_create(
+                            project.id, s_type, seg_code, node_name, parent, struct_map,
+                            seq=20 + idx, dedup_parent_id=dedup_parent_id, key_val=key_val
+                        )
+                        if s_type == 'division' and seg_code and not parent.code:
+                            parent.code = seg_code
+                        _tag_scope(parent, 'work')
+
+                    if parent and ln.structure_id != parent:
+                        ln.structure_id = parent.id
+
+            _handle_work_lines(work_lines)
+
+            # --- 单价措施 / 总价措施 ---
+            def _handle_measure(lines_subset, scope_key, major_label, seq_major):
+                if not lines_subset:
+                    return
+                # 取任一行定位单位工程
+                for ln in lines_subset:
+                    single_name = (ln.single_name or '').strip() or '未分类单项工程'
+                    unit_name = (ln.unit_name or '').strip() or '未分类单位工程'
+                    node_single = _get_or_create(project.id, 'single', False, single_name, False, struct_map, seq=5)
+                    node_unit = _get_or_create(project.id, 'unit', False, unit_name, node_single, struct_map, seq=10)
+                    _tag_scope(node_single, scope_key)
+                    _tag_scope(node_unit, scope_key)
+                    break
+                node_measure_major = _get_or_create(
+                    project.id, 'major', False, major_label, node_unit, struct_map, seq=seq_major
+                )
+                _tag_scope(node_measure_major, scope_key)
+                for ln in lines_subset:
+                    group_name = _match_measure_group(ln)
+                    node_division = _get_or_create(
+                        project.id, 'division', False, group_name, node_measure_major, struct_map, seq=seq_major + 1
+                    )
+                    _tag_scope(node_division, scope_key)
+                    code_val = ln.code_item or ln.code or False
+                    node_item = _get_or_create(
+                        project.id, 'item', code_val, ln.name, node_division, struct_map, seq=seq_major + 2
+                    )
+                    _tag_scope(node_item, scope_key)
+                    if node_item and ln.structure_id != node_item:
+                        ln.structure_id = node_item.id
+
+            _handle_measure(unit_measure_lines, 'measure_unit', '单价措施项目工程', 50)
+            _handle_measure(total_measure_lines, 'measure_total', '总价措施项目工程', 60)
+
+            # --- 规费/税金 ---
+            def _handle_fee_tax(lines_subset, scope_key, major_label, seq_major):
+                if not lines_subset:
+                    return
+                for ln in lines_subset:
+                    single_name = (ln.single_name or '').strip() or '未分类单项工程'
+                    unit_name = (ln.unit_name or '').strip() or '未分类单位工程'
+                    node_single = _get_or_create(project.id, 'single', False, single_name, False, struct_map, seq=5)
+                    node_unit = _get_or_create(project.id, 'unit', False, unit_name, node_single, struct_map, seq=10)
+                    _tag_scope(node_single, scope_key)
+                    _tag_scope(node_unit, scope_key)
+                    break
+                node_major = _get_or_create(
+                    project.id, 'major', False, major_label, node_unit, struct_map, seq=seq_major
+                )
+                _tag_scope(node_major, scope_key)
+                for ln in lines_subset:
+                    name = ''
+                    if scope_key == 'fee' and getattr(ln, 'fee_type_id', False):
+                        name = ln.fee_type_id.name
+                    if scope_key == 'tax' and getattr(ln, 'tax_type_id', False):
+                        name = ln.tax_type_id.name
+                    name = name or ln.name
+                    code_val = ln.code or False
+                    node_item = _get_or_create(
+                        project.id, 'item', code_val, name, node_major, struct_map, seq=seq_major + 1
+                    )
+                    _tag_scope(node_item, scope_key)
+                    if node_item and ln.structure_id != node_item:
+                        ln.structure_id = node_item.id
+
+            _handle_fee_tax(fee_lines, 'fee', '规费', 80)
+            _handle_fee_tax(tax_lines, 'tax', '税金', 90)
+            _handle_fee_tax(other_lines, 'other', '其他费用', 70)
 
             if skipped:
                 project.message_post(
