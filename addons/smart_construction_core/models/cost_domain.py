@@ -263,9 +263,9 @@ class ProjectCostCode(models.Model):
         required=True,
     )
 
-    level = fields.Integer("层级", compute="_compute_hierarchy", store=True)
+    level = fields.Integer("层级", compute="_compute_hierarchy", store=True, recursive=True)
     active = fields.Boolean(default=True)
-    path_display = fields.Char("路径", compute="_compute_hierarchy", store=True)
+    path_display = fields.Char("路径", compute="_compute_hierarchy", store=True, recursive=True)
 
     note = fields.Char("说明")
 
