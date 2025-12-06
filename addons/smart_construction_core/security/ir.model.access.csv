@@ -53,3 +53,6 @@ access_tender_opening_competitor_manager,tender.opening.competitor.manager,model
 access_tender_opening_competitor_user,tender.opening.competitor.user,model_tender_opening_competitor,smart_construction_core.group_sc_user,1,1,1,0
 access_tender_guarantee_manager,tender.guarantee.manager,model_tender_guarantee,smart_construction_core.group_sc_manager,1,1,1,1
 access_tender_guarantee_user,tender.guarantee.user,model_tender_guarantee,smart_construction_core.group_sc_user,1,1,1,0
+access_project_budget_user,access_project_budget_user,model_project_budget,base.group_user,1,1,1,1
+access_project_budget_line_user,access_project_budget_line_user,model_project_budget_line,base.group_user,1,1,1,1
+access_project_wbs_user,access_project_wbs_user,model_project_wbs,base.group_user,1,0,0,0
