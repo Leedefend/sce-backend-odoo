@@ -10,6 +10,7 @@ from . import stock_extend
 from . import product_extend
 from . import cost_report
 from . import profit_report
+from . import project_budget
 from . import task_extend
 from . import work_breakdown
 from . import boq
