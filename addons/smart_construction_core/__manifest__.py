@@ -42,6 +42,7 @@
         'views/document_views.xml',
         'views/project_dashboard_kanban.xml',
         'views/contract_views.xml',
+        'views/project_contract_views.xml',
         'views/purchase_extend_views.xml',
         'views/account_extend_views.xml',
         'views/product_extend_views.xml',

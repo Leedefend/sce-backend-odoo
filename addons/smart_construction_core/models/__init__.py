@@ -3,6 +3,7 @@ from . import base_dictionary
 from . import project_core
 from . import document_center
 from . import contract_center
+from . import project_contract
 from . import cost_domain
 from . import purchase_extend
 from . import account_extend
