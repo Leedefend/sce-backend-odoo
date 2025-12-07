@@ -23,4 +23,19 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_purchase_order_form_sc_settlement" model="ir.ui.view">
+        <field name="name">purchase.order.form.sc.settlement</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header" position="inside">
+                <button name="action_create_settlement"
+                        type="object"
+                        string="创建结算单"
+                        class="btn-secondary"
+                        attrs="{'invisible': ['|', ('state', '!=', 'purchase'), ('order_line', '=', [])]}"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
