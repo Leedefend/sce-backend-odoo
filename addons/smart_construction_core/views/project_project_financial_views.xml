@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <!-- 继承项目表单，增加预算 / 合同 Smart Button -->
+        <record id="view_project_form_financial_buttons" model="ir.ui.view">
+            <field name="name">project.project.form.financial.buttons</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/header" position="inside">
+                    <button name="action_open_project_budgets"
+                            type="object"
+                            string="预算"
+                            class="oe_stat_button"
+                            icon="fa-calculator"/>
+                    <button name="action_open_project_contracts"
+                            type="object"
+                            string="合同"
+                            class="oe_stat_button"
+                            icon="fa-file-text-o"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

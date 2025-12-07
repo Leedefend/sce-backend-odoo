@@ -46,6 +46,7 @@
         'views/purchase_extend_views.xml',
         'views/account_extend_views.xml',
         'views/product_extend_views.xml',
+        'views/project_project_financial_views.xml',
         'views/project_budget_views.xml',
         'views/menu.xml',
     ],
