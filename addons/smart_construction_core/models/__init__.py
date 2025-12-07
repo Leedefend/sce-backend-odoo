@@ -5,6 +5,7 @@ from . import document_center
 from . import contract_center
 from . import project_contract
 from . import cost_domain
+from . import budget_compat
 from . import purchase_extend
 from . import account_extend
 from . import stock_extend
