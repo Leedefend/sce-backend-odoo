@@ -1,0 +1,17 @@
+# --- SmartOdoo 平台核心代码所有权定义 ----------------------
+
+# 平台核心模块所有者（生产环境敏感逻辑）
+/addons/smart_construction_core/    @Leedefend
+
+# 配置引擎模块（系统配置、统一管理组件）
+/addons/app_config_engine/          @Leedefend
+
+# 全局脚本、Makefile、CI/CD 工作流
+/Makefile                           @Leedefend
+/.github/workflows/                 @Leedefend
+
+# 文档目录（可多人编辑，如有需要可加入团队成员）
+/docs/                               @Leedefend
+
+# 默认规则：所有未匹配路径也需要你审核
+*                                     @Leedefend
