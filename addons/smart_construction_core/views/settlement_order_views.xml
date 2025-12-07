@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <!-- 支出结算列表 -->
+        <record id="view_sc_settlement_order_tree" model="ir.ui.view">
+            <field name="name">sc.settlement.order.tree</field>
+            <field name="model">sc.settlement.order</field>
+            <field name="arch" type="xml">
+                <tree string="支出结算单">
+                    <field name="name"/>
+                    <field name="type"/>
+                    <field name="project_id"/>
+                    <field name="contract_id"/>
+                    <field name="partner_id"/>
+                    <field name="amount_total"/>
+                    <field name="state"/>
+                    <field name="date_settlement"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- 支出结算表单 -->
+        <record id="view_sc_settlement_order_form" model="ir.ui.view">
+            <field name="name">sc.settlement.order.form</field>
+            <field name="model">sc.settlement.order</field>
+            <field name="arch" type="xml">
+                <form string="支出结算单">
+                    <header>
+                        <button name="action_submit"
+                                type="object"
+                                string="提交"
+                                class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_approve"
+                                type="object"
+                                string="批准"
+                                invisible="state != 'submit'"/>
+                        <button name="action_done"
+                                type="object"
+                                string="完成"
+                                invisible="state != 'approved'"/>
+                        <button name="action_cancel"
+                                type="object"
+                                string="取消"
+                                invisible="state not in ['draft', 'submit', 'approved']"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submit,approved,done,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="type"/>
+                                <field name="project_id"/>
+                                <field name="contract_id"/>
+                            </group>
+                            <group>
+                                <field name="partner_id"/>
+                                <field name="date_settlement"/>
+                                <field name="currency_id"/>
+                            </group>
+                        </group>
+
+                        <group string="金额">
+                            <field name="amount_untaxed" readonly="1"/>
+                            <field name="amount_tax" readonly="1"/>
+                            <field name="amount_total" readonly="1"/>
+                        </group>
+
+                        <notebook>
+                            <page string="结算明细">
+                                <field name="line_ids">
+                                    <tree editable="bottom">
+                                        <field name="purchase_line_id"/>
+                                        <field name="product_id"/>
+                                        <field name="cost_item_id"/>
+                                        <field name="uom_id"/>
+                                        <field name="qty_source" readonly="1"/>
+                                        <field name="qty_settle"/>
+                                        <field name="price_unit"/>
+                                        <field name="amount_total" readonly="1"/>
+                                        <field name="currency_id" invisible="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="附加信息">
+                                <group>
+                                    <field name="invoice_ids" readonly="1"/>
+                                    <field name="payment_ids" readonly="1"/>
+                                    <field name="note"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- 动作 -->
+        <record id="action_sc_settlement_order" model="ir.actions.act_window">
+            <field name="name">支出结算单</field>
+            <field name="res_model">sc.settlement.order</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- 菜单：财务中心下的结算中心 -->
+        <menuitem id="menu_sc_settlement_center"
+                  name="结算中心"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  sequence="20"
+                  groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
+
+        <menuitem id="menu_sc_settlement_order"
+                  name="支出结算单"
+                  parent="menu_sc_settlement_center"
+                  action="action_sc_settlement_order"
+                  sequence="10"
+                  groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
+
+    </data>
+</odoo>
