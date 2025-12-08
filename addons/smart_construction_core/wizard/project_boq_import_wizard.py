@@ -113,9 +113,18 @@ class ProjectBoqImportWizard(models.TransientModel):
         Boq = self.env["project.boq.line"]
         created_count = 0
         updated_count = 0
+
+        def _create_rows(vals_list):
+            """根据清单类别选择是否启用层级导入。"""
+            if not vals_list:
+                return 0
+            if self.boq_category == "boq":
+                return self._create_with_hierarchy(Boq, vals_list)
+            return self._batch_create(Boq, vals_list)
+
         if self.clear_mode == "replace_project":
             Boq.search([("project_id", "=", self.project_id.id)]).unlink()
-            created_count = self._batch_create(Boq, rows)
+            created_count = _create_rows(rows)
         elif self.clear_mode == "replace_code":
             for vals in rows:
                 domain = [
@@ -133,7 +142,7 @@ class ProjectBoqImportWizard(models.TransientModel):
                     Boq.create(vals)
                     created_count += 1
         else:
-            created_count = self._batch_create(Boq, rows)
+            created_count = _create_rows(rows)
 
         log_lines = []
         log_lines.append(f"成功导入 {created_count} 条，更新 {updated_count} 条。")
@@ -831,3 +840,48 @@ class ProjectBoqImportWizard(models.TransientModel):
             model.create(chunk)
             created += len(chunk)
         return created
+
+    def _create_with_hierarchy(self, model, vals_list):
+        """
+        批量创建 + 根据编码推断层级，写入 parent_id。
+        仅在分部分项清单（boq_category='boq'）中使用。
+        """
+        if not vals_list:
+            return 0
+
+        records = model.create(vals_list)
+        stack = {}
+
+        for rec in records:
+            level = self._guess_line_level(rec.code or "", rec.name or "")
+            stack = {lvl: r for lvl, r in stack.items() if lvl < level}
+            if level <= 0:
+                rec.parent_id = False
+            else:
+                parent = stack.get(level - 1)
+                rec.parent_id = parent.id if parent else False
+            stack[level] = rec
+
+        return len(records)
+
+    @staticmethod
+    def _guess_line_level(code, name):
+        """
+        根据编码长度保守推断层级：
+        <=2位:章，<=4位:节，<=6位:子目，其它:清单项。
+        非纯数字（或含点）的编码视为清单项。
+        """
+        code = (code or "").strip()
+        if not code:
+            return 3
+        pure = code.replace(".", "")
+        if not pure.isdigit():
+            return 3
+        length = len(pure)
+        if length <= 2:
+            return 0
+        if length <= 4:
+            return 1
+        if length <= 6:
+            return 2
+        return 3

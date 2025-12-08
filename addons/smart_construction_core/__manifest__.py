@@ -34,8 +34,8 @@
         'views/project_task_from_boq_views.xml',
         'views/project_structure_views.xml',
         'actions/project_structure_actions.xml',
-        'views/project_views.xml',
         'views/boq_views.xml',
+        'views/project_views.xml',
         'views/task_boq_views.xml',
         'views/work_breakdown_views.xml',
         'views/tender_views.xml',
@@ -48,6 +48,7 @@
         'views/product_extend_views.xml',
         'views/project_project_financial_views.xml',
         'views/project_budget_views.xml',
+        'views/project_extend_boq_views.xml',
         'views/menu.xml',
     ],
     'demo': [
