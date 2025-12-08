@@ -9,7 +9,7 @@ class ProjectBoqLine(models.Model):
 
     _name = "project.boq.line"
     _description = "工程量清单"
-    _order = "project_id, parent_path, sequence, id"
+    _order = "project_id, section_type, parent_path, sequence, id"
     _parent_store = True
     _parent_name = "parent_id"
 
@@ -38,7 +38,7 @@ class ProjectBoqLine(models.Model):
         "层级",
         compute="_compute_level",
         store=True,
-        help="0=顶级（章），1=第二级（节），以此类推。",
+        help="1=顶级（专业清单），2=分部清单，3=清单项，以此类推。",
     )
 
     sequence = fields.Integer("序号", default=10)
@@ -81,6 +81,8 @@ class ProjectBoqLine(models.Model):
         compute="_compute_amount",
         store=True,
     )
+    has_warning = fields.Boolean("有警告", readonly=True)
+    warning_message = fields.Char("警告信息", readonly=True)
 
     currency_id = fields.Many2one(
         "res.currency",
@@ -185,12 +187,15 @@ class ProjectBoqLine(models.Model):
     sheet_index = fields.Integer("来源Sheet序号")
     sheet_name = fields.Char("来源Sheet名称")
 
-    @api.depends("quantity", "price")
+    @api.depends("line_type", "quantity", "price", "child_ids.amount")
     def _compute_amount(self):
         for rec in self:
-            qty = rec.quantity or 0.0
-            price = rec.price or 0.0
-            rec.amount = qty * price
+            if rec.line_type == "item":
+                qty = rec.quantity or 0.0
+                price = rec.price or 0.0
+                rec.amount = qty * price
+            else:
+                rec.amount = sum(rec.child_ids.mapped("amount"))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -236,13 +241,28 @@ class ProjectBoqLine(models.Model):
 
     _sql_constraints = []
 
+    line_type = fields.Selection(
+        [
+            ("major", "专业工程"),
+            ("division", "分部工程"),
+            ("group", "标题/汇总行"),
+            ("item", "清单项"),
+        ],
+        string="行类型",
+        default="item",
+        index=True,
+        help="major/ division 为系统生成的节点；item 为实际清单行；group 兼容旧数据。",
+    )
+
     @api.depends("parent_path")
     def _compute_level(self):
-        """基于 parent_path 计算层级深度。
-        parent_path 形如 '12/45/78/' → split('/') 长度 - 2 = 层级。
-        """
+        """根据 parent_path 计算 BOQ 树中的层级深度：
+        - parent_path 形如 '12/', '12/45/', '12/45/78/' 或不带尾斜杠都能兼容
+        - 顶级节点 level=1，子节点依次 +1
+            """
         for rec in self:
-            if rec.parent_path:
-                rec.level = max(len(rec.parent_path.split("/")) - 2, 0)
+            path = (rec.parent_path or "").strip("/")  # 去掉首尾 '/'
+            if not path:
+                rec.level = 1  # 没有路径，当作顶级
             else:
-                rec.level = 0
+                rec.level = len(path.split("/"))
