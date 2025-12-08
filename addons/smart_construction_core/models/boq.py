@@ -9,7 +9,9 @@ class ProjectBoqLine(models.Model):
 
     _name = "project.boq.line"
     _description = "工程量清单"
-    _order = "project_id, sequence, id"
+    _order = "project_id, parent_path, sequence, id"
+    _parent_store = True
+    _parent_name = "parent_id"
 
     project_id = fields.Many2one(
         "project.project",
@@ -18,6 +20,27 @@ class ProjectBoqLine(models.Model):
         index=True,
         ondelete="cascade",
     )
+
+    # 树状层级结构（章/节/子目/清单项等）
+    parent_id = fields.Many2one(
+        "project.boq.line",
+        string="上级清单",
+        index=True,
+        ondelete="cascade",
+    )
+    child_ids = fields.One2many(
+        "project.boq.line",
+        "parent_id",
+        string="下级清单",
+    )
+    parent_path = fields.Char(index=True)
+    level = fields.Integer(
+        "层级",
+        compute="_compute_level",
+        store=True,
+        help="0=顶级（章），1=第二级（节），以此类推。",
+    )
+
     sequence = fields.Integer("序号", default=10)
     section_type = fields.Selection(
         [
@@ -169,6 +192,16 @@ class ProjectBoqLine(models.Model):
             price = rec.price or 0.0
             rec.amount = qty * price
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Ensure project_id is set, inheriting from parent when missing."""
+        for vals in vals_list:
+            if not vals.get("project_id") and vals.get("parent_id"):
+                parent = self.browse(vals["parent_id"])
+                if parent.exists():
+                    vals["project_id"] = parent.project_id.id
+        return super().create(vals_list)
+
     @api.depends("structure_id", "structure_id.parent_id", "structure_id.parent_id.parent_id")
     def _compute_structure_levels(self):
         for rec in self:
@@ -202,3 +235,14 @@ class ProjectBoqLine(models.Model):
                 rec.code_item = False
 
     _sql_constraints = []
+
+    @api.depends("parent_path")
+    def _compute_level(self):
+        """基于 parent_path 计算层级深度。
+        parent_path 形如 '12/45/78/' → split('/') 长度 - 2 = 层级。
+        """
+        for rec in self:
+            if rec.parent_path:
+                rec.level = max(len(rec.parent_path.split("/")) - 2, 0)
+            else:
+                rec.level = 0
