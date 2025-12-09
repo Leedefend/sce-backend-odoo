@@ -54,6 +54,7 @@ class ProjectBoqImportWizard(models.TransientModel):
             ("total_measure", "总价措施清单"),
             ("fee", "规费"),
             ("tax", "税金"),
+            ("other", "其他费用"),
         ],
         string="清单类别",
         default="boq",
@@ -97,6 +98,9 @@ class ProjectBoqImportWizard(models.TransientModel):
         ),
     )
 
+    # -------------------------------------------------------------------------
+    # 主入口
+    # -------------------------------------------------------------------------
     def action_import(self):
         self.ensure_one()
         if not self.file:
@@ -115,12 +119,22 @@ class ProjectBoqImportWizard(models.TransientModel):
         updated_count = 0
 
         def _create_rows(vals_list):
-            """根据清单类别选择是否启用层级导入。"""
+            """按行的 boq_category 决定是否启用层级导入。"""
             if not vals_list:
                 return 0
-            if self.boq_category == "boq":
-                return self._create_with_hierarchy(Boq, vals_list)
-            return self._batch_create(Boq, vals_list)
+
+            grouped = {}
+            for vals in vals_list:
+                cat = vals.get("boq_category") or self.boq_category or "boq"
+                grouped.setdefault(cat, []).append(vals)
+
+            created = 0
+            for cat, chunk in grouped.items():
+                if cat in ("boq", "other"):
+                    created += self._create_with_hierarchy(Boq, chunk)
+                else:
+                    created += self._batch_create(Boq, chunk)
+            return created
 
         if self.clear_mode == "replace_project":
             Boq.search([("project_id", "=", self.project_id.id)]).unlink()
@@ -163,8 +177,9 @@ class ProjectBoqImportWizard(models.TransientModel):
             "target": "current",
         }
 
-    # --- helpers ---
-
+    # -------------------------------------------------------------------------
+    # 文件解析入口
+    # -------------------------------------------------------------------------
     def _parse_file(self):
         """Parse CSV/XLS/XLSX into vals list for project.boq.line."""
         data = base64.b64decode(self.file)
@@ -178,7 +193,6 @@ class ProjectBoqImportWizard(models.TransientModel):
         content = self._read_as_csv(data)
         return self._parse_csv_content(content)
 
-
     def _parse_csv_content(self, content):
         reader = csv.reader(io.StringIO(content))
         rows_data = list(reader)
@@ -189,107 +203,244 @@ class ProjectBoqImportWizard(models.TransientModel):
         data_rows = rows_data[1:]
         col_map = self._prepare_col_map(headers)
         rows, created_uoms, skipped = self._build_rows_from_iter(
-            data_rows, col_map, strict_numeric=True,
-            default_single=self.single_name, default_unit=self.unit_name,
+            data_rows,
+            col_map,
+            strict_numeric=True,
+            default_single=self.single_name,
+            default_unit=self.unit_name,
             boq_category=self.boq_category,
         )
         if not rows:
             rows, created_uoms, skipped = self._build_rows_from_iter(
-                data_rows, col_map, strict_numeric=False,
-                default_single=self.single_name, default_unit=self.unit_name,
+                data_rows,
+                col_map,
+                strict_numeric=False,
+                default_single=self.single_name,
+                default_unit=self.unit_name,
                 boq_category=self.boq_category,
             )
         return rows, created_uoms, skipped
 
     def _parse_excel(self, data, filename):
+        """解析 XLS/XLSX 为 project.boq.line 的 vals 列表。"""
         col_map_cfg = self._col_map_cfg()
         rows_all = []
         created_uoms_all = set()
         skipped_all = 0
 
+        # ---------------- XLSX ----------------
         if filename.endswith(".xlsx"):
             if not openpyxl:
                 raise UserError("服务器缺少 openpyxl，无法解析 XLSX，请安装依赖或改用 CSV。")
             book = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+
             for idx, sheet in enumerate(book.worksheets, start=1):
-                if not self._is_supported_sheet(sheet.title or ""):
+                title = sheet.title or ""
+                # 根据 sheet 名称分类；封面/汇总等直接跳过
+                sheet_type, sheet_category = self._classify_sheet_title(title)
+                if sheet_type in ("cover", "summary", "other_skip"):
                     continue
-                header_info = self._extract_excel_header(sheet)
+
+                if not self._is_supported_sheet(title):
+                    continue
+
+                # 表头行数按表类型区分：总价/规费/税金等通常只有 1 行列标题
+                if sheet_type in ("total_measure", "fee", "tax", "other_item"):
+                    header_info = self._extract_excel_header(sheet, header_rows=1)
+                else:
+                    header_info = self._extract_excel_header(sheet)
                 if not header_info:
                     continue
                 headers, data_start_row, header_row_idx = header_info
+
+                # 解析表头前几行的“工程名称：项目\单位【专业】”
                 parsed_single, parsed_unit, parsed_major = self._parse_engineering_header_excel(
                     sheet, limit=max(5, header_row_idx)
                 )
+
                 default_single = self.single_name or parsed_single
                 default_unit = self.unit_name or parsed_unit
-                section_type = self.section_type or self._map_major_to_section_type(parsed_major) or self._guess_section_type(sheet.title or "")
-                category = self._detect_boq_category(sheet.title or "") or self.boq_category
+
+                section_type = (
+                    self.section_type
+                    or self._map_major_to_section_type(parsed_major)
+                    or self._guess_section_type(title)
+                )
+                # 根据 sheet 名推断清单类别：分部分项 / 单价措施 / 总价措施 / 规费 / 税金 / 其他项目
+                category = sheet_category or self._detect_boq_category(title) or self.boq_category
+
                 col_map = self._prepare_col_map(headers, col_map_cfg)
-                data_rows = [list(row) for row in sheet.iter_rows(min_row=data_start_row, values_only=True)]
+                data_rows = [
+                    list(row)
+                    for row in sheet.iter_rows(min_row=data_start_row, values_only=True)
+                ]
+
+                # 清单类 sheet 统一 strict_numeric=False，
+                # 标题/分部行会先保留，由内部的小计/合计过滤逻辑做最后筛选
+                if category == "other":
+                    rows, skipped = self._build_rows_other(
+                        data_rows,
+                        sheet_index=idx,
+                        sheet_name=title,
+                        section_type=section_type,
+                        default_single=default_single,
+                        default_unit=default_unit,
+                        major_name=parsed_major,
+                    )
+                    rows_all.extend(rows)
+                    skipped_all += skipped
+                    continue
+
                 rows, created_uoms, skipped = self._build_rows_from_iter(
-                    data_rows, col_map, section_type, strict_numeric=True,
-                    default_single=default_single, default_unit=default_unit,
-                    major_name=parsed_major, sheet_index=idx, sheet_name=sheet.title or "",
+                    data_rows,
+                    col_map,
+                    section_type=section_type,
+                    strict_numeric=False,
+                    default_single=default_single,
+                    default_unit=default_unit,
+                    major_name=parsed_major,
+                    sheet_index=idx,
+                    sheet_name=title,
                     boq_category=category,
                 )
-                if not rows:
-                    rows, created_uoms, skipped = self._build_rows_from_iter(
-                        data_rows, col_map, section_type, strict_numeric=False,
-                        default_single=default_single, default_unit=default_unit,
-                        major_name=parsed_major, sheet_index=idx, sheet_name=sheet.title or "",
-                        boq_category=category,
-                    )
+
                 rows_all.extend(rows)
                 created_uoms_all.update(created_uoms)
                 skipped_all += skipped
+
             return rows_all, created_uoms_all, skipped_all
 
+        # ---------------- XLS ----------------
         if filename.endswith(".xls"):
             if not xlrd:
                 raise UserError("服务器缺少 xlrd，无法解析 XLS，请安装依赖或改用 CSV。")
             book = xlrd.open_workbook(file_contents=data)
+
             for idx, sheet in enumerate(book.sheets(), start=1):
                 if sheet.nrows < 1:
                     continue
-                if not self._is_supported_sheet(sheet.name or ""):
+
+                title = sheet.name or ""
+                sheet_type, sheet_category = self._classify_sheet_title(title)
+                if sheet_type in ("cover", "summary", "other_skip"):
                     continue
-                headers, data_start_row, header_row_idx = self._extract_xls_header(sheet)
+
+                if not self._is_supported_sheet(title):
+                    continue
+
+                if sheet_type in ("total_measure", "fee", "tax", "other_item"):
+                    headers, data_start_row, header_row_idx = self._extract_xls_header(sheet, header_rows=1)
+                else:
+                    headers, data_start_row, header_row_idx = self._extract_xls_header(sheet)
                 if not headers:
                     continue
+
                 parsed_single, parsed_unit, parsed_major = self._parse_engineering_header_xls(
                     sheet, limit=max(5, header_row_idx)
                 )
+
                 default_single = self.single_name or parsed_single
                 default_unit = self.unit_name or parsed_unit
-                section_type = self.section_type or self._map_major_to_section_type(parsed_major) or self._guess_section_type(sheet.name or "")
-                category = self._detect_boq_category(sheet.name or "") or self.boq_category
+
+                section_type = (
+                    self.section_type
+                    or self._map_major_to_section_type(parsed_major)
+                    or self._guess_section_type(title)
+                )
+                category = sheet_category or self._detect_boq_category(title) or self.boq_category
+
                 col_map = self._prepare_col_map(headers, col_map_cfg)
                 data_rows = [
                     [sheet.cell_value(r, c) for c in range(sheet.ncols)]
                     for r in range(data_start_row, sheet.nrows)
                 ]
+
+                if category == "other":
+                    rows, skipped = self._build_rows_other(
+                        data_rows,
+                        sheet_index=idx,
+                        sheet_name=title,
+                        section_type=section_type,
+                        default_single=default_single,
+                        default_unit=default_unit,
+                        major_name=parsed_major,
+                    )
+                    rows_all.extend(rows)
+                    skipped_all += skipped
+                    continue
+
                 rows, created_uoms, skipped = self._build_rows_from_iter(
-                    data_rows, col_map, section_type, strict_numeric=True,
-                    default_single=default_single, default_unit=default_unit,
-                    major_name=parsed_major, sheet_index=idx, sheet_name=sheet.name or "",
+                    data_rows,
+                    col_map,
+                    section_type=section_type,
+                    strict_numeric=False,
+                    default_single=default_single,
+                    default_unit=default_unit,
+                    major_name=parsed_major,
+                    sheet_index=idx,
+                    sheet_name=title,
                     boq_category=category,
                 )
-                if not rows:
-                    rows, created_uoms, skipped = self._build_rows_from_iter(
-                        data_rows, col_map, section_type, strict_numeric=False,
-                        default_single=default_single, default_unit=default_unit,
-                        major_name=parsed_major, sheet_index=idx, sheet_name=sheet.name or "",
-                        boq_category=category,
-                    )
+
                 rows_all.extend(rows)
                 created_uoms_all.update(created_uoms)
                 skipped_all += skipped
+
             return rows_all, created_uoms_all, skipped_all
 
-        # 回退：尝试按 UTF-8/GBK 解码 CSV
+        # ---------------- Fallback: 按 CSV 解析 ----------------
         return self._parse_csv_bytes(data), set(), 0
 
+    # -------------------------------------------------------------------------
+    # Sheet 名称分类（核心升级点）
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def _classify_sheet_title(sheet_title):
+        """
+        根据 sheet 名称判断：
+        - sheet_type: 业务上的表类型（boq/unit_measure/total_measure/fee/tax/other）
+        - category:   写入 project.boq.line.boq_category 的值
+
+        返回: (sheet_type, category)；都可能是 None。
+        """
+        title_raw = sheet_title or ""
+        # 去掉空格/全角空格，全部小写方便匹配
+        text = title_raw.replace(" ", "").replace("\u3000", "").lower()
+
+        # 1) 总价措施项目清单计价表（优先匹配，避免被“措施”二字误判成单价措施）
+        if "总价措施项目清单计价表" in text or "总价措施项目清单" in text:
+            return "total_measure", "total_measure"
+
+        # 2) 单价措施项目清单
+        if "单价措施项目清单" in text or "单价措施" in text:
+            return "unit_measure", "unit_measure"
+
+        # 3) 分部分项工程量清单
+        if "分部分项工程量清单" in text or "分部分项工程清单" in text:
+            return "boq", "boq"
+
+        # 4) 其他项目清单 / 计价汇总表
+        if "其他项目清单计价汇总表" in text or "其他项目清单" in text or "其他项目" in text:
+            return "other_item", "other"
+
+        # 5) 规费/税金 等专门表（有的模板会单独拆出来）
+        if "规费" in text and "清单" in text:
+            return "fee", "fee"
+        if "税金" in text and "清单" in text:
+            return "tax", "tax"
+
+        # 6) 其它含“措施”但没说总价/单价的，尽量保守按 total_measure 处理
+        if "总价措施" in text:
+            return "total_measure", "total_measure"
+        if "措施项目清单" in text:
+            # 如果没提“单价/总价”，按单价措施兜底
+            return "unit_measure", "unit_measure"
+
+        # 7) 实在看不出来，一律当分部分项
+        return None, None
+    # -------------------------------------------------------------------------
+    # 表头 & 列映射
+    # -------------------------------------------------------------------------
     def _col_map_cfg(self):
         return {
             "code": ["清单编码", "编码", "code"],
@@ -302,6 +453,9 @@ class ProjectBoqImportWizard(models.TransientModel):
             "amount": ["合价", "合计", "amount", "金额", "金额元"],
             "cost_item_id": ["成本项", "成本科目"],
             "remark": ["备注", "说明"],
+            # --- 总价措施/规费类专用（目前先读出来，后面可扩展成模型字段） ---
+            "rate": ["费率", "费率(%)", "费率（%）"],
+            "calc_base": ["计算基础", "计费基础"],
         }
 
     def _prepare_col_map(self, headers, col_map_cfg=None):
@@ -313,7 +467,11 @@ class ProjectBoqImportWizard(models.TransientModel):
                 matched = False
                 for alias in aliases:
                     alias_norm = self._normalize_header(alias)
-                    if title_norm == alias_norm or title_norm.endswith(alias_norm) or alias_norm in title_norm:
+                    if (
+                        title_norm == alias_norm
+                        or title_norm.endswith(alias_norm)
+                        or alias_norm in title_norm
+                    ):
                         matched = True
                         break
                 if matched and field not in col_map:
@@ -325,7 +483,7 @@ class ProjectBoqImportWizard(models.TransientModel):
                 col_map["name"] = 0
             else:
                 raise UserError("模板中至少需要包含 “清单名称” 列。")
-        # 若识别到工程量列，按相对位置推断单价/合价（常见 F.1.1 结构：工程量右一列=单价，右二列=合价）
+        # 若识别到工程量列，按相对位置推断单价/合价（常见 F1-1 结构：工程量右一列=单价，右二列=合价）
         qty_idx = col_map.get("quantity")
         if qty_idx is not None:
             if "price" not in col_map and qty_idx + 1 < len(headers):
@@ -390,8 +548,8 @@ class ProjectBoqImportWizard(models.TransientModel):
                 return single, unit, major
         return "", "", ""
 
-    def _extract_excel_header(self, sheet, header_rows=3, scan_rows=8):
-        """处理多行表头+合并单元格，返回(扁平列名列表, 数据起始行号)"""
+    def _extract_excel_header(self, sheet, header_rows=2, scan_rows=8):
+        """处理多行表头+合并单元格，返回(扁平列名列表, 数据起始行号, 识别到的表头行号)"""
         merge_map = {}
         try:
             merge_ranges = sheet.merged_cells
@@ -417,7 +575,23 @@ class ProjectBoqImportWizard(models.TransientModel):
         max_col = sheet.max_column or 0
         header_row_idx = 0
         best_hits = 0
-        keywords = ["编码", "项目编码", "清单编码", "特征", "工程量", "综合单价", "合价", "计量单位"]
+        keywords = [
+            "编码",
+            "项目编码",
+            "清单编码",
+            "特征",
+            "工程量",
+            "综合单价",
+            "合价",
+            "计量单位",
+            # 其他项目清单/计价汇总表常见列
+            "项目名称",
+            "金额",
+            "金额(元)",
+            "金额（元）",
+            "备注",
+            "序号",
+        ]
         for idx in range(1, min(scan_rows, sheet.max_row or 0) + 1):
             row_vals = [str(cell_val(idx, c) or "").strip() for c in range(1, max_col + 1)]
             hits = sum(1 for v in row_vals if any(k in v for k in keywords))
@@ -447,11 +621,27 @@ class ProjectBoqImportWizard(models.TransientModel):
         data_start = header_row_idx + header_rows
         return flat_headers, data_start, header_row_idx
 
-    def _extract_xls_header(self, sheet, header_rows=3, scan_rows=8):
+    def _extract_xls_header(self, sheet, header_rows=2, scan_rows=8):
         max_col = sheet.ncols
         header_row_idx = 0
         best_hits = 0
-        keywords = ["编码", "项目编码", "清单编码", "特征", "工程量", "综合单价", "合价", "计量单位"]
+        keywords = [
+            "编码",
+            "项目编码",
+            "清单编码",
+            "特征",
+            "工程量",
+            "综合单价",
+            "合价",
+            "计量单位",
+            # 其他项目清单/计价汇总表常见列
+            "项目名称",
+            "金额",
+            "金额(元)",
+            "金额（元）",
+            "备注",
+            "序号",
+        ]
         for idx in range(min(scan_rows, sheet.nrows)):
             row_vals = [str(sheet.cell_value(idx, c) or "").strip() for c in range(max_col)]
             hits = sum(1 for v in row_vals if any(k in v for k in keywords))
@@ -459,7 +649,7 @@ class ProjectBoqImportWizard(models.TransientModel):
                 best_hits = hits
                 header_row_idx = idx
         if max_col == 0:
-            return None, 0
+            return None, 0, 0
         header_rows_vals = []
         for r in range(header_row_idx, min(header_row_idx + header_rows, sheet.nrows)):
             row_vals = [str(sheet.cell_value(r, c) or "").strip() for c in range(max_col)]
@@ -471,10 +661,20 @@ class ProjectBoqImportWizard(models.TransientModel):
         data_start = header_row_idx + header_rows
         return flat_headers, data_start, header_row_idx
 
+    # -------------------------------------------------------------------------
+    # 行解析 & 单位/成本项匹配
+    # -------------------------------------------------------------------------
     def _build_rows_from_iter(
-        self, row_iter, col_map, section_type=None, strict_numeric=True,
-        default_single=None, default_unit=None,
-        major_name=None, sheet_index=None, sheet_name=None,
+        self,
+        row_iter,
+        col_map,
+        section_type=None,
+        strict_numeric=True,
+        default_single=None,
+        default_unit=None,
+        major_name=None,
+        sheet_index=None,
+        sheet_name=None,
         boq_category=None,
     ):
         Uom = self.env["uom.uom"]
@@ -495,7 +695,8 @@ class ProjectBoqImportWizard(models.TransientModel):
             return category
 
         for row in row_iter:
-            # 小工具：按字段名取这一行对应列的值
+            
+             #小工具：按字段名取这一行对应列的值
             def get(field):
                 idx = col_map.get(field)
                 if idx is None or idx >= len(row):
@@ -508,8 +709,23 @@ class ProjectBoqImportWizard(models.TransientModel):
                 skipped_rows += 1
                 continue
 
-            # 分部标题行：项目编码空、名称有值（且非数字） -> 记录当前分部，跳过本行
-            if not code and name and not self._is_number(name):
+            eff_boq_category = boq_category or self.boq_category
+
+            # 逻辑上的“项目编码”：只保留阿拉伯数字，过滤掉序号/符号
+            logical_code_digits = re.sub(r"\D", "", code or "")
+
+            # 非分部分项清单：缺少编码直接跳过，避免必填校验失败
+            if eff_boq_category != "boq" and not code:
+                skipped_rows += 1
+                continue
+
+            # 分部分项清单：项目编码空、名称有值（且非数字） -> 记录当前分部，跳过本行
+            if (
+                eff_boq_category == "boq"
+                and not code
+                and name
+                and not self._is_number(name)
+            ):
                 # 小计/合计类行作为分部标题会污染分部名称，直接跳过
                 lower_name = name.lower()
                 if any(key in lower_name for key in ["合计", "小计", "本页", "本表"]):
@@ -529,7 +745,9 @@ class ProjectBoqImportWizard(models.TransientModel):
                 "sheet_name": sheet_name,
                 "source_type": self.source_type,
                 "version": self.version,
-                "boq_category": boq_category or self.boq_category or "boq",
+                "boq_category": eff_boq_category or "boq",
+                # 默认认为都是清单项，后续在 _create_with_hierarchy 里再根据层级修正
+                "line_type": "item",
             }
             if section_type and not vals["section_type"]:
                 vals["section_type"] = section_type
@@ -539,11 +757,35 @@ class ProjectBoqImportWizard(models.TransientModel):
             qty = get("quantity")
             price = get("price")
             amount_val = get("amount")
+            rate_val = get("rate")
+            calc_base = str(get("calc_base") or "").strip()
+
+            # ---- 总价措施 / 规费 / 税金 专用规则 ----
+            if eff_boq_category in ("total_measure", "fee", "tax"):
+                lower_name = (name or "").lower()
+                # 1) 合计/本页/本表 行直接跳过
+                if any(k in lower_name for k in ("合计", "本页", "本表")):
+                    skipped_rows += 1
+                    continue
+
+                # 2) 子目行：逻辑上无有效项目编码 + 有金额，当前版本不导入，避免重复计入总价
+                #    例如 ① / ② / ③ / ④ 这些序号会被视为无效编码
+                if not logical_code_digits and self._is_number(amount_val):
+                    continue
+
+                # 3) 只有金额，没有工程量/单价 → 用金额补齐 qty/price
+                if (not self._is_number(qty)) and (not self._is_number(price)) and self._is_number(amount_val):
+                    qty = 1.0
+                    price = amount_val
+
+                # 4) 金额型费用行统一视为清单项
+                vals["line_type"] = "item"
 
             if code:
                 vals["code"] = code
             if spec:
                 vals["spec"] = spec
+
             # 记录当前分部名称，便于后续 WBS 直接使用（无需再从 remark 里解析）
             if current_division:
                 vals["division_name"] = current_division
@@ -553,6 +795,8 @@ class ProjectBoqImportWizard(models.TransientModel):
 
             vals["quantity"] = self._to_float(qty)
             vals["price"] = self._to_float(price)
+            # 注意：amount 字段是 compute+store，直接写值会被覆盖；
+            # 这里仍然填入，主要是便于后续调试或可能的自定义逻辑。
             vals["amount"] = self._to_float(amount_val)
 
             # 若数量/单价/合价均为0，则视为标题/小计行跳过
@@ -669,10 +913,126 @@ class ProjectBoqImportWizard(models.TransientModel):
                     cost_item_cache[cost_item_name] = cost_item
                 vals["cost_item_id"] = cost_item.id or False
 
+            # --- 总价措施 / 单价措施等“非分部分项”表的分部兜底 ---
+            # 这些表本身没有“分部标题行”，为了避免 division_name=False 出现在分组视图里，
+            # 这里按清单类别统一给一个可读的分部名称。
+            if not vals.get("division_name"):
+                if boq_category in ("total_measure",):
+                    # 总价措施项目清单
+                    vals["division_name"] = "总价措施项目"
+                elif boq_category in ("unit_measure",):
+                    # 单价措施项目清单
+                    vals["division_name"] = "单价措施项目"
+                elif boq_category in ("fee", "tax"):
+                    vals["division_name"] = "规费及税金"
+
             rows.append(vals)
 
         return rows, created_uoms, skipped_rows
 
+    # -------------------------------------------------------------------------
+    # 其他项目清单（专用解析）
+    # -------------------------------------------------------------------------
+    def _build_rows_other(
+        self,
+        data_rows,
+        sheet_index=None,
+        sheet_name=None,
+        section_type=None,
+        default_single=None,
+        default_unit=None,
+        major_name=None,
+    ):
+        """
+        解析《其他项目清单与计价汇总表》：
+        - A 列：序号/层级编码（1 / 2 / 2.1 / 3 / 合计）
+        - B 列：项目名称
+        - C 列：金额（无数量/单价）
+        """
+        rows = []
+        skipped = 0
+
+        Uom = self.env["uom.uom"]
+
+        def _default_uom():
+            category = self.env.ref("uom.product_uom_categ_unit", raise_if_not_found=False)
+            if not category:
+                category = self.env["uom.category"].search([], limit=1)
+            ref_uom = False
+            if category:
+                ref_uom = Uom.search(
+                    [("category_id", "=", category.id), ("uom_type", "=", "reference")], limit=1
+                )
+                if not ref_uom:
+                    ref_uom = Uom.create(
+                        {
+                            "name": "项",
+                            "category_id": category.id,
+                            "uom_type": "reference",
+                            "factor": 1.0,
+                            "factor_inv": 1.0,
+                            "rounding": 0.0001,
+                            "active": True,
+                        }
+                    )
+            return ref_uom
+
+        default_uom = _default_uom()
+
+        for row in data_rows:
+            code = str((row[0] if len(row) > 0 else "") or "").strip()
+            name = str((row[1] if len(row) > 1 else "") or "").strip()
+            amount_raw = row[2] if len(row) > 2 else ""
+
+            # 空行直接跳过
+            if not code and not name:
+                skipped += 1
+                continue
+
+            # 合计/总计行（写在序号或项目名称里）一律跳过
+            label = f"{code}{name}".replace(" ", "").replace("　", "")
+            if label in ("合计", "本表合计", "本页合计", "总计", "台计"):
+                skipped += 1
+                continue
+
+            line_type, level = self._parse_other_line_level(code)
+            if not line_type or not level:
+                # 兜底：当作一级标题
+                line_type = "group"
+                level = 1
+
+            amount = self._to_float(amount_raw)
+            qty = 1.0
+            price = amount
+
+            vals = {
+                "project_id": self.project_id.id,
+                "name": name,
+                "code": code,
+                "quantity": qty,
+                "price": price,
+                "amount": amount,
+                "boq_category": "other",
+                "division_name": "其他项目",
+                "line_type": line_type,
+                "sheet_index": sheet_index,
+                "sheet_name": sheet_name,
+                "section_type": self.section_type or section_type or False,
+                "single_name": default_single or self.single_name or False,
+                "unit_name": default_unit or self.unit_name or False,
+                "major_name": major_name or False,
+                "source_type": self.source_type,
+                "version": self.version,
+            }
+            if default_uom:
+                vals["uom_id"] = default_uom.id
+            rows.append(vals)
+
+        return rows, skipped
+
+    # -------------------------------------------------------------------------
+    # 字符串/数值工具
+    # -------------------------------------------------------------------------
     def _read_as_csv(self, data_bytes):
         """Return CSV string from raw bytes."""
         return self._parse_csv_bytes(data_bytes)
@@ -705,19 +1065,13 @@ class ProjectBoqImportWizard(models.TransientModel):
                 return val
         return False
 
-    @staticmethod
-    def _is_supported_sheet(title):
-        """仅处理常见清单表，跳过封面/汇总等无效 sheet，匹配更宽。"""
-        text = (title or "").replace(" ", "")
-        keywords = [
-            # 分部分项
-            "分部分项工程清单", "分部分项工程量清单",
-            # 单价措施
-            "单价措施项目清单", "单价措施", "措施项目清单",
-            # 总价措施
-            "总价措施项目清单", "总价措施",
-        ]
-        return any(key in text for key in keywords)
+    def _is_supported_sheet(self, title):
+        """
+        只要能识别出 sheet_type，就认为是“清单相关的有效 sheet”，其他一律跳过
+        （封面、汇总表、投标总说明之类不会被读取）。
+        """
+        sheet_type, category = ProjectBoqImportWizard._classify_sheet_title(title or "")
+        return bool(sheet_type)
 
     @staticmethod
     def _map_major_to_section_type(major_name):
@@ -743,14 +1097,36 @@ class ProjectBoqImportWizard(models.TransientModel):
                 return val
         return False
 
+    # 其他项目清单：根据序号判断层级与行类型
+    @staticmethod
+    def _parse_other_line_level(code):
+        """
+        返回 (line_type, level)：
+        - 纯数字：一级 group
+        - 数字.数字：二级 item
+        - 合计：None
+        """
+        text = (code or "").strip()
+        if text in ("合计", "合 计", "台计"):
+            return None, None
+        if not text:
+            return None, None
+        if text.isdigit():
+            return "group", 1
+        if re.match(r"^\d+\.\d+$", text):
+            return "item", 2
+        return None, None
+
     @staticmethod
     def _detect_boq_category(sheet_title):
-        """根据 sheet 名推断清单类别：分部分项/单价措施/总价措施。"""
-        title = (sheet_title or "").lower()
-        if any(k in title for k in ["单价措施", "措施清单", "措施项目"]):
-            return "unit_measure"
-        if any(k in title for k in ["总价措施"]):
-            return "total_measure"
+        """
+        根据 sheet 名推断清单类别：分部分项/单价措施/总价措施/规费/税金/其他项目。
+        实现上复用 _classify_sheet_title 的逻辑。
+        """
+        sheet_type, category = ProjectBoqImportWizard._classify_sheet_title(sheet_title or "")
+        if category:
+            return category
+        # 没识别到就按分部分项兜底
         return "boq"
 
     @staticmethod
@@ -760,8 +1136,6 @@ class ProjectBoqImportWizard(models.TransientModel):
         return text.lower()
 
     @staticmethod
-
-
     def _is_number(val):
         try:
             if isinstance(val, str):
@@ -829,6 +1203,9 @@ class ProjectBoqImportWizard(models.TransientModel):
                     return main
         return norm_name
 
+    # -------------------------------------------------------------------------
+    # 批量创建 & 层级构建
+    # -------------------------------------------------------------------------
     def _batch_create(self, model, vals_list):
         """批量创建，避免一次性巨大列表占用内存/锁时间过长。"""
         if not vals_list:
@@ -843,45 +1220,166 @@ class ProjectBoqImportWizard(models.TransientModel):
 
     def _create_with_hierarchy(self, model, vals_list):
         """
-        批量创建 + 根据编码推断层级，写入 parent_id。
+        批量创建 + 根据编码/上下文推断层级，写入 parent_id + line_type。
         仅在分部分项清单（boq_category='boq'）中使用。
+
+        思路：
+        - 保持创建顺序（vals_list 的顺序），避免打乱 Excel 原始行序；
+        - 以 (project, section_type, single_name, unit_name, sheet_index) 为分段 key，
+          每一段单独维护一个“层级栈”（stack: level -> record）；
+        - 根据编码/名称/是否有数量，调用 _classify_line 得到 (line_type, level)；
+        - level=0 无 parent，level>0 时 parent = stack[level-1]；
+        - 最后将当前记录放入 stack[level]，供后续行作为下级挂接。
         """
         if not vals_list:
             return 0
 
+        # 一次性创建所有记录（保持 vals_list 顺序）
         records = model.create(vals_list)
-        stack = {}
 
-        for rec in records:
-            level = self._guess_line_level(rec.code or "", rec.name or "")
-            stack = {lvl: r for lvl, r in stack.items() if lvl < level}
+        # 为了保证层级构建稳定，以 sheet_index / id 排个序
+        ordered_records = sorted(
+            records,
+            key=lambda r: (
+                r.project_id.id or 0,
+                r.section_type or "",
+                r.single_name or "",
+                r.unit_name or "",
+                r.sheet_index or 0,
+                r.id,
+            ),
+        )
+
+        current_key = None
+        stack = {}  # level(int) -> record
+
+        for rec in ordered_records:
+            key = (
+                rec.project_id.id,
+                rec.section_type or "",
+                rec.single_name or "",
+                rec.unit_name or "",
+                rec.sheet_index or 0,
+            )
+            # 换了 sheet / 单项工程 / 单位工程：重置层级栈
+            if key != current_key:
+                stack = {}
+                current_key = key
+
+            # 其他项目清单：使用专用层级规则（code 决定 level）
+            if rec.boq_category == "other":
+                o_line_type, o_level = ProjectBoqImportWizard._parse_other_line_level(rec.code)
+                if not o_line_type or o_level is None:
+                    o_line_type, o_level = "group", 1
+                rec.line_type = o_line_type
+                if o_level <= 0:
+                    rec.parent_id = False
+                else:
+                    parent = stack.get(o_level - 1)
+                    rec.parent_id = parent.id if parent else False
+                stack[o_level] = rec
+                continue
+
+            line_type, level = self._classify_line(
+                code=rec.code,
+                name=rec.name,
+                qty=rec.quantity,
+                price=rec.price,
+                amount=rec.amount,
+                boq_category=rec.boq_category,
+            )
+
+            # 写入行类型
+            rec.line_type = line_type
+
+            # 处理 parent_id
             if level <= 0:
                 rec.parent_id = False
             else:
                 parent = stack.get(level - 1)
                 rec.parent_id = parent.id if parent else False
+
+            # 当前层级占位
             stack[level] = rec
 
         return len(records)
 
     @staticmethod
-    def _guess_line_level(code, name):
+    def _classify_line(code, name, qty, price, amount, boq_category):
         """
-        根据编码长度保守推断层级：
-        <=2位:章，<=4位:节，<=6位:子目，其它:清单项。
-        非纯数字（或含点）的编码视为清单项。
+        读一行，判断：
+        - line_type: major / division / group / item
+        - level: 0,1,2,3  对应 章 / 分部 / 小结 / 清单项
+
+        规则分两块：
+        A) 总价措施 / 规费 / 税金 等“金额型费用表”
+        B) 普通分部分项清单（编码驱动层级）
         """
         code = (code or "").strip()
-        if not code:
-            return 3
+        name = (name or "").strip()
+        lname = name.lower()
+
+        # 是否有“数量/单价/金额”数值
+        has_numeric = any(
+            ProjectBoqImportWizard._is_number(v)
+            for v in (qty, price, amount)
+        )
+
+        # ---------- A) 总价措施 / 规费 / 税金 ----------
+        if boq_category in ("total_measure", "fee", "tax"):
+            # 典型结构：第一行有项目编码，下面若干行无编码，表示该费用的组成明细
+            #   1  安全文明施工费  code=0411..., amount 有值
+            #   1.1 环境保护费    code 为空，费率/金额有值
+            #   1.2 文明施工费    ...
+            #
+            # 策略：
+            # - 只要这一行有 code → 视为“费用汇总行”（group, level 1）
+            # - 同一表中，后续无 code 的行 → 视为该费用下的明细项（item, level 2）
+            # - “合计/本表合计”等仍按通用小计过滤逻辑跳过（在别处已经处理）
+            if code:
+                return "group", 1
+            else:
+                # 无编码，但有金额/费率 → 明细项
+                if has_numeric:
+                    return "item", 2
+                # 实在啥都没有，就当成标题行（几乎不会出现）
+                return "group", 1
+
+        # ---------- B) 普通分部分项清单：原有逻辑 ----------
+        # 特殊前缀：MAJ-xxx / DIV-xxx
+        if code.startswith("MAJ-") or code.startswith("MAJ"):
+            return "major", 0
+        if code.startswith("DIV-") or code.startswith("DIV"):
+            return "division", 1
+
+        # 纯数字/带点编码
         pure = code.replace(".", "")
-        if not pure.isdigit():
-            return 3
-        length = len(pure)
-        if length <= 2:
-            return 0
-        if length <= 4:
-            return 1
-        if length <= 6:
-            return 2
-        return 3
+        if pure.isdigit():
+            length = len(pure)
+            if length <= 2:
+                return "major", 0
+            if length <= 4:
+                return "division", 1
+            if length <= 6:
+                return "group", 2
+            # 一般 8~12 位都是具体清单项目码
+            return "item", 3
+
+        # 无编码 & 无数值：标题/汇总
+        if not code and not has_numeric:
+            # 合计/小计 视为小结行
+            if any(k in lname for k in ("合计", "小计", "本页", "本表")):
+                return "group", 2
+            # 名称里包含“工程/专业”等，视为分部工程
+            if any(k in name for k in ("工程", "专业", "道路", "市政", "桥梁", "绿化")):
+                return "division", 1
+            # 其他标题，暂当 group
+            return "group", 2
+
+        # 有数值，但是编码非数字（比如 “0401090024-01” 的特殊写法）
+        if has_numeric:
+            return "item", 3
+
+        # 兜底：实在分不清的都当清单项，不破坏数据
+        return "item", 3
+
