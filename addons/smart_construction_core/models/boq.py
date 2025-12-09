@@ -40,6 +40,21 @@ class ProjectBoqLine(models.Model):
         store=True,
         help="1=顶级（专业清单），2=分部清单，3=清单项，以此类推。",
     )
+    is_group = fields.Boolean(
+        "章节/标题行",
+        help="用于标识本行是否为章节/汇总标题行；阶段1中仅作为标记字段，后续由导入引擎和层级算法统一维护。",
+        index=True,
+    )
+    hierarchy_code = fields.Char(
+        "层级编号",
+        help="与清单表中章节编号对应，如 1, 1.1, 1.1.2；阶段1中仅存储导入解析结果，不参与计算。",
+        index=True,
+    )
+    display_order = fields.Char(
+        "展示顺序",
+        help="用于树/列表视图的稳定排序，例如 001.001.005；阶段1中先留空，后续由导入引擎填充。",
+        index=True,
+    )
 
     sequence = fields.Integer("序号", default=10)
     section_type = fields.Selection(
