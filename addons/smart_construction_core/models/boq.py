@@ -80,6 +80,7 @@ class ProjectBoqLine(models.Model):
         currency_field="currency_id",
         compute="_compute_amount",
         store=True,
+        recursive=True,
     )
     has_warning = fields.Boolean("有警告", readonly=True)
     warning_message = fields.Char("警告信息", readonly=True)
@@ -190,12 +191,13 @@ class ProjectBoqLine(models.Model):
     @api.depends("line_type", "quantity", "price", "child_ids.amount")
     def _compute_amount(self):
         for rec in self:
-            if rec.line_type == "item":
-                qty = rec.quantity or 0.0
-                price = rec.price or 0.0
-                rec.amount = qty * price
-            else:
+            qty = rec.quantity or 0.0
+            price = rec.price or 0.0
+            # 有子节点时优先使用子节点合计；否则回退到自身数量*单价
+            if rec.line_type != "item" and rec.child_ids:
                 rec.amount = sum(rec.child_ids.mapped("amount"))
+            else:
+                rec.amount = qty * price
 
     @api.model_create_multi
     def create(self, vals_list):
