@@ -1,174 +1,231 @@
 <odoo>
+    <!-- 工程量清单：树视图 -->
     <record id="view_project_boq_line_tree" model="ir.ui.view">
         <field name="name">project.boq.line.tree</field>
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
-        <tree string="工程量清单"
-              default_order="project_id, parent_path, sequence">
-            <field name="sequence" widget="handle" optional="hide"/>
-            <field name="project_id" optional="hide"/>
-            <field name="parent_id" optional="hide"/>
-            <field name="level" invisible="1"/>
+            <tree string="工程量清单"
+                  default_order="section_type, parent_path, sequence, id"
+                  decoration-bf="line_type != 'item'">
 
-            <!-- WBS 聚合维度 -->
-            <field name="single_name"/>
-            <field name="unit_name"/>
-            <field name="major_name" optional="hide"/>
-            <field name="code_division" optional="hide"/>
-            <field name="code_subdivision" optional="hide"/>
+                <!-- 树结构关键字段（隐藏） -->
+                <field name="parent_id" invisible="1"/>
+                <field name="line_type" invisible="1"/>
 
-            <!-- 基本特征 -->
-            <field name="section_type"/>
-            <field name="category" optional="hide"/>
-            <field name="is_provisional" optional="hide"/>
-            <field name="source_type" optional="hide"/>
-            <field name="version" optional="hide"/>
-            <field name="code"/>
-            <field name="name"/>
-            <field name="spec"/>
+                <!-- 拖拽排序 -->
+                <field name="sequence" widget="handle" optional="hide"/>
 
-            <!-- 计量计价 -->
-            <field name="uom_id"/>
-            <field name="quantity"/>
-            <field name="price"/>
-            <field name="amount" sum="金额合计"/>
+                <!-- 名称列（用于显示缩进） -->
+                <field name="name" string="名称"/>
 
-            <!-- 关联信息 -->
-            <field name="cost_item_id" optional="hide"/>
-            <field name="structure_id" optional="hide"/>
-            <field name="task_id" optional="hide"/>
-            <field name="remark" optional="hide"/>
-        </tree>
-    </field>
-</record>
+                <!-- 层级信息 -->
+                <field name="level" string="层级" readonly="1" optional="hide"/>
 
+                <!-- 工程维度 -->
+                <field name="project_id" optional="hide"/>
+                <field name="section_type"/>
+                <field name="single_name" optional="hide"/>
+                <field name="unit_name" optional="hide"/>
+                <field name="major_name" optional="hide"/>
+                <field name="category" optional="hide"/>
+                <field name="is_provisional" optional="hide"/>
+                <field name="source_type" optional="hide"/>
+                <field name="version" optional="hide"/>
+                <field name="code_division" optional="hide"/>
+                <field name="code_subdivision" optional="hide"/>
+
+                <!-- 清单识别信息 -->
+                <field name="code"/>
+                <field name="spec"/>
+
+                <!-- 计量计价 -->
+                <field name="uom_id"/>
+                <field name="quantity"/>
+                <field name="price"/>
+                <field name="amount" sum="工程合价"/>
+
+                <!-- 预警信息 -->
+                <field name="has_warning" widget="boolean_toggle" optional="hide"/>
+                <field name="warning_message" optional="hide"/>
+
+                <!-- 关联信息 -->
+                <field name="cost_item_id" optional="hide"/>
+                <field name="structure_id" optional="hide"/>
+                <field name="task_id" optional="hide"/>
+                <field name="remark" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 工程量清单：表单视图 -->
     <record id="view_project_boq_line_form" model="ir.ui.view">
         <field name="name">project.boq.line.form</field>
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
             <form string="工程量清单">
                 <sheet>
-                <group>
                     <group>
-                        <field name="project_id"/>
-                        <field name="section_type"/>
-                        <field name="category"/>
-                        <field name="is_provisional"/>
-                    </group>
-                    <group>
-                        <field name="sequence"/>
-                        <field name="code"/>
-                        <field name="name"/>
-                        <field name="spec"/>
-                    </group>
-                </group>
-
-                <group string="层级结构">
-                    <group>
-                        <field name="parent_id"/>
-                        <field name="level" readonly="1"/>
-                    </group>
-                </group>
-
-                <group string="工程属性">
-                    <group>
-                        <field name="single_name" readonly="1"/>
-                        <field name="unit_name" readonly="1"/>
-                        <field name="major_name" readonly="1"/>
-                    </group>
-                    <group>
-                        <field name="source_type"/>
-                        <field name="version"/>
-                        <field name="sheet_index" readonly="1"/>
-                        <field name="sheet_name" readonly="1"/>
-                        <field name="structure_id" readonly="1"/>
-                        <field name="task_id" readonly="1"/>
-                    </group>
-                </group>
-                <group>
-                    <group>
-                        <field name="uom_id"/>
-                        <field name="quantity"/>
-                        <field name="price"/>
-                        <field name="amount" readonly="1"/>
-                    </group>
-                    <group>
-                        <field name="cost_item_id"/>
-                        <field name="remark"/>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="section_type"/>
+                            <field name="category"/>
+                            <field name="is_provisional"/>
                         </group>
-                </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="spec"/>
+                        </group>
+                    </group>
 
-                <notebook>
-                    <page string="下级清单">
-                        <field name="child_ids">
-                            <tree editable="bottom">
-                                <field name="sequence" widget="handle"/>
-                                <field name="code"/>
-                                <field name="name"/>
-                                <field name="category"/>
-                                <field name="uom_id"/>
-                                <field name="quantity"/>
-                                <field name="price"/>
-                                <field name="amount" readonly="1"/>
-                            </tree>
-                        </field>
-                    </page>
-                </notebook>
+                    <group string="层级结构">
+                        <group>
+                            <field name="parent_id"/>
+                            <field name="level" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="工程属性">
+                        <group>
+                            <field name="single_name" readonly="1"/>
+                            <field name="unit_name" readonly="1"/>
+                            <field name="major_name" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="source_type"/>
+                            <field name="version"/>
+                            <field name="sheet_index" readonly="1"/>
+                            <field name="sheet_name" readonly="1"/>
+                            <field name="structure_id" readonly="1"/>
+                            <field name="task_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group>
+                            <field name="uom_id"/>
+                            <field name="quantity"/>
+                            <field name="price"/>
+                            <field name="amount" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="cost_item_id"/>
+                            <field name="remark"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="下级清单">
+                            <field name="child_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="category"/>
+                                    <field name="uom_id"/>
+                                    <field name="quantity"/>
+                                    <field name="price"/>
+                                    <field name="amount" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
     </record>
 
+    <!-- 工程量清单：Pivot 视图 -->
     <record id="view_project_boq_line_pivot" model="ir.ui.view">
         <field name="name">project.boq.line.pivot</field>
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
             <pivot string="工程量清单分析">
-                <field name="project_id" type="row"/>
-                <field name="section_type" type="row"/>
-                <field name="category" type="row"/>
-                <field name="single_name" type="col" optional="hide"/>
-                <field name="major_name" type="col" optional="hide"/>
-                <field name="source_type" type="col" optional="hide"/>
-                <field name="amount" type="measure"/>
+                <field name="amount" type="measure" string="合价"/>
                 <field name="quantity" type="measure" invisible="1"/>
+                <field name="project_id"/>
+                <field name="section_type"/>
+                <field name="major_name"/>
+                <field name="division_name"/>
+                <field name="category" optional="hide"/>
+                <field name="line_type" optional="hide"/>
             </pivot>
         </field>
     </record>
 
+    <!-- 工程量清单：主列表 Action -->
     <record id="action_project_boq_line" model="ir.actions.act_window">
         <field name="name">工程量清单</field>
         <field name="res_model">project.boq.line</field>
         <field name="view_mode">tree,form,pivot</field>
         <field name="view_id" ref="view_project_boq_line_tree"/>
         <field name="context">{'search_default_group_by_project': 1}</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
+        <field name="groups_id"
+               eval="[(4, ref('smart_construction_core.group_sc_user')),
+                      (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
+    <!-- 工程量清单：分析 Action -->
+    <record id="action_project_boq_line_analysis" model="ir.actions.act_window">
+        <field name="name">工程量清单分析</field>
+        <field name="res_model">project.boq.line</field>
+        <field name="view_mode">tree,pivot,graph</field>
+        <field name="search_view_id" ref="view_project_boq_line_search"/>
+        <field name="context">{'search_default_project_id': active_id}</field>
+    </record>
+
+    <!-- 工程量清单：搜索视图 -->
     <record id="view_project_boq_line_search" model="ir.ui.view">
         <field name="name">project.boq.line.search</field>
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
             <search string="工程量清单">
                 <field name="project_id"/>
+                <field name="name"/>
+                <field name="code"/>
                 <field name="section_type"/>
+                <field name="major_name"/>
+                <field name="division_name"/>
                 <field name="category"/>
                 <field name="single_name"/>
                 <field name="unit_name"/>
                 <field name="source_type"/>
                 <field name="version"/>
 
-                <filter string="按项目" name="group_by_project" context="{'group_by': 'project_id'}"/>
-                <filter string="按工程类别" name="group_by_section" context="{'group_by': 'section_type'}"/>
-                <filter string="按类别" name="group_by_category" context="{'group_by': 'category'}"/>
-                <filter string="按单项工程" name="group_by_single" context="{'group_by': 'single_name'}"/>
-                <filter string="按单位工程" name="group_by_unit" context="{'group_by': 'unit_name'}"/>
-                <filter string="按来源" name="group_by_source" context="{'group_by': 'source_type'}"/>
-                <filter string="按版本" name="group_by_version" context="{'group_by': 'version'}"/>
+                <filter string="仅清单项" name="only_item"
+                        domain="[('line_type','=','item')]"/>
+                <filter string="仅有警告" name="only_warning"
+                        domain="[('has_warning','=',True)]"/>
+
                 <separator/>
-                <filter string="仅暂列/暂估" name="only_provisional" domain="[('is_provisional','=',True)]"/>
+                <group expand="1" string="分组">
+                    <filter string="按项目" name="group_by_project"
+                            context="{'group_by': 'project_id'}"/>
+                    <filter string="按工程类别" name="group_by_section"
+                            context="{'group_by': 'section_type'}"/>
+                    <filter string="按专业" name="group_by_major"
+                            context="{'group_by': 'major_name'}"/>
+                    <filter string="按分部" name="group_by_division"
+                            context="{'group_by': 'division_name'}"/>
+                    <filter string="按类别" name="group_by_category"
+                            context="{'group_by': 'category'}"/>
+                    <filter string="按单项工程" name="group_by_single"
+                            context="{'group_by': 'single_name'}"/>
+                    <filter string="按单位工程" name="group_by_unit"
+                            context="{'group_by': 'unit_name'}"/>
+                    <filter string="按来源" name="group_by_source"
+                            context="{'group_by': 'source_type'}"/>
+                    <filter string="按版本" name="group_by_version"
+                            context="{'group_by': 'version'}"/>
+                    <filter string="按行类型" name="group_by_line_type"
+                            context="{'group_by': 'line_type'}"/>
+                </group>
+
+                <separator/>
+                <filter string="仅暂列/暂估" name="only_provisional"
+                        domain="[('is_provisional','=',True)]"/>
             </search>
         </field>
     </record>
-
 </odoo>
