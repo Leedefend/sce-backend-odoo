@@ -5,7 +5,7 @@
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
             <tree string="工程量清单"
-                  default_order="section_type, parent_path, sequence, id"
+                  default_order="section_type, display_order, id"
                   decoration-bf="line_type != 'item'">
 
                 <!-- 树结构关键字段（隐藏） -->
@@ -45,7 +45,8 @@
                 <field name="uom_id"/>
                 <field name="quantity"/>
                 <field name="price"/>
-                <field name="amount" sum="工程合价"/>
+                <field name="amount"/>
+                <field name="stat_amount" string="合价(统计)" sum="合计金额" optional="hide"/>
 
                 <!-- 预警信息 -->
                 <field name="has_warning" widget="boolean_toggle" optional="hide"/>

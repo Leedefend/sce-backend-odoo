@@ -130,7 +130,7 @@ class ProjectBoqImportWizard(models.TransientModel):
 
             created = 0
             for cat, chunk in grouped.items():
-                if cat in ("boq", "other"):
+                if cat in ("boq", "other", "total_measure", "fee", "tax"):
                     created += self._create_with_hierarchy(Boq, chunk)
                 else:
                     created += self._batch_create(Boq, chunk)
@@ -680,6 +680,7 @@ class ProjectBoqImportWizard(models.TransientModel):
         created_uoms = set()
         skipped_rows = 0
         current_division = None
+        row_index = 0  # sheet 内行号（数据行）
 
         def _default_uom_category():
             """选用通用“单位”类别，若缺失则取任一类别兜底。"""
@@ -689,6 +690,7 @@ class ProjectBoqImportWizard(models.TransientModel):
             return category
 
         for row in row_iter:
+            row_index += 1
             
              #小工具：按字段名取这一行对应列的值
             def get(field):
@@ -762,18 +764,18 @@ class ProjectBoqImportWizard(models.TransientModel):
                     skipped_rows += 1
                     continue
 
-                # 2) 子目行：逻辑上无有效项目编码 + 有金额，当前版本不导入，避免重复计入总价
-                #    例如 ① / ② / ③ / ④ 这些序号会被视为无效编码
-                if not logical_code_digits and self._is_number(amount_val):
+                # 2) 如果完全没有数值，当作标题跳过
+                has_numeric_any = any(
+                    self._is_number(v) for v in (qty, price, amount_val)
+                )
+                if not has_numeric_any:
+                    skipped_rows += 1
                     continue
 
                 # 3) 只有金额，没有工程量/单价 → 用金额补齐 qty/price
                 if (not self._is_number(qty)) and (not self._is_number(price)) and self._is_number(amount_val):
                     qty = 1.0
                     price = amount_val
-
-                # 4) 金额型费用行统一视为清单项
-                vals["line_type"] = "item"
 
             if code:
                 vals["code"] = code
@@ -920,6 +922,12 @@ class ProjectBoqImportWizard(models.TransientModel):
                 elif boq_category in ("fee", "tax"):
                     vals["division_name"] = "规费及税金"
 
+            # 为树/列表提供稳定排序键
+            vals["display_order"] = self._make_display_order(
+                sheet_index=sheet_index or 0,
+                row_index=row_index,
+            )
+
             rows.append(vals)
 
         return rows, created_uoms, skipped_rows
@@ -947,6 +955,7 @@ class ProjectBoqImportWizard(models.TransientModel):
         skipped = 0
 
         Uom = self.env["uom.uom"]
+        row_index = 0  # sheet 内行号（数据行）
 
         def _default_uom():
             category = self.env.ref("uom.product_uom_categ_unit", raise_if_not_found=False)
@@ -974,6 +983,7 @@ class ProjectBoqImportWizard(models.TransientModel):
         default_uom = _default_uom()
 
         for row in data_rows:
+            row_index += 1
             code = str((row[0] if len(row) > 0 else "") or "").strip()
             name = str((row[1] if len(row) > 1 else "") or "").strip()
             amount_raw = row[2] if len(row) > 2 else ""
@@ -1018,6 +1028,10 @@ class ProjectBoqImportWizard(models.TransientModel):
                 "source_type": self.source_type,
                 "version": self.version,
             }
+            vals["display_order"] = self._make_display_order(
+                sheet_index=sheet_index or 0,
+                row_index=row_index,
+            )
             if default_uom:
                 vals["uom_id"] = default_uom.id
             rows.append(vals)
@@ -1173,6 +1187,15 @@ class ProjectBoqImportWizard(models.TransientModel):
         cleaned = cleaned.replace(",", "").replace("，", "").replace(" ", "").strip()
         return cleaned
 
+    # --- display_order helpers ---
+    def _make_display_order(self, sheet_index, row_index):
+        """
+        Phase-3: 基于 sheet+行号 的稳定排序键。
+        为避免跨 sheet 冲突，每个 sheet 预留 1,000,000 空间。
+        """
+        base = (sheet_index or 0) * 1_000_000
+        return base + (row_index or 0)
+
     # --- UoM helpers ---
     def _normalize_uom_name(self, name):
         """基本规范化：去空格、全角转半角、小写。"""
@@ -1312,6 +1335,7 @@ class ProjectBoqImportWizard(models.TransientModel):
         code = (code or "").strip()
         name = (name or "").strip()
         lname = name.lower()
+        code_digits = re.sub(r"\D", "", code) if code else ""
 
         # 是否有“数量/单价/金额”数值
         has_numeric = any(
@@ -1330,7 +1354,7 @@ class ProjectBoqImportWizard(models.TransientModel):
             # - 只要这一行有 code → 视为“费用汇总行”（group, level 1）
             # - 同一表中，后续无 code 的行 → 视为该费用下的明细项（item, level 2）
             # - “合计/本表合计”等仍按通用小计过滤逻辑跳过（在别处已经处理）
-            if code:
+            if code_digits:
                 return "group", 1
             else:
                 # 无编码，但有金额/费率 → 明细项

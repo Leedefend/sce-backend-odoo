@@ -9,7 +9,7 @@ class ProjectBoqLine(models.Model):
 
     _name = "project.boq.line"
     _description = "工程量清单"
-    _order = "project_id, section_type, parent_path, sequence, id"
+    _order = "project_id, section_type, display_order, id"
     _parent_store = True
     _parent_name = "parent_id"
 
@@ -96,6 +96,19 @@ class ProjectBoqLine(models.Model):
         compute="_compute_amount",
         store=True,
         recursive=True,
+    )
+    stat_qty = fields.Float(
+        "统计工程量",
+        compute="_compute_stat_values",
+        store=True,
+        help="用于汇总统计的工程量；不同清单类别按业务规则筛选参与统计的行。",
+    )
+    stat_amount = fields.Monetary(
+        "统计合价",
+        currency_field="currency_id",
+        compute="_compute_stat_values",
+        store=True,
+        help="用于汇总统计的合价；避免父子节点重复累加。",
     )
     has_warning = fields.Boolean("有警告", readonly=True)
     warning_message = fields.Char("警告信息", readonly=True)
@@ -213,6 +226,33 @@ class ProjectBoqLine(models.Model):
                 rec.amount = sum(rec.child_ids.mapped("amount"))
             else:
                 rec.amount = qty * price
+
+    @api.depends("quantity", "amount", "boq_category", "level", "line_type")
+    def _compute_stat_values(self):
+        """
+        统计专用字段，避免父子重复累加：
+        - 总价措施/规费/税金：仅 level=1 参与统计
+        - 分部分项：仅清单项参与统计
+        - 其他类别：全部参与统计
+        """
+        for rec in self:
+            qty = 0.0
+            amt = 0.0
+
+            if rec.boq_category in ("total_measure", "fee", "tax"):
+                if rec.level == 1:
+                    qty = rec.quantity or 0.0
+                    amt = rec.amount or 0.0
+            elif rec.boq_category == "boq":
+                if rec.line_type == "item":
+                    qty = rec.quantity or 0.0
+                    amt = rec.amount or 0.0
+            else:
+                qty = rec.quantity or 0.0
+                amt = rec.amount or 0.0
+
+            rec.stat_qty = qty
+            rec.stat_amount = amt
 
     @api.model_create_multi
     def create(self, vals_list):
