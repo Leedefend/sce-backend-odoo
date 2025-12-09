@@ -184,14 +184,8 @@ class ProjectBoqImportWizard(models.TransientModel):
         """Parse CSV/XLS/XLSX into vals list for project.boq.line."""
         data = base64.b64decode(self.file)
         filename = (self.filename or "").lower()
-
-        # Excel：xlsx/xls
-        if filename.endswith((".xlsx", ".xls")):
-            return self._parse_excel(data, filename)
-
-        # 默认按 UTF-8/GBK CSV 解析
-        content = self._read_as_csv(data)
-        return self._parse_csv_content(content)
+        parser = BoqParser(self)
+        return parser.parse_file(data, filename)
 
     def _parse_csv_content(self, content):
         reader = csv.reader(io.StringIO(content))
@@ -1382,4 +1376,126 @@ class ProjectBoqImportWizard(models.TransientModel):
 
         # 兜底：实在分不清的都当清单项，不破坏数据
         return "item", 3
+
+
+# -------------------------------------------------------------------------
+# 层级构建器（阶段2占位：封装栈操作，保持现有层级算法）
+# -------------------------------------------------------------------------
+class HierarchyBuilder:
+    def __init__(self):
+        self.stack = {}
+
+    def reset(self):
+        self.stack = {}
+
+    def place(self, rec, level):
+        parent = self.stack.get(level - 1)
+        rec.parent_id = parent.id if parent else False
+        self.stack[level] = rec
+
+    def refresh_parent_path(self, records):
+        """占位：统一刷新 parent_path；失败时静默，保持现有行为。"""
+        try:
+            records._parent_store_compute()
+        except Exception:
+            pass
+
+    def heal_hierarchy(self, records):
+        """
+        Phase-2 占位：层级连续性修复接口。
+        当前未启用，后续阶段用于批量调整 level/parent_id/display_order。
+        """
+        return records
+
+
+# -------------------------------------------------------------------------
+# 阶段2架构：解析器骨架（行为保持不变）
+# -------------------------------------------------------------------------
+class RowParser:
+    """行解析器骨架：后续可按清单类别扩展，当前作为占位，保持现有行为。"""
+
+    def __init__(self, wizard):
+        self.wizard = wizard
+
+    def parse_row(self, raw_row, col_map):
+        """占位：返回原始行，供后续按类别定制。"""
+        return raw_row
+
+
+class BoqParser:
+    """
+    Phase-2: 导入解析骨架。
+    当前仍委托原有 _parse_excel/_build_rows_from_iter，承担结构封装与章节池占位，
+    不改变导入业务行为。
+    """
+
+    def __init__(self, wizard):
+        self.wizard = wizard
+        self.row_parser = RowParser(wizard)
+        # 章节池：收集标题/章节文本（阶段2仅收集，不做推断）
+        self.chapter_pool = []
+
+    def parse_file(self, data, filename):
+        """按文件类型分发，返回 rows/created_uoms/skipped。"""
+        fname = (filename or "").lower()
+        if fname.endswith((".xlsx", ".xls")):
+            return self.wizard._parse_excel(data, fname)
+        # CSV 默认解析
+        content = self.wizard._read_as_csv(data)
+        return self.wizard._parse_csv_content(content)
+
+    def parse_sheet(self, sheet, sheet_index):
+        """
+        占位：保留扩展点（阶段2框架），当前由 wizard._parse_excel 处理。
+        预解析合并单元格标题区并收集章节池（仅收集，不推断）。
+        """
+        titles = self.parse_merged_title_area(sheet)
+        if titles:
+            self.chapter_pool.extend(titles)
+        return None
+
+    def parse_rows(self, data_rows):
+        """占位：保留扩展点（阶段2框架），当前由 wizard._build_rows_from_iter 处理。"""
+        return None
+
+    # ------------------ 章节/标题预解析（阶段2占位） ------------------
+    def parse_merged_title_area(self, sheet, max_rows=5):
+        """
+        简单读取前几行合并单元格的非空文本，作为章节池候选。
+        阶段2仅收集文本，不做层级推断。
+        """
+        titles = []
+        try:
+            merge_ranges = sheet.merged_cells
+        except Exception:
+            merge_ranges = None
+        ranges = getattr(merge_ranges, "ranges", merge_ranges) or []
+        seen = set()
+        for m in ranges:
+            try:
+                min_row, min_col, max_row, max_col = m.min_row, m.min_col, m.max_row, m.max_col
+            except Exception:
+                continue
+            if min_row > max_rows:
+                continue
+            try:
+                val = sheet.cell(row=min_row, column=min_col).value
+            except Exception:
+                val = None
+            text = str(val or "").strip()
+            if text and text not in seen:
+                titles.append(text)
+                seen.add(text)
+        # 兜底：再扫一遍前 max_rows 行的非空单元格，补充章节文本
+        for r in range(1, max_rows + 1):
+            row_vals = []
+            try:
+                row_vals = [str(sheet.cell(row=r, column=c).value or "").strip() for c in range(1, (sheet.max_column or 0) + 1)]
+            except Exception:
+                pass
+            for v in row_vals:
+                if v and v not in seen:
+                    titles.append(v)
+                    seen.add(v)
+        return titles
 
