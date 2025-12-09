@@ -160,6 +160,21 @@
                                 type="action"
                                 class="btn-secondary"
                                 name="%(smart_construction_core.action_project_task_from_boq_wizard)d"/>
+                        <button string="重建工程量清单层级"
+                                type="object"
+                                class="btn-secondary"
+                                name="action_rebuild_boq_hierarchy"
+                                groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
+                        <button string="校验工程量清单"
+                                type="object"
+                                class="btn-secondary"
+                                name="action_validate_boq"
+                                groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
+                        <button string="工程量清单分析"
+                                type="action"
+                                class="btn-secondary"
+                                name="%(smart_construction_core.action_project_boq_line_analysis)d"
+                                context="{'search_default_project_id': [active_id]}"/>
                     </group>
                     <group string="清单汇总">
                         <field name="boq_amount_total" readonly="1"/>
