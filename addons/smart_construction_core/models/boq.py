@@ -97,6 +97,20 @@ class ProjectBoqLine(models.Model):
         store=True,
         recursive=True,
     )
+    amount_raw = fields.Monetary(
+        "原始金额",
+        currency_field="currency_id",
+        compute="_compute_amount_raw",
+        store=True,
+        help="数量*单价得到的原始金额，用于对账。",
+    )
+    amount_invest = fields.Monetary(
+        "投资金额",
+        currency_field="currency_id",
+        compute="_compute_amount_invest",
+        store=True,
+        help="投资口径金额：总价措施/规费/税金的明细行不参与统计。",
+    )
     stat_qty = fields.Float(
         "统计工程量",
         compute="_compute_stat_values",
@@ -226,6 +240,25 @@ class ProjectBoqLine(models.Model):
                 rec.amount = sum(rec.child_ids.mapped("amount"))
             else:
                 rec.amount = qty * price
+
+    @api.depends("quantity", "price")
+    def _compute_amount_raw(self):
+        """原始金额=数量*单价，用于与外部清单对账。"""
+        for rec in self:
+            rec.amount_raw = (rec.quantity or 0.0) * (rec.price or 0.0)
+
+    @api.depends("amount_raw", "level", "boq_category")
+    def _compute_amount_invest(self):
+        """
+        投资口径金额：
+        - 总价措施/规费/税金：仅 level=1 参与统计，明细行不计入
+        - 其他类别：使用原始金额
+        """
+        for rec in self:
+            invest = rec.amount_raw or 0.0
+            if rec.boq_category in ("total_measure", "fee", "tax") and (rec.level or 0) > 1:
+                invest = 0.0
+            rec.amount_invest = invest
 
     @api.depends("quantity", "amount", "boq_category", "level", "line_type")
     def _compute_stat_values(self):

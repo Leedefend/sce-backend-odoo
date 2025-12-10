@@ -45,6 +45,8 @@
                 <field name="uom_id"/>
                 <field name="quantity"/>
                 <field name="price"/>
+                <field name="amount_raw" string="原始金额" sum="原始合计" optional="hide"/>
+                <field name="amount_invest" string="投资金额" sum="投资合计" optional="hide"/>
                 <field name="amount"/>
                 <field name="stat_amount" string="合价(统计)" sum="合计金额" optional="hide"/>
 
@@ -151,7 +153,8 @@
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
             <pivot string="工程量清单分析">
-                <field name="amount" type="measure" string="合价"/>
+                <field name="amount_invest" type="measure" string="投资金额"/>
+                <field name="amount_raw" type="measure" string="原始金额" optional="hide"/>
                 <field name="quantity" type="measure" invisible="1"/>
                 <field name="project_id"/>
                 <field name="section_type"/>
