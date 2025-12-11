@@ -1,0 +1,171 @@
+<odoo>
+    <!-- Specialty -->
+    <record id="view_sc_norm_specialty_tree" model="ir.ui.view">
+        <field name="name">sc.norm.specialty.tree</field>
+        <field name="model">sc.norm.specialty</field>
+        <field name="arch" type="xml">
+            <tree string="专业">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="sheet_name"/>
+                <field name="sequence"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_norm_specialty_form" model="ir.ui.view">
+        <field name="name">sc.norm.specialty.form</field>
+        <field name="model">sc.norm.specialty</field>
+        <field name="arch" type="xml">
+            <form string="专业">
+                <sheet>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="sheet_name"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="章节">
+                            <field name="chapter_ids">
+                                <tree editable="bottom">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="sequence"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="定额子目">
+                            <field name="item_ids">
+                                <tree editable="bottom">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="chapter_id"/>
+                                    <field name="unit_raw"/>
+                                    <field name="price_total"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_norm_specialty" model="ir.actions.act_window">
+        <field name="name">专业</field>
+        <field name="res_model">sc.norm.specialty</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Chapter -->
+    <record id="view_sc_norm_chapter_tree" model="ir.ui.view">
+        <field name="name">sc.norm.chapter.tree</field>
+        <field name="model">sc.norm.chapter</field>
+        <field name="arch" type="xml">
+            <tree string="章节">
+                <field name="specialty_id"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="sequence"/>
+                <field name="norm_code_start"/>
+                <field name="norm_code_end"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_norm_chapter_form" model="ir.ui.view">
+        <field name="name">sc.norm.chapter.form</field>
+        <field name="model">sc.norm.chapter</field>
+        <field name="arch" type="xml">
+            <form string="章节">
+                <sheet>
+                    <group>
+                        <field name="specialty_id"/>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="sequence"/>
+                        <field name="norm_code_start"/>
+                        <field name="norm_code_end"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_norm_chapter" model="ir.actions.act_window">
+        <field name="name">章节</field>
+        <field name="res_model">sc.norm.chapter</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Item -->
+    <record id="view_sc_norm_item_tree" model="ir.ui.view">
+        <field name="name">sc.norm.item.tree</field>
+        <field name="model">sc.norm.item</field>
+        <field name="arch" type="xml">
+            <tree string="定额子目">
+                <field name="specialty_id"/>
+                <field name="chapter_id"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="unit_raw"/>
+                <field name="uom_id"/>
+                <field name="price_total"/>
+                <field name="cost_direct"/>
+                <field name="cost_labor"/>
+                <field name="cost_material"/>
+                <field name="cost_machine"/>
+                <field name="fee_rate"/>
+                <field name="cost_misc"/>
+                <field name="line_no"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_norm_item_form" model="ir.ui.view">
+        <field name="name">sc.norm.item.form</field>
+        <field name="model">sc.norm.item</field>
+        <field name="arch" type="xml">
+            <form string="定额子目">
+                <sheet>
+                    <group>
+                        <field name="specialty_id"/>
+                        <field name="chapter_id"/>
+                    </group>
+                    <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="unit_raw"/>
+                        <field name="uom_id"/>
+                    </group>
+                    <group string="费用">
+                        <group>
+                            <field name="price_total"/>
+                            <field name="cost_direct"/>
+                            <field name="cost_labor"/>
+                            <field name="cost_material"/>
+                            <field name="cost_machine"/>
+                        </group>
+                        <group>
+                            <field name="fee_rate"/>
+                            <field name="cost_misc"/>
+                            <field name="line_no"/>
+                        </group>
+                    </group>
+                    <group string="工作内容">
+                        <field name="work_desc" nolabel="1" colspan="4"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_norm_item" model="ir.actions.act_window">
+        <field name="name">定额子目</field>
+        <field name="res_model">sc.norm.item</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

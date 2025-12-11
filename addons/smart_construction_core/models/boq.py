@@ -97,6 +97,9 @@ class ProjectBoqLine(models.Model):
         store=True,
         recursive=True,
     )
+    # 单价分析表基价（人工/机械），导入时回写，便于对账和分析
+    base_labor_unit = fields.Float("人工基价")
+    base_machine_unit = fields.Float("机械基价")
     has_warning = fields.Boolean("有警告", readonly=True)
     warning_message = fields.Char("警告信息", readonly=True)
 

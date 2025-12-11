@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sc_norm_specialty_user,sc_norm_specialty_user,model_sc_norm_specialty,base.group_user,1,0,0,0
+access_sc_norm_specialty_manager,sc_norm_specialty_manager,model_sc_norm_specialty,base.group_system,1,1,1,1
+access_sc_norm_chapter_user,sc_norm_chapter_user,model_sc_norm_chapter,base.group_user,1,0,0,0
+access_sc_norm_chapter_manager,sc_norm_chapter_manager,model_sc_norm_chapter,base.group_system,1,1,1,1
+access_sc_norm_item_user,sc_norm_item_user,model_sc_norm_item,base.group_user,1,0,0,0
+access_sc_norm_item_manager,sc_norm_item_manager,model_sc_norm_item,base.group_system,1,1,1,1

@@ -28,7 +28,6 @@
         'security/ir.model.access.csv',
 
         # 视图
-        'views/dictionary_views.xml',
         'views/cost_domain_views.xml',
         'views/project_boq_import_views.xml',
         'views/project_task_from_boq_views.xml',
@@ -50,7 +49,16 @@
         'views/project_budget_views.xml',
         'views/project_extend_boq_views.xml',
         'views/menu.xml',
+        'views/dictionary_views.xml',
+        'views/quota_import_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'smart_construction_core/static/src/js/project_quota_center.js',
+            'smart_construction_core/static/src/xml/project_quota_center.xml',
+            'smart_construction_core/static/src/scss/project_quota_center.scss',
+        ],
+    },
     'demo': [
         # 如需演示数据再启用
         # 'data/cost_domain_demo.xml',
