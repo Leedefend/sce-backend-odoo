@@ -97,6 +97,15 @@ class ProjectBoqLine(models.Model):
         store=True,
         recursive=True,
     )
+    # 基价/分析指标
+    base_labor_unit = fields.Float(
+        "单位人工费(基价)",
+        help="综合单价分析表中的人工费合价（单价基数）。",
+    )
+    base_machine_unit = fields.Float(
+        "单位机械费(基价)",
+        help="综合单价分析表中的机械费合价（单价基数）。",
+    )
     amount_raw = fields.Monetary(
         "原始金额",
         currency_field="currency_id",

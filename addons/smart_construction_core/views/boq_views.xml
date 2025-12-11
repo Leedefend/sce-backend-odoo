@@ -63,6 +63,19 @@
         </field>
     </record>
 
+    <!-- 在列表中补充人工/机械基价列，便于校验综合单价分析导入 -->
+    <record id="view_project_boq_line_tree_inherit_analysis" model="ir.ui.view">
+        <field name="name">project.boq.line.tree.analysis</field>
+        <field name="model">project.boq.line</field>
+        <field name="inherit_id" ref="smart_construction_core.view_project_boq_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree/field[@name='price']" position="after">
+                <field name="base_labor_unit" string="人工基价"/>
+                <field name="base_machine_unit" string="机械基价"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- 工程量清单：表单视图 -->
     <record id="view_project_boq_line_form" model="ir.ui.view">
         <field name="name">project.boq.line.form</field>

@@ -2,11 +2,14 @@
 import base64
 import csv
 import io
+import logging
 import re
 
 from odoo import fields, models
 from odoo.exceptions import UserError
 from odoo.tools import misc
+
+_logger = logging.getLogger(__name__)
 
 try:
     import openpyxl
@@ -103,11 +106,16 @@ class ProjectBoqImportWizard(models.TransientModel):
     # -------------------------------------------------------------------------
     def action_import(self):
         self.ensure_one()
+        _logger.info(
+            ">>> [BOQ IMPORT] START filename=%s, project=%s",
+            self.filename,
+            self.project_id.display_name,
+        )
         if not self.file:
             raise UserError("请先上传导入文件。")
 
-        rows, created_uoms, skipped = self._parse_file()
-        if not rows:
+        rows, created_uoms, skipped, analysis_updates = self._parse_file()
+        if not rows and not analysis_updates:
             raise UserError(
                 "未找到可导入的清单数据：\n"
                 "请确认文件中至少有一行同时包含名称列（清单名称/项目名称/汇总内容等）"
@@ -165,6 +173,8 @@ class ProjectBoqImportWizard(models.TransientModel):
         if created_uoms:
             log_lines.append("自动创建计量单位：\n- " + "\n- ".join(sorted(created_uoms)))
             self.project_id.message_post(body=log_lines[-1])
+        if analysis_updates:
+            self._apply_price_analysis_updates(analysis_updates)
         log_lines.append("如需刷新工程结构，请在项目中点击“生成工程结构”按钮。")
         self.log = "\n".join(log_lines)
 
@@ -213,7 +223,7 @@ class ProjectBoqImportWizard(models.TransientModel):
                 default_unit=self.unit_name,
                 boq_category=self.boq_category,
             )
-        return rows, created_uoms, skipped
+        return rows, created_uoms, skipped, {}
 
     def _parse_excel(self, data, filename):
         """解析 XLS/XLSX 为 project.boq.line 的 vals 列表。"""
@@ -221,15 +231,30 @@ class ProjectBoqImportWizard(models.TransientModel):
         rows_all = []
         created_uoms_all = set()
         skipped_all = 0
+        analysis_updates = {}
 
         # ---------------- XLSX ----------------
         if filename.endswith(".xlsx"):
             if not openpyxl:
                 raise UserError("服务器缺少 openpyxl，无法解析 XLSX，请安装依赖或改用 CSV。")
-            book = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+            book = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
 
             for idx, sheet in enumerate(book.worksheets, start=1):
                 title = sheet.title or ""
+                # 综合单价分析表：单独解析基数数据
+                if self._is_price_analysis_sheet(sheet):
+                    try:
+                        updates = self._parse_price_analysis_sheet(sheet)
+                        if updates:
+                            analysis_updates.update(updates)
+                    except Exception as exc:
+                        _logger.warning(
+                            "[BOQ IMPORT] Skip price analysis sheet '%s' due to error: %s",
+                            title,
+                            exc,
+                        )
+                    continue
+
                 # 根据 sheet 名称分类；封面/汇总等直接跳过
                 sheet_type, sheet_category = self._classify_sheet_title(title)
                 if sheet_type in ("cover", "summary", "other_skip"):
@@ -302,7 +327,7 @@ class ProjectBoqImportWizard(models.TransientModel):
                 created_uoms_all.update(created_uoms)
                 skipped_all += skipped
 
-            return rows_all, created_uoms_all, skipped_all
+            return rows_all, created_uoms_all, skipped_all, analysis_updates
 
         # ---------------- XLS ----------------
         if filename.endswith(".xls"):
@@ -315,6 +340,19 @@ class ProjectBoqImportWizard(models.TransientModel):
                     continue
 
                 title = sheet.name or ""
+                if self._is_price_analysis_sheet(sheet):
+                    try:
+                        updates = self._parse_price_analysis_sheet(sheet)
+                        if updates:
+                            analysis_updates.update(updates)
+                    except Exception as exc:
+                        _logger.warning(
+                            "[BOQ IMPORT] Skip price analysis sheet '%s' due to error: %s",
+                            title,
+                            exc,
+                        )
+                    continue
+
                 sheet_type, sheet_category = self._classify_sheet_title(title)
                 if sheet_type in ("cover", "summary", "other_skip"):
                     continue
@@ -380,10 +418,11 @@ class ProjectBoqImportWizard(models.TransientModel):
                 created_uoms_all.update(created_uoms)
                 skipped_all += skipped
 
-            return rows_all, created_uoms_all, skipped_all
+            return rows_all, created_uoms_all, skipped_all, analysis_updates
 
         # ---------------- Fallback: 按 CSV 解析 ----------------
-        return self._parse_csv_bytes(data), set(), 0
+        rows, created_uoms, skipped, analysis_updates_csv = self._parse_csv_content(self._parse_csv_bytes(data))
+        return rows, created_uoms, skipped, analysis_updates_csv
 
     # -------------------------------------------------------------------------
     # Sheet 名称分类（核心升级点）
@@ -489,6 +528,59 @@ class ProjectBoqImportWizard(models.TransientModel):
     def _find_header_in_sheet(self, row_iter):
         """Deprecated: use _extract_excel_header/_extract_xls_header."""
         return [], 0
+
+    # ----------------- 单价分析表解析 -----------------
+    def _is_price_analysis_sheet(self, sheet, scan_rows=6):
+        """简单识别综合单价分析表：前几行包含关键词。"""
+        keywords = ("综合单价分析表",)
+        try:
+            max_row = min(scan_rows, sheet.max_row or 0)
+            for r in range(1, max_row + 1):
+                for c in range(1, (sheet.max_column or 0) + 1):
+                    val = str(sheet.cell(row=r, column=c).value or "").strip()
+                    if any(k in val for k in keywords):
+                        return True
+        except Exception:
+            try:
+                max_row = min(scan_rows, sheet.nrows)
+                for r in range(max_row):
+                    row_vals = [str(sheet.cell_value(r, c) or "").strip() for c in range(sheet.ncols)]
+                    if any(any(k in v for k in keywords) for v in row_vals):
+                        return True
+            except Exception:
+                return False
+        return False
+
+    def _parse_price_analysis_sheet(self, sheet):
+        """解析综合单价分析表，返回 code -> {labor_unit, machine_unit}。"""
+        parser = BoqPriceAnalysisParser(self)
+        return parser.parse_sheet(sheet) or {}
+
+    def _apply_price_analysis_updates(self, updates):
+        """将单价分析表提取的基数写回 BOQ 行。"""
+        if not updates:
+            return
+        BoqLine = self.env["project.boq.line"]
+        lines = BoqLine.search([("project_id", "=", self.project_id.id)])
+        line_by_code = { (ln.code or "").strip(): ln for ln in lines }
+        missing = []
+        for raw_code, info in updates.items():
+            code = (raw_code or "").strip()
+            line = line_by_code.get(code)
+            if not line:
+                missing.append(code)
+                continue
+            vals = {}
+            if "labor_unit" in info:
+                vals["base_labor_unit"] = info["labor_unit"]
+            if "machine_unit" in info:
+                vals["base_machine_unit"] = info["machine_unit"]
+            if vals:
+                line.write(vals)
+        if missing:
+            msg = "单价分析表中以下编码未找到对应清单行：\n- " + "\n- ".join(sorted(set(filter(None, missing))))
+            if self.project_id and hasattr(self.project_id, "message_post"):
+                self.project_id.message_post(body=msg)
 
     # ----------------- Excel helpers -----------------
     def _parse_engineering_header_excel(self, sheet, limit=5):
@@ -728,6 +820,11 @@ class ProjectBoqImportWizard(models.TransientModel):
                     skipped_rows += 1
                     continue
                 current_division = name
+                continue
+
+            # 仍然没有编码的分部分项行直接跳过，避免必填校验失败
+            if eff_boq_category == "boq" and not code:
+                skipped_rows += 1
                 continue
 
             vals = {
@@ -990,6 +1087,11 @@ class ProjectBoqImportWizard(models.TransientModel):
 
             # 空行直接跳过
             if not code and not name:
+                skipped += 1
+                continue
+
+            # 无编码的行不导入，避免必填字段报错
+            if not code:
                 skipped += 1
                 continue
 
@@ -1435,6 +1537,133 @@ class HierarchyBuilder:
 # -------------------------------------------------------------------------
 # 阶段2架构：解析器骨架（行为保持不变）
 # -------------------------------------------------------------------------
+class BoqPriceAnalysisParser:
+    """综合单价分析表解析：提取人工/机械费基价。"""
+
+    def __init__(self, wizard):
+        self.wizard = wizard
+
+    def parse_sheet(self, sheet):
+        """
+        返回: {code: {"labor_unit": float, "machine_unit": float}}
+
+        解析规则：
+        - 以“项目编码”为块起点
+        - 找到包含“人工”“机械”的表头行
+        - 表头中取最后一个“人工/机械”列（合价区域）
+        - 在费用分解区找到“小计”行，读取对应列数值作为基价
+        """
+        import re
+
+        results = {}
+
+        def nrows():
+            try:
+                return sheet.max_row or 0
+            except Exception:
+                return getattr(sheet, "nrows", 0)
+
+        def ncols():
+            try:
+                return sheet.max_column or 0
+            except Exception:
+                return getattr(sheet, "ncols", 0)
+
+        def cell_value(r, c):
+            """兼容 openpyxl(1-based) / xlrd(0-based)。"""
+            try:
+                return sheet.cell(row=r, column=c).value
+            except Exception:
+                try:
+                    return sheet.cell_value(r, c)
+                except Exception:
+                    return None
+
+        def normalize(val):
+            return str(val or "").strip()
+
+        def normalize_code(raw):
+            """把 '(1) 010101001001' 标准化为 '010101001001'。"""
+            s = str(raw or "").strip()
+            s = re.sub(r"^\(\d+\)\s*", "", s)
+            return s
+
+        def row_values(r):
+            vals = []
+            for c in range(1, ncols() + 1):
+                vals.append(normalize(cell_value(r, c)))
+            if vals and all(v == "" for v in vals):
+                # 兼容 xlrd 0-based 行
+                vals = [normalize(cell_value(r - 1, c)) for c in range(ncols())]
+            return vals
+
+        def find_row(start, end, keywords):
+            for r in range(start, min(end, nrows()) + 1):
+                vals = row_values(r)
+                joined = " ".join(vals)
+                if all(k in joined for k in keywords):
+                    return r, vals
+            return None, None
+
+        def find_col(vals, keyword, from_right=False):
+            indices = [i + 1 for i, v in enumerate(vals) if keyword in v]
+            if not indices:
+                return None
+            return indices[-1] if from_right else indices[0]
+
+        def get_number(r, c):
+            try:
+                val = cell_value(r, c)
+                text = str(val or "").replace(",", "").replace("，", "").strip()
+                return float(text) if text not in ("", "-") else 0.0
+            except Exception:
+                return 0.0
+
+        r = 1
+        max_r = nrows()
+        while r <= max_r:
+            vals = row_values(r)
+            if any("项目编码" in v for v in vals):
+                # 获取编码：当前行除“项目编码”之外的第一个非空值
+                code = ""
+                for v in vals:
+                    if "项目编码" not in v and v:
+                        code = v
+                        break
+                if not code and len(vals) >= 2:
+                    code = vals[1]
+                code = normalize_code(code)
+
+                header_row, header_vals = find_row(r, r + 30, ["人工", "机械"])
+                if not header_row:
+                    r += 1
+                    continue
+                labor_col = find_col(header_vals, "人工", from_right=True)
+                machine_col = find_col(header_vals, "机械", from_right=True)
+                if not labor_col and not machine_col:
+                    r = header_row + 1
+                    continue
+
+                subtotal_row, _ = find_row(header_row + 1, header_row + 40, ["小", "计"])
+                if not subtotal_row:
+                    r = header_row + 1
+                    continue
+
+                labor_val = get_number(subtotal_row, labor_col) if labor_col else 0.0
+                machine_val = get_number(subtotal_row, machine_col) if machine_col else 0.0
+
+                if code:
+                    results.setdefault(code, {})
+                    results[code]["labor_unit"] = labor_val
+                    results[code]["machine_unit"] = machine_val
+
+                r = subtotal_row + 1
+            else:
+                r += 1
+
+        return results
+
+
 class RowParser:
     """行解析器骨架：后续可按清单类别扩展，当前作为占位，保持现有行为。"""
 
@@ -1466,7 +1695,8 @@ class BoqParser:
             return self.wizard._parse_excel(data, fname)
         # CSV 默认解析
         content = self.wizard._read_as_csv(data)
-        return self.wizard._parse_csv_content(content)
+        rows, created_uoms, skipped, analysis_updates = self.wizard._parse_csv_content(content)
+        return rows, created_uoms, skipped, analysis_updates
 
     def parse_sheet(self, sheet, sheet_index):
         """
