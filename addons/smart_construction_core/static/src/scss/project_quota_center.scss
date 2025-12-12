@@ -23,6 +23,24 @@
     width: 100%;
 }
 
+.o_quota_init_loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px 24px;
+    color: #666;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.o_quota_init_spinner {
+    font-size: 18px;
+    color: #6c4fa1;
+}
+
 /* ============= 左侧树 Panel ============= */
 
 .o_quota_tree_panel {
@@ -141,6 +159,18 @@
     gap: 12px;
 }
 
+.o_quota_loading_badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #f3f0fb;
+    border-radius: 12px;
+    color: #6c4fa1;
+    font-size: 12px;
+    border: 1px solid rgba(108, 79, 161, 0.12);
+}
+
 .o_quota_toggle_active {
     display: inline-flex;
     align-items: center;
@@ -199,6 +229,7 @@
     min-height: 0;
     overflow-y: auto;
     outline: none;
+    position: relative;
 }
 
 .o_quota_list_body:focus {
@@ -276,6 +307,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.o_quota_list_overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .o_quota_number {
