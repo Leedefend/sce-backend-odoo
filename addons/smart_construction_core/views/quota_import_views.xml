@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_quota_import_wizard_form" model="ir.ui.view">
+        <field name="name">quota.import.wizard.form</field>
+        <field name="model">quota.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="四川定额导入" create="false" edit="false">
+                <sheet>
+                    <group>
+                        <field name="filename" readonly="1"/>
+                        <field name="file_data" filename="filename"/>
+                        <field name="sheet_name"/>
+                        <field name="header_row"/>
+                    </group>
+                    <div class="o_form_label">
+                        不填 Sheet 名则导入配置中定义的全部 Sheet；header_row 默认第 1 行为表头。
+                    </div>
+                    <footer>
+                        <button string="导入" type="object" name="action_import" class="btn-primary"/>
+                        <button string="取消" special="cancel" class="btn-secondary"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_quota_import_wizard" model="ir.actions.act_window">
+        <field name="name">四川定额导入</field>
+        <field name="res_model">quota.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- 菜单：挂到配置 → 数据字典 下，方便直接导入到 project.dictionary -->
+    <menuitem id="menu_quota_import_wizard"
+              name="四川定额导入"
+              parent="menu_sc_dictionary_root"
+              action="action_quota_import_wizard"
+              sequence="50"
+              groups="smart_construction_core.group_sc_manager"/>
+</odoo>

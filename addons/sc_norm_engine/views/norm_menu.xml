@@ -1,0 +1,9 @@
+<odoo>
+    <menuitem id="menu_sc_norm_root" name="定额引擎" sequence="10"/>
+
+    <menuitem id="menu_sc_norm_specialty" name="专业" parent="menu_sc_norm_root" action="action_sc_norm_specialty"/>
+    <menuitem id="menu_sc_norm_chapter" name="章节" parent="menu_sc_norm_root" action="action_sc_norm_chapter"/>
+    <menuitem id="menu_sc_norm_item" name="定额子目" parent="menu_sc_norm_root" action="action_sc_norm_item"/>
+
+    <menuitem id="menu_sc_norm_import" name="导入定额" parent="menu_sc_norm_root" action="action_sc_norm_import_wizard"/>
+</odoo>

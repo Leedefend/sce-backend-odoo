@@ -58,3 +58,6 @@ access_tender_guarantee_user,tender.guarantee.user,model_tender_guarantee,smart_
 access_project_budget_user,access_project_budget_user,model_project_budget,base.group_user,1,1,1,1
 access_project_budget_line_user,access_project_budget_line_user,model_project_budget_line,base.group_user,1,1,1,1
 access_project_wbs_user,access_project_wbs_user,model_project_wbs,base.group_user,1,0,0,0
+access_project_dictionary_user,project.dictionary.user,model_project_dictionary,smart_construction_core.group_sc_user,1,0,0,0
+access_project_dictionary_manager,project.dictionary.manager,model_project_dictionary,smart_construction_core.group_sc_manager,1,1,1,1
+access_quota_import_wizard_manager,quota.import.wizard.manager,model_quota_import_wizard,smart_construction_core.group_sc_manager,1,1,1,1

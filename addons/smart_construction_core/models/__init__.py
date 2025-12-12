@@ -16,6 +16,7 @@ from . import profit_report
 from . import project_budget
 from . import task_extend
 from . import work_breakdown
+from . import project_dictionary
 from . import boq
 from . import tender
 from . import res_config_settings
