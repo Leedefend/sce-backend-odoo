@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 列表 -->
+    <record id="view_project_material_plan_tree" model="ir.ui.view">
+        <field name="name">project.material.plan.tree</field>
+        <field name="model">project.material.plan</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="date_plan"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 表单 -->
+    <record id="view_project_material_plan_form" model="ir.ui.view">
+        <field name="name">project.material.plan.form</field>
+        <field name="model">project.material.plan</field>
+        <field name="arch" type="xml">
+            <form string="物资计划">
+                <header>
+                    <button name="action_submit"
+                            type="object"
+                            string="提交"
+                            class="oe_highlight"
+                            groups="smart_construction_core.group_sc_cap_material_user"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve"
+                            type="object"
+                            string="批准"
+                            class="btn-primary"
+                            groups="smart_construction_core.group_sc_cap_material_manager"
+                            invisible="state != 'submit'"/>
+                    <button name="action_reject"
+                            type="object"
+                            string="驳回"
+                            class="btn-secondary"
+                            groups="smart_construction_core.group_sc_cap_material_manager"
+                            invisible="state != 'submit'"/>
+                    <button name="%(action_material_plan_to_rfq_wizard)d"
+                            type="action"
+                            string="生成采购单"
+                            class="btn-secondary"
+                            invisible="state != 'approved'"/>
+                    <button name="action_done"
+                            type="object"
+                            string="完成"
+                            class="btn-secondary"
+                            groups="smart_construction_core.group_sc_cap_material_manager"
+                            invisible="state != 'approved'"/>
+                    <button name="action_cancel"
+                            type="object"
+                            string="取消"
+                            class="btn-secondary"
+                            groups="smart_construction_core.group_sc_cap_material_manager"
+                            invisible="state in ['done','cancel']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submit,approved,done,cancel"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_purchase_orders" icon="fa-shopping-cart">
+                            <field name="purchase_order_count" widget="statinfo" string="采购单"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_purchase_lines" icon="fa-list">
+                            <field name="purchase_line_count" widget="statinfo" string="采购明细"/>
+                        </button>
+                    </div>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="project_id" required="1"/>
+                        <field name="date_plan"/>
+                    </group>
+                    <group>
+                        <field name="submitted_by" readonly="1"/>
+                        <field name="submitted_at" readonly="1"/>
+                        <field name="approved_by" readonly="1"/>
+                        <field name="approved_at" readonly="1"/>
+                        <field name="reject_reason" readonly="1" modifiers='{"invisible": [["reject_reason","=",false]]}'/>
+                    </group>
+                    <notebook>
+                        <page string="明细">
+                            <field name="state" invisible="1"/>
+                            <field name="line_ids" context="{}"
+                                   modifiers='{"readonly": [["state","!=","draft"]]}'>
+                                <tree editable="bottom" create="1" delete="1">
+                                    <field name="product_id"/>
+                                    <field name="spec"/>
+                                    <field name="quantity"/>
+                                    <field name="uom_id"/>
+                                    <field name="vendor_id"/>
+                                    <field name="note"/>
+                                </tree>
+                                <form string="明细">
+                                    <group>
+                                        <field name="product_id"/>
+                                        <field name="spec"/>
+                                        <field name="quantity"/>
+                                        <field name="uom_id"/>
+                                        <field name="vendor_id"/>
+                                        <field name="note"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- 动作 -->
+    <record id="action_project_material_plan" model="ir.actions.act_window">
+        <field name="name">物资计划</field>
+        <field name="res_model">project.material.plan</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- 菜单：挂到物资中心 -->
+    <menuitem id="menu_project_material_plan"
+              parent="menu_sc_material_center"
+              name="物资计划"
+              action="action_project_material_plan"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
+</odoo>
