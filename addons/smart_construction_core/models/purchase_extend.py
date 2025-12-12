@@ -10,6 +10,11 @@ class PurchaseOrder(models.Model):
         string="关联项目",
         help="该采购订单关联的施工项目，默认同步到订单行。",
     )
+    plan_id = fields.Many2one(
+        "project.material.plan",
+        string="物资计划",
+        help="来源物资计划，便于追溯生成关系。",
+    )
 
     def button_confirm(self):
         for order in self:
@@ -56,6 +61,17 @@ class PurchaseOrderLine(models.Model):
         string="项目",
         default=lambda self: self.order_id.project_id,
         help="可单独指定采购行对应的项目，默认继承订单。",
+    )
+    plan_id = fields.Many2one(
+        related="order_id.plan_id",
+        string="物资计划",
+        store=True,
+        readonly=True,
+    )
+    plan_line_id = fields.Many2one(
+        "project.material.plan.line",
+        string="计划明细",
+        help="记录采购行对应的物资计划行，便于追溯。",
     )
     wbs_id = fields.Many2one(
         "construction.work.breakdown",

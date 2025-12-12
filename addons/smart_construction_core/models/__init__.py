@@ -23,3 +23,6 @@ from . import res_config_settings
 from . import account_move_line_ext
 from . import project_extend_boq
 from . import settlement_order
+from . import settlement
+from . import payment_request
+from . import material_plan
