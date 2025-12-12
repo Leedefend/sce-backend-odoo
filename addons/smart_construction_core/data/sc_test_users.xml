@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="user_sc_pm_01" model="res.users">
+            <field name="name">测试-项目经理A</field>
+            <field name="login">pm1</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_project_manager')])]"/>
+        </record>
+
+        <record id="user_sc_material_01" model="res.users">
+            <field name="name">测试-物资员A</field>
+            <field name="login">mat1</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_material_user')])]"/>
+        </record>
+
+        <record id="user_sc_material_mgr_01" model="res.users">
+            <field name="name">测试-物资主管A</field>
+            <field name="login">mat_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_material_manager')])]"/>
+        </record>
+
+        <record id="user_sc_purchase_01" model="res.users">
+            <field name="name">测试-采购员A</field>
+            <field name="login">pur1</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_purchase_user')])]"/>
+        </record>
+
+        <record id="user_sc_fin_01" model="res.users">
+            <field name="name">测试-出纳A</field>
+            <field name="login">fin1</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_finance_user')])]"/>
+        </record>
+
+        <record id="user_sc_fin_mgr_01" model="res.users">
+            <field name="name">测试-财务经理A</field>
+            <field name="login">fin_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_finance_manager')])]"/>
+        </record>
+
+        <record id="user_sc_contract_01" model="res.users">
+            <field name="name">测试-合同管理员A</field>
+            <field name="login">ct1</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_contract_admin')])]"/>
+        </record>
+
+        <record id="user_sc_cost_01" model="res.users">
+            <field name="name">测试-成本员A</field>
+            <field name="login">cost1</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_cost_user')])]"/>
+        </record>
+    </data>
+</odoo>
