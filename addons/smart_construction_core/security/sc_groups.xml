@@ -26,16 +26,12 @@
              - 职责：日常录入 / 查询 Smart Construction 相关数据
            ======================================================= -->
         <record id="group_sc_user" model="res.groups">
-            <field name="name">Smart Construction User</field>
+            <field name="name">Smart Construction User (Deprecated)</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="comment">
-                基础业务用户角色：
-                - 允许访问 Smart Construction 相关菜单和文档
-                - 仅具有日常录入 / 查询权限
-                具体访问范围由 ir.model.access.csv 与记录规则决定。
+                已废弃占位组：保留历史记录，避免升级报错；不再承载实际权限。
             </field>
-            <!-- 继承 Odoo 内部用户角色 -->
-            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="implied_ids" eval="[]"/>
         </record>
 
         <!-- =======================================================
@@ -45,16 +41,12 @@
              - 职责：在基础权限上增加审批、审核、部分配置能力
            ======================================================= -->
         <record id="group_sc_manager" model="res.groups">
-            <field name="name">Smart Construction Manager</field>
+            <field name="name">Smart Construction Manager (Deprecated)</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="comment">
-                管理角色：
-                - 在基础用户权限之上，增加审批 / 审核 / 管理操作权限
-                - 通常与更高的模型访问权限（ir.model.access）配合使用
-                注意：不自动继承系统管理员(base.group_system)，避免越权。
+                已废弃占位组：保留历史记录，避免升级报错；不再承载实际权限。
             </field>
-            <!-- 继承 Smart Construction User 权限 -->
-            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_user'))]"/>
+            <field name="implied_ids" eval="[]"/>
         </record>
 
         <!-- =======================================================
@@ -73,7 +65,7 @@
                 - 不继承 Odoo 全局系统管理员权限，严格限制在本模块域内。
             </field>
             <!-- 配置角色站在管理角色之上 -->
-            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_manager'))]"/>
+            <field name="implied_ids" eval="[]"/>
         </record>
 
     </data>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record id="view_payment_request_tree" model="ir.ui.view">
+            <field name="name">payment.request.tree</field>
+            <field name="model">payment.request</field>
+            <field name="arch" type="xml">
+                <tree string="付款/收款申请">
+                    <field name="name"/>
+                    <field name="type"/>
+                    <field name="project_id"/>
+                    <field name="contract_id"/>
+                    <field name="settlement_id"/>
+                    <field name="partner_id"/>
+                    <field name="amount"/>
+                    <field name="state"/>
+                    <field name="date_request"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_payment_request_form" model="ir.ui.view">
+            <field name="name">payment.request.form</field>
+            <field name="model">payment.request</field>
+            <field name="arch" type="xml">
+                <form string="付款/收款申请">
+                    <header>
+                        <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'" groups="smart_construction_core.group_sc_cap_finance_user"/>
+                        <button name="action_approve" type="object" string="审批中" class="btn-secondary" invisible="state != 'submit'" groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <button name="action_set_approved" type="object" string="批准" class="btn-secondary" invisible="state != 'approve'" groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <button name="action_done" type="object" string="完成" class="btn-secondary" invisible="state not in ['approve', 'approved']" groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <button name="action_cancel" type="object" string="取消" class="btn-secondary" invisible="state in ['done', 'cancel']" groups="smart_construction_core.group_sc_cap_finance_manager"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve,approved,done,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="type"/>
+                                <field name="project_id" options="{'no_create': True}"/>
+                                <field name="contract_id" domain="[('project_id', '=', project_id)]"/>
+                                <field name="settlement_id" domain="[('project_id', '=', project_id)]"/>
+                            </group>
+                            <group>
+                                <field name="partner_id"/>
+                                <field name="amount"/>
+                                <field name="currency_id"/>
+                                <field name="date_request"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_payment_request" model="ir.actions.act_window">
+            <field name="name">付款/收款申请</field>
+            <field name="res_model">payment.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_group_by_project_id': 1}</field>
+        </record>
+
+        <menuitem id="menu_payment_request"
+                  name="付款/收款申请"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_payment_request"
+                  sequence="25"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+    </data>
+</odoo>

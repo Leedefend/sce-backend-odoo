@@ -9,12 +9,12 @@
                         string="重建工程量清单层级"
                         type="object"
                         class="btn-secondary"
-                        groups="smart_construction_core.group_sc_manager"/>
+                        groups="smart_construction_core.group_sc_cap_cost_manager"/>
                 <button name="action_validate_boq"
                         string="校验工程量清单"
                         type="object"
                         class="btn-secondary"
-                        groups="smart_construction_core.group_sc_manager"/>
+                        groups="smart_construction_core.group_sc_cap_cost_manager"/>
             </xpath>
         </field>
     </record>
