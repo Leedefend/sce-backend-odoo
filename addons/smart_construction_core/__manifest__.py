@@ -17,7 +17,7 @@
     ],
     'data': [
         # 基础数据
-        #'data/sequence.xml',
+        'data/sequence_change_order.xml',
         'data/dictionary_demo.xml',
         'data/cost_demo.xml',
         'data/project_stage_data.xml',
@@ -48,8 +48,9 @@
         'views/project_project_financial_views.xml',
         'views/project_budget_views.xml',
         'views/project_extend_boq_views.xml',
-        'views/menu.xml',
         'views/dictionary_views.xml',
+        'views/project_change_order_views.xml',
+        'views/menu.xml',
         'views/quota_import_views.xml',
     ],
     'assets': {
@@ -61,7 +62,7 @@
     },
     'demo': [
         # 如需演示数据再启用
-        # 'data/cost_domain_demo.xml',
+        'data/cost_domain_demo.xml',
     ],
     'installable': True,
     'application': True,

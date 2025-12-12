@@ -207,5 +207,86 @@
               action="action_project_cost_code"
               sequence="40"
               groups="smart_construction_core.group_sc_manager"/>
+    <!-- ========== 菜单结构：施工企业管理 → 配置 → 数据字典 → 四个子菜单 ========== -->
+    <!-- 父菜单配置中心：menu_sc_config_center -->
+     <menuitem id="menu_project_quota_root"
+              name="定额库"
+              parent="menu_sc_config_center"
+              sequence="20"
+              groups="smart_construction_core.group_sc_manager"/>
+
+     <menuitem id="menu_sc_dictionary_root"
+              name="数据字典"
+              parent="menu_sc_config_center"
+              sequence="10"
+              groups="smart_construction_core.group_sc_manager"/>
+   
+
+    <menuitem id="menu_project_quota_subitem"
+              name="定额子目"
+              parent="menu_project_quota_root"
+              action="action_project_quota_subitem"
+              sequence="10"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_project_quota_tree"
+              name="定额层级"
+              parent="menu_project_quota_root"
+              action="action_project_quota_tree"
+              sequence="20"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_project_quota_center"
+              name="定额中心（左树右明细）"
+              parent="menu_project_quota_root"
+              action="action_project_quota_center"
+              sequence="5"
+              groups="smart_construction_core.group_sc_manager"/>
+
+   
+
+    <menuitem id="menu_sc_dictionary_all"
+              name="全部字典"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary"
+              sequence="5"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_discipline"
+              name="专业"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary_discipline"
+              sequence="10"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_chapter"
+              name="章节"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary_chapter"
+              sequence="20"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_quota_item"
+              name="定额项目"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary_quota_item"
+              sequence="30"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_sub_item"
+              name="子目"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary_sub_item"
+              sequence="40"
+              groups="smart_construction_core.group_sc_manager"/>
+
+     <menuitem id="menu_sc_change_order"
+              name="变更/签证"
+              parent="menu_sc_contract_center"
+              action="action_project_change_order"
+              sequence="20"
+              groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
+
+    
 
 </odoo>

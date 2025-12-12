@@ -174,14 +174,7 @@
                       (4, ref('smart_construction_core.group_sc_manager'))]"/>
     </record>
 
-    <!-- 工程量清单：分析 Action -->
-    <record id="action_project_boq_line_analysis" model="ir.actions.act_window">
-        <field name="name">工程量清单分析</field>
-        <field name="res_model">project.boq.line</field>
-        <field name="view_mode">tree,pivot,graph</field>
-        <field name="search_view_id" ref="view_project_boq_line_search"/>
-        <field name="context">{'search_default_project_id': active_id}</field>
-    </record>
+    
 
     <!-- 工程量清单：搜索视图 -->
     <record id="view_project_boq_line_search" model="ir.ui.view">
@@ -235,5 +228,13 @@
                         domain="[('is_provisional','=',True)]"/>
             </search>
         </field>
+    </record>
+    <!-- 工程量清单：分析 Action -->
+    <record id="action_project_boq_line_analysis" model="ir.actions.act_window">
+        <field name="name">工程量清单分析</field>
+        <field name="res_model">project.boq.line</field>
+        <field name="view_mode">tree,pivot,graph</field>
+        <field name="search_view_id" ref="view_project_boq_line_search"/>
+        <field name="context">{'search_default_project_id': active_id}</field>
     </record>
 </odoo>

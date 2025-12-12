@@ -1,0 +1,10 @@
+<odoo>
+    <record id="seq_project_change_order" model="ir.sequence">
+        <field name="name">工程变更单</field>
+        <field name="code">project.change.order</field>
+        <field name="prefix">CO%(y)s%(month)s</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>
+

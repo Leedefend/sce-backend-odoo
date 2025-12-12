@@ -107,6 +107,10 @@
                         <page string="备注">
                             <field name="note"/>
                         </page>
+                        <page string="变更单">
+                            <field name="change_order_ids">
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>

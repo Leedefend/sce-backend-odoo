@@ -138,6 +138,12 @@ class ConstructionContract(models.Model):
     )
 
     note = fields.Text(string="备注")
+    # --- Change order ------------------------------------------------------
+    change_order_ids = fields.One2many(
+        "project.change.order",
+        "contract_id",
+        string="变更单",
+    )
 
     def action_generate_lines_from_budget(self):
         """Populate contract lines from the active budget BoQ."""
