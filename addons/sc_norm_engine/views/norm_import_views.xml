@@ -1,0 +1,30 @@
+<odoo>
+    <record id="view_sc_norm_import_wizard" model="ir.ui.view">
+        <field name="name">sc.norm.import.wizard.form</field>
+        <field name="model">sc.norm.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="导入定额 (四川2015)">
+                <group>
+                    <field name="data_file" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                    <field name="clear_before"/>
+                </group>
+                <group>
+                    <field name="log" nolabel="1" readonly="1" colspan="4"/>
+                </group>
+                <footer>
+                    <button string="导入" type="object" name="action_import" class="btn-primary"/>
+                    <button string="关闭" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_norm_import_wizard" model="ir.actions.act_window">
+        <field name="name">导入定额</field>
+        <field name="res_model">sc.norm.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_sc_norm_import_wizard"/>
+    </record>
+</odoo>

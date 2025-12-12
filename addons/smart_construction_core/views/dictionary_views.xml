@@ -1,44 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- 业务字典列表 -->
-    <record id="view_sc_dictionary_tree" model="ir.ui.view">
-        <field name="name">sc.dictionary.tree</field>
-        <field name="model">sc.dictionary</field>
+
+    <!-- ========== 通用动作（全部字典） ========== -->
+    <record id="action_project_dictionary" model="ir.actions.act_window">
+        <field name="name">数据字典（全部）</field>
+        <field name="res_model">project.dictionary</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ========== 通用视图：树形 + 表单 ========== -->
+    <record id="view_project_dictionary_tree" model="ir.ui.view">
+        <field name="name">project.dictionary.tree</field>
+        <field name="model">project.dictionary</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree editable="bottom">
                 <field name="type"/>
-                <field name="name"/>
                 <field name="code"/>
+                <field name="name"/>
+                <field name="parent_id"/>
+                <field name="level" readonly="1"/>
+                <field name="full_name" readonly="1"/>
                 <field name="sequence"/>
                 <field name="active"/>
             </tree>
         </field>
     </record>
 
-    <!-- 业务字典表单 -->
-    <record id="view_sc_dictionary_form" model="ir.ui.view">
-        <field name="name">sc.dictionary.form</field>
-        <field name="model">sc.dictionary</field>
+    <record id="view_project_dictionary_form" model="ir.ui.view">
+        <field name="name">project.dictionary.form</field>
+        <field name="model">project.dictionary</field>
         <field name="arch" type="xml">
-            <form string="业务字典">
+            <form string="数据字典">
                 <sheet>
                     <group>
                         <field name="type"/>
-                        <field name="name"/>
                         <field name="code"/>
+                        <field name="name"/>
+                        <field name="parent_id"/>
                         <field name="sequence"/>
                         <field name="active"/>
+                    </group>
+                    <group>
+                        <field name="level" readonly="1"/>
+                        <field name="full_name" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="下级条目">
+                            <field name="child_ids">
+                                <tree editable="bottom">
+                                    <field name="type" readonly="1"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="sequence"/>
+                                    <field name="active"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ========== 子目专用 Tree 视图：展示定额核心字段 ========== -->
+    <record id="view_project_dictionary_sub_item_tree" model="ir.ui.view">
+        <field name="name">project.dictionary.sub_item.tree</field>
+        <field name="model">project.dictionary</field>
+        <!-- 提高优先级，确保子目列表默认用此视图 -->
+        <field name="priority">10</field>
+        <field name="arch" type="xml">
+            <tree string="定额子目">
+                <field name="code" string="定额号"/>
+                <field name="name" string="项目名称"/>
+                <field name="parent_id" string="章节"/>
+                <field name="uom_id" string="单位"/>
+                <field name="price_total" string="综合单价"/>
+                <field name="price_direct" string="直接费"/>
+                <field name="price_labor" string="人工费"/>
+                <field name="price_material" string="材料费"/>
+                <field name="price_machine" string="机械费"/>
+                <field name="amount_misc" string="综合费"/>
+                <field name="rate_misc" string="费率"/>
+                <field name="active" string="启用"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ========== 子目专用 Form 视图 ========== -->
+    <record id="view_project_dictionary_sub_item_form" model="ir.ui.view">
+        <field name="name">project.dictionary.sub_item.form</field>
+        <field name="model">project.dictionary</field>
+        <!-- 更高优先级，打开子目时优先使用 -->
+        <field name="priority">5</field>
+        <field name="arch" type="xml">
+            <form string="定额子目">
+                <sheet>
+                    <group>
+                        <field name="code" string="定额号"/>
+                        <field name="name" string="项目名称"/>
+                        <field name="parent_id" string="所属章节"/>
+                        <field name="uom_id" string="单位"/>
+                        <field name="active"/>
+                    </group>
+                    <group>
+                        <field name="price_total"/>
+                        <field name="price_direct"/>
+                        <field name="price_labor"/>
+                        <field name="price_material"/>
+                        <field name="price_machine"/>
+                        <field name="amount_misc"/>
+                        <field name="rate_misc"/>
+                    </group>
+                    <notebook>
+                        <page string="工作内容">
+                            <field name="work_content" nolabel="1"/>
+                        </page>
+                        <page string="原始行（调试用）">
+                            <field name="raw_line" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ========== 定额子目专用列表/表单/搜索 ========== -->
+    <record id="view_project_quota_subitem_tree" model="ir.ui.view">
+        <field name="name">project.dictionary.quota.subitem.tree</field>
+        <field name="model">project.dictionary</field>
+        <field name="arch" type="xml">
+            <tree string="定额子目" default_order="discipline_id, chapter_id, quota_code">
+                <field name="discipline_id"/>
+                <field name="chapter_id"/>
+                <field name="quota_code"/>
+                <field name="name"/>
+                <field name="uom_id"/>
+                <field name="price_total" string="综合单价"/>
+                <field name="price_direct" string="直接费"/>
+                <field name="price_labor" string="人工费"/>
+                <field name="price_material" string="材料费"/>
+                <field name="price_machine" string="机械费"/>
+                <field name="amount_misc" string="综合费/附加费"/>
+                <field name="rate_misc" string="费率"/>
+                <field name="active" string="启用"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_project_quota_subitem_form" model="ir.ui.view">
+        <field name="name">project.dictionary.quota.subitem.form</field>
+        <field name="model">project.dictionary</field>
+        <field name="arch" type="xml">
+            <form string="定额子目" create="false">
+                <sheet>
+                    <group>
+                        <field name="type" readonly="1"/>
+                        <field name="discipline_id" readonly="1"/>
+                        <field name="chapter_id" readonly="1"/>
+                        <field name="parent_id" string="上级条目" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="quota_code"/>
+                        <field name="name"/>
+                        <field name="uom_id"/>
+                        <field name="active"/>
+                    </group>
+                    <group string="价格构成">
+                        <field name="price_total"/>
+                        <field name="price_direct"/>
+                        <field name="price_labor"/>
+                        <field name="price_material"/>
+                        <field name="price_machine"/>
+                        <field name="amount_misc"/>
+                        <field name="rate_misc"/>
+                    </group>
+                    <group string="说明">
+                        <field name="work_content"/>
+                        <field name="raw_line" readonly="1"/>
                     </group>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <!-- 业务字典动作 -->
-    <record id="action_sc_dictionary" model="ir.actions.act_window">
-        <field name="name">业务字典</field>
-        <field name="res_model">sc.dictionary</field>
-        <field name="view_mode">tree,form</field>
-        <field name="context">{}</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_user')), (4, ref('smart_construction_core.group_sc_manager'))]"/>
+    <record id="view_project_quota_subitem_search" model="ir.ui.view">
+        <field name="name">project.dictionary.quota.subitem.search</field>
+        <field name="model">project.dictionary</field>
+        <field name="arch" type="xml">
+            <search string="定额子目">
+                <field name="quota_code" string="定额编号"/>
+                <field name="name" string="名称"/>
+                <filter name="discipline" string="专业" context="{'group_by': 'discipline_id'}"/>
+                <filter name="chapter" string="章节" context="{'group_by': 'chapter_id'}"/>
+                <filter name="active" string="启用" domain="[('active','=',True)]"/>
+            </search>
+        </field>
     </record>
+
+    <record id="view_project_quota_tree" model="ir.ui.view">
+        <field name="name">project.dictionary.quota.tree</field>
+        <field name="model">project.dictionary</field>
+        <field name="arch" type="xml">
+            <tree string="定额层级"
+                  default_order="parent_path"
+                  expand="1"
+                  create="false">
+                <field name="parent_id" invisible="1"/>
+                <field name="type" invisible="1"/>
+                <field name="name" string="名称"/>
+                <field name="type" string="类别"/>
+                <field name="quota_code" string="定额编号"/>
+                <field name="uom_id" string="单位"/>
+                <field name="price_total" string="综合单价"/>
+                <field name="active" string="启用"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ========== 分类型动作：专业 / 章节 / 定额项目 / 子目 ========== -->
+    <record id="action_project_dictionary_discipline" model="ir.actions.act_window">
+        <field name="name">专业</field>
+        <field name="res_model">project.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type','=','discipline')]</field>
+        <field name="context">{'default_type': 'discipline'}</field>
+    </record>
+
+    <record id="action_project_dictionary_chapter" model="ir.actions.act_window">
+        <field name="name">章节</field>
+        <field name="res_model">project.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type','=','chapter')]</field>
+        <field name="context">{'default_type': 'chapter'}</field>
+    </record>
+
+    <record id="action_project_dictionary_quota_item" model="ir.actions.act_window">
+        <field name="name">定额项目</field>
+        <field name="res_model">project.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type','=','quota_item')]</field>
+        <field name="context">{'default_type': 'quota_item'}</field>
+    </record>
+
+    <record id="action_project_dictionary_sub_item" model="ir.actions.act_window">
+        <field name="name">子目</field>
+        <field name="res_model">project.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type','=','sub_item')]</field>
+        <field name="context">{'default_type': 'sub_item'}</field>
+        <!-- 默认列表视图指定为子目专用 tree，form 由优先级控制 -->
+        <field name="view_id" ref="view_project_dictionary_sub_item_tree"/>
+    </record>
+
+    <!-- ========== 定额专用动作 ========== -->
+    <record id="action_project_quota_subitem" model="ir.actions.act_window">
+        <field name="name">定额子目</field>
+        <field name="res_model">project.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type', '=', 'sub_item')]</field>
+        <field name="view_id" ref="view_project_quota_subitem_tree"/>
+        <field name="search_view_id" ref="view_project_quota_subitem_search"/>
+    </record>
+
+    <record id="action_project_quota_tree" model="ir.actions.act_window">
+        <field name="name">定额体系树</field>
+        <field name="res_model">project.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_project_quota_tree"/>
+        <field name="domain">
+            [('type', 'in', ('discipline', 'chapter', 'quota_item', 'sub_item'))]
+        </field>
+    </record>
+
+    <!-- ========== 定额中心 Client Action（左树右明细） ========== -->
+    <record id="action_project_quota_center" model="ir.actions.client">
+        <field name="name">定额中心</field>
+        <field name="tag">project_quota_center</field>
+    </record>
+
+    <!-- ========== 菜单结构：施工企业管理 → 配置 → 数据字典 → 四个子菜单 ========== -->
+    <!-- 父菜单配置中心：menu_sc_config_center -->
+
+    <menuitem id="menu_project_quota_root"
+              name="定额库"
+              parent="menu_sc_config_center"
+              sequence="20"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_project_quota_subitem"
+              name="定额子目"
+              parent="menu_project_quota_root"
+              action="action_project_quota_subitem"
+              sequence="10"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_project_quota_tree"
+              name="定额层级"
+              parent="menu_project_quota_root"
+              action="action_project_quota_tree"
+              sequence="20"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_project_quota_center"
+              name="定额中心（左树右明细）"
+              parent="menu_project_quota_root"
+              action="action_project_quota_center"
+              sequence="5"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_root"
+              name="数据字典"
+              parent="menu_sc_config_center"
+              sequence="10"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_all"
+              name="全部字典"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary"
+              sequence="5"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_discipline"
+              name="专业"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary_discipline"
+              sequence="10"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_chapter"
+              name="章节"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary_chapter"
+              sequence="20"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_quota_item"
+              name="定额项目"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary_quota_item"
+              sequence="30"
+              groups="smart_construction_core.group_sc_manager"/>
+
+    <menuitem id="menu_sc_dictionary_sub_item"
+              name="子目"
+              parent="menu_sc_dictionary_root"
+              action="action_project_dictionary_sub_item"
+              sequence="40"
+              groups="smart_construction_core.group_sc_manager"/>
+
 </odoo>

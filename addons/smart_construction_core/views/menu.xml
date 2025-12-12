@@ -191,7 +191,7 @@
     <menuitem id="menu_sc_dictionary"
               name="业务字典"
               parent="menu_sc_data_center"
-              action="action_sc_dictionary"
+              action="action_project_dictionary"
               sequence="10"
               groups="smart_construction_core.group_sc_user,smart_construction_core.group_sc_manager"/>
 
