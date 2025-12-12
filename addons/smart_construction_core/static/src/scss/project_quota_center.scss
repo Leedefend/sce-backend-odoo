@@ -23,6 +23,39 @@
     width: 100%;
 }
 
+.o_quota_top_progress {
+    height: 2px;
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.o_quota_top_progress_bar {
+    position: absolute;
+    left: -30%;
+    top: 0;
+    height: 2px;
+    width: 30%;
+    background: #6c4fa1;
+    animation: quotaProgress 1s ease-in-out infinite;
+    opacity: 0.9;
+}
+
+@keyframes quotaProgress {
+    0% {
+        left: -30%;
+        width: 30%;
+    }
+    50% {
+        left: 35%;
+        width: 40%;
+    }
+    100% {
+        left: 100%;
+        width: 30%;
+    }
+}
+
 .o_quota_init_loading {
     display: flex;
     align-items: center;
@@ -341,4 +374,10 @@
 
 .o_quota_footer_divider {
     color: #ccc;
+}
+
+.o_quota_hit {
+    background: rgba(108, 79, 161, 0.16);
+    border-radius: 3px;
+    padding: 0 2px;
 }

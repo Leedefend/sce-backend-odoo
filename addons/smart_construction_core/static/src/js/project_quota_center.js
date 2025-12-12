@@ -34,7 +34,10 @@ export class ProjectQuotaCenter extends Component {
         this.action = useService("action");
         this._searchTimer = null;
         this._isComposing = false;
+        this._reqSeq = 0;
+        this._lastAppliedKey = "";
         this.listBodyRef = useRef("listBody");
+        this.searchInputRef = useRef("searchInput");
         this.state = useState({
             tree: [],
             currentNodeId: null,
@@ -48,6 +51,10 @@ export class ProjectQuotaCenter extends Component {
             selectedLineId: null,
             initialized: false,
             loadingList: false,
+            pageSize: 200,
+            offset: 0,
+            hasMore: true,
+            loadingMore: false,
         });
 
         onWillStart(async () => {
@@ -64,7 +71,7 @@ export class ProjectQuotaCenter extends Component {
                 console.time("quota.loadList.init");
                 this.state.loading = true;
                 this.state.loadingList = true;
-                await this.loadList();
+                await this.loadList({ force: true });
                 console.timeEnd("quota.loadList.init");
 
                 this.state.initialized = true;
@@ -153,7 +160,7 @@ export class ProjectQuotaCenter extends Component {
     async onNodeClick(nodeId, nodeLabel) {
         this.state.currentNodeId = nodeId;
         this.state.currentNodeLabel = nodeLabel || "全部子目";
-        await this.loadList();
+        await this.loadList({ reset: true, force: true });
     }
 
     onLineClick(line) {
@@ -191,8 +198,7 @@ export class ProjectQuotaCenter extends Component {
                 return;
             }
             this._searchTimer = setTimeout(async () => {
-                await this.reloadCurrent();
-                this.state.appliedSearchTerm = "";
+                await this.loadList({ reset: true, force: true });
             }, 300);
             return;
         }
@@ -202,8 +208,7 @@ export class ProjectQuotaCenter extends Component {
         }
 
         this._searchTimer = setTimeout(async () => {
-            await this.reloadCurrent();
-            this.state.appliedSearchTerm = this.state.searchTerm || "";
+            await this.loadList({ reset: true });
         }, 600);
     }
 
@@ -251,42 +256,91 @@ export class ProjectQuotaCenter extends Component {
     }
 
     async reloadCurrent() {
-        await this.loadList();
+        await this.loadList({ reset: true });
     }
 
-    async loadList() {
+    async loadList({ reset = true, force = false } = {}) {
+        const seq = ++this._reqSeq;
+        const term = (this.state.searchTerm || "").trim();
+        const key = JSON.stringify({
+            node: this.state.currentNodeId || null,
+            term,
+            onlyActive: !!this.state.onlyActive,
+        });
+
         try {
+            if (!force && key === this._lastAppliedKey && !reset) {
+                return;
+            }
+
+            if (reset) {
+                this.state.offset = 0;
+                this.state.hasMore = true;
+                this.state.loadingMore = false;
+                this.state.lines = [];
+                this.state.selectedLineId = null;
+            }
+
             this.state.loadingList = true;
             const finalDomain = await this.orm.call(
                 "project.dictionary",
                 "get_quota_search_domain",
-                [this.state.currentNodeId, this.state.searchTerm, this.state.onlyActive],
+                [this.state.currentNodeId, term, this.state.onlyActive],
                 {}
             );
+            if (seq !== this._reqSeq) {
+                return;
+            }
             console.time("quota.searchRead");
             console.log("quota.searchRead domain:", finalDomain);
+            const limit = this.state.pageSize || 200;
+            const offset = this.state.offset || 0;
             const lines = await this.orm.searchRead(
                 "project.dictionary",
                 finalDomain,
                 FIELDS,
-                { limit: 200, order: "discipline_id, chapter_id, quota_code" }
+                { limit, offset, order: "discipline_id, chapter_id, quota_code" }
             );
+            if (seq !== this._reqSeq) {
+                return;
+            }
             console.timeEnd("quota.searchRead");
             console.log("quota.searchRead lines:", lines ? lines.length : 0);
-            this.state.lines = lines;
+            this._lastAppliedKey = key;
+            const chunk = lines || [];
+            this.state.lines = reset ? chunk : [...(this.state.lines || []), ...chunk];
             this.state.error = null;
-            this.state.appliedSearchTerm = this.state.searchTerm || "";
+            this.state.appliedSearchTerm = term;
 
-            if (!lines.length) {
+            this.state.hasMore = chunk.length === limit;
+            this.state.offset = (offset + chunk.length);
+
+            if (!this.state.lines.length) {
                 this.state.selectedLineId = null;
-            } else if (!lines.find((l) => l.id === this.state.selectedLineId)) {
-                this.state.selectedLineId = lines[0].id;
+            } else if (!this.state.selectedLineId || !this.state.lines.find((l) => l && l.id === this.state.selectedLineId)) {
+                this.state.selectedLineId = this.state.lines[0].id;
             }
         } catch (err) {
-            console.error("project_quota_center load error", err);
-            this.state.error = err.message || String(err);
+            if (seq === this._reqSeq) {
+                console.error("project_quota_center load error", err);
+                this.state.error = err.message || String(err);
+            }
         } finally {
-            this.state.loadingList = false;
+            if (seq === this._reqSeq) {
+                this.state.loadingList = false;
+            }
+        }
+    }
+
+    async loadMore() {
+        if (this.state.loadingList || this.state.loadingMore || !this.state.hasMore) {
+            return;
+        }
+        this.state.loadingMore = true;
+        try {
+            await this.loadList({ reset: false, force: true });
+        } finally {
+            this.state.loadingMore = false;
         }
     }
 
@@ -311,10 +365,18 @@ export class ProjectQuotaCenter extends Component {
             return;
         }
         this.state.onlyActive = checked;
-        this.reloadCurrent();
+        this.loadList({ reset: true, force: true });
     }
 
     onKeyDown(ev) {
+        if (ev.key === "/" && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
+            ev.preventDefault();
+            const el = this.searchInputRef.el;
+            if (el) {
+                el.focus();
+            }
+            return;
+        }
         if (!this.state.lines.length) {
             return;
         }
@@ -346,6 +408,18 @@ export class ProjectQuotaCenter extends Component {
         }
     }
 
+    onListScroll(ev) {
+        const el = ev.currentTarget;
+        if (!el) {
+            return;
+        }
+        const threshold = 160;
+        const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+        if (remaining < threshold) {
+            this.loadMore();
+        }
+    }
+
     _scrollToLine(lineId) {
         const container = this.listBodyRef.el;
         if (!container) {
@@ -355,6 +429,37 @@ export class ProjectQuotaCenter extends Component {
         if (row) {
             row.scrollIntoView({ block: "nearest" });
         }
+    }
+
+    _escapeHtml(s) {
+        return String(s ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+    }
+
+    highlight(text) {
+        const raw = String(text ?? "");
+        const term = (this.state.searchTerm || "").trim();
+        if (!term) {
+            return this._escapeHtml(raw);
+        }
+        const tokens = term.split(/\s+/).filter(Boolean);
+        if (!tokens.length) {
+            return this._escapeHtml(raw);
+        }
+        let html = this._escapeHtml(raw);
+        for (const t of tokens) {
+            const escaped = this._escapeHtml(t);
+            if (!escaped) {
+                continue;
+            }
+            const re = new RegExp(escaped.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig");
+            html = html.replace(re, (m) => `<span class="o_quota_hit">${m}</span>`);
+        }
+        return html;
     }
 }
 
