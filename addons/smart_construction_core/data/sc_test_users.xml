@@ -88,5 +88,88 @@
             <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
             <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('smart_construction_core.group_sc_role_cost_user')])]"/>
         </record>
+
+        <!-- 通用测试账号：全能力 -->
+        <record id="user_sc_test_admin" model="res.users">
+            <field name="name">测试-全能力</field>
+            <field name="login">sc_test_admin</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_project_read'),
+                ref('smart_construction_core.group_sc_cap_project_user'),
+                ref('smart_construction_core.group_sc_cap_project_manager'),
+                ref('smart_construction_core.group_sc_cap_material_read'),
+                ref('smart_construction_core.group_sc_cap_material_user'),
+                ref('smart_construction_core.group_sc_cap_material_manager'),
+                ref('smart_construction_core.group_sc_cap_purchase_read'),
+                ref('smart_construction_core.group_sc_cap_purchase_user'),
+                ref('smart_construction_core.group_sc_cap_purchase_manager'),
+                ref('smart_construction_core.group_sc_cap_cost_read'),
+                ref('smart_construction_core.group_sc_cap_cost_user'),
+                ref('smart_construction_core.group_sc_cap_cost_manager'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_contract_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager'),
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager'),
+                ref('smart_construction_core.group_sc_cap_data_read'),
+                ref('smart_construction_core.group_sc_cap_config_admin')
+            ])]"/>
+        </record>
+
+        <!-- 财务经理能力测试账号 -->
+        <record id="user_sc_finance_mgr_test" model="res.users">
+            <field name="name">测试-财务经理</field>
+            <field name="login">sc_finance_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager')
+            ])]"/>
+        </record>
+
+        <!-- 物资主管能力测试账号 -->
+        <record id="user_sc_material_mgr_test" model="res.users">
+            <field name="name">测试-物资主管</field>
+            <field name="login">sc_material_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_material_read'),
+                ref('smart_construction_core.group_sc_cap_material_user'),
+                ref('smart_construction_core.group_sc_cap_material_manager')
+            ])]"/>
+        </record>
+
+        <!-- 项目只读能力测试账号 -->
+        <record id="user_sc_project_viewer_test" model="res.users">
+            <field name="name">测试-项目只读</field>
+            <field name="login">sc_project_viewer</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_project_read')
+            ])]"/>
+        </record>
     </data>
 </odoo>
