@@ -78,8 +78,9 @@
                                 <div class="o_quota_search_wrapper">
                                     <i class="fa fa-search o_quota_search_icon"/>
                                     <input type="text"
+                                           t-ref="searchInput"
                                            t-att-value="state.searchTerm"
-                                           placeholder="搜索定额编号 / 名称"
+                                           placeholder="搜索定额编号 / 名称（支持多关键词，空格分隔）"
                                            t-on-input="onSearchInput"
                                            t-on-keydown="onSearchKeydown"
                                            t-on-compositionstart="onSearchCompositionStart"
@@ -87,16 +88,19 @@
                                            class="o_input o_quota_search"/>
                                 </div>
                             </div>
+                            <t t-if="state.loadingList">
+                                <div class="o_quota_top_progress">
+                                    <div class="o_quota_top_progress_bar"/>
+                                </div>
+                            </t>
                         </div>
 
                         <!-- 列表主体 -->
                         <div class="o_panel_body o_quota_list_body"
                              t-ref="listBody"
                              tabindex="0"
-                             t-on-keydown="onKeyDown">
-                            <t t-if="state.loadingList">
-                                <div class="o_quota_list_overlay"/>
-                            </t>
+                             t-on-keydown="onKeyDown"
+                             t-on-scroll="onListScroll">
                             <table class="o_quota_table table table-sm table-hover o_list_view">
                                 <thead>
                                     <tr>
@@ -128,21 +132,11 @@
                                                     </t>
                                                 </td>
                                                 <td>
-                                                    <t t-if="line.chapter_id">
-                                                        <t t-esc="line.chapter_id[1]"/>
-                                                    </t>
+                                                    <t t-if="line.chapter_id" t-esc="line.chapter_id[1]"/>
                                                 </td>
-                                                <td><t t-esc="line.quota_code"/></td>
-                                                <td>
-                                                    <span t-att-title="line.name">
-                                                        <t t-esc="line.name"/>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <t t-if="line.uom_id">
-                                                        <t t-esc="line.uom_id[1]"/>
-                                                    </t>
-                                                </td>
+                                                <td><span t-out="this.highlight(line.quota_code)"/></td>
+                                                <td><span t-att-title="line.name" t-out="this.highlight(line.name)"/></td>
+                                                <td><t t-if="line.uom_id" t-esc="line.uom_id[1]"/></td>
                                                 <td class="o_quota_number"><t t-esc="line.price_total"/></td>
                                                 <td class="o_quota_number"><t t-esc="line.price_direct"/></td>
                                                 <td class="o_quota_number"><t t-esc="line.price_labor"/></td>
