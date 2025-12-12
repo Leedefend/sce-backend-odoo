@@ -5,7 +5,7 @@
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
             <tree string="工程量清单"
-                  default_order="section_type, parent_path, sequence, id"
+                  default_order="section_type, display_order, id"
                   decoration-bf="line_type != 'item'">
 
                 <!-- 树结构关键字段（隐藏） -->
@@ -45,7 +45,10 @@
                 <field name="uom_id"/>
                 <field name="quantity"/>
                 <field name="price"/>
-                <field name="amount" sum="工程合价"/>
+                <field name="amount_raw" string="原始金额" sum="原始合计" optional="hide"/>
+                <field name="amount_invest" string="投资金额" sum="投资合计" optional="hide"/>
+                <field name="amount"/>
+                <field name="stat_amount" string="合价(统计)" sum="合计金额" optional="hide"/>
 
                 <!-- 预警信息 -->
                 <field name="has_warning" widget="boolean_toggle" optional="hide"/>
@@ -57,6 +60,19 @@
                 <field name="task_id" optional="hide"/>
                 <field name="remark" optional="hide"/>
             </tree>
+        </field>
+    </record>
+
+    <!-- 在列表中补充人工/机械基价列，便于校验综合单价分析导入 -->
+    <record id="view_project_boq_line_tree_inherit_analysis" model="ir.ui.view">
+        <field name="name">project.boq.line.tree.analysis</field>
+        <field name="model">project.boq.line</field>
+        <field name="inherit_id" ref="smart_construction_core.view_project_boq_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree/field[@name='price']" position="after">
+                <field name="base_labor_unit" string="人工基价"/>
+                <field name="base_machine_unit" string="机械基价"/>
+            </xpath>
         </field>
     </record>
 
@@ -150,7 +166,8 @@
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
             <pivot string="工程量清单分析">
-                <field name="amount" type="measure" string="合价"/>
+                <field name="amount_invest" type="measure" string="投资金额"/>
+                <field name="amount_raw" type="measure" string="原始金额" optional="hide"/>
                 <field name="quantity" type="measure" invisible="1"/>
                 <field name="project_id"/>
                 <field name="section_type"/>
