@@ -23,4 +23,28 @@
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
+
+    <record id="seq_project_settlement" model="ir.sequence">
+        <field name="name">项目结算</field>
+        <field name="code">project.settlement</field>
+        <field name="prefix">STL%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_payment_request" model="ir.sequence">
+        <field name="name">付款/收款申请</field>
+        <field name="code">payment.request</field>
+        <field name="prefix">PRQ%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_project_material_plan" model="ir.sequence">
+        <field name="name">物资计划</field>
+        <field name="code">project.material.plan</field>
+        <field name="prefix">MP/</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>

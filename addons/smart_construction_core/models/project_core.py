@@ -270,6 +270,27 @@ class ProjectProject(models.Model):
         '成本差异', currency_field='company_currency_id',
         compute='_compute_costs', store=True
     )
+    settlement_ids = fields.One2many(
+        'project.settlement',
+        'project_id',
+        string='结算单',
+    )
+    pay_contract_total = fields.Monetary(
+        '支出合同金额', currency_field='company_currency_id',
+        compute='_compute_pay_overview', store=True,
+    )
+    pay_settlement_total = fields.Monetary(
+        '已结算金额', currency_field='company_currency_id',
+        compute='_compute_pay_overview', store=True,
+    )
+    pay_paid_total = fields.Monetary(
+        '已付款金额', currency_field='company_currency_id',
+        compute='_compute_pay_overview', store=True,
+    )
+    pay_unpaid_total = fields.Monetary(
+        '未付款金额', currency_field='company_currency_id',
+        compute='_compute_pay_overview', store=True,
+    )
 
     plan_percent = fields.Float(
         '计划完成率(%)',
@@ -456,6 +477,69 @@ class ProjectProject(models.Model):
     def _compute_costs(self):
         for project in self:
             project.cost_variance = (project.budget_total or 0.0) - (project.cost_actual or 0.0)
+
+    # ---------- 合同/结算/付款经营口径 ----------
+    @api.depends(
+        'contract_ids.state',
+        'contract_ids.amount_final',
+        'contract_ids.type',
+        'settlement_ids.amount',
+        'settlement_ids.state',
+    )
+    def _compute_pay_overview(self):
+        contract_map = defaultdict(float)
+        settlement_map = defaultdict(float)
+        payment_map = defaultdict(float)
+
+        if self.ids:
+            contract_read = self.env['construction.contract'].read_group(
+                [
+                    ('project_id', 'in', self.ids),
+                    ('type', '=', 'in'),
+                    ('state', '=', 'confirmed'),
+                ],
+                ['amount_final:sum'],
+                ['project_id'],
+            )
+            for rec in contract_read:
+                project_id = rec['project_id'][0]
+                contract_map[project_id] += rec.get('amount_final_sum', rec.get('amount_final', 0.0)) or 0.0
+
+            settlement_read = self.env['project.settlement'].read_group(
+                [
+                    ('project_id', 'in', self.ids),
+                    ('type', '=', 'pay'),
+                    ('state', 'in', ['confirmed', 'done']),
+                ],
+                ['amount:sum'],
+                ['project_id'],
+            )
+            for rec in settlement_read:
+                project_id = rec['project_id'][0]
+                settlement_map[project_id] += rec.get('amount_sum', rec.get('amount', 0.0)) or 0.0
+
+            if 'payment.request' in self.env:
+                payment_read = self.env['payment.request'].read_group(
+                    [
+                        ('project_id', 'in', self.ids),
+                        ('type', '=', 'pay'),
+                        ('state', 'in', ['approved', 'approve', 'done']),
+                    ],
+                    ['amount:sum'],
+                    ['project_id'],
+                )
+                for rec in payment_read:
+                    project_id = rec['project_id'][0]
+                    payment_map[project_id] += rec.get('amount_sum', rec.get('amount', 0.0)) or 0.0
+
+        for project in self:
+            contract_total = contract_map.get(project.id, 0.0)
+            settlement_total = settlement_map.get(project.id, 0.0)
+            paid_total = payment_map.get(project.id, 0.0)
+            project.pay_contract_total = contract_total
+            project.pay_settlement_total = settlement_total
+            project.pay_paid_total = paid_total
+            project.pay_unpaid_total = (settlement_total or 0.0) - (paid_total or 0.0)
 
     # ---------- 创建/初始化 ----------
     @api.model_create_multi

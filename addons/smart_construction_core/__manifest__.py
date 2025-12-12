@@ -17,15 +17,18 @@
     ],
     'data': [
         # 基础数据
-        #'data/sequence.xml',
+        'data/sequence.xml',
         'data/dictionary_demo.xml',
         'data/cost_demo.xml',
         'data/project_stage_data.xml',
 
         # 安全
         'security/sc_groups.xml',
+        'security/sc_capability_groups.xml',
+        'security/sc_role_groups.xml',
         'security/sc_model_records.xml',
         'security/ir.model.access.csv',
+        'data/sc_test_users.xml',
 
         # 视图
         'views/cost_domain_views.xml',
@@ -48,6 +51,10 @@
         'views/project_project_financial_views.xml',
         'views/project_budget_views.xml',
         'views/project_extend_boq_views.xml',
+        'views/payment_request_views.xml',
+        'views/settlement_views.xml',
+        'wizard/material_plan_to_rfq_views.xml',
+        'views/material_plan_views.xml',
         'views/menu.xml',
         'views/dictionary_views.xml',
         'views/quota_import_views.xml',
