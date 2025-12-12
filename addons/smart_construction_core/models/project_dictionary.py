@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.osv import expression
 
 
 class ProjectDictionary(models.Model):
@@ -218,3 +219,26 @@ class ProjectDictionary(models.Model):
             return [("type", "=", "sub_item"), ("chapter_id", "child_of", node.id)]
         # quota_item 或 sub_item
         return [("type", "=", "sub_item"), ("parent_id", "child_of", node.id)]
+
+    @api.model
+    def get_quota_search_domain(self, node_id=None, search_term=None, only_active=False):
+        """统一构造定额中心的搜索 domain，避免前端拼装出非法结构。"""
+        base = self.get_quota_domain_by_node(node_id) if node_id else [("type", "=", "sub_item")]
+
+        if only_active:
+            base = expression.AND([base, [("active", "=", True)]])
+
+        term = (search_term or "").strip()
+        if not term:
+            return base
+
+        tokens = [t for t in term.split() if t]
+        if not tokens:
+            return base
+
+        token_domains = [["|", ("quota_code", "ilike", t), ("name", "ilike", t)] for t in tokens]
+        search_domain = token_domains[0]
+        for td in token_domains[1:]:
+            search_domain = expression.AND([search_domain, td])
+
+        return expression.AND([base, search_domain])
