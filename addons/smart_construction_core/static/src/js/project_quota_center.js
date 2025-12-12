@@ -22,23 +22,32 @@ const FIELDS = [
 ];
 
 export class ProjectQuotaCenter extends Component {
+    static template = "project_quota_center.Main";
+    static props = {
+        action: { type: Object, optional: true },
+        actionId: { type: [Number, String], optional: true },
+        className: { type: String, optional: true },
+    };
+
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
         this._searchTimer = null;
         this._isComposing = false;
-        this.baseDomain = [["type", "=", "sub_item"]];
         this.listBodyRef = useRef("listBody");
         this.state = useState({
             tree: [],
             currentNodeId: null,
             currentNodeLabel: "全部子目",
             searchTerm: "",
+            appliedSearchTerm: "",
             onlyActive: true,
             lines: [],
             loading: true,
             error: null,
             selectedLineId: null,
+            initialized: false,
+            loadingList: false,
         });
 
         onWillStart(async () => {
@@ -53,13 +62,18 @@ export class ProjectQuotaCenter extends Component {
                 console.timeEnd("quota.annotateLevels");
 
                 console.time("quota.loadList.init");
-                await this.loadList(this.baseDomain);
+                this.state.loading = true;
+                this.state.loadingList = true;
+                await this.loadList();
                 console.timeEnd("quota.loadList.init");
+
+                this.state.initialized = true;
             } catch (err) {
                 console.error("project_quota_center init error", err);
                 this.state.error = err.message || String(err);
             } finally {
                 this.state.loading = false;
+                this.state.loadingList = false;
             }
         });
     }
@@ -139,9 +153,7 @@ export class ProjectQuotaCenter extends Component {
     async onNodeClick(nodeId, nodeLabel) {
         this.state.currentNodeId = nodeId;
         this.state.currentNodeLabel = nodeLabel || "全部子目";
-        const domain = await this.orm.call("project.dictionary", "get_quota_domain_by_node", [nodeId], {});
-        this.baseDomain = domain;
-        await this.loadList(domain);
+        await this.loadList();
     }
 
     onLineClick(line) {
@@ -159,53 +171,52 @@ export class ProjectQuotaCenter extends Component {
         });
     }
 
-    async onSearchInput(ev) {
-        if (ev.isComposing || this._isComposing) {
+    _scheduleSearch(term) {
+        const normalized = (term || "").trim();
+        const prevApplied = this.state.appliedSearchTerm || "";
+
+        this.state.searchTerm = normalized;
+
+        if (normalized === prevApplied) {
             return;
         }
-        const term = (ev.target.value || "").trim();
-
-        if (term === this.state.searchTerm) {
-            return;
-        }
-
-        this.state.searchTerm = term;
 
         if (this._searchTimer) {
             clearTimeout(this._searchTimer);
             this._searchTimer = null;
         }
 
-        if (!term) {
-            this._searchTimer = setTimeout(() => {
-                this.reloadCurrent();
+        if (!normalized) {
+            if (!prevApplied) {
+                return;
+            }
+            this._searchTimer = setTimeout(async () => {
+                await this.reloadCurrent();
+                this.state.appliedSearchTerm = "";
             }, 300);
             return;
         }
 
-        if (term.length < 2) {
+        if (normalized.length < 2) {
             return;
         }
 
-        this._searchTimer = setTimeout(() => {
-            this.reloadCurrent();
+        this._searchTimer = setTimeout(async () => {
+            await this.reloadCurrent();
+            this.state.appliedSearchTerm = this.state.searchTerm || "";
         }, 600);
     }
 
-    onSearchKeydown(ev) {
-        if (ev.isComposing || this._isComposing || ev.keyCode === 229) {
-            return;
-        }
-        if (ev.key !== "Enter") {
-            return;
-        }
-        ev.preventDefault();
+    onSearchInput(ev) {
+        const raw = ev.target.value || "";
+        const composingFlag =
+            ev.isComposing || this._isComposing || ev.inputType === "insertCompositionText";
 
-        if (this._searchTimer) {
-            clearTimeout(this._searchTimer);
-            this._searchTimer = null;
+        if (composingFlag) {
+            return;
         }
-        this.reloadCurrent();
+
+        this._scheduleSearch(raw);
     }
 
     onSearchCompositionStart() {
@@ -218,40 +229,40 @@ export class ProjectQuotaCenter extends Component {
 
     onSearchCompositionEnd(ev) {
         this._isComposing = false;
-        this.onSearchInput(ev);
+        const raw = ev.target.value || "";
+        this._scheduleSearch(raw);
     }
 
-    _applySearch(domain) {
-        const base = domain && domain.length ? domain : [];
-        if (!this.state.searchTerm) {
-            return base;
+    onSearchKeydown(ev) {
+        if (ev.isComposing || this._isComposing || ev.keyCode === 229) {
+            return;
         }
-        const term = this.state.searchTerm;
-        if (!base.length) {
-            return ["|", ["quota_code", "ilike", term], ["name", "ilike", term]];
+        if (ev.key !== "Enter") {
+            return;
         }
-        return ["&", ...base, "|", ["quota_code", "ilike", term], ["name", "ilike", term]];
+        ev.preventDefault();
+
+        const raw = ev.target.value || "";
+        if (this._searchTimer) {
+            clearTimeout(this._searchTimer);
+            this._searchTimer = null;
+        }
+        this._scheduleSearch(raw);
     }
 
     async reloadCurrent() {
-        await this.loadList(this.baseDomain);
+        await this.loadList();
     }
 
-    async loadList(domain) {
+    async loadList() {
         try {
-            this.state.loading = true;
-            let baseDomain = domain || this.baseDomain || [["type", "=", "sub_item"]];
-            this.baseDomain = baseDomain;
-
-            if (this.state.onlyActive) {
-                if (baseDomain.length) {
-                    baseDomain = ["&", ...baseDomain, ["active", "=", true]];
-                } else {
-                    baseDomain = [["active", "=", true]];
-                }
-            }
-
-            const finalDomain = this._applySearch(baseDomain);
+            this.state.loadingList = true;
+            const finalDomain = await this.orm.call(
+                "project.dictionary",
+                "get_quota_search_domain",
+                [this.state.currentNodeId, this.state.searchTerm, this.state.onlyActive],
+                {}
+            );
             console.time("quota.searchRead");
             console.log("quota.searchRead domain:", finalDomain);
             const lines = await this.orm.searchRead(
@@ -264,6 +275,7 @@ export class ProjectQuotaCenter extends Component {
             console.log("quota.searchRead lines:", lines ? lines.length : 0);
             this.state.lines = lines;
             this.state.error = null;
+            this.state.appliedSearchTerm = this.state.searchTerm || "";
 
             if (!lines.length) {
                 this.state.selectedLineId = null;
@@ -274,7 +286,7 @@ export class ProjectQuotaCenter extends Component {
             console.error("project_quota_center load error", err);
             this.state.error = err.message || String(err);
         } finally {
-            this.state.loading = false;
+            this.state.loadingList = false;
         }
     }
 
@@ -345,7 +357,5 @@ export class ProjectQuotaCenter extends Component {
         }
     }
 }
-
-ProjectQuotaCenter.template = "project_quota_center.Main";
 
 actionRegistry.add("project_quota_center", ProjectQuotaCenter);

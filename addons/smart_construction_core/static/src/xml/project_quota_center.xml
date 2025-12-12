@@ -1,179 +1,185 @@
 <templates xml:space="preserve">
     <t t-name="project_quota_center.Main">
-        <div class="o_project_quota_center">
-            <!-- 错误提示 -->
+        <div class="o_project_quota_center o-flex">
             <t t-if="state.error">
                 <div class="o_alert o_alert_danger o_quota_alert">
                     <strong>加载失败：</strong>
                     <t t-esc="state.error"/>
                 </div>
             </t>
+            <t t-elif="!state.initialized">
+                <div class="o_panel_body o_quota_init_loading">
+                    <i class="fa fa-spinner fa-spin o_quota_init_spinner"/>
+                    <span>定额中心初始化中...</span>
+                </div>
+            </t>
             <t t-else="">
-                <!-- 加载中 -->
-                <t t-if="state.loading">
-                    <div class="o_panel o_quota_loading_panel">
-                        <div class="o_panel_body">定额数据加载中...</div>
-                    </div>
-                </t>
-                <t t-else="">
-                    <div class="o_quota_layout o-flex">
-                        <!-- 左侧：定额树 -->
-                        <div class="o_quota_tree_panel o_panel">
-                            <div class="o_panel_header">
-                                <span class="o_panel_title">定额结构</span>
-                            </div>
-                            <div class="o_panel_body o_quota_tree_body">
-                                <ul class="o_quota_tree">
-                                    <!-- 全部子目 -->
+                <div class="o_quota_layout o-flex">
+                    <!-- 左侧：定额树 -->
+                    <div class="o_quota_tree_panel o_panel">
+                        <div class="o_panel_header">
+                            <span class="o_panel_title">定额结构</span>
+                        </div>
+                        <div class="o_panel_body o_quota_tree_body">
+                            <ul class="o_quota_tree">
+                                <!-- 全部子目 -->
+                                <li class="o_quota_tree_node">
+                                    <a role="button"
+                                       t-attf-class="o_quota_tree_link #{state.currentNodeId === null ? 'o_quota_tree_link_active' : ''}"
+                                       t-on-click="() => this.onNodeClick(null, '全部子目')">
+                                        <span class="o_quota_tree_dot"></span>
+                                        全部子目
+                                    </a>
+                                </li>
+                                <!-- 其他节点 -->
+                                <t t-foreach="state.tree" t-as="node" t-key="node.id">
                                     <li class="o_quota_tree_node">
-                                        <a role="button"
-                                           t-attf-class="o_quota_tree_link #{state.currentNodeId === null ? 'o_quota_tree_link_active' : ''}"
-                                           t-on-click="() => this.onNodeClick(null, '全部子目')">
+                                    <a role="button"
+                                       t-attf-style="padding-left: #{(node.level - 1) * 14}px;"
+                                       t-att-level="node.level"
+                                       t-attf-class="o_quota_tree_link #{state.currentNodeId === node.id ? 'o_quota_tree_link_active' : ''}"
+                                       t-on-click="() => this.onNodeClick(node.id, node.name)">
                                             <span class="o_quota_tree_dot"></span>
-                                            全部子目
+                                            <t t-esc="node.name"/>
                                         </a>
                                     </li>
-                                    <!-- 其他节点 -->
-                                    <t t-foreach="state.tree" t-as="node" t-key="node.id">
-                                        <li class="o_quota_tree_node">
-                                        <a role="button"
-                                           t-attf-style="padding-left: #{(node.level - 1) * 14}px;"
-                                           t-att-level="node.level"
-                                           t-attf-class="o_quota_tree_link #{state.currentNodeId === node.id ? 'o_quota_tree_link_active' : ''}"
-                                           t-on-click="() => this.onNodeClick(node.id, node.name)">
-                                                <span class="o_quota_tree_dot"></span>
-                                                <t t-esc="node.name"/>
-                                            </a>
-                                        </li>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：定额列表 -->
+                    <div class="o_quota_right_panel o_quota_list_panel o-flex-1 o_panel">
+                        <!-- 工具栏：标题 + 搜索 -->
+                        <div class="o_panel_header o_quota_list_toolbar">
+                            <div class="o_panel_title_group">
+                                <span class="o_panel_title">
+                                    <t t-esc="state.currentNodeLabel || '全部子目'"/>
+                                </span>
+                                <span class="o_panel_subtitle">
+                                    <t t-if="state.lines">
+                                        共 <t t-esc="state.lines.length"/> 条
                                     </t>
-                                </ul>
+                                </span>
+                            </div>
+                            <div class="o_quota_toolbar_right">
+                                <t t-if="state.loadingList">
+                                    <span class="o_quota_loading_badge">
+                                        <i class="fa fa-spinner fa-spin"/>
+                                        <span>正在加载...</span>
+                                    </span>
+                                </t>
+                                <label class="o_quota_toggle_active">
+                                    <input type="checkbox"
+                                           t-att-checked="state.onlyActive"
+                                           t-on-change="onToggleOnlyActive"/>
+                                    <span>仅启用</span>
+                                </label>
+                                <div class="o_quota_search_wrapper">
+                                    <i class="fa fa-search o_quota_search_icon"/>
+                                    <input type="text"
+                                           t-att-value="state.searchTerm"
+                                           placeholder="搜索定额编号 / 名称"
+                                           t-on-input="onSearchInput"
+                                           t-on-keydown="onSearchKeydown"
+                                           t-on-compositionstart="onSearchCompositionStart"
+                                           t-on-compositionend="onSearchCompositionEnd"
+                                           class="o_input o_quota_search"/>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- 右侧：定额列表 -->
-                        <div class="o_quota_right_panel o_quota_list_panel o-flex-1 o_panel">
-                            <!-- 工具栏：标题 + 搜索 -->
-                            <div class="o_panel_header o_quota_list_toolbar">
-                                <div class="o_panel_title_group">
-                                    <span class="o_panel_title">
-                                        <t t-esc="state.currentNodeLabel || '全部子目'"/>
-                                    </span>
-                                    <span class="o_panel_subtitle">
-                                        <t t-if="state.lines">
-                                            共 <t t-esc="state.lines.length"/> 条
-                                        </t>
-                                    </span>
-                                </div>
-                                <div class="o_quota_toolbar_right">
-                                    <label class="o_quota_toggle_active">
-                                        <input type="checkbox"
-                                               t-att-checked="state.onlyActive"
-                                               t-on-change="onToggleOnlyActive"/>
-                                        <span>仅启用</span>
-                                    </label>
-                                    <div class="o_quota_search_wrapper">
-                                        <i class="fa fa-search o_quota_search_icon"/>
-                                        <input type="text"
-                                               t-att-value="state.searchTerm"
-                                               placeholder="搜索定额编号 / 名称"
-                                               t-on-input="onSearchInput"
-                                               t-on-keydown="onSearchKeydown"
-                                               t-on-compositionstart="onSearchCompositionStart"
-                                               t-on-compositionend="onSearchCompositionEnd"
-                                               class="o_input o_quota_search"/>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 列表主体 -->
-                            <div class="o_panel_body o_quota_list_body"
-                                 t-ref="listBody"
-                                 tabindex="0"
-                                 t-on-keydown="onKeyDown">
-                                <table class="o_quota_table table table-sm table-hover o_list_view">
-                                    <thead>
-                                        <tr>
-                                            <th>专业</th>
-                                            <th>章节</th>
-                                            <th>定额编号</th>
-                                            <th>名称</th>
-                                            <th>单位</th>
-                                            <th>综合单价</th>
-                                            <th>直接费</th>
-                                            <th>人工费</th>
-                                            <th>材料费</th>
-                                            <th>机械费</th>
-                                            <th>综合费</th>
-                                            <th>费率</th>
-                                            <th>启用</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-if="state.lines and state.lines.length">
-                                            <t t-foreach="state.lines" t-as="line" t-key="line.id">
-                                                <tr t-on-click="() => this.onLineClick(line)"
-                                                    t-on-dblclick="() => this.onLineDblClick(line)"
-                                                    t-att-data-id="line.id"
-                                                    t-attf-class="#{state.selectedLineId === line.id ? 'o_quota_row_selected' : ''}">
-                                                    <td>
-                                                        <t t-if="line.discipline_id">
-                                                            <t t-esc="line.discipline_id[1]"/>
-                                                        </t>
-                                                    </td>
-                                                    <td>
-                                                        <t t-if="line.chapter_id">
-                                                            <t t-esc="line.chapter_id[1]"/>
-                                                        </t>
-                                                    </td>
-                                                    <td><t t-esc="line.quota_code"/></td>
-                                                    <td>
-                                                        <span t-att-title="line.name">
-                                                            <t t-esc="line.name"/>
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <t t-if="line.uom_id">
-                                                            <t t-esc="line.uom_id[1]"/>
-                                                        </t>
-                                                    </td>
-                                                    <td class="o_quota_number"><t t-esc="line.price_total"/></td>
-                                                    <td class="o_quota_number"><t t-esc="line.price_direct"/></td>
-                                                    <td class="o_quota_number"><t t-esc="line.price_labor"/></td>
-                                                    <td class="o_quota_number"><t t-esc="line.price_material"/></td>
-                                                    <td class="o_quota_number"><t t-esc="line.price_machine"/></td>
-                                                    <td class="o_quota_number"><t t-esc="line.amount_misc"/></td>
-                                                    <td class="o_quota_number"><t t-esc="line.rate_misc"/></td>
-                                                    <td>
-                                                        <span t-if="line.active" class="badge badge-success">启用</span>
-                                                        <span t-if="!line.active" class="badge badge-secondary">停用</span>
-                                                    </td>
-                                                </tr>
-                                            </t>
-                                        </t>
-                                        <t t-else="">
-                                            <tr>
-                                                <td colspan="13" class="o_text_muted text-center">
-                                                    暂无数据，请调整左侧筛选或搜索条件
+                        <!-- 列表主体 -->
+                        <div class="o_panel_body o_quota_list_body"
+                             t-ref="listBody"
+                             tabindex="0"
+                             t-on-keydown="onKeyDown">
+                            <t t-if="state.loadingList">
+                                <div class="o_quota_list_overlay"/>
+                            </t>
+                            <table class="o_quota_table table table-sm table-hover o_list_view">
+                                <thead>
+                                    <tr>
+                                        <th>专业</th>
+                                        <th>章节</th>
+                                        <th>定额编号</th>
+                                        <th>名称</th>
+                                        <th>单位</th>
+                                        <th>综合单价</th>
+                                        <th>直接费</th>
+                                        <th>人工费</th>
+                                        <th>材料费</th>
+                                        <th>机械费</th>
+                                        <th>综合费</th>
+                                        <th>费率</th>
+                                        <th>启用</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="state.lines and state.lines.length">
+                                        <t t-foreach="state.lines" t-as="line" t-key="line.id">
+                                            <tr t-on-click="() => this.onLineClick(line)"
+                                                t-on-dblclick="() => this.onLineDblClick(line)"
+                                                t-att-data-id="line.id"
+                                                t-attf-class="#{state.selectedLineId === line.id ? 'o_quota_row_selected' : ''}">
+                                                <td>
+                                                    <t t-if="line.discipline_id">
+                                                        <t t-esc="line.discipline_id[1]"/>
+                                                    </t>
+                                                </td>
+                                                <td>
+                                                    <t t-if="line.chapter_id">
+                                                        <t t-esc="line.chapter_id[1]"/>
+                                                    </t>
+                                                </td>
+                                                <td><t t-esc="line.quota_code"/></td>
+                                                <td>
+                                                    <span t-att-title="line.name">
+                                                        <t t-esc="line.name"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <t t-if="line.uom_id">
+                                                        <t t-esc="line.uom_id[1]"/>
+                                                    </t>
+                                                </td>
+                                                <td class="o_quota_number"><t t-esc="line.price_total"/></td>
+                                                <td class="o_quota_number"><t t-esc="line.price_direct"/></td>
+                                                <td class="o_quota_number"><t t-esc="line.price_labor"/></td>
+                                                <td class="o_quota_number"><t t-esc="line.price_material"/></td>
+                                                <td class="o_quota_number"><t t-esc="line.price_machine"/></td>
+                                                <td class="o_quota_number"><t t-esc="line.amount_misc"/></td>
+                                                <td class="o_quota_number"><t t-esc="line.rate_misc"/></td>
+                                                <td>
+                                                    <span t-if="line.active" class="badge badge-success">启用</span>
+                                                    <span t-if="!line.active" class="badge badge-secondary">停用</span>
                                                 </td>
                                             </tr>
                                         </t>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="o_quota_footer" t-if="state.lines">
-                                <span>当前显示 <t t-esc="state.lines.length"/> 条定额</span>
-                                <t t-if="selectedLine">
-                                    <span class="o_quota_footer_divider">|</span>
-                                    <span>
-                                        已选：
-                                        <t t-esc="selectedLine.quota_code"/> —
-                                        <t t-esc="selectedLine.name"/>
-                                    </span>
-                                </t>
-                            </div>
+                                    </t>
+                                    <t t-else="">
+                                        <tr>
+                                            <td colspan="13" class="o_text_muted text-center">
+                                                暂无数据，请调整左侧筛选或搜索条件
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="o_quota_footer" t-if="state.lines">
+                            <span>当前显示 <t t-esc="state.lines.length"/> 条定额</span>
+                            <t t-if="selectedLine">
+                                <span class="o_quota_footer_divider">|</span>
+                                <span>
+                                    已选：
+                                    <t t-esc="selectedLine.quota_code"/> —
+                                    <t t-esc="selectedLine.name"/>
+                                </span>
+                            </t>
                         </div>
                     </div>
-                </t>
+                </div>
             </t>
         </div>
     </t>
