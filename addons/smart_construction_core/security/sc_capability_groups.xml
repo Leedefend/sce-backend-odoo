@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- 项目中心 -->
+        <record id="group_sc_cap_project_read" model="res.groups">
+            <field name="name">SC 能力 - 项目中心只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_sc_cap_project_user" model="res.groups">
+            <field name="name">SC 能力 - 项目中心经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+        </record>
+        <record id="group_sc_cap_project_manager" model="res.groups">
+            <field name="name">SC 能力 - 项目中心审批</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user'))]"/>
+        </record>
+
+        <!-- 物资中心 -->
+        <record id="group_sc_cap_material_read" model="res.groups">
+            <field name="name">SC 能力 - 物资中心只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_sc_cap_material_user" model="res.groups">
+            <field name="name">SC 能力 - 物资中心经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read'))]"/>
+        </record>
+        <record id="group_sc_cap_material_manager" model="res.groups">
+            <field name="name">SC 能力 - 物资中心审批</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_material_user'))]"/>
+        </record>
+
+        <!-- 采购中心 -->
+        <record id="group_sc_cap_purchase_read" model="res.groups">
+            <field name="name">SC 能力 - 采购中心只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_sc_cap_purchase_user" model="res.groups">
+            <field name="name">SC 能力 - 采购中心经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_purchase_read'))]"/>
+        </record>
+        <record id="group_sc_cap_purchase_manager" model="res.groups">
+            <field name="name">SC 能力 - 采购中心审批</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_purchase_user'))]"/>
+        </record>
+
+        <!-- 财务中心 -->
+        <record id="group_sc_cap_finance_read" model="res.groups">
+            <field name="name">SC 能力 - 财务中心只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_sc_cap_finance_user" model="res.groups">
+            <field name="name">SC 能力 - 财务中心经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+        <record id="group_sc_cap_finance_manager" model="res.groups">
+            <field name="name">SC 能力 - 财务中心审批</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user'))]"/>
+        </record>
+
+        <!-- 合同中心 -->
+        <record id="group_sc_cap_contract_read" model="res.groups">
+            <field name="name">SC 能力 - 合同中心只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_sc_cap_contract_user" model="res.groups">
+            <field name="name">SC 能力 - 合同中心经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+        <record id="group_sc_cap_contract_manager" model="res.groups">
+            <field name="name">SC 能力 - 合同中心审批</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user'))]"/>
+        </record>
+
+        <!-- 成控中心 -->
+        <record id="group_sc_cap_cost_read" model="res.groups">
+            <field name="name">SC 能力 - 成控中心只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_sc_cap_cost_user" model="res.groups">
+            <field name="name">SC 能力 - 成控中心经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        </record>
+        <record id="group_sc_cap_cost_manager" model="res.groups">
+            <field name="name">SC 能力 - 成控中心审批</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user'))]"/>
+        </record>
+
+        <!-- 数据中心（Phase1 先只读） -->
+        <record id="group_sc_cap_data_read" model="res.groups">
+            <field name="name">SC 能力 - 数据中心只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- 配置管理员 -->
+        <record id="group_sc_cap_config_admin" model="res.groups">
+            <field name="name">SC 能力 - 配置管理员</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+    </data>
+</odoo>
