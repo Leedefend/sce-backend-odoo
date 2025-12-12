@@ -26,3 +26,4 @@ from . import settlement_order
 from . import settlement
 from . import payment_request
 from . import material_plan
+from . import sc_workflow
