@@ -207,5 +207,34 @@
               action="action_project_cost_code"
               sequence="40"
               groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_root"
+              name="工作流"
+              parent="menu_sc_config_center"
+              sequence="50"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_def"
+              name="工作流定义"
+              parent="menu_sc_workflow_root"
+              action="action_sc_workflow_def"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_instance"
+              name="工作流实例"
+              parent="menu_sc_workflow_root"
+              action="action_sc_workflow_instance"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_workitem"
+              name="工作项"
+              parent="menu_sc_workflow_root"
+              action="action_sc_workflow_workitem"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_log"
+              name="工作流日志"
+              parent="menu_sc_workflow_root"
+              action="action_sc_workflow_log"
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
 
 </odoo>

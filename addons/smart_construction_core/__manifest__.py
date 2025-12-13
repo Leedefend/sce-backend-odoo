@@ -55,6 +55,7 @@
         'views/settlement_views.xml',
         'wizard/material_plan_to_rfq_views.xml',
         'views/material_plan_views.xml',
+        'views/workflow_views.xml',
         'views/menu.xml',
         'views/dictionary_views.xml',
         'views/quota_import_views.xml',
