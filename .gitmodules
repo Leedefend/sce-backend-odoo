@@ -1,0 +1,4 @@
+[submodule "addons_external/oca_server_ux"]
+	path = addons_external/oca_server_ux
+	url = https://github.com/OCA/server-ux.git
+	branch = 17.0
