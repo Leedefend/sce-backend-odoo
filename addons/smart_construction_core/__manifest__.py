@@ -14,6 +14,8 @@
         'uom',
         'product',
         'web',
+        'base_tier_validation',
+        'base_tier_validation_server_action',
     ],
     'data': [
         # 基础数据
@@ -29,6 +31,7 @@
         'security/sc_model_records.xml',
         'security/ir.model.access.csv',
         'data/sc_test_users.xml',
+        'data/material_plan_tier_actions.xml',
 
         # 视图
         'views/cost_domain_views.xml',
@@ -50,6 +53,7 @@
         'views/product_extend_views.xml',
         'views/project_project_financial_views.xml',
         'views/project_budget_views.xml',
+        'views/tier_review_views.xml',
         'views/project_extend_boq_views.xml',
         'views/payment_request_views.xml',
         'views/settlement_views.xml',

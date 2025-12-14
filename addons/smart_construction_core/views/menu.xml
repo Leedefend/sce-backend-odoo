@@ -173,6 +173,12 @@
               action="smart_construction_core.action_project_material_plan"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_material_read"/>
+    <menuitem id="menu_sc_tier_review_my_material_plan"
+              name="待我审批（物资计划）"
+              parent="menu_sc_material_center"
+              action="smart_construction_core.action_sc_tier_review_my_material_plan"
+              sequence="35"
+              groups="smart_construction_core.group_sc_cap_material_manager"/>
 
     <!-- 财务中心 -->
     <menuitem id="menu_sc_finance_center"
