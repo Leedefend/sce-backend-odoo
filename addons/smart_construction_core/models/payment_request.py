@@ -39,10 +39,43 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
     settlement_id = fields.Many2one(
-        "project.settlement",
-        string="关联结算单",
-        domain="[('project_id', '=', project_id)]",
+        "sc.settlement.order",
+        string="结算单",
+        domain="[('project_id', '=', project_id), ('state', '=', 'approve')]",
         tracking=True,
+    )
+    settlement_currency_id = fields.Many2one(
+        "res.currency",
+        string="结算币种",
+        related="settlement_id.currency_id",
+        store=True,
+        readonly=True,
+    )
+    settlement_amount_total = fields.Monetary(
+        string="结算总额",
+        currency_field="settlement_currency_id",
+        related="settlement_id.amount_total",
+        store=True,
+        readonly=True,
+    )
+    settlement_paid_amount = fields.Monetary(
+        string="已付款金额",
+        currency_field="settlement_currency_id",
+        related="settlement_id.paid_amount",
+        store=True,
+        readonly=True,
+    )
+    settlement_remaining_amount = fields.Monetary(
+        string="剩余额度",
+        currency_field="settlement_currency_id",
+        related="settlement_id.remaining_amount",
+        store=True,
+        readonly=True,
+    )
+    settlement_amount_insufficient = fields.Boolean(
+        string="结算额度不足",
+        compute="_compute_settlement_amount_insufficient",
+        store=False,
     )
     partner_id = fields.Many2one(
         "res.partner",
@@ -90,15 +123,49 @@ class PaymentRequest(models.Model):
                 vals["name"] = seq.next_by_code("payment.request") or _("Payment Request")
         return super().create(vals_list)
 
-    @api.constrains("settlement_id", "type")
-    def _check_settlement_type(self):
+    @api.depends("settlement_id", "settlement_remaining_amount", "amount")
+    def _compute_settlement_amount_insufficient(self):
         for rec in self:
-            if rec.settlement_id and rec.settlement_id.type != rec.type:
+            if not rec.settlement_id:
+                rec.settlement_amount_insufficient = False
+                continue
+            remaining = rec.settlement_remaining_amount or 0.0
+            request_amount = rec.amount or 0.0
+            rec.settlement_amount_insufficient = remaining <= 0 or request_amount > remaining
+
+    @api.constrains("settlement_id", "type", "project_id", "partner_id", "contract_id")
+    def _check_settlement_consistency(self):
+        for rec in self:
+            settle = rec.settlement_id
+            if not settle:
+                continue
+            if settle.settlement_type == "out" and rec.type != "pay":
                 raise ValidationError(_("结算单类型必须与付款申请类型一致。"))
+            if settle.settlement_type == "in" and rec.type != "receive":
+                raise ValidationError(_("结算单类型必须与付款申请类型一致。"))
+            if settle.project_id and rec.project_id and settle.project_id != rec.project_id:
+                raise ValidationError(_("结算单项目必须与付款申请项目一致。"))
+            if settle.partner_id and rec.partner_id and settle.partner_id != rec.partner_id:
+                raise ValidationError(_("结算单往来单位必须与付款申请一致。"))
+            if settle.contract_id and rec.contract_id and settle.contract_id != rec.contract_id:
+                raise ValidationError(_("结算单合同必须与付款申请一致。"))
+            # 额度校验
+            if settle.remaining_amount is not None:
+                if settle.remaining_amount <= 0:
+                    raise ValidationError(
+                        _("结算单剩余额度不足，无法提交付款申请（剩余额度：%s）。") % settle.remaining_amount
+                    )
+                if rec.amount and rec.amount > settle.remaining_amount:
+                    raise ValidationError(
+                        _("申请金额超过结算单剩余额度，无法提交。（申请金额：%s，剩余额度：%s）")
+                        % (rec.amount, settle.remaining_amount)
+                    )
 
     def action_submit(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user"):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
+        # 额度校验
+        self._check_settlement_consistency()
         self.write(
             {
                 "state": "submit",
@@ -126,7 +193,33 @@ class PaymentRequest(models.Model):
     def action_done(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
-        self.write({"state": "done"})
+        for rec in self:
+            if not rec.settlement_id:
+                raise ValidationError(_("请先关联已批准的结算单，再完成付款申请。"))
+            # 额度校验（再次防守）
+            rec._check_settlement_consistency()
+            # 幂等：同一付款申请只允许一条资金流水
+            ledger = self.env["sc.treasury.ledger"].sudo().search([("payment_request_id", "=", rec.id)], limit=1)
+            if ledger:
+                raise ValidationError(_("该付款申请已生成资金流水，不能重复入账。"))
+            rec.write({"state": "done"})
+            self.env["sc.treasury.ledger"].sudo().with_context(allow_ledger_auto=True).create(
+                {
+                    "project_id": rec.project_id.id,
+                    "partner_id": rec.partner_id.id,
+                    "settlement_id": rec.settlement_id.id,
+                    "payment_request_id": rec.id,
+                    "direction": "out" if rec.type == "pay" else "in",
+                    "amount": rec.amount,
+                    "currency_id": rec.currency_id.id,
+                    "note": _("由付款申请 %s 自动生成") % rec.name,
+                }
+            )
+            # 更新结算单状态（可选：额度打完自动完成）
+            settle = rec.settlement_id.sudo()
+            settle._compute_paid_amount()
+            if settle.remaining_amount <= 0 and settle.state not in ("done", "cancel"):
+                settle.write({"state": "done"})
 
     def action_cancel(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):

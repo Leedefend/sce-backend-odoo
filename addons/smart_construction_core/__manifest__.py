@@ -59,6 +59,7 @@
         'views/project_extend_boq_views.xml',
         'views/payment_request_views.xml',
         'views/settlement_views.xml',
+        'views/treasury_ledger_views.xml',
         'wizard/material_plan_to_rfq_views.xml',
         'views/material_plan_views.xml',
         'views/workflow_views.xml',

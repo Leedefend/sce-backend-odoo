@@ -3,70 +3,96 @@
     <data>
 
         <!-- 列表 -->
-        <record id="view_project_settlement_tree" model="ir.ui.view">
-            <field name="name">project.settlement.tree</field>
-            <field name="model">project.settlement</field>
+        <record id="view_sc_settlement_order_tree" model="ir.ui.view">
+            <field name="name">sc.settlement.order.tree</field>
+            <field name="model">sc.settlement.order</field>
             <field name="arch" type="xml">
-                <tree string="项目结算">
+                <tree string="结算单">
                     <field name="name"/>
+                    <field name="settlement_type"/>
                     <field name="project_id"/>
-                    <field name="type"/>
                     <field name="contract_id"/>
                     <field name="partner_id"/>
-                    <field name="amount"/>
+                    <field name="amount_total"/>
                     <field name="state"/>
-                    <field name="date_settle"/>
+                    <field name="date_settlement"/>
                 </tree>
             </field>
         </record>
 
         <!-- 表单 -->
-        <record id="view_project_settlement_form" model="ir.ui.view">
-            <field name="name">project.settlement.form</field>
-            <field name="model">project.settlement</field>
+        <record id="view_sc_settlement_order_form" model="ir.ui.view">
+            <field name="name">sc.settlement.order.form</field>
+            <field name="model">sc.settlement.order</field>
             <field name="arch" type="xml">
-                <form string="项目结算">
+                <form string="结算单">
                     <header>
-                        <button name="action_confirm"
-                                type="object"
-                                string="确认"
-                                class="btn-primary"
-                                invisible="state != 'draft'"/>
-                        <button name="action_done"
-                                type="object"
-                                string="完成"
-                                class="btn-secondary"
-                                invisible="state not in ['draft', 'confirmed']"/>
-                        <button name="action_cancel"
-                                type="object"
-                                string="取消"
-                                class="btn-secondary"
-                                invisible="state in ['done', 'cancel']"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done,cancel"/>
+                        <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'"/>
+                        <button name="action_approve" type="object" string="批准" invisible="state != 'submit'"/>
+                        <button name="action_done" type="object" string="完成" invisible="state not in ['approve']"/>
+                        <button name="action_cancel" type="object" string="取消" invisible="state in ['done','cancel']"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve,done,cancel"/>
                     </header>
                     <sheet>
+                        <group string="结算额度">
+                            <field name="amount_total" readonly="1"/>
+                            <field name="paid_amount" readonly="1"/>
+                            <field name="remaining_amount"
+                                   readonly="1"
+                                   modifiers="{'invisible': [['remaining_amount', '&lt;=', 0.0]]}"/>
+                            <field name="remaining_amount"
+                                   string="剩余额度（风险）"
+                                   readonly="1"
+                                   class="text-danger"
+                                   modifiers="{'invisible': [['remaining_amount', '>', 0.0]]}"/>
+                        </group>
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
-                                <field name="project_id" options="{'no_create': True}"/>
-                                <field name="type"/>
+                                <field name="project_id" options="{'no_create': True}" required="1"/>
+                                <field name="settlement_type" required="1"/>
                                 <field name="contract_id" domain="[('project_id', '=', project_id)]"/>
                             </group>
                             <group>
-                                <field name="partner_id" options="{'no_create_edit': True}"/>
-                                <field name="amount"/>
-                                <field name="currency_id"/>
-                                <field name="date_settle"/>
+                                <field name="partner_id" options="{'no_create_edit': True}" required="1"/>
+                                <field name="date_settlement"/>
+                                <field name="currency_id" required="1"/>
+                                <field name="company_id" readonly="1"/>
                             </group>
                         </group>
+                        <group>
+                            <field name="amount_total" readonly="1"/>
+                            <field name="note"/>
+                        </group>
                         <notebook>
-                            <page string="结算明细">
+                            <page string="明细">
                                 <field name="line_ids">
                                     <tree editable="bottom">
-                                        <field name="sequence" widget="handle"/>
                                         <field name="name"/>
-                                        <field name="amount"/>
+                                        <field name="qty"/>
+                                        <field name="price_unit"/>
+                                        <field name="amount" readonly="1"/>
                                         <field name="currency_id" invisible="1"/>
+                                    </tree>
+                                    <form>
+                                        <group>
+                                            <field name="name"/>
+                                            <field name="qty"/>
+                                            <field name="price_unit"/>
+                                            <field name="amount" readonly="1"/>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="付款申请">
+                                <field name="payment_request_ids" readonly="1" context="{'create': False, 'edit': False}">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="project_id"/>
+                    <field name="partner_id"/>
+                                        <field name="amount"/>
+                                        <field name="date_request"/>
+                                        <field name="state"/>
                                     </tree>
                                 </field>
                             </page>
@@ -77,12 +103,12 @@
         </record>
 
         <!-- 动作 -->
-        <record id="action_project_settlement" model="ir.actions.act_window">
-            <field name="name">结算中心</field>
-            <field name="res_model">project.settlement</field>
+        <record id="action_sc_settlement_order" model="ir.actions.act_window">
+            <field name="name">结算单</field>
+            <field name="res_model">sc.settlement.order</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{'search_default_group_by_project_id': 1}</field>
-            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
         </record>
 
         <!-- 菜单 -->
@@ -90,14 +116,14 @@
                   name="结算中心"
                   parent="smart_construction_core.menu_sc_finance_center"
                   sequence="30"
-                  groups="smart_construction_core.group_sc_cap_finance_read"/>
+                  groups="smart_construction_core.group_sc_cap_settlement_read"/>
 
-        <menuitem id="menu_project_settlement"
+        <menuitem id="menu_sc_settlement_order"
                   name="结算单"
                   parent="menu_sc_settlement_center"
-                  action="action_project_settlement"
+                  action="action_sc_settlement_order"
                   sequence="10"
-                  groups="smart_construction_core.group_sc_cap_finance_read"/>
+                  groups="smart_construction_core.group_sc_cap_settlement_read"/>
 
     </data>
 </odoo>
