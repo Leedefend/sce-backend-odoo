@@ -173,6 +173,12 @@
               action="smart_construction_core.action_project_material_plan"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_material_read"/>
+    <menuitem id="menu_sc_tier_review_my_material_plan"
+              name="待我审批（物资计划）"
+              parent="menu_sc_material_center"
+              action="smart_construction_core.action_sc_tier_review_my_material_plan"
+              sequence="35"
+              groups="smart_construction_core.group_sc_cap_material_manager"/>
 
     <!-- 财务中心 -->
     <menuitem id="menu_sc_finance_center"
@@ -205,6 +211,35 @@
               name="成本科目"
               parent="menu_sc_config_center"
               action="action_project_cost_code"
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_root"
+              name="工作流"
+              parent="menu_sc_config_center"
+              sequence="50"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_def"
+              name="工作流定义"
+              parent="menu_sc_workflow_root"
+              action="action_sc_workflow_def"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_instance"
+              name="工作流实例"
+              parent="menu_sc_workflow_root"
+              action="action_sc_workflow_instance"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_workitem"
+              name="工作项"
+              parent="menu_sc_workflow_root"
+              action="action_sc_workflow_workitem"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <menuitem id="menu_sc_workflow_log"
+              name="工作流日志"
+              parent="menu_sc_workflow_root"
+              action="action_sc_workflow_log"
               sequence="40"
               groups="smart_construction_core.group_sc_cap_config_admin"/>
 

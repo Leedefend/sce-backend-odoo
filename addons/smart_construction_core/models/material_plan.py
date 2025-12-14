@@ -7,7 +7,7 @@ from odoo.exceptions import UserError, ValidationError
 class ProjectMaterialPlan(models.Model):
     _name = "project.material.plan"
     _description = "物资计划"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
     _order = "id desc"
 
     name = fields.Char("单号", default="新建", copy=False, readonly=True)
@@ -78,7 +78,6 @@ class ProjectMaterialPlan(models.Model):
             rec._normalize_lines_uom()
             if rec.name == "新建":
                 rec.name = seq.next_by_code("project.material.plan") or rec.name
-            approver = rec._get_material_approver()
             rec.write(
                 {
                     "state": "submit",
@@ -87,12 +86,13 @@ class ProjectMaterialPlan(models.Model):
                     "reject_reason": False,
                 }
             )
-            rec.message_post(body=_("物资计划已提交，等待 %s 审核。") % approver.name)
-            rec.activity_schedule(
-                "mail.mail_activity_data_todo",
-                user_id=approver.id,
-                summary=_("请审核物资计划：%s") % rec.name,
-            )
+            rec.invalidate_recordset()
+            company = rec.company_id or self.env.company
+            rec.with_context(
+                allowed_company_ids=[company.id],
+                force_company=company.id,
+            ).request_validation()
+            rec.message_post(body=_("物资计划已提交，进入审批流程。"))
 
     def action_approve(self):
         for rec in self:
@@ -124,6 +124,32 @@ class ProjectMaterialPlan(models.Model):
                 }
             )
             rec.message_post(body=_("物资计划被驳回：%s") % rec.reject_reason)
+
+    # ==== Tier 回调 ====
+    def action_on_tier_approved(self):
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            rec.write(
+                {
+                    "state": "approved",
+                    "approved_by": self.env.user.id,
+                    "approved_at": fields.Datetime.now(),
+                }
+            )
+            rec.message_post(body=_("物资计划审批通过。"))
+
+    def action_on_tier_rejected(self, reason=None):
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            rec.write(
+                {
+                    "state": "draft",
+                    "reject_reason": reason or _("未填写原因"),
+                }
+            )
+            rec.message_post(body=_("物资计划审批驳回：%s") % rec.reject_reason)
 
     def action_done(self):
         for rec in self:
@@ -180,6 +206,17 @@ class ProjectMaterialPlan(models.Model):
         action["context"] = ctx
         return action
 
+    def _check_state_from_condition(self):
+        """
+        OCA Tier Validation gate.
+        默认实现通常依赖上游的状态字段/条件字段；我们自定义了 state，
+        因此明确声明：submit 状态即可发起审批。
+        """
+        self.ensure_one()
+        # 兼容父类（如果上游也实现了该方法）
+        parent = getattr(super(ProjectMaterialPlan, self), "_check_state_from_condition", None)
+        base_ok = parent() if parent else False
+        return base_ok or (self.state == "submit")
 
 class ProjectMaterialPlanLine(models.Model):
     _name = "project.material.plan.line"
