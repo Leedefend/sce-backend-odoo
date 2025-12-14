@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScSettlementOrder(models.Model):
@@ -70,8 +70,26 @@ class ScSettlementOrder(models.Model):
         compute="_compute_paid_amount",
         store=True,
     )
-    compliance_contract_ok = fields.Boolean(string="合同一致", compute="_compute_compliance_flags", store=False)
-    compliance_message = fields.Text(string="匹配提示", compute="_compute_compliance_flags", store=False)
+    purchase_order_ids = fields.Many2many(
+        comodel_name="purchase.order",
+        relation="sc_settlement_order_purchase_rel",
+        column1="settlement_id",
+        column2="purchase_id",
+        string="采购订单",
+        help="与本结算单关联的采购订单（Phase-3 三单匹配基础版）。",
+    )
+    invoice_ref = fields.Char(string="发票号/票据号")
+    invoice_amount = fields.Monetary(string="发票金额", currency_field="currency_id")
+    invoice_date = fields.Date(string="发票日期")
+
+    compliance_contract_ok = fields.Boolean(string="合同一致", compute="_compute_compliance_summary", store=False)
+    compliance_state = fields.Selection(
+        [("ok", "通过"), ("warn", "警告"), ("block", "阻断")],
+        string="匹配状态",
+        compute="_compute_compliance_summary",
+        store=False,
+    )
+    compliance_message = fields.Text(string="匹配提示", compute="_compute_compliance_summary", store=False)
 
     @api.depends("line_ids.amount", "payment_request_ids", "payment_request_ids.state")
     def _compute_paid_amount(self):
@@ -106,23 +124,77 @@ class ScSettlementOrder(models.Model):
         for order in self:
             order.amount_total = sum(order.line_ids.mapped("amount"))
 
-    @api.depends("contract_id", "payment_request_ids.contract_id")
-    def _compute_compliance_flags(self):
+    @api.constrains("purchase_order_ids", "partner_id")
+    def _check_po_vendor_consistency(self):
         for rec in self:
-            ok = True
-            msg = []
+            if not rec.purchase_order_ids or not rec.partner_id:
+                continue
+            wrong = rec.purchase_order_ids.filtered(lambda po: po.partner_id.id != rec.partner_id.id)
+            if wrong:
+                raise ValidationError(
+                    _("采购订单供应商与结算单往来单位不一致：%s")
+                    % ", ".join(wrong.mapped("name")[:10])
+                )
+
+    @api.depends(
+        "contract_id",
+        "payment_request_ids.contract_id",
+        "purchase_order_ids",
+        "purchase_order_ids.state",
+        "purchase_order_ids.partner_id",
+        "partner_id",
+        "invoice_ref",
+        "invoice_amount",
+        "invoice_date",
+        "amount_total",
+    )
+    def _compute_compliance_summary(self):
+        for rec in self:
+            missing = []
+            mismatch = []
+            warnings = []
+
+            # 合同一致性
             if rec.contract_id and rec.payment_request_ids:
                 wrong = rec.payment_request_ids.filtered(
                     lambda r: r.contract_id and r.contract_id.id != rec.contract_id.id
                 )
                 if wrong:
-                    ok = False
-                    msg.append(
-                        _("存在付款申请合同与结算单不一致：%s")
-                        % ", ".join(wrong.mapped("name")[:6])
-                    )
-            rec.compliance_contract_ok = ok
-            rec.compliance_message = "\n".join(msg) if msg else _("匹配正常")
+                    mismatch.append(_("付款申请合同与结算单不一致"))
+
+            # 采购来源
+            if not rec.purchase_order_ids:
+                missing.append(_("采购订单"))
+            else:
+                bad_state = rec.purchase_order_ids.filtered(lambda po: po.state not in ("purchase", "done"))
+                if bad_state:
+                    mismatch.append(_("采购订单状态不合规"))
+                # 供应商不一致由 constrains 硬拦，这里不重复
+
+            # 发票占位（软提示）
+            if not rec.invoice_ref:
+                warnings.append(_("缺少发票信息（占位）"))
+            else:
+                if rec.invoice_amount and rec.amount_total and rec.invoice_amount < rec.amount_total:
+                    warnings.append(_("发票金额小于结算金额"))
+
+            # 汇总状态：block > warn > ok
+            if mismatch:
+                rec.compliance_state = "block"
+            elif missing or warnings:
+                rec.compliance_state = "warn"
+            else:
+                rec.compliance_state = "ok"
+
+            lines = []
+            if mismatch:
+                lines.append(_("【阻断】") + "；".join(mismatch))
+            if missing:
+                lines.append(_("【缺失】") + "；".join(missing))
+            if warnings:
+                lines.append(_("【提示】") + "；".join(warnings))
+            rec.compliance_message = "\n".join(lines) if lines else _("匹配正常")
+            rec.compliance_contract_ok = not bool(mismatch)
 
     def _get_bool_param(self, key, default=True):
         val = self.env["ir.config_parameter"].sudo().get_param(key)
@@ -147,6 +219,27 @@ class ScSettlementOrder(models.Model):
                     _("合同不一致，禁止继续操作。请检查结算单合同与关联付款申请合同。")
                 )
 
+    def _check_purchase_orders_or_raise(self, strict=True):
+        """
+        strict=True 用于 approve 时强制校验；strict=False 受参数控制。
+        """
+        self.ensure_one()
+        hard_block = self._get_bool_param("sc.settlement.check_purchase.hard_block", True)
+        if not hard_block and not strict:
+            return
+
+        if not self.purchase_order_ids:
+            if strict:
+                raise UserError(_("缺少采购订单来源，无法批准结算单。"))
+            return
+
+        bad_state = self.purchase_order_ids.filtered(lambda po: po.state not in ("purchase", "done"))
+        if bad_state:
+            raise UserError(
+                _("采购订单状态不合规（需为 已采购/完成），问题订单：%s")
+                % ", ".join(bad_state.mapped("name")[:10])
+            )
+
     @api.model
     def create(self, vals):
         if vals.get("name", "新建") in (False, "新建"):
@@ -157,11 +250,13 @@ class ScSettlementOrder(models.Model):
     def action_submit(self):
         for rec in self:
             rec._check_contract_consistency_or_raise(strict=False)
+            rec._check_purchase_orders_or_raise(strict=False)
         self.write({"state": "submit"})
 
     def action_approve(self):
         for rec in self:
             rec._check_contract_consistency_or_raise(strict=True)
+            rec._check_purchase_orders_or_raise(strict=True)
         self.write({"state": "approve"})
 
     def action_done(self):

@@ -72,6 +72,28 @@ class PaymentRequest(models.Model):
         store=True,
         readonly=True,
     )
+    settlement_compliance_state = fields.Selection(
+        related="settlement_id.compliance_state",
+        string="匹配状态",
+        readonly=True,
+        store=True,
+    )
+    settlement_compliance_message = fields.Text(
+        related="settlement_id.compliance_message",
+        string="匹配提示",
+        readonly=True,
+        store=True,
+    )
+    settlement_match_blocked = fields.Boolean(
+        string="匹配阻断",
+        compute="_compute_settlement_match_flags",
+        store=False,
+    )
+    settlement_match_warn = fields.Boolean(
+        string="匹配警告",
+        compute="_compute_settlement_match_flags",
+        store=False,
+    )
     settlement_amount_insufficient = fields.Boolean(
         string="结算额度不足",
         compute="_compute_settlement_amount_insufficient",
@@ -133,6 +155,32 @@ class PaymentRequest(models.Model):
             request_amount = rec.amount or 0.0
             rec.settlement_amount_insufficient = remaining <= 0 or request_amount > remaining
 
+    @api.depends("settlement_id", "settlement_id.compliance_state")
+    def _compute_settlement_match_flags(self):
+        for rec in self:
+            state = rec.settlement_id.compliance_state if rec.settlement_id else False
+            rec.settlement_match_blocked = state == "block"
+            rec.settlement_match_warn = state == "warn"
+
+    def _get_bool_param(self, key, default=True):
+        val = self.env["ir.config_parameter"].sudo().get_param(key)
+        if val is None:
+            return default
+        return str(val).strip().lower() in ("1", "true", "yes", "y", "on")
+
+    def _check_settlement_compliance_or_raise(self, strict=True):
+        self.ensure_one()
+        if not self.settlement_id:
+            return
+        block_on_block = self._get_bool_param("sc.payment.block_on_settlement_block", True)
+        block_on_warn = self._get_bool_param("sc.payment.block_on_settlement_warn", False)
+        state = self.settlement_id.compliance_state
+        msg = self.settlement_id.compliance_message or ""
+        if state == "block" and block_on_block:
+            raise ValidationError(_("结算单来源匹配未通过，禁止继续：\n%s") % msg)
+        if state == "warn" and strict and block_on_warn:
+            raise ValidationError(_("结算单来源匹配存在缺失/提示，按策略禁止继续：\n%s") % msg)
+
     @api.constrains("settlement_id", "type", "project_id", "partner_id", "contract_id")
     def _check_settlement_consistency(self):
         for rec in self:
@@ -166,6 +214,8 @@ class PaymentRequest(models.Model):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
         # 额度校验
         self._check_settlement_consistency()
+        for rec in self:
+            rec._check_settlement_compliance_or_raise(strict=False)
         self.write(
             {
                 "state": "submit",
@@ -198,6 +248,7 @@ class PaymentRequest(models.Model):
                 raise ValidationError(_("请先关联已批准的结算单，再完成付款申请。"))
             # 额度校验（再次防守）
             rec._check_settlement_consistency()
+            rec._check_settlement_compliance_or_raise(strict=True)
             # 幂等：同一付款申请只允许一条资金流水
             ledger = self.env["sc.treasury.ledger"].sudo().search([("payment_request_id", "=", rec.id)], limit=1)
             if ledger:
