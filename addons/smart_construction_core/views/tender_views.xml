@@ -81,7 +81,7 @@
                             <field name="biz_attachment_ids" widget="many2many_binary"/>
                         </page>
                         <page string="标书购买">
-                            <field name="doc_purchase_ids" context="{'default_bid_id': active_id}">
+                            <field name="doc_purchase_ids" context="{'default_bid_id': context.get('active_id')}">
                                 <tree editable="bottom">
                                     <field name="applicant_id"/>
                                     <field name="apply_date"/>
@@ -92,7 +92,7 @@
                             </field>
                         </page>
                         <page string="现场踏勘">
-                            <field name="survey_ids" context="{'default_bid_id': active_id}">
+                            <field name="survey_ids" context="{'default_bid_id': context.get('active_id')}">
                                 <tree editable="bottom">
                                     <field name="survey_date"/>
                                     <field name="location"/>
@@ -102,7 +102,7 @@
                             </field>
                         </page>
                         <page string="文件审查">
-                            <field name="review_ids" context="{'default_bid_id': active_id}">
+                            <field name="review_ids" context="{'default_bid_id': context.get('active_id')}">
                                 <tree editable="bottom">
                                     <field name="version"/>
                                     <field name="reviewer_ids"/>
@@ -112,7 +112,7 @@
                             </field>
                         </page>
                         <page string="开标登记">
-                            <field name="opening_ids" context="{'default_bid_id': active_id}">
+                            <field name="opening_ids" context="{'default_bid_id': context.get('active_id')}">
                                 <tree editable="bottom">
                                     <field name="open_time"/>
                                     <field name="result"/>
@@ -122,7 +122,7 @@
                             </field>
                         </page>
                         <page string="保证金">
-                            <field name="guarantee_ids" context="{'default_bid_id': active_id}">
+                            <field name="guarantee_ids" context="{'default_bid_id': context.get('active_id')}">
                                 <tree editable="bottom">
                                     <field name="type"/>
                                     <field name="date"/>

@@ -63,7 +63,7 @@
                             </field>
                         </page>
                         <page string="任务">
-                            <field name="task_ids" context="{'default_work_id': active_id}">
+                            <field name="task_ids" context="{'default_work_id': context.get('active_id')}">
                                 <tree string="关联任务">
                                     <field name="name"/>
                                     <field name="boq_quantity_total"/>

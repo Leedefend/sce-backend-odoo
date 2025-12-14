@@ -173,7 +173,7 @@ class ProjectBudgetBoqLine(models.Model):
 
     sequence = fields.Integer("序号", default=10)
     boq_code = fields.Char("清单编码")
-    name = fields.Char("清单名称", required=True, oldname="boq_name")
+    name = fields.Char("清单名称", required=True)
 
     wbs_id = fields.Many2one(
         "construction.work.breakdown",
@@ -184,20 +184,17 @@ class ProjectBudgetBoqLine(models.Model):
     qty_bidded = fields.Float(
         "中标工程量",
         digits="Product Unit of Measure",
-        oldname="qty_budget",
     )
     uom_id = fields.Many2one("uom.uom", string="计量单位")
     price_bidded = fields.Monetary(
         "中标单价",
         currency_field="currency_id",
-        oldname="price_budget",
     )
     amount_bidded = fields.Monetary(
         "中标合价",
         compute="_compute_bidded_amount",
         store=True,
         currency_field="currency_id",
-        oldname="amount_budget",
     )
 
     currency_id = fields.Many2one(
@@ -252,7 +249,7 @@ class ProjectCostCode(models.Model):
     name = fields.Char("名称", required=True)
     code = fields.Char("编码", required=True, index=True)
     parent_id = fields.Many2one("project.cost.code", string="上级科目", index=True)
-    parent_path = fields.Char(index=True)
+    parent_path = fields.Char(index=True, unaccent=False)
 
     type = fields.Selection(
         [

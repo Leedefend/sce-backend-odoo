@@ -200,7 +200,6 @@ class TenderDocPurchase(models.Model):
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "审批中"), ("approved", "已通过"), ("rejected", "已驳回")],
         default="draft",
-        tracking=True,
     )
     currency_id = fields.Many2one(
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
@@ -233,7 +232,6 @@ class TenderDocReview(models.Model):
     state = fields.Selection(
         [("draft", "草稿"), ("reviewing", "审查中"), ("approved", "已通过"), ("rejected", "已驳回")],
         default="draft",
-        tracking=True,
     )
 
 

@@ -148,7 +148,7 @@ class ProjectBudgetLine(models.Model):
         index=True,
     )
 
-    name = fields.Char(string="说明")
+    name = fields.Char(string="预算项名称")
     sequence = fields.Integer(string="序号", default=10)
 
     budget_qty = fields.Float(string="预算工程量")
@@ -185,7 +185,7 @@ class ProjectBudgetLine(models.Model):
     )
 
     # 兼容旧版：预算说明
-    note = fields.Text(string="说明")
+    note = fields.Text(string="备注")
     uom_id = fields.Many2one(
         "uom.uom",
         string="单位",

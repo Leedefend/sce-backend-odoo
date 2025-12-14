@@ -179,7 +179,7 @@
         <field name="res_model">project.boq.line</field>
         <field name="view_mode">tree,pivot,graph</field>
         <field name="search_view_id" ref="view_project_boq_line_search"/>
-        <field name="context">{'search_default_project_id': active_id}</field>
+        <field name="context">{'search_default_project_id': context.get('active_id')}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
     </record>
 
