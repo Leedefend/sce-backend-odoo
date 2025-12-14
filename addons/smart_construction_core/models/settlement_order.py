@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class ScSettlementOrder(models.Model):
@@ -69,6 +70,8 @@ class ScSettlementOrder(models.Model):
         compute="_compute_paid_amount",
         store=True,
     )
+    compliance_contract_ok = fields.Boolean(string="合同一致", compute="_compute_compliance_flags", store=False)
+    compliance_message = fields.Text(string="匹配提示", compute="_compute_compliance_flags", store=False)
 
     @api.depends("line_ids.amount", "payment_request_ids", "payment_request_ids.state")
     def _compute_paid_amount(self):
@@ -103,6 +106,47 @@ class ScSettlementOrder(models.Model):
         for order in self:
             order.amount_total = sum(order.line_ids.mapped("amount"))
 
+    @api.depends("contract_id", "payment_request_ids.contract_id")
+    def _compute_compliance_flags(self):
+        for rec in self:
+            ok = True
+            msg = []
+            if rec.contract_id and rec.payment_request_ids:
+                wrong = rec.payment_request_ids.filtered(
+                    lambda r: r.contract_id and r.contract_id.id != rec.contract_id.id
+                )
+                if wrong:
+                    ok = False
+                    msg.append(
+                        _("存在付款申请合同与结算单不一致：%s")
+                        % ", ".join(wrong.mapped("name")[:6])
+                    )
+            rec.compliance_contract_ok = ok
+            rec.compliance_message = "\n".join(msg) if msg else _("匹配正常")
+
+    def _get_bool_param(self, key, default=True):
+        val = self.env["ir.config_parameter"].sudo().get_param(key)
+        if val is None:
+            return default
+        return str(val).strip().lower() in ("1", "true", "yes", "y", "on")
+
+    def _check_contract_consistency_or_raise(self, strict=True):
+        """
+        strict=True 用于 approve 时强制校验；strict=False 受参数控制。
+        """
+        self.ensure_one()
+        hard_block = self._get_bool_param("sc.settlement.check_contract.hard_block", True)
+        if not hard_block and not strict:
+            return
+        if self.contract_id and self.payment_request_ids:
+            wrong = self.payment_request_ids.filtered(
+                lambda r: r.contract_id and r.contract_id.id != self.contract_id.id
+            )
+            if wrong:
+                raise UserError(
+                    _("合同不一致，禁止继续操作。请检查结算单合同与关联付款申请合同。")
+                )
+
     @api.model
     def create(self, vals):
         if vals.get("name", "新建") in (False, "新建"):
@@ -111,9 +155,13 @@ class ScSettlementOrder(models.Model):
         return super().create(vals)
 
     def action_submit(self):
+        for rec in self:
+            rec._check_contract_consistency_or_raise(strict=False)
         self.write({"state": "submit"})
 
     def action_approve(self):
+        for rec in self:
+            rec._check_contract_consistency_or_raise(strict=True)
         self.write({"state": "approve"})
 
     def action_done(self):

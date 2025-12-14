@@ -45,6 +45,13 @@
                                    readonly="1"
                                    class="text-danger"
                                    modifiers="{'invisible': [['remaining_amount', '>', 0.0]]}"/>
+                            <field name="compliance_message"
+                                   readonly="1"
+                                   class="text-danger"
+                                   modifiers="{'invisible': [['compliance_contract_ok', '=', True]]}"/>
+                            <field name="compliance_message"
+                                   readonly="1"
+                                   modifiers="{'invisible': [['compliance_contract_ok', '=', False]]}"/>
                         </group>
                         <group>
                             <group>
