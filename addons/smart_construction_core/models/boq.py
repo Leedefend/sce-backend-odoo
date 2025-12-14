@@ -33,7 +33,7 @@ class ProjectBoqLine(models.Model):
         "parent_id",
         string="下级清单",
     )
-    parent_path = fields.Char(index=True)
+    parent_path = fields.Char(index=True, unaccent=False)
     level = fields.Integer(
         "层级",
         compute="_compute_level",

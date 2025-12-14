@@ -39,7 +39,7 @@ class ScProjectStructure(models.Model):
         'sc.project.structure', 'parent_id',
         string='下级节点', recursive=True
     )
-    parent_path = fields.Char(index=True)
+    parent_path = fields.Char(index=True, unaccent=False)
 
     sequence = fields.Integer('排序', default=10)
     level = fields.Integer('层级', compute='_compute_level', store=True, recursive=True)
