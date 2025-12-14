@@ -46,6 +46,22 @@
                                    class="text-danger"
                                    modifiers="{'invisible': [['remaining_amount', '>', 0.0]]}"/>
                         </group>
+                        <group string="来源匹配">
+                            <field name="compliance_message"
+                                   nolabel="1"
+                                   readonly="1"
+                                   class="text-danger"
+                                   modifiers="{'invisible': [['compliance_state', '!=', 'block']]}"/>
+                            <field name="compliance_message"
+                                   nolabel="1"
+                                   readonly="1"
+                                   class="text-warning"
+                                   modifiers="{'invisible': [['compliance_state', '!=', 'warn']]}"/>
+                            <field name="compliance_message"
+                                   nolabel="1"
+                                   readonly="1"
+                                   modifiers="{'invisible': [['compliance_state', '!=', 'ok']]}"/>
+                        </group>
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
@@ -63,6 +79,11 @@
                         <group>
                             <field name="amount_total" readonly="1"/>
                             <field name="note"/>
+                        </group>
+                        <group string="发票信息（占位）">
+                            <field name="invoice_ref"/>
+                            <field name="invoice_date"/>
+                            <field name="invoice_amount"/>
                         </group>
                         <notebook>
                             <page string="明细">
@@ -92,6 +113,22 @@
                     <field name="partner_id"/>
                                         <field name="amount"/>
                                         <field name="date_request"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="采购订单">
+                                <group>
+                                    <field name="purchase_order_ids"
+                                           widget="many2many_tags"
+                                           options="{'no_create': True}"/>
+                                </group>
+                                <field name="purchase_order_ids" nolabel="1" readonly="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="date_order"/>
+                                        <field name="partner_id"/>
+                                        <field name="amount_total"/>
                                         <field name="state"/>
                                     </tree>
                                 </field>

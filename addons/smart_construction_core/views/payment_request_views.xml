@@ -71,6 +71,18 @@
                                 ⚠ 结算额度不足（剩余额度低于申请金额），系统将阻止提交/完成。
                             </div>
                         </group>
+                        <group string="来源匹配">
+                            <field name="settlement_match_blocked" invisible="1"/>
+                            <field name="settlement_match_warn" invisible="1"/>
+                            <field name="settlement_compliance_message" nolabel="1" readonly="1"
+                                   class="text-danger"
+                                   modifiers="{'invisible': [['settlement_match_blocked', '=', False]]}"/>
+                            <field name="settlement_compliance_message" nolabel="1" readonly="1"
+                                   class="text-warning"
+                                   modifiers="{'invisible': [['settlement_match_warn', '=', False]]}"/>
+                            <field name="settlement_compliance_message" nolabel="1" readonly="1"
+                                   modifiers="{'invisible': ['|', ['settlement_match_blocked', '=', True], ['settlement_match_warn', '=', True]]}"/>
+                        </group>
                         <group>
                             <field name="note"/>
                         </group>
