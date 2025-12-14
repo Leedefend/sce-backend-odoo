@@ -276,7 +276,7 @@ class ProjectProject(models.Model):
         string='结算单',
     )
     pay_contract_total = fields.Monetary(
-        '支出合同金额', currency_field='company_currency_id',
+        '已付款合同额', currency_field='company_currency_id',
         compute='_compute_pay_overview', store=True,
     )
     pay_settlement_total = fields.Monetary(
@@ -320,7 +320,7 @@ class ProjectProject(models.Model):
     )
     work_ids = fields.One2many(
         'construction.work.breakdown', 'project_id',
-        string='工程结构'
+        string='施工结构'
     )
     boq_line_ids = fields.One2many(
         'project.boq.line', 'project_id',
@@ -389,7 +389,7 @@ class ProjectProject(models.Model):
     )
     wbs_ids = fields.One2many(
         'construction.work.breakdown', 'project_id',
-        string='工程结构'
+        string='WBS结构'
     )
     tender_count = fields.Integer(
         '投标数', compute='_compute_tender_stats'
@@ -404,7 +404,7 @@ class ProjectProject(models.Model):
         '缺失必备资料', compute='_compute_document_stats'
     )
     document_completion_rate = fields.Float(
-        '资料完备率(%)', compute='_compute_document_stats', readonly=True
+        '资料完备率（统计）', compute='_compute_document_stats', readonly=True
     )
 
     # ---------- 合同 & 驾驶舱指标 ----------
