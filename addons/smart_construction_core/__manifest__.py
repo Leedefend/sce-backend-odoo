@@ -32,6 +32,7 @@
         'security/ir.model.access.csv',
         'data/sc_test_users.xml',
         'data/material_plan_tier_actions.xml',
+        'data/payment_request_tier_actions.xml',
 
         # 视图
         'views/cost_domain_views.xml',
@@ -53,6 +54,7 @@
         'views/product_extend_views.xml',
         'views/project_project_financial_views.xml',
         'views/project_budget_views.xml',
+        'views/payment_request_tier_review_views.xml',
         'views/tier_review_views.xml',
         'views/project_extend_boq_views.xml',
         'views/payment_request_views.xml',

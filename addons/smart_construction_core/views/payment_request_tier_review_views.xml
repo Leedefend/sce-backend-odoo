@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="action_sc_tier_review_my_payment_request" model="ir.actions.act_window">
+            <field name="name">待我审批（付款申请）</field>
+            <field name="res_model">tier.review</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('reviewer_id','=',uid), ('status','in',('waiting','pending')), ('model','=','payment.request')]</field>
+        </record>
+    </data>
+</odoo>

@@ -64,7 +64,10 @@
         <record id="group_sc_cap_finance_read" model="res.groups">
             <field name="name">SC 能力 - 财务中心只读</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
-            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="implied_ids" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_core.group_sc_cap_contract_read'))
+            ]"/>
         </record>
         <record id="group_sc_cap_finance_user" model="res.groups">
             <field name="name">SC 能力 - 财务中心经办</field>
