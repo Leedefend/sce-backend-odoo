@@ -5,14 +5,12 @@
               sequence="30"
               groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_purchase_read,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_data_read"/>
 
-    <!-- 财务主动作：默认打开供应商/客户发票列表，作为财务中心入口 -->
+    <!-- 财务主动作：直接打开付款/收款申请列表，确保财务能力组可见 -->
     <record id="action_sc_finance_dashboard" model="ir.actions.act_window">
         <field name="name">财务中心</field>
-        <field name="res_model">account.move</field>
+        <field name="res_model">payment.request</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('move_type', 'in', ['in_invoice', 'out_invoice'])]</field>
-        <field name="context">{'default_move_type': 'in_invoice'}</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
     </record>
 
     <!-- 项目中心 -->
@@ -95,13 +93,21 @@
               name="合同中心"
               parent="menu_sc_root"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_contract_read"/>
+              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <menuitem id="menu_sc_contract_list"
               name="合同列表"
               parent="menu_sc_contract_center"
               action="action_construction_contract"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_contract_read"/>
+              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
+    <!-- 强制覆盖合同中心菜单的 groups（移除只读组，避免财务看到） -->
+    <record id="menu_sc_contract_center" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
+    </record>
+    <record id="menu_sc_contract_list" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
+    </record>
 
     <!-- 成控中心 -->
     <menuitem id="menu_sc_cost_center"
@@ -186,7 +192,13 @@
               parent="menu_sc_root"
               action="action_sc_finance_dashboard"
               sequence="40"
-              groups="smart_construction_core.group_sc_cap_finance_read"/>
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_tier_review_my_payment_request"
+              name="待我审批（付款申请）"
+              parent="menu_sc_finance_center"
+              action="smart_construction_core.action_sc_tier_review_my_payment_request"
+              sequence="45"
+              groups="smart_construction_core.group_sc_cap_finance_manager"/>
 
     <!-- 数据中心 -->
     <menuitem id="menu_sc_data_center"

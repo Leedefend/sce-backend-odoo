@@ -12,6 +12,7 @@ class TierDefinition(models.Model):
             names = []
         elif isinstance(names, (set, tuple)):
             names = list(names)
-        if "project.material.plan" not in names:
-            names.append("project.material.plan")
+        for model_name in ["project.material.plan", "payment.request"]:
+            if model_name not in names:
+                names.append(model_name)
         return names
