@@ -72,6 +72,7 @@ services:
     volumes:
       - ./runtime/odoo:/var/lib/odoo
       - ./addons:/mnt/extra-addons
+      - ./addons_external:/mnt/addons_external
       - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
 
     ports:

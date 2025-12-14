@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- 物资计划 Tier 审批通过回调 -->
+        <record id="server_action_material_plan_tier_approved" model="ir.actions.server">
+            <field name="name">物资计划 - 审批通过回调</field>
+            <field name="model_id" ref="model_project_material_plan"/>
+            <field name="state">code</field>
+            <field name="code">records.action_on_tier_approved()</field>
+        </record>
+
+        <!-- 物资计划 Tier 审批驳回回调 -->
+        <record id="server_action_material_plan_tier_rejected" model="ir.actions.server">
+            <field name="name">物资计划 - 审批驳回回调</field>
+            <field name="model_id" ref="model_project_material_plan"/>
+            <field name="state">code</field>
+            <field name="code">records.action_on_tier_rejected()</field>
+        </record>
+    </data>
+</odoo>

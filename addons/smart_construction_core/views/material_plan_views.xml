@@ -27,18 +27,6 @@
                             class="oe_highlight"
                             groups="smart_construction_core.group_sc_cap_material_user"
                             invisible="state != 'draft'"/>
-                    <button name="action_approve"
-                            type="object"
-                            string="批准"
-                            class="btn-primary"
-                            groups="smart_construction_core.group_sc_cap_material_manager"
-                            invisible="state != 'submit'"/>
-                    <button name="action_reject"
-                            type="object"
-                            string="驳回"
-                            class="btn-secondary"
-                            groups="smart_construction_core.group_sc_cap_material_manager"
-                            invisible="state != 'submit'"/>
                     <button name="%(action_material_plan_to_rfq_wizard)d"
                             type="action"
                             string="生成采购单"
