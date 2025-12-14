@@ -32,6 +32,22 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_settlement_order" model="ir.sequence">
+        <field name="name">结算单</field>
+        <field name="code">sc.settlement.order</field>
+        <field name="prefix">STO%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_sc_treasury_ledger" model="ir.sequence">
+        <field name="name">资金台账</field>
+        <field name="code">sc.treasury.ledger</field>
+        <field name="prefix">TL%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_payment_request" model="ir.sequence">
         <field name="name">付款/收款申请</field>
         <field name="code">payment.request</field>

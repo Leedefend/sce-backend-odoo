@@ -64,10 +64,8 @@
         <record id="group_sc_cap_finance_read" model="res.groups">
             <field name="name">SC 能力 - 财务中心只读</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
-            <field name="implied_ids" eval="[
-                (4, ref('base.group_user')),
-                (4, ref('smart_construction_core.group_sc_cap_contract_read'))
-            ]"/>
+            <!-- 仅保留基础用户权限，跨域读取合同依赖专门 ACL，不再隐式继承合同菜单组 -->
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         </record>
         <record id="group_sc_cap_finance_user" model="res.groups">
             <field name="name">SC 能力 - 财务中心经办</field>
@@ -112,6 +110,23 @@
             <field name="name">SC 能力 - 成控中心审批</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user'))]"/>
+        </record>
+
+        <!-- 结算中心 -->
+        <record id="group_sc_cap_settlement_read" model="res.groups">
+            <field name="name">SC 能力 - 结算中心只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <record id="group_sc_cap_settlement_user" model="res.groups">
+            <field name="name">SC 能力 - 结算中心经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
+        </record>
+        <record id="group_sc_cap_settlement_manager" model="res.groups">
+            <field name="name">SC 能力 - 结算中心审批</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_user'))]"/>
         </record>
 
         <!-- 数据中心（Phase1 先只读） -->
