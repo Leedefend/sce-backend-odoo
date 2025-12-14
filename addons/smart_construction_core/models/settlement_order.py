@@ -239,12 +239,13 @@ class ScSettlementOrder(models.Model):
                 % ", ".join(bad_state.mapped("name")[:10])
             )
 
-    @api.model
-    def create(self, vals):
-        if vals.get("name", "新建") in (False, "新建"):
-            seq = self.env["ir.sequence"].next_by_code("sc.settlement.order")
-            vals["name"] = seq or _("Settlement")
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("name", "新建") in (False, "新建"):
+                seq = self.env["ir.sequence"].next_by_code("sc.settlement.order")
+                vals["name"] = seq or _("Settlement")
+        return super().create(vals_list)
 
     def action_submit(self):
         for rec in self:

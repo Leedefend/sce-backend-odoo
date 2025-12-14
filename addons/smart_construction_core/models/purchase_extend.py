@@ -84,12 +84,13 @@ class PurchaseOrderLine(models.Model):
         help="填写后可自动写入成本台账。",
     )
 
-    @api.model
-    def create(self, vals):
-        if not vals.get("project_id") and vals.get("order_id"):
-            order = self.env["purchase.order"].browse(vals["order_id"])
-            vals["project_id"] = order.project_id.id
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get("project_id") and vals.get("order_id"):
+                order = self.env["purchase.order"].browse(vals["order_id"])
+                vals["project_id"] = order.project_id.id
+        return super().create(vals_list)
 
     def write(self, vals):
         res = super().write(vals)
