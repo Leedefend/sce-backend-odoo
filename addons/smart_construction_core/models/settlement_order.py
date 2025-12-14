@@ -116,7 +116,6 @@ class ScSettlementOrder(models.Model):
         ],
         string="状态",
         default="draft",
-        tracking=True,
     )
 
     @api.depends("line_ids.amount")
@@ -279,7 +278,7 @@ class ScSettlementOrderLine(models.Model):
     )
     name = fields.Char(string="名称", required=True)
     qty = fields.Float(string="数量", default=1.0, digits="Product Unit of Measure")
-    price_unit = fields.Monetary(string="单价", currency_field="currency_id", default=0.0, digits="Product Price")
+    price_unit = fields.Monetary(string="单价", currency_field="currency_id", default=0.0)
     amount = fields.Monetary(string="金额", currency_field="currency_id", compute="_compute_amount", store=True)
     currency_id = fields.Many2one(
         "res.currency",

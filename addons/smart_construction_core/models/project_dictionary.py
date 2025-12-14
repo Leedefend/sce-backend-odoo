@@ -49,6 +49,7 @@ class ProjectDictionary(models.Model):
         compute="_compute_level",
         store=True,
         readonly=True,
+        recursive=True,
     )
 
     full_name = fields.Char(
@@ -57,8 +58,9 @@ class ProjectDictionary(models.Model):
         store=True,
         readonly=True,
         help="自动拼接“上级 / 本级名称”，方便搜索与导入匹配",
+        recursive=True,
     )
-    parent_path = fields.Char(index=True)
+    parent_path = fields.Char(index=True, unaccent=False)
     # === 层级导航锚点：便于子目列表按专业/章节分组 ===
     discipline_id = fields.Many2one(
         "project.dictionary",

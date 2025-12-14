@@ -43,7 +43,7 @@ class ConstructionWorkBreakdown(models.Model):
         index=True,
         ondelete="cascade",
     )
-    parent_path = fields.Char(index=True)
+    parent_path = fields.Char(index=True, unaccent=False)
     child_ids = fields.One2many(
         "construction.work.breakdown",
         "parent_id",
