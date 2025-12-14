@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <record id="view_sc_treasury_ledger_tree" model="ir.ui.view">
+            <field name="name">sc.treasury.ledger.tree</field>
+            <field name="model">sc.treasury.ledger</field>
+            <field name="arch" type="xml">
+                <tree string="资金台账" create="false" edit="false">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="settlement_id"/>
+                    <field name="payment_request_id"/>
+                    <field name="direction"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_treasury_ledger_form" model="ir.ui.view">
+            <field name="name">sc.treasury.ledger.form</field>
+            <field name="model">sc.treasury.ledger</field>
+            <field name="arch" type="xml">
+                <form string="资金台账" create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="date" readonly="1"/>
+                                <field name="state" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="project_id" readonly="1"/>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="direction" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="关联单据">
+                            <field name="settlement_id" readonly="1"/>
+                            <field name="payment_request_id" readonly="1"/>
+                        </group>
+                        <group string="金额">
+                            <field name="amount" readonly="1"/>
+                            <field name="currency_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="note" readonly="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_treasury_ledger" model="ir.actions.act_window">
+            <field name="name">资金台账</field>
+            <field name="res_model">sc.treasury.ledger</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'create': False}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_treasury_ledger"
+                  name="资金台账"
+                  parent="smart_construction_core.menu_sc_settlement_center"
+                  action="action_sc_treasury_ledger"
+                  sequence="30"
+                  groups="smart_construction_core.group_sc_cap_finance_read"/>
+
+    </data>
+</odoo>

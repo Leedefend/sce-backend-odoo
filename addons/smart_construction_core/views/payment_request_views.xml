@@ -49,6 +49,28 @@
                                 <field name="date_request"/>
                             </group>
                         </group>
+                        <group string="结算依据">
+                            <field name="settlement_id" domain="[('state','=','approve'), ('project_id','=', project_id)]"/>
+                            <field name="settlement_amount_total"
+                                   readonly="1"
+                                   modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
+                            <field name="settlement_paid_amount"
+                                   readonly="1"
+                                   modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
+                            <field name="settlement_remaining_amount"
+                                   readonly="1"
+                                   modifiers="{'invisible': [['settlement_id', '=', False], ['settlement_amount_insufficient', '=', True]]}"/>
+                            <field name="settlement_remaining_amount"
+                                   string="剩余额度（风险）"
+                                   readonly="1"
+                                   class="text-danger"
+                                   modifiers="{'invisible': [['settlement_id', '=', False], ['settlement_amount_insufficient', '=', False]]}"/>
+                            <field name="settlement_amount_insufficient" invisible="1"/>
+                            <div class="o_form_label text-danger"
+                                 modifiers="{'invisible': [['settlement_amount_insufficient', '=', False]]}">
+                                ⚠ 结算额度不足（剩余额度低于申请金额），系统将阻止提交/完成。
+                            </div>
+                        </group>
                         <group>
                             <field name="note"/>
                         </group>
