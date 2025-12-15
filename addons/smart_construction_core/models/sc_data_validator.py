@@ -14,6 +14,30 @@ class ScDataValidator(models.AbstractModel):
 
     name = fields.Char(default="Data Validator")
 
+    def validate_or_raise(self):
+        """业务门禁入口：若存在 ERROR 级别问题则抛出 UserError。"""
+        from odoo.exceptions import UserError
+
+        payload = self.run(return_dict=True)
+        rule_results = payload.get("rules", [])
+        error_issues = []
+        for r in rule_results:
+            if str(r.get("severity", "")).upper() != "ERROR":
+                continue
+            for issue in r.get("issues", []):
+                issue["rule_code"] = r.get("code") or r.get("rule")
+                issue["title"] = r.get("title")
+                error_issues.append(issue)
+        if error_issues:
+            lines = ["数据校验未通过："]
+            for it in error_issues[:20]:
+                code = it.get("rule_code") or "UNKNOWN"
+                msg = it.get("message") or it.get("title") or ""
+                name = it.get("refs", {}).get("name") if isinstance(it.get("refs"), dict) else ""
+                lines.append(f"- {code}: {msg} {name or ''}".strip())
+            raise UserError("\n".join(lines))
+        return payload
+
     def _run_rules(self):
         """Execute all registered rules and return aggregated result."""
         env = self.env
