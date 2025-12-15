@@ -8,12 +8,13 @@ INIT_MODULES   := base
 
 # 默认要升级的模块（可在命令行用 MODULE=xxx 覆盖）
 MODULE ?= smart_construction_core
+TEST_TAGS ?= sc_smoke
 
 # 自定义模块集合（升级全部时使用）
 CUSTOM_MODULES := smart_construction_core smart_construction_demo
 
 # ================== 基础操作 ==================
-.PHONY: up down restart restart-odoo ps logs odoo-shell db-reset upgrade upgrade-all
+.PHONY: up down restart restart-odoo ps logs odoo-shell db-reset upgrade upgrade-all test
 
 # 启动全部服务
 up:
@@ -98,5 +99,22 @@ upgrade-all:
 		-u $(CUSTOM_MODULES) \
 		--stop-after-init
 	@echo "== ✔ All modules upgraded =="
+
+# 运行测试基线（默认只跑指定模块，可通过 TEST_TAGS 覆盖 test-tags 语法）
+# 示例：
+#   make test               # 跑 smart_construction_core 下的测试
+#   make test MODULE=xyz    # 覆盖模块
+#   make test TEST_TAGS=/   # 全量测试
+test:
+	@echo "== Running tests for module: $(MODULE) (tags: $(TEST_TAGS)) on database: $(DB_NAME) =="
+	$(COMPOSE) run --rm odoo \
+		-c /etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		-u $(MODULE) \
+		--no-http \
+		--test-enable \
+		--test-tags "$(TEST_TAGS)" \
+		--stop-after-init
+	@echo "== ✔ Test run done =="
 
 
