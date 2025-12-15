@@ -14,7 +14,7 @@ TEST_TAGS ?= sc_smoke
 CUSTOM_MODULES := smart_construction_core smart_construction_demo
 
 # ================== 基础操作 ==================
-.PHONY: up down restart restart-odoo ps logs odoo-shell db-reset upgrade upgrade-all test
+.PHONY: up down restart restart-odoo ps logs odoo-shell db-reset upgrade upgrade-all test validate
 
 # 启动全部服务
 up:
@@ -42,9 +42,9 @@ ps:
 	@echo "== docker ps (table) =="
 	docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# 查看 Odoo 日志
+# 查看 Odoo 日志（注意：compose 的 service 名通常是 odoo，不是 sc-odoo）
 logs:
-	@echo "== docker-compose logs -f $(ODOO_CONTAINER) =="
+	@echo "== docker-compose logs -f odoo =="
 	$(COMPOSE) logs -f odoo
 
 # 进入 Odoo 容器
@@ -100,15 +100,16 @@ upgrade-all:
 		--stop-after-init
 	@echo "== ✔ All modules upgraded =="
 
-# 运行测试基线（默认只跑指定模块，可通过 TEST_TAGS 覆盖 test-tags 语法）
+# ================== 测试与校验（Phase3.5 当前步骤） ==================
+
+# 运行测试基线（默认 smoke）
 # 示例：
-#   make test               # 跑 smart_construction_core 下的测试
-#   make test MODULE=xyz    # 覆盖模块
-#   make test TEST_TAGS=/   # 全量测试
+#   make test
+#   make test TEST_TAGS=sc_smoke
+#   make test TEST_TAGS=/   # 全量（不建议日常）
 test:
 	@echo "== Running tests for module: $(MODULE) (tags: $(TEST_TAGS)) on database: $(DB_NAME) =="
-	$(COMPOSE) run --rm odoo \
-		-c /etc/odoo/odoo.conf \
+	$(COMPOSE) run --rm -T odoo \
 		-d $(DB_NAME) \
 		-u $(MODULE) \
 		--no-http \
@@ -117,4 +118,13 @@ test:
 		--stop-after-init
 	@echo "== ✔ Test run done =="
 
-
+# 数据校验器（Data Validator）
+# 直接用 python 构造 registry/env 调用，避免 stdin/odoo shell/stop-after-init 时序问题
+# 示例：
+#   make validate
+#   make validate DB_NAME=sc_odoo
+validate:
+	@echo "== Validating data on database: $(DB_NAME) =="
+	$(COMPOSE) run --rm -T --entrypoint python3 odoo \
+		/mnt/extra-addons/smart_construction_core/tools/validator/run_validate.py
+	@echo "== ✔ Validate done =="
