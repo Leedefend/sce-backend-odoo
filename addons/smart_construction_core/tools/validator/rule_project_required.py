@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import _
 
-from .rules import DataRule, register
+from .rules import BaseRule, register, SEVERITY_WARN
 
 
 @register
-class ProjectRequiredRule(DataRule):
-    name = "project_required"
-    level = "warn"
-    description = "关键单据必须挂项目"
+class ProjectRequiredRule(BaseRule):
+    code = "SC.VAL.PROJ.001"
+    title = "关键单据必须挂项目"
+    severity = SEVERITY_WARN
 
     def run(self):
         env = self.env
@@ -32,8 +32,9 @@ class ProjectRequiredRule(DataRule):
                         }
                     )
         return {
-            "rule": self.name,
-            "level": self.level,
+            "rule": self.code,
+            "title": self.title,
+            "severity": self.severity,
             "checked": checked,
             "issues": issues,
         }

@@ -6,7 +6,7 @@ from odoo.tests.common import TransactionCase, tagged
 class TestValidatorSmoke(TransactionCase):
 
     def test_validator_runs(self):
-        payload = self.env["sc.data.validator"].run()
+        payload = self.env["sc.data.validator"].run(return_dict=True)
         self.assertIn("rules", payload)
         self.assertIn("issues_total", payload)
         # at least rule registry is wired
@@ -25,7 +25,7 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "approve",  # 规则要求此状态必须关联结算单
             }
         )
-        payload = self.env["sc.data.validator"].run()
-        rule = next(r for r in payload["rules"] if r["rule"] == "three_way_link_integrity")
+        payload = self.env["sc.data.validator"].run(return_dict=True)
+        rule = next(r for r in payload["rules"] if r["rule"] == "SC.VAL.3WAY.001")
         issue_ids = [i["res_id"] for i in rule.get("issues", [])]
         self.assertIn(bad_pr.id, issue_ids)

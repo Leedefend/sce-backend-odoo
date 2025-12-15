@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import _
 
-from .rules import DataRule, register
+from .rules import BaseRule, register, SEVERITY_ERROR
 
 
 @register
-class CompanyConsistencyRule(DataRule):
-    name = "company_consistency"
-    level = "error"
-    description = "采购/结算/付款的公司一致性"
+class CompanyConsistencyRule(BaseRule):
+    code = "SC.VAL.COMP.001"
+    title = "采购/结算/付款的公司一致性"
+    severity = SEVERITY_ERROR
 
     def run(self):
         env = self.env
@@ -60,8 +60,9 @@ class CompanyConsistencyRule(DataRule):
                     )
 
         return {
-            "rule": self.name,
-            "level": self.level,
+            "rule": self.code,
+            "title": self.title,
+            "severity": self.severity,
             "checked": checked,
             "issues": issues,
         }
