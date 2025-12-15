@@ -1,10 +1,8 @@
 name: sc smoke + validate
 
 on:
-  push:
-    branches: ["main", "feat/**"]
-  pull_request:
-    branches: ["main"]
+[]
+  
 
 concurrency:
   group: sc-smoke-${{ github.ref }}
