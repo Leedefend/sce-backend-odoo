@@ -1,0 +1,80 @@
+name: sc smoke + validate
+
+on:
+  push:
+    branches: ["main", "feat/**"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: sc-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker info
+        run: |
+          docker --version
+          docker compose version || docker-compose --version
+
+      - name: Install docker-compose (if missing)
+        run: |
+          if command -v docker-compose >/dev/null 2>&1; then
+            echo "docker-compose exists"
+          else
+            sudo apt-get update
+            sudo apt-get install -y docker-compose
+          fi
+
+      - name: Pull & build images
+        run: |
+          docker-compose pull || true
+          docker-compose build
+
+      - name: Start db & redis
+        run: |
+          docker-compose up -d db redis
+          docker-compose ps
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            if docker-compose exec -T db pg_isready -U odoo >/dev/null 2>&1; then
+              echo "Postgres is ready"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Ensure database exists
+        run: |
+          docker-compose exec -T db createdb -U odoo sc_odoo || true
+
+      - name: Run smoke tests (sc_smoke)
+        run: |
+          make test MODULE=smart_construction_core TEST_TAGS=sc_smoke
+
+      - name: Run data validator
+        run: |
+          make validate
+
+      - name: Upload validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validate-reports
+          path: addons/smart_construction_core/var/validate/*.json
+          if-no-files-found: warn
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker-compose ps
+          docker-compose logs --no-color --tail=200
