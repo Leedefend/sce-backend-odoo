@@ -251,12 +251,14 @@ class ScSettlementOrder(models.Model):
         for rec in self:
             rec._check_contract_consistency_or_raise(strict=False)
             rec._check_purchase_orders_or_raise(strict=False)
+        self.env["sc.data.validator"].validate_or_raise()
         self.write({"state": "submit"})
 
     def action_approve(self):
         for rec in self:
             rec._check_contract_consistency_or_raise(strict=True)
             rec._check_purchase_orders_or_raise(strict=True)
+        self.env["sc.data.validator"].validate_or_raise()
         self.write({"state": "approve"})
 
     def action_done(self):
