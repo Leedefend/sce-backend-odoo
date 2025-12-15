@@ -19,6 +19,28 @@ class ThreeWayLinkIntegrityRule(BaseRule):
         pr_states_need_settle = ("approve", "approved", "done")
         settle_states_need_po = ("approve", "done")
 
+        def _suggest_settlements(rec):
+            """给出同项目+同供应商的候选结算单（最近3条批准态优先）。"""
+            domain = [
+                ("project_id", "=", rec.project_id.id),
+                ("partner_id", "=", rec.partner_id.id),
+                ("state", "in", settle_states_need_po),
+            ]
+            candidates = Settlement.search(domain, limit=3, order="create_date desc, id desc")
+            return [
+                {
+                    "res_model": "sc.settlement.order",
+                    "res_id": s.id,
+                    "display_name": s.display_name or s.name,
+                    "project_id": s.project_id.id,
+                    "partner_id": s.partner_id.id,
+                    "reason": _("同项目同供应商的最近结算单"),
+                    "score": 0.8,
+                    "action": {"type": "open_form", "res_model": "sc.settlement.order", "res_id": s.id},
+                }
+                for s in candidates
+            ]
+
         for pr in Payment.search([]):
             checked += 1
             if pr.state not in pr_states_need_settle:
@@ -30,6 +52,7 @@ class ThreeWayLinkIntegrityRule(BaseRule):
                         "res_id": pr.id,
                         "message": _("付款申请未关联结算单"),
                         "refs": {"name": pr.name},
+                        "suggestions": _suggest_settlements(pr),
                     }
                 )
             elif pr.settlement_id.state in settle_states_need_po and not pr.settlement_id.purchase_order_ids:
