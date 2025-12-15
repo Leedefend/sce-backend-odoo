@@ -36,7 +36,7 @@ class ScDataValidator(models.AbstractModel):
         return str(out_path)
 
     @api.model
-    def run(self):
+    def run(self, return_dict=True):
         """Run all validators and return structured payload."""
         rule_results = self._run_rules()
         total_issues = sum(len(r.get("issues", [])) for r in rule_results)
@@ -46,24 +46,24 @@ class ScDataValidator(models.AbstractModel):
             "rules": rule_results,
             "issues_total": total_issues,
         }
-        return payload
+        return payload if return_dict else True
 
     @api.model
     def run_cli(self):
         """Entry for make validate: run, print summary, write JSON."""
-        payload = self.run()
+        payload = self.run(return_dict=True)
         report_path = self._write_report(payload)
         print(f"VALIDATE: db={payload['database']} rules={len(payload['rules'])} issues={payload['issues_total']}")
 
         has_error = False
         for r in payload["rules"]:
             issue_count = len(r.get("issues", []))
-            level = r.get("level", "info").upper()
+            level = r.get("severity", "INFO").upper()
             prefix = "[OK]" if issue_count == 0 else f"[{level}]"
             if level == "ERROR" and issue_count > 0:
                 has_error = True
             print(
-                f"{prefix} {r['rule']}: checked={r.get('checked',0)} issues={issue_count}"
+                f"{prefix} {r.get('code', r.get('rule'))}: {r.get('title', '')} checked={r.get('checked',0)} issues={issue_count}"
             )
 
         print(f"Report: {report_path}")
@@ -71,4 +71,4 @@ class ScDataValidator(models.AbstractModel):
             # 非零退出方便 CI 门禁
             import sys
             sys.exit(1)
-        return payload
+        return 0

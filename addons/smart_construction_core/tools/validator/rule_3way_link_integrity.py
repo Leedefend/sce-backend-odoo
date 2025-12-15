@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import _
 
-from .rules import DataRule, register
+from .rules import BaseRule, register, SEVERITY_ERROR
 
 
 @register
-class ThreeWayLinkIntegrityRule(DataRule):
-    name = "three_way_link_integrity"
-    level = "error"
-    description = "三单匹配链路的关键关联是否缺失"
+class ThreeWayLinkIntegrityRule(BaseRule):
+    code = "SC.VAL.3WAY.001"
+    title = "三单匹配链路的关键关联是否缺失"
+    severity = SEVERITY_ERROR
 
     def run(self):
         env = self.env
@@ -58,8 +58,9 @@ class ThreeWayLinkIntegrityRule(DataRule):
             )
 
         return {
-            "rule": self.name,
-            "level": self.level,
+            "rule": self.code,
+            "title": self.title,
+            "severity": self.severity,
             "checked": checked,
             "issues": issues,
         }
