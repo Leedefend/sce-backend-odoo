@@ -14,12 +14,50 @@ class ScDataValidator(models.AbstractModel):
 
     name = fields.Char(default="Data Validator")
 
-    def _run_rules(self):
+    def validate_or_raise(self, scope=None):
+        """业务门禁入口：若存在 ERROR 级别问题则抛出 UserError。"""
+        from odoo.exceptions import UserError
+        payload = self.run(return_dict=True, scope=scope)
+        rule_results = payload.get("rules", [])
+        error_issues = self._collect_error_issues(rule_results)
+        if error_issues:
+            raise UserError(self._render_error_message(error_issues))
+        return payload
+
+    def _collect_error_issues(self, rule_results):
+        issues = []
+        for r in rule_results:
+            if str(r.get("severity", "")).upper() != "ERROR":
+                continue
+            for issue in r.get("issues", []):
+                issue["rule_code"] = r.get("code") or r.get("rule")
+                issue["title"] = r.get("title")
+                issues.append(issue)
+        return issues
+
+    def _render_error_message(self, error_issues):
+        lines = ["数据校验未通过："]
+        for it in error_issues[:20]:
+            code = it.get("rule_code") or "UNKNOWN"
+            msg = it.get("message") or it.get("title") or ""
+            name = it.get("refs", {}).get("name") if isinstance(it.get("refs"), dict) else ""
+            line = f"- {code}: {msg}"
+            if name:
+                line += f"（{name}）"
+            lines.append(line)
+            suggestions = it.get("suggestions") or []
+            for s in suggestions[:5]:
+                s_name = s.get("display_name") or s.get("name") or ""
+                reason = s.get("reason") or _("候选关联")
+                lines.append(f"  • {s_name} - {reason}".rstrip(" -"))
+        return "\n".join(lines)
+
+    def _run_rules(self, scope=None):
         """Execute all registered rules and return aggregated result."""
         env = self.env
         results = []
         for rule_cls in get_registered_rules():
-            rule = rule_cls(env)
+            rule = rule_cls(env, scope=scope)
             results.append(rule.run())
         return results
 
@@ -36,9 +74,9 @@ class ScDataValidator(models.AbstractModel):
         return str(out_path)
 
     @api.model
-    def run(self):
+    def run(self, return_dict=True, scope=None):
         """Run all validators and return structured payload."""
-        rule_results = self._run_rules()
+        rule_results = self._run_rules(scope=scope)
         total_issues = sum(len(r.get("issues", [])) for r in rule_results)
         payload = {
             "database": self.env.cr.dbname,
@@ -46,24 +84,24 @@ class ScDataValidator(models.AbstractModel):
             "rules": rule_results,
             "issues_total": total_issues,
         }
-        return payload
+        return payload if return_dict else True
 
     @api.model
     def run_cli(self):
         """Entry for make validate: run, print summary, write JSON."""
-        payload = self.run()
+        payload = self.run(return_dict=True)
         report_path = self._write_report(payload)
         print(f"VALIDATE: db={payload['database']} rules={len(payload['rules'])} issues={payload['issues_total']}")
 
         has_error = False
         for r in payload["rules"]:
             issue_count = len(r.get("issues", []))
-            level = r.get("level", "info").upper()
+            level = r.get("severity", "INFO").upper()
             prefix = "[OK]" if issue_count == 0 else f"[{level}]"
             if level == "ERROR" and issue_count > 0:
                 has_error = True
             print(
-                f"{prefix} {r['rule']}: checked={r.get('checked',0)} issues={issue_count}"
+                f"{prefix} {r.get('code', r.get('rule'))}: {r.get('title', '')} checked={r.get('checked',0)} issues={issue_count}"
             )
 
         print(f"Report: {report_path}")
@@ -71,4 +109,4 @@ class ScDataValidator(models.AbstractModel):
             # 非零退出方便 CI 门禁
             import sys
             sys.exit(1)
-        return payload
+        return 0
