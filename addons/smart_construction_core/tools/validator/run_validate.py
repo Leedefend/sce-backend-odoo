@@ -2,6 +2,7 @@
 import odoo
 from odoo import api, SUPERUSER_ID
 from odoo.tools import config
+import sys
 
 
 def main():
@@ -11,7 +12,8 @@ def main():
     registry = odoo.registry(db)
     with registry.cursor() as cr:
         env = api.Environment(cr, SUPERUSER_ID, {})
-        env["sc.data.validator"].run_cli()
+        code = env["sc.data.validator"].run_cli()
+        sys.exit(code)
 
 
 if __name__ == "__main__":

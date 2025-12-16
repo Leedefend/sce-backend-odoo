@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import _
 
-from .rules import DataRule, register
+from .rules import BaseRule, register, SEVERITY_WARN
 
 
 @register
-class AmountQtySanityRule(DataRule):
-    name = "amount_qty_sanity"
-    level = "warn"
-    description = "金额与数量的合理性检查（不允许负数）"
+class AmountQtySanityRule(BaseRule):
+    code = "SC.VAL.AMT.001"
+    title = "金额与数量的合理性检查（不允许负数）"
+    severity = SEVERITY_WARN
 
     def run(self):
         env = self.env
@@ -24,7 +24,7 @@ class AmountQtySanityRule(DataRule):
         ]
         for model, field_name, msg in checks:
             Model = env[model].sudo()
-            for rec in Model.search([]):
+            for rec in Model.search(self._scope_domain(model)):
                 checked += 1
                 val = getattr(rec, field_name, 0.0) or 0.0
                 if val < 0:
@@ -37,8 +37,9 @@ class AmountQtySanityRule(DataRule):
                     )
 
         return {
-            "rule": self.name,
-            "level": self.level,
+            "rule": self.code,
+            "title": self.title,
+            "severity": self.severity,
             "checked": checked,
             "issues": issues,
         }
