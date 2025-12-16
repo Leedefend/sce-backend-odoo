@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- 工程结构树视图 -->
+    <record id="view_sc_project_structure_tree" model="ir.ui.view">
+        <field name="name">sc.project.structure.tree</field>
+        <field name="model">sc.project.structure</field>
+        <field name="arch" type="xml">
+            <tree string="工程结构（清单 WBS）"
+                  default_order="project_id, parent_path, sequence, id">
+                <field name="project_id" optional="hide"/>
+                <field name="structure_type" optional="hide"/>
+                <field name="biz_scope" optional="hide"/>
+                <field name="code" optional="hide"/>
+                <field name="display_label" string="名称"/>
+                <field name="qty_total"/>
+                <field name="amount_total" widget="monetary" options="{'currency_field': 'currency_id'}" sum="合价总额"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="parent_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 工程结构表单视图 -->
+    <record id="view_sc_project_structure_form" model="ir.ui.view">
+        <field name="name">sc.project.structure.form</field>
+        <field name="model">sc.project.structure</field>
+        <field name="arch" type="xml">
+            <form string="工程结构节点">
+                <sheet>
+                    <group>
+                        <field name="structure_type" readonly="1"/>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                    <group>
+                        <field name="project_id" readonly="1"/>
+                        <field name="parent_id"/>
+                        <field name="level" readonly="1"/>
+                        <field name="sequence"/>
+                    </group>
+                    <group string="关联清单" col="1" colspan="4">
+                        <!-- 使用含子节点的清单集合，确保分部/单位/单项也能看到下级清单；单列布局以铺满可用宽度 -->
+                        <field name="boq_line_all_ids" readonly="1" nolabel="1">
+                            <tree string="关联清单行">
+                                <field name="code"/>
+                                <field name="name"/>
+                                <field name="quantity"/>
+                                <field name="uom_id"/>
+                                <field name="amount"/>
+                            </tree>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_sc_project_structure" model="ir.actions.act_window">
+        <field name="name">工程结构（清单 WBS）</field>
+        <field name="res_model">sc.project.structure</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_project_structure_tree"/>
+        <field name="context">{'search_default_group_by_project': 1}</field>
+    </record>
+
+    <record id="view_sc_project_structure_search" model="ir.ui.view">
+        <field name="name">sc.project.structure.search</field>
+        <field name="model">sc.project.structure</field>
+        <field name="arch" type="xml">
+            <search string="工程结构（清单 WBS）">
+                <field name="project_id"/>
+                <field name="structure_type"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="biz_scope" invisible="1"/>
+                <filter string="按项目" name="group_by_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按结构类型" name="group_by_structure_type" context="{'group_by': 'structure_type'}"/>
+                <filter string="分部分项" name="scope_work" domain="[('biz_scope','=','work')]"/>
+                <filter string="措施项目" name="scope_measure" domain="[('biz_scope','in',('measure_unit','measure_total'))]"/>
+                <filter string="规费" name="scope_fee" domain="[('biz_scope','=','fee')]"/>
+                <filter string="税金" name="scope_tax" domain="[('biz_scope','=','tax')]"/>
+                <filter string="其他费用" name="scope_other" domain="[('biz_scope','=','other')]"/>
+                <filter string="单项工程" name="filter_single" domain="[('structure_type','=','single')]"/>
+                <filter string="单位工程" name="filter_unit" domain="[('structure_type','=','unit')]"/>
+                <filter string="专业工程" name="filter_major" domain="[('structure_type','=','major')]"/>
+                <filter string="分部工程" name="filter_division" domain="[('structure_type','=','division')]"/>
+                <filter string="清单项目" name="filter_item" domain="[('structure_type','=','item')]"/>
+            </search>
+        </field>
+    </record>
+</odoo>
