@@ -101,7 +101,12 @@
             <field name="name">支出结算单</field>
             <field name="res_model">sc.settlement.order</field>
             <field name="view_mode">tree,form</field>
-            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+            <field name="groups_id" eval="[
+                (4, ref('smart_construction_core.group_sc_cap_settlement_read')),
+                (4, ref('smart_construction_core.group_sc_cap_project_read')),
+                (4, ref('smart_construction_core.group_sc_cap_cost_read')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_read'))
+            ]"/>
         </record>
 
         <!-- 菜单：财务中心下的结算中心 -->
@@ -109,14 +114,14 @@
                   name="结算中心"
                   parent="smart_construction_core.menu_sc_finance_center"
                   sequence="20"
-                  groups="smart_construction_core.group_sc_cap_finance_read"/>
+                  groups="smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
 
         <menuitem id="menu_sc_settlement_order"
                   name="支出结算单"
                   parent="menu_sc_settlement_center"
                   action="action_sc_settlement_order"
                   sequence="10"
-                  groups="smart_construction_core.group_sc_cap_finance_read"/>
+                  groups="smart_construction_core.group_sc_cap_settlement_read,smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
 
     </data>
 </odoo>

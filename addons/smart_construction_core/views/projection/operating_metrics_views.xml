@@ -13,6 +13,30 @@
         </field>
     </record>
 
+    <!-- Drill: 结算单（按项目） -->
+    <record id="action_sc_operating_drill_settlements" model="ir.actions.act_window">
+        <field name="name">结算单（按项目）</field>
+        <field name="res_model">sc.settlement.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('project_id', '=', context.get('default_project_id'))]</field>
+        <field name="context">{'search_default_project_id': context.get('default_project_id')}</field>
+    </record>
+
+    <!-- Drill: 超付风险付款申请（按项目） -->
+    <record id="action_sc_operating_drill_overpay_risk_pr" model="ir.actions.act_window">
+        <field name="name">超付风险付款申请（按项目）</field>
+        <field name="res_model">payment.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">
+            [
+                ('project_id', '=', context.get('default_project_id')),
+                ('type', '=', 'pay'),
+                ('is_overpay_risk', '=', True)
+            ]
+        </field>
+        <field name="context">{'search_default_project_id': context.get('default_project_id')}</field>
+    </record>
+
     <!-- Tree -->
     <record id="view_sc_operating_metrics_project_tree" model="ir.ui.view">
         <field name="name">sc.operating.metrics.project.tree</field>
@@ -20,9 +44,17 @@
         <field name="arch" type="xml">
             <tree string="经营指标（项目）">
                 <field name="project_id"/>
+                <button name="%(action_sc_operating_drill_settlements)d"
+                        type="action"
+                        string="结算单"
+                        context="{'default_project_id': project_id}"/>
                 <field name="settlement_amount_total" sum="结算合计"/>
                 <field name="settlement_amount_paid" sum="已付合计"/>
                 <field name="settlement_amount_payable" sum="可付合计"/>
+                <button name="%(action_sc_operating_drill_overpay_risk_pr)d"
+                        type="action"
+                        string="风险单"
+                        context="{'default_project_id': project_id}"/>
                 <field name="overpay_risk_count" sum="超付风险单数"/>
                 <field name="three_way_missing_count" sum="三单缺失项"/>
             </tree>
