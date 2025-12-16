@@ -24,8 +24,9 @@ class BaseRule(ABC):
     title: str = None
     severity: str = SEVERITY_WARN
 
-    def __init__(self, env):
+    def __init__(self, env, scope=None):
         self.env = env
+        self.scope = scope or {}
         self._validate_meta()
 
     def _validate_meta(self):
@@ -33,6 +34,25 @@ class BaseRule(ABC):
             raise ValueError(f"Rule meta missing: code/title in {self.__class__.__name__}")
         if self.severity not in SEVERITY_LEVELS:
             raise ValueError(f"Invalid severity={self.severity} in {self.code}")
+
+    # ---- scope helpers ----
+    def _scope_domain(self, model_name: str):
+        """Build domain honoring validator scope."""
+        scope = self.scope or {}
+        res_model = scope.get("res_model")
+        res_ids = scope.get("res_ids") or []
+        project_id = scope.get("project_id")
+        company_id = scope.get("company_id")
+
+        Model = self.env[model_name]
+        domain = []
+        if res_model == model_name and res_ids:
+            domain.append(("id", "in", res_ids))
+        if project_id and "project_id" in Model._fields:
+            domain.append(("project_id", "=", project_id))
+        if company_id and "company_id" in Model._fields:
+            domain.append(("company_id", "=", company_id))
+        return domain
 
     @abstractmethod
     def run(self) -> Dict[str, Any]:

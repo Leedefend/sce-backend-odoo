@@ -21,7 +21,7 @@ class ProjectRequiredRule(BaseRule):
         ]
         for model, msg in targets:
             Model = env[model].sudo()
-            for rec in Model.search([]):
+            for rec in Model.search(self._scope_domain(model)):
                 checked += 1
                 if not rec.project_id:
                     issues.append(

@@ -17,7 +17,7 @@ class CompanyConsistencyRule(BaseRule):
         issues = []
         checked = 0
 
-        for pr in Payment.search([]):
+        for pr in Payment.search(self._scope_domain("payment.request")):
             checked += 1
             settle = pr.settlement_id
             if settle and pr.company_id and settle.company_id and pr.company_id != settle.company_id:
@@ -43,7 +43,7 @@ class CompanyConsistencyRule(BaseRule):
                         }
                     )
 
-        for settle in Settlement.search([]):
+        for settle in Settlement.search(self._scope_domain("sc.settlement.order")):
             checked += 1
             if settle.purchase_order_ids:
                 bad_po = settle.purchase_order_ids.filtered(
