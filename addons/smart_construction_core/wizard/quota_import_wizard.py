@@ -12,7 +12,7 @@ try:
 except ImportError:
     openpyxl = None
 
-from ..models.quota_spec import QUOTA_SPEC
+from ..models.support.quota_spec import QUOTA_SPEC
 
 
 def _clean(val):
