@@ -26,7 +26,11 @@ class ThreeWayLinkIntegrityRule(BaseRule):
                 ("partner_id", "=", rec.partner_id.id),
                 ("state", "in", settle_states_need_po),
             ]
-            candidates = Settlement.search(domain, limit=3, order="create_date desc, id desc")
+            candidates = Settlement.search(
+                self._scope_domain("sc.settlement.order") + domain,
+                limit=3,
+                order="create_date desc, id desc",
+            )
             return [
                 {
                     "res_model": "sc.settlement.order",
@@ -41,7 +45,7 @@ class ThreeWayLinkIntegrityRule(BaseRule):
                 for s in candidates
             ]
 
-        for pr in Payment.search([]):
+        for pr in Payment.search(self._scope_domain("payment.request")):
             checked += 1
             if pr.state not in pr_states_need_settle:
                 continue
@@ -65,7 +69,7 @@ class ThreeWayLinkIntegrityRule(BaseRule):
                     }
                 )
 
-        for settle in Settlement.search([]):
+        for settle in Settlement.search(self._scope_domain("sc.settlement.order")):
             checked += 1
             if settle.state not in settle_states_need_po:
                 continue

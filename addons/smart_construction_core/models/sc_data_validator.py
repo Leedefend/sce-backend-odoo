@@ -14,10 +14,10 @@ class ScDataValidator(models.AbstractModel):
 
     name = fields.Char(default="Data Validator")
 
-    def validate_or_raise(self):
+    def validate_or_raise(self, scope=None):
         """业务门禁入口：若存在 ERROR 级别问题则抛出 UserError。"""
         from odoo.exceptions import UserError
-        payload = self.run(return_dict=True)
+        payload = self.run(return_dict=True, scope=scope)
         rule_results = payload.get("rules", [])
         error_issues = self._collect_error_issues(rule_results)
         if error_issues:
@@ -52,12 +52,12 @@ class ScDataValidator(models.AbstractModel):
                 lines.append(f"  • {s_name} - {reason}".rstrip(" -"))
         return "\n".join(lines)
 
-    def _run_rules(self):
+    def _run_rules(self, scope=None):
         """Execute all registered rules and return aggregated result."""
         env = self.env
         results = []
         for rule_cls in get_registered_rules():
-            rule = rule_cls(env)
+            rule = rule_cls(env, scope=scope)
             results.append(rule.run())
         return results
 
@@ -74,9 +74,9 @@ class ScDataValidator(models.AbstractModel):
         return str(out_path)
 
     @api.model
-    def run(self, return_dict=True):
+    def run(self, return_dict=True, scope=None):
         """Run all validators and return structured payload."""
-        rule_results = self._run_rules()
+        rule_results = self._run_rules(scope=scope)
         total_issues = sum(len(r.get("issues", [])) for r in rule_results)
         payload = {
             "database": self.env.cr.dbname,

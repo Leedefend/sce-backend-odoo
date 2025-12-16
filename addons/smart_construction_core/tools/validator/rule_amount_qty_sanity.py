@@ -24,7 +24,7 @@ class AmountQtySanityRule(BaseRule):
         ]
         for model, field_name, msg in checks:
             Model = env[model].sudo()
-            for rec in Model.search([]):
+            for rec in Model.search(self._scope_domain(model)):
                 checked += 1
                 val = getattr(rec, field_name, 0.0) or 0.0
                 if val < 0:

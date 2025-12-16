@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase, tagged
 
 
@@ -26,7 +27,11 @@ class TestValidatorSmoke(TransactionCase):
             }
         )
         payload = self.env["sc.data.validator"].run(return_dict=True)
-        rule = next(r for r in payload["rules"] if r["rule"] == "SC.VAL.3WAY.001")
+        rule = next(
+            r
+            for r in payload["rules"]
+            if (r.get("code") or r.get("rule")) == "SC.VAL.3WAY.001"
+        )
         issue_ids = [i["res_id"] for i in rule.get("issues", [])]
         self.assertIn(bad_pr.id, issue_ids)
 
@@ -92,6 +97,105 @@ class TestValidatorSmoke(TransactionCase):
         # 调用提交按钮，不应抛异常
         pr.with_user(fin_user).action_submit()
         self.assertEqual(pr.state, "submit")
+
+    def test_validator_scope_only_checks_target_payment_request(self):
+        """
+        验证 scope 仅校验目标单据：good_pr 需通过，bad_pr 需失败。
+        """
+
+        validator = self.env["sc.data.validator"]
+
+        # bad_pr：缺少 settlement_id，但处于必须有关联的状态
+        project1 = self.env["project.project"].create({"name": "Scope Project BAD"})
+        partner1 = self.env["res.partner"].create({"name": "Scope Vendor BAD"})
+        bad_pr = self.env["payment.request"].create(
+            {
+                "name": "VAL-PR-BAD-SCOPE",
+                "type": "pay",
+                "project_id": project1.id,
+                "partner_id": partner1.id,
+                "amount": 100,
+                "state": "approve",
+            }
+        )
+
+        # good_pr：完整链路，处于同样状态
+        project2 = self.env["project.project"].create({"name": "Scope Project GOOD"})
+        partner2 = self.env["res.partner"].create({"name": "Scope Vendor GOOD"})
+        contract2 = self.env["construction.contract"].create(
+            {"subject": "Scope Contract", "type": "in", "project_id": project2.id, "partner_id": partner2.id}
+        )
+        product2 = self.env["product.product"].create(
+            {
+                "name": "Scope Product",
+                "type": "product",
+                "uom_id": self.env.ref("uom.product_uom_unit").id,
+                "uom_po_id": self.env.ref("uom.product_uom_unit").id,
+            }
+        )
+        po2 = self.env["purchase.order"].create(
+            {
+                "partner_id": partner2.id,
+                "project_id": project2.id,
+                "order_line": [
+                    (
+                        0,
+                        0,
+                        {
+                            "name": "Line",
+                            "product_id": product2.id,
+                            "product_qty": 1,
+                            "product_uom": product2.uom_po_id.id,
+                            "price_unit": 10,
+                        },
+                    )
+                ],
+            }
+        )
+        po2.button_confirm()
+        settle2 = self.env["sc.settlement.order"].create(
+            {
+                "project_id": project2.id,
+                "partner_id": partner2.id,
+                "contract_id": contract2.id,
+                "purchase_order_ids": [(6, 0, [po2.id])],
+                "line_ids": [(0, 0, {"name": "Settlement Line", "qty": 1, "price_unit": 10})],
+                "state": "approve",
+            }
+        )
+        good_pr = self.env["payment.request"].sudo().create(
+            {
+                "name": "VAL-PR-GOOD-SCOPE",
+                "type": "pay",
+                "project_id": project2.id,
+                "partner_id": partner2.id,
+                "contract_id": contract2.id,
+                "settlement_id": settle2.id,
+                "amount": 5,
+                "state": "approve",
+            }
+        )
+
+        # scope 指向 good_pr：应通过
+        validator.validate_or_raise(
+            scope={
+                "res_model": "payment.request",
+                "res_ids": [good_pr.id],
+                "project_id": good_pr.project_id.id,
+                "company_id": good_pr.company_id.id,
+            }
+        )
+
+        # scope 指向 bad_pr：应抛异常
+        with self.assertRaises(UserError):
+            validator.validate_or_raise(
+                scope={
+                    "res_model": "payment.request",
+                    "res_ids": [bad_pr.id],
+                    "project_id": bad_pr.project_id.id,
+                    "company_id": bad_pr.company_id.id,
+                }
+            )
 
     def test_settlement_approve_happy_path(self):
         project = self.env["project.project"].create({"name": "Settle Happy Project"})
