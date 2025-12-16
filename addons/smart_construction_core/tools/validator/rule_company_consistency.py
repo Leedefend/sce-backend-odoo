@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import _
 
-from .rules import DataRule, register
+from .rules import BaseRule, register, SEVERITY_ERROR
 
 
 @register
-class CompanyConsistencyRule(DataRule):
-    name = "company_consistency"
-    level = "error"
-    description = "采购/结算/付款的公司一致性"
+class CompanyConsistencyRule(BaseRule):
+    code = "SC.VAL.COMP.001"
+    title = "采购/结算/付款的公司一致性"
+    severity = SEVERITY_ERROR
 
     def run(self):
         env = self.env
@@ -17,7 +17,7 @@ class CompanyConsistencyRule(DataRule):
         issues = []
         checked = 0
 
-        for pr in Payment.search([]):
+        for pr in Payment.search(self._scope_domain("payment.request")):
             checked += 1
             settle = pr.settlement_id
             if settle and pr.company_id and settle.company_id and pr.company_id != settle.company_id:
@@ -43,7 +43,7 @@ class CompanyConsistencyRule(DataRule):
                         }
                     )
 
-        for settle in Settlement.search([]):
+        for settle in Settlement.search(self._scope_domain("sc.settlement.order")):
             checked += 1
             if settle.purchase_order_ids:
                 bad_po = settle.purchase_order_ids.filtered(
@@ -60,8 +60,9 @@ class CompanyConsistencyRule(DataRule):
                     )
 
         return {
-            "rule": self.name,
-            "level": self.level,
+            "rule": self.code,
+            "title": self.title,
+            "severity": self.severity,
             "checked": checked,
             "issues": issues,
         }
