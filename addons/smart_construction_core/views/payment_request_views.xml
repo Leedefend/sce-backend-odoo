@@ -6,12 +6,14 @@
             <field name="name">payment.request.tree</field>
             <field name="model">payment.request</field>
             <field name="arch" type="xml">
-                <tree string="付款/收款申请">
+                <tree string="付款/收款申请" decoration-danger="is_overpay_risk">
                     <field name="name"/>
                     <field name="type"/>
                     <field name="project_id"/>
                     <field name="contract_id"/>
                     <field name="settlement_id"/>
+                    <field name="settlement_amount_payable"/>
+                    <field name="is_overpay_risk" invisible="1"/>
                     <field name="partner_id"/>
                     <field name="amount"/>
                     <field name="state"/>
@@ -55,6 +57,9 @@
                                    readonly="1"
                                    modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
                             <field name="settlement_paid_amount"
+                                   readonly="1"
+                                   modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
+                            <field name="settlement_amount_payable"
                                    readonly="1"
                                    modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
                             <field name="settlement_remaining_amount"

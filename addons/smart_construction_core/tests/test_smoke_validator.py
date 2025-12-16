@@ -197,6 +197,87 @@ class TestValidatorSmoke(TransactionCase):
                 }
             )
 
+    def test_payment_request_overpay_blocked(self):
+        project = self.env["project.project"].create({"name": "Overpay Project"})
+        partner = self.env["res.partner"].create({"name": "Overpay Vendor"})
+        contract = self.env["construction.contract"].create(
+            {"subject": "Overpay Contract", "type": "in", "project_id": project.id, "partner_id": partner.id}
+        )
+        product = self.env["product.product"].create(
+            {
+                "name": "Overpay Product",
+                "type": "product",
+                "uom_id": self.env.ref("uom.product_uom_unit").id,
+                "uom_po_id": self.env.ref("uom.product_uom_unit").id,
+            }
+        )
+        po = self.env["purchase.order"].create(
+            {
+                "partner_id": partner.id,
+                "project_id": project.id,
+                "order_line": [
+                    (
+                        0,
+                        0,
+                        {
+                            "name": "Line",
+                            "product_id": product.id,
+                            "product_qty": 1,
+                            "product_uom": product.uom_po_id.id,
+                            "price_unit": 100,
+                        },
+                    )
+                ],
+            }
+        )
+        po.button_confirm()
+        settle = self.env["sc.settlement.order"].create(
+            {
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "contract_id": contract.id,
+                "purchase_order_ids": [(6, 0, [po.id])],
+                "line_ids": [(0, 0, {"name": "Settlement Line", "qty": 1, "price_unit": 100})],
+                "state": "approve",
+            }
+        )
+        fin_user = self.env.ref("smart_construction_core.user_sc_fin_01")
+        fin_mgr = self.env.ref("smart_construction_core.user_sc_fin_mgr_01")
+        fin_user.write({"email": "fin+overpay@test.com"})
+        fin_mgr.write({"email": "finmgr+overpay@test.com"})
+        # 第一笔 80 正常通过
+        pr1 = self.env["payment.request"].sudo().create(
+            {
+                "name": "PR-1",
+                "type": "pay",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "contract_id": contract.id,
+                "settlement_id": settle.id,
+                "amount": 80,
+                "state": "draft",
+            }
+        )
+        pr1.with_user(fin_user).action_submit()
+        pr1.with_user(fin_mgr).action_approve()
+        self.assertIn(pr1.state, ("approve", "approved"))
+
+        # 第二笔超付（结算剩余 20，尝试付款 30），应阻断
+        pr2 = self.env["payment.request"].sudo().create(
+            {
+                "name": "PR-2",
+                "type": "pay",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "contract_id": contract.id,
+                "settlement_id": settle.id,
+                "amount": 30,
+                "state": "draft",
+            }
+        )
+        with self.assertRaises(UserError):
+            pr2.with_user(fin_user).action_submit()
+
     def test_settlement_approve_happy_path(self):
         project = self.env["project.project"].create({"name": "Settle Happy Project"})
         partner = self.env["res.partner"].create({"name": "Happy Vendor"})
