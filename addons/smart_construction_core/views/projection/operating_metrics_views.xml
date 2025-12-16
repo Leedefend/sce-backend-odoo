@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action -->
+    <record id="action_sc_operating_metrics_project" model="ir.actions.act_window">
+        <field name="name">经营指标（项目）</field>
+        <field name="res_model">sc.operating.metrics.project</field>
+        <field name="view_mode">tree,pivot</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                经营指标（项目维度）
+            </p>
+        </field>
+    </record>
+
+    <!-- Tree -->
+    <record id="view_sc_operating_metrics_project_tree" model="ir.ui.view">
+        <field name="name">sc.operating.metrics.project.tree</field>
+        <field name="model">sc.operating.metrics.project</field>
+        <field name="arch" type="xml">
+            <tree string="经营指标（项目）">
+                <field name="project_id"/>
+                <field name="settlement_amount_total" sum="结算合计"/>
+                <field name="settlement_amount_paid" sum="已付合计"/>
+                <field name="settlement_amount_payable" sum="可付合计"/>
+                <field name="overpay_risk_count" sum="超付风险单数"/>
+                <field name="three_way_missing_count" sum="三单缺失项"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Pivot -->
+    <record id="view_sc_operating_metrics_project_pivot" model="ir.ui.view">
+        <field name="name">sc.operating.metrics.project.pivot</field>
+        <field name="model">sc.operating.metrics.project</field>
+        <field name="arch" type="xml">
+            <pivot string="经营指标（项目）">
+                <field name="project_id" type="row"/>
+                <field name="settlement_amount_total" type="measure"/>
+                <field name="settlement_amount_paid" type="measure"/>
+                <field name="settlement_amount_payable" type="measure"/>
+                <field name="overpay_risk_count" type="measure"/>
+                <field name="three_way_missing_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="menu_sc_projection_root"
+              name="看板"
+              parent="smart_construction_core.menu_sc_root"
+              sequence="35"
+              groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+
+    <menuitem id="menu_sc_operating_metrics_root"
+              name="经营指标"
+              parent="menu_sc_projection_root"
+              sequence="50"
+              groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+
+    <menuitem id="menu_sc_operating_metrics_project"
+              name="项目指标"
+              parent="menu_sc_operating_metrics_root"
+              action="action_sc_operating_metrics_project"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+</odoo>
