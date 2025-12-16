@@ -5,7 +5,7 @@ from pathlib import Path
 
 from odoo import api, fields, models
 
-from ..tools.validator.rules import get_registered_rules
+from ...tools.validator.rules import get_registered_rules
 
 
 class ScDataValidator(models.AbstractModel):
