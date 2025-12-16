@@ -61,14 +61,32 @@ class ScSettlementOrder(models.Model):
     paid_amount = fields.Monetary(
         string="已付款金额",
         currency_field="currency_id",
-        compute="_compute_paid_amount",
+        compute="_compute_paid_amounts",
         store=True,
+        compute_sudo=True,
     )
     remaining_amount = fields.Monetary(
         string="待付款金额",
         currency_field="currency_id",
-        compute="_compute_paid_amount",
+        compute="_compute_paid_amounts",
         store=True,
+        compute_sudo=True,
+    )
+    amount_paid = fields.Monetary(
+        string="已付累计",
+        currency_field="currency_id",
+        compute="_compute_paid_amounts",
+        store=True,
+        compute_sudo=True,
+        help="按付款申请的已付口径汇总的金额（状态见 _get_paid_payment_states）。",
+    )
+    amount_payable = fields.Monetary(
+        string="可付余额",
+        currency_field="currency_id",
+        compute="_compute_paid_amounts",
+        store=True,
+        compute_sudo=True,
+        help="可付余额 = 结算金额 - 已付累计；为负时代表存在超付风险。",
     )
     purchase_order_ids = fields.Many2many(
         comodel_name="purchase.order",
@@ -91,20 +109,45 @@ class ScSettlementOrder(models.Model):
     )
     compliance_message = fields.Text(string="匹配提示", compute="_compute_compliance_summary", store=False)
 
-    @api.depends("line_ids.amount", "payment_request_ids", "payment_request_ids.state")
-    def _compute_paid_amount(self):
-        Ledger = self.env["sc.treasury.ledger"].sudo()
+    def _get_paid_payment_states(self):
+        """状态集合：哪些付款申请算已付（可调整）。"""
+        return ("submit", "approve", "approved", "done")
+
+    def _compute_paid_amount_map(self):
+        """按结算单聚合付款申请金额（仅统计视为已付的状态集合）。"""
+        if not self:
+            return {}
+        Payment = self.env["payment.request"].sudo()
+        domain = [
+            ("settlement_id", "in", self.ids),
+            ("type", "=", "pay"),
+            ("state", "in", self._get_paid_payment_states()),
+        ]
+        rows = Payment.read_group(domain, ["amount:sum"], ["settlement_id"])
+        res = {}
+        for r in rows:
+            settle = r.get("settlement_id")
+            if settle and isinstance(settle, (list, tuple)) and settle[0]:
+                res[settle[0]] = r.get("amount_sum") or 0.0
+        return res
+
+    @api.depends(
+        "line_ids.amount",
+        "payment_request_ids",
+        "payment_request_ids.state",
+        "payment_request_ids.amount",
+    )
+    def _compute_paid_amounts(self):
+        """Phase6-2: 结算单的已付/可付核心口径。"""
+        paid_map = self._compute_paid_amount_map()
         for order in self:
             total = order.amount_total or 0.0
-            paid = 0.0
-            if order.id:
-                paid = sum(
-                    Ledger.search(
-                        [("settlement_id", "=", order.id), ("state", "=", "posted")]
-                    ).mapped("amount")
-                )
+            paid = paid_map.get(order.id, 0.0)
+            remaining = total - paid
             order.paid_amount = paid
-            order.remaining_amount = total - paid
+            order.remaining_amount = remaining
+            order.amount_paid = paid
+            order.amount_payable = remaining
 
     state = fields.Selection(
         [

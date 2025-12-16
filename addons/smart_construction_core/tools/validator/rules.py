@@ -37,7 +37,12 @@ class BaseRule(ABC):
 
     # ---- scope helpers ----
     def _scope_domain(self, model_name: str):
-        """Build domain honoring validator scope."""
+        """Build domain honoring validator scope.
+
+        约定：
+        - res_model/res_ids：限定校验目标记录
+        - project_id/company_id：进一步收敛到项目/公司维度
+        """
         scope = self.scope or {}
         res_model = scope.get("res_model")
         res_ids = scope.get("res_ids") or []

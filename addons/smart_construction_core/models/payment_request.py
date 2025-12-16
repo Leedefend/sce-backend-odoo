@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
+from odoo.tools.float_utils import float_compare
 
 
 class PaymentRequest(models.Model):
@@ -71,6 +72,19 @@ class PaymentRequest(models.Model):
         related="settlement_id.remaining_amount",
         store=True,
         readonly=True,
+    )
+    settlement_amount_payable = fields.Monetary(
+        string="可付余额",
+        currency_field="settlement_currency_id",
+        related="settlement_id.amount_payable",
+        store=True,
+        readonly=True,
+    )
+    is_overpay_risk = fields.Boolean(
+        string="超付风险",
+        compute="_compute_is_overpay_risk",
+        store=False,
+        help="用于列表高亮：当申请金额超过结算可付余额时为 True。",
     )
     settlement_compliance_state = fields.Selection(
         related="settlement_id.compliance_state",
@@ -209,10 +223,76 @@ class PaymentRequest(models.Model):
                         % (rec.amount, settle.remaining_amount)
                     )
 
+    def _check_not_overpay_settlement(self):
+        """
+        防超付硬校验：付款金额不得超过结算单可付余额。
+        - 排除本记录自身的金额，避免自我误伤
+        - 使用币种精度对比，防止浮点误差
+        """
+        for rec in self:
+            if rec.type != "pay" or not rec.settlement_id:
+                continue
+            settle = rec.settlement_id.sudo()
+            paid = sum(
+                settle.payment_request_ids.sudo().filtered(
+                    lambda r: r.id != rec.id
+                    and r.type == "pay"
+                    and r.state in settle._get_paid_payment_states()
+                ).mapped("amount")
+            )
+            payable = (settle.amount_total or 0.0) - paid
+            amount = rec.amount or 0.0
+            currency = rec.company_id.currency_id
+            precision = currency.rounding or 0.01
+            if precision <= 0:
+                precision = 0.01
+            if float_compare(amount, payable, precision_rounding=precision) == 1:
+                raise UserError(
+                    _(
+                        "付款金额超出结算单可付余额：\n"
+                        "- 付款金额：%(amount)s\n"
+                        "- 可付余额：%(payable)s\n"
+                        "- 结算单：%(settle)s"
+                    )
+                    % {
+                        "amount": amount,
+                        "payable": payable,
+                        "settle": rec.settlement_id.display_name,
+                    }
+                )
+
+    def _compute_is_overpay_risk(self):
+        """用于 UI 高亮：金额 > 可付余额 时标记风险。"""
+        for rec in self:
+            if rec.type != "pay" or not rec.settlement_id:
+                rec.is_overpay_risk = False
+                continue
+            settle = rec.settlement_id.sudo()
+            paid = sum(
+                settle.payment_request_ids.sudo().filtered(
+                    lambda r: r.id != rec.id
+                    and r.type == "pay"
+                    and r.state in settle._get_paid_payment_states()
+                ).mapped("amount")
+            )
+            payable = (settle.amount_total or 0.0) - paid
+            currency = rec.company_id.currency_id
+            precision = currency.rounding or 0.01
+            if precision <= 0:
+                precision = 0.01
+            rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1
+
     def action_submit(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user"):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
-        self.env["sc.data.validator"].validate_or_raise()
+        self._check_not_overpay_settlement()
+        scope = {
+            "res_model": self._name,
+            "res_ids": self.ids,
+            "project_id": self[:1].project_id.id if self[:1].project_id else False,
+            "company_id": self[:1].company_id.id if self[:1].company_id else False,
+        }
+        self.env["sc.data.validator"].validate_or_raise(scope=scope)
         # 额度校验
         self._check_settlement_consistency()
         for rec in self:
@@ -233,7 +313,14 @@ class PaymentRequest(models.Model):
     def action_approve(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有审批付款/收款申请的权限。"))
-        self.env["sc.data.validator"].validate_or_raise()
+        self._check_not_overpay_settlement()
+        scope = {
+            "res_model": self._name,
+            "res_ids": self.ids,
+            "project_id": self[:1].project_id.id if self[:1].project_id else False,
+            "company_id": self[:1].company_id.id if self[:1].company_id else False,
+        }
+        self.env["sc.data.validator"].validate_or_raise(scope=scope)
         self.write({"state": "approve"})
 
     def action_set_approved(self):
