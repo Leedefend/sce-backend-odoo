@@ -3,6 +3,7 @@ from odoo import _
 from odoo.tools.float_utils import float_compare
 
 from .rules import BaseRule, register, SEVERITY_ERROR
+from ...models.support import operating_metrics as opm
 
 
 @register
@@ -26,7 +27,12 @@ class PaymentNotOverpayRule(BaseRule):
         issues = []
         checked = 0
 
-        for pr in Payment.search(domain):
+        paid_states = opm.get_paid_states()
+        records = Payment.search(domain)
+        settlement_ids = records.mapped("settlement_id").ids
+        paid_map = opm.settlement_paid_map(env, settlement_ids, paid_states=paid_states)
+
+        for pr in records:
             checked += 1
             settle = pr.settlement_id
             if not settle:
@@ -35,13 +41,10 @@ class PaymentNotOverpayRule(BaseRule):
             precision = currency.rounding or 0.01
             if precision <= 0:
                 precision = 0.01
-            paid = sum(
-                settle.payment_request_ids.sudo().filtered(
-                    lambda r: r.id != pr.id
-                    and r.type == "pay"
-                    and r.state in settle._get_paid_payment_states()
-                ).mapped("amount")
-            )
+            paid = paid_map.get(settle.id, 0.0)
+            # 排除自身（避免自统计）
+            if pr.state in paid_states:
+                paid -= pr.amount or 0.0
             payable = (settle.amount_total or 0.0) - paid
             amount = pr.amount or 0.0
 

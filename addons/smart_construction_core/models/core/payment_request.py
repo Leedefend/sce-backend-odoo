@@ -3,6 +3,8 @@ from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError, UserError
 from odoo.tools.float_utils import float_compare
 
+from ..support import operating_metrics as opm
+
 
 class PaymentRequest(models.Model):
     _name = "payment.request"
@@ -211,41 +213,38 @@ class PaymentRequest(models.Model):
                 raise ValidationError(_("结算单往来单位必须与付款申请一致。"))
             if settle.contract_id and rec.contract_id and settle.contract_id != rec.contract_id:
                 raise ValidationError(_("结算单合同必须与付款申请一致。"))
-            # 额度校验
-            if settle.remaining_amount is not None:
-                if settle.remaining_amount <= 0:
-                    raise ValidationError(
-                        _("结算单剩余额度不足，无法提交付款申请（剩余额度：%s）。") % settle.remaining_amount
-                    )
-                if rec.amount and rec.amount > settle.remaining_amount:
-                    raise ValidationError(
-                        _("申请金额超过结算单剩余额度，无法提交。（申请金额：%s，剩余额度：%s）")
-                        % (rec.amount, settle.remaining_amount)
-                    )
+            # 已进入流程的记录在字段更改时仍要守住额度
+            if rec.state in ("submit", "approve", "approved", "done"):
+                rec._check_settlement_remaining_amount()
+
+    def _check_settlement_remaining_amount(self):
+        """防超付额度硬校验：提交/审批前必须满足结算额度（排除本申请）。"""
+        for rec in self:
+            settle = rec.settlement_id
+            if rec.type != "pay" or not settle:
+                continue
+            metrics = opm.compute_payment_payable_excluding_self(rec)
+            payable = metrics["payable"]
+            precision = metrics["precision"]
+            amount = rec.amount or 0.0
+            if float_compare(payable, 0.0, precision_rounding=precision) <= 0:
+                raise ValidationError(_("结算单剩余额度不足，无法继续（剩余额度：%s）。") % payable)
+            if float_compare(amount, payable, precision_rounding=precision) == 1:
+                raise ValidationError(
+                    _("申请金额超过结算单剩余额度，无法继续。（申请金额：%s，剩余额度：%s）") % (amount, payable)
+                )
 
     def _check_not_overpay_settlement(self):
         """
         防超付硬校验：付款金额不得超过结算单可付余额。
-        - 排除本记录自身的金额，避免自我误伤
-        - 使用币种精度对比，防止浮点误差
         """
         for rec in self:
             if rec.type != "pay" or not rec.settlement_id:
                 continue
-            settle = rec.settlement_id.sudo()
-            paid = sum(
-                settle.payment_request_ids.sudo().filtered(
-                    lambda r: r.id != rec.id
-                    and r.type == "pay"
-                    and r.state in settle._get_paid_payment_states()
-                ).mapped("amount")
-            )
-            payable = (settle.amount_total or 0.0) - paid
+            metrics = opm.compute_payment_payable_excluding_self(rec)
+            payable = metrics["payable"]
+            precision = metrics["precision"]
             amount = rec.amount or 0.0
-            currency = rec.company_id.currency_id
-            precision = currency.rounding or 0.01
-            if precision <= 0:
-                precision = 0.01
             if float_compare(amount, payable, precision_rounding=precision) == 1:
                 raise UserError(
                     _(
@@ -267,24 +266,15 @@ class PaymentRequest(models.Model):
             if rec.type != "pay" or not rec.settlement_id:
                 rec.is_overpay_risk = False
                 continue
-            settle = rec.settlement_id.sudo()
-            paid = sum(
-                settle.payment_request_ids.sudo().filtered(
-                    lambda r: r.id != rec.id
-                    and r.type == "pay"
-                    and r.state in settle._get_paid_payment_states()
-                ).mapped("amount")
-            )
-            payable = (settle.amount_total or 0.0) - paid
-            currency = rec.company_id.currency_id
-            precision = currency.rounding or 0.01
-            if precision <= 0:
-                precision = 0.01
+            metrics = opm.compute_payment_payable_excluding_self(rec)
+            payable = metrics["payable"]
+            precision = metrics["precision"]
             rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1
 
     def action_submit(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user"):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
+        self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
         scope = {
             "res_model": self._name,
@@ -313,6 +303,7 @@ class PaymentRequest(models.Model):
     def action_approve(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有审批付款/收款申请的权限。"))
+        self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
         scope = {
             "res_model": self._name,
@@ -334,6 +325,7 @@ class PaymentRequest(models.Model):
         for rec in self:
             if not rec.settlement_id:
                 raise ValidationError(_("请先关联已批准的结算单，再完成付款申请。"))
+            rec._check_settlement_remaining_amount()
             # 额度校验（再次防守）
             rec._check_settlement_consistency()
             rec._check_settlement_compliance_or_raise(strict=True)
