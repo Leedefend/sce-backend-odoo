@@ -212,6 +212,7 @@ class PaymentRequest(models.Model):
     def action_submit(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user"):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
+        self.env["sc.data.validator"].validate_or_raise()
         # 额度校验
         self._check_settlement_consistency()
         for rec in self:
@@ -224,15 +225,15 @@ class PaymentRequest(models.Model):
         self.invalidate_recordset()
         for rec in self:
             company = rec.company_id or self.env.company
-            rec.with_context(
+            rec.with_company(company).with_context(
                 allowed_company_ids=[company.id],
-                force_company=company.id,
             ).request_validation()
         self.message_post(body=_("付款/收款申请已提交，进入审批流程。"))
 
     def action_approve(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有审批付款/收款申请的权限。"))
+        self.env["sc.data.validator"].validate_or_raise()
         self.write({"state": "approve"})
 
     def action_set_approved(self):
