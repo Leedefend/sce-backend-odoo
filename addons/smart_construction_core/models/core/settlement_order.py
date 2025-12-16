@@ -2,6 +2,8 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+from ..support import operating_metrics as opm
+
 
 class ScSettlementOrder(models.Model):
     _name = "sc.settlement.order"
@@ -109,28 +111,6 @@ class ScSettlementOrder(models.Model):
     )
     compliance_message = fields.Text(string="匹配提示", compute="_compute_compliance_summary", store=False)
 
-    def _get_paid_payment_states(self):
-        """状态集合：哪些付款申请算已付（可调整）。"""
-        return ("submit", "approve", "approved", "done")
-
-    def _compute_paid_amount_map(self):
-        """按结算单聚合付款申请金额（仅统计视为已付的状态集合）。"""
-        if not self:
-            return {}
-        Payment = self.env["payment.request"].sudo()
-        domain = [
-            ("settlement_id", "in", self.ids),
-            ("type", "=", "pay"),
-            ("state", "in", self._get_paid_payment_states()),
-        ]
-        rows = Payment.read_group(domain, ["amount:sum"], ["settlement_id"])
-        res = {}
-        for r in rows:
-            settle = r.get("settlement_id")
-            if settle and isinstance(settle, (list, tuple)) and settle[0]:
-                res[settle[0]] = r.get("amount_sum") or 0.0
-        return res
-
     @api.depends(
         "line_ids.amount",
         "payment_request_ids",
@@ -138,8 +118,8 @@ class ScSettlementOrder(models.Model):
         "payment_request_ids.amount",
     )
     def _compute_paid_amounts(self):
-        """Phase6-2: 结算单的已付/可付核心口径。"""
-        paid_map = self._compute_paid_amount_map()
+        """Phase7-1: 结算单的已付/可付口径，统一由 operating_metrics 提供。"""
+        paid_map = opm.settlement_paid_map(self.env, self.ids)
         for order in self:
             total = order.amount_total or 0.0
             paid = paid_map.get(order.id, 0.0)
