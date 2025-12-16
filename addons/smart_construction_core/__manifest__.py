@@ -46,6 +46,7 @@
         'views/support/work_breakdown_views.xml',
         'views/support/tender_views.xml',
         'views/support/document_views.xml',
+        'views/projection/operating_metrics_views.xml',
         'views/projection/project_dashboard_kanban.xml',
         'views/core/contract_views.xml',
         'views/core/project_contract_views.xml',
