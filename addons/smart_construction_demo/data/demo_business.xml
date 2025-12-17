@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- 支出合同（关联供应商A） -->
+        <record id="sc_demo_contract_cost_001" model="construction.contract">
+            <field name="subject">主体结构分包合同（示例）</field>
+            <field name="type">in</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_supplier_a"/>
+            <field name="date_contract">2025-03-15</field>
+            <field name="tax_rate">0</field>
+            <field name="state">confirmed</field>
+        </record>
+
+        <!-- 支出合同（供应商B - 材料） -->
+        <record id="sc_demo_contract_cost_002" model="construction.contract">
+            <field name="subject">混凝土供货合同（示例）</field>
+            <field name="type">in</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_supplier_b"/>
+            <field name="date_contract">2025-03-20</field>
+            <field name="tax_rate">0</field>
+            <field name="state">confirmed</field>
+        </record>
+
+        <!-- 收入合同（业主） -->
+        <record id="sc_demo_contract_revenue_001" model="construction.contract">
+            <field name="subject">德阳项目施工总承包合同（示例）</field>
+            <field name="type">out</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="date_contract">2025-02-01</field>
+            <field name="tax_rate">0</field>
+            <field name="state">confirmed</field>
+        </record>
+
+        <!-- 物资计划（行由 post_init_hook 补全） -->
+        <record id="sc_demo_material_plan_001" model="project.material.plan">
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="date_plan">2025-04-01</field>
+        </record>
+
+        <!-- 付款申请（示例，未关联结算单以避免额度校验） -->
+        <record id="sc_demo_payment_request_001" model="payment.request">
+            <field name="type">pay</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_supplier_a"/>
+            <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_cost_001"/>
+            <field name="amount">150000.0</field>
+            <field name="date_request">2025-05-05</field>
+            <field name="note">示例付款申请，用于演示审批与额度校验</field>
+        </record>
+
+        <!-- 付款申请 B -->
+        <record id="sc_demo_payment_request_002" model="payment.request">
+            <field name="type">pay</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_supplier_b"/>
+            <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_cost_002"/>
+            <field name="amount">30000.0</field>
+            <field name="date_request">2025-05-10</field>
+            <field name="note">示例付款申请（供应商B）</field>
+        </record>
+
+        <!-- 收入结算与收款申请 -->
+        <record id="sc_demo_settlement_in_001" model="sc.settlement.order">
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_revenue_001"/>
+            <field name="settlement_type">in</field>
+            <field name="date_settlement">2025-09-01</field>
+            <field name="line_ids" eval="[(0,0,{'name':'工程进度结算','qty':1,'price_unit':45000000.0})]"/>
+            <field name="state">approve</field>
+        </record>
+
+        <record id="sc_demo_payment_request_receive_001" model="payment.request">
+            <field name="type">receive</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_revenue_001"/>
+            <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_in_001"/>
+            <field name="amount">20000000.0</field>
+            <field name="date_request">2025-09-05</field>
+            <field name="note">示例收款申请（进度款）</field>
+        </record>
+
+    </data>
+</odoo>
