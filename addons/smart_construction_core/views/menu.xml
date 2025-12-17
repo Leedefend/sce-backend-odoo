@@ -18,7 +18,7 @@
               name="项目中心"
               parent="menu_sc_root"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_project_read"/>
+              groups="smart_construction_core.group_sc_cap_project_user,smart_construction_core.group_sc_cap_project_manager"/>
     <record id="action_project_initiation" model="ir.actions.act_window">
         <field name="name">项目立项</field>
         <field name="res_model">project.project</field>
@@ -115,7 +115,7 @@
               parent="menu_sc_root"
               action="smart_construction_core.action_project_cost_compare"
               sequence="25"
-              groups="smart_construction_core.group_sc_cap_cost_read"/>
+              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <menuitem id="menu_sc_project_budget"
               name="项目预算"
               parent="menu_sc_cost_center"
@@ -178,7 +178,7 @@
               parent="menu_sc_root"
               action="smart_construction_core.action_project_material_plan"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_material_read"/>
+              groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_sc_tier_review_my_material_plan"
               name="待我审批（物资计划）"
               parent="menu_sc_material_center"
@@ -192,7 +192,7 @@
               parent="menu_sc_root"
               action="action_sc_finance_dashboard"
               sequence="40"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_tier_review_my_payment_request"
               name="待我审批（付款申请）"
               parent="menu_sc_finance_center"

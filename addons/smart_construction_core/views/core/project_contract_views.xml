@@ -73,19 +73,25 @@
             <field name="res_model">project.contract</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{}</field>
+            <field name="groups_id" eval="[
+                (4, ref('smart_construction_core.group_sc_cap_contract_user')),
+                (4, ref('smart_construction_core.group_sc_cap_contract_manager'))
+            ]"/>
         </record>
 
-        <!-- 顶层菜单：挂在项目管理下，你也可以改到自己的顶级菜单 -->
+        <!-- 顶层菜单：调整到模块合同中心 -->
         <menuitem id="menu_project_contract_root"
                   name="合同管理"
-                  parent="project.menu_main_pm"
-                  sequence="40"/>
+                  parent="smart_construction_core.menu_sc_contract_center"
+                  sequence="40"
+                  groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
         <!-- 子菜单：合同台账 -->
         <menuitem id="menu_project_contract"
                   name="合同台账"
                   parent="menu_project_contract_root"
                   action="action_project_contract"
-                  sequence="10"/>
+                  sequence="10"
+                  groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     </data>
 </odoo>
