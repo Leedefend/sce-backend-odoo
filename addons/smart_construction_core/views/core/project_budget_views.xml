@@ -59,12 +59,17 @@
         <field name="name">项目预算</field>
         <field name="res_model">project.budget</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[
+            (4, ref('smart_construction_core.group_sc_cap_cost_user')),
+            (4, ref('smart_construction_core.group_sc_cap_cost_manager'))
+        ]"/>
     </record>
 
-    <!-- parent 如需调整到你的顶级菜单，请修改 parent 的外部 id -->
+    <!-- parent 调整到模块顶级菜单：成控中心 -->
     <menuitem id="menu_project_budget"
               name="项目预算"
-              parent="project.menu_main_pm"
+              parent="smart_construction_core.menu_sc_cost_center"
               action="action_project_budget"
-              sequence="40"/>
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
 </odoo>

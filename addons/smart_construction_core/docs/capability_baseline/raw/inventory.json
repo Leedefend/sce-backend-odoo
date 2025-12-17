@@ -1,0 +1,3608 @@
+{
+  "menus_defined_by_module": [
+    {
+      "xml_id": "smart_construction_core.menu_payment_request",
+      "id": 319,
+      "name": "付款/收款申请",
+      "parent_id": 286,
+      "parent_xml_id": "smart_construction_core.menu_sc_finance_center",
+      "action": 489,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 25
+    },
+    {
+      "xml_id": "smart_construction_core.menu_project_budget",
+      "id": 295,
+      "name": "项目预算",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 440,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "xml_id": "smart_construction_core.menu_project_contract",
+      "id": 294,
+      "name": "合同台账",
+      "parent_id": 293,
+      "parent_xml_id": "smart_construction_core.menu_project_contract_root",
+      "action": 463,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_project_contract_root",
+      "id": 293,
+      "name": "合同管理",
+      "parent_id": 273,
+      "parent_xml_id": "smart_construction_core.menu_sc_contract_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "xml_id": "smart_construction_core.menu_project_material_plan",
+      "id": 320,
+      "name": "物资计划",
+      "parent_id": 285,
+      "parent_xml_id": "smart_construction_core.menu_sc_material_center",
+      "action": 493,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_cap_material_manager",
+        "smart_construction_core.group_sc_cap_material_user",
+        "smart_construction_core.group_sc_role_material_manager",
+        "smart_construction_core.group_sc_role_material_user",
+        "smart_construction_core.group_sc_role_purchase_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_project_quota_center",
+      "id": 316,
+      "name": "定额中心（左树右明细）",
+      "parent_id": 313,
+      "parent_xml_id": "smart_construction_core.menu_project_quota_root",
+      "action": 487,
+      "action_model": "ir.actions.client",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 5
+    },
+    {
+      "xml_id": "smart_construction_core.menu_project_quota_root",
+      "id": 313,
+      "name": "定额库",
+      "parent_id": 289,
+      "parent_xml_id": "smart_construction_core.menu_sc_config_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "xml_id": "smart_construction_core.menu_project_quota_subitem",
+      "id": 314,
+      "name": "定额子目",
+      "parent_id": 313,
+      "parent_xml_id": "smart_construction_core.menu_project_quota_root",
+      "action": 485,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_project_quota_tree",
+      "id": 315,
+      "name": "定额层级",
+      "parent_id": 313,
+      "parent_xml_id": "smart_construction_core.menu_project_quota_root",
+      "action": 486,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "xml_id": "smart_construction_core.menu_quota_import_wizard",
+      "id": 312,
+      "name": "四川定额导入",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 484,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_budget_alloc",
+      "id": 277,
+      "name": "预算清单分摊",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 445,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_manager",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_config_center",
+      "id": 289,
+      "name": "配置",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 90
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_contract_center",
+      "id": 273,
+      "name": "合同中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_manager",
+        "smart_construction_core.group_sc_cap_contract_user"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_contract_list",
+      "id": 274,
+      "name": "合同列表",
+      "parent_id": 273,
+      "parent_xml_id": "smart_construction_core.menu_sc_contract_center",
+      "action": 459,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_manager",
+        "smart_construction_core.group_sc_cap_contract_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_cost_center",
+      "id": 275,
+      "name": "成控中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": 442,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 25
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_cost_reports",
+      "id": 281,
+      "name": "成本报表",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 442,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 60
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_data_center",
+      "id": 287,
+      "name": "数据中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 80
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_dictionary",
+      "id": 288,
+      "name": "业务字典",
+      "parent_id": 287,
+      "parent_xml_id": "smart_construction_core.menu_sc_data_center",
+      "action": 479,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_dictionary_all",
+      "id": 307,
+      "name": "全部字典",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 479,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 5
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_dictionary_chapter",
+      "id": 309,
+      "name": "章节",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 481,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_dictionary_discipline",
+      "id": 308,
+      "name": "专业",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 480,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_dictionary_quota_item",
+      "id": 310,
+      "name": "定额项目",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 482,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "id": 306,
+      "name": "数据字典",
+      "parent_id": 289,
+      "parent_xml_id": "smart_construction_core.menu_sc_config_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_dictionary_sub_item",
+      "id": 311,
+      "name": "子目",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 483,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_doc_center",
+      "id": 283,
+      "name": "工程资料中心",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_finance_center",
+      "id": 286,
+      "name": "财务中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": 460,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_role_finance_user",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_material_center",
+      "id": 285,
+      "name": "物资中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": 493,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_role_material_manager",
+        "smart_construction_core.group_sc_role_material_user",
+        "smart_construction_core.group_sc_role_purchase_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_operating_metrics_project",
+      "id": 335,
+      "name": "项目指标",
+      "parent_id": 334,
+      "parent_xml_id": "smart_construction_core.menu_sc_operating_metrics_root",
+      "action": 510,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_operating_metrics_root",
+      "id": 334,
+      "name": "经营指标",
+      "parent_id": 333,
+      "parent_xml_id": "smart_construction_core.menu_sc_projection_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_profit_reports",
+      "id": 282,
+      "name": "经营利润",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 443,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 70
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_boq_root",
+      "id": 272,
+      "name": "工程量清单",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 454,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_budget",
+      "id": 276,
+      "name": "项目预算",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 440,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_manager",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_budget_center",
+      "id": 268,
+      "name": "项目预算",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 440,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_center",
+      "id": 263,
+      "name": "项目中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_contract_overview",
+      "id": 269,
+      "name": "合同汇总",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 453,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 35
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_cost_code",
+      "id": 290,
+      "name": "成本科目",
+      "parent_id": 289,
+      "parent_xml_id": "smart_construction_core.menu_sc_config_center",
+      "action": 441,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_cost_ledger",
+      "id": 280,
+      "name": "成本台账",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 444,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_dashboard",
+      "id": 265,
+      "name": "项目驾驶舱",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 458,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 5
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_documents",
+      "id": 284,
+      "name": "工程资料",
+      "parent_id": 283,
+      "parent_xml_id": "smart_construction_core.menu_sc_doc_center",
+      "action": 457,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_initiation",
+      "id": 264,
+      "name": "项目立项",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 461,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 1
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_projection_root",
+      "id": 333,
+      "name": "看板",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ],
+      "active": true,
+      "sequence": 35
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_progress",
+      "id": 279,
+      "name": "进度计量",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 447,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_project",
+      "id": 266,
+      "name": "项目列表",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 297,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_structure_wbs",
+      "id": 291,
+      "name": "工程结构（清单WBS）",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 462,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 52
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_tender",
+      "id": 270,
+      "name": "投标管理",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 456,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 38
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_wbs",
+      "id": 267,
+      "name": "WBS/分部分项",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 446,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_wbs_cost",
+      "id": 278,
+      "name": "WBS/分部分项",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 446,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "base.group_no_one"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_project_work_breakdown",
+      "id": 271,
+      "name": "工程结构",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 455,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 45
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_root",
+      "id": 262,
+      "name": "智能施工 2.0",
+      "parent_id": false,
+      "parent_xml_id": null,
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_purchase_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_role_finance_user",
+        "smart_construction_core.group_sc_role_contract_admin",
+        "smart_construction_core.group_sc_role_cost_user",
+        "smart_construction_core.group_sc_role_material_manager",
+        "smart_construction_core.group_sc_role_material_user",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_role_purchase_user",
+        "smart_construction_core.group_sc_role_project_manager",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_settlement_center",
+      "id": 317,
+      "name": "结算中心",
+      "parent_id": 286,
+      "parent_xml_id": "smart_construction_core.menu_sc_finance_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_settlement_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_settlement_order",
+      "id": 331,
+      "name": "结算单",
+      "parent_id": 317,
+      "parent_xml_id": "smart_construction_core.menu_sc_settlement_center",
+      "action": 508,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_settlement_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_tier_review_my_material_plan",
+      "id": 329,
+      "name": "待我审批（物资计划）",
+      "parent_id": 285,
+      "parent_xml_id": "smart_construction_core.menu_sc_material_center",
+      "action": 504,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_material_manager"
+      ],
+      "active": true,
+      "sequence": 35
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_tier_review_my_payment_request",
+      "id": 330,
+      "name": "待我审批（付款申请）",
+      "parent_id": 286,
+      "parent_xml_id": "smart_construction_core.menu_sc_finance_center",
+      "action": 507,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_manager"
+      ],
+      "active": true,
+      "sequence": 45
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_treasury_ledger",
+      "id": 332,
+      "name": "资金台账",
+      "parent_id": 317,
+      "parent_xml_id": "smart_construction_core.menu_sc_settlement_center",
+      "action": 509,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_read"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_workflow_def",
+      "id": 322,
+      "name": "工作流定义",
+      "parent_id": 321,
+      "parent_xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "action": 494,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_workflow_instance",
+      "id": 323,
+      "name": "工作流实例",
+      "parent_id": 321,
+      "parent_xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "action": 495,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_workflow_log",
+      "id": 325,
+      "name": "工作流日志",
+      "parent_id": 321,
+      "parent_xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "action": 497,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "id": 321,
+      "name": "工作流",
+      "parent_id": 289,
+      "parent_xml_id": "smart_construction_core.menu_sc_config_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "xml_id": "smart_construction_core.menu_sc_workflow_workitem",
+      "id": 324,
+      "name": "工作项",
+      "parent_id": 321,
+      "parent_xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "action": 496,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 30
+    }
+  ],
+  "menus_root_subtree": [
+    {
+      "id": 264,
+      "xml_id": "smart_construction_core.menu_sc_project_initiation",
+      "name": "项目立项",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 461,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 1
+    },
+    {
+      "id": 265,
+      "xml_id": "smart_construction_core.menu_sc_project_dashboard",
+      "name": "项目驾驶舱",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 458,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 5
+    },
+    {
+      "id": 266,
+      "xml_id": "smart_construction_core.menu_sc_project_project",
+      "name": "项目列表",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 297,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 267,
+      "xml_id": "smart_construction_core.menu_sc_project_wbs",
+      "name": "WBS/分部分项",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 446,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "id": 268,
+      "xml_id": "smart_construction_core.menu_sc_project_budget_center",
+      "name": "项目预算",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 440,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "id": 269,
+      "xml_id": "smart_construction_core.menu_sc_project_contract_overview",
+      "name": "合同汇总",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 453,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 35
+    },
+    {
+      "id": 270,
+      "xml_id": "smart_construction_core.menu_sc_project_tender",
+      "name": "投标管理",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 456,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 38
+    },
+    {
+      "id": 283,
+      "xml_id": "smart_construction_core.menu_sc_doc_center",
+      "name": "工程资料中心",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "id": 271,
+      "xml_id": "smart_construction_core.menu_sc_project_work_breakdown",
+      "name": "工程结构",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 455,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 45
+    },
+    {
+      "id": 272,
+      "xml_id": "smart_construction_core.menu_sc_project_boq_root",
+      "name": "工程量清单",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 454,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "id": 291,
+      "xml_id": "smart_construction_core.menu_sc_project_structure_wbs",
+      "name": "工程结构（清单WBS）",
+      "parent_id": 263,
+      "parent_xml_id": "smart_construction_core.menu_sc_project_center",
+      "action": 462,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 52
+    },
+    {
+      "id": 307,
+      "xml_id": "smart_construction_core.menu_sc_dictionary_all",
+      "name": "全部字典",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 479,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 5
+    },
+    {
+      "id": 308,
+      "xml_id": "smart_construction_core.menu_sc_dictionary_discipline",
+      "name": "专业",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 480,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 309,
+      "xml_id": "smart_construction_core.menu_sc_dictionary_chapter",
+      "name": "章节",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 481,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "id": 310,
+      "xml_id": "smart_construction_core.menu_sc_dictionary_quota_item",
+      "name": "定额项目",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 482,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "id": 311,
+      "xml_id": "smart_construction_core.menu_sc_dictionary_sub_item",
+      "name": "子目",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 483,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "id": 312,
+      "xml_id": "smart_construction_core.menu_quota_import_wizard",
+      "name": "四川定额导入",
+      "parent_id": 306,
+      "parent_xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "action": 484,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "id": 274,
+      "xml_id": "smart_construction_core.menu_sc_contract_list",
+      "name": "合同列表",
+      "parent_id": 273,
+      "parent_xml_id": "smart_construction_core.menu_sc_contract_center",
+      "action": 459,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_manager",
+        "smart_construction_core.group_sc_cap_contract_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 293,
+      "xml_id": "smart_construction_core.menu_project_contract_root",
+      "name": "合同管理",
+      "parent_id": 273,
+      "parent_xml_id": "smart_construction_core.menu_sc_contract_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "id": 316,
+      "xml_id": "smart_construction_core.menu_project_quota_center",
+      "name": "定额中心（左树右明细）",
+      "parent_id": 313,
+      "parent_xml_id": "smart_construction_core.menu_project_quota_root",
+      "action": 487,
+      "action_model": "ir.actions.client",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 5
+    },
+    {
+      "id": 314,
+      "xml_id": "smart_construction_core.menu_project_quota_subitem",
+      "name": "定额子目",
+      "parent_id": 313,
+      "parent_xml_id": "smart_construction_core.menu_project_quota_root",
+      "action": 485,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 315,
+      "xml_id": "smart_construction_core.menu_project_quota_tree",
+      "name": "定额层级",
+      "parent_id": 313,
+      "parent_xml_id": "smart_construction_core.menu_project_quota_root",
+      "action": 486,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "id": 276,
+      "xml_id": "smart_construction_core.menu_sc_project_budget",
+      "name": "项目预算",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 440,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_manager",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 277,
+      "xml_id": "smart_construction_core.menu_sc_budget_alloc",
+      "name": "预算清单分摊",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 445,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_manager",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "id": 278,
+      "xml_id": "smart_construction_core.menu_sc_project_wbs_cost",
+      "name": "WBS/分部分项",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 446,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "base.group_no_one"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "id": 279,
+      "xml_id": "smart_construction_core.menu_sc_project_progress",
+      "name": "进度计量",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 447,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "id": 295,
+      "xml_id": "smart_construction_core.menu_project_budget",
+      "name": "项目预算",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 440,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "id": 280,
+      "xml_id": "smart_construction_core.menu_sc_project_cost_ledger",
+      "name": "成本台账",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 444,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "id": 281,
+      "xml_id": "smart_construction_core.menu_sc_cost_reports",
+      "name": "成本报表",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 442,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 60
+    },
+    {
+      "id": 282,
+      "xml_id": "smart_construction_core.menu_sc_profit_reports",
+      "name": "经营利润",
+      "parent_id": 275,
+      "parent_xml_id": "smart_construction_core.menu_sc_cost_center",
+      "action": 443,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 70
+    },
+    {
+      "id": 263,
+      "xml_id": "smart_construction_core.menu_sc_project_center",
+      "name": "项目中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 273,
+      "xml_id": "smart_construction_core.menu_sc_contract_center",
+      "name": "合同中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_manager",
+        "smart_construction_core.group_sc_cap_contract_user"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "id": 275,
+      "xml_id": "smart_construction_core.menu_sc_cost_center",
+      "name": "成控中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": 442,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 25
+    },
+    {
+      "id": 285,
+      "xml_id": "smart_construction_core.menu_sc_material_center",
+      "name": "物资中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": 493,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_role_material_manager",
+        "smart_construction_core.group_sc_role_material_user",
+        "smart_construction_core.group_sc_role_purchase_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "id": 333,
+      "xml_id": "smart_construction_core.menu_sc_projection_root",
+      "name": "看板",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ],
+      "active": true,
+      "sequence": 35
+    },
+    {
+      "id": 286,
+      "xml_id": "smart_construction_core.menu_sc_finance_center",
+      "name": "财务中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": 460,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_role_finance_user",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "id": 287,
+      "xml_id": "smart_construction_core.menu_sc_data_center",
+      "name": "数据中心",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 80
+    },
+    {
+      "id": 289,
+      "xml_id": "smart_construction_core.menu_sc_config_center",
+      "name": "配置",
+      "parent_id": 262,
+      "parent_xml_id": "smart_construction_core.menu_sc_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 90
+    },
+    {
+      "id": 320,
+      "xml_id": "smart_construction_core.menu_project_material_plan",
+      "name": "物资计划",
+      "parent_id": 285,
+      "parent_xml_id": "smart_construction_core.menu_sc_material_center",
+      "action": 493,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_cap_material_manager",
+        "smart_construction_core.group_sc_cap_material_user",
+        "smart_construction_core.group_sc_role_material_manager",
+        "smart_construction_core.group_sc_role_material_user",
+        "smart_construction_core.group_sc_role_purchase_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 329,
+      "xml_id": "smart_construction_core.menu_sc_tier_review_my_material_plan",
+      "name": "待我审批（物资计划）",
+      "parent_id": 285,
+      "parent_xml_id": "smart_construction_core.menu_sc_material_center",
+      "action": 504,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_material_manager"
+      ],
+      "active": true,
+      "sequence": 35
+    },
+    {
+      "id": 331,
+      "xml_id": "smart_construction_core.menu_sc_settlement_order",
+      "name": "结算单",
+      "parent_id": 317,
+      "parent_xml_id": "smart_construction_core.menu_sc_settlement_center",
+      "action": 508,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_settlement_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 332,
+      "xml_id": "smart_construction_core.menu_sc_treasury_ledger",
+      "name": "资金台账",
+      "parent_id": 317,
+      "parent_xml_id": "smart_construction_core.menu_sc_settlement_center",
+      "action": 509,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_read"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "id": 334,
+      "xml_id": "smart_construction_core.menu_sc_operating_metrics_root",
+      "name": "经营指标",
+      "parent_id": 333,
+      "parent_xml_id": "smart_construction_core.menu_sc_projection_root",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "id": 284,
+      "xml_id": "smart_construction_core.menu_sc_project_documents",
+      "name": "工程资料",
+      "parent_id": 283,
+      "parent_xml_id": "smart_construction_core.menu_sc_doc_center",
+      "action": 457,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 319,
+      "xml_id": "smart_construction_core.menu_payment_request",
+      "name": "付款/收款申请",
+      "parent_id": 286,
+      "parent_xml_id": "smart_construction_core.menu_sc_finance_center",
+      "action": 489,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 25
+    },
+    {
+      "id": 317,
+      "xml_id": "smart_construction_core.menu_sc_settlement_center",
+      "name": "结算中心",
+      "parent_id": 286,
+      "parent_xml_id": "smart_construction_core.menu_sc_finance_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_settlement_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "id": 330,
+      "xml_id": "smart_construction_core.menu_sc_tier_review_my_payment_request",
+      "name": "待我审批（付款申请）",
+      "parent_id": 286,
+      "parent_xml_id": "smart_construction_core.menu_sc_finance_center",
+      "action": 507,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_manager"
+      ],
+      "active": true,
+      "sequence": 45
+    },
+    {
+      "id": 294,
+      "xml_id": "smart_construction_core.menu_project_contract",
+      "name": "合同台账",
+      "parent_id": 293,
+      "parent_xml_id": "smart_construction_core.menu_project_contract_root",
+      "action": 463,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 322,
+      "xml_id": "smart_construction_core.menu_sc_workflow_def",
+      "name": "工作流定义",
+      "parent_id": 321,
+      "parent_xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "action": 494,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 323,
+      "xml_id": "smart_construction_core.menu_sc_workflow_instance",
+      "name": "工作流实例",
+      "parent_id": 321,
+      "parent_xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "action": 495,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "id": 324,
+      "xml_id": "smart_construction_core.menu_sc_workflow_workitem",
+      "name": "工作项",
+      "parent_id": 321,
+      "parent_xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "action": 496,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 30
+    },
+    {
+      "id": 325,
+      "xml_id": "smart_construction_core.menu_sc_workflow_log",
+      "name": "工作流日志",
+      "parent_id": 321,
+      "parent_xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "action": 497,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "id": 335,
+      "xml_id": "smart_construction_core.menu_sc_operating_metrics_project",
+      "name": "项目指标",
+      "parent_id": 334,
+      "parent_xml_id": "smart_construction_core.menu_sc_operating_metrics_root",
+      "action": 510,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 288,
+      "xml_id": "smart_construction_core.menu_sc_dictionary",
+      "name": "业务字典",
+      "parent_id": 287,
+      "parent_xml_id": "smart_construction_core.menu_sc_data_center",
+      "action": 479,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 306,
+      "xml_id": "smart_construction_core.menu_sc_dictionary_root",
+      "name": "数据字典",
+      "parent_id": 289,
+      "parent_xml_id": "smart_construction_core.menu_sc_config_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 10
+    },
+    {
+      "id": 313,
+      "xml_id": "smart_construction_core.menu_project_quota_root",
+      "name": "定额库",
+      "parent_id": 289,
+      "parent_xml_id": "smart_construction_core.menu_sc_config_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 20
+    },
+    {
+      "id": 290,
+      "xml_id": "smart_construction_core.menu_sc_project_cost_code",
+      "name": "成本科目",
+      "parent_id": 289,
+      "parent_xml_id": "smart_construction_core.menu_sc_config_center",
+      "action": 441,
+      "action_model": "ir.actions.act_window",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin",
+        "smart_construction_core.group_sc_manager"
+      ],
+      "active": true,
+      "sequence": 40
+    },
+    {
+      "id": 321,
+      "xml_id": "smart_construction_core.menu_sc_workflow_root",
+      "name": "工作流",
+      "parent_id": 289,
+      "parent_xml_id": "smart_construction_core.menu_sc_config_center",
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ],
+      "active": true,
+      "sequence": 50
+    },
+    {
+      "id": 262,
+      "xml_id": "smart_construction_core.menu_sc_root",
+      "name": "智能施工 2.0",
+      "parent_id": false,
+      "parent_xml_id": null,
+      "action": null,
+      "action_model": null,
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_purchase_read",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_role_finance_user",
+        "smart_construction_core.group_sc_role_contract_admin",
+        "smart_construction_core.group_sc_role_cost_user",
+        "smart_construction_core.group_sc_role_material_manager",
+        "smart_construction_core.group_sc_role_material_user",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_role_purchase_user",
+        "smart_construction_core.group_sc_role_project_manager",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ],
+      "active": true,
+      "sequence": 30
+    }
+  ],
+  "actions": [
+    {
+      "id": 480,
+      "xml_id": "smart_construction_core.action_project_dictionary_discipline",
+      "name": "专业",
+      "res_model": "project.dictionary",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 449,
+      "xml_id": "smart_construction_core.action_project_task_from_boq_wizard",
+      "name": "从清单生成施工任务",
+      "res_model": "project.task.from.boq.wizard",
+      "view_mode": "form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_manager",
+        "smart_construction_core.group_sc_cap_cost_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 489,
+      "xml_id": "smart_construction_core.action_payment_request",
+      "name": "付款/收款申请",
+      "res_model": "payment.request",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 463,
+      "xml_id": "smart_construction_core.action_project_contract",
+      "name": "合同台账",
+      "res_model": "project.contract",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ]
+    },
+    {
+      "id": 484,
+      "xml_id": "smart_construction_core.action_quota_import_wizard",
+      "name": "四川定额导入",
+      "res_model": "quota.import.wizard",
+      "view_mode": "form",
+      "groups": []
+    },
+    {
+      "id": 483,
+      "xml_id": "smart_construction_core.action_project_dictionary_sub_item",
+      "name": "子目",
+      "res_model": "project.dictionary",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 486,
+      "xml_id": "smart_construction_core.action_project_quota_tree",
+      "name": "定额体系树",
+      "res_model": "project.dictionary",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 485,
+      "xml_id": "smart_construction_core.action_project_quota_subitem",
+      "name": "定额子目",
+      "res_model": "project.dictionary",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 482,
+      "xml_id": "smart_construction_core.action_project_dictionary_quota_item",
+      "name": "定额项目",
+      "res_model": "project.dictionary",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 494,
+      "xml_id": "smart_construction_core.action_sc_workflow_def",
+      "name": "工作流定义",
+      "res_model": "sc.workflow.def",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ]
+    },
+    {
+      "id": 495,
+      "xml_id": "smart_construction_core.action_sc_workflow_instance",
+      "name": "工作流实例",
+      "res_model": "sc.workflow.instance",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ]
+    },
+    {
+      "id": 497,
+      "xml_id": "smart_construction_core.action_sc_workflow_log",
+      "name": "工作流日志",
+      "res_model": "sc.workflow.log",
+      "view_mode": "tree",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ]
+    },
+    {
+      "id": 496,
+      "xml_id": "smart_construction_core.action_sc_workflow_workitem",
+      "name": "工作项",
+      "res_model": "sc.workflow.workitem",
+      "view_mode": "tree",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin"
+      ]
+    },
+    {
+      "id": 446,
+      "xml_id": "smart_construction_core.action_project_wbs",
+      "name": "工程结构",
+      "res_model": "construction.work.breakdown",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 455,
+      "xml_id": "smart_construction_core.action_work_breakdown",
+      "name": "工程结构",
+      "res_model": "construction.work.breakdown",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 462,
+      "xml_id": "smart_construction_core.action_sc_project_structure",
+      "name": "工程结构（清单 WBS）",
+      "res_model": "sc.project.structure",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 457,
+      "xml_id": "smart_construction_core.action_sc_project_document",
+      "name": "工程资料",
+      "res_model": "sc.project.document",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 454,
+      "xml_id": "smart_construction_core.action_project_boq_line",
+      "name": "工程量清单",
+      "res_model": "project.boq.line",
+      "view_mode": "tree,form,pivot",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 466,
+      "xml_id": "smart_construction_core.action_project_boq_line_analysis",
+      "name": "工程量清单分析",
+      "res_model": "project.boq.line",
+      "view_mode": "tree,pivot,graph",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read"
+      ]
+    },
+    {
+      "id": 448,
+      "xml_id": "smart_construction_core.action_project_boq_import_wizard",
+      "name": "工程量清单导入",
+      "res_model": "project.boq.import.wizard",
+      "view_mode": "form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_manager",
+        "smart_construction_core.group_sc_cap_cost_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 507,
+      "xml_id": "smart_construction_core.action_sc_tier_review_my_payment_request",
+      "name": "待我审批（付款申请）",
+      "res_model": "tier.review",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 504,
+      "xml_id": "smart_construction_core.action_sc_tier_review_my_material_plan",
+      "name": "待我审批（物资计划）",
+      "res_model": "tier.review",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 444,
+      "xml_id": "smart_construction_core.action_project_cost_ledger",
+      "name": "成本台账",
+      "res_model": "project.cost.ledger",
+      "view_mode": "tree,form,pivot,graph",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 451,
+      "xml_id": "smart_construction_core.action_project_cost_ledger_quick",
+      "name": "成本台账",
+      "res_model": "project.cost.ledger",
+      "view_mode": "tree,form,pivot,graph",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 441,
+      "xml_id": "smart_construction_core.action_project_cost_code",
+      "name": "成本科目",
+      "res_model": "project.cost.code",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_config_admin",
+        "smart_construction_core.group_sc_manager"
+      ]
+    },
+    {
+      "id": 456,
+      "xml_id": "smart_construction_core.action_tender_bid",
+      "name": "投标管理",
+      "res_model": "tender.bid",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 479,
+      "xml_id": "smart_construction_core.action_project_dictionary",
+      "name": "数据字典（全部）",
+      "res_model": "project.dictionary",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_data_read"
+      ]
+    },
+    {
+      "id": 493,
+      "xml_id": "smart_construction_core.action_project_material_plan",
+      "name": "物资计划",
+      "res_model": "project.material.plan",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 490,
+      "xml_id": "smart_construction_core.action_material_plan_to_rfq_wizard",
+      "name": "生成询价单",
+      "res_model": "material.plan.to.rfq.wizard",
+      "view_mode": "form",
+      "groups": []
+    },
+    {
+      "id": 481,
+      "xml_id": "smart_construction_core.action_project_dictionary_chapter",
+      "name": "章节",
+      "res_model": "project.dictionary",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 510,
+      "xml_id": "smart_construction_core.action_sc_operating_metrics_project",
+      "name": "经营指标（项目）",
+      "res_model": "sc.operating.metrics.project",
+      "view_mode": "tree,pivot",
+      "groups": []
+    },
+    {
+      "id": 508,
+      "xml_id": "smart_construction_core.action_sc_settlement_order",
+      "name": "结算单",
+      "res_model": "sc.settlement.order",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_settlement_read",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_project_read"
+      ]
+    },
+    {
+      "id": 513,
+      "xml_id": "smart_construction_core.action_sc_operating_drill_settlements",
+      "name": "结算单（按项目）",
+      "res_model": "sc.settlement.order",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 460,
+      "xml_id": "smart_construction_core.action_sc_finance_dashboard",
+      "name": "财务中心",
+      "res_model": "payment.request",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 509,
+      "xml_id": "smart_construction_core.action_sc_treasury_ledger",
+      "name": "资金台账",
+      "res_model": "sc.treasury.ledger",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_finance_read"
+      ]
+    },
+    {
+      "id": 514,
+      "xml_id": "smart_construction_core.action_sc_operating_drill_overpay_risk_pr",
+      "name": "超付风险付款申请（按项目）",
+      "res_model": "payment.request",
+      "view_mode": "tree,form",
+      "groups": []
+    },
+    {
+      "id": 447,
+      "xml_id": "smart_construction_core.action_project_progress_entry",
+      "name": "进度计量",
+      "res_model": "project.progress.entry",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 452,
+      "xml_id": "smart_construction_core.action_project_progress_quick",
+      "name": "进度计量",
+      "res_model": "project.progress.entry",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 459,
+      "xml_id": "smart_construction_core.action_construction_contract",
+      "name": "项目合同",
+      "res_model": "construction.contract",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 453,
+      "xml_id": "smart_construction_core.action_project_contract_overview",
+      "name": "项目合同汇总",
+      "res_model": "construction.contract",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 442,
+      "xml_id": "smart_construction_core.action_project_cost_compare",
+      "name": "项目成本预算 vs 实际",
+      "res_model": "project.cost.compare",
+      "view_mode": "tree,pivot",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 461,
+      "xml_id": "smart_construction_core.action_project_initiation",
+      "name": "项目立项",
+      "res_model": "project.project",
+      "view_mode": "form,tree,kanban",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 443,
+      "xml_id": "smart_construction_core.action_project_profit_compare",
+      "name": "项目经营利润",
+      "res_model": "project.profit.compare",
+      "view_mode": "tree,pivot",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 450,
+      "xml_id": "smart_construction_core.action_project_budget_quick",
+      "name": "项目预算",
+      "res_model": "project.budget",
+      "view_mode": "tree,form,graph",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 440,
+      "xml_id": "smart_construction_core.action_project_budget",
+      "name": "项目预算",
+      "res_model": "project.budget",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 458,
+      "xml_id": "smart_construction_core.action_project_dashboard",
+      "name": "项目驾驶舱",
+      "res_model": "project.project",
+      "view_mode": "kanban,tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_manager",
+        "smart_construction_core.group_sc_user"
+      ]
+    },
+    {
+      "id": 445,
+      "xml_id": "smart_construction_core.action_project_budget_cost_alloc",
+      "name": "预算清单分摊",
+      "res_model": "project.budget.cost.alloc",
+      "view_mode": "tree,form",
+      "groups": [
+        "smart_construction_core.group_sc_cap_cost_manager",
+        "smart_construction_core.group_sc_manager"
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": 668,
+      "model": "payment.request",
+      "name": "Payment Request",
+      "xml_id": "smart_construction_core.model_payment_request"
+    },
+    {
+      "id": 573,
+      "model": "project.budget",
+      "name": "Project Budget",
+      "xml_id": "smart_construction_core.model_project_budget"
+    },
+    {
+      "id": 623,
+      "model": "project.contract",
+      "name": "Project Contract",
+      "xml_id": "smart_construction_core.model_project_contract"
+    },
+    {
+      "id": 570,
+      "model": "sc.project.document",
+      "name": "Project Engineering Document",
+      "xml_id": "smart_construction_core.model_sc_project_document"
+    },
+    {
+      "id": 666,
+      "model": "project.settlement",
+      "name": "Project Settlement",
+      "xml_id": "smart_construction_core.model_project_settlement"
+    },
+    {
+      "id": 676,
+      "model": "sc.workflow.def",
+      "name": "SC Workflow Definition",
+      "xml_id": "smart_construction_core.model_sc_workflow_def"
+    },
+    {
+      "id": 678,
+      "model": "sc.workflow.instance",
+      "name": "SC Workflow Instance",
+      "xml_id": "smart_construction_core.model_sc_workflow_instance"
+    },
+    {
+      "id": 587,
+      "model": "tender.bid",
+      "name": "投标管理",
+      "xml_id": "smart_construction_core.model_tender_bid"
+    },
+    {
+      "id": 674,
+      "model": "project.material.plan",
+      "name": "物资计划",
+      "xml_id": "smart_construction_core.model_project_material_plan"
+    },
+    {
+      "id": 571,
+      "model": "construction.contract",
+      "name": "项目合同",
+      "xml_id": "smart_construction_core.model_construction_contract"
+    },
+    {
+      "id": 669,
+      "model": "material.plan.to.rfq.wizard",
+      "name": "Material Plan To RFQ",
+      "xml_id": "smart_construction_core.model_material_plan_to_rfq_wizard"
+    },
+    {
+      "id": 622,
+      "model": "project.budget.line",
+      "name": "Project Budget Line",
+      "xml_id": "smart_construction_core.model_project_budget_line"
+    },
+    {
+      "id": 624,
+      "model": "project.contract.line",
+      "name": "Project Contract Line",
+      "xml_id": "smart_construction_core.model_project_contract_line"
+    },
+    {
+      "id": 667,
+      "model": "project.settlement.line",
+      "name": "Project Settlement Line",
+      "xml_id": "smart_construction_core.model_project_settlement_line"
+    },
+    {
+      "id": 680,
+      "model": "sc.workflow.log",
+      "name": "SC Workflow Log",
+      "xml_id": "smart_construction_core.model_sc_workflow_log"
+    },
+    {
+      "id": 677,
+      "model": "sc.workflow.node",
+      "name": "SC Workflow Node",
+      "xml_id": "smart_construction_core.model_sc_workflow_node"
+    },
+    {
+      "id": 679,
+      "model": "sc.workflow.workitem",
+      "name": "SC Workflow Workitem",
+      "xml_id": "smart_construction_core.model_sc_workflow_workitem"
+    },
+    {
+      "id": 633,
+      "model": "sc.settlement.order",
+      "name": "Settlement Order",
+      "xml_id": "smart_construction_core.model_sc_settlement_order"
+    },
+    {
+      "id": 634,
+      "model": "sc.settlement.order.line",
+      "name": "Settlement Order Line",
+      "xml_id": "smart_construction_core.model_sc_settlement_order_line"
+    },
+    {
+      "id": 688,
+      "model": "sc.data.validator",
+      "name": "Smart Construction Data Validator",
+      "xml_id": "smart_construction_core.model_sc_data_validator"
+    },
+    {
+      "id": 566,
+      "model": "sc.dictionary",
+      "name": "Smart Construction Dictionary",
+      "xml_id": "smart_construction_core.model_sc_dictionary"
+    },
+    {
+      "id": 687,
+      "model": "sc.treasury.ledger",
+      "name": "Treasury Ledger",
+      "xml_id": "smart_construction_core.model_sc_treasury_ledger"
+    },
+    {
+      "id": 597,
+      "model": "project.task.from.boq.wizard",
+      "name": "从工程量清单生成施工任务",
+      "xml_id": "smart_construction_core.model_project_task_from_boq_wizard"
+    },
+    {
+      "id": 572,
+      "model": "construction.contract.line",
+      "name": "合同清单行",
+      "xml_id": "smart_construction_core.model_construction_contract_line"
+    },
+    {
+      "id": 665,
+      "model": "quota.import.wizard",
+      "name": "四川定额导入向导",
+      "xml_id": "smart_construction_core.model_quota_import_wizard"
+    },
+    {
+      "id": 584,
+      "model": "construction.work.breakdown",
+      "name": "工程结构(WBS)",
+      "xml_id": "smart_construction_core.model_construction_work_breakdown"
+    },
+    {
+      "id": 585,
+      "model": "project.wbs",
+      "name": "工程结构(WBS)兼容层",
+      "xml_id": "smart_construction_core.model_project_wbs"
+    },
+    {
+      "id": 586,
+      "model": "project.boq.line",
+      "name": "工程量清单",
+      "xml_id": "smart_construction_core.model_project_boq_line"
+    },
+    {
+      "id": 596,
+      "model": "project.boq.import.wizard",
+      "name": "工程量清单导入",
+      "xml_id": "smart_construction_core.model_project_boq_import_wizard"
+    },
+    {
+      "id": 661,
+      "model": "project.dictionary",
+      "name": "工程项目数据字典",
+      "xml_id": "smart_construction_core.model_project_dictionary"
+    },
+    {
+      "id": 592,
+      "model": "tender.opening",
+      "name": "开标登记",
+      "xml_id": "smart_construction_core.model_tender_opening"
+    },
+    {
+      "id": 594,
+      "model": "tender.guarantee",
+      "name": "投标保证金",
+      "xml_id": "smart_construction_core.model_tender_guarantee"
+    },
+    {
+      "id": 591,
+      "model": "tender.doc.review",
+      "name": "投标文件审查",
+      "xml_id": "smart_construction_core.model_tender_doc_review"
+    },
+    {
+      "id": 589,
+      "model": "tender.doc.purchase",
+      "name": "投标文件购买申请",
+      "xml_id": "smart_construction_core.model_tender_doc_purchase"
+    },
+    {
+      "id": 588,
+      "model": "tender.bid.line",
+      "name": "投标清单行",
+      "xml_id": "smart_construction_core.model_tender_bid_line"
+    },
+    {
+      "id": 590,
+      "model": "tender.survey",
+      "name": "投标项目勘察",
+      "xml_id": "smart_construction_core.model_tender_survey"
+    },
+    {
+      "id": 675,
+      "model": "project.material.plan.line",
+      "name": "物资计划行",
+      "xml_id": "smart_construction_core.model_project_material_plan_line"
+    },
+    {
+      "id": 593,
+      "model": "tender.opening.competitor",
+      "name": "竞争对手报价",
+      "xml_id": "smart_construction_core.model_tender_opening_competitor"
+    },
+    {
+      "id": 690,
+      "model": "sc.operating.metrics.project",
+      "name": "经营指标（项目）",
+      "xml_id": "smart_construction_core.model_sc_operating_metrics_project"
+    },
+    {
+      "id": 600,
+      "model": "sc.project.structure",
+      "name": "项目工程结构（WBS）",
+      "xml_id": "smart_construction_core.model_sc_project_structure"
+    },
+    {
+      "id": 576,
+      "model": "project.cost.ledger",
+      "name": "项目成本台账",
+      "xml_id": "smart_construction_core.model_project_cost_ledger"
+    },
+    {
+      "id": 575,
+      "model": "project.cost.code",
+      "name": "项目成本科目",
+      "xml_id": "smart_construction_core.model_project_cost_code"
+    },
+    {
+      "id": 582,
+      "model": "project.cost.compare",
+      "name": "项目成本预算 vs 实际",
+      "xml_id": "smart_construction_core.model_project_cost_compare"
+    },
+    {
+      "id": 583,
+      "model": "project.profit.compare",
+      "name": "项目经营利润对比",
+      "xml_id": "smart_construction_core.model_project_profit_compare"
+    },
+    {
+      "id": 569,
+      "model": "project.responsibility",
+      "name": "项目责任矩阵",
+      "xml_id": "smart_construction_core.model_project_responsibility"
+    },
+    {
+      "id": 578,
+      "model": "project.progress.entry",
+      "name": "项目进度计量记录",
+      "xml_id": "smart_construction_core.model_project_progress_entry"
+    },
+    {
+      "id": 574,
+      "model": "project.budget.boq.line",
+      "name": "项目预算 / 中标清单行",
+      "xml_id": "smart_construction_core.model_project_budget_boq_line"
+    },
+    {
+      "id": 577,
+      "model": "project.budget.cost.alloc",
+      "name": "预算清单与成本科目分摊",
+      "xml_id": "smart_construction_core.model_project_budget_cost_alloc"
+    }
+  ],
+  "acls": [
+    {
+      "id": 798,
+      "name": "payment.request.manager",
+      "model": "payment.request",
+      "group": "smart_construction_core.group_sc_cap_finance_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 799,
+      "name": "payment.request.user",
+      "model": "payment.request",
+      "group": "smart_construction_core.group_sc_cap_finance_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 682,
+      "name": "project.budget.user",
+      "model": "project.budget",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 767,
+      "name": "access_project_budget_user",
+      "model": "project.budget",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 681,
+      "name": "project.budget.manager",
+      "model": "project.budget",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 765,
+      "name": "project.contract.user",
+      "model": "project.contract",
+      "group": "smart_construction_core.group_sc_cap_contract_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 674,
+      "name": "sc.project.document.manager",
+      "model": "sc.project.document",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 673,
+      "name": "sc.project.document.user",
+      "model": "sc.project.document",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 794,
+      "name": "project.settlement.manager",
+      "model": "project.settlement",
+      "group": "smart_construction_core.group_sc_cap_finance_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 795,
+      "name": "project.settlement.user",
+      "model": "project.settlement",
+      "group": "smart_construction_core.group_sc_cap_finance_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 809,
+      "name": "sc.workflow.def.admin",
+      "model": "sc.workflow.def",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 811,
+      "name": "sc.workflow.instance.admin",
+      "model": "sc.workflow.instance",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 707,
+      "name": "tender.bid.manager",
+      "model": "tender.bid",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 708,
+      "name": "tender.bid.user",
+      "model": "tender.bid",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 804,
+      "name": "project.material.plan.user",
+      "model": "project.material.plan",
+      "group": "smart_construction_core.group_sc_cap_material_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 676,
+      "name": "construction.contract.manager",
+      "model": "construction.contract",
+      "group": "smart_construction_core.group_sc_cap_contract_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 675,
+      "name": "construction.contract.user",
+      "model": "construction.contract",
+      "group": "smart_construction_core.group_sc_cap_contract_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 824,
+      "name": "construction.contract.finance.read",
+      "model": "construction.contract",
+      "group": "smart_construction_core.group_sc_cap_finance_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 826,
+      "name": "construction.contract.finance.manager",
+      "model": "construction.contract",
+      "group": "smart_construction_core.group_sc_cap_finance_manager",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 825,
+      "name": "construction.contract.finance.user",
+      "model": "construction.contract",
+      "group": "smart_construction_core.group_sc_cap_finance_user",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 806,
+      "name": "material.plan.to.rfq.wizard",
+      "model": "material.plan.to.rfq.wizard",
+      "group": "smart_construction_core.group_sc_cap_material_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 768,
+      "name": "access_project_budget_line_user",
+      "model": "project.budget.line",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 766,
+      "name": "project.contract.line.user",
+      "model": "project.contract.line",
+      "group": "smart_construction_core.group_sc_cap_contract_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 796,
+      "name": "project.settlement.line.manager",
+      "model": "project.settlement.line",
+      "group": "smart_construction_core.group_sc_cap_finance_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 797,
+      "name": "project.settlement.line.user",
+      "model": "project.settlement.line",
+      "group": "smart_construction_core.group_sc_cap_finance_user",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 813,
+      "name": "sc.workflow.log.admin",
+      "model": "sc.workflow.log",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 810,
+      "name": "sc.workflow.node.admin",
+      "model": "sc.workflow.node",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 812,
+      "name": "sc.workflow.workitem.admin",
+      "model": "sc.workflow.workitem",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 841,
+      "name": "sc.settlement.order.cost.read",
+      "model": "sc.settlement.order",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 828,
+      "name": "sc.settlement.order.read",
+      "model": "sc.settlement.order",
+      "group": "smart_construction_core.group_sc_cap_settlement_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 830,
+      "name": "sc.settlement.order.manager",
+      "model": "sc.settlement.order",
+      "group": "smart_construction_core.group_sc_cap_settlement_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 829,
+      "name": "sc.settlement.order.user",
+      "model": "sc.settlement.order",
+      "group": "smart_construction_core.group_sc_cap_settlement_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 842,
+      "name": "sc.settlement.order.finance.read",
+      "model": "sc.settlement.order",
+      "group": "smart_construction_core.group_sc_cap_finance_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 840,
+      "name": "sc.settlement.order.project.read",
+      "model": "sc.settlement.order",
+      "group": "smart_construction_core.group_sc_cap_project_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 831,
+      "name": "sc.settlement.order.line.read",
+      "model": "sc.settlement.order.line",
+      "group": "smart_construction_core.group_sc_cap_settlement_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 833,
+      "name": "sc.settlement.order.line.manager",
+      "model": "sc.settlement.order.line",
+      "group": "smart_construction_core.group_sc_cap_settlement_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 832,
+      "name": "sc.settlement.order.line.user",
+      "model": "sc.settlement.order.line",
+      "group": "smart_construction_core.group_sc_cap_settlement_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 807,
+      "name": "sc.dictionary.read",
+      "model": "sc.dictionary",
+      "group": "smart_construction_core.group_sc_cap_data_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 808,
+      "name": "sc.dictionary.admin",
+      "model": "sc.dictionary",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 834,
+      "name": "sc.treasury.ledger.read",
+      "model": "sc.treasury.ledger",
+      "group": "smart_construction_core.group_sc_cap_finance_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 836,
+      "name": "sc.treasury.ledger.manager",
+      "model": "sc.treasury.ledger",
+      "group": "smart_construction_core.group_sc_cap_finance_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 835,
+      "name": "sc.treasury.ledger.user",
+      "model": "sc.treasury.ledger",
+      "group": "smart_construction_core.group_sc_cap_finance_user",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 703,
+      "name": "project.task.from.boq.wizard.manager",
+      "model": "project.task.from.boq.wizard",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 704,
+      "name": "project.task.from.boq.wizard.user",
+      "model": "project.task.from.boq.wizard",
+      "group": "smart_construction_core.group_sc_cap_cost_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 827,
+      "name": "construction.contract.line.read",
+      "model": "construction.contract.line",
+      "group": "smart_construction_core.group_sc_cap_contract_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 678,
+      "name": "construction.contract.line.manager",
+      "model": "construction.contract.line",
+      "group": "smart_construction_core.group_sc_cap_contract_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 677,
+      "name": "construction.contract.line.user",
+      "model": "construction.contract.line",
+      "group": "smart_construction_core.group_sc_cap_contract_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 793,
+      "name": "quota.import.wizard.manager",
+      "model": "quota.import.wizard",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 705,
+      "name": "construction.work.breakdown.manager",
+      "model": "construction.work.breakdown",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 706,
+      "name": "construction.work.breakdown.user",
+      "model": "construction.work.breakdown",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 769,
+      "name": "access_project_wbs_user",
+      "model": "project.wbs",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 699,
+      "name": "project.boq.line.manager",
+      "model": "project.boq.line",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 700,
+      "name": "project.boq.line.user",
+      "model": "project.boq.line",
+      "group": "smart_construction_core.group_sc_cap_cost_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 701,
+      "name": "project.boq.import.wizard.manager",
+      "model": "project.boq.import.wizard",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 702,
+      "name": "project.boq.import.wizard.user",
+      "model": "project.boq.import.wizard",
+      "group": "smart_construction_core.group_sc_cap_cost_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 788,
+      "name": "project.dictionary.user",
+      "model": "project.dictionary",
+      "group": "smart_construction_core.group_sc_cap_data_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 789,
+      "name": "project.dictionary.manager",
+      "model": "project.dictionary",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 717,
+      "name": "tender.opening.manager",
+      "model": "tender.opening",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 718,
+      "name": "tender.opening.user",
+      "model": "tender.opening",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 721,
+      "name": "tender.guarantee.manager",
+      "model": "tender.guarantee",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 722,
+      "name": "tender.guarantee.user",
+      "model": "tender.guarantee",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 715,
+      "name": "tender.doc.review.manager",
+      "model": "tender.doc.review",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 716,
+      "name": "tender.doc.review.user",
+      "model": "tender.doc.review",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 711,
+      "name": "tender.doc.purchase.manager",
+      "model": "tender.doc.purchase",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 712,
+      "name": "tender.doc.purchase.user",
+      "model": "tender.doc.purchase",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 709,
+      "name": "tender.bid.line.manager",
+      "model": "tender.bid.line",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 710,
+      "name": "tender.bid.line.user",
+      "model": "tender.bid.line",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 713,
+      "name": "tender.survey.manager",
+      "model": "tender.survey",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 714,
+      "name": "tender.survey.user",
+      "model": "tender.survey",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 805,
+      "name": "project.material.plan.line.user",
+      "model": "project.material.plan.line",
+      "group": "smart_construction_core.group_sc_cap_material_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 719,
+      "name": "tender.opening.competitor.manager",
+      "model": "tender.opening.competitor",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 720,
+      "name": "tender.opening.competitor.user",
+      "model": "tender.opening.competitor",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 838,
+      "name": "sc.operating.metrics.project.cost.read",
+      "model": "sc.operating.metrics.project",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 839,
+      "name": "sc.operating.metrics.project.finance.read",
+      "model": "sc.operating.metrics.project",
+      "group": "smart_construction_core.group_sc_cap_finance_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 837,
+      "name": "sc.operating.metrics.project.read",
+      "model": "sc.operating.metrics.project",
+      "group": "smart_construction_core.group_sc_cap_project_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 743,
+      "name": "sc.project.structure.manager",
+      "model": "sc.project.structure",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 742,
+      "name": "sc.project.structure.user",
+      "model": "sc.project.structure",
+      "group": "smart_construction_core.group_sc_cap_project_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 688,
+      "name": "project.cost.ledger.user",
+      "model": "project.cost.ledger",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 687,
+      "name": "project.cost.ledger.manager",
+      "model": "project.cost.ledger",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 686,
+      "name": "project.cost.code.user",
+      "model": "project.cost.code",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 685,
+      "name": "project.cost.code.manager",
+      "model": "project.cost.code",
+      "group": "smart_construction_core.group_sc_cap_config_admin",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 693,
+      "name": "project.cost.compare.manager",
+      "model": "project.cost.compare",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 694,
+      "name": "project.cost.compare.user",
+      "model": "project.cost.compare",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 695,
+      "name": "project.profit.compare.manager",
+      "model": "project.profit.compare",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 696,
+      "name": "project.profit.compare.user",
+      "model": "project.profit.compare",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 698,
+      "name": "project.responsibility.user",
+      "model": "project.responsibility",
+      "group": "smart_construction_core.group_sc_cap_project_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 697,
+      "name": "project.responsibility.manager",
+      "model": "project.responsibility",
+      "group": "smart_construction_core.group_sc_cap_project_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 691,
+      "name": "project.progress.entry.manager",
+      "model": "project.progress.entry",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 692,
+      "name": "project.progress.entry.user",
+      "model": "project.progress.entry",
+      "group": "smart_construction_core.group_sc_cap_cost_user",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": false
+    },
+    {
+      "id": 684,
+      "name": "project.budget.boq.line.user",
+      "model": "project.budget.boq.line",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 683,
+      "name": "project.budget.boq.line.manager",
+      "model": "project.budget.boq.line",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    },
+    {
+      "id": 690,
+      "name": "project.budget.cost.alloc.user",
+      "model": "project.budget.cost.alloc",
+      "group": "smart_construction_core.group_sc_cap_cost_read",
+      "perm_read": true,
+      "perm_write": false,
+      "perm_create": false,
+      "perm_unlink": false
+    },
+    {
+      "id": 689,
+      "name": "project.budget.cost.alloc.manager",
+      "model": "project.budget.cost.alloc",
+      "group": "smart_construction_core.group_sc_cap_cost_manager",
+      "perm_read": true,
+      "perm_write": true,
+      "perm_create": true,
+      "perm_unlink": true
+    }
+  ]
+}
