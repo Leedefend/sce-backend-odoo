@@ -28,6 +28,28 @@
             <!-- stage_id 不写，走 _default_stage_id 默认值 -->
         </record>
 
+        <!-- 工程结构(WBS) -->
+        <record id="sc_demo_wbs_root" model="construction.work.breakdown">
+            <field name="name">主体工程</field>
+            <field name="code">01</field>
+            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="level_type">unit</field>
+        </record>
+        <record id="sc_demo_wbs_earthwork" model="construction.work.breakdown">
+            <field name="name">土石方工程</field>
+            <field name="code">01.01</field>
+            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="parent_id" ref="sc_demo_wbs_root"/>
+            <field name="level_type">sub_division</field>
+        </record>
+        <record id="sc_demo_wbs_structure" model="construction.work.breakdown">
+            <field name="name">主体结构</field>
+            <field name="code">01.02</field>
+            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="parent_id" ref="sc_demo_wbs_root"/>
+            <field name="level_type">sub_division</field>
+        </record>
+
         <!-- 工程量清单 1：场地平整（土石方） -->
         <record id="sc_demo_boq_earthwork" model="project.boq.line">
             <field name="project_id" ref="sc_demo_project_001"/>
@@ -40,6 +62,7 @@
             <field name="price">35</field>
             <field name="cost_item_id" ref="sc_demo_dict_cost_item_earthwork"/>
             <field name="category">subitem</field>
+            <field name="work_id" ref="sc_demo_wbs_earthwork"/>
         </record>
 
         <!-- 工程量清单 2：现浇混凝土框架 -->
@@ -54,6 +77,7 @@
             <field name="price">900</field>
             <field name="cost_item_id" ref="sc_demo_dict_cost_item_structure"/>
             <field name="category">subitem</field>
+            <field name="work_id" ref="sc_demo_wbs_structure"/>
         </record>
 
     </data>
