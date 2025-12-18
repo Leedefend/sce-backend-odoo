@@ -35,12 +35,12 @@ class ScOperatingMetricsProject(models.Model):
         if not (has_settlement and has_payment):
             return
         # 强制清理残留表/视图，再重建只读视图
-        # 先尝试删除表（忽略对象类型错误），再安全删除视图
+        tools.drop_view_if_exists(self._cr, self._table)
+        # 若曾误生成表，清理之
         try:
             self._cr.execute(f"DROP TABLE IF EXISTS {self._table} CASCADE")
         except Exception:
             self._cr.rollback()
-        tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute(
             f"""
             CREATE OR REPLACE VIEW {self._table} AS (

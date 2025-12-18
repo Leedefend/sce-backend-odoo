@@ -195,6 +195,18 @@ class PaymentRequest(models.Model):
         for rec in self:
             rec.move_type = rec.type
 
+    @api.onchange("type", "project_id")
+    def _onchange_type_set_contract_domain(self):
+        domain = {}
+        expected_contract_type = "in" if self.type == "pay" else "out"
+        domain["contract_id"] = [
+            ("project_id", "=", self.project_id.id),
+            ("type", "=", expected_contract_type),
+        ]
+        if self.contract_id and self.contract_id.type != expected_contract_type:
+            self.contract_id = False
+        return {"domain": domain}
+
     def _check_settlement_compliance_or_raise(self, strict=True):
         self.ensure_one()
         if not self.settlement_id:
@@ -227,6 +239,15 @@ class PaymentRequest(models.Model):
             # 已进入流程的记录在字段更改时仍要守住额度
             if rec.state in ("submit", "approve", "approved", "done"):
                 rec._check_settlement_remaining_amount()
+
+    @api.constrains("contract_id", "type")
+    def _check_contract_direction(self):
+        for rec in self:
+            if not rec.contract_id:
+                continue
+            expected = "in" if rec.type == "pay" else "out"
+            if rec.contract_id.type != expected:
+                raise ValidationError(_("合同类型必须与申请类型一致。"))
 
     def _check_settlement_remaining_amount(self):
         """防超付额度硬校验：提交/审批前必须满足结算额度（排除本申请）。"""
