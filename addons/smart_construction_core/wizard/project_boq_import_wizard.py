@@ -137,6 +137,15 @@ class ProjectBoqImportWizard(models.TransientModel):
             return created
 
         if self.clear_mode == "replace_project":
+            # 安全检查：若已有合同清单引用本项目清单，禁止整表清空，避免外键错误
+            linked_lines = self.env["construction.contract.line"].sudo().search_count(
+                [("boq_line_id.project_id", "=", self.project_id.id)]
+            )
+            if linked_lines:
+                raise UserError(
+                    "当前项目的清单已被合同引用，禁止“清空项目后导入”。\n"
+                    "请创建新预算版本或使用“按编码覆盖/追加”策略。"
+                )
             Boq.search([("project_id", "=", self.project_id.id)]).unlink()
             created_count = _create_rows(rows)
         elif self.clear_mode == "replace_code":

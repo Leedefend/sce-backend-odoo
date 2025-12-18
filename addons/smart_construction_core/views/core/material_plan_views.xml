@@ -106,11 +106,4 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <!-- 菜单：挂到物资中心 -->
-    <menuitem id="menu_project_material_plan"
-              parent="menu_sc_material_center"
-              name="物资计划"
-              action="action_project_material_plan"
-              sequence="10"
-              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
 </odoo>

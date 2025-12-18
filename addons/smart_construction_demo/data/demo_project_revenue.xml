@@ -32,13 +32,13 @@
             <field name="name">SC-DEMO-INV-001</field>
             <field name="move_type">out_invoice</field>
             <field name="journal_id" ref="sc_demo_journal_sale"/>
-            <field name="partner_id" ref="sc_demo_partner_owner_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
             <field name="invoice_date">2025-05-30</field>
-            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
             <field name="invoice_line_ids" eval="[(0, 0, {
                 'name': '进度计量收入',
                 'account_id': ref('sc_demo_account_revenue'),
-                'project_id': ref('sc_demo_project_001'),
+                'project_id': ref('smart_construction_demo.sc_demo_project_001'),
                 'quantity': 1.0,
                 'price_unit': 25000000.0,
             })]"/>
@@ -48,13 +48,13 @@
             <field name="name">SC-DEMO-INV-002</field>
             <field name="move_type">out_invoice</field>
             <field name="journal_id" ref="sc_demo_journal_sale"/>
-            <field name="partner_id" ref="sc_demo_partner_owner_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
             <field name="invoice_date">2025-08-20</field>
-            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
             <field name="invoice_line_ids" eval="[(0, 0, {
                 'name': '进度计量收入',
                 'account_id': ref('sc_demo_account_revenue'),
-                'project_id': ref('sc_demo_project_001'),
+                'project_id': ref('smart_construction_demo.sc_demo_project_001'),
                 'quantity': 1.0,
                 'price_unit': 20000000.0,
             })]"/>

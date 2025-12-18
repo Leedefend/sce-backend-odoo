@@ -12,7 +12,7 @@
                 <field name="category_id"/>
                 <field name="partner_id"/>
                 <field name="date_contract"/>
-                <field name="amount_final"/>
+                <field name="amount_final" sum="合同金额合计"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -90,20 +90,26 @@
                     <notebook>
                         <page string="合同行">
                             <field name="line_ids" context="{'default_contract_id': context.get('active_id')}">
-                                <tree editable="bottom">
+                                <tree editable="bottom"
+                                      decoration-danger="delta_amount &gt; 0"
+                                      decoration-success="delta_amount &lt; 0">
                                     <field name="sequence" widget="handle"/>
                                     <field name="project_id" invisible="1"/>
                                     <field name="boq_line_id"/>
                                     <field name="boq_code"/>
                                     <field name="boq_name"/>
-                                    <field name="wbs_id"/>
-                                    <field name="uom_id"/>
-                                    <field name="qty_contract"/>
-                                    <field name="price_contract"/>
-                                    <field name="amount_contract" readonly="1"/>
-                                </tree>
-                            </field>
-                        </page>
+                            <field name="wbs_id"/>
+                            <field name="uom_id"/>
+                            <field name="qty_contract"/>
+                            <field name="price_contract"/>
+                            <field name="amount_contract" readonly="1"/>
+                            <field name="amount_contract_leaf" sum="合同合价" optional="hide"/>
+                            <field name="boq_amount_leaf" readonly="1" optional="hide"/>
+                            <field name="boq_amount_source" readonly="1" optional="hide"/>
+                            <field name="delta_amount" sum="差额合计" optional="show"/>
+                        </tree>
+                    </field>
+                </page>
                         <page string="备注">
                             <field name="note"/>
                         </page>

@@ -290,6 +290,71 @@ class ScSettlementOrder(models.Model):
     def action_cancel(self):
         self.write({"state": "cancel"})
 
+    # ------------------------------------------------------------------
+    # 合同联动：选合同后自动带出项目/公司/币种/往来单位/结算类型
+    # ------------------------------------------------------------------
+    @api.onchange("contract_id")
+    def _onchange_contract_id_fill_header(self):
+        for rec in self:
+            c = rec.contract_id
+            if not c:
+                continue
+            # 项目/公司/币种
+            if not rec.project_id and getattr(c, "project_id", False):
+                rec.project_id = c.project_id.id
+            if not rec.company_id and getattr(c, "company_id", False):
+                rec.company_id = c.company_id.id
+            if not rec.currency_id:
+                cur = getattr(c, "currency_id", False) or (rec.company_id.currency_id if rec.company_id else False)
+                if cur:
+                    rec.currency_id = cur.id
+            # 往来单位（合同相对方）
+            partner = getattr(c, "partner_id", False)
+            if partner and not rec.partner_id:
+                rec.partner_id = partner.id
+            # 结算类型：收入合同->收入结算(in)，支出合同->支出结算(out)
+            if getattr(c, "type", False) and not rec.settlement_type:
+                rec.settlement_type = "in" if c.type == "out" else "out"
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("name", "新建") in (False, "新建"):
+                seq = self.env["ir.sequence"].next_by_code("sc.settlement.order")
+                vals["name"] = seq or _("Settlement")
+        records = super().create(vals_list)
+        records._apply_contract_defaults_if_needed()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if "contract_id" in vals:
+            self._apply_contract_defaults_if_needed()
+        return res
+
+    def _apply_contract_defaults_if_needed(self):
+        """兜底：导入/批量写入绕过 onchange 时也能带出合同信息。"""
+        for rec in self:
+            c = rec.contract_id
+            if not c:
+                continue
+            updates = {}
+            if not rec.project_id and getattr(c, "project_id", False):
+                updates["project_id"] = c.project_id.id
+            if not rec.company_id and getattr(c, "company_id", False):
+                updates["company_id"] = c.company_id.id
+            if not rec.currency_id:
+                cur = getattr(c, "currency_id", False) or (updates.get("company_id") and self.env["res.company"].browse(updates["company_id"]).currency_id)
+                if cur:
+                    updates["currency_id"] = cur.id
+            partner = getattr(c, "partner_id", False)
+            if partner and not rec.partner_id:
+                updates["partner_id"] = partner.id
+            if not rec.settlement_type and getattr(c, "type", False):
+                updates["settlement_type"] = "in" if c.type == "out" else "out"
+            if updates:
+                rec.with_context(skip_onchange=True).sudo().write(updates)
+
 
 class ScSettlementOrderLine(models.Model):
     _name = "sc.settlement.order.line"

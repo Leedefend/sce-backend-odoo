@@ -88,14 +88,24 @@ class ProjectBoqLine(models.Model):
         index=True,
     )
     uom_id = fields.Many2one("uom.uom", string="单位", required=True)
-    quantity = fields.Float("工程量", default=0.0)
-    price = fields.Monetary("单价", currency_field="currency_id")
+    quantity = fields.Float("工程量", default=0.0, group_operator="sum")
+    price = fields.Monetary("单价", currency_field="currency_id", group_operator=False)
     amount = fields.Monetary(
         "合价",
         currency_field="currency_id",
         compute="_compute_amount",
         store=True,
         recursive=True,
+        group_operator=False,
+        help="树形展示口径：清单项=工程量*单价，父项=子项合价之和；不参与统计汇总。",
+    )
+    amount_leaf = fields.Monetary(
+        "合价(叶子)",
+        currency_field="currency_id",
+        compute="_compute_amount_leaf",
+        store=True,
+        group_operator="sum",
+        help="仅清单项计入汇总，章节/父项不计入，避免分组/透视重复统计。",
     )
     # 单价分析表基价（人工/机械），导入时回写，便于对账和分析
     base_labor_unit = fields.Float("人工基价")
@@ -206,7 +216,7 @@ class ProjectBoqLine(models.Model):
     sheet_index = fields.Integer("来源Sheet序号")
     sheet_name = fields.Char("来源Sheet名称")
 
-    @api.depends("line_type", "quantity", "price", "child_ids.amount")
+    @api.depends("line_type", "quantity", "price", "child_ids.amount", "child_ids.amount_leaf")
     def _compute_amount(self):
         for rec in self:
             qty = rec.quantity or 0.0
@@ -216,6 +226,14 @@ class ProjectBoqLine(models.Model):
                 rec.amount = sum(rec.child_ids.mapped("amount"))
             else:
                 rec.amount = qty * price
+
+    @api.depends("line_type", "quantity", "price")
+    def _compute_amount_leaf(self):
+        for rec in self:
+            if rec.line_type == "item":
+                rec.amount_leaf = (rec.quantity or 0.0) * (rec.price or 0.0)
+            else:
+                rec.amount_leaf = 0.0
 
     @api.model_create_multi
     def create(self, vals_list):
