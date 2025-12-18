@@ -1,0 +1,26 @@
+<odoo>
+    <record id="view_construction_contract_line_search" model="ir.ui.view">
+        <field name="name">construction.contract.line.search</field>
+        <field name="model">construction.contract.line</field>
+        <field name="arch" type="xml">
+            <search string="合同行">
+                <field name="contract_id"/>
+                <field name="project_id"/>
+                <field name="boq_line_id"/>
+                <filter string="有差额" name="has_delta" domain="[('delta_amount','!=',0)]"/>
+                <filter string="合同高于清单" name="delta_pos" domain="[('delta_amount','>',0)]"/>
+                <filter string="合同低于清单" name="delta_neg" domain="[('delta_amount','&lt;',0)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_construction_contract_line" model="ir.actions.act_window">
+        <field name="name">合同行</field>
+        <field name="res_model">construction.contract.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_construction_contract_line_search"/>
+        <field name="context">{}</field>
+        <field name="domain">[]</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
+</odoo>

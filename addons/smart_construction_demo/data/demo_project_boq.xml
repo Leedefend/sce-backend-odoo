@@ -2,35 +2,9 @@
 <odoo>
     <data noupdate="1">
 
-        <!-- 示例业主单位（避免依赖 base.res_partner_1） -->
-        <record id="sc_demo_partner_owner_001" model="res.partner">
-            <field name="name">德阳市某产业发展有限公司（示例）</field>
-            <field name="company_type">company</field>
-        </record>
-
-        <!-- 示范项目：德阳智能制造产教融合项目 -->
-        <record id="sc_demo_project_001" model="project.project">
-            <field name="name">德阳智能制造产教融合项目</field>
-            <field name="project_code">SC-DEY-2025-001</field>
-
-            <!-- 公司：仍然使用主公司 -->
-            <field name="company_id" ref="base.main_company"/>
-
-            <!-- 业主：使用我们在本文件中创建的示例 partner -->
-            <field name="partner_id" ref="sc_demo_partner_owner_001"/>
-
-            <!-- 项目类型 / 项目类别：使用 demo_dictionary.xml 中定义的字典 -->
-            <field name="project_type_id" ref="sc_demo_dict_project_type_municipal"/>
-            <field name="project_category_id" ref="sc_demo_dict_project_category_industry"/>
-
-            <field name="start_date">2025-01-01</field>
-            <field name="end_date">2026-12-31</field>
-            <!-- stage_id 不写，走 _default_stage_id 默认值 -->
-        </record>
-
         <!-- 工程量清单 1：场地平整（土石方） -->
         <record id="sc_demo_boq_earthwork" model="project.boq.line">
-            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
             <field name="sequence">10</field>
             <field name="code">010101</field>
             <field name="name">场地平整</field>
@@ -44,7 +18,7 @@
 
         <!-- 工程量清单 2：现浇混凝土框架 -->
         <record id="sc_demo_boq_concrete" model="project.boq.line">
-            <field name="project_id" ref="sc_demo_project_001"/>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
             <field name="sequence">20</field>
             <field name="code">020202</field>
             <field name="name">现浇混凝土框架结构</field>

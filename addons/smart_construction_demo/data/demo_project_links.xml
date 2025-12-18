@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- 物资计划：示例一条 -->
+    <record id="sc_demo_material_plan_001" model="project.material.plan">
+        <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+        <field name="name">MP-DEMO-001</field>
+        <field name="date_plan">2025-03-15</field>
+        <field name="state">draft</field>
+    </record>
+
+    <!-- 合同示例（无行也可用于概览计数） -->
+    <record id="sc_demo_contract_out_001" model="construction.contract">
+        <field name="subject">总包合同（示例）</field>
+        <field name="type">out</field>
+        <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+        <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+        <field name="date_contract">2025-01-10</field>
+    </record>
+
+</odoo>

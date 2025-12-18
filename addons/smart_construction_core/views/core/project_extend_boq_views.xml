@@ -3,19 +3,9 @@
         <field name="name">project.project.form.boq.hierarchy</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
+        <field name="active" eval="False"/>
         <field name="arch" type="xml">
-            <xpath expr="//header" position="inside">
-                <button name="action_rebuild_boq_hierarchy"
-                        string="重建工程量清单层级"
-                        type="object"
-                        class="btn-secondary"
-                        groups="smart_construction_core.group_sc_cap_cost_manager"/>
-                <button name="action_validate_boq"
-                        string="校验工程量清单"
-                        type="object"
-                        class="btn-secondary"
-                        groups="smart_construction_core.group_sc_cap_cost_manager"/>
-            </xpath>
+            <data/>
         </field>
     </record>
 </odoo>

@@ -43,9 +43,10 @@
 
                 <!-- 计量计价 -->
                 <field name="uom_id"/>
-                <field name="quantity"/>
+                <field name="quantity" sum="工程量合计"/>
                 <field name="price"/>
-                <field name="amount" sum="工程合价"/>
+                <field name="amount"/>
+                <field name="amount_leaf" sum="工程合价" optional="hide"/>
 
                 <!-- 预警信息 -->
                 <field name="has_warning" widget="boolean_toggle" optional="hide"/>
@@ -150,8 +151,8 @@
         <field name="model">project.boq.line</field>
         <field name="arch" type="xml">
             <pivot string="工程量清单分析">
-                <field name="amount" type="measure" string="合价"/>
-                <field name="quantity" type="measure" invisible="1"/>
+                <field name="amount_leaf" type="measure" string="合价"/>
+                <field name="quantity" type="measure" string="工程量"/>
                 <field name="project_id"/>
                 <field name="section_type"/>
                 <field name="major_name"/>
@@ -168,7 +169,7 @@
         <field name="res_model">project.boq.line</field>
         <field name="view_mode">tree,form,pivot</field>
         <field name="view_id" ref="view_project_boq_line_tree"/>
-        <field name="context">{'search_default_group_by_project': 1}</field>
+        <field name="context">{}</field>
         <field name="groups_id"
                eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
     </record>
