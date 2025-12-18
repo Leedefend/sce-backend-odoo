@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- P1：全量演示项目 -->
+    <record id="sc_demo_project_001" model="project.project">
+        <field name="name">德阳智能制造产教融合项目</field>
+        <field name="project_code">SC-DEY-2025-001</field>
+        <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="project_type_id" ref="smart_construction_demo.sc_demo_dict_project_type_municipal"/>
+        <field name="project_category_id" ref="smart_construction_demo.sc_demo_dict_project_category_industry"/>
+        <field name="start_date">2025-01-01</field>
+        <field name="end_date">2026-12-31</field>
+        <field name="active">True</field>
+        <field name="description">
+            【Demo 说明】
+            - Button Box 6 个入口均可打开：工程结构 / 清单导入 / 预算 / 合同 / 物资计划 / 财务
+            - 数据轻量：WBS/清单可空态，合同与物资计划各有一条示例
+        </field>
+    </record>
+
+    <!-- P2：空壳对照项目 -->
+    <record id="sc_demo_project_002" model="project.project">
+        <field name="name">P2-空壳对照项目（演示）</field>
+        <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="active">True</field>
+    </record>
+
+</odoo>

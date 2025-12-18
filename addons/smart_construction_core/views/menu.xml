@@ -1,18 +1,4 @@
 <odoo>
-    <!-- 顶级菜单 -->
-    <menuitem id="menu_sc_root"
-              name="智能施工 2.0"
-              sequence="30"
-              groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_purchase_read,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_data_read"/>
-
-    <!-- 财务主动作：直接打开付款/收款申请列表，确保财务能力组可见 -->
-    <record id="action_sc_finance_dashboard" model="ir.actions.act_window">
-        <field name="name">财务中心</field>
-        <field name="res_model">payment.request</field>
-        <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
-    </record>
-
     <!-- 项目中心 -->
     <menuitem id="menu_sc_project_center"
               name="项目中心"
@@ -176,9 +162,14 @@
     <menuitem id="menu_sc_material_center"
               name="物资中心"
               parent="menu_sc_root"
-              action="smart_construction_core.action_project_material_plan"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_material_read"/>
+    <menuitem id="menu_project_material_plan"
+              name="物资计划"
+              parent="menu_sc_material_center"
+              action="action_project_material_plan"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_sc_tier_review_my_material_plan"
               name="待我审批（物资计划）"
               parent="menu_sc_material_center"
@@ -186,31 +177,11 @@
               sequence="35"
               groups="smart_construction_core.group_sc_cap_material_manager"/>
 
-    <!-- 财务中心 -->
-    <menuitem id="menu_sc_finance_center"
-              name="财务中心"
-              parent="menu_sc_root"
-              action="action_sc_finance_dashboard"
-              sequence="40"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
-    <menuitem id="menu_sc_tier_review_my_payment_request"
-              name="待我审批（付款申请）"
-              parent="menu_sc_finance_center"
-              action="smart_construction_core.action_sc_tier_review_my_payment_request"
-              sequence="45"
-              groups="smart_construction_core.group_sc_cap_finance_manager"/>
-
     <!-- 数据中心 -->
     <menuitem id="menu_sc_data_center"
               name="数据中心"
               parent="menu_sc_root"
               sequence="80"
-              groups="smart_construction_core.group_sc_cap_data_read"/>
-    <menuitem id="menu_sc_dictionary"
-              name="业务字典"
-              parent="menu_sc_data_center"
-              action="action_project_dictionary"
-              sequence="10"
               groups="smart_construction_core.group_sc_cap_data_read"/>
 
     <!-- 配置中心 -->

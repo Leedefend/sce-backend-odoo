@@ -187,8 +187,9 @@
                     <field name="tender_count" widget="statinfo" string="投标"/>
                 </button>
             </xpath>
-            <xpath expr="//sheet/notebook" position="inside">
-                <page string="投标管理">
+            <!-- 若项目视图已定义 sc_tender 页签，则复用并替换其内容，避免重复新增投标管理页 -->
+            <xpath expr="//sheet/notebook/page[@name='sc_tender']" position="replace">
+                <page string="投标管理" name="sc_tender">
                     <field name="tender_bid_ids" context="{'default_project_id': id, 'default_state': 'prepare'}">
                         <tree string="投标记录" editable="bottom">
                             <field name="tender_name"/>

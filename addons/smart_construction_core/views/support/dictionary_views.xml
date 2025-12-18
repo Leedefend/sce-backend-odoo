@@ -350,4 +350,12 @@
               sequence="40"
               groups="smart_construction_core.group_sc_cap_data_read"/>
 
+    <!-- 数据中心入口 -->
+    <menuitem id="menu_sc_dictionary"
+              name="业务字典"
+              parent="menu_sc_data_center"
+              action="action_project_dictionary"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_data_read"/>
+
 </odoo>

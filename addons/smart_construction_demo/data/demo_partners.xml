@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- 客户 / 业主 -->
+    <record id="sc_demo_partner_owner_001" model="res.partner">
+        <field name="name">德阳市某产业发展有限公司（示例）</field>
+        <field name="is_company">True</field>
+        <field name="company_type">company</field>
+        <field name="phone">0838-0000000</field>
+    </record>
+
+    <!-- 供应商：商砼 -->
+    <record id="sc_demo_partner_vendor_concrete" model="res.partner">
+        <field name="name">德阳某某商砼有限公司（示例）</field>
+        <field name="is_company">True</field>
+        <field name="company_type">company</field>
+        <field name="supplier_rank">1</field>
+        <field name="phone">0838-1111111</field>
+    </record>
+
+    <!-- 供应商：钢材 -->
+    <record id="sc_demo_partner_vendor_steel" model="res.partner">
+        <field name="name">德阳某某钢材贸易有限公司（示例）</field>
+        <field name="is_company">True</field>
+        <field name="company_type">company</field>
+        <field name="supplier_rank">1</field>
+        <field name="phone">0838-2222222</field>
+    </record>
+
+</odoo>

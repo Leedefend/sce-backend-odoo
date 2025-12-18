@@ -20,6 +20,13 @@ class PaymentRequest(models.Model):
         required=True,
         tracking=True,
     )
+    # 兼容部分搜索条件（有时被带入 account.move 的 move_type 过滤）
+    move_type = fields.Selection(
+        [("pay", "付款"), ("receive", "收款")],
+        string="单据类型(兼容)",
+        compute="_compute_move_type",
+        store=False,
+    )
     project_id = fields.Many2one(
         "project.project",
         string="项目",
@@ -183,6 +190,10 @@ class PaymentRequest(models.Model):
         if val is None:
             return default
         return str(val).strip().lower() in ("1", "true", "yes", "y", "on")
+
+    def _compute_move_type(self):
+        for rec in self:
+            rec.move_type = rec.type
 
     def _check_settlement_compliance_or_raise(self, strict=True):
         self.ensure_one()

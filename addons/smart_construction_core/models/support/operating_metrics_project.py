@@ -27,6 +27,13 @@ class ScOperatingMetricsProject(models.Model):
     three_way_missing_count = fields.Integer(string="三单缺失项", readonly=True)
 
     def init(self):
+        # 依赖的表若尚未创建（新装阶段），跳过视图创建，等待下次加载再建
+        self._cr.execute(
+            "SELECT to_regclass('sc_settlement_order'), to_regclass('payment_request')"
+        )
+        has_settlement, has_payment = self._cr.fetchone()
+        if not (has_settlement and has_payment):
+            return
         # 强制清理残留表/视图，再重建只读视图
         # 先尝试删除表（忽略对象类型错误），再安全删除视图
         try:

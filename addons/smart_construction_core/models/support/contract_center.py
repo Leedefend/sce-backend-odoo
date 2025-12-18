@@ -159,17 +159,28 @@ class ConstructionContract(models.Model):
             if not budget.line_ids:
                 raise UserError("预算版本中没有预算清单行。")
 
-            contract.line_ids.unlink()
-            vals_list = [
-                {
-                    "contract_id": contract.id,
-                    "boq_line_id": line.id,
+            # 清理孤儿合同行（对应预算行已被删除），否则后续写入会触发外键错误
+            orphans = contract.line_ids.filtered(lambda l: not l.boq_line_id)
+            if orphans:
+                orphans.sudo().unlink()
+
+            # 不再整表 unlink，避免存在引用时的外键报错；改为 upsert
+            existing = {l.boq_line_id.id: l for l in contract.line_ids}
+            for line in budget.line_ids:
+                payload = {
                     "qty_contract": line.qty_bidded or 0.0,
                     "price_contract": line.price_bidded or 0.0,
                 }
-                for line in budget.line_ids
-            ]
-            ContractLine.create(vals_list)
+                if line.id in existing:
+                    existing[line.id].write(payload)
+                else:
+                    payload.update(
+                        {
+                            "contract_id": contract.id,
+                            "boq_line_id": line.id,
+                        }
+                    )
+                    ContractLine.create(payload)
 
     state = fields.Selection(
         [
@@ -250,6 +261,22 @@ class ConstructionContractLine(models.Model):
     _description = "合同清单行"
     _order = "sequence, id"
 
+    @api.model
+    def _auto_init(self):
+        # 防御性补列：老库缺少新增的存储字段时，确保列存在再继续初始化
+        res = super()._auto_init()
+        cr = self._cr
+        cr.execute(
+            """
+            ALTER TABLE construction_contract_line
+                ADD COLUMN IF NOT EXISTS amount_contract_leaf numeric,
+                ADD COLUMN IF NOT EXISTS boq_amount_leaf numeric,
+                ADD COLUMN IF NOT EXISTS delta_amount numeric,
+                ADD COLUMN IF NOT EXISTS boq_amount_source varchar
+            """
+        )
+        return res
+
     contract_id = fields.Many2one(
         "construction.contract",
         string="合同",
@@ -271,8 +298,8 @@ class ConstructionContractLine(models.Model):
     boq_line_id = fields.Many2one(
         "project.budget.boq.line",
         string="对应中标清单",
-        required=True,
-        ondelete="restrict",
+        required=False,
+        ondelete="set null",
         domain="[('project_id', '=', project_id)]",
     )
     boq_code = fields.Char(
@@ -313,6 +340,46 @@ class ConstructionContractLine(models.Model):
         compute="_compute_amount_contract",
         store=True,
         currency_field="currency_id",
+        group_operator=False,
+        help="展示口径：合同工程量 * 合同单价。为防止父项/标题行重复统计，统计场景请使用 amount_contract_leaf。",
+    )
+    amount_contract_leaf = fields.Monetary(
+        string="合同合价(叶子)",
+        currency_field="currency_id",
+        compute="_compute_amount_contract_leaf",
+        store=True,
+        group_operator="sum",
+        help="仅实际合同行计入汇总，章节/父项不计入，用于分组/透视/看板统计。",
+    )
+    boq_amount_leaf = fields.Monetary(
+        string="清单合价(基准)",
+        currency_field="currency_id",
+        compute="_compute_boq_amount_leaf",
+        store=True,
+        readonly=True,
+        group_operator="sum",
+        help="对应清单的叶子合价，用于合同对标基准；若目标字段缺失则退化为清单展示合价。",
+    )
+    delta_amount = fields.Monetary(
+        string="差额(合同-清单)",
+        currency_field="currency_id",
+        compute="_compute_delta_amount",
+        store=True,
+        group_operator="sum",
+        help="合同合价(叶子) 与 清单合价(叶子) 之差，便于快速查看溢价/节约。",
+    )
+    boq_amount_source = fields.Selection(
+        [
+            ("amount_leaf", "BOQ叶子合价"),
+            ("amount_bidded", "预算中标合价"),
+            ("qty_price", "数量×单价回退"),
+            ("none", "无基准"),
+        ],
+        string="基准来源",
+        compute="_compute_boq_amount_leaf",
+        store=True,
+        readonly=True,
+        help="标记基准取值来源，便于排查差额口径：优先 amount_leaf，其次 amount_bidded，再次 qty*price，最后无基准。",
     )
 
     note = fields.Char("备注")
@@ -323,6 +390,47 @@ class ConstructionContractLine(models.Model):
             qty = line.qty_contract or 0.0
             price = line.price_contract or 0.0
             line.amount_contract = qty * price
+
+    @api.depends("qty_contract", "price_contract")
+    def _compute_amount_contract_leaf(self):
+        for line in self:
+            # 当前模型无章节/父子结构，默认全部为叶子；若未来引入父子，可在此跳过章节行
+            line.amount_contract_leaf = (line.qty_contract or 0.0) * (line.price_contract or 0.0)
+
+    @api.depends("amount_contract_leaf", "boq_amount_leaf")
+    def _compute_delta_amount(self):
+        for line in self:
+            line.delta_amount = (line.amount_contract_leaf or 0.0) - (line.boq_amount_leaf or 0.0)
+
+    @api.depends(
+        "boq_line_id",
+        "boq_line_id.write_date",
+        "boq_line_id.amount_bidded",
+        "boq_line_id.qty_bidded",
+        "boq_line_id.price_bidded",
+    )
+    def _compute_boq_amount_leaf(self):
+        for line in self:
+            boq = line.boq_line_id
+            if not boq:
+                line.boq_amount_leaf = 0.0
+                line.boq_amount_source = "none"
+                continue
+            if hasattr(boq, "amount_leaf"):
+                line.boq_amount_leaf = boq.amount_leaf or 0.0
+                line.boq_amount_source = "amount_leaf"
+            elif hasattr(boq, "amount_bidded"):
+                line.boq_amount_leaf = boq.amount_bidded or 0.0
+                line.boq_amount_source = "amount_bidded"
+            else:
+                qty = getattr(boq, "qty_bidded", False)
+                price = getattr(boq, "price_bidded", False)
+                if qty is not False and price is not False:
+                    line.boq_amount_leaf = (qty or 0.0) * (price or 0.0)
+                    line.boq_amount_source = "qty_price"
+                else:
+                    line.boq_amount_leaf = 0.0
+                    line.boq_amount_source = "none"
 class ProjectProject(models.Model):
     """
     Project-level helpers for quick visibility of connected contracts.

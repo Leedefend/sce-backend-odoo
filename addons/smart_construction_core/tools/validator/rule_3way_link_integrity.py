@@ -47,7 +47,8 @@ class ThreeWayLinkIntegrityRule(BaseRule):
 
         for pr in Payment.search(self._scope_domain("payment.request")):
             checked += 1
-            if pr.state not in pr_states_need_settle:
+            # 仅对支出付款单执行三单匹配校验
+            if pr.type != "pay" or pr.state not in pr_states_need_settle:
                 continue
             if not pr.settlement_id:
                 issues.append(
@@ -67,11 +68,12 @@ class ThreeWayLinkIntegrityRule(BaseRule):
                         "message": _("结算单未关联采购订单"),
                         "refs": {"settlement_id": pr.settlement_id.id, "name": pr.settlement_id.name},
                     }
-                )
+            )
 
         for settle in Settlement.search(self._scope_domain("sc.settlement.order")):
             checked += 1
-            if settle.state not in settle_states_need_po:
+            # 仅对支出结算单执行三单匹配校验
+            if settle.settlement_type != "out" or settle.state not in settle_states_need_po:
                 continue
             if settle.purchase_order_ids:
                 continue

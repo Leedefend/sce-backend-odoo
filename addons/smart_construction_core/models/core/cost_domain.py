@@ -225,6 +225,24 @@ class ProjectBudgetBoqLine(models.Model):
         default="progress",
     )
 
+    def unlink(self):
+        """防御：若已有合同清单行引用该预算清单行，禁止删除并给出友好提示。
+
+        之前用户在界面操作时直接触发数据库外键报错（construction_contract_line_boq_line_id_fkey），
+        这里提前拦截，避免出现难以理解的错误弹窗，并明确提示需要先处理合同行或取消关联。
+        """
+        ContractLine = self.env["construction.contract.line"]
+        for rec in self:
+            ref_lines = ContractLine.search([("boq_line_id", "=", rec.id)], limit=1)
+            if ref_lines:
+                raise UserError(
+                    "清单行已被合同清单引用，不能删除。\n"
+                    "清单：%s\n"
+                    "请先在合同中调整或解除关联，再删除清单。"
+                    % (rec.display_name or rec.id)
+                )
+        return super().unlink()
+
     note = fields.Char("备注")
     alloc_ids = fields.One2many(
         "project.budget.cost.alloc",

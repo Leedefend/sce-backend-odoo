@@ -39,17 +39,17 @@ class ProjectProfitCompare(models.Model):
                 WITH cost_actual AS (
                     SELECT
                         project_id,
-                        COALESCE(wbs_id, 0) AS wbs_id,
+                        COALESCE(wbs_id, -1) AS wbs_key,
                         COALESCE(to_char(date, 'YYYY-MM'), 'TOTAL') AS period,
                         currency_id,
                         SUM(amount) AS cost_actual_amount
                     FROM project_cost_ledger
-                    GROUP BY project_id, COALESCE(wbs_id, 0), COALESCE(to_char(date, 'YYYY-MM'), 'TOTAL'), currency_id
+                    GROUP BY project_id, COALESCE(wbs_id, -1), COALESCE(to_char(date, 'YYYY-MM'), 'TOTAL'), currency_id
                 ),
                 cost_budget AS (
                     SELECT
                         alloc.project_id,
-                        COALESCE(line.wbs_id, 0) AS wbs_id,
+                        COALESCE(line.wbs_id, -1) AS wbs_key,
                         'TOTAL' AS period,
                         line.currency_id AS currency_id,
                         SUM(alloc.amount_budget) AS cost_budget_amount
@@ -57,24 +57,24 @@ class ProjectProfitCompare(models.Model):
                     JOIN project_budget_boq_line line ON alloc.budget_boq_line_id = line.id
                     JOIN project_budget bud ON line.budget_id = bud.id
                     WHERE bud.is_active = TRUE
-                    GROUP BY alloc.project_id, COALESCE(line.wbs_id, 0), line.currency_id
+                    GROUP BY alloc.project_id, COALESCE(line.wbs_id, -1), line.currency_id
                 ),
                 revenue_budget AS (
                     SELECT
                         line.project_id,
-                        COALESCE(line.wbs_id, 0) AS wbs_id,
+                        COALESCE(line.wbs_id, -1) AS wbs_key,
                         'TOTAL' AS period,
                         line.currency_id,
                         SUM(line.amount_bidded) AS revenue_budget_amount
                     FROM project_budget_boq_line line
                     JOIN project_budget bud ON line.budget_id = bud.id
                     WHERE bud.is_active = TRUE
-                    GROUP BY line.project_id, COALESCE(line.wbs_id, 0), line.currency_id
+                    GROUP BY line.project_id, COALESCE(line.wbs_id, -1), line.currency_id
                 ),
                 revenue_actual AS (
                     SELECT
                         aml.project_id,
-                        COALESCE(aml.wbs_id, 0) AS wbs_id,
+                        COALESCE(aml.wbs_id, -1) AS wbs_key,
                         COALESCE(to_char(aml.date, 'YYYY-MM'), 'TOTAL') AS period,
                         COALESCE(aml.currency_id, am.currency_id) AS currency_id,
                         SUM(-aml.balance) AS revenue_actual_amount
@@ -86,7 +86,7 @@ class ProjectProfitCompare(models.Model):
                       AND aml.project_id IS NOT NULL
                       AND acc.internal_group = 'income'
                     GROUP BY aml.project_id,
-                             COALESCE(aml.wbs_id, 0),
+                             COALESCE(aml.wbs_id, -1),
                              COALESCE(to_char(aml.date, 'YYYY-MM'), 'TOTAL'),
                              COALESCE(aml.currency_id, am.currency_id)
                 )
@@ -94,7 +94,7 @@ class ProjectProfitCompare(models.Model):
                     row_number() OVER () AS id,
                     COALESCE(cb.project_id, ca.project_id, rb.project_id, ra.project_id) AS project_id,
                     COALESCE(ca.period, ra.period, cb.period, rb.period) AS period,
-                    COALESCE(ca.wbs_id, cb.wbs_id, ra.wbs_id, rb.wbs_id) AS wbs_id,
+                    NULLIF(COALESCE(ca.wbs_key, cb.wbs_key, ra.wbs_key, rb.wbs_key), -1) AS wbs_id,
                     COALESCE(ca.currency_id, cb.currency_id, ra.currency_id, rb.currency_id) AS currency_id,
                     COALESCE(rb.revenue_budget_amount, 0.0) AS revenue_budget_amount,
                     COALESCE(ra.revenue_actual_amount, 0.0) AS revenue_actual_amount,
@@ -110,16 +110,16 @@ class ProjectProfitCompare(models.Model):
                 FROM cost_actual ca
                 FULL OUTER JOIN cost_budget cb
                     ON ca.project_id = cb.project_id
-                   AND ca.wbs_id = cb.wbs_id
+                   AND ca.wbs_key = cb.wbs_key
                    AND ca.currency_id = cb.currency_id
                 FULL OUTER JOIN revenue_actual ra
                     ON COALESCE(ca.project_id, cb.project_id) = ra.project_id
-                   AND COALESCE(ca.wbs_id, cb.wbs_id) = ra.wbs_id
+                   AND COALESCE(ca.wbs_key, cb.wbs_key) = ra.wbs_key
                    AND ra.currency_id = COALESCE(ca.currency_id, cb.currency_id, ra.currency_id)
                    AND ra.period = COALESCE(ca.period, ra.period)
                 FULL OUTER JOIN revenue_budget rb
                     ON COALESCE(ca.project_id, cb.project_id, ra.project_id) = rb.project_id
-                   AND COALESCE(ca.wbs_id, cb.wbs_id, ra.wbs_id) = rb.wbs_id
+                   AND COALESCE(ca.wbs_key, cb.wbs_key, ra.wbs_key) = rb.wbs_key
                    AND rb.currency_id = COALESCE(ca.currency_id, cb.currency_id, ra.currency_id, rb.currency_id)
                 ORDER BY project_id, period, wbs_id
             )
