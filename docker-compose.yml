@@ -79,7 +79,7 @@ services:
       - "8069:8069"
 
     entrypoint: ["odoo"]
-    command: ["-c", "/etc/odoo/odoo.conf"]
+    command: ["-c", "/etc/odoo/odoo.conf", "-d", "sc"]
 
   # ============================================================
   # n8n 自动化引擎

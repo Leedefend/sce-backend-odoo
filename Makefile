@@ -1,6 +1,6 @@
 # ================== 基本配置 ==================
 COMPOSE        := docker-compose
-DB_NAME        := sc_odoo
+DB_NAME        := sc
 DB_USER        := odoo
 DB_CONTAINER   := sc-db
 ODOO_CONTAINER := sc-odoo
