@@ -80,10 +80,16 @@
               parent="menu_sc_root"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
-    <menuitem id="menu_sc_contract_list"
-              name="合同列表"
+    <menuitem id="menu_sc_contract_income"
+              name="收入合同"
               parent="menu_sc_contract_center"
-              action="action_construction_contract"
+              action="action_construction_contract_income"
+              sequence="5"
+              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+    <menuitem id="menu_sc_contract_expense"
+              name="支出合同"
+              parent="menu_sc_contract_center"
+              action="action_construction_contract_expense"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
@@ -91,7 +97,10 @@
     <record id="menu_sc_contract_center" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
     </record>
-    <record id="menu_sc_contract_list" model="ir.ui.menu">
+    <record id="menu_sc_contract_income" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
+    </record>
+    <record id="menu_sc_contract_expense" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_contract_user'), ref('smart_construction_core.group_sc_cap_contract_manager')])]"/>
     </record>
 
