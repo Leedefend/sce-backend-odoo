@@ -163,27 +163,6 @@
         </field>
     </record>
 
-    <!-- 工程量清单：主列表 Action -->
-    <record id="action_project_boq_line" model="ir.actions.act_window">
-        <field name="name">工程量清单</field>
-        <field name="res_model">project.boq.line</field>
-        <field name="view_mode">tree,form,pivot</field>
-        <field name="view_id" ref="view_project_boq_line_tree"/>
-        <field name="context">{}</field>
-        <field name="groups_id"
-               eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
-    </record>
-
-    <!-- 工程量清单：分析 Action -->
-    <record id="action_project_boq_line_analysis" model="ir.actions.act_window">
-        <field name="name">工程量清单分析</field>
-        <field name="res_model">project.boq.line</field>
-        <field name="view_mode">tree,pivot,graph</field>
-        <field name="search_view_id" ref="view_project_boq_line_search"/>
-        <field name="context">{'search_default_project_id': context.get('active_id')}</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
-    </record>
-
     <!-- 工程量清单：搜索视图 -->
     <record id="view_project_boq_line_search" model="ir.ui.view">
         <field name="name">project.boq.line.search</field>
@@ -236,5 +215,26 @@
                         domain="[('is_provisional','=',True)]"/>
             </search>
         </field>
+    </record>
+
+    <!-- 工程量清单：主列表 Action -->
+    <record id="action_project_boq_line" model="ir.actions.act_window">
+        <field name="name">工程量清单</field>
+        <field name="res_model">project.boq.line</field>
+        <field name="view_mode">tree,form,pivot</field>
+        <field name="view_id" ref="view_project_boq_line_tree"/>
+        <field name="context">{}</field>
+        <field name="groups_id"
+               eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+    </record>
+
+    <!-- 工程量清单：分析 Action -->
+    <record id="action_project_boq_line_analysis" model="ir.actions.act_window">
+        <field name="name">工程量清单分析</field>
+        <field name="res_model">project.boq.line</field>
+        <field name="view_mode">tree,pivot,graph</field>
+        <field name="search_view_id" ref="view_project_boq_line_search"/>
+        <field name="context">{'search_default_project_id': context.get('active_id')}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
     </record>
 </odoo>
