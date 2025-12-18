@@ -59,6 +59,7 @@ db-reset:
 		-d $(DB_NAME) \
 		-i $(INIT_MODULES) \
 		--without-demo=all \
+		--load-language=zh_CN \
 		--stop-after-init
 	@echo "== ✔ db-reset done =="
 
