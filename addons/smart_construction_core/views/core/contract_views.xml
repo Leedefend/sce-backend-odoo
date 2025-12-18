@@ -78,7 +78,7 @@
                     </group>
 
                     <group string="金额概览" colspan="2">
-                        <field name="tax_rate"/>
+                        <field name="tax_id"/>
                         <field name="amount_untaxed" readonly="1"/>
                         <field name="amount_tax" readonly="1"/>
                         <field name="amount_total" readonly="1"/>
@@ -125,6 +125,24 @@
         <field name="name">项目合同</field>
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
+
+    <record id="action_construction_contract_income" model="ir.actions.act_window">
+        <field name="name">收入合同</field>
+        <field name="res_model">construction.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type', '=', 'out')]</field>
+        <field name="context">{'default_type': 'out'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
+
+    <record id="action_construction_contract_expense" model="ir.actions.act_window">
+        <field name="name">支出合同</field>
+        <field name="res_model">construction.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('type', '=', 'in')]</field>
+        <field name="context">{'default_type': 'in'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
 </odoo>

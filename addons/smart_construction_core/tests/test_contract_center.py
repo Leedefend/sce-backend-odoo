@@ -13,6 +13,7 @@ class TestConstructionContract(TransactionCase):
             "code": "WBS-TEST",
             "project_id": self.project.id,
         })
+        self.tax_sale_9 = self.env.ref("smart_construction_core.tax_sale_vat_9")
         self.budget = self.env["project.budget"].create({
             "name": "控制版",
             "project_id": self.project.id,
@@ -41,7 +42,7 @@ class TestConstructionContract(TransactionCase):
                 "subject": "测试合同",
                 "project_id": self.project.id,
                 "partner_id": self.partner.id,
-                "tax_rate": 6.0,
+                "tax_id": self.tax_sale_9.id,
                 "line_ids": [
                     (
                         0,
@@ -67,8 +68,8 @@ class TestConstructionContract(TransactionCase):
         self.assertNotEqual(contract.name, "新建")
         self.assertEqual(contract.line_amount_total, 12500.0)
         self.assertEqual(contract.amount_untaxed, 12500.0)
-        self.assertAlmostEqual(contract.amount_tax, 750.0)
-        self.assertAlmostEqual(contract.amount_total, 13250.0)
+        self.assertAlmostEqual(contract.amount_tax, 1125.0)
+        self.assertAlmostEqual(contract.amount_total, 13625.0)
         contract.action_confirm()
         self.assertEqual(contract.state, "confirmed")
         contract.action_set_running()

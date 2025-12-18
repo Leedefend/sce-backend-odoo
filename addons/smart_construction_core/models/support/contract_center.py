@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ConstructionContract(models.Model):
@@ -75,10 +75,11 @@ class ConstructionContract(models.Model):
     )
 
     # --- Amounts -----------------------------------------------------------
-    tax_rate = fields.Float(
-        string="税率(%)",
-        help="可选：用于根据合同行金额自动计算税额。",
-        default=0.0,
+    tax_id = fields.Many2one(
+        "account.tax",
+        string="税率",
+        required=True,
+        help="使用 account.tax 主数据进行税额计算，收入合同使用销项税，支出合同使用进项税。",
     )
     amount_untaxed = fields.Monetary(
         string="不含税金额",
@@ -139,6 +140,40 @@ class ConstructionContract(models.Model):
 
     note = fields.Text(string="备注")
 
+    @api.model
+    def _get_default_tax(self, contract_type):
+        """Return default tax by contract type."""
+        xml_map = {
+            "out": "smart_construction_core.tax_sale_vat_9",
+            "in": "smart_construction_core.tax_purchase_vat_13",
+        }
+        xmlid = xml_map.get(contract_type or "out")
+        return self.env.ref(xmlid, raise_if_not_found=False)
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        contract_type = res.get("type") or "out"
+        if "tax_id" in fields_list and not res.get("tax_id"):
+            default_tax = self._get_default_tax(contract_type)
+            if not default_tax:
+                raise UserError("默认税率主数据未加载，请确认 data/tax.xml 已安装并存在对应 xmlid。")
+            res["tax_id"] = default_tax.id
+        return res
+
+    @api.onchange("type")
+    def _onchange_type(self):
+        """Adjust default税率 and restrict selection by类型."""
+        domain = {}
+        if self.type:
+            expected_use = "sale" if self.type == "out" else "purchase"
+            if (not self.tax_id) or (self.tax_id.type_tax_use not in (expected_use, "all")):
+                default_tax = self._get_default_tax(self.type)
+                if default_tax:
+                    self.tax_id = default_tax
+            domain = {"tax_id": [("type_tax_use", "=", expected_use)]}
+        return {"domain": domain}
+
     def action_generate_lines_from_budget(self):
         """Populate contract lines from the active budget BoQ."""
         Budget = self.env["project.budget"]
@@ -196,15 +231,24 @@ class ConstructionContract(models.Model):
     )
 
     # --- Computations ------------------------------------------------------
-    @api.depends("line_amount_total", "tax_rate")
+    @api.depends("line_amount_total", "tax_id")
     def _compute_amount_total(self):
         for contract in self:
             untaxed = contract.line_amount_total or 0.0
-            rate = contract.tax_rate or 0.0
+            rate = contract.tax_id.amount if contract.tax_id else 0.0
             tax_amount = untaxed * rate / 100.0
             contract.amount_untaxed = untaxed
             contract.amount_tax = tax_amount
             contract.amount_total = untaxed + tax_amount
+
+    @api.constrains("tax_id", "type")
+    def _check_tax_type(self):
+        for contract in self:
+            if not contract.tax_id:
+                continue
+            expect = "sale" if contract.type == "out" else "purchase"
+            if contract.tax_id.type_tax_use not in (expect, "all"):
+                raise ValidationError("合同类型与税率类型不一致，请选择正确的税率。")
 
     @api.depends("line_ids.amount_contract")
     def _compute_line_amount_total(self):
@@ -224,8 +268,20 @@ class ConstructionContract(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            if not vals.get("type"):
+                vals["type"] = "out"
+            if not vals.get("tax_id"):
+                default_tax = self._get_default_tax(vals["type"])
+                if not default_tax:
+                    raise UserError("默认税率主数据未加载，请确认 data/tax.xml 已安装并存在对应 xmlid。")
+                vals["tax_id"] = default_tax.id
             if not vals.get("name") or vals["name"] == "新建":
-                vals["name"] = seq.next_by_code("construction.contract") or "新建"
+                seq_code = (
+                    "construction.contract.income"
+                    if vals.get("type") == "out"
+                    else "construction.contract.expense"
+                )
+                vals["name"] = seq.next_by_code(seq_code) or seq.next_by_code("construction.contract") or "新建"
         return super().create(vals_list)
 
     # --- State transitions -------------------------------------------------

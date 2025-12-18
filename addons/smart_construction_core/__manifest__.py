@@ -20,6 +20,7 @@
     'data': [
         # 基础数据
         'data/sequence.xml',
+        'data/tax.xml',
         'data/dictionary_demo.xml',
         'data/cost_demo.xml',
         'data/project_stage_data.xml',

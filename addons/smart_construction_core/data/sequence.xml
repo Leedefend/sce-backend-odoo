@@ -24,6 +24,22 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_construction_contract_income" model="ir.sequence">
+        <field name="name">收入合同</field>
+        <field name="code">construction.contract.income</field>
+        <field name="prefix">CONIN%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_construction_contract_expense" model="ir.sequence">
+        <field name="name">支出合同</field>
+        <field name="code">construction.contract.expense</field>
+        <field name="prefix">CONOUT%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_project_settlement" model="ir.sequence">
         <field name="name">项目结算</field>
         <field name="code">project.settlement</field>
