@@ -126,11 +126,11 @@ install:
 
 noiseoff:
 	@echo "== Noise off (disable cron/server actions) DB=$(DB) =="
-	docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB) -f /mnt/extra-addons/smart_construction_core/tools/sql/noiseoff.sql
+	docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB) < addons/smart_construction_core/tools/sql/noiseoff.sql
 
 noiseon:
 	@echo "== Noise on (restore last batch) DB=$(DB) =="
-	docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB) -f /mnt/extra-addons/smart_construction_core/tools/sql/noiseon.sql
+	docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB) < addons/smart_construction_core/tools/sql/noiseon.sql
 
 verify.noise:
 	@echo "== Verify noise DB=$(DB) =="
