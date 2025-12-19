@@ -5,6 +5,7 @@ DB_USER        := odoo
 DB_CONTAINER   := sc-db
 ODOO_CONTAINER := sc-odoo
 INIT_MODULES   := base
+DB ?= $(DB_NAME)
 
 # 默认模块 / 测试标签
 MODULE ?= smart_construction_core
@@ -14,7 +15,7 @@ TEST_TAGS ?= sc_smoke
 CUSTOM_MODULES := smart_construction_core smart_construction_demo
 
 # ================== 基础操作 ==================
-.PHONY: up down restart restart-odoo ps logs odoo-shell db-reset upgrade upgrade-all test validate
+.PHONY: up down restart restart-odoo ps logs odoo-shell db-reset upgrade upgrade-all test validate db.drop db.create install noiseoff verify.noise db.rebuild.noiseoff
 
 up:
 	@echo "== docker-compose up -d =="
@@ -101,3 +102,63 @@ validate:
 		--entrypoint python3 odoo \
 		/mnt/extra-addons/smart_construction_core/tools/validator/run_validate.py
 	@echo "== ✔ validate done =="
+
+# ================== 数据库管理（剃刀流程） ==================
+db.drop:
+	@echo "== Drop database $(DB) =="
+	docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$(DB)' AND pid <> pg_backend_pid();"
+	docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d postgres -c "DROP DATABASE IF EXISTS $(DB);"
+
+db.create:
+	@echo "== Create database $(DB) =="
+	docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d postgres -c "CREATE DATABASE $(DB) WITH TEMPLATE template0 ENCODING 'UTF8';"
+
+install:
+	@echo "== Install module $(MODULE) on $(DB) =="
+	docker exec $(ODOO_CONTAINER) odoo \
+		-c /etc/odoo/odoo.conf \
+		-d $(DB) \
+		-i $(MODULE) \
+		--without-demo=all \
+		--load-language=zh_CN \
+		--stop-after-init
+	@echo "== ✔ install done =="
+
+noiseoff:
+	@echo "== Noise off (disable cron/server actions) DB=$(DB) =="
+	docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB) < addons/smart_construction_core/tools/sql/noiseoff.sql
+
+noiseon:
+	@echo "== Noise on (restore last batch) DB=$(DB) =="
+	docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB) < addons/smart_construction_core/tools/sql/noiseon.sql
+
+verify.noise:
+	@echo "== Verify noise DB=$(DB) =="
+	docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB) -c "\
+	SELECT count(*) AS active_noise_cron \
+	FROM ir_cron \
+	WHERE active=true AND ( \
+	       cron_name ILIKE 'Mail:%' \
+	    OR cron_name ILIKE 'Notification:%' \
+	    OR cron_name ILIKE 'Discuss:%' \
+	    OR cron_name ILIKE 'SMS:%' \
+	    OR cron_name ILIKE 'Snailmail:%' \
+	    OR cron_name ILIKE 'Partner Autocomplete:%' \
+	    OR cron_name ILIKE '%Tier%' \
+	    OR cron_name ILIKE '%Unregistered Users%' \
+	);" \
+	&& docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB) -c "\
+	SELECT count(*) AS bad_server_actions \
+	FROM ir_act_server \
+	WHERE state='code' AND code ILIKE '%send_unregistered_user_reminder%';"
+
+db.rebuild.noiseoff:
+	@echo "== Rebuild DB ($(DB)) + install $(MODULE) + noiseoff =="
+	- $(MAKE) down
+	$(MAKE) up
+	$(MAKE) db.drop DB=$(DB)
+	$(MAKE) db.create DB=$(DB)
+	$(MAKE) install MODULE=$(MODULE) DB=$(DB)
+	$(MAKE) noiseoff DB=$(DB)
+	$(MAKE) verify.noise DB=$(DB)
+	@echo "== ✔ db.rebuild.noiseoff done =="
