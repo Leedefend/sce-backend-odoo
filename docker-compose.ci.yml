@@ -5,7 +5,7 @@ services:
     # CI 不要写宿主 runtime
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
 
   redis:
     container_name: null
