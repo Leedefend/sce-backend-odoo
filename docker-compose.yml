@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./runtime/postgres:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d sc_odoo || exit 1"]
       interval: 10s
@@ -50,7 +50,9 @@ services:
       redis:
         condition: service_healthy
 
-    # ---------- 环境变量：给 conf / 代码 / 诊断工具用 ----------
+    env_file:
+      - .env
+
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -62,23 +64,18 @@ services:
 
       REDIS_HOST: redis
 
-    # ---------- 显式 command：确保 Odoo 启动参数完全确定 ----------
-    command:
-      - "-c"
-      - "/etc/odoo/odoo.conf"
-      - "--db_host=db"
-      - "--db_port=5432"
-      - "--db_user=${DB_USER}"
-      - "--db_password=${DB_PASSWORD}"
-
     volumes:
       - ./runtime/odoo:/var/lib/odoo
       - ./addons:/mnt/extra-addons
       - ./addons_external:/mnt/addons_external
-      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - ./config/odoo.conf.template:/etc/odoo/odoo.conf.template:ro
+      - ./scripts/render_odoo_conf.py:/usr/local/bin/render_odoo_conf.py:ro
+      - ./scripts/odoo-entrypoint.sh:/usr/local/bin/odoo-entrypoint.sh:ro
 
     ports:
       - "8069:8069"
+
+    entrypoint: ["/bin/sh", "/usr/local/bin/odoo-entrypoint.sh"]
 
   # ============================================================
   # NGINX 统一反向代理

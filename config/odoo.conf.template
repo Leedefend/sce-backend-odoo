@@ -1,0 +1,20 @@
+[options]
+db_host = db
+db_port = 5432
+db_user = ${DB_USER}
+db_password = ${DB_PASSWORD}
+
+admin_passwd = ${ADMIN_PASSWD}
+
+addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux
+logfile = False
+
+; 锁库：只允许 sc_odoo（你当前库名）
+dbfilter = ${ODOO_DBFILTER}
+
+proxy_mode = True
+limit_time_real = 1800
+limit_time_cpu  = 1200
+
+; 禁用 demo（更推荐建库时不加载 demo，这里是兜底）
+without_demo = True
