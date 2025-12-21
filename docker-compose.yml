@@ -1,5 +1,3 @@
-
-
 services:
 
   # ============================================================
@@ -45,29 +43,33 @@ services:
     image: odoo17-odoo:latest
     container_name: sc-odoo
     restart: unless-stopped
+
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
 
+    # ---------- 环境变量：给 conf / 代码 / 诊断工具用 ----------
     environment:
-      # ------------- ⬇ 必须传递给 wait-for-psql.py 的变量（关键）⬇ -------------
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
 
-      # ------------- ⬇ 你原来写在代码里的旧 HOST / USER / PASSWORD 也保留 -------------
-      HOST: db
-      USER: ${DB_USER}
-      PASSWORD: ${DB_PASSWORD}
+      ADMIN_PASSWD: ${ADMIN_PASSWD}
+      JWT_SECRET: ${JWT_SECRET}
 
-      # JWT 密钥
-      ODOO_JWT_SECRET: ${JWT_SECRET}
-
-      # Redis 配置
       REDIS_HOST: redis
+
+    # ---------- 显式 command：确保 Odoo 启动参数完全确定 ----------
+    command:
+      - "-c"
+      - "/etc/odoo/odoo.conf"
+      - "--db_host=db"
+      - "--db_port=5432"
+      - "--db_user=${DB_USER}"
+      - "--db_password=${DB_PASSWORD}"
 
     volumes:
       - ./runtime/odoo:/var/lib/odoo
@@ -77,7 +79,7 @@ services:
 
     ports:
       - "8069:8069"
-  
+
   # ============================================================
   # NGINX 统一反向代理
   # ============================================================
@@ -90,7 +92,7 @@ services:
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "8080:80"
+      - "18080:80"
     healthcheck:
       test: ["CMD-SHELL", "nginx -t || exit 1"]
       interval: 30s
