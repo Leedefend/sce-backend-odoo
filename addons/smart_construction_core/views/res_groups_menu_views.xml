@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- 限制“群组”菜单只对配置管理员/超管可见，避免业务管理员进入原生组列表 -->
+        <record id="base.menu_action_res_groups" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_config_admin'),
+                ref('smart_construction_core.group_sc_super_admin')
+            ])]"/>
+        </record>
+
+        <!-- 同步限制群组列表 Action，防止从其它入口绕开菜单 -->
+        <record id="base.action_res_groups" model="ir.actions.act_window">
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_config_admin'),
+                ref('smart_construction_core.group_sc_super_admin')
+            ])]"/>
+        </record>
+    </data>
+</odoo>
