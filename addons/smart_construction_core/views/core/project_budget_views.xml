@@ -40,12 +40,12 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence"/>
-                                    <field name="boq_line_id"/>
-                                    <field name="wbs_id"/>
+                                    <field name="boq_code"/>
                                     <field name="name"/>
-                                    <field name="budget_qty"/>
-                                    <field name="budget_price"/>
-                                    <field name="budget_amount"/>
+                                    <field name="wbs_id"/>
+                                    <field name="qty_bidded"/>
+                                    <field name="price_bidded"/>
+                                    <field name="amount_bidded"/>
                                 </tree>
                             </field>
                         </page>
