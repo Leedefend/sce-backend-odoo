@@ -11,6 +11,8 @@
         <field name="res_model">project.cost.ledger</field>
         <field name="view_mode">tree,form,pivot,graph</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        <field name="context">{'default_project_id': active_id, 'search_default_project_id': active_id}</field>
+        <field name="domain">context.get('default_project_id') and [('project_id','=',context.get('default_project_id'))] or []</field>
     </record>
 
     <record id="action_project_progress_quick" model="ir.actions.act_window">
@@ -143,6 +145,16 @@
                         <field name="cost_budget_gap" readonly="1"/>
                         <field name="progress_rate_latest" readonly="1"/>
                         <field name="progress_entry_count" readonly="1"/>
+                        <button name="action_open_cost_ledger"
+                                string="查看台账明细"
+                                type="object"
+                                class="btn-secondary"
+                                groups="smart_construction_core.group_sc_cap_cost_read"/>
+                        <button name="action_open_progress_entries"
+                                string="查看进度明细"
+                                type="object"
+                                class="btn-secondary"
+                                groups="smart_construction_core.group_sc_cap_cost_read"/>
                     </group>
                 </page>
             </xpath>

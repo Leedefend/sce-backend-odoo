@@ -332,7 +332,7 @@ class ProjectCostLedger(models.Model):
         index=True,
     )
 
-    date = fields.Date("发生日期", index=True)
+    date = fields.Date("发生日期", index=True, default=fields.Date.context_today)
     period = fields.Char("期间(YYYY-MM)", index=True)
 
     qty = fields.Float("数量")
