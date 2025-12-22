@@ -267,17 +267,13 @@
         <field name="model">project.cost.ledger</field>
         <field name="arch" type="xml">
             <tree string="成本台账">
-                <field name="project_id"/>
-                <field name="wbs_id"/>
-                <field name="cost_code_id"/>
                 <field name="date"/>
-                <field name="period"/>
-                <field name="qty"/>
-                <field name="uom_id"/>
+                <field name="project_id"/>
+                <field name="cost_code_id"/>
                 <field name="amount"/>
+                <field name="wbs_id"/>
+                <field name="period"/>
                 <field name="partner_id"/>
-                <field name="source_model"/>
-                <field name="source_id"/>
                 <field name="note"/>
             </tree>
         </field>
@@ -292,10 +288,10 @@
                     <group>
                         <group>
                             <field name="project_id"/>
+                            <field name="date"/>
+                            <field name="period" readonly="1"/>
                             <field name="wbs_id"/>
                             <field name="cost_code_id"/>
-                            <field name="date"/>
-                            <field name="period"/>
                         </group>
                         <group>
                             <field name="qty"/>
@@ -305,9 +301,11 @@
                         </group>
                     </group>
                     <group>
-                        <field name="source_model"/>
-                        <field name="source_id"/>
-                        <field name="source_line_id"/>
+                        <group string="系统来源（只读）" modifiers="{'invisible': [['source_model','=',False]]}">
+                            <field name="source_model" readonly="1"/>
+                            <field name="source_id" readonly="1"/>
+                            <field name="source_line_id" readonly="1"/>
+                        </group>
                         <field name="note"/>
                     </group>
                 </sheet>
@@ -506,12 +504,12 @@
         <field name="model">project.progress.entry</field>
         <field name="arch" type="xml">
             <tree>
+                <field name="date"/>
                 <field name="project_id"/>
                 <field name="wbs_id"/>
-                <field name="date"/>
+                <field name="progress_rate"/>
                 <field name="qty_done"/>
                 <field name="qty_cum"/>
-                <field name="progress_rate"/>
                 <field name="note"/>
             </tree>
         </field>
@@ -525,13 +523,25 @@
                 <sheet>
                     <group>
                         <field name="project_id" required="1"/>
-                        <field name="wbs_id" required="1"/>
+                        <field name="wbs_id" required="1" domain="[('project_id','=',project_id)]"/>
                         <field name="date"/>
                     </group>
                     <group>
                         <field name="qty_done"/>
                         <field name="qty_cum"/>
-                        <field name="progress_rate"/>
+                        <field name="progress_rate"
+                               placeholder="0-100（%）"
+                               widget="percentage"/>
+                    </group>
+                    <group>
+                        <label for="progress_rate" string="录入口径" class="o_form_label text-muted"/>
+                        <div class="text-muted o_mt8">
+                            累计完成比例（0–100）。例如 35 表示 35%。
+                            <span class="text-danger o_mt4"
+                                  modifiers="{'invisible': ['|', ('progress_rate','=', False), '&amp;', ('progress_rate','&gt;=',0), ('progress_rate','&lt;=',100)]}">
+                                ⚠ 数值超出 0-100，可能录入异常，请确认。
+                            </span>
+                        </div>
                     </group>
                     <group>
                         <field name="note"/>
