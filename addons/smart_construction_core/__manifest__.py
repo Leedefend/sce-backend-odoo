@@ -32,6 +32,8 @@
         'security/sc_model_records.xml',
         'security/ir.model.access.csv',
         'security/sc_record_rules.xml',
+        'views/res_users_views.xml',
+        'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
 

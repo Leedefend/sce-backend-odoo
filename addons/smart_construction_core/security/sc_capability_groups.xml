@@ -40,8 +40,7 @@
             <field name="name">SC 能力 - 项目中心审批</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
-                ref('smart_construction_core.group_sc_internal_user'),
-                ref('project.group_project_user')
+                ref('smart_construction_core.group_sc_cap_project_user')
             ])]"/>
         </record>
 
@@ -241,6 +240,19 @@
         </record>
 
         <!-- =========================
+             联系人管理
+             - 映射到 Odoo 联系人管理员
+        ========================== -->
+        <record id="group_sc_cap_contact_manager" model="res.groups">
+            <field name="name">SC 能力 - 联系人管理</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_internal_user'),
+                ref('base.group_partner_manager')
+            ])]"/>
+        </record>
+
+        <!-- =========================
              超级管理员（仅测试/运维使用）
              - 汇总所有域的 manager 能力 + 配置/数据读
              - implied internal_user 以继承 base.group_user
@@ -252,6 +264,7 @@
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_internal_user'),
 
+                ref('smart_construction_core.group_sc_cap_contact_manager'),
                 ref('smart_construction_core.group_sc_cap_project_manager'),
                 ref('smart_construction_core.group_sc_cap_contract_manager'),
                 ref('smart_construction_core.group_sc_cap_cost_manager'),

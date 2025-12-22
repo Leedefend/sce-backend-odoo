@@ -686,12 +686,13 @@ class ProjectProject(models.Model):
         'progress_rate_latest',
     )
     def _compute_dashboard_overview(self):
+        has_account_access = self.env.user.has_group('account.group_account_readonly')
         revenue_map = defaultdict(float)
         invoice_model = self.env['account.move.line']
         move_model = self.env['account.move']
 
         # 收入 & 开票金额（按项目汇总收入科目 / 发票金额）
-        if self.ids:
+        if self.ids and has_account_access:
             # --- 行级收入汇总 ---
             invoice_domain = [
                 ('project_id', 'in', self.ids),
@@ -762,7 +763,7 @@ class ProjectProject(models.Model):
 
         for project in self:
             cost_val = project.cost_ledger_amount_actual or 0.0
-            revenue_val = revenue_map.get(project.id, 0.0)
+            revenue_val = revenue_map.get(project.id, 0.0) if has_account_access else 0.0
 
             project.dashboard_cost_actual = cost_val
             project.dashboard_revenue_actual = revenue_val
