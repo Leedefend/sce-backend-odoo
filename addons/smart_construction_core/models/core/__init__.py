@@ -11,3 +11,4 @@ from . import material_plan
 from . import settlement_order
 from . import settlement
 from . import payment_request
+from . import project_dashboard

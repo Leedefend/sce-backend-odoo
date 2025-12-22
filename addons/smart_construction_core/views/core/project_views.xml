@@ -45,27 +45,33 @@
             <!-- 重做按钮区：仅保留主流程按钮 -->
             <xpath expr="//sheet/div[@name='button_box']" position="replace">
                 <div class="oe_button_box" name="button_box">
-                    <button name="action_open_wbs" string="工程结构" type="object" class="oe_stat_button"/>
-                    <button name="action_open_boq_import" string="工程量清单" type="object" class="oe_stat_button"/>
+                    <button name="action_open_wbs" string="工程结构" type="object" class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_project_read"/>
+                    <button name="action_open_boq_import" string="工程量清单" type="object" class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_cost_read"/>
                     <button name="%(smart_construction_core.action_project_budget_quick)d"
                             string="预算/成本"
                             type="action"
                             class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_cost_read"
                             context="{'default_project_id': id, 'search_default_project_id': id}"/>
                     <button name="%(smart_construction_core.action_project_contract_overview)d"
                             string="合同"
                             type="action"
                             class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_contract_read"
                             context="{'search_default_project_id': [id], 'default_project_id': id}"/>
                     <button name="%(smart_construction_core.action_project_material_plan)d"
                             string="物资/采购"
                             type="action"
                             class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_material_read"
                             context="{'search_default_project_id': [id], 'default_project_id': id}"/>
                     <button name="%(smart_construction_core.action_sc_finance_dashboard)d"
                             string="结算/财务"
                             type="action"
                             class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_finance_read"
                             context="{'search_default_project_id': [id], 'default_project_id': id}"/>
                 </div>
             </xpath>
@@ -82,7 +88,7 @@
                         <field name="partner_id"/>
                         <field name="owner_id"/>
                     </group>
-                    <group col="4" string="关键指标">
+                    <group col="4" string="关键指标" groups="smart_construction_core.group_sc_cap_finance_read">
                         <field name="pay_contract_total" readonly="1"/>
                         <field name="pay_settlement_total" readonly="1"/>
                         <field name="pay_paid_total" readonly="1"/>
@@ -129,7 +135,7 @@
                             </tree>
                         </field>
                     </group>
-                    <group col="4" string="成本与进度">
+                    <group col="4" string="成本与进度" groups="smart_construction_core.group_sc_cap_cost_read">
                         <field name="budget_active_id" readonly="1" options="{'no_create': True}"/>
                         <field name="budget_active_cost_target" readonly="1"/>
                         <field name="budget_active_revenue_target" readonly="1"/>
