@@ -31,7 +31,7 @@
         'security/sc_role_groups.xml',
         'security/sc_model_records.xml',
         'security/ir.model.access.csv',
-        'data/sc_test_users.xml',
+        'security/sc_record_rules.xml',
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
 
@@ -83,7 +83,7 @@
         ],
     },
     'demo': [
-        # 如需演示数据再启用
+        'demo/sc_demo_users.xml',
         # 'data/cost_domain_demo.xml',
     ],
     'installable': True,
