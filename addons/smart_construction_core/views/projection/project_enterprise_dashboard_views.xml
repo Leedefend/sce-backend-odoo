@@ -1,0 +1,123 @@
+<odoo>
+    <record id="view_project_form_enterprise_dashboard" model="ir.ui.view">
+        <field name="name">project.project.form.enterprise.dashboard</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook/page[.//field[@name='contract_amount']]" position="replace">
+                <page string="企业驾驶舱" name="enterprise_dashboard">
+                    <div class="o_sc_dashboard">
+                        <div class="o_sc_header">
+                            <div>
+                                <div class="o_sc_title">
+                                    <h2><field name="name" readonly="1"/></h2>
+                                    <div class="o_sc_badges">
+                                        <field name="health_state" readonly="1" widget="statusbar" statusbar_visible="good,warn,risk"/>
+                                        <span class="o_sc_badge subtle">
+                                            <field name="stage_id" readonly="1"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_sc_meta">
+                                    <div class="kv">
+                                        <span class="k">业主</span>
+                                        <span class="v"><field name="owner_id" readonly="1"/></span>
+                                    </div>
+                                    <div class="kv">
+                                        <span class="k">地点</span>
+                                        <span class="v"><field name="location" readonly="1"/></span>
+                                    </div>
+                                    <div class="kv">
+                                        <span class="k">起止</span>
+                                        <span class="v"><field name="start_date" readonly="1"/> ~ <field name="end_date" readonly="1"/></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="o_sc_kpi_grid">
+                            <div class="kpi">
+                                <div class="label">目标成本</div>
+                                <div class="value"><field name="budget_total" readonly="1"/></div>
+                            </div>
+                            <div class="kpi">
+                                <div class="label">承诺成本</div>
+                                <div class="value"><field name="cost_committed" readonly="1"/></div>
+                            </div>
+                            <div class="kpi">
+                                <div class="label">实际成本</div>
+                                <div class="value"><field name="cost_actual" readonly="1"/></div>
+                            </div>
+                            <div class="kpi emphasis">
+                                <div class="label">成本偏差</div>
+                                <div class="value"><field name="cost_variance" readonly="1"/></div>
+                            </div>
+                        </div>
+
+                        <div class="o_sc_section">
+                            <div class="o_sc_section_title">成本占用</div>
+                            <div class="o_sc_meter">
+                                <div class="row">
+                                    <div class="name">实际/预算</div>
+                                    <div class="bar">
+                                        <field name="cost_actual_pct" widget="progressbar" options="{'max_value': 100}" readonly="1"/>
+                                    </div>
+                                    <div class="num"><field name="cost_actual_pct" readonly="1"/>%</div>
+                                </div>
+                                <div class="row">
+                                    <div class="name">承诺/预算</div>
+                                    <div class="bar">
+                                        <field name="cost_commit_pct" widget="progressbar" options="{'max_value': 100}" readonly="1"/>
+                                    </div>
+                                    <div class="num"><field name="cost_commit_pct" readonly="1"/>%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="o_sc_section">
+                            <div class="o_sc_section_title">进度执行</div>
+                            <div class="o_sc_meter">
+                                <div class="row">
+                                    <div class="name">计划完成率</div>
+                                    <div class="bar">
+                                        <field name="plan_percent" widget="progressbar" options="{'max_value': 100}" readonly="1"/>
+                                    </div>
+                                    <div class="num"><field name="plan_percent" readonly="1"/>%</div>
+                                </div>
+                                <div class="row">
+                                    <div class="name">实际完成率</div>
+                                    <div class="bar">
+                                        <field name="actual_percent" widget="progressbar" options="{'max_value': 100}" readonly="1"/>
+                                    </div>
+                                    <div class="num"><field name="actual_percent" readonly="1"/>%</div>
+                                </div>
+                                <div class="row compact">
+                                    <div class="name">偏差</div>
+                                    <div class="delta">
+                                        <field name="schedule_delta" readonly="1"/>%
+                                        <span class="hint">（负数=落后）</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="o_sc_section">
+                            <div class="o_sc_section_title">关键提醒</div>
+                            <div class="o_sc_alerts">
+                                <div class="alert">
+                                    <field name="dashboard_alert_1" readonly="1"/>
+                                </div>
+                                <div class="alert" modifiers="{'invisible': [['dashboard_alert_2','=',False]]}">
+                                    <field name="dashboard_alert_2" readonly="1"/>
+                                </div>
+                                <div class="alert" modifiers="{'invisible': [['dashboard_alert_3','=',False]]}">
+                                    <field name="dashboard_alert_3" readonly="1"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

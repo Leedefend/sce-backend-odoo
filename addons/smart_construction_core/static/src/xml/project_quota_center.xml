@@ -6,14 +6,12 @@
                     <strong>加载失败：</strong>
                     <t t-esc="state.error"/>
                 </div>
-            </t>
-            <t t-elif="!state.initialized">
+            </t><t t-elif="!state.initialized">
                 <div class="o_panel_body o_quota_init_loading">
                     <i class="fa fa-spinner fa-spin o_quota_init_spinner"/>
                     <span>定额中心初始化中...</span>
                 </div>
-            </t>
-            <t t-else="">
+            </t><t t-else="">
                 <div class="o_quota_layout o-flex">
                     <!-- 左侧：定额树 -->
                     <div class="o_quota_tree_panel o_panel">
@@ -150,8 +148,7 @@
                                                 </td>
                                             </tr>
                                         </t>
-                                    </t>
-                                    <t t-else="">
+                                    </t><t t-else="">
                                         <tr>
                                             <td colspan="13" class="o_text_muted text-center">
                                                 暂无数据，请调整左侧筛选或搜索条件

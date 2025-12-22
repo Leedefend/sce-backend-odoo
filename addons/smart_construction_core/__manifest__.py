@@ -56,6 +56,7 @@
         'views/support/document_views.xml',
         'views/projection/operating_metrics_views.xml',
         'views/projection/project_dashboard_kanban.xml',
+        'views/projection/project_enterprise_dashboard_views.xml',
         'views/core/contract_views.xml',
         'views/core/project_contract_views.xml',
         'views/core/contract_line_search.xml',
@@ -81,6 +82,7 @@
             'smart_construction_core/static/src/js/project_quota_center.js',
             'smart_construction_core/static/src/xml/project_quota_center.xml',
             'smart_construction_core/static/src/scss/project_quota_center.scss',
+            'smart_construction_core/static/src/scss/sc_dashboard.scss',
         ],
     },
     'demo': [
