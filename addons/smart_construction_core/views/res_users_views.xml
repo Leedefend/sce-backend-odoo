@@ -10,8 +10,8 @@
                 <xpath expr="//field[@name='groups_id']" position="attributes">
                     <attribute name="domain">[
                         ('category_id', 'in', [
-                            ref('smart_construction_core.module_category_smart_construction'),
-                            ref('base.module_category_user_type')
+                            xmlid_to_res_id('smart_construction_core.module_category_smart_construction'),
+                            xmlid_to_res_id('base.module_category_user_type')
                         ])
                     ]</attribute>
                 </xpath>
@@ -27,8 +27,8 @@
                 <xpath expr="//field[@name='groups_id']" position="attributes">
                     <attribute name="domain">[
                         ('category_id', 'in', [
-                            ref('smart_construction_core.module_category_smart_construction'),
-                            ref('base.module_category_user_type')
+                            xmlid_to_res_id('smart_construction_core.module_category_smart_construction'),
+                            xmlid_to_res_id('base.module_category_user_type')
                         ])
                     ]</attribute>
                 </xpath>
