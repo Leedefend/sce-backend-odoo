@@ -491,7 +491,11 @@ class ProjectProject(models.Model):
         settlement_map = defaultdict(float)
         payment_map = defaultdict(float)
 
-        if self.ids:
+        can_contract = self._can_read_model('construction.contract')
+        can_settlement = self._can_read_model('project.settlement')
+        can_payment = ('payment.request' in self.env) and self._can_read_model('payment.request')
+
+        if self.ids and can_contract:
             contract_read = self.env['construction.contract'].read_group(
                 [
                     ('project_id', 'in', self.ids),
@@ -505,6 +509,7 @@ class ProjectProject(models.Model):
                 project_id = rec['project_id'][0]
                 contract_map[project_id] += rec.get('amount_final_sum', rec.get('amount_final', 0.0)) or 0.0
 
+        if self.ids and can_settlement:
             settlement_read = self.env['project.settlement'].read_group(
                 [
                     ('project_id', 'in', self.ids),
@@ -518,24 +523,24 @@ class ProjectProject(models.Model):
                 project_id = rec['project_id'][0]
                 settlement_map[project_id] += rec.get('amount_sum', rec.get('amount', 0.0)) or 0.0
 
-            if 'payment.request' in self.env:
-                payment_read = self.env['payment.request'].read_group(
-                    [
-                        ('project_id', 'in', self.ids),
-                        ('type', '=', 'pay'),
-                        ('state', 'in', ['approved', 'approve', 'done']),
-                    ],
-                    ['amount:sum'],
-                    ['project_id'],
-                )
-                for rec in payment_read:
-                    project_id = rec['project_id'][0]
-                    payment_map[project_id] += rec.get('amount_sum', rec.get('amount', 0.0)) or 0.0
+        if self.ids and can_payment:
+            payment_read = self.env['payment.request'].read_group(
+                [
+                    ('project_id', 'in', self.ids),
+                    ('type', '=', 'pay'),
+                    ('state', 'in', ['approved', 'approve', 'done']),
+                ],
+                ['amount:sum'],
+                ['project_id'],
+            )
+            for rec in payment_read:
+                project_id = rec['project_id'][0]
+                payment_map[project_id] += rec.get('amount_sum', rec.get('amount', 0.0)) or 0.0
 
         for project in self:
-            contract_total = contract_map.get(project.id, 0.0)
-            settlement_total = settlement_map.get(project.id, 0.0)
-            paid_total = payment_map.get(project.id, 0.0)
+            contract_total = contract_map.get(project.id, 0.0) if can_contract else 0.0
+            settlement_total = settlement_map.get(project.id, 0.0) if can_settlement else 0.0
+            paid_total = payment_map.get(project.id, 0.0) if can_payment else 0.0
             project.pay_contract_total = contract_total
             project.pay_settlement_total = settlement_total
             project.pay_paid_total = paid_total
@@ -631,8 +636,10 @@ class ProjectProject(models.Model):
         progress_rate_map = {}
         progress_count_map = {}
 
-        if self.ids:
-            # 成本台账汇总
+        can_ledger = self._can_read_model('project.cost.ledger')
+        can_progress = self._can_read_model('project.progress.entry')
+
+        if self.ids and can_ledger:
             ledger_read = self.env['project.cost.ledger'].read_group(
                 [('project_id', 'in', self.ids)],
                 ['amount:sum'],
@@ -643,7 +650,7 @@ class ProjectProject(models.Model):
                 ledger_amount_map[project_id] = rec.get('amount_sum', rec.get('amount', 0.0)) or 0.0
                 ledger_count_map[project_id] = rec.get('__count', 0)
 
-            # 进度记录汇总（取最大进度）
+        if self.ids and can_progress:
             progress_read = self.env['project.progress.entry'].read_group(
                 [('project_id', 'in', self.ids)],
                 ['progress_rate:max'],
@@ -670,13 +677,13 @@ class ProjectProject(models.Model):
             project.budget_active_revenue_target = budget_rec.amount_revenue_target if budget_rec else 0.0
             project.budget_count = len(budgets)
 
-            ledger_amount = ledger_amount_map.get(project.id, 0.0) or 0.0
+            ledger_amount = ledger_amount_map.get(project.id, 0.0) if can_ledger else 0.0
             project.cost_ledger_amount_actual = ledger_amount
-            project.cost_ledger_entry_count = ledger_count_map.get(project.id, 0)
+            project.cost_ledger_entry_count = ledger_count_map.get(project.id, 0) if can_ledger else 0
             project.cost_budget_gap = (project.budget_active_cost_target or 0.0) - ledger_amount
 
-            project.progress_entry_count = progress_count_map.get(project.id, 0)
-            project.progress_rate_latest = progress_rate_map.get(project.id, 0.0)
+            project.progress_entry_count = progress_count_map.get(project.id, 0) if can_progress else 0
+            project.progress_rate_latest = progress_rate_map.get(project.id, 0.0) if can_progress else 0.0
 
     # ---------- 驾驶舱汇总 ----------
     @api.depends(
@@ -687,6 +694,7 @@ class ProjectProject(models.Model):
     )
     def _compute_dashboard_overview(self):
         has_account_access = self.env.user.has_group('account.group_account_readonly')
+        can_payment = ('payment.request' in self.env) and self._can_read_model('payment.request')
         revenue_map = defaultdict(float)
         invoice_model = self.env['account.move.line']
         move_model = self.env['account.move']
@@ -744,7 +752,7 @@ class ProjectProject(models.Model):
         # 收/付款申请金额
         payment_in_map = defaultdict(float)
         payment_out_map = defaultdict(float)
-        if self.ids and 'payment.request' in self.env:
+        if self.ids and can_payment:
             payment_read = self.env['payment.request'].read_group(
                 [
                     ('project_id', 'in', self.ids),
@@ -769,8 +777,8 @@ class ProjectProject(models.Model):
             project.dashboard_revenue_actual = revenue_val
             project.dashboard_invoice_amount = revenue_val
             project.dashboard_profit_actual = revenue_val - cost_val
-            project.dashboard_payment_in = payment_in_map.get(project.id, 0.0)
-            project.dashboard_payment_out = payment_out_map.get(project.id, 0.0)
+            project.dashboard_payment_in = payment_in_map.get(project.id, 0.0) if can_payment else 0.0
+            project.dashboard_payment_out = payment_out_map.get(project.id, 0.0) if can_payment else 0.0
             project.dashboard_document_completion = project.document_completion_rate
             project.dashboard_progress_rate = project.progress_rate_latest or 0.0
 
@@ -779,6 +787,18 @@ class ProjectProject(models.Model):
     def _compute_wbs_count(self):
         for project in self:
             project.wbs_count = len(project.structure_ids)
+
+    # ---------- ACL guard ----------
+    def _can_read_model(self, model_name: str) -> bool:
+        """Check both access rights and record rules without raising."""
+        Model = self.env[model_name]
+        if not Model.check_access_rights('read', raise_exception=False):
+            return False
+        try:
+            Model.check_access_rule('read')
+        except Exception:
+            return False
+        return True
 
     @api.depends('tender_bid_ids')
     def _compute_tender_stats(self):
