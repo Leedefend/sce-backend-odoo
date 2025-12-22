@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- 仅在用户表单中展示 SC 业务能力组 + 用户类型组，隐藏其它原生组 -->
+        <record id="view_users_form_sc_groups_only" model="ir.ui.view">
+            <field name="name">res.users.form.sc.groups.only</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="base.view_users_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='groups_id']" position="attributes">
+                    <attribute name="domain">[
+                        ('category_id', 'in', [
+                            ref('smart_construction_core.module_category_smart_construction'),
+                            ref('base.module_category_user_type')
+                        ])
+                    ]</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- 简化版用户表单（17 常见两套视图），同样限制 groups_id -->
+        <record id="view_users_form_simple_sc_groups_only" model="ir.ui.view">
+            <field name="name">res.users.form.simple.sc.groups.only</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="base.view_users_form_simple"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='groups_id']" position="attributes">
+                    <attribute name="domain">[
+                        ('category_id', 'in', [
+                            ref('smart_construction_core.module_category_smart_construction'),
+                            ref('base.module_category_user_type')
+                        ])
+                    ]</attribute>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

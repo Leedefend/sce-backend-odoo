@@ -19,12 +19,12 @@
                 <field name="document_missing_count"/>
                 <field name="document_required_count"/>
 
-                <field name="dashboard_revenue_actual"/>
-                <field name="dashboard_cost_actual"/>
-                <field name="dashboard_profit_actual"/>
-                <field name="dashboard_invoice_amount"/>
-                <field name="dashboard_payment_in"/>
-                <field name="dashboard_payment_out"/>
+                <field name="dashboard_revenue_actual" groups="account.group_account_readonly"/>
+                <field name="dashboard_cost_actual" groups="account.group_account_readonly"/>
+                <field name="dashboard_profit_actual" groups="account.group_account_readonly"/>
+                <field name="dashboard_invoice_amount" groups="account.group_account_readonly"/>
+                <field name="dashboard_payment_in" groups="account.group_account_readonly"/>
+                <field name="dashboard_payment_out" groups="account.group_account_readonly"/>
 
                 <field name="budget_active_cost_target"/>
                 <field name="budget_active_revenue_target"/>
@@ -91,13 +91,21 @@
                                 <div class="sc-kpi-block">
                                     <div class="sc-kpi-row sc-kpi-bold">
                                         <span class="sc-kpi-label">收入</span>
-                                        <span class="sc-kpi-value"
-                                              t-esc="record.dashboard_revenue_actual.value or '0.00'"/>
+                                        <span class="sc-kpi-value">
+                                            <t t-if="record.dashboard_revenue_actual">
+                                                <t t-esc="record.dashboard_revenue_actual.value or '0.00'"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </span>
                                     </div>
                                     <div class="sc-kpi-row sc-kpi-bold">
                                         <span class="sc-kpi-label">成本</span>
-                                        <span class="sc-kpi-value"
-                                              t-esc="record.dashboard_cost_actual.value or '0.00'"/>
+                                        <span class="sc-kpi-value">
+                                            <t t-if="record.dashboard_cost_actual">
+                                                <t t-esc="record.dashboard_cost_actual.value or '0.00'"/>
+                                            </t>
+                        �                                            <t t-else="">—</t>
+                                        </span>
                                     </div>
                                     <div class="sc-kpi-row">
                                         <span class="sc-kpi-label">收入目标</span>
@@ -106,8 +114,12 @@
                                     </div>
                                     <div class="sc-kpi-row sc-kpi-bold">
                                         <span class="sc-kpi-label">毛利</span>
-                                        <span class="sc-kpi-value"
-                                              t-esc="record.dashboard_profit_actual.value or '0.00'"/>
+                                        <span class="sc-kpi-value">
+                                            <t t-if="record.dashboard_profit_actual">
+                                                <t t-esc="record.dashboard_profit_actual.value or '0.00'"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </span>
                                     </div>
 
                                     <div class="sc-kpi-row sc-kpi-gap">
@@ -199,18 +211,30 @@
                                 <div class="sc-footer-right">
                                     <div class="sc-footer-row">
                                         <span class="sc-footer-label">开票</span>
-                                        <span class="sc-footer-value"
-                                              t-esc="record.dashboard_invoice_amount.value or '0.00'"/>
+                                        <span class="sc-footer-value">
+                                            <t t-if="record.dashboard_invoice_amount">
+                                                <t t-esc="record.dashboard_invoice_amount.value or '0.00'"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </span>
                                     </div>
                                     <div class="sc-footer-row">
                                         <span class="sc-footer-label">收款</span>
-                                        <span class="sc-footer-value"
-                                              t-esc="record.dashboard_payment_in.value or '0.00'"/>
+                                        <span class="sc-footer-value">
+                                            <t t-if="record.dashboard_payment_in">
+                                                <t t-esc="record.dashboard_payment_in.value or '0.00'"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </span>
                                     </div>
                                     <div class="sc-footer-row">
                                         <span class="sc-footer-label">付款</span>
-                                        <span class="sc-footer-value"
-                                              t-esc="record.dashboard_payment_out.value or '0.00'"/>
+                                        <span class="sc-footer-value">
+                                            <t t-if="record.dashboard_payment_out">
+                                                <t t-esc="record.dashboard_payment_out.value or '0.00'"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </span>
                                     </div>
                                     <div class="sc-footer-row">
                                         <span class="sc-footer-label">资料</span>
@@ -239,6 +263,7 @@
                         min-height: 170px;
                         background: #fafafa;
                         border: 1px solid #eee;
+                        position: relative;
                     }
                     .sc_project_dashboard_kanban .sc_project_card.sc_risk_high{
                         border-left-color: #e74c3c;
