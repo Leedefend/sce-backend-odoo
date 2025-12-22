@@ -782,6 +782,35 @@ class ProjectProject(models.Model):
             project.dashboard_document_completion = project.document_completion_rate
             project.dashboard_progress_rate = project.progress_rate_latest or 0.0
 
+    # ---------- Drilldown actions ----------
+    def action_open_cost_ledger(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "成本台账",
+            "res_model": "project.cost.ledger",
+            "view_mode": "tree,form,pivot,graph",
+            "domain": [("project_id", "=", self.id)],
+            "context": {
+                "default_project_id": self.id,
+                "search_default_project_id": self.id,
+            },
+        }
+
+    def action_open_progress_entries(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "进度计量",
+            "res_model": "project.progress.entry",
+            "view_mode": "tree,form",
+            "domain": [("project_id", "=", self.id)],
+            "context": {
+                "default_project_id": self.id,
+                "search_default_project_id": self.id,
+            },
+        }
+
     # ---------- WBS / 投标统计 ----------
     @api.depends('structure_ids')
     def _compute_wbs_count(self):
