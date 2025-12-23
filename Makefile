@@ -1,11 +1,35 @@
+# =========================================================
+# Stable Engineering Makefile (Odoo 17 + Docker Compose)
+# - CI uses overlay compose and hard cleanup even on failure
+# - Windows friendly via Git Bash / MSYS2 / WSL bash
+# =========================================================
+
+SHELL := bash
+.SHELLFLAGS := -eu -o pipefail -c
+
 # ================== 基本配置 ==================
-COMPOSE        := docker-compose
-DB_NAME        := sc
+# 建议统一用 docker compose（plugin）；如你仍用 docker-compose v1，可在命令行覆盖：
+#   make COMPOSE_BIN=docker-compose test-ci
+COMPOSE_BIN ?= docker compose
+
+PROJECT        ?= sc
+PROJECT_CI     ?= sc-ci
+
+# 明确指定 compose 文件，避免“目录里多个 compose 文件导致不确定”
+COMPOSE        := $(COMPOSE_BIN) -p $(PROJECT) -f docker-compose.yml
+COMPOSE_CI     := $(COMPOSE_BIN) -p $(PROJECT_CI) -f docker-compose.yml -f docker-compose.ci.yml
+
+DB_NAME        := sc_odoo
 DB_USER        := odoo
 DB_CONTAINER   := sc-db
 ODOO_CONTAINER := sc-odoo
 INIT_MODULES   := base
 DB ?= $(DB_NAME)
+
+# CI 专用 DB（强烈建议隔离，避免锁冲突/污染）
+DB_CI          ?= sc_test
+CI_CONF        ?= /etc/odoo/odoo.conf
+CI_LOG         ?= test-ci.log
 
 # 默认模块 / 测试标签
 MODULE ?= smart_construction_core
@@ -14,19 +38,27 @@ TEST_TAGS ?= sc_smoke
 # 自定义模块集合
 CUSTOM_MODULES := smart_construction_core smart_construction_demo
 
+# 统一禁用 compose ANSI（兼容你遇到的 unknown flag: --ansi）
+export COMPOSE_ANSI := never
+
 # ================== 基础操作 ==================
-.PHONY: up down restart restart-odoo ps logs odoo-shell db-reset upgrade upgrade-all test validate db.drop db.create install noiseoff verify.noise db.rebuild.noiseoff
+.PHONY: up down restart restart-odoo ps logs odoo-shell \
+        db-reset upgrade upgrade-all \
+        test test.safe test.isolated test-ci \
+        validate validate-ci \
+        db.drop db.create install noiseoff noiseon verify.noise db.rebuild.noiseoff \
+        ci.up ci.down ci.ps ci.logs ci.clean
 
 up:
-	@echo "== docker-compose up -d =="
+	@echo "== compose up -d =="
 	$(COMPOSE) up -d
 
 down:
-	@echo "== docker-compose down =="
+	@echo "== compose down =="
 	$(COMPOSE) down
 
 restart:
-	@echo "== docker-compose restart =="
+	@echo "== compose restart =="
 	$(COMPOSE) down
 	$(COMPOSE) up -d
 
@@ -39,20 +71,42 @@ ps:
 	docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 logs:
-	@echo "== docker-compose logs -f odoo =="
+	@echo "== compose logs -f odoo =="
 	$(COMPOSE) logs -f odoo
 
 odoo-shell:
 	@echo "== docker exec -it $(ODOO_CONTAINER) bash =="
 	docker exec -it $(ODOO_CONTAINER) bash
 
+# ================== CI 基础操作（强隔离） ==================
+ci.up:
+	@echo "== CI up (abort on odoo exit) DB=$(DB_CI) =="
+	DB_CI=$(DB_CI) MODULE=$(MODULE) TEST_TAGS=$(TEST_TAGS) \
+	$(COMPOSE_CI) up --abort-on-container-exit --exit-code-from odoo
+
+ci.down:
+	@echo "== CI down =="
+	$(COMPOSE_CI) down --remove-orphans || true
+
+ci.clean:
+	@echo "== CI down -v (clean volumes) =="
+	$(COMPOSE_CI) down -v --remove-orphans || true
+
+ci.ps:
+	@echo "== CI ps =="
+	$(COMPOSE_CI) ps
+
+ci.logs:
+	@echo "== CI logs -f odoo =="
+	$(COMPOSE_CI) logs -f odoo
+
 # ================== 数据库重置 ==================
 db-reset:
 	@echo "== Reset database $(DB_NAME) =="
-	- docker stop $(ODOO_CONTAINER)
+	- docker stop $(ODOO_CONTAINER) || true
 	- docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d postgres \
 		-c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$(DB_NAME)' AND pid <> pg_backend_pid();"
-	- docker exec $(DB_CONTAINER) dropdb -U $(DB_USER) $(DB_NAME)
+	- docker exec $(DB_CONTAINER) dropdb -U $(DB_USER) $(DB_NAME) || true
 	- docker exec $(DB_CONTAINER) createdb -U $(DB_USER) $(DB_NAME)
 	- docker start $(ODOO_CONTAINER)
 	- docker exec $(ODOO_CONTAINER) odoo \
@@ -84,16 +138,63 @@ upgrade-all:
 	@echo "== ✔ upgrade-all done =="
 
 # ================== 测试（Smoke） ==================
+# 关键点：
+# - Odoo 无论如何都会加载/安装依赖（base/web 等），这是正常的
+# - 你要避免“看似跑系统模块测试”，正确做法是把 --test-tags 限定到模块维度
+#   推荐格式：/module:tag  （例如 /smart_construction_core:sc_smoke）
+# - 这样日志里仍会看到 base/web 等模块加载，但真正执行的测试只会落在你的模块范围内
+
+TEST_TAG_EXPR := /$(MODULE):$(TEST_TAGS)
+
 test:
-	@echo "== Running tests: module=$(MODULE) tags=$(TEST_TAGS) =="
+	@echo "== Running tests (legacy): module=$(MODULE) tags=$(TEST_TAGS) expr=$(TEST_TAG_EXPR) =="
+	@echo "== NOTE: if hang occurs, use 'make test.safe' or 'make test-ci' =="
 	$(COMPOSE) run --rm -T odoo \
 		-d $(DB_NAME) \
 		-u $(MODULE) \
 		--no-http \
 		--test-enable \
-		--test-tags "$(TEST_TAGS)" \
+		--test-tags "$(TEST_TAG_EXPR)" \
 		--stop-after-init
 	@echo "== ✔ test done =="
+
+test.safe:
+	@echo "== Running tests SAFE: stop running services to avoid DB locks & entrypoint hang =="
+	- $(COMPOSE) stop odoo nginx || true
+	$(COMPOSE) run --rm -T odoo \
+		-d $(DB_NAME) \
+		-u $(MODULE) \
+		--no-http \
+		--test-enable \
+		--test-tags "$(TEST_TAG_EXPR)" \
+		--stop-after-init
+	@echo "== ✔ test.safe done =="
+
+test.isolated: test.safe
+
+# ================== 推荐：CI 方式跑测试（强隔离 DB，最稳定） ==================
+# 工程化要求：
+# - 开始前：down -v 清卷，保证环境干净
+# - 结束后：无论 up 成功/失败，都 down -v 清卷（保证不会污染下一次）
+# - 记录日志：test-ci.log
+# - 出错时：保持原 exit code（CI 守门需要）
+
+test-ci:
+	@echo "== Running tests in CI compose: module=$(MODULE) tags=$(TEST_TAGS) DB=$(DB_CI) =="
+	@echo "== test-tags expr: $(TEST_TAG_EXPR) =="
+	@echo "== log: $(CI_LOG) =="
+	@echo "== compose: $(COMPOSE_CI) =="
+	@echo "== (pre-clean) down -v =="
+	@$(COMPOSE_CI) down -v --remove-orphans >/dev/null 2>&1 || true
+	@echo "== (up) start CI stack =="
+	@set +e; \
+	DB_CI=$(DB_CI) MODULE=$(MODULE) TEST_TAGS=$(TEST_TAGS) \
+	$(COMPOSE_CI) up --abort-on-container-exit --exit-code-from odoo 2>&1 | tee "$(CI_LOG)"; \
+	rc=$$?; \
+	echo "== (post-clean) down -v =="; \
+	$(COMPOSE_CI) down -v --remove-orphans >/dev/null 2>&1 || true; \
+	echo "== ✔ test-ci done (exit=$$rc) =="; \
+	exit $$rc
 
 # ================== 数据校验器 ==================
 validate:
@@ -102,6 +203,14 @@ validate:
 		--entrypoint python3 odoo \
 		/mnt/extra-addons/smart_construction_core/tools/validator/run_validate.py
 	@echo "== ✔ validate done =="
+
+validate-ci:
+	@echo "== Running data validator (CI env) DB=$(DB_CI) =="
+	DB_CI=$(DB_CI) MODULE=$(MODULE) TEST_TAGS=$(TEST_TAGS) \
+	$(COMPOSE_CI) run --rm -T \
+		--entrypoint python3 odoo \
+		/mnt/extra-addons/smart_construction_core/tools/validator/run_validate.py
+	@echo "== ✔ validate-ci done =="
 
 # ================== 数据库管理（剃刀流程） ==================
 db.drop:
@@ -154,7 +263,7 @@ verify.noise:
 
 db.rebuild.noiseoff:
 	@echo "== Rebuild DB ($(DB)) + install $(MODULE) + noiseoff =="
-	- $(MAKE) down
+	- $(MAKE) down || true
 	$(MAKE) up
 	$(MAKE) db.drop DB=$(DB)
 	$(MAKE) db.create DB=$(DB)
