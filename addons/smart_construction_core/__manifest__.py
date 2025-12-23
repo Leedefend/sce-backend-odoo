@@ -32,7 +32,6 @@
         'security/sc_model_records.xml',
         'security/ir.model.access.csv',
         'security/sc_record_rules.xml',
-        'security/action_groups_patch.xml',
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
@@ -76,6 +75,8 @@
         'views/menu.xml',
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
+        # Patch 文件移到最后加载
+        'security/action_groups_patch.xml',
     ],
     'assets': {
         'web.assets_backend': [

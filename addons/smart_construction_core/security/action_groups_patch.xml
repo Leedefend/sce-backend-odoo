@@ -218,4 +218,69 @@
     <record id="server_action_payment_request_on_rejected" model="ir.actions.server">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
     </record>
+
+  <data noupdate="1">
+
+    <!-- ===== Settings / Configuration (lock to System Settings) ===== -->
+    <record id="base_setup.action_general_configuration" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <record id="account.action_account_config" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <record id="project.project_config_settings_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <record id="stock.action_stock_config_settings" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <record id="purchase.action_purchase_configuration" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <!-- ===== Master data / journals (usually also settings-level) ===== -->
+    <record id="account.action_incoterms_tree" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <record id="account.action_account_journal_form" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <record id="account.action_account_journal_group_list" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <!-- ===== Stock business actions (lock to stock users) ===== -->
+    <record id="stock.action_replenishment" model="ir.actions.server">
+      <field name="groups_id" eval="[(6, 0, [ref('stock.group_stock_user')])]"/>
+    </record>
+
+    <record id="stock.action_picking_tree_incoming" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('stock.group_stock_user')])]"/>
+    </record>
+
+    <record id="stock.action_picking_tree_outgoing" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('stock.group_stock_user')])]"/>
+    </record>
+
+    <!-- ===== Digest (usually settings-level) ===== -->
+    <record id="digest.digest_digest_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <record id="digest.digest_tip_action" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+
+    <!-- ===== Purchase report (at least purchase user) ===== -->
+    <record id="purchase.action_purchase_order_report_all" model="ir.actions.act_window">
+      <field name="groups_id" eval="[(6, 0, [ref('purchase.group_purchase_user')])]"/>
+    </record>
+
+  </data>
 </odoo>

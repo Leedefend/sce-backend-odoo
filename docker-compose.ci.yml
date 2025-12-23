@@ -1,29 +1,77 @@
+# docker-compose.ci.yml
 services:
   db:
-    # CI 不要固定容器名，避免冲突
-    container_name: null
-    # CI 不要写宿主 runtime
+    image: postgres:15
+    environment:
+      POSTGRES_DB: sc_test
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d sc_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   redis:
-    container_name: null
+    image: redis:7-alpine
     volumes:
       - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   odoo:
-    container_name: null
-    # CI 不要暴露端口
-    ports: []
-    # CI 不要写宿主 runtime/odoo
+    image: odoo17-odoo:latest
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # CI 不需要暴露端口；不写 ports 即可
+    # ports: []
+
     volumes:
       - odoodata:/var/lib/odoo
       - ./addons:/mnt/extra-addons
       - ./addons_external:/mnt/addons_external
-      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      # 关键：直接挂最终 conf 到 /etc/odoo/odoo.conf（不是 template）
+      - ./config/odoo.ci.conf:/etc/odoo/odoo.conf:ro
 
-  # CI 不需要这些，直接禁用（最简单）
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/mnt/extra-addons
+
+    # 核心：CI 跳过你们自定义 entrypoint（避免 render/写 /etc/odoo/odoo.conf）
+    entrypoint: ["/usr/bin/odoo"]
+
+    # 核心：显式指定 config + DB 参数（双保险：即使 conf 漏了 db_host 也不翻车）
+    command:
+      - "--config=/etc/odoo/odoo.conf"
+      - "--db_host=db"
+      - "--db_port=5432"
+      - "--db_user=odoo"
+      - "--db_password=odoo"
+      - "-d"
+      - "sc_test"
+      - "-i"
+      - "smart_construction_core"
+      - "--without-demo=all"
+      - "--test-enable"
+      - "--test-tags=/smart_construction_core"
+      - "--stop-after-init"
+      - "--log-level=test"
+      - "--log-handler=odoo.tests.result:DEBUG"
+      # CI 建议固定为单进程/禁 cron，避免随机性
+      - "--workers=0"
+      - "--max-cron-threads=0"
+
+  # CI 不需要这些，保留但默认不启
   n8n:
     profiles: ["manual"]
 
