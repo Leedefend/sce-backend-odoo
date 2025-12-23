@@ -158,5 +158,266 @@
                 ref('smart_construction_core.group_sc_cap_project_read')
             ])]"/>
         </record>
+
+        <!-- 按中心梳理：项目/成本/合同/采购/物资/财务/结算 的 读-经办-审批三档账号（能力组版） -->
+
+        <!-- 项目中心 -->
+        <record id="user_sc_project_user" model="res.users">
+            <field name="name">测试-项目经办</field>
+            <field name="login">sc_project_user</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_project_user')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_project_manager_cap" model="res.users">
+            <field name="name">测试-项目审批</field>
+            <field name="login">sc_project_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_project_manager')
+            ])]"/>
+        </record>
+
+        <!-- 成本中心 -->
+        <record id="user_sc_cost_read_cap" model="res.users">
+            <field name="name">测试-成本只读</field>
+            <field name="login">sc_cost_read</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_cost_read')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_cost_user_cap" model="res.users">
+            <field name="name">测试-成本经办</field>
+            <field name="login">sc_cost_user_cap</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_cost_user')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_cost_manager_cap" model="res.users">
+            <field name="name">测试-成本审批</field>
+            <field name="login">sc_cost_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_cost_manager')
+            ])]"/>
+        </record>
+
+        <!-- 合同中心 -->
+        <record id="user_sc_contract_read_cap" model="res.users">
+            <field name="name">测试-合同只读</field>
+            <field name="login">sc_contract_read</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_contract_read')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_contract_user_cap" model="res.users">
+            <field name="name">测试-合同经办</field>
+            <field name="login">sc_contract_user_cap</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_contract_user')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_contract_manager_cap" model="res.users">
+            <field name="name">测试-合同审批</field>
+            <field name="login">sc_contract_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager')
+            ])]"/>
+        </record>
+
+        <!-- 采购中心 -->
+        <record id="user_sc_purchase_read_cap" model="res.users">
+            <field name="name">测试-采购只读</field>
+            <field name="login">sc_purchase_read</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_purchase_read')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_purchase_user_cap" model="res.users">
+            <field name="name">测试-采购经办</field>
+            <field name="login">sc_purchase_user_cap</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_purchase_user')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_purchase_manager_cap" model="res.users">
+            <field name="name">测试-采购审批</field>
+            <field name="login">sc_purchase_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_purchase_manager')
+            ])]"/>
+        </record>
+
+        <!-- 物资中心 -->
+        <record id="user_sc_material_read_cap" model="res.users">
+            <field name="name">测试-物资只读</field>
+            <field name="login">sc_material_read</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_material_read')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_material_user_cap" model="res.users">
+            <field name="name">测试-物资经办</field>
+            <field name="login">sc_material_user_cap</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_material_user')
+            ])]"/>
+        </record>
+
+        <!-- 财务中心（补读/经办；审批账号已存在 sc_finance_mgr） -->
+        <record id="user_sc_finance_read_cap" model="res.users">
+            <field name="name">测试-财务只读</field>
+            <field name="login">sc_finance_read</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_finance_read')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_finance_user_cap" model="res.users">
+            <field name="name">测试-财务经办</field>
+            <field name="login">sc_finance_user_cap</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_finance_user')
+            ])]"/>
+        </record>
+
+        <!-- 结算中心 -->
+        <record id="user_sc_settlement_read_cap" model="res.users">
+            <field name="name">测试-结算只读</field>
+            <field name="login">sc_settlement_read</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_settlement_read')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_settlement_user_cap" model="res.users">
+            <field name="name">测试-结算经办</field>
+            <field name="login">sc_settlement_user_cap</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_settlement_user')
+            ])]"/>
+        </record>
+
+        <record id="user_sc_settlement_manager_cap" model="res.users">
+            <field name="name">测试-结算审批</field>
+            <field name="login">sc_settlement_mgr</field>
+            <field name="password">123456</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="lang">zh_CN</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('base.group_user'),
+                ref('smart_construction_core.group_sc_cap_settlement_manager')
+            ])]"/>
+        </record>
     </data>
 </odoo>
