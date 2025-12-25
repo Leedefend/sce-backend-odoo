@@ -2,7 +2,7 @@
 from odoo.tests.common import TransactionCase, tagged
 
 
-@tagged("smoke", "sc_smoke", "smoke_registry")
+@tagged("post_install", "-at_install", "smoke", "sc_smoke", "smoke_registry")
 class TestSmokeRegistry(TransactionCase):
 
     @classmethod
