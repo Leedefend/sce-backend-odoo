@@ -1,8 +1,44 @@
 # -*- coding: utf-8 -*-
 from odoo.tests import TransactionCase
+from odoo.tests.common import tagged
 
 
+@tagged("post_install", "-at_install", "sc_regression", "contract")
 class TestConstructionContract(TransactionCase):
+    def _ensure_tax_group(self):
+        country = self.env.ref("base.cn", raise_if_not_found=False)
+        company = self.env.ref("base.main_company")
+        group = self.env["account.tax.group"].search(
+            [("name", "=", "增值税"), ("company_id", "=", company.id)], limit=1
+        )
+        if not group:
+            vals = {
+                "name": "增值税",
+                "sequence": 10,
+                "company_id": company.id,
+            }
+            if country:
+                vals["country_id"] = country.id
+            group = self.env["account.tax.group"].create(vals)
+        return group
+
+    def _create_test_tax(self, name, amount, tax_use):
+        company = self.env.ref("base.main_company")
+        country = self.env.ref("base.cn", raise_if_not_found=False)
+        tax_group = self._ensure_tax_group()
+        vals = {
+            "name": name,
+            "amount_type": "percent",
+            "amount": amount,
+            "type_tax_use": tax_use,
+            "tax_group_id": tax_group.id,
+            "company_id": company.id,
+            "active": True,
+        }
+        if country:
+            vals["country_id"] = country.id
+        return self.env["account.tax"].create(vals)
+
     def setUp(self):
         super().setUp()
         self.project = self.env["project.project"].create({"name": "合同中心测试项目"})
@@ -13,7 +49,7 @@ class TestConstructionContract(TransactionCase):
             "code": "WBS-TEST",
             "project_id": self.project.id,
         })
-        self.tax_sale_9 = self.env.ref("smart_construction_core.tax_sale_vat_9")
+        self.tax_sale_9 = self._create_test_tax("销项VAT 9%", 9, "sale")
         self.budget = self.env["project.budget"].create({
             "name": "控制版",
             "project_id": self.project.id,
@@ -35,6 +71,7 @@ class TestConstructionContract(TransactionCase):
             "price_bidded": 500.0,
         })
 
+    @tagged("post_install", "-at_install", "sc_regression", "contract")
     def test_contract_state_and_amount(self):
         contract = self.env["construction.contract"].create(
             {
@@ -77,6 +114,7 @@ class TestConstructionContract(TransactionCase):
         contract.action_close()
         self.assertEqual(contract.state, "closed")
 
+    @tagged("post_install", "-at_install", "sc_regression", "contract")
     def test_generate_lines_from_budget(self):
         contract = self.env["construction.contract"].create(
             {
