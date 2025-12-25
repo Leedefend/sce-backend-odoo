@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from odoo.tests import TransactionCase
+from odoo.tests.common import tagged
 
 
+@tagged("post_install", "-at_install", "sc_regression", "cost")
 class TestProjectCostCompare(TransactionCase):
 
     def setUp(self):
@@ -44,6 +46,7 @@ class TestProjectCostCompare(TransactionCase):
             "amount": 800,
         })
 
+    @tagged("post_install", "-at_install", "sc_regression", "cost")
     def test_compare_view_records(self):
         records = self.env["project.cost.compare"].search([
             ("project_id", "=", self.project.id),

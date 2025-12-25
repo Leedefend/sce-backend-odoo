@@ -3,7 +3,7 @@ from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase, tagged
 
 
-@tagged("sc_smoke", "smoke_validator")
+@tagged("post_install", "-at_install", "sc_smoke", "smoke_validator")
 class TestValidatorSmoke(TransactionCase):
 
     def test_validator_runs(self):
@@ -39,6 +39,7 @@ class TestValidatorSmoke(TransactionCase):
         # 构造完整链路：项目 -> 合同 -> 采购 -> 结算 -> 付款申请
         project = self.env["project.project"].create({"name": "PR Happy Project"})
         partner = self.env["res.partner"].create({"name": "Happy Vendor"})
+        company = self.env.ref("base.main_company")
         contract = self.env["construction.contract"].create(
             {"subject": "Happy Contract", "type": "in", "project_id": project.id, "partner_id": partner.id}
         )
@@ -80,8 +81,15 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "approve",
             }
         )
-        fin_user = self.env.ref("smart_construction_core.user_sc_fin_01")
-        fin_user.write({"email": "fin+happy@test.com"})
+        finance_group = self.env.ref("smart_construction_core.group_sc_cap_finance_user")
+        fin_user = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Happy Finance",
+            "login": "happy_fin",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [finance_group.id])],
+            "email": "fin+happy@test.com",
+        })
         pr = self.env["payment.request"].sudo().create(
             {
                 "name": "PR Happy",
@@ -200,6 +208,7 @@ class TestValidatorSmoke(TransactionCase):
     def test_payment_request_overpay_blocked(self):
         project = self.env["project.project"].create({"name": "Overpay Project"})
         partner = self.env["res.partner"].create({"name": "Overpay Vendor"})
+        company = self.env.ref("base.main_company")
         contract = self.env["construction.contract"].create(
             {"subject": "Overpay Contract", "type": "in", "project_id": project.id, "partner_id": partner.id}
         )
@@ -241,10 +250,24 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "approve",
             }
         )
-        fin_user = self.env.ref("smart_construction_core.user_sc_fin_01")
-        fin_mgr = self.env.ref("smart_construction_core.user_sc_fin_mgr_01")
-        fin_user.write({"email": "fin+overpay@test.com"})
-        fin_mgr.write({"email": "finmgr+overpay@test.com"})
+        finance_group = self.env.ref("smart_construction_core.group_sc_cap_finance_user")
+        finance_mgr_group = self.env.ref("smart_construction_core.group_sc_cap_finance_manager")
+        fin_user = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Fin Overpay",
+            "login": "fin_overpay",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [finance_group.id])],
+            "email": "fin+overpay@test.com",
+        })
+        fin_mgr = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "FinMgr Overpay",
+            "login": "finmgr_overpay",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [finance_mgr_group.id])],
+            "email": "finmgr+overpay@test.com",
+        })
         # 第一笔 80 正常通过
         pr1 = self.env["payment.request"].sudo().create(
             {
@@ -323,10 +346,25 @@ class TestValidatorSmoke(TransactionCase):
                 "state": "approve",
             }
         )
-        fin_user = self.env.ref("smart_construction_core.user_sc_fin_01")
-        fin_mgr = self.env.ref("smart_construction_core.user_sc_fin_mgr_01")
-        fin_user.write({"email": "fin+paidpayable@test.com"})
-        fin_mgr.write({"email": "finmgr+paidpayable@test.com"})
+        company = self.env.ref("base.main_company")
+        finance_group = self.env.ref("smart_construction_core.group_sc_cap_finance_user")
+        finance_mgr_group = self.env.ref("smart_construction_core.group_sc_cap_finance_manager")
+        fin_user = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Fin PaidPayable",
+            "login": "fin_paidpayable",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [finance_group.id])],
+            "email": "fin+paidpayable@test.com",
+        })
+        fin_mgr = self.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "FinMgr PaidPayable",
+            "login": "finmgr_paidpayable",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [finance_mgr_group.id])],
+            "email": "finmgr+paidpayable@test.com",
+        })
 
         # 第一笔 80 提交+审批，计入已付
         pr1 = self.env["payment.request"].sudo().create(
