@@ -10,8 +10,8 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U odoo -d sc_test"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${POSTGRES_DB:-sc_test}"]
+      interval: 2s
       timeout: 3s
       retries: 30
 
@@ -21,7 +21,7 @@ services:
       - redisdata:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      interval: 2s
       timeout: 3s
       retries: 30
 
@@ -40,34 +40,31 @@ services:
       - odoodata:/var/lib/odoo
       - ./addons:/mnt/extra-addons
       - ./addons_external:/mnt/addons_external
-      # 关键：直接挂最终 conf 到 /etc/odoo/odoo.conf（不是 template）
+      # 直接挂最终 conf（不走镜像渲染）
       - ./config/odoo.ci.conf:/etc/odoo/odoo.conf:ro
 
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/mnt/extra-addons
 
-    # 核心：CI 跳过你们自定义 entrypoint（避免 render/写 /etc/odoo/odoo.conf）
+    # 直接调用 odoo，避免镜像入口渲染
     entrypoint: ["/usr/bin/odoo"]
-
-    # 核心：显式指定 config + DB 参数（双保险：即使 conf 漏了 db_host 也不翻车）
     command:
       - "--config=/etc/odoo/odoo.conf"
-      - "--db_host=db"
-      - "--db_port=5432"
-      - "--db_user=odoo"
-      - "--db_password=odoo"
+      - "--db_host=${DB_HOST:-db}"
+      - "--db_port=${DB_PORT:-5432}"
+      - "--db_user=${DB_USER:-odoo}"
+      - "--db_password=${DB_PASSWORD:-odoo}"
       - "-d"
-      - "sc_test"
+      - "${DB_CI:-sc_odoo}"
       - "-i"
-      - "smart_construction_core"
-      - "--without-demo=all"
-      - "--test-enable"
-      - "--test-tags=/smart_construction_core"
+      - "${MODULE:-smart_construction_core}"
+      - "--without-demo=${WITHOUT_DEMO:-all}"
+      - "${TEST_ENABLE_FLAG:---test-enable}"
+      - "--test-tags=${TEST_TAGS:-/smart_construction_core:sc_smoke,sc_gate}"
       - "--stop-after-init"
-      - "--log-level=test"
-      - "--log-handler=odoo.tests.result:DEBUG"
-      # CI 建议固定为单进程/禁 cron，避免随机性
+      - "--log-level=${LOG_LEVEL:-test}"
+      - "--log-handler=${LOG_HANDLER:-odoo.tests.result:DEBUG}"
       - "--workers=0"
       - "--max-cron-threads=0"
 
