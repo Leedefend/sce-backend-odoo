@@ -85,6 +85,7 @@
             'smart_construction_core/static/src/scss/project_quota_center.scss',
         ],
     },
+    'post_init_hook': 'ensure_core_taxes',
     'demo': [
         'demo/sc_demo_users.xml',
         # 'data/cost_domain_demo.xml',
