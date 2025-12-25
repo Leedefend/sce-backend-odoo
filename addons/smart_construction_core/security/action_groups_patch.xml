@@ -46,8 +46,7 @@
     </record>
     <!-- 成本科目 -->
     <record id="action_project_cost_code" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
-                                      (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
     </record>
     <!-- 成本对比 / 利润对比 -->
     <record id="action_project_cost_compare" model="ir.actions.act_window">
@@ -110,12 +109,10 @@
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
     <record id="action_project_boq_import_wizard" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
-                                      (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <record id="action_project_task_from_boq_wizard" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
-                                      (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <record id="action_work_breakdown" model="ir.actions.act_window">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')),
@@ -223,41 +220,41 @@
 
     <!-- ===== Settings / Configuration (lock to System Settings) ===== -->
     <record id="base_setup.action_general_configuration" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_super_admin')])]"/>
     </record>
 
     <record id="account.action_account_config" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_super_admin')])]"/>
     </record>
 
     <record id="project.project_config_settings_action" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_super_admin')])]"/>
     </record>
 
     <record id="stock.action_stock_config_settings" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_super_admin')])]"/>
     </record>
 
     <record id="purchase.action_purchase_configuration" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_super_admin')])]"/>
     </record>
 
     <!-- ===== Master data / journals (usually also settings-level) ===== -->
     <record id="account.action_incoterms_tree" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_finance_manager')])]"/>
     </record>
 
     <record id="account.action_account_journal_form" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_finance_manager')])]"/>
     </record>
 
     <record id="account.action_account_journal_group_list" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_finance_manager')])]"/>
     </record>
 
     <!-- ===== Stock business actions (lock to stock users) ===== -->
     <record id="stock.action_replenishment" model="ir.actions.server">
-      <field name="groups_id" eval="[(6, 0, [ref('stock.group_stock_user')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_material_manager')])]"/>
     </record>
 
     <record id="stock.action_picking_tree_incoming" model="ir.actions.act_window">
@@ -270,11 +267,11 @@
 
     <!-- ===== Digest (usually settings-level) ===== -->
     <record id="digest.digest_digest_action" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_super_admin')])]"/>
     </record>
 
     <record id="digest.digest_tip_action" model="ir.actions.act_window">
-      <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_super_admin')])]"/>
     </record>
 
     <!-- ===== Purchase report (at least purchase user) ===== -->
