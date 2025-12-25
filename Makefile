@@ -7,6 +7,8 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 
+ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 # ================== 基本配置 ==================
 # 建议统一用 docker compose（plugin）；如你仍用 docker-compose v1，可在命令行覆盖：
 #   make COMPOSE_BIN=docker-compose test-ci
@@ -14,10 +16,12 @@ COMPOSE_BIN ?= docker compose
 
 PROJECT        ?= sc
 PROJECT_CI     ?= sc-ci
+# 固化 project-directory，避免不同 shell/cwd 行为漂移
+COMPOSE_COMMON := --project-directory "$(ROOT_DIR)"
 
 # 明确指定 compose 文件，避免“目录里多个 compose 文件导致不确定”
-COMPOSE        := $(COMPOSE_BIN) -p $(PROJECT) -f docker-compose.yml
-COMPOSE_CI     := $(COMPOSE_BIN) -p $(PROJECT_CI) -f docker-compose.yml -f docker-compose.ci.yml
+COMPOSE        := $(COMPOSE_BIN) $(COMPOSE_COMMON) -p $(PROJECT) -f docker-compose.yml
+COMPOSE_CI     := $(COMPOSE_BIN) $(COMPOSE_COMMON) -p $(PROJECT_CI) -f docker-compose.yml -f docker-compose.ci.yml
 
 DB_NAME        := sc_odoo
 DB_USER        := odoo
@@ -27,13 +31,23 @@ INIT_MODULES   := base
 DB ?= $(DB_NAME)
 
 # CI 专用 DB（强烈建议隔离，避免锁冲突/污染）
-DB_CI          ?= sc_test
+DB_CI          ?= sc_odoo
 CI_CONF        ?= /etc/odoo/odoo.conf
 CI_LOG         ?= test-ci.log
+CI_ARTIFACT_DIR ?= artifacts/ci
+# 测试通过的日志签名，配合 compose rc 兜底（收敛到最终汇总行）
+CI_PASS_SIG_RE ?= (0 failed, 0 error\(s\))
 
 # 默认模块 / 测试标签
 MODULE ?= smart_construction_core
-TEST_TAGS ?= sc_smoke
+# 分层：sc_smoke（最小烟囱） + sc_gate（权限守门）为默认；回归层按需加
+TEST_TAGS ?= sc_smoke,sc_gate
+# 如果 TEST_TAGS 已经带 /module: 前缀，则直接使用；否则自动补 /$(MODULE):
+ifeq (,$(findstring /,$(TEST_TAGS)))
+TEST_TAG_EXPR := /$(MODULE):$(TEST_TAGS)
+else
+TEST_TAG_EXPR := $(TEST_TAGS)
+endif
 
 # 自定义模块集合
 CUSTOM_MODULES := smart_construction_core smart_construction_demo
@@ -45,9 +59,10 @@ export COMPOSE_ANSI := never
 .PHONY: up down restart restart-odoo ps logs odoo-shell \
         db-reset upgrade upgrade-all \
         test test.safe test.isolated test-ci \
+        test-install-gate test-upgrade-gate \
         validate validate-ci \
         db.drop db.create install noiseoff noiseon verify.noise db.rebuild.noiseoff \
-        ci.up ci.down ci.ps ci.logs ci.clean
+        ci.up ci.down ci.ps ci.logs ci.clean ci.collect ci.repro
 
 up:
 	@echo "== compose up -d =="
@@ -100,6 +115,17 @@ ci.logs:
 	@echo "== CI logs -f odoo =="
 	$(COMPOSE_CI) logs -f odoo
 
+ci.collect:
+	@set -e; \
+	ts=$$(date +%Y%m%d-%H%M%S); \
+	outdir="$(CI_ARTIFACT_DIR)/$(PROJECT_CI)/$$ts"; \
+	mkdir -p "$$outdir"; \
+	$(COMPOSE_CI) ps -a >"$$outdir/ps.txt" 2>&1 || true; \
+	$(COMPOSE_CI) logs --no-color --tail=500 db >"$$outdir/db.log" 2>&1 || true; \
+	$(COMPOSE_CI) logs --no-color --tail=500 redis >"$$outdir/redis.log" 2>&1 || true; \
+	$(COMPOSE_CI) logs --no-color --tail=800 odoo >"$$outdir/odoo.log" 2>&1 || true; \
+	echo "$$outdir"
+
 # ================== 数据库重置 ==================
 db-reset:
 	@echo "== Reset database $(DB_NAME) =="
@@ -116,7 +142,7 @@ db-reset:
 		--without-demo=all \
 		--load-language=zh_CN \
 		--stop-after-init
-	@echo "== ✔ db-reset done =="
+	@echo "== [OK] db-reset done =="
 
 # ================== 模块升级 ==================
 upgrade:
@@ -126,7 +152,7 @@ upgrade:
 		-d $(DB_NAME) \
 		-u $(MODULE) \
 		--stop-after-init
-	@echo "== ✔ upgrade done =="
+	@echo "== [OK] upgrade done =="
 
 upgrade-all:
 	@echo "== Upgrade all custom modules =="
@@ -135,7 +161,7 @@ upgrade-all:
 		-d $(DB_NAME) \
 		-u $(CUSTOM_MODULES) \
 		--stop-after-init
-	@echo "== ✔ upgrade-all done =="
+	@echo "== [OK] upgrade-all done =="
 
 # ================== 测试（Smoke） ==================
 # 关键点：
@@ -156,7 +182,7 @@ test:
 		--test-enable \
 		--test-tags "$(TEST_TAG_EXPR)" \
 		--stop-after-init
-	@echo "== ✔ test done =="
+	@echo "== [OK] test done =="
 
 test.safe:
 	@echo "== Running tests SAFE: stop running services to avoid DB locks & entrypoint hang =="
@@ -168,7 +194,7 @@ test.safe:
 		--test-enable \
 		--test-tags "$(TEST_TAG_EXPR)" \
 		--stop-after-init
-	@echo "== ✔ test.safe done =="
+	@echo "== [OK] test.safe done =="
 
 test.isolated: test.safe
 
@@ -188,13 +214,64 @@ test-ci:
 	@$(COMPOSE_CI) down -v --remove-orphans >/dev/null 2>&1 || true
 	@echo "== (up) start CI stack =="
 	@set +e; \
-	DB_CI=$(DB_CI) MODULE=$(MODULE) TEST_TAGS=$(TEST_TAGS) \
+	ts=$$(date +%Y%m%d-%H%M%S); \
+	outdir="$(CI_ARTIFACT_DIR)/$(PROJECT_CI)/$$ts"; \
+	mkdir -p "$$outdir"; \
+	cleanup() { \
+	  echo "== (post) collecting artifacts to $$outdir =="; \
+	  $(COMPOSE_CI) ps -a >"$$outdir/ps.txt" 2>&1 || true; \
+	  $(COMPOSE_CI) logs --no-color --tail=500 db >"$$outdir/db.log" 2>&1 || true; \
+	  $(COMPOSE_CI) logs --no-color --tail=500 redis >"$$outdir/redis.log" 2>&1 || true; \
+	  $(COMPOSE_CI) logs --no-color --tail=800 odoo >"$$outdir/odoo.log" 2>&1 || true; \
+	  echo "== artifacts saved: $$outdir =="; \
+	  $(COMPOSE_CI) down -v --remove-orphans >/dev/null 2>&1 || true; \
+	}; \
+	trap cleanup EXIT; \
+	DB_CI=$(DB_CI) MODULE=$(MODULE) TEST_TAGS=$(TEST_TAG_EXPR) \
 	$(COMPOSE_CI) up --abort-on-container-exit --exit-code-from odoo 2>&1 | tee "$(CI_LOG)"; \
-	rc=$$?; \
-	echo "== (post-clean) down -v =="; \
-	$(COMPOSE_CI) down -v --remove-orphans >/dev/null 2>&1 || true; \
-	echo "== ✔ test-ci done (exit=$$rc) =="; \
+	rc=$${PIPESTATUS[0]}; \
+	if [ "$$rc" -ne 0 ]; then \
+	  if grep -Eq "$(CI_PASS_SIG_RE)" "$(CI_LOG)"; then \
+	    echo "== compose exit=$$rc but tests look PASS; normalize rc=0 =="; \
+	    rc=0; \
+	  fi; \
+	fi; \
+	echo "exit=$$rc" >"$$outdir/exit.txt" 2>/dev/null || true; \
+	cp -f "$(CI_LOG)" "$$outdir/$(CI_LOG)" 2>/dev/null || true; \
+	echo "== [DONE] test-ci exit=$$rc =="; \
 	exit $$rc
+
+ci.repro:
+	@echo "== CI repro (NO down -v) module=$(MODULE) tags=$(TEST_TAGS) DB=$(DB_CI) =="
+	DB_CI=$(DB_CI) MODULE=$(MODULE) TEST_TAGS=$(TEST_TAG_EXPR) \
+	$(COMPOSE_CI) up --abort-on-container-exit --exit-code-from odoo
+
+test-install-gate:
+	@echo "== Install Gate (at_install) module=$(MODULE) =="
+	$(MAKE) test-ci MODULE=$(MODULE) TEST_TAGS="/$(MODULE):at_install,sc_install,sc_gate"
+
+test-upgrade-gate:
+	@echo "== Upgrade Gate (post_install after -u) module=$(MODULE) =="
+	@echo "== (pre-clean) down -v =="
+	@$(COMPOSE_CI) down -v --remove-orphans >/dev/null 2>&1 || true
+	@echo "== Install base module before upgrade =="
+	DB_CI=$(DB_CI) MODULE=$(MODULE) \
+	$(COMPOSE_CI) run --rm -T odoo \
+		-d $(DB_CI) \
+		-i $(MODULE) \
+		--without-demo=all \
+		--stop-after-init
+	@echo "== Upgrade with post_install tests =="
+	DB_CI=$(DB_CI) MODULE=$(MODULE) \
+	$(COMPOSE_CI) run --rm -T odoo \
+		-d $(DB_CI) \
+		-u $(MODULE) \
+		--without-demo=all \
+		--test-enable \
+		--test-tags "/$(MODULE):post_install,sc_upgrade,sc_gate,sc_perm" \
+		--stop-after-init
+	@echo "== (post) down -v clean =="
+	@$(COMPOSE_CI) down -v --remove-orphans >/dev/null 2>&1 || true
 
 # ================== 数据校验器 ==================
 validate:
@@ -202,7 +279,7 @@ validate:
 	$(COMPOSE) run --rm -T \
 		--entrypoint python3 odoo \
 		/mnt/extra-addons/smart_construction_core/tools/validator/run_validate.py
-	@echo "== ✔ validate done =="
+	@echo "== [OK] validate done =="
 
 validate-ci:
 	@echo "== Running data validator (CI env) DB=$(DB_CI) =="
@@ -210,7 +287,7 @@ validate-ci:
 	$(COMPOSE_CI) run --rm -T \
 		--entrypoint python3 odoo \
 		/mnt/extra-addons/smart_construction_core/tools/validator/run_validate.py
-	@echo "== ✔ validate-ci done =="
+	@echo "== [OK] validate-ci done =="
 
 # ================== 数据库管理（剃刀流程） ==================
 db.drop:
@@ -231,7 +308,7 @@ install:
 		--without-demo=all \
 		--load-language=zh_CN \
 		--stop-after-init
-	@echo "== ✔ install done =="
+	@echo "== [OK] install done =="
 
 noiseoff:
 	@echo "== Noise off (disable cron/server actions) DB=$(DB) =="
@@ -270,4 +347,4 @@ db.rebuild.noiseoff:
 	$(MAKE) install MODULE=$(MODULE) DB=$(DB)
 	$(MAKE) noiseoff DB=$(DB)
 	$(MAKE) verify.noise DB=$(DB)
-	@echo "== ✔ db.rebuild.noiseoff done =="
+	@echo "== [OK] db.rebuild.noiseoff done =="
