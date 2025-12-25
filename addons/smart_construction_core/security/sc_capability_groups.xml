@@ -70,7 +70,8 @@
             <field name="name">SC 能力 - 物资中心经办</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
-                ref('smart_construction_core.group_sc_cap_material_read')
+                ref('smart_construction_core.group_sc_cap_material_read'),
+                ref('stock.group_stock_user')
             ])]"/>
         </record>
 
@@ -98,7 +99,8 @@
             <field name="name">SC 能力 - 采购中心经办</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
-                ref('smart_construction_core.group_sc_cap_purchase_read')
+                ref('smart_construction_core.group_sc_cap_purchase_read'),
+                ref('purchase.group_purchase_user')
             ])]"/>
         </record>
 
@@ -248,7 +250,10 @@
             <field name="name">SC 能力 - 配置管理员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[
-                (6, 0, [ref('smart_construction_core.group_sc_internal_user')])
+                (6, 0, [
+                    ref('smart_construction_core.group_sc_internal_user'),
+                    ref('base.group_system')
+                ])
             ]"/>
         </record>
 
@@ -289,7 +294,8 @@
                 ref('smart_construction_core.group_sc_cap_data_read'),
                 ref('smart_construction_core.group_sc_cap_config_admin'),
 
-                ref('project.group_project_manager')
+                ref('project.group_project_manager'),
+                ref('base.group_system')
             ])]"/>
         </record>
 
