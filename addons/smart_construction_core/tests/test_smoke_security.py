@@ -2,7 +2,7 @@
 from odoo.tests.common import TransactionCase, tagged
 
 
-@tagged("smoke", "sc_smoke", "smoke_security")
+@tagged("post_install", "-at_install", "smoke", "sc_smoke", "smoke_security")
 class TestSmokeSecurity(TransactionCase):
 
     @classmethod
@@ -26,11 +26,35 @@ class TestSmokeSecurity(TransactionCase):
                 "partner_id": cls.partner.id,
             }
         )
-        cls.finance_user = cls.env.ref("smart_construction_core.user_sc_fin_01")
-        cls.material_manager = cls.env.ref("smart_construction_core.user_sc_material_mgr_test")
-        cls.admin_user = cls.env.ref("smart_construction_core.user_sc_test_admin")
-        settlement_group = cls.env.ref("smart_construction_core.group_sc_cap_settlement_manager")
-        cls.admin_user.groups_id = [(4, settlement_group.id)] + [(4, g.id) for g in cls.admin_user.groups_id]
+        # 测试内创建用户与组，避免依赖 demo xmlid
+        finance_group = cls.env.ref("smart_construction_core.group_sc_cap_finance_user")
+        material_group = cls.env.ref("smart_construction_core.group_sc_cap_material_manager")
+        admin_groups = [
+            cls.env.ref("smart_construction_core.group_sc_cap_finance_manager"),
+            cls.env.ref("smart_construction_core.group_sc_cap_settlement_manager"),
+        ]
+        company = cls.env.ref("base.main_company")
+        cls.finance_user = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Smoke Finance",
+            "login": "smoke_fin",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [finance_group.id])],
+        })
+        cls.material_manager = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Smoke Material",
+            "login": "smoke_material",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [material_group.id])],
+        })
+        cls.admin_user = cls.env["res.users"].with_context(no_reset_password=True).create({
+            "name": "Smoke Admin",
+            "login": "smoke_admin",
+            "company_id": company.id,
+            "company_ids": [(6, 0, [company.id])],
+            "groups_id": [(6, 0, [g.id for g in admin_groups])],
+        })
 
     def test_finance_user_can_create_payment_request(self):
         request = self.env["payment.request"].with_user(self.finance_user).create(
