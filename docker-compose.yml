@@ -15,7 +15,7 @@ services:
       - ./runtime/postgres:/var/lib/postgresql/data
       - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d sc_odoo || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${POSTGRES_DB:-sc_odoo} || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
