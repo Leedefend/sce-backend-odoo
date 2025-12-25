@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from odoo.tests import TransactionCase
+from odoo.tests.common import tagged
 
 
+@tagged("post_install", "-at_install", "sc_gate", "security_gate")
 class TestActionGroupsGate(TransactionCase):
     """CI 守门：模块内 actions 必须有 groups，菜单/Action 不允许 URL 绕过。"""
 
