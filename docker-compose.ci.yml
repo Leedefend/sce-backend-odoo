@@ -1,22 +1,25 @@
 # docker-compose.ci.yml
+
 services:
   db:
     image: postgres:15
+    container_name: sc-ci-db
     environment:
-      POSTGRES_DB: sc_test
+      POSTGRES_DB: ${DB_CI:-sc_odoo}
       POSTGRES_USER: odoo
       POSTGRES_PASSWORD: odoo
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${POSTGRES_DB:-sc_test}"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 2s
       timeout: 3s
       retries: 30
 
   redis:
     image: redis:7-alpine
+    container_name: sc-ci-redis
     volumes:
       - redisdata:/data
     healthcheck:
@@ -27,55 +30,53 @@ services:
 
   odoo:
     image: odoo17-odoo:latest
+    container_name: sc-ci-odoo
+    profiles: ["ci"]
+
+    user: "odoo"
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
 
-    # CI 不需要暴露端口；不写 ports 即可
-    # ports: []
+    ports: []
+    restart: "no"
 
     volumes:
       - odoodata:/var/lib/odoo
       - ./addons:/mnt/extra-addons
       - ./addons_external:/mnt/addons_external
-      # 直接挂最终 conf（不走镜像渲染）
+      - ./docs:/mnt/docs:ro
       - ./config/odoo.ci.conf:/etc/odoo/odoo.conf:ro
+      - ./scripts/ci/odoo_ci.sh:/usr/local/bin/odoo_ci.sh:ro
 
     environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/mnt/extra-addons
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: /mnt/extra-addons
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: odoo
+      DB_PASSWORD: odoo
+      ODOO_BIN: /usr/bin/odoo
+      ODOO_CONF: /etc/odoo/odoo.conf
+      DB_CI: ${DB_CI:-sc_odoo}
+      MODULE: ${MODULE:-smart_construction_core}
+      TEST_TAGS_FINAL: ${TEST_TAGS_FINAL:-sc_gate,sc_perm}
 
-    # 直接调用 odoo，避免镜像入口渲染
-    entrypoint: ["/usr/bin/odoo"]
+    entrypoint: []
+    # ✅关键：不要让镜像默认 entrypoint 接管，直接用 bash 跑脚本
     command:
-      - "--config=/etc/odoo/odoo.conf"
-      - "--db_host=${DB_HOST:-db}"
-      - "--db_port=${DB_PORT:-5432}"
-      - "--db_user=${DB_USER:-odoo}"
-      - "--db_password=${DB_PASSWORD:-odoo}"
-      - "-d"
-      - "${DB_CI:-sc_odoo}"
-      - "-i"
-      - "${MODULE:-smart_construction_core}"
-      - "--without-demo=${WITHOUT_DEMO:-all}"
-      - "${TEST_ENABLE_FLAG:---test-enable}"
-      - "--test-tags=${TEST_TAGS:-/smart_construction_core:sc_smoke,sc_gate}"
-      - "--stop-after-init"
-      - "--log-level=${LOG_LEVEL:-test}"
-      - "--log-handler=${LOG_HANDLER:-odoo.tests.result:DEBUG}"
-      - "--workers=0"
-      - "--max-cron-threads=0"
+      - bash
+      - -lc
+      - |
+          set -euo pipefail
+          echo "[CI] whoami=$(whoami) pwd=$(pwd)"
+          ls -l /usr/local/bin/odoo_ci.sh
+          bash -x /usr/local/bin/odoo_ci.sh
 
-  # CI 不需要这些，保留但默认不启
-  n8n:
-    profiles: ["manual"]
-
-  nginx:
-    profiles: ["manual"]
 
 volumes:
-  pgdata:
-  redisdata:
-  odoodata:
+  pgdata: {}
+  redisdata: {}
+  odoodata: {}
