@@ -1,55 +1,61 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source scripts/common/env.sh
-source scripts/common/compose.sh
-source scripts/common/log.sh
+source "$(dirname "$0")/../_lib/common.sh"
 
-: "${DB_CI:?DB_CI is required}"
-: "${MODULE:?MODULE is required}"
-: "${TEST_TAGS_FINAL:?TEST_TAGS_FINAL is required}"
+: "${MODULE:?MODULE required}"
+: "${DB_CI:?DB_CI required}"
+: "${ADDONS_EXTERNAL_MOUNT:?ADDONS_EXTERNAL_MOUNT required}"
+: "${DOCS_MOUNT_HOST:?DOCS_MOUNT_HOST required}"
+: "${DOCS_MOUNT_CONT:?DOCS_MOUNT_CONT required}"
 
-mkdir -p "$CI_ARTIFACT_DIR/$PROJECT_CI"
+mkdir -p "${CI_ARTIFACT_DIR}"
 
-if [[ "$CI_ARTIFACT_PURGE" == "1" ]]; then
-  ls -1dt "$CI_ARTIFACT_DIR/$PROJECT_CI"/* 2>/dev/null | tail -n +"$((CI_ARTIFACT_KEEP + 1))" | xargs -r rm -rf || true
+TEST_TAGS_FINAL="$(normalize_test_tags "${MODULE}" "${TEST_TAGS:-}")"
+log "CI run: MODULE=${MODULE} DB_CI=${DB_CI}"
+log "CI run: TEST_TAGS=${TEST_TAGS:-}"
+log "CI run: TEST_TAGS_FINAL=${TEST_TAGS_FINAL}"
+
+# 0) 准备数据库（保证干净）
+log "CI db reset: ${DB_CI}"
+compose ${COMPOSE_TEST_FILES} up -d db redis
+compose ${COMPOSE_TEST_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c "DROP DATABASE IF EXISTS ${DB_CI};"
+compose ${COMPOSE_TEST_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c "CREATE DATABASE ${DB_CI};"
+
+# 1) 确保依赖（解决 odoo_test_helper 缺失）
+bash "$(dirname "$0")/ensure_testdeps.sh"
+
+# 2) 跑测试（统一挂载 docs，避免 permission_matrix 文档找不到）
+# 注意：这里“每次都 pip install”是稳定优先策略（镜像不改也能跑通）
+# shellcheck disable=SC2086
+compose ${COMPOSE_TEST_FILES} run --rm -T \
+  -v "${DOCS_MOUNT_HOST}:${DOCS_MOUNT_CONT}:ro" \
+  --entrypoint bash odoo -lc "
+    pip3 install -q odoo-test-helper >/dev/null 2>&1 || true
+    exec /usr/bin/odoo \
+      --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_USER} \
+      -d ${DB_CI} \
+      --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,${ADDONS_EXTERNAL_MOUNT} \
+      -i ${MODULE} \
+      --without-demo=all \
+      --no-http --workers=0 --max-cron-threads=0 \
+      --test-enable \
+      --test-tags \"${TEST_TAGS_FINAL}\" \
+      --stop-after-init \
+      --log-level=test
+  " 2>&1 | tee "${CI_ARTIFACT_DIR}/${CI_LOG}"
+
+log "CI finished. Log: ${CI_ARTIFACT_DIR}/${CI_LOG}"
+
+# 3) 简单验收：看通过签名（你可以按需强化）
+if grep -Eq "${CI_PASS_SIG_RE}" "${CI_ARTIFACT_DIR}/${CI_LOG}"; then
+  log "PASS signature matched: ${CI_PASS_SIG_RE}"
+else
+  log "WARN: PASS signature NOT found (check logs)."
+  exit 1
 fi
 
-ts="$(date +%Y%m%d-%H%M%S)"
-outdir="$CI_ARTIFACT_DIR/$PROJECT_CI/$ts"
-mkdir -p "$outdir"
-
-cleanup() {
-  log "[CI][CLEANUP] collecting -> $outdir"
-  compose_ci config >"$outdir/compose.effective.yml" 2>"$outdir/compose.config.err" || true
-  compose_ci ps -a >"$outdir/ps.txt" 2>&1 || true
-  compose_ci logs --no-color --tail="$CI_TAIL_ODOO" odoo  >"$outdir/odoo.tail.log" 2>&1 || true
-  compose_ci logs --no-color --tail="$CI_TAIL_DB"   db    >"$outdir/db.tail.log"   2>&1 || true
-  compose_ci logs --no-color --tail="$CI_TAIL_REDIS" redis >"$outdir/redis.tail.log" 2>&1 || true
-  [[ -f "$CI_LOG" ]] && cp -f "$CI_LOG" "$outdir/$CI_LOG" || true
-  compose_ci down -v --remove-orphans >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
-
-log "== CI runner =="
-log "DB_CI=$DB_CI MODULE=$MODULE TEST_TAGS_FINAL=$TEST_TAGS_FINAL"
-log "artifacts=$outdir"
-echo
-
-compose_ci down -v --remove-orphans >/dev/null 2>&1 || true
-
-DB_CI="$DB_CI" \
-MODULE="$MODULE" \
-TEST_TAGS="$TEST_TAGS" \
-TEST_TAGS_FINAL="$TEST_TAGS_FINAL" \
-compose_ci up --abort-on-container-exit --exit-code-from odoo 2>&1 | tee "$CI_LOG"
-
-rc="${PIPESTATUS[0]}"
-
-# heuristic pass signature
-if [[ "$rc" -ne 0 ]] && grep -Eq "$CI_PASS_SIG_RE" "$CI_LOG"; then
-  rc=0
+# 4) 可选：清理 artifacts（保留最近 N 份）
+if [[ "${CI_ARTIFACT_PURGE:-1}" == "1" ]]; then
+  log "purge artifacts keep=${CI_ARTIFACT_KEEP}"
+  ls -1t "${CI_ARTIFACT_DIR}"/*.log 2>/dev/null | tail -n "+$((CI_ARTIFACT_KEEP+1))" | xargs -r rm -f
 fi
-
-echo "exit=$rc" >"$outdir/exit.txt"
-log "== artifacts: $outdir =="
-exit "$rc"
