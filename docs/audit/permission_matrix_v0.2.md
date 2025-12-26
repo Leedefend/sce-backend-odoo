@@ -187,6 +187,100 @@
 | Server Action / Automation | `stock.action_replenishment` | server_action | `stock.warehouse.orderpoint` | 库存补货批量生成 | `group_sc_cap_material_manager`（理想映射；当前原生为 `stock.group_stock_user`，需桥接） |
 | 导入/删除（非 Odoo Action） | `db_reset` (Makefile) | shell | `n/a` | 数据库重置 | 运维动作，需人工确认 |
 
+<!-- PERM_MATRIX_START -->
+```json
+{
+  "super_admin": {
+    "groups": ["smart_construction_core.group_sc_super_admin"],
+    "menus_allow": [
+      "smart_construction_core.menu_sc_root",
+      "smart_construction_core.menu_sc_project_center",
+      "smart_construction_core.menu_sc_finance_center",
+      "smart_construction_core.menu_sc_contract_center"
+    ],
+    "menus_deny": [],
+    "actions_allow": [
+      "smart_construction_core.action_project_dashboard",
+      "smart_construction_core.action_payment_request",
+      "smart_construction_core.action_construction_contract",
+      "smart_construction_core.action_sc_workflow_def"
+    ],
+    "actions_deny": []
+  },
+  "project_read": {
+    "groups": ["smart_construction_core.group_sc_cap_project_read"],
+    "menus_allow": ["smart_construction_core.menu_sc_project_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_finance_center"],
+    "actions_allow": ["smart_construction_core.action_project_dashboard"],
+    "actions_deny": ["smart_construction_core.action_payment_request"]
+  },
+  "project_manager": {
+    "groups": ["smart_construction_core.group_sc_cap_project_manager"],
+    "menus_allow": ["smart_construction_core.menu_sc_project_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_finance_center"],
+    "actions_allow": ["smart_construction_core.action_project_wbs"],
+    "actions_deny": ["smart_construction_core.action_payment_request"]
+  },
+  "finance_read": {
+    "groups": ["smart_construction_core.group_sc_cap_finance_read"],
+    "menus_allow": ["smart_construction_core.menu_sc_finance_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_project_center"],
+    "actions_allow": ["smart_construction_core.action_payment_request"],
+    "actions_deny": ["smart_construction_core.action_project_wbs"]
+  },
+  "finance_user": {
+    "groups": ["smart_construction_core.group_sc_cap_finance_user"],
+    "menus_allow": ["smart_construction_core.menu_sc_finance_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_project_center"],
+    "actions_allow": ["smart_construction_core.action_payment_request"],
+    "actions_deny": ["smart_construction_core.action_project_material_plan"]
+  },
+  "finance_manager": {
+    "groups": ["smart_construction_core.group_sc_cap_finance_manager"],
+    "menus_allow": ["smart_construction_core.menu_sc_finance_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_project_center"],
+    "actions_allow": ["smart_construction_core.action_sc_tier_review_my_payment_request"],
+    "actions_deny": ["smart_construction_core.action_project_material_plan"]
+  },
+  "contract_user": {
+    "groups": ["smart_construction_core.group_sc_cap_contract_user"],
+    "menus_allow": ["smart_construction_core.menu_sc_contract_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_finance_center"],
+    "actions_allow": ["smart_construction_core.action_construction_contract"],
+    "actions_deny": ["smart_construction_core.action_payment_request"]
+  },
+  "contract_manager": {
+    "groups": ["smart_construction_core.group_sc_cap_contract_manager"],
+    "menus_allow": ["smart_construction_core.menu_sc_contract_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_finance_center"],
+    "actions_allow": ["smart_construction_core.action_construction_contract"],
+    "actions_deny": ["smart_construction_core.action_payment_request"]
+  },
+  "cost_manager": {
+    "groups": ["smart_construction_core.group_sc_cap_cost_manager"],
+    "menus_allow": ["smart_construction_core.menu_sc_project_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_finance_center"],
+    "actions_allow": ["smart_construction_core.action_project_cost_compare"],
+    "actions_deny": ["smart_construction_core.action_payment_request"]
+  },
+  "material_manager": {
+    "groups": ["smart_construction_core.group_sc_cap_material_manager"],
+    "menus_allow": ["smart_construction_core.menu_sc_material_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_finance_center"],
+    "actions_allow": ["smart_construction_core.action_project_material_plan"],
+    "actions_deny": ["smart_construction_core.action_payment_request"]
+  },
+  "config_admin": {
+    "groups": ["smart_construction_core.group_sc_cap_config_admin"],
+    "menus_allow": ["smart_construction_core.menu_sc_root"],
+    "menus_deny": [],
+    "actions_allow": ["smart_construction_core.action_sc_workflow_def"],
+    "actions_deny": []
+  }
+}
+```
+<!-- PERM_MATRIX_END -->
+
 > 说明：上述列表以 “Settings/Config 全量 + Import/Export/Mass 全量 + Server Action/Automation 全量” 为口径。若新增向导/自动化，请按同一标准补充表项并绑定 SC 能力组（不要直接绑原生组）。
 
 ### Compute / Related 风险点清单（纳入回归用例）
