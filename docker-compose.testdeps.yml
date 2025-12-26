@@ -1,0 +1,6 @@
+services:
+  odoo:
+    entrypoint: ["/bin/bash", "-lc"]
+    command: |
+      pip3 install -q odoo-test-helper
+      exec /usr/local/bin/entrypoint.sh odoo

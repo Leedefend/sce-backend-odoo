@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source scripts/common/compose.sh
-compose_dev logs -f odoo
+source "$(dirname "$0")/../_lib/common.sh"
+log "dev logs"
+# shellcheck disable=SC2086
+compose ${COMPOSE_FILES} logs -f --tail=200 odoo
