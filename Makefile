@@ -12,20 +12,27 @@ ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 # ------------------ Compose ------------------
 COMPOSE_BIN ?= docker compose
 PROJECT    ?= sc
-PROJECT_CI ?= sc-ci
+
+# Compose files
+COMPOSE_FILES ?= -f docker-compose.yml
+COMPOSE_TEST_FILES ?= -f docker-compose.yml -f docker-compose.testdeps.yml
 
 # ------------------ DB / Module ------------------
 DB_NAME := sc_odoo
-DB_CI   ?= sc_odoo
+DB_CI   ?= sc_test
 DB_USER := odoo
 
 MODULE ?= smart_construction_core
 
-# ------------------ Test tags ------------------
-TEST_TAGS ?= sc_smoke,sc_gate
+# ------------------ Addons / Docs mount ------------------
+# 外部 addons 仓库在容器中的 mount 位置（你已在 addons-path 里用到）
+ADDONS_EXTERNAL_MOUNT ?= /mnt/addons_external/oca_server_ux
+DOCS_MOUNT_HOST ?= $(ROOT_DIR)/docs
+DOCS_MOUNT_CONT ?= /mnt/docs
 
-# 安全展开：逐个 tag 加 module 前缀
-TEST_TAGS_FINAL := $(TEST_TAGS)
+# ------------------ Test tags ------------------
+# 你写 sc_gate,sc_perm，脚本会自动变成 /smart_construction_core:sc_gate,/smart_construction_core:sc_perm
+TEST_TAGS ?= sc_smoke,sc_gate
 
 # ------------------ CI artifacts ------------------
 CI_LOG          ?= test-ci.log
@@ -49,13 +56,16 @@ define RUN_ENV
 ROOT_DIR="$(ROOT_DIR)" \
 COMPOSE_BIN="$(COMPOSE_BIN)" \
 PROJECT="$(PROJECT)" \
-PROJECT_CI="$(PROJECT_CI)" \
+COMPOSE_FILES='$(COMPOSE_FILES)' \
+COMPOSE_TEST_FILES='$(COMPOSE_TEST_FILES)' \
 DB_NAME="$(DB_NAME)" \
 DB_CI="$(DB_CI)" \
 DB_USER="$(DB_USER)" \
 MODULE="$(MODULE)" \
 TEST_TAGS="$(TEST_TAGS)" \
-TEST_TAGS_FINAL="$(TEST_TAGS_FINAL)" \
+ADDONS_EXTERNAL_MOUNT="$(ADDONS_EXTERNAL_MOUNT)" \
+DOCS_MOUNT_HOST="$(DOCS_MOUNT_HOST)" \
+DOCS_MOUNT_CONT="$(DOCS_MOUNT_CONT)" \
 CI_LOG="$(CI_LOG)" \
 CI_ARTIFACT_DIR="$(CI_ARTIFACT_DIR)" \
 CI_PASS_SIG_RE='$(CI_PASS_SIG_RE)' \
@@ -67,79 +77,77 @@ CI_TAIL_REDIS="$(CI_TAIL_REDIS)"
 endef
 
 # ======================================================
+# ==================== Help ============================
+# ======================================================
+.PHONY: help
+help:
+	@echo "Targets:"
+	@echo "  make up/down/restart/logs/ps/odoo-shell"
+	@echo "  make test | test.safe"
+	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
+	@echo "  make ci.clean | ci.ps | ci.logs | ci.repro"
+	@echo
+	@echo "Common vars:"
+	@echo "  MODULE=$(MODULE) DB_CI=$(DB_CI) TEST_TAGS=$(TEST_TAGS)"
+	@echo "  COMPOSE_BIN='$(COMPOSE_BIN)' PROJECT='$(PROJECT)'"
+
+# ======================================================
 # ==================== Dev =============================
 # ======================================================
 .PHONY: up down restart logs ps odoo-shell
-
 up:
 	@$(RUN_ENV) bash scripts/dev/up.sh
-
 down:
 	@$(RUN_ENV) bash scripts/dev/down.sh
-
 restart:
 	@$(RUN_ENV) bash scripts/dev/restart.sh
-
 logs:
 	@$(RUN_ENV) bash scripts/dev/logs.sh
-
 ps:
 	@$(RUN_ENV) bash scripts/dev/ps.sh
-
 odoo-shell:
 	@$(RUN_ENV) bash scripts/dev/shell.sh
-
 
 # ======================================================
 # ==================== Dev Test ========================
 # ======================================================
 .PHONY: test test.safe
-
 test:
 	@$(RUN_ENV) bash scripts/test/test.sh
-
 test.safe:
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-
 # ======================================================
-# ==================== CI v0.3 =========================
+# ==================== CI ==============================
 # ======================================================
-.PHONY: test-ci ci ci.smoke \
+.PHONY: ci.gate ci.smoke ci.full ci.repro \
         test-install-gate test-upgrade-gate \
-        ci.clean ci.ps ci.logs ci.repro
+        ci.clean ci.ps ci.logs
 
-test-ci:
-	@echo "== CI v0.3 FINAL =="
-	@echo "MODULE=$(MODULE)"
-	@echo "DB_CI=$(DB_CI)"
-	@echo "TEST_TAGS=$(TEST_TAGS)"
-	@echo "TEST_TAGS_FINAL=$(TEST_TAGS_FINAL)"
-	@echo "CI_ARTIFACT_PURGE=$(CI_ARTIFACT_PURGE) CI_ARTIFACT_KEEP=$(CI_ARTIFACT_KEEP)"
-	@echo
-	@$(RUN_ENV) bash scripts/ci/run_ci.sh
+# 只跑守门：权限/绕过（最快定位安全回归）
+ci.gate:
+	@$(RUN_ENV) TEST_TAGS="sc_gate,sc_perm" bash scripts/ci/run_ci.sh
 
+# 冒烟：基础链路 + 守门
 ci.smoke:
 	@$(RUN_ENV) TEST_TAGS="sc_smoke,sc_gate" bash scripts/ci/run_ci.sh
 
-ci:
-	@$(RUN_ENV) bash scripts/ci/install_gate.sh
-	@$(RUN_ENV) TEST_TAGS="sc_smoke,sc_gate" bash scripts/ci/run_ci.sh
+# 全量：用 TEST_TAGS（默认 sc_smoke,sc_gate，也可你自定义覆盖）
+ci.full:
+	@$(RUN_ENV) bash scripts/ci/run_ci.sh
+
+# 复现：不清理 artifacts，保留现场
+ci.repro:
+	@$(RUN_ENV) CI_ARTIFACT_PURGE=0 bash scripts/ci/run_ci.sh
 
 test-install-gate:
 	@$(RUN_ENV) bash scripts/ci/install_gate.sh
-
 test-upgrade-gate:
 	@$(RUN_ENV) bash scripts/ci/upgrade_gate.sh
 
 ci.clean:
 	@$(RUN_ENV) bash scripts/ci/ci_clean.sh
-
 ci.ps:
 	@$(RUN_ENV) bash scripts/ci/ci_ps.sh
-
 ci.logs:
 	@$(RUN_ENV) bash scripts/ci/ci_logs.sh
-
-ci.repro:
-	@$(RUN_ENV) bash scripts/ci/ci_repro.sh
