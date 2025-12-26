@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source scripts/common/compose.sh
-compose_ci ps
+source "$(dirname "$0")/../_lib/common.sh"
+log "ci ps"
+# shellcheck disable=SC2086
+compose ${COMPOSE_TEST_FILES} ps
