@@ -8,7 +8,7 @@
     </record>
 
     <!-- 销项税：收入合同默认 9% -->
-    <record id="tax_sale_vat_9" model="account.tax">
+    <record id="tax_default_sale_9" model="account.tax">
         <field name="name">销项VAT 9%</field>
         <field name="amount_type">percent</field>
         <field name="amount">9</field>
@@ -20,7 +20,7 @@
     </record>
 
     <!-- 进项税：支出合同可选 13/3/1 -->
-    <record id="tax_purchase_vat_13" model="account.tax">
+    <record id="tax_default_purchase_13" model="account.tax">
         <field name="name">进项VAT 13%</field>
         <field name="amount_type">percent</field>
         <field name="amount">13</field>

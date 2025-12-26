@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+
+
+_logger = logging.getLogger(__name__)
 
 
 class ConstructionContract(models.Model):
@@ -141,14 +146,127 @@ class ConstructionContract(models.Model):
     note = fields.Text(string="备注")
 
     @api.model
-    def _get_default_tax(self, contract_type):
-        """Return default tax by contract type."""
-        xml_map = {
-            "out": "smart_construction_core.tax_sale_vat_9",
-            "in": "smart_construction_core.tax_purchase_vat_13",
+    def _tax_use_from_contract_type(self, contract_type: str) -> str:
+        return "sale" if contract_type == "out" else "purchase"
+
+    @api.model
+    def _bind_xmlid(self, record, xmlid):
+        """Ensure ir.model.data exists and points to record (idempotent)."""
+        module, name = xmlid.split(".", 1)
+        Imd = self.env["ir.model.data"].sudo()
+        data = Imd.search([("module", "=", module), ("name", "=", name)], limit=1)
+        vals = {
+            "module": module,
+            "name": name,
+            "model": record._name,
+            "res_id": record.id,
+            "noupdate": True,
         }
-        xmlid = xml_map.get(contract_type or "out")
-        return self.env.ref(xmlid, raise_if_not_found=False)
+        if data:
+            if data.res_id != record.id or data.model != record._name:
+                data.write(vals)
+        else:
+            Imd.create(vals)
+
+    @api.model
+    def _ensure_default_tax(self, *, xmlid: str, name: str, amount: float, type_tax_use: str, aliases=None):
+        """Return a usable account.tax.
+        Prefer xmlid -> fallback to search -> fallback create.
+        Always company-scoped.
+        """
+        Tax = self.env["account.tax"].sudo()
+        company = self.env.company
+        aliases = aliases or []
+
+        # 1) xmlid
+        try:
+            tax = self.env.ref(xmlid, raise_if_not_found=True)
+            return tax
+        except Exception:
+            pass
+        # 1b) aliases: if an older xmlid存在则复用并绑定新 xmlid
+        for alias in aliases:
+            try:
+                alt_tax = self.env.ref(alias, raise_if_not_found=True)
+                self._bind_xmlid(alt_tax, xmlid)
+                return alt_tax
+            except Exception:
+                continue
+
+        # 2) search by company + type + amount + name
+        tax = Tax.with_context(active_test=False).search(
+            [
+                ("company_id", "=", company.id),
+                ("type_tax_use", "in", [type_tax_use, "all"]),
+                ("amount_type", "=", "percent"),
+                ("amount", "=", float(amount)),
+                ("name", "=", name),
+            ],
+            limit=1,
+        )
+        if tax:
+            _logger.warning("Default tax xmlid missing: %s. Reuse existing tax id=%s name=%s", xmlid, tax.id, tax.name)
+            self._bind_xmlid(tax, xmlid)
+            for alias in aliases:
+                self._bind_xmlid(tax, alias)
+            return tax
+
+        # 3) create minimal tax
+        vals = {
+            "name": name,
+            "company_id": company.id,
+            "type_tax_use": type_tax_use,
+            "amount_type": "percent",
+            "amount": float(amount),
+            "active": True,
+        }
+        try:
+            tax = Tax.create(vals)
+            _logger.warning("Default tax xmlid missing: %s. Created tax id=%s name=%s", xmlid, tax.id, tax.name)
+            self._bind_xmlid(tax, xmlid)
+            for alias in aliases:
+                self._bind_xmlid(tax, alias)
+            return tax
+        except ValidationError:
+            # 名称唯一冲突：再搜一次兜底
+            tax = Tax.with_context(active_test=False).search(
+                [
+                    ("company_id", "=", company.id),
+                    ("type_tax_use", "in", [type_tax_use, "all"]),
+                    ("amount_type", "=", "percent"),
+                    ("amount", "=", float(amount)),
+                    ("name", "=", name),
+                ],
+                limit=1,
+            )
+            if tax:
+                self._bind_xmlid(tax, xmlid)
+                for alias in aliases:
+                    self._bind_xmlid(tax, alias)
+                return tax
+            raise
+
+    @api.model
+    def _get_default_tax(self, contract_type):
+        """Return default tax by contract type with self-healing fallback."""
+        type_tax_use = self._tax_use_from_contract_type(contract_type or "out")
+        if type_tax_use == "sale":
+            xmlid = "smart_construction_core.tax_default_sale_9"
+            name = "销项VAT 9%"
+            amount = 9.0
+            aliases = ["smart_construction_core.tax_sale_vat_9"]
+        else:
+            xmlid = "smart_construction_core.tax_default_purchase_13"
+            name = "进项VAT 13%"
+            amount = 13.0
+            aliases = ["smart_construction_core.tax_purchase_vat_13"]
+        return self._ensure_default_tax(
+            xmlid=xmlid,
+            name=name,
+            amount=amount,
+            type_tax_use=type_tax_use,
+            aliases=aliases,
+        )
 
     @api.model
     def default_get(self, fields_list):
@@ -156,8 +274,6 @@ class ConstructionContract(models.Model):
         contract_type = res.get("type") or "out"
         if "tax_id" in fields_list and not res.get("tax_id"):
             default_tax = self._get_default_tax(contract_type)
-            if not default_tax:
-                raise UserError("默认税率主数据未加载，请确认 data/tax.xml 已安装并存在对应 xmlid。")
             res["tax_id"] = default_tax.id
         return res
 
@@ -272,8 +388,6 @@ class ConstructionContract(models.Model):
                 vals["type"] = "out"
             if not vals.get("tax_id"):
                 default_tax = self._get_default_tax(vals["type"])
-                if not default_tax:
-                    raise UserError("默认税率主数据未加载，请确认 data/tax.xml 已安装并存在对应 xmlid。")
                 vals["tax_id"] = default_tax.id
             if not vals.get("name") or vals["name"] == "新建":
                 seq_code = (

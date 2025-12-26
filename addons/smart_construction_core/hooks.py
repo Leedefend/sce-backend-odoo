@@ -15,7 +15,7 @@ def _bind_xmlid(env, record, xmlid, model):
                 "name": name,
                 "model": model,
                 "res_id": record.id,
-                "noupdate": False,
+                "noupdate": True,
             }
         )
 
@@ -50,6 +50,10 @@ def ensure_core_taxes(env_or_cr, registry=None):
         _bind_xmlid(env, tax_group, "smart_construction_core.tax_group_vat_cn", "account.tax.group")
 
     tax_defs = [
+        # 默认 xmlid（合同、测试依赖）
+        ("smart_construction_core.tax_default_sale_9", "销项VAT 9%", 9, "sale"),
+        ("smart_construction_core.tax_default_purchase_13", "进项VAT 13%", 13, "purchase"),
+        # 兼容旧命名
         ("smart_construction_core.tax_sale_vat_9", "销项VAT 9%", 9, "sale"),
         ("smart_construction_core.tax_purchase_vat_13", "进项VAT 13%", 13, "purchase"),
         ("smart_construction_core.tax_purchase_vat_3", "进项VAT 3%", 3, "purchase"),
@@ -58,10 +62,13 @@ def ensure_core_taxes(env_or_cr, registry=None):
     for xmlid, name, amount, tax_use in tax_defs:
         tax = env.ref(xmlid, raise_if_not_found=False)
         if not tax:
-            tax = env["account.tax"].search([
-                ("name", "=", name),
+            Tax = env["account.tax"].with_context(active_test=False)
+            tax = Tax.search([
                 ("company_id", "=", company.id),
                 ("type_tax_use", "=", tax_use),
+                ("amount_type", "=", "percent"),
+                ("amount", "=", amount),
+                ("name", "=", name),
             ], limit=1)
             if not tax:
                 vals = {
@@ -75,5 +82,8 @@ def ensure_core_taxes(env_or_cr, registry=None):
                 }
                 if country:
                     vals["country_id"] = country.id
-                tax = env["account.tax"].create(vals)
-            _bind_xmlid(env, tax, xmlid, "account.tax")
+                tax = Tax.create(vals)
+            else:
+                if not tax.active:
+                    tax.active = True
+        _bind_xmlid(env, tax, xmlid, "account.tax")
