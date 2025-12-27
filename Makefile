@@ -22,6 +22,14 @@ DB_NAME := sc_odoo
 DB_CI   ?= sc_test
 DB_USER := odoo
 
+# ------------------ DB override (single entry) ------------------
+# Use one knob to control dev/test db: `make test DB=sc_test`
+# CI keeps its own DB_CI unless你显式覆盖。
+DB ?=
+ifneq ($(strip $(DB)),)
+DB_NAME := $(DB)
+endif
+
 MODULE ?= smart_construction_core
 
 # ------------------ Addons / Docs mount ------------------
@@ -82,7 +90,7 @@ endef
 .PHONY: help
 help:
 	@echo "Targets:"
-	@echo "  make up/down/restart/logs/ps/odoo-shell"
+	@echo "  make up/down/restart/logs/ps/odoo-shell/db.reset"
 	@echo "  make test | test.safe"
 	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
 	@echo "  make ci.clean | ci.ps | ci.logs | ci.repro"
@@ -107,6 +115,8 @@ ps:
 	@$(RUN_ENV) bash scripts/dev/ps.sh
 odoo-shell:
 	@$(RUN_ENV) bash scripts/dev/shell.sh
+db.reset:
+	@$(RUN_ENV) bash scripts/db/reset.sh
 
 # ======================================================
 # ==================== Dev Test ========================

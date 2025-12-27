@@ -20,7 +20,6 @@
     'data': [
         # 基础数据
         'data/sequence.xml',
-        'data/tax.xml',
         'data/dictionary_demo.xml',
         'data/cost_demo.xml',
         'data/project_stage_data.xml',
@@ -85,6 +84,7 @@
             'smart_construction_core/static/src/scss/project_quota_center.scss',
         ],
     },
+    'pre_init_hook': 'pre_init_hook',
     'post_init_hook': 'ensure_core_taxes',
     'demo': [
         'demo/sc_demo_users.xml',
