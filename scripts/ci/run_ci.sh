@@ -4,6 +4,8 @@ source "$(dirname "$0")/../_lib/common.sh"
 
 : "${MODULE:?MODULE required}"
 : "${DB_CI:?DB_CI required}"
+: "${DB_USER:=odoo}"
+: "${DB_PASSWORD:=${DB_USER}}"
 : "${ADDONS_EXTERNAL_MOUNT:?ADDONS_EXTERNAL_MOUNT required}"
 : "${DOCS_MOUNT_HOST:?DOCS_MOUNT_HOST required}"
 : "${DOCS_MOUNT_CONT:?DOCS_MOUNT_CONT required}"
@@ -18,8 +20,28 @@ log "CI run: TEST_TAGS_FINAL=${TEST_TAGS_FINAL}"
 # 0) 准备数据库（保证干净）
 log "CI db reset: ${DB_CI}"
 compose ${COMPOSE_TEST_FILES} up -d db redis
+
+# 等待 Postgres 就绪（容器刚启动时 socket 可能还没创建）
+log "CI db wait: pg_isready"
+for i in $(seq 1 60); do
+  if compose ${COMPOSE_TEST_FILES} exec -T db pg_isready -U "${DB_USER}" -d postgres >/dev/null 2>&1; then
+    log "CI db ready"
+    break
+  fi
+  if [[ "$i" -eq 60 ]]; then
+    log "CI db NOT ready after 60s"
+    compose ${COMPOSE_TEST_FILES} logs --tail=200 db || true
+    exit 2
+  fi
+  sleep 1
+done
+
+# 断开可能残留的连接，保证 DROP 成功
+compose ${COMPOSE_TEST_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c \
+  "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_CI}';" >/dev/null || true
 compose ${COMPOSE_TEST_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c "DROP DATABASE IF EXISTS ${DB_CI};"
-compose ${COMPOSE_TEST_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c "CREATE DATABASE ${DB_CI};"
+compose ${COMPOSE_TEST_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c \
+  "CREATE DATABASE ${DB_CI} OWNER ${DB_USER} TEMPLATE template0 ENCODING 'UTF8';"
 
 # 1) 确保依赖（解决 odoo_test_helper 缺失）
 bash "$(dirname "$0")/ensure_testdeps.sh"
@@ -32,7 +54,7 @@ compose ${COMPOSE_TEST_FILES} run --rm -T \
   --entrypoint bash odoo -lc "
     pip3 install -q odoo-test-helper >/dev/null 2>&1 || true
     exec /usr/bin/odoo \
-      --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_USER} \
+      --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
       -d ${DB_CI} \
       --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,${ADDONS_EXTERNAL_MOUNT} \
       -i ${MODULE} \
