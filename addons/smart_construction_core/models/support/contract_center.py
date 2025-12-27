@@ -2,7 +2,7 @@
 import logging
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
 
 
 _logger = logging.getLogger(__name__)
@@ -18,6 +18,11 @@ class ConstructionContract(models.Model):
     _description = "项目合同"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "project_id, type, id desc"
+
+    def _register_hook(self):
+        """Ensure model registration finishes cleanly."""
+        res = super()._register_hook()
+        return res
 
     # --- Identity & basics -------------------------------------------------
     name = fields.Char(
@@ -150,68 +155,29 @@ class ConstructionContract(models.Model):
         return "sale" if contract_type == "out" else "purchase"
 
     @api.model
-    def _bind_xmlid(self, record, xmlid):
-        """Ensure ir.model.data exists and points to record (idempotent)."""
-        module, name = xmlid.split(".", 1)
-        Imd = self.env["ir.model.data"].sudo()
-        data = Imd.search([("module", "=", module), ("name", "=", name)], limit=1)
-        vals = {
-            "module": module,
-            "name": name,
-            "model": record._name,
-            "res_id": record.id,
-            "noupdate": True,
-        }
-        if data:
-            if data.res_id != record.id or data.model != record._name:
-                data.write(vals)
-        else:
-            Imd.create(vals)
+    def _find_or_create_tax(self, *, name: str, amount: float, type_tax_use: str):
+        """Return an account.tax scoped to company with idempotent search/create.
 
-    @api.model
-    def _ensure_default_tax(self, *, xmlid: str, name: str, amount: float, type_tax_use: str, aliases=None):
-        """Return a usable account.tax.
-        Prefer xmlid -> fallback to search -> fallback create.
-        Always company-scoped.
+        - Primary search: company + type_tax_use/all + amount_type=percent + amount
+        - If multiple, prefer same name; otherwise pick the first match.
+        - Create minimal tax when missing.
         """
         Tax = self.env["account.tax"].sudo()
         company = self.env.company
-        aliases = aliases or []
-
-        # 1) xmlid
-        try:
-            tax = self.env.ref(xmlid, raise_if_not_found=True)
-            return tax
-        except Exception:
-            pass
-        # 1b) aliases: if an older xmlid存在则复用并绑定新 xmlid
-        for alias in aliases:
-            try:
-                alt_tax = self.env.ref(alias, raise_if_not_found=True)
-                self._bind_xmlid(alt_tax, xmlid)
-                return alt_tax
-            except Exception:
-                continue
-
-        # 2) search by company + type + amount + name
-        tax = Tax.with_context(active_test=False).search(
-            [
-                ("company_id", "=", company.id),
-                ("type_tax_use", "in", [type_tax_use, "all"]),
-                ("amount_type", "=", "percent"),
-                ("amount", "=", float(amount)),
-                ("name", "=", name),
-            ],
-            limit=1,
-        )
-        if tax:
-            _logger.warning("Default tax xmlid missing: %s. Reuse existing tax id=%s name=%s", xmlid, tax.id, tax.name)
-            self._bind_xmlid(tax, xmlid)
-            for alias in aliases:
-                self._bind_xmlid(tax, alias)
+        domain = [
+            ("company_id", "=", company.id),
+            ("type_tax_use", "in", [type_tax_use, "all"]),
+            ("amount_type", "=", "percent"),
+            ("amount", "=", float(amount)),
+        ]
+        candidates = Tax.with_context(active_test=False).search(domain)
+        if candidates:
+            exact = candidates.filtered(lambda t: t.name == name)
+            tax = (exact or candidates[:1])[0]
+            if not tax.active:
+                tax.active = True
             return tax
 
-        # 3) create minimal tax
         vals = {
             "name": name,
             "company_id": company.id,
@@ -220,52 +186,24 @@ class ConstructionContract(models.Model):
             "amount": float(amount),
             "active": True,
         }
-        try:
-            tax = Tax.create(vals)
-            _logger.warning("Default tax xmlid missing: %s. Created tax id=%s name=%s", xmlid, tax.id, tax.name)
-            self._bind_xmlid(tax, xmlid)
-            for alias in aliases:
-                self._bind_xmlid(tax, alias)
-            return tax
-        except ValidationError:
-            # 名称唯一冲突：再搜一次兜底
-            tax = Tax.with_context(active_test=False).search(
-                [
-                    ("company_id", "=", company.id),
-                    ("type_tax_use", "in", [type_tax_use, "all"]),
-                    ("amount_type", "=", "percent"),
-                    ("amount", "=", float(amount)),
-                    ("name", "=", name),
-                ],
-                limit=1,
-            )
-            if tax:
-                self._bind_xmlid(tax, xmlid)
-                for alias in aliases:
-                    self._bind_xmlid(tax, alias)
-                return tax
-            raise
+        tax = Tax.create(vals)
+        _logger.warning("Default tax missing: created tax id=%s name=%s", tax.id, tax.name)
+        return tax
 
     @api.model
     def _get_default_tax(self, contract_type):
         """Return default tax by contract type with self-healing fallback."""
         type_tax_use = self._tax_use_from_contract_type(contract_type or "out")
         if type_tax_use == "sale":
-            xmlid = "smart_construction_core.tax_default_sale_9"
             name = "销项VAT 9%"
             amount = 9.0
-            aliases = ["smart_construction_core.tax_sale_vat_9"]
         else:
-            xmlid = "smart_construction_core.tax_default_purchase_13"
             name = "进项VAT 13%"
             amount = 13.0
-            aliases = ["smart_construction_core.tax_purchase_vat_13"]
-        return self._ensure_default_tax(
-            xmlid=xmlid,
+        return self._find_or_create_tax(
             name=name,
             amount=amount,
             type_tax_use=type_tax_use,
-            aliases=aliases,
         )
 
     @api.model
