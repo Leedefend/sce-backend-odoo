@@ -90,7 +90,7 @@ endef
 .PHONY: help
 help:
 	@echo "Targets:"
-	@echo "  make up/down/restart/logs/ps/odoo-shell/db.reset"
+	@echo "  make up/down/restart/logs/ps/odoo-shell/db.reset/demo.reset"
 	@echo "  make test | test.safe"
 	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
 	@echo "  make ci.clean | ci.ps | ci.logs | ci.repro"
@@ -117,6 +117,8 @@ odoo-shell:
 	@$(RUN_ENV) bash scripts/dev/shell.sh
 db.reset:
 	@$(RUN_ENV) bash scripts/db/reset.sh
+demo.reset:
+	@$(RUN_ENV) DB=sc_demo bash scripts/demo/reset.sh
 
 # ======================================================
 # ==================== Dev Test ========================
