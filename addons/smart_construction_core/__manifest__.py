@@ -85,7 +85,7 @@
         ],
     },
     'pre_init_hook': 'pre_init_hook',
-    'post_init_hook': 'ensure_core_taxes',
+    'post_init_hook': 'post_init_hook',
     'demo': [
         'demo/sc_demo_users.xml',
         # 'data/cost_domain_demo.xml',
