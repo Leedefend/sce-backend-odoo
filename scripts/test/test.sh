@@ -14,7 +14,6 @@ compose ${COMPOSE_FILES} run --rm -T \
       -d ${DB_NAME} \
       --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,${ADDONS_EXTERNAL_MOUNT} \
       -i ${MODULE} \
-      -u ${MODULE} \
       --without-demo=all \
       --no-http --workers=0 --max-cron-threads=0 \
       --test-enable \
