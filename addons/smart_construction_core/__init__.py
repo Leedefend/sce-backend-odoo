@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 from . import models
 from . import wizard
-from .hooks import ensure_core_taxes
+from .hooks import pre_init_hook, ensure_core_taxes
