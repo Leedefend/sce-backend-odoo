@@ -1,0 +1,2 @@
+# Odoo runtime python dependencies
+openpyxl
