@@ -11,6 +11,7 @@ logfile = False
 
 ; 锁库：只允许 sc_odoo（你当前库名）
 dbfilter = ${ODOO_DBFILTER}
+data_dir = /var/lib/odoo
 
 proxy_mode = True
 limit_time_real = 1800

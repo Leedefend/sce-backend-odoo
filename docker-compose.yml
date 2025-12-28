@@ -40,6 +40,9 @@ services:
   # Odoo 后端服务（核心）
   # ============================================================
   odoo:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: odoo17-odoo:latest
     container_name: sc-odoo
     restart: unless-stopped
