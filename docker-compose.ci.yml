@@ -31,8 +31,6 @@ services:
   odoo:
     image: odoo17-odoo:latest
     container_name: sc-ci-odoo
-    profiles: ["ci"]
-
     user: "odoo"
     depends_on:
       db:
