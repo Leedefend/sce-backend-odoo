@@ -10,17 +10,29 @@ SHELL := bash
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # ------------------ Compose ------------------
-COMPOSE_BIN ?= docker compose
-PROJECT    ?= sc
+COMPOSE ?= docker compose
+COMPOSE_BIN ?= $(COMPOSE)
+COMPOSE_PROJECT_NAME ?= sc
+PROJECT    ?= $(COMPOSE_PROJECT_NAME)
 
-# Compose files
-COMPOSE_FILES ?= -f docker-compose.yml
-COMPOSE_TEST_FILES ?= -f docker-compose.yml -f docker-compose.testdeps.yml
+# Compose files / overlays
+COMPOSE_FILE_BASE ?= docker-compose.yml
+COMPOSE_FILE_TESTDEPS ?= docker-compose.testdeps.yml
+COMPOSE_FILE_CI ?= docker-compose.ci.yml
+COMPOSE_FILES ?= -f $(COMPOSE_FILE_BASE)
+COMPOSE_TEST_FILES ?= -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_TESTDEPS)
+COMPOSE_CI_FILES ?= -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_CI)
+
+# Canonical compose commands
+COMPOSE_BASE      = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE)
+COMPOSE_TESTDEPS  = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_TESTDEPS)
+COMPOSE_CI        = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_CI)
 
 # ------------------ DB / Module ------------------
 DB_NAME := sc_odoo
 DB_CI   ?= sc_test
 DB_USER := odoo
+DB_PASSWORD ?= $(DB_USER)
 
 # ------------------ DB override (single entry) ------------------
 # Use one knob to control dev/test db: `make test DB=sc_test`
@@ -31,6 +43,8 @@ DB_NAME := $(DB)
 endif
 
 MODULE ?= smart_construction_core
+WITHOUT_DEMO ?= --without-demo=all
+ODOO_ARGS ?=
 
 # ------------------ Addons / Docs mount ------------------
 # 外部 addons 仓库在容器中的 mount 位置（你已在 addons-path 里用到）
@@ -63,12 +77,15 @@ export MSYS2_ARG_CONV_EXCL := --test-tags
 define RUN_ENV
 ROOT_DIR="$(ROOT_DIR)" \
 COMPOSE_BIN="$(COMPOSE_BIN)" \
+COMPOSE_PROJECT_NAME="$(COMPOSE_PROJECT_NAME)" \
 PROJECT="$(PROJECT)" \
-COMPOSE_FILES='$(COMPOSE_FILES)' \
-COMPOSE_TEST_FILES='$(COMPOSE_TEST_FILES)' \
+COMPOSE_FILES="$(COMPOSE_FILES)" \
+COMPOSE_TEST_FILES="$(COMPOSE_TEST_FILES)" \
+COMPOSE_CI_FILES="$(COMPOSE_CI_FILES)" \
 DB_NAME="$(DB_NAME)" \
 DB_CI="$(DB_CI)" \
 DB_USER="$(DB_USER)" \
+DB_PASSWORD="$(DB_PASSWORD)" \
 MODULE="$(MODULE)" \
 TEST_TAGS="$(TEST_TAGS)" \
 ADDONS_EXTERNAL_MOUNT="$(ADDONS_EXTERNAL_MOUNT)" \
@@ -90,10 +107,12 @@ endef
 .PHONY: help
 help:
 	@echo "Targets:"
-	@echo "  make up/down/restart/logs/ps/odoo-shell/db.reset"
+	@echo "  make up/down/restart/logs/ps/odoo-shell/db.reset/demo.reset"
+	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
 	@echo "  make test | test.safe"
 	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
 	@echo "  make ci.clean | ci.ps | ci.logs | ci.repro"
+	@echo "  make diag.compose"
 	@echo
 	@echo "Common vars:"
 	@echo "  MODULE=$(MODULE) DB_CI=$(DB_CI) TEST_TAGS=$(TEST_TAGS)"
@@ -116,7 +135,54 @@ ps:
 odoo-shell:
 	@$(RUN_ENV) bash scripts/dev/shell.sh
 db.reset:
-	@$(RUN_ENV) bash scripts/db/reset.sh
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
+demo.reset:
+	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
+
+# ======================================================
+# ==================== Module Ops ======================
+# ======================================================
+.PHONY: mod.install mod.upgrade
+mod.install:
+	@echo "[mod.install] module=$(MODULE) db=$(DB_NAME)"
+	@test -n "$(MODULE)" || (echo "ERROR: MODULE is required. e.g. make mod.install MODULE=smart_construction_core" && exit 2)
+	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
+		--entrypoint /usr/bin/odoo odoo \
+		--config=/etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
+		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		-i $(MODULE) \
+		$(WITHOUT_DEMO) \
+		--no-http --workers=0 --max-cron-threads=0 \
+		--stop-after-init $(ODOO_ARGS)
+
+mod.upgrade:
+	@echo "[mod.upgrade] module=$(MODULE) db=$(DB_NAME)"
+	@test -n "$(MODULE)" || (echo "ERROR: MODULE is required. e.g. make mod.upgrade MODULE=smart_construction_core" && exit 2)
+	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
+		--entrypoint /usr/bin/odoo odoo \
+		--config=/etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
+		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		-u $(MODULE) \
+		$(WITHOUT_DEMO) \
+		--no-http --workers=0 --max-cron-threads=0 \
+		--stop-after-init $(ODOO_ARGS)
+
+.PHONY: diag.compose
+diag.compose:
+	@echo "=== base ==="
+	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
+	@echo "=== base+ci ==="
+	@$(COMPOSE_CI) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
+	@echo "=== base+testdeps ==="
+	@out="$$( $(COMPOSE_TESTDEPS) config 2>&1 )"; \
+	status=$$?; \
+	echo "$$out" | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'; \
+	echo "=== base+testdeps err ==="; \
+	if [ $$status -ne 0 ]; then echo "$$out" | sed -n '1,120p'; fi
 
 # ======================================================
 # ==================== Dev Test ========================
