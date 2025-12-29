@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data noupdate="1">
+
+        <!-- S40-B: 数值不一致（收款金额 > 结算金额） -->
+        <record id="sc_demo_settlement_040_amount_bad" model="sc.settlement.order">
+            <field name="name">S40-SETTLEMENT-AMOUNT-BAD</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="currency_id" ref="base.CNY"/>
+            <field name="settlement_type">in</field>
+        </record>
+
+        <record id="sc_demo_settle_line_040_amount_001" model="sc.settlement.order.line">
+            <field name="name">S40-结算明细-金额不一致</field>
+            <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_040_amount_bad"/>
+            <field name="qty">1</field>
+            <field name="price_unit">500000.00</field>
+            <field name="amount">500000.00</field>
+        </record>
+
+        <record id="sc_demo_payment_040_amount_001" model="payment.request">
+            <field name="type">receive</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="amount">900000.00</field>
+            <field name="date_request">2025-04-01</field>
+            <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_040_amount_bad"/>
+        </record>
+
     </data>
 </odoo>
