@@ -226,6 +226,9 @@ demo.verify:
 	@echo "✓ check S20 settlement lines >= 2"
 	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
 		"select case when count(*) >= 2 then 'ok' else 'S20 settlement lines < 2' end from sc_settlement_order_line where id in (select res_id from ir_model_data where module='smart_construction_demo' and name in ('sc_demo_settle_line_020_001','sc_demo_settle_line_020_002'));" | grep -qx ok
+	@echo "✓ check S20 settlement links to at least 1 payment request"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S20 settlement has no linked payment_request' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_020_001');" | grep -qx ok
 	@echo "🎉 demo.verify PASSED"
 
 .ONESHELL: demo.load demo.list
