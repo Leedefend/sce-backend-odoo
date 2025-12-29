@@ -39,5 +39,7 @@ check_eq "module smart_construction_bootstrap installed" "installed" "SELECT sta
 check_eq "module smart_construction_seed installed" "installed" "SELECT state FROM ir_module_module WHERE name='smart_construction_seed';"
 check_eq "module smart_construction_demo installed" "installed" "SELECT state FROM ir_module_module WHERE name='smart_construction_demo';"
 check_eq "seed execution flag" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.enabled'), '0');"
+check_eq "seed last_steps contains sanity" "1" "SELECT ((POSITION('sanity' IN COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.last_steps'), '')) > 0)::int);"
+check_eq "seed sanity ran flag" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.sanity_ran'), '0');"
 
 echo "[verify.demo] PASS ALL on ${DB_NAME}"
