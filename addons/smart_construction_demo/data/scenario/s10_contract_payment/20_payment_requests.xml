@@ -2,7 +2,7 @@
 <odoo>
   <data noupdate="1">
 
-    <!-- S10: 收款申请（最小字段集，保持 draft） -->
+    <!-- S10: 收款申请（最小字段集，保持 draft；合同 type=out 对应申请 type=receive） -->
     <record id="sc_demo_pay_req_010_001" model="payment.request">
       <field name="type">receive</field>
       <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
