@@ -251,6 +251,24 @@ demo.list:
 	for k in sorted(SCENARIOS.keys()): print(k)
 	PY
 
+.PHONY: demo.load.all
+demo.load.all:
+	@echo "[demo.load.all] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
+		--entrypoint /usr/bin/odoo odoo \
+		shell --config=/etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
+		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--no-http --workers=0 --max-cron-threads=0 \
+		<<-'PY'
+	from odoo.addons.smart_construction_demo.tools.scenario_loader import load_all
+	print("[demo.load.all] loading all scenarios")
+	load_all(env, mode="update")
+	print("[demo.load.all] done")
+	PY
+
 .PHONY: diag.compose
 diag.compose:
 	@echo "=== base ==="
