@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <!-- S10: 收款申请（最小字段集，保持 draft） -->
+    <record id="sc_demo_pay_req_010_001" model="payment.request">
+      <field name="type">receive</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="contract_id" ref="sc_demo_contract_out_010"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="amount">5000000.0</field>
+      <field name="date_request">2025-02-15</field>
+    </record>
+
+  </data>
+</odoo>
