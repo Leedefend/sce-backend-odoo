@@ -37,6 +37,14 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s30_settlement_workflow/30_assert_state.xml",
         ],
     },
+    "s40_failure_paths": {
+        "sequence": 40,
+        "files": [
+            "data/scenario/s40_failure_paths/10_invalid_settlement.xml",
+            "data/scenario/s40_failure_paths/20_invalid_amounts.xml",
+            "data/scenario/s40_failure_paths/30_invalid_links.xml",
+        ],
+    },
 }
 
 
