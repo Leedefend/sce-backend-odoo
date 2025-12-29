@@ -24,6 +24,27 @@ SCENARIOS: Dict[str, List[str]] = {
 }
 
 
+def _normalize_registry() -> Dict[str, Dict[str, List[str] | int]]:
+    """
+    Normalize SCENARIOS to:
+      {name: {"sequence": int, "files": List[str]}}
+    Backward compatible with legacy list-only entries.
+    """
+    normalized: Dict[str, Dict[str, List[str] | int]] = {}
+    for name, spec in SCENARIOS.items():
+        if isinstance(spec, dict):
+            files = spec.get("files") or []
+            seq = int(spec.get("sequence", 0))
+        else:
+            files = spec
+            seq = 0
+        normalized[name] = {
+            "sequence": seq,
+            "files": files,
+        }
+    return normalized
+
+
 def load_scenario(env, scenario: str, mode: str = "update") -> None:
     """
     Load a demo scenario XML files into current DB using Odoo converter.
@@ -40,7 +61,8 @@ def load_scenario(env, scenario: str, mode: str = "update") -> None:
         raise ValueError(f"unknown scenario '{scenario}'. known: {known}")
 
     module = "smart_construction_demo"
-    files = SCENARIOS[scenario]
+    registry = _normalize_registry()
+    files = registry[scenario]["files"]
 
     # idref is used by Odoo converter to resolve xmlids in-file
     idref = {}
@@ -67,5 +89,10 @@ def load_all(env, mode: str = "update") -> None:
     """
     Load all registered scenarios in stable order.
     """
-    for scenario in sorted(SCENARIOS.keys()):
+    registry = _normalize_registry()
+    ordered = sorted(
+        registry.items(),
+        key=lambda item: (item[1]["sequence"], item[0]),
+    )
+    for scenario, _spec in ordered:
         load_scenario(env, scenario, mode=mode)
