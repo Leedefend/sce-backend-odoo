@@ -19,7 +19,7 @@ class ProjectProjectFinancial(models.Model):
     def action_open_project_contracts(self):
         """从项目详情页打开当前项目的合同列表。"""
         self.ensure_one()
-        action = self.env.ref("smart_construction_core.action_project_contract").read()[0]
+        action = self.env.ref("smart_construction_core.action_construction_contract").read()[0]
 
         action["domain"] = [("project_id", "=", self.id)]
         ctx = dict(self.env.context)
