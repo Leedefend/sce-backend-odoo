@@ -196,6 +196,11 @@ make demo.list DB_NAME=sc_demo
 make demo.load.all DB_NAME=sc_demo
 ```
 
+一键重建演示库（清库 → 安装 → 全量加载 → 验收）：
+```bash
+make demo.rebuild DB_NAME=sc_demo
+```
+
 ---
 
 ## 常见问题（Troubleshooting）
