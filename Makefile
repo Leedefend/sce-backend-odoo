@@ -138,6 +138,8 @@ db.reset:
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 demo.reset:
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
+db.demo.reset:
+	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 
 # ======================================================
 # ==================== Module Ops ======================
