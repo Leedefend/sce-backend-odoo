@@ -3,6 +3,7 @@ import logging
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import config
 
 
 _logger = logging.getLogger(__name__)
@@ -193,22 +194,40 @@ class ConstructionContract(models.Model):
         if type_tax_use == "sale":
             name = "销项VAT 9%"
             amount = 9.0
+            xmlid = "smart_construction_seed.tax_sale_9"
         else:
             name = "进项VAT 13%"
             amount = 13.0
+            xmlid = "smart_construction_seed.tax_purchase_13"
+
+        # 优先 XMLID（seed/demo 可提供）
+        tax = self.env.ref(xmlid, raise_if_not_found=False)
+        if tax:
+            return tax
+
         try:
-            return self._find_tax(
-                name=name,
-                amount=amount,
-                type_tax_use=type_tax_use,
-            )
+            return self._find_tax(name=name, amount=amount, type_tax_use=type_tax_use)
         except UserError:
-            allow = bool(self.env.context.get("sc_autocreate_default_tax")) or bool(
-                getattr(self.env.registry, "in_test_mode", lambda: False)()
-            )
+            allow_test_mode = False
+            in_test = getattr(self.env.registry, "in_test_mode", None)
+            if callable(in_test):
+                allow_test_mode = bool(in_test())
+            allow = bool(config.get("test_enable")) or bool(self.env.context.get("sc_test_mode")) or allow_test_mode
             if not allow:
                 raise
             Tax = self.env["account.tax"].sudo()
+            domain = [
+                ("company_id", "=", self.env.company.id),
+                ("type_tax_use", "in", [type_tax_use, "all"]),
+                ("amount_type", "=", "percent"),
+                ("price_include", "=", False),
+                ("amount", "=", float(amount)),
+            ]
+            existing = Tax.with_context(active_test=False).search(domain, limit=1)
+            if existing:
+                if not existing.active:
+                    existing.active = True
+                return existing
             tax = Tax.create(
                 {
                     "name": name,
