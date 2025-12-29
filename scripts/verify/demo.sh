@@ -41,5 +41,9 @@ check_eq "module smart_construction_demo installed" "installed" "SELECT state FR
 check_eq "seed execution flag" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.enabled'), '0');"
 check_eq "seed last_steps contains sanity" "1" "SELECT ((POSITION('sanity' IN COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.last_steps'), '')) > 0)::int);"
 check_eq "seed sanity ran flag" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.sanity_ran'), '0');"
+check_eq "seed dictionary marker" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.dictionary'), '0');"
+check_eq "seed project skeleton marker" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.project_skeleton'), '0');"
+check_eq "seed boq sample marker" "10" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.boq_count'), '0');"
+check_eq "seed metrics smoke marker" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.metrics_smoke'), '0');"
 
 echo "[verify.demo] PASS ALL on ${DB_NAME}"
