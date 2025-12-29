@@ -109,6 +109,7 @@ help:
 	@echo "Targets:"
 	@echo "  make up/down/restart/logs/ps/odoo-shell/db.reset/demo.reset"
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
+	@echo "  make db.branch | db.create DB=<name> | db.reset.manual DB=<name>"
 	@echo "  make test | test.safe"
 	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
 	@echo "  make ci.clean | ci.ps | ci.logs | ci.repro"
@@ -140,6 +141,12 @@ demo.reset:
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 db.demo.reset:
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
+db.branch:
+	@bash scripts/db/branch_db.sh
+db.create:
+	@bash scripts/db/create.sh $(DB)
+db.reset.manual:
+	@bash scripts/db/reset_manual.sh $(DB)
 verify.baseline:
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo:
