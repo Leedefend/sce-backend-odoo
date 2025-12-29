@@ -106,6 +106,23 @@ make mod.upgrade MODULE=smart_construction_demo DB_NAME=sc_demo
 
 ---
 
+## S10 合同付款演示路径（最小闭环）
+
+场景目录：`data/scenario/s10_contract_payment/`
+
+- 合同：`sc_demo_contract_out_010`（model: `construction.contract`，type=out）
+- 付款申请：`sc_demo_pay_req_010_001`（model: `payment.request`，保持 draft；type=receive 与合同类型约束一致）
+- 发票：`sc_demo_invoice_s10_001`、`sc_demo_invoice_s10_002`（默认 draft）
+
+> 说明：S10 目前不默认写入 `__manifest__.py`，以保持 S00 为默认稳定演示路径；需要时可临时加入 manifest 进行加载验证。
+
+验收命令：
+```bash
+make demo.verify DB_NAME=sc_demo
+```
+
+---
+
 ## 验收断言（Acceptance Checklist）
 
 在数据库 `sc_demo` 中，应满足：
