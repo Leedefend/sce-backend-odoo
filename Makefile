@@ -217,6 +217,26 @@ demo.verify:
 		"select case when count(*) >= 2 then 'ok' else 'S10 invoices < 2' end from account_move where id in (select res_id from ir_model_data where module='smart_construction_demo' and name in ('sc_demo_invoice_s10_001','sc_demo_invoice_s10_002'));" | grep -qx ok
 	@echo "🎉 demo.verify PASSED"
 
+.ONESHELL: demo.load
+.PHONY: demo.load
+demo.load:
+	@echo "[demo.load] db=$(DB_NAME) scenario=$(SCENARIO)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@test -n "$(SCENARIO)" || (echo "ERROR: SCENARIO is required. e.g. make demo.load SCENARIO=s10_contract_payment" && exit 2)
+	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
+		--entrypoint /usr/bin/odoo odoo \
+		shell --config=/etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
+		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--no-http --workers=0 --max-cron-threads=0 \
+		<<-'PY'
+	from odoo.addons.smart_construction_demo.tools.scenario_loader import load_scenario
+	print("[demo.load] loading scenario:", "$(SCENARIO)")
+	load_scenario(env, "$(SCENARIO)", mode="update")
+	print("[demo.load] done")
+	PY
+
 .PHONY: diag.compose
 diag.compose:
 	@echo "=== base ==="
