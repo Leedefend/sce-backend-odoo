@@ -244,6 +244,42 @@ demo.verify:
 	@echo "✓ check S30 gate: bad settlement stays draft"
 	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
 		"select case when count(*) = 1 then 'ok' else 'S30 gate failed' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_030_bad_001') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S40 structural settlement stays draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S40 structural missing or not draft' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_structural_bad') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S40 structural has no lines"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 0 then 'ok' else 'S40 structural has lines' end from sc_settlement_order_line where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_structural_bad');" | grep -qx ok
+	@echo "✓ check S40 structural has no payment requests"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 0 then 'ok' else 'S40 structural has payment requests' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_structural_bad');" | grep -qx ok
+	@echo "✓ check S40 amount mismatch stays draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S40 amount missing or not draft' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S40 amount has lines"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S40 amount has no lines' end from sc_settlement_order_line where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad');" | grep -qx ok
+	@echo "✓ check S40 amount links payment request"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S40 amount has no payment request' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad');" | grep -qx ok
+	@echo "✓ check S40 amount inconsistency (payment > settlement)"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when (select coalesce(sum(pr.amount), 0) from payment_request pr where pr.settlement_id = (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad')) > (select amount_total from sc_settlement_order where id = (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad')) then 'ok' else 'S40 amount not inconsistent' end;" | grep -qx ok
+	@echo "✓ check S40 link bad stays draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S40 link missing or not draft' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_link_bad') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S40 link bad has lines"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S40 link has no lines' end from sc_settlement_order_line where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_link_bad');" | grep -qx ok
+	@echo "✓ check S40 link bad has no linked payment request"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 0 then 'ok' else 'S40 link unexpectedly linked' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_link_bad');" | grep -qx ok
+	@echo "✓ check S40 unlinked payment request exists"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S40 unlinked payment missing' end from payment_request where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_payment_040_link_001') and settlement_id is null;" | grep -qx ok
+	@echo "✓ check S40 settlements never leave draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 0 then 'ok' else 'S40 settlement advanced' end from sc_settlement_order where name like 'S40-%' and state <> 'draft';" | grep -qx ok
 	@echo "🎉 demo.verify PASSED"
 
 .ONESHELL: demo.load demo.list
