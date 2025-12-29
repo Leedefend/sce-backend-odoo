@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
   <data noupdate="1">
+
+    <!-- S20 收款记录（业务付款，不走会计过账） -->
+    <record id="sc_demo_payment_020_001" model="payment.request">
+      <field name="type">receive</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_010"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="amount">5000000.00</field>
+      <field name="date_request">2025-03-01</field>
+    </record>
+
   </data>
 </odoo>
