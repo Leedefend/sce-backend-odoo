@@ -20,7 +20,7 @@ This blueprint locks down the target architecture for the 鈥滃叚涓績 + �
         鈻?  project.task(id, project_id, wbs_id, ...)
 
 [Contract Center]
-  project.contract(id, project_id, partner_id, ...)
+  construction.contract(id, project_id, partner_id, ...)
         鈹?
         鈻?  contract.line(id, contract_id, wbs_id, boq_code, ...)
 
@@ -66,8 +66,8 @@ Key principles:
 
 ### 2.2 Contract Center
 
-- **project.contract** 鈥?every contract (main, subcontract, supply) tied to a project.
-- **project.contract.line** 鈥?BoQ lines bound to WBS; basis for measurement/settlement.
+- **construction.contract** 鈥?every contract (main, subcontract, supply) tied to a project.
+- **construction.contract.line** 鈥?BoQ lines bound to WBS; basis for measurement/settlement.
 - Optional: change orders, milestones, receivable/payable plans.
 
 ### 2.3 Cost Control Center
@@ -114,8 +114,8 @@ Center submenus (current + planned):
   - WBS/鍒嗛儴鍒嗛」 (`project.wbs`)
   - 椤圭洰浠诲姟 / 宸ョ▼璧勬枡 / AI 椤圭洰鍒嗘瀽鏃ュ織
 - **鍚堝悓涓績**
-  - 鍚堝悓鍒楄〃 (`project.contract`)
-  - 鍚堝悓琛?(`project.contract.line`)
+  - 鍚堝悓鍒楄〃 (`construction.contract`)
+  - 鍚堝悓琛?(`construction.contract.line`)
   - 鍙樻洿/绛捐瘉銆佹敹娆捐鍒掋€佷粯娆捐鍒掞紙杩唬鎸佺画锛?- **鎴愭帶涓績**
   - 鎴愭湰鎺у埗浠〃鐩橈紙dashboard / client action锛?  - 椤圭洰棰勭畻 (`project.budget`)
   - 棰勭畻娓呭崟鍒嗘憡 (`project.budget.boq.alloc`)
