@@ -123,6 +123,23 @@ make demo.verify DB_NAME=sc_demo
 
 ---
 
+## S20 结算/核销演示路径（最小闭环）
+
+场景目录：`data/scenario/s20_settlement_clearing/`
+
+- 收款记录：`sc_demo_payment_020_001`（model: `payment.request`，type=receive）
+- 结算单：`sc_demo_settlement_020_001`（model: `sc.settlement.order`）
+- 结算明细：`sc_demo_settle_line_020_001`、`sc_demo_settle_line_020_002`
+
+> 说明：S20 依赖 S10（合同/发票/付款申请），建议使用 `make demo.load.all` 加载。
+
+验收命令：
+```bash
+make demo.verify DB_NAME=sc_demo
+```
+
+---
+
 ## 验收断言（Acceptance Checklist）
 
 在数据库 `sc_demo` 中，应满足：
