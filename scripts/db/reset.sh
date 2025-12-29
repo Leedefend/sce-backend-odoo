@@ -47,6 +47,7 @@ compose ${COMPOSE_FILES} run --rm -T \
   -d "${DB_NAME}" \
   "${ODOO_DB_ARGS[@]}" \
   -i base \
+  --without-demo=all \
   --no-http --workers=0 --max-cron-threads=0 \
   --stop-after-init
 
@@ -57,6 +58,7 @@ compose ${COMPOSE_FILES} run --rm -T \
   -d "${DB_NAME}" \
   "${ODOO_DB_ARGS[@]}" \
   -i smart_construction_bootstrap \
+  --without-demo=all \
   --no-http --workers=0 --max-cron-threads=0 \
   --stop-after-init
 

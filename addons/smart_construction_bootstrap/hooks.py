@@ -6,9 +6,16 @@ from odoo import SUPERUSER_ID, api
 _logger = logging.getLogger(__name__)
 
 
-def post_init_hook(cr, registry):
+def _as_env(env_or_cr, registry=None):
+    """Accept env (new API) or (cr, registry) signature and return Environment."""
+    if isinstance(env_or_cr, api.Environment):
+        return env_or_cr
+    return api.Environment(env_or_cr, SUPERUSER_ID, {})
+
+
+def post_init_hook(env_or_cr, registry=None):
     """Bootstrap baseline settings for a fresh DB (idempotent)."""
-    env = api.Environment(cr, SUPERUSER_ID, {})
+    env = _as_env(env_or_cr, registry)
 
     ICP = env["ir.config_parameter"].sudo()
     lang = ICP.get_param("sc.bootstrap.lang", "zh_CN")

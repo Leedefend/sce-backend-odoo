@@ -140,6 +140,16 @@ demo.reset:
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 db.demo.reset:
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
+verify.baseline:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
+verify.demo:
+	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
+gate.baseline:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
+gate.demo:
+	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
+	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
 
 # ======================================================
 # ==================== Module Ops ======================
