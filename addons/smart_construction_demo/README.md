@@ -168,6 +168,17 @@ make demo.load SCENARIO=s10_contract_payment DB_NAME=sc_demo
 make demo.verify DB_NAME=sc_demo
 ```
 
+列出可用场景：
+```bash
+make demo.list DB_NAME=sc_demo
+```
+
+加载全部场景：
+
+```bash
+make demo.load.all DB_NAME=sc_demo
+```
+
 ---
 
 ## 常见问题（Troubleshooting）
