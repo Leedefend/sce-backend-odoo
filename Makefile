@@ -138,7 +138,9 @@ odoo-shell:
 db.reset:
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 demo.reset:
-	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
+	@echo "[demo.reset] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@$(MAKE) db.reset DB_NAME=$(DB_NAME)
 db.demo.reset:
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 db.branch:
@@ -268,6 +270,22 @@ demo.load.all:
 	load_all(env, mode="update")
 	print("[demo.load.all] done")
 	PY
+
+.PHONY: demo.install
+demo.install:
+	@echo "[demo.install] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@$(MAKE) mod.install MODULE=smart_construction_demo DB_NAME=$(DB_NAME)
+
+.PHONY: demo.rebuild
+demo.rebuild:
+	@echo "[demo.rebuild] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@$(MAKE) demo.reset DB_NAME=$(DB_NAME)
+	@$(MAKE) demo.install DB_NAME=$(DB_NAME)
+	@$(MAKE) demo.load.all DB_NAME=$(DB_NAME)
+	@$(MAKE) demo.verify DB_NAME=$(DB_NAME)
+	@echo "🎉 demo.rebuild PASSED"
 
 .PHONY: diag.compose
 diag.compose:
