@@ -123,6 +123,25 @@ make mod.upgrade MODULE=smart_construction_demo DB_NAME=sc_demo
 
 ---
 
+## 自动验收（demo.verify）
+
+为便于回归测试与 CI 校验，提供自动化 Demo 验收命令：
+
+```bash
+make demo.verify DB_NAME=sc_demo
+```
+
+该命令将基于 PostgreSQL 只读检查以下断言：
+
+- 项目数量 ≥ 2
+- BOQ 节点数量 ≥ 2
+- 材料计划数量 ≥ 1
+- 发票数量 ≥ 2
+
+任一断言失败将直接返回非 0 退出码，适用于本地验证与 CI 集成。
+
+---
+
 ## 常见问题（Troubleshooting）
 
 ### ❌ 报错：`The entry XXX must be in draft`
@@ -150,4 +169,3 @@ make mod.upgrade MODULE=smart_construction_demo DB_NAME=sc_demo
   - 可跳过
   - 可重复执行
   - 不依赖人工环境
-
