@@ -159,6 +159,17 @@ make demo.verify DB_NAME=sc_demo
 
 ---
 
+## 加载可选场景（Scenario Loader）
+
+S10 等可选场景默认不写入 manifest，可使用命令按需加载：
+
+```bash
+make demo.load SCENARIO=s10_contract_payment DB_NAME=sc_demo
+make demo.verify DB_NAME=sc_demo
+```
+
+---
+
 ## 常见问题（Troubleshooting）
 
 ### ❌ 报错：`The entry XXX must be in draft`
