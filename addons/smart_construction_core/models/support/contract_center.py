@@ -2,7 +2,7 @@
 import logging
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 _logger = logging.getLogger(__name__)
@@ -155,12 +155,12 @@ class ConstructionContract(models.Model):
         return "sale" if contract_type == "out" else "purchase"
 
     @api.model
-    def _find_or_create_tax(self, *, name: str, amount: float, type_tax_use: str):
-        """Return an account.tax scoped to company with idempotent search/create.
+    def _find_tax(self, *, name: str, amount: float, type_tax_use: str):
+        """Return an account.tax scoped to company.
 
-        - Primary search: company + type_tax_use/all + amount_type=percent + amount
+        - Search: company + type_tax_use/all + amount_type=percent + amount
         - If multiple, prefer same name; otherwise pick the first match.
-        - Create minimal tax when missing.
+        - Do not create missing taxes at runtime; raise for explicit configuration.
         """
         Tax = self.env["account.tax"].sudo()
         company = self.env.company
@@ -178,17 +178,10 @@ class ConstructionContract(models.Model):
                 tax.active = True
             return tax
 
-        vals = {
-            "name": name,
-            "company_id": company.id,
-            "type_tax_use": type_tax_use,
-            "amount_type": "percent",
-            "amount": float(amount),
-            "active": True,
-        }
-        tax = Tax.create(vals)
-        _logger.warning("Default tax missing: created tax id=%s name=%s", tax.id, tax.name)
-        return tax
+        raise UserError(
+            "缺少默认税率：%(name)s %(amount)s%% %(use)s\n"
+            "请在税率主数据中创建后再试。" % {"name": name, "amount": amount, "use": type_tax_use}
+        )
 
     @api.model
     def _get_default_tax(self, contract_type):
@@ -200,7 +193,7 @@ class ConstructionContract(models.Model):
         else:
             name = "进项VAT 13%"
             amount = 13.0
-        return self._find_or_create_tax(
+        return self._find_tax(
             name=name,
             amount=amount,
             type_tax_use=type_tax_use,
@@ -225,7 +218,7 @@ class ConstructionContract(models.Model):
                 default_tax = self._get_default_tax(self.type)
                 if default_tax:
                     self.tax_id = default_tax
-            domain = {"tax_id": [("type_tax_use", "=", expected_use)]}
+            domain = {"tax_id": [("type_tax_use", "in", [expected_use, "all"])]}
         return {"domain": domain}
 
     def action_generate_lines_from_budget(self):
@@ -288,12 +281,15 @@ class ConstructionContract(models.Model):
     @api.depends("line_amount_total", "tax_id")
     def _compute_amount_total(self):
         for contract in self:
-            untaxed = contract.line_amount_total or 0.0
+            currency = contract.currency_id or contract.company_currency_id
+            untaxed = currency.round(contract.line_amount_total or 0.0)
             rate = contract.tax_id.amount if contract.tax_id else 0.0
-            tax_amount = untaxed * rate / 100.0
+            tax_amount = 0.0
+            if contract.tax_id and contract.tax_id.amount_type == "percent" and not contract.tax_id.price_include:
+                tax_amount = currency.round(untaxed * rate / 100.0)
             contract.amount_untaxed = untaxed
             contract.amount_tax = tax_amount
-            contract.amount_total = untaxed + tax_amount
+            contract.amount_total = currency.round(untaxed + tax_amount)
 
     @api.constrains("tax_id", "type")
     def _check_tax_type(self):
@@ -303,6 +299,10 @@ class ConstructionContract(models.Model):
             expect = "sale" if contract.type == "out" else "purchase"
             if contract.tax_id.type_tax_use not in (expect, "all"):
                 raise ValidationError("合同类型与税率类型不一致，请选择正确的税率。")
+            if contract.tax_id.amount_type != "percent":
+                raise ValidationError("合同仅支持百分比税率，请选择 amount_type=percent 的税。")
+            if contract.tax_id.price_include:
+                raise ValidationError("合同税率必须为不含税价，请选择未含税的税率。")
 
     @api.depends("line_ids.amount_contract")
     def _compute_line_amount_total(self):
@@ -339,27 +339,47 @@ class ConstructionContract(models.Model):
     # --- State transitions -------------------------------------------------
     def action_confirm(self):
         for contract in self:
+            old = contract.state
+            if not contract.line_ids:
+                raise UserError("请先录入合同行后再确认。")
             if contract.state == "draft":
                 contract.state = "confirmed"
+                contract.message_post(body="合同状态：草稿 → 已生效")
 
     def action_set_running(self):
         for contract in self:
-            if contract.state in ("draft", "confirmed"):
-                contract.state = "running"
+            old = contract.state
+            if contract.state not in ("draft", "confirmed"):
+                raise UserError("仅草稿/已生效的合同可置为执行中。")
+            contract.state = "running"
+            if old != contract.state:
+                contract.message_post(body="合同状态：%s → 执行中" % ("已生效" if old == "confirmed" else "草稿"))
 
     def action_close(self):
         for contract in self:
-            if contract.state in ("confirmed", "running"):
-                contract.state = "closed"
+            old = contract.state
+            if contract.state not in ("confirmed", "running"):
+                raise UserError("仅已生效/执行中的合同可关闭。")
+            if not contract.line_ids:
+                raise UserError("无合同行的合同不可关闭，请补充清单。")
+            contract.state = "closed"
+            if old != contract.state:
+                contract.message_post(body="合同状态：%s → 已关闭" % ("已生效" if old == "confirmed" else "执行中"))
 
     def action_cancel(self):
         for contract in self:
+            old = contract.state
             if contract.state != "cancel":
                 contract.state = "cancel"
+                if old != contract.state:
+                    contract.message_post(body="合同状态：取消")
 
     def action_reset_draft(self):
         for contract in self:
+            old = contract.state
             contract.state = "draft"
+            if old != contract.state:
+                contract.message_post(body="合同状态：重置为草稿")
 
 
 class ConstructionContractLine(models.Model):
@@ -575,8 +595,11 @@ class ProjectProject(models.Model):
         for project in self:
             income = 0.0
             expense = 0.0
+            company_currency = project.company_currency_id or project.company_id.currency_id
             for contract in project.contract_ids:
                 amount = contract.amount_final or 0.0
+                currency = contract.currency_id or company_currency
+                amount = currency._convert(amount, company_currency, contract.company_id, fields.Date.today())
                 if contract.type == "out":
                     income += amount
                 else:
