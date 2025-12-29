@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <!-- S10: 合同（最小字段集，不触发确认/审批） -->
+    <record id="sc_demo_contract_out_010" model="construction.contract">
+      <field name="subject">总包合同（S10）</field>
+      <field name="type">out</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="date_contract">2025-02-01</field>
+    </record>
+
+  </data>
+</odoo>
