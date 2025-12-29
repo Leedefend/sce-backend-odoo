@@ -21,6 +21,14 @@ SCENARIOS: Dict[str, List[str]] = {
         "data/scenario/s10_contract_payment/20_payment_requests.xml",
         "data/scenario/s10_contract_payment/30_invoices.xml",
     ],
+    "s20_settlement_clearing": {
+        "sequence": 20,
+        "files": [
+            "data/scenario/s20_settlement_clearing/10_payments.xml",
+            "data/scenario/s20_settlement_clearing/20_clearing.xml",
+            "data/scenario/s20_settlement_clearing/30_settlement.xml",
+        ],
+    },
 }
 
 
