@@ -1,5 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <data noupdate="1">
-  </data>
+    <data noupdate="1">
+
+        <!-- S30 结算单（工作流演示用，保持 draft） -->
+        <record id="sc_demo_settlement_030_001" model="sc.settlement.order">
+            <field name="name">S30-SETTLEMENT-001</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="currency_id" ref="base.CNY"/>
+            <field name="settlement_type">in</field>
+            <field name="amount_total">1000000.00</field>
+            <!-- state 不写，走模型默认（draft） -->
+        </record>
+
+        <!-- S30 门禁测试用：不完整结算单，必须保持 draft -->
+        <record id="sc_demo_settlement_030_bad_001" model="sc.settlement.order">
+            <field name="name">S30-SETTLEMENT-BAD-001</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="currency_id" ref="base.CNY"/>
+            <field name="settlement_type">in</field>
+            <field name="amount_total">0.00</field>
+            <!-- 无明细 / 无付款关联，验证门禁 -->
+        </record>
+
+    </data>
 </odoo>
