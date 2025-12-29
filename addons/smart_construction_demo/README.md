@@ -140,6 +140,36 @@ make demo.verify DB_NAME=sc_demo
 
 ---
 
+## S30 结算工作流演示路径（可推进但不自动推进）
+
+场景目录：`data/scenario/s30_settlement_workflow/`
+
+- 结算单：`sc_demo_settlement_030_001`（model: `sc.settlement.order`，保持 draft）
+- 结算明细：`sc_demo_settlement_line_030_001`
+- 收款关联：`sc_demo_pay_req_030_001`（model: `payment.request`，type=receive）
+- 门禁样例：`sc_demo_settlement_030_bad_001`（无明细/无收款，必须保持 draft）
+
+验收命令：
+```bash
+make demo.verify DB_NAME=sc_demo
+```
+
+---
+
+## S40 失败路径 / 边界场景
+
+场景目录：`data/scenario/s40_failure_paths/`
+
+- 结构性违规：`sc_demo_settlement_040_structural_bad`（无明细、无收款关联）
+- 金额违规：`sc_demo_settlement_040_amount_bad`（收款金额 > 结算金额）
+- 关联违规：`sc_demo_settlement_040_link_bad`（有明细但无收款关联）
+
+说明：
+- S40 数据可以正常加载，但不应推进状态。
+- demo.verify 会对 S40 的失败条件做强校验。
+
+---
+
 ## 验收断言（Acceptance Checklist）
 
 在数据库 `sc_demo` 中，应满足：
