@@ -190,6 +190,24 @@ mod.upgrade:
 		--no-http --workers=0 --max-cron-threads=0 \
 		--stop-after-init $(ODOO_ARGS)
 
+.PHONY: demo.verify
+demo.verify:
+	@echo "[demo.verify] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@echo "✓ check projects >= 2"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 2 then 'ok' else 'project < 2' end from project_project;" | grep -qx ok
+	@echo "✓ check BOQ nodes >= 2"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 2 then 'ok' else 'boq < 2' end from project_boq_line;" | grep -qx ok
+	@echo "✓ check material plans >= 1"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'material plan < 1' end from project_material_plan;" | grep -qx ok
+	@echo "✓ check invoices >= 2"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 2 then 'ok' else 'invoice < 2' end from account_move where move_type in ('out_invoice','out_refund');" | grep -qx ok
+	@echo "🎉 demo.verify PASSED"
+
 .PHONY: diag.compose
 diag.compose:
 	@echo "=== base ==="
