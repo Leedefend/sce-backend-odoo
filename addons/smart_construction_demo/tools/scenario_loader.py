@@ -61,3 +61,11 @@ def load_scenario(env, scenario: str, mode: str = "update") -> None:
         )
 
     env.cr.commit()
+
+
+def load_all(env, mode: str = "update") -> None:
+    """
+    Load all registered scenarios in stable order.
+    """
+    for scenario in sorted(SCENARIOS.keys()):
+        load_scenario(env, scenario, mode=mode)
