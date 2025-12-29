@@ -6,7 +6,7 @@
     "category": "Tools",
     "license": "LGPL-3",
     "author": "SCE",
-    "depends": ["smart_construction_bootstrap"],
+    "depends": ["smart_construction_bootstrap", "account"],
     "data": [],
     "post_init_hook": "post_init_hook",
     "installable": True,

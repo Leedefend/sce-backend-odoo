@@ -306,6 +306,11 @@ class PaymentRequest(models.Model):
     def action_submit(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user"):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
+        for rec in self:
+            if not rec.contract_id:
+                raise UserError("请先选择关联合同后再提交付款/收款申请。")
+            if rec.contract_id.state == "cancel":
+                raise UserError("关联合同已取消，不能提交付款/收款申请。")
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
         scope = {
