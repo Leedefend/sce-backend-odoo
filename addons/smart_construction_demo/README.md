@@ -13,6 +13,35 @@
 
 ---
 
+## Quick Start
+
+重建演示库（推荐）：
+```bash
+make demo.rebuild DB_NAME=sc_demo
+```
+
+列出可用场景：
+```bash
+make demo.list DB_NAME=sc_demo
+```
+
+加载单个场景：
+```bash
+make demo.load SCENARIO=s10_contract_payment DB_NAME=sc_demo
+```
+
+加载全部场景：
+```bash
+make demo.load.all DB_NAME=sc_demo
+```
+
+验收断言：
+```bash
+make demo.verify DB_NAME=sc_demo
+```
+
+---
+
 ## 模块结构说明
 
 Demo 数据按 **Base / Scenario** 两层结构组织：
@@ -170,6 +199,28 @@ make demo.verify DB_NAME=sc_demo
 
 ---
 
+## Scenario Index
+
+| 场景 | 目标 | 关键模型 | 可验证点 |
+| --- | --- | --- | --- |
+| S00 | 最短路径（项目/BOQ/材料/发票） | project.project / project.boq.line / project.material.plan / account.move | projects/boq/material/invoices |
+| S10 | 合同 + 付款申请 + 发票（draft） | construction.contract / payment.request / account.move | contract/payment_request/invoices |
+| S20 | 结算单 + 明细 + 收款关联 | sc.settlement.order / sc.settlement.order.line / payment.request | settlement/lines/payment_request.link |
+| S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
+| S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
+
+---
+
+## Acceptance Matrix
+
+- S00: 项目数量、BOQ 节点、材料计划、发票数量
+- S10: 合同记录、付款申请、发票记录
+- S20: 结算单、结算明细、收款关联
+- S30: 结算单 draft、明细/收款关联、门禁样例 draft
+- S40: 结构/金额/关联违规均保持 draft，且失败条件可验证
+
+---
+
 ## 验收断言（Acceptance Checklist）
 
 在数据库 `sc_demo` 中，应满足：
@@ -249,6 +300,17 @@ make demo.rebuild DB_NAME=sc_demo
 - 检查：
   - `__manifest__.py` 中 `data` 加载顺序
   - XML 中 `ref="..."` 是否指向已定义的 xmlid
+
+---
+
+## 操作排障小贴士
+
+- 第一次安装/升级耗时较长，注意等待容器初始化完成。
+- 若出现外键相关报错，优先检查场景文件顺序与 loader 的注册顺序。
+- 付款/结算类型不匹配（in/out vs receive/pay）会触发一致性校验。
+- docutils 警告不影响安装/升级，可后续再清理。
+- demo.verify 失败时，可用相同 SQL 在 psql 中复查并定位具体记录。
+- 若只想验证单个场景，可先 `make demo.load SCENARIO=...` 后再 `make demo.verify`。
 
 ---
 
