@@ -1,0 +1,108 @@
+name: demo.ci
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "addons/smart_construction_demo/**"
+      - "addons/smart_construction_seed/**"
+      - "Makefile"
+      - "docker-compose*.yml"
+      - ".github/workflows/demo-ci.yml"
+  push:
+    branches: [ main ]
+    paths:
+      - "addons/smart_construction_demo/**"
+      - "addons/smart_construction_seed/**"
+      - "Makefile"
+      - "docker-compose*.yml"
+      - ".github/workflows/demo-ci.yml"
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "可选：场景名，如 s50_repairable_paths"
+        required: false
+        default: ""
+      step:
+        description: "可选：bad|fix|all"
+        required: false
+        default: "all"
+
+concurrency:
+  group: demo-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  demo_ci:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    env:
+      COMPOSE_PROJECT_NAME: sc-demo-${{ github.run_id }}
+      DB_NAME: sc_demo_${{ github.run_id }}
+      SCENARIO: ${{ inputs.scenario || '' }}
+      STEP: ${{ inputs.step || 'all' }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker info
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pull & build images
+        run: |
+          docker compose pull || true
+          docker compose build
+
+      - name: Start db & redis
+        run: |
+          docker compose up -d db redis
+          docker compose ps
+
+      - name: Wait for PostgreSQL
+        run: |
+          ready=0
+          for i in {1..60}; do
+            if docker compose exec -T db pg_isready -U odoo -d postgres >/dev/null 2>&1; then
+              echo "Postgres is ready"
+              ready=1
+              break
+            fi
+            echo "waiting postgres... ($i/60)"
+            sleep 2
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Postgres not ready"
+            docker compose logs --no-color --tail=200 db
+            exit 1
+          fi
+
+      - name: Run demo.ci
+        run: |
+          set -euo pipefail
+          if [[ -n "${SCENARIO}" ]]; then
+            make demo.ci DB_NAME="${DB_NAME}" SCENARIO="${SCENARIO}" STEP="${STEP}"
+          else
+            make demo.ci DB_NAME="${DB_NAME}"
+          fi
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --no-color --tail=300
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v --remove-orphans || true
