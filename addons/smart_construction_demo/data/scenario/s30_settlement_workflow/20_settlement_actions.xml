@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <data noupdate="1">
-  </data>
+    <data noupdate="1">
+
+        <!-- S30 结算单明细 -->
+        <record id="sc_demo_settlement_line_030_001" model="sc.settlement.order.line">
+            <field name="name">主体工程结算</field>
+            <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_030_001"/>
+            <field name="qty">1</field>
+            <field name="price_unit">1000000.00</field>
+            <field name="amount">1000000.00</field>
+        </record>
+
+    </data>
 </odoo>
