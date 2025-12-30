@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Dict, List
 
 from odoo.tools import convert
@@ -45,6 +46,20 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s40_failure_paths/30_invalid_links.xml",
         ],
     },
+    "s50_repairable_paths": {
+        "sequence": 50,
+        "files": [
+            "data/scenario/s50_repairable_paths/10_bad_seed.xml",
+            "data/scenario/s50_repairable_paths/20_fix_patch.xml",
+            "data/scenario/s50_repairable_paths/30_assert_state.xml",
+        ],
+    },
+    "s90_users_roles": {
+        "sequence": 90,
+        "files": [
+            "data/scenario/s90_users_roles/10_users.xml",
+        ],
+    },
 }
 
 
@@ -69,7 +84,31 @@ def _normalize_registry() -> Dict[str, Dict[str, List[str] | int]]:
     return normalized
 
 
-def load_scenario(env, scenario: str, mode: str = "update") -> None:
+def _filter_files(files: List[str], step: str | None) -> List[str]:
+    if not step or step == "all":
+        return files
+    step = step.strip().lower()
+    if step == "bad":
+        prefixes = ("10_",)
+    elif step == "fix":
+        prefixes = ("20_", "30_")
+    else:
+        raise ValueError(f"unknown step '{step}'. use bad|fix|all")
+
+    filtered = [
+        relpath for relpath in files if Path(relpath).name.startswith(prefixes)
+    ]
+    if not filtered:
+        raise ValueError(f"no files matched step '{step}'")
+    return filtered
+
+
+def load_scenario(
+    env,
+    scenario: str,
+    mode: str = "update",
+    step: str | None = None,
+) -> None:
     """
     Load a demo scenario XML files into current DB using Odoo converter.
     - env: Odoo env from odoo shell
@@ -87,6 +126,7 @@ def load_scenario(env, scenario: str, mode: str = "update") -> None:
     module = "smart_construction_demo"
     registry = _normalize_registry()
     files = registry[scenario]["files"]
+    files = _filter_files(files, step)
 
     # idref is used by Odoo converter to resolve xmlids in-file
     idref = {}

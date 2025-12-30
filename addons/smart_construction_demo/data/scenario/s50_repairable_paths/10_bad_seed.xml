@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- S50 bad seed: settlement without linked payment request -->
+        <record id="sc_demo_settlement_050_001" model="sc.settlement.order">
+            <field name="name">S50-SETTLEMENT-001</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="currency_id" ref="base.CNY"/>
+            <field name="settlement_type">in</field>
+            <field name="amount_total">1000000.00</field>
+        </record>
+
+        <record id="sc_demo_settlement_line_050_001" model="sc.settlement.order.line">
+            <field name="name">S50 结算明细</field>
+            <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_050_001"/>
+            <field name="qty">1</field>
+            <field name="price_unit">1000000.00</field>
+            <field name="amount">1000000.00</field>
+        </record>
+
+        <record id="sc_demo_payment_050_001" model="payment.request">
+            <field name="type">receive</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="amount">1000000.00</field>
+            <field name="date_request">2025-03-15</field>
+            <!-- settlement_id intentionally missing to reproduce failure -->
+        </record>
+
+    </data>
+</odoo>
