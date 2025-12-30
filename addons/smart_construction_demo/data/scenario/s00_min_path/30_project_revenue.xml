@@ -60,9 +60,9 @@
             })]"/>
         </record>
 
-        <!-- 创建完成后，执行过账 -->
+        <!-- 创建完成后，执行过账；若已过账则跳过，避免升级时报“必须在草稿” -->
         <function model="account.move" name="action_post">
-            <value eval="[ref('smart_construction_demo.sc_demo_invoice_progress'), ref('smart_construction_demo.sc_demo_invoice_progress_2')]"/>
+            <value model="account.move" eval="obj([ref('smart_construction_demo.sc_demo_invoice_progress'), ref('smart_construction_demo.sc_demo_invoice_progress_2')]).filtered(lambda m: m.state == 'draft').ids"/>
         </function>
 
     </data>

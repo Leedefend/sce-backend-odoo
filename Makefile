@@ -138,7 +138,9 @@ odoo-shell:
 db.reset:
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 demo.reset:
-	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
+	@echo "[demo.reset] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@$(MAKE) db.reset DB_NAME=$(DB_NAME)
 db.demo.reset:
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 db.branch:
@@ -189,6 +191,164 @@ mod.upgrade:
 		$(WITHOUT_DEMO) \
 		--no-http --workers=0 --max-cron-threads=0 \
 		--stop-after-init $(ODOO_ARGS)
+
+.PHONY: demo.verify
+demo.verify:
+	@echo "[demo.verify] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@echo "✓ check projects >= 2"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 2 then 'ok' else 'project < 2' end from project_project;" | grep -qx ok
+	@echo "✓ check BOQ nodes >= 2"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 2 then 'ok' else 'boq < 2' end from project_boq_line;" | grep -qx ok
+	@echo "✓ check material plans >= 1"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'material plan < 1' end from project_material_plan;" | grep -qx ok
+	@echo "✓ check invoices >= 2"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 2 then 'ok' else 'invoice < 2' end from account_move where move_type in ('out_invoice','out_refund');" | grep -qx ok
+	@echo "✓ check S10 contract record exists"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S10 contract missing' end from construction_contract where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_contract_out_010');" | grep -qx ok
+	@echo "✓ check S10 payment request record exists"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S10 payment request missing' end from payment_request where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_pay_req_010_001');" | grep -qx ok
+	@echo "✓ check S10 invoices >= 2"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 2 then 'ok' else 'S10 invoices < 2' end from account_move where id in (select res_id from ir_model_data where module='smart_construction_demo' and name in ('sc_demo_invoice_s10_001','sc_demo_invoice_s10_002'));" | grep -qx ok
+	@echo "✓ check S20 payment record exists"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S20 payment missing' end from payment_request where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_payment_020_001');" | grep -qx ok
+	@echo "✓ check S20 settlement order exists"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S20 settlement missing' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_020_001');" | grep -qx ok
+	@echo "✓ check S20 settlement lines >= 2"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 2 then 'ok' else 'S20 settlement lines < 2' end from sc_settlement_order_line where id in (select res_id from ir_model_data where module='smart_construction_demo' and name in ('sc_demo_settle_line_020_001','sc_demo_settle_line_020_002'));" | grep -qx ok
+	@echo "✓ check S20 settlement links to at least 1 payment request"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S20 settlement has no linked payment_request' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_020_001');" | grep -qx ok
+	@echo "✓ check S30 settlement exists and stays in draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S30 settlement missing or not draft' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_030_001') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S30 settlement has at least one line"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S30 settlement has no lines' end from sc_settlement_order_line where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_030_001');" | grep -qx ok
+	@echo "✓ check S30 settlement links to payment requests"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S30 settlement has no linked payment_request' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_030_001');" | grep -qx ok
+	@echo "✓ check S30 settlement amount matches line sum"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when abs(o.amount_total - sum(l.amount)) < 0.01 then 'ok' else 'S30 settlement amount mismatch' end from sc_settlement_order o join sc_settlement_order_line l on l.settlement_id = o.id where o.id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_030_001') group by o.amount_total;" | grep -qx ok
+	@echo "✓ check S30 gate: bad settlement stays draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S30 gate failed' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_030_bad_001') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S40 structural settlement stays draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S40 structural missing or not draft' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_structural_bad') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S40 structural has no lines"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 0 then 'ok' else 'S40 structural has lines' end from sc_settlement_order_line where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_structural_bad');" | grep -qx ok
+	@echo "✓ check S40 structural has no payment requests"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 0 then 'ok' else 'S40 structural has payment requests' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_structural_bad');" | grep -qx ok
+	@echo "✓ check S40 amount mismatch stays draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S40 amount missing or not draft' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S40 amount has lines"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S40 amount has no lines' end from sc_settlement_order_line where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad');" | grep -qx ok
+	@echo "✓ check S40 amount links payment request"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S40 amount has no payment request' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad');" | grep -qx ok
+	@echo "✓ check S40 amount inconsistency (payment > settlement)"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when (select coalesce(sum(pr.amount), 0) from payment_request pr where pr.settlement_id = (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad')) > (select amount_total from sc_settlement_order where id = (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_amount_bad')) then 'ok' else 'S40 amount not inconsistent' end;" | grep -qx ok
+	@echo "✓ check S40 link bad stays draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S40 link missing or not draft' end from sc_settlement_order where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_link_bad') and state = 'draft';" | grep -qx ok
+	@echo "✓ check S40 link bad has lines"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) >= 1 then 'ok' else 'S40 link has no lines' end from sc_settlement_order_line where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_link_bad');" | grep -qx ok
+	@echo "✓ check S40 link bad has no linked payment request"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 0 then 'ok' else 'S40 link unexpectedly linked' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_040_link_bad');" | grep -qx ok
+	@echo "✓ check S40 unlinked payment request exists"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 1 then 'ok' else 'S40 unlinked payment missing' end from payment_request where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_payment_040_link_001') and settlement_id is null;" | grep -qx ok
+	@echo "✓ check S40 settlements never leave draft"
+	@$(COMPOSE_BASE) exec -T db psql -U $(DB_USER) -d $(DB_NAME) -At -v ON_ERROR_STOP=1 -c \
+		"select case when count(*) = 0 then 'ok' else 'S40 settlement advanced' end from sc_settlement_order where name like 'S40-%' and state <> 'draft';" | grep -qx ok
+	@echo "🎉 demo.verify PASSED"
+
+.ONESHELL: demo.load demo.list
+.PHONY: demo.load
+demo.load:
+	@echo "[demo.load] db=$(DB_NAME) scenario=$(SCENARIO)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@test -n "$(SCENARIO)" || (echo "ERROR: SCENARIO is required. e.g. make demo.load SCENARIO=s10_contract_payment" && exit 2)
+	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
+		--entrypoint /usr/bin/odoo odoo \
+		shell --config=/etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
+		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--no-http --workers=0 --max-cron-threads=0 \
+		<<-'PY'
+	from odoo.addons.smart_construction_demo.tools.scenario_loader import load_scenario
+	print("[demo.load] loading scenario:", "$(SCENARIO)")
+	load_scenario(env, "$(SCENARIO)", mode="update")
+	print("[demo.load] done")
+	PY
+
+.PHONY: demo.list
+demo.list:
+	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
+		--entrypoint /usr/bin/odoo odoo \
+		shell --config=/etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
+		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--no-http --workers=0 --max-cron-threads=0 \
+		<<-'PY'
+	from odoo.addons.smart_construction_demo.tools.scenario_loader import SCENARIOS
+	for k in sorted(SCENARIOS.keys()): print(k)
+	PY
+
+.PHONY: demo.load.all
+demo.load.all:
+	@echo "[demo.load.all] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
+		--entrypoint /usr/bin/odoo odoo \
+		shell --config=/etc/odoo/odoo.conf \
+		-d $(DB_NAME) \
+		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
+		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--no-http --workers=0 --max-cron-threads=0 \
+		<<-'PY'
+	from odoo.addons.smart_construction_demo.tools.scenario_loader import load_all
+	print("[demo.load.all] loading all scenarios")
+	load_all(env, mode="update")
+	print("[demo.load.all] done")
+	PY
+
+.PHONY: demo.install
+demo.install:
+	@echo "[demo.install] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@$(MAKE) mod.install MODULE=smart_construction_demo DB_NAME=$(DB_NAME)
+
+.PHONY: demo.rebuild
+demo.rebuild:
+	@echo "[demo.rebuild] db=$(DB_NAME)"
+	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
+	@$(MAKE) demo.reset DB_NAME=$(DB_NAME)
+	@$(MAKE) demo.install DB_NAME=$(DB_NAME)
+	@$(MAKE) demo.load.all DB_NAME=$(DB_NAME)
+	@$(MAKE) demo.verify DB_NAME=$(DB_NAME)
+	@echo "🎉 demo.rebuild PASSED"
 
 .PHONY: diag.compose
 diag.compose:
