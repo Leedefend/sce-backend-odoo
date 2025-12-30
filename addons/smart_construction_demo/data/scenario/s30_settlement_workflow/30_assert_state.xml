@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <data noupdate="1">
-  </data>
+    <data noupdate="1">
+
+        <!-- 将 S30 付款申请关联到结算单 -->
+        <record id="sc_demo_pay_req_030_001" model="payment.request">
+            <field name="type">receive</field>
+            <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+            <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+            <field name="amount">1000000.00</field>
+            <field name="date_request">2025-03-01</field>
+            <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_030_001"/>
+        </record>
+
+    </data>
 </odoo>
