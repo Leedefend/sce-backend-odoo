@@ -20,8 +20,7 @@
     'data': [
         # 基础数据
         'data/sequence.xml',
-        'data/dictionary_demo.xml',
-        'data/cost_demo.xml',
+        # demo-like seeds moved to smart_construction_demo (base/05,06)
         'data/project_stage_data.xml',
 
         # 安全

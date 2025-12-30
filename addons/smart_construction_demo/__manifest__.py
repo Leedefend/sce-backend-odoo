@@ -10,6 +10,8 @@
     ],
     "data": [
         "data/base/00_dictionary.xml",
+        "data/base/05_core_seed_dictionary.xml",
+        "data/base/06_core_seed_cost.xml",
         "data/base/10_partners.xml",
         "data/base/20_projects.xml",
         "data/scenario/s00_min_path/10_project_boq.xml",

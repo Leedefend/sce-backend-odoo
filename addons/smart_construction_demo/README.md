@@ -50,6 +50,8 @@ Demo 数据按 **Base / Scenario** 两层结构组织：
 data/
 ├─ base/                       # 基础演示数据（可复用）
 │  ├─ 00_dictionary.xml        # 数据字典
+│  ├─ 05_core_seed_dictionary.xml  # core 演示字典（迁入）
+│  ├─ 06_core_seed_cost.xml        # core 成本科目（迁入）
 │  ├─ 10_partners.xml          # 业主 / 供应商
 │  └─ 20_projects.xml          # 项目基础信息
 └─ scenario/

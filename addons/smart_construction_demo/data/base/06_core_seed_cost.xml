@@ -1,0 +1,45 @@
+<odoo>
+    <!-- === 成本科目树 Demo（迁自 smart_construction_core） === -->
+    <record id="sc_cost_code_root_labor" model="project.cost.code">
+        <field name="name">人工费</field>
+        <field name="code">LAB</field>
+        <field name="type">labor</field>
+        <field name="level">1</field>
+    </record>
+    <record id="sc_cost_code_root_material" model="project.cost.code">
+        <field name="name">材料费</field>
+        <field name="code">MAT</field>
+        <field name="type">material</field>
+        <field name="level">1</field>
+    </record>
+    <record id="sc_cost_code_root_machine" model="project.cost.code">
+        <field name="name">机械费</field>
+        <field name="code">MAC</field>
+        <field name="type">machine</field>
+        <field name="level">1</field>
+    </record>
+    <record id="sc_cost_code_root_subcontract" model="project.cost.code">
+        <field name="name">分包费</field>
+        <field name="code">SUB</field>
+        <field name="type">subcontract</field>
+        <field name="level">1</field>
+    </record>
+    <record id="sc_cost_code_root_measure" model="project.cost.code">
+        <field name="name">措施费</field>
+        <field name="code">MEAS</field>
+        <field name="type">measure</field>
+        <field name="level">1</field>
+    </record>
+    <record id="sc_cost_code_root_overhead" model="project.cost.code">
+        <field name="name">管理费</field>
+        <field name="code">OH</field>
+        <field name="type">overhead</field>
+        <field name="level">1</field>
+    </record>
+    <record id="sc_cost_code_root_tax" model="project.cost.code">
+        <field name="name">税金</field>
+        <field name="code">TAX</field>
+        <field name="type">tax</field>
+        <field name="level">1</field>
+    </record>
+</odoo>
