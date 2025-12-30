@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- S90 demo users for capability groups (passwords are demo-only) -->
+        <record id="sc_demo_user_pm" model="res.users">
+            <field name="name">Demo-项目经理</field>
+            <field name="login">demo_pm</field>
+            <field name="password">demo</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_manager')])]"/>
+        </record>
+
+        <record id="sc_demo_user_finance" model="res.users">
+            <field name="name">Demo-财务经办</field>
+            <field name="login">demo_finance</field>
+            <field name="password">demo</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_finance_user')])]"/>
+        </record>
+
+        <record id="sc_demo_user_cost" model="res.users">
+            <field name="name">Demo-成控经办</field>
+            <field name="login">demo_cost</field>
+            <field name="password">demo</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_cost_user')])]"/>
+        </record>
+
+        <record id="sc_demo_user_audit" model="res.users">
+            <field name="name">Demo-数据审计</field>
+            <field name="login">demo_audit</field>
+            <field name="password">demo</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_data_read')])]"/>
+        </record>
+
+        <record id="sc_demo_user_readonly" model="res.users">
+            <field name="name">Demo-只读</field>
+            <field name="login">demo_readonly</field>
+            <field name="password">demo</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_read')])]"/>
+        </record>
+
+    </data>
+</odoo>

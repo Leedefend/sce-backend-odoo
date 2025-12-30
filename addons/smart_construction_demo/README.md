@@ -20,6 +20,14 @@
 make demo.rebuild DB_NAME=sc_demo
 ```
 
+CI 一键链路（reset→upgrade→load→verify）：
+```bash
+make demo.ci DB_NAME=sc_demo
+```
+可调参数：
+- `DEMO_TIMEOUT`（默认 600 秒）
+- `DEMO_LOG_TAIL`（默认 200 行）
+
 列出可用场景：
 ```bash
 make demo.list DB_NAME=sc_demo
@@ -40,6 +48,11 @@ make demo.load.all DB_NAME=sc_demo
 make demo.verify DB_NAME=sc_demo
 ```
 
+按场景过滤验收：
+```bash
+make demo.verify DB_NAME=sc_demo SCENARIO=s30_settlement_workflow
+```
+
 ---
 
 ## 模块结构说明
@@ -50,6 +63,8 @@ Demo 数据按 **Base / Scenario** 两层结构组织：
 data/
 ├─ base/                       # 基础演示数据（可复用）
 │  ├─ 00_dictionary.xml        # 数据字典
+│  ├─ 05_core_seed_dictionary.xml  # core 演示字典（迁入）
+│  ├─ 06_core_seed_cost.xml        # core 成本科目（迁入）
 │  ├─ 10_partners.xml          # 业主 / 供应商
 │  └─ 20_projects.xml          # 项目基础信息
 └─ scenario/
@@ -199,6 +214,33 @@ make demo.verify DB_NAME=sc_demo
 
 ---
 
+## S50 失败→修复闭环（Repairable）
+
+场景目录：`data/scenario/s50_repairable_paths/`
+
+- bad seed：`sc_demo_settlement_050_001`（未关联 payment_request）
+- 修复补丁：`sc_demo_payment_050_001`（补齐 settlement_id）
+
+示例（bad→fix）：
+```bash
+make demo.load SCENARIO=s50_repairable_paths STEP=bad DB_NAME=sc_demo
+make demo.verify DB_NAME=sc_demo SCENARIO=s50_repairable_paths STEP=bad
+make demo.load SCENARIO=s50_repairable_paths STEP=fix DB_NAME=sc_demo
+make demo.verify DB_NAME=sc_demo SCENARIO=s50_repairable_paths
+```
+说明：`STEP=bad` 预期返回非 0（失败即成功）。
+
+---
+
+## S90 角色/权限演示
+
+场景目录：`data/scenario/s90_users_roles/`
+
+- demo 用户：`demo_pm` / `demo_finance` / `demo_cost` / `demo_audit` / `demo_readonly`
+- 用于演示能力组门禁与菜单可见性基线（SQL 断言）
+
+---
+
 ## Scenario Index
 
 | 场景 | 目标 | 关键模型 | 可验证点 |
@@ -208,6 +250,8 @@ make demo.verify DB_NAME=sc_demo
 | S20 | 结算单 + 明细 + 收款关联 | sc.settlement.order / sc.settlement.order.line / payment.request | settlement/lines/payment_request.link |
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
+| S50 | 失败→修复闭环 | sc.settlement.order / payment.request | bad→fix verification |
+| S90 | 角色/权限演示 | res.users / res.groups | users/groups/menu gates |
 
 ---
 
@@ -218,6 +262,8 @@ make demo.verify DB_NAME=sc_demo
 - S20: 结算单、结算明细、收款关联
 - S30: 结算单 draft、明细/收款关联、门禁样例 draft
 - S40: 结构/金额/关联违规均保持 draft，且失败条件可验证
+- S50: bad 阶段必须失败，fix 阶段必须通过
+- S90: 用户/组绑定与门禁基线
 
 ---
 
@@ -246,6 +292,11 @@ make demo.verify DB_NAME=sc_demo
 make demo.verify DB_NAME=sc_demo
 ```
 
+按场景过滤：
+```bash
+make demo.verify DB_NAME=sc_demo SCENARIO=s40_failure_paths
+```
+
 该命令将基于 PostgreSQL 只读检查以下断言：
 
 - 项目数量 ≥ 2
@@ -264,6 +315,12 @@ S10 等可选场景默认不写入 manifest，可使用命令按需加载：
 ```bash
 make demo.load SCENARIO=s10_contract_payment DB_NAME=sc_demo
 make demo.verify DB_NAME=sc_demo
+```
+
+加载步骤控制（用于 S50）：
+```bash
+make demo.load SCENARIO=s50_repairable_paths STEP=bad DB_NAME=sc_demo
+make demo.load SCENARIO=s50_repairable_paths STEP=fix DB_NAME=sc_demo
 ```
 
 列出可用场景：
@@ -310,7 +367,7 @@ make demo.rebuild DB_NAME=sc_demo
 - 付款/结算类型不匹配（in/out vs receive/pay）会触发一致性校验。
 - docutils 警告不影响安装/升级，可后续再清理。
 - demo.verify 失败时，可用相同 SQL 在 psql 中复查并定位具体记录。
-- 若只想验证单个场景，可先 `make demo.load SCENARIO=...` 后再 `make demo.verify`。
+- 若只想验证单个场景，可直接 `make demo.verify SCENARIO=...`。
 
 ---
 

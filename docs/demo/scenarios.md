@@ -1,4 +1,4 @@
-# Demo Scenarios Catalog (S00–S40)
+# Demo Scenarios Catalog (S00–S90)
 
 本文件定义 Smart Construction Demo Platform 的全部演示场景、
 业务目标、核心模型与可验证断言。
@@ -17,6 +17,8 @@
 | S20 | Settlement Clearing | 结算单 + 明细 + 收款关联 | sc.settlement.order(+line) / payment.request | 结算完整性 |
 | S30 | Workflow Gate | 可推进但未推进 | sc.settlement.order | 门禁条件成立 |
 | S40 | Failure Paths | 非法状态不可推进 | sc.settlement.order | 失败路径锁定 |
+| S50 | Repairable Failure | 失败→修复→通过 | sc.settlement.order / payment.request | 修复闭环可验证 |
+| S90 | Users & Roles | 角色演示与门禁 | res.users / res.groups | 权限可见性基线 |
 
 ## Scenario Dependency
 
@@ -25,6 +27,8 @@
 - S20 依赖 S10（付款申请 / 合同）
 - S30 基于 S20，但使用独立结算单
 - S40 为独立失败样本，不参与正常流程
+- S50 依赖 S00（基础项目/往来单位），通过修复补丁完成闭环
+- S90 依赖核心权限组，按场景加载演示账号
 
 ## S00 – Minimal Path
 
@@ -88,6 +92,36 @@
 - 所有 S40 记录必须保持 draft
 - 结构/金额/关联失败条件可验证
 
+## S50 – Repairable Failure
+
+目标：
+演示“失败→修复→通过”的最小闭环。
+
+关键记录：
+- sc_demo_settlement_050_001（bad seed）
+- sc_demo_payment_050_001（bad: 未关联）
+
+断言：
+- bad 阶段：结算单不应关联 payment.request
+- fix 阶段：payment.request 成功关联结算单
+
+加载方式：
+- bad: `make demo.load SCENARIO=s50_repairable_paths STEP=bad DB_NAME=sc_demo`
+- fix: `make demo.load SCENARIO=s50_repairable_paths STEP=fix DB_NAME=sc_demo`
+
+## S90 – Users & Roles
+
+目标：
+提供角色演示账号，并验证最小权限门禁。
+
+关键记录：
+- demo_pm / demo_finance / demo_cost / demo_audit / demo_readonly
+
+断言：
+- 用户存在
+- 财务账号不具备合同中心能力
+- 只读账号不具备结算经办能力
+
 ## Verification Model
 
 所有场景均通过 make demo.verify 验证。
@@ -102,11 +136,27 @@
 - 回归可复现
 - 演示稳定
 
+可选用法：
+- `make demo.verify SCENARIO=s30_settlement_workflow`
+- `make demo.verify SCENARIO=s50_repairable_paths STEP=bad`
+
 ## Versioning & Evolution
 
-当前版本：Demo Platform v1 (S00–S40)
+当前版本：Demo Platform v2 (S00–S90)
 
 约定：
 - 新场景必须新增 Sxx 编号
 - 不修改已有场景语义
 - S50+ 只能作为增强，不回溯破坏 v1
+
+## Roadmap: cost_domain_demo 拆分计划（S6x）
+
+约定：
+- core 中的 cost_domain_demo.xml 保持冻结，不默认加载（仅保留历史参考）
+- 未来拆分为 S60–S63，按业务域解耦
+
+建议拆分：
+- S60：成本域基础对象（项目/WBS/预算）
+- S61：预算 BOQ 与成本分摊
+- S62：成本台账与进度
+- S63：预算导入/模板样例
