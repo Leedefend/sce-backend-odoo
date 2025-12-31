@@ -38,12 +38,12 @@ DEMO_LOG_TAIL ?= 200
 DEMO_LOG_SERVICE ?= odoo
 
 # === Odoo Runtime (Single Source of Truth) ===
-ODOO_CONTAINER ?= sc-odoo
-ODOO_CONF      ?= /var/lib/odoo/odoo.conf
-ODOO_DB        ?= $(DB_NAME)
+ODOO_SERVICE ?= odoo
+ODOO_CONF    ?= /var/lib/odoo/odoo.conf
+ODOO_DB      ?= $(DB_NAME)
 
 # Unified Odoo execution (never bypass entrypoint config)
-ODOO_EXEC = docker exec -it $(ODOO_CONTAINER) odoo -c $(ODOO_CONF) -d $(ODOO_DB)
+ODOO_EXEC = $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) odoo -c $(ODOO_CONF) -d $(ODOO_DB)
 
 # ------------------ DB override (single entry) ------------------
 # Use one knob to control dev/test db: `make test DB=sc_test`
