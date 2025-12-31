@@ -1,17 +1,30 @@
+version: "3.9"
+
 services:
-  devshell:
+  sc-dev:
     build:
       context: .
-      dockerfile: .devcontainer/Dockerfile
-    container_name: sc-devshell
-    command: ["sh", "-lc", "sleep infinity"]
-    working_dir: /workspaces/sc-backend-odoo
-    user: root
+      dockerfile: .devcontainer/Dockerfile.dev
 
+    container_name: sc-dev
+
+    # DevContainer 不跑任何服务，只保持常驻
+    command: ["bash", "-lc", "sleep infinity"]
+
+    # 与宿主机代码同步
     volumes:
+      - .:/workspaces/sc-backend-odoo:cached
+
+      # 关键：让 sc-dev 能控制 docker / compose
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/run/docker.sock:/run/docker.sock
 
-    environment:
-      COMPOSE_BIN: "docker compose"
-      PROJECT: "sc"
+    # docker group（通常是 999，若不通再校准）
+    group_add:
+      - "999"
+
+    working_dir: /workspaces/sc-backend-odoo
+
+    # 与 runtime 共享网络，便于 compose exec
+    networks:
+      - default
