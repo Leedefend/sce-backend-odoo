@@ -16,7 +16,7 @@
         "data/scenario/s00_min_path/20_project_links.xml",
         "data/scenario/s00_min_path/30_project_revenue.xml",
     ],
-    "post_init_hook": "ensure_demo_taxes",
+    "post_init_hook": "post_init_hook",
     "installable": True,
     "application": False,
     "license": "LGPL-3",
