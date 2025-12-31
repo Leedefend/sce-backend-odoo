@@ -1,4 +1,29 @@
-# This file is deprecated and no longer used.
-# The devcontainer now attaches directly to the 'odoo' service
-# defined in the main docker-compose.yml file.
-# This file can be safely deleted.
+version: "3.9"
+
+services:
+  sc-dev:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile.dev
+
+    container_name: sc-dev
+
+    # DevContainer 不跑任何服务，只保持常驻
+    command: ["bash", "-lc", "sleep infinity"]
+
+    # 与宿主机代码同步
+    volumes:
+      - .:/workspaces/sc-backend-odoo:cached
+
+      # 关键：让 sc-dev 能控制 docker / compose
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # docker group（通常是 999，若不通再校准）
+    group_add:
+      - "999"
+
+    working_dir: /workspaces/sc-backend-odoo
+
+    # 与 runtime 共享网络，便于 compose exec
+    networks:
+      - default
