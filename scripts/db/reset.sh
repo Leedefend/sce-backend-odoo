@@ -15,6 +15,7 @@ log() { printf '[%s] %s\n' "$(date +'%H:%M:%S')" "$*"; }
 : "${DB_USER:?DB_USER required}"
 
 DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
+export DB_USER DB_PASSWORD
 
 log "db reset: ${DB_NAME}"
 compose_dev up -d db redis
@@ -22,8 +23,19 @@ compose_dev up -d db redis
 DB_READY_TIMEOUT="${DB_READY_TIMEOUT:-120}"
 DB_READY_INTERVAL="${DB_READY_INTERVAL:-1}"
 log "db wait: pg_isready (timeout ${DB_READY_TIMEOUT}s)"
+pg_isready_check() {
+  if command -v timeout >/dev/null 2>&1; then
+    timeout 2s bash -lc "ROOT_DIR='${ROOT_DIR}' COMPOSE_BIN='${COMPOSE_BIN}' PROJECT='${PROJECT}' \
+      source '${ROOT_DIR}/scripts/common/env.sh'; \
+      source '${ROOT_DIR}/scripts/common/compose.sh'; \
+      compose_dev exec -T db pg_isready -U '${DB_USER}' -d postgres -t 2" >/dev/null 2>&1
+  else
+    compose_dev exec -T db pg_isready -U "${DB_USER}" -d postgres -t 2 >/dev/null 2>&1
+  fi
+}
+
 for i in $(seq 1 "$DB_READY_TIMEOUT"); do
-  if compose_dev exec -T db pg_isready -U "${DB_USER}" -d postgres -t 2 >/dev/null 2>&1; then
+  if pg_isready_check; then
     log "db ready"
     break
   fi
