@@ -22,15 +22,17 @@ compose_dev up -d db redis
 
 DB_READY_TIMEOUT="${DB_READY_TIMEOUT:-120}"
 DB_READY_INTERVAL="${DB_READY_INTERVAL:-1}"
+DB_READY_USER="${DB_READY_USER:-postgres}"
+DB_READY_DB="${DB_READY_DB:-postgres}"
 log "db wait: pg_isready (timeout ${DB_READY_TIMEOUT}s)"
 pg_isready_check() {
   if command -v timeout >/dev/null 2>&1; then
     timeout 2s bash -lc "ROOT_DIR='${ROOT_DIR}' COMPOSE_BIN='${COMPOSE_BIN}' PROJECT='${PROJECT}' \
       source '${ROOT_DIR}/scripts/common/env.sh'; \
       source '${ROOT_DIR}/scripts/common/compose.sh'; \
-      compose_dev exec -T db pg_isready -U '${DB_USER}' -d postgres -t 2" >/dev/null 2>&1
+      compose_dev exec -T db pg_isready -U '${DB_READY_USER}' -d '${DB_READY_DB}' -t 2" >/dev/null 2>&1
   else
-    compose_dev exec -T db pg_isready -U "${DB_USER}" -d postgres -t 2 >/dev/null 2>&1
+    compose_dev exec -T db pg_isready -U "${DB_READY_USER}" -d "${DB_READY_DB}" -t 2 >/dev/null 2>&1
   fi
 }
 
@@ -39,9 +41,12 @@ for i in $(seq 1 "$DB_READY_TIMEOUT"); do
     log "db ready"
     break
   fi
+  if [[ "$i" -eq 1 ]]; then
+    compose_dev exec -T db pg_isready -U "${DB_READY_USER}" -d "${DB_READY_DB}" -t 2 || true
+  fi
   if [[ "$i" -eq "$DB_READY_TIMEOUT" ]]; then
     log "db NOT ready after ${DB_READY_TIMEOUT}s"
-    compose_dev exec -T db pg_isready -U "${DB_USER}" -d postgres -t 2 || true
+    compose_dev exec -T db pg_isready -U "${DB_READY_USER}" -d "${DB_READY_DB}" -t 2 || true
     compose_dev logs --tail=200 db || true
     exit 2
   fi
