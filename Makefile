@@ -11,7 +11,11 @@ ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # ------------------ Compose ------------------
 COMPOSE ?= docker compose
-COMPOSE_BIN ?= $(COMPOSE)
+# Prefer v2 `docker compose` if subcommand exists, otherwise fallback to `docker-compose`
+COMPOSE_BIN ?= $(shell \
+  if command -v docker >/dev/null 2>&1 && docker help compose >/dev/null 2>&1; then echo "docker compose"; \
+  elif command -v docker-compose >/dev/null 2>&1; then echo "docker-compose"; \
+  else echo "docker compose"; fi)
 COMPOSE_PROJECT_NAME ?= sc
 PROJECT    ?= $(COMPOSE_PROJECT_NAME)
 
@@ -35,7 +39,7 @@ DB_USER := odoo
 DB_PASSWORD ?= $(DB_USER)
 DEMO_TIMEOUT ?= 600
 DEMO_LOG_TAIL ?= 200
-DEMO_LOG_SERVICE ?= odoo
+DEMO_LOG_SERVICE ?= $(ODOO_SERVICE)
 
 # === Odoo Runtime (Single Source of Truth) ===
 ODOO_SERVICE ?= odoo
