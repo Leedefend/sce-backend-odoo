@@ -17,7 +17,7 @@ MODULE="${MODULE:-smart_construction_core}"
 
 # Tags
 TEST_TAGS="${TEST_TAGS:-sc_smoke,sc_gate}"
-TEST_TAGS_FINAL="${TEST_TAGS_FINAL:-/$(MODULE):sc_smoke,/$(MODULE):sc_gate}"
+TEST_TAGS_FINAL="${TEST_TAGS_FINAL:-/${MODULE}:sc_smoke,/${MODULE}:sc_gate}"
 
 # CI outputs
 CI_LOG="${CI_LOG:-test-ci.log}"
