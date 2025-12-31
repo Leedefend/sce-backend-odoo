@@ -37,6 +37,14 @@ DEMO_TIMEOUT ?= 600
 DEMO_LOG_TAIL ?= 200
 DEMO_LOG_SERVICE ?= odoo
 
+# === Odoo Runtime (Single Source of Truth) ===
+ODOO_CONTAINER ?= sc-odoo
+ODOO_CONF      ?= /var/lib/odoo/odoo.conf
+ODOO_DB        ?= $(DB_NAME)
+
+# Unified Odoo execution (never bypass entrypoint config)
+ODOO_EXEC = docker exec -it $(ODOO_CONTAINER) odoo -c $(ODOO_CONF) -d $(ODOO_DB)
+
 # ------------------ DB override (single entry) ------------------
 # Use one knob to control dev/test db: `make test DB=sc_test`
 # CI keeps its own DB_CI unless你显式覆盖。
@@ -166,14 +174,16 @@ gate.demo:
 # ======================================================
 # ==================== Module Ops ======================
 # ======================================================
+.PHONY: check-odoo-conf
+check-odoo-conf:
+	@test "$(ODOO_CONF)" = "/var/lib/odoo/odoo.conf" || \
+	  (echo "❌ ODOO_CONF must be /var/lib/odoo/odoo.conf" && exit 1)
+
 .PHONY: mod.install mod.upgrade
-mod.install:
+mod.install: check-odoo-conf
 	@echo "[mod.install] module=$(MODULE) db=$(DB_NAME)"
 	@test -n "$(MODULE)" || (echo "ERROR: MODULE is required. e.g. make mod.install MODULE=smart_construction_core" && exit 2)
-	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
-		--entrypoint /usr/bin/odoo odoo \
-		--config=/etc/odoo/odoo.conf \
-		-d $(DB_NAME) \
+	@$(RUN_ENV) $(ODOO_EXEC) \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
 		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
 		-i $(MODULE) \
@@ -181,13 +191,10 @@ mod.install:
 		--no-http --workers=0 --max-cron-threads=0 \
 		--stop-after-init $(ODOO_ARGS)
 
-mod.upgrade:
+mod.upgrade: check-odoo-conf
 	@echo "[mod.upgrade] module=$(MODULE) db=$(DB_NAME)"
 	@test -n "$(MODULE)" || (echo "ERROR: MODULE is required. e.g. make mod.upgrade MODULE=smart_construction_core" && exit 2)
-	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
-		--entrypoint /usr/bin/odoo odoo \
-		--config=/etc/odoo/odoo.conf \
-		-d $(DB_NAME) \
+	@$(RUN_ENV) $(ODOO_EXEC) \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
 		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
 		-u $(MODULE) \
@@ -338,14 +345,11 @@ demo.verify:
 
 .ONESHELL: demo.load demo.list
 .PHONY: demo.load
-demo.load:
+demo.load: check-odoo-conf
 	@echo "[demo.load] db=$(DB_NAME) scenario=$(SCENARIO) step=$(STEP)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
 	@test -n "$(SCENARIO)" || (echo "ERROR: SCENARIO is required. e.g. make demo.load SCENARIO=s10_contract_payment" && exit 2)
-	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
-		--entrypoint /usr/bin/odoo odoo \
-		shell --config=/etc/odoo/odoo.conf \
-		-d $(DB_NAME) \
+	@$(RUN_ENV) $(ODOO_EXEC) shell \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
 		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
 		--no-http --workers=0 --max-cron-threads=0 \
@@ -357,11 +361,8 @@ demo.load:
 	PY
 
 .PHONY: demo.list
-demo.list:
-	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
-		--entrypoint /usr/bin/odoo odoo \
-		shell --config=/etc/odoo/odoo.conf \
-		-d $(DB_NAME) \
+demo.list: check-odoo-conf
+	@$(RUN_ENV) $(ODOO_EXEC) shell \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
 		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
 		--no-http --workers=0 --max-cron-threads=0 \
@@ -371,13 +372,10 @@ demo.list:
 	PY
 
 .PHONY: demo.load.all
-demo.load.all:
+demo.load.all: check-odoo-conf
 	@echo "[demo.load.all] db=$(DB_NAME)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
-	@$(RUN_ENV) $(COMPOSE_BASE) run --rm -T \
-		--entrypoint /usr/bin/odoo odoo \
-		shell --config=/etc/odoo/odoo.conf \
-		-d $(DB_NAME) \
+	@$(RUN_ENV) $(ODOO_EXEC) shell \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
 		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
 		--no-http --workers=0 --max-cron-threads=0 \
