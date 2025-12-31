@@ -10,36 +10,47 @@ SHELL := bash
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # ------------------ Compose ------------------
-COMPOSE ?= docker compose
 # Prefer v2 `docker compose` if subcommand exists, otherwise fallback to `docker-compose`
 COMPOSE_BIN ?= $(shell \
   if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then echo "docker compose"; \
   elif command -v docker-compose >/dev/null 2>&1 && docker-compose version >/dev/null 2>&1; then echo "docker-compose"; \
   else echo "docker compose"; fi)
+
 COMPOSE_PROJECT_NAME ?= sc-backend-odoo
-PROJECT    ?= $(COMPOSE_PROJECT_NAME)
+PROJECT              ?= $(COMPOSE_PROJECT_NAME)
 
 # Compose files / overlays
-COMPOSE_FILE_BASE ?= docker-compose.yml
-COMPOSE_FILE_TESTDEPS ?= docker-compose.testdeps.yml
-COMPOSE_FILE_CI ?= docker-compose.ci.yml
-COMPOSE_FILES ?= -f $(COMPOSE_FILE_BASE)
-COMPOSE_TEST_FILES ?= -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_TESTDEPS)
-COMPOSE_CI_FILES ?= -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_CI)
+COMPOSE_FILE_BASE      ?= docker-compose.yml
+COMPOSE_FILE_TESTDEPS  ?= docker-compose.testdeps.yml
+COMPOSE_FILE_CI        ?= docker-compose.ci.yml
+
+COMPOSE_FILES       ?= -f $(COMPOSE_FILE_BASE)
+COMPOSE_TEST_FILES  ?= -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_TESTDEPS)
+COMPOSE_CI_FILES    ?= -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_CI)
 
 # Canonical compose commands
-COMPOSE_BASE      = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE)
-COMPOSE_TESTDEPS  = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_TESTDEPS)
-COMPOSE_CI        = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_CI)
+COMPOSE_BASE     = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE)
+COMPOSE_TESTDEPS = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_TESTDEPS)
+COMPOSE_CI       = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_BASE) -f $(COMPOSE_FILE_CI)
 
 # ------------------ DB / Module ------------------
-DB_NAME := sc_odoo
-DB_CI   ?= sc_test
-DB_USER := odoo
-DB_PASSWORD ?= $(DB_USER)
-DEMO_TIMEOUT ?= 600
-DEMO_LOG_TAIL ?= 200
-DEMO_LOG_SERVICE ?= $(ODOO_SERVICE)
+DB_NAME      ?= sc_odoo
+DB_CI        ?= sc_test
+DB_USER      ?= odoo
+DB_PASSWORD  ?= $(DB_USER)
+
+# Use one knob to control dev/test db: `make test DB=sc_test`
+DB ?=
+ifneq ($(strip $(DB)),)
+DB_NAME := $(DB)
+endif
+
+MODULE       ?= smart_construction_core
+WITHOUT_DEMO ?= --without-demo=all
+ODOO_ARGS    ?=
+
+DEMO_TIMEOUT     ?= 600
+DEMO_LOG_TAIL    ?= 200
 
 # === Odoo Runtime (Single Source of Truth) ===
 ODOO_SERVICE ?= odoo
@@ -49,29 +60,19 @@ ODOO_DB      ?= $(DB_NAME)
 # Unified Odoo execution (never bypass entrypoint config)
 ODOO_EXEC = $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) odoo -c $(ODOO_CONF) -d $(ODOO_DB)
 
-# ------------------ DB override (single entry) ------------------
-# Use one knob to control dev/test db: `make test DB=sc_test`
-# CI keeps its own DB_CI unless你显式覆盖。
-DB ?=
-ifneq ($(strip $(DB)),)
-DB_NAME := $(DB)
-endif
-
-MODULE ?= smart_construction_core
-WITHOUT_DEMO ?= --without-demo=all
-ODOO_ARGS ?=
-
 # ------------------ Addons / Docs mount ------------------
 # 外部 addons 仓库（git submodule）默认路径：项目内 addons_external/...
-ADDONS_EXTERNAL_HOST ?= $(ROOT_DIR)/addons_external/oca_server_ux
+ADDONS_EXTERNAL_HOST  ?= $(ROOT_DIR)/addons_external/oca_server_ux
 # odoo 容器内的挂载路径
 ADDONS_EXTERNAL_MOUNT ?= /mnt/addons_external/oca_server_ux
+
 BASE_ADDONS_PATH := /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
 EXTRA_ADDONS_PATH := $(shell \
   if [ -n "$(ADDONS_EXTERNAL_HOST)" ] && [ -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
     echo ",$(ADDONS_EXTERNAL_MOUNT)"; \
   fi)
 ODOO_ADDONS_PATH := $(BASE_ADDONS_PATH)$(EXTRA_ADDONS_PATH)
+
 DOCS_MOUNT_HOST ?= $(ROOT_DIR)/docs
 DOCS_MOUNT_CONT ?= /mnt/docs
 
@@ -87,9 +88,9 @@ CI_PASS_SIG_RE  ?= (0 failed, 0 error\(s\))
 CI_ARTIFACT_PURGE ?= 1
 CI_ARTIFACT_KEEP  ?= 30
 
-CI_TAIL_ODOO ?= 2000
-CI_TAIL_DB   ?= 800
-CI_TAIL_REDIS?= 400
+CI_TAIL_ODOO  ?= 2000
+CI_TAIL_DB    ?= 800
+CI_TAIL_REDIS ?= 400
 
 # ------------------ MSYS / Git Bash tweaks ------------------
 export COMPOSE_ANSI := never
@@ -110,6 +111,8 @@ DB_CI="$(DB_CI)" \
 DB_USER="$(DB_USER)" \
 DB_PASSWORD="$(DB_PASSWORD)" \
 MODULE="$(MODULE)" \
+WITHOUT_DEMO="$(WITHOUT_DEMO)" \
+ODOO_ARGS="$(ODOO_ARGS)" \
 TEST_TAGS="$(TEST_TAGS)" \
 ADDONS_EXTERNAL_MOUNT="$(ADDONS_EXTERNAL_MOUNT)" \
 DOCS_MOUNT_HOST="$(DOCS_MOUNT_HOST)" \
@@ -121,8 +124,43 @@ CI_ARTIFACT_PURGE="$(CI_ARTIFACT_PURGE)" \
 CI_ARTIFACT_KEEP="$(CI_ARTIFACT_KEEP)" \
 CI_TAIL_ODOO="$(CI_TAIL_ODOO)" \
 CI_TAIL_DB="$(CI_TAIL_DB)" \
-CI_TAIL_REDIS="$(CI_TAIL_REDIS)"
+CI_TAIL_REDIS="$(CI_TAIL_REDIS)" \
+DEMO_TIMEOUT="$(DEMO_TIMEOUT)" \
+DEMO_LOG_TAIL="$(DEMO_LOG_TAIL)"
 endef
+
+# ======================================================
+# ==================== Guards ==========================
+# ======================================================
+.PHONY: check-compose-project check-external-addons check-odoo-conf
+
+check-compose-project:
+	@set -e; \
+	for c in sc-db sc-redis sc-odoo sc-nginx; do \
+	  if docker inspect $$c >/dev/null 2>&1; then \
+	    p="$$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' $$c 2>/dev/null || true)"; \
+	    if [ -n "$$p" ] && [ "$$p" != "$(COMPOSE_PROJECT_NAME)" ]; then \
+	      echo "❌ compose project mismatch: container $$c belongs to '$$p', Makefile wants '$(COMPOSE_PROJECT_NAME)'"; \
+	      echo "   Fix: set COMPOSE_PROJECT_NAME=$$p (recommended) or remove conflicting containers."; \
+	      exit 2; \
+	    fi; \
+	  fi; \
+	done
+
+check-external-addons:
+	@if [ ! -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
+		echo "❌ external addons missing: $(ADDONS_EXTERNAL_HOST)"; \
+		echo "   Fix: git submodule update --init --recursive"; \
+		exit 2; \
+	fi
+	@if [ -z "$$(find "$(ADDONS_EXTERNAL_HOST)" -maxdepth 2 -name '__manifest__.py' 2>/dev/null | head -n 1)" ]; then \
+		echo "❌ external addons exists but contains no addons: $(ADDONS_EXTERNAL_HOST)"; \
+		exit 2; \
+	fi
+
+check-odoo-conf:
+	@test "$(ODOO_CONF)" = "/var/lib/odoo/odoo.conf" || \
+	  (echo "❌ ODOO_CONF must be /var/lib/odoo/odoo.conf" && exit 1)
 
 # ======================================================
 # ==================== Help ============================
@@ -130,17 +168,18 @@ endef
 .PHONY: help
 help:
 	@echo "Targets:"
-	@echo "  make up/down/restart/logs/ps/odoo-shell/db.reset/demo.reset"
+	@echo "  make up/down/restart/logs/ps/odoo-shell"
+	@echo "  make db.reset DB=<name> | demo.reset DB=<name> | gate.demo"
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
-	@echo "  make db.branch | db.create DB=<name> | db.reset.manual DB=<name>"
+	@echo "  make demo.list | demo.load SCENARIO=... [STEP=...] | demo.load.all | demo.verify"
 	@echo "  make test | test.safe"
 	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
-	@echo "  make ci.clean | ci.ps | ci.logs | ci.repro"
-	@echo "  make diag.compose"
+	@echo "  make ci.clean | ci.ps | ci.logs"
+	@echo "  make diag.compose | verify.ops"
 	@echo
 	@echo "Common vars:"
-	@echo "  MODULE=$(MODULE) DB_CI=$(DB_CI) TEST_TAGS=$(TEST_TAGS)"
-	@echo "  COMPOSE_BIN='$(COMPOSE_BIN)' PROJECT='$(PROJECT)'"
+	@echo "  MODULE=$(MODULE) DB_NAME=$(DB_NAME) DB_CI=$(DB_CI) TEST_TAGS=$(TEST_TAGS)"
+	@echo "  COMPOSE_BIN='$(COMPOSE_BIN)' COMPOSE_PROJECT_NAME='$(COMPOSE_PROJECT_NAME)'"
 
 # ======================================================
 # ==================== Dev =============================
@@ -158,6 +197,7 @@ ps: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/ps.sh
 odoo-shell: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/shell.sh
+
 .PHONY: odoo.recreate odoo.logs odoo.exec
 odoo.recreate: check-compose-project
 	@echo "[odoo.recreate] service=$(ODOO_SERVICE)"
@@ -166,133 +206,87 @@ odoo.logs: check-compose-project
 	@$(RUN_ENV) $(COMPOSE_BASE) logs --tail=200 $(ODOO_SERVICE)
 odoo.exec: check-compose-project
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) bash
-db.reset:
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
-demo.reset:
-	@echo "[demo.reset] db=$(DB_NAME)"
-	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
-	@$(MAKE) db.reset DB_NAME=$(DB_NAME)
-db.demo.reset:
+
+# ======================================================
+# ==================== DB / Demo =======================
+# ======================================================
+.PHONY: db.reset demo.reset db.branch db.create db.reset.manual
+db.reset: check-compose-project
+	@$(RUN_ENV) bash scripts/db/reset.sh
+
+# demo.reset 必须走 scripts/demo/reset.sh（含 seed/demo 安装）
+demo.reset: check-compose-project
+	@$(RUN_ENV) bash scripts/demo/reset.sh
+
+# 兼容旧快捷命令：固定 sc_demo
+.PHONY: db.demo.reset
+db.demo.reset: check-compose-project
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
+
 db.branch:
 	@bash scripts/db/branch_db.sh
 db.create:
 	@bash scripts/db/create.sh $(DB)
 db.reset.manual:
 	@bash scripts/db/reset_manual.sh $(DB)
-verify.baseline:
+
+# ======================================================
+# ==================== Verify / Gate ===================
+# ======================================================
+.PHONY: verify.baseline verify.demo gate.baseline gate.demo
+verify.baseline: check-compose-project
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
-verify.demo:
+verify.demo: check-compose-project
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
-gate.baseline:
+
+gate.baseline: check-compose-project
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
-gate.demo:
+
+gate.demo: check-compose-project
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
 
 # ======================================================
 # ==================== Module Ops ======================
 # ======================================================
-.PHONY: check-compose-project
-check-compose-project:
-	@set -e; \
-	for c in sc-db sc-redis sc-odoo sc-nginx; do \
-	  if docker inspect $$c >/dev/null 2>&1; then \
-	    p="$$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' $$c 2>/dev/null || true)"; \
-	    if [ -n "$$p" ] && [ "$$p" != "$(COMPOSE_PROJECT_NAME)" ]; then \
-	      echo "❌ compose project mismatch: container $$c belongs to '$$p', Makefile wants '$(COMPOSE_PROJECT_NAME)'"; \
-	      echo "   Fix: set COMPOSE_PROJECT_NAME=$$p (recommended) or remove conflicting containers."; \
-	      exit 2; \
-	    fi; \
-	  fi; \
-	done
-
-.PHONY: check-external-addons
-check-external-addons:
-	@if [ ! -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
-		echo "❌ external addons missing: $(ADDONS_EXTERNAL_HOST)"; \
-		echo "   Fix: git submodule update --init --recursive"; \
-		exit 2; \
-	fi
-	@if [ -z "$$(find "$(ADDONS_EXTERNAL_HOST)" -maxdepth 2 -name '__manifest__.py' 2>/dev/null | head -n 1)" ]; then \
-		echo "❌ external addons exists but contains no addons: $(ADDONS_EXTERNAL_HOST)"; \
-		exit 2; \
-	fi
-
-.PHONY: check-odoo-conf
-check-odoo-conf:
-	@test "$(ODOO_CONF)" = "/var/lib/odoo/odoo.conf" || \
-	  (echo "❌ ODOO_CONF must be /var/lib/odoo/odoo.conf" && exit 1)
-
 .PHONY: mod.install mod.upgrade
-mod.install:
+mod.install: check-compose-project
 	@$(RUN_ENV) bash scripts/mod/install.sh
-
-mod.upgrade:
+mod.upgrade: check-compose-project
 	@$(RUN_ENV) bash scripts/mod/upgrade.sh
 
-.PHONY: demo.verify
-demo.verify:
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.install demo.rebuild demo.ci
+demo.verify: check-compose-project
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
-.PHONY: demo.load
-demo.load:
+demo.load: check-compose-project
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/load.sh
 
-.PHONY: demo.list
-demo.list:
+demo.list: check-compose-project
 	@$(RUN_ENV) bash scripts/demo/list.sh
 
-.PHONY: demo.load.all
-demo.load.all:
+demo.load.all: check-compose-project
 	@$(RUN_ENV) bash scripts/demo/load_all.sh
 
-.PHONY: demo.install
-demo.install:
+demo.install: check-compose-project
 	@echo "[demo.install] db=$(DB_NAME)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
 	@$(MAKE) mod.install MODULE=smart_construction_demo DB_NAME=$(DB_NAME)
 
-.PHONY: demo.rebuild demo.ci
-demo.rebuild:
+demo.rebuild: check-compose-project
 	@$(RUN_ENV) bash scripts/demo/rebuild.sh
 
-demo.ci:
+demo.ci: check-compose-project
 	@$(RUN_ENV) bash scripts/demo/ci.sh
-
-.PHONY: diag.compose
-diag.compose:
-	@echo "=== base ==="
-	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
-	@echo "=== base+ci ==="
-	@$(COMPOSE_CI) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
-	@echo "=== base+testdeps ==="
-	@out="$$( $(COMPOSE_TESTDEPS) config 2>&1 )"; \
-	status=$$?; \
-	echo "$$out" | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'; \
-	echo "=== base+testdeps err ==="; \
-	if [ $$status -ne 0 ]; then echo "$$out" | sed -n '1,120p'; fi
-.PHONY: verify.ops
-verify.ops: check-compose-project
-	@echo "== verify.ops =="
-	@echo "[1] docker daemon"
-	@docker info >/dev/null && echo "OK docker daemon" || (echo "FAIL docker daemon" && exit 2)
-	@echo "[2] compose project"
-	@$(COMPOSE_BASE) ps
-	@echo "[3] odoo recreate"
-	@$(MAKE) odoo.recreate
-	@echo "[4] module upgrade smoke"
-	@$(MAKE) mod.upgrade MODULE=$(MODULE)
-	@echo "🎉 verify.ops PASSED"
 
 # ======================================================
 # ==================== Dev Test ========================
 # ======================================================
 .PHONY: test test.safe
-test:
+test: check-compose-project
 	@$(RUN_ENV) bash scripts/test/test.sh
-test.safe:
+test.safe: check-compose-project
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
 # ======================================================
@@ -329,3 +323,31 @@ ci.ps:
 	@$(RUN_ENV) bash scripts/ci/ci_ps.sh
 ci.logs:
 	@$(RUN_ENV) bash scripts/ci/ci_logs.sh
+
+# ======================================================
+# ==================== Diagnostics ======================
+# ======================================================
+.PHONY: diag.compose verify.ops
+diag.compose:
+	@echo "=== base ==="
+	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
+	@echo "=== base+ci ==="
+	@$(COMPOSE_CI) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
+	@echo "=== base+testdeps ==="
+	@out="$$( $(COMPOSE_TESTDEPS) config 2>&1 )"; \
+	status=$$?; \
+	echo "$$out" | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'; \
+	echo "=== base+testdeps err ==="; \
+	if [ $$status -ne 0 ]; then echo "$$out" | sed -n '1,120p'; fi
+
+verify.ops: check-compose-project
+	@echo "== verify.ops =="
+	@echo "[1] docker daemon"
+	@docker info >/dev/null && echo "OK docker daemon" || (echo "FAIL docker daemon" && exit 2)
+	@echo "[2] compose project"
+	@$(COMPOSE_BASE) ps
+	@echo "[3] odoo recreate"
+	@$(MAKE) odoo.recreate
+	@echo "[4] module upgrade smoke"
+	@$(MAKE) mod.upgrade MODULE=$(MODULE)
+	@echo "🎉 verify.ops PASSED"
