@@ -1,37 +1,51 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source "$(dirname "$0")/../_lib/common.sh"
+
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+export ROOT_DIR
+
+# shellcheck source=../common/env.sh
+source "$ROOT_DIR/scripts/common/env.sh"
+# shellcheck source=../common/compose.sh
+source "$ROOT_DIR/scripts/common/compose.sh"
+
+log() { printf '[%s] %s\n' "$(date +'%H:%M:%S')" "$*"; }
 
 : "${DB_NAME:?DB_NAME required}"
 : "${DB_USER:?DB_USER required}"
-: "${COMPOSE_FILES:?COMPOSE_FILES required}"
 
 DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
 
 log "db reset: ${DB_NAME}"
-compose ${COMPOSE_FILES} up -d db redis
+compose_dev up -d db redis
 
-log "db wait: pg_isready"
-for i in $(seq 1 60); do
-  if compose ${COMPOSE_FILES} exec -T db pg_isready -U "${DB_USER}" -d postgres >/dev/null 2>&1; then
+DB_READY_TIMEOUT="${DB_READY_TIMEOUT:-120}"
+DB_READY_INTERVAL="${DB_READY_INTERVAL:-1}"
+log "db wait: pg_isready (timeout ${DB_READY_TIMEOUT}s)"
+for i in $(seq 1 "$DB_READY_TIMEOUT"); do
+  if compose_dev exec -T db pg_isready -U "${DB_USER}" -d postgres -t 2 >/dev/null 2>&1; then
     log "db ready"
     break
   fi
-  if [[ "$i" -eq 60 ]]; then
-    log "db NOT ready after 60s"
-    compose ${COMPOSE_FILES} logs --tail=200 db || true
+  if [[ "$i" -eq "$DB_READY_TIMEOUT" ]]; then
+    log "db NOT ready after ${DB_READY_TIMEOUT}s"
+    compose_dev exec -T db pg_isready -U "${DB_USER}" -d postgres -t 2 || true
+    compose_dev logs --tail=200 db || true
     exit 2
   fi
-  sleep 1
+  if (( i % 10 == 0 )); then
+    log "db wait: pg_isready (${i}/${DB_READY_TIMEOUT})"
+  fi
+  sleep "$DB_READY_INTERVAL"
 done
 
 # terminate existing connections to allow drop
-compose ${COMPOSE_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c \
+compose_dev exec -T db psql -U "${DB_USER}" -d postgres -c \
   "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" >/dev/null || true
 
-compose ${COMPOSE_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c \
+compose_dev exec -T db psql -U "${DB_USER}" -d postgres -c \
   "DROP DATABASE IF EXISTS ${DB_NAME};"
-compose ${COMPOSE_FILES} exec -T db psql -U "${DB_USER}" -d postgres -c \
+compose_dev exec -T db psql -U "${DB_USER}" -d postgres -c \
   "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER} TEMPLATE template0 ENCODING 'UTF8';"
 
 # 统一 Odoo DB 参数（后续所有操作必须带，避免掉回本机 socket）
@@ -41,7 +55,7 @@ ODOO_DB_ARGS=(
 )
 
 log "odoo init base (stop-after-init): ${DB_NAME}"
-compose ${COMPOSE_FILES} run --rm -T \
+compose_dev run --rm -T \
   --entrypoint /usr/bin/odoo odoo \
   --config=/etc/odoo/odoo.conf \
   -d "${DB_NAME}" \
@@ -52,7 +66,7 @@ compose ${COMPOSE_FILES} run --rm -T \
   --stop-after-init
 
 log "install bootstrap module: smart_construction_bootstrap"
-compose ${COMPOSE_FILES} run --rm -T \
+compose_dev run --rm -T \
   --entrypoint /usr/bin/odoo odoo \
   --config=/etc/odoo/odoo.conf \
   -d "${DB_NAME}" \
