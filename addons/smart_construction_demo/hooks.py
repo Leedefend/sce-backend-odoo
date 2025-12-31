@@ -8,7 +8,7 @@ def ensure_demo_taxes(env_or_cr, registry=None):
 
     This keeps demo/CI reproducible without letting the core module seed taxes.
     """
-    if registry:
+    if registry is not None:
         env = api.Environment(env_or_cr, SUPERUSER_ID, {})
     else:
         env = env_or_cr
@@ -24,14 +24,31 @@ DEMO_LOGINS = [
 ]
 
 
-def post_init_hook(cr, registry):
-    """Normalize demo users' language/timezone for trial UX."""
-    env = api.Environment(cr, SUPERUSER_ID, {})
+def _normalize_demo_users(env):
     users = env["res.users"].search([("login", "in", DEMO_LOGINS)])
-    if users:
-        to_write = users.filtered(
-            lambda u: (u.lang or "") != "zh_CN" or (u.tz or "") != "Asia/Shanghai"
-        )
-        if to_write:
-            to_write.write({"lang": "zh_CN", "tz": "Asia/Shanghai"})
+    if not users:
+        return
+    to_write = users.filtered(
+        lambda u: (u.lang or "") != "zh_CN" or (u.tz or "") != "Asia/Shanghai"
+    )
+    if to_write:
+        to_write.write({"lang": "zh_CN", "tz": "Asia/Shanghai"})
+
+
+def post_init_hook(*args, **kwargs):
+    """Support both post_init_hook(env) and post_init_hook(cr, registry)."""
+    if not args:
+        return
+
+    first = args[0]
+    if hasattr(first, "cr") and hasattr(first, "registry"):
+        env = first
+        _normalize_demo_users(env)
+        ensure_demo_taxes(env)
+        return
+
+    cr = first
+    registry = args[1] if len(args) > 1 else None
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    _normalize_demo_users(env)
     ensure_demo_taxes(cr, registry)
