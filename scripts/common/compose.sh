@@ -19,6 +19,12 @@ compose_dev() {
   "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$PROJECT" -f "$ROOT_DIR/docker-compose.yml" "$@"
 }
 
+compose_testdeps() {
+  "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$PROJECT" \
+    -f "$ROOT_DIR/docker-compose.yml" -f "$ROOT_DIR/docker-compose.testdeps.yml" \
+    "$@"
+}
+
 compose_ci() {
   "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$PROJECT_CI" \
     -f "$ROOT_DIR/docker-compose.yml" -f "$ROOT_DIR/docker-compose.ci.yml" \
