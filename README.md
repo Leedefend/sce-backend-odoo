@@ -35,6 +35,8 @@
 
 👉 `docs/dev-env.md`
 
+补充约束：所有 Makefile 中调用 Odoo 的 target 必须经由 `$(ODOO_EXEC)`，任何直接调用 `odoo` 的行为一律视为缺陷。
+
 ---
 
 ## 🏗️ 核心特性

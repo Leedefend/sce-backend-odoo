@@ -37,6 +37,14 @@ DEMO_TIMEOUT ?= 600
 DEMO_LOG_TAIL ?= 200
 DEMO_LOG_SERVICE ?= odoo
 
+# === Odoo Runtime (Single Source of Truth) ===
+ODOO_CONTAINER ?= sc-odoo
+ODOO_CONF      ?= /var/lib/odoo/odoo.conf
+ODOO_DB        ?= $(DB_NAME)
+
+# Unified Odoo execution (never bypass entrypoint config)
+ODOO_EXEC = docker exec -it $(ODOO_CONTAINER) odoo -c $(ODOO_CONF) -d $(ODOO_DB)
+
 # ------------------ DB override (single entry) ------------------
 # Use one knob to control dev/test db: `make test DB=sc_test`
 # CI keeps its own DB_CI unless你显式覆盖。
@@ -166,6 +174,11 @@ gate.demo:
 # ======================================================
 # ==================== Module Ops ======================
 # ======================================================
+.PHONY: check-odoo-conf
+check-odoo-conf:
+	@test "$(ODOO_CONF)" = "/var/lib/odoo/odoo.conf" || \
+	  (echo "❌ ODOO_CONF must be /var/lib/odoo/odoo.conf" && exit 1)
+
 .PHONY: mod.install mod.upgrade
 mod.install:
 	@$(RUN_ENV) bash scripts/mod/install.sh
@@ -228,8 +241,8 @@ test.safe:
 # ==================== CI ==============================
 # ======================================================
 .PHONY: ci.gate ci.smoke ci.full ci.repro \
-        test-install-gate test-upgrade-gate \
-        ci.clean ci.ps ci.logs
+	test-install-gate test-upgrade-gate \
+	ci.clean ci.ps ci.logs
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate:

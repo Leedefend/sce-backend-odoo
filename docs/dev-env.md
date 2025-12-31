@@ -151,6 +151,10 @@ docker exec -it sc-odoo odoo -d sc_odoo -u smart_construction_core
 - [ ] 重启后配置仍来自 entrypoint 渲染结果
 - [ ] 任意成员按本文档从零启动，30 分钟内完成上述所有检查项
 
+## Makefile Guarantee
+
+所有 Makefile 中调用 Odoo 的 target 必须经由 `$(ODOO_EXEC)`，任何直接调用 `odoo` 的行为一律视为缺陷。
+
 ## 架构师真心话
 
 你今天做的不是写文档，而是把昂贵的踩坑经验转化成可规模化复用的工程资产。这一步，是团队从能跑到可复制的分水岭。
