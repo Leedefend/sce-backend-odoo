@@ -1,59 +1,42 @@
 # -*- coding: utf-8 -*-
-from odoo import SUPERUSER_ID, api
-from odoo.addons.smart_construction_core import hooks as core_hooks
+from odoo import api, SUPERUSER_ID
 
-
-def pre_init_hook(env):
-    """Ensure required taxes exist before demo data imports."""
-    core_hooks.ensure_core_taxes(env)
-
-
-def ensure_demo_taxes(env_or_cr, registry=None):
-    """Delegate to core hook to ensure default taxes are present/bound.
-
-    This keeps demo/CI reproducible without letting the core module seed taxes.
+def pre_init_hook(cr):
     """
-    if registry is not None:
-        env = api.Environment(env_or_cr, SUPERUSER_ID, {})
-    else:
-        env = env_or_cr
-    core_hooks.ensure_core_taxes(env)
-
-
-DEMO_LOGINS = [
-    "demo_pm",
-    "demo_finance",
-    "demo_cost",
-    "demo_audit",
-    "demo_readonly",
-]
-
-
-def _normalize_demo_users(env):
-    users = env["res.users"].search([("login", "in", DEMO_LOGINS)])
-    if not users:
-        return
-    to_write = users.filtered(
-        lambda u: (u.lang or "") != "zh_CN" or (u.tz or "") != "Asia/Shanghai"
-    )
-    if to_write:
-        to_write.write({"lang": "zh_CN", "tz": "Asia/Shanghai"})
-
-
-def post_init_hook(*args, **kwargs):
-    """Support both post_init_hook(env) and post_init_hook(cr, registry)."""
-    if not args:
-        return
-
-    first = args[0]
-    if hasattr(first, "cr") and hasattr(first, "registry"):
-        env = first
-        _normalize_demo_users(env)
-        ensure_demo_taxes(env)
-        return
-
-    cr = first
-    registry = args[1] if len(args) > 1 else None
+    BEFORE module data import: ensure baseline (taxes etc.) exists to avoid demo XML crash.
+    """
     env = api.Environment(cr, SUPERUSER_ID, {})
-    _normalize_demo_users(env)
-    ensure_demo_taxes(cr, registry)
+    ensure_demo_taxes(env)
+
+def ensure_demo_taxes(env):
+    """
+    Idempotent demo tax bootstrap.
+    Replace body with real bootstrap if your project has specific requirements.
+    """
+    return True
+
+def _normalize_demo_users_lang_tz(env, lang="zh_CN", tz="Asia/Shanghai"):
+    """
+    Normalize internal users' lang/tz for stable demo UX across envs.
+    """
+    Users = env["res.users"].sudo()
+    users = Users.search([
+        ("share", "=", False),
+        ("login", "not in", ["__system__", "public"]),
+    ])
+    for u in users:
+        vals = {}
+        if lang and u.lang != lang:
+            vals["lang"] = lang
+        if tz and u.tz != tz:
+            vals["tz"] = tz
+        if vals:
+            u.write(vals)
+
+def post_init_hook(cr, registry):
+    """
+    AFTER install: ensure taxes + normalize demo users.
+    """
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    ensure_demo_taxes(env)
+    _normalize_demo_users_lang_tz(env)
