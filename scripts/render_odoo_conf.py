@@ -1,90 +1,104 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 
-# allow lower/upper variable names
-VAR_PATTERN = re.compile(r"\$\{([A-Za-z0-9_]+)\}")
+VAR_PATTERN = re.compile(r"\$\{?([A-Z0-9_]+)\}?")
 LEFTOVER_PATTERN = re.compile(r"\$\{[^}]+\}")
 
-# keys we expect to be present and non-empty after render
 REQUIRED_KEYS = {
     "db_host",
     "db_port",
     "db_user",
     "db_password",
+    "db_name",
     "admin_passwd",
 }
+
+DEFAULT_OUT = "/var/lib/odoo/odoo.conf"
+
 
 def render(text: str) -> str:
     def repl(m: re.Match) -> str:
         key = m.group(1)
-        val = os.getenv(key)
+        val = os.environ.get(key)
         if val is None:
             raise SystemExit(f"[render_odoo_conf] Missing env var: {key}")
         return val
+
     return VAR_PATTERN.sub(repl, text)
 
+
 def parse_kv(rendered: str) -> dict:
-    """
-    Very small INI-ish parser for [options] key=value lines.
-    Ignores comments and section headers.
-    """
     kv = {}
     for line in rendered.splitlines():
-        s = line.strip()
-        if not s or s.startswith(("#", ";")):
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
             continue
-        if s.startswith("[") and s.endswith("]"):
-            continue
-        if "=" in s:
-            k, v = s.split("=", 1)
-            kv[k.strip()] = v.strip()
+        k, v = line.split("=", 1)
+        kv[k.strip()] = v.strip()
     return kv
+
+
+def atomic_write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".odoo_conf_", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
+        Path(tmp).replace(path)
+    finally:
+        try:
+            if Path(tmp).exists():
+                Path(tmp).unlink()
+        except Exception:
+            pass
+
 
 def main() -> None:
     if len(sys.argv) != 3:
         raise SystemExit("Usage: render_odoo_conf.py <template_path> <output_path>")
 
     tpl = Path(sys.argv[1])
-    out = Path(sys.argv[2])
+    out_arg = (sys.argv[2] or "").strip()
+    if out_arg in {"", "-", "auto"}:
+        out_arg = os.environ.get("ODOO_CONF_OUT", DEFAULT_OUT)
 
-    text = tpl.read_text(encoding="utf-8")
-    rendered = render(text)
+    out = Path(out_arg)
 
-    # hard fail if any ${...} still exists
+    rendered = render(tpl.read_text(encoding="utf-8"))
     if LEFTOVER_PATTERN.search(rendered):
         leftovers = sorted(set(LEFTOVER_PATTERN.findall(rendered)))
         raise SystemExit(f"[render_odoo_conf] Unresolved placeholders remain: {leftovers}")
-
     kv = parse_kv(rendered)
 
-    # required keys must exist and be non-empty
-    missing = [k for k in REQUIRED_KEYS if not kv.get(k)]
+    missing = REQUIRED_KEYS - kv.keys()
     if missing:
-        raise SystemExit(f"[render_odoo_conf] Missing/empty required keys after render: {missing}")
+        raise SystemExit(f"[render_odoo_conf] Missing keys after render: {sorted(missing)}")
 
-    # extra guardrail: password cannot be empty or quoted empty
-    pwd = kv.get("db_password", "")
-    if pwd in {"", '""', "''"}:
+    if kv.get("db_password", "") in {"", "''", '""'}:
         raise SystemExit("[render_odoo_conf] db_password is empty after render")
 
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(rendered, encoding="utf-8")
+    try:
+        atomic_write_text(out, rendered)
+    except PermissionError as e:
+        raise SystemExit(
+            "[render_odoo_conf] Permission denied writing config.\n"
+            f"  target: {out}\n"
+            "Fix options:\n"
+            "  1) Set ODOO_CONF_OUT=/var/lib/odoo/odoo.conf (recommended)\n"
+            "  2) Or change docker-compose volume/permissions\n"
+            f"Original error: {e}"
+        )
 
-    # safe log (no secrets)
-    dbfilter_line = ""
-    for line in rendered.splitlines():
-        if line.strip().startswith("dbfilter"):
-            dbfilter_line = line.strip()
-            break
+    dbfilter = kv.get("dbfilter")
+    if dbfilter:
+        print(f"[render_odoo_conf] dbfilter={dbfilter}")
 
-    print(f"[render_odoo_conf] Rendered {tpl} -> {out}")
-    if dbfilter_line:
-        print(f"[render_odoo_conf] {dbfilter_line}")
 
 if __name__ == "__main__":
     main()
