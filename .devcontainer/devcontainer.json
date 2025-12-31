@@ -1,18 +1,18 @@
 {
-  "name": "sc-backend-odoo (sc-odoo service)",
+  "name": "sc-backend-odoo (dev)",
   "dockerComposeFile": [
-    "../docker-compose.yml"
+    "../docker-compose.yml",
+    "../docker-compose.devcontainer.yml"
   ],
-  "service": "odoo",
+  "service": "sc-dev",
   "workspaceFolder": "/workspaces/sc-backend-odoo",
-  "shutdownAction": "none",
-  "remoteUser": "root",
+  "shutdownAction": "stopCompose",
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-azuretools.vscode-docker",
         "ms-python.python",
-        "ms-python.vscode-pylance"
+        "redhat.vscode-yaml"
       ]
     }
   }
