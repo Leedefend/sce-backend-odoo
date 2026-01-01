@@ -8,13 +8,12 @@ services:
     user: "odoo"
     volumes:
       - .:/workspaces/sc-backend-odoo:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "1001"
     working_dir: /workspaces/sc-backend-odoo
-    # 让 dev 容器能与 db/odoo/redis 同网互通
     depends_on:
       db:
         condition: service_started
       redis:
         condition: service_started
-    # 可选：如果你希望在 dev 容器里直接跑 docker compose（需要 docker socket）
-    # volumes:
-    #   - /var/run/docker.sock:/var/run/docker.sock
