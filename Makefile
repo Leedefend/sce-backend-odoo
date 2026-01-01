@@ -16,7 +16,7 @@ COMPOSE_BIN ?= $(shell \
   if command -v docker >/dev/null 2>&1 && docker help compose >/dev/null 2>&1; then echo "docker compose"; \
   elif command -v docker-compose >/dev/null 2>&1; then echo "docker-compose"; \
   else echo "docker compose"; fi)
-COMPOSE_PROJECT_NAME ?= sc
+COMPOSE_PROJECT_NAME ?= sc-backend-odoo
 PROJECT    ?= $(COMPOSE_PROJECT_NAME)
 
 # Compose files / overlays
@@ -62,8 +62,16 @@ WITHOUT_DEMO ?= --without-demo=all
 ODOO_ARGS ?=
 
 # ------------------ Addons / Docs mount ------------------
-# 外部 addons 仓库在容器中的 mount 位置（你已在 addons-path 里用到）
+# 外部 addons 仓库（git submodule）默认路径：项目内 addons_external/...
+ADDONS_EXTERNAL_HOST ?= $(ROOT_DIR)/addons_external/oca_server_ux
+# odoo 容器内的挂载路径
 ADDONS_EXTERNAL_MOUNT ?= /mnt/addons_external/oca_server_ux
+BASE_ADDONS_PATH := /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
+EXTRA_ADDONS_PATH := $(shell \
+  if [ -n "$(ADDONS_EXTERNAL_HOST)" ] && [ -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
+    echo ",$(ADDONS_EXTERNAL_MOUNT)"; \
+  fi)
+ODOO_ADDONS_PATH := $(BASE_ADDONS_PATH)$(EXTRA_ADDONS_PATH)
 DOCS_MOUNT_HOST ?= $(ROOT_DIR)/docs
 DOCS_MOUNT_CONT ?= /mnt/docs
 
@@ -138,17 +146,17 @@ help:
 # ==================== Dev =============================
 # ======================================================
 .PHONY: up down restart logs ps odoo-shell
-up:
+up: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/up.sh
-down:
+down: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/down.sh
-restart:
+restart: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/restart.sh
-logs:
+logs: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/logs.sh
-ps:
+ps: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/ps.sh
-odoo-shell:
+odoo-shell: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/shell.sh
 db.reset:
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
@@ -178,29 +186,55 @@ gate.demo:
 # ======================================================
 # ==================== Module Ops ======================
 # ======================================================
+.PHONY: check-compose-project
+check-compose-project:
+	@set -e; \
+	for c in sc-db sc-redis sc-odoo sc-nginx; do \
+	  if docker inspect $$c >/dev/null 2>&1; then \
+	    p="$$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' $$c 2>/dev/null || true)"; \
+	    if [ -n "$$p" ] && [ "$$p" != "$(COMPOSE_PROJECT_NAME)" ]; then \
+	      echo "❌ compose project mismatch: container $$c belongs to '$$p', Makefile wants '$(COMPOSE_PROJECT_NAME)'"; \
+	      echo "   Fix: set COMPOSE_PROJECT_NAME=$$p (recommended) or remove conflicting containers."; \
+	      exit 2; \
+	    fi; \
+	  fi; \
+	done
+
+.PHONY: check-external-addons
+check-external-addons:
+	@if [ ! -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
+		echo "❌ external addons missing: $(ADDONS_EXTERNAL_HOST)"; \
+		echo "   Fix: git submodule update --init --recursive"; \
+		exit 2; \
+	fi
+	@if [ -z "$$(find "$(ADDONS_EXTERNAL_HOST)" -maxdepth 2 -name '__manifest__.py' 2>/dev/null | head -n 1)" ]; then \
+		echo "❌ external addons exists but contains no addons: $(ADDONS_EXTERNAL_HOST)"; \
+		exit 2; \
+	fi
+
 .PHONY: check-odoo-conf
 check-odoo-conf:
 	@test "$(ODOO_CONF)" = "/var/lib/odoo/odoo.conf" || \
 	  (echo "❌ ODOO_CONF must be /var/lib/odoo/odoo.conf" && exit 1)
 
 .PHONY: mod.install mod.upgrade
-mod.install: check-odoo-conf
+mod.install: check-compose-project check-odoo-conf check-external-addons
 	@echo "[mod.install] module=$(MODULE) db=$(DB_NAME)"
 	@test -n "$(MODULE)" || (echo "ERROR: MODULE is required. e.g. make mod.install MODULE=smart_construction_core" && exit 2)
 	@$(RUN_ENV) $(ODOO_EXEC) \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
-		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--addons-path=$(ODOO_ADDONS_PATH) \
 		-i $(MODULE) \
 		$(WITHOUT_DEMO) \
 		--no-http --workers=0 --max-cron-threads=0 \
 		--stop-after-init $(ODOO_ARGS)
 
-mod.upgrade: check-odoo-conf
+mod.upgrade: check-compose-project check-odoo-conf check-external-addons
 	@echo "[mod.upgrade] module=$(MODULE) db=$(DB_NAME)"
 	@test -n "$(MODULE)" || (echo "ERROR: MODULE is required. e.g. make mod.upgrade MODULE=smart_construction_core" && exit 2)
 	@$(RUN_ENV) $(ODOO_EXEC) \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
-		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--addons-path=$(ODOO_ADDONS_PATH) \
 		-u $(MODULE) \
 		$(WITHOUT_DEMO) \
 		--no-http --workers=0 --max-cron-threads=0 \
@@ -349,13 +383,13 @@ demo.verify:
 
 .ONESHELL: demo.load demo.list
 .PHONY: demo.load
-demo.load: check-odoo-conf
+demo.load: check-compose-project check-odoo-conf check-external-addons
 	@echo "[demo.load] db=$(DB_NAME) scenario=$(SCENARIO) step=$(STEP)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
 	@test -n "$(SCENARIO)" || (echo "ERROR: SCENARIO is required. e.g. make demo.load SCENARIO=s10_contract_payment" && exit 2)
 	@$(RUN_ENV) $(ODOO_EXEC) shell \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
-		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--addons-path=$(ODOO_ADDONS_PATH) \
 		--no-http --workers=0 --max-cron-threads=0 \
 	<<-'PY'
 	from odoo.addons.smart_construction_demo.tools.scenario_loader import load_scenario
@@ -365,10 +399,10 @@ demo.load: check-odoo-conf
 	PY
 
 .PHONY: demo.list
-demo.list: check-odoo-conf
+demo.list: check-compose-project check-odoo-conf check-external-addons
 	@$(RUN_ENV) $(ODOO_EXEC) shell \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
-		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--addons-path=$(ODOO_ADDONS_PATH) \
 		--no-http --workers=0 --max-cron-threads=0 \
 		<<-'PY'
 	from odoo.addons.smart_construction_demo.tools.scenario_loader import SCENARIOS
@@ -376,12 +410,12 @@ demo.list: check-odoo-conf
 	PY
 
 .PHONY: demo.load.all
-demo.load.all: check-odoo-conf
+demo.load.all: check-compose-project check-odoo-conf check-external-addons
 	@echo "[demo.load.all] db=$(DB_NAME)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
 	@$(RUN_ENV) $(ODOO_EXEC) shell \
 		--db_host=db --db_port=5432 --db_user=$(DB_USER) --db_password=$(DB_PASSWORD) \
-		--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,$(ADDONS_EXTERNAL_MOUNT) \
+		--addons-path=$(ODOO_ADDONS_PATH) \
 		--no-http --workers=0 --max-cron-threads=0 \
 		<<-'PY'
 	from odoo.addons.smart_construction_demo.tools.scenario_loader import load_all
@@ -398,7 +432,7 @@ demo.install:
 
 .ONESHELL: demo.rebuild demo.ci
 .PHONY: demo.rebuild demo.ci
-demo.rebuild:
+demo.rebuild: check-compose-project check-external-addons
 	@echo "[demo.rebuild] db=$(DB_NAME)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
 	@stage=""
@@ -419,7 +453,7 @@ demo.rebuild:
 	@run_stage verify $(MAKE) demo.verify DB_NAME=$(DB_NAME)
 	@echo "🎉 demo.rebuild PASSED"
 
-demo.ci:
+demo.ci: check-compose-project check-external-addons
 	@echo "[demo.ci] db=$(DB_NAME)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
 	@stage=""
