@@ -11,8 +11,12 @@ ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # ------------------ Compose ------------------
 COMPOSE ?= docker compose
-COMPOSE_BIN ?= $(COMPOSE)
-COMPOSE_PROJECT_NAME ?= sc
+# Prefer v2 `docker compose` if subcommand exists, otherwise fallback to `docker-compose`
+COMPOSE_BIN ?= $(shell \
+  if command -v docker >/dev/null 2>&1 && docker help compose >/dev/null 2>&1; then echo "docker compose"; \
+  elif command -v docker-compose >/dev/null 2>&1; then echo "docker-compose"; \
+  else echo "docker compose"; fi)
+COMPOSE_PROJECT_NAME ?= sc-backend-odoo
 PROJECT    ?= $(COMPOSE_PROJECT_NAME)
 
 # Compose files / overlays
@@ -35,7 +39,7 @@ DB_USER := odoo
 DB_PASSWORD ?= $(DB_USER)
 DEMO_TIMEOUT ?= 600
 DEMO_LOG_TAIL ?= 200
-DEMO_LOG_SERVICE ?= odoo
+DEMO_LOG_SERVICE ?= $(ODOO_SERVICE)
 
 # === Odoo Runtime (Single Source of Truth) ===
 ODOO_SERVICE ?= odoo
@@ -58,8 +62,16 @@ WITHOUT_DEMO ?= --without-demo=all
 ODOO_ARGS ?=
 
 # ------------------ Addons / Docs mount ------------------
-# 外部 addons 仓库在容器中的 mount 位置（你已在 addons-path 里用到）
+# 外部 addons 仓库（git submodule）默认路径：项目内 addons_external/...
+ADDONS_EXTERNAL_HOST ?= $(ROOT_DIR)/addons_external/oca_server_ux
+# odoo 容器内的挂载路径
 ADDONS_EXTERNAL_MOUNT ?= /mnt/addons_external/oca_server_ux
+BASE_ADDONS_PATH := /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
+EXTRA_ADDONS_PATH := $(shell \
+  if [ -n "$(ADDONS_EXTERNAL_HOST)" ] && [ -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
+    echo ",$(ADDONS_EXTERNAL_MOUNT)"; \
+  fi)
+ODOO_ADDONS_PATH := $(BASE_ADDONS_PATH)$(EXTRA_ADDONS_PATH)
 DOCS_MOUNT_HOST ?= $(ROOT_DIR)/docs
 DOCS_MOUNT_CONT ?= /mnt/docs
 
@@ -134,17 +146,17 @@ help:
 # ==================== Dev =============================
 # ======================================================
 .PHONY: up down restart logs ps odoo-shell
-up:
+up: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/up.sh
-down:
+down: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/down.sh
-restart:
+restart: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/restart.sh
-logs:
+logs: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/logs.sh
-ps:
+ps: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/ps.sh
-odoo-shell:
+odoo-shell: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/shell.sh
 db.reset:
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
@@ -174,6 +186,32 @@ gate.demo:
 # ======================================================
 # ==================== Module Ops ======================
 # ======================================================
+.PHONY: check-compose-project
+check-compose-project:
+	@set -e; \
+	for c in sc-db sc-redis sc-odoo sc-nginx; do \
+	  if docker inspect $$c >/dev/null 2>&1; then \
+	    p="$$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' $$c 2>/dev/null || true)"; \
+	    if [ -n "$$p" ] && [ "$$p" != "$(COMPOSE_PROJECT_NAME)" ]; then \
+	      echo "❌ compose project mismatch: container $$c belongs to '$$p', Makefile wants '$(COMPOSE_PROJECT_NAME)'"; \
+	      echo "   Fix: set COMPOSE_PROJECT_NAME=$$p (recommended) or remove conflicting containers."; \
+	      exit 2; \
+	    fi; \
+	  fi; \
+	done
+
+.PHONY: check-external-addons
+check-external-addons:
+	@if [ ! -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
+		echo "❌ external addons missing: $(ADDONS_EXTERNAL_HOST)"; \
+		echo "   Fix: git submodule update --init --recursive"; \
+		exit 2; \
+	fi
+	@if [ -z "$$(find "$(ADDONS_EXTERNAL_HOST)" -maxdepth 2 -name '__manifest__.py' 2>/dev/null | head -n 1)" ]; then \
+		echo "❌ external addons exists but contains no addons: $(ADDONS_EXTERNAL_HOST)"; \
+		exit 2; \
+	fi
+
 .PHONY: check-odoo-conf
 check-odoo-conf:
 	@test "$(ODOO_CONF)" = "/var/lib/odoo/odoo.conf" || \
