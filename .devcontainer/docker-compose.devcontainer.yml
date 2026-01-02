@@ -1,4 +1,17 @@
-# This file is deprecated and no longer used.
-# The devcontainer now attaches directly to the 'odoo' service
-# defined in the main docker-compose.yml file.
-# This file can be safely deleted.
+services:
+  devshell:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    container_name: sc-devshell
+    command: ["sh", "-lc", "sleep infinity"]
+    working_dir: /workspaces/sc-backend-odoo
+    user: root
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/run/docker.sock
+
+    environment:
+      COMPOSE_BIN: "docker compose"
+      PROJECT: "sc"
