@@ -1,0 +1,19 @@
+mkdir -p addons/smart_construction_demo/static/description
+cat > addons/smart_construction_demo/static/description/index.html <<'HTML'
+<section style="font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+  <h1>Smart Construction Demo Data</h1>
+  <p>Demo dataset for Smart Construction Core (projects, partners, light links).</p>
+
+  <h2>Scenarios</h2>
+  <ul>
+    <li><b>S00</b>: minimal runnable path (projects/BOQ/material/invoices)</li>
+    <li><b>S10</b>: contract + payment request + invoices (draft)</li>
+    <li><b>S20</b>: settlement + lines + payment linkage</li>
+    <li><b>S30</b>: workflow seed + gate demo (bad stays draft)</li>
+    <li><b>S40</b>: failure paths (struct/amount/link)</li>
+  </ul>
+
+  <h2>Verify</h2>
+  <pre>make demo.verify DB_NAME=sc_demo</pre>
+</section>
+HTML
