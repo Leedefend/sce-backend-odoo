@@ -1,28 +1,17 @@
 {
-  "name": "sc-backend-odoo (dev)",
+  "name": "sc-backend-odoo (devshell)",
   "dockerComposeFile": [
     "../docker-compose.yml",
-    "../docker-compose.devcontainer.yml"
+    "docker-compose.devcontainer.yml"
   ],
-  "service": "sc-dev",
+  "service": "devshell",
   "workspaceFolder": "/workspaces/sc-backend-odoo",
-  "shutdownAction": "stopCompose",
-  "runArgs": [
-    "--env=WAYLAND_DISPLAY=",
-    "--env=DISPLAY="
-  ],
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-azuretools.vscode-docker",
-        "ms-python.python",
-        "redhat.vscode-yaml",
-        "openai.chatgpt"
-      ],
-      "settings": {
-        "dev.containers.mountWaylandSocket": false,
-        "dev.containers.mountX11Socket": false
-      }
-    }
-  }
+
+  // ✅ 关键：不要让 DevContainer 自动拉起 db/odoo/nginx
+  "runServices": ["devshell"],
+
+  // ✅ 先别跑 git safe.directory（你用 alpine 还没装 git，会报 git not found）
+  "postCreateCommand": "true",
+
+  "shutdownAction": "stopCompose"
 }
