@@ -3,7 +3,7 @@ db_host = db
 db_port = 5432
 db_user = ${DB_USER}
 db_password = ${DB_PASSWORD}
-
+db_name = ${ODOO_DB}
 admin_passwd = ${ADMIN_PASSWD}
 
 addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux
