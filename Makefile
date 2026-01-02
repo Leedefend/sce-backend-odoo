@@ -13,8 +13,8 @@ ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 COMPOSE ?= docker compose
 # Prefer v2 `docker compose` if subcommand exists, otherwise fallback to `docker-compose`
 COMPOSE_BIN ?= $(shell \
-  if command -v docker >/dev/null 2>&1 && docker help compose >/dev/null 2>&1; then echo "docker compose"; \
-  elif command -v docker-compose >/dev/null 2>&1; then echo "docker-compose"; \
+  if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then echo "docker compose"; \
+  elif command -v docker-compose >/dev/null 2>&1 && docker-compose version >/dev/null 2>&1; then echo "docker-compose"; \
   else echo "docker compose"; fi)
 COMPOSE_PROJECT_NAME ?= sc-backend-odoo
 PROJECT    ?= $(COMPOSE_PROJECT_NAME)
@@ -158,6 +158,14 @@ ps: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/ps.sh
 odoo-shell: check-compose-project
 	@$(RUN_ENV) bash scripts/dev/shell.sh
+.PHONY: odoo.recreate odoo.logs odoo.exec
+odoo.recreate: check-compose-project
+	@echo "[odoo.recreate] service=$(ODOO_SERVICE)"
+	@$(RUN_ENV) $(COMPOSE_BASE) up -d --force-recreate $(ODOO_SERVICE)
+odoo.logs: check-compose-project
+	@$(RUN_ENV) $(COMPOSE_BASE) logs --tail=200 $(ODOO_SERVICE)
+odoo.exec: check-compose-project
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) bash
 db.reset:
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 demo.reset:
@@ -488,6 +496,18 @@ diag.compose:
 	echo "$$out" | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'; \
 	echo "=== base+testdeps err ==="; \
 	if [ $$status -ne 0 ]; then echo "$$out" | sed -n '1,120p'; fi
+.PHONY: verify.ops
+verify.ops: check-compose-project
+	@echo "== verify.ops =="
+	@echo "[1] docker daemon"
+	@docker info >/dev/null && echo "OK docker daemon" || (echo "FAIL docker daemon" && exit 2)
+	@echo "[2] compose project"
+	@$(COMPOSE_BASE) ps
+	@echo "[3] odoo recreate"
+	@$(MAKE) odoo.recreate
+	@echo "[4] module upgrade smoke"
+	@$(MAKE) mod.upgrade MODULE=$(MODULE)
+	@echo "🎉 verify.ops PASSED"
 
 # ======================================================
 # ==================== Dev Test ========================
