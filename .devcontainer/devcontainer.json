@@ -14,7 +14,10 @@
         "ms-python.python",
         "redhat.vscode-yaml",
         "openai.chatgpt"
-      ]
+      ],
+      "settings": {
+        "dev.containers.mountWaylandSocket": false
+      }
     }
   }
 }
