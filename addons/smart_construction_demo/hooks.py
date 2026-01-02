@@ -3,6 +3,11 @@ from odoo import SUPERUSER_ID, api
 from odoo.addons.smart_construction_core import hooks as core_hooks
 
 
+def pre_init_hook(env):
+    """Ensure required taxes exist before demo data imports."""
+    core_hooks.ensure_core_taxes(env)
+
+
 def ensure_demo_taxes(env_or_cr, registry=None):
     """Delegate to core hook to ensure default taxes are present/bound.
 
