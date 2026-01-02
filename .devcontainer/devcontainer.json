@@ -1,19 +1,17 @@
 {
-  "name": "sc-backend-odoo (sc-odoo service)",
+  "name": "sc-backend-odoo (devshell)",
   "dockerComposeFile": [
-    "../docker-compose.yml"
+    "../docker-compose.yml",
+    "docker-compose.devcontainer.yml"
   ],
-  "service": "odoo",
+  "service": "devshell",
   "workspaceFolder": "/workspaces/sc-backend-odoo",
-  "shutdownAction": "none",
-  "remoteUser": "root",
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-azuretools.vscode-docker",
-        "ms-python.python",
-        "ms-python.vscode-pylance"
-      ]
-    }
-  }
+
+  // ✅ 关键：不要让 DevContainer 自动拉起 db/odoo/nginx
+  "runServices": ["devshell"],
+
+  // ✅ 先别跑 git safe.directory（你用 alpine 还没装 git，会报 git not found）
+  "postCreateCommand": "true",
+
+  "shutdownAction": "stopCompose"
 }
