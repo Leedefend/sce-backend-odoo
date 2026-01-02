@@ -7,6 +7,10 @@
   "service": "sc-dev",
   "workspaceFolder": "/workspaces/sc-backend-odoo",
   "shutdownAction": "stopCompose",
+  "runArgs": [
+    "--env=WAYLAND_DISPLAY=",
+    "--env=DISPLAY="
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
@@ -16,7 +20,8 @@
         "openai.chatgpt"
       ],
       "settings": {
-        "dev.containers.mountWaylandSocket": false
+        "dev.containers.mountWaylandSocket": false,
+        "dev.containers.mountX11Socket": false
       }
     }
   }
