@@ -256,7 +256,7 @@ mod.install: check-compose-project
 mod.upgrade: check-compose-project
 	@$(RUN_ENV) bash scripts/mod/upgrade.sh
 
-.PHONY: demo.verify demo.load demo.list demo.load.all demo.install demo.rebuild demo.ci
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.install demo.rebuild demo.ci demo.repro demo.full
 demo.verify: check-compose-project
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
@@ -279,6 +279,14 @@ demo.rebuild: check-compose-project
 
 demo.ci: check-compose-project
 	@$(RUN_ENV) bash scripts/demo/ci.sh
+
+demo.repro: check-compose-project
+	@$(MAKE) demo.reset DB=$(DB_NAME)
+	@$(MAKE) demo.load DB=$(DB_NAME) SCENARIO=s00_min_path
+	@$(MAKE) demo.verify DB=$(DB_NAME)
+
+demo.full: check-compose-project
+	@$(RUN_ENV) bash scripts/demo/full.sh
 
 # ======================================================
 # ==================== Dev Test ========================

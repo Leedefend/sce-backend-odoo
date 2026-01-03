@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 from odoo import api, SUPERUSER_ID
 
-def pre_init_hook(cr):
+def _ensure_env(cr_or_env):
+    if isinstance(cr_or_env, api.Environment):
+        return cr_or_env
+    return api.Environment(cr_or_env, SUPERUSER_ID, {})
+
+def pre_init_hook(cr_or_env):
     """
     BEFORE module data import: ensure baseline (taxes etc.) exists to avoid demo XML crash.
     """
-    env = api.Environment(cr, SUPERUSER_ID, {})
+    env = _ensure_env(cr_or_env)
     ensure_demo_taxes(env)
 
 def ensure_demo_taxes(env):
@@ -33,10 +38,10 @@ def _normalize_demo_users_lang_tz(env, lang="zh_CN", tz="Asia/Shanghai"):
         if vals:
             u.write(vals)
 
-def post_init_hook(cr, registry):
+def post_init_hook(env_or_cr, registry=None):
     """
     AFTER install: ensure taxes + normalize demo users.
     """
-    env = api.Environment(cr, SUPERUSER_ID, {})
+    env = _ensure_env(env_or_cr)
     ensure_demo_taxes(env)
     _normalize_demo_users_lang_tz(env)
