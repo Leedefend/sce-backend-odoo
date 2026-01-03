@@ -11,5 +11,5 @@
     'data/scenario/s00_min_path/20_project_links.xml',
     'data/scenario/s00_min_path/30_project_revenue.xml'], 'pre_init_hook': 'pre_init_hook',
     'post_init_hook': 'post_init_hook',
-    'installable': True, 'application': False, 'license': 'LGPL-3
+    'installable': True, 'application': False, 'license': 'LGPL-3'
 }
