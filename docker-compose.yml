@@ -82,6 +82,12 @@ services:
       - "8069:8069"
 
     entrypoint: ["/bin/sh", "/usr/local/bin/odoo-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8069/web/login', timeout=8)\""]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
 
   # ============================================================
   # NGINX 统一反向代理
