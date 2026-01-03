@@ -80,6 +80,37 @@
 
             <!-- 概览/施工/协作页插入到原生 notebook 开头 -->
             <xpath expr="//sheet/notebook/page[1]" position="before">
+                <div class="o_sc_project_overview row" style="margin: 8px 0 12px 0;">
+                    <div class="col-12">
+                        <div class="alert alert-info" role="alert" style="margin-bottom: 8px;">
+                            <strong>项目概览：</strong>快速查看合同与资金执行情况（试用版）。
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="card p-3">
+                            <div class="text-muted">已付款合同额</div>
+                            <div class="h3"><field name="pay_contract_total" widget="monetary" readonly="1"/></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="card p-3">
+                            <div class="text-muted">已结算金额</div>
+                            <div class="h3"><field name="pay_settlement_total" widget="monetary" readonly="1"/></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="card p-3">
+                            <div class="text-muted">已付款金额</div>
+                            <div class="h3"><field name="pay_paid_total" widget="monetary" readonly="1"/></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="card p-3">
+                            <div class="text-muted">未付款金额</div>
+                            <div class="h3"><field name="pay_unpaid_total" widget="monetary" readonly="1"/></div>
+                        </div>
+                    </div>
+                </div>
                 <page string="项目概览" name="sc_overview">
                     <group col="4" string="项目概览">
                         <field name="name"/>
