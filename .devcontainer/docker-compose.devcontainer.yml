@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   sc-dev:
@@ -17,6 +16,7 @@ services:
 
       # 关键：让 sc-dev 能控制 docker / compose
       - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/run/docker.sock
 
     # docker group（通常是 999，若不通再校准）
     group_add:

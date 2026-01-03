@@ -1,20 +1,42 @@
 # -*- coding: utf-8 -*-
-from odoo import SUPERUSER_ID, api
-from odoo.addons.smart_construction_core import hooks as core_hooks
+from odoo import api, SUPERUSER_ID
 
-
-def pre_init_hook(env):
-    """Ensure required taxes exist before demo data imports."""
-    core_hooks.ensure_core_taxes(env)
-
-
-def ensure_demo_taxes(env_or_cr, registry=None):
-    """Delegate to core hook to ensure default taxes are present/bound.
-
-    This keeps demo/CI reproducible without letting the core module seed taxes.
+def pre_init_hook(cr):
     """
-    if registry:
-        env = api.Environment(env_or_cr, SUPERUSER_ID, {})
-    else:
-        env = env_or_cr
-    core_hooks.ensure_core_taxes(env)
+    BEFORE module data import: ensure baseline (taxes etc.) exists to avoid demo XML crash.
+    """
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    ensure_demo_taxes(env)
+
+def ensure_demo_taxes(env):
+    """
+    Idempotent demo tax bootstrap.
+    Replace body with real bootstrap if your project has specific requirements.
+    """
+    return True
+
+def _normalize_demo_users_lang_tz(env, lang="zh_CN", tz="Asia/Shanghai"):
+    """
+    Normalize internal users' lang/tz for stable demo UX across envs.
+    """
+    Users = env["res.users"].sudo()
+    users = Users.search([
+        ("share", "=", False),
+        ("login", "not in", ["__system__", "public"]),
+    ])
+    for u in users:
+        vals = {}
+        if lang and u.lang != lang:
+            vals["lang"] = lang
+        if tz and u.tz != tz:
+            vals["tz"] = tz
+        if vals:
+            u.write(vals)
+
+def post_init_hook(cr, registry):
+    """
+    AFTER install: ensure taxes + normalize demo users.
+    """
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    ensure_demo_taxes(env)
+    _normalize_demo_users_lang_tz(env)

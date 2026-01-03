@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DB=sc_test
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+export ROOT_DIR
+
+# shellcheck source=../common/env.sh
+source "$ROOT_DIR/scripts/common/env.sh"
+# shellcheck source=../common/compose.sh
+source "$ROOT_DIR/scripts/common/compose.sh"
+
+DB="${DB_CI:-sc_test}"
 ADDONS="/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux"
 
-docker compose -p sc -f docker-compose.yml -f docker-compose.testdeps.yml run --rm -T \
-  -v "$(pwd)/docs:/mnt/docs:ro" \
+compose_testdeps run --rm -T \
+  -v "${ROOT_DIR}/docs:/mnt/docs:ro" \
   --entrypoint bash odoo -lc "
     pip3 install -q odoo-test-helper &&
     exec /usr/bin/odoo \

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- Hide Apps/Settings for trial users: only system admin can see -->
+        <record id="base.menu_apps" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+        </record>
+
+        <record id="base.menu_management" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+        </record>
+
+        <record id="base.menu_administration" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+        </record>
+
+    </data>
+</odoo>
