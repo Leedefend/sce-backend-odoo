@@ -15,6 +15,8 @@ source "$ROOT_DIR/scripts/common/compose.sh"
 printf '[demo.load] db=%s scenario=%s step=%s\n' "$DB_NAME" "$SCENARIO" "${STEP:-}"
 
 compose_dev run --rm -T \
+  -e SCENARIO \
+  -e STEP \
   --entrypoint /usr/bin/odoo odoo \
   shell --config=/etc/odoo/odoo.conf \
   -d "$DB_NAME" \
@@ -22,8 +24,12 @@ compose_dev run --rm -T \
   --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,"$ADDONS_EXTERNAL_MOUNT" \
   --no-http --workers=0 --max-cron-threads=0 \
 <<'PY'
+import os
 from odoo.addons.smart_construction_demo.tools.scenario_loader import load_scenario
-print("[demo.load] loading scenario:", "${SCENARIO}", "step:", "${STEP}")
-load_scenario(env, "${SCENARIO}", mode="update", step="${STEP}")
+
+scenario = os.environ["SCENARIO"]
+step = os.environ.get("STEP") or None
+print("[demo.load] loading scenario:", scenario, "step:", step)
+load_scenario(env, scenario, mode="update", step=step)
 print("[demo.load] done")
 PY
