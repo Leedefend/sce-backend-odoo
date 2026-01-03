@@ -10,8 +10,8 @@ PROJECT="${PROJECT:-sc}"
 PROJECT_CI="${PROJECT_CI:-sc-ci}"
 
 # DB/module
-DB_NAME="${DB_NAME:-sc_odoo}"
-DB_CI="${DB_CI:-sc_odoo}"
+DB_NAME="${DB_NAME:-${DB:-sc_odoo}}"
+DB_CI="${DB_CI:-sc_test}"
 DB_USER="${DB_USER:-odoo}"
 MODULE="${MODULE:-smart_construction_core}"
 
