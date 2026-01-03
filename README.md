@@ -35,6 +35,24 @@
 
 👉 `docs/dev-env.md`
 
+## Quick Start (Dev)
+
+```bash
+docker compose up -d
+```
+
+* Reverse proxy: http://localhost:18080/web
+* Direct Odoo: http://localhost:8069/web
+
+Demo bootstrap:
+
+```bash
+make demo.full DB=sc_demo
+```
+
+???????`docs/ops/dev_bootstrap.md`
+
+
 补充约束：所有 Makefile 中调用 Odoo 的 target 必须经由 `$(ODOO_EXEC)`，任何直接调用 `odoo` 的行为一律视为缺陷。
 
 ---
