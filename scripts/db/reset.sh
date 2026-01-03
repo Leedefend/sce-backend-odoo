@@ -16,59 +16,90 @@ log() { printf '[%s] %s\n' "$(date +'%H:%M:%S')" "$*"; }
 
 DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
 export DB_USER DB_PASSWORD
+ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux}"
+
+case "${DB_NAME}" in
+  "" )
+    log "DB_NAME is empty; refuse to proceed"
+    exit 2
+    ;;
+  postgres|template0|template1)
+    log "refuse to drop system database: ${DB_NAME}"
+    exit 2
+    ;;
+esac
 
 log "db reset: ${DB_NAME}"
-compose_dev up -d db redis
+
+if ! compose_dev ps -q db | grep -q .; then
+  log "db container not running; run 'make up' first"
+  exit 2
+fi
 
 DB_READY_TIMEOUT="${DB_READY_TIMEOUT:-120}"
 DB_READY_INTERVAL="${DB_READY_INTERVAL:-1}"
-DB_READY_USER="${DB_READY_USER:-postgres}"
+DB_READY_USER="${DB_READY_USER:-${DB_USER}}"
 DB_READY_DB="${DB_READY_DB:-postgres}"
-log "db wait: pg_isready (timeout ${DB_READY_TIMEOUT}s)"
-pg_isready_check() {
-  if command -v timeout >/dev/null 2>&1; then
-    timeout 2s bash -lc "ROOT_DIR='${ROOT_DIR}' COMPOSE_BIN='${COMPOSE_BIN}' PROJECT='${PROJECT}' \
-      source '${ROOT_DIR}/scripts/common/env.sh'; \
-      source '${ROOT_DIR}/scripts/common/compose.sh'; \
-      compose_dev exec -T db pg_isready -U '${DB_READY_USER}' -d '${DB_READY_DB}' -t 2" >/dev/null 2>&1
-  else
-    compose_dev exec -T db pg_isready -U "${DB_READY_USER}" -d "${DB_READY_DB}" -t 2 >/dev/null 2>&1
+log "db wait: healthcheck/pg_isready (timeout ${DB_READY_TIMEOUT}s)"
+
+DB_CID="$(compose_dev ps -q db | head -n 1)"
+if [[ -z "${DB_CID}" ]]; then
+  log "db container not found (compose project mismatch?)"
+  exit 2
+fi
+if [[ -n "${PROJECT:-}" ]]; then
+  db_project="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "${DB_CID}" 2>/dev/null || true)"
+  if [[ -n "${db_project}" && "${db_project}" != "${PROJECT}" ]]; then
+    log "db container project mismatch: got=${db_project} expected=${PROJECT}"
+    exit 2
   fi
-}
+fi
 
 for i in $(seq 1 "$DB_READY_TIMEOUT"); do
-  if pg_isready_check; then
-    log "db ready"
+  health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${DB_CID}" 2>/dev/null || echo "unknown")"
+  if [[ "${health}" == "healthy" ]]; then
+    log "db ready (healthcheck=healthy)"
     break
   fi
+  if [[ "${health}" == "none" || "${health}" == "unknown" ]]; then
+    if docker exec -i "${DB_CID}" \
+      pg_isready -U "${DB_READY_USER}" -d "${DB_READY_DB}" -t 2 >/dev/null 2>&1; then
+      log "db ready (pg_isready)"
+      break
+    fi
+  fi
   if [[ "$i" -eq 1 ]]; then
-    compose_dev exec -T db pg_isready -U "${DB_READY_USER}" -d "${DB_READY_DB}" -t 2 || true
+    docker exec -i "${DB_CID}" \
+      pg_isready -U "${DB_READY_USER}" -d "${DB_READY_DB}" -t 2 || true
   fi
   if [[ "$i" -eq "$DB_READY_TIMEOUT" ]]; then
-    log "db NOT ready after ${DB_READY_TIMEOUT}s"
-    compose_dev exec -T db pg_isready -U "${DB_READY_USER}" -d "${DB_READY_DB}" -t 2 || true
-    compose_dev logs --tail=200 db || true
+    log "db NOT ready after ${DB_READY_TIMEOUT}s (health=${health})"
+    docker logs --tail=200 "${DB_CID}" || true
     exit 2
   fi
   if (( i % 10 == 0 )); then
-    log "db wait: pg_isready (${i}/${DB_READY_TIMEOUT})"
+    log "db wait: healthcheck/pg_isready (${i}/${DB_READY_TIMEOUT})"
   fi
   sleep "$DB_READY_INTERVAL"
 done
 
 # terminate existing connections to allow drop
-compose_dev exec -T db psql -U "${DB_USER}" -d postgres -c \
+log "db terminate connections: ${DB_NAME}"
+compose_dev exec -T -e PGPASSWORD="${DB_PASSWORD}" db psql -U "${DB_USER}" -d postgres -c \
   "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" >/dev/null || true
 
-compose_dev exec -T db psql -U "${DB_USER}" -d postgres -c \
+log "db drop: ${DB_NAME}"
+compose_dev exec -T -e PGPASSWORD="${DB_PASSWORD}" db psql -U "${DB_USER}" -d postgres -c \
   "DROP DATABASE IF EXISTS ${DB_NAME};"
-compose_dev exec -T db psql -U "${DB_USER}" -d postgres -c \
+log "db create: ${DB_NAME}"
+compose_dev exec -T -e PGPASSWORD="${DB_PASSWORD}" db psql -U "${DB_USER}" -d postgres -c \
   "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER} TEMPLATE template0 ENCODING 'UTF8';"
 
 # 统一 Odoo DB 参数（后续所有操作必须带，避免掉回本机 socket）
 ODOO_DB_ARGS=(
   --db_host=db --db_port=5432
   --db_user="${DB_USER}" --db_password="${DB_PASSWORD}"
+  --addons-path="${ODOO_ADDONS_PATH}"
 )
 
 log "odoo init base (stop-after-init): ${DB_NAME}"

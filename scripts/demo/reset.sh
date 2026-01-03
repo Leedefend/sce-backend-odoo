@@ -19,22 +19,37 @@ export DB_USER DB_PASSWORD
 # ------------------------------
 # 1) reset db（走你刚修好的逻辑）
 # ------------------------------
+log "demo reset start: ${DB_NAME}"
+log "db reset start: ${DB_NAME}"
 bash "$ROOT_DIR/scripts/db/reset.sh"
+log "db reset done: ${DB_NAME}"
 
 # ------------------------------
 # 2) install seed + demo modules
 # ------------------------------
+SC_WITH_DEMO="${SC_WITH_DEMO:-1}"
+if [[ "${SC_WITH_DEMO}" == "1" ]]; then
+  WITHOUT_DEMO_FLAG="--without-demo=0"
+else
+  WITHOUT_DEMO_FLAG="--without-demo=all"
+fi
+DEMO_LOGFILE="${DEMO_LOGFILE:-/tmp/demo_install.log}"
+ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux}"
+
 log "install seed/demo modules on ${DB_NAME}"
 
 compose_dev run --rm -T \
   -e SC_SEED_ENABLED=1 \
   -e SC_BOOTSTRAP_MODE=demo \
-  --entrypoint /usr/bin/odoo odoo \
-  --config=/etc/odoo/odoo.conf \
-  -d "${DB_NAME}" \
-  -i smart_construction_seed,smart_construction_demo \
-  --without-demo=all \
-  --no-http --workers=0 --max-cron-threads=0 \
-  --stop-after-init
+  --entrypoint /bin/bash odoo -lc \
+  "odoo --config=/etc/odoo/odoo.conf \
+    --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
+    --addons-path=\"${ODOO_ADDONS_PATH}\" \
+    -d \"${DB_NAME}\" \
+    -i smart_construction_seed,smart_construction_demo \
+    ${WITHOUT_DEMO_FLAG} \
+    --no-http --workers=0 --max-cron-threads=0 --stop-after-init \
+    --logfile=\"${DEMO_LOGFILE}\"; \
+   rc=\$?; if [ \$rc -ne 0 ]; then tail -n 200 \"${DEMO_LOGFILE}\" || true; fi; exit \$rc"
 
 log "demo reset done: ${DB_NAME}"
