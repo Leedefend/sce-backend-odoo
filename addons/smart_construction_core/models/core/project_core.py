@@ -333,6 +333,12 @@ class ProjectProject(models.Model):
     wbs_count = fields.Integer(
         '工程结构数', compute='_compute_wbs_count'
     )
+    wbs_node_count = fields.Integer(
+        '工程结构节点数', compute='_compute_wbs_count'
+    )
+    wbs_ready = fields.Boolean(
+        '工程结构已就绪', compute='_compute_wbs_count'
+    )
     boq_amount_total = fields.Monetary(
         '清单总额', currency_field='company_currency_id',
         compute='_compute_boq_stats', store=True
@@ -344,6 +350,19 @@ class ProjectProject(models.Model):
     boq_amount_installation = fields.Monetary(
         '安装工程额', currency_field='company_currency_id',
         compute='_compute_boq_stats', store=True
+    )
+    boq_line_count = fields.Integer(
+        '清单行数', compute='_compute_boq_status'
+    )
+    boq_imported = fields.Boolean(
+        '清单已导入', compute='_compute_boq_status'
+    )
+    boq_version_latest = fields.Char(
+        '清单版本(最近)', compute='_compute_boq_status'
+    )
+    boq_amount_leaf_total = fields.Monetary(
+        '清单合价(叶子)', currency_field='company_currency_id',
+        compute='_compute_boq_status'
     )
 
     # ---------- 成本控制衍生指标 ----------
@@ -604,6 +623,56 @@ class ProjectProject(models.Model):
             project.boq_amount_building = build_map.get(project.id, 0.0) if can_boq else 0.0
             project.boq_amount_installation = install_map.get(project.id, 0.0) if can_boq else 0.0
 
+    # ---------- BOQ 状态卡（只读表达） ----------
+    @api.depends('boq_line_ids.amount_leaf', 'boq_line_ids.version', 'boq_line_ids.write_date')
+    def _compute_boq_status(self):
+        projects = self
+        for project in projects:
+            project.boq_line_count = 0
+            project.boq_imported = False
+            project.boq_version_latest = False
+            project.boq_amount_leaf_total = 0.0
+        if not projects:
+            return
+
+        project_ids = projects.ids
+        BoqLine = self.env['project.boq.line'].sudo()
+        data = BoqLine.read_group(
+            [('project_id', 'in', project_ids)],
+            ['project_id', 'amount_leaf:sum'],
+            ['project_id'],
+        )
+        count_map = {row['project_id'][0]: row['project_id_count'] for row in data}
+        amount_map = {}
+        for row in data:
+            proj_id = row['project_id'][0]
+            amount = row.get('amount_leaf_sum')
+            if amount is None:
+                amount = row.get('amount_leaf', 0.0)
+            amount_map[proj_id] = amount
+
+        version_map = {}
+        self.env.cr.execute(
+            """
+            select distinct on (project_id) project_id, version
+            from project_boq_line
+            where project_id = any(%s)
+              and version is not null
+              and version <> ''
+            order by project_id, write_date desc
+            """,
+            (project_ids,),
+        )
+        for row in self.env.cr.fetchall():
+            version_map[row[0]] = row[1]
+
+        for project in projects:
+            count = count_map.get(project.id, 0) or 0
+            project.boq_line_count = count
+            project.boq_imported = count > 0
+            project.boq_version_latest = version_map.get(project.id) or False
+            project.boq_amount_leaf_total = amount_map.get(project.id, 0.0) or 0.0
+
     # ---------- 工程资料统计 ----------
     @api.depends('document_ids.is_mandatory', 'document_ids.state')
     def _compute_document_stats(self):
@@ -822,8 +891,12 @@ class ProjectProject(models.Model):
     # ---------- WBS / 投标统计 ----------
     @api.depends('structure_ids')
     def _compute_wbs_count(self):
+        can_wbs = self._can_read_model('sc.project.structure')
         for project in self:
-            project.wbs_count = len(project.structure_ids)
+            count = len(project.structure_ids) if can_wbs else 0
+            project.wbs_count = count
+            project.wbs_node_count = count
+            project.wbs_ready = count > 0
 
     # ---------- ACL guard ----------
     def _can_read_model(self, model_name: str) -> bool:
