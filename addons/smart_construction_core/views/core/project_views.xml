@@ -3,14 +3,14 @@
         <field name="name">项目预算</field>
         <field name="res_model">project.budget</field>
         <field name="view_mode">tree,form,graph</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')), (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
 
     <record id="action_project_cost_ledger_quick" model="ir.actions.act_window">
         <field name="name">成本台账</field>
         <field name="res_model">project.cost.ledger</field>
         <field name="view_mode">tree,form,pivot,graph</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')), (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
         <field name="context">{'default_project_id': active_id, 'search_default_project_id': active_id}</field>
         <field name="domain">context.get('default_project_id') and [('project_id','=',context.get('default_project_id'))] or []</field>
     </record>
@@ -19,7 +19,7 @@
         <field name="name">进度计量</field>
         <field name="res_model">project.progress.entry</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')), (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
 
     <record id="action_project_contract_overview" model="ir.actions.act_window">
@@ -27,7 +27,7 @@
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
         <field name="context">{'searchpanel_default_project_id': True}</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
     </record>
 
     <!-- 项目表单扩展：施工信息 + 工程资料 + 合同 -->
@@ -48,32 +48,32 @@
             <xpath expr="//sheet/div[@name='button_box']" position="replace">
                 <div class="oe_button_box" name="button_box">
                     <button name="action_open_wbs" string="工程结构" type="object" class="oe_stat_button"
-                            groups="smart_construction_core.group_sc_cap_project_read"/>
+                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <button name="action_open_boq_import" string="工程量清单" type="object" class="oe_stat_button"
                             groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <button name="%(smart_construction_core.action_project_budget_quick)d"
                             string="预算/成本"
                             type="action"
                             class="oe_stat_button"
-                            groups="smart_construction_core.group_sc_cap_cost_read"
+                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"
                             context="{'default_project_id': id, 'search_default_project_id': id}"/>
                     <button name="%(smart_construction_core.action_project_contract_overview)d"
                             string="合同"
                             type="action"
                             class="oe_stat_button"
-                            groups="smart_construction_core.group_sc_cap_contract_read"
+                            groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"
                             context="{'search_default_project_id': [id], 'default_project_id': id}"/>
                     <button name="%(smart_construction_core.action_project_material_plan)d"
                             string="物资/采购"
                             type="action"
                             class="oe_stat_button"
-                            groups="smart_construction_core.group_sc_cap_material_read"
+                            groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"
                             context="{'search_default_project_id': [id], 'default_project_id': id}"/>
                     <button name="%(smart_construction_core.action_sc_finance_dashboard)d"
                             string="结算/财务"
                             type="action"
                             class="oe_stat_button"
-                            groups="smart_construction_core.group_sc_cap_finance_read"
+                            groups="smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"
                             context="{'search_default_project_id': [id], 'default_project_id': id}"/>
                 </div>
             </xpath>
@@ -108,6 +108,30 @@
                         <div class="card p-3">
                             <div class="text-muted">未付款金额</div>
                             <div class="h3"><field name="pay_unpaid_total" widget="monetary" readonly="1"/></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="card p-3">
+                            <div class="text-muted">BOQ 状态</div>
+                            <div class="h3"><field name="boq_line_count" readonly="1"/></div>
+                            <div class="text-muted">已导入</div>
+                            <div><field name="boq_imported" readonly="1"/></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="card p-3">
+                            <div class="text-muted">BOQ 合价(叶子)</div>
+                            <div class="h3"><field name="boq_amount_leaf_total" widget="monetary" readonly="1"/></div>
+                            <div class="text-muted">BOQ 版本</div>
+                            <div><field name="boq_version_latest" readonly="1"/></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="card p-3">
+                            <div class="text-muted">工程结构状态</div>
+                            <div class="h3"><field name="wbs_node_count" readonly="1"/></div>
+                            <div class="text-muted">已就绪</div>
+                            <div><field name="wbs_ready" readonly="1"/></div>
                         </div>
                     </div>
                 </div>
@@ -180,19 +204,19 @@
                                 string="查看台账明细"
                                 type="object"
                                 class="btn-secondary"
-                                groups="smart_construction_core.group_sc_cap_cost_read"/>
+                                groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                         <button name="action_open_progress_entries"
                                 string="查看进度明细"
                                 type="object"
                                 class="btn-secondary"
-                                groups="smart_construction_core.group_sc_cap_cost_read"/>
+                                groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     </group>
                 </page>
             </xpath>
 
             <!-- notebook 中重排业务页签，保证系统/描述/设置靠后 -->
             <xpath expr="//sheet/notebook/page[@name='sc_construction']" position="after">
-                <page string="WBS结构" groups="smart_construction_core.group_sc_cap_project_user">
+                <page string="WBS结构" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
                     <field name="wbs_ids" context="{'default_project_id': id}">
                         <tree editable="bottom">
                             <field name="sequence"/>
@@ -283,7 +307,7 @@
                         </form>
                     </field>
                 </page>
-                <page string="工程结构" groups="smart_construction_core.group_sc_cap_cost_read">
+                <page string="工程结构" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
                     <field name="work_ids" context="{'default_project_id': id}" domain="[('project_id','=',id)]">
                         <tree editable="bottom">
                             <field name="sequence" widget="handle"/>
@@ -338,7 +362,7 @@
                         <field name="contract_income_total" readonly="1"/>
                         <field name="contract_expense_total" readonly="1"/>
                     </group>
-                    <field name="contract_ids" context="{'default_project_id': id}">
+                    <field name="contract_ids" context="{'default_project_id': id}" groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager">
                         <tree editable="bottom">
                             <field name="name"/>
                             <field name="subject"/>
@@ -357,7 +381,7 @@
                         <field name="document_required_count" readonly="1"/>
                         <field name="document_missing_count" readonly="1"/>
                     </group>
-                    <field name="document_ids" context="{'default_project_id': id}">
+                    <field name="document_ids" context="{'default_project_id': id}" groups="smart_construction_core.group_sc_super_admin">
                         <tree editable="bottom">
                             <field name="name"/>
                             <field name="wbs_id"/>
@@ -400,6 +424,11 @@
                         <field name="analytic_account_id"/>
                     </group>
                 </page>
+            </xpath>
+
+            <!-- 协作入口仅对经办/审批与超管可见，PM 主路径隐藏 -->
+            <xpath expr="//div[hasclass('o_chatter') or hasclass('oe_chatter')]" position="attributes">
+                <attribute name="groups">smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager,smart_construction_core.group_sc_super_admin</attribute>
             </xpath>
 
         </field>

@@ -3,24 +3,24 @@
 
     <!-- 合同域 -->
     <record id="action_construction_contract" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
     </record>
     <record id="action_construction_contract_income" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
     </record>
     <record id="action_construction_contract_expense" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
     </record>
     <record id="action_construction_contract_line" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
     </record>
     <record id="action_project_contract_overview" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
     </record>
 
     <!-- 资金 / 付款申请 -->
     <record id="action_payment_request" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
     </record>
     <record id="action_sc_tier_review_my_payment_request" model="ir.actions.act_window">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
@@ -28,17 +28,17 @@
 
     <!-- 结算域 -->
     <record id="action_sc_settlement_order" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_user')), (4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
     </record>
     <!-- support 目录内的结算 action 也补齐 -->
     <record id="action_sc_settlement_order" model="ir.actions.act_window" context="{'force_reload': True}">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_user')), (4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
     </record>
 
     <!-- Batch-2：预算/成本域（统一 canonical 到 cost_domain 版本的 action） -->
     <!-- 预算 -->
     <record id="action_project_budget" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <!-- 成本科目 -->
@@ -47,21 +47,21 @@
     </record>
     <!-- 成本对比 / 利润对比 -->
     <record id="action_project_cost_compare" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <record id="action_project_profit_compare" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <!-- 成本台账 -->
     <record id="action_project_cost_ledger" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <!-- 预算分摊 -->
     <record id="action_project_budget_cost_alloc" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <!-- BOQ 相关（工程量清单） -->
@@ -75,31 +75,30 @@
     </record>
     <!-- WBS / 进度计量 -->
     <record id="action_project_wbs" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <record id="action_project_progress_entry" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <!-- 快速入口（项目表单按钮用） -->
     <record id="action_project_budget_quick" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <record id="action_project_cost_ledger_quick" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
     <record id="action_project_progress_quick" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_cost_manager'))]"/>
     </record>
 
     <!-- Batch-3：物资 / 采购域 -->
     <record id="action_project_material_plan" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')),
-                                      (4, ref('smart_construction_core.group_sc_cap_material_user')),
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_user')),
                                       (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
     <record id="action_sc_tier_review_my_material_plan" model="ir.actions.act_window">
@@ -158,19 +157,19 @@
 
     <!-- 运营指标 / 驾驶舱 / 财务报表 -->
     <record id="action_sc_operating_metrics_project" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_cost_user'))]"/>
     </record>
     <record id="action_sc_operating_drill_settlements" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
     </record>
     <record id="action_sc_operating_drill_overpay_risk_pr" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
     </record>
     <record id="action_project_dashboard" model="ir.actions.act_window">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
     </record>
     <record id="action_sc_treasury_ledger" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
     </record>
 
     <!-- 文档 -->
@@ -194,8 +193,8 @@
     <!-- 项目：工程结构（清单 WBS） -->
     <record id="action_sc_project_structure" model="ir.actions.act_window">
         <field name="groups_id" eval="[
-            (4, ref('smart_construction_core.group_sc_cap_project_user')),
-            (4, ref('smart_construction_core.group_sc_cap_project_manager'))
+            (4, ref('smart_construction_core.group_sc_cap_cost_user')),
+            (4, ref('smart_construction_core.group_sc_cap_cost_manager'))
         ]"/>
     </record>
     <record id="project.open_view_project_all" model="ir.actions.act_window">
@@ -204,13 +203,13 @@
 
     <!-- Project: share / message actions (keep within project center users) -->
     <record id="project.action_send_mail_project_project" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
     <record id="project_sms.project_project_act_window_sms_composer" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
     <record id="project.project_share_wizard_action" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_super_admin'))]"/>
     </record>
 
     <!-- 物资：审批回调 server action -->

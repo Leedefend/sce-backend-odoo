@@ -13,11 +13,13 @@
                             type="object"
                             string="预算"
                             class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"
                             icon="fa-calculator"/>
                     <button name="action_open_project_contracts"
                             type="object"
                             string="合同"
                             class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"
                             icon="fa-file-text-o"/>
                 </xpath>
             </field>
