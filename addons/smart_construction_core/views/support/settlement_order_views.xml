@@ -31,19 +31,19 @@
                                 type="object"
                                 string="提交"
                                 class="btn-primary"
-                                invisible="state != 'draft'"/>
+                                invisible="state != 'draft'" groups="smart_construction_core.group_sc_cap_settlement_user,smart_construction_core.group_sc_cap_settlement_manager"/>
                         <button name="action_approve"
                                 type="object"
                                 string="批准"
-                                invisible="state != 'submit'"/>
+                                invisible="state != 'submit'" groups="smart_construction_core.group_sc_cap_settlement_manager"/>
                         <button name="action_done"
                                 type="object"
                                 string="完成"
-                                invisible="state != 'approved'"/>
+                                invisible="state != 'approved'" groups="smart_construction_core.group_sc_cap_settlement_manager"/>
                         <button name="action_cancel"
                                 type="object"
                                 string="取消"
-                                invisible="state not in ['draft', 'submit', 'approved']"/>
+                                invisible="state not in ['draft', 'submit', 'approved']" groups="smart_construction_core.group_sc_cap_settlement_user,smart_construction_core.group_sc_cap_settlement_manager"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approved,done,cancel"/>
                     </header>
                     <sheet>

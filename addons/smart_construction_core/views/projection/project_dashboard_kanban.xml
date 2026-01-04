@@ -19,12 +19,12 @@
                 <field name="document_missing_count"/>
                 <field name="document_required_count"/>
 
-                <field name="dashboard_revenue_actual" groups="account.group_account_readonly"/>
-                <field name="dashboard_cost_actual" groups="account.group_account_readonly"/>
-                <field name="dashboard_profit_actual" groups="account.group_account_readonly"/>
-                <field name="dashboard_invoice_amount" groups="account.group_account_readonly"/>
-                <field name="dashboard_payment_in" groups="account.group_account_readonly"/>
-                <field name="dashboard_payment_out" groups="account.group_account_readonly"/>
+                <field name="dashboard_revenue_actual" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                <field name="dashboard_cost_actual" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                <field name="dashboard_profit_actual" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                <field name="dashboard_invoice_amount" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                <field name="dashboard_payment_in" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                <field name="dashboard_payment_out" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
 
                 <field name="budget_active_cost_target"/>
                 <field name="budget_active_revenue_target"/>
