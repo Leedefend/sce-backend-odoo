@@ -42,14 +42,15 @@ compose_dev run --rm -T \
   -e SC_SEED_ENABLED=1 \
   -e SC_BOOTSTRAP_MODE=demo \
   --entrypoint /bin/bash odoo -lc \
-  "odoo --config=/etc/odoo/odoo.conf \
+  "set -o pipefail; \
+   odoo --config=/etc/odoo/odoo.conf \
     --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
     --addons-path=\"${ODOO_ADDONS_PATH}\" \
     -d \"${DB_NAME}\" \
     -i smart_construction_seed,smart_construction_demo \
     ${WITHOUT_DEMO_FLAG} \
     --no-http --workers=0 --max-cron-threads=0 --stop-after-init \
-    --logfile=\"${DEMO_LOGFILE}\"; \
-   rc=\$?; if [ \$rc -ne 0 ]; then tail -n 200 \"${DEMO_LOGFILE}\" || true; fi; exit \$rc"
+    --logfile=/dev/stdout 2>&1 | tee \"${DEMO_LOGFILE}\"; \
+   rc=\${PIPESTATUS[0]}; if [ \$rc -ne 0 ]; then tail -n 200 \"${DEMO_LOGFILE}\" || true; fi; exit \$rc"
 
 log "demo reset done: ${DB_NAME}"

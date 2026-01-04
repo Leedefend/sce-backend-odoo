@@ -27,14 +27,14 @@
                 <header>
                     <button name="action_set_active" type="object" string="设为当前"
                             class="oe_highlight"
-                            modifiers="{'invisible': [['is_active','=',True]]}"/ groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
+                            modifiers="{'invisible': [['is_active','=',True]]}" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <button name="action_archive_version" type="object" string="停用"
-                            modifiers="{'invisible': [['is_active','=',False]]}"/ groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
+                            modifiers="{'invisible': [['is_active','=',False]]}" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <button name="action_copy_version" type="object" string="复制并保留分摊"
-                            class="btn-secondary"/ groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
+                            class="btn-secondary" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <button name="action_copy_version" type="object" string="复制不带分摊"
                             class="btn-secondary"
-                            context="{'copy_allocations': False}"/ groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
+                            context="{'copy_allocations': False}" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <field name="is_active"/>
                 </header>
                 <sheet>
