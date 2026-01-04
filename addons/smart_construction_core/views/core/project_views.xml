@@ -50,7 +50,7 @@
                     <button name="action_open_wbs" string="工程结构" type="object" class="oe_stat_button"
                             groups="smart_construction_core.group_sc_cap_project_read"/>
                     <button name="action_open_boq_import" string="工程量清单" type="object" class="oe_stat_button"
-                            groups="smart_construction_core.group_sc_cap_cost_read"/>
+                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <button name="%(smart_construction_core.action_project_budget_quick)d"
                             string="预算/成本"
                             type="action"
@@ -128,7 +128,7 @@
                         <field name="pay_unpaid_total" readonly="1"/>
                     </group>
                 </page>
-                <page string="投标管理" name="sc_tender">
+                <page string="投标管理" name="sc_tender" groups="smart_construction_core.group_sc_cap_project_user">
                     <field name="tender_bid_ids" context="{'default_project_id': id, 'default_state': 'prepare'}">
                         <tree string="投标记录" editable="bottom">
                             <field name="tender_name"/>
@@ -141,7 +141,7 @@
                         </tree>
                     </field>
                 </page>
-                <page string="施工信息" name="sc_construction">
+                <page string="施工信息" name="sc_construction" groups="smart_construction_core.group_sc_cap_project_read">
                     <group col="4" string="施工项目信息">
                         <field name="project_code" readonly="1"/>
                         <field name="project_type_id"/>
@@ -192,7 +192,7 @@
 
             <!-- notebook 中重排业务页签，保证系统/描述/设置靠后 -->
             <xpath expr="//sheet/notebook/page[@name='sc_construction']" position="after">
-                <page string="WBS结构">
+                <page string="WBS结构" groups="smart_construction_core.group_sc_cap_project_user">
                     <field name="wbs_ids" context="{'default_project_id': id}">
                         <tree editable="bottom">
                             <field name="sequence"/>
@@ -204,7 +204,7 @@
                         </tree>
                     </field>
                 </page>
-                <page string="工程量清单" name="boq_tab">
+                <page string="工程量清单" name="boq_tab" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
                     <group col="2">
                         <group string="清单操作">
                             <button string="导入清单"
@@ -214,8 +214,7 @@
                             <button string="生成工程结构"
                                     type="object"
                                     class="btn-secondary"
-                                    name="action_generate_wbs_from_boq"
-                                    invisible="not boq_line_ids"/>
+                                    name="action_generate_wbs_from_boq"/>
                             <button string="生成施工任务"
                                     type="action"
                                     class="btn-secondary"
@@ -284,7 +283,7 @@
                         </form>
                     </field>
                 </page>
-                <page string="工程结构">
+                <page string="工程结构" groups="smart_construction_core.group_sc_cap_cost_read">
                     <field name="work_ids" context="{'default_project_id': id}" domain="[('project_id','=',id)]">
                         <tree editable="bottom">
                             <field name="sequence" widget="handle"/>
@@ -333,7 +332,7 @@
                         </field>
                     </group>
                 </page>
-                <page string="合同">
+                <page string="合同" groups="smart_construction_core.group_sc_cap_contract_read">
                     <group>
                         <field name="contract_count" readonly="1"/>
                         <field name="contract_income_total" readonly="1"/>
@@ -352,7 +351,7 @@
                         </tree>
                     </field>
                 </page>
-                <page string="工程资料">
+                <page string="工程资料" groups="smart_construction_core.group_sc_cap_project_read">
                     <group>
                         <field name="document_count" readonly="1"/>
                         <field name="document_required_count" readonly="1"/>
@@ -372,7 +371,7 @@
                         </tree>
                     </field>
                 </page>
-                <page string="驾驶舱">
+                <page string="驾驶舱" groups="smart_construction_core.group_sc_cap_finance_read">
                     <group>
                         <group>
                             <field name="contract_amount" readonly="1"/>

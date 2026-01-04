@@ -580,8 +580,9 @@ class ProjectProject(models.Model):
         amount_map = {}
         install_map = {}
         build_map = {}
+        can_boq = self._can_read_model('project.boq.line')
 
-        if self.ids:
+        if self.ids and can_boq:
             BoqLine = self.env['project.boq.line']
             data = BoqLine.read_group(
                 [('project_id', 'in', self.ids)],
@@ -599,14 +600,21 @@ class ProjectProject(models.Model):
                     install_map[project_id] = install_map.get(project_id, 0.0) + amount
 
         for project in self:
-            project.boq_amount_total = amount_map.get(project.id, 0.0)
-            project.boq_amount_building = build_map.get(project.id, 0.0)
-            project.boq_amount_installation = install_map.get(project.id, 0.0)
+            project.boq_amount_total = amount_map.get(project.id, 0.0) if can_boq else 0.0
+            project.boq_amount_building = build_map.get(project.id, 0.0) if can_boq else 0.0
+            project.boq_amount_installation = install_map.get(project.id, 0.0) if can_boq else 0.0
 
     # ---------- 工程资料统计 ----------
     @api.depends('document_ids.is_mandatory', 'document_ids.state')
     def _compute_document_stats(self):
+        can_document = self._can_read_model('sc.project.document')
         for project in self:
+            if not can_document:
+                project.document_count = 0
+                project.document_required_count = 0
+                project.document_missing_count = 0
+                project.document_completion_rate = 0.0
+                continue
             docs = project.document_ids
             project.document_count = len(docs)
 
@@ -831,8 +839,9 @@ class ProjectProject(models.Model):
 
     @api.depends('tender_bid_ids')
     def _compute_tender_stats(self):
+        can_tender = self._can_read_model('tender.bid')
         for project in self:
-            project.tender_count = len(project.tender_bid_ids)
+            project.tender_count = len(project.tender_bid_ids) if can_tender else 0
 
     # ========== Action 打开各种子模块 ==========
     def action_open_project_budget(self):
