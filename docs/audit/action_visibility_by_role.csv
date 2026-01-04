@@ -1,0 +1,13 @@
+role,action_xmlid,action_name,res_model,view_mode,has_groups,groups_xmlids,visible
+demo_pm,project.action_send_mail_project_project,Send Email,mail.compose.message,form,1,smart_construction_core.group_sc_cap_project_user,1
+demo_pm,project_sms.project_project_act_window_sms_composer,Send SMS Text Message,sms.composer,form,1,smart_construction_core.group_sc_cap_project_user,1
+demo_pm,project.project_share_wizard_action,Share Project,project.share.wizard,form,1,smart_construction_core.group_sc_cap_project_user,1
+demo_cost,project.action_send_mail_project_project,Send Email,mail.compose.message,form,1,smart_construction_core.group_sc_cap_project_user,0
+demo_cost,project_sms.project_project_act_window_sms_composer,Send SMS Text Message,sms.composer,form,1,smart_construction_core.group_sc_cap_project_user,0
+demo_cost,project.project_share_wizard_action,Share Project,project.share.wizard,form,1,smart_construction_core.group_sc_cap_project_user,0
+demo_readonly,project.action_send_mail_project_project,Send Email,mail.compose.message,form,1,smart_construction_core.group_sc_cap_project_user,0
+demo_readonly,project_sms.project_project_act_window_sms_composer,Send SMS Text Message,sms.composer,form,1,smart_construction_core.group_sc_cap_project_user,0
+demo_readonly,project.project_share_wizard_action,Share Project,project.share.wizard,form,1,smart_construction_core.group_sc_cap_project_user,0
+admin,project.action_send_mail_project_project,Send Email,mail.compose.message,form,1,smart_construction_core.group_sc_cap_project_user,1
+admin,project_sms.project_project_act_window_sms_composer,Send SMS Text Message,sms.composer,form,1,smart_construction_core.group_sc_cap_project_user,1
+admin,project.project_share_wizard_action,Share Project,project.share.wizard,form,1,smart_construction_core.group_sc_cap_project_user,1

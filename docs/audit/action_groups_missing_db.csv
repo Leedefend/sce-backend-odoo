@@ -1,4 +1,1 @@
-action_type,xmlid,name,res_model,binding_type,has_sc_group,groups
-act_window,project.action_send_mail_project_project,Send Email,mail.compose.message,action,0,
-act_window,project_sms.project_project_act_window_sms_composer,Send SMS Text Message,sms.composer,action,0,
-act_window,project.project_share_wizard_action,Share Project,project.share.wizard,action,0,
+action_type,xmlid,name,res_model,view_mode,binding_type,has_sc_group,groups

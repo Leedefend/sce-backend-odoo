@@ -1,0 +1,2 @@
+role,action_xmlid,signals,confidence,suggested_verdict,role_scope,risk
+demo_pm,project.action_send_mail_project_project,R02,high,hide,pm_only,config_risk
