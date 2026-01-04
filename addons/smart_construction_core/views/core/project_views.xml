@@ -377,14 +377,14 @@
                         <group>
                             <field name="contract_amount" readonly="1"/>
                             <field name="subcontract_amount" readonly="1"/>
-                            <field name="dashboard_revenue_actual" readonly="1" groups="account.group_account_readonly"/>
-                            <field name="dashboard_cost_actual" readonly="1" groups="account.group_account_readonly"/>
-                            <field name="dashboard_profit_actual" readonly="1" groups="account.group_account_readonly"/>
+                            <field name="dashboard_revenue_actual" readonly="1" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                            <field name="dashboard_cost_actual" readonly="1" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                            <field name="dashboard_profit_actual" readonly="1" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
                         </group>
                         <group>
-                            <field name="dashboard_invoice_amount" readonly="1" groups="account.group_account_readonly"/>
-                            <field name="dashboard_payment_in" readonly="1" groups="account.group_account_readonly"/>
-                            <field name="dashboard_payment_out" readonly="1" groups="account.group_account_readonly"/>
+                            <field name="dashboard_invoice_amount" readonly="1" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                            <field name="dashboard_payment_in" readonly="1" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
+                            <field name="dashboard_payment_out" readonly="1" groups="account.group_account_readonly,smart_construction_core.group_sc_cap_finance_read"/>
                             <field name="dashboard_progress_rate" readonly="1"/>
                             <field name="dashboard_document_completion" readonly="1"/>
                         </group>

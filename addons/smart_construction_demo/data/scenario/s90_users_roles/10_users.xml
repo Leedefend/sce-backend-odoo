@@ -11,7 +11,16 @@
             <field name="tz">Asia/Shanghai</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
-            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_manager')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_project_manager'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_cost_read'),
+                ref('smart_construction_core.group_sc_cap_purchase_read'),
+                ref('smart_construction_core.group_sc_cap_material_read'),
+                ref('smart_construction_core.group_sc_cap_settlement_read'),
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_data_read')
+            ])]"/>
         </record>
 
         <record id="sc_demo_user_finance" model="res.users">
