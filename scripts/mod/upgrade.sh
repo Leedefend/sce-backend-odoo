@@ -15,6 +15,9 @@ source "$ROOT_DIR/scripts/common/compose.sh"
 printf '[mod.upgrade] module=%s db=%s\n' "$MODULE" "$DB_NAME"
 
 compose_dev run --rm -T \
+  -e SC_SEED_ENABLED \
+  -e SC_SEED_STEPS \
+  -e SC_BOOTSTRAP_MODE \
   --entrypoint /usr/bin/odoo odoo \
   --config=/etc/odoo/odoo.conf \
   -d "$DB_NAME" \

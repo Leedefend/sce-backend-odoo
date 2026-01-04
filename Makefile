@@ -256,7 +256,7 @@ mod.install: check-compose-project
 mod.upgrade: check-compose-project
 	@$(RUN_ENV) bash scripts/mod/upgrade.sh
 
-.PHONY: demo.verify demo.load demo.list demo.load.all demo.install demo.rebuild demo.ci demo.repro demo.full
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.install demo.rebuild demo.ci demo.repro demo.full seed.run
 demo.verify: check-compose-project
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
@@ -287,6 +287,9 @@ demo.repro: check-compose-project
 
 demo.full: check-compose-project
 	@$(RUN_ENV) bash scripts/demo/full.sh
+
+seed.run: check-compose-project
+	@$(RUN_ENV) STEPS=$(STEPS) bash scripts/seed/run.sh
 
 # ======================================================
 # ==================== Dev Test ========================
