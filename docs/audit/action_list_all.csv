@@ -1,0 +1,4 @@
+action_type,action_id,xmlid,name,res_model,view_mode,binding_type,has_sc_group,groups
+act_window,300,project.action_send_mail_project_project,Send Email,mail.compose.message,form,action,1,smart_construction_core.group_sc_cap_project_user
+act_window,418,project_sms.project_project_act_window_sms_composer,Send SMS Text Message,sms.composer,form,action,1,smart_construction_core.group_sc_cap_project_user
+act_window,295,project.project_share_wizard_action,Share Project,project.share.wizard,form,action,1,smart_construction_core.group_sc_cap_project_user
