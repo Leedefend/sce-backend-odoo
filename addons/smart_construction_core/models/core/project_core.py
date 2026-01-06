@@ -188,6 +188,13 @@ class ProjectProject(models.Model):
         tracking=True,
         readonly=True,
     )
+    code = fields.Char(
+        '项目编号',
+        related='project_code',
+        store=True,
+        readonly=True,
+        copy=False,
+    )
     project_type_id = fields.Many2one(
         'sc.dictionary', string='项目类型',
         domain=[('type', '=', 'project_type')]
@@ -214,6 +221,12 @@ class ProjectProject(models.Model):
     start_date = fields.Date('计划开工日期')
     end_date = fields.Date('计划竣工日期')
 
+    funding_enabled = fields.Boolean(
+        '资金承载开关',
+        default=False,
+        help='用于控制项目是否具备资金承载资格的最小语义。',
+    )
+
     lifecycle_state = fields.Selection(
         [
             ('draft', '立项'),
@@ -229,6 +242,10 @@ class ProjectProject(models.Model):
         tracking=True,
         help='驱动项目级联动控制：暂停/关闭禁止新增进度、成本等业务数据；结算中限制部分操作。'
     )
+
+    def is_funding_ready(self):
+        self.ensure_one()
+        return bool(self.funding_enabled and self.code)
     phase_key = fields.Selection(
         [
             ('initiation', '立项阶段'),
