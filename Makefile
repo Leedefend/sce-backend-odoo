@@ -341,7 +341,7 @@ ci.logs:
 # ======================================================
 # ==================== Diagnostics ======================
 # ======================================================
-.PHONY: diag.compose verify.ops
+.PHONY: diag.compose verify.ops gate.audit
 diag.compose:
 	@echo "=== base ==="
 	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
@@ -365,3 +365,6 @@ verify.ops: check-compose-project
 	@echo "[4] module upgrade smoke"
 	@$(MAKE) mod.upgrade MODULE=$(MODULE)
 	@echo "🎉 verify.ops PASSED"
+
+gate.audit: check-compose-project
+	@$(RUN_ENV) bash scripts/ci/gate_audit.sh
