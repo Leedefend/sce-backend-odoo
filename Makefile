@@ -341,7 +341,7 @@ ci.logs:
 # ======================================================
 # ==================== Diagnostics ======================
 # ======================================================
-.PHONY: diag.compose verify.ops gate.audit
+.PHONY: diag.compose verify.ops gate.audit ci.gate.tp08
 diag.compose:
 	@echo "=== base ==="
 	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
@@ -368,3 +368,6 @@ verify.ops: check-compose-project
 
 gate.audit: check-compose-project
 	@$(RUN_ENV) bash scripts/ci/gate_audit.sh
+
+ci.gate.tp08: check-compose-project
+	@$(RUN_ENV) bash scripts/ci/gate_audit_tp08.sh
