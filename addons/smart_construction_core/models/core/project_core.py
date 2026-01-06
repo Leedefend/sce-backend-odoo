@@ -263,6 +263,11 @@ class ProjectProject(models.Model):
         'project.responsibility', 'project_id',
         string='责任矩阵'
     )
+    funding_baseline_ids = fields.One2many(
+        'project.funding.baseline',
+        'project_id',
+        string='资金基准',
+    )
 
     # ---------- 成本与进度总控 ----------
     company_currency_id = fields.Many2one(
@@ -307,6 +312,10 @@ class ProjectProject(models.Model):
     pay_unpaid_total = fields.Monetary(
         '未付款金额', currency_field='company_currency_id',
         compute='_compute_pay_overview', store=True,
+    )
+    funding_cap_amount = fields.Monetary(
+        '资金上限', currency_field='company_currency_id',
+        compute='_compute_funding_cap_amount', store=False,
     )
 
     plan_percent = fields.Float(
@@ -581,6 +590,24 @@ class ProjectProject(models.Model):
             project.pay_settlement_total = settlement_total
             project.pay_paid_total = paid_total
             project.pay_unpaid_total = (settlement_total or 0.0) - (paid_total or 0.0)
+
+    @api.depends('funding_baseline_ids.state', 'funding_baseline_ids.total_amount')
+    def _compute_funding_cap_amount(self):
+        amount_map = {}
+        if self.ids:
+            data = self.env['project.funding.baseline'].read_group(
+                [
+                    ('project_id', 'in', self.ids),
+                    ('state', '=', 'active'),
+                ],
+                ['total_amount:sum'],
+                ['project_id'],
+            )
+            for rec in data:
+                project_id = rec['project_id'][0]
+                amount_map[project_id] = rec.get('total_amount_sum', rec.get('total_amount', 0.0)) or 0.0
+        for project in self:
+            project.funding_cap_amount = amount_map.get(project.id, 0.0)
 
     # ---------- 创建/初始化 ----------
     @api.model_create_multi

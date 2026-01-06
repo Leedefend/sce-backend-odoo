@@ -9,5 +9,6 @@ from . import boq
 from . import material_plan
 from . import settlement_order
 from . import settlement
+from . import funding_baseline
 from . import payment_request
 from . import project_dashboard
