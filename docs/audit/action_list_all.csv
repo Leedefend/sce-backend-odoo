@@ -1,4 +1,166 @@
-action_type,action_id,xmlid,name,res_model,view_mode,binding_type,has_sc_group,groups
-act_window,300,project.action_send_mail_project_project,Send Email,mail.compose.message,form,action,1,smart_construction_core.group_sc_cap_project_user
-act_window,418,project_sms.project_project_act_window_sms_composer,Send SMS Text Message,sms.composer,form,action,1,smart_construction_core.group_sc_cap_project_user
-act_window,295,project.project_share_wizard_action,Share Project,project.share.wizard,form,action,1,smart_construction_core.group_sc_cap_project_user
+action_type,action_id,xmlid,name,res_model,view_mode,binding_type,has_groups,groups
+act_window,4,base.action_decimal_precision_form,Decimal Accuracy,decimal.precision,"tree,form",action,0,
+act_window,5,base.ir_sequence_actions,Actions,ir.actions.actions,"tree,form",action,0,
+act_window,6,base.ir_action_report,Reports,ir.actions.report,"tree,form",action,0,
+act_window,7,base.ir_action_window,Window Actions,ir.actions.act_window,"tree,form",action,0,
+act_window,8,base.ir_client_actions_report,Client Actions,ir.actions.client,"tree,form",action,0,
+act_window,9,base.action_server_action,Server Actions,ir.actions.server,"tree,form",action,0,
+act_window,10,base.act_ir_actions_todo_form,Configuration Wizards,ir.actions.todo,"tree,form",action,0,
+act_window,12,base.action_asset,Assets,ir.asset,"tree,form",action,0,
+act_window,13,base.ir_config_list_action,System Parameters,ir.config_parameter,"tree,form",action,0,
+act_window,14,base.ir_cron_act,Scheduled Actions,ir.cron,"tree,form,calendar",action,0,
+act_window,15,base.ir_cron_trigger_action,Scheduled Actions Triggers,ir.cron.trigger,"tree,form",action,0,
+act_window,16,base.actions_ir_filters_view,User-defined Filters,ir.filters,"tree,form",action,0,
+act_window,19,base.action_model_model,Models,ir.model,"tree,form",action,0,
+act_window,20,base.action_model_fields,Fields,ir.model.fields,"tree,form",action,0,
+act_window,21,base.action_model_fields_selection,Fields Selection,ir.model.fields.selection,"tree,form",action,0,
+act_window,25,base.ir_access_act,Access Rights,ir.model.access,"tree,form",action,0,
+act_window,26,base.action_attachment,Attachments,ir.attachment,"kanban,tree,form",action,0,
+act_window,27,base.action_rule,Record Rules,ir.rule,"tree,form",action,0,
+act_window,28,base.ir_sequence_form,Sequences,ir.sequence,"tree,form",action,0,
+act_window,29,base.grant_menu_access,Menu Items,ir.ui.menu,"tree,form",action,0,
+act_window,30,base.action_ui_view,Views,ir.ui.view,"tree,form",action,0,
+act_window,32,base.action_ui_view_custom,Customized Views,ir.ui.view.custom,"tree,form",action,0,
+act_window,33,base.ir_default_menu_action,User-defined Defaults,ir.default,"tree,form",action,0,
+act_window,37,base.ir_logging_all_act,Logging,ir.logging,"tree,form",action,0,
+act_window,38,base.open_module_tree,Apps,ir.module.module,"kanban,tree,form",action,0,
+act_window,44,base.action_view_base_import_language,Import Translation,base.language.import,form,action,0,
+act_window,47,base.action_wizard_lang_export,Export Translation,base.language.export,form,action,0,
+act_window,51,base.action_menu_ir_profile,Ir profile,ir.profile,"tree,form",action,0,
+act_window,52,base.action_res_company_form,Companies,res.company,"tree,kanban,form",action,0,
+act_window,53,base.res_lang_act_window,Languages,res.lang,"tree,form",action,0,
+act_window,66,base.action_currency_form,Currencies,res.currency,"tree,kanban,form",action,0,
+act_window,68,base.action_res_groups,Groups,res.groups,"tree,form",action,1,smart_construction_core.group_sc_cap_config_admin;smart_construction_core.group_sc_super_admin
+act_window,69,base.action_res_users,Users,res.users,"tree,kanban,form",action,0,
+act_window,73,base.ir_property_form,Company Properties,ir.property,"tree,form",action,0,
+act_window,84,base_setup.action_general_configuration,Settings,res.config.settings,form,action,1,smart_construction_core.group_sc_super_admin
+act_window,85,web_tour.edit_tour_action,Tours,web_tour.tour,"tree,form",action,0,
+act_window,86,iap.iap_account_action,IAP Account,iap.account,"tree,form",action,0,
+act_window,88,uom.product_uom_categ_form_action,Units of Measure Categories,uom.category,"tree,form",action,0,
+act_window,90,onboarding.action_view_onboarding_onboarding,Onboardings,onboarding.onboarding,"tree,form",action,0,
+act_window,91,onboarding.action_view_onboarding_step,Onboarding Steps,onboarding.onboarding.step,"tree,form",action,0,
+act_window,92,resource.action_resource_resource_tree,Resources,resource.resource,"tree,form",action,0,
+act_window,94,resource.action_resource_calendar_leave_tree,Resource Time Off,resource.calendar.leaves,"tree,form,calendar",action,0,
+act_window,98,resource.action_resource_calendar_form,Working Schedules,resource.calendar,"tree,form",action,0,
+act_window,105,mail.action_view_message_subtype,Subtypes,mail.message.subtype,"tree,form",action,0,
+act_window,106,mail.action_view_mail_tracking_value,Tracking Values,mail.tracking.value,"tree,form",action,0,
+act_window,108,mail.action_view_mail_message,Messages,mail.message,"tree,form",action,0,
+act_window,109,mail.mail_message_schedule_action,Scheduled Messages,mail.message.schedule,"tree,form",action,0,
+act_window,110,mail.action_view_mail_mail,Emails,mail.mail,"tree,form",action,0,
+act_window,113,mail.action_ice_servers,ICE servers,mail.ice.server,"tree,form",action,0,
+act_window,115,mail.discuss_channel_rtc_session_action,RTC sessions,discuss.channel.rtc.session,"tree,form",action,0,
+act_window,116,mail.mail_link_preview_action,Link Previews,mail.link.preview,"tree,form",action,0,
+act_window,117,mail.discuss_gif_favorite_action,GIF favorite,discuss.gif.favorite,"tree,form",action,0,
+act_window,121,mail.mail_activity_type_action,Activity Types,mail.activity.type,"tree,form",action,0,
+act_window,122,mail.mail_activity_action,Activities,mail.activity,"tree,form",action,0,
+act_window,124,mail.mail_activity_plan_action,Activity Plans,mail.activity.plan,"tree,form",action,0,
+act_window,135,mail.mail_guest_action,Guests,mail.guest,"tree,form",action,0,
+act_window,136,mail.mail_message_reaction_action,Message Reactions,mail.message.reaction,"tree,form",action,0,
+act_window,137,mail.res_users_settings_action,User Settings,res.users.settings,"tree,form",action,0,
+act_window,138,mail.action_email_template_tree_all,Email Templates,mail.template,"form,tree",action,0,
+act_window,140,mail.mail_blacklist_action,Blacklisted Email Addresses,mail.blacklist,"tree,form",action,0,
+act_window,153,base_tier_validation.tier_definition_action,Tier Definition,tier.definition,"tree,form",action,0,
+act_window,154,base_tier_validation.tier_validation_exception_action,Tier Validation Exception,tier.validation.exception,"tree,form",action,0,
+act_window,155,phone_validation.phone_blacklist_action,Blacklisted Phone Numbers,phone.blacklist,"tree,form",action,0,
+act_window,160,privacy_lookup.privacy_log_action,Privacy Logs,privacy.log,"tree,form",action,0,
+act_window,172,product.product_category_action_form,Product Categories,product.category,"tree,form",action,0,
+act_window,176,product.product_supplierinfo_type_action,Vendor Pricelists,product.supplierinfo,"tree,form,kanban",action,0,
+act_window,186,rating.rating_rating_action,Ratings,rating.rating,"kanban,tree,graph,pivot,form",action,0,
+act_window,199,sms.sms_sms_action,SMS,sms.sms,"tree,form",action,0,
+act_window,201,sms.sms_template_action,Templates,sms.template,"tree,form",action,0,
+act_window,203,snailmail.action_mail_letters,Snailmail Letters,snailmail.letter,"form,tree",action,0,
+act_window,207,digest.digest_digest_action,Digest Emails,digest.digest,"tree,form",action,1,smart_construction_core.group_sc_super_admin
+act_window,208,digest.digest_tip_action,Digest Tips,digest.tip,"tree,form",action,1,smart_construction_core.group_sc_super_admin
+act_window,210,payment.action_payment_provider,Payment Providers,payment.provider,"kanban,tree,form",action,0,
+act_window,211,payment.action_payment_method,Payment Methods,payment.method,"tree,kanban,form",action,0,
+act_window,224,account.action_account_payments,Customer Payments,account.payment,"tree,kanban,form,graph,activity",action,0,
+act_window,225,account.action_account_payments_payable,Vendor Payments,account.payment,"tree,kanban,form,graph,activity",action,0,
+act_window,248,account.action_move_out_invoice_type,Invoices,account.move,"tree,kanban,form,activity",action,0,
+act_window,249,account.action_move_out_refund_type,Credit Notes,account.move,"tree,kanban,form,activity",action,0,
+act_window,250,account.action_move_in_invoice_type,Bills,account.move,"tree,kanban,form,activity",action,0,
+act_window,251,account.action_move_in_refund_type,Refunds,account.move,"tree,kanban,form,activity",action,0,
+act_window,260,account.action_account_journal_form,Journals,account.journal,"tree,kanban,form",action,1,smart_construction_core.group_sc_cap_finance_manager
+act_window,261,account.action_account_journal_group_list,Journal Groups,account.journal.group,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager
+act_window,265,account.action_tax_form,Taxes,account.tax,"tree,kanban,form",action,0,
+act_window,267,account.action_payment_term_form,Payment Terms,account.payment.term,"tree,kanban,form",action,0,
+act_window,269,account.action_account_supplier_accounts,Bank Accounts,res.partner.bank,"tree,form",action,0,
+act_window,271,account.product_product_action_sellable,Products,product.template,"kanban,tree,form,activity",action,0,
+act_window,272,account.product_product_action_purchasable,Products,product.template,"kanban,tree,form,activity",action,0,
+act_window,275,account.action_account_invoice_report_all,Invoices Analysis,account.invoice.report,"graph,pivot",action,0,
+act_window,278,account.action_account_config,Settings,res.config.settings,form,action,1,smart_construction_core.group_sc_super_admin
+act_window,280,account.action_account_fiscal_position_form,Fiscal Positions,account.fiscal.position,"tree,kanban,form",action,0,
+act_window,281,account.res_partner_action_customer,Customers,res.partner,"kanban,tree,form",action,0,
+act_window,282,account.res_partner_action_supplier,Vendors,res.partner,"kanban,tree,form",action,0,
+act_window,286,account.action_incoterms_tree,Incoterms,account.incoterms,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager
+act_window,293,project.project_project_stage_configure,Project Stages,project.project.stage,"tree,kanban,form",action,0,
+act_window,295,project.project_share_wizard_action,Share Project,project.share.wizard,form,action,1,smart_construction_core.group_sc_super_admin;base.group_system
+act_window,300,project.action_send_mail_project_project,Send Email,mail.compose.message,form,action,1,smart_construction_core.group_sc_super_admin;base.group_system
+act_window,302,project.open_view_project_all,Projects,project.project,"kanban,tree,form",action,1,smart_construction_core.group_sc_cap_project_read
+act_window,303,project.open_view_project_all_group_stage,Projects,project.project,"kanban,tree,form,calendar,activity",action,0,
+act_window,304,project.open_view_project_all_config,Projects,project.project,"tree,kanban,form",action,0,
+act_window,305,project.open_view_project_all_config_group_stage,Projects,project.project,"tree,kanban,form,calendar,activity",action,0,
+act_window,312,project.action_view_all_task,All Tasks,project.task,"tree,kanban,form,calendar,pivot,graph,activity",action,0,
+act_window,320,project.project_tags_action,Tags,project.tags,"tree,form",action,0,
+act_window,321,project.project_config_settings_action,Settings,res.config.settings,form,action,1,smart_construction_core.group_sc_super_admin
+act_window,322,project.mail_activity_plan_action_config_project_task_plan,Activity Plans,mail.activity.plan,"tree,form",action,0,
+act_window,324,project.mail_activity_type_action_config_project_types,Activity Types,mail.activity.type,"tree,form",action,0,
+act_window,327,project.action_project_task_user_tree,Tasks Analysis,report.project.task.user,"graph,pivot",action,0,
+act_window,330,spreadsheet_dashboard.spreadsheet_dashboard_action_configuration_dashboards,Dashboards,spreadsheet.dashboard.group,"tree,form",action,0,
+act_window,367,stock.action_stock_scrap,Scrap Orders,stock.scrap,"tree,form,kanban,pivot,graph",action,0,
+act_window,375,stock.action_warehouse_form,Warehouses,stock.warehouse,"tree,form",action,0,
+act_window,377,stock.stock_move_line_action,Moves History,stock.move.line,"tree,kanban,pivot,form",action,0,
+act_window,379,stock.action_picking_tree_incoming,Receipts,stock.picking,"tree,kanban,form,calendar,activity",action,1,stock.group_stock_user
+act_window,380,stock.action_picking_tree_outgoing,Deliveries,stock.picking,"tree,kanban,form,calendar,activity",action,1,stock.group_stock_user
+act_window,395,stock.action_picking_type_list,Operations Types,stock.picking.type,"tree,form",action,0,
+act_window,396,stock.stock_picking_type_action,Inventory Overview,stock.picking.type,"kanban,form",action,0,
+act_window,397,stock.stock_move_action,Move Analysis,stock.move,"tree,form",action,0,
+act_window,399,stock.action_product_stock_view,Stock,product.product,"tree,form",action,0,
+act_window,400,stock.product_template_action_product,Products,product.template,"kanban,tree,form",action,0,
+act_window,408,stock.action_orderpoint,Reordering Rules,stock.warehouse.orderpoint,"tree,kanban,form",action,0,
+act_window,412,stock.action_stock_config_settings,Settings,res.config.settings,form,action,1,smart_construction_core.group_sc_super_admin
+act_window,418,project_sms.project_project_act_window_sms_composer,Send SMS Text Message,sms.composer,form,action,1,smart_construction_core.group_sc_super_admin;base.group_system
+act_window,427,purchase.product_normal_action_puchased,Products,product.template,"kanban,tree,form,activity",action,0,
+act_window,429,purchase.purchase_rfq,Requests for Quotation,purchase.order,"tree,kanban,form,pivot,graph,calendar,activity",action,0,
+act_window,430,purchase.purchase_form_action,Purchase Orders,purchase.order,"tree,kanban,form,pivot,graph,calendar,activity",action,0,
+act_window,436,purchase.action_purchase_configuration,Settings,res.config.settings,form,action,1,smart_construction_core.group_sc_super_admin
+act_window,439,purchase.action_purchase_order_report_all,Purchase Analysis,purchase.report,"graph,pivot",action,1,purchase.group_purchase_user
+act_window,440,stock_account.stock_valuation_layer_action,Stock Valuation,stock.valuation.layer,"tree,form,pivot",action,0,
+act_window,442,stock_account.inventory_aging_action,Inventory Aging,stock.valuation.layer,"pivot,tree,graph",action,0,
+act_window,448,smart_construction_core.action_project_budget,项目预算,project.budget,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
+act_window,449,smart_construction_core.action_project_cost_code,成本科目,project.cost.code,"tree,form",action,1,smart_construction_core.group_sc_cap_config_admin
+act_window,450,smart_construction_core.action_project_cost_compare,项目成本预算 vs 实际,project.cost.compare,"tree,pivot",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
+act_window,451,smart_construction_core.action_project_profit_compare,项目经营利润,project.profit.compare,"tree,pivot",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
+act_window,452,smart_construction_core.action_project_cost_ledger,成本台账,project.cost.ledger,"tree,form,pivot,graph",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
+act_window,453,smart_construction_core.action_project_budget_cost_alloc,预算清单分摊,project.budget.cost.alloc,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
+act_window,454,smart_construction_core.action_project_wbs,工程结构,construction.work.breakdown,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user;smart_construction_core.group_sc_cap_project_manager;smart_construction_core.group_sc_cap_project_user
+act_window,455,smart_construction_core.action_project_progress_entry,进度计量,project.progress.entry,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
+act_window,458,smart_construction_core.action_sc_project_structure,工程结构（清单 WBS）,sc.project.structure,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
+act_window,459,smart_construction_core.action_project_boq_line,工程量清单,project.boq.line,"tree,form,pivot",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
+act_window,462,smart_construction_core.action_project_material_plan,物资计划,project.material.plan,"tree,form",action,1,smart_construction_core.group_sc_cap_material_manager;smart_construction_core.group_sc_cap_material_user
+act_window,463,smart_construction_core.action_sc_finance_dashboard,财务中心,payment.request,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager;smart_construction_core.group_sc_cap_finance_user
+act_window,467,smart_construction_core.action_project_contract_overview,项目合同汇总,construction.contract,"tree,form",action,1,smart_construction_core.group_sc_cap_contract_manager;smart_construction_core.group_sc_cap_contract_user
+act_window,468,smart_construction_core.action_work_breakdown,工程结构,construction.work.breakdown,"tree,form",action,1,smart_construction_core.group_sc_cap_project_manager;smart_construction_core.group_sc_cap_project_user
+act_window,469,smart_construction_core.action_tender_bid,投标管理,tender.bid,"tree,form",action,1,smart_construction_core.group_sc_cap_project_read
+act_window,470,smart_construction_core.action_sc_project_document,工程资料,sc.project.document,"tree,form",action,1,smart_construction_core.group_sc_cap_project_read
+act_window,471,smart_construction_core.action_sc_operating_metrics_project,经营指标（项目）,sc.operating.metrics.project,"tree,pivot",action,1,smart_construction_core.group_sc_cap_cost_user
+act_window,474,smart_construction_core.action_project_dashboard,项目驾驶舱,project.project,"kanban,tree,form",action,1,smart_construction_core.group_sc_cap_project_read
+act_window,476,smart_construction_core.action_construction_contract_income,收入合同,construction.contract,"tree,form",action,1,smart_construction_core.group_sc_cap_contract_read;smart_construction_core.group_sc_cap_contract_manager;smart_construction_core.group_sc_cap_contract_user
+act_window,477,smart_construction_core.action_construction_contract_expense,支出合同,construction.contract,"tree,form",action,1,smart_construction_core.group_sc_cap_contract_read;smart_construction_core.group_sc_cap_contract_manager;smart_construction_core.group_sc_cap_contract_user
+act_window,479,smart_construction_core.action_sc_tier_review_my_payment_request,待我审批（付款申请）,tier.review,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager
+act_window,480,smart_construction_core.action_sc_tier_review_my_material_plan,待我审批（物资计划）,tier.review,"tree,form",action,1,smart_construction_core.group_sc_cap_material_manager
+act_window,481,smart_construction_core.action_payment_request,付款/收款申请,payment.request,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager;smart_construction_core.group_sc_cap_finance_user
+act_window,482,smart_construction_core.action_sc_settlement_order,结算单,sc.settlement.order,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_settlement_read;smart_construction_core.group_sc_cap_settlement_manager;smart_construction_core.group_sc_cap_settlement_user;smart_construction_core.group_sc_cap_finance_read;smart_construction_core.group_sc_cap_project_read
+act_window,483,smart_construction_core.action_sc_treasury_ledger,资金台账,sc.treasury.ledger,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_read;smart_construction_core.group_sc_cap_finance_manager;smart_construction_core.group_sc_cap_finance_user
+act_window,484,smart_construction_core.action_sc_workflow_def,工作流定义,sc.workflow.def,"tree,form",action,1,smart_construction_core.group_sc_cap_config_admin
+act_window,485,smart_construction_core.action_sc_workflow_instance,工作流实例,sc.workflow.instance,"tree,form",action,1,smart_construction_core.group_sc_cap_config_admin
+act_window,486,smart_construction_core.action_sc_workflow_workitem,工作项,sc.workflow.workitem,tree,action,1,smart_construction_core.group_sc_cap_config_admin
+act_window,487,smart_construction_core.action_sc_workflow_log,工作流日志,sc.workflow.log,tree,action,1,smart_construction_core.group_sc_cap_config_admin
+act_window,488,smart_construction_core.action_project_initiation,项目立项,project.project,"form,tree,kanban",action,1,smart_construction_core.group_sc_cap_project_manager;smart_construction_core.group_sc_cap_project_user
+act_window,489,smart_construction_core.action_project_dictionary,数据字典（全部）,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
+act_window,490,smart_construction_core.action_project_dictionary_discipline,专业,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
+act_window,491,smart_construction_core.action_project_dictionary_chapter,章节,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
+act_window,492,smart_construction_core.action_project_dictionary_quota_item,定额项目,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
+act_window,493,smart_construction_core.action_project_dictionary_sub_item,子目,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
+act_window,494,smart_construction_core.action_project_quota_subitem,定额子目,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
+act_window,495,smart_construction_core.action_project_quota_tree,定额体系树,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
+act_window,497,smart_construction_core.action_quota_import_wizard,四川定额导入,quota.import.wizard,form,action,1,smart_construction_core.group_sc_cap_config_admin
