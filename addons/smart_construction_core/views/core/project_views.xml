@@ -47,6 +47,18 @@
             <!-- 重做按钮区：仅保留主流程按钮 -->
             <xpath expr="//sheet/div[@name='button_box']" position="replace">
                 <div class="oe_button_box" name="button_box">
+                    <button name="action_view_tasks" string="任务" type="object" class="oe_stat_button"
+                            groups="base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin">
+                        <field string="Tasks" name="open_task_count" widget="statinfo"/>
+                    </button>
+                    <button name="project_update_all_action" type="object" class="oe_stat_button"
+                            groups="base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin">
+                        <field name="last_update_color" invisible="1"/>
+                        <div class="o_stat_info">
+                            <field name="last_update_status" readonly="1" widget="status_with_color"
+                                   status_label="Project Status"/>
+                        </div>
+                    </button>
                     <button name="action_open_wbs" string="工程结构" type="object" class="oe_stat_button"
                             groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <button name="action_open_boq_import" string="工程量清单" type="object" class="oe_stat_button"
@@ -234,30 +246,36 @@
                             <button string="导入清单"
                                     type="object"
                                     class="oe_highlight"
-                                    name="action_open_boq_import"/>
+                                    name="action_open_boq_import"
+                                    groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                             <button string="生成工程结构"
                                     type="object"
                                     class="btn-secondary"
-                                    name="action_generate_wbs_from_boq"/>
+                                    name="action_generate_wbs_from_boq"
+                                    groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                             <button string="生成施工任务"
                                     type="action"
                                     class="btn-secondary"
-                                    name="%(smart_construction_core.action_project_task_from_boq_wizard)d"/>
+                                    name="%(smart_construction_core.action_project_task_from_boq_wizard)d"
+                                    groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                             <button string="工程量清单分析"
                                     type="action"
                                     class="btn-secondary"
                                     name="%(smart_construction_core.action_project_boq_line_analysis)d"
+                                    groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"
                                     context="{'search_default_project_id': [id]}"/>
                         </group>
                         <group string="维护" groups="smart_construction_core.group_sc_cap_cost_manager">
                             <button string="重建工程量清单层级"
                                     type="object"
                                     class="btn-secondary"
-                                    name="action_rebuild_boq_hierarchy"/>
+                                    name="action_rebuild_boq_hierarchy"
+                                    groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                             <button string="校验工程量清单"
                                     type="object"
                                     class="btn-secondary"
-                                    name="action_validate_boq"/>
+                                    name="action_validate_boq"
+                                    groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                         </group>
                     </group>
                     <group string="清单汇总">
@@ -431,6 +449,75 @@
                 <attribute name="groups">smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager,smart_construction_core.group_sc_super_admin</attribute>
             </xpath>
 
+        </field>
+    </record>
+
+    <!-- Hide task execution entry points from PM; keep for project users/managers and system admin. -->
+    <record id="view_project_hide_task_buttons_sc_core" model="ir.ui.view">
+        <field name="name">project.project.form.sc.core.hide.task.buttons</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="priority">5</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']//button[@name='action_view_tasks']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
+            <xpath expr="//div[@name='button_box']//button[@name='project_update_all_action']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_project_hide_task_tree_actions_sc_core" model="ir.ui.view">
+        <field name="name">project.project.tree.sc.core.hide.task.actions</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_view_tasks']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_project_hide_task_simplified_actions_sc_core" model="ir.ui.view">
+        <field name="name">project.project.form.simplified.sc.core.hide.task.actions</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.project_project_view_form_simplified_footer"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_view_tasks']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_project_hide_task_kanban_actions_sc_core" model="ir.ui.view">
+        <field name="name">project.project.kanban.sc.core.hide.task.actions</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//a[@name='action_view_tasks']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
+            <xpath expr="//a[@name='action_get_list_view']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
+            <xpath expr="//a[@name='action_view_tasks_analysis']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
+            <xpath expr="//a[@name='action_project_task_burndown_chart_report']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_project_hide_task_kanban_inherit_actions_sc_core" model="ir.ui.view">
+        <field name="name">project.project.kanban.inherit.sc.core.hide.task.actions</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.project_view_kanban_inherit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//a[@name='project_update_all_action']" position="attributes">
+                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            </xpath>
         </field>
     </record>
 

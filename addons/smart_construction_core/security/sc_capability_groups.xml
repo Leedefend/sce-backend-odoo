@@ -299,5 +299,22 @@
             ])]"/>
         </record>
 
+
+        <!-- =========================
+             任务入口白名单（仅系统管理员/项目原生经理可见）
+        ========================== -->
+        <record id="group_sc_task_entry_access" model="res.groups">
+            <field name="name">任务入口白名单（Task Entry Access）</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('base.group_system'),
+                ref('project.group_project_manager')
+            ])]"/>
+        </record>
+
+        <record id="base.group_system" model="res.groups">
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_task_entry_access'))]"/>
+        </record>
+
     </data>
 </odoo>
