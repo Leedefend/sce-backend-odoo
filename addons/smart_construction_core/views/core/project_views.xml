@@ -494,18 +494,31 @@
         <field name="name">project.project.kanban.sc.core.hide.task.actions</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.view_project_kanban"/>
+        <field name="priority">99</field>
         <field name="arch" type="xml">
-            <xpath expr="//a[@name='action_view_tasks']" position="attributes">
-                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            <xpath expr="//kanban[@action='action_view_tasks']" position="attributes">
+                <attribute name="action"></attribute>
+                <attribute name="type"></attribute>
+            </xpath>
+            <xpath expr="//a[@name='action_view_tasks' and not(contains(concat(' ', normalize-space(@class), ' '), ' o_project_kanban_box '))]" position="replace">
+                <a name="action_view_tasks" type="object" groups="smart_construction_core.group_sc_task_entry_access">Tasks</a>
+            </xpath>
+            <xpath expr="//a[contains(concat(' ', normalize-space(@class), ' '), ' o_project_kanban_box ') and @name='action_view_tasks']" position="replace">
+                <a class="o_project_kanban_box" name="action_view_tasks" type="object" groups="smart_construction_core.group_sc_task_entry_access">
+                    <div>
+                        <span class="o_value"><t t-esc="record.open_task_count.value"/></span>
+                        <span class="o_label ms-1"><t t-esc="record.label_tasks.value"/></span>
+                    </div>
+                </a>
             </xpath>
             <xpath expr="//a[@name='action_get_list_view']" position="attributes">
                 <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
             </xpath>
-            <xpath expr="//a[@name='action_view_tasks_analysis']" position="attributes">
-                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+            <xpath expr="//a[@name='action_view_tasks_analysis']" position="replace">
+                <a name="action_view_tasks_analysis" type="object" groups="smart_construction_core.group_sc_task_entry_access">Tasks Analysis</a>
             </xpath>
             <xpath expr="//a[@name='action_project_task_burndown_chart_report']" position="attributes">
-                <attribute name="groups">base.group_system,smart_construction_core.group_sc_task_entry_access,smart_construction_core.group_sc_super_admin</attribute>
+                <attribute name="groups">smart_construction_core.group_sc_task_entry_access</attribute>
             </xpath>
         </field>
     </record>
