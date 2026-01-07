@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="seed_dict_contract_type_out" model="sc.dictionary">
+            <field name="name">收入合同</field>
+            <field name="type">contract_type</field>
+            <field name="code">BASE_CONTRACT_OUT</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="seed_dict_contract_type_in" model="sc.dictionary">
+            <field name="name">支出合同</field>
+            <field name="type">contract_type</field>
+            <field name="code">BASE_CONTRACT_IN</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <record id="seed_dict_contract_category_build" model="sc.dictionary">
+            <field name="name">施工合同</field>
+            <field name="type">contract_category</field>
+            <field name="code">BASE_CONTRACT_BUILD</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="seed_dict_project_type_base" model="sc.dictionary">
+            <field name="name">基础项目类型</field>
+            <field name="type">project_type</field>
+            <field name="code">BASE_PROJECT_TYPE</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="seed_dict_project_category_base" model="sc.dictionary">
+            <field name="name">基础项目类别</field>
+            <field name="type">project_category</field>
+            <field name="code">BASE_PROJECT_CATEGORY</field>
+            <field name="sequence">10</field>
+        </record>
+
+    </data>
+</odoo>

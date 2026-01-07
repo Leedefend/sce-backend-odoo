@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="seed_partner_contract" model="res.partner">
+            <field name="name">Demo-合同相对方</field>
+            <field name="company_type">company</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="seed_partner_owner" model="res.partner">
+            <field name="name">Demo-业主单位</field>
+            <field name="company_type">company</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="seed_partner_supplier" model="res.partner">
+            <field name="name">Demo-供应商</field>
+            <field name="company_type">company</field>
+            <field name="active">True</field>
+        </record>
+
+    </data>
+</odoo>
