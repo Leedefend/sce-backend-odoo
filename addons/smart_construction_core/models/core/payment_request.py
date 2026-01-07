@@ -160,6 +160,40 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
 
+    def _check_project_funding_gate(self, project, amount, exclude_ids=None):
+        if not project or not project.is_funding_ready():
+            raise UserError("项目未满足资金承载条件，不能提交付款申请。")
+        cap = project.funding_cap_amount or 0.0
+        if cap <= 0.0:
+            raise UserError("项目未设置生效中的资金基准，不能提交付款申请。")
+        domain = [
+            ("project_id", "=", project.id),
+            ("type", "=", "pay"),
+            ("state", "in", ["submit", "approve", "approved", "done"]),
+        ]
+        if exclude_ids:
+            domain.append(("id", "not in", exclude_ids))
+        data = self.read_group(domain, ["amount:sum"], [])
+        used = data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
+        rounding = project.company_currency_id.rounding if project.company_currency_id else 0.01
+        if float_compare((used or 0.0) + (amount or 0.0), cap, precision_rounding=rounding) == 1:
+            raise UserError(
+                _("付款申请金额累计超出资金基准上限：\n- 已提交/审批金额：%(used)s\n- 本次申请：%(amount)s\n- 资金上限：%(cap)s")
+                % {"used": used, "amount": amount, "cap": cap}
+            )
+
+    def _enforce_funding_gate(self, vals=None):
+        vals = vals or {}
+        for rec in self:
+            state = vals.get("state", rec.state)
+            req_type = vals.get("type", rec.type)
+            if req_type != "pay" or state != "submit":
+                continue
+            project_id = vals.get("project_id", rec.project_id.id)
+            project = self.env["project.project"].browse(project_id) if project_id else rec.project_id
+            amount = vals.get("amount", rec.amount)
+            self._check_project_funding_gate(project, amount, exclude_ids=rec.ids)
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
@@ -167,6 +201,12 @@ class PaymentRequest(models.Model):
             if not vals.get("name") or vals.get("name") == "New":
                 vals["name"] = seq.next_by_code("payment.request") or _("Payment Request")
         return super().create(vals_list)
+
+    def write(self, vals):
+        res = super().write(vals)
+        if any(key in vals for key in ("state", "type", "project_id", "amount")):
+            self._enforce_funding_gate(vals)
+        return res
 
     @api.depends("settlement_id", "settlement_remaining_amount", "amount")
     def _compute_settlement_amount_insufficient(self):
@@ -311,6 +351,7 @@ class PaymentRequest(models.Model):
                 raise UserError("请先选择关联合同后再提交付款/收款申请。")
             if rec.contract_id.state == "cancel":
                 raise UserError("关联合同已取消，不能提交付款/收款申请。")
+        self._enforce_funding_gate({"state": "submit"})
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
         scope = {
