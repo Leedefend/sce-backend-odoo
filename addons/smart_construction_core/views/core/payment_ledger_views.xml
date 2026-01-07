@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
+        <record id="action_payment_ledger" model="ir.actions.act_window">
+            <field name="name">付款记录</field>
+            <field name="res_model">payment.ledger</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
         <record id="view_payment_ledger_tree" model="ir.ui.view">
             <field name="name">payment.ledger.tree</field>
             <field name="model">payment.ledger</field>
@@ -43,5 +49,12 @@
                 </form>
             </field>
         </record>
+
+        <menuitem id="menu_payment_ledger"
+                  name="付款记录"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_payment_ledger"
+                  sequence="35"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     </data>
 </odoo>

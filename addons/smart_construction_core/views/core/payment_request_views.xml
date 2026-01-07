@@ -36,6 +36,14 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve,approved,done,cancel"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="%(smart_construction_core.action_payment_ledger)d"
+                                    string="付款记录"
+                                    type="action"
+                                    class="oe_stat_button"
+                                    context="{'default_payment_request_id': active_id, 'search_default_payment_request_id': active_id}"
+                                    groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+                        </div>
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
