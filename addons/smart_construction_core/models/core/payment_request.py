@@ -403,8 +403,6 @@ class PaymentRequest(models.Model):
         self.message_post(body=_("付款/收款申请已提交，进入审批流程。"))
 
     def action_approve(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
-            raise ValidationError(_("你没有审批付款/收款申请的权限。"))
         self._enforce_funding_gate({"state": "approve"})
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
@@ -415,13 +413,24 @@ class PaymentRequest(models.Model):
             "company_id": self[:1].company_id.id if self[:1].company_id else False,
         }
         self.env["sc.data.validator"].validate_or_raise(scope=scope)
-        self.write({"state": "approve"})
+        result = None
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            rec.write({"state": "approve"})
+            action = rec.validate_tier()
+            if action:
+                result = action
+        return result
 
     def action_set_approved(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
-            raise ValidationError(_("你没有批准付款/收款申请的权限。"))
         self._enforce_funding_gate({"state": "approved"})
-        self.write({"state": "approved"})
+        result = None
+        for rec in self:
+            action = rec.validate_tier()
+            if action:
+                result = action
+        return result
 
     def action_done(self):
         raise UserError("当前阶段不支持完成流程。")
