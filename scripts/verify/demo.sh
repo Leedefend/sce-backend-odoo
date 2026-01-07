@@ -47,6 +47,8 @@ check_eq "seed boq sample marker" "10" "SELECT COALESCE((SELECT value FROM ir_co
 check_eq "seed metrics smoke marker" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.metrics_smoke'), '0');"
 check_eq "demo users exist" "5" "SELECT COUNT(*)::text FROM res_users WHERE login IN ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly') AND active IS TRUE AND share IS FALSE;"
 check_eq "demo contracts exist" "1" "SELECT CASE WHEN COUNT(*) >= 1 THEN '1' ELSE '0' END FROM construction_contract WHERE project_id IS NOT NULL;"
+check_eq "settlement order table exists" "sc_settlement_order" "SELECT to_regclass('sc_settlement_order');"
+check_eq "demo settlement orders exist" "1" "SELECT CASE WHEN COUNT(*) >= 1 THEN '1' ELSE '0' END FROM sc_settlement_order WHERE name LIKE 'DEMO-SO-%' AND contract_id IS NOT NULL AND project_id IS NOT NULL;"
 
 
 echo "[verify.demo] PASS ALL on ${DB_NAME}"
