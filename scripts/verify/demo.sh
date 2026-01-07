@@ -45,5 +45,6 @@ check_eq "seed dictionary marker" "1" "SELECT COALESCE((SELECT value FROM ir_con
 check_eq "seed project skeleton marker" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.project_skeleton'), '0');"
 check_eq "seed boq sample marker" "10" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.boq_count'), '0');"
 check_eq "seed metrics smoke marker" "1" "SELECT COALESCE((SELECT value FROM ir_config_parameter WHERE key='sc.seed.metrics_smoke'), '0');"
+check_eq "demo users exist" "1" "SELECT CASE WHEN COUNT(*) >= 1 THEN '1' ELSE '0' END FROM res_users WHERE login IN ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly') AND active IS TRUE AND share IS FALSE;"
 
 echo "[verify.demo] PASS ALL on ${DB_NAME}"
