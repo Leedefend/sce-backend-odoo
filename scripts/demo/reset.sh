@@ -47,7 +47,7 @@ compose_dev run --rm -T \
     --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
     --addons-path=\"${ODOO_ADDONS_PATH}\" \
     -d \"${DB_NAME}\" \
-    -i smart_construction_seed,smart_construction_demo \
+    -i smart_construction_core,smart_construction_seed,smart_construction_demo \
     ${WITHOUT_DEMO_FLAG} \
     --no-http --workers=0 --max-cron-threads=0 --stop-after-init \
     --logfile=/dev/stdout 2>&1 | tee \"${DEMO_LOGFILE}\"; \

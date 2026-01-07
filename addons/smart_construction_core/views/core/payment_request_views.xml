@@ -36,6 +36,14 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve,approved,done,cancel"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="%(smart_construction_core.action_payment_ledger)d"
+                                    string="付款记录"
+                                    type="action"
+                                    class="oe_stat_button"
+                                    context="{'default_payment_request_id': active_id, 'search_default_payment_request_id': active_id}"
+                                    groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+                        </div>
                         <group>
                             <group>
                                 <field name="name" readonly="1"/>
@@ -49,6 +57,9 @@
                                 <field name="amount"/>
                                 <field name="currency_id"/>
                                 <field name="date_request"/>
+                                <field name="paid_amount_total" readonly="1"/>
+                                <field name="unpaid_amount" readonly="1"/>
+                                <field name="is_fully_paid" readonly="1"/>
                             </group>
                         </group>
                         <group string="结算依据">
@@ -90,6 +101,16 @@
                         </group>
                         <group>
                             <field name="note"/>
+                        </group>
+                        <group string="付款记录">
+                            <field name="ledger_line_ids" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="paid_at"/>
+                                    <field name="amount"/>
+                                    <field name="ref"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
                         </group>
                     </sheet>
                 </form>
