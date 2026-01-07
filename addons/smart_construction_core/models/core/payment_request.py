@@ -145,6 +145,28 @@ class PaymentRequest(models.Model):
         default=fields.Date.context_today,
     )
     note = fields.Text(string="备注")
+    ledger_line_ids = fields.One2many(
+        "payment.ledger",
+        "payment_request_id",
+        string="付款记录",
+    )
+    paid_amount_total = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_totals",
+        store=False,
+    )
+    unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_totals",
+        store=False,
+    )
+    is_fully_paid = fields.Boolean(
+        string="已结清",
+        compute="_compute_payment_totals",
+        store=False,
+    )
 
     state = fields.Selection(
         [
@@ -226,7 +248,7 @@ class PaymentRequest(models.Model):
 
     def write(self, vals):
         if vals.get("state") == "done":
-            raise UserError("当前阶段不支持完成流程。")
+            self._check_can_done()
         res = super().write(vals)
         if any(key in vals for key in ("state", "type", "project_id", "amount")):
             self._enforce_funding_gate(vals)
@@ -258,6 +280,41 @@ class PaymentRequest(models.Model):
     def _compute_move_type(self):
         for rec in self:
             rec.move_type = rec.type
+
+    @api.depends("ledger_line_ids.amount", "ledger_line_ids.currency_id", "amount", "currency_id")
+    def _compute_payment_totals(self):
+        paid_map = {}
+        if self.ids:
+            data = self.env["payment.ledger"].read_group(
+                [("payment_request_id", "in", self.ids)],
+                ["amount:sum"],
+                ["payment_request_id"],
+            )
+            for rec in data:
+                req_id = rec["payment_request_id"][0]
+                paid_map[req_id] = rec.get("amount_sum", rec.get("amount", 0.0)) or 0.0
+        for req in self:
+            paid_total = paid_map.get(req.id, 0.0)
+            req.paid_amount_total = paid_total
+            unpaid = (req.amount or 0.0) - paid_total
+            req.unpaid_amount = unpaid
+            rounding = req.currency_id.rounding if req.currency_id else 0.01
+            req.is_fully_paid = float_compare(unpaid, 0.0, precision_rounding=rounding) <= 0
+
+    def _check_can_done(self):
+        for rec in self:
+            if rec.state != "approved":
+                raise ValidationError(_("仅已批准的付款申请可以完成。"))
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            data = self.env["payment.ledger"].read_group(
+                [("payment_request_id", "=", rec.id)],
+                ["amount:sum"],
+                [],
+            )
+            paid_total = data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
+            unpaid = (rec.amount or 0.0) - paid_total
+            if float_compare(unpaid, 0.0, precision_rounding=rounding) == 1:
+                raise ValidationError(_("付款未结清，无法完成。"))
 
     @api.onchange("type", "project_id")
     def _onchange_type_set_contract_domain(self):
@@ -433,38 +490,11 @@ class PaymentRequest(models.Model):
         return result
 
     def action_done(self):
-        raise UserError("当前阶段不支持完成流程。")
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
+        self._check_can_done()
         for rec in self:
-            if not rec.settlement_id:
-                raise ValidationError(_("请先关联已批准的结算单，再完成付款申请。"))
-            rec._check_settlement_remaining_amount()
-            # 额度校验（再次防守）
-            rec._check_settlement_consistency()
-            rec._check_settlement_compliance_or_raise(strict=True)
-            # 幂等：同一付款申请只允许一条资金流水
-            ledger = self.env["sc.treasury.ledger"].sudo().search([("payment_request_id", "=", rec.id)], limit=1)
-            if ledger:
-                raise ValidationError(_("该付款申请已生成资金流水，不能重复入账。"))
             rec.write({"state": "done"})
-            self.env["sc.treasury.ledger"].sudo().with_context(allow_ledger_auto=True).create(
-                {
-                    "project_id": rec.project_id.id,
-                    "partner_id": rec.partner_id.id,
-                    "settlement_id": rec.settlement_id.id,
-                    "payment_request_id": rec.id,
-                    "direction": "out" if rec.type == "pay" else "in",
-                    "amount": rec.amount,
-                    "currency_id": rec.currency_id.id,
-                    "note": _("由付款申请 %s 自动生成") % rec.name,
-                }
-            )
-            # 更新结算单状态（可选：额度打完自动完成）
-            settle = rec.settlement_id.sudo()
-            settle._compute_paid_amount()
-            if settle.remaining_amount <= 0 and settle.state not in ("done", "cancel"):
-                settle.write({"state": "done"})
 
     def action_cancel(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
