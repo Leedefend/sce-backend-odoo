@@ -207,7 +207,8 @@ class PaymentRequest(models.Model):
             project_id = vals.get("project_id", rec.project_id.id)
             project = self.env["project.project"].browse(project_id) if project_id else rec.project_id
             amount = vals.get("amount", rec.amount)
-            if req_type == "pay":
+            state = vals.get("state", rec.state)
+            if req_type == "pay" and state in ("submit", "approve", "approved"):
                 self._check_project_funding_gate(project, amount, exclude_ids=rec.ids)
 
     @api.model_create_multi
@@ -217,12 +218,14 @@ class PaymentRequest(models.Model):
             if not vals.get("name") or vals.get("name") == "New":
                 vals["name"] = seq.next_by_code("payment.request") or _("Payment Request")
         records = super().create(vals_list)
-        records._enforce_funding_gate()
+        records.filtered(
+            lambda r: r.type == "pay" and r.state in ("submit", "approve", "approved")
+        )._enforce_funding_gate()
         return records
 
     def write(self, vals):
-        if vals.get("state") in ("approve", "approved", "done"):
-            raise UserError("当前阶段仅支持草稿提交，不支持审批或完成。")
+        if vals.get("state") == "done":
+            raise UserError("当前阶段不支持完成流程。")
         res = super().write(vals)
         if any(key in vals for key in ("state", "type", "project_id", "amount")):
             self._enforce_funding_gate(vals)
@@ -399,9 +402,9 @@ class PaymentRequest(models.Model):
         self.message_post(body=_("付款/收款申请已提交，进入审批流程。"))
 
     def action_approve(self):
-        raise UserError("当前阶段仅支持草稿提交，不支持审批流程。")
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有审批付款/收款申请的权限。"))
+        self._enforce_funding_gate({"state": "approve"})
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
         scope = {
@@ -414,13 +417,13 @@ class PaymentRequest(models.Model):
         self.write({"state": "approve"})
 
     def action_set_approved(self):
-        raise UserError("当前阶段仅支持草稿提交，不支持审批流程。")
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有批准付款/收款申请的权限。"))
+        self._enforce_funding_gate({"state": "approved"})
         self.write({"state": "approved"})
 
     def action_done(self):
-        raise UserError("当前阶段仅支持草稿提交，不支持完成流程。")
+        raise UserError("当前阶段不支持完成流程。")
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
         for rec in self:
@@ -468,6 +471,7 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
+            rec._enforce_funding_gate({"state": "approved"})
             rec.write(
                 {
                     "state": "approved",
