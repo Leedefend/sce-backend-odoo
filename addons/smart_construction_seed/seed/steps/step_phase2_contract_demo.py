@@ -12,14 +12,17 @@ def _find_demo_project(env):
 
 
 def _find_demo_partner(env):
-    try:
-        return env.ref("smart_construction_demo.sc_demo_partner_owner_001")
-    except ValueError:
-        Partner = env["res.partner"].sudo()
-        partner = Partner.search([("name", "=", "Demo-合同相对方")], limit=1)
-        if partner:
-            return partner
-        return Partner.create({"name": "Demo-合同相对方"})
+    partner = env.ref("smart_construction_seed.seed_partner_contract", raise_if_not_found=False)
+    if partner:
+        return partner
+    partner = env.ref("smart_construction_demo.sc_demo_partner_owner_001", raise_if_not_found=False)
+    if partner:
+        return partner
+    Partner = env["res.partner"].sudo()
+    existing = Partner.search([("name", "=", "Demo-合同相对方")], limit=1)
+    if existing:
+        return existing
+    return Partner.create({"name": "Demo-合同相对方"})
 
 
 def run(env):
@@ -29,6 +32,7 @@ def run(env):
         raise UserError("缺少 demo 项目，无法创建示例合同。")
 
     partner = _find_demo_partner(env)
+    tax = env.ref("smart_construction_seed.tax_sale_9", raise_if_not_found=False)
     subject = "Demo 合同-收入"
 
     existing = Contract.search(
@@ -44,6 +48,7 @@ def run(env):
             "type": "out",
             "project_id": project.id,
             "partner_id": partner.id,
+            "tax_id": tax.id if tax else False,
             "date_contract": "2025-02-01",
         }
     )
