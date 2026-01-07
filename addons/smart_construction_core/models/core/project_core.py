@@ -188,6 +188,13 @@ class ProjectProject(models.Model):
         tracking=True,
         readonly=True,
     )
+    code = fields.Char(
+        '项目编号',
+        related='project_code',
+        store=True,
+        readonly=True,
+        copy=False,
+    )
     project_type_id = fields.Many2one(
         'sc.dictionary', string='项目类型',
         domain=[('type', '=', 'project_type')]
@@ -214,6 +221,12 @@ class ProjectProject(models.Model):
     start_date = fields.Date('计划开工日期')
     end_date = fields.Date('计划竣工日期')
 
+    funding_enabled = fields.Boolean(
+        '资金承载开关',
+        default=False,
+        help='用于控制项目是否具备资金承载资格的最小语义。',
+    )
+
     lifecycle_state = fields.Selection(
         [
             ('draft', '立项'),
@@ -229,6 +242,10 @@ class ProjectProject(models.Model):
         tracking=True,
         help='驱动项目级联动控制：暂停/关闭禁止新增进度、成本等业务数据；结算中限制部分操作。'
     )
+
+    def is_funding_ready(self):
+        self.ensure_one()
+        return bool(self.funding_enabled and self.code)
     phase_key = fields.Selection(
         [
             ('initiation', '立项阶段'),
@@ -245,6 +262,16 @@ class ProjectProject(models.Model):
     responsibility_ids = fields.One2many(
         'project.responsibility', 'project_id',
         string='责任矩阵'
+    )
+    payment_request_ids = fields.One2many(
+        'payment.request',
+        'project_id',
+        string='付款申请',
+    )
+    funding_baseline_ids = fields.One2many(
+        'project.funding.baseline',
+        'project_id',
+        string='资金基准',
     )
 
     # ---------- 成本与进度总控 ----------
@@ -290,6 +317,18 @@ class ProjectProject(models.Model):
     pay_unpaid_total = fields.Monetary(
         '未付款金额', currency_field='company_currency_id',
         compute='_compute_pay_overview', store=True,
+    )
+    funding_cap_amount = fields.Monetary(
+        '资金上限', currency_field='company_currency_id',
+        compute='_compute_funding_cap_amount', store=False,
+    )
+    funding_reserved_amount = fields.Monetary(
+        '资金已占用', currency_field='company_currency_id',
+        compute='_compute_funding_remaining_amount', store=False,
+    )
+    funding_remaining_amount = fields.Monetary(
+        '资金可用余额', currency_field='company_currency_id',
+        compute='_compute_funding_remaining_amount', store=False,
     )
 
     plan_percent = fields.Float(
@@ -565,6 +604,50 @@ class ProjectProject(models.Model):
             project.pay_paid_total = paid_total
             project.pay_unpaid_total = (settlement_total or 0.0) - (paid_total or 0.0)
 
+    @api.depends('funding_baseline_ids.state', 'funding_baseline_ids.total_amount')
+    def _compute_funding_cap_amount(self):
+        amount_map = {}
+        if self.ids:
+            data = self.env['project.funding.baseline'].read_group(
+                [
+                    ('project_id', 'in', self.ids),
+                    ('state', '=', 'active'),
+                ],
+                ['total_amount:sum'],
+                ['project_id'],
+            )
+            for rec in data:
+                project_id = rec['project_id'][0]
+                amount_map[project_id] = rec.get('total_amount_sum', rec.get('total_amount', 0.0)) or 0.0
+        for project in self:
+            project.funding_cap_amount = amount_map.get(project.id, 0.0)
+
+    @api.depends(
+        'funding_baseline_ids.state',
+        'funding_baseline_ids.total_amount',
+        'payment_request_ids.state',
+        'payment_request_ids.amount',
+    )
+    def _compute_funding_remaining_amount(self):
+        reserved_map = {}
+        if self.ids:
+            data = self.env['payment.request'].read_group(
+                [
+                    ('project_id', 'in', self.ids),
+                    ('type', '=', 'pay'),
+                    ('state', 'in', ['submit', 'approve', 'approved']),
+                ],
+                ['amount:sum'],
+                ['project_id'],
+            )
+            for rec in data:
+                project_id = rec['project_id'][0]
+                reserved_map[project_id] = rec.get('amount_sum', rec.get('amount', 0.0)) or 0.0
+        for project in self:
+            reserved = reserved_map.get(project.id, 0.0)
+            cap = project.funding_cap_amount or 0.0
+            project.funding_reserved_amount = reserved
+            project.funding_remaining_amount = cap - reserved
     # ---------- 创建/初始化 ----------
     @api.model_create_multi
     def create(self, vals_list):

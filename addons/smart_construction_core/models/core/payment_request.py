@@ -145,6 +145,28 @@ class PaymentRequest(models.Model):
         default=fields.Date.context_today,
     )
     note = fields.Text(string="备注")
+    ledger_line_ids = fields.One2many(
+        "payment.ledger",
+        "payment_request_id",
+        string="付款记录",
+    )
+    paid_amount_total = fields.Monetary(
+        string="已付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_totals",
+        store=False,
+    )
+    unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_payment_totals",
+        store=False,
+    )
+    is_fully_paid = fields.Boolean(
+        string="已结清",
+        compute="_compute_payment_totals",
+        store=False,
+    )
 
     state = fields.Selection(
         [
@@ -152,6 +174,7 @@ class PaymentRequest(models.Model):
             ("submit", "提交"),
             ("approve", "审批中"),
             ("approved", "已批准"),
+            ("rejected", "已驳回"),
             ("done", "已完成"),
             ("cancel", "已取消"),
         ],
@@ -160,13 +183,76 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
 
+    def _get_active_funding_baseline(self, project):
+        baseline = self.env["project.funding.baseline"].search(
+            [
+                ("project_id", "=", project.id),
+                ("state", "=", "active"),
+            ],
+            limit=2,
+        )
+        if len(baseline) != 1:
+            raise UserError("项目必须且只能有一个生效中的资金基准。")
+        return baseline
+
+    def _get_reserved_amount(self, project, exclude_ids=None):
+        domain = [
+            ("project_id", "=", project.id),
+            ("type", "=", "pay"),
+            ("state", "in", ["submit", "approve", "approved"]),
+        ]
+        if exclude_ids:
+            domain.append(("id", "not in", exclude_ids))
+        data = self.read_group(domain, ["amount:sum"], [])
+        return data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
+
+    def _check_project_funding_gate(self, project, amount, exclude_ids=None):
+        if not project or not project.is_funding_ready():
+            raise UserError("项目未满足资金承载条件，不能提交付款申请。")
+        baseline = self._get_active_funding_baseline(project)
+        cap = baseline.total_amount or 0.0
+        if cap <= 0.0:
+            raise UserError("项目资金基准上限必须大于 0。")
+        if (amount or 0.0) <= 0.0:
+            raise UserError("申请金额必须大于 0。")
+        used = self._get_reserved_amount(project, exclude_ids=exclude_ids)
+        rounding = project.company_currency_id.rounding if project.company_currency_id else 0.01
+        if float_compare((used or 0.0) + (amount or 0.0), cap, precision_rounding=rounding) == 1:
+            raise UserError(
+                _("付款申请金额累计超出资金基准上限：\n- 已提交/审批金额：%(used)s\n- 本次申请：%(amount)s\n- 资金上限：%(cap)s")
+                % {"used": used, "amount": amount, "cap": cap}
+            )
+
+    def _enforce_funding_gate(self, vals=None):
+        vals = vals or {}
+        for rec in self:
+            req_type = vals.get("type", rec.type)
+            project_id = vals.get("project_id", rec.project_id.id)
+            project = self.env["project.project"].browse(project_id) if project_id else rec.project_id
+            amount = vals.get("amount", rec.amount)
+            state = vals.get("state", rec.state)
+            if req_type == "pay" and state in ("submit", "approve", "approved"):
+                self._check_project_funding_gate(project, amount, exclude_ids=rec.ids)
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
             if not vals.get("name") or vals.get("name") == "New":
                 vals["name"] = seq.next_by_code("payment.request") or _("Payment Request")
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records.filtered(
+            lambda r: r.type == "pay" and r.state in ("submit", "approve", "approved")
+        )._enforce_funding_gate()
+        return records
+
+    def write(self, vals):
+        if vals.get("state") == "done":
+            self._check_can_done()
+        res = super().write(vals)
+        if any(key in vals for key in ("state", "type", "project_id", "amount")):
+            self._enforce_funding_gate(vals)
+        return res
 
     @api.depends("settlement_id", "settlement_remaining_amount", "amount")
     def _compute_settlement_amount_insufficient(self):
@@ -194,6 +280,41 @@ class PaymentRequest(models.Model):
     def _compute_move_type(self):
         for rec in self:
             rec.move_type = rec.type
+
+    @api.depends("ledger_line_ids.amount", "ledger_line_ids.currency_id", "amount", "currency_id")
+    def _compute_payment_totals(self):
+        paid_map = {}
+        if self.ids:
+            data = self.env["payment.ledger"].read_group(
+                [("payment_request_id", "in", self.ids)],
+                ["amount:sum"],
+                ["payment_request_id"],
+            )
+            for rec in data:
+                req_id = rec["payment_request_id"][0]
+                paid_map[req_id] = rec.get("amount_sum", rec.get("amount", 0.0)) or 0.0
+        for req in self:
+            paid_total = paid_map.get(req.id, 0.0)
+            req.paid_amount_total = paid_total
+            unpaid = (req.amount or 0.0) - paid_total
+            req.unpaid_amount = unpaid
+            rounding = req.currency_id.rounding if req.currency_id else 0.01
+            req.is_fully_paid = float_compare(unpaid, 0.0, precision_rounding=rounding) <= 0
+
+    def _check_can_done(self):
+        for rec in self:
+            if rec.state != "approved":
+                raise ValidationError(_("仅已批准的付款申请可以完成。"))
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            data = self.env["payment.ledger"].read_group(
+                [("payment_request_id", "=", rec.id)],
+                ["amount:sum"],
+                [],
+            )
+            paid_total = data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
+            unpaid = (rec.amount or 0.0) - paid_total
+            if float_compare(unpaid, 0.0, precision_rounding=rounding) == 1:
+                raise ValidationError(_("付款未结清，无法完成。"))
 
     @api.onchange("type", "project_id")
     def _onchange_type_set_contract_domain(self):
@@ -311,6 +432,7 @@ class PaymentRequest(models.Model):
                 raise UserError("请先选择关联合同后再提交付款/收款申请。")
             if rec.contract_id.state == "cancel":
                 raise UserError("关联合同已取消，不能提交付款/收款申请。")
+        self._enforce_funding_gate({"state": "submit"})
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
         scope = {
@@ -338,8 +460,7 @@ class PaymentRequest(models.Model):
         self.message_post(body=_("付款/收款申请已提交，进入审批流程。"))
 
     def action_approve(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
-            raise ValidationError(_("你没有审批付款/收款申请的权限。"))
+        self._enforce_funding_gate({"state": "approve"})
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
         scope = {
@@ -349,45 +470,31 @@ class PaymentRequest(models.Model):
             "company_id": self[:1].company_id.id if self[:1].company_id else False,
         }
         self.env["sc.data.validator"].validate_or_raise(scope=scope)
-        self.write({"state": "approve"})
+        result = None
+        for rec in self:
+            if rec.state != "submit":
+                continue
+            rec.write({"state": "approve"})
+            action = rec.validate_tier()
+            if action:
+                result = action
+        return result
 
     def action_set_approved(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
-            raise ValidationError(_("你没有批准付款/收款申请的权限。"))
-        self.write({"state": "approved"})
+        self._enforce_funding_gate({"state": "approved"})
+        result = None
+        for rec in self:
+            action = rec.validate_tier()
+            if action:
+                result = action
+        return result
 
     def action_done(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
+        self._check_can_done()
         for rec in self:
-            if not rec.settlement_id:
-                raise ValidationError(_("请先关联已批准的结算单，再完成付款申请。"))
-            rec._check_settlement_remaining_amount()
-            # 额度校验（再次防守）
-            rec._check_settlement_consistency()
-            rec._check_settlement_compliance_or_raise(strict=True)
-            # 幂等：同一付款申请只允许一条资金流水
-            ledger = self.env["sc.treasury.ledger"].sudo().search([("payment_request_id", "=", rec.id)], limit=1)
-            if ledger:
-                raise ValidationError(_("该付款申请已生成资金流水，不能重复入账。"))
             rec.write({"state": "done"})
-            self.env["sc.treasury.ledger"].sudo().with_context(allow_ledger_auto=True).create(
-                {
-                    "project_id": rec.project_id.id,
-                    "partner_id": rec.partner_id.id,
-                    "settlement_id": rec.settlement_id.id,
-                    "payment_request_id": rec.id,
-                    "direction": "out" if rec.type == "pay" else "in",
-                    "amount": rec.amount,
-                    "currency_id": rec.currency_id.id,
-                    "note": _("由付款申请 %s 自动生成") % rec.name,
-                }
-            )
-            # 更新结算单状态（可选：额度打完自动完成）
-            settle = rec.settlement_id.sudo()
-            settle._compute_paid_amount()
-            if settle.remaining_amount <= 0 and settle.state not in ("done", "cancel"):
-                settle.write({"state": "done"})
 
     def action_cancel(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
@@ -404,6 +511,7 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
+            rec._enforce_funding_gate({"state": "approved"})
             rec.write(
                 {
                     "state": "approved",
@@ -417,7 +525,7 @@ class PaymentRequest(models.Model):
                 continue
             rec.write(
                 {
-                    "state": "draft",
+                    "state": "rejected",
                 }
             )
             rec.message_post(body=_("付款/收款申请审批驳回：%s") % (reason or _("未填写原因")))

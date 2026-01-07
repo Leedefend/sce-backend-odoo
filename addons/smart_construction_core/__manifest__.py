@@ -67,6 +67,7 @@
         'views/menu_finance_center.xml',
         'views/support/tier_review_views.xml',
         'views/core/project_extend_boq_views.xml',
+        'views/core/payment_ledger_views.xml',
         'views/core/payment_request_views.xml',
         'views/core/settlement_views.xml',
         'views/projection/treasury_ledger_views.xml',

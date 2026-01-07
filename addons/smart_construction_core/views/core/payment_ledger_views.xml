@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="action_payment_ledger" model="ir.actions.act_window">
+            <field name="name">付款记录</field>
+            <field name="res_model">payment.ledger</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="view_payment_ledger_tree" model="ir.ui.view">
+            <field name="name">payment.ledger.tree</field>
+            <field name="model">payment.ledger</field>
+            <field name="arch" type="xml">
+                <tree string="付款记录">
+                    <field name="payment_request_id"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <field name="paid_at"/>
+                    <field name="ref"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_payment_ledger_form" model="ir.ui.view">
+            <field name="name">payment.ledger.form</field>
+            <field name="model">payment.ledger</field>
+            <field name="arch" type="xml">
+                <form string="付款记录">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="payment_request_id"/>
+                                <field name="project_id" readonly="1"/>
+                                <field name="partner_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="amount"/>
+                                <field name="currency_id" readonly="1"/>
+                                <field name="paid_at"/>
+                                <field name="ref"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <menuitem id="menu_payment_ledger"
+                  name="付款记录"
+                  parent="smart_construction_core.menu_sc_finance_center"
+                  action="action_payment_ledger"
+                  sequence="35"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>
