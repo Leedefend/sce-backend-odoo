@@ -152,6 +152,7 @@ class PaymentRequest(models.Model):
             ("submit", "提交"),
             ("approve", "审批中"),
             ("approved", "已批准"),
+            ("rejected", "已驳回"),
             ("done", "已完成"),
             ("cancel", "已取消"),
         ],
@@ -485,7 +486,7 @@ class PaymentRequest(models.Model):
                 continue
             rec.write(
                 {
-                    "state": "draft",
+                    "state": "rejected",
                 }
             )
             rec.message_post(body=_("付款/收款申请审批驳回：%s") % (reason or _("未填写原因")))
