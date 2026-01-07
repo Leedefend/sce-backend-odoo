@@ -7,7 +7,11 @@
     "license": "LGPL-3",
     "author": "SCE",
     "depends": ["smart_construction_bootstrap", "account", "smart_construction_core"],
-    "data": [],
+    "data": [
+        "data/sc_seed_dictionary_contract.xml",
+        "data/sc_seed_partner.xml",
+        "data/sc_seed_tax.xml",
+    ],
     "post_init_hook": "post_init_hook",
     "installable": True,
     "application": False,
