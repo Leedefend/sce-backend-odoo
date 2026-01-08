@@ -90,6 +90,10 @@
                 </div>
             </xpath>
 
+            <xpath expr="//sheet/div[@name='button_box']" position="after">
+                <div class="sc_insight_mount" data-model="project.project" data-scene="project.entry"/>
+            </xpath>
+
             <!-- 概览/施工/协作页插入到原生 notebook 开头 -->
             <xpath expr="//sheet/notebook/page[1]" position="before">
                 <div class="o_sc_project_overview row" style="margin: 8px 0 12px 0;">
