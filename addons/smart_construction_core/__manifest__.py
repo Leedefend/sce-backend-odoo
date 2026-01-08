@@ -83,6 +83,8 @@
             'smart_construction_core/static/src/js/project_quota_center.js',
             'smart_construction_core/static/src/xml/project_quota_center.xml',
             'smart_construction_core/static/src/scss/project_quota_center.scss',
+            'smart_construction_core/static/src/js/insight_banner.js',
+            'smart_construction_core/static/src/scss/insight_banner.scss',
         ],
     },
     'pre_init_hook': 'pre_init_hook',
