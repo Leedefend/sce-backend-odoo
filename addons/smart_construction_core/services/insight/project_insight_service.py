@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from odoo.exceptions import AccessError
+
 from .dto import BusinessInsight, InsightSummary
 
 
@@ -50,11 +52,11 @@ class ProjectInsightService:
         stage = self._get_stage(project)
 
         missing = []
-        if not getattr(project, "partner_id", False):
+        if not self._safe_getattr(project, "partner_id"):
             missing.append("客户")
 
         # Odoo project.project default manager field: user_id
-        manager = getattr(project, "user_id", False) or getattr(project, "project_manager_id", False)
+        manager = self._safe_getattr(project, "user_id") or self._safe_getattr(project, "project_manager_id")
         if not manager:
             missing.append("项目经理")
 
@@ -105,13 +107,19 @@ class ProjectInsightService:
     # -----------------------------
     def _get_stage(self, project) -> str:
         # Prefer explicit stage name if present
-        stage_id = getattr(project, "stage_id", False)
+        stage_id = self._safe_getattr(project, "stage_id")
         if stage_id:
             return stage_id.display_name or stage_id.name
 
         # fallback to state if any
-        state = getattr(project, "state", False)
+        state = self._safe_getattr(project, "state")
         if state:
             return str(state)
 
         return "unknown"
+
+    def _safe_getattr(self, record, name):
+        try:
+            return getattr(record, name)
+        except (AccessError, AttributeError):
+            return False
