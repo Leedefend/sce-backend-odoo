@@ -66,6 +66,8 @@ Quantity semantics (P0-03):
 Derived import status (computed on project):
 - empty: no BOQ lines
 - imported: line_count > 0
+Project fields:
+- boq_line_count: total BOQ lines
 
 Transitions:
 - empty -> imported (import/seed)
@@ -75,6 +77,8 @@ Transitions:
 Freeze principle (for P0-03+ guards):
 - re-import is allowed
 - after settlement/payment key nodes, BOQ edits are guarded or versioned
+  - settlement: project.settlement in confirmed/done
+  - payment: payment.request in approve/approved/done
 
 ## Settlement Order (sc.settlement.order.state)
 
