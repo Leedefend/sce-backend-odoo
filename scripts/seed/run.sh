@@ -10,9 +10,20 @@ source "$ROOT_DIR/scripts/common/env.sh"
 source "$ROOT_DIR/scripts/common/compose.sh"
 
 : "${DB_NAME:?DB_NAME is required}"
-: "${STEPS:?STEPS is required. e.g. STEPS=project_owner_demo_pm}"
+
+PROFILE="${PROFILE:-}"
+STEPS="${STEPS:-}"
+
+if [[ -z "$PROFILE" && -z "$STEPS" ]]; then
+  echo "ERROR: STEPS or PROFILE is required. e.g. STEPS=project_owner_demo_pm or PROFILE=demo_full" >&2
+  exit 2
+fi
 
 ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux}"
+
+if [[ -n "$PROFILE" ]]; then
+  STEPS="profile:${PROFILE}"
+fi
 
 printf '[seed.run] db=%s steps=%s\n' "$DB_NAME" "$STEPS"
 

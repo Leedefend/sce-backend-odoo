@@ -173,7 +173,7 @@ help:
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
 	@echo "  make policy.apply.business_full DB=<name> | smoke.business_full DB=<name>"
 	@echo "  make policy.apply.role_matrix DB=<name> | smoke.role_matrix DB=<name>"
-	@echo "  make demo.list | demo.load SCENARIO=... [STEP=...] | demo.load.all | demo.verify"
+	@echo "  make demo.list | demo.load SCENARIO=... [STEP=...] | demo.load.all | demo.load.full | demo.verify"
 	@echo "  make test | test.safe"
 	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
 	@echo "  make ci.clean | ci.ps | ci.logs"
@@ -273,7 +273,7 @@ smoke.business_full: check-compose-project
 smoke.role_matrix: check-compose-project
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/audit/smoke_role_matrix.sh
 
-.PHONY: demo.verify demo.load demo.list demo.load.all demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions
 demo.verify: check-compose-project
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
@@ -285,6 +285,9 @@ demo.list: check-compose-project
 
 demo.load.all: check-compose-project
 	@$(RUN_ENV) bash scripts/demo/load_all.sh
+
+demo.load.full: check-compose-project
+	@$(RUN_ENV) bash scripts/demo/load_full.sh
 
 demo.install: check-compose-project
 	@echo "[demo.install] db=$(DB_NAME)"
