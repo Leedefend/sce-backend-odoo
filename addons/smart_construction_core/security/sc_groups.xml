@@ -68,29 +68,5 @@
             <field name="implied_ids" eval="[]"/>
         </record>
 
-        <!-- =======================================================
-             业务全能力测试角色：Business Full
-             - 仅业务能力，不含系统管理权限
-           ======================================================= -->
-        <record id="group_sc_business_full" model="res.groups">
-            <field name="name">Business Full</field>
-            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
-            <field name="comment">
-                业务全能力测试用户（非系统管理员）
-            </field>
-            <field name="implied_ids" eval="[(6, 0, [
-                ref('smart_construction_core.group_sc_cap_project_manager'),
-                ref('smart_construction_core.group_sc_cap_contract_manager'),
-                ref('smart_construction_core.group_sc_cap_cost_manager'),
-                ref('smart_construction_core.group_sc_cap_material_manager'),
-                ref('smart_construction_core.group_sc_cap_purchase_manager'),
-                ref('smart_construction_core.group_sc_cap_finance_manager'),
-                ref('smart_construction_core.group_sc_cap_settlement_manager'),
-                ref('smart_construction_core.group_sc_cap_data_read'),
-                ref('smart_construction_core.group_sc_cap_config_admin'),
-                ref('smart_construction_core.group_sc_cap_contact_manager')
-            ])]"/>
-        </record>
-
     </data>
 </odoo>
