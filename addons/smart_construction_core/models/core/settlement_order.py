@@ -283,7 +283,27 @@ class ScSettlementOrder(models.Model):
         self.write({"state": "done"})
 
     def action_cancel(self):
+        self._check_payments_before_cancel()
         self.write({"state": "cancel"})
+
+    def _check_payments_before_cancel(self):
+        Payment = self.env["payment.request"]
+        for rec in self:
+            count = Payment.search_count(
+                [
+                    ("settlement_id", "=", rec.id),
+                    ("state", "in", ["approve", "approved", "done"]),
+                ]
+            )
+            if count:
+                raise UserError(
+                    _("结算单已关联 %s 条付款申请（审批中/已批准/已完成），禁止作废。") % count
+                )
+
+    def write(self, vals):
+        if vals.get("state") == "cancel":
+            self._check_payments_before_cancel()
+        return super().write(vals)
 
     # ------------------------------------------------------------------
     # 合同联动：选合同后自动带出项目/公司/币种/往来单位/结算类型
