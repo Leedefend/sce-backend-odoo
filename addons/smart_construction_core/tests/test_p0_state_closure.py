@@ -115,16 +115,8 @@ class TestP0StateClosure(TransactionCase):
                 "state": "draft",
             }
         )
-        finance_group = self.env.ref("smart_construction_core.group_sc_cap_finance_user")
-        fin_user = self.env["res.users"].with_context(no_reset_password=True).create({
-            "name": "P0 Finance",
-            "login": "p0_fin",
-            "company_id": self.company.id,
-            "company_ids": [(6, 0, [self.company.id])],
-            "groups_id": [(6, 0, [finance_group.id])],
-            "email": "p0_fin@test.com",
-        })
-        pr.with_user(fin_user).action_submit()
+        # Avoid validator dependencies (e.g., PO link) and simulate pending payment.
+        pr.sudo().write({"state": "submit"})
         with self.assertRaises(UserError):
             project.action_set_lifecycle_state("warranty")
 
