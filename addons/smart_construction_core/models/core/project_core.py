@@ -179,15 +179,18 @@ class ProjectProject(models.Model):
 
     # ---------- 默认阶段 ----------
     def _stage_has_default_column(self):
-        self.env.cr.execute(
-            """
-            SELECT 1
-            FROM information_schema.columns
-            WHERE table_name = 'project_project_stage'
-              AND column_name = 'is_default'
-            """
-        )
-        return bool(self.env.cr.fetchone())
+        try:
+            self.env.cr.execute(
+                """
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'project_project_stage'
+                  AND column_name = 'is_default'
+                """
+            )
+            return bool(self.env.cr.fetchone())
+        except Exception:
+            return False
 
     def _default_stage_id(self):
         if not self._stage_has_default_column():
