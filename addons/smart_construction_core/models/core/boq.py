@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
 
-from ..support import state_machine as sm
+from ..support.state_machine import ScStateMachine
 
 
 class ProjectBoqLine(models.Model):
@@ -205,7 +205,7 @@ class ProjectBoqLine(models.Model):
     code_item = fields.Char("清单项目码", compute="_compute_code_segments", store=True, index=True)
 
     source_type = fields.Selection(
-        sm.BOQ_SOURCE_TYPES,
+        ScStateMachine.BOQ_SOURCE_TYPES,
         string="清单来源",
         default="contract",
         index=True,
