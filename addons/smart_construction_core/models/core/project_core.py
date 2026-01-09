@@ -402,10 +402,10 @@ class ProjectProject(models.Model):
         compute='_compute_boq_stats', store=True
     )
     boq_line_count = fields.Integer(
-        '清单行数', compute='_compute_boq_status'
+        '清单行数', compute='_compute_boq_status', store=True, compute_sudo=True
     )
     boq_imported = fields.Boolean(
-        '清单已导入', compute='_compute_boq_status'
+        '清单已导入', compute='_compute_boq_status', store=True, compute_sudo=True
     )
     boq_status = fields.Selection(
         [
@@ -415,13 +415,14 @@ class ProjectProject(models.Model):
         string="清单状态",
         compute="_compute_boq_status",
         store=True,
+        compute_sudo=True,
     )
     boq_version_latest = fields.Char(
-        '清单版本(最近)', compute='_compute_boq_status'
+        '清单版本(最近)', compute='_compute_boq_status', store=True, compute_sudo=True
     )
     boq_amount_leaf_total = fields.Monetary(
         '清单合价(叶子)', currency_field='company_currency_id',
-        compute='_compute_boq_status'
+        compute='_compute_boq_status', store=True, compute_sudo=True
     )
 
     # ---------- 成本控制衍生指标 ----------
