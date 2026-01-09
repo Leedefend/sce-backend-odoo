@@ -57,33 +57,39 @@ def exec_kw(uid, pwd, model, method, args, kwargs=None):
 def step(msg):
     print("==", msg)
 
-step("read role: search_read project")
-uid = login(READ_USER, READ_PWD)
-if not uid:
+step("env check")
+jsonrpc("common", "version", [])
+uid_read = login(READ_USER, READ_PWD)
+uid_user = login(USER_USER, USER_PWD)
+uid_manager = login(MANAGER_USER, MANAGER_PWD)
+admin_uid = login(ADMIN_USER, ADMIN_PWD)
+if not uid_read:
     raise RuntimeError("login failed for %s" % READ_USER)
-exec_kw(uid, READ_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
+if not uid_user:
+    raise RuntimeError("login failed for %s" % USER_USER)
+if not uid_manager:
+    raise RuntimeError("login failed for %s" % MANAGER_USER)
+if not admin_uid:
+    raise RuntimeError("login failed for %s" % ADMIN_USER)
+
+step("read role: search_read project")
+exec_kw(uid_read, READ_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
 
 step("read role: create project should fail")
 failed = False
 try:
-    exec_kw(uid, READ_PWD, "project.project", "create", [{"name": "Role Smoke Read"}])
+    exec_kw(uid_read, READ_PWD, "project.project", "create", [{"name": "Role Smoke Read"}])
 except Exception:
     failed = True
 if not failed:
     raise RuntimeError("read role can create project unexpectedly")
 
 step("user role: create project")
-uid = login(USER_USER, USER_PWD)
-if not uid:
-    raise RuntimeError("login failed for %s" % USER_USER)
-project_user_id = exec_kw(uid, USER_PWD, "project.project", "create", [{"name": "Role Smoke User"}])
+project_user_id = exec_kw(uid_user, USER_PWD, "project.project", "create", [{"name": "Role Smoke User"}])
 if not project_user_id:
     raise RuntimeError("user role failed to create project")
 
 step("ensure partner for contract")
-admin_uid = login(ADMIN_USER, ADMIN_PWD)
-if not admin_uid:
-    raise RuntimeError("login failed for admin user")
 partner_ids = exec_kw(admin_uid, ADMIN_PWD, "res.partner", "search", [[("active", "=", True)]], {"limit": 1})
 if partner_ids:
     partner_id = partner_ids[0]
@@ -91,7 +97,6 @@ else:
     partner_id = exec_kw(admin_uid, ADMIN_PWD, "res.partner", "create", [{"name": "Role Smoke Partner"}])
 
 step("read role: contract create should fail")
-uid_read = login(READ_USER, READ_PWD)
 failed = False
 try:
     exec_kw(
@@ -112,7 +117,6 @@ if not failed:
     raise RuntimeError("read role can create contract unexpectedly")
 
 step("user role: create contract + line")
-uid_user = login(USER_USER, USER_PWD)
 contract_id = exec_kw(
     uid_user,
     USER_PWD,
@@ -138,18 +142,14 @@ exec_kw(
 )
 
 step("manager role: confirm contract")
-uid_mgr = login(MANAGER_USER, MANAGER_PWD)
-exec_kw(uid_mgr, MANAGER_PWD, "construction.contract", "action_confirm", [[contract_id]])
-state = exec_kw(uid_mgr, MANAGER_PWD, "construction.contract", "read", [[contract_id]], {"fields": ["state"]})[0]["state"]
+exec_kw(uid_manager, MANAGER_PWD, "construction.contract", "action_confirm", [[contract_id]])
+state = exec_kw(uid_manager, MANAGER_PWD, "construction.contract", "read", [[contract_id]], {"fields": ["state"]})[0]["state"]
 if state != "confirmed":
     raise RuntimeError("manager role failed to confirm contract")
 
 step("manager role: create + unlink project")
-uid = login(MANAGER_USER, MANAGER_PWD)
-if not uid:
-    raise RuntimeError("login failed for %s" % MANAGER_USER)
-project_mgr_id = exec_kw(uid, MANAGER_PWD, "project.project", "create", [{"name": "Role Smoke Manager"}])
-exec_kw(uid, MANAGER_PWD, "project.project", "unlink", [[project_mgr_id]])
+project_mgr_id = exec_kw(uid_manager, MANAGER_PWD, "project.project", "create", [{"name": "Role Smoke Manager"}])
+exec_kw(uid_manager, MANAGER_PWD, "project.project", "unlink", [[project_mgr_id]])
 
 print("OK: role matrix smoke passed")
 PY
