@@ -12,6 +12,7 @@
     ],
     "data": [
         "security/ir.model.access.csv",
+        "security/role_matrix_groups.xml",
         "data/security_policy_actions.xml",
     ],
     "post_init_hook": "post_init_hook",
