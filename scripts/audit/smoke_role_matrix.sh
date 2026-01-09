@@ -39,7 +39,9 @@ if not fallback and base_defaulted:
 def ok(url):
     try:
         with urllib.request.urlopen(url, timeout=2) as resp:
-            return resp.status == 200
+            return resp.status < 500
+    except urllib.error.HTTPError as exc:
+        return exc.code < 500
     except Exception:
         return False
 
@@ -55,9 +57,9 @@ PY
     return
   fi
 
-  until curl -fsS "${base}/web/webclient/version_info" >/dev/null 2>&1; do
+  until [ "$(curl -s -o /dev/null -w '%{http_code}' "${base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null; do
     n=$((n+1))
-    if [ -n "${fallback_base}" ] && curl -fsS "${fallback_base}/web/webclient/version_info" >/dev/null 2>&1; then
+    if [ -n "${fallback_base}" ] && [ "$(curl -s -o /dev/null -w '%{http_code}' "${fallback_base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null; then
       export BASE_URL="${fallback_base}"
       return
     fi
