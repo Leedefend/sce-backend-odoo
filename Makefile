@@ -171,6 +171,7 @@ help:
 	@echo "  make up/down/restart/logs/ps/odoo-shell"
 	@echo "  make db.reset DB=<name> | demo.reset DB=<name> | gate.demo"
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
+	@echo "  make policy.apply.business_full DB=<name> | smoke.business_full DB=<name>"
 	@echo "  make demo.list | demo.load SCENARIO=... [STEP=...] | demo.load.all | demo.verify"
 	@echo "  make test | test.safe"
 	@echo "  make ci.gate | ci.smoke | ci.full | ci.repro"
@@ -255,6 +256,15 @@ mod.install: check-compose-project
 	@$(RUN_ENV) bash scripts/mod/install.sh
 mod.upgrade: check-compose-project
 	@$(RUN_ENV) bash scripts/mod/upgrade.sh
+
+# ======================================================
+# ==================== Policy Ops ======================
+# ======================================================
+.PHONY: policy.apply.business_full smoke.business_full
+policy.apply.business_full: check-compose-project
+	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
+smoke.business_full: check-compose-project
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/audit/smoke_business_full.sh
 
 .PHONY: demo.verify demo.load demo.list demo.load.all demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions
 demo.verify: check-compose-project
