@@ -227,6 +227,13 @@ class PaymentRequest(models.Model):
             if req_type == "pay" and state in ("submit", "approve", "approved"):
                 self._check_project_funding_gate(project, amount, exclude_ids=rec.ids)
 
+    def _check_project_lifecycle(self, project, target_state):
+        if not project:
+            return
+        if target_state in ("submit", "approve", "approved", "done"):
+            if project.lifecycle_state in ("warranty", "closed"):
+                raise UserError("项目已进入保修/关闭状态，禁止提交或审批付款申请。")
+
     def _check_settlement_state(self, settlement):
         if not settlement:
             return
@@ -435,6 +442,7 @@ class PaymentRequest(models.Model):
                 raise UserError("请先选择关联合同后再提交付款/收款申请。")
             if rec.contract_id.state == "cancel":
                 raise UserError("关联合同已取消，不能提交付款/收款申请。")
+            rec._check_project_lifecycle(rec.project_id, "submit")
             rec._check_settlement_state(rec.settlement_id)
         self._enforce_funding_gate({"state": "submit"})
         self._check_settlement_remaining_amount()
@@ -465,6 +473,7 @@ class PaymentRequest(models.Model):
 
     def action_approve(self):
         for rec in self:
+            rec._check_project_lifecycle(rec.project_id, "approve")
             rec._check_settlement_state(rec.settlement_id)
         self._enforce_funding_gate({"state": "approve"})
         self._check_settlement_remaining_amount()
@@ -517,6 +526,7 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
+            rec._check_project_lifecycle(rec.project_id, "approved")
             rec._check_settlement_state(rec.settlement_id)
             rec._enforce_funding_gate({"state": "approved"})
             rec.write(
