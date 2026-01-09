@@ -262,7 +262,7 @@ mod.upgrade: check-compose-project
 # ======================================================
 .PHONY: policy.apply.business_full smoke.business_full
 policy.apply.business_full: check-compose-project
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
+	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
 smoke.business_full: check-compose-project
 	@echo "[smoke.business_full] not implemented yet"
 
