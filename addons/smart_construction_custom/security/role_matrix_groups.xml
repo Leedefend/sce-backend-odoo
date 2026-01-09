@@ -36,5 +36,23 @@
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
         </record>
+
+        <record id="group_sc_role_settlement_read" model="res.groups">
+            <field name="name">结算中心-只读</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
+        </record>
+
+        <record id="group_sc_role_settlement_user" model="res.groups">
+            <field name="name">结算中心-经办</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_user'))]"/>
+        </record>
+
+        <record id="group_sc_role_settlement_manager" model="res.groups">
+            <field name="name">结算中心-审批</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+        </record>
     </data>
 </odoo>
