@@ -44,6 +44,9 @@ class ScSecurityPolicy(models.TransientModel):
             ("smart_construction_custom.group_sc_role_contract_read", "smart_construction_core.group_sc_cap_contract_read"),
             ("smart_construction_custom.group_sc_role_contract_user", "smart_construction_core.group_sc_cap_contract_user"),
             ("smart_construction_custom.group_sc_role_contract_manager", "smart_construction_core.group_sc_cap_contract_manager"),
+            ("smart_construction_custom.group_sc_role_settlement_read", "smart_construction_core.group_sc_cap_settlement_read"),
+            ("smart_construction_custom.group_sc_role_settlement_user", "smart_construction_core.group_sc_cap_settlement_user"),
+            ("smart_construction_custom.group_sc_role_settlement_manager", "smart_construction_core.group_sc_cap_settlement_manager"),
         ]
         updated = False
         for role_xmlid, cap_xmlid in role_specs:
@@ -60,16 +63,22 @@ class ScSecurityPolicy(models.TransientModel):
                 "smart_construction_custom.group_sc_role_project_read",
                 "smart_construction_custom.group_sc_role_contract_read",
                 "smart_construction_core.group_sc_cap_contract_read",
+                "smart_construction_custom.group_sc_role_settlement_read",
+                "smart_construction_core.group_sc_cap_settlement_read",
             ],
             "demo_role_project_user": [
                 "smart_construction_custom.group_sc_role_project_user",
                 "smart_construction_custom.group_sc_role_contract_user",
                 "smart_construction_core.group_sc_cap_contract_user",
+                "smart_construction_custom.group_sc_role_settlement_user",
+                "smart_construction_core.group_sc_cap_settlement_user",
             ],
             "demo_role_project_manager": [
                 "smart_construction_custom.group_sc_role_project_manager",
                 "smart_construction_custom.group_sc_role_contract_manager",
                 "smart_construction_core.group_sc_cap_contract_manager",
+                "smart_construction_custom.group_sc_role_settlement_manager",
+                "smart_construction_core.group_sc_cap_settlement_manager",
             ],
         }
         Users = self.env["res.users"].sudo()
