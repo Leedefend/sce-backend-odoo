@@ -65,17 +65,6 @@
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
         </record>
 
-        <record id="rule_sc_business_full_project_project" model="ir.rule">
-            <field name="name">SC Business Full - project.project ALL</field>
-            <field name="model_id" ref="project.model_project_project"/>
-            <field name="domain_force">[(1,'=',1)]</field>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_unlink" eval="False"/>
-            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_business_full'))]"/>
-        </record>
-
         <!-- =========================================================
              项目中心：任务 record rules
              - read/user: 仅限负责或关注的任务

@@ -5,12 +5,12 @@
               parent="smart_construction_core.menu_sc_root"
               action="smart_construction_core.action_sc_finance_dashboard"
               sequence="40"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_business_full"/>
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     <menuitem id="menu_sc_tier_review_my_payment_request"
               name="待我审批（付款申请）"
               parent="menu_sc_finance_center"
               action="smart_construction_core.action_sc_tier_review_my_payment_request"
               sequence="45"
-              groups="smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_business_full"/>
+              groups="smart_construction_core.group_sc_cap_finance_manager"/>
 </odoo>

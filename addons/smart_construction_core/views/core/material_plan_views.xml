@@ -25,7 +25,7 @@
                             type="object"
                             string="提交"
                             class="oe_highlight"
-                            groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_business_full"
+                            groups="smart_construction_core.group_sc_cap_material_user"
                             invisible="state != 'draft'"/>
                     <button name="%(action_material_plan_to_rfq_wizard)d"
                             type="action"
@@ -36,13 +36,13 @@
                             type="object"
                             string="完成"
                             class="btn-secondary"
-                            groups="smart_construction_core.group_sc_cap_material_manager,smart_construction_core.group_sc_business_full"
+                            groups="smart_construction_core.group_sc_cap_material_manager"
                             invisible="state != 'approved'"/>
                     <button name="action_cancel"
                             type="object"
                             string="取消"
                             class="btn-secondary"
-                            groups="smart_construction_core.group_sc_cap_material_manager,smart_construction_core.group_sc_business_full"
+                            groups="smart_construction_core.group_sc_cap_material_manager"
                             invisible="state in ['done','cancel']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submit,approved,done,cancel"/>
                 </header>

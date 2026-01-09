@@ -4,7 +4,7 @@
               name="项目中心"
               parent="menu_sc_root"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_business_full"/>
+              groups="smart_construction_core.group_sc_cap_project_read"/>
     <record id="action_project_initiation" model="ir.actions.act_window">
         <field name="name">项目立项</field>
         <field name="res_model">project.project</field>
@@ -79,7 +79,7 @@
               name="合同中心"
               parent="menu_sc_root"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager,smart_construction_core.group_sc_business_full"/>
+              groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <menuitem id="menu_sc_contract_income"
               name="收入合同"
               parent="menu_sc_contract_center"
@@ -110,7 +110,7 @@
               parent="menu_sc_root"
               action="smart_construction_core.action_project_cost_compare"
               sequence="25"
-              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_business_full"/>
+              groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <menuitem id="menu_sc_project_budget"
               name="项目预算"
               parent="menu_sc_cost_center"
@@ -172,7 +172,7 @@
               name="物资中心"
               parent="menu_sc_root"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager,smart_construction_core.group_sc_business_full"/>
+              groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_project_material_plan"
               name="物资计划"
               parent="menu_sc_material_center"
@@ -191,7 +191,7 @@
               name="数据中心"
               parent="menu_sc_root"
               sequence="80"
-              groups="smart_construction_core.group_sc_cap_data_read,smart_construction_core.group_sc_business_full"/>
+              groups="smart_construction_core.group_sc_cap_data_read"/>
 
     <!-- 配置中心 -->
     <menuitem id="menu_sc_config_center"
