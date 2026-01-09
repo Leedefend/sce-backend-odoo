@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError, UserError
 from odoo.tools.float_utils import float_compare
 
 from ..support import operating_metrics as opm
+from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
 
 
@@ -232,13 +233,25 @@ class PaymentRequest(models.Model):
             return
         if target_state in ("submit", "approve", "approved", "done"):
             if project.lifecycle_state in ("warranty", "closed"):
-                raise UserError("项目已进入保修/关闭状态，禁止提交或审批付款申请。")
+                raise_guard(
+                    "P0_PROJECT_TERMINAL_BLOCKED",
+                    f"项目[{project.display_name}]",
+                    "提交/审批付款申请",
+                    reasons=[f"当前项目状态为 {project.lifecycle_state}"],
+                    hints=["请先调整项目状态或完成保修/关闭流程"],
+                )
 
     def _check_settlement_state(self, settlement):
         if not settlement:
             return
         if settlement.state not in ("approve", "done"):
-            raise UserError("结算单未完成批准，禁止提交/审批付款申请。")
+            raise_guard(
+                "P0_PAYMENT_SETTLEMENT_NOT_READY",
+                f"结算单[{settlement.display_name}]",
+                "提交/审批付款申请",
+                reasons=[f"结算单状态为 {settlement.state}"],
+                hints=["请先完成结算单审批后再提交付款申请"],
+            )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -258,7 +271,13 @@ class PaymentRequest(models.Model):
         if vals.get("state") in ("approved", "done"):
             for rec in self:
                 if rec.validation_status != "validated":
-                    raise ValidationError(_("未完成审批流程，禁止进入已批准/已完成状态。"))
+                    raise_guard(
+                        "P0_PAYMENT_STATE_BYPASS_BLOCKED",
+                        f"付款申请[{rec.display_name}]",
+                        "状态变更",
+                        reasons=["未完成审批流程"],
+                        hints=["请先完成审批后再进入已批准/已完成状态"],
+                    )
         res = super().write(vals)
         if any(key in vals for key in ("state", "type", "project_id", "amount")):
             self._enforce_funding_gate(vals)
@@ -391,10 +410,20 @@ class PaymentRequest(models.Model):
             precision = metrics["precision"]
             amount = rec.amount or 0.0
             if float_compare(payable, 0.0, precision_rounding=precision) <= 0:
-                raise ValidationError(_("结算单剩余额度不足，无法继续（剩余额度：%s）。") % payable)
+                raise_guard(
+                    "P0_PAYMENT_OVER_BALANCE",
+                    f"付款申请[{rec.display_name}]",
+                    "提交/审批付款申请",
+                    reasons=[f"结算单剩余额度不足（剩余额度：{payable}）"],
+                    hints=["请先调整结算金额或降低付款金额"],
+                )
             if float_compare(amount, payable, precision_rounding=precision) == 1:
-                raise ValidationError(
-                    _("申请金额超过结算单剩余额度，无法继续。（申请金额：%s，剩余额度：%s）") % (amount, payable)
+                raise_guard(
+                    "P0_PAYMENT_OVER_BALANCE",
+                    f"付款申请[{rec.display_name}]",
+                    "提交/审批付款申请",
+                    reasons=[f"申请金额 {amount} 超过结算单剩余额度 {payable}"],
+                    hints=["请降低付款金额或拆分付款申请"],
                 )
 
     def _check_not_overpay_settlement(self):
@@ -409,18 +438,12 @@ class PaymentRequest(models.Model):
             precision = metrics["precision"]
             amount = rec.amount or 0.0
             if float_compare(amount, payable, precision_rounding=precision) == 1:
-                raise UserError(
-                    _(
-                        "付款金额超出结算单可付余额：\n"
-                        "- 付款金额：%(amount)s\n"
-                        "- 可付余额：%(payable)s\n"
-                        "- 结算单：%(settle)s"
-                    )
-                    % {
-                        "amount": amount,
-                        "payable": payable,
-                        "settle": rec.settlement_id.display_name,
-                    }
+                raise_guard(
+                    "P0_PAYMENT_OVER_BALANCE",
+                    f"付款申请[{rec.display_name}]",
+                    "提交/审批付款申请",
+                    reasons=[f"付款金额 {amount} 超出结算单可付余额 {payable}"],
+                    hints=["请降低付款金额或先调整结算单余额"],
                 )
 
     def _compute_is_overpay_risk(self):
