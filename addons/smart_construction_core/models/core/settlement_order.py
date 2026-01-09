@@ -3,6 +3,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 from ..support import operating_metrics as opm
+from ..support import state_machine as sm
 
 
 class ScSettlementOrder(models.Model):
@@ -130,13 +131,7 @@ class ScSettlementOrder(models.Model):
             order.amount_payable = remaining
 
     state = fields.Selection(
-        [
-            ("draft", "草稿"),
-            ("submit", "提交"),
-            ("approve", "批准"),
-            ("done", "完成"),
-            ("cancel", "取消"),
-        ],
+        sm.SETTLEMENT_ORDER_STATES,
         string="状态",
         default="draft",
     )

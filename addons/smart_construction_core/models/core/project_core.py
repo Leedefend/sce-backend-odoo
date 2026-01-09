@@ -4,6 +4,8 @@ from collections import defaultdict
 import uuid
 
 from odoo import models, fields, api
+
+from ..support import state_machine as sm
 from odoo.exceptions import UserError
 
 
@@ -228,15 +230,7 @@ class ProjectProject(models.Model):
     )
 
     lifecycle_state = fields.Selection(
-        [
-            ('draft', '立项'),
-            ('in_progress', '在建'),
-            ('paused', '停工'),
-            ('done', '竣工'),
-            ('closing', '结算中'),
-            ('warranty', '保修期'),
-            ('closed', '关闭'),
-        ],
+        sm.PROJECT_LIFECYCLE_STATES,
         string='项目状态',
         default='draft',
         tracking=True,

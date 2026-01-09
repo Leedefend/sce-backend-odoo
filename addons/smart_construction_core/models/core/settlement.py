@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 
+from ..support import state_machine as sm
+
 
 class ProjectSettlement(models.Model):
     _name = "project.settlement"
@@ -57,12 +59,7 @@ class ProjectSettlement(models.Model):
         string="结算行",
     )
     state = fields.Selection(
-        [
-            ("draft", "草稿"),
-            ("confirmed", "已确认"),
-            ("done", "完成"),
-            ("cancel", "取消"),
-        ],
+        sm.SETTLEMENT_STATES,
         string="状态",
         default="draft",
         tracking=True,

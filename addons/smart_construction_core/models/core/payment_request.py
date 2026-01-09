@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError, UserError
 from odoo.tools.float_utils import float_compare
 
 from ..support import operating_metrics as opm
+from ..support import state_machine as sm
 
 
 class PaymentRequest(models.Model):
@@ -169,15 +170,7 @@ class PaymentRequest(models.Model):
     )
 
     state = fields.Selection(
-        [
-            ("draft", "草稿"),
-            ("submit", "提交"),
-            ("approve", "审批中"),
-            ("approved", "已批准"),
-            ("rejected", "已驳回"),
-            ("done", "已完成"),
-            ("cancel", "已取消"),
-        ],
+        sm.PAYMENT_REQUEST_STATES,
         string="状态",
         default="draft",
         tracking=True,
