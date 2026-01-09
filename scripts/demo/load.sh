@@ -18,11 +18,10 @@ compose_dev run --rm -T \
   -e SCENARIO \
   -e STEP \
   --entrypoint /usr/bin/odoo odoo \
-  shell --config=/etc/odoo/odoo.conf \
+  shell --config="$ODOO_CONF" \
   -d "$DB_NAME" \
   --db_host=db --db_port=5432 --db_user="$DB_USER" --db_password="$DB_PASSWORD" \
   --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,"$ADDONS_EXTERNAL_MOUNT" \
-  --logfile=/dev/stdout \
   --no-http --workers=0 --max-cron-threads=0 \
 <<'PY'
 import os

@@ -15,7 +15,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s90_users_roles"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -170,5 +170,14 @@ run_check "S90 finance user lacks contract capability" "s90_users_roles" \
 run_check "S90 readonly user not in settlement user group" "s90_users_roles" \
   "select case when count(*) = 0 then 'ok' else 'S90 readonly has settlement group' end from res_groups_users_rel r where r.uid = (select id from res_users where login='demo_readonly') and r.gid in (select id from res_groups where coalesce(name->>'zh_CN', name->>'en_US') = 'SC 能力 - 结算中心经办');" \
   "select u.login, coalesce(g.name->>'zh_CN', g.name->>'en_US') as group_name from res_groups_users_rel r join res_users u on u.id = r.uid join res_groups g on g.id = r.gid where u.login='demo_readonly' order by group_name;"
+run_check "showroom projects >= 8" "showroom" \
+  "select case when count(*) >= 8 then 'ok' else 'showroom projects < 8' end from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%';" \
+  "select id, name, lifecycle_state from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%' order by id;"
+run_check "showroom tasks >= 80" "showroom" \
+  "select case when count(*) >= 80 then 'ok' else 'showroom tasks < 80' end from project_task where project_id in (select id from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%');" \
+  "select id, name, project_id from project_task where project_id in (select id from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%') order by id limit 20;"
+run_check "showroom contracts >= 3" "showroom" \
+  "select case when count(*) >= 3 then 'ok' else 'showroom contracts < 3' end from construction_contract where subject like '展厅合同-%';" \
+  "select id, subject, project_id, state from construction_contract where subject like '展厅合同-%' order by id;"
 
 echo "🎉 demo.verify PASSED"

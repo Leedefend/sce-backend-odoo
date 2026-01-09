@@ -16,7 +16,7 @@ ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons
 
 printf '[seed.run] db=%s steps=%s\n' "$DB_NAME" "$STEPS"
 
-compose_dev exec -T -e STEPS="$STEPS" odoo odoo shell -d "$DB_NAME" \
+compose_dev exec -T -e STEPS="$STEPS" odoo odoo shell --config="$ODOO_CONF" -d "$DB_NAME" \
   --db_host=db --db_port=5432 --db_user="$DB_USER" --db_password="$DB_PASSWORD" \
   --addons-path="$ODOO_ADDONS_PATH" \
 <<'PY'

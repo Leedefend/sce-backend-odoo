@@ -173,6 +173,7 @@ def _ensure_demo_user_xmlids(env) -> None:
         "demo_cost": "sc_demo_user_cost",
         "demo_audit": "sc_demo_user_audit",
         "demo_readonly": "sc_demo_user_readonly",
+        "sc_test_admin": "sc_demo_user_test_admin",
     }
     Users = env["res.users"].sudo()
     imd = env["ir.model.data"].sudo()
