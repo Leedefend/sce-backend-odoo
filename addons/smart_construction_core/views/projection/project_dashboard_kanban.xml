@@ -47,33 +47,33 @@
                         </div>
                     </t>
                     <t t-name="kanban-box">
-                        <t t-set="revenue_raw" t-value="+(record.dashboard_revenue_actual.raw_value || 0)"/>
-                        <t t-set="cost_raw" t-value="+(record.dashboard_cost_actual.raw_value || 0)"/>
-                        <t t-set="profit_raw" t-value="+(record.dashboard_profit_actual.raw_value || 0)"/>
-                        <t t-set="invoice_raw" t-value="+(record.dashboard_invoice_amount.raw_value || 0)"/>
-                        <t t-set="payment_in_raw" t-value="+(record.dashboard_payment_in.raw_value || 0)"/>
-                        <t t-set="payment_out_raw" t-value="+(record.dashboard_payment_out.raw_value || 0)"/>
-                        <t t-set="plan_revenue_target_raw" t-value="+(record.budget_active_revenue_target.raw_value || 0)"/>
+                        <t t-set="revenue_raw" t-value="+((record.dashboard_revenue_actual ? record.dashboard_revenue_actual.raw_value : 0) || 0)"/>
+                        <t t-set="cost_raw" t-value="+((record.dashboard_cost_actual ? record.dashboard_cost_actual.raw_value : 0) || 0)"/>
+                        <t t-set="profit_raw" t-value="+((record.dashboard_profit_actual ? record.dashboard_profit_actual.raw_value : 0) || 0)"/>
+                        <t t-set="invoice_raw" t-value="+((record.dashboard_invoice_amount ? record.dashboard_invoice_amount.raw_value : 0) || 0)"/>
+                        <t t-set="payment_in_raw" t-value="+((record.dashboard_payment_in ? record.dashboard_payment_in.raw_value : 0) || 0)"/>
+                        <t t-set="payment_out_raw" t-value="+((record.dashboard_payment_out ? record.dashboard_payment_out.raw_value : 0) || 0)"/>
+                        <t t-set="plan_revenue_target_raw" t-value="+((record.budget_active_revenue_target ? record.budget_active_revenue_target.raw_value : 0) || 0)"/>
                         <t t-set="has_finance_data"
                            t-value="Math.abs(revenue_raw) || Math.abs(cost_raw) || Math.abs(invoice_raw) || Math.abs(payment_in_raw) || Math.abs(payment_out_raw)"/>
 
-                        <t t-set="progress_raw" t-value="+(record.dashboard_progress_rate.raw_value or 0)"/>
+                        <t t-set="progress_raw" t-value="+((record.dashboard_progress_rate ? record.dashboard_progress_rate.raw_value : 0) || 0)"/>
                         <t t-set="progress_clamped" t-value="Math.min(Math.max(progress_raw, 0.0), 100.0)"/>
-                        <t t-set="progress_entry_count" t-value="+(record.progress_entry_count.raw_value || 0)"/>
+                        <t t-set="progress_entry_count" t-value="+((record.progress_entry_count ? record.progress_entry_count.raw_value : 0) || 0)"/>
                         <t t-set="has_progress_data" t-value="progress_entry_count"/>
                         <t t-set="dashoffset" t-value="has_progress_data and (100 - progress_clamped) or 100"/>
 
-                        <t t-set="doc_rate_raw" t-value="+(record.document_completion_rate.raw_value or 0)"/>
+                        <t t-set="doc_rate_raw" t-value="+((record.document_completion_rate ? record.document_completion_rate.raw_value : 0) || 0)"/>
                         <t t-set="doc_rate_clamped" t-value="Math.min(Math.max(doc_rate_raw, 0.0), 100.0)"/>
-                        <t t-set="doc_missing" t-value="+(record.document_missing_count.raw_value || 0)"/>
-                        <t t-set="doc_required" t-value="+(record.document_required_count.raw_value || 0)"/>
+                        <t t-set="doc_missing" t-value="+((record.document_missing_count ? record.document_missing_count.raw_value : 0) || 0)"/>
+                        <t t-set="doc_required" t-value="+((record.document_required_count ? record.document_required_count.raw_value : 0) || 0)"/>
 
-                        <t t-set="plan_rate_raw" t-value="+(record.plan_percent.raw_value or 0)"/>
+                        <t t-set="plan_rate_raw" t-value="+((record.plan_percent ? record.plan_percent.raw_value : 0) || 0)"/>
                         <t t-set="plan_rate_clamped" t-value="Math.min(Math.max(plan_rate_raw, 0.0), 100.0)"/>
                         <t t-set="has_plan_data" t-value="Math.abs(plan_rate_raw) || Math.abs(plan_revenue_target_raw)"/>
 
-                        <t t-set="gap" t-value="+(record.cost_budget_gap.raw_value or 0.0)"/>
-                        <t t-set="budget_target" t-value="+(record.budget_active_cost_target.raw_value or 0.0)"/>
+                        <t t-set="gap" t-value="+((record.cost_budget_gap ? record.cost_budget_gap.raw_value : 0) || 0.0)"/>
+                        <t t-set="budget_target" t-value="+((record.budget_active_cost_target ? record.budget_active_cost_target.raw_value : 0) || 0.0)"/>
                         <t t-set="has_budget_data" t-value="Math.abs(budget_target) || Math.abs(plan_revenue_target_raw)"/>
                         <t t-set="risk_class"
                            t-value="gap &lt; 0 and 'sc_risk_high'
@@ -225,7 +225,7 @@
                                         <t t-if="has_plan_data">
                                             <br/>计划 <t t-esc="Math.round(plan_rate_clamped)"/>%
                                         </t>
-                                        <t t-elif="not has_progress_data">
+                                        <t t-elif="!has_progress_data">
                                             <br/>未初始化
                                         </t>
                                     </div>
