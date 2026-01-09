@@ -16,8 +16,44 @@ ADMIN_PWD=${ADMIN_PWD:-admin}
 wait_odoo() {
   local base="${BASE_URL}"
   local n=0
+  local fallback_base=""
+  if [ -z "${BASE_URL:-}" ]; then
+    fallback_base="http://localhost:18080"
+  fi
+  if ! command -v curl >/dev/null 2>&1; then
+    python3 - <<'PY'
+import os
+import time
+import urllib.request
+
+base = os.environ.get("BASE_URL", "http://localhost:8069")
+fallback = "" if os.environ.get("BASE_URL") else "http://localhost:18080"
+
+def ok(url):
+    try:
+        with urllib.request.urlopen(url, timeout=2) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+for _ in range(60):
+    if ok(base + "/web/webclient/version_info"):
+        raise SystemExit(0)
+    if fallback and ok(fallback + "/web/webclient/version_info"):
+        os.environ["BASE_URL"] = fallback
+        raise SystemExit(0)
+    time.sleep(1)
+raise SystemExit("ERROR: odoo not ready after 60s")
+PY
+    return
+  fi
+
   until curl -fsS "${base}/web/webclient/version_info" >/dev/null 2>&1; do
     n=$((n+1))
+    if [ -n "${fallback_base}" ] && curl -fsS "${fallback_base}/web/webclient/version_info" >/dev/null 2>&1; then
+      export BASE_URL="${fallback_base}"
+      return
+    fi
     if [ "$n" -ge 60 ]; then
       echo "ERROR: odoo not ready after 60s"
       exit 2
