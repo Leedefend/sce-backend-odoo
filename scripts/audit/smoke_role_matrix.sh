@@ -10,6 +10,8 @@ USER_USER=${USER_USER:-demo_role_project_user}
 USER_PWD=${USER_PWD:-demo}
 MANAGER_USER=${MANAGER_USER:-demo_role_project_manager}
 MANAGER_PWD=${MANAGER_PWD:-demo}
+ADMIN_USER=${ADMIN_USER:-admin}
+ADMIN_PWD=${ADMIN_PWD:-admin}
 
 python3 - <<'PY'
 import json
@@ -25,6 +27,8 @@ USER_USER = os.environ.get("USER_USER", "demo_role_project_user")
 USER_PWD = os.environ.get("USER_PWD", "demo")
 MANAGER_USER = os.environ.get("MANAGER_USER", "demo_role_project_manager")
 MANAGER_PWD = os.environ.get("MANAGER_PWD", "demo")
+ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
+ADMIN_PWD = os.environ.get("ADMIN_PWD", "admin")
 
 def jsonrpc(service, method, args):
     payload = json.dumps({
@@ -75,6 +79,70 @@ if not uid:
 project_user_id = exec_kw(uid, USER_PWD, "project.project", "create", [{"name": "Role Smoke User"}])
 if not project_user_id:
     raise RuntimeError("user role failed to create project")
+
+step("ensure partner for contract")
+admin_uid = login(ADMIN_USER, ADMIN_PWD)
+if not admin_uid:
+    raise RuntimeError("login failed for admin user")
+partner_ids = exec_kw(admin_uid, ADMIN_PWD, "res.partner", "search", [[("active", "=", True)]], {"limit": 1})
+if partner_ids:
+    partner_id = partner_ids[0]
+else:
+    partner_id = exec_kw(admin_uid, ADMIN_PWD, "res.partner", "create", [{"name": "Role Smoke Partner"}])
+
+step("read role: contract create should fail")
+uid_read = login(READ_USER, READ_PWD)
+failed = False
+try:
+    exec_kw(
+        uid_read,
+        READ_PWD,
+        "construction.contract",
+        "create",
+        [{
+            "subject": "Role Smoke Contract (read)",
+            "type": "in",
+            "project_id": project_user_id,
+            "partner_id": partner_id,
+        }],
+    )
+except Exception:
+    failed = True
+if not failed:
+    raise RuntimeError("read role can create contract unexpectedly")
+
+step("user role: create contract + line")
+uid_user = login(USER_USER, USER_PWD)
+contract_id = exec_kw(
+    uid_user,
+    USER_PWD,
+    "construction.contract",
+    "create",
+    [{
+        "subject": "Role Smoke Contract (user)",
+        "type": "in",
+        "project_id": project_user_id,
+        "partner_id": partner_id,
+    }],
+)
+exec_kw(
+    uid_user,
+    USER_PWD,
+    "construction.contract.line",
+    "create",
+    [{
+        "contract_id": contract_id,
+        "qty_contract": 1.0,
+        "price_contract": 100.0,
+    }],
+)
+
+step("manager role: confirm contract")
+uid_mgr = login(MANAGER_USER, MANAGER_PWD)
+exec_kw(uid_mgr, MANAGER_PWD, "construction.contract", "action_confirm", [[contract_id]])
+state = exec_kw(uid_mgr, MANAGER_PWD, "construction.contract", "read", [[contract_id]], {"fields": ["state"]})[0]["state"]
+if state != "confirmed":
+    raise RuntimeError("manager role failed to confirm contract")
 
 step("manager role: create + unlink project")
 uid = login(MANAGER_USER, MANAGER_PWD)

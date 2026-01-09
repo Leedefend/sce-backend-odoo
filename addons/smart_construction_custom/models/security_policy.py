@@ -41,6 +41,9 @@ class ScSecurityPolicy(models.TransientModel):
             ("smart_construction_custom.group_sc_role_project_read", "smart_construction_core.group_sc_cap_project_read"),
             ("smart_construction_custom.group_sc_role_project_user", "smart_construction_core.group_sc_cap_project_user"),
             ("smart_construction_custom.group_sc_role_project_manager", "smart_construction_core.group_sc_cap_project_manager"),
+            ("smart_construction_custom.group_sc_role_contract_read", "smart_construction_core.group_sc_cap_contract_read"),
+            ("smart_construction_custom.group_sc_role_contract_user", "smart_construction_core.group_sc_cap_contract_user"),
+            ("smart_construction_custom.group_sc_role_contract_manager", "smart_construction_core.group_sc_cap_contract_manager"),
         ]
         updated = False
         for role_xmlid, cap_xmlid in role_specs:
@@ -50,5 +53,36 @@ class ScSecurityPolicy(models.TransientModel):
                 continue
             if cap not in role.implied_ids:
                 role.write({"implied_ids": [(4, cap.id)]})
+                updated = True
+
+        user_map = {
+            "demo_role_project_read": [
+                "smart_construction_custom.group_sc_role_project_read",
+                "smart_construction_custom.group_sc_role_contract_read",
+                "smart_construction_core.group_sc_cap_contract_read",
+            ],
+            "demo_role_project_user": [
+                "smart_construction_custom.group_sc_role_project_user",
+                "smart_construction_custom.group_sc_role_contract_user",
+                "smart_construction_core.group_sc_cap_contract_user",
+            ],
+            "demo_role_project_manager": [
+                "smart_construction_custom.group_sc_role_project_manager",
+                "smart_construction_custom.group_sc_role_contract_manager",
+                "smart_construction_core.group_sc_cap_contract_manager",
+            ],
+        }
+        Users = self.env["res.users"].sudo()
+        for login, groups in user_map.items():
+            user = Users.search([("login", "=", login)], limit=1)
+            if not user:
+                continue
+            to_add = []
+            for xmlid in groups:
+                group = self.env.ref(xmlid, raise_if_not_found=False)
+                if group and group not in user.groups_id:
+                    to_add.append(group.id)
+            if to_add:
+                user.write({"groups_id": [(4, gid) for gid in to_add]})
                 updated = True
         return updated or True
