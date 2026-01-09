@@ -147,6 +147,47 @@ state = exec_kw(uid_manager, MANAGER_PWD, "construction.contract", "read", [[con
 if state != "confirmed":
     raise RuntimeError("manager role failed to confirm contract")
 
+step("user role: create settlement + line")
+settlement_id = exec_kw(
+    uid_user,
+    USER_PWD,
+    "sc.settlement.order",
+    "create",
+    [{
+        "project_id": project_user_id,
+        "contract_id": contract_id,
+        "partner_id": partner_id,
+        "settlement_type": "out",
+    }],
+)
+exec_kw(
+    uid_user,
+    USER_PWD,
+    "sc.settlement.order.line",
+    "create",
+    [{
+        "settlement_id": settlement_id,
+        "name": "Role Smoke Settlement Line",
+        "qty": 1.0,
+        "price_unit": 100.0,
+    }],
+)
+
+step("read role: settlement submit should fail")
+failed = False
+try:
+    exec_kw(uid_read, READ_PWD, "sc.settlement.order", "action_submit", [[settlement_id]])
+except Exception:
+    failed = True
+if not failed:
+    raise RuntimeError("read role can submit settlement unexpectedly")
+
+step("manager role: submit settlement")
+exec_kw(uid_manager, MANAGER_PWD, "sc.settlement.order", "action_submit", [[settlement_id]])
+settle_state = exec_kw(uid_manager, MANAGER_PWD, "sc.settlement.order", "read", [[settlement_id]], {"fields": ["state"]})[0]["state"]
+if settle_state != "submit":
+    raise RuntimeError("manager role failed to submit settlement")
+
 step("manager role: create + unlink project")
 project_mgr_id = exec_kw(uid_manager, MANAGER_PWD, "project.project", "create", [{"name": "Role Smoke Manager"}])
 exec_kw(uid_manager, MANAGER_PWD, "project.project", "unlink", [[project_mgr_id]])
