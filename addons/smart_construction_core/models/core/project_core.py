@@ -178,11 +178,27 @@ class ProjectProject(models.Model):
     _inherit = 'project.project'
 
     # ---------- 默认阶段 ----------
-    def _default_stage_id(self):
-        stage = self.env['project.project.stage'].search(
-            [('is_default', '=', True)], limit=1
+    def _stage_has_default_column(self):
+        self.env.cr.execute(
+            """
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_name = 'project_project_stage'
+              AND column_name = 'is_default'
+            """
         )
-        return stage.id
+        return bool(self.env.cr.fetchone())
+
+    def _default_stage_id(self):
+        if not self._stage_has_default_column():
+            return False
+        try:
+            stage = self.env['project.project.stage'].search(
+                [('is_default', '=', True)], limit=1
+            )
+            return stage.id
+        except Exception:
+            return False
 
     # ---------- 基础属性 ----------
     project_code = fields.Char(
