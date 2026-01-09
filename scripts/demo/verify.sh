@@ -183,4 +183,8 @@ run_check "showroom stages >= 4" "showroom" \
   "select case when count(distinct stage_id) >= 4 then 'ok' else 'showroom stages < 4' end from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%';" \
   "select stage_id, count(*) from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%' group by stage_id order by stage_id;"
 
+run_check "showroom settlement projects in closing+" "showroom" \
+  "select case when (select count(distinct p.id) from project_project p join sc_settlement_order s on s.project_id = p.id where coalesce(p.name->>'zh_CN', p.name->>'en_US', p.name::text) like '展厅-%') = (select count(distinct p.id) from project_project p join sc_settlement_order s on s.project_id = p.id join ir_model_data d on d.res_id = p.stage_id and d.model='project.project.stage' and d.module='smart_construction_core' where coalesce(p.name->>'zh_CN', p.name->>'en_US', p.name::text) like '展厅-%' and d.name in ('project_stage_closing','project_stage_closed','project_stage_warranty','project_stage_archived')) then 'ok' else 'showroom settlement stage mismatch' end;" \
+  "select p.id, coalesce(p.name->>'zh_CN', p.name->>'en_US', p.name::text) as name, d.name as stage_xmlid from project_project p join sc_settlement_order s on s.project_id = p.id left join ir_model_data d on d.res_id = p.stage_id and d.model='project.project.stage' and d.module='smart_construction_core' where coalesce(p.name->>'zh_CN', p.name->>'en_US', p.name::text) like '展厅-%' order by p.id;"
+
 echo "🎉 demo.verify PASSED"
