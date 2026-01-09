@@ -123,6 +123,9 @@ def load_scenario(
         known = ", ".join(sorted(SCENARIOS.keys()))
         raise ValueError(f"unknown scenario '{scenario}'. known: {known}")
 
+    if scenario == "s90_users_roles":
+        _ensure_demo_user_xmlids(env)
+
     module = "smart_construction_demo"
     registry = _normalize_registry()
     files = registry[scenario]["files"]
@@ -160,3 +163,37 @@ def load_all(env, mode: str = "update") -> None:
     )
     for scenario, _spec in ordered:
         load_scenario(env, scenario, mode=mode)
+
+
+def _ensure_demo_user_xmlids(env) -> None:
+    module = "smart_construction_demo"
+    login_to_xmlid = {
+        "demo_pm": "sc_demo_user_pm",
+        "demo_finance": "sc_demo_user_finance",
+        "demo_cost": "sc_demo_user_cost",
+        "demo_audit": "sc_demo_user_audit",
+        "demo_readonly": "sc_demo_user_readonly",
+    }
+    Users = env["res.users"].sudo()
+    imd = env["ir.model.data"].sudo()
+    for login, xmlid in login_to_xmlid.items():
+        user = Users.search([("login", "=", login)], limit=1)
+        if not user:
+            continue
+        existing = imd.search(
+            [("module", "=", module), ("name", "=", xmlid)],
+            limit=1,
+        )
+        if existing:
+            if existing.model != "res.users" or existing.res_id != user.id:
+                existing.write({"model": "res.users", "res_id": user.id})
+            continue
+        imd.create(
+            {
+                "module": module,
+                "name": xmlid,
+                "model": "res.users",
+                "res_id": user.id,
+                "noupdate": True,
+            }
+        )
