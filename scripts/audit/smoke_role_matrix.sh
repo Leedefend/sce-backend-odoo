@@ -203,6 +203,82 @@ settle_state = exec_kw(uid_manager, MANAGER_PWD, "sc.settlement.order", "read", 
 if settle_state != "submit":
     raise RuntimeError("manager role failed to submit settlement")
 
+step("admin: enable project funding gate")
+exec_kw(admin_uid, ADMIN_PWD, "project.project", "write", [[project_user_id], {"funding_enabled": True}])
+
+step("admin: ensure active funding baseline")
+baseline_ids = exec_kw(
+    admin_uid,
+    ADMIN_PWD,
+    "project.funding.baseline",
+    "search",
+    [[("project_id", "=", project_user_id), ("state", "=", "active")]],
+    {"limit": 1},
+)
+if not baseline_ids:
+    exec_kw(
+        admin_uid,
+        ADMIN_PWD,
+        "project.funding.baseline",
+        "create",
+        [{
+            "project_id": project_user_id,
+            "total_amount": 1000.0,
+            "state": "active",
+        }],
+    )
+
+step("user role: create payment request")
+payment_request_id = exec_kw(
+    uid_user,
+    USER_PWD,
+    "payment.request",
+    "create",
+    [{
+        "type": "pay",
+        "project_id": project_user_id,
+        "contract_id": contract_id,
+        "settlement_id": settlement_id,
+        "partner_id": partner_id,
+        "amount": 50.0,
+    }],
+)
+
+step("read role: payment submit should fail")
+failed = False
+try:
+    exec_kw(uid_read, READ_PWD, "payment.request", "action_submit", [[payment_request_id]])
+except Exception:
+    failed = True
+if not failed:
+    raise RuntimeError("read role can submit payment request unexpectedly")
+
+step("user role: submit payment request")
+exec_kw(uid_user, USER_PWD, "payment.request", "action_submit", [[payment_request_id]])
+pay_state = exec_kw(
+    uid_user,
+    USER_PWD,
+    "payment.request",
+    "read",
+    [[payment_request_id]],
+    {"fields": ["state"]},
+)[0]["state"]
+if pay_state != "submit":
+    raise RuntimeError("user role failed to submit payment request")
+
+step("manager role: approve payment request")
+exec_kw(uid_manager, MANAGER_PWD, "payment.request", "action_approve", [[payment_request_id]])
+pay_mgr_state = exec_kw(
+    uid_manager,
+    MANAGER_PWD,
+    "payment.request",
+    "read",
+    [[payment_request_id]],
+    {"fields": ["state"]},
+)[0]["state"]
+if pay_mgr_state not in ("approve", "approved"):
+    raise RuntimeError("manager role failed to approve payment request")
+
 step("manager role: create + unlink project")
 project_mgr_id = exec_kw(uid_manager, MANAGER_PWD, "project.project", "create", [{"name": "Role Smoke Manager"}])
 exec_kw(uid_manager, MANAGER_PWD, "project.project", "unlink", [[project_mgr_id]])
