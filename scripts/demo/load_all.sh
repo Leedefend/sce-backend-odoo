@@ -31,4 +31,4 @@ print("[demo.load.all] done")
 PY
 
 printf '[demo.load.all] seed showroom\n'
-STEPS=demo_showroom DB_NAME="$DB_NAME" bash "$ROOT_DIR/scripts/seed/run.sh"
+STEPS=demo_showroom,project_stage_sync DB_NAME="$DB_NAME" bash "$ROOT_DIR/scripts/seed/run.sh"
