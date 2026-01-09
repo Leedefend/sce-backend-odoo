@@ -6,7 +6,7 @@
         <field name="name">数据字典（全部）</field>
         <field name="res_model">project.dictionary</field>
         <field name="view_mode">tree,form</field>
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_data_read'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_data_read')), (4, ref('smart_construction_core.group_sc_business_full'))]"/>
     </record>
 
     <!-- ========== 通用视图：树形 + 表单 ========== -->
