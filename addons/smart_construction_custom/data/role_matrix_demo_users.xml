@@ -13,7 +13,8 @@
                 (4, ref('base.group_user')),
                 (4, ref('smart_construction_custom.group_sc_role_project_read')),
                 (4, ref('smart_construction_custom.group_sc_role_contract_read')),
-                (4, ref('smart_construction_custom.group_sc_role_settlement_read'))
+                (4, ref('smart_construction_custom.group_sc_role_settlement_read')),
+                (4, ref('smart_construction_custom.group_sc_role_payment_read'))
             ]"/>
         </record>
 
@@ -29,7 +30,8 @@
                 (4, ref('base.group_user')),
                 (4, ref('smart_construction_custom.group_sc_role_project_user')),
                 (4, ref('smart_construction_custom.group_sc_role_contract_user')),
-                (4, ref('smart_construction_custom.group_sc_role_settlement_user'))
+                (4, ref('smart_construction_custom.group_sc_role_settlement_user')),
+                (4, ref('smart_construction_custom.group_sc_role_payment_user'))
             ]"/>
         </record>
 
@@ -45,7 +47,8 @@
                 (4, ref('base.group_user')),
                 (4, ref('smart_construction_custom.group_sc_role_project_manager')),
                 (4, ref('smart_construction_custom.group_sc_role_contract_manager')),
-                (4, ref('smart_construction_custom.group_sc_role_settlement_manager'))
+                (4, ref('smart_construction_custom.group_sc_role_settlement_manager')),
+                (4, ref('smart_construction_custom.group_sc_role_payment_manager'))
             ]"/>
         </record>
     </data>
