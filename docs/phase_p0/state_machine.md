@@ -58,6 +58,11 @@ Running criteria (suggested):
 BOQ has no explicit workflow state yet. Current controlled enums:
 - source_type: tender | contract | settlement
 
+Quantity semantics (P0-03):
+- qty_planned: plan quantity (alias of quantity)
+- qty_done: executed quantity (cannot exceed planned)
+- qty_remain = qty_planned - qty_done
+
 Derived import status (computed on project):
 - empty: no BOQ lines
 - imported: line_count > 0
