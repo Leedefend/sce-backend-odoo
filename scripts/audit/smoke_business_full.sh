@@ -164,4 +164,35 @@ contract_state = exec_kw(uid, PWD, "construction.contract", "read", [[contract_i
 if contract_state != "confirmed":
     raise RuntimeError("contract confirm failed: state=%s" % contract_state)
 print("OK: contract confirm success")
+
+step("create settlement order + line")
+settlement_id = exec_kw(
+    uid,
+    PWD,
+    "sc.settlement.order",
+    "create",
+    [{
+        "project_id": project_id,
+        "contract_id": contract_id,
+        "partner_id": partner_id,
+        "settlement_type": "out",
+    }],
+)
+exec_kw(
+    uid,
+    PWD,
+    "sc.settlement.order.line",
+    "create",
+    [{
+        "settlement_id": settlement_id,
+        "name": "BF Smoke Settlement Line",
+        "qty": 1.0,
+        "price_unit": 100.0,
+    }],
+)
+exec_kw(uid, PWD, "sc.settlement.order", "action_submit", [[settlement_id]])
+settle_state = exec_kw(uid, PWD, "sc.settlement.order", "read", [[settlement_id]], {"fields": ["state"]})[0]["state"]
+if settle_state != "submit":
+    raise RuntimeError("settlement submit failed: state=%s" % settle_state)
+print("OK: settlement submit success")
 PY
