@@ -112,7 +112,6 @@ common_args=(
   --without-demo="${WITHOUT_DEMO}"
   --workers=0
   --max-cron-threads=0
-  --logfile=-
   # 更稳：用 info/test 两段分别控
   --log-handler :INFO
   --log-handler odoo:INFO

@@ -7,7 +7,7 @@ db_name = ${ODOO_DB}
 admin_passwd = ${ADMIN_PASSWD}
 
 addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux
-logfile = False
+logfile =
 
 ; 锁库：只允许 sc_odoo（你当前库名）
 dbfilter = ${ODOO_DBFILTER}

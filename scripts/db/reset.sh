@@ -105,7 +105,7 @@ ODOO_DB_ARGS=(
 log "odoo init base (stop-after-init): ${DB_NAME}"
 compose_dev run --rm -T \
   --entrypoint /usr/bin/odoo odoo \
-  --config=/etc/odoo/odoo.conf \
+  --config="$ODOO_CONF" \
   -d "${DB_NAME}" \
   "${ODOO_DB_ARGS[@]}" \
   -i base \
@@ -116,7 +116,7 @@ compose_dev run --rm -T \
 log "install bootstrap module: smart_construction_bootstrap"
 compose_dev run --rm -T \
   --entrypoint /usr/bin/odoo odoo \
-  --config=/etc/odoo/odoo.conf \
+  --config="$ODOO_CONF" \
   -d "${DB_NAME}" \
   "${ODOO_DB_ARGS[@]}" \
   -i smart_construction_bootstrap \
