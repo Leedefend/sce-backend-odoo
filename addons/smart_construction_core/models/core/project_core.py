@@ -5,6 +5,7 @@ import uuid
 
 from odoo import models, fields, api
 
+from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
 from odoo.exceptions import UserError
 
@@ -1378,9 +1379,12 @@ class ProjectProject(models.Model):
         )
         if count:
             label = ScStateMachine.label(ScStateMachine.PROJECT, target_state)
-            raise UserError(
-                f"项目[{self.display_name}]存在 {count} 条结算单未完成，禁止进入“{label}”。\n"
-                "建议：请先完成或取消相关结算单。"
+            raise_guard(
+                "P0_PROJECT_TERMINAL_BLOCKED",
+                f"项目[{self.display_name}]",
+                f"进入“{label}”",
+                reasons=[f"存在未完成结算单：{count} 条"],
+                hints=["请先完成或取消相关结算单"],
             )
 
     def _guard_project_close_by_payment(self, target_state):
@@ -1393,17 +1397,23 @@ class ProjectProject(models.Model):
         )
         if count:
             label = ScStateMachine.label(ScStateMachine.PROJECT, target_state)
-            raise UserError(
-                f"项目[{self.display_name}]存在 {count} 条付款申请未完结，禁止进入“{label}”。\n"
-                "建议：请先完成审批或取消相关付款申请。"
+            raise_guard(
+                "P0_PROJECT_TERMINAL_BLOCKED",
+                f"项目[{self.display_name}]",
+                f"进入“{label}”",
+                reasons=[f"存在未完结付款申请：{count} 条"],
+                hints=["请先完成审批或取消相关付款申请"],
             )
 
     def _guard_project_close_by_boq(self, target_state):
         if not (self.boq_line_count or 0):
             label = ScStateMachine.label(ScStateMachine.PROJECT, target_state)
-            raise UserError(
-                f"项目[{self.display_name}]尚未导入工程量清单，禁止进入“{label}”。\n"
-                "建议：请先导入 BOQ 清单。"
+            raise_guard(
+                "P0_BOQ_NOT_IMPORTED",
+                f"项目[{self.display_name}]",
+                f"进入“{label}”",
+                reasons=["项目 BOQ 未导入"],
+                hints=["请先导入 BOQ 清单后再推进状态"],
             )
 
 

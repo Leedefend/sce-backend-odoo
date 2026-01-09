@@ -3,6 +3,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 from ..support import operating_metrics as opm
+from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
 
 
@@ -296,8 +297,12 @@ class ScSettlementOrder(models.Model):
                 ]
             )
             if count:
-                raise UserError(
-                    _("结算单已关联 %s 条付款申请（审批中/已批准/已完成），禁止作废。") % count
+                raise_guard(
+                    "P0_SETTLEMENT_CANCEL_BLOCKED",
+                    f"结算单[{rec.display_name}]",
+                    _("作废结算单"),
+                    reasons=[_("已关联付款申请：%s 条") % count],
+                    hints=[_("请先取消/完成关联付款申请后再作废结算单")],
                 )
 
     def write(self, vals):

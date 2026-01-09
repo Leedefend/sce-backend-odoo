@@ -4,6 +4,7 @@ from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare
 
 from ..support.state_machine import ScStateMachine
+from ..support.state_guard import raise_guard
 
 
 class ProjectBoqLine(models.Model):
@@ -325,7 +326,13 @@ class ProjectBoqLine(models.Model):
             if project and project.id not in frozen_projects and project.is_boq_frozen():
                 frozen_projects.add(project.id)
         if frozen_projects:
-            raise UserError("项目已进入结算/支付关键节点，BOQ 已冻结，禁止删除清单行。")
+            raise_guard(
+                "P0_BOQ_FROZEN",
+                "BOQ",
+                "删除清单行",
+                reasons=[f"涉及已冻结项目数：{len(frozen_projects)}"],
+                hints=["请先完成/撤销结算或付款流程后再调整 BOQ"],
+            )
         return super().unlink()
 
     line_type = fields.Selection(
