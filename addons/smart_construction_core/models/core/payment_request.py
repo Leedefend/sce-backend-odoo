@@ -425,7 +425,10 @@ class PaymentRequest(models.Model):
             rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1
 
     def action_submit(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user"):
+        if not (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
+            or self.env.user.has_group("smart_construction_core.group_sc_business_full")
+        ):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
         for rec in self:
             if not rec.contract_id:
@@ -490,14 +493,20 @@ class PaymentRequest(models.Model):
         return result
 
     def action_done(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
+        if not (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_core.group_sc_business_full")
+        ):
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
         self._check_can_done()
         for rec in self:
             rec.write({"state": "done"})
 
     def action_cancel(self):
-        if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
+        if not (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_core.group_sc_business_full")
+        ):
             raise ValidationError(_("你没有取消付款/收款申请的权限。"))
         self.write({"state": "cancel"})
 
