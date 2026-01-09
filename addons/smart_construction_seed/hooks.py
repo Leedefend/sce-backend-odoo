@@ -23,11 +23,15 @@ def post_init_hook(env_or_cr, registry=None):
     env_seed_enabled = os.getenv("SC_SEED_ENABLED")
     env_mode = os.getenv("SC_BOOTSTRAP_MODE")
     env_steps = os.getenv("SC_SEED_STEPS")
+    env_profile = os.getenv("SC_SEED_PROFILE")
 
     mode = env_mode or ICP.get_param("sc.bootstrap.mode", "prod")
     seed_enabled = env_seed_enabled if env_seed_enabled is not None else ICP.get_param("sc.bootstrap.seed_enabled", "0")
     enabled = seed_enabled in ("1", "true", "True")
+    profile = env_profile if env_profile is not None else ICP.get_param("sc.seed.profile", "")
     steps_sel = env_steps if env_steps is not None else ICP.get_param("sc.seed.steps", "all")
+    if profile:
+        steps_sel = f"profile:{profile}"
 
     if not enabled:
         _logger.info("Seed skipped: sc.bootstrap.seed_enabled=%s mode=%s", seed_enabled, mode)

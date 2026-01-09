@@ -1161,9 +1161,15 @@ class ProjectProject(models.Model):
                 ['project_id', 'type']
             )
             for rec in payment_read:
-                project_id = rec['project_id'][0]
-                amount = rec['amount_sum'] or 0.0
-                if rec['type'] == 'receive':
+                project = rec.get('project_id')
+                if not project:
+                    continue
+                project_id = project[0]
+                pay_type = rec.get('type')
+                if not pay_type:
+                    continue
+                amount = rec.get('amount_sum', rec.get('amount', 0.0)) or 0.0
+                if pay_type == 'receive':
                     payment_in_map[project_id] += amount
                 else:
                     payment_out_map[project_id] += amount
