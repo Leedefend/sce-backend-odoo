@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="user_demo_project_read" model="res.users">
+            <field name="name">Demo Project Read</field>
+            <field name="login">demo_role_project_read</field>
+            <field name="password">demo</field>
+            <field name="email">demo_role_project_read@example.com</field>
+            <field name="active">True</field>
+            <field name="share">False</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="groups_id" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_custom.group_sc_role_project_read'))
+            ]"/>
+        </record>
+
+        <record id="user_demo_project_user" model="res.users">
+            <field name="name">Demo Project User</field>
+            <field name="login">demo_role_project_user</field>
+            <field name="password">demo</field>
+            <field name="email">demo_role_project_user@example.com</field>
+            <field name="active">True</field>
+            <field name="share">False</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="groups_id" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_custom.group_sc_role_project_user'))
+            ]"/>
+        </record>
+
+        <record id="user_demo_project_manager" model="res.users">
+            <field name="name">Demo Project Manager</field>
+            <field name="login">demo_role_project_manager</field>
+            <field name="password">demo</field>
+            <field name="email">demo_role_project_manager@example.com</field>
+            <field name="active">True</field>
+            <field name="share">False</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="groups_id" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_custom.group_sc_role_project_manager'))
+            ]"/>
+        </record>
+    </data>
+</odoo>
