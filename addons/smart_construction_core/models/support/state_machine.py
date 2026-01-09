@@ -5,7 +5,6 @@ Keep these constants in sync with docs/phase_p0/state_machine.md.
 """
 
 from odoo import _
-from odoo.exceptions import UserError
 
 
 class ScStateMachine:
@@ -141,21 +140,22 @@ class ScStateMachine:
             return
         allowed = cls.transitions(model_name).get(old, set())
         if new not in allowed:
-            hint = _("合法跃迁：%s") % (", ".join(sorted(allowed)) or "-")
-            title = _("状态跃迁被拒绝")
+            from .state_guard import raise_guard
+
             who = obj_display or model_name
-            raise UserError(
-                _("%(title)s：%(who)s %(old)s(%(old_l)s) -> %(new)s(%(new_l)s)\n%(hint)s")
+            reasons = [
+                _("%(old)s(%(old_l)s) -> %(new)s(%(new_l)s)")
                 % {
-                    "title": title,
-                    "who": who,
                     "old": old,
                     "old_l": cls.label(model_name, old),
                     "new": new,
                     "new_l": cls.label(model_name, new),
-                    "hint": hint,
                 }
-            )
+            ]
+            hints = [
+                _("合法跃迁：%s") % (", ".join(sorted(allowed)) or "-"),
+            ]
+            raise_guard("P0_STATE_ILLEGAL_TRANSITION", who, _("状态变更"), reasons, hints)
 
 
 # Legacy exports for backward compatibility. Prefer ScStateMachine.* in new code.
