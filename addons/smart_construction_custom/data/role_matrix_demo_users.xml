@@ -11,7 +11,8 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_project_read'))
+                (4, ref('smart_construction_custom.group_sc_role_project_read')),
+                (4, ref('smart_construction_custom.group_sc_role_contract_read'))
             ]"/>
         </record>
 
@@ -25,7 +26,8 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_project_user'))
+                (4, ref('smart_construction_custom.group_sc_role_project_user')),
+                (4, ref('smart_construction_custom.group_sc_role_contract_user'))
             ]"/>
         </record>
 
@@ -39,7 +41,8 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_project_manager'))
+                (4, ref('smart_construction_custom.group_sc_role_project_manager')),
+                (4, ref('smart_construction_custom.group_sc_role_contract_manager'))
             ]"/>
         </record>
     </data>
