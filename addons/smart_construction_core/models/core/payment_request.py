@@ -227,6 +227,12 @@ class PaymentRequest(models.Model):
             if req_type == "pay" and state in ("submit", "approve", "approved"):
                 self._check_project_funding_gate(project, amount, exclude_ids=rec.ids)
 
+    def _check_settlement_state(self, settlement):
+        if not settlement:
+            return
+        if settlement.state not in ("approve", "done"):
+            raise UserError("结算单未完成批准，禁止提交/审批付款申请。")
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
@@ -425,6 +431,7 @@ class PaymentRequest(models.Model):
                 raise UserError("请先选择关联合同后再提交付款/收款申请。")
             if rec.contract_id.state == "cancel":
                 raise UserError("关联合同已取消，不能提交付款/收款申请。")
+            rec._check_settlement_state(rec.settlement_id)
         self._enforce_funding_gate({"state": "submit"})
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
@@ -453,6 +460,8 @@ class PaymentRequest(models.Model):
         self.message_post(body=_("付款/收款申请已提交，进入审批流程。"))
 
     def action_approve(self):
+        for rec in self:
+            rec._check_settlement_state(rec.settlement_id)
         self._enforce_funding_gate({"state": "approve"})
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
@@ -504,6 +513,7 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
+            rec._check_settlement_state(rec.settlement_id)
             rec._enforce_funding_gate({"state": "approved"})
             rec.write(
                 {
