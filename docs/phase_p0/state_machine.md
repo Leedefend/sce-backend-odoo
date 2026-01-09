@@ -67,6 +67,7 @@ Derived import status (computed on project):
 - empty: no BOQ lines
 - imported: line_count > 0
 Project fields:
+- boq_status: empty | imported
 - boq_line_count: total BOQ lines
 
 Transitions:
