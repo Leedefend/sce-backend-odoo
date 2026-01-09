@@ -266,6 +266,8 @@ policy.apply.business_full: check-compose-project
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
 policy.apply.role_matrix: check-compose-project
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_role_matrix.sh
+	@echo "⚠️  policy.apply.role_matrix finished; restarting Odoo to refresh ACL caches"
+	@$(MAKE) restart
 smoke.business_full: check-compose-project
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/audit/smoke_business_full.sh
 smoke.role_matrix: check-compose-project
