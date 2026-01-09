@@ -11,8 +11,8 @@
         "smart_construction_core",
     ],
     "data": [
-        "security/ir.model.access.csv",
         "security/role_matrix_groups.xml",
+        "security/ir.model.access.csv",
         "data/role_matrix_demo_users.xml",
         "data/security_policy_actions.xml",
     ],
