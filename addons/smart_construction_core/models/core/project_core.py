@@ -407,6 +407,15 @@ class ProjectProject(models.Model):
     boq_imported = fields.Boolean(
         '清单已导入', compute='_compute_boq_status'
     )
+    boq_status = fields.Selection(
+        [
+            ("empty", "未导入"),
+            ("imported", "已导入"),
+        ],
+        string="清单状态",
+        compute="_compute_boq_status",
+        store=True,
+    )
     boq_version_latest = fields.Char(
         '清单版本(最近)', compute='_compute_boq_status'
     )
@@ -724,6 +733,7 @@ class ProjectProject(models.Model):
         for project in projects:
             project.boq_line_count = 0
             project.boq_imported = False
+            project.boq_status = "empty"
             project.boq_version_latest = False
             project.boq_amount_leaf_total = 0.0
         if not projects:
@@ -764,6 +774,7 @@ class ProjectProject(models.Model):
             count = count_map.get(project.id, 0) or 0
             project.boq_line_count = count
             project.boq_imported = count > 0
+            project.boq_status = "imported" if count > 0 else "empty"
             project.boq_version_latest = version_map.get(project.id) or False
             project.boq_amount_leaf_total = amount_map.get(project.id, 0.0) or 0.0
 
