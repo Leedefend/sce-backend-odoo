@@ -7,7 +7,8 @@ def run(env):
     Stage = env["project.project.stage"].sudo()
     updated = 0
     for project in Project.search([]):
-        stage = Project._get_stage_for_lifecycle(project.lifecycle_state)
+        key = project._sc_compute_stage_key()
+        stage = Project._get_stage_by_key(key)
         if stage and project.stage_id != stage:
             project.stage_id = stage.id
             updated += 1
@@ -32,7 +33,7 @@ def run(env):
 register(
     SeedStep(
         name="project_stage_sync",
-        description="Align project stage_id with lifecycle_state.",
+        description="Align project stage_id with lifecycle signals.",
         run=run,
     )
 )
