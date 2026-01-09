@@ -14,6 +14,7 @@ DB_NAME="${DB_NAME:-${DB:-sc_odoo}}"
 DB_CI="${DB_CI:-sc_test}"
 DB_USER="${DB_USER:-odoo}"
 MODULE="${MODULE:-smart_construction_core}"
+ODOO_CONF="${ODOO_CONF:-/var/lib/odoo/odoo.conf}"
 
 # Tags
 TEST_TAGS="${TEST_TAGS:-sc_smoke,sc_gate}"
@@ -32,3 +33,4 @@ CI_TAIL_REDIS="${CI_TAIL_REDIS:-400}"
 export COMPOSE_ANSI="${COMPOSE_ANSI:-never}"
 export MSYS_NO_PATHCONV="${MSYS_NO_PATHCONV:-1}"
 export MSYS2_ARG_CONV_EXCL="${MSYS2_ARG_CONV_EXCL:---test-tags}"
+export ODOO_CONF
