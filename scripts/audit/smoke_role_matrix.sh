@@ -13,6 +13,21 @@ MANAGER_PWD=${MANAGER_PWD:-demo}
 ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PWD=${ADMIN_PWD:-admin}
 
+wait_odoo() {
+  local base="${BASE_URL}"
+  local n=0
+  until curl -fsS "${base}/web/webclient/version_info" >/dev/null 2>&1; do
+    n=$((n+1))
+    if [ "$n" -ge 60 ]; then
+      echo "ERROR: odoo not ready after 60s"
+      exit 2
+    fi
+    sleep 1
+  done
+}
+
+wait_odoo
+
 python3 - <<'PY'
 import json
 import os
