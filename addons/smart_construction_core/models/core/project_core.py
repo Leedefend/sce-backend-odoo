@@ -1350,6 +1350,11 @@ class ProjectProject(models.Model):
                 target_state,
                 obj_display=project.display_name,
             )
+            if target_state in ("warranty", "closed"):
+                project._guard_project_close_by_settlement(target_state)
+                project._guard_project_close_by_payment(target_state)
+            if target_state in ("in_progress", "done", "closing", "warranty", "closed"):
+                project._guard_project_close_by_boq(target_state)
 
     def action_set_lifecycle_state(self, target_state):
         """项目状态切换入口，统一接入状态机校验。"""
@@ -1361,6 +1366,44 @@ class ProjectProject(models.Model):
         if "lifecycle_state" in vals:
             self._validate_lifecycle_transition(vals.get("lifecycle_state"))
         return super().write(vals)
+
+    def _guard_project_close_by_settlement(self, target_state):
+        Settlement = self.env["project.settlement"]
+        count = Settlement.search_count(
+            [
+                ("project_id", "=", self.id),
+                ("state", "in", ["draft", "confirmed"]),
+            ]
+        )
+        if count:
+            label = ScStateMachine.label(ScStateMachine.PROJECT, target_state)
+            raise UserError(
+                f"项目[{self.display_name}]存在 {count} 条结算单未完成，禁止进入“{label}”。\n"
+                "建议：请先完成或取消相关结算单。"
+            )
+
+    def _guard_project_close_by_payment(self, target_state):
+        Payment = self.env["payment.request"]
+        count = Payment.search_count(
+            [
+                ("project_id", "=", self.id),
+                ("state", "in", ["submit", "approve", "approved"]),
+            ]
+        )
+        if count:
+            label = ScStateMachine.label(ScStateMachine.PROJECT, target_state)
+            raise UserError(
+                f"项目[{self.display_name}]存在 {count} 条付款申请未完结，禁止进入“{label}”。\n"
+                "建议：请先完成审批或取消相关付款申请。"
+            )
+
+    def _guard_project_close_by_boq(self, target_state):
+        if not (self.boq_line_count or 0):
+            label = ScStateMachine.label(ScStateMachine.PROJECT, target_state)
+            raise UserError(
+                f"项目[{self.display_name}]尚未导入工程量清单，禁止进入“{label}”。\n"
+                "建议：请先导入 BOQ 清单。"
+            )
 
 
 # =========================
