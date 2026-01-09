@@ -318,6 +318,16 @@ class ProjectBoqLine(models.Model):
 
     _sql_constraints = []
 
+    def unlink(self):
+        frozen_projects = set()
+        for rec in self:
+            project = rec.project_id
+            if project and project.id not in frozen_projects and project.is_boq_frozen():
+                frozen_projects.add(project.id)
+        if frozen_projects:
+            raise UserError("项目已进入结算/支付关键节点，BOQ 已冻结，禁止删除清单行。")
+        return super().unlink()
+
     line_type = fields.Selection(
         [
             ("major", "专业工程"),

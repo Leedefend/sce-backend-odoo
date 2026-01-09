@@ -240,6 +240,23 @@ class ProjectProject(models.Model):
     def is_funding_ready(self):
         self.ensure_one()
         return bool(self.funding_enabled and self.code)
+
+    def is_boq_frozen(self):
+        """BOQ is frozen once settlement/payment reaches key milestones."""
+        self.ensure_one()
+        Settlement = self.env["project.settlement"]
+        Payment = self.env["payment.request"]
+        settle = Settlement.search(
+            [("project_id", "=", self.id), ("state", "in", ["confirmed", "done"])],
+            limit=1,
+        )
+        if settle:
+            return True
+        pay = Payment.search(
+            [("project_id", "=", self.id), ("state", "in", ["approve", "approved", "done"])],
+            limit=1,
+        )
+        return bool(pay)
     phase_key = fields.Selection(
         [
             ('initiation', '立项阶段'),

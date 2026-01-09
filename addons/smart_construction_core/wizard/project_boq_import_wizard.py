@@ -105,6 +105,8 @@ class ProjectBoqImportWizard(models.TransientModel):
         self.ensure_one()
         if not self.file:
             raise UserError("请先上传导入文件。")
+        if self.project_id and self.project_id.is_boq_frozen() and self.clear_mode in ("replace_project", "replace_code"):
+            raise UserError("项目已进入结算/支付关键节点，BOQ 已冻结，禁止覆盖/清空导入。")
 
         rows, created_uoms, skipped = self._parse_file()
         if not rows:
