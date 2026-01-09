@@ -113,25 +113,52 @@ class ScStateMachine:
     }
 
     @classmethod
+    def is_registered(cls, model_name):
+        return model_name in cls._REGISTRY
+
+    @classmethod
+    def _get_registry(cls, model_name):
+        if model_name not in cls._REGISTRY:
+            raise KeyError(f"ScStateMachine: model not registered: {model_name}")
+        return cls._REGISTRY[model_name]
+
+    @classmethod
     def selection(cls, model_name):
-        return cls._REGISTRY[model_name][0]
+        return cls._get_registry(model_name)[0]
 
     @classmethod
     def transitions(cls, model_name):
-        return cls._REGISTRY[model_name][1]
+        return cls._get_registry(model_name)[1]
+
+    @classmethod
+    def label(cls, model_name, key):
+        states, _ = cls._get_registry(model_name)
+        return dict(states).get(key, key)
 
     @classmethod
     def assert_transition(cls, model_name, old, new, obj_display=""):
-        if old == new:
+        if not old or not new or old == new:
             return
         allowed = cls.transitions(model_name).get(old, set())
         if new not in allowed:
             hint = _("合法跃迁：%s") % (", ".join(sorted(allowed)) or "-")
             title = _("状态跃迁被拒绝")
             who = obj_display or model_name
-            raise UserError(f"{title}：{who} {old} -> {new}\n{hint}")
+            raise UserError(
+                _("%(title)s：%(who)s %(old)s(%(old_l)s) -> %(new)s(%(new_l)s)\n%(hint)s")
+                % {
+                    "title": title,
+                    "who": who,
+                    "old": old,
+                    "old_l": cls.label(model_name, old),
+                    "new": new,
+                    "new_l": cls.label(model_name, new),
+                    "hint": hint,
+                }
+            )
 
 
+# Legacy exports for backward compatibility. Prefer ScStateMachine.* in new code.
 PROJECT_LIFECYCLE_STATES = ScStateMachine.PROJECT_STATES
 PROJECT_LIFECYCLE_TRANSITIONS = ScStateMachine.PROJECT_TRANSITIONS
 CONTRACT_STATES = ScStateMachine.CONTRACT_STATES
