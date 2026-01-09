@@ -11,6 +11,8 @@ source "$(dirname "$0")/../_lib/common.sh"
 : "${DOCS_MOUNT_CONT:?DOCS_MOUNT_CONT required}"
 
 mkdir -p "${CI_ARTIFACT_DIR}"
+: > "${CI_ARTIFACT_DIR}/${CI_LOG}"
+exec > >(tee -a "${CI_ARTIFACT_DIR}/${CI_LOG}") 2>&1
 
 TEST_TAGS_FINAL="$(normalize_test_tags "${MODULE}" "${TEST_TAGS:-}")"
 log "CI run: MODULE=${MODULE} DB_CI=${DB_CI}"
@@ -64,7 +66,7 @@ compose ${COMPOSE_TEST_FILES} run --rm -T \
       --test-tags \"${TEST_TAGS_FINAL}\" \
       --stop-after-init \
       --log-level=test
-  " 2>&1 | tee "${CI_ARTIFACT_DIR}/${CI_LOG}"
+  "
 
 log "CI finished. Log: ${CI_ARTIFACT_DIR}/${CI_LOG}"
 
