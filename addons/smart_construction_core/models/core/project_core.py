@@ -178,30 +178,37 @@ class ProjectProject(models.Model):
     _inherit = 'project.project'
 
     # ---------- 默认阶段 ----------
-    def _stage_has_default_column(self):
-        try:
-            self.env.cr.execute(
-                """
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_name = 'project_project_stage'
-                  AND column_name = 'is_default'
-                """
-            )
-            return bool(self.env.cr.fetchone())
-        except Exception:
-            return False
+    @api.model
+    def _has_column(self, table, column):
+        """Return True if a column exists in current DB schema."""
+        self.env.cr.execute(
+            """
+            SELECT 1
+              FROM pg_attribute a
+              JOIN pg_class c ON c.oid = a.attrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = current_schema()
+               AND c.relname = %s
+               AND a.attname = %s
+               AND a.attnum > 0
+               AND NOT a.attisdropped
+             LIMIT 1
+        """, (table, column))
+        return bool(self.env.cr.fetchone())
 
+    @api.model
+    def _stage_has_default_column(self):
+        return self._has_column("project_project_stage", "is_default")
+
+    @api.model
     def _default_stage_id(self):
+        # 关键 guard：fresh DB 装模块时，列可能还没创建
         if not self._stage_has_default_column():
             return False
-        try:
-            stage = self.env['project.project.stage'].search(
-                [('is_default', '=', True)], limit=1
-            )
-            return stage.id
-        except Exception:
-            return False
+        stage = self.env['project.project.stage'].search(
+            [('is_default', '=', True)], limit=1
+        )
+        return stage.id or False
 
     # ---------- 基础属性 ----------
     project_code = fields.Char(
