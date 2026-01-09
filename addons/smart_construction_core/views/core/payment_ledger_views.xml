@@ -5,6 +5,11 @@
             <field name="name">付款记录</field>
             <field name="res_model">payment.ledger</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ])]"/>
         </record>
 
         <record id="view_payment_ledger_tree" model="ir.ui.view">
