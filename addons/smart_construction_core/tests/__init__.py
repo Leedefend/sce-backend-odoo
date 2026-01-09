@@ -10,6 +10,7 @@ from . import test_contract_center
 from . import test_cost_compare
 from . import test_profit_compare
 from . import test_stock_cost
+from . import test_p0_state_closure
 from . import test_install_gate
 from . import test_permission_matrix
 from . import test_permission_doc_sync
