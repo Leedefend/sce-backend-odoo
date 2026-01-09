@@ -1339,11 +1339,28 @@ class ProjectProject(models.Model):
 
     def action_set_state(self, target_state):
         """轻量状态切换入口，便于在表单按钮中调用。"""
-        allowed = [key for key, _ in self._fields['lifecycle_state'].selection]
-        if target_state not in allowed:
-            raise UserError("无效的项目状态。")
+        self.action_set_lifecycle_state(target_state)
+        return True
+
+    def _validate_lifecycle_transition(self, target_state):
+        for project in self:
+            ScStateMachine.assert_transition(
+                ScStateMachine.PROJECT,
+                project.lifecycle_state,
+                target_state,
+                obj_display=project.display_name,
+            )
+
+    def action_set_lifecycle_state(self, target_state):
+        """项目状态切换入口，统一接入状态机校验。"""
+        self._validate_lifecycle_transition(target_state)
         self.write({'lifecycle_state': target_state})
         return True
+
+    def write(self, vals):
+        if "lifecycle_state" in vals:
+            self._validate_lifecycle_transition(vals.get("lifecycle_state"))
+        return super().write(vals)
 
 
 # =========================
