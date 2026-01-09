@@ -179,5 +179,8 @@ run_check "showroom tasks >= 80" "showroom" \
 run_check "showroom contracts >= 3" "showroom" \
   "select case when count(*) >= 3 then 'ok' else 'showroom contracts < 3' end from construction_contract where subject like '展厅合同-%';" \
   "select id, subject, project_id, state from construction_contract where subject like '展厅合同-%' order by id;"
+run_check "showroom stages >= 4" "showroom" \
+  "select case when count(distinct stage_id) >= 4 then 'ok' else 'showroom stages < 4' end from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%';" \
+  "select stage_id, count(*) from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%' group by stage_id order by stage_id;"
 
 echo "🎉 demo.verify PASSED"

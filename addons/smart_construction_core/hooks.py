@@ -143,3 +143,21 @@ def pre_init_hook(env):
 def post_init_hook(env):
     """Install-time hook to ensure core taxes are present."""
     ensure_core_taxes(env)
+    _archive_default_project_stages(env)
+
+
+def _archive_default_project_stages(env):
+    """Archive Odoo default project stages to keep lifecycle stages canonical."""
+    Stage = env["project.project.stage"].sudo()
+    builtin_names = [
+        "To Do",
+        "In Progress",
+        "Done",
+        "Canceled",
+        "Cancelled",
+        "New",
+    ]
+    for name in builtin_names:
+        stages = Stage.search([("name", "ilike", name), ("active", "=", True)])
+        if stages:
+            stages.write({"active": False})
