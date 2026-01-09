@@ -1028,6 +1028,7 @@ class ProjectProject(models.Model):
         progress_rate_map = {}
         progress_count_map = {}
 
+        can_budget = self._can_read_model('project.budget')
         can_ledger = self._can_read_model('project.cost.ledger')
         can_progress = self._can_read_model('project.progress.entry')
 
@@ -1054,20 +1055,26 @@ class ProjectProject(models.Model):
                 progress_count_map[project_id] = rec.get('__count', 0)
 
         for project in self:
-            budgets = project.budget_ids
-            active_budget = budgets.filtered(lambda b: b.is_active)
-            if not active_budget:
-                active_budget = budgets
-            active_budget = active_budget.sorted(
-                key=lambda b: (b.version_date or b.create_date or fields.Date.today()),
-                reverse=True
-            )[:1]
-            budget_rec = active_budget[:1]
+            if can_budget:
+                budgets = project.budget_ids
+                active_budget = budgets.filtered(lambda b: b.is_active)
+                if not active_budget:
+                    active_budget = budgets
+                active_budget = active_budget.sorted(
+                    key=lambda b: (b.version_date or b.create_date or fields.Date.today()),
+                    reverse=True
+                )[:1]
+                budget_rec = active_budget[:1]
 
-            project.budget_active_id = budget_rec.id if budget_rec else False
-            project.budget_active_cost_target = budget_rec.amount_cost_target if budget_rec else 0.0
-            project.budget_active_revenue_target = budget_rec.amount_revenue_target if budget_rec else 0.0
-            project.budget_count = len(budgets)
+                project.budget_active_id = budget_rec.id if budget_rec else False
+                project.budget_active_cost_target = budget_rec.amount_cost_target if budget_rec else 0.0
+                project.budget_active_revenue_target = budget_rec.amount_revenue_target if budget_rec else 0.0
+                project.budget_count = len(budgets)
+            else:
+                project.budget_active_id = False
+                project.budget_active_cost_target = 0.0
+                project.budget_active_revenue_target = 0.0
+                project.budget_count = 0
 
             ledger_amount = ledger_amount_map.get(project.id, 0.0) if can_ledger else 0.0
             project.cost_ledger_amount_actual = ledger_amount

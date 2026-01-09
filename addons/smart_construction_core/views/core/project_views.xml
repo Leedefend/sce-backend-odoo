@@ -94,12 +94,28 @@
                 <div class="sc_insight_mount" data-model="project.project" data-scene="project.entry"/>
             </xpath>
 
-            <!-- 概览/施工/协作页插入到原生 notebook 开头 -->
-            <xpath expr="//sheet/notebook/page[1]" position="before">
-                <div class="o_sc_project_overview row" style="margin: 8px 0 12px 0;">
+            <!-- 概览提示区插入到原生 notebook 之前 -->
+            <xpath expr="//sheet/notebook" position="before">
+                <div class="o_sc_project_overview row" data-model="project.project" style="margin: 8px 0 12px 0;">
                     <div class="col-12">
-                        <div class="alert alert-info" role="alert" style="margin-bottom: 8px;">
-                            <strong>项目概览：</strong>快速查看合同与资金执行情况（试用版）。
+                        <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert" style="margin-bottom: 8px;">
+                            <span><strong>项目概览：</strong>快速查看合同与资金执行情况（试用版）。</span>
+                            <span>
+                                <a href="#"
+                                   role="button"
+                                   class="btn btn-sm btn-primary sc-project-tab-jump"
+                                   data-tab="sc_tender"
+                                   groups="smart_construction_core.group_sc_cap_project_user">
+                                    进入投标管理
+                                </a>
+                                <a href="#"
+                                   role="button"
+                                   class="btn btn-sm btn-outline-primary sc-project-tab-jump ms-1"
+                                   data-tab="sc_contract"
+                                   groups="smart_construction_core.group_sc_cap_contract_read">
+                                    进入合同
+                                </a>
+                            </span>
                         </div>
                     </div>
                     <div class="col-12 col-md-3">
@@ -151,6 +167,10 @@
                         </div>
                     </div>
                 </div>
+            </xpath>
+
+            <!-- 概览/施工/协作页插入到原生 notebook 开头 -->
+            <xpath expr="//sheet/notebook/page[1]" position="before">
                 <page string="项目概览" name="sc_overview">
                     <group col="4" string="项目概览">
                         <field name="name"/>
@@ -168,7 +188,7 @@
                         <field name="pay_unpaid_total" readonly="1"/>
                     </group>
                 </page>
-                <page string="投标管理" name="sc_tender" groups="smart_construction_core.group_sc_cap_project_user">
+                <page string="投标管理" name="sc_tender" data-tab="sc_tender" groups="smart_construction_core.group_sc_cap_project_user">
                     <field name="tender_bid_ids" context="{'default_project_id': id, 'default_state': 'prepare'}">
                         <tree string="投标记录" editable="bottom">
                             <field name="tender_name"/>
@@ -378,7 +398,7 @@
                         </field>
                     </group>
                 </page>
-                <page string="合同" groups="smart_construction_core.group_sc_cap_contract_read">
+                <page string="合同" name="sc_contract" data-tab="sc_contract" groups="smart_construction_core.group_sc_cap_contract_read">
                     <group>
                         <field name="contract_count" readonly="1"/>
                         <field name="contract_income_total" readonly="1"/>
