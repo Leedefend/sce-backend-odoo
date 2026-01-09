@@ -40,3 +40,22 @@ test -d addons_external/oca_server_ux/base_tier_validation && echo OK
 ### 验收标准
 * 目录 addons_external/oca_server_ux/base_tier_validation 存在
 * Odoo 安装 smart_construction_core 不再报缺依赖
+
+## Business Full 权限策略（必跑）
+
+### 场景
+smart_construction_custom 负责聚合 Business Full 的能力组。升级后需显式应用策略，避免权限漂移。
+
+### 操作（升级后执行一次）
+```bash
+make policy.apply.business_full DB=sc_demo
+```
+
+### 回归（最小 smoke）
+```bash
+make smoke.business_full DB=sc_demo
+```
+
+### 验收标准
+* apply 输出包含 `apply_business_full_policy: True`
+* smoke 输出包含 `OK: material plan submit success`
