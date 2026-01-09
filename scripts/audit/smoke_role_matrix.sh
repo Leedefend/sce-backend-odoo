@@ -2,7 +2,11 @@
 set -euo pipefail
 
 DB_NAME=${DB_NAME:-sc_demo}
-BASE_URL=${BASE_URL:-http://localhost:8069}
+BASE_URL_DEFAULTED=0
+if [ -z "${BASE_URL:-}" ]; then
+  BASE_URL="http://localhost:8069"
+  BASE_URL_DEFAULTED=1
+fi
 
 READ_USER=${READ_USER:-demo_role_project_read}
 READ_PWD=${READ_PWD:-demo}
@@ -17,17 +21,20 @@ wait_odoo() {
   local base="${BASE_URL}"
   local n=0
   local fallback_base=""
-  if [ -z "${BASE_URL:-}" ]; then
+  if [ "${BASE_URL_DEFAULTED}" -eq 1 ]; then
     fallback_base="http://localhost:18080"
   fi
   if ! command -v curl >/dev/null 2>&1; then
-    python3 - <<'PY'
+    BASE_URL_DEFAULTED="${BASE_URL_DEFAULTED}" BASE_URL="${base}" FALLBACK_BASE="${fallback_base}" python3 - <<'PY'
 import os
 import time
 import urllib.request
 
 base = os.environ.get("BASE_URL", "http://localhost:8069")
-fallback = "" if os.environ.get("BASE_URL") else "http://localhost:18080"
+fallback = os.environ.get("FALLBACK_BASE", "")
+base_defaulted = os.environ.get("BASE_URL_DEFAULTED", "0") == "1"
+if not fallback and base_defaulted:
+    fallback = "http://localhost:18080"
 
 def ok(url):
     try:
@@ -43,7 +50,7 @@ for _ in range(60):
         os.environ["BASE_URL"] = fallback
         raise SystemExit(0)
     time.sleep(1)
-raise SystemExit("ERROR: odoo not ready after 60s")
+raise SystemExit("ERROR: odoo not ready after 60s (tried %s%s)" % (base, ", " + fallback if fallback else ""))
 PY
     return
   fi
@@ -55,7 +62,11 @@ PY
       return
     fi
     if [ "$n" -ge 60 ]; then
-      echo "ERROR: odoo not ready after 60s"
+      if [ -n "${fallback_base}" ]; then
+        echo "ERROR: odoo not ready after 60s (tried ${base}, ${fallback_base})"
+      else
+        echo "ERROR: odoo not ready after 60s (tried ${base})"
+      fi
       exit 2
     fi
     sleep 1
