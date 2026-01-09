@@ -32,13 +32,36 @@
                 <field name="cost_budget_gap"/>
 
                 <field name="dashboard_progress_rate"/>
+                <field name="progress_entry_count"/>
                 <field name="document_completion_rate"/>
 
                 <templates>
+                    <t t-name="kanban-group-header">
+                        <div class="o_kanban_header">
+                            <div class="o_kanban_header_title">
+                                <span t-esc="group.value"/>
+                                <span class="sc-group-count" t-if="group.count">
+                                    (<t t-esc="group.count"/>)
+                                </span>
+                            </div>
+                        </div>
+                    </t>
                     <t t-name="kanban-box">
+                        <t t-set="revenue_raw" t-value="+(record.dashboard_revenue_actual.raw_value || 0)"/>
+                        <t t-set="cost_raw" t-value="+(record.dashboard_cost_actual.raw_value || 0)"/>
+                        <t t-set="profit_raw" t-value="+(record.dashboard_profit_actual.raw_value || 0)"/>
+                        <t t-set="invoice_raw" t-value="+(record.dashboard_invoice_amount.raw_value || 0)"/>
+                        <t t-set="payment_in_raw" t-value="+(record.dashboard_payment_in.raw_value || 0)"/>
+                        <t t-set="payment_out_raw" t-value="+(record.dashboard_payment_out.raw_value || 0)"/>
+                        <t t-set="plan_revenue_target_raw" t-value="+(record.budget_active_revenue_target.raw_value || 0)"/>
+                        <t t-set="has_finance_data"
+                           t-value="Math.abs(revenue_raw) || Math.abs(cost_raw) || Math.abs(invoice_raw) || Math.abs(payment_in_raw) || Math.abs(payment_out_raw)"/>
+
                         <t t-set="progress_raw" t-value="+(record.dashboard_progress_rate.raw_value or 0)"/>
                         <t t-set="progress_clamped" t-value="Math.min(Math.max(progress_raw, 0.0), 100.0)"/>
-                        <t t-set="dashoffset" t-value="100 - progress_clamped"/>
+                        <t t-set="progress_entry_count" t-value="+(record.progress_entry_count.raw_value || 0)"/>
+                        <t t-set="has_progress_data" t-value="progress_entry_count"/>
+                        <t t-set="dashoffset" t-value="has_progress_data and (100 - progress_clamped) or 100"/>
 
                         <t t-set="doc_rate_raw" t-value="+(record.document_completion_rate.raw_value or 0)"/>
                         <t t-set="doc_rate_clamped" t-value="Math.min(Math.max(doc_rate_raw, 0.0), 100.0)"/>
@@ -47,9 +70,11 @@
 
                         <t t-set="plan_rate_raw" t-value="+(record.plan_percent.raw_value or 0)"/>
                         <t t-set="plan_rate_clamped" t-value="Math.min(Math.max(plan_rate_raw, 0.0), 100.0)"/>
+                        <t t-set="has_plan_data" t-value="Math.abs(plan_rate_raw) || Math.abs(plan_revenue_target_raw)"/>
 
                         <t t-set="gap" t-value="+(record.cost_budget_gap.raw_value or 0.0)"/>
                         <t t-set="budget_target" t-value="+(record.budget_active_cost_target.raw_value or 0.0)"/>
+                        <t t-set="has_budget_data" t-value="Math.abs(budget_target) || Math.abs(plan_revenue_target_raw)"/>
                         <t t-set="risk_class"
                            t-value="gap &lt; 0 and 'sc_risk_high'
                                     or (gap &lt;= budget_target * 0.1 and 'sc_risk_warn'
@@ -92,7 +117,7 @@
                                     <div class="sc-kpi-row sc-kpi-bold">
                                         <span class="sc-kpi-label">收入</span>
                                         <span class="sc-kpi-value">
-                                            <t t-if="record.dashboard_revenue_actual">
+                                            <t t-if="has_finance_data">
                                                 <t t-esc="record.dashboard_revenue_actual.value or '0.00'"/>
                                             </t><t t-else="">—</t>
                                         </span>
@@ -100,7 +125,7 @@
                                     <div class="sc-kpi-row sc-kpi-bold">
                                         <span class="sc-kpi-label">成本</span>
                                         <span class="sc-kpi-value">
-                                            <t t-if="record.dashboard_cost_actual">
+                                            <t t-if="has_finance_data">
                                                 <t t-esc="record.dashboard_cost_actual.value or '0.00'"/>
                                             </t>
                                                 <t t-else="">—</t>
@@ -108,13 +133,17 @@
                                     </div>
                                     <div class="sc-kpi-row">
                                         <span class="sc-kpi-label">收入目标</span>
-                                        <span class="sc-kpi-value"
-                                              t-esc="record.budget_active_revenue_target.value or '0.00'"/>
+                                        <span class="sc-kpi-value">
+                                            <t t-if="plan_revenue_target_raw">
+                                                <t t-esc="record.budget_active_revenue_target.value or '0.00'"/>
+                                            </t>
+                                            <t t-else="">—</t>
+                                        </span>
                                     </div>
                                     <div class="sc-kpi-row sc-kpi-bold">
                                         <span class="sc-kpi-label">毛利</span>
                                         <span class="sc-kpi-value">
-                                            <t t-if="record.dashboard_profit_actual">
+                                            <t t-if="has_finance_data">
                                                 <t t-esc="record.dashboard_profit_actual.value or '0.00'"/>
                                             </t><t t-else="">—</t>
                                         </span>
@@ -123,21 +152,26 @@
                                     <div class="sc-kpi-row sc-kpi-gap">
                                         <span class="sc-kpi-label">成本偏差</span>
                                         <span>
-                                            <t t-if="gap &lt; 0">
-                                                <span class="badge badge-danger">超预算</span>
-                                            </t>
-                                            <t t-elif="risk_class == 'sc_risk_warn'">
-                                                <span class="badge badge-warning">接近上限</span>
+                                            <t t-if="has_budget_data">
+                                                <t t-if="gap &lt; 0">
+                                                    <span class="badge badge-danger">超预算</span>
+                                                </t>
+                                                <t t-elif="risk_class == 'sc_risk_warn'">
+                                                    <span class="badge badge-warning">接近上限</span>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="badge badge-success">正常</span>
+                                                </t>
                                             </t>
                                             <t t-else="">
-                                                <span class="badge badge-success">正常</span>
+                                                <span class="badge badge-secondary">尚未录入计划数据</span>
                                             </t>
                                         </span>
                                     </div>
                                     <div class="sc-kpi-row">
                                         <span class="sc-kpi-label">进度偏差</span>
                                         <span>
-                                            <t t-if="plan_rate_clamped">
+                                            <t t-if="has_plan_data">
                                                 <t t-set="sv" t-value="progress_clamped - plan_rate_clamped"/>
                                                 <t t-if="sv &lt; -5">
                                                     <span class="badge badge-danger">
@@ -154,13 +188,13 @@
                                                 </t>
                                             </t>
                                             <t t-else="">
-                                                <span class="badge badge-secondary">无计划数据</span>
+                                                <span class="badge badge-secondary">尚未录入计划数据</span>
                                             </t>
                                         </span>
                                     </div>
                                 </div>
 
-                                <div class="sc-progress-block">
+                                <div t-attf-class="sc-progress-block{{ has_progress_data and '' or ' sc-progress-empty' }}">
                                     <svg viewBox="0 0 36 36" width="70" height="70">
                                         <circle cx="18" cy="18" r="16"
                                                 fill="none"
@@ -168,8 +202,8 @@
                                                 stroke-width="3.5"/>
                                         <circle cx="18" cy="18" r="16"
                                                 fill="none"
-                                                t-att-stroke="risk_class == 'sc_risk_high' and '#e74c3c'
-                                                              or (risk_class == 'sc_risk_warn' and '#f39c12' or '#7159c1')"
+                                                t-att-stroke="has_progress_data and (risk_class == 'sc_risk_high' and '#e74c3c'
+                                                              or (risk_class == 'sc_risk_warn' and '#f39c12' or '#7159c1')) or '#d6d6d6'"
                                                 stroke-width="3.5"
                                                 stroke-linecap="round"
                                                 stroke-dasharray="100"
@@ -178,14 +212,21 @@
                                         <text x="18" y="20.5"
                                               text-anchor="middle"
                                               font-size="9"
-                                              fill="#333">
-                                            <t t-esc="Math.round(progress_clamped || 0) + '%'"/>
+                                              fill="#333"
+                                              t-att-class="has_progress_data and '' or 'sc-progress-empty-text'">
+                                            <t t-if="has_progress_data">
+                                                <t t-esc="Math.round(progress_clamped || 0) + '%'"/>
+                                            </t>
+                                            <t t-else="">—</t>
                                         </text>
                                     </svg>
                                     <div class="sc-progress-caption">
-                                        驾驶舱进度
-                                        <t t-if="plan_rate_clamped">
+                                        <span class="sc-progress-title" title="根据进度填报与计划口径汇总">综合执行进度</span>
+                                        <t t-if="has_plan_data">
                                             <br/>计划 <t t-esc="Math.round(plan_rate_clamped)"/>%
+                                        </t>
+                                        <t t-elif="not has_progress_data">
+                                            <br/>未初始化
                                         </t>
                                     </div>
                                 </div>
@@ -210,7 +251,7 @@
                                     <div class="sc-footer-row">
                                         <span class="sc-footer-label">开票</span>
                                         <span class="sc-footer-value">
-                                            <t t-if="record.dashboard_invoice_amount">
+                                            <t t-if="has_finance_data">
                                                 <t t-esc="record.dashboard_invoice_amount.value or '0.00'"/>
                                             </t>
                                             <t t-else="">—</t>
@@ -219,7 +260,7 @@
                                     <div class="sc-footer-row">
                                         <span class="sc-footer-label">收款</span>
                                         <span class="sc-footer-value">
-                                            <t t-if="record.dashboard_payment_in">
+                                            <t t-if="has_finance_data">
                                                 <t t-esc="record.dashboard_payment_in.value or '0.00'"/>
                                             </t>
                                             <t t-else="">—</t>
@@ -228,7 +269,7 @@
                                     <div class="sc-footer-row">
                                         <span class="sc-footer-label">付款</span>
                                         <span class="sc-footer-value">
-                                            <t t-if="record.dashboard_payment_out">
+                                            <t t-if="has_finance_data">
                                                 <t t-esc="record.dashboard_payment_out.value or '0.00'"/>
                                             </t>
                                             <t t-else="">—</t>
@@ -237,7 +278,7 @@
                                     <div class="sc-footer-row">
                                         <span class="sc-footer-label">资料</span>
                                         <span class="sc-footer-value">
-                                            <t t-if="doc_rate_clamped">
+                                            <t t-if="doc_required">
                                                 <t t-esc="Math.round(doc_rate_clamped || 0) + '%'"/>
                                             </t>
                                             <t t-else="">—</t>
@@ -245,6 +286,7 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="sc-card-more">更多财务与资料</div>
                         </div>
                     </t>
                 </templates>
@@ -341,6 +383,10 @@
                         padding-top:4px;
                         font-size:10px;
                         color:#666;
+                        max-height:0;
+                        opacity:0;
+                        overflow:hidden;
+                        transition:max-height .2s ease, opacity .2s ease;
                     }
                     .sc-footer-right{
                         display:grid;
@@ -364,6 +410,25 @@
                         top: 6px;
                         right: 6px;
                         font-size: 14px;
+                    }
+                    .sc-card-more{
+                        font-size:10px;
+                        color:#999;
+                        text-align:right;
+                    }
+                    .sc_project_dashboard_kanban .sc_project_card:hover .sc-card-footer{
+                        max-height:120px;
+                        opacity:1;
+                    }
+                    .sc_project_dashboard_kanban .sc_project_card:hover .sc-card-more{
+                        display:none;
+                    }
+                    .sc-progress-empty text.sc-progress-empty-text{
+                        fill:#999;
+                    }
+                    .sc-group-count{
+                        margin-left:4px;
+                        color:#999;
                     }
                 </style>
             </kanban>
