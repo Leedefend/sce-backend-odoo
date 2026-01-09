@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="action_apply_business_full_policy" model="ir.actions.server">
+            <field name="name">Apply Business Full Policy</field>
+            <field name="model_id" ref="model_sc_security_policy"/>
+            <field name="state">code</field>
+            <field name="code">env['sc.security.policy'].apply_business_full_policy()</field>
+        </record>
+    </data>
+</odoo>
