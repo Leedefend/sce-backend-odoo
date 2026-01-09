@@ -4,100 +4,142 @@
 Keep these constants in sync with docs/phase_p0/state_machine.md.
 """
 
-# Project lifecycle (project.project.lifecycle_state)
-PROJECT_LIFECYCLE_STATES = [
-    ("draft", "立项"),
-    ("in_progress", "在建"),
-    ("paused", "停工"),
-    ("done", "竣工"),
-    ("closing", "结算中"),
-    ("warranty", "保修期"),
-    ("closed", "关闭"),
-]
+from odoo import _
+from odoo.exceptions import UserError
 
-PROJECT_LIFECYCLE_TRANSITIONS = {
-    "draft": ["in_progress", "paused", "closed"],
-    "in_progress": ["paused", "done", "closing", "closed"],
-    "paused": ["in_progress", "closed"],
-    "done": ["closing", "warranty", "closed"],
-    "closing": ["warranty", "closed"],
-    "warranty": ["closed"],
-    "closed": [],
-}
 
-# Contract (construction.contract.state)
-CONTRACT_STATES = [
-    ("draft", "草稿"),
-    ("confirmed", "已生效"),
-    ("running", "执行中"),
-    ("closed", "已关闭"),
-    ("cancel", "已取消"),
-]
+class ScStateMachine:
+    """Single source of truth for lifecycle states + legal transitions."""
 
-CONTRACT_TRANSITIONS = {
-    "draft": ["confirmed", "cancel"],
-    "confirmed": ["running", "closed", "cancel"],
-    "running": ["closed", "cancel"],
-    "closed": [],
-    "cancel": [],
-}
+    PROJECT = "project.project"
+    CONTRACT = "construction.contract"
+    SETTLEMENT_ORDER = "sc.settlement.order"
+    SETTLEMENT = "project.settlement"
+    PAYMENT_REQUEST = "payment.request"
 
-# Settlement order (sc.settlement.order.state)
-SETTLEMENT_ORDER_STATES = [
-    ("draft", "草稿"),
-    ("submit", "提交"),
-    ("approve", "批准"),
-    ("done", "完成"),
-    ("cancel", "取消"),
-]
+    PROJECT_STATES = [
+        ("draft", _("立项")),
+        ("in_progress", _("在建")),
+        ("paused", _("停工")),
+        ("done", _("竣工")),
+        ("closing", _("结算中")),
+        ("warranty", _("保修期")),
+        ("closed", _("关闭")),
+    ]
+    PROJECT_TRANSITIONS = {
+        "draft": {"in_progress", "paused", "closed"},
+        "in_progress": {"paused", "done", "closing", "closed"},
+        "paused": {"in_progress", "closed"},
+        "done": {"closing", "warranty", "closed"},
+        "closing": {"warranty", "closed"},
+        "warranty": {"closed"},
+        "closed": set(),
+    }
 
-SETTLEMENT_ORDER_TRANSITIONS = {
-    "draft": ["submit", "cancel"],
-    "submit": ["approve", "cancel"],
-    "approve": ["done", "cancel"],
-    "done": [],
-    "cancel": [],
-}
+    CONTRACT_STATES = [
+        ("draft", _("草稿")),
+        ("confirmed", _("已生效")),
+        ("running", _("执行中")),
+        ("closed", _("已关闭")),
+        ("cancel", _("已取消")),
+    ]
+    CONTRACT_TRANSITIONS = {
+        "draft": {"confirmed", "cancel"},
+        "confirmed": {"running", "closed", "cancel"},
+        "running": {"closed", "cancel"},
+        "closed": set(),
+        "cancel": set(),
+    }
 
-# Settlement (project.settlement.state)
-SETTLEMENT_STATES = [
-    ("draft", "草稿"),
-    ("confirmed", "已确认"),
-    ("done", "完成"),
-    ("cancel", "取消"),
-]
+    SETTLEMENT_ORDER_STATES = [
+        ("draft", _("草稿")),
+        ("submit", _("提交")),
+        ("approve", _("批准")),
+        ("done", _("完成")),
+        ("cancel", _("取消")),
+    ]
+    SETTLEMENT_ORDER_TRANSITIONS = {
+        "draft": {"submit", "cancel"},
+        "submit": {"approve", "cancel"},
+        "approve": {"done", "cancel"},
+        "done": set(),
+        "cancel": set(),
+    }
 
-SETTLEMENT_TRANSITIONS = {
-    "draft": ["confirmed", "cancel"],
-    "confirmed": ["done", "cancel"],
-    "done": [],
-    "cancel": [],
-}
+    SETTLEMENT_STATES = [
+        ("draft", _("草稿")),
+        ("confirmed", _("已确认")),
+        ("done", _("完成")),
+        ("cancel", _("取消")),
+    ]
+    SETTLEMENT_TRANSITIONS = {
+        "draft": {"confirmed", "cancel"},
+        "confirmed": {"done", "cancel"},
+        "done": set(),
+        "cancel": set(),
+    }
 
-# Payment request (payment.request.state)
-PAYMENT_REQUEST_STATES = [
-    ("draft", "草稿"),
-    ("submit", "提交"),
-    ("approve", "审批中"),
-    ("approved", "已批准"),
-    ("rejected", "已驳回"),
-    ("done", "已完成"),
-    ("cancel", "已取消"),
-]
+    PAYMENT_REQUEST_STATES = [
+        ("draft", _("草稿")),
+        ("submit", _("提交")),
+        ("approve", _("审批中")),
+        ("approved", _("已批准")),
+        ("rejected", _("已驳回")),
+        ("done", _("已完成")),
+        ("cancel", _("已取消")),
+    ]
+    PAYMENT_REQUEST_TRANSITIONS = {
+        "draft": {"submit", "cancel"},
+        "submit": {"approve", "rejected", "cancel"},
+        "approve": {"approved", "rejected", "cancel"},
+        "approved": {"done", "cancel"},
+        "rejected": {"draft", "cancel"},
+        "done": set(),
+        "cancel": set(),
+    }
 
-PAYMENT_REQUEST_TRANSITIONS = {
-    "draft": ["submit", "cancel"],
-    "submit": ["approve", "rejected", "cancel"],
-    "approve": ["approved", "rejected", "cancel"],
-    "approved": ["done", "cancel"],
-    "rejected": ["draft", "cancel"],
-    "done": [],
-    "cancel": [],
-}
+    BOQ_SOURCE_TYPES = [
+        ("tender", _("招标清单")),
+        ("contract", _("合同清单")),
+        ("settlement", _("结算清单")),
+    ]
 
-# BOQ source types (project.boq.line.source_type)
-BOQ_SOURCE_TYPES = [
-    ("tender", "招标清单"),
-    ("contract", "合同清单"),
-    ("settlement", "结算清单"),
-]
+    _REGISTRY = {
+        PROJECT: (PROJECT_STATES, PROJECT_TRANSITIONS),
+        CONTRACT: (CONTRACT_STATES, CONTRACT_TRANSITIONS),
+        SETTLEMENT_ORDER: (SETTLEMENT_ORDER_STATES, SETTLEMENT_ORDER_TRANSITIONS),
+        SETTLEMENT: (SETTLEMENT_STATES, SETTLEMENT_TRANSITIONS),
+        PAYMENT_REQUEST: (PAYMENT_REQUEST_STATES, PAYMENT_REQUEST_TRANSITIONS),
+    }
+
+    @classmethod
+    def selection(cls, model_name):
+        return cls._REGISTRY[model_name][0]
+
+    @classmethod
+    def transitions(cls, model_name):
+        return cls._REGISTRY[model_name][1]
+
+    @classmethod
+    def assert_transition(cls, model_name, old, new, obj_display=""):
+        if old == new:
+            return
+        allowed = cls.transitions(model_name).get(old, set())
+        if new not in allowed:
+            hint = _("合法跃迁：%s") % (", ".join(sorted(allowed)) or "-")
+            title = _("状态跃迁被拒绝")
+            who = obj_display or model_name
+            raise UserError(f"{title}：{who} {old} -> {new}\n{hint}")
+
+
+PROJECT_LIFECYCLE_STATES = ScStateMachine.PROJECT_STATES
+PROJECT_LIFECYCLE_TRANSITIONS = ScStateMachine.PROJECT_TRANSITIONS
+CONTRACT_STATES = ScStateMachine.CONTRACT_STATES
+CONTRACT_TRANSITIONS = ScStateMachine.CONTRACT_TRANSITIONS
+SETTLEMENT_ORDER_STATES = ScStateMachine.SETTLEMENT_ORDER_STATES
+SETTLEMENT_ORDER_TRANSITIONS = ScStateMachine.SETTLEMENT_ORDER_TRANSITIONS
+SETTLEMENT_STATES = ScStateMachine.SETTLEMENT_STATES
+SETTLEMENT_TRANSITIONS = ScStateMachine.SETTLEMENT_TRANSITIONS
+PAYMENT_REQUEST_STATES = ScStateMachine.PAYMENT_REQUEST_STATES
+PAYMENT_REQUEST_TRANSITIONS = ScStateMachine.PAYMENT_REQUEST_TRANSITIONS
+BOQ_SOURCE_TYPES = ScStateMachine.BOQ_SOURCE_TYPES

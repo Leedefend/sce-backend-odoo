@@ -5,7 +5,7 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import config
 
-from . import state_machine as sm
+from .state_machine import ScStateMachine
 
 
 _logger = logging.getLogger(__name__)
@@ -328,7 +328,7 @@ class ConstructionContract(models.Model):
                     ContractLine.create(payload)
 
     state = fields.Selection(
-        sm.CONTRACT_STATES,
+        ScStateMachine.selection(ScStateMachine.CONTRACT),
         string="状态",
         default="draft",
         tracking=True,

@@ -5,7 +5,7 @@ import uuid
 
 from odoo import models, fields, api
 
-from ..support import state_machine as sm
+from ..support.state_machine import ScStateMachine
 from odoo.exceptions import UserError
 
 
@@ -230,7 +230,7 @@ class ProjectProject(models.Model):
     )
 
     lifecycle_state = fields.Selection(
-        sm.PROJECT_LIFECYCLE_STATES,
+        ScStateMachine.selection(ScStateMachine.PROJECT),
         string='项目状态',
         default='draft',
         tracking=True,

@@ -13,6 +13,11 @@ States:
 - warranty (保修期)
 - closed (关闭)
 
+Semantics:
+- done: 现场已竣工，待结算
+- closing: 结算流程进行中（至少存在 confirmed/done settlement 或在跑支付/审价）
+- warranty: 进入保修履约阶段（不再产生工程量，但可能产生保修任务/费用）
+
 Transitions:
 - draft -> in_progress | paused | closed
 - in_progress -> paused | done | closing | closed
@@ -22,7 +27,10 @@ Transitions:
 - warranty -> closed
 
 Triggers:
-- Manual project lifecycle changes (future guard rules in P0-02+)
+- action_*: explicit user actions (buttons)
+- write/unlink: implicit actions (edit/delete)
+- cron: system actions (future)
+- Manual lifecycle changes (future guard rules in P0-02+)
 
 ## Contract (construction.contract.state)
 
@@ -41,6 +49,10 @@ Transitions:
 Triggers:
 - action_confirm, action_close (or equivalent)
 
+Running criteria (suggested):
+- confirmed: contract effective but no execution evidence
+- running: first execution evidence exists (e.g., payment approved, settlement confirmed, or BOQ execution > 0)
+
 ## BOQ (project.boq.line)
 
 BOQ has no explicit workflow state yet. Current controlled enums:
@@ -54,6 +66,10 @@ Transitions:
 - empty -> imported (import/seed)
 - imported -> imported (re-import/replace)
 - imported -> empty (delete all)
+
+Freeze principle (for P0-03+ guards):
+- re-import is allowed
+- after settlement/payment key nodes, BOQ edits are guarded or versioned
 
 ## Settlement Order (sc.settlement.order.state)
 
@@ -73,6 +89,10 @@ Triggers:
 - action_submit, action_approve, action_done
 
 ## Settlement (project.settlement.state)
+
+Note:
+- Settlement Order: process-oriented document (审批型单据)
+- Settlement: result/ledger document (生效型单据)
 
 States:
 - draft (草稿)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 
-from ..support import state_machine as sm
+from ..support.state_machine import ScStateMachine
 
 
 class ProjectSettlement(models.Model):
@@ -59,7 +59,7 @@ class ProjectSettlement(models.Model):
         string="结算行",
     )
     state = fields.Selection(
-        sm.SETTLEMENT_STATES,
+        ScStateMachine.selection(ScStateMachine.SETTLEMENT),
         string="状态",
         default="draft",
         tracking=True,

@@ -4,7 +4,7 @@ from odoo.exceptions import ValidationError, UserError
 from odoo.tools.float_utils import float_compare
 
 from ..support import operating_metrics as opm
-from ..support import state_machine as sm
+from ..support.state_machine import ScStateMachine
 
 
 class PaymentRequest(models.Model):
@@ -170,7 +170,7 @@ class PaymentRequest(models.Model):
     )
 
     state = fields.Selection(
-        sm.PAYMENT_REQUEST_STATES,
+        ScStateMachine.selection(ScStateMachine.PAYMENT_REQUEST),
         string="状态",
         default="draft",
         tracking=True,
