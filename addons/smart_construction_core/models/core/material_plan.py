@@ -71,10 +71,7 @@ class ProjectMaterialPlan(models.Model):
         for rec in self:
             if rec.state != "draft":
                 continue
-            if not (
-                self.env.user.has_group("smart_construction_core.group_sc_cap_material_user")
-                or self.env.user.has_group("smart_construction_core.group_sc_business_full")
-            ):
+            if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_user"):
                 raise UserError(_("你没有提交物资计划的权限。"))
             if not rec.line_ids:
                 raise UserError(_("请先填写物资计划明细再提交。"))
@@ -101,10 +98,7 @@ class ProjectMaterialPlan(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
-            if not (
-                self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager")
-                or self.env.user.has_group("smart_construction_core.group_sc_business_full")
-            ):
+            if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有审批物资计划的权限。"))
             rec.write(
                 {
@@ -120,10 +114,7 @@ class ProjectMaterialPlan(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
-            if not (
-                self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager")
-                or self.env.user.has_group("smart_construction_core.group_sc_business_full")
-            ):
+            if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有驳回物资计划的权限。"))
             rec.activity_unlink(["mail.mail_activity_data_todo"])
             rec.write(
@@ -164,10 +155,7 @@ class ProjectMaterialPlan(models.Model):
         for rec in self:
             if rec.state != "approved":
                 continue
-            if not (
-                self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager")
-                or self.env.user.has_group("smart_construction_core.group_sc_business_full")
-            ):
+            if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有完成物资计划的权限。"))
             rec.state = "done"
 
@@ -175,10 +163,7 @@ class ProjectMaterialPlan(models.Model):
         for rec in self:
             if rec.state in ("done", "cancel"):
                 continue
-            if not (
-                self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager")
-                or self.env.user.has_group("smart_construction_core.group_sc_business_full")
-            ):
+            if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有取消物资计划的权限。"))
             rec.state = "cancel"
 
