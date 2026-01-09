@@ -12,5 +12,5 @@
               parent="menu_sc_finance_center"
               action="smart_construction_core.action_sc_tier_review_my_payment_request"
               sequence="45"
-              groups="smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_business_full"/>
 </odoo>
