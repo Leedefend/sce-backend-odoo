@@ -2,9 +2,10 @@
 set -euo pipefail
 
 DB_NAME=${DB_NAME:-sc_demo}
+ODOO_BASE_URL="${ODOO_BASE_URL:-${BASE_URL:-http://localhost:8069}}"
+BASE_URL="${ODOO_BASE_URL}"
 BASE_URL_DEFAULTED=0
-if [ -z "${BASE_URL:-}" ]; then
-  BASE_URL="http://localhost:8069"
+if [ -z "${ODOO_BASE_URL:-}" ] && [ -z "${BASE_URL:-}" ]; then
   BASE_URL_DEFAULTED=1
 fi
 
@@ -18,7 +19,7 @@ ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PWD=${ADMIN_PWD:-admin}
 
 wait_odoo() {
-  local base="${BASE_URL}"
+  local base="${ODOO_BASE_URL}"
   local n=0
   local fallback_base=""
   if [ "${BASE_URL_DEFAULTED}" -eq 1 ]; then
@@ -29,6 +30,7 @@ wait_odoo() {
 import os
 import time
 import urllib.request
+import json
 
 base = os.environ.get("BASE_URL", "http://localhost:8069")
 fallback = os.environ.get("FALLBACK_BASE", "")
@@ -45,11 +47,28 @@ def ok(url):
     except Exception:
         return False
 
+def jsonrpc_ok(url):
+    payload = json.dumps({
+        "jsonrpc": "2.0",
+        "method": "call",
+        "params": {"service": "common", "method": "version", "args": []},
+        "id": 1,
+    }).encode()
+    try:
+        req = urllib.request.Request(url + "/jsonrpc", data=payload, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            return resp.status < 500
+    except urllib.error.HTTPError as exc:
+        return exc.code < 500
+    except Exception:
+        return False
+
 for _ in range(60):
-    if ok(base + "/web/webclient/version_info"):
+    if ok(base + "/web/webclient/version_info") and jsonrpc_ok(base):
         raise SystemExit(0)
-    if fallback and ok(fallback + "/web/webclient/version_info"):
+    if fallback and ok(fallback + "/web/webclient/version_info") and jsonrpc_ok(fallback):
         os.environ["BASE_URL"] = fallback
+        os.environ["ODOO_BASE_URL"] = fallback
         raise SystemExit(0)
     time.sleep(1)
 raise SystemExit("ERROR: odoo not ready after 60s (tried %s%s)" % (base, ", " + fallback if fallback else ""))
@@ -57,9 +76,13 @@ PY
     return
   fi
 
-  until [ "$(curl -s -o /dev/null -w '%{http_code}' "${base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null; do
+  until [ "$(curl -s -o /dev/null -w '%{http_code}' "${base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
+        curl -s -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${base}/jsonrpc"; do
     n=$((n+1))
-    if [ -n "${fallback_base}" ] && [ "$(curl -s -o /dev/null -w '%{http_code}' "${fallback_base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null; then
+    if [ -n "${fallback_base}" ] && \
+       [ "$(curl -s -o /dev/null -w '%{http_code}' "${fallback_base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
+       curl -s -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${fallback_base}/jsonrpc"; then
+      export ODOO_BASE_URL="${fallback_base}"
       export BASE_URL="${fallback_base}"
       return
     fi
