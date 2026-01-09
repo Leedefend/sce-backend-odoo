@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
+import logging
 
 import uuid
 
@@ -8,6 +9,8 @@ from odoo import models, fields, api
 from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 
 # =========================
@@ -177,6 +180,15 @@ class ProjectProjectStage(models.Model):
 class ProjectProject(models.Model):
     _inherit = 'project.project'
 
+    _STAGE_XMLID_BY_KEY = {
+        "planning": "smart_construction_core.project_stage_planning",
+        "running": "smart_construction_core.project_stage_running",
+        "paused": "smart_construction_core.project_stage_paused",
+        "closing": "smart_construction_core.project_stage_closing",
+        "done": "smart_construction_core.project_stage_closed",
+        "warranty": "smart_construction_core.project_stage_warranty",
+        "archived": "smart_construction_core.project_stage_archived",
+    }
     _STAGE_XMLID_BY_LIFECYCLE = {
         "draft": "smart_construction_core.project_stage_planning",
         "in_progress": "smart_construction_core.project_stage_running",
@@ -227,12 +239,153 @@ class ProjectProject(models.Model):
             return False
         return self.env.ref(xmlid, raise_if_not_found=False)
 
+    @api.model
+    def _get_stage_by_key(self, key):
+        xmlid = self._STAGE_XMLID_BY_KEY.get(key)
+        if not xmlid:
+            return False
+        return self.env.ref(xmlid, raise_if_not_found=False)
+
+    @api.model
+    def _stage_key_rank(self, key):
+        order = [
+            'planning',
+            'running',
+            'closing',
+            'done',
+            'warranty',
+            'archived',
+        ]
+        if key == 'paused':
+            return -1
+        return order.index(key) if key in order else -1
+
+    def _sc_has_execution_signal(self):
+        self.ensure_one()
+        if (self.boq_line_count or 0) >= 1:
+            return True
+        Task = self.env['project.task'].sudo()
+        if Task.search_count([('project_id', '=', self.id)]) >= 1:
+            return True
+        MaterialPlan = self.env['project.material.plan'].sudo()
+        return MaterialPlan.search_count([('project_id', '=', self.id)]) >= 1
+
+    def _sc_has_settlement_signal(self):
+        self.ensure_one()
+        Settlement = self.env['sc.settlement.order'].sudo()
+        if Settlement.search_count([('project_id', '=', self.id)]) >= 1:
+            return True
+        Payment = self.env['payment.request'].sudo()
+        if Payment.search_count([('project_id', '=', self.id)]) >= 1:
+            return True
+        Ledger = self.env['payment.ledger'].sudo()
+        return Ledger.search_count([('project_id', '=', self.id)]) >= 1
+
+    def _sc_is_settlement_complete(self):
+        self.ensure_one()
+        Settlement = self.env['sc.settlement.order'].sudo()
+        Payment = self.env['payment.request'].sudo()
+        pending_settlement = Settlement.search_count(
+            [('project_id', '=', self.id), ('state', 'in', ['draft', 'submit'])]
+        )
+        if pending_settlement:
+            return False
+        pending_payment = Payment.search_count(
+            [('project_id', '=', self.id), ('state', 'in', ['submit', 'approve', 'approved'])]
+        )
+        return pending_payment == 0
+
+    def _sc_compute_stage_key(self):
+        self.ensure_one()
+        reason = ''
+        if self.lifecycle_state == 'paused':
+            key = 'paused'
+            reason = 'lifecycle paused'
+        elif self.lifecycle_state == 'closed':
+            key = 'archived'
+            reason = 'lifecycle closed'
+        elif self.lifecycle_state == 'warranty':
+            key = 'warranty'
+            reason = 'lifecycle warranty'
+        elif self.lifecycle_state == 'done':
+            key = 'done'
+            reason = 'lifecycle done'
+        elif self.lifecycle_state == 'closing':
+            key = 'closing'
+            reason = 'lifecycle closing'
+        elif self._sc_has_settlement_signal():
+            if self._sc_is_settlement_complete():
+                key = 'done'
+                reason = 'settlement signals complete'
+            else:
+                key = 'closing'
+                reason = 'settlement signals present'
+        elif self._sc_has_execution_signal():
+            key = 'running'
+            reason = 'execution signals present'
+        else:
+            key = 'planning'
+            reason = 'no execution/settlement signals'
+
+        _logger.debug(
+            'sc_stage_key project=%s lifecycle=%s key=%s reason=%s',
+            self.display_name,
+            self.lifecycle_state,
+            key,
+            reason,
+        )
+        return key
+
+    def _sync_stage_from_signals(self):
+        for project in self:
+            key = project._sc_compute_stage_key()
+            stage = project._get_stage_by_key(key)
+            if not stage:
+                continue
+            current_key = project._get_stage_key_from_stage(project.stage_id)
+            if current_key == 'paused':
+                _logger.debug('sc_stage_sync skip paused project=%s', project.display_name)
+                continue
+            # Auto-sync is monotonic: stage only moves forward to derived stage.
+            if current_key and self._stage_key_rank(key) <= self._stage_key_rank(current_key):
+                _logger.debug(
+                    'sc_stage_sync skip non-advance project=%s current=%s target=%s',
+                    project.display_name,
+                    current_key,
+                    key,
+                )
+                continue
+            if project.stage_id != stage:
+                project.with_context(sc_stage_sync=True).stage_id = stage.id
+
     def _sync_stage_from_lifecycle(self, lifecycle_state=None):
         for project in self:
             state = lifecycle_state or project.lifecycle_state
             stage = project._get_stage_for_lifecycle(state)
             if stage and project.stage_id != stage:
                 project.stage_id = stage.id
+
+    def _get_stage_key_from_stage(self, stage):
+        if not stage:
+            return False
+        imd = self.env['ir.model.data'].sudo().search(
+            [
+                ('model', '=', 'project.project.stage'),
+                ('res_id', '=', stage.id),
+                ('module', '=', 'smart_construction_core'),
+            ],
+            limit=1,
+        )
+        if not imd:
+            return False
+        for key, xmlid in self._STAGE_XMLID_BY_KEY.items():
+            if xmlid.split('.')[-1] == imd.name:
+                return key
+        return False
+
+    def action_sc_stage_sync(self):
+        self._sync_stage_from_signals()
+        return True
 
     # ---------- 基础属性 ----------
     project_code = fields.Char(
@@ -1427,6 +1580,21 @@ class ProjectProject(models.Model):
                 if stage:
                     vals = dict(vals)
                     vals["stage_id"] = stage.id
+        if "stage_id" in vals and "lifecycle_state" not in vals and not self.env.context.get("sc_stage_sync"):
+            stage = self.env["project.project.stage"].browse(vals.get("stage_id"))
+            target_key = self._get_stage_key_from_stage(stage)
+            for project in self:
+                current_key = project._sc_compute_stage_key()
+                if target_key and current_key:
+                    # Manual stage change cannot exceed derived stage.
+                    if self._stage_key_rank(target_key) > self._stage_key_rank(current_key):
+                        raise_guard(
+                            "P0_PROJECT_STAGE_BYPASS_BLOCKED",
+                            f"项目[{project.display_name}]",
+                            "阶段变更",
+                            reasons=[f"当前业务进度不满足进入“{stage.display_name}”"],
+                            hints=["请先补齐 BOQ/任务/结算/付款等业务数据"],
+                        )
         res = super().write(vals)
         if "lifecycle_state" not in vals and "stage_id" not in vals:
             self.filtered(lambda p: not p.stage_id)._sync_stage_from_lifecycle()
