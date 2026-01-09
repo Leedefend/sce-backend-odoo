@@ -177,6 +177,16 @@ class ProjectProjectStage(models.Model):
 class ProjectProject(models.Model):
     _inherit = 'project.project'
 
+    _STAGE_XMLID_BY_LIFECYCLE = {
+        "draft": "smart_construction_core.project_stage_planning",
+        "in_progress": "smart_construction_core.project_stage_running",
+        "paused": "smart_construction_core.project_stage_paused",
+        "done": "smart_construction_core.project_stage_closed",
+        "closing": "smart_construction_core.project_stage_closing",
+        "warranty": "smart_construction_core.project_stage_warranty",
+        "closed": "smart_construction_core.project_stage_archived",
+    }
+
     # ---------- 默认阶段 ----------
     @api.model
     def _has_column(self, table, column):
@@ -209,6 +219,20 @@ class ProjectProject(models.Model):
             [('is_default', '=', True)], limit=1
         )
         return stage.id or False
+
+    @api.model
+    def _get_stage_for_lifecycle(self, lifecycle_state):
+        xmlid = self._STAGE_XMLID_BY_LIFECYCLE.get(lifecycle_state)
+        if not xmlid:
+            return False
+        return self.env.ref(xmlid, raise_if_not_found=False)
+
+    def _sync_stage_from_lifecycle(self, lifecycle_state=None):
+        for project in self:
+            state = lifecycle_state or project.lifecycle_state
+            stage = project._get_stage_for_lifecycle(state)
+            if stage and project.stage_id != stage:
+                project.stage_id = stage.id
 
     # ---------- 基础属性 ----------
     project_code = fields.Char(
@@ -701,6 +725,7 @@ class ProjectProject(models.Model):
     def create(self, vals_list):
         sequence = self.env['ir.sequence']
         default_stage = self._default_stage_id()
+        updated_vals = []
         for vals in vals_list:
             if not vals.get('project_code'):
                 code = sequence.next_by_code('project.project.code')
@@ -708,11 +733,15 @@ class ProjectProject(models.Model):
                     # 确保即使未配置序列也能生成唯一编号，避免“项目编号不能重复”报错
                     code = f"PJ-{fields.Datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
                 vals['project_code'] = code
-            if not vals.get('stage_id') and default_stage:
-                vals['stage_id'] = default_stage
             if not vals.get('lifecycle_state'):
                 vals['lifecycle_state'] = 'draft'
-        return super().create(vals_list)
+            stage = self._get_stage_for_lifecycle(vals.get("lifecycle_state"))
+            if stage:
+                vals["stage_id"] = stage.id
+            elif not vals.get('stage_id') and default_stage:
+                vals['stage_id'] = default_stage
+            updated_vals.append(vals)
+        return super().create(updated_vals)
 
     def init(self):
         # 确保老项目也有默认阶段
@@ -1393,7 +1422,15 @@ class ProjectProject(models.Model):
     def write(self, vals):
         if "lifecycle_state" in vals:
             self._validate_lifecycle_transition(vals.get("lifecycle_state"))
-        return super().write(vals)
+            if "stage_id" not in vals:
+                stage = self._get_stage_for_lifecycle(vals.get("lifecycle_state"))
+                if stage:
+                    vals = dict(vals)
+                    vals["stage_id"] = stage.id
+        res = super().write(vals)
+        if "lifecycle_state" not in vals and "stage_id" not in vals:
+            self.filtered(lambda p: not p.stage_id)._sync_stage_from_lifecycle()
+        return res
 
     def _guard_project_close_by_settlement(self, target_state):
         Settlement = self.env["project.settlement"]

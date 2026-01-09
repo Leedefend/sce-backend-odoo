@@ -6,13 +6,34 @@
         <field name="company_id" eval="False"/>
     </record>
     <record id="project_stage_running" model="project.project.stage">
-        <field name="name">执行中</field>
+        <field name="name">在建</field>
         <field name="sequence">10</field>
         <field name="company_id" eval="False"/>
     </record>
-    <record id="project_stage_closed" model="project.project.stage">
-        <field name="name">已竣工</field>
+    <record id="project_stage_paused" model="project.project.stage">
+        <field name="name">停工</field>
         <field name="sequence">20</field>
         <field name="company_id" eval="False"/>
+    </record>
+    <record id="project_stage_closed" model="project.project.stage">
+        <field name="name">竣工</field>
+        <field name="sequence">30</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="project_stage_closing" model="project.project.stage">
+        <field name="name">结算中</field>
+        <field name="sequence">40</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="project_stage_warranty" model="project.project.stage">
+        <field name="name">保修期</field>
+        <field name="sequence">50</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="project_stage_archived" model="project.project.stage">
+        <field name="name">关闭</field>
+        <field name="sequence">60</field>
+        <field name="company_id" eval="False"/>
+        <field name="fold">True</field>
     </record>
 </odoo>
