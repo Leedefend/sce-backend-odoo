@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 from ..support.state_machine import ScStateMachine
 
@@ -91,6 +93,24 @@ class ProjectBoqLine(models.Model):
     )
     uom_id = fields.Many2one("uom.uom", string="单位", required=True)
     quantity = fields.Float("工程量", default=0.0, group_operator="sum")
+    qty_planned = fields.Float(
+        "计划工程量",
+        related="quantity",
+        store=True,
+        readonly=True,
+        help="P0 口径：清单计划量（与工程量字段保持一致）。",
+    )
+    qty_done = fields.Float(
+        "累计完成量",
+        default=0.0,
+        help="P0 口径：执行完成量，默认不允许超出计划量。",
+    )
+    qty_remain = fields.Float(
+        "剩余工程量",
+        compute="_compute_qty_remain",
+        store=True,
+        readonly=True,
+    )
     price = fields.Monetary("单价", currency_field="currency_id", group_operator=False)
     amount = fields.Monetary(
         "合价",
@@ -230,6 +250,27 @@ class ProjectBoqLine(models.Model):
         for rec in self:
             if rec.line_type == "item":
                 rec.amount_leaf = (rec.quantity or 0.0) * (rec.price or 0.0)
+
+    @api.depends("line_type", "quantity", "qty_done")
+    def _compute_qty_remain(self):
+        for rec in self:
+            if rec.line_type and rec.line_type != "item":
+                rec.qty_remain = 0.0
+                continue
+            rec.qty_remain = (rec.quantity or 0.0) - (rec.qty_done or 0.0)
+
+    @api.constrains("quantity", "qty_done", "line_type", "uom_id")
+    def _check_qty_done_range(self):
+        for rec in self:
+            if rec.line_type and rec.line_type != "item":
+                continue
+            planned = rec.quantity or 0.0
+            done = rec.qty_done or 0.0
+            rounding = rec.uom_id.rounding if rec.uom_id else 0.0001
+            if float_compare(done, 0.0, precision_rounding=rounding) == -1:
+                raise UserError("累计完成量不能为负数。")
+            if float_compare(done, planned, precision_rounding=rounding) == 1:
+                raise UserError("累计完成量不能超过计划工程量。")
             else:
                 rec.amount_leaf = 0.0
 
