@@ -124,4 +124,119 @@ if state != "submit":
     raise RuntimeError("material plan submit failed: state=%s" % state)
 
 print("OK: material plan submit success")
+
+step("find/create partner")
+partner_ids = exec_kw(uid, PWD, "res.partner", "search", [[("active", "=", True)]], {"limit": 1})
+if partner_ids:
+    partner_id = partner_ids[0]
+else:
+    uid_admin = login(ADMIN_USER, ADMIN_PWD)
+    if not uid_admin:
+        raise RuntimeError("login failed for admin user")
+    partner_id = exec_kw(uid_admin, ADMIN_PWD, "res.partner", "create", [{"name": "BF Smoke Partner"}])
+
+step("create contract + line")
+contract_id = exec_kw(
+    uid,
+    PWD,
+    "construction.contract",
+    "create",
+    [{
+        "subject": "BF Smoke Contract",
+        "type": "in",
+        "project_id": project_id,
+        "partner_id": partner_id,
+    }],
+)
+exec_kw(
+    uid,
+    PWD,
+    "construction.contract.line",
+    "create",
+    [{
+        "contract_id": contract_id,
+        "qty_contract": 1.0,
+        "price_contract": 100.0,
+    }],
+)
+exec_kw(uid, PWD, "construction.contract", "action_confirm", [[contract_id]])
+contract_state = exec_kw(uid, PWD, "construction.contract", "read", [[contract_id]], {"fields": ["state"]})[0]["state"]
+if contract_state != "confirmed":
+    raise RuntimeError("contract confirm failed: state=%s" % contract_state)
+print("OK: contract confirm success")
+
+step("create settlement order + line")
+settlement_id = exec_kw(
+    uid,
+    PWD,
+    "sc.settlement.order",
+    "create",
+    [{
+        "project_id": project_id,
+        "contract_id": contract_id,
+        "partner_id": partner_id,
+        "settlement_type": "out",
+    }],
+)
+exec_kw(
+    uid,
+    PWD,
+    "sc.settlement.order.line",
+    "create",
+    [{
+        "settlement_id": settlement_id,
+        "name": "BF Smoke Settlement Line",
+        "qty": 1.0,
+        "price_unit": 100.0,
+    }],
+)
+exec_kw(uid, PWD, "sc.settlement.order", "action_submit", [[settlement_id]])
+settle_state = exec_kw(uid, PWD, "sc.settlement.order", "read", [[settlement_id]], {"fields": ["state"]})[0]["state"]
+if settle_state != "submit":
+    raise RuntimeError("settlement submit failed: state=%s" % settle_state)
+print("OK: settlement submit success")
+
+step("ensure project funding ready + baseline")
+exec_kw(uid, PWD, "project.project", "write", [[project_id], {"funding_enabled": True}])
+baseline_ids = exec_kw(
+    uid,
+    PWD,
+    "project.funding.baseline",
+    "search",
+    [[("project_id", "=", project_id), ("state", "=", "active")]],
+    {"limit": 1},
+)
+if not baseline_ids:
+    exec_kw(
+        uid,
+        PWD,
+        "project.funding.baseline",
+        "create",
+        [{
+            "project_id": project_id,
+            "total_amount": 1000.0,
+            "state": "active",
+        }],
+    )
+
+step("create payment request + submit")
+payment_id = exec_kw(
+    uid,
+    PWD,
+    "payment.request",
+    "create",
+    [{
+        "type": "pay",
+        "project_id": project_id,
+        "contract_id": contract_id,
+        "settlement_id": settlement_id,
+        "partner_id": partner_id,
+        "amount": 50.0,
+    }],
+)
+exec_kw(uid, PWD, "payment.request", "action_submit", [[payment_id]])
+pay_state = exec_kw(uid, PWD, "payment.request", "read", [[payment_id]], {"fields": ["state"]})[0]["state"]
+if pay_state != "submit":
+    raise RuntimeError("payment request submit failed: state=%s" % pay_state)
+print("OK: payment request submit success")
 PY
