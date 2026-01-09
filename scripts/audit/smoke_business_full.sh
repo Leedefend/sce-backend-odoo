@@ -124,4 +124,44 @@ if state != "submit":
     raise RuntimeError("material plan submit failed: state=%s" % state)
 
 print("OK: material plan submit success")
+
+step("find/create partner")
+partner_ids = exec_kw(uid, PWD, "res.partner", "search", [[("active", "=", True)]], {"limit": 1})
+if partner_ids:
+    partner_id = partner_ids[0]
+else:
+    uid_admin = login(ADMIN_USER, ADMIN_PWD)
+    if not uid_admin:
+        raise RuntimeError("login failed for admin user")
+    partner_id = exec_kw(uid_admin, ADMIN_PWD, "res.partner", "create", [{"name": "BF Smoke Partner"}])
+
+step("create contract + line")
+contract_id = exec_kw(
+    uid,
+    PWD,
+    "construction.contract",
+    "create",
+    [{
+        "subject": "BF Smoke Contract",
+        "type": "in",
+        "project_id": project_id,
+        "partner_id": partner_id,
+    }],
+)
+exec_kw(
+    uid,
+    PWD,
+    "construction.contract.line",
+    "create",
+    [{
+        "contract_id": contract_id,
+        "qty_contract": 1.0,
+        "price_contract": 100.0,
+    }],
+)
+exec_kw(uid, PWD, "construction.contract", "action_confirm", [[contract_id]])
+contract_state = exec_kw(uid, PWD, "construction.contract", "read", [[contract_id]], {"fields": ["state"]})[0]["state"]
+if contract_state != "confirmed":
+    raise RuntimeError("contract confirm failed: state=%s" % contract_state)
+print("OK: contract confirm success")
 PY
