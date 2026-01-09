@@ -248,6 +248,10 @@ class PaymentRequest(models.Model):
     def write(self, vals):
         if vals.get("state") == "done":
             self._check_can_done()
+        if vals.get("state") in ("approved", "done"):
+            for rec in self:
+                if rec.validation_status != "validated":
+                    raise ValidationError(_("未完成审批流程，禁止进入已批准/已完成状态。"))
         res = super().write(vals)
         if any(key in vals for key in ("state", "type", "project_id", "amount")):
             self._enforce_funding_gate(vals)
