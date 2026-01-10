@@ -33,6 +33,44 @@ def _get_project(env, code):
     return env["project.project"].sudo().search([("project_code", "=", code)], limit=1)
 
 
+def _get_showroom_projects(env):
+    Project = env["project.project"].sudo()
+    domain = [
+        "|",
+        "|",
+        ("name", "ilike", "展厅-"),
+        ("name", "ilike", "演示项目"),
+        ("project_code", "ilike", "DEMO-"),
+    ]
+    return Project.search(domain)
+
+
+def _collect_missing(env, project):
+    missing = []
+    if not project.partner_id:
+        missing.append("customer")
+    if not project.manager_id:
+        missing.append("pm")
+
+    Tender = env["tender.bid"].sudo()
+    Contract = env["construction.contract"].sudo()
+    if (Tender.search_count([("project_id", "=", project.id)]) +
+            Contract.search_count([("project_id", "=", project.id)])) == 0:
+        missing.append("contract_or_tender")
+
+    Boq = env["project.boq.line"].sudo()
+    Work = env["construction.work.breakdown"].sudo()
+    if (Boq.search_count([("project_id", "=", project.id)]) +
+            Work.search_count([("project_id", "=", project.id)])) == 0:
+        missing.append("boq_or_wbs")
+
+    Document = env["sc.project.document"].sudo()
+    if Document.search_count([("project_id", "=", project.id)]) == 0:
+        missing.append("documents")
+
+    return missing
+
+
 def run(env):
     init_project = _get_project(env, PROJECT_INIT_CODE)
     tender_project = _get_project(env, PROJECT_TENDER_CODE)
@@ -45,6 +83,27 @@ def run(env):
     ] if not rec]
     if missing:
         raise UserError(f"Demo projects missing: {missing}")
+
+    showroom_projects = _get_showroom_projects(env)
+    if showroom_projects:
+        incomplete = []
+        for project in showroom_projects:
+            missing_items = _collect_missing(env, project)
+            if missing_items:
+                incomplete.append((project, missing_items))
+                project.write({"sc_demo_showcase": True, "sc_demo_showcase_ready": False})
+            else:
+                project.write({"sc_demo_showcase": True, "sc_demo_showcase_ready": True})
+        if incomplete:
+            lines = [
+                f"- {p.project_code or p.name}: {p.name} -> {', '.join(items)}"
+                for p, items in incomplete
+            ]
+            raise UserError(
+                "Showroom projects incomplete:\n"
+                f"showroom={len(showroom_projects)} complete={len(showroom_projects) - len(incomplete)}\n"
+                + "\n".join(lines)
+            )
 
     Tender = env["tender.bid"].sudo()
     if Tender.search_count([("project_id", "=", tender_project.id)]) < 2:
@@ -129,7 +188,7 @@ def run(env):
         if not project:
             continue
         settlement = Settlement.search([("project_id", "=", project.id)], limit=1)
-        total = settlement.amount_total or 0.0
+        total = settlement.amount_total or sum(settlement.line_ids.mapped("amount")) or 0.0
         if total <= 0.0:
             continue
         ratio = round((settlement.invoice_amount or 0.0) / total, 2)
