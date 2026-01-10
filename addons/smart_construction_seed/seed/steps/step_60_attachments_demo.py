@@ -22,6 +22,18 @@ def _get_project(env, code):
     return env["project.project"].sudo().search([("project_code", "=", code)], limit=1)
 
 
+def _get_showroom_projects(env):
+    Project = env["project.project"].sudo()
+    domain = [
+        "|",
+        "|",
+        ("name", "ilike", "展厅-"),
+        ("name", "ilike", "演示项目"),
+        ("project_code", "ilike", "DEMO-"),
+    ]
+    return Project.search(domain)
+
+
 def _get_or_create_dict(env, dict_type, name):
     Dictionary = env["sc.dictionary"].sudo()
     record = Dictionary.search([("type", "=", dict_type), ("name", "=", name)], limit=1)
@@ -49,7 +61,8 @@ def run(env):
     ]
     for code in STAGE_PROJECT_CODES:
         projects.append(_get_project(env, code))
-    projects = [p for p in projects if p]
+    projects.extend(_get_showroom_projects(env))
+    projects = list({p.id: p for p in projects if p}.values())
     if not projects:
         return
 
