@@ -199,6 +199,7 @@
     </record>
     <record id="project.open_view_project_all" model="ir.actions.act_window">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+        <field name="domain">[('sc_demo_showcase_ready', '=', True)]</field>
     </record>
 
     <!-- Project: share / message actions (keep within project center users) -->

@@ -423,6 +423,16 @@ class ProjectProject(models.Model):
     doc_manager_id = fields.Many2one('res.users', string='资料负责人')
     location = fields.Char('项目地点')
     contract_no = fields.Char('主合同编号')
+    sc_demo_showcase = fields.Boolean(
+        '演示项目池',
+        default=False,
+        help='用于标记演示项目池的入口筛选项目。',
+    )
+    sc_demo_showcase_ready = fields.Boolean(
+        '演示项目可展示',
+        default=False,
+        help='用于演示入口硬筛选，仅展示数据补齐完成的项目。',
+    )
 
     start_date = fields.Date('计划开工日期')
     end_date = fields.Date('计划竣工日期')
