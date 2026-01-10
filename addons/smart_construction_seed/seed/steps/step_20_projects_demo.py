@@ -40,6 +40,18 @@ def _get_dictionary(env, xmlid, domain):
     return env["sc.dictionary"].sudo().search(domain, limit=1)
 
 
+def _get_showroom_projects(env):
+    Project = env["project.project"].sudo()
+    domain = [
+        "|",
+        "|",
+        ("name", "ilike", "展厅-"),
+        ("name", "ilike", "演示项目"),
+        ("project_code", "ilike", "DEMO-"),
+    ]
+    return Project.search(domain)
+
+
 def _ensure_project(env, code, vals):
     Project = env["project.project"].sudo()
     project = Project.search([("project_code", "=", code)], limit=1)
@@ -522,6 +534,23 @@ def run(env):
         _ensure_budget(env, project, uom_unit, stage_root)
         _ensure_cost_progress(env, project, cost_material, cost_sub, uom_unit, stage_root)
         _apply_lifecycle(project, state)
+
+    showroom_projects = _get_showroom_projects(env)
+    for project in showroom_projects:
+        vals = {}
+        if not project.partner_id and owner:
+            vals["partner_id"] = owner.id
+        if not project.owner_id and owner:
+            vals["owner_id"] = owner.id
+        if demo_pm and not project.manager_id:
+            vals["manager_id"] = demo_pm.id
+        if demo_cost and not project.cost_manager_id:
+            vals["cost_manager_id"] = demo_cost.id
+        if demo_pm and not project.doc_manager_id:
+            vals["doc_manager_id"] = demo_pm.id
+        vals["sc_demo_showcase"] = True
+        if vals:
+            project.write(vals)
 
     ICP.set_param("sc.seed.demo.project_init", str(init_project.id))
     ICP.set_param("sc.seed.demo.project_tender", str(tender_project.id))

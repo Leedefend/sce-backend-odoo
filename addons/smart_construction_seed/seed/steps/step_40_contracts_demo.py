@@ -275,6 +275,18 @@ def _get_project(env, code):
     return env["project.project"].sudo().search([("project_code", "=", code)], limit=1)
 
 
+def _get_showroom_projects(env):
+    Project = env["project.project"].sudo()
+    domain = [
+        "|",
+        "|",
+        ("name", "ilike", "展厅-"),
+        ("name", "ilike", "演示项目"),
+        ("project_code", "ilike", "DEMO-"),
+    ]
+    return Project.search(domain)
+
+
 def _get_or_create_partner(env, name):
     Partner = env["res.partner"].sudo()
     partner = Partner.search([("name", "=", name)], limit=1)
@@ -304,13 +316,55 @@ def _ensure_contract(env, vals):
     return contract
 
 
+def _ensure_tender(env, project, owner):
+    Tender = env["tender.bid"].sudo()
+    TenderLine = env["tender.bid.line"].sudo()
+    uom_unit = env.ref("uom.product_uom_unit", raise_if_not_found=False)
+    if not uom_unit:
+        uom_unit = env["uom.uom"].sudo().search([], limit=1)
+
+    bid_name = f"TB-{project.project_code or project.id}-01"
+    tender = Tender.search([("project_id", "=", project.id), ("name", "=", bid_name)], limit=1)
+    vals = {
+        "name": bid_name,
+        "tender_name": f"{project.name} 投标",
+        "project_id": project.id,
+        "tender_round": 1,
+        "owner_id": owner.id if owner else False,
+        "bid_amount": 680000.0,
+        "deadline": fields.Datetime.now(),
+        "open_date": fields.Datetime.now(),
+        "state": "prepare",
+    }
+    if tender:
+        tender.write(vals)
+    else:
+        tender = Tender.create(vals)
+
+    line_vals = {
+        "bid_id": tender.id,
+        "sequence": 10,
+        "code": f"{project.project_code or project.id}-BID-01",
+        "name": "投标清单项",
+        "uom_id": uom_unit.id if uom_unit else False,
+        "quantity": 80,
+        "price": 1200,
+    }
+    line = TenderLine.search([("bid_id", "=", tender.id), ("code", "=", line_vals["code"])], limit=1)
+    if line:
+        line.write(line_vals)
+    else:
+        TenderLine.create(line_vals)
+
+
 def run(env):
     projects = [
         _get_project(env, PROJECT_EXEC_CODE),
     ]
     for code in STAGE_PROJECT_CODES:
         projects.append(_get_project(env, code))
-    projects = [p for p in projects if p]
+    projects.extend(_get_showroom_projects(env))
+    projects = list({p.id: p for p in projects if p}.values())
 
     owner = _get_or_create_partner(env, "演示业主 · 城市建设集团")
     subcontract = _get_or_create_partner(env, "演示分包 · 桥梁施工队")
@@ -336,10 +390,22 @@ def run(env):
 
     today = fields.Date.context_today(env.user)
     ContractLine = env["construction.contract.line"].sudo()
+    Contract = env["construction.contract"].sudo()
+    Tender = env["tender.bid"].sudo()
     warn_codes = DEMO_WARN_PROJECT_CODES
     split_codes = {"DEMO-PJ-TENDER"}
 
     for project in projects:
+        has_contract = Contract.search_count([("project_id", "=", project.id)]) > 0
+        has_tender = Tender.search_count([("project_id", "=", project.id)]) > 0
+        is_core_demo = bool(project.project_code and project.project_code.startswith("DEMO-"))
+        if (not is_core_demo and
+                project.lifecycle_state in ("draft", "in_progress", "paused") and
+                not has_contract):
+            if not has_tender:
+                _ensure_tender(env, project, owner)
+            continue
+
         out_vals = {
             "subject": f"{project.name}-收入合同",
             "type": "out",
