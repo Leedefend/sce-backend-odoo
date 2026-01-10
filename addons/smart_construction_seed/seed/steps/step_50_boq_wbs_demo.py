@@ -11,6 +11,18 @@ def _get_project(env, code):
     return env["project.project"].sudo().search([("project_code", "=", code)], limit=1)
 
 
+def _get_showroom_projects(env):
+    Project = env["project.project"].sudo()
+    domain = [
+        "|",
+        "|",
+        ("name", "ilike", "展厅-"),
+        ("name", "ilike", "演示项目"),
+        ("project_code", "ilike", "DEMO-"),
+    ]
+    return Project.search(domain)
+
+
 def _ensure_wbs(env, project, code, name, level_type, parent=None):
     Work = env["construction.work.breakdown"].sudo()
     domain = [("project_id", "=", project.id), ("code", "=", code), ("level_type", "=", level_type)]
@@ -30,74 +42,56 @@ def _ensure_wbs(env, project, code, name, level_type, parent=None):
 
 
 def run(env):
-    project = _get_project(env, PROJECT_EXEC_CODE)
-    if not project:
+    projects = [_get_project(env, PROJECT_EXEC_CODE)]
+    projects.extend(_get_showroom_projects(env))
+    projects = list({p.id: p for p in projects if p}.values())
+    if not projects:
         return
-
-    root = _ensure_wbs(env, project, "WBS-002", "桥梁工程", "unit", None)
-    section = _ensure_wbs(env, project, "WBS-002-01", "下部结构", "sub_division", root)
-    sub_section = _ensure_wbs(env, project, "WBS-002-01-01", "承台施工", "sub_section", section)
-    lot = _ensure_wbs(env, project, "WBS-002-01-01-01", "钢筋安装", "inspection_lot", sub_section)
 
     uom_unit = env.ref("uom.product_uom_unit", raise_if_not_found=False)
     if not uom_unit:
         uom_unit = env["uom.uom"].sudo().search([], limit=1)
+    Work = env["construction.work.breakdown"].sudo()
     Boq = env["project.boq.line"].sudo()
 
-    header = Boq.search(
-        [("project_id", "=", project.id), ("code", "=", "BOQ-G-01"), ("is_group", "=", True)],
-        limit=1,
-    )
-    header_vals = {
-        "project_id": project.id,
-        "code": "BOQ-G-01",
-        "name": "桥梁下部结构",
-        "section_type": "building",
-        "is_group": True,
-        "uom_id": uom_unit.id if uom_unit else False,
-        "quantity": 0.0,
-        "price": 0.0,
-        "work_id": section.id,
-    }
-    if header:
-        header.write(header_vals)
-    else:
-        header = Boq.create(header_vals)
-
-    line_vals = [
-        {
-            "project_id": project.id,
-            "parent_id": header.id,
-            "code": "BOQ-310",
-            "name": "承台混凝土",
-            "section_type": "building",
-            "uom_id": uom_unit.id if uom_unit else False,
-            "quantity": 120,
-            "price": 3800.0,
-            "work_id": sub_section.id,
-        },
-        {
-            "project_id": project.id,
-            "parent_id": header.id,
-            "code": "BOQ-311",
-            "name": "承台钢筋安装",
-            "section_type": "building",
-            "uom_id": uom_unit.id if uom_unit else False,
-            "quantity": 95,
-            "price": 2600.0,
-            "work_id": lot.id,
-        },
-    ]
-    for vals in line_vals:
-        existing = Boq.search(
-            [("project_id", "=", project.id), ("code", "=", vals["code"])], limit=1
-        )
-        if existing:
-            existing.write(vals)
+    for project in projects:
+        if Work.search_count([("project_id", "=", project.id)]) == 0:
+            code_prefix = project.project_code or f"SHOW-{project.id}"
+            root = _ensure_wbs(env, project, f"{code_prefix}-WBS", "示例结构", "unit", None)
+            section = _ensure_wbs(env, project, f"{code_prefix}-WBS-01", "示例分部", "sub_division", root)
+            sub_section = _ensure_wbs(env, project, f"{code_prefix}-WBS-01-01", "示例分项", "sub_section", section)
         else:
-            Boq.create(vals)
+            root = Work.search([("project_id", "=", project.id)], limit=1)
+            section = root
+            sub_section = root
 
-    project.sudo().write({"lifecycle_state": "in_progress"})
+        if Boq.search_count([("project_id", "=", project.id)]) == 0:
+            code_prefix = project.project_code or f"SHOW-{project.id}"
+            header_vals = {
+                "project_id": project.id,
+                "code": f"{code_prefix}-G",
+                "name": "示例清单",
+                "section_type": "building",
+                "is_group": True,
+                "uom_id": uom_unit.id if uom_unit else False,
+                "quantity": 0.0,
+                "price": 0.0,
+                "work_id": section.id if section else False,
+            }
+            header = Boq.create(header_vals)
+            Boq.create(
+                {
+                    "project_id": project.id,
+                    "parent_id": header.id,
+                    "code": f"{code_prefix}-001",
+                    "name": "示例清单项",
+                    "section_type": "building",
+                    "uom_id": uom_unit.id if uom_unit else False,
+                    "quantity": 120,
+                    "price": 3200.0,
+                    "work_id": sub_section.id if sub_section else False,
+                }
+            )
 
     ICP = env["ir.config_parameter"].sudo()
     ICP.set_param("sc.seed.demo.boq_wbs", fields.Datetime.now().isoformat())
