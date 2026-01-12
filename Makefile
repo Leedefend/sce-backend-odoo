@@ -137,7 +137,7 @@ endef
 # ======================================================
 # ==================== Guards ==========================
 # ======================================================
-.PHONY: check-compose-project check-external-addons check-odoo-conf
+.PHONY: check-compose-project check-external-addons check-odoo-conf diag.project
 
 check-compose-project:
 	@if [ -z "$${COMPOSE_PROJECT_NAME:-}" ]; then \
@@ -219,14 +219,21 @@ odoo.exec: check-compose-project
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) bash
 
 # ======================================================
+# ==================== Diagnostics =====================
+# ======================================================
+.PHONY: diag.project
+diag.project: check-compose-project
+	@$(RUN_ENV) bash scripts/diag/project.sh
+
+# ======================================================
 # ==================== DB / Demo =======================
 # ======================================================
 .PHONY: db.reset demo.reset db.branch db.create db.reset.manual
-db.reset: check-compose-project
+db.reset: check-compose-project diag.project
 	@$(RUN_ENV) bash scripts/db/reset.sh
 
 # demo.reset 必须走 scripts/demo/reset.sh（含 seed/demo 安装）
-demo.reset: check-compose-project
+demo.reset: check-compose-project diag.project
 	@$(RUN_ENV) bash scripts/demo/reset.sh
 
 # 兼容旧快捷命令：固定 sc_demo
