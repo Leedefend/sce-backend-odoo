@@ -26,7 +26,7 @@ runtime/
 # Environment & secrets
 # -----------------------------------------
 .env
-*.env
+.env.local
 
 # -----------------------------------------
 # Editor junk
