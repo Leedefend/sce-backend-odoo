@@ -157,18 +157,7 @@ check-compose-project:
 	done
 
 check-compose-env:
-	@set -e; \
-	req="COMPOSE_PROJECT_NAME DB_USER DB_PASSWORD DB_NAME ADMIN_PASSWD JWT_SECRET ODOO_DBFILTER"; \
-	miss=""; \
-	for k in $$req; do \
-	  v="$${!k-}"; \
-	  if [ -z "$$v" ]; then miss="$$miss $$k"; fi; \
-	done; \
-	if [ -n "$$miss" ]; then \
-	  echo "❌ missing required env vars:$$miss"; \
-	  echo "   Fix: cp .env.example .env  (and fill values)"; \
-	  exit 2; \
-	fi
+	@bash scripts/common/check_env.sh
 
 gate.compose.config: check-compose-env
 	@echo "[gate.compose.config] checking container_name..."
