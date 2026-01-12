@@ -15,5 +15,42 @@
             <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
         </record>
 
+        <!-- Hide native Project menu for SC users; keep for system/config admins only. -->
+        <record id="project.menu_main_pm" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+
+        <!-- Project Center: keep only Execution Structure for normal users -->
+        <record id="menu_sc_project_initiation" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_project_project" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_project_budget_center" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_project_contract_overview" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_project_tender" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_project_work_breakdown" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_project_boq_root" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_project_structure_wbs" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_doc_center" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+        <record id="menu_sc_project_documents" model="ir.ui.menu" forcecreate="0">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        </record>
+
     </data>
 </odoo>
