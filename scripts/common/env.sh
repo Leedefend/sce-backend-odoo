@@ -6,8 +6,25 @@ set -euo pipefail
 
 # Compose + projects
 COMPOSE_BIN="${COMPOSE_BIN:-docker compose}"
-PROJECT="${PROJECT:-sc}"
 PROJECT_CI="${PROJECT_CI:-sc-ci}"
+
+# ---- Compose project name: single source of truth ----
+if [[ -n "${PROJECT:-}" && -n "${COMPOSE_PROJECT_NAME:-}" && "${PROJECT}" != "${COMPOSE_PROJECT_NAME}" ]]; then
+  echo "[FATAL] PROJECT(${PROJECT}) != COMPOSE_PROJECT_NAME(${COMPOSE_PROJECT_NAME})" >&2
+  exit 2
+fi
+
+# allow .env to provide it (server & local)
+if [[ -z "${COMPOSE_PROJECT_NAME:-}" && -f "${ROOT_DIR}/.env" ]]; then
+  # shellcheck disable=SC1090
+  source "${ROOT_DIR}/.env"
+fi
+
+: "${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required (export it or set in .env)}"
+
+# keep PROJECT as alias for legacy scripts (do not set independently)
+PROJECT="${COMPOSE_PROJECT_NAME}"
+export COMPOSE_PROJECT_NAME PROJECT
 
 # DB/module
 DB_NAME="${DB_NAME:-${DB:-sc_odoo}}"
