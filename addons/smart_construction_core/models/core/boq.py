@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tools.float_utils import float_compare
 
 from ..support.state_machine import ScStateMachine
@@ -318,6 +318,22 @@ class ProjectBoqLine(models.Model):
                 rec.code_item = False
 
     _sql_constraints = []
+
+    @api.constrains("structure_id", "work_id")
+    def _check_structure_binding(self):
+        """清单行只能绑定一套结构维度，避免工程对象与执行分解混用。"""
+        for rec in self:
+            if rec.structure_id and rec.work_id:
+                raise ValidationError(
+                    "清单行不可同时绑定工程结构与WBS，请保留工程结构绑定并清理WBS绑定。"
+                )
+
+    @api.constrains("work_id")
+    def _check_work_id_forbidden(self):
+        """清单行必须仅绑定工程结构，禁止挂接到WBS。"""
+        for rec in self:
+            if rec.work_id:
+                raise ValidationError("清单行禁止绑定WBS，请改为绑定工程结构。")
 
     def unlink(self):
         frozen_projects = set()

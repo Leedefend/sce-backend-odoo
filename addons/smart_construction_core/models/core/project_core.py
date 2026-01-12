@@ -156,6 +156,78 @@ class ScProjectStructure(models.Model):
             ])
             node.boq_line_all_ids = lines
 
+    def _exec_structure_action(self, view_key):
+        ctx = dict(self.env.context or {})
+        project_id = False
+        if self and self[0].project_id:
+            project_id = self[0].project_id.id
+        project_id = project_id or ctx.get("default_project_id") or ctx.get("project_id") or ctx.get("active_id")
+        if not project_id:
+            next_action = {
+                "type": "ir.actions.act_window",
+                "name": "项目列表",
+                "res_model": "project.project",
+                "view_mode": "kanban,tree,form",
+                "views": [(False, "kanban"), (False, "tree"), (False, "form")],
+                "target": "current",
+                "domain": [("sc_demo_showcase_ready", "=", True)],
+                "context": ctx,
+            }
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": "执行结构",
+                    "message": "请先选择项目，将跳转到项目列表。",
+                    "type": "warning",
+                    "sticky": False,
+                    "next": next_action,
+                },
+            }
+
+        ctx.setdefault("default_project_id", project_id)
+        ctx.setdefault("search_default_project_id", project_id)
+        ctx["sc_exec_view"] = view_key
+        if view_key == "wbs":
+            view = self.env.ref("smart_construction_core.view_exec_structure_wbs_tree")
+            search_view = self.env.ref("smart_construction_core.view_project_wbs_search")
+            return {
+                "type": "ir.actions.act_window",
+                "name": "执行结构",
+                "res_model": "construction.work.breakdown",
+                "view_mode": "tree,form",
+                "views": [(view.id, "tree"), (False, "form")],
+                "search_view_id": search_view.id,
+                "domain": [("project_id", "=", project_id)],
+                "context": ctx,
+                "target": "current",
+            }
+        view = self.env.ref("smart_construction_core.view_exec_structure_structure_tree")
+        search_view = self.env.ref("smart_construction_core.view_sc_project_structure_search")
+        return {
+            "type": "ir.actions.act_window",
+            "name": "执行结构",
+            "res_model": "sc.project.structure",
+            "view_mode": "tree,form",
+            "views": [(view.id, "tree"), (False, "form")],
+            "search_view_id": search_view.id,
+            "domain": [("project_id", "=", project_id)],
+            "context": ctx,
+            "target": "current",
+        }
+
+    def action_open_exec_wbs(self):
+        return self._exec_structure_action(
+            "smart_construction_core.action_exec_structure_wbs",
+            "wbs",
+        )
+
+    def action_open_exec_structure(self):
+        return self._exec_structure_action(
+            "smart_construction_core.action_exec_structure_structure",
+            "structure",
+        )
+
 
 # =========================
 # 项目阶段定义
@@ -198,6 +270,64 @@ class ProjectProject(models.Model):
         "warranty": "smart_construction_core.project_stage_warranty",
         "closed": "smart_construction_core.project_stage_archived",
     }
+
+    def _exec_structure_action(self, view_key):
+        ctx = dict(self.env.context or {})
+        project_id = self.id if self else False
+        project_id = project_id or ctx.get("default_project_id") or ctx.get("project_id") or ctx.get("active_id")
+        if not project_id:
+            next_action = {
+                "type": "ir.actions.act_window",
+                "name": "项目列表",
+                "res_model": "project.project",
+                "view_mode": "kanban,tree,form",
+                "views": [(False, "kanban"), (False, "tree"), (False, "form")],
+                "target": "current",
+                "domain": [("sc_demo_showcase_ready", "=", True)],
+                "context": ctx,
+            }
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": "执行结构",
+                    "message": "请先选择项目，将跳转到项目列表。",
+                    "type": "warning",
+                    "sticky": False,
+                    "next": next_action,
+                },
+            }
+
+        ctx.setdefault("default_project_id", project_id)
+        ctx.setdefault("search_default_project_id", project_id)
+        ctx["sc_exec_view"] = view_key
+        if view_key == "wbs":
+            view = self.env.ref("smart_construction_core.view_exec_structure_wbs_tree")
+            search_view = self.env.ref("smart_construction_core.view_project_wbs_search")
+            return {
+                "type": "ir.actions.act_window",
+                "name": "执行结构",
+                "res_model": "construction.work.breakdown",
+                "view_mode": "tree,form",
+                "views": [(view.id, "tree"), (False, "form")],
+                "search_view_id": search_view.id,
+                "domain": [("project_id", "=", project_id)],
+                "context": ctx,
+                "target": "current",
+            }
+        view = self.env.ref("smart_construction_core.view_exec_structure_structure_tree")
+        search_view = self.env.ref("smart_construction_core.view_sc_project_structure_search")
+        return {
+            "type": "ir.actions.act_window",
+            "name": "执行结构",
+            "res_model": "sc.project.structure",
+            "view_mode": "tree,form",
+            "views": [(view.id, "tree"), (False, "form")],
+            "search_view_id": search_view.id,
+            "domain": [("project_id", "=", project_id)],
+            "context": ctx,
+            "target": "current",
+        }
 
     # ---------- 默认阶段 ----------
     @api.model
@@ -395,7 +525,7 @@ class ProjectProject(models.Model):
         readonly=True,
     )
     code = fields.Char(
-        '项目编号',
+        '项目编号(别名)',
         related='project_code',
         store=True,
         readonly=True,
@@ -1271,11 +1401,15 @@ class ProjectProject(models.Model):
         return self._action_open_related('smart_construction_core.action_project_profit_compare')
 
     def action_open_wbs(self):
+        return self.action_open_exec_wbs()
+
+    def action_open_exec_wbs(self):
         self.ensure_one()
-        action = self.env.ref('smart_construction_core.action_sc_project_structure').read()[0]
-        action['domain'] = [('project_id', '=', self.id)]
-        action['context'] = {'default_project_id': self.id}
-        return action
+        return self._exec_structure_action("wbs")
+
+    def action_open_exec_structure(self):
+        self.ensure_one()
+        return self._exec_structure_action("structure")
 
     def action_open_boq_import(self):
         """Open BOQ import wizard with current project prefilled."""

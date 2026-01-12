@@ -42,9 +42,9 @@ class ProjectTaskFromBoqWizard(models.TransientModel):
         for line in boq_lines:
             section = line.section_type or "other"
             key, label = self._compute_group_key(line, section)
-            work_id = False
+            structure_id = False
             if self.group_mode in ("code6", "code_prefix", "section"):
-                work_id = self._get_or_create_work_node(project, line, section, key)
+                structure_id = self._get_or_create_structure_node(project, line, section, key)
             data = groups.setdefault(
                 key,
                 {
@@ -53,14 +53,14 @@ class ProjectTaskFromBoqWizard(models.TransientModel):
                     "qty": 0.0,
                     "amount": 0.0,
                     "items": self.env["project.boq.line"],
-                    "work_id": work_id,
+                    "structure_id": structure_id,
                 },
             )
             data["qty"] += line.quantity or 0.0
             data["amount"] += line.amount or 0.0
             data["items"] |= line
-            if not data["work_id"] and line.work_id:
-                data["work_id"] = line.work_id.id
+            if not data["structure_id"] and line.structure_id:
+                data["structure_id"] = line.structure_id.id
 
         created = 0
         updated = 0
@@ -84,7 +84,6 @@ class ProjectTaskFromBoqWizard(models.TransientModel):
                 "boq_quantity_total": data["qty"],
                 "boq_amount_total": data["amount"],
                 "boq_line_ids": [(6, 0, [l.id for l in data["items"]])],
-                "work_id": data.get("work_id"),
             }
 
             if existing:
@@ -94,7 +93,8 @@ class ProjectTaskFromBoqWizard(models.TransientModel):
                     data["items"].write(
                         {
                             "task_id": existing.id,
-                            "work_id": data.get("work_id"),
+                            "structure_id": data.get("structure_id"),
+                            "work_id": False,
                         }
                     )
                     updated += 1
@@ -105,7 +105,8 @@ class ProjectTaskFromBoqWizard(models.TransientModel):
                 data["items"].write(
                     {
                         "task_id": task.id,
-                        "work_id": data.get("work_id"),
+                        "structure_id": data.get("structure_id"),
+                        "work_id": False,
                     }
                 )
                 created += 1
@@ -154,15 +155,15 @@ class ProjectTaskFromBoqWizard(models.TransientModel):
         label = f"{dict(self._section_labels()).get(section, section)} BOQ聚合任务"
         return section or "other", label
 
-    def _get_or_create_work_node(self, project, line, section, key):
+    def _get_or_create_structure_node(self, project, line, section, key):
         """根据分组规则匹配/创建工程结构节点."""
-        Work = self.env["construction.work.breakdown"]
+        Structure = self.env["sc.project.structure"]
         code = (line.code or "").strip()
-        level = "sub_section"
+        structure_type = "subdivision"
         name = line.name or key
 
         if self.group_mode == "section":
-            level = "sub_division"
+            structure_type = "division"
             code = section or "other"
             name = dict(self._section_labels()).get(section, section) or "工程结构"
         elif self.group_mode in ("code6", "code_prefix"):
@@ -173,16 +174,17 @@ class ProjectTaskFromBoqWizard(models.TransientModel):
         domain = [
             ("project_id", "=", project.id),
             ("code", "=", code),
-            ("level_type", "=", level),
+            ("structure_type", "=", structure_type),
         ]
-        work = Work.search(domain, limit=1)
-        if not work:
-            work = Work.create(
+        node = Structure.search(domain, limit=1)
+        if not node:
+            node = Structure.create(
                 {
                     "project_id": project.id,
                     "code": code,
                     "name": name,
-                    "level_type": level,
+                    "structure_type": structure_type,
+                    "biz_scope": "work",
                 }
             )
-        return work.id
+        return node.id
