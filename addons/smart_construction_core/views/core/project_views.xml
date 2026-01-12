@@ -59,8 +59,8 @@
                                    status_label="Project Status"/>
                         </div>
                     </button>
-                    <button name="action_open_wbs" string="工程结构" type="object" class="oe_stat_button"
-                            groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+                    <button name="action_open_wbs" string="执行结构" type="object" class="oe_stat_button"
+                            groups="smart_construction_core.group_sc_cap_project_read"/>
                     <button name="action_open_boq_import" string="工程量清单" type="object" class="oe_stat_button"
                             groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
                     <button name="%(smart_construction_core.action_project_budget_quick)d"
