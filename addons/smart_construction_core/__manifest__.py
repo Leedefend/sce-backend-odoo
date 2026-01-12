@@ -31,12 +31,12 @@
         'security/sc_model_records.xml',
         'security/ir.model.access.csv',
         'security/sc_record_rules.xml',
-        'security/menu_tech_hide_patch.xml',
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
 
         # 顶级菜单基础
+        'actions/project_list_actions.xml',
         'views/menu_root.xml',
 
         # 视图
@@ -44,6 +44,9 @@
         'views/core/project_boq_import_views.xml',
         'views/core/project_task_from_boq_views.xml',
         'views/core/project_structure_views.xml',
+        'actions/execution_structure_actions_base.xml',
+        'views/core/execution_structure_views.xml',
+        'actions/execution_structure_actions.xml',
         'actions/project_structure_actions.xml',
         'views/core/boq_views.xml',
         'wizard/material_plan_to_rfq_views.xml',
@@ -77,6 +80,7 @@
         'views/support/quota_import_views.xml',
         # Patch 文件移到最后加载
         'security/action_groups_patch.xml',
+        'security/menu_tech_hide_patch.xml',
     ],
     'assets': {
         'web.assets_backend': [

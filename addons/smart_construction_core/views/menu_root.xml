@@ -3,5 +3,6 @@
     <menuitem id="menu_sc_root"
               name="智能施工 2.0"
               sequence="30"
+              action="action_sc_project_list"
               groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_purchase_read,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_data_read,smart_construction_core.group_sc_cap_config_admin"/>
 </odoo>

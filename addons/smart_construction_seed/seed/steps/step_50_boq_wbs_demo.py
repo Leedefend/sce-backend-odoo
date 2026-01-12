@@ -41,6 +41,29 @@ def _ensure_wbs(env, project, code, name, level_type, parent=None):
     return node
 
 
+def _ensure_structure(env, project, code, name, structure_type, parent=None):
+    Structure = env["sc.project.structure"].sudo()
+    domain = [
+        ("project_id", "=", project.id),
+        ("code", "=", code),
+        ("structure_type", "=", structure_type),
+    ]
+    node = Structure.search(domain, limit=1)
+    vals = {
+        "project_id": project.id,
+        "code": code,
+        "name": name,
+        "structure_type": structure_type,
+        "biz_scope": "work",
+        "parent_id": parent.id if parent else False,
+    }
+    if node:
+        node.write(vals)
+    else:
+        node = Structure.create(vals)
+    return node
+
+
 def run(env):
     projects = [_get_project(env, PROJECT_EXEC_CODE)]
     projects.extend(_get_showroom_projects(env))
@@ -52,11 +75,13 @@ def run(env):
     if not uom_unit:
         uom_unit = env["uom.uom"].sudo().search([], limit=1)
     Work = env["construction.work.breakdown"].sudo()
+    Structure = env["sc.project.structure"].sudo()
     Boq = env["project.boq.line"].sudo()
 
     for project in projects:
-        if Work.search_count([("project_id", "=", project.id)]) == 0:
-            code_prefix = project.project_code or f"SHOW-{project.id}"
+        wbs_count = Work.search_count([("project_id", "=", project.id)])
+        code_prefix = project.project_code or f"SHOW-{project.id}"
+        if wbs_count < 3:
             root = _ensure_wbs(env, project, f"{code_prefix}-WBS", "示例结构", "unit", None)
             section = _ensure_wbs(env, project, f"{code_prefix}-WBS-01", "示例分部", "sub_division", root)
             sub_section = _ensure_wbs(env, project, f"{code_prefix}-WBS-01-01", "示例分项", "sub_section", section)
@@ -76,7 +101,6 @@ def run(env):
                 "uom_id": uom_unit.id if uom_unit else False,
                 "quantity": 0.0,
                 "price": 0.0,
-                "work_id": section.id if section else False,
             }
             header = Boq.create(header_vals)
             Boq.create(
@@ -89,9 +113,29 @@ def run(env):
                     "uom_id": uom_unit.id if uom_unit else False,
                     "quantity": 120,
                     "price": 3200.0,
-                    "work_id": sub_section.id if sub_section else False,
                 }
             )
+
+        structure_count = Structure.search_count([("project_id", "=", project.id)])
+        code_prefix = project.project_code or f"SHOW-{project.id}"
+        if structure_count < 3:
+            unit = _ensure_structure(env, project, f"{code_prefix}-S-UNIT", "示例单位工程", "unit", None)
+            division = _ensure_structure(env, project, f"{code_prefix}-S-DIV", "示例分部", "division", unit)
+            item = _ensure_structure(env, project, f"{code_prefix}-S-ITEM", "示例清单项目", "item", division)
+        else:
+            item = Structure.search(
+                [("project_id", "=", project.id), ("structure_type", "=", "item")],
+                limit=1,
+            )
+            if not item:
+                unit = _ensure_structure(env, project, f"{code_prefix}-S-UNIT", "示例单位工程", "unit", None)
+                division = _ensure_structure(env, project, f"{code_prefix}-S-DIV", "示例分部", "division", unit)
+                item = _ensure_structure(env, project, f"{code_prefix}-S-ITEM", "示例清单项目", "item", division)
+
+        if item:
+            lines = Boq.search([("project_id", "=", project.id), ("structure_id", "=", False)])
+            if lines:
+                lines.write({"structure_id": item.id, "work_id": False})
 
     ICP = env["ir.config_parameter"].sudo()
     ICP.set_param("sc.seed.demo.boq_wbs", fields.Datetime.now().isoformat())
