@@ -4,6 +4,19 @@ set -euo pipefail
 # Require ROOT_DIR for safety
 : "${ROOT_DIR:?ROOT_DIR is required}"
 
+# SOT: load .env for both make and direct script invocation
+ENV_FILE="${ROOT_DIR}/.env"
+if [[ ! -f "${ENV_FILE}" ]]; then
+  echo "❌ missing .env at ${ENV_FILE}" >&2
+  echo "   Fix: cp .env.example .env" >&2
+  exit 2
+fi
+
+# shellcheck disable=SC1090
+set -a
+source "${ENV_FILE}"
+set +a
+
 # Compose + projects
 COMPOSE_BIN="${COMPOSE_BIN:-docker compose}"
 PROJECT_CI="${PROJECT_CI:-sc-ci}"
@@ -14,12 +27,6 @@ if [[ -n "${PROJECT:-}" && -n "${COMPOSE_PROJECT_NAME:-}" && "${PROJECT}" != "${
   exit 2
 fi
 
-# allow .env to provide it (server & local)
-if [[ -z "${COMPOSE_PROJECT_NAME:-}" && -f "${ROOT_DIR}/.env" ]]; then
-  # shellcheck disable=SC1090
-  source "${ROOT_DIR}/.env"
-fi
-
 : "${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required (export it or set in .env)}"
 
 # keep PROJECT as alias for legacy scripts (do not set independently)
@@ -27,11 +34,25 @@ PROJECT="${COMPOSE_PROJECT_NAME}"
 export COMPOSE_PROJECT_NAME PROJECT
 
 # DB/module
-DB_NAME="${DB_NAME:-${DB:-sc_odoo}}"
+DB_NAME="${DB_NAME:-${DB:-}}"
 DB_CI="${DB_CI:-sc_test}"
-DB_USER="${DB_USER:-odoo}"
+DB_USER="${DB_USER:-}"
 MODULE="${MODULE:-smart_construction_core}"
 ODOO_CONF="${ODOO_CONF:-/var/lib/odoo/odoo.conf}"
+
+# required env gate (fail fast when scripts run directly)
+_req_vars=(COMPOSE_PROJECT_NAME DB_USER DB_PASSWORD DB_NAME ADMIN_PASSWD JWT_SECRET ODOO_DBFILTER)
+_missing=()
+for _k in "${_req_vars[@]}"; do
+  if [[ -z "${!_k:-}" ]]; then
+    _missing+=("$_k")
+  fi
+done
+if [[ "${#_missing[@]}" -gt 0 ]]; then
+  echo "❌ missing required env vars: ${_missing[*]}" >&2
+  echo "   Fix: cp .env.example .env  (and fill values)" >&2
+  exit 2
+fi
 
 # Tags
 TEST_TAGS="${TEST_TAGS:-sc_smoke,sc_gate}"
