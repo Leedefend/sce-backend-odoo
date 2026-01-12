@@ -5,7 +5,6 @@ services:
   # ============================================================
   db:
     image: postgres:15
-    container_name: sc-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: sc_odoo
@@ -25,7 +24,6 @@ services:
   # ============================================================
   redis:
     image: redis:7-alpine
-    container_name: sc-redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
@@ -44,7 +42,6 @@ services:
       context: .
       dockerfile: Dockerfile
     image: odoo17-odoo:latest
-    container_name: sc-odoo
     restart: unless-stopped
 
     depends_on:
@@ -94,7 +91,6 @@ services:
   # ============================================================
   nginx:
     image: nginx:latest
-    container_name: sc-nginx
     restart: unless-stopped
     depends_on:
       odoo:
