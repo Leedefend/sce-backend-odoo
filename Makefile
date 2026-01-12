@@ -9,6 +9,12 @@ SHELL := bash
 
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
+# Load .env if present (repo-level)
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
+
 # ------------------ Compose ------------------
 # Prefer v2 `docker compose` if subcommand exists, otherwise fallback to `docker-compose`
 COMPOSE_BIN ?= $(shell \
@@ -16,7 +22,6 @@ COMPOSE_BIN ?= $(shell \
   elif command -v docker-compose >/dev/null 2>&1 && docker-compose version >/dev/null 2>&1; then echo "docker-compose"; \
   else echo "docker compose"; fi)
 
-COMPOSE_PROJECT_NAME ?= sc-backend-odoo
 PROJECT              ?= $(COMPOSE_PROJECT_NAME)
 
 # Compose files / overlays
@@ -135,6 +140,10 @@ endef
 .PHONY: check-compose-project check-external-addons check-odoo-conf
 
 check-compose-project:
+	@if [ -z "$${COMPOSE_PROJECT_NAME:-}" ]; then \
+	  echo "[FATAL] COMPOSE_PROJECT_NAME is required. Set it or create .env"; \
+	  exit 2; \
+	fi
 	@set -e; \
 	for c in sc-db sc-redis sc-odoo sc-nginx; do \
 	  if docker inspect $$c >/dev/null 2>&1; then \
