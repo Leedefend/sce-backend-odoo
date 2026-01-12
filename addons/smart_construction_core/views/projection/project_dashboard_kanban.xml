@@ -3,17 +3,15 @@
         <field name="name">project.project.kanban.dashboard</field>
         <field name="model">project.project</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="stage_id"
+            <kanban default_group_by="lifecycle_state"
                     class="sc_project_dashboard_kanban o_kanban_small">
                 <field name="name"/>
                 <field name="project_code"/>
-                <field name="stage_id"/>
                 <field name="manager_id"/>
                 <field name="owner_id"/>
                 <field name="location"/>
                 <field name="contract_no"/>
                 <field name="lifecycle_state"/>
-                <field name="phase_key"/>
                 <field name="plan_percent"/>
                 <field name="actual_percent"/>
                 <field name="document_missing_count"/>
@@ -97,14 +95,8 @@
                                     </t>
                                 </div>
                                 <div class="sc-meta-row">
-                                    <span class="badge badge-secondary" t-if="record.stage_id.value">
-                                        <t t-esc="record.stage_id.value"/>
-                                    </span>
                                     <span class="badge badge-light" t-if="record.lifecycle_state.value">
                                         <t t-esc="record.lifecycle_state.value"/>
-                                    </span>
-                                    <span class="badge badge-light" t-if="record.phase_key.value">
-                                        <t t-esc="record.phase_key.value"/>
                                     </span>
                                     <span class="sc-manager" t-if="record.manager_id.value">
                                         👤 <t t-esc="record.manager_id.value"/>
@@ -440,7 +432,7 @@
         <field name="res_model">project.project</field>
         <field name="view_mode">kanban,tree,form</field>
         <field name="view_id" ref="view_project_project_kanban_dashboard"/>
-        <field name="context">{'group_by': 'stage_id'}</field>
+        <field name="context">{'group_by': 'lifecycle_state'}</field>
         <field name="domain">[('sc_demo_showcase_ready', '=', True)]</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
     </record>

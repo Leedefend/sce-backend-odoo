@@ -71,7 +71,7 @@ class PaymentRequest(models.Model):
         readonly=True,
     )
     settlement_paid_amount = fields.Monetary(
-        string="已付款金额",
+        string="结算已付款",
         currency_field="settlement_currency_id",
         related="settlement_id.paid_amount",
         store=True,
@@ -153,7 +153,7 @@ class PaymentRequest(models.Model):
         string="付款记录",
     )
     paid_amount_total = fields.Monetary(
-        string="已付款金额",
+        string="已付款合计",
         currency_field="currency_id",
         compute="_compute_payment_totals",
         store=False,

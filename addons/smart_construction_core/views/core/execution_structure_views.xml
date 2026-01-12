@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- 执行结构：WBS 视图（默认入口） -->
+    <record id="view_exec_structure_wbs_tree" model="ir.ui.view">
+        <field name="name">execution.structure.wbs.tree</field>
+        <field name="model">construction.work.breakdown</field>
+        <field name="arch" type="xml">
+            <tree string="执行结构 · 工作分解（WBS）" default_order="project_id, parent_path, sequence, id">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="parent_id" optional="hide"/>
+                <field name="level_type"/>
+                <field name="level"/>
+                <field name="boq_quantity_total" sum="清单工程量合计"/>
+                <field name="boq_amount_total" sum="清单金额合计"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 执行结构：分部分项视图 -->
+    <record id="view_exec_structure_structure_tree" model="ir.ui.view">
+        <field name="name">execution.structure.structure.tree</field>
+        <field name="model">sc.project.structure</field>
+        <field name="arch" type="xml">
+            <tree string="执行结构 · 分部分项（工程结构）" default_order="project_id, parent_path, sequence, id">
+                <field name="structure_type"/>
+                <field name="biz_scope" optional="hide"/>
+                <field name="code"/>
+                <field name="display_label" string="名称"/>
+                <field name="qty_total"/>
+                <field name="amount_total" widget="monetary" options="{'currency_field': 'currency_id'}" sum="合价总额"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="parent_id" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+</odoo>
