@@ -16,17 +16,17 @@ if ! command -v "${_compose_cmd[0]}" >/dev/null 2>&1; then
 fi
 
 compose_dev() {
-  "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$PROJECT" -f "$ROOT_DIR/docker-compose.yml" "$@"
+  "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$COMPOSE_PROJECT_NAME" -f "$ROOT_DIR/docker-compose.yml" "$@"
 }
 
 compose_testdeps() {
-  "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$PROJECT" \
+  "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$COMPOSE_PROJECT_NAME" \
     -f "$ROOT_DIR/docker-compose.yml" -f "$ROOT_DIR/docker-compose.testdeps.yml" \
     "$@"
 }
 
 compose_ci() {
-  "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$PROJECT_CI" \
+  "${_compose_cmd[@]}" --project-directory "$ROOT_DIR" -p "$COMPOSE_PROJECT_NAME" \
     -f "$ROOT_DIR/docker-compose.yml" -f "$ROOT_DIR/docker-compose.ci.yml" \
     --profile ci \
     "$@"
