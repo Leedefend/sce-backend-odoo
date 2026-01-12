@@ -9,6 +9,12 @@ SHELL := bash
 
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
+# Load .env if present (repo-level)
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
+
 # ------------------ Compose ------------------
 # Prefer v2 `docker compose` if subcommand exists, otherwise fallback to `docker-compose`
 COMPOSE_BIN ?= $(shell \
@@ -16,7 +22,6 @@ COMPOSE_BIN ?= $(shell \
   elif command -v docker-compose >/dev/null 2>&1 && docker-compose version >/dev/null 2>&1; then echo "docker-compose"; \
   else echo "docker compose"; fi)
 
-COMPOSE_PROJECT_NAME ?= sc-backend-odoo
 PROJECT              ?= $(COMPOSE_PROJECT_NAME)
 
 # Compose files / overlays
@@ -132,9 +137,13 @@ endef
 # ======================================================
 # ==================== Guards ==========================
 # ======================================================
-.PHONY: check-compose-project check-external-addons check-odoo-conf
+.PHONY: check-compose-project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config
 
 check-compose-project:
+	@if [ -z "$${COMPOSE_PROJECT_NAME:-}" ]; then \
+	  echo "[FATAL] COMPOSE_PROJECT_NAME is required. Set it or create .env"; \
+	  exit 2; \
+	fi
 	@set -e; \
 	for c in sc-db sc-redis sc-odoo sc-nginx; do \
 	  if docker inspect $$c >/dev/null 2>&1; then \
@@ -146,6 +155,15 @@ check-compose-project:
 	    fi; \
 	  fi; \
 	done
+
+check-compose-env:
+	@bash scripts/common/check_env.sh
+
+gate.compose.config: check-compose-env
+	@echo "[gate.compose.config] checking container_name..."
+	@$(COMPOSE_BASE) config | grep -nE '^\\s*container_name:' && \
+	  (echo "❌ container_name is forbidden (causes cross-project collisions)"; exit 2) || \
+	  echo "✅ ok"
 
 check-external-addons:
 	@if [ ! -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
@@ -187,65 +205,80 @@ help:
 # ==================== Dev =============================
 # ======================================================
 .PHONY: up down restart logs ps odoo-shell
-up: check-compose-project
+up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
-down: check-compose-project
+down: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/down.sh
-restart: check-compose-project
+restart: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/restart.sh
-logs: check-compose-project
+logs: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/logs.sh
-ps: check-compose-project
+ps: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/ps.sh
-odoo-shell: check-compose-project
+odoo-shell: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/shell.sh
 
+.PHONY: dev.rebuild
+dev.rebuild: check-compose-project check-compose-env gate.compose.config
+	@$(RUN_ENV) bash scripts/dev/down.sh || true
+	@$(RUN_ENV) bash scripts/dev/up.sh
+	@$(MAKE) db.reset
+	@$(MAKE) demo.reset DB=$(DB_NAME)
+	@echo "[dev.rebuild] done"
+
 .PHONY: odoo.recreate odoo.logs odoo.exec
-odoo.recreate: check-compose-project
+odoo.recreate: check-compose-project check-compose-env
 	@echo "[odoo.recreate] service=$(ODOO_SERVICE)"
 	@$(RUN_ENV) $(COMPOSE_BASE) up -d --force-recreate $(ODOO_SERVICE)
-odoo.logs: check-compose-project
+odoo.logs: check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) logs --tail=200 $(ODOO_SERVICE)
-odoo.exec: check-compose-project
+odoo.exec: check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) bash
+
+# ======================================================
+# ==================== Diagnostics =====================
+# ======================================================
+.PHONY: diag.project
+diag.project: check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/diag/project.sh
 
 # ======================================================
 # ==================== DB / Demo =======================
 # ======================================================
 .PHONY: db.reset demo.reset db.branch db.create db.reset.manual
-db.reset: check-compose-project
+db.reset: check-compose-project check-compose-env diag.project
 	@$(RUN_ENV) bash scripts/db/reset.sh
 
 # demo.reset 必须走 scripts/demo/reset.sh（含 seed/demo 安装）
-demo.reset: check-compose-project
+demo.reset: check-compose-project check-compose-env diag.project
 	@$(RUN_ENV) bash scripts/demo/reset.sh
 
 # 兼容旧快捷命令：固定 sc_demo
 .PHONY: db.demo.reset
-db.demo.reset: check-compose-project
+db.demo.reset: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 
 db.branch:
 	@bash scripts/db/branch_db.sh
 db.create:
 	@bash scripts/db/create.sh $(DB)
-db.reset.manual:
+db.reset.manual: check-compose-env
 	@bash scripts/db/reset_manual.sh $(DB)
 
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
 .PHONY: verify.baseline verify.demo gate.baseline gate.demo
-verify.baseline: check-compose-project
+verify.baseline: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
-verify.demo: check-compose-project
+verify.demo: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
 
-gate.baseline: check-compose-project
+gate.baseline: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 
-gate.demo: check-compose-project
+gate.demo: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
 
@@ -253,74 +286,74 @@ gate.demo: check-compose-project
 # ==================== Module Ops ======================
 # ======================================================
 .PHONY: mod.install mod.upgrade
-mod.install: check-compose-project
+mod.install: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/mod/install.sh
-mod.upgrade: check-compose-project
+mod.upgrade: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/mod/upgrade.sh
 
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
 .PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix
-policy.apply.business_full: check-compose-project
+policy.apply.business_full: check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
-policy.apply.role_matrix: check-compose-project
+policy.apply.role_matrix: check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_role_matrix.sh
 	@echo "⚠️  policy.apply.role_matrix finished; restarting Odoo to refresh ACL caches"
 	@$(MAKE) restart
-smoke.business_full: check-compose-project
+smoke.business_full: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/audit/smoke_business_full.sh
-smoke.role_matrix: check-compose-project
+smoke.role_matrix: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/audit/smoke_role_matrix.sh
 
 .PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions
-demo.verify: check-compose-project
+demo.verify: check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
-demo.load: check-compose-project
+demo.load: check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/load.sh
 
-demo.list: check-compose-project
+demo.list: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/list.sh
 
-demo.load.all: check-compose-project
+demo.load.all: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/load_all.sh
 
-demo.load.full: check-compose-project
+demo.load.full: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/load_full.sh
 
-demo.install: check-compose-project
+demo.install: check-compose-project check-compose-env
 	@echo "[demo.install] db=$(DB_NAME)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
 	@$(MAKE) mod.install MODULE=smart_construction_demo DB_NAME=$(DB_NAME)
 
-demo.rebuild: check-compose-project
+demo.rebuild: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/rebuild.sh
 
-demo.ci: check-compose-project
+demo.ci: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/ci.sh
 
-demo.repro: check-compose-project
+demo.repro: check-compose-project check-compose-env
 	@$(MAKE) demo.reset DB=$(DB_NAME)
 	@$(MAKE) demo.load DB=$(DB_NAME) SCENARIO=s00_min_path
 	@$(MAKE) demo.verify DB=$(DB_NAME)
 
-demo.full: check-compose-project
+demo.full: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/full.sh
 
-seed.run: check-compose-project
+seed.run: check-compose-project check-compose-env
 	@$(RUN_ENV) STEPS=$(STEPS) bash scripts/seed/run.sh
 
-audit.project.actions: check-compose-project
+audit.project.actions: check-compose-project check-compose-env
 	@$(RUN_ENV) OUT=$(OUT) bash scripts/ops/audit_project_actions.sh
 
 # ======================================================
 # ==================== Dev Test ========================
 # ======================================================
 .PHONY: test test.safe
-test: check-compose-project
+test: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test.sh
-test.safe: check-compose-project
+test.safe: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
 # ======================================================
@@ -362,7 +395,7 @@ ci.logs:
 # ==================== Diagnostics ======================
 # ======================================================
 .PHONY: diag.compose verify.ops gate.audit ci.gate.tp08
-diag.compose:
+diag.compose: check-compose-env
 	@echo "=== base ==="
 	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
 	@echo "=== base+ci ==="
@@ -374,7 +407,7 @@ diag.compose:
 	echo "=== base+testdeps err ==="; \
 	if [ $$status -ne 0 ]; then echo "$$out" | sed -n '1,120p'; fi
 
-verify.ops: check-compose-project
+verify.ops: check-compose-project check-compose-env
 	@echo "== verify.ops =="
 	@echo "[1] docker daemon"
 	@docker info >/dev/null && echo "OK docker daemon" || (echo "FAIL docker daemon" && exit 2)
@@ -386,8 +419,8 @@ verify.ops: check-compose-project
 	@$(MAKE) mod.upgrade MODULE=$(MODULE)
 	@echo "🎉 verify.ops PASSED"
 
-gate.audit: check-compose-project
+gate.audit: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit.sh
 
-ci.gate.tp08: check-compose-project
+ci.gate.tp08: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit_tp08.sh
