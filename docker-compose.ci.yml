@@ -3,7 +3,6 @@
 services:
   db:
     image: postgres:15
-    container_name: sc-ci-db
     environment:
       POSTGRES_DB: ${DB_CI:-sc_odoo}
       POSTGRES_USER: odoo
@@ -19,7 +18,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: sc-ci-redis
     volumes:
       - redisdata:/data
     healthcheck:
@@ -30,7 +28,6 @@ services:
 
   odoo:
     image: odoo17-odoo:latest
-    container_name: sc-ci-odoo
     user: "odoo"
     depends_on:
       db:
