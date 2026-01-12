@@ -86,7 +86,32 @@ def _ensure_wbs(env, project, code, name, level_type, parent=None):
     return node
 
 
-def _ensure_boq(env, project, code_prefix, work_node, uom_unit):
+def _ensure_structure(env, project, code, name, structure_type, parent=None):
+    Structure = env["sc.project.structure"].sudo()
+    domain = [
+        ("project_id", "=", project.id),
+        ("code", "=", code),
+        ("structure_type", "=", structure_type),
+    ]
+    node = Structure.search(domain, limit=1)
+    vals = {
+        "project_id": project.id,
+        "code": code,
+        "name": name,
+        "structure_type": structure_type,
+        "biz_scope": "work",
+        "parent_id": parent.id if parent else False,
+    }
+    if node:
+        node.write(vals)
+    else:
+        node = Structure.create(vals)
+    return node
+
+
+def _ensure_boq(env, project, code_prefix, uom_unit):
+    unit = _ensure_structure(env, project, f"{code_prefix}-S-UNIT", "基础单位工程", "unit", None)
+    item = _ensure_structure(env, project, f"{code_prefix}-S-ITEM", "基础清单项目", "item", unit)
     Boq = env["project.boq.line"].sudo()
     header = Boq.search(
         [("project_id", "=", project.id), ("code", "=", f"{code_prefix}-G")], limit=1
@@ -100,7 +125,8 @@ def _ensure_boq(env, project, code_prefix, work_node, uom_unit):
         "uom_id": uom_unit.id if uom_unit else False,
         "quantity": 0.0,
         "price": 0.0,
-        "work_id": work_node.id,
+        "structure_id": item.id,
+        "work_id": False,
     }
     if header:
         header.write(header_vals)
@@ -116,7 +142,8 @@ def _ensure_boq(env, project, code_prefix, work_node, uom_unit):
         "uom_id": uom_unit.id if uom_unit else False,
         "quantity": 120,
         "price": 3200.0,
-        "work_id": work_node.id,
+        "structure_id": item.id,
+        "work_id": False,
     }
     existing = Boq.search(
         [("project_id", "=", project.id), ("code", "=", leaf_vals["code"])], limit=1
@@ -530,7 +557,7 @@ def run(env):
             },
         )
         stage_root = _ensure_wbs(env, project, f"{code}-WBS", "演示结构", "unit", None)
-        _ensure_boq(env, project, code, stage_root, uom_unit)
+        _ensure_boq(env, project, code, uom_unit)
         _ensure_budget(env, project, uom_unit, stage_root)
         _ensure_cost_progress(env, project, cost_material, cost_sub, uom_unit, stage_root)
         _apply_lifecycle(project, state)
