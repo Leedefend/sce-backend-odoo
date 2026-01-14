@@ -18,6 +18,15 @@ DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
 export DB_USER DB_PASSWORD
 ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux}"
 
+STOP_ODOO=0
+restore_odoo() {
+  if [[ "${STOP_ODOO}" == "1" ]]; then
+    log "start odoo service after db reset"
+    compose_dev up -d odoo || true
+  fi
+}
+trap 'status=$?; restore_odoo; exit $status' EXIT
+
 case "${DB_NAME}" in
   "" )
     log "DB_NAME is empty; refuse to proceed"
@@ -34,6 +43,14 @@ log "db reset: ${DB_NAME}"
 if ! compose_dev ps -q db | grep -q .; then
   log "db container not running; run 'make up' first"
   exit 2
+fi
+
+if [[ "${DB_RESET_STOP_ODOO:-1}" == "1" && "${DB_NAME}" == "sc_demo" ]]; then
+  if compose_dev ps -q odoo | grep -q .; then
+    log "stop odoo service to release sc_demo connections"
+    compose_dev stop odoo
+    STOP_ODOO=1
+  fi
 fi
 
 DB_READY_TIMEOUT="${DB_READY_TIMEOUT:-120}"
