@@ -18,9 +18,9 @@ mkdir -p "${OUT_DIR}"
 if [[ -n "${ODOO_CID:-}" ]]; then
   CID="${ODOO_CID}"
 else
-  CID="$(${COMPOSE_BIN} ps -q odoo | head -n1)"
+  CID="$(docker ps -a --filter "name=sc-test-odoo-${DB}" --format "{{.ID}}" | head -n1)"
   if [[ -z "${CID}" ]]; then
-    CID="$(docker ps -a --filter "name=sc-test-odoo-${DB}" --format "{{.ID}}" | head -n1)"
+    CID="$(${COMPOSE_BIN} ps -q odoo | head -n1)"
   fi
 fi
 
@@ -31,7 +31,7 @@ if [[ -z "${CID}" ]]; then
   exit 2
 fi
 
-echo "[audit.pull] Using container: ${CID} (service=odoo)"
+echo "[audit.pull] Using container: ${CID}"
 echo "[audit.pull] Export to: ${OUT_DIR}"
 
 PATTERNS=(
@@ -43,19 +43,32 @@ PATTERNS=(
   "/tmp/*_matrix.csv"
 )
 
-COPIED=0
-for p in "${PATTERNS[@]}"; do
-  if docker exec "${CID}" sh -lc "ls -1 ${p} 2>/dev/null" >/tmp/_audit_ls.txt 2>/dev/null; then
-    while IFS= read -r f; do
-      [[ -z "${f}" ]] && continue
-      base="$(basename "${f}")"
-      target="${OUT_DIR}/${base%.csv}.${DB}.${TS}.csv"
-      docker cp "${CID}:${f}" "${target}"
-      echo "[audit.pull] copied: ${f} -> ${target}"
-      COPIED=$((COPIED+1))
-    done </tmp/_audit_ls.txt
+copy_from_container() {
+  local container="$1"
+  local copied=0
+  for p in "${PATTERNS[@]}"; do
+    if docker exec "${container}" sh -lc "ls -1 ${p} 2>/dev/null" >/tmp/_audit_ls.txt 2>/dev/null; then
+      while IFS= read -r f; do
+        [[ -z "${f}" ]] && continue
+        base="$(basename "${f}")"
+        target="${OUT_DIR}/${base%.csv}.${DB}.${TS}.csv"
+        docker cp "${container}:${f}" "${target}"
+        echo "[audit.pull] copied: ${f} -> ${target}"
+        copied=$((copied+1))
+      done </tmp/_audit_ls.txt
+    fi
+  done
+  echo "${copied}"
+}
+
+COPIED="$(copy_from_container "${CID}")"
+if [[ "${COPIED}" -eq 0 ]]; then
+  ALT_CID="$(docker ps -a --filter "name=sc-test-odoo-${DB}" --format "{{.ID}}" | head -n1)"
+  if [[ -n "${ALT_CID}" && "${ALT_CID}" != "${CID}" ]]; then
+    echo "[audit.pull] Retry with test container: ${ALT_CID}"
+    COPIED="$(copy_from_container "${ALT_CID}")"
   fi
-done
+fi
 
 if [[ "${COPIED}" -eq 0 ]]; then
   echo "[audit.pull] No audit CSV found in container /tmp." >&2
