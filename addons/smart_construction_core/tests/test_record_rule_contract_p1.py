@@ -13,6 +13,15 @@ class TestRecordRuleContractP1(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         company = cls.env.ref("base.main_company")
+        ctx = dict(
+            cls.env.context,
+            mail_create_nosubscribe=True,
+            mail_notify_noemail=True,
+            mail_auto_subscribe_no_notify=True,
+            tracking_disable=True,
+        )
+        def _ctx(model):
+            return cls.env[model].with_context(ctx)
 
         def _create_user(login, group_xmlids):
             groups = [(6, 0, [cls.env.ref(x).id for x in group_xmlids])]
@@ -41,18 +50,18 @@ class TestRecordRuleContractP1(TransactionCase):
         )
 
         project_vals = {"privacy_visibility": "followers"}
-        cls.project_read = cls.env["project.project"].create(
+        cls.project_read = _ctx("project.project").create(
             dict(project_vals, name="RR Contract Project Read", user_id=cls.user_project_read.id)
         )
-        cls.project_user = cls.env["project.project"].create(
+        cls.project_user = _ctx("project.project").create(
             dict(project_vals, name="RR Contract Project User", user_id=cls.user_contract_user.id)
         )
-        cls.project_other = cls.env["project.project"].create(
+        cls.project_other = _ctx("project.project").create(
             dict(project_vals, name="RR Contract Project Other", user_id=cls.user_contract_manager.id)
         )
 
-        cls.partner = cls.env["res.partner"].create({"name": "RR Contract Partner"})
-        cls.tax = cls.env["account.tax"].create(
+        cls.partner = _ctx("res.partner").create({"name": "RR Contract Partner"})
+        cls.tax = _ctx("account.tax").create(
             {
                 "name": "RR Contract VAT 9%",
                 "amount": 9.0,
@@ -63,7 +72,7 @@ class TestRecordRuleContractP1(TransactionCase):
             }
         )
 
-        cls.contract_read = cls.env["construction.contract"].create(
+        cls.contract_read = _ctx("construction.contract").create(
             {
                 "subject": "RR Contract Read",
                 "type": "in",
@@ -72,7 +81,7 @@ class TestRecordRuleContractP1(TransactionCase):
                 "tax_id": cls.tax.id,
             }
         )
-        cls.contract_user = cls.env["construction.contract"].create(
+        cls.contract_user = _ctx("construction.contract").create(
             {
                 "subject": "RR Contract User",
                 "type": "in",
@@ -81,7 +90,7 @@ class TestRecordRuleContractP1(TransactionCase):
                 "tax_id": cls.tax.id,
             }
         )
-        cls.contract_other = cls.env["construction.contract"].create(
+        cls.contract_other = _ctx("construction.contract").create(
             {
                 "subject": "RR Contract Other",
                 "type": "in",
@@ -107,8 +116,15 @@ class TestRecordRuleContractP1(TransactionCase):
             os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir)
         )
         docs_dir = os.path.join(repo_root, "docs", "audit")
-        if os.path.isdir(docs_dir) and os.access(docs_dir, os.W_OK):
-            return os.path.join(docs_dir, "rr_contract_p1.csv")
+        if os.path.isdir(docs_dir):
+            probe = os.path.join(docs_dir, ".write_test")
+            try:
+                with open(probe, "w", encoding="utf-8") as handle:
+                    handle.write("ok")
+                os.unlink(probe)
+                return os.path.join(docs_dir, "rr_contract_p1.csv")
+            except OSError:
+                pass
         return "/tmp/rr_contract_p1.csv"
 
     def test_contract_read_visibility_audit(self):
