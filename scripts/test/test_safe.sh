@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+export ROOT_DIR
+
+# shellcheck source=../common/env.sh
+source "$ROOT_DIR/scripts/common/env.sh"
 source "$(dirname "$0")/../_lib/common.sh"
 log "dev test.safe (no upgrade) DB=${DB_NAME} tags=${TEST_TAGS}"
 TEST_TAGS_FINAL="$(normalize_test_tags "${MODULE}" "${TEST_TAGS}")"
@@ -10,7 +16,7 @@ compose ${COMPOSE_FILES} run --rm -T \
   --entrypoint bash odoo -lc "
     pip3 install -q odoo-test-helper >/dev/null 2>&1 || true
     exec /usr/bin/odoo \
-      --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_USER} \
+      --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
       -d ${DB_NAME} \
       --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,${ADDONS_EXTERNAL_MOUNT} \
       --no-http --workers=0 --max-cron-threads=0 \
