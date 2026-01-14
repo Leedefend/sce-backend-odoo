@@ -18,6 +18,34 @@ DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
 export DB_USER DB_PASSWORD
 ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux}"
 
+run_with_timeout_retry() {
+  local timeout_s="$1"; shift
+  local retries="$1"; shift
+  local attempt=1
+
+  while true; do
+    log "[run] attempt=${attempt}/${retries} timeout=${timeout_s}s: $*"
+    if command -v timeout >/dev/null 2>&1; then
+      if timeout "${timeout_s}" "$@"; then
+        return 0
+      fi
+    else
+      if "$@"; then
+        return 0
+      fi
+    fi
+
+    local rc=$?
+    log "[run] failed rc=${rc}"
+    if [[ "${attempt}" -ge "${retries}" ]]; then
+      log "[run] giving up after ${retries} attempts"
+      return "${rc}"
+    fi
+    attempt=$((attempt + 1))
+    sleep 2
+  done
+}
+
 STOP_ODOO=0
 restore_odoo() {
   if [[ "${STOP_ODOO}" == "1" ]]; then
@@ -120,7 +148,8 @@ ODOO_DB_ARGS=(
 )
 
 log "odoo init base (stop-after-init): ${DB_NAME}"
-compose_dev run --rm -T \
+run_with_timeout_retry "${DB_RESET_RUN_TIMEOUT:-300}" "${DB_RESET_RUN_RETRIES:-2}" \
+  compose_dev run --rm -T \
   --entrypoint /usr/bin/odoo odoo \
   --config="$ODOO_CONF" \
   -d "${DB_NAME}" \
@@ -131,7 +160,8 @@ compose_dev run --rm -T \
   --stop-after-init
 
 log "install bootstrap module: smart_construction_bootstrap"
-compose_dev run --rm -T \
+run_with_timeout_retry "${DB_RESET_RUN_TIMEOUT:-300}" "${DB_RESET_RUN_RETRIES:-2}" \
+  compose_dev run --rm -T \
   --entrypoint /usr/bin/odoo odoo \
   --config="$ODOO_CONF" \
   -d "${DB_NAME}" \
