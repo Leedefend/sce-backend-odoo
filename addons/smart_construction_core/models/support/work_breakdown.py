@@ -214,7 +214,6 @@ class ConstructionWorkBreakdown(models.Model):
                 "view_mode": "kanban,tree,form",
                 "views": [(False, "kanban"), (False, "tree"), (False, "form")],
                 "target": "current",
-                "domain": [("sc_demo_showcase_ready", "=", True)],
                 "context": ctx,
             }
             return {

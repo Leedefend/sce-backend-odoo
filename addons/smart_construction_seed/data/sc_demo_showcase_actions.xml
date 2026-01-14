@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_sc_project_list_showcase" model="ir.actions.act_window">
+        <field name="name">项目列表（演示）</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('sc_demo_showcase_ready', '=', True)]</field>
+        <field name="context">{}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+
+    <menuitem id="menu_sc_project_list_showcase"
+              name="项目列表（演示）"
+              parent="smart_construction_core.menu_sc_project_center"
+              action="action_sc_project_list_showcase"
+              sequence="11"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+
+    <record id="action_project_dashboard_showcase" model="ir.actions.act_window">
+        <field name="name">项目驾驶舱（演示）</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_project_project_kanban_dashboard"/>
+        <field name="context">{'group_by': 'lifecycle_state'}</field>
+        <field name="domain">[('sc_demo_showcase_ready', '=', True)]</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+
+    <menuitem id="menu_sc_project_dashboard_showcase"
+              name="项目驾驶舱（演示）"
+              parent="smart_construction_core.menu_sc_projection_root"
+              action="action_project_dashboard_showcase"
+              sequence="11"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+</odoo>

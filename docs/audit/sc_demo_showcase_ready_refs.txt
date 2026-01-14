@@ -1,0 +1,9 @@
+addons/smart_construction_seed/data/sc_demo_showcase_actions.xml:7:        <field name="domain">[('sc_demo_showcase_ready', '=', True)]</field>
+addons/smart_construction_seed/data/sc_demo_showcase_actions.xml:25:        <field name="domain">[('sc_demo_showcase_ready', '=', True)]</field>
+addons/smart_construction_seed/seed/steps/step_90_verify_demo.py:108:                project.write({"sc_demo_showcase": True, "sc_demo_showcase_ready": False})
+addons/smart_construction_seed/seed/steps/step_90_verify_demo.py:110:                project.write({"sc_demo_showcase": True, "sc_demo_showcase_ready": True})
+addons/smart_construction_core/models/core/project_core.py:559:    sc_demo_showcase_ready = fields.Boolean(
+addons/smart_construction_core/tests/test_demo_showcase_gate.py:15:        allow_pattern = re.compile(r"\bsc_demo_showcase_ready\s*=\s*fields\.Boolean\b")
+addons/smart_construction_core/tests/test_demo_showcase_gate.py:27:                if "sc_demo_showcase_ready" not in content:
+addons/smart_construction_core/tests/test_demo_showcase_gate.py:31:                    if "sc_demo_showcase_ready" not in line:
+addons/smart_construction_core/tests/test_demo_showcase_gate.py:39:            "禁止 core 模块硬编码 demo 过滤（sc_demo_showcase_ready），命中：%s"

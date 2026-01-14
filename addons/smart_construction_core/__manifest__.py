@@ -81,6 +81,7 @@
         # Patch 文件移到最后加载
         'security/action_groups_patch.xml',
         'security/menu_tech_hide_patch.xml',
+        'actions/project_native_action_overrides.xml',
     ],
     'assets': {
         'web.assets_backend': [
