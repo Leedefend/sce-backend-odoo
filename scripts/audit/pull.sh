@@ -4,9 +4,10 @@ set -euo pipefail
 # Usage:
 #   DB=sc_demo bash scripts/audit/pull.sh
 #
-# Pull /tmp audit CSVs from a running Odoo container into docs/audit/.
+# Pull /tmp audit CSVs from the Odoo service container into docs/audit/.
 
 DB="${DB:-sc_demo}"
+COMPOSE_BIN="${COMPOSE_BIN:-docker compose}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT_DIR="${ROOT_DIR}/docs/audit"
@@ -14,20 +15,19 @@ TS="$(date +%Y%m%d_%H%M%S)"
 
 mkdir -p "${OUT_DIR}"
 
-CID="$(
-  docker ps --format '{{.Names}}' \
-    | awk '
-        $0 ~ /sc-backend-odoo.*odoo/ {print; exit}
-        $0 ~ /odoo/ {print; exit}
-      '
-)"
+if [[ -n "${ODOO_CID:-}" ]]; then
+  CID="${ODOO_CID}"
+else
+  CID="$(${COMPOSE_BIN} ps -q odoo | head -n1)"
+fi
 
 if [[ -z "${CID}" ]]; then
-  echo "[audit.pull] No running odoo container found. Run make test first." >&2
+  echo "[audit.pull] No odoo container found (service=odoo)." >&2
+  echo "[audit.pull] Hint: ${COMPOSE_BIN} ps" >&2
   exit 2
 fi
 
-echo "[audit.pull] Using container: ${CID}"
+echo "[audit.pull] Using container: ${CID} (service=odoo)"
 echo "[audit.pull] Export to: ${OUT_DIR}"
 
 PATTERNS=(
@@ -54,7 +54,8 @@ for p in "${PATTERNS[@]}"; do
 done
 
 if [[ "${COPIED}" -eq 0 ]]; then
-  echo "[audit.pull] No audit CSV found in container /tmp. Did tests run?" >&2
+  echo "[audit.pull] No audit CSV found in container /tmp." >&2
+  echo "[audit.pull] Tests may have run in a one-off --rm container." >&2
   exit 3
 fi
 
