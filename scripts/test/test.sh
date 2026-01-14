@@ -10,8 +10,18 @@ source "$(dirname "$0")/../_lib/common.sh"
 log "dev test (upgrade + tests) DB=${DB_NAME} tags=${TEST_TAGS}"
 TEST_TAGS_FINAL="$(normalize_test_tags "${MODULE}" "${TEST_TAGS}")"
 
+RUN_RM="${RUN_RM:---rm}"
+RUN_NAME=()
+if [[ "${KEEP_TEST_CONTAINER:-0}" == "1" ]]; then
+  RUN_RM=""
+  RUN_NAME=(--name "sc-test-odoo-${DB_NAME}")
+  if docker ps -a --format '{{.Names}}' | grep -q "^sc-test-odoo-${DB_NAME}$"; then
+    docker rm -f "sc-test-odoo-${DB_NAME}" >/dev/null
+  fi
+fi
+
 # shellcheck disable=SC2086
-compose ${COMPOSE_FILES} run --rm -T \
+compose ${COMPOSE_FILES} run ${RUN_RM} -T "${RUN_NAME[@]}" \
   -v "${DOCS_MOUNT_HOST}:${DOCS_MOUNT_CONT}:ro" \
   --entrypoint bash odoo -lc "
     pip3 install -q odoo-test-helper >/dev/null 2>&1 || true

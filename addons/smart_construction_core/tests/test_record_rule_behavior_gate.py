@@ -11,6 +11,15 @@ class TestRecordRuleBehaviorGate(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         company = cls.env.ref("base.main_company")
+        ctx = dict(
+            cls.env.context,
+            mail_create_nosubscribe=True,
+            mail_notify_noemail=True,
+            mail_auto_subscribe_no_notify=True,
+            tracking_disable=True,
+        )
+        def _ctx(model):
+            return cls.env[model].with_context(ctx)
 
         def _create_user(login, group_xmlids):
             groups = [(6, 0, [cls.env.ref(x).id for x in group_xmlids])]
@@ -55,41 +64,41 @@ class TestRecordRuleBehaviorGate(TransactionCase):
         )
 
         project_vals = {"privacy_visibility": "followers"}
-        cls.project_read = cls.env["project.project"].create(
+        cls.project_read = _ctx("project.project").create(
             dict(project_vals, name="RR Project Read", user_id=cls.user_project_read.id)
         )
-        cls.project_user = cls.env["project.project"].create(
+        cls.project_user = _ctx("project.project").create(
             dict(project_vals, name="RR Project User", user_id=cls.user_project_user.id)
         )
-        cls.project_other = cls.env["project.project"].create(
+        cls.project_other = _ctx("project.project").create(
             dict(project_vals, name="RR Project Other", user_id=cls.user_project_manager.id)
         )
-        cls.project_finance = cls.env["project.project"].create(
+        cls.project_finance = _ctx("project.project").create(
             dict(project_vals, name="RR Project Finance", user_id=cls.user_finance_user.id)
         )
-        cls.project_finance_read = cls.env["project.project"].create(
+        cls.project_finance_read = _ctx("project.project").create(
             dict(project_vals, name="RR Project Finance Read", user_id=cls.user_finance_read.id)
         )
-        cls.project_settlement = cls.env["project.project"].create(
+        cls.project_settlement = _ctx("project.project").create(
             dict(project_vals, name="RR Project Settlement", user_id=cls.user_settlement_user.id)
         )
-        cls.project_settlement_read = cls.env["project.project"].create(
+        cls.project_settlement_read = _ctx("project.project").create(
             dict(project_vals, name="RR Project Settlement Read", user_id=cls.user_settlement_read.id)
         )
 
-        cls.task_read = cls.env["project.task"].create(
+        cls.task_read = _ctx("project.task").create(
             {"name": "RR Task Read", "project_id": cls.project_read.id}
         )
-        cls.task_user = cls.env["project.task"].create(
+        cls.task_user = _ctx("project.task").create(
             {"name": "RR Task User", "project_id": cls.project_user.id}
         )
-        cls.task_other = cls.env["project.task"].create(
+        cls.task_other = _ctx("project.task").create(
             {"name": "RR Task Other", "project_id": cls.project_other.id}
         )
 
-        cls.partner = cls.env["res.partner"].create({"name": "RR Partner"})
+        cls.partner = _ctx("res.partner").create({"name": "RR Partner"})
 
-        cls.payment_req_read = cls.env["payment.request"].create(
+        cls.payment_req_read = _ctx("payment.request").create(
             {
                 "project_id": cls.project_finance_read.id,
                 "partner_id": cls.partner.id,
@@ -97,7 +106,7 @@ class TestRecordRuleBehaviorGate(TransactionCase):
                 "type": "pay",
             }
         )
-        cls.payment_req_user = cls.env["payment.request"].create(
+        cls.payment_req_user = _ctx("payment.request").create(
             {
                 "project_id": cls.project_finance.id,
                 "partner_id": cls.partner.id,
@@ -105,7 +114,7 @@ class TestRecordRuleBehaviorGate(TransactionCase):
                 "type": "pay",
             }
         )
-        cls.payment_req_other = cls.env["payment.request"].create(
+        cls.payment_req_other = _ctx("payment.request").create(
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
@@ -114,21 +123,21 @@ class TestRecordRuleBehaviorGate(TransactionCase):
             }
         )
 
-        cls.settlement_read = cls.env["sc.settlement.order"].create(
+        cls.settlement_read = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.project_settlement_read.id,
                 "partner_id": cls.partner.id,
                 "line_ids": [(0, 0, {"name": "RR Line Read", "amount": 10.0})],
             }
         )
-        cls.settlement_user = cls.env["sc.settlement.order"].create(
+        cls.settlement_user = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.project_settlement.id,
                 "partner_id": cls.partner.id,
                 "line_ids": [(0, 0, {"name": "RR Line User", "amount": 20.0})],
             }
         )
-        cls.settlement_other = cls.env["sc.settlement.order"].create(
+        cls.settlement_other = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
