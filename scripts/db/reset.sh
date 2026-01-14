@@ -50,10 +50,13 @@ run_with_timeout_retry() {
       return 0
     fi
     if [[ "${rc}" -eq 124 && "$1" == "compose_dev" ]]; then
-      if ! docker ps --format '{{.Names}}' | grep -q "^${COMPOSE_PROJECT_NAME}-odoo-run"; then
-        log "[run] timeout but compose run container not running; assume success"
-        return 0
-      fi
+      for i in $(seq 1 15); do
+        if ! docker ps --format '{{.Names}}' | grep -q "^${COMPOSE_PROJECT_NAME}-odoo-run"; then
+          log "[run] timeout but compose run container not running; assume success"
+          return 0
+        fi
+        sleep 1
+      done
     fi
     log "[run] failed rc=${rc}"
     if [[ "${attempt}" -ge "${retries}" ]]; then
