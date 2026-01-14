@@ -353,6 +353,10 @@ seed.run: check-compose-project check-compose-env
 audit.project.actions: check-compose-project check-compose-env
 	@$(RUN_ENV) OUT=$(OUT) bash scripts/ops/audit_project_actions.sh
 
+.PHONY: audit.pull
+audit.pull:
+	@DB=$(DB_NAME) bash scripts/audit/pull.sh
+
 # ======================================================
 # ==================== Dev Test ========================
 # ======================================================
