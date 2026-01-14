@@ -30,32 +30,24 @@ run_with_timeout_retry() {
       if [[ "$1" == "compose_dev" ]]; then
         local cmd_str
         printf -v cmd_str '%q ' "${@:2}"
-        if ! timeout "${timeout_s}" bash -lc "source \"${ROOT_DIR}/scripts/common/compose.sh\"; compose_dev ${cmd_str}"; then
-          rc=$?
-        else
-          return 0
-        fi
+        timeout "${timeout_s}" bash -lc "source \"${ROOT_DIR}/scripts/common/compose.sh\"; compose_dev ${cmd_str}"
+        rc=$?
       elif declare -F "$1" >/dev/null 2>&1; then
         local cmd_str
         printf -v cmd_str '%q ' "$@"
-        if ! timeout "${timeout_s}" bash -lc "$(declare -f "$1"); ${cmd_str}"; then
-          rc=$?
-        else
-          return 0
-        fi
-      else
-        if ! timeout "${timeout_s}" "$@"; then
-          rc=$?
-        else
-          return 0
-        fi
-      fi
-    else
-      if ! "$@"; then
+        timeout "${timeout_s}" bash -lc "$(declare -f "$1"); ${cmd_str}"
         rc=$?
       else
-        return 0
+        timeout "${timeout_s}" "$@"
+        rc=$?
       fi
+    else
+      "$@"
+      rc=$?
+    fi
+
+    if [[ "${rc}" -eq 0 ]]; then
+      return 0
     fi
     if [[ "${rc}" -eq 124 && "$1" == "compose_dev" ]]; then
       if ! docker ps -a --format '{{.Names}}' | grep -q "^${COMPOSE_PROJECT_NAME}-odoo-run"; then
