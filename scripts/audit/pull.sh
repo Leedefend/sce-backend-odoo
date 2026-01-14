@@ -56,8 +56,18 @@ copy_from_container() {
     return 1
   fi
 
+  local files=()
   for p in "${PATTERNS[@]}"; do
     local base_pat="${p#/tmp/}"
+    while IFS= read -r f; do
+      [[ -z "${f}" ]] && continue
+      files+=("${f}")
+    done < <(find "${tmp_dir}" -maxdepth 1 -type f -name "${base_pat}" 2>/dev/null)
+  done
+
+  if ((${#files[@]} > 0)); then
+    local uniq
+    uniq="$(printf '%s\n' "${files[@]}" | sort -u)"
     while IFS= read -r f; do
       [[ -z "${f}" ]] && continue
       local base
@@ -66,8 +76,8 @@ copy_from_container() {
       cp "${f}" "${target}"
       echo "[audit.pull] copied: ${base} -> ${target}"
       copied=$((copied+1))
-    done < <(find "${tmp_dir}" -maxdepth 1 -type f -name "${base_pat}" 2>/dev/null)
-  done
+    done <<<"${uniq}"
+  fi
 
   rm -rf "${tmp_dir}"
   COPIED_COUNT=$((COPIED_COUNT + copied))
