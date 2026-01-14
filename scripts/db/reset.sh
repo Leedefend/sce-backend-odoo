@@ -102,14 +102,14 @@ done
 
 # terminate existing connections to allow drop
 log "db terminate connections: ${DB_NAME}"
-docker exec -T -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
+docker exec -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
   "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" >/dev/null || true
 
 log "db drop: ${DB_NAME}"
-docker exec -T -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
+docker exec -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
   "DROP DATABASE IF EXISTS ${DB_NAME};"
 log "db create: ${DB_NAME}"
-docker exec -T -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
+docker exec -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
   "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER} TEMPLATE template0 ENCODING 'UTF8';"
 
 # 统一 Odoo DB 参数（后续所有操作必须带，避免掉回本机 socket）
