@@ -43,6 +43,8 @@ PATTERNS=(
   "/tmp/*_matrix.csv"
 )
 
+COPIED_COUNT=0
+
 copy_from_container() {
   local container="$1"
   local copied=0
@@ -51,8 +53,7 @@ copy_from_container() {
 
   if ! docker cp "${container}:/tmp/." "${tmp_dir}" >/dev/null 2>&1; then
     rm -rf "${tmp_dir}"
-    echo "0"
-    return
+    return 1
   fi
 
   for p in "${PATTERNS[@]}"; do
@@ -69,22 +70,23 @@ copy_from_container() {
   done
 
   rm -rf "${tmp_dir}"
-  echo "${copied}"
+  COPIED_COUNT=$((COPIED_COUNT + copied))
+  return 0
 }
 
-COPIED="$(copy_from_container "${CID}")"
-if [[ "${COPIED}" -eq 0 ]]; then
+copy_from_container "${CID}" || true
+if [[ "${COPIED_COUNT}" -eq 0 ]]; then
   ALT_CID="$(docker ps -a --filter "name=sc-test-odoo-${DB}" --format "{{.ID}}" | head -n1)"
   if [[ -n "${ALT_CID}" && "${ALT_CID}" != "${CID}" ]]; then
     echo "[audit.pull] Retry with test container: ${ALT_CID}"
-    COPIED="$(copy_from_container "${ALT_CID}")"
+    copy_from_container "${ALT_CID}" || true
   fi
 fi
 
-if [[ "${COPIED}" -eq 0 ]]; then
+if [[ "${COPIED_COUNT}" -eq 0 ]]; then
   echo "[audit.pull] No audit CSV found in container /tmp." >&2
   echo "[audit.pull] Tests may have run in a one-off --rm container." >&2
   exit 3
 fi
 
-echo "[audit.pull] Done. Files copied: ${COPIED}"
+echo "[audit.pull] Done. Files copied: ${COPIED_COUNT}"
