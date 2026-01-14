@@ -25,6 +25,7 @@ _pre_MODULE="${MODULE:-}"
 _pre_COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-}"
 _pre_PROJECT="${PROJECT:-}"
 _pre_ODOO_CONF="${ODOO_CONF:-}"
+_pre_BD="${BD:-}"
 
 # ---- Load .env defaults ----
 # shellcheck disable=SC1090
@@ -41,6 +42,7 @@ set +a
 [[ -n "${_pre_COMPOSE_PROJECT_NAME}" ]] && COMPOSE_PROJECT_NAME="${_pre_COMPOSE_PROJECT_NAME}"
 [[ -n "${_pre_PROJECT}" ]] && PROJECT="${_pre_PROJECT}"
 [[ -n "${_pre_ODOO_CONF}" ]] && ODOO_CONF="${_pre_ODOO_CONF}"
+[[ -n "${_pre_BD}" ]] && BD="${_pre_BD}"
 
 # =========================================================
 # Compose / Project identity (Single Source of Truth)
@@ -68,8 +70,9 @@ export COMPOSE_PROJECT_NAME PROJECT
 # DB_NAME priority:
 # 1) externally provided DB_NAME
 # 2) externally provided DB
-# 3) .env DB_NAME
-DB_NAME="${DB_NAME:-${DB:-}}"
+# 3) externally provided BD (legacy alias)
+# 4) .env DB_NAME
+DB_NAME="${DB_NAME:-${DB:-${BD:-}}}"
 
 DB_CI="${DB_CI:-sc_test}"
 DB_USER="${DB_USER:-}"
