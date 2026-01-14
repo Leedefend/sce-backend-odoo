@@ -46,18 +46,29 @@ PATTERNS=(
 copy_from_container() {
   local container="$1"
   local copied=0
+  local tmp_dir
+  tmp_dir="$(mktemp -d)"
+
+  if ! docker cp "${container}:/tmp/." "${tmp_dir}" >/dev/null 2>&1; then
+    rm -rf "${tmp_dir}"
+    echo "0"
+    return
+  fi
+
   for p in "${PATTERNS[@]}"; do
-    if docker exec "${container}" sh -lc "ls -1 ${p} 2>/dev/null" >/tmp/_audit_ls.txt 2>/dev/null; then
-      while IFS= read -r f; do
-        [[ -z "${f}" ]] && continue
-        base="$(basename "${f}")"
-        target="${OUT_DIR}/${base%.csv}.${DB}.${TS}.csv"
-        docker cp "${container}:${f}" "${target}"
-        echo "[audit.pull] copied: ${f} -> ${target}"
-        copied=$((copied+1))
-      done </tmp/_audit_ls.txt
-    fi
+    local base_pat="${p#/tmp/}"
+    while IFS= read -r f; do
+      [[ -z "${f}" ]] && continue
+      local base
+      base="$(basename "${f}")"
+      local target="${OUT_DIR}/${base%.csv}.${DB}.${TS}.csv"
+      cp "${f}" "${target}"
+      echo "[audit.pull] copied: ${base} -> ${target}"
+      copied=$((copied+1))
+    done < <(find "${tmp_dir}" -maxdepth 1 -type f -name "${base_pat}" 2>/dev/null)
   done
+
+  rm -rf "${tmp_dir}"
   echo "${copied}"
 }
 
