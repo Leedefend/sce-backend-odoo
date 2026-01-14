@@ -18,3 +18,4 @@ from . import test_high_risk_actions
 from . import test_demo_showcase_gate
 from . import test_acl_matrix_gate
 from . import test_record_rule_behavior_gate
+from . import test_record_rule_contract_p1
