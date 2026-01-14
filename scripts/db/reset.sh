@@ -27,7 +27,15 @@ run_with_timeout_retry() {
     log "[run] attempt=${attempt}/${retries} timeout=${timeout_s}s: $*"
     local rc=0
     if command -v timeout >/dev/null 2>&1; then
-      if declare -F "$1" >/dev/null 2>&1; then
+      if [[ "$1" == "compose_dev" ]]; then
+        local cmd_str
+        printf -v cmd_str '%q ' "${@:2}"
+        if ! timeout "${timeout_s}" bash -lc "source \"${ROOT_DIR}/scripts/common/compose.sh\"; compose_dev ${cmd_str}"; then
+          rc=$?
+        else
+          return 0
+        fi
+      elif declare -F "$1" >/dev/null 2>&1; then
         local cmd_str
         printf -v cmd_str '%q ' "$@"
         if ! timeout "${timeout_s}" bash -lc "$(declare -f "$1"); ${cmd_str}"; then
