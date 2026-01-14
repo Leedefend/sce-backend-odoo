@@ -19,11 +19,15 @@ if [[ -n "${ODOO_CID:-}" ]]; then
   CID="${ODOO_CID}"
 else
   CID="$(${COMPOSE_BIN} ps -q odoo | head -n1)"
+  if [[ -z "${CID}" ]]; then
+    CID="$(docker ps -a --filter "name=sc-test-odoo-${DB}" --format "{{.ID}}" | head -n1)"
+  fi
 fi
 
 if [[ -z "${CID}" ]]; then
   echo "[audit.pull] No odoo container found (service=odoo)." >&2
   echo "[audit.pull] Hint: ${COMPOSE_BIN} ps" >&2
+  echo "[audit.pull] Hint: KEEP_TEST_CONTAINER=1 make test TEST_TAGS=sc_gate BD=${DB}" >&2
   exit 2
 fi
 
