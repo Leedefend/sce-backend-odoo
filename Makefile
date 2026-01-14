@@ -44,6 +44,12 @@ DB_CI        ?= sc_test
 DB_USER      ?= odoo
 DB_PASSWORD  ?= $(DB_USER)
 
+# Back-compat alias: BD -> DB_NAME (lower priority than DB)
+BD ?=
+ifneq ($(strip $(BD)),)
+DB_NAME := $(BD)
+endif
+
 # Use one knob to control dev/test db: `make test DB=sc_test`
 DB ?=
 ifneq ($(strip $(DB)),)
