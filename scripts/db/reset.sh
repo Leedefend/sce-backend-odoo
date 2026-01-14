@@ -25,17 +25,30 @@ run_with_timeout_retry() {
 
   while true; do
     log "[run] attempt=${attempt}/${retries} timeout=${timeout_s}s: $*"
+    local rc=0
     if command -v timeout >/dev/null 2>&1; then
-      if timeout "${timeout_s}" "$@"; then
-        return 0
+      if declare -F "$1" >/dev/null 2>&1; then
+        local cmd_str
+        printf -v cmd_str '%q ' "$@"
+        if ! timeout "${timeout_s}" bash -lc "$(declare -f "$1"); ${cmd_str}"; then
+          rc=$?
+        else
+          return 0
+        fi
+      else
+        if ! timeout "${timeout_s}" "$@"; then
+          rc=$?
+        else
+          return 0
+        fi
       fi
     else
-      if "$@"; then
+      if ! "$@"; then
+        rc=$?
+      else
         return 0
       fi
     fi
-
-    local rc=$?
     log "[run] failed rc=${rc}"
     if [[ "${attempt}" -ge "${retries}" ]]; then
       log "[run] giving up after ${retries} attempts"
