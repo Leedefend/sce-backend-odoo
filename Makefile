@@ -274,7 +274,7 @@ db.reset.manual: check-compose-env
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
-.PHONY: verify.baseline verify.demo gate.baseline gate.demo
+.PHONY: verify.baseline verify.demo gate.baseline gate.demo gate.full
 verify.baseline: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo: check-compose-project check-compose-env
@@ -356,6 +356,11 @@ audit.project.actions: check-compose-project check-compose-env
 .PHONY: audit.pull
 audit.pull:
 	@DB=$(DB_NAME) bash scripts/audit/pull.sh
+
+gate.full: check-compose-project check-compose-env
+	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
+	@$(MAKE) verify.demo BD=$(DB_NAME)
+	@$(MAKE) audit.pull DB_NAME=$(DB_NAME)
 
 # ======================================================
 # ==================== Dev Test ========================
