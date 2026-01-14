@@ -15,7 +15,7 @@ RUN_NAME=()
 if [[ "${KEEP_TEST_CONTAINER:-0}" == "1" ]]; then
   RUN_RM=""
   RUN_NAME=(--name "sc-test-odoo-${DB_NAME}")
-  if docker ps -a --format '{{.Names}}' | rg -q "^sc-test-odoo-${DB_NAME}$"; then
+  if docker ps -a --format '{{.Names}}' | grep -q "^sc-test-odoo-${DB_NAME}$"; then
     docker rm -f "sc-test-odoo-${DB_NAME}" >/dev/null
   fi
 fi
