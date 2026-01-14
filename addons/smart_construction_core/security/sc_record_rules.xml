@@ -119,5 +119,117 @@
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
         </record>
 
+        <!-- =========================================================
+             财务中心：付款申请 record rules
+             - read/user: 仅限负责或关注的项目
+             - manager: 放行全部
+        ========================================================== -->
+        <record id="rule_sc_finance_read_payment_request" model="ir.rule">
+            <field name="name">SC Finance Read - payment.request by project member</field>
+            <field name="model_id" ref="model_payment_request"/>
+            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_user_payment_request" model="ir.rule">
+            <field name="name">SC Finance User - payment.request by project member</field>
+            <field name="model_id" ref="model_payment_request"/>
+            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_manager_payment_request" model="ir.rule">
+            <field name="name">SC Finance Manager - payment.request ALL</field>
+            <field name="model_id" ref="model_payment_request"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <!-- =========================================================
+             结算中心：结算单 record rules
+             - read/user: 仅限负责或关注的项目
+             - manager: 放行全部
+        ========================================================== -->
+        <record id="rule_sc_settlement_read_order" model="ir.rule">
+            <field name="name">SC Settlement Read - sc.settlement.order by project member</field>
+            <field name="model_id" ref="model_sc_settlement_order"/>
+            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_project_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_cost_read')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+
+        <record id="rule_sc_settlement_user_order" model="ir.rule">
+            <field name="name">SC Settlement User - sc.settlement.order by project member</field>
+            <field name="model_id" ref="model_sc_settlement_order"/>
+            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_user'))]"/>
+        </record>
+
+        <record id="rule_sc_settlement_manager_order" model="ir.rule">
+            <field name="name">SC Settlement Manager - sc.settlement.order ALL</field>
+            <field name="model_id" ref="model_sc_settlement_order"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_settlement_read_line" model="ir.rule">
+            <field name="name">SC Settlement Read - sc.settlement.order.line by project member</field>
+            <field name="model_id" ref="model_sc_settlement_order_line"/>
+            <field name="domain_force">['|', ('settlement_id.project_id.user_id', '=', user.id), ('settlement_id.project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
+        </record>
+
+        <record id="rule_sc_settlement_user_line" model="ir.rule">
+            <field name="name">SC Settlement User - sc.settlement.order.line by project member</field>
+            <field name="model_id" ref="model_sc_settlement_order_line"/>
+            <field name="domain_force">['|', ('settlement_id.project_id.user_id', '=', user.id), ('settlement_id.project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_user'))]"/>
+        </record>
+
+        <record id="rule_sc_settlement_manager_line" model="ir.rule">
+            <field name="name">SC Settlement Manager - sc.settlement.order.line ALL</field>
+            <field name="model_id" ref="model_sc_settlement_order_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+        </record>
+
     </data>
 </odoo>

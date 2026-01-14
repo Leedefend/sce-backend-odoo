@@ -19,14 +19,22 @@
              - 关键：project.stage_id 字段受 project.group_project_user 限制
              - 放在 project_read，保证 read/user/manager 全链条具备 stage_id 读权限
         ========================== -->
-        <!-- 原生能力桥接：承接 Odoo 原生项目组，统一从这里黏住 -->
-        <record id="group_sc_bridge_project_read" model="res.groups">
-            <field name="name">SC Bridge - Project Read</field>
+        <!-- 原生能力桥接：拆分 base / user，避免 read 角色拿到 project_user 权限 -->
+        <record id="group_sc_bridge_project_base" model="res.groups">
+            <field name="name">SC Bridge - Project Base</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_internal_user'),
-                ref('project.group_project_user'),
                 ref('project.group_project_stages')
+            ])]"/>
+        </record>
+
+        <record id="group_sc_bridge_project_user" model="res.groups">
+            <field name="name">SC Bridge - Project User</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_bridge_project_base'),
+                ref('project.group_project_user')
             ])]"/>
         </record>
 
@@ -34,7 +42,7 @@
             <field name="name">SC 能力 - 项目中心只读</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
-                ref('smart_construction_core.group_sc_bridge_project_read')
+                ref('smart_construction_core.group_sc_bridge_project_base')
             ])]"/>
         </record>
 
@@ -42,7 +50,8 @@
             <field name="name">SC 能力 - 项目中心经办</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
-                ref('smart_construction_core.group_sc_cap_project_read')
+                ref('smart_construction_core.group_sc_cap_project_read'),
+                ref('smart_construction_core.group_sc_bridge_project_user')
             ])]"/>
         </record>
 
