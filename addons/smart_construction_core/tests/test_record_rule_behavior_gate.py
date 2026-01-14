@@ -37,6 +37,22 @@ class TestRecordRuleBehaviorGate(TransactionCase):
             "rr_project_manager",
             ["smart_construction_core.group_sc_cap_project_manager"],
         )
+        cls.user_finance_read = _create_user(
+            "rr_finance_read",
+            ["smart_construction_core.group_sc_cap_finance_read"],
+        )
+        cls.user_finance_user = _create_user(
+            "rr_finance_user",
+            ["smart_construction_core.group_sc_cap_finance_user"],
+        )
+        cls.user_settlement_read = _create_user(
+            "rr_settlement_read",
+            ["smart_construction_core.group_sc_cap_settlement_read"],
+        )
+        cls.user_settlement_user = _create_user(
+            "rr_settlement_user",
+            ["smart_construction_core.group_sc_cap_settlement_user"],
+        )
 
         project_vals = {"privacy_visibility": "followers"}
         cls.project_read = cls.env["project.project"].create(
@@ -47,6 +63,18 @@ class TestRecordRuleBehaviorGate(TransactionCase):
         )
         cls.project_other = cls.env["project.project"].create(
             dict(project_vals, name="RR Project Other", user_id=cls.user_project_manager.id)
+        )
+        cls.project_finance = cls.env["project.project"].create(
+            dict(project_vals, name="RR Project Finance", user_id=cls.user_finance_user.id)
+        )
+        cls.project_finance_read = cls.env["project.project"].create(
+            dict(project_vals, name="RR Project Finance Read", user_id=cls.user_finance_read.id)
+        )
+        cls.project_settlement = cls.env["project.project"].create(
+            dict(project_vals, name="RR Project Settlement", user_id=cls.user_settlement_user.id)
+        )
+        cls.project_settlement_read = cls.env["project.project"].create(
+            dict(project_vals, name="RR Project Settlement Read", user_id=cls.user_settlement_read.id)
         )
 
         cls.task_read = cls.env["project.task"].create(
@@ -59,13 +87,68 @@ class TestRecordRuleBehaviorGate(TransactionCase):
             {"name": "RR Task Other", "project_id": cls.project_other.id}
         )
 
+        cls.partner = cls.env["res.partner"].create({"name": "RR Partner"})
+
+        cls.payment_req_read = cls.env["payment.request"].create(
+            {
+                "project_id": cls.project_finance_read.id,
+                "partner_id": cls.partner.id,
+                "amount": 10.0,
+                "type": "pay",
+            }
+        )
+        cls.payment_req_user = cls.env["payment.request"].create(
+            {
+                "project_id": cls.project_finance.id,
+                "partner_id": cls.partner.id,
+                "amount": 20.0,
+                "type": "pay",
+            }
+        )
+        cls.payment_req_other = cls.env["payment.request"].create(
+            {
+                "project_id": cls.project_other.id,
+                "partner_id": cls.partner.id,
+                "amount": 30.0,
+                "type": "pay",
+            }
+        )
+
+        cls.settlement_read = cls.env["sc.settlement.order"].create(
+            {
+                "project_id": cls.project_settlement_read.id,
+                "partner_id": cls.partner.id,
+                "line_ids": [(0, 0, {"name": "RR Line Read", "amount": 10.0})],
+            }
+        )
+        cls.settlement_user = cls.env["sc.settlement.order"].create(
+            {
+                "project_id": cls.project_settlement.id,
+                "partner_id": cls.partner.id,
+                "line_ids": [(0, 0, {"name": "RR Line User", "amount": 20.0})],
+            }
+        )
+        cls.settlement_other = cls.env["sc.settlement.order"].create(
+            {
+                "project_id": cls.project_other.id,
+                "partner_id": cls.partner.id,
+                "line_ids": [(0, 0, {"name": "RR Line Other", "amount": 30.0})],
+            }
+        )
+
         # Ensure denied records do not inherit follower-based access.
         partners = [
             cls.user_project_read.partner_id.id,
             cls.user_project_user.partner_id.id,
+            cls.user_finance_read.partner_id.id,
+            cls.user_finance_user.partner_id.id,
+            cls.user_settlement_read.partner_id.id,
+            cls.user_settlement_user.partner_id.id,
         ]
         cls.project_other.message_unsubscribe(partner_ids=partners)
         cls.task_other.message_unsubscribe(partner_ids=partners)
+        cls.payment_req_other.project_id.message_unsubscribe(partner_ids=partners)
+        cls.settlement_other.project_id.message_unsubscribe(partner_ids=partners)
 
     def _can_read(self, user, record):
         Model = self.env[record._name].with_user(user)
@@ -114,4 +197,38 @@ class TestRecordRuleBehaviorGate(TransactionCase):
         self.assertTrue(self._can_read(self.user_project_manager, self.task_other))
         self._assert_write_allowed(
             self.user_project_manager, self.task_other, {"name": "RR Task Other Manager"}
+        )
+
+    def test_payment_request_rules(self):
+        # Finance read: can read own project, cannot see others.
+        self.assertTrue(self._can_read(self.user_finance_read, self.payment_req_read))
+        self.assertFalse(self._can_read(self.user_finance_read, self.payment_req_other))
+
+        # Finance user: can write own project, denied on others.
+        self._assert_write_allowed(
+            self.user_finance_user,
+            self.payment_req_user,
+            {"note": "RR Payment User Updated"},
+        )
+        self._assert_write_denied(
+            self.user_finance_user,
+            self.payment_req_other,
+            {"note": "RR Payment Other Updated"},
+        )
+
+    def test_settlement_order_rules(self):
+        # Settlement read: can read own project, cannot see others.
+        self.assertTrue(self._can_read(self.user_settlement_read, self.settlement_read))
+        self.assertFalse(self._can_read(self.user_settlement_read, self.settlement_other))
+
+        # Settlement user: can write own project, denied on others.
+        self._assert_write_allowed(
+            self.user_settlement_user,
+            self.settlement_user,
+            {"note": "RR Settlement User Updated"},
+        )
+        self._assert_write_denied(
+            self.user_settlement_user,
+            self.settlement_other,
+            {"note": "RR Settlement Other Updated"},
         )
