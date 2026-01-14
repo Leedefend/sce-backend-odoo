@@ -111,8 +111,15 @@ class TestAclMatrixGate(TransactionCase):
             os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir)
         )
         docs_dir = os.path.join(repo_root, "docs", "audit")
-        if os.path.isdir(docs_dir) and os.access(docs_dir, os.W_OK):
-            return os.path.join(docs_dir, "acl_matrix.csv")
+        if os.path.isdir(docs_dir):
+            probe = os.path.join(docs_dir, ".write_test")
+            try:
+                with open(probe, "w", encoding="utf-8") as handle:
+                    handle.write("ok")
+                os.unlink(probe)
+                return os.path.join(docs_dir, "acl_matrix.csv")
+            except OSError:
+                pass
         return "/tmp/acl_matrix.csv"
 
     def _write_audit_csv(self):
@@ -157,7 +164,15 @@ class TestAclMatrixGate(TransactionCase):
         )
         docs_dir = os.path.join(repo_root, "docs", "audit")
         target = os.path.join(docs_dir, "acl_p1_sources.csv")
-        if not (os.path.isdir(docs_dir) and os.access(docs_dir, os.W_OK)):
+        if os.path.isdir(docs_dir):
+            probe = os.path.join(docs_dir, ".write_test")
+            try:
+                with open(probe, "w", encoding="utf-8") as handle:
+                    handle.write("ok")
+                os.unlink(probe)
+            except OSError:
+                target = "/tmp/acl_p1_sources.csv"
+        else:
             target = "/tmp/acl_p1_sources.csv"
 
         rows = []

@@ -13,6 +13,14 @@ class TestRecordRuleLedgerP1(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         company = cls.env.ref("base.main_company")
+        ctx = dict(
+            cls.env.context,
+            mail_create_nosubscribe=True,
+            mail_notify_noemail=True,
+            mail_auto_subscribe_no_notify=True,
+            tracking_disable=True,
+        )
+        Env = cls.env.with_context(ctx)
 
         def _create_user(login, group_xmlids):
             groups = [(6, 0, [cls.env.ref(x).id for x in group_xmlids])]
@@ -41,23 +49,23 @@ class TestRecordRuleLedgerP1(TransactionCase):
         )
 
         project_vals = {"privacy_visibility": "followers"}
-        cls.project_same = cls.env["project.project"].create(
+        cls.project_same = Env["project.project"].create(
             dict(project_vals, name="RR Ledger Project Same", user_id=cls.user_finance_user.id)
         )
-        cls.project_other = cls.env["project.project"].create(
+        cls.project_other = Env["project.project"].create(
             dict(project_vals, name="RR Ledger Project Other", user_id=cls.user_finance_manager.id)
         )
 
-        cls.partner = cls.env["res.partner"].create({"name": "RR Ledger Partner"})
+        cls.partner = Env["res.partner"].create({"name": "RR Ledger Partner"})
 
-        cls.settlement_same = cls.env["sc.settlement.order"].create(
+        cls.settlement_same = Env["sc.settlement.order"].create(
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
                 "line_ids": [(0, 0, {"name": "RR Ledger Line Same", "amount": 10.0})],
             }
         )
-        cls.settlement_other = cls.env["sc.settlement.order"].create(
+        cls.settlement_other = Env["sc.settlement.order"].create(
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
@@ -65,7 +73,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
             }
         )
 
-        cls.payment_req_same = cls.env["payment.request"].create(
+        cls.payment_req_same = Env["payment.request"].create(
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
@@ -73,7 +81,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
                 "type": "pay",
             }
         )
-        cls.payment_req_other = cls.env["payment.request"].create(
+        cls.payment_req_other = Env["payment.request"].create(
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
@@ -82,7 +90,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
             }
         )
 
-        cls.treasury_same = cls.env["sc.treasury.ledger"].with_context(allow_ledger_auto=True).create(
+        cls.treasury_same = Env["sc.treasury.ledger"].with_context(allow_ledger_auto=True).create(
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
@@ -92,7 +100,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
                 "amount": 10.0,
             }
         )
-        cls.treasury_other = cls.env["sc.treasury.ledger"].with_context(allow_ledger_auto=True).create(
+        cls.treasury_other = Env["sc.treasury.ledger"].with_context(allow_ledger_auto=True).create(
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
@@ -128,8 +136,15 @@ class TestRecordRuleLedgerP1(TransactionCase):
             os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir)
         )
         docs_dir = os.path.join(repo_root, "docs", "audit")
-        if os.path.isdir(docs_dir) and os.access(docs_dir, os.W_OK):
-            return os.path.join(docs_dir, "rr_ledger_p1.csv")
+        if os.path.isdir(docs_dir):
+            probe = os.path.join(docs_dir, ".write_test")
+            try:
+                with open(probe, "w", encoding="utf-8") as handle:
+                    handle.write("ok")
+                os.unlink(probe)
+                return os.path.join(docs_dir, "rr_ledger_p1.csv")
+            except OSError:
+                pass
         return "/tmp/rr_ledger_p1.csv"
 
     def test_ledger_visibility_audit(self):
