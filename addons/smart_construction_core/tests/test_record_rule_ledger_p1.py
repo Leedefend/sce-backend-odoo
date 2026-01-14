@@ -20,7 +20,8 @@ class TestRecordRuleLedgerP1(TransactionCase):
             mail_auto_subscribe_no_notify=True,
             tracking_disable=True,
         )
-        Env = cls.env.with_context(ctx)
+        def _ctx(model):
+            return cls.env[model].with_context(ctx)
 
         def _create_user(login, group_xmlids):
             groups = [(6, 0, [cls.env.ref(x).id for x in group_xmlids])]
@@ -49,23 +50,23 @@ class TestRecordRuleLedgerP1(TransactionCase):
         )
 
         project_vals = {"privacy_visibility": "followers"}
-        cls.project_same = Env["project.project"].create(
+        cls.project_same = _ctx("project.project").create(
             dict(project_vals, name="RR Ledger Project Same", user_id=cls.user_finance_user.id)
         )
-        cls.project_other = Env["project.project"].create(
+        cls.project_other = _ctx("project.project").create(
             dict(project_vals, name="RR Ledger Project Other", user_id=cls.user_finance_manager.id)
         )
 
-        cls.partner = Env["res.partner"].create({"name": "RR Ledger Partner"})
+        cls.partner = _ctx("res.partner").create({"name": "RR Ledger Partner"})
 
-        cls.settlement_same = Env["sc.settlement.order"].create(
+        cls.settlement_same = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
                 "line_ids": [(0, 0, {"name": "RR Ledger Line Same", "amount": 10.0})],
             }
         )
-        cls.settlement_other = Env["sc.settlement.order"].create(
+        cls.settlement_other = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
@@ -73,7 +74,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
             }
         )
 
-        cls.payment_req_same = Env["payment.request"].create(
+        cls.payment_req_same = _ctx("payment.request").create(
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
@@ -81,7 +82,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
                 "type": "pay",
             }
         )
-        cls.payment_req_other = Env["payment.request"].create(
+        cls.payment_req_other = _ctx("payment.request").create(
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
@@ -90,7 +91,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
             }
         )
 
-        cls.treasury_same = Env["sc.treasury.ledger"].with_context(allow_ledger_auto=True).create(
+        cls.treasury_same = _ctx("sc.treasury.ledger").with_context(allow_ledger_auto=True).create(
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
@@ -100,7 +101,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
                 "amount": 10.0,
             }
         )
-        cls.treasury_other = Env["sc.treasury.ledger"].with_context(allow_ledger_auto=True).create(
+        cls.treasury_other = _ctx("sc.treasury.ledger").with_context(allow_ledger_auto=True).create(
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,

@@ -20,7 +20,8 @@ class TestRecordRuleContractP1(TransactionCase):
             mail_auto_subscribe_no_notify=True,
             tracking_disable=True,
         )
-        Env = cls.env.with_context(ctx)
+        def _ctx(model):
+            return cls.env[model].with_context(ctx)
 
         def _create_user(login, group_xmlids):
             groups = [(6, 0, [cls.env.ref(x).id for x in group_xmlids])]
@@ -49,18 +50,18 @@ class TestRecordRuleContractP1(TransactionCase):
         )
 
         project_vals = {"privacy_visibility": "followers"}
-        cls.project_read = Env["project.project"].create(
+        cls.project_read = _ctx("project.project").create(
             dict(project_vals, name="RR Contract Project Read", user_id=cls.user_project_read.id)
         )
-        cls.project_user = Env["project.project"].create(
+        cls.project_user = _ctx("project.project").create(
             dict(project_vals, name="RR Contract Project User", user_id=cls.user_contract_user.id)
         )
-        cls.project_other = Env["project.project"].create(
+        cls.project_other = _ctx("project.project").create(
             dict(project_vals, name="RR Contract Project Other", user_id=cls.user_contract_manager.id)
         )
 
-        cls.partner = Env["res.partner"].create({"name": "RR Contract Partner"})
-        cls.tax = Env["account.tax"].create(
+        cls.partner = _ctx("res.partner").create({"name": "RR Contract Partner"})
+        cls.tax = _ctx("account.tax").create(
             {
                 "name": "RR Contract VAT 9%",
                 "amount": 9.0,
@@ -71,7 +72,7 @@ class TestRecordRuleContractP1(TransactionCase):
             }
         )
 
-        cls.contract_read = Env["construction.contract"].create(
+        cls.contract_read = _ctx("construction.contract").create(
             {
                 "subject": "RR Contract Read",
                 "type": "in",
@@ -80,7 +81,7 @@ class TestRecordRuleContractP1(TransactionCase):
                 "tax_id": cls.tax.id,
             }
         )
-        cls.contract_user = Env["construction.contract"].create(
+        cls.contract_user = _ctx("construction.contract").create(
             {
                 "subject": "RR Contract User",
                 "type": "in",
@@ -89,7 +90,7 @@ class TestRecordRuleContractP1(TransactionCase):
                 "tax_id": cls.tax.id,
             }
         )
-        cls.contract_other = Env["construction.contract"].create(
+        cls.contract_other = _ctx("construction.contract").create(
             {
                 "subject": "RR Contract Other",
                 "type": "in",
