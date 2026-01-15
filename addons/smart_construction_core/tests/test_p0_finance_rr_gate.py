@@ -113,6 +113,63 @@ class TestP0FinanceRrGate(TransactionCase):
     def _project_ids_from_groups(self, groups):
         return {g.get("project_id")[0] for g in groups if g.get("project_id")}
 
+    def _assert_groups_include(self, record, required_xmlids):
+        self.assertTrue(record.groups_id, "Expected groups on record but found none")
+        required_ids = {self.env.ref(xmlid).id for xmlid in required_xmlids}
+        self.assertTrue(
+            required_ids.issubset(set(record.groups_id.ids)),
+            "Missing required groups on record",
+        )
+
+    def test_action_menu_groups_for_payment_request(self):
+        action_payment_request = self.env.ref(
+            "smart_construction_core.action_payment_request"
+        )
+        action_finance_dashboard = self.env.ref(
+            "smart_construction_core.action_sc_finance_dashboard"
+        )
+        menu_payment_request = self.env.ref(
+            "smart_construction_core.menu_payment_request"
+        )
+        self._assert_groups_include(
+            action_payment_request,
+            [
+                "smart_construction_core.group_sc_cap_finance_read",
+                "smart_construction_core.group_sc_cap_finance_user",
+                "smart_construction_core.group_sc_cap_finance_manager",
+            ],
+        )
+        self._assert_groups_include(
+            action_finance_dashboard,
+            [
+                "smart_construction_core.group_sc_cap_finance_user",
+                "smart_construction_core.group_sc_cap_finance_manager",
+            ],
+        )
+        self._assert_groups_include(
+            menu_payment_request,
+            [
+                "smart_construction_core.group_sc_cap_finance_read",
+                "smart_construction_core.group_sc_cap_finance_user",
+                "smart_construction_core.group_sc_cap_finance_manager",
+            ],
+        )
+
+    def test_action_menu_groups_for_settlement_order(self):
+        action_settlement_order = self.env.ref(
+            "smart_construction_core.action_sc_settlement_order"
+        )
+        menu_settlement_order = self.env.ref(
+            "smart_construction_core.menu_sc_settlement_order"
+        )
+        menu_settlement_center = self.env.ref(
+            "smart_construction_core.menu_sc_settlement_center"
+        )
+        required = ["smart_construction_core.group_sc_cap_finance_read"]
+        self._assert_groups_include(action_settlement_order, required)
+        self._assert_groups_include(menu_settlement_order, required)
+        self._assert_groups_include(menu_settlement_center, required)
+
     def test_payment_request_read_group_scope_finance_read(self):
         groups = (
             self.env["payment.request"]
