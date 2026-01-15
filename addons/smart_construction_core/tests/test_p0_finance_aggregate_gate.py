@@ -7,6 +7,13 @@ from odoo.tests.common import TransactionCase, tagged
 class TestP0FinanceAggregateGate(TransactionCase):
     """P0 gate for finance aggregation paths (read_group)."""
 
+    _SUM_FIELDS = (
+        ("payment.request", "amount"),
+        ("sc.settlement.order", "amount_total"),
+        ("payment.ledger", "amount"),
+        ("sc.treasury.ledger", "amount"),
+    )
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -181,6 +188,21 @@ class TestP0FinanceAggregateGate(TransactionCase):
                     break
         return total
 
+    def _sum_read_group_value(self, model, user, field, domain, groupby="project_id"):
+        groups = (
+            self.env[model]
+            .with_user(user)
+            .read_group(domain, [f"{field}:sum"], [groupby])
+        )
+        total = 0.0
+        for group in groups:
+            total += group.get(field) or 0.0
+        return total
+
+    def _sum_search_field(self, model, user, field, domain):
+        values = self.env[model].with_user(user).search(domain).mapped(field)
+        return sum(values or [])
+
     def _assert_aggregate_consistency(self, model, user, domain, groupby="project_id"):
         count = self.env[model].with_user(user).search_count(domain)
         rg_total = self._sum_read_group_count(model, user, domain, groupby=groupby)
@@ -199,6 +221,11 @@ class TestP0FinanceAggregateGate(TransactionCase):
         ]:
             with self.assertRaises(AccessError):
                 self._read_group_project_ids(model, self.user_no_access)
+
+    def test_read_group_sum_denied_non_finance(self):
+        for model, field in self._SUM_FIELDS:
+            with self.assertRaises(AccessError):
+                self._sum_read_group_value(model, self.user_no_access, field, [])
 
     def test_search_count_denied_non_finance(self):
         for model in [
@@ -254,4 +281,34 @@ class TestP0FinanceAggregateGate(TransactionCase):
         ]:
             self._assert_aggregate_consistency(
                 model, self.user_finance_manager, [], groupby="project_id"
+            )
+
+    def test_aggregate_sum_parity_finance_read(self):
+        for model, field in self._SUM_FIELDS:
+            rg_total = self._sum_read_group_value(
+                model, self.user_finance_read, field, []
+            )
+            search_total = self._sum_search_field(
+                model, self.user_finance_read, field, []
+            )
+            self.assertAlmostEqual(
+                rg_total,
+                search_total,
+                places=2,
+                msg=f"sum mismatch on {model}.{field}: read_group={rg_total} search_sum={search_total}",
+            )
+
+    def test_aggregate_sum_parity_finance_manager(self):
+        for model, field in self._SUM_FIELDS:
+            rg_total = self._sum_read_group_value(
+                model, self.user_finance_manager, field, []
+            )
+            search_total = self._sum_search_field(
+                model, self.user_finance_manager, field, []
+            )
+            self.assertAlmostEqual(
+                rg_total,
+                search_total,
+                places=2,
+                msg=f"sum mismatch on {model}.{field}: read_group={rg_total} search_sum={search_total}",
             )
