@@ -118,7 +118,11 @@ def run(env):
             }
         )
     if payment.state != "approved":
-        payment.write({"state": "approved"})
+        env.cr.execute(
+            "UPDATE payment_request SET state=%s, validation_status=%s WHERE id=%s",
+            ("approved", "validated", payment.id),
+        )
+        env.invalidate_all()
 
     ledger = Ledger.create(
         {
