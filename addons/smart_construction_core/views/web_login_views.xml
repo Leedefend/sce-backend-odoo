@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="sc_web_login_inherit" inherit_id="web.login">
+        <xpath expr="." position="inside">
+            <t t-set="sc_login_enabled"
+               t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')"/>
+            <t t-set="sc_login_env"
+               t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', '')"/>
+            <t t-set="sc_hide_db"
+               t-value="sc_login_enabled and sc_login_env in ('demo','prod')"/>
+            <t t-set="sc_hide_dev_links"
+               t-value="sc_login_enabled and sc_login_env in ('demo','prod')"/>
+        </xpath>
+
+        <xpath expr="//form[contains(@class,'oe_login_form') or contains(@class,'o_login_form')]/div[1]" position="before">
+            <t t-if="sc_login_enabled">
+                <div class="sc-login-branding">
+                    <h2>智能工程项目管理系统</h2>
+                    <div>项目 · 合同 · 结算 · 支付一体化（演示环境）</div>
+                </div>
+                <t t-if="sc_login_env">
+                    <div class="sc-login-env">ENV: <t t-esc="sc_login_env.upper()"/></div>
+                </t>
+            </t>
+        </xpath>
+
+        <xpath expr="//div[.//select[@name='db']]" position="attributes">
+            <attribute name="t-if">not sc_hide_db</attribute>
+        </xpath>
+
+        <xpath expr="//a[contains(@href, '/web/database')]" position="attributes">
+            <attribute name="t-if">not sc_hide_dev_links</attribute>
+        </xpath>
+        <xpath expr="//a[contains(@href, 'debug=1')]" position="attributes">
+            <attribute name="t-if">not sc_hide_dev_links</attribute>
+        </xpath>
+    </template>
+</odoo>
