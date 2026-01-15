@@ -48,6 +48,10 @@ class TestRecordRuleLedgerP1(TransactionCase):
             "rr_ledger_fin_manager",
             ["smart_construction_core.group_sc_cap_finance_manager"],
         )
+        cls.user_no_access = _create_user(
+            "rr_ledger_no_access",
+            ["base.group_user"],
+        )
 
         project_vals = {"privacy_visibility": "followers"}
         cls.project_same = _ctx("project.project").create(
@@ -119,6 +123,15 @@ class TestRecordRuleLedgerP1(TransactionCase):
         ]
         cls.project_other.message_unsubscribe(partner_ids=partners)
 
+        cls.demo_payment_ledger = cls.env["payment.ledger"].sudo().search(
+            [("ref", "=like", "RR-LEDGER-P1%")],
+            limit=1,
+        )
+        if not cls.demo_payment_ledger:
+            raise AssertionError("Missing demo payment.ledger ref=RR-LEDGER-P1*. Run seed step payment_ledger_p1.")
+        if cls.demo_payment_ledger.payment_request_id.state != "approved":
+            raise AssertionError("Demo payment.request must be approved for ledger P1 audit.")
+
     def _can_read(self, user, record):
         Model = self.env[record._name].with_user(user)
         return bool(Model.search_count([("id", "=", record.id)]))
@@ -172,10 +185,10 @@ class TestRecordRuleLedgerP1(TransactionCase):
                 {
                     "model": "payment.ledger",
                     "role": role,
-                    "same_project_read": "",
-                    "other_project_read": "",
+                    "same_project_read": self._can_read(self.user_finance_read, self.demo_payment_ledger),
+                    "other_project_read": self._can_read(self.user_no_access, self.demo_payment_ledger),
                     "rule_xmlids": self._rule_xmlids("payment.ledger"),
-                    "note": "sample_unavailable",
+                    "note": "no_access_user",
                 }
             )
 
