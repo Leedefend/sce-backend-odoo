@@ -10,6 +10,7 @@
     "data": [
         "data/sc_demo_showcase_actions.xml",
         "data/sc_seed_dictionary_contract.xml",
+        "data/sc_seed_login_env.xml",
         "data/sc_seed_partner.xml",
         "data/sc_seed_tax.xml",
     ],
