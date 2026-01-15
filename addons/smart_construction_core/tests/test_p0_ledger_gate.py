@@ -131,11 +131,27 @@ class TestP0LedgerGate(TransactionCase):
         with self.assertRaises(AccessError):
             self.payment_ok.with_user(self.user_finance_read)._ensure_payment_ledger()
 
-    def test_block_overpay(self):
+    def test_block_create_without_context(self):
         with self.assertRaises(UserError):
             self.env["payment.ledger"].with_user(self.user_finance_user).create(
                 {
                     "payment_request_id": self.payment_ok.id,
-                    "amount": 1000.0,
+                    "amount": self.payment_ok.amount,
                 }
             )
+
+    def test_block_duplicate_create(self):
+        self.payment_ok.with_user(self.user_finance_user)._ensure_payment_ledger()
+        with self.assertRaises(UserError):
+            self.env["payment.ledger"].with_user(self.user_finance_user).with_context(
+                allow_payment_ledger_create=True
+            ).create(
+                {
+                    "payment_request_id": self.payment_ok.id,
+                    "amount": self.payment_ok.amount,
+                }
+            )
+
+    def test_block_overpay(self):
+        with self.assertRaises(UserError):
+            self.payment_ok.with_user(self.user_finance_user)._ensure_payment_ledger(amount=1000.0)
