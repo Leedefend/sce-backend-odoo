@@ -1,19 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <template id="sc_web_login_inherit" inherit_id="web.login">
-        <xpath expr="." position="inside">
-            <t t-set="sc_login_enabled"
-               t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')"/>
-            <t t-set="sc_login_env"
-               t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
-            <t t-set="sc_hide_db"
-               t-value="sc_login_enabled and sc_login_env in ('demo','prod')"/>
-            <t t-set="sc_hide_dev_links"
-               t-value="sc_login_enabled and sc_login_env in ('demo','prod')"/>
-        </xpath>
-
-        <xpath expr="//form[contains(@class,'oe_login_form') or contains(@class,'o_login_form')]/div[1]" position="before">
-            <t t-if="sc_login_enabled">
+        <xpath expr="//form" position="before">
+            <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
+                <t t-set="sc_login_env"
+                   t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
                 <div class="sc-login-branding">
                     <h2>智能工程项目管理系统</h2>
                     <div>项目 · 合同 · 结算 · 支付一体化（演示环境）</div>
@@ -24,15 +15,33 @@
             </t>
         </xpath>
 
-        <xpath expr="//div[.//select[@name='db']]" position="attributes">
-            <attribute name="t-if">not sc_hide_db</attribute>
+        <xpath expr="//form//div[.//input[@name='db']]" position="attributes">
+            <attribute name="t-if">
+                not (
+                request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')
+                and request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod') in ('demo','prod')
+                )
+            </attribute>
         </xpath>
 
-        <xpath expr="//a[contains(@href, '/web/database')]" position="attributes">
-            <attribute name="t-if">not sc_hide_dev_links</attribute>
+        <xpath expr="//button[@name='redirect' and contains(normalize-space(.), 'superuser')]" position="attributes">
+            <attribute name="t-if">
+                not (
+                request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')
+                and request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod') in ('demo','prod')
+                )
+            </attribute>
         </xpath>
-        <xpath expr="//a[contains(@href, 'debug=1')]" position="attributes">
-            <attribute name="t-if">not sc_hide_dev_links</attribute>
+    </template>
+
+    <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
+        <xpath expr="//a[@href='/web/database/manager']" position="attributes">
+            <attribute name="t-if">
+                not (
+                request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')
+                and request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod') in ('demo','prod')
+                )
+            </attribute>
         </xpath>
     </template>
 </odoo>
