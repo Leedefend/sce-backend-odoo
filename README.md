@@ -390,6 +390,7 @@ npm run test
 * [项目 Wiki](docs/wiki.md)
 * [API 文档](docs/api-reference.md)
 * [Git 分支规范](docs/git/SmartConstruction-Git-Guide.md)
+* [P0 Ledger Gate 规范](docs/spec/p0_ledger_gate.md)
 * [FAQ](docs/faq.md)
 
 ---
