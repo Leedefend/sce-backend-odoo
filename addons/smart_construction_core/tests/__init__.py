@@ -20,3 +20,4 @@ from . import test_acl_matrix_gate
 from . import test_record_rule_behavior_gate
 from . import test_record_rule_contract_p1
 from . import test_record_rule_ledger_p1
+from . import test_p0_ledger_gate
