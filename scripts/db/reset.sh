@@ -22,6 +22,7 @@ run_with_timeout_retry() {
   local timeout_s="$1"; shift
   local retries="$1"; shift
   local attempt=1
+  local grace_s="${DB_RESET_RUN_GRACE:-120}"
 
   while true; do
     log "[run] attempt=${attempt}/${retries} timeout=${timeout_s}s: $*"
@@ -30,7 +31,7 @@ run_with_timeout_retry() {
       if [[ "$1" == "compose_dev" ]]; then
         local cmd_str
         printf -v cmd_str '%q ' "${@:2}"
-        timeout "${timeout_s}" bash -lc "source \"${ROOT_DIR}/scripts/common/compose.sh\"; compose_dev ${cmd_str}"
+        timeout "${timeout_s}" bash -lc "source \"${ROOT_DIR}/scripts/common/compose.sh\"; compose_dev ${cmd_str} </dev/null"
         rc=$?
       elif declare -F "$1" >/dev/null 2>&1; then
         local cmd_str
@@ -50,8 +51,13 @@ run_with_timeout_retry() {
       return 0
     fi
     if [[ "${rc}" -eq 124 && "$1" == "compose_dev" ]]; then
-      for i in $(seq 1 15); do
-        if ! docker ps --format '{{.Names}}' | grep -q "^${COMPOSE_PROJECT_NAME}-odoo-run"; then
+      for i in $(seq 1 "${grace_s}"); do
+        if ! docker ps \
+          --filter "label=com.docker.compose.project=${COMPOSE_PROJECT_NAME}" \
+          --filter "label=com.docker.compose.oneoff=True" \
+          --filter "label=com.docker.compose.service=odoo" \
+          --format '{{.ID}}' \
+          | grep -q .; then
           log "[run] timeout but compose run container not running; assume success"
           return 0
         fi
