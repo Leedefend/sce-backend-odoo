@@ -37,6 +37,10 @@ def post_init_hook(env_or_cr, registry=None):
         _logger.info("Seed skipped: sc.bootstrap.seed_enabled=%s mode=%s", seed_enabled, mode)
         return
 
+    if mode == "demo":
+        ICP.set_param("sc.login.env", "demo")
+        ICP.set_param("sc.login.custom_enabled", "1")
+
     executed = run_steps(env, steps_sel)
 
     # mark execution evidence for verify/demo
