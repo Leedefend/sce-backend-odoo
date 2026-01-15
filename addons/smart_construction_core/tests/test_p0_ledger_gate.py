@@ -99,11 +99,42 @@ class TestP0LedgerGate(TransactionCase):
             }
         )
 
+        cls.other_project = _ctx("project.project").create(
+            {
+                "name": "P0 Ledger Project Other",
+                "privacy_visibility": "followers",
+                "user_id": cls.user_no_access.id,
+            }
+        )
+        cls.other_partner = _ctx("res.partner").create({"name": "P0 Ledger Partner Other"})
+        cls.other_settlement = _ctx("sc.settlement.order").create(
+            {
+                "project_id": cls.other_project.id,
+                "partner_id": cls.other_partner.id,
+                "line_ids": [(0, 0, {"name": "P0 Ledger Line Other", "amount": 80.0})],
+            }
+        )
+        cls.other_settlement.write({"state": "approve"})
+        cls.other_payment = _ctx("payment.request").create(
+            {
+                "project_id": cls.other_project.id,
+                "partner_id": cls.other_partner.id,
+                "settlement_id": cls.other_settlement.id,
+                "amount": 80.0,
+                "type": "pay",
+            }
+        )
+
         cls.env.cr.execute(
             "UPDATE payment_request SET state=%s, validation_status=%s WHERE id in %s",
-            ("approved", "validated", (cls.payment_ok.id, cls.payment_bad_settlement.id)),
+            (
+                "approved",
+                "validated",
+                (cls.payment_ok.id, cls.payment_bad_settlement.id, cls.other_payment.id),
+            ),
         )
         cls.env.invalidate_all()
+        cls.other_ledger = cls.other_payment.sudo()._ensure_payment_ledger()
 
     def test_create_ledger_from_approved_payment(self):
         ledger = self.payment_ok.with_user(self.user_finance_user)._ensure_payment_ledger()
@@ -170,3 +201,24 @@ class TestP0LedgerGate(TransactionCase):
         view = self.env.ref("smart_construction_core.view_payment_request_form").arch_db
         self.assertIn('name="ledger_line_ids"', view)
         self.assertIn('create="false"', view)
+
+    def test_rr_ledger_read_scope_finance_read(self):
+        ledger = self.payment_ok.with_user(self.user_finance_user)._ensure_payment_ledger()
+        can_read = self.env["payment.ledger"].with_user(self.user_finance_read).search_count(
+            [("id", "=", ledger.id)]
+        )
+        cannot_read = self.env["payment.ledger"].with_user(self.user_finance_read).search_count(
+            [("id", "=", self.other_ledger.id)]
+        )
+        self.assertEqual(can_read, 1)
+        self.assertEqual(cannot_read, 0)
+
+    def test_rr_ledger_read_denied_non_finance(self):
+        with self.assertRaises(AccessError):
+            self.env["payment.ledger"].with_user(self.user_no_access).search_count([])
+
+    def test_action_menu_groups_for_ledger(self):
+        action = self.env.ref("smart_construction_core.action_payment_ledger")
+        menu = self.env.ref("smart_construction_core.menu_payment_ledger")
+        self.assertTrue(action.groups_id)
+        self.assertTrue(menu.groups_id)
