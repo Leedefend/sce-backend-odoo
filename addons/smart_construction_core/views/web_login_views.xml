@@ -5,7 +5,7 @@
             <t t-set="sc_login_enabled"
                t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')"/>
             <t t-set="sc_login_env"
-               t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', '')"/>
+               t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
             <t t-set="sc_hide_db"
                t-value="sc_login_enabled and sc_login_env in ('demo','prod')"/>
             <t t-set="sc_hide_dev_links"
