@@ -161,6 +161,35 @@ class TestP0FinanceAggregateGate(TransactionCase):
         )
         return self._project_ids_from_groups(groups)
 
+    def _sum_read_group_count(self, model, user, domain, groupby="project_id"):
+        groups = (
+            self.env[model]
+            .with_user(user)
+            .read_group(domain, ["id:count"], [groupby])
+        )
+        total = 0
+        for group in groups:
+            if "__count" in group:
+                total += group["__count"]
+                continue
+            if "id_count" in group:
+                total += group["id_count"]
+                continue
+            for key, value in group.items():
+                if key.endswith("_count") and isinstance(value, int):
+                    total += value
+                    break
+        return total
+
+    def _assert_aggregate_consistency(self, model, user, domain, groupby="project_id"):
+        count = self.env[model].with_user(user).search_count(domain)
+        rg_total = self._sum_read_group_count(model, user, domain, groupby=groupby)
+        self.assertEqual(
+            count,
+            rg_total,
+            f"aggregate mismatch on {model}: search_count={count} read_group_sum={rg_total}",
+        )
+
     def test_read_group_denied_non_finance(self):
         for model in [
             "payment.request",
@@ -170,6 +199,16 @@ class TestP0FinanceAggregateGate(TransactionCase):
         ]:
             with self.assertRaises(AccessError):
                 self._read_group_project_ids(model, self.user_no_access)
+
+    def test_search_count_denied_non_finance(self):
+        for model in [
+            "payment.request",
+            "sc.settlement.order",
+            "payment.ledger",
+            "sc.treasury.ledger",
+        ]:
+            with self.assertRaises(AccessError):
+                self.env[model].with_user(self.user_no_access).search_count([])
 
     def test_read_group_scope_finance_read(self):
         expected = {self.project_same.id}
@@ -194,3 +233,25 @@ class TestP0FinanceAggregateGate(TransactionCase):
                 model, self.user_finance_manager
             )
             self.assertTrue(expected.issubset(project_ids))
+
+    def test_aggregate_consistency_finance_read(self):
+        for model in [
+            "payment.request",
+            "sc.settlement.order",
+            "payment.ledger",
+            "sc.treasury.ledger",
+        ]:
+            self._assert_aggregate_consistency(
+                model, self.user_finance_read, [], groupby="project_id"
+            )
+
+    def test_aggregate_consistency_finance_manager(self):
+        for model in [
+            "payment.request",
+            "sc.settlement.order",
+            "payment.ledger",
+            "sc.treasury.ledger",
+        ]:
+            self._assert_aggregate_consistency(
+                model, self.user_finance_manager, [], groupby="project_id"
+            )
