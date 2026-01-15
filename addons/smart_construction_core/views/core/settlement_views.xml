@@ -29,10 +29,14 @@
             <field name="arch" type="xml">
                 <form string="结算单">
                     <header>
-                        <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'"/>
-                        <button name="action_approve" type="object" string="批准" invisible="state != 'submit'"/>
-                        <button name="action_done" type="object" string="完成" invisible="state not in ['approve']"/>
-                        <button name="action_cancel" type="object" string="取消" invisible="state in ['done','cancel']"/>
+                        <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'"
+                                groups="smart_construction_core.group_sc_cap_settlement_user"/>
+                        <button name="action_approve" type="object" string="批准" invisible="state != 'submit'"
+                                groups="smart_construction_core.group_sc_cap_settlement_manager"/>
+                        <button name="action_done" type="object" string="完成" invisible="state not in ['approve']"
+                                groups="smart_construction_core.group_sc_cap_settlement_manager"/>
+                        <button name="action_cancel" type="object" string="取消" invisible="state in ['done','cancel']"
+                                groups="smart_construction_core.group_sc_cap_settlement_manager"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,submit,approve,done,cancel"/>
                     </header>
                     <sheet>
