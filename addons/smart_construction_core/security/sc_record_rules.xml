@@ -158,6 +158,44 @@
         </record>
 
         <!-- =========================================================
+             财务中心：付款台账 record rules
+             - read/user: 仅限负责或关注的项目
+             - manager: 放行全部
+        ========================================================== -->
+        <record id="rule_sc_finance_read_payment_ledger" model="ir.rule">
+            <field name="name">SC Finance Read - payment.ledger by project member</field>
+            <field name="model_id" ref="model_payment_ledger"/>
+            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_user_payment_ledger" model="ir.rule">
+            <field name="name">SC Finance User - payment.ledger by project member</field>
+            <field name="model_id" ref="model_payment_ledger"/>
+            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_manager_payment_ledger" model="ir.rule">
+            <field name="name">SC Finance Manager - payment.ledger ALL</field>
+            <field name="model_id" ref="model_payment_ledger"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <!-- =========================================================
              结算中心：结算单 record rules
              - read/user: 仅限负责或关注的项目
              - manager: 放行全部
