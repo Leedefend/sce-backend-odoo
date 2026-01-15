@@ -271,7 +271,8 @@
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
-            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
 
         <record id="rule_sc_settlement_read_line" model="ir.rule">
@@ -304,7 +305,8 @@
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
-            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager'))]"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_manager')),
+                                       (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
 
     </data>
