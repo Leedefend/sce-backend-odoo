@@ -135,6 +135,32 @@ class TestP0LedgerGate(TransactionCase):
         )
         cls.env.invalidate_all()
         cls.other_ledger = cls.other_payment.sudo()._ensure_payment_ledger()
+        cls.treasury_same = (
+            _ctx("sc.treasury.ledger")
+            .with_context(allow_ledger_auto=True)
+            .create(
+                {
+                    "project_id": cls.project.id,
+                    "partner_id": cls.partner.id,
+                    "settlement_id": cls.settlement_ok.id,
+                    "payment_request_id": cls.payment_ok.id,
+                    "amount": 100.0,
+                }
+            )
+        )
+        cls.treasury_other = (
+            _ctx("sc.treasury.ledger")
+            .with_context(allow_ledger_auto=True)
+            .create(
+                {
+                    "project_id": cls.other_project.id,
+                    "partner_id": cls.other_partner.id,
+                    "settlement_id": cls.other_settlement.id,
+                    "payment_request_id": cls.other_payment.id,
+                    "amount": 80.0,
+                }
+            )
+        )
 
     def test_create_ledger_from_approved_payment(self):
         ledger = self.payment_ok.with_user(self.user_finance_user)._ensure_payment_ledger()
@@ -222,3 +248,28 @@ class TestP0LedgerGate(TransactionCase):
         menu = self.env.ref("smart_construction_core.menu_payment_ledger")
         self.assertTrue(action.groups_id)
         self.assertTrue(menu.groups_id)
+
+    def test_rr_treasury_read_scope_finance_read(self):
+        can_read = self.env["sc.treasury.ledger"].with_user(self.user_finance_read).search_count(
+            [("id", "=", self.treasury_same.id)]
+        )
+        cannot_read = self.env["sc.treasury.ledger"].with_user(self.user_finance_read).search_count(
+            [("id", "=", self.treasury_other.id)]
+        )
+        self.assertEqual(can_read, 1)
+        self.assertEqual(cannot_read, 0)
+
+    def test_rr_treasury_read_denied_non_finance(self):
+        with self.assertRaises(AccessError):
+            self.env["sc.treasury.ledger"].with_user(self.user_no_access).search_count([])
+
+    def test_action_menu_groups_for_treasury_ledger(self):
+        action = self.env.ref("smart_construction_core.action_sc_treasury_ledger")
+        menu = self.env.ref("smart_construction_core.menu_sc_treasury_ledger")
+        group_ids = {
+            self.env.ref("smart_construction_core.group_sc_cap_finance_read").id,
+            self.env.ref("smart_construction_core.group_sc_cap_finance_user").id,
+            self.env.ref("smart_construction_core.group_sc_cap_finance_manager").id,
+        }
+        self.assertTrue(group_ids.issubset(set(action.groups_id.ids)))
+        self.assertTrue(group_ids.issubset(set(menu.groups_id.ids)))
