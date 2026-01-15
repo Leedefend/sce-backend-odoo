@@ -534,6 +534,23 @@ class PaymentRequest(models.Model):
         for rec in self:
             rec.write({"state": "done"})
 
+    def _ensure_payment_ledger(self, amount=None, paid_at=None, ref=None, note=None):
+        self.ensure_one()
+        Ledger = self.env["payment.ledger"]
+        existing = Ledger.search([("payment_request_id", "=", self.id)], limit=1)
+        if existing:
+            return existing
+        vals = {
+            "payment_request_id": self.id,
+            "amount": amount if amount is not None else (self.amount or 0.0),
+            "paid_at": paid_at or fields.Datetime.now(),
+        }
+        if ref:
+            vals["ref"] = ref
+        if note:
+            vals["note"] = note
+        return Ledger.create(vals)
+
     def action_cancel(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有取消付款/收款申请的权限。"))
