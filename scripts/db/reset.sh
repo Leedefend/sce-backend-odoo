@@ -18,6 +18,71 @@ DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
 export DB_USER DB_PASSWORD
 ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux}"
 
+run_with_timeout_retry() {
+  local timeout_s="$1"; shift
+  local retries="$1"; shift
+  local attempt=1
+  local grace_s="${DB_RESET_RUN_GRACE:-120}"
+
+  while true; do
+    log "[run] attempt=${attempt}/${retries} timeout=${timeout_s}s: $*"
+    local rc=0
+    if command -v timeout >/dev/null 2>&1; then
+      if [[ "$1" == "compose_dev" ]]; then
+        local cmd_str
+        printf -v cmd_str '%q ' "${@:2}"
+        timeout "${timeout_s}" bash -lc "source \"${ROOT_DIR}/scripts/common/compose.sh\"; compose_dev ${cmd_str} </dev/null"
+        rc=$?
+      elif declare -F "$1" >/dev/null 2>&1; then
+        local cmd_str
+        printf -v cmd_str '%q ' "$@"
+        timeout "${timeout_s}" bash -lc "$(declare -f "$1"); ${cmd_str}"
+        rc=$?
+      else
+        timeout "${timeout_s}" "$@"
+        rc=$?
+      fi
+    else
+      "$@"
+      rc=$?
+    fi
+
+    if [[ "${rc}" -eq 0 ]]; then
+      return 0
+    fi
+    if [[ "${rc}" -eq 124 && "$1" == "compose_dev" ]]; then
+      for i in $(seq 1 "${grace_s}"); do
+        if ! docker ps \
+          --filter "label=com.docker.compose.project=${COMPOSE_PROJECT_NAME}" \
+          --filter "label=com.docker.compose.oneoff=True" \
+          --filter "label=com.docker.compose.service=odoo" \
+          --format '{{.ID}}' \
+          | grep -q .; then
+          log "[run] timeout but compose run container not running; assume success"
+          return 0
+        fi
+        sleep 1
+      done
+    fi
+    log "[run] failed rc=${rc}"
+    if [[ "${attempt}" -ge "${retries}" ]]; then
+      log "[run] giving up after ${retries} attempts"
+      return "${rc}"
+    fi
+    attempt=$((attempt + 1))
+    sleep 2
+  done
+}
+
+STOP_ODOO=0
+restore_odoo() {
+  if [[ "${STOP_ODOO}" == "1" ]]; then
+    log "start odoo service after db reset"
+    compose_dev up -d odoo || true
+  fi
+}
+trap 'status=$?; restore_odoo; exit $status' EXIT
+
 case "${DB_NAME}" in
   "" )
     log "DB_NAME is empty; refuse to proceed"
@@ -34,6 +99,14 @@ log "db reset: ${DB_NAME}"
 if ! compose_dev ps -q db | grep -q .; then
   log "db container not running; run 'make up' first"
   exit 2
+fi
+
+if [[ "${DB_RESET_STOP_ODOO:-1}" == "1" && "${DB_NAME}" == "sc_demo" ]]; then
+  if compose_dev ps -q odoo | grep -q .; then
+    log "stop odoo service to release sc_demo connections"
+    compose_dev stop odoo
+    STOP_ODOO=1
+  fi
 fi
 
 DB_READY_TIMEOUT="${DB_READY_TIMEOUT:-120}"
@@ -85,14 +158,14 @@ done
 
 # terminate existing connections to allow drop
 log "db terminate connections: ${DB_NAME}"
-compose_dev exec -T -e PGPASSWORD="${DB_PASSWORD}" db psql -U "${DB_USER}" -d postgres -c \
+docker exec -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
   "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" >/dev/null || true
 
 log "db drop: ${DB_NAME}"
-compose_dev exec -T -e PGPASSWORD="${DB_PASSWORD}" db psql -U "${DB_USER}" -d postgres -c \
+docker exec -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
   "DROP DATABASE IF EXISTS ${DB_NAME};"
 log "db create: ${DB_NAME}"
-compose_dev exec -T -e PGPASSWORD="${DB_PASSWORD}" db psql -U "${DB_USER}" -d postgres -c \
+docker exec -e PGPASSWORD="${DB_PASSWORD}" "${DB_CID}" psql -U "${DB_USER}" -d postgres -c \
   "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER} TEMPLATE template0 ENCODING 'UTF8';"
 
 # 统一 Odoo DB 参数（后续所有操作必须带，避免掉回本机 socket）
@@ -103,7 +176,8 @@ ODOO_DB_ARGS=(
 )
 
 log "odoo init base (stop-after-init): ${DB_NAME}"
-compose_dev run --rm -T \
+run_with_timeout_retry "${DB_RESET_RUN_TIMEOUT:-300}" "${DB_RESET_RUN_RETRIES:-2}" \
+  compose_dev run --rm -T \
   --entrypoint /usr/bin/odoo odoo \
   --config="$ODOO_CONF" \
   -d "${DB_NAME}" \
@@ -114,7 +188,8 @@ compose_dev run --rm -T \
   --stop-after-init
 
 log "install bootstrap module: smart_construction_bootstrap"
-compose_dev run --rm -T \
+run_with_timeout_retry "${DB_RESET_RUN_TIMEOUT:-300}" "${DB_RESET_RUN_RETRIES:-2}" \
+  compose_dev run --rm -T \
   --entrypoint /usr/bin/odoo odoo \
   --config="$ODOO_CONF" \
   -d "${DB_NAME}" \

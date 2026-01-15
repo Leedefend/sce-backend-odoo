@@ -32,7 +32,7 @@ if [ -n "$scenario" ]; then
 fi
 
 psql_cmd() {
-  compose_dev exec -T db psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 "$@"
+  compose_dev exec -T db psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 "$@" </dev/null
 }
 
 run_check() {

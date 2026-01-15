@@ -26,4 +26,4 @@ compose_dev run --rm -T \
   -i "$MODULE" \
   ${WITHOUT_DEMO:-} \
   --no-http --workers=0 --max-cron-threads=0 \
-  --stop-after-init ${ODOO_ARGS:-}
+  --stop-after-init ${ODOO_ARGS:-} </dev/null
