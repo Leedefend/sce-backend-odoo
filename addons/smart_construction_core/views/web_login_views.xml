@@ -7,10 +7,12 @@
                    t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
                 <div class="sc-login-branding">
                     <h2>智能工程项目管理系统</h2>
-                    <div>项目 · 合同 · 结算 · 支付一体化（演示环境）</div>
+                    <div class="sc-subtitle">项目 · 合同 · 结算 · 支付一体化（演示环境）</div>
                 </div>
                 <t t-if="sc_login_env">
-                    <div class="sc-login-env">ENV: <t t-esc="sc_login_env.upper()"/></div>
+                    <div t-attf-class="sc-login-env-badge is-#{sc_login_env}">
+                        <t t-esc="sc_login_env.upper()"/> 环境
+                    </div>
                 </t>
             </t>
         </xpath>
@@ -35,6 +37,38 @@
     </template>
 
     <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
+        <xpath expr="." position="inside">
+            <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
+                <style>
+                    .sc-login-branding h2{
+                        margin: 0 0 8px 0;
+                        font-weight: 700;
+                        font-size: 22px;
+                        line-height: 1.2;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                    .sc-login-branding .sc-subtitle{
+                        color: #666;
+                        font-size: 13px;
+                        margin-bottom: 8px;
+                    }
+                    .sc-login-env-badge{
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: 999px;
+                        font-size: 12px;
+                        font-weight: 600;
+                        background: #eef6ff;
+                        color: #1d4ed8;
+                        margin-bottom: 10px;
+                    }
+                    .sc-login-env-badge.is-demo{ background: #ecfdf5; color: #047857; }
+                    .sc-login-env-badge.is-prod{ background: #fff7ed; color: #9a3412; }
+                </style>
+            </t>
+        </xpath>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
                 not (
