@@ -78,6 +78,7 @@
         'views/menu.xml',
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
+        'views/web_login_views.xml',
         # Patch 文件移到最后加载
         'security/action_groups_patch.xml',
         'security/menu_tech_hide_patch.xml',
