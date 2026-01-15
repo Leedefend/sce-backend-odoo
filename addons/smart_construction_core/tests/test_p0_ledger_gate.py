@@ -155,3 +155,18 @@ class TestP0LedgerGate(TransactionCase):
     def test_block_overpay(self):
         with self.assertRaises(UserError):
             self.payment_ok.with_user(self.user_finance_user)._ensure_payment_ledger(amount=1000.0)
+
+    def test_ui_blocks_direct_ledger_create(self):
+        tree_view = self.env.ref("smart_construction_core.view_payment_ledger_tree").arch_db
+        form_view = self.env.ref("smart_construction_core.view_payment_ledger_form").arch_db
+        self.assertIn('create="false"', tree_view)
+        self.assertIn('edit="false"', tree_view)
+        self.assertIn('delete="false"', tree_view)
+        self.assertIn('create="false"', form_view)
+        self.assertIn('edit="false"', form_view)
+        self.assertIn('delete="false"', form_view)
+
+    def test_ui_blocks_ledger_lines_inline_create(self):
+        view = self.env.ref("smart_construction_core.view_payment_request_form").arch_db
+        self.assertIn('name="ledger_line_ids"', view)
+        self.assertIn('create="false"', view)
