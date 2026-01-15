@@ -53,6 +53,10 @@ class PaymentLedger(models.Model):
     def _check_request_state(self, request):
         if not request or request.state != "approved":
             raise UserError("付款申请未处于已批准状态，不能登记付款。")
+        if not request.settlement_id:
+            raise UserError("付款申请未关联结算单，不能登记付款。")
+        if request.settlement_id.state not in ("approve", "done"):
+            raise UserError("结算单未处于已审批状态，不能登记付款。")
 
     def _check_amount(self):
         for rec in self:
@@ -79,9 +83,19 @@ class PaymentLedger(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        request_ids = []
         for vals in vals_list:
-            request = self.env["payment.request"].browse(vals.get("payment_request_id"))
+            req_id = vals.get("payment_request_id")
+            if req_id:
+                request_ids.append(req_id)
+            request = self.env["payment.request"].browse(req_id)
             self._check_request_state(request)
+        if request_ids:
+            if len(request_ids) != len(set(request_ids)):
+                raise UserError("同一付款申请不能生成多条付款台账。")
+            existing = self.search([("payment_request_id", "in", request_ids)], limit=1)
+            if existing:
+                raise UserError("付款申请已存在付款台账，禁止重复生成。")
         records = super().create(vals_list)
         records._check_amount()
         records._check_overpay()
