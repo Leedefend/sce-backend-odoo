@@ -9,6 +9,14 @@ class PaymentLedger(models.Model):
     _description = "Payment Ledger"
     _order = "paid_at desc, id desc"
 
+    _sql_constraints = [
+        (
+            "uniq_payment_request_id",
+            "unique(payment_request_id)",
+            "同一付款申请只能生成一条付款台账。",
+        ),
+    ]
+
     payment_request_id = fields.Many2one(
         "payment.request",
         string="付款申请",
@@ -83,6 +91,8 @@ class PaymentLedger(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        if not self.env.context.get("allow_payment_ledger_create"):
+            raise UserError("请通过付款申请登记付款记录。")
         request_ids = []
         for vals in vals_list:
             req_id = vals.get("payment_request_id")
