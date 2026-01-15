@@ -103,7 +103,8 @@
                             <field name="note"/>
                         </group>
                         <group string="付款记录">
-                            <field name="ledger_line_ids" nolabel="1">
+                            <field name="ledger_line_ids" nolabel="1"
+                                   context="{'allow_payment_ledger_create': 1}">
                                 <tree editable="bottom">
                                     <field name="paid_at"/>
                                     <field name="amount"/>

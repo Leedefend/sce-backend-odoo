@@ -124,14 +124,10 @@ def run(env):
         )
         env.invalidate_all()
 
-    ledger = Ledger.create(
-        {
-            "payment_request_id": payment.id,
-            "amount": payment.amount,
-            "paid_at": fields.Datetime.now(),
-            "ref": f"{ledger_prefix}-001",
-            "note": "seed:payment_ledger_p1",
-        }
+    ledger = payment._ensure_payment_ledger(
+        paid_at=fields.Datetime.now(),
+        ref=f"{ledger_prefix}-001",
+        note="seed:payment_ledger_p1",
     )
     ICP.set_param("sc.seed.payment_ledger_p1", str(ledger.id))
     return {"ok": True, "payment_request_id": payment.id, "ledger_id": ledger.id}

@@ -536,7 +536,7 @@ class PaymentRequest(models.Model):
 
     def _ensure_payment_ledger(self, amount=None, paid_at=None, ref=None, note=None):
         self.ensure_one()
-        Ledger = self.env["payment.ledger"]
+        Ledger = self.env["payment.ledger"].with_context(allow_payment_ledger_create=True)
         existing = Ledger.search([("payment_request_id", "=", self.id)], limit=1)
         if existing:
             return existing
