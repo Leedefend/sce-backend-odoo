@@ -12,10 +12,10 @@ Each file defines:
 - `COMPOSE_PROJECT_NAME` (unique per env)
 - `DB_NAME`
 - `ODOO_DBFILTER`
-- `DB_DATA` / `REDIS_DATA` / `ODOO_DATA` (bind mounts under ./runtime/<env>/...)
+- `DB_DATA` / `REDIS_DATA` / `ODOO_DATA` (named volumes (explicit per env))
 - `NGINX_PORT` / `ODOO_PORT` (port isolation)
 
-Note: if you use bind mounts (paths like `./runtime/...`), prefer Linux filesystem paths on WSL to avoid permission issues. Using ./runtime/<env>/... keeps data isolated per environment.
+Note: on WSL/Windows, named volumes avoid permission/ownership issues with /mnt mounts.
 
 ## 2) Common Commands
 
@@ -55,7 +55,7 @@ ENV=dev make restart
 Notes:
 - Uses `.env.dev`
 - Default ports: `NGINX_PORT=18081`, `ODOO_PORT=8070`
-- Data: `DB_DATA=./runtime/sc-backend-odoo-dev/postgres`, `REDIS_DATA=./runtime/sc-backend-odoo-dev/redis`, `ODOO_DATA=./runtime/sc-backend-odoo-dev/odoo`
+- Data: `DB_DATA=sc_dev_db_data`, `REDIS_DATA=sc_dev_redis_data`, `ODOO_DATA=sc_dev_odoo_data`
 - Locked DB: `ODOO_DBFILTER=^sc_demo$`
 
 ## 4) Test Environment (test)
@@ -70,7 +70,7 @@ ENV=test make test
 Notes:
 - Uses `.env.test`
 - Default ports: `NGINX_PORT=18082`, `ODOO_PORT=8071`
-- Data: `DB_DATA=./runtime/sc-backend-odoo-test/postgres`, `REDIS_DATA=./runtime/sc-backend-odoo-test/redis`, `ODOO_DATA=./runtime/sc-backend-odoo-test/odoo`
+- Data: `DB_DATA=sc_test_db_data`, `REDIS_DATA=sc_test_redis_data`, `ODOO_DATA=sc_test_odoo_data`
 - Locked DB: `ODOO_DBFILTER=^sc_test$`
 
 ## 5) Production (prod)
@@ -85,7 +85,7 @@ Notes:
 - Uses `.env.prod`
 - Replace `DB_PASSWORD`, `ADMIN_PASSWD`, `JWT_SECRET`
 - Default ports: `NGINX_PORT=18083`, `ODOO_PORT=8072`
-- Data: `DB_DATA=./runtime/sc-backend-odoo-prod/postgres`, `REDIS_DATA=./runtime/sc-backend-odoo-prod/redis`, `ODOO_DATA=./runtime/sc-backend-odoo-prod/odoo`
+- Data: `DB_DATA=sc_prod_db_data`, `REDIS_DATA=sc_prod_redis_data`, `ODOO_DATA=sc_prod_odoo_data`
 - Locked DB: `ODOO_DBFILTER=^sc_prod$`
 
 ## 6) Troubleshooting
