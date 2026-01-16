@@ -5,7 +5,7 @@
             <nav class="sc-sidebar" aria-label="主导航">
                 <div class="sc-sidebar__header">
                     <span class="sc-sidebar__brandIcon" aria-hidden="true">
-                        <img src="/smart_construction_core/static/png/系统图标(1).png" alt=""/>
+                        <img src="/smart_construction_core/static/png/system-icon-1.png" alt=""/>
                     </span>
                     <span class="sc-sidebar__brandText">智能施工</span>
                     <span class="sc-sidebar__brandTag">平台</span>
