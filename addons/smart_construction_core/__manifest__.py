@@ -78,6 +78,7 @@
         'views/menu.xml',
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
+        'views/ux/project_demo_banner_views.xml',
         'views/web_login_views.xml',
         # Patch 文件移到最后加载
         'security/action_groups_patch.xml',
@@ -86,12 +87,21 @@
     ],
     'assets': {
         'web.assets_backend': [
+            'smart_construction_core/static/src/scss/sc_theme.scss',
+            'smart_construction_core/static/src/js/title_manager.js',
+            'smart_construction_core/static/src/xml/title_manager.xml',
+            'smart_construction_core/static/src/js/sc_sidebar.js',
+            'smart_construction_core/static/src/xml/sc_sidebar.xml',
+            'smart_construction_core/static/src/scss/sc_sidebar.scss',
             'smart_construction_core/static/src/js/project_form_tab_jump.js',
             'smart_construction_core/static/src/js/project_quota_center.js',
             'smart_construction_core/static/src/xml/project_quota_center.xml',
             'smart_construction_core/static/src/scss/project_quota_center.scss',
             'smart_construction_core/static/src/js/insight_banner.js',
             'smart_construction_core/static/src/scss/insight_banner.scss',
+        ],
+        'web.assets_tests': [
+            'smart_construction_core/static/tests/sc_sidebar_tests.js',
         ],
     },
     'pre_init_hook': 'pre_init_hook',

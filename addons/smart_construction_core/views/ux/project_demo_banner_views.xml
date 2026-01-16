@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="sc_project_project_kanban_demo_banner" model="ir.ui.view">
+        <field name="name">sc.project.project.kanban.demo.banner</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_kanban"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <xpath expr="//kanban" position="inside">
+                <div class="alert alert-info o_sc_demo_banner" role="status"
+                     t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.env','prod') == 'demo'">
+                    <strong>欢迎体验【智能工程项目管理系统 · DEMO】</strong>
+                    <span class="ms-2">推荐路径：</span>
+                    <b>① 项目 → ② 合同 → ③ 结算 → ④ 支付 → ⑤ 台账</b>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
