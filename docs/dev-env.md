@@ -78,7 +78,7 @@
 
 ```env
 ODOO_CONF_OUT=/var/lib/odoo/odoo.conf
-ODOO_DB=sc_odoo
+ODOO_DB=${DB_NAME}
 ```
 
 禁止事项（非常重要）：
@@ -100,11 +100,11 @@ ODOO_DB=sc_odoo
 
 ```bash
 # 查看当前使用的配置
-docker exec -it sc-odoo grep dbfilter /var/lib/odoo/odoo.conf
+docker compose exec -T odoo grep dbfilter /var/lib/odoo/odoo.conf
 
 # 升级模块（正确方式）
-docker exec -it sc-odoo \
-  odoo -c /var/lib/odoo/odoo.conf -d sc_odoo -u smart_construction_core --stop-after-init
+docker compose exec -T odoo \
+  odoo -c /var/lib/odoo/odoo.conf -d ${DB_NAME} -u smart_construction_core --stop-after-init
 
 # 重启 Odoo
 docker compose restart odoo
@@ -118,7 +118,28 @@ docker logs -f sc-odoo
 常见错误示例（不要这样做）：
 
 ```bash
-docker exec -it sc-odoo odoo -d sc_odoo -u smart_construction_core
+docker compose exec -T odoo odoo -d ${DB_NAME} -u smart_construction_core
+```
+
+## 五、多环境运行（dev/test/prod）
+
+建议使用独立的 env 文件与项目名，避免端口和数据冲突：
+
+```bash
+# dev
+ENV=dev make up
+
+# test
+ENV=test make up
+
+# prod
+ENV=prod make up
+```
+
+也可以直接指定文件：
+
+```bash
+ENV_FILE=.env.dev make up
 ```
 
 原因：该命令未指定 `-c`，会回退到默认配置路径。
@@ -168,8 +189,8 @@ docker exec -it sc-odoo odoo -d sc_odoo -u smart_construction_core
    `/var/lib/odoo/odoo.conf`
 4. 正确升级模块：
    ```bash
-   docker exec -it sc-odoo \
-     odoo -c /var/lib/odoo/odoo.conf -d sc_odoo -u smart_construction_core --stop-after-init
+   docker compose exec -T odoo \
+     odoo -c /var/lib/odoo/odoo.conf -d ${DB_NAME} -u smart_construction_core --stop-after-init
    ```
 5. 如果看到 `default@default` 或 socket 错误：
    → 回到正文第三、五章排查
