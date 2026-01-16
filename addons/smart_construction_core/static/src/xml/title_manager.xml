@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="sc_title_manager_templates" xml:space="preserve">
+    <t t-name="smart_construction_core.TitleManager"/>
+</templates>
