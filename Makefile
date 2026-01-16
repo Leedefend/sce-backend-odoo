@@ -9,9 +9,21 @@ SHELL := bash
 
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
-# Load .env if present (repo-level)
-ifneq (,$(wildcard .env))
-include .env
+# Load env file (repo-level)
+ENV ?= dev
+ENV_FILE ?=
+ENV_FILE_RESOLVED :=
+ifneq ($(strip $(ENV_FILE)),)
+ENV_FILE_RESOLVED := $(ENV_FILE)
+else ifneq (,$(wildcard .env.$(ENV)))
+ENV_FILE_RESOLVED := .env.$(ENV)
+else ifneq (,$(wildcard .env))
+ENV_FILE_RESOLVED := .env
+endif
+ENV_FILE := $(ENV_FILE_RESOLVED)
+
+ifneq ($(strip $(ENV_FILE_RESOLVED)),)
+include $(ENV_FILE_RESOLVED)
 export
 endif
 
@@ -111,6 +123,8 @@ export MSYS2_ARG_CONV_EXCL := --test-tags
 # ------------------ Script runner common env ------------------
 define RUN_ENV
 ROOT_DIR="$(ROOT_DIR)" \
+ENV="$(ENV)" \
+ENV_FILE="$(ENV_FILE)" \
 COMPOSE_BIN="$(COMPOSE_BIN)" \
 COMPOSE_PROJECT_NAME="$(COMPOSE_PROJECT_NAME)" \
 PROJECT="$(PROJECT)" \
@@ -205,6 +219,7 @@ help:
 	@echo
 	@echo "Common vars:"
 	@echo "  MODULE=$(MODULE) DB_NAME=$(DB_NAME) DB_CI=$(DB_CI) TEST_TAGS=$(TEST_TAGS)"
+	@echo "  ENV=$(ENV) ENV_FILE=$(ENV_FILE)"
 	@echo "  COMPOSE_BIN='$(COMPOSE_BIN)' COMPOSE_PROJECT_NAME='$(COMPOSE_PROJECT_NAME)'"
 
 # ======================================================
