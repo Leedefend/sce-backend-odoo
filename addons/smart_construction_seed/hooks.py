@@ -40,6 +40,10 @@ def post_init_hook(env_or_cr, registry=None):
     if mode == "demo":
         ICP.set_param("sc.login.env", "demo")
         ICP.set_param("sc.login.custom_enabled", "1")
+        demo_user = env.ref("smart_construction_demo.sc_demo_user_pm", raise_if_not_found=False)
+        demo_action = env.ref("project.open_view_project_all", raise_if_not_found=False)
+        if demo_user and demo_action and demo_user.action_id != demo_action:
+            demo_user.sudo().write({"action_id": demo_action.id})
 
     executed = run_steps(env, steps_sel)
 
