@@ -1,0 +1,64 @@
+:root {
+  --sc-primary: #6f64b1;
+  --sc-bg: #f6f7fb;
+  --sc-border: rgba(0, 0, 0, .08);
+  --sc-radius: 12px;
+  --sc-font: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  --o-brand-primary: var(--sc-primary);
+  --o-brand-secondary: #4f46e5;
+  /* 可按你品牌调整 */
+  --o-view-background-color: #fff;
+
+  --o-border-radius: var(--sc-radius);
+  --o-font-family-sans-serif: var(--sc-font);
+}
+
+.o_web_client {
+  font-family: var(--sc-font);
+  background: var(--sc-bg);
+}
+
+/* 顶部主导航 */
+.o_web_client .o_main_navbar {
+  background: var(--sc-primary);
+  border-bottom: 0;
+}
+
+/* 顶部菜单胶囊 */
+.o_web_client .o_main_navbar .o_menu_sections .o_nav_entry,
+.o_web_client .o_main_navbar .o_menu_sections .dropdown-toggle {
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+.o_web_client .o_main_navbar .o_menu_sections .o_nav_entry:hover,
+.o_web_client .o_main_navbar .o_menu_sections .dropdown-toggle:hover {
+  background: rgba(255, 255, 255, .16);
+}
+
+.o_web_client .o_main_navbar .o_menu_sections .o_nav_entry.active,
+.o_web_client .o_main_navbar .o_main_navbar .o_menu_sections .dropdown-toggle.active {
+  background: rgba(255, 255, 255, .24);
+}
+
+/* 去品牌化：尽量只隐藏具体元素，别扩大范围 */
+.o_web_client .o_main_navbar .o_menu_brand {
+  display: none;
+}
+
+/* app launcher：更窄范围，避免误杀 */
+.o_web_client .o_main_navbar .o_app_switcher_dropdown {
+  display: none;
+}
+
+/* 左侧菜单：建议保留容器骨架，隐藏内容 */
+.o_web_client .o_navbar_sidebar .o_navbar_sidebar_content {
+  display: none;
+}
+
+.o_web_client .o_navbar_sidebar {
+  width: 0;
+  border: 0;
+}
