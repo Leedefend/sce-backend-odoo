@@ -9,10 +9,17 @@ set -euo pipefail
 # BUT: externally provided vars (Makefile / CLI) must win
 # =========================================================
 
-ENV_FILE="${ROOT_DIR}/.env"
+ENV_NAME="${ENV:-}"
+ENV_FILE="${ENV_FILE:-}"
+if [[ -z "${ENV_FILE}" && -n "${ENV_NAME}" ]]; then
+  ENV_FILE="${ROOT_DIR}/.env.${ENV_NAME}"
+fi
+if [[ -z "${ENV_FILE}" ]]; then
+  ENV_FILE="${ROOT_DIR}/.env"
+fi
 if [[ ! -f "${ENV_FILE}" ]]; then
-  echo "❌ missing .env at ${ENV_FILE}" >&2
-  echo "   Fix: cp .env.example .env" >&2
+  echo "❌ missing env file at ${ENV_FILE}" >&2
+  echo "   Fix: cp .env.example .env  or  cp .env.example .env.<env>" >&2
   exit 2
 fi
 

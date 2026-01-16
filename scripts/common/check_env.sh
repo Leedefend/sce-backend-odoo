@@ -3,11 +3,20 @@ set -euo pipefail
 
 ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 
-# Load .env as SOT if present (do NOT fail here; fail below with clear message)
-if [[ -f "${ROOT_DIR}/.env" ]]; then
+ENV_NAME="${ENV:-}"
+ENV_FILE="${ENV_FILE:-}"
+if [[ -z "${ENV_FILE}" && -n "${ENV_NAME}" ]]; then
+  ENV_FILE="${ROOT_DIR}/.env.${ENV_NAME}"
+fi
+if [[ -z "${ENV_FILE}" ]]; then
+  ENV_FILE="${ROOT_DIR}/.env"
+fi
+
+# Load env file as SOT if present (do NOT fail here; fail below with clear message)
+if [[ -f "${ENV_FILE}" ]]; then
   set -a
   # shellcheck disable=SC1090
-  source "${ROOT_DIR}/.env"
+  source "${ENV_FILE}"
   set +a
 fi
 
@@ -30,7 +39,7 @@ need ODOO_DBFILTER
 
 if (( ${#missing[@]} > 0 )); then
   echo "❌ missing required env vars: ${missing[*]}" >&2
-  echo "   Fix: cp .env.example .env and fill required values." >&2
+  echo "   Fix: cp .env.example .env  (or .env.<env>) and fill required values." >&2
   exit 2
 fi
 

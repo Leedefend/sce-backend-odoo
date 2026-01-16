@@ -9,7 +9,7 @@ admin_passwd = ${ADMIN_PASSWD}
 addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux
 logfile =
 
-; 锁库：只允许 sc_odoo（你当前库名）
+; 锁库：只允许指定库（由 ODOO_DBFILTER 控制）
 dbfilter = ${ODOO_DBFILTER}
 data_dir = /var/lib/odoo
 
