@@ -11,10 +11,10 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ${DB_DATA:-./runtime/postgres}:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
       - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${POSTGRES_DB:-sc_odoo} || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${DB_NAME:-sc_odoo} || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
-      - ${REDIS_DATA:-./runtime/redis}:/data
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -68,7 +68,7 @@ services:
       ODOO_DB: ${DB_NAME}
 
     volumes:
-      - ${ODOO_DATA:-./runtime/odoo}:/var/lib/odoo
+      - odoo_data:/var/lib/odoo
       - ./addons:/mnt/extra-addons
       - ./addons_external:/mnt/addons_external
       - ./config/odoo.conf.template:/etc/odoo/odoo.conf.template:ro
@@ -107,5 +107,8 @@ services:
 
 volumes:
   db_data:
+    name: ${DB_DATA}
   redis_data:
+    name: ${REDIS_DATA}
   odoo_data:
+    name: ${ODOO_DATA}
