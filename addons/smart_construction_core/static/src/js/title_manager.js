@@ -6,7 +6,7 @@ import { useService } from "@web/core/utils/hooks";
 
 const mainComponents = registry.category("main_components");
 const BRAND_TITLE = "智能施工";
-const BRAND_ICON = "/smart_construction_core/static/png/系统图标(1).png";
+const BRAND_ICON = "/smart_construction_core/static/png/system-icon-1.png";
 
 class TitleManager extends Component {
   static template = "smart_construction_core.TitleManager";
