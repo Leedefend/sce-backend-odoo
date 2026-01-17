@@ -3,6 +3,7 @@
 import { Component, onMounted, onWillStart, onWillUnmount, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { ScCompanySwitcherSidebar } from "./sc_company_switcher_sidebar";
 
 const mainComponents = registry.category("main_components");
 const ROOT_XMLID = "smart_construction_core.menu_sc_root";
@@ -20,6 +21,7 @@ const DEBUG_ENABLED = Boolean(
 export class ScSidebar extends Component {
   static template = "smart_construction_core.ScSidebar";
   static props = {};
+  static components = { ScCompanySwitcherSidebar };
 
   setup() {
     this.orm = useService("orm");
@@ -246,14 +248,7 @@ export class ScSidebar extends Component {
   }
 
   async getRootMenuId() {
-    try {
-      const res = await this.orm.call("ir.model.data", "xmlid_to_res_id", ["smart_construction_core.menu_sc_root"], {
-        raise_if_not_found: false,
-      });
-      return res || null;
-    } catch (err) {
-      return null;
-    }
+    return null;
   }
 
   resolveRootMenu(menus, rootId) {
