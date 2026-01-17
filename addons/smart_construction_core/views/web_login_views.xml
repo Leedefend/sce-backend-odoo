@@ -33,7 +33,7 @@
                 request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')
                 and '/web#menu_id=%s&amp;action=%s' % (
                     request.env.ref('smart_construction_core.menu_sc_root').id,
-                    request.env.ref('smart_construction_core.action_sc_project_list').id
+                    request.env.ref('smart_construction_core.action_sc_project_workbench').id
                 )
                 )
                 or ''

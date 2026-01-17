@@ -119,11 +119,11 @@
                             </div>
                             <div class="sc-sidebar__items"
                                  t-att-class="section.isOpen || state.searchTerm ? '' : 'is-collapsed'">
-                                <t t-if="state.showOverview and section.actionId">
+                                <t t-if="section.showOverviewEntry">
                                     <a class="sc-sidebar__item"
                                        t-att-class="section.id === state.activeMenuId ? 'is-active' : ''"
-                                       t-on-click.prevent="() => openMenu(section.id, section.actionId, section.name)"
-                                       t-attf-href="#menu_id=#{section.id}&amp;action=#{section.actionId}">
+                                       t-on-click.prevent="() => openMenu(section.id, section.overviewActionId || section.actionId, section.name)"
+                                       t-attf-href="#menu_id=#{section.id}&amp;action=#{section.overviewActionId || section.actionId}">
                                         <span class="sc-sidebar__itemLabel">概览</span>
                                         <button type="button"
                                                 class="sc-sidebar__favButton"
