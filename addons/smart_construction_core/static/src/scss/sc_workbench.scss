@@ -1,0 +1,80 @@
+.sc-workbench {
+  padding: 24px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.sc-workbench__header {
+  margin-bottom: 16px;
+}
+
+.sc-workbench__title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.sc-workbench__meta {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.sc-workbench__metaSep {
+  margin: 0 6px;
+}
+
+.sc-workbench__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sc-kpi {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sc-kpi__label {
+  color: #64748b;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.sc-kpi__value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sc-kpi__hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.sc-kpi--muted {
+  cursor: default;
+  background: #f8fafc;
+}
+
+.sc-workbench__section {
+  margin-top: 12px;
+}
+
+.sc-workbench__sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 10px;
+}
+
+.sc-workbench__shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+

@@ -1,0 +1,6 @@
+<odoo>
+    <record id="action_sc_project_workbench" model="ir.actions.client">
+        <field name="name">项目中心工作台</field>
+        <field name="tag">sc_project_workbench</field>
+    </record>
+</odoo>
