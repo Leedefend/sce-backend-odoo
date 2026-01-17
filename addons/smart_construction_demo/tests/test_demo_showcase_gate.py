@@ -10,7 +10,9 @@ class TestDemoShowcaseGate(TransactionCase):
     """Prevent demo filters from leaking into core business entries."""
 
     def test_no_demo_showcase_filters_in_core(self):
-        module_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+        demo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+        addons_root = os.path.abspath(os.path.join(demo_root, os.pardir))
+        module_root = os.path.join(addons_root, "smart_construction_core")
         allow_path = os.path.join("models", "core", "project_core.py")
         allow_pattern = re.compile(r"\bsc_demo_showcase_ready\s*=\s*fields\.Boolean\b")
 

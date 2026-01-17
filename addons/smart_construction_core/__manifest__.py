@@ -20,8 +20,6 @@
     'data': [
         # 基础数据
         'data/sequence.xml',
-        'data/dictionary_demo.xml',
-        'data/cost_demo.xml',
         'data/project_stage_data.xml',
 
         # 安全
@@ -79,7 +77,6 @@
         'views/project_workbench_action.xml',
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
-        'views/ux/project_demo_banner_views.xml',
         'views/web_login_views.xml',
         # Patch 文件移到最后加载
         'security/action_groups_patch.xml',
@@ -114,7 +111,6 @@
     'pre_init_hook': 'pre_init_hook',
     'post_init_hook': 'post_init_hook',
     'demo': [
-        'demo/sc_demo_users.xml',
         # 'data/cost_domain_demo.xml',
     ],
     'installable': True,
