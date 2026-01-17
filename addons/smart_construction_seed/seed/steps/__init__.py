@@ -16,6 +16,7 @@ from . import step_demo_showroom  # noqa: F401
 from . import step_demo_user_prefs  # noqa: F401
 from . import step_dictionary_min  # noqa: F401
 from . import step_icp_defaults  # noqa: F401
+from . import step_project_stages_min  # noqa: F401
 from . import step_project_stage_sync  # noqa: F401
 from . import step_10_users_demo  # noqa: F401
 from . import step_20_projects_demo  # noqa: F401
