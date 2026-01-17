@@ -73,3 +73,4 @@ docs/audit/*.csv
 docs/audit/*.sc_*.csv
 docs/audit/*.tsv
 docs/audit/*.json
+tmp/
