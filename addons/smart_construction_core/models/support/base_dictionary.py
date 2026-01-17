@@ -29,6 +29,8 @@ class ScDictionary(models.Model):
         ('doc_type', '工程资料大类'),
         ('doc_subtype', '工程资料细类'),
         ('expense_type', '费用类别'),
+        ('fee_type', '规费类别'),
+        ('tax_type', '税种'),
         ('contract_type', '合同方向'),
         ('contract_category', '合同类别'),
     ], string='字典类型', required=True, index=True)
