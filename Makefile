@@ -289,11 +289,13 @@ db.reset.manual: check-compose-env
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
-.PHONY: verify.baseline verify.demo gate.baseline gate.demo gate.full
+.PHONY: verify.baseline verify.demo verify.p0 gate.baseline gate.demo gate.full
 verify.baseline: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
+verify.p0: check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/p0_base.sh
 
 gate.baseline: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
