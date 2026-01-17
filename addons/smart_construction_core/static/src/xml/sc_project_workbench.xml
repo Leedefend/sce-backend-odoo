@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="sc_project_workbench_templates" xml:space="preserve">
+    <t t-name="smart_construction_core.ScProjectWorkbench">
+        <div class="sc-workbench">
+            <div class="sc-workbench__header">
+                <div class="sc-workbench__title">项目中心 · 工作台</div>
+                <div class="sc-workbench__meta">
+                    <span>当前公司：<t t-esc="state.companyName"/></span>
+                    <span class="sc-workbench__metaSep">·</span>
+                    <span>当前用户：<t t-esc="state.userName"/></span>
+                </div>
+            </div>
+
+            <div class="sc-workbench__kpis">
+                <button type="button" class="sc-kpi" t-on-click="openProjectList">
+                    <div class="sc-kpi__label">项目总数</div>
+                    <div class="sc-kpi__value"><t t-esc="state.projectTotal"/></div>
+                </button>
+                <div class="sc-kpi">
+                    <div class="sc-kpi__label">进行中</div>
+                    <div class="sc-kpi__value"><t t-esc="state.projectActive"/></div>
+                </div>
+                <div class="sc-kpi">
+                    <div class="sc-kpi__label">已归档</div>
+                    <div class="sc-kpi__value"><t t-esc="state.projectInactive"/></div>
+                </div>
+                <div class="sc-kpi sc-kpi--muted">
+                    <div class="sc-kpi__label">成本偏差预警</div>
+                    <div class="sc-kpi__value"><t t-esc="state.costAlerts"/></div>
+                    <div class="sc-kpi__hint">即将上线</div>
+                </div>
+                <div class="sc-kpi sc-kpi--muted">
+                    <div class="sc-kpi__label">待审批</div>
+                    <div class="sc-kpi__value"><t t-esc="state.pendingApprovals"/></div>
+                    <div class="sc-kpi__hint">即将上线</div>
+                </div>
+            </div>
+
+            <div class="sc-workbench__section">
+                <div class="sc-workbench__sectionTitle">快捷入口</div>
+                <div class="sc-workbench__shortcuts">
+                    <button type="button" class="btn btn-primary" t-on-click="openProjectList">项目列表</button>
+                    <button type="button" class="btn btn-secondary" t-on-click="openCostCompare">成本对比</button>
+                    <button type="button" class="btn btn-secondary" t-on-click="openContractLedger">合同汇总</button>
+                    <button type="button" class="btn btn-secondary" t-on-click="openPaymentRequest">付款/收款申请</button>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
