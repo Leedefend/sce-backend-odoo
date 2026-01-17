@@ -16,6 +16,7 @@ printf '[mod.install] module=%s db=%s\n' "$MODULE" "$DB_NAME"
 
 compose_dev run --rm -T \
   -e SC_SEED_ENABLED \
+  -e SC_SEED_PROFILE \
   -e SC_SEED_STEPS \
   -e SC_BOOTSTRAP_MODE \
   --entrypoint /usr/bin/odoo odoo \
