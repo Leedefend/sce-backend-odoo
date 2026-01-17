@@ -16,6 +16,7 @@ _PROFILES: Dict[str, List[str]] = {
         "sanity",
         "tax_defaults",
         "icp_defaults",
+        "dictionary_min",
     ],
     "demo_full": [
         "sanity",
