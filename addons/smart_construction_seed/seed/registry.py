@@ -12,6 +12,10 @@ class SeedStep:
 
 _REGISTRY: Dict[str, SeedStep] = {}
 _PROFILES: Dict[str, List[str]] = {
+    "base": [
+        "sanity",
+        "tax_defaults",
+    ],
     "demo_full": [
         "sanity",
         "dictionary",
