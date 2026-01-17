@@ -10,34 +10,7 @@
                     <span class="sc-sidebar__brandText">智能施工</span>
                     <span class="sc-sidebar__brandTag">平台</span>
                 </div>
-                <t t-if="state.allowedCompanies.length &gt; 1">
-                    <div class="sc-sidebar__company">
-                        <button type="button"
-                                class="sc-sidebar__companyButton"
-                                t-on-click="toggleCompanyMenu"
-                                t-att-aria-expanded="state.companyMenuOpen ? 'true' : 'false'">
-                            <span class="sc-sidebar__companyLabel"><t t-esc="companyLabel"/></span>
-                            <span class="sc-sidebar__chev" t-att-class="state.companyMenuOpen ? 'is-open' : ''">▾</span>
-                        </button>
-                        <div class="sc-sidebar__companyMenu" t-att-class="state.companyMenuOpen ? 'is-open' : ''">
-                            <t t-foreach="state.allowedCompanies" t-as="company" t-key="company.id">
-                                <label class="sc-sidebar__companyItem">
-                                    <input type="checkbox"
-                                           t-att-checked="state.selectedCompanyIds.includes(company.id) ? 'checked' : undefined"
-                                           t-on-change="() => toggleCompanySelection(company.id)"/>
-                                    <span class="sc-sidebar__companyName"><t t-esc="company.name"/></span>
-                                </label>
-                            </t>
-                            <div class="sc-sidebar__companyActions">
-                                <button type="button"
-                                        class="sc-sidebar__companyApply"
-                                        t-on-click.stop="applyCompanySelection">
-                                    应用
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </t>
+                <ScCompanySwitcherSidebar/>
                 <t t-if="state.debugMessage">
                     <div class="sc-sidebar__debug">
                         <t t-esc="state.debugMessage"/>
@@ -191,5 +164,29 @@
                 </div>
             </nav>
         </t>
+    </t>
+    <t t-name="smart_construction_core.ScCompanySwitcherSidebar">
+        <div class="sc-company-switcher" t-att-class="state.open ? 'is-open' : ''">
+            <button type="button"
+                    class="sc-company-switcher__button"
+                    t-on-click="toggleOpen"
+                    t-att-disabled="canSwitch ? undefined : 'disabled'"
+                    t-att-aria-expanded="state.open ? 'true' : 'false'">
+                <span class="sc-company-switcher__label"><t t-esc="currentCompanyName"/></span>
+                <span class="sc-company-switcher__chev"
+                      t-if="canSwitch"
+                      t-att-class="state.open ? 'is-open' : ''">▾</span>
+            </button>
+            <div class="sc-company-switcher__menu" t-if="canSwitch" t-att-class="state.open ? 'is-open' : ''">
+                <t t-foreach="allowedCompanies" t-as="company" t-key="company.id">
+                    <button type="button"
+                            class="sc-company-switcher__item"
+                            t-att-class="company.id === currentCompanyId ? 'is-active' : ''"
+                            t-on-click="() => this.switchCompany(company.id)">
+                        <span class="sc-company-switcher__name"><t t-esc="company.name"/></span>
+                    </button>
+                </t>
+            </div>
+        </div>
     </t>
 </templates>

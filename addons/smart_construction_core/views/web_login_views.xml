@@ -26,15 +26,6 @@
             </attribute>
         </xpath>
 
-        <xpath expr="//button[@name='redirect' and contains(normalize-space(.), 'superuser')]" position="attributes">
-            <attribute name="t-if">
-                not (
-                request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')
-                and request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod') in ('demo','prod')
-                )
-            </attribute>
-        </xpath>
-
         <xpath expr="//form//input[@name='redirect']" position="attributes">
             <attribute name="t-att-value">
                 request.params.get('redirect')
@@ -80,6 +71,7 @@
                     }
                     .sc-login-env-badge.is-demo{ background: #ecfdf5; color: #047857; }
                     .sc-login-env-badge.is-prod{ background: #fff7ed; color: #9a3412; }
+                    .oe_login_buttons button[name='redirect']{ display: none !important; }
                 </style>
             </t>
         </xpath>
