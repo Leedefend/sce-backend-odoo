@@ -48,6 +48,7 @@ check_eq "workbench action xmlid" "smart_construction_core.action_sc_project_wor
   "SELECT value FROM ir_config_parameter WHERE key='sc.workbench.default_action_xmlid';"
 check_eq "sidebar overview enabled" "1" "SELECT value FROM ir_config_parameter WHERE key='sc.sidebar.overview_enabled';"
 check_eq "sidebar overview menu ids" "265" "SELECT value FROM ir_config_parameter WHERE key='sc.sidebar.overview_menu_ids';"
+check_eq "login env prod" "prod" "SELECT value FROM ir_config_parameter WHERE key='sc.login.env';"
 
 check_ge "project stages (company-wide)" "5" "SELECT count(1) FROM project_project_stage WHERE company_id IS NULL;"
 check_ge "project stages default" "1" "SELECT count(1) FROM project_project_stage WHERE company_id IS NULL AND is_default IS TRUE;"
@@ -61,5 +62,10 @@ check_ge "dict doc_subtype" "1" "SELECT count(1) FROM sc_dictionary WHERE type='
 check_ge "dict fee_type" "1" "SELECT count(1) FROM sc_dictionary WHERE type='fee_type' AND active IS TRUE;"
 check_ge "dict tax_type" "1" "SELECT count(1) FROM sc_dictionary WHERE type='tax_type' AND active IS TRUE;"
 check_ge "dict cost_item" "1" "SELECT count(1) FROM sc_dictionary WHERE type='cost_item' AND active IS TRUE;"
+
+if [[ "${SC_BOOTSTRAP_USERS:-}" =~ ^(1|true|True|yes|YES)$ ]]; then
+  BOOT_LOGIN="${SC_BOOTSTRAP_ADMIN_LOGIN:-pm_admin}"
+  check_eq "bootstrap user exists" "1" "SELECT count(1) FROM res_users WHERE login='${BOOT_LOGIN}' AND active IS TRUE;"
+fi
 
 echo "[verify.p0] PASS ALL on ${DB_NAME}"

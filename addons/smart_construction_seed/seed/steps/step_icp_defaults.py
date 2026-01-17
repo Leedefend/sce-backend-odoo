@@ -10,6 +10,7 @@ def _set_default_param(params, key, value):
 
 def _run(env):
     params = env["ir.config_parameter"].sudo()
+    params.set_param("sc.login.env", "prod")
     _set_default_param(params, "sc.login.custom_enabled", "1")
     _set_default_param(params, "sc.workbench.enabled", "1")
     _set_default_param(

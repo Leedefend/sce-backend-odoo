@@ -18,6 +18,7 @@ _PROFILES: Dict[str, List[str]] = {
         "icp_defaults",
         "dictionary_min",
         "project_stages_min",
+        "users_bootstrap",
     ],
     "demo_full": [
         "sanity",
