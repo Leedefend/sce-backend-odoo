@@ -19,6 +19,13 @@ compose_dev run --rm -T \
   -e SC_SEED_PROFILE \
   -e SC_SEED_STEPS \
   -e SC_BOOTSTRAP_MODE \
+  -e SC_BOOTSTRAP_USERS \
+  -e SC_BOOTSTRAP_ADMIN_LOGIN \
+  -e SC_BOOTSTRAP_ADMIN_PASSWORD \
+  -e SC_BOOTSTRAP_ADMIN_NAME \
+  -e SC_BOOTSTRAP_ADMIN_GROUP_XMLIDS \
+  -e SC_BOOTSTRAP_ADMIN_COMPANY_MODE \
+  -e SC_BOOTSTRAP_UPDATE_PASSWORD \
   --entrypoint /usr/bin/odoo odoo \
   --config="$ODOO_CONF" \
   -d "$DB_NAME" \

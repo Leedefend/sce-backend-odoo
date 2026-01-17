@@ -7,12 +7,10 @@
                    t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
                 <div class="sc-login-branding">
                     <h2>智能工程项目管理系统</h2>
-                    <div class="sc-subtitle">项目 · 合同 · 结算 · 支付一体化（演示环境）</div>
+                    <div class="sc-subtitle">项目 · 合同 · 结算 · 支付一体化</div>
                 </div>
-                <t t-if="sc_login_env">
-                    <div t-attf-class="sc-login-env-badge is-#{sc_login_env}">
-                        <t t-esc="sc_login_env.upper()"/> 环境
-                    </div>
+                <t t-if="sc_login_env == 'demo'">
+                    <div class="sc-login-env-badge is-demo">DEMO 环境</div>
                 </t>
             </t>
         </xpath>
