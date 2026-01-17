@@ -14,6 +14,10 @@ const FAVORITE_MENUS_KEY = "sc_sidebar_favorite_menus";
 const RECENT_LIMIT = 8;
 const FAVORITE_LIMIT = 12;
 const SHOW_OVERVIEW = getConfigFlag("sc_sidebar_overview", true);
+const OVERVIEW_MENU_XMLIDS = new Set(["smart_construction_core.menu_sc_project_center"]);
+const OVERVIEW_MENU_IDS = new Set();
+const OVERVIEW_MENU_NAMES = new Set(["项目中心"]);
+const OVERVIEW_ACTION_XMLID = "smart_construction_core.action_sc_project_workbench";
 const DEBUG_ENABLED = Boolean(
   (window.odoo && window.odoo.__DEBUG__) || /\bdebug\b/.test(window.location.search || "")
 );
@@ -63,6 +67,10 @@ export class ScSidebar extends Component {
     };
     this.onSectionTitleClick = (section) => {
       if (!section) return;
+      if (section.children && section.children.length) {
+        this.toggleSection(section.id);
+        return;
+      }
       if (section.actionId) {
         this.openMenu(section.id, section.actionId, section.name);
         return;
@@ -497,15 +505,31 @@ function findFirstActionMenu(menu, menuMap) {
 export function buildMenuSections(rootMenu, menuMap) {
   const sections = [];
   const children = resolveChildren(rootMenu, menuMap);
+  if (!OVERVIEW_MENU_IDS.size) {
+    for (const child of children) {
+      const menuRecord = menuMap && menuMap[child.id] ? menuMap[child.id] : child;
+      if (menuRecord && menuRecord.xmlid && OVERVIEW_MENU_XMLIDS.has(menuRecord.xmlid)) {
+        OVERVIEW_MENU_IDS.add(child.id);
+      }
+    }
+  }
   for (const child of children) {
+    const menuRecord = menuMap && menuMap[child.id] ? menuMap[child.id] : child;
     const childAction = parseActionId(child);
     const childName = resolveName(child && child.name);
     const item = {
       id: child.id,
       name: childName,
       actionId: childAction,
+      overviewActionId: null,
+      xmlid: menuRecord && menuRecord.xmlid ? menuRecord.xmlid : null,
+      showOverviewEntry: false,
       children: [],
     };
+    item.showOverviewEntry = shouldShowOverviewEntry(item);
+    if (item.showOverviewEntry) {
+      item.overviewActionId = OVERVIEW_ACTION_XMLID;
+    }
     const sub = resolveChildren(child, menuMap);
     for (const node of sub) {
       const nodeAction = parseActionId(node);
@@ -531,6 +555,15 @@ export function buildMenuSections(rootMenu, menuMap) {
     }
   }
   return sections;
+}
+
+function shouldShowOverviewEntry(section) {
+  if (!SHOW_OVERVIEW) return false;
+  if (!section) return false;
+  if (section.xmlid && OVERVIEW_MENU_XMLIDS.has(section.xmlid)) return true;
+  if (OVERVIEW_MENU_IDS.has(section.id)) return true;
+  if (section.name && OVERVIEW_MENU_NAMES.has(section.name)) return true;
+  return false;
 }
 
 function resolveName(name) {
