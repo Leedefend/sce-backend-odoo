@@ -40,7 +40,7 @@ def _run(env):
     group_xmlids = _split_xmlids(
         os.getenv(
             "SC_BOOTSTRAP_ADMIN_GROUP_XMLIDS",
-            "smart_construction_core.group_sc_role_project_manager",
+            "smart_construction_core.group_sc_super_admin",
         )
     )
 
