@@ -27,7 +27,16 @@ fi
 
 printf '[seed.run] db=%s steps=%s\n' "$DB_NAME" "$STEPS"
 
-compose_dev exec -T -e STEPS="$STEPS" odoo odoo shell --config="$ODOO_CONF" -d "$DB_NAME" \
+compose_dev exec -T \
+  -e STEPS="$STEPS" \
+  -e SC_BOOTSTRAP_USERS \
+  -e SC_BOOTSTRAP_ADMIN_LOGIN \
+  -e SC_BOOTSTRAP_ADMIN_PASSWORD \
+  -e SC_BOOTSTRAP_ADMIN_NAME \
+  -e SC_BOOTSTRAP_ADMIN_GROUP_XMLIDS \
+  -e SC_BOOTSTRAP_ADMIN_COMPANY_MODE \
+  -e SC_BOOTSTRAP_UPDATE_PASSWORD \
+  odoo odoo shell --config="$ODOO_CONF" -d "$DB_NAME" \
   --db_host=db --db_port=5432 --db_user="$DB_USER" --db_password="$DB_PASSWORD" \
   --addons-path="$ODOO_ADDONS_PATH" \
 <<'PY'
