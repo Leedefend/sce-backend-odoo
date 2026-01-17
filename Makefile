@@ -372,6 +372,10 @@ audit.project.actions: check-compose-project check-compose-env
 audit.pull:
 	@DB=$(DB_NAME) bash scripts/audit/pull.sh
 
+.PHONY: audit.boundary
+audit.boundary:
+	@bash scripts/audit/boundary_lint.sh
+
 gate.full: check-compose-project check-compose-env
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
