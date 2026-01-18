@@ -6,6 +6,8 @@ export ROOT_DIR
 
 # shellcheck source=../common/env.sh
 source "$ROOT_DIR/scripts/common/env.sh"
+# shellcheck source=../common/guard_prod.sh
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
 # shellcheck source=../common/compose.sh
 source "$ROOT_DIR/scripts/common/compose.sh"
 
@@ -24,6 +26,9 @@ ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons
 if [[ -n "$PROFILE" ]]; then
   STEPS="profile:${PROFILE}"
 fi
+
+guard_seed_profile_prod
+guard_seed_bootstrap_prod
 
 printf '[seed.run] db=%s steps=%s\n' "$DB_NAME" "$STEPS"
 

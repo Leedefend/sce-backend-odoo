@@ -5,7 +5,7 @@ Makefile guards and script-level guards.
 
 ## Allowed (safe)
 
-- `make up/down/restart/logs/ps`
+- `make up/down/logs/ps`
 - `make diag.project`
 - `make verify.baseline` (requires PROD_DANGER=1)
 - `make verify.p0` (requires PROD_DANGER=1)
@@ -15,6 +15,9 @@ Makefile guards and script-level guards.
 
 - `make mod.install`
 - `make mod.upgrade`
+- `make restart` (requires PROD_DANGER=1)
+- `make prod.restart.safe` (requires PROD_DANGER=1)
+- `make prod.restart.full` (requires PROD_DANGER=1)
 - `make policy.apply.business_full`
 - `make policy.apply.role_matrix`
 - `make audit.project.actions`
@@ -28,6 +31,8 @@ Makefile guards and script-level guards.
 - `make test` / `make test.safe`
 - `make ci.*`
 - `make verify.ops`
+- `make seed.run PROFILE!=base`
+- `make seed.run` with `SC_BOOTSTRAP_USERS=1` unless `SEED_ALLOW_USERS_BOOTSTRAP=1`
 
 ## Examples
 
@@ -35,6 +40,12 @@ Enable a guarded operation:
 
 ```bash
 ENV=prod PROD_DANGER=1 make mod.upgrade MODULE=smart_construction_seed DB_NAME=sc_prod
+```
+
+Allow bootstrap users in prod:
+
+```bash
+ENV=prod SEED_ALLOW_USERS_BOOTSTRAP=1 SC_BOOTSTRAP_USERS=1 PROFILE=base make seed.run DB_NAME=sc_prod
 ```
 
 Blocked demo in prod:
