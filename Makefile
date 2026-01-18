@@ -159,6 +159,27 @@ endef
 # ======================================================
 .PHONY: check-compose-project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config
 
+IS_PROD := 0
+ifneq (,$(filter prod,$(ENV)))
+IS_PROD := 1
+endif
+ifneq (,$(findstring .env.prod,$(ENV_FILE)))
+IS_PROD := 1
+endif
+
+.PHONY: guard.prod.forbid guard.prod.danger
+guard.prod.forbid:
+	@if [ "$(IS_PROD)" = "1" ]; then \
+	  echo "❌ forbidden in prod (ENV=prod/ENV_FILE=.env.prod)"; \
+	  exit 2; \
+	fi
+
+guard.prod.danger:
+	@if [ "$(IS_PROD)" = "1" ] && [ "$${PROD_DANGER:-}" != "1" ]; then \
+	  echo "❌ prod danger guard: set PROD_DANGER=1 to proceed"; \
+	  exit 2; \
+	fi
+
 check-compose-project:
 	@if [ -z "$${COMPOSE_PROJECT_NAME:-}" ]; then \
 	  echo "[FATAL] COMPOSE_PROJECT_NAME is required. Set it or create .env"; \
@@ -240,7 +261,7 @@ odoo-shell: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/shell.sh
 
 .PHONY: dev.rebuild
-dev.rebuild: check-compose-project check-compose-env gate.compose.config
+dev.rebuild: guard.prod.forbid check-compose-project check-compose-env gate.compose.config
 	@$(RUN_ENV) bash scripts/dev/down.sh || true
 	@$(RUN_ENV) bash scripts/dev/up.sh
 	@$(MAKE) db.reset
@@ -267,43 +288,45 @@ diag.project: check-compose-project check-compose-env
 # ==================== DB / Demo =======================
 # ======================================================
 .PHONY: db.reset demo.reset db.branch db.create db.reset.manual
-db.reset: check-compose-project check-compose-env diag.project
+db.reset: guard.prod.forbid check-compose-project check-compose-env diag.project
 	@$(RUN_ENV) bash scripts/db/reset.sh
 
 # demo.reset 必须走 scripts/demo/reset.sh（含 seed/demo 安装）
-demo.reset: check-compose-project check-compose-env diag.project
+demo.reset: guard.prod.forbid check-compose-project check-compose-env diag.project
 	@$(RUN_ENV) bash scripts/demo/reset.sh
 
 # 兼容旧快捷命令：固定 sc_demo
 .PHONY: db.demo.reset
-db.demo.reset: check-compose-project check-compose-env
+db.demo.reset: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 
 db.branch:
 	@bash scripts/db/branch_db.sh
 db.create:
 	@bash scripts/db/create.sh $(DB)
-db.reset.manual: check-compose-env
+db.reset.manual: guard.prod.forbid check-compose-env
 	@bash scripts/db/reset_manual.sh $(DB)
 
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
-.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow gate.baseline gate.demo gate.full
-verify.baseline: check-compose-project check-compose-env
+.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.prod.guard gate.baseline gate.demo gate.full
+verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
-verify.demo: check-compose-project check-compose-env
+verify.demo: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
-verify.p0: check-compose-project check-compose-env
+verify.p0: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/p0_base.sh
-verify.p0.flow: check-compose-project check-compose-env
+verify.p0.flow: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/p0_flow.sh
+verify.prod.guard: check-compose-env
+	@bash scripts/verify/prod_guard_smoke.sh
 
-gate.baseline: check-compose-project check-compose-env
+gate.baseline: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 
-gate.demo: check-compose-project check-compose-env
+gate.demo: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
 
@@ -311,18 +334,18 @@ gate.demo: check-compose-project check-compose-env
 # ==================== Module Ops ======================
 # ======================================================
 .PHONY: mod.install mod.upgrade
-mod.install: check-compose-project check-compose-env
+mod.install: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/mod/install.sh
-mod.upgrade: check-compose-project check-compose-env
+mod.upgrade: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/mod/upgrade.sh
 
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
 .PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix
-policy.apply.business_full: check-compose-project check-compose-env
+policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
-policy.apply.role_matrix: check-compose-project check-compose-env
+policy.apply.role_matrix: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_role_matrix.sh
 	@echo "⚠️  policy.apply.role_matrix finished; restarting Odoo to refresh ACL caches"
 	@$(MAKE) restart
@@ -332,45 +355,50 @@ smoke.role_matrix: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/audit/smoke_role_matrix.sh
 
 .PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions
-demo.verify: check-compose-project check-compose-env
+demo.verify: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
-demo.load: check-compose-project check-compose-env
+demo.load: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/load.sh
 
 demo.list: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/list.sh
 
-demo.load.all: check-compose-project check-compose-env
+demo.load.all: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/load_all.sh
 
-demo.load.full: check-compose-project check-compose-env
+demo.load.full: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/load_full.sh
 
-demo.install: check-compose-project check-compose-env
+demo.install: guard.prod.forbid check-compose-project check-compose-env
 	@echo "[demo.install] db=$(DB_NAME)"
 	@test -n "$(DB_NAME)" || (echo "ERROR: DB_NAME is required" && exit 2)
 	@$(MAKE) mod.install MODULE=smart_construction_demo DB_NAME=$(DB_NAME)
 
-demo.rebuild: check-compose-project check-compose-env
+demo.rebuild: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/rebuild.sh
 
-demo.ci: check-compose-project check-compose-env
+demo.ci: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/ci.sh
 
-demo.repro: check-compose-project check-compose-env
+demo.repro: guard.prod.forbid check-compose-project check-compose-env
 	@$(MAKE) demo.reset DB=$(DB_NAME)
 	@$(MAKE) demo.load DB=$(DB_NAME) SCENARIO=s00_min_path
 	@$(MAKE) demo.verify DB=$(DB_NAME)
 
-demo.full: check-compose-project check-compose-env
+demo.full: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/demo/full.sh
 
 seed.run: check-compose-project check-compose-env
 	@$(RUN_ENV) STEPS=$(STEPS) bash scripts/seed/run.sh
 
-audit.project.actions: check-compose-project check-compose-env
+audit.project.actions: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) OUT=$(OUT) bash scripts/ops/audit_project_actions.sh
+
+.PHONY: prod.upgrade.core
+prod.upgrade.core: guard.prod.danger check-compose-project check-compose-env
+	@$(RUN_ENV) MODULE=smart_construction_core DB_NAME=$(DB_NAME) bash scripts/mod/upgrade.sh
+	@$(MAKE) restart
 
 .PHONY: audit.pull
 audit.pull:
@@ -380,7 +408,7 @@ audit.pull:
 audit.boundary:
 	@bash scripts/audit/boundary_lint.sh
 
-gate.full: check-compose-project check-compose-env
+gate.full: guard.prod.forbid check-compose-project check-compose-env
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
 	@$(MAKE) audit.pull DB_NAME=$(DB_NAME)
@@ -389,9 +417,9 @@ gate.full: check-compose-project check-compose-env
 # ==================== Dev Test ========================
 # ======================================================
 .PHONY: test test.safe
-test: check-compose-project check-compose-env
+test: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test.sh
-test.safe: check-compose-project check-compose-env
+test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
 # ======================================================
@@ -402,19 +430,19 @@ test.safe: check-compose-project check-compose-env
 	ci.clean ci.ps ci.logs
 
 # 只跑守门：权限/绕过（最快定位安全回归）
-ci.gate:
+ci.gate: guard.prod.forbid
 	@$(RUN_ENV) TEST_TAGS="sc_gate,sc_perm" bash scripts/ci/run_ci.sh
 
 # 冒烟：基础链路 + 守门
-ci.smoke:
+ci.smoke: guard.prod.forbid
 	@$(RUN_ENV) TEST_TAGS="sc_smoke,sc_gate" bash scripts/ci/run_ci.sh
 
 # 全量：用 TEST_TAGS（默认 sc_smoke,sc_gate，也可你自定义覆盖）
-ci.full:
+ci.full: guard.prod.forbid
 	@$(RUN_ENV) bash scripts/ci/run_ci.sh
 
 # 复现：不清理 artifacts，保留现场
-ci.repro:
+ci.repro: guard.prod.forbid
 	@$(RUN_ENV) CI_ARTIFACT_PURGE=0 bash scripts/ci/run_ci.sh
 
 test-install-gate:
@@ -422,11 +450,11 @@ test-install-gate:
 test-upgrade-gate:
 	@$(RUN_ENV) bash scripts/ci/upgrade_gate.sh
 
-ci.clean:
+ci.clean: guard.prod.forbid
 	@$(RUN_ENV) bash scripts/ci/ci_clean.sh
-ci.ps:
+ci.ps: guard.prod.forbid
 	@$(RUN_ENV) bash scripts/ci/ci_ps.sh
-ci.logs:
+ci.logs: guard.prod.forbid
 	@$(RUN_ENV) bash scripts/ci/ci_logs.sh
 
 # ======================================================
@@ -445,7 +473,7 @@ diag.compose: check-compose-env
 	echo "=== base+testdeps err ==="; \
 	if [ $$status -ne 0 ]; then echo "$$out" | sed -n '1,120p'; fi
 
-verify.ops: check-compose-project check-compose-env
+verify.ops: guard.prod.forbid check-compose-project check-compose-env
 	@echo "== verify.ops =="
 	@echo "[1] docker daemon"
 	@docker info >/dev/null && echo "OK docker daemon" || (echo "FAIL docker daemon" && exit 2)
@@ -457,8 +485,8 @@ verify.ops: check-compose-project check-compose-env
 	@$(MAKE) mod.upgrade MODULE=$(MODULE)
 	@echo "🎉 verify.ops PASSED"
 
-gate.audit: check-compose-project check-compose-env
+gate.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit.sh
 
-ci.gate.tp08: check-compose-project check-compose-env
+ci.gate.tp08: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit_tp08.sh
