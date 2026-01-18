@@ -41,6 +41,11 @@ test -d addons_external/oca_server_ux/base_tier_validation && echo OK
 * 目录 addons_external/oca_server_ux/base_tier_validation 存在
 * Odoo 安装 smart_construction_core 不再报缺依赖
 
+## 生产操作与发布指引
+
+- 生产命令策略：`docs/ops/prod_command_policy.md`
+- 发布清单：`docs/ops/release_checklist_v0.3.0-stable.md`
+
 ## Business Full 权限策略（必跑）
 
 ### 场景
