@@ -70,3 +70,4 @@ ENV=prod make demo.reset DB_NAME=sc_demo
 
 - `ENV=prod` or `ENV_FILE=.env.prod` triggers production guard.
 - Guards also apply when scripts are called directly (bypassing Makefile).
+- Release checklist: `docs/ops/release_checklist_v0.3.0-stable.md`

@@ -20,6 +20,8 @@ make verify.p0.flow DB_NAME=sc_p0_base
 
 - Requires `SC_SEED_ENABLED=1` and `SC_SEED_PROFILE=base` during install/reset.
 - For local runs, export envs before calling make:
+- Production command policy: `docs/ops/prod_command_policy.md`
+- Release checklist (stable): `docs/ops/release_checklist_v0.3.0-stable.md`
 
 ```bash
 export SC_SEED_ENABLED=1
