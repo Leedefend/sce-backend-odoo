@@ -33,6 +33,11 @@ guard_seed_db_explicit_prod
 
 printf '[seed.run] db=%s steps=%s\n' "$DB_NAME" "$STEPS"
 
+if [[ "${SEED_GUARD_ONLY:-}" == "1" ]]; then
+  echo "[seed.run] guard-only mode; skip execution"
+  exit 0
+fi
+
 compose_dev exec -T \
   -e STEPS="$STEPS" \
   -e SC_BOOTSTRAP_USERS \
