@@ -26,3 +26,22 @@ guard_prod_danger() {
     fi
   fi
 }
+
+guard_seed_profile_prod() {
+  if is_prod; then
+    local profile="${PROFILE:-}"
+    if [[ -n "${profile}" && "${profile}" != "base" ]]; then
+      echo "❌ prod seed guard: PROFILE must be 'base' (got '${profile}')." >&2
+      exit 2
+    fi
+  fi
+}
+
+guard_seed_bootstrap_prod() {
+  if is_prod; then
+    if [[ "${SC_BOOTSTRAP_USERS:-}" =~ ^(1|true|True|yes|YES)$ ]] && [[ "${SEED_ALLOW_USERS_BOOTSTRAP:-}" != "1" ]]; then
+      echo "❌ prod seed guard: set SEED_ALLOW_USERS_BOOTSTRAP=1 to allow users_bootstrap." >&2
+      exit 2
+    fi
+  fi
+}

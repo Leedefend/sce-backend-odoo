@@ -246,12 +246,12 @@ help:
 # ======================================================
 # ==================== Dev =============================
 # ======================================================
-.PHONY: up down restart logs ps odoo-shell
+.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full
 up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 down: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/down.sh
-restart: check-compose-project check-compose-env
+restart: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/restart.sh
 logs: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/logs.sh
@@ -259,6 +259,13 @@ ps: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/ps.sh
 odoo-shell: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/shell.sh
+
+prod.restart.safe: guard.prod.danger check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/dev/restart.sh
+
+prod.restart.full: guard.prod.danger check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/dev/down.sh
+	@$(RUN_ENV) bash scripts/dev/up.sh
 
 .PHONY: dev.rebuild
 dev.rebuild: guard.prod.forbid check-compose-project check-compose-env gate.compose.config
