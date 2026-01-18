@@ -50,7 +50,9 @@ Demo bootstrap:
 make demo.full DB=sc_demo
 ```
 
-???????`docs/ops/dev_bootstrap.md`
+`docs/ops/dev_bootstrap.md`
+`docs/ops/prod_command_policy.md`
+`docs/ops/release_notes_v0.3.0-stable.md`
 
 
 补充约束：所有 Makefile 中调用 Odoo 的 target 必须经由 `$(ODOO_EXEC)`，任何直接调用 `odoo` 的行为一律视为缺陷。
