@@ -58,5 +58,10 @@ echo "[prod.guard] SUMMARY guard_tests=${GUARD_TOTAL} pass=${GUARD_PASS} guard_f
 timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 env_name="${ENV:-}"
 db_name="${DB_TARGET}"
-printf '{"guard_tests":%s,"pass":%s,"guard_fail_expected":%s,"business_fail":%s,"timestamp":"%s","env":"%s","db_name":"%s"}\n' \
-  "${GUARD_TOTAL}" "${GUARD_PASS}" "${GUARD_EXPECTED_FAIL}" "${BUSINESS_FAIL}" "${timestamp}" "${env_name}" "${db_name}"
+git_sha="${GIT_SHA:-}"
+if [[ -z "${git_sha}" ]] && command -v git >/dev/null 2>&1; then
+  git_sha="$(git rev-parse --short HEAD 2>/dev/null || true)"
+fi
+rc=0
+printf '{"guard_tests":%s,"pass":%s,"guard_fail_expected":%s,"business_fail":%s,"timestamp":"%s","env":"%s","db_name":"%s","rc":%s,"git_sha":"%s"}\n' \
+  "${GUARD_TOTAL}" "${GUARD_PASS}" "${GUARD_EXPECTED_FAIL}" "${BUSINESS_FAIL}" "${timestamp}" "${env_name}" "${db_name}" "${rc}" "${git_sha}"
