@@ -32,6 +32,7 @@ Makefile guards and script-level guards.
 - `make ci.*`
 - `make verify.ops`
 - `make seed.run PROFILE!=base`
+- `make seed.run` without `SEED_DB_NAME_EXPLICIT=1`
 - `make seed.run` with `SC_BOOTSTRAP_USERS=1` unless `SEED_ALLOW_USERS_BOOTSTRAP=1`
 
 ## Examples
@@ -47,6 +48,17 @@ Allow bootstrap users in prod:
 ```bash
 ENV=prod SEED_ALLOW_USERS_BOOTSTRAP=1 SC_BOOTSTRAP_USERS=1 PROFILE=base make seed.run DB_NAME=sc_prod
 ```
+
+Seed.run in prod must be explicit:
+
+```bash
+ENV=prod SEED_DB_NAME_EXPLICIT=1 PROFILE=base DB_NAME=sc_prod make seed.run
+```
+
+## Seed users bootstrap prerequisites
+
+- `SC_BOOTSTRAP_USERS=1` requires `SC_BOOTSTRAP_ADMIN_PASSWORD` (or the run will abort).
+- Always pass `DB_NAME` explicitly in prod (`SEED_DB_NAME_EXPLICIT=1`).
 
 Blocked demo in prod:
 

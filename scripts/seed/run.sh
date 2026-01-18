@@ -29,6 +29,7 @@ fi
 
 guard_seed_profile_prod
 guard_seed_bootstrap_prod
+guard_seed_db_explicit_prod
 
 printf '[seed.run] db=%s steps=%s\n' "$DB_NAME" "$STEPS"
 
