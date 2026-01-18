@@ -1,3 +1,8 @@
+---
+capability_stage: P0.1
+status: active
+since: v0.3.0-stable
+---
 # 模块边界
 
 本文定义模块职责与依赖方向的硬性规则。

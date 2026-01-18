@@ -1,3 +1,8 @@
+---
+capability_stage: P0
+status: frozen
+since: v0.3.0-stable
+---
 # Production Command Policy
 
 This policy enforces safe command usage in production. It is enforced by

@@ -1,3 +1,8 @@
+---
+capability_stage: P0
+status: frozen
+since: v0.3.0-stable
+---
 # Release Notes — v0.3.0-stable
 
 ## Highlights

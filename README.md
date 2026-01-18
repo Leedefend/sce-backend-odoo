@@ -51,6 +51,8 @@ make demo.full DB=sc_demo
 ```
 
 `docs/ops/dev_bootstrap.md`
+`docs/README.md`
+`docs/README.zh.md`
 `docs/ops/README.md`
 `docs/ops/README.zh.md`
 `docs/dev/README.md`

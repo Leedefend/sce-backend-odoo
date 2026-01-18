@@ -1,3 +1,8 @@
+---
+capability_stage: P0
+status: frozen
+since: v0.3.0-stable
+---
 ## Reset & Verify 手册
 
 ### 目标

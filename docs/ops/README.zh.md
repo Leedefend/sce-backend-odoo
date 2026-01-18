@@ -1,3 +1,7 @@
+---
+capability_stage: P0.1
+status: active
+---
 # Ops 文档索引
 
 这里是运维与发布相关文档的入口。
@@ -7,6 +11,8 @@
 - 生产命令策略：`docs/ops/prod_command_policy.md`
 - Release Notes：`docs/ops/release_notes_v0.3.0-stable.md`
 - Release Checklist：`docs/ops/release_checklist_v0.3.0-stable.md`
+- 能力阶段定义：`docs/architecture/capability_stages.zh.md`
+- 阶段索引：`docs/capabilities/README.zh.md`
 
 ## 环境与数据库
 - Compose 环境单一事实源：`docs/ops/compose_env_sot.md`

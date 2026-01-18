@@ -1,3 +1,8 @@
+---
+capability_stage: P0.1
+status: active
+since: v0.3.0-stable
+---
 # Seed Lifecycle
 
 This document defines how seed is used across environments and what is allowed in production.

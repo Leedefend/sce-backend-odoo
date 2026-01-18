@@ -1,3 +1,8 @@
+---
+capability_stage: P0
+status: frozen
+since: v0.3.0-stable
+---
 # Release Checklist — v0.3.0-stable
 
 ## Preconditions

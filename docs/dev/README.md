@@ -1,3 +1,8 @@
+---
+capability_stage: P0.1
+status: active
+since: v0.3.0-stable
+---
 # Developer Start Here
 
 This page is the entry point for contributors.
