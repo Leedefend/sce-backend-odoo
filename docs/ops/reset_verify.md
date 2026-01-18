@@ -31,3 +31,7 @@ make gate.demo       # 等同 db.demo.reset + verify.demo，默认 DB=sc_demo
 ### 参数说明
 - `DB` / `DB_NAME`：目标数据库名（缺省 gate/verify 已设默认值）
 - `SC_SEED_ENABLED` / `SC_BOOTSTRAP_MODE`：演示库 reset 时已自动传入，无需额外设置
+
+### 相关 SOP
+- 生产命令策略：`docs/ops/prod_command_policy.md`
+- 发布清单：`docs/ops/release_checklist_v0.3.0-stable.md`

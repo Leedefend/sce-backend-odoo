@@ -48,3 +48,8 @@
 - 主要扣分点：
 - 运行态权限检查未自动化（计划：preflight check）
 - audit 产物未进入 CI artifact（计划：ci.upload_artifacts）
+
+## 相关 SOP
+
+- 生产命令策略：`docs/ops/prod_command_policy.md`
+- 发布清单：`docs/ops/release_checklist_v0.3.0-stable.md`
