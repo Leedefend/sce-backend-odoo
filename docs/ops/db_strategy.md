@@ -29,3 +29,6 @@
 - 当前 `.env`：`ODOO_DBFILTER=^(sc_odoo|sc_demo)$`（仅允许基线/演示库）
 - 若需开发/分支库，需将 dbfilter 放宽为：`^(sc_odoo|sc_demo|sc_dev|sc_dev__.*)$` 并重启 odoo
 
+## 相关 SOP
+- 生产命令策略：`docs/ops/prod_command_policy.md`
+- 发布清单：`docs/ops/release_checklist_v0.3.0-stable.md`
