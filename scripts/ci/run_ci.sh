@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
 source "$(dirname "$0")/../_lib/common.sh"
+
+guard_prod_forbid
 
 : "${MODULE:?MODULE required}"
 : "${DB_CI:?DB_CI required}"
