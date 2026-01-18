@@ -6,6 +6,8 @@ export ROOT_DIR
 
 # shellcheck source=../common/env.sh
 source "$ROOT_DIR/scripts/common/env.sh"
+# shellcheck source=../common/guard_prod.sh
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
 # shellcheck source=../common/compose.sh
 source "$ROOT_DIR/scripts/common/compose.sh"
 
@@ -13,6 +15,8 @@ log() { printf '[%s] %s\n' "$(date +'%H:%M:%S')" "$*"; }
 
 : "${DB_NAME:?DB_NAME required}"
 : "${DB_USER:?DB_USER required}"
+
+guard_prod_forbid
 
 DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
 export DB_USER DB_PASSWORD

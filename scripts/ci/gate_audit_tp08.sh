@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
+guard_prod_forbid
 LOG_DIR="$ROOT_DIR/artifacts/logs"
 mkdir -p "$LOG_DIR"
 TS="$(date +%Y%m%d_%H%M%S)"

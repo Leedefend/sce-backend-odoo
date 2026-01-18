@@ -6,10 +6,14 @@ export ROOT_DIR
 
 # shellcheck source=../common/env.sh
 source "$ROOT_DIR/scripts/common/env.sh"
+# shellcheck source=../common/guard_prod.sh
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
 # shellcheck source=../common/compose.sh
 source "$ROOT_DIR/scripts/common/compose.sh"
 
 : "${DB_NAME:?DB_NAME is required}"
+
+guard_prod_forbid
 
 printf '[demo.verify] db=%s\n' "$DB_NAME"
 

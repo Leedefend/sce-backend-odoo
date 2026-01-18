@@ -9,8 +9,12 @@ export DB_NAME
 
 # shellcheck source=../common/env.sh
 source "$ROOT_DIR/scripts/common/env.sh"
+# shellcheck source=../common/guard_prod.sh
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
 # shellcheck source=../common/compose.sh
 source "$ROOT_DIR/scripts/common/compose.sh"
+
+guard_prod_forbid
 
 echo "[db] RESET will DROP and RECREATE: ${DB_NAME}"
 printf "Type DB name to confirm: "

@@ -6,11 +6,15 @@ export ROOT_DIR
 
 # shellcheck source=../common/env.sh
 source "$ROOT_DIR/scripts/common/env.sh"
+# shellcheck source=../common/guard_prod.sh
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
 # shellcheck source=../common/compose.sh
 source "$ROOT_DIR/scripts/common/compose.sh"
 
 DB="${DB_CI:-sc_test}"
 ADDONS="/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux"
+
+guard_prod_forbid
 
 compose_testdeps run --rm -T \
   -v "${ROOT_DIR}/docs:/mnt/docs:ro" \
