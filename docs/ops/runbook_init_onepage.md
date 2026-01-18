@@ -83,3 +83,8 @@ make install MODULE=smart_construction_core DB=sc_dev
 
 - dbfilter 未放开：重启 odoo 后再试（见：docs/ops/db_strategy.md）
 - demo/seed 缺失：verify.demo 会失败（预期行为）
+
+## 相关 SOP
+
+- 生产命令策略：`docs/ops/prod_command_policy.md`
+- 发布清单：`docs/ops/release_checklist_v0.3.0-stable.md`
