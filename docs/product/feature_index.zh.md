@@ -1,3 +1,7 @@
+---
+capability_stage: P0.1
+status: active
+---
 # 功能索引
 
 这是功能与模块的轻量映射表。

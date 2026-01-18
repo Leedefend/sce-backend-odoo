@@ -1,3 +1,7 @@
+---
+capability_stage: P0.1
+status: active
+---
 # Feature Index
 
 This is a lightweight map from features to modules and runtime status.

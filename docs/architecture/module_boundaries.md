@@ -1,3 +1,8 @@
+---
+capability_stage: P0.1
+status: active
+since: v0.3.0-stable
+---
 # Module Boundaries
 
 This document defines responsibilities and dependency rules for modules.

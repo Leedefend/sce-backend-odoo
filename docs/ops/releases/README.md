@@ -1,3 +1,7 @@
+---
+capability_stage: P0.1
+status: active
+---
 # Releases Index
 
 This index tracks stable releases with their notes and checklists.

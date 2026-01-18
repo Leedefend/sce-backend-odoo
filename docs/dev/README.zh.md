@@ -1,3 +1,8 @@
+---
+capability_stage: P0.1
+status: active
+since: v0.3.0-stable
+---
 # 开发者入口
 
 这里是开发者的第一站。

@@ -1,3 +1,7 @@
+---
+capability_stage: P0.1
+status: active
+---
 # Ops Docs Index
 
 Start here for operational runbooks, verification, and release policy.
@@ -7,6 +11,8 @@ Start here for operational runbooks, verification, and release policy.
 - Production command policy: `docs/ops/prod_command_policy.md`
 - Release notes: `docs/ops/release_notes_v0.3.0-stable.md`
 - Release checklist: `docs/ops/release_checklist_v0.3.0-stable.md`
+- Capability stages: `docs/architecture/capability_stages.md`
+- Stage index: `docs/capabilities/README.md`
 
 ## Environment and Database
 - Compose env single source of truth: `docs/ops/compose_env_sot.md`

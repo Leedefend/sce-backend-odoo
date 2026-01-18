@@ -1,3 +1,7 @@
+---
+capability_stage: P0.1
+status: active
+---
 # 版本发布索引
 
 本索引用于稳定版本的发布记录与清单。

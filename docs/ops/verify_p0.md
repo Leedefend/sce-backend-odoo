@@ -1,3 +1,8 @@
+---
+capability_stage: P0
+status: frozen
+since: v0.3.0-stable
+---
 # P0 Verification (Base Usable)
 
 This verifies a fresh database can install core + seed, apply the base profile,

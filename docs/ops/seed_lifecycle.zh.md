@@ -1,3 +1,8 @@
+---
+capability_stage: P0.1
+status: active
+since: v0.3.0-stable
+---
 # Seed 生命周期
 
 本文件定义 seed 在不同环境中的使用方式以及生产环境的严格边界。
