@@ -295,6 +295,11 @@ rm -rf runtime
 > **env-baseline-odoo17-clean** 是后续所有开发、部署、排障的唯一参考基线。
 > 所有模块、功能问题，必须在该基线可正常启动的前提下进行。
 
+## 11. 生产与发布参考
+
+- 生产命令策略：`docs/ops/prod_command_policy.md`
+- 发布清单：`docs/ops/release_checklist_v0.3.0-stable.md`
+
 ---
 
 后续可选动作：
