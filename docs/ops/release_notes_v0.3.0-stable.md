@@ -10,6 +10,7 @@ This release hardens production operations and makes guard verification machine-
 
 ## Verification
 - `ENV=prod make verify.prod.guard`
+- Release checklist: `docs/ops/release_checklist_v0.3.0-stable.md`
 
 ## Tag
 - v0.3.0-stable
