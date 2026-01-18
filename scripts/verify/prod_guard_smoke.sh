@@ -27,7 +27,7 @@ expect_no_guard() {
     echo "$out"
     exit 1
   fi
-  echo "[prod.guard] PASS guard cleared: ${name} (rc=${rc})"
+  echo "[prod.guard] PASS guard cleared (business rc=${rc}): ${name}"
 }
 
 ENV=prod ENV_FILE=.env.prod expect_fail "make db.reset" make db.reset DB_NAME=sc_demo
