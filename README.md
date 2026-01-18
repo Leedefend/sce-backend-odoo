@@ -52,6 +52,15 @@ make demo.full DB=sc_demo
 
 `docs/ops/dev_bootstrap.md`
 `docs/ops/README.md`
+`docs/ops/README.zh.md`
+`docs/dev/README.md`
+`docs/dev/README.zh.md`
+`docs/architecture/README.md`
+`docs/architecture/README.zh.md`
+`docs/architecture/module_boundaries.md`
+`docs/ops/seed_lifecycle.md`
+`docs/product/feature_index.md`
+`docs/product/feature_index.zh.md`
 `docs/ops/prod_command_policy.md`
 `docs/ops/release_notes_v0.3.0-stable.md`
 `docs/ops/release_checklist_v0.3.0-stable.md`
