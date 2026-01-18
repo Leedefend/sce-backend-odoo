@@ -42,3 +42,7 @@ Required keys:
 - Check compose config: `make gate.compose.config`
 - Check labels: `docker ps --format '{{.Names}} {{.Label "com.docker.compose.project"}}'`
 - Verify `.env` is loaded: `make diag.project`
+
+## Related SOP
+- Production command policy: `docs/ops/prod_command_policy.md`
+- Release checklist: `docs/ops/release_checklist_v0.3.0-stable.md`
