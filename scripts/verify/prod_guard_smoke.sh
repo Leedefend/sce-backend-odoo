@@ -63,5 +63,7 @@ if [[ -z "${git_sha}" ]] && command -v git >/dev/null 2>&1; then
   git_sha="$(git rev-parse --short HEAD 2>/dev/null || true)"
 fi
 rc=0
-printf '{"guard_tests":%s,"pass":%s,"guard_fail_expected":%s,"business_fail":%s,"timestamp":"%s","env":"%s","db_name":"%s","rc":%s,"git_sha":"%s"}\n' \
-  "${GUARD_TOTAL}" "${GUARD_PASS}" "${GUARD_EXPECTED_FAIL}" "${BUSINESS_FAIL}" "${timestamp}" "${env_name}" "${db_name}" "${rc}" "${git_sha}"
+host_name="$(hostname 2>/dev/null || true)"
+compose_project="${COMPOSE_PROJECT_NAME:-}"
+printf '{"guard_tests":%s,"pass":%s,"guard_fail_expected":%s,"business_fail":%s,"timestamp":"%s","env":"%s","db_name":"%s","rc":%s,"git_sha":"%s","host":"%s","compose_project":"%s"}\n' \
+  "${GUARD_TOTAL}" "${GUARD_PASS}" "${GUARD_EXPECTED_FAIL}" "${BUSINESS_FAIL}" "${timestamp}" "${env_name}" "${db_name}" "${rc}" "${git_sha}" "${host_name}" "${compose_project}"
