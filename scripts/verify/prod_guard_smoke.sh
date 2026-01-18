@@ -13,6 +13,8 @@ expect_fail() {
     echo "$out"
     exit 1
   fi
+  GUARD_EXPECTED_FAIL=$((GUARD_EXPECTED_FAIL + 1))
+  GUARD_PASS=$((GUARD_PASS + 1))
   echo "[prod.guard] PASS expected fail: ${name}"
 }
 
@@ -28,14 +30,28 @@ expect_no_guard() {
     echo "$out"
     exit 1
   fi
+  if [[ "${rc}" -ne 0 ]]; then
+    BUSINESS_FAIL=$((BUSINESS_FAIL + 1))
+  fi
+  GUARD_PASS=$((GUARD_PASS + 1))
   echo "[prod.guard] PASS guard cleared (business rc=${rc}): ${name}"
 }
 
-ENV=prod ENV_FILE=.env.prod expect_fail "make db.reset" make db.reset DB_NAME=sc_demo
-ENV=prod ENV_FILE=.env.prod expect_fail "make mod.upgrade (no unlock)" make mod.upgrade MODULE=smart_construction_core DB_NAME=sc_demo
-ENV=prod ENV_FILE=.env.prod PROD_DANGER=1 expect_no_guard "make mod.upgrade (unlock)" make mod.upgrade MODULE=smart_construction_core DB_NAME=__guard_smoke__
-ENV=prod ENV_FILE=.env.prod expect_fail "script db/reset" bash scripts/db/reset.sh
-ENV=prod ENV_FILE=.env.prod expect_fail "seed.run profile demo_full" PROFILE=demo_full make seed.run DB_NAME="${DB_TARGET}"
-ENV=prod ENV_FILE=.env.prod expect_fail "seed.run without explicit db" PROFILE=base make seed.run DB_NAME="${DB_TARGET}"
-ENV=prod ENV_FILE=.env.prod expect_fail "seed.run users_bootstrap without allow" PROFILE=base SC_BOOTSTRAP_USERS=1 make seed.run DB_NAME="${DB_TARGET}"
-ENV=prod ENV_FILE=.env.prod SEED_DB_NAME_EXPLICIT=1 SEED_GUARD_ONLY=1 SEED_ALLOW_USERS_BOOTSTRAP=1 SC_BOOTSTRAP_USERS=1 PROFILE=base expect_no_guard "seed.run users_bootstrap with allow" make seed.run DB_NAME="${DB_TARGET}"
+GUARD_TOTAL=0
+GUARD_PASS=0
+GUARD_EXPECTED_FAIL=0
+BUSINESS_FAIL=0
+
+run_fail() { GUARD_TOTAL=$((GUARD_TOTAL + 1)); expect_fail "$@"; }
+run_clear() { GUARD_TOTAL=$((GUARD_TOTAL + 1)); expect_no_guard "$@"; }
+
+ENV=prod ENV_FILE=.env.prod run_fail "make db.reset" make db.reset DB_NAME=sc_demo
+ENV=prod ENV_FILE=.env.prod run_fail "make mod.upgrade (no unlock)" make mod.upgrade MODULE=smart_construction_core DB_NAME=sc_demo
+ENV=prod ENV_FILE=.env.prod PROD_DANGER=1 run_clear "make mod.upgrade (unlock)" make mod.upgrade MODULE=smart_construction_core DB_NAME=__guard_smoke__
+ENV=prod ENV_FILE=.env.prod run_fail "script db/reset" bash scripts/db/reset.sh
+ENV=prod ENV_FILE=.env.prod run_fail "seed.run profile demo_full" PROFILE=demo_full make seed.run DB_NAME="${DB_TARGET}"
+ENV=prod ENV_FILE=.env.prod run_fail "seed.run without explicit db" PROFILE=base make seed.run DB_NAME="${DB_TARGET}"
+ENV=prod ENV_FILE=.env.prod run_fail "seed.run users_bootstrap without allow" PROFILE=base SC_BOOTSTRAP_USERS=1 make seed.run DB_NAME="${DB_TARGET}"
+ENV=prod ENV_FILE=.env.prod SEED_DB_NAME_EXPLICIT=1 SEED_GUARD_ONLY=1 SEED_ALLOW_USERS_BOOTSTRAP=1 SC_BOOTSTRAP_USERS=1 PROFILE=base run_clear "seed.run users_bootstrap with allow" make seed.run DB_NAME="${DB_TARGET}"
+
+echo "[prod.guard] SUMMARY guard_tests=${GUARD_TOTAL} pass=${GUARD_PASS} guard_fail_expected=${GUARD_EXPECTED_FAIL} business_fail=${BUSINESS_FAIL}"
