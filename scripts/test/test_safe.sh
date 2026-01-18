@@ -6,7 +6,9 @@ export ROOT_DIR
 
 # shellcheck source=../common/env.sh
 source "$ROOT_DIR/scripts/common/env.sh"
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
 source "$(dirname "$0")/../_lib/common.sh"
+guard_prod_forbid
 log "dev test.safe (no upgrade) DB=${DB_NAME} tags=${TEST_TAGS}"
 TEST_TAGS_FINAL="$(normalize_test_tags "${MODULE}" "${TEST_TAGS}")"
 
