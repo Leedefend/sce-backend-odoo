@@ -45,3 +45,12 @@ guard_seed_bootstrap_prod() {
     fi
   fi
 }
+
+guard_seed_db_explicit_prod() {
+  if is_prod; then
+    if [[ "${SEED_DB_NAME_EXPLICIT:-}" != "1" ]]; then
+      echo "❌ prod seed guard: set SEED_DB_NAME_EXPLICIT=1 and pass DB_NAME explicitly." >&2
+      exit 2
+    fi
+  fi
+}
