@@ -55,5 +55,8 @@ ENV=prod ENV_FILE=.env.prod run_fail "seed.run users_bootstrap without allow" PR
 ENV=prod ENV_FILE=.env.prod SEED_DB_NAME_EXPLICIT=1 SEED_GUARD_ONLY=1 SEED_ALLOW_USERS_BOOTSTRAP=1 SC_BOOTSTRAP_USERS=1 PROFILE=base run_clear "seed.run users_bootstrap with allow" make seed.run DB_NAME="${DB_TARGET}"
 
 echo "[prod.guard] SUMMARY guard_tests=${GUARD_TOTAL} pass=${GUARD_PASS} guard_fail_expected=${GUARD_EXPECTED_FAIL} business_fail=${BUSINESS_FAIL}"
-printf '{"guard_tests":%s,"pass":%s,"guard_fail_expected":%s,"business_fail":%s}\n' \
-  "${GUARD_TOTAL}" "${GUARD_PASS}" "${GUARD_EXPECTED_FAIL}" "${BUSINESS_FAIL}"
+timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+env_name="${ENV:-}"
+db_name="${DB_TARGET}"
+printf '{"guard_tests":%s,"pass":%s,"guard_fail_expected":%s,"business_fail":%s,"timestamp":"%s","env":"%s","db_name":"%s"}\n' \
+  "${GUARD_TOTAL}" "${GUARD_PASS}" "${GUARD_EXPECTED_FAIL}" "${BUSINESS_FAIL}" "${timestamp}" "${env_name}" "${db_name}"
