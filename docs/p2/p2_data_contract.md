@@ -35,6 +35,16 @@ Scope: Define authoritative objects/fields/state constraints for P2 execution co
 ### Errors
 - TASK_GUARD_MISSING_FIELDS
 - TASK_GUARD_PROJECT_BLOCKED
+- TASK_GUARD_NOT_COMPLETE
+- TASK_GUARD_ROLE_REQUIRED
+
+### Transition API Table (project.task)
+| From -> To           | Method / Action                  | Guard (Error Code)            | Audit Event |
+|----------------------|----------------------------------|-------------------------------|------------|
+| draft -> ready       | project.task.action_prepare_task | TASK_GUARD_MISSING_FIELDS     | task_ready |
+| ready -> in_progress | project.task.action_start_task   | TASK_GUARD_PROJECT_BLOCKED    | task_started |
+| in_progress -> done  | project.task.action_mark_done    | TASK_GUARD_NOT_COMPLETE       | task_done |
+| any -> cancel        | project.task.action_cancel_task  | TASK_GUARD_ROLE_REQUIRED      | task_cancelled |
 
 ## 2) construction.work.breakdown
 ### Core Fields
@@ -117,6 +127,14 @@ Scope: Define authoritative objects/fields/state constraints for P2 execution co
 - SETTLEMENT_PURCHASE_MISSING
 - SETTLEMENT_PURCHASE_INVALID
 
+### Transition API Table (sc.settlement.order)
+| From -> To      | Method / Action                     | Guard (Error Code)              | Audit Event |
+|-----------------|-------------------------------------|---------------------------------|------------|
+| draft -> submit | sc.settlement.order.action_submit   | SETTLEMENT_CONTRACT_MISMATCH / SETTLEMENT_PURCHASE_MISSING | settlement_submitted |
+| submit -> approve | sc.settlement.order.action_approve | SETTLEMENT_PURCHASE_INVALID     | settlement_approved |
+| approve -> done | sc.settlement.order.action_done     | (n/a)                           | settlement_done |
+| any -> cancel   | sc.settlement.order.action_cancel   | P0_SETTLEMENT_CANCEL_BLOCKED    | settlement_cancelled |
+
 ## 7) sc.settlement.order.line
 ### Core Fields
 - id (readonly)
@@ -156,6 +174,16 @@ Scope: Define authoritative objects/fields/state constraints for P2 execution co
 - P0_PAYMENT_SETTLEMENT_NOT_READY
 - P0_PAYMENT_STATE_BYPASS_BLOCKED
 - P0_PAYMENT_OVER_BALANCE
+
+### Transition API Table (payment.request)
+| From -> To         | Method / Action                      | Guard (Error Code)                 | Audit Event |
+|--------------------|--------------------------------------|------------------------------------|------------|
+| draft -> submit    | payment.request.action_submit        | P0_PAYMENT_SETTLEMENT_NOT_READY    | payment_submitted |
+| submit -> approve  | payment.request.action_approve       | P0_PAYMENT_OVER_BALANCE            | payment_approve_started |
+| approve -> approved| payment.request.action_set_approved  | P0_PAYMENT_STATE_BYPASS_BLOCKED    | payment_approved |
+| submit -> rejected | payment.request.action_on_tier_rejected | (n/a)                           | payment_rejected |
+| approved -> done   | payment.request.action_done          | P0_PAYMENT_STATE_BYPASS_BLOCKED    | payment_done |
+| any -> cancel      | payment.request.action_cancel        | (n/a)                              | payment_cancelled |
 
 ## Visibility Rules
 - read access by role groups per existing ACL.
