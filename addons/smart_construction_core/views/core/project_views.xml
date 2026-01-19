@@ -91,103 +91,11 @@
             </xpath>
 
             <xpath expr="//sheet/div[@name='button_box']" position="after">
-                <div class="sc_insight_mount" data-model="project.project" data-scene="project.entry"/>
-            </xpath>
-
-            <!-- 概览提示区插入到原生 notebook 之前 -->
-            <xpath expr="//sheet/notebook" position="before">
-                <div class="o_sc_project_overview row" data-model="project.project" style="margin: 8px 0 12px 0;">
-                    <div class="col-12">
-                        <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert" style="margin-bottom: 8px;">
-                            <span><strong>项目概览：</strong>快速查看合同与资金执行情况（试用版）。</span>
-                            <span>
-                                <a href="#"
-                                   role="button"
-                                   class="btn btn-sm btn-primary sc-project-tab-jump"
-                                   data-tab="sc_tender"
-                                   groups="smart_construction_core.group_sc_cap_project_user">
-                                    进入投标管理
-                                </a>
-                                <a href="#"
-                                   role="button"
-                                   class="btn btn-sm btn-outline-primary sc-project-tab-jump ms-1"
-                                   data-tab="sc_contract"
-                                   groups="smart_construction_core.group_sc_cap_contract_read">
-                                    进入合同
-                                </a>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-3">
-                        <div class="card p-3">
-                            <div class="text-muted">已付款合同额</div>
-                            <div class="h3"><field name="pay_contract_total" widget="monetary" readonly="1"/></div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-3">
-                        <div class="card p-3">
-                            <div class="text-muted">已结算金额</div>
-                            <div class="h3"><field name="pay_settlement_total" widget="monetary" readonly="1"/></div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-3">
-                        <div class="card p-3">
-                            <div class="text-muted">已付款金额</div>
-                            <div class="h3"><field name="pay_paid_total" widget="monetary" readonly="1"/></div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-3">
-                        <div class="card p-3">
-                            <div class="text-muted">未付款金额</div>
-                            <div class="h3"><field name="pay_unpaid_total" widget="monetary" readonly="1"/></div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-3">
-                        <div class="card p-3">
-                            <div class="text-muted">BOQ 状态</div>
-                            <div class="h3"><field name="boq_line_count" readonly="1"/></div>
-                            <div class="text-muted">已导入</div>
-                            <div><field name="boq_imported" readonly="1"/></div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-3">
-                        <div class="card p-3">
-                            <div class="text-muted">BOQ 合价(叶子)</div>
-                            <div class="h3"><field name="boq_amount_leaf_total" widget="monetary" readonly="1"/></div>
-                            <div class="text-muted">BOQ 版本</div>
-                            <div><field name="boq_version_latest" readonly="1"/></div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-3">
-                        <div class="card p-3">
-                            <div class="text-muted">工程结构状态</div>
-                            <div class="h3"><field name="wbs_node_count" readonly="1"/></div>
-                            <div class="text-muted">已就绪</div>
-                            <div><field name="wbs_ready" readonly="1"/></div>
-                        </div>
-                    </div>
-                </div>
+                <widget name="sc_insight_banner" options="{'scene': 'project.entry'}"/>
             </xpath>
 
             <!-- 概览/施工/协作页插入到原生 notebook 开头 -->
             <xpath expr="//sheet/notebook/page[1]" position="before">
-                <page string="项目概览" name="sc_overview">
-                    <group col="4" string="项目概览">
-                        <field name="name"/>
-                        <field name="project_code" readonly="1"/>
-                        <field name="project_type_id"/>
-                        <field name="project_category_id"/>
-                        <field name="manager_id"/>
-                        <field name="partner_id"/>
-                        <field name="owner_id"/>
-                    </group>
-                    <group col="4" string="关键指标" groups="smart_construction_core.group_sc_cap_finance_read">
-                        <field name="pay_contract_total" readonly="1"/>
-                        <field name="pay_settlement_total" readonly="1"/>
-                        <field name="pay_paid_total" readonly="1"/>
-                        <field name="pay_unpaid_total" readonly="1"/>
-                    </group>
-                </page>
                 <page string="投标管理" name="sc_tender" data-tab="sc_tender" groups="smart_construction_core.group_sc_cap_project_user">
                     <field name="tender_bid_ids" context="{'default_project_id': id, 'default_state': 'prepare'}">
                         <tree string="投标记录" editable="bottom">
@@ -202,7 +110,7 @@
                     </field>
                 </page>
                 <page string="施工信息" name="sc_construction" groups="smart_construction_core.group_sc_cap_project_read">
-                    <group col="4" string="施工项目信息">
+                    <group col="4" string="施工项目信息" data-sc-anchor="schedule">
                         <field name="project_code" readonly="1"/>
                         <field name="project_type_id"/>
                         <field name="project_category_id"/>
@@ -214,7 +122,7 @@
                         <field name="start_date"/>
                         <field name="end_date"/>
                     </group>
-                    <group col="4" string="项目责任人">
+                    <group col="4" string="项目责任人" data-sc-anchor="manager">
                         <field name="manager_id"/>
                         <field name="cost_manager_id"/>
                         <field name="doc_manager_id"/>
@@ -252,7 +160,7 @@
 
             <!-- notebook 中重排业务页签，保证系统/描述/设置靠后 -->
             <xpath expr="//sheet/notebook/page[@name='sc_construction']" position="after">
-                <page string="WBS结构" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
+                <page string="WBS结构" name="wbs_tab" data-sc-anchor="wbs" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
                     <field name="wbs_ids" context="{'default_project_id': id}">
                         <tree editable="bottom">
                             <field name="sequence"/>
@@ -264,7 +172,7 @@
                         </tree>
                     </field>
                 </page>
-                <page string="工程量清单" name="boq_tab" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
+                <page string="工程量清单" name="boq_tab" data-sc-anchor="boq" groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager">
                     <group col="2">
                         <group string="清单操作">
                             <button string="导入清单"

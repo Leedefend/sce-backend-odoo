@@ -31,6 +31,7 @@ function normalizeCompanies(raw) {
 
 export class ScCompanySwitcherSidebar extends Component {
   static template = "smart_construction_core.ScCompanySwitcherSidebar";
+  static props = {};
 
   setup() {
     this.companyService = useService("company");

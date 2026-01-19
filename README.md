@@ -59,6 +59,7 @@ make demo.full DB=sc_demo
 `docs/dev/README.zh.md`
 `docs/architecture/README.md`
 `docs/architecture/README.zh.md`
+`docs/architecture/page_attention_contract.md`
 `docs/architecture/module_boundaries.md`
 `docs/ops/seed_lifecycle.md`
 `docs/product/feature_index.md`
@@ -69,6 +70,8 @@ make demo.full DB=sc_demo
 
 
 补充约束：所有 Makefile 中调用 Odoo 的 target 必须经由 `$(ODOO_EXEC)`，任何直接调用 `odoo` 的行为一律视为缺陷。
+
+补充约束：所有新页面/提示必须遵守 `docs/architecture/page_attention_contract.md`。
 
 ---
 
