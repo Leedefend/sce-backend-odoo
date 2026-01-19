@@ -266,6 +266,14 @@ class PaymentRequest(models.Model):
         return records
 
     def write(self, vals):
+        if "state" in vals and not self.env.context.get("allow_transition"):
+            sample = self[:1]
+            raise_guard(
+                "PAYMENT_GUARD_DIRECT_STATE_WRITE",
+                f"付款申请[{sample.display_name if sample else ''}]",
+                "状态变更",
+                reasons=["state change must use transition methods"],
+            )
         if vals.get("state") == "done":
             self._check_can_done()
         if vals.get("state") in ("approved", "done"):
@@ -282,6 +290,41 @@ class PaymentRequest(models.Model):
         if any(key in vals for key in ("state", "type", "project_id", "amount")):
             self._enforce_funding_gate(vals)
         return res
+
+    def _get_attachment_count(self):
+        self.ensure_one()
+        if "message_attachment_count" in self._fields:
+            return self.message_attachment_count or 0
+        if "attachment_ids" in self._fields:
+            return len(self.attachment_ids)
+        return self.env["ir.attachment"].search_count(
+            [("res_model", "=", self._name), ("res_id", "=", self.id)]
+        )
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "amount": self.amount,
+            "partner_id": self.partner_id.id if self.partner_id else False,
+            "attachment_count": self._get_attachment_count(),
+            "validation_status": self.validation_status,
+        }
+
+    def _audit_transition(self, event_code, before, after, reason=None, require_reason=False, action_name=None):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code=event_code,
+            model=self._name,
+            res_id=self.id,
+            action=action_name or event_code,
+            before=before,
+            after=after,
+            reason=reason,
+            require_reason=require_reason,
+            company_id=self.company_id,
+            project_id=self.project_id,
+        )
 
     @api.depends("settlement_id", "settlement_remaining_amount", "amount")
     def _compute_settlement_amount_insufficient(self):
@@ -461,6 +504,13 @@ class PaymentRequest(models.Model):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user"):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
         for rec in self:
+            if rec._get_attachment_count() <= 0:
+                raise_guard(
+                    "PAYMENT_ATTACHMENTS_REQUIRED",
+                    f"付款申请[{rec.display_name}]",
+                    "提交付款/收款申请",
+                    reasons=["attachments are required on submit"],
+                )
             if not rec.contract_id:
                 raise UserError("请先选择关联合同后再提交付款/收款申请。")
             if rec.contract_id.state == "cancel":
@@ -481,11 +531,11 @@ class PaymentRequest(models.Model):
         self._check_settlement_consistency()
         for rec in self:
             rec._check_settlement_compliance_or_raise(strict=False)
-        self.write(
-            {
-                "state": "submit",
-            }
-        )
+        for rec in self:
+            before = rec._snapshot_audit_payload()
+            rec.with_context(allow_transition=True).write({"state": "submit"})
+            after = rec._snapshot_audit_payload()
+            rec._audit_transition("payment_submitted", before, after, action_name="action_submit")
         self.invalidate_recordset()
         for rec in self:
             company = rec.company_id or self.env.company
@@ -496,8 +546,17 @@ class PaymentRequest(models.Model):
 
     def action_approve(self):
         for rec in self:
+            if rec.state != "submit":
+                continue
             rec._check_project_lifecycle(rec.project_id, "approve")
             rec._check_settlement_state(rec.settlement_id)
+            if rec.validation_status != "validated":
+                raise_guard(
+                    "PAYMENT_TIER_INCOMPLETE",
+                    f"付款申请[{rec.display_name}]",
+                    "审批付款申请",
+                    reasons=["tier validation not complete"],
+                )
         self._enforce_funding_gate({"state": "approve"})
         self._check_settlement_remaining_amount()
         self._check_not_overpay_settlement()
@@ -512,7 +571,7 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
-            rec.write({"state": "approve"})
+            rec.with_context(allow_transition=True).write({"state": "approve"})
             action = rec.validate_tier()
             if action:
                 result = action
@@ -530,9 +589,27 @@ class PaymentRequest(models.Model):
     def action_done(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
+        for rec in self:
+            if rec.validation_status != "validated":
+                raise_guard(
+                    "PAYMENT_TIER_INCOMPLETE",
+                    f"付款申请[{rec.display_name}]",
+                    "完成付款申请",
+                    reasons=["tier validation not complete"],
+                )
+            if rec.state != "approved":
+                raise_guard(
+                    "PAYMENT_GUARD_NOT_READY",
+                    f"付款申请[{rec.display_name}]",
+                    "完成付款申请",
+                    reasons=[f"当前状态为 {rec.state}"],
+                )
         self._check_can_done()
         for rec in self:
-            rec.write({"state": "done"})
+            before = rec._snapshot_audit_payload()
+            rec.with_context(allow_transition=True).write({"state": "done"})
+            after = rec._snapshot_audit_payload()
+            rec._audit_transition("payment_paid", before, after, action_name="action_done")
 
     def _ensure_payment_ledger(self, amount=None, paid_at=None, ref=None, note=None):
         self.ensure_one()
@@ -554,7 +631,7 @@ class PaymentRequest(models.Model):
     def action_cancel(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager"):
             raise ValidationError(_("你没有取消付款/收款申请的权限。"))
-        self.write({"state": "cancel"})
+        self.with_context(allow_transition=True).write({"state": "cancel"})
 
     def _check_state_from_condition(self):
         self.ensure_one()
@@ -569,20 +646,39 @@ class PaymentRequest(models.Model):
             rec._check_project_lifecycle(rec.project_id, "approved")
             rec._check_settlement_state(rec.settlement_id)
             rec._enforce_funding_gate({"state": "approved"})
-            rec.write(
-                {
-                    "state": "approved",
-                }
-            )
+            if rec.validation_status != "validated":
+                raise_guard(
+                    "PAYMENT_TIER_INCOMPLETE",
+                    f"付款申请[{rec.display_name}]",
+                    "审批付款申请",
+                    reasons=["tier validation not complete"],
+                )
+            before = rec._snapshot_audit_payload()
+            rec.with_context(allow_transition=True).write({"state": "approved"})
+            after = rec._snapshot_audit_payload()
+            rec._audit_transition("payment_approved", before, after, action_name="action_on_tier_approved")
             rec.message_post(body=_("付款/收款申请审批通过。"))
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "submit":
                 continue
-            rec.write(
-                {
-                    "state": "rejected",
-                }
+            if not reason:
+                raise_guard(
+                    "AUDIT_REASON_REQUIRED",
+                    f"付款申请[{rec.display_name}]",
+                    "审批驳回",
+                    reasons=["reason is required"],
+                )
+            before = rec._snapshot_audit_payload()
+            rec.with_context(allow_transition=True).write({"state": "rejected"})
+            after = rec._snapshot_audit_payload()
+            rec._audit_transition(
+                "payment_rejected",
+                before,
+                after,
+                reason=reason,
+                require_reason=True,
+                action_name="action_on_tier_rejected",
             )
             rec.message_post(body=_("付款/收款申请审批驳回：%s") % (reason or _("未填写原因")))
