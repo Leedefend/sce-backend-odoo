@@ -268,6 +268,7 @@ class ScSettlementOrder(models.Model):
 
     def action_submit(self):
         for rec in self:
+            rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=False)
             rec._check_purchase_orders_or_raise(strict=False)
         self.env["sc.data.validator"].validate_or_raise()
@@ -275,6 +276,7 @@ class ScSettlementOrder(models.Model):
 
     def action_approve(self):
         for rec in self:
+            rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=True)
             rec._check_purchase_orders_or_raise(strict=True)
         self.env["sc.data.validator"].validate_or_raise()
@@ -375,6 +377,25 @@ class ScSettlementOrder(models.Model):
             if updates:
                 rec.with_context(skip_onchange=True).sudo().write(updates)
 
+    def _check_line_contracts_or_raise(self):
+        for rec in self:
+            for line in rec.line_ids:
+                if not line.contract_id:
+                    raise_guard(
+                        "SETTLEMENT_CONTRACT_REQUIRED",
+                        f"结算单[{rec.display_name}]",
+                        _("校验结算行合同"),
+                        reasons=[_("结算行未绑定合同")],
+                    )
+                if line.contract_id and rec.project_id:
+                    if line.contract_id.project_id.id != rec.project_id.id:
+                        raise_guard(
+                            "SETTLEMENT_CONTRACT_MISMATCH",
+                            f"结算单[{rec.display_name}]",
+                            _("校验结算行合同"),
+                            reasons=[_("合同项目与结算单项目不一致")],
+                        )
+
 
 class ScSettlementOrderLine(models.Model):
     _name = "sc.settlement.order.line"
@@ -386,6 +407,18 @@ class ScSettlementOrderLine(models.Model):
         string="结算单",
         required=True,
         ondelete="cascade",
+    )
+    project_id = fields.Many2one(
+        "project.project",
+        string="项目",
+        related="settlement_id.project_id",
+        store=True,
+        readonly=True,
+    )
+    contract_id = fields.Many2one(
+        "construction.contract",
+        string="合同",
+        index=True,
     )
     name = fields.Char(string="名称", required=True)
     qty = fields.Float(string="数量", default=1.0, digits="Product Unit of Measure")
@@ -403,3 +436,130 @@ class ScSettlementOrderLine(models.Model):
     def _compute_amount(self):
         for line in self:
             line.amount = (line.qty or 0.0) * (line.price_unit or 0.0)
+
+    def _ensure_manager_role(self):
+        if not self.env.user.has_group("smart_construction_core.group_sc_cap_project_manager"):
+            raise_guard(
+                "SETTLEMENT_CONTRACT_REQUIRED",
+                "Settlement Line",
+                "Change Contract",
+                reasons=["manager role required"],
+            )
+
+    def _ensure_contract_required(self, contract_id=None):
+        if not contract_id:
+            raise_guard(
+                "SETTLEMENT_CONTRACT_REQUIRED",
+                "Settlement Line",
+                "Bind Contract",
+                reasons=["contract_id is required"],
+            )
+
+    def _ensure_contract_match(self, contract_id, project_id):
+        if not contract_id or not project_id:
+            return
+        contract = self.env["construction.contract"].browse(contract_id)
+        if contract.project_id and contract.project_id.id != project_id:
+            raise_guard(
+                "SETTLEMENT_CONTRACT_MISMATCH",
+                "Settlement Line",
+                "Bind Contract",
+                reasons=["contract project mismatch"],
+            )
+
+    def _audit_contract(self, event_code, before_id, after_id, reason=None, require_reason=False):
+        Audit = self.env["sc.audit.log"]
+        for rec in self:
+            Audit.write_event(
+                event_code=event_code,
+                model=rec._name,
+                res_id=rec.id,
+                action=event_code,
+                before={"contract_id": before_id},
+                after={"contract_id": after_id},
+                reason=reason,
+                require_reason=require_reason,
+                project_id=rec.project_id.id if rec.project_id else False,
+                company_id=rec.settlement_id.company_id.id if rec.settlement_id else False,
+            )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get("contract_id") and vals.get("settlement_id"):
+                settlement = self.env["sc.settlement.order"].browse(vals.get("settlement_id"))
+                if settlement.contract_id:
+                    vals["contract_id"] = settlement.contract_id.id
+            self._ensure_contract_required(vals.get("contract_id"))
+            if vals.get("settlement_id"):
+                settlement = self.env["sc.settlement.order"].browse(vals.get("settlement_id"))
+                self._ensure_contract_match(vals.get("contract_id"), settlement.project_id.id)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if "contract_id" in vals and not self.env.context.get("allow_contract_change"):
+            raise_guard(
+                "SETTLEMENT_CONTRACT_REQUIRED",
+                "Settlement Line",
+                "Change Contract",
+                reasons=["use action_bind_contract/action_unbind_contract"],
+            )
+        if "contract_id" in vals:
+            if not vals.get("contract_id") and not self.env.context.get("allow_contract_change"):
+                self._ensure_contract_required(False)
+        res = super().write(vals)
+        if "contract_id" in vals:
+            for rec in self:
+                if rec.contract_id:
+                    rec._ensure_contract_required(rec.contract_id.id)
+                    rec._ensure_contract_match(rec.contract_id.id, rec.project_id.id)
+                elif not self.env.context.get("allow_contract_change"):
+                    rec._ensure_contract_required(False)
+        return res
+
+    def action_bind_contract(self, contract_id, reason=None):
+        self.ensure_one()
+        self._ensure_contract_required(contract_id)
+        self._ensure_contract_match(contract_id, self.project_id.id)
+        before_id = self.contract_id.id if self.contract_id else False
+        require_reason = False
+        if before_id and before_id != contract_id:
+            self._ensure_manager_role()
+            require_reason = True
+        if require_reason and not reason:
+            raise_guard(
+                "AUDIT_REASON_REQUIRED",
+                "Audit",
+                "Write",
+                reasons=["reason is required"],
+            )
+        self.with_context(allow_contract_change=True).write({"contract_id": contract_id})
+        self._audit_contract(
+            "contract_bound",
+            before_id=before_id,
+            after_id=contract_id,
+            reason=reason,
+            require_reason=require_reason,
+        )
+        return True
+
+    def action_unbind_contract(self, reason=None):
+        self.ensure_one()
+        self._ensure_manager_role()
+        if not reason:
+            raise_guard(
+                "AUDIT_REASON_REQUIRED",
+                "Audit",
+                "Write",
+                reasons=["reason is required"],
+            )
+        before_id = self.contract_id.id if self.contract_id else False
+        self.with_context(allow_contract_change=True).write({"contract_id": False})
+        self._audit_contract(
+            "contract_unbound",
+            before_id=before_id,
+            after_id=False,
+            reason=reason,
+            require_reason=True,
+        )
+        return True
