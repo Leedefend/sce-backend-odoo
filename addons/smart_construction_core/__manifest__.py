@@ -101,7 +101,10 @@
             'smart_construction_core/static/src/js/project_quota_center.js',
             'smart_construction_core/static/src/xml/project_quota_center.xml',
             'smart_construction_core/static/src/scss/project_quota_center.scss',
-            'smart_construction_core/static/src/js/insight_banner.js',
+            'smart_construction_core/static/src/js/insight/insight_service.js',
+            'smart_construction_core/static/src/js/insight/insight_nav.js',
+            'smart_construction_core/static/src/js/insight/insight_widget.js',
+            'smart_construction_core/static/src/js/insight/insight_view_widget.js',
             'smart_construction_core/static/src/scss/insight_banner.scss',
         ],
         'web.assets_tests': [
