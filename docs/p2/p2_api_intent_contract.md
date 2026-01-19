@@ -20,6 +20,24 @@ Goal: Provide stable intent/API contract for P2 capabilities, aligned with full 
 }
 ```
 
+## Action Payload Standardization
+All execute_button returns MUST use the common envelope.
+
+Example:
+```
+{
+  "ok": true,
+  "data": {
+    "type": "ir.actions.act_window",
+    "action": { ... }
+  }
+}
+```
+
+Rules:
+- No raw action dicts at top-level.
+- UI consumes only envelope; action is nested in data.action.
+
 ## 3) Intent: P2 Task Readiness (api.data)
 Endpoint: `/api/insight?model=project.task&id=...&scene=task.entry`
 Returns:

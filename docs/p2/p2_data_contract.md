@@ -192,3 +192,21 @@ Scope: Define authoritative objects/fields/state constraints for P2 execution co
 Notes:
 - Fields labeled “derived” must be computed server-side only.
 - Errors should be stable codes to support UI guidance.
+
+## AuditRecord v1 (schema)
+Required fields:
+- event_code (e.g. P2-TASK-READY / settlement_done)
+- action (method/xmlid)
+- model, res_id
+- actor_uid, actor_login
+- ts (UTC ISO8601)
+- before (json, optional, diff only)
+- after (json, optional, diff only)
+- reason (required for override/unlock/revert)
+- trace_id (request correlation id)
+- company_id, project_id
+
+Write requirements:
+- MUST write audit for all execute_button transitions.
+- SHOULD write audit for manual overrides.
+- OPTIONAL for pure read intents.
