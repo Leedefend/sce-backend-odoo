@@ -115,3 +115,5 @@ access_sc_operating_metrics_project_read,sc.operating.metrics.project.read,model
 access_sc_operating_metrics_project_cost_read,sc.operating.metrics.project.cost.read,model_sc_operating_metrics_project,smart_construction_core.group_sc_cap_cost_read,1,0,0,0
 access_sc_operating_metrics_project_finance_read,sc.operating.metrics.project.finance.read,model_sc_operating_metrics_project,smart_construction_core.group_sc_cap_finance_read,1,0,0,0
 access_sc_partner_contact_manager,sc.partner.contact.manager,base.model_res_partner,smart_construction_core.group_sc_cap_contact_manager,1,1,1,1
+access_sc_audit_log_system,sc.audit.log.system,model_sc_audit_log,base.group_system,1,1,1,1
+access_sc_audit_log_admin,sc.audit.log.admin,model_sc_audit_log,smart_construction_core.group_sc_super_admin,1,1,1,1
