@@ -28,12 +28,16 @@ class BusinessInsight:
     scene: str
     stage: str
     summary: InsightSummary
+    initiation: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        data = {
             "object": self.object,
             "object_id": self.object_id,
             "scene": self.scene,
             "stage": self.stage,
             "summary": self.summary.to_dict(),
         }
+        if self.initiation is not None:
+            data["initiation"] = self.initiation
+        return data
