@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+export ROOT_DIR
+
+DB_NAME="${DB_NAME:-${DB:-sc_p2}}"
+
+# shellcheck source=../common/env.sh
+source "$ROOT_DIR/scripts/common/env.sh"
+# shellcheck source=../common/guard_prod.sh
+source "$ROOT_DIR/scripts/common/guard_prod.sh"
+# shellcheck source=../common/compose.sh
+source "$ROOT_DIR/scripts/common/compose.sh"
+# shellcheck source=../_lib/common.sh
+source "$ROOT_DIR/scripts/_lib/common.sh"
+
+guard_prod_forbid
+
+: "${DB_NAME:?DB_NAME is required}"
+
+ODOO_ADDONS_PATH="${ODOO_ADDONS_PATH:-/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux}"
+DB_PASSWORD="${DB_PASSWORD:-${DB_USER}}"
+
+status=0
+
+log "p2.validate: docker access"
+if docker info >/dev/null 2>&1; then
+  echo "OK docker access"
+else
+  echo "FAIL docker access"
+  status=1
+fi
+
+log "p2.validate: compose services"
+if ! compose_dev ps >/dev/null 2>&1; then
+  echo "FAIL compose ps"
+  status=1
+fi
+
+log "p2.validate: odoo/db status"
+ps_out="$(compose_dev ps odoo db || true)"
+echo "$ps_out"
+if ! echo "$ps_out" | grep -E -q "odoo"; then
+  echo "FAIL odoo service not found"
+  status=1
+fi
+if ! echo "$ps_out" | grep -E -q "db"; then
+  echo "FAIL db service not found"
+  status=1
+fi
+if ! echo "$ps_out" | grep -E -q "(Up|running)"; then
+  echo "FAIL services not running"
+  status=1
+fi
+
+if [[ "$status" -ne 0 ]]; then
+  echo "RESULT: FAIL"
+  exit 1
+fi
+
+log "p2.validate: odoo shell smoke"
+compose_dev exec -T \
+  -e PYTHONWARNINGS=ignore \
+  odoo odoo shell -d "$DB_NAME" \
+  --db_host=db --db_port=5432 --db_user="$DB_USER" --db_password="$DB_PASSWORD" \
+  --addons-path="$ODOO_ADDONS_PATH" \
+  --logfile=/dev/null --log-level=warn \
+  < "$ROOT_DIR/scripts/ops/p2_runtime_smoke.py"
+
+if [[ "$?" -eq 0 ]]; then
+  echo "RESULT: PASS"
+  exit 0
+fi
+
+echo "RESULT: FAIL"
+exit 1
