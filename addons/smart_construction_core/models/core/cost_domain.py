@@ -8,6 +8,8 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
+from ..support.state_guard import raise_guard
+
 
 class ProjectBudget(models.Model):
     """Budget header scoped to a single project/contract version."""
@@ -334,6 +336,12 @@ class ProjectCostLedger(models.Model):
 
     date = fields.Date("发生日期", index=True, default=fields.Date.context_today)
     period = fields.Char("期间(YYYY-MM)", index=True)
+    period_id = fields.Many2one(
+        "project.cost.period",
+        string="期间",
+        required=True,
+        index=True,
+    )
 
     qty = fields.Float("数量")
     uom_id = fields.Many2one("uom.uom", string="单位")
@@ -358,11 +366,56 @@ class ProjectCostLedger(models.Model):
         date_obj = fields.Date.to_date(date_value)
         return date_obj.strftime("%Y-%m") if date_obj else False
 
+    def _get_or_create_period(self, project_id, period_value):
+        Period = self.env["project.cost.period"].sudo()
+        period = Period.search(
+            [
+                ("project_id", "=", project_id),
+                ("period", "=", period_value),
+            ],
+            limit=1,
+        )
+        if not period:
+            period = Period.create(
+                {
+                    "project_id": project_id,
+                    "period": period_value,
+                }
+            )
+        return period
+
+    def _ensure_period_unlocked(self, period_rec, operation_label):
+        if period_rec and period_rec.locked:
+            raise_guard(
+                "PERIOD_LOCKED",
+                period_rec.display_name or "Period",
+                operation_label,
+                reasons=["period is locked"],
+            )
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if not vals.get("date"):
+                vals["date"] = fields.Date.context_today(self)
             if not vals.get("period") and vals.get("date"):
                 vals["period"] = self._compute_period_value(vals["date"])
+            if vals.get("period_id"):
+                period_rec = self.env["project.cost.period"].browse(vals["period_id"])
+                self._ensure_period_unlocked(period_rec, "Create")
+                if not vals.get("period") and period_rec.period:
+                    vals["period"] = period_rec.period
+            elif vals.get("project_id") and vals.get("period"):
+                period_rec = self._get_or_create_period(vals["project_id"], vals["period"])
+                self._ensure_period_unlocked(period_rec, "Create")
+                vals["period_id"] = period_rec.id
+            else:
+                raise_guard(
+                    "PERIOD_LOCKED",
+                    "Period",
+                    "Create",
+                    reasons=["period is required"],
+                )
         project_ids = {vals.get("project_id") for vals in vals_list if vals.get("project_id")}
         if project_ids:
             projects = self.env["project.project"].browse(project_ids)
@@ -373,10 +426,35 @@ class ProjectCostLedger(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
-        if "date" in vals and "period" not in vals:
-            vals = dict(vals)
-            vals["period"] = self._compute_period_value(vals.get("date"))
-        return super().write(vals)
+        Period = self.env["project.cost.period"]
+        for rec in self:
+            self._ensure_period_unlocked(rec.period_id, "Write")
+            rec_vals = vals
+            if "date" in rec_vals and "period" not in rec_vals:
+                rec_vals = dict(rec_vals)
+                rec_vals["period"] = self._compute_period_value(rec_vals.get("date"))
+            if "period_id" in rec_vals:
+                period_rec = Period.browse(rec_vals.get("period_id"))
+            else:
+                period_value = rec_vals.get("period") or rec.period
+                project_id = rec_vals.get("project_id") or rec.project_id.id
+                period_rec = (
+                    self._get_or_create_period(project_id, period_value)
+                    if project_id and period_value
+                    else False
+                )
+                if period_rec:
+                    rec_vals = dict(rec_vals)
+                    rec_vals.setdefault("period_id", period_rec.id)
+                    rec_vals.setdefault("period", period_rec.period)
+            self._ensure_period_unlocked(period_rec, "Write")
+            super(ProjectCostLedger, rec).write(rec_vals)
+        return True
+
+    def unlink(self):
+        for rec in self:
+            self._ensure_period_unlocked(rec.period_id, "Delete")
+        return super().unlink()
 
 
 class ProjectBudgetCostAlloc(models.Model):
