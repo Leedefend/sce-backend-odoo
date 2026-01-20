@@ -19,7 +19,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 ## Release List (Newest First)
 
 1) 2026-01-20 — Infra Stage Exec v0.3 (SOP squash rebuild)
-   - Tag: `infra-stage-exec-v0.3-squash1`
+   - Tag: `infra-stage-exec-v0.3-squash1` (canonical)
    - Type: infra
    - Status: released
    - Docs: `docs/ops/stage_execution_template_v1.0.md`, `docs/ops/stage_defs/p2.yml`, `docs/ops/stage_defs/p3-runtime-r1.yml`
@@ -27,7 +27,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - GitHub Release: (not published)
 
 2) 2026-01-20 — Infra Stage Exec v0.3
-   - Tag: `infra-stage-exec-v0.3`
+   - Tag: `infra-stage-exec-v0.3` (legacy, non-SOP; do not use)
    - Type: infra
    - Status: released
    - Docs: `docs/ops/stage_execution_template_v1.0.md`, `docs/ops/stage_defs/p2.yml`, `docs/ops/stage_defs/p3-runtime-r1.yml`
