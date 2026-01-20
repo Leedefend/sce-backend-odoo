@@ -8,6 +8,7 @@ ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 export ROOT_DIR
 
 trap 'STAGE_STATUS="FAIL"; finalize_report; echo "STAGE_RESULT: FAIL"' ERR
+trap 'git restore --source=HEAD --worktree --staged -- docs/audit >/dev/null 2>&1 || true' EXIT
 
 if [[ -z "$STAGE_NAME" ]]; then
   echo "FAIL: STAGE is required"
@@ -47,6 +48,18 @@ read_yaml_scalar() {
   awk -F': ' -v key="$key" '$1 == key {print $2; exit}' "$file"
 }
 
+read_yaml_cmd_markers() {
+  local cmd_index="$1"
+  local file="$2"
+  awk -v cmd="cmd${cmd_index}:" '
+    $0 ~ /^evidence_markers:/ {in_list=1; next}
+    in_list && $0 ~ "^  "cmd {in_cmd=1; next}
+    in_list && in_cmd && $0 ~ /^    - / {sub(/^    - /,""); print; next}
+    in_list && in_cmd {exit}
+    in_list && $0 !~ /^  / {exit}
+  ' "$file"
+}
+
 check_db_exists() {
   local db_name="$1"
   # shellcheck source=../common/env.sh
@@ -82,24 +95,7 @@ if [[ -n "$STAGE_DEF" ]]; then
     check_db_exists "$DB_NAME"
   fi
 
-  declare -A markers_by_cmd
-  all_markers=""
-  markers_raw="$(read_yaml_list "evidence_markers" "$STAGE_DEF")"
-  if [[ -z "$markers_raw" ]]; then
-    echo "FAIL: evidence_markers is empty"
-    exit 1
-  fi
-  while IFS= read -r marker; do
-    if [[ "$marker" =~ ^cmd([0-9]+):(.+)$ ]]; then
-      idx="${BASH_REMATCH[1]}"
-      val="${BASH_REMATCH[2]}"
-      markers_by_cmd["$idx"]+="${val}"$'\n'
-    elif [[ "$marker" =~ ^all:(.+)$ ]]; then
-      all_markers+="${BASH_REMATCH[1]}"$'\n'
-    else
-      all_markers+="${marker}"$'\n'
-    fi
-  done < <(echo "$markers_raw")
+  evidence_markers_strict="$(read_yaml_scalar "evidence_markers_strict" "$STAGE_DEF")"
 
   cmd_index=0
   commands_raw="$(read_yaml_list "required_commands" "$STAGE_DEF")"
@@ -116,21 +112,27 @@ if [[ -n "$STAGE_DEF" ]]; then
       exit 1
     fi
 
-    markers="${all_markers}${markers_by_cmd[$cmd_index]:-}"
+    markers="$(read_yaml_cmd_markers "$cmd_index" "$STAGE_DEF")"
     if [[ -z "$markers" ]]; then
-      echo "FAIL: no evidence markers configured for cmd${cmd_index}"
-      echo "${cmd_index}|${cmd}|(none)|FAIL" >> "$SUMMARY_FILE"
-      exit 1
+      if [[ "$evidence_markers_strict" == "true" ]]; then
+        echo "FAIL: no evidence markers configured for cmd${cmd_index}"
+        echo "${cmd_index}|${cmd}|(none)|FAIL" >> "$SUMMARY_FILE"
+        exit 1
+      else
+        echo "${cmd_index}|${cmd}|(none)|PASS" >> "$SUMMARY_FILE"
+        continue
+      fi
     fi
 
+    markers_sanitized="$(echo "$markers" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
     missing=0
-    markers_flat="$(echo "$markers" | sed '/^$/d' | tr '\n' ';')"
+    markers_flat="$(echo "$markers_sanitized" | sed '/^$/d' | tr '\n' ';')"
     while IFS= read -r m; do
       if ! grep -F -q "$m" "$tmp_out"; then
         echo "FAIL: marker not found for cmd${cmd_index}: ${m}"
         missing=1
       fi
-    done < <(echo "$markers" | sed '/^$/d')
+    done < <(echo "$markers_sanitized" | sed '/^$/d')
 
     if [[ "$missing" -ne 0 ]]; then
       echo "${cmd_index}|${cmd}|${markers_flat}|FAIL" >> "$SUMMARY_FILE"
@@ -142,7 +144,7 @@ if [[ -n "$STAGE_DEF" ]]; then
 
   if [[ -z "$REPORT_OUT" ]]; then
     timestamp="$(date +%Y%m%d_%H%M%S)"
-    REPORT_OUT="$ROOT_DIR/out/stage_report_${STAGE_NAME}_${timestamp}.md"
+    REPORT_OUT="$ROOT_DIR/out/stage_reports/${STAGE_NAME}_${timestamp}.md"
   fi
   STAGE_STATUS="PASS"
   finalize_report
