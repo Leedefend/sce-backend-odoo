@@ -1,11 +1,14 @@
 stage: p2
 db_must_exist: true
+evidence_markers_strict: true
 required_commands:
   - make ci.gate.tp08 DB=sc_demo
   - make p2.smoke DB=$DB
 evidence_markers:
-  - cmd1:[GATE][PASS]
-  - cmd2:RESULT: PASS
+  cmd1:
+    - "[GATE][PASS]"
+  cmd2:
+    - "RESULT: PASS"
 post_cleanup:
   - git restore docs/audit/action_groups_missing_db.csv
   - git restore docs/audit/action_list_all.csv
