@@ -1,0 +1,8 @@
+stage: p3-runtime-smoke
+db_must_exist: true
+evidence_markers_strict: true
+required_commands:
+  - make p3.smoke DB=$DB
+evidence_markers:
+  cmd1:
+    - RESULT: PASS
