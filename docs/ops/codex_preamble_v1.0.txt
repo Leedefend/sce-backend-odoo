@@ -1,0 +1,15 @@
+CODEX PREAMBLE v1.0
+
+Stage: <P0/P1/P2/P3>
+
+Hard prohibitions:
+- Do not edit on main branch.
+- Do not create new DB names; only sc_demo/sc_p2/sc_p3 unless explicitly allowed.
+- Do not commit docs/audit/*.csv (restore after gate runs).
+
+Required evidence:
+- branch + sha
+- git show --name-status -1
+- gate tails (tp08 / p2.smoke / p3.smoke / p3.audit as required)
+- at least one script output
+- git status clean
