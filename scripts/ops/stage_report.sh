@@ -38,3 +38,18 @@ status="$(git status --porcelain)"
     echo "$status"
   fi
 } > "${REPORT_OUT}"
+
+reports_dir="$(dirname "$REPORT_OUT")"
+if [[ "$(basename "$reports_dir")" == "stage_reports" ]]; then
+  readme="${reports_dir}/README.md"
+  report_file="$(basename "$REPORT_OUT")"
+  if [[ ! -f "$readme" ]]; then
+    {
+      echo "# Stage Reports"
+      echo
+      echo "Auto-generated index of stage execution reports."
+      echo
+    } > "$readme"
+  fi
+  echo "- ${report_file} | stage=${STAGE_NAME} | result=${STAGE_STATUS}" >> "$readme"
+fi
