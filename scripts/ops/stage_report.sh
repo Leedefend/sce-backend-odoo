@@ -85,7 +85,10 @@ data = {
 
 with open(report_json, "w", encoding="utf-8") as out:
     json.dump(data, out, ensure_ascii=True, indent=2)
+    out.write("\n")
 PY
+
+python3 -m json.tool "$REPORT_JSON" >/dev/null
 
 reports_dir="$(dirname "$REPORT_OUT")"
 if [[ "$(basename "$reports_dir")" == "stage_reports" ]]; then
