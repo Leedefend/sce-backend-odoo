@@ -349,7 +349,7 @@ mod.upgrade: guard.prod.danger check-compose-project check-compose-env
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix p2.smoke
+.PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix p2.smoke p3.smoke
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
 policy.apply.role_matrix: guard.prod.danger check-compose-project check-compose-env
@@ -363,6 +363,9 @@ smoke.role_matrix: check-compose-project check-compose-env
 
 p2.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/validate_p2_runtime.sh
+
+p3.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/validate_p3_runtime.sh
 
 .PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions
 demo.verify: guard.prod.forbid check-compose-project check-compose-env
