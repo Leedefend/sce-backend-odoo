@@ -18,7 +18,15 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 
 ## Release List (Newest First)
 
-1) 2026-01-20 — Infra Codex Policy v0.1
+1) 2026-01-20 — Infra Stage Exec v0.1
+   - Tag: `infra-stage-exec-v0.1`
+   - Type: infra
+   - Status: released
+   - Docs: `docs/ops/stage_execution_template_v1.0.md`, `docs/ops/codex_rules_v1.0.md`, `docs/ops/codex_preamble_v1.0.txt`
+   - Verify: `make stage.run STAGE=p2 DB=sc_p2`, `make stage.run STAGE=p3-runtime-r1 DB=sc_p3`
+   - GitHub Release: (not published)
+
+2) 2026-01-20 — Infra Codex Policy v0.1
    - Tag: `infra-codex-policy-v0.1`
    - Type: infra
    - Status: merged
@@ -26,7 +34,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make codex.preflight`, `make ci.gate.tp08 DB=sc_demo`
    - GitHub Release: (not published)
 
-2) 2026-01-20 — P3 Runtime R1 v0.1
+3) 2026-01-20 — P3 Runtime R1 v0.1
    - Tag: `p3-runtime-r1-v0.1`
    - Type: runtime
    - Status: active
@@ -34,7 +42,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make ci.gate.tp08 DB=sc_demo`, `make p3.smoke DB=sc_p3`, `make p3.audit DB=sc_p3`
    - GitHub Release: (not published)
 
-3) 2026-01-20 — P2 Runtime v0.1
+4) 2026-01-20 — P2 Runtime v0.1
    - Tag: `p2-runtime-v0.1`
    - Type: runtime
    - Status: active
@@ -42,7 +50,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make p2.smoke DB=sc_p2`
    - GitHub Release: (not published)
 
-4) 2026-01-19 — Gate P2 v0.1
+5) 2026-01-19 — Gate P2 v0.1
    - Tag: `p2-gate-v0.1`
    - Type: gate
    - Status: active
@@ -50,7 +58,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make ci.gate.tp08 DB=sc_demo`, `make p2.smoke DB=sc_p2`
    - GitHub Release: https://github.com/Leedefend/sce-backend-odoo/releases/tag/p2-gate-v0.1
 
-5) 2026-01-19 — P1 Initiation v0.1
+6) 2026-01-19 — P1 Initiation v0.1
    - Tag: `p1-initiation-v0.1`
    - Type: phase
    - Status: active
@@ -58,7 +66,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make ci.gate.tp08 DB=sc_demo`
    - GitHub Release: (not published)
 
-6) 2026-01-18 — v0.3.0-stable
+7) 2026-01-18 — v0.3.0-stable
    - Tag: `v0.3.0-stable`
    - Type: runtime
    - Status: stable
