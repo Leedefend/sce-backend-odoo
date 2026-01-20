@@ -1,0 +1,90 @@
+name: infra stage gate
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: infra-stage-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  infra_stage_gate:
+    runs-on: [self-hosted, huawei, ubuntu22]
+    timeout-minutes: 60
+
+    env:
+      COMPOSE_PROJECT_NAME: sc-ci-${{ github.run_id }}
+      DB_NAME: sc_demo
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker info
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Pull & build images
+        run: |
+          docker compose pull || true
+          docker compose build
+
+      - name: Start db/redis/odoo
+        run: |
+          docker compose up -d db redis odoo
+          docker compose ps
+
+      - name: Wait for PostgreSQL
+        run: |
+          ready=0
+          for i in {1..60}; do
+            if docker compose exec -T db pg_isready -U odoo -d postgres >/dev/null 2>&1; then
+              echo "Postgres is ready"
+              ready=1
+              break
+            fi
+            echo "waiting postgres... ($i/60)"
+            sleep 2
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Postgres not ready"
+            docker compose logs --no-color --tail=200 db
+            exit 1
+          fi
+
+      - name: Ensure databases exist
+        run: |
+          docker compose exec -T db createdb -U odoo -T template0 sc_demo || true
+          docker compose exec -T db createdb -U odoo -T template0 sc_p2 || true
+          docker compose exec -T db createdb -U odoo -T template0 sc_p3 || true
+
+      - name: Gate tp08
+        run: |
+          make ci.gate.tp08 DB=sc_demo
+
+      - name: Stage p2
+        run: |
+          make stage.run STAGE=p2 DB=sc_p2
+
+      - name: Stage p3-runtime-r1
+        run: |
+          make stage.run STAGE=p3-runtime-r1 DB=sc_p3
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --no-color --tail=200
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v --remove-orphans || true
