@@ -28,7 +28,7 @@
 .sc-login {
   width: var(--sc-login-card-w);
   max-width: calc(100vw - 48px);
-  margin: 0 auto;
+  margin: clamp(24px, 6vh, 80px) auto 0;
   padding: var(--sc-login-pad-y) var(--sc-login-pad-x) !important;
   border-radius: var(--sc-login-radius);
   background: rgba(255, 255, 255, 0.92);
@@ -63,6 +63,12 @@
   font-size: var(--sc-login-subtitle);
   line-height: 1.6;
   color: rgba(15, 23, 42, 0.62);
+}
+
+.sc-login-subtitle {
+  max-width: 320px;
+  margin: 0 auto;
+  opacity: 0.65;
 }
 
 .sc-login-env-badge {
@@ -112,7 +118,7 @@
 
 .sc-login input:focus {
   border-color: rgba(37, 99, 235, 0.55);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
   outline: none;
 }
 
@@ -148,10 +154,12 @@
 .sc-login-links a {
   color: rgba(37, 99, 235, 0.86);
   text-decoration: none;
+  opacity: 0.75;
 }
 
 .sc-login-links a:hover {
   text-decoration: underline;
+  opacity: 1;
 }
 
 .o_login a[href*='/web/reset_password'],
