@@ -12,17 +12,18 @@
             <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
                 <t t-set="sc_login_env"
                    t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
-                <div class="sc-login-branding">
-                    <div class="sc-login-logo">
-                        <img src="/smart_construction_core/static/png/system-icon-1.png" alt="Smart Construction"/>
-                    </div>
-                    <h2>智能工程项目管理系统</h2>
-                    <div class="sc-subtitle">工程全链路协同平台 · 项目 · 合同 · 结算 · 支付</div>
+                <div class="sc-login-brand">
+                    <img class="sc-login-brand-logo" src="/smart_construction_core/static/png/system-icon-1.png" alt="Smart Construction"/>
+                    <div class="sc-login-title">智能工程项目管理系统</div>
+                    <div class="sc-login-subtitle">工程全链路协同平台 · 项目 · 合同 · 结算 · 支付</div>
                 </div>
                 <t t-if="sc_login_env == 'demo'">
                     <div class="sc-login-env-badge is-demo">DEMO 环境</div>
                 </t>
             </t>
+        </xpath>
+        <xpath expr="//form" position="attributes">
+            <attribute name="class">oe_login_form sc-login-form</attribute>
         </xpath>
         <xpath expr="//form//div[.//input[@name='db']]" position="attributes">
             <attribute name="t-if">
@@ -62,8 +63,13 @@
             <t t-set="disable_footer" t-value="True"/>
             <t t-set="disable_database_manager" t-value="True"/>
         </xpath>
-        <xpath expr="//img[contains(@t-attf-src, '/web/binary/company_logo')]" position="replace">
-            <img class="img-fluid" src="/smart_construction_core/static/png/system-icon-1.png" alt="Smart Construction"/>
+        <xpath expr="//div[hasclass('text-center') and hasclass('border-bottom')]" position="replace"/>
+        <xpath expr="//div[@class='container py-5']" position="attributes">
+            <attribute name="class">container py-5 sc-login-wrap</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@class,'o_database_list')]" position="attributes">
+            <attribute name="t-attf-class">card border-0 mx-auto bg-100 {{login_card_classes}} o_database_list sc-login-card</attribute>
+            <attribute name="style">max-width: 420px;</attribute>
         </xpath>
         <xpath expr="." position="inside">
             <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
