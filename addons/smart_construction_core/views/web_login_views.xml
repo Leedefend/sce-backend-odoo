@@ -6,6 +6,9 @@
                 <t t-set="sc_login_env"
                    t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
                 <div class="sc-login-branding">
+                    <div class="sc-login-logo">
+                        <img src="/smart_construction_core/static/src/img/brand/logo.svg" alt="Smart Construction"/>
+                    </div>
                     <h2>智能工程项目管理系统</h2>
                     <div class="sc-subtitle">工程全链路协同平台 · 项目 · 合同 · 结算 · 支付</div>
                 </div>
@@ -49,9 +52,6 @@
     </template>
 
     <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
-        <xpath expr="//img[contains(@src, '/web/static/img/logo')]" position="replace">
-            <img class="img-fluid" src="/smart_construction_core/static/src/img/brand/logo.svg" alt="Smart Construction"/>
-        </xpath>
         <xpath expr="." position="inside">
             <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
                 <style>
@@ -63,6 +63,14 @@
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
+                    }
+                    .sc-login-logo{
+                        margin-bottom: 10px;
+                    }
+                    .sc-login-logo img{
+                        max-width: 220px;
+                        height: auto;
+                        display: block;
                     }
                     .sc-login-branding .sc-subtitle{
                         color: #666;
@@ -81,12 +89,15 @@
                     }
                     .sc-login-env-badge.is-demo{ background: #ecfdf5; color: #047857; }
                     .sc-login-env-badge.is-prod{ background: #fff7ed; color: #9a3412; }
+                    .o_login_footer,
+                    .o_login_logo,
+                    .o_login_image{
+                        display: none !important;
+                    }
                     .oe_login_buttons button[name='redirect']{ display: none !important; }
                 </style>
             </t>
         </xpath>
-        <xpath expr="//div[contains(@class,'o_login_footer')]" position="replace"/>
-        <xpath expr="//a[contains(@href,'odoo.com')]" position="replace"/>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
                 not (
