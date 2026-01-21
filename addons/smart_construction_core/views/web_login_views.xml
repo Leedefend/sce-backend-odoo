@@ -14,7 +14,7 @@
                    t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
                 <div class="sc-login-branding">
                     <div class="sc-login-logo">
-                        <img src="/smart_construction_core/static/src/img/brand/logo.svg" alt="Smart Construction"/>
+                        <img src="/smart_construction_core/static/png/system-icon-1.png" alt="Smart Construction"/>
                     </div>
                     <h2>智能工程项目管理系统</h2>
                     <div class="sc-subtitle">工程全链路协同平台 · 项目 · 合同 · 结算 · 支付</div>
@@ -53,7 +53,7 @@
             <title>智能工程项目管理系统</title>
         </xpath>
         <xpath expr="//head" position="inside">
-            <link rel="icon" type="image/svg+xml" href="/smart_construction_core/static/src/img/brand/favicon.svg"/>
+            <link rel="icon" type="image/png" href="/smart_construction_core/static/png/system-icon-1.png"/>
         </xpath>
     </template>
 
@@ -63,7 +63,7 @@
             <t t-set="disable_database_manager" t-value="True"/>
         </xpath>
         <xpath expr="//img[contains(@t-attf-src, '/web/binary/company_logo')]" position="replace">
-            <img class="img-fluid" src="/smart_construction_core/static/src/img/brand/logo.svg" alt="Smart Construction"/>
+            <img class="img-fluid" src="/smart_construction_core/static/png/system-icon-1.png" alt="Smart Construction"/>
         </xpath>
         <xpath expr="." position="inside">
             <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
