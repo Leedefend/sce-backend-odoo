@@ -97,6 +97,11 @@
   text-decoration: underline;
 }
 
+.o_login a[href*='/web/reset_password'],
+.o_login a[href*='/web/signup'] {
+  display: none !important;
+}
+
 /* hide default odoo logo zone if present */
 .o_login .o_login_logo,
 .o_login .o_login_footer,
