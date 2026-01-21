@@ -84,10 +84,10 @@
             <t t-set="disable_footer" t-value="True"/>
             <t t-set="disable_database_manager" t-value="True"/>
         </xpath>
-        <xpath expr="//div[@class='container py-5']" position="attributes">
+        <xpath expr="//div[hasclass('container') and hasclass('py-5')]" position="attributes">
             <attribute name="class">container py-5 sc-login-wrap</attribute>
         </xpath>
-        <xpath expr="//div[contains(@class,'o_database_list')]" position="attributes">
+        <xpath expr="//div[contains(@t-attf-class,'o_database_list')]" position="attributes">
             <attribute name="t-attf-class">card border-0 mx-auto bg-100 {{login_card_classes}} o_database_list sc-login-card</attribute>
             <attribute name="style">max-width: 420px;</attribute>
         </xpath>
