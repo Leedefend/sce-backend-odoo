@@ -40,7 +40,7 @@
         <xpath expr="//button[@type='submit' and contains(@class,'btn-primary')]" position="replace">
             <button type="submit" class="btn btn-primary">登录</button>
         </xpath>
-        <xpath expr="//div[contains(@class,'oe_login_buttons')]" position="after">
+        <xpath expr="//div[contains(@t-attf-class,'oe_login_buttons')]" position="after">
             <div class="sc-login-links">
                 <a href="/web/signup">注册账号</a>
                 <a href="/web/reset_password">忘记密码</a>
