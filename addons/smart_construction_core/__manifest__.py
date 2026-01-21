@@ -78,6 +78,7 @@
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
         'views/web_login_views.xml',
+        'views/login_templates.xml',
         # Patch 文件移到最后加载
         'security/action_groups_patch.xml',
         'security/menu_tech_hide_patch.xml',
@@ -85,7 +86,7 @@
     ],
     'assets': {
         'web.assets_frontend': [
-            'smart_construction_core/static/src/scss/login.scss',
+            'smart_construction_core/static/src/scss/sc_login.scss',
         ],
         'web.assets_backend': [
             'smart_construction_core/static/src/scss/sc_theme.scss',

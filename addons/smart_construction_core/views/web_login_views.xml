@@ -79,25 +79,4 @@
         </xpath>
     </template>
 
-    <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
-        <xpath expr="//t[@t-call='web.frontend_layout']" position="inside">
-            <t t-set="disable_footer" t-value="True"/>
-            <t t-set="disable_database_manager" t-value="True"/>
-        </xpath>
-        <xpath expr="//div[hasclass('container') and hasclass('py-5')]" position="attributes">
-            <attribute name="class">container py-5 sc-login-wrap</attribute>
-        </xpath>
-        <xpath expr="//div[contains(@t-attf-class,'o_database_list')]" position="attributes">
-            <attribute name="t-attf-class">card border-0 mx-auto bg-100 {{login_card_classes}} o_database_list sc-login-card</attribute>
-            <attribute name="style">max-width: 420px;</attribute>
-        </xpath>
-        <xpath expr="//a[@href='/web/database/manager']" position="attributes">
-            <attribute name="t-if">
-                not (
-                request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')
-                and request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod') in ('demo','prod')
-                )
-            </attribute>
-        </xpath>
-    </template>
 </odoo>
