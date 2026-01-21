@@ -84,7 +84,6 @@
             <t t-set="disable_footer" t-value="True"/>
             <t t-set="disable_database_manager" t-value="True"/>
         </xpath>
-        <xpath expr="//div[hasclass('text-center') and hasclass('border-bottom')]" position="replace"/>
         <xpath expr="//div[@class='container py-5']" position="attributes">
             <attribute name="class">container py-5 sc-login-wrap</attribute>
         </xpath>

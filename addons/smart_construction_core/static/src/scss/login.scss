@@ -104,6 +104,14 @@
   display: none !important;
 }
 
+.o_database_list > .card-body > .text-center.pb-3.border-bottom {
+  display: none !important;
+}
+
+.o_database_list img[alt='Logo'] {
+  display: none !important;
+}
+
 /* hide debug redirect button */
 .oe_login_buttons button[name='redirect'] {
   display: none !important;
