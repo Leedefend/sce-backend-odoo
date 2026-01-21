@@ -84,6 +84,9 @@
         'actions/project_native_action_overrides.xml',
     ],
     'assets': {
+        'web.assets_frontend': [
+            'smart_construction_core/static/src/scss/login.scss',
+        ],
         'web.assets_backend': [
             'smart_construction_core/static/src/scss/sc_theme.scss',
             'smart_construction_core/static/src/js/title_manager.js',

@@ -71,52 +71,6 @@
             <attribute name="t-attf-class">card border-0 mx-auto bg-100 {{login_card_classes}} o_database_list sc-login-card</attribute>
             <attribute name="style">max-width: 420px;</attribute>
         </xpath>
-        <xpath expr="." position="inside">
-            <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
-                <style>
-                    .sc-login-branding h2{
-                        margin: 0 0 8px 0;
-                        font-weight: 700;
-                        font-size: 22px;
-                        line-height: 1.2;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-                    .sc-login-logo{
-                        margin-bottom: 10px;
-                    }
-                    .sc-login-logo img{
-                        max-width: 220px;
-                        height: auto;
-                        display: block;
-                    }
-                    .sc-login-branding .sc-subtitle{
-                        color: #666;
-                        font-size: 13px;
-                        margin-bottom: 8px;
-                    }
-                    .sc-login-env-badge{
-                        display: inline-block;
-                        padding: 2px 8px;
-                        border-radius: 999px;
-                        font-size: 12px;
-                        font-weight: 600;
-                        background: #eef6ff;
-                        color: #1d4ed8;
-                        margin-bottom: 10px;
-                    }
-                    .sc-login-env-badge.is-demo{ background: #ecfdf5; color: #047857; }
-                    .sc-login-env-badge.is-prod{ background: #fff7ed; color: #9a3412; }
-                    .o_login_footer,
-                    .o_login_logo,
-                    .o_login_image{
-                        display: none !important;
-                    }
-                    .oe_login_buttons button[name='redirect']{ display: none !important; }
-                </style>
-            </t>
-        </xpath>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
                 not (
