@@ -17,8 +17,6 @@
                 </t>
             </t>
         </xpath>
-        <xpath expr="//a[contains(@href,'odoo.com')]" position="replace"/>
-
         <xpath expr="//form//div[.//input[@name='db']]" position="attributes">
             <attribute name="t-if">
                 not (
@@ -53,6 +51,9 @@
     </template>
 
     <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
+        <xpath expr="//img[contains(@t-attf-src, '/web/binary/company_logo')]" position="replace">
+            <img class="img-fluid" src="/smart_construction_core/static/src/img/brand/logo.svg" alt="Smart Construction"/>
+        </xpath>
         <xpath expr="." position="inside">
             <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
                 <style>
@@ -99,6 +100,7 @@
                 </style>
             </t>
         </xpath>
+        <xpath expr="//a[contains(@href,'odoo.com')]" position="replace"/>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
                 not (
