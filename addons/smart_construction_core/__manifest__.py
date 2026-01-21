@@ -11,6 +11,7 @@
         'stock',
         'account',
         'mail',
+        'auth_signup',
         'uom',
         'product',
         'web',
