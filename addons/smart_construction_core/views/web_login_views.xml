@@ -17,6 +17,7 @@
                 </t>
             </t>
         </xpath>
+        <xpath expr="//a[contains(@href,'odoo.com')]" position="replace"/>
 
         <xpath expr="//form//div[.//input[@name='db']]" position="attributes">
             <attribute name="t-if">
@@ -98,8 +99,6 @@
                 </style>
             </t>
         </xpath>
-        <xpath expr="//div[hasclass('o_login_footer')]" position="replace"/>
-        <xpath expr="//a[contains(@href,'odoo.com')]" position="replace"/>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
                 not (
