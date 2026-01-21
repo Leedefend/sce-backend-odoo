@@ -40,9 +40,6 @@
     </template>
 
     <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
-        <xpath expr="//head/title" position="replace">
-            <title>智能工程项目管理系统</title>
-        </xpath>
         <xpath expr="//head" position="inside">
             <link rel="icon" type="image/svg+xml" href="/smart_construction_core/static/src/img/brand/favicon.svg"/>
         </xpath>
