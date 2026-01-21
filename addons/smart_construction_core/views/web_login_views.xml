@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <template id="sc_web_login_disable_footer" inherit_id="web.login" priority="1000">
+        <xpath expr="//t[@t-call='web.login_layout']" position="before">
+            <t t-set="disable_footer" t-value="True"/>
+            <t t-set="disable_database_manager" t-value="True"/>
+        </xpath>
+    </template>
+
     <template id="sc_web_login_inherit" inherit_id="web.login">
         <xpath expr="//form" position="before">
             <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
