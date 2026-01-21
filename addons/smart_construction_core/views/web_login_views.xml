@@ -51,6 +51,10 @@
     </template>
 
     <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
+        <xpath expr="//t[@t-call='web.frontend_layout']" position="inside">
+            <t t-set="disable_footer" t-value="True"/>
+            <t t-set="disable_database_manager" t-value="True"/>
+        </xpath>
         <xpath expr="//img[contains(@t-attf-src, '/web/binary/company_logo')]" position="replace">
             <img class="img-fluid" src="/smart_construction_core/static/src/img/brand/logo.svg" alt="Smart Construction"/>
         </xpath>
@@ -100,7 +104,6 @@
                 </style>
             </t>
         </xpath>
-        <xpath expr="//a[contains(@href,'odoo.com')]" position="replace"/>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
                 not (
