@@ -40,6 +40,9 @@
     </template>
 
     <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
+        <xpath expr="//title" position="replace">
+            <title>智能工程项目管理系统</title>
+        </xpath>
         <xpath expr="//head/title" position="replace">
             <title>智能工程项目管理系统</title>
         </xpath>
@@ -83,6 +86,7 @@
             </t>
         </xpath>
         <xpath expr="//div[contains(@class,'o_login_footer')]" position="replace"/>
+        <xpath expr="//a[contains(@href,'odoo.com')]" position="replace"/>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
                 not (
