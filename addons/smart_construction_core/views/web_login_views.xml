@@ -25,6 +25,21 @@
         <xpath expr="//form" position="attributes">
             <attribute name="class">oe_login_form sc-login-form</attribute>
         </xpath>
+        <xpath expr="//label[@for='login']" position="replace">
+            <label for="login" class="form-label">账号</label>
+        </xpath>
+        <xpath expr="//label[@for='password']" position="replace">
+            <label for="password" class="form-label">密码</label>
+        </xpath>
+        <xpath expr="//input[@name='login']" position="attributes">
+            <attribute name="placeholder">手机号/邮箱/用户名</attribute>
+        </xpath>
+        <xpath expr="//input[@name='password']" position="attributes">
+            <attribute name="placeholder">密码</attribute>
+        </xpath>
+        <xpath expr="//button[@type='submit' and contains(@class,'btn-primary')]" position="replace">
+            <button type="submit" class="btn btn-primary">登录</button>
+        </xpath>
         <xpath expr="//form//div[.//input[@name='db']]" position="attributes">
             <attribute name="t-if">
                 not (
