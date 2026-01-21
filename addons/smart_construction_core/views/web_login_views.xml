@@ -73,6 +73,7 @@
                 </style>
             </t>
         </xpath>
+        <xpath expr="//div[contains(@class,'o_login_footer')]" position="replace"/>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
                 not (
