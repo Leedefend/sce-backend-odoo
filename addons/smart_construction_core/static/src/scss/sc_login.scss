@@ -1,5 +1,16 @@
 /* Login page facelift (Smart Construction) */
 .sc-login-page {
+  --sc-login-card-w: clamp(360px, 28vw, 520px);
+  --sc-login-pad-x: clamp(22px, 2.2vw, 36px);
+  --sc-login-pad-y: clamp(22px, 2.6vw, 40px);
+  --sc-login-logo: clamp(72px, 6vw, 104px);
+  --sc-login-title: clamp(18px, 1.6vw, 24px);
+  --sc-login-subtitle: clamp(12px, 1.05vw, 14px);
+  --sc-login-label: 12px;
+  --sc-login-input-h: clamp(42px, 3.2vw, 48px);
+  --sc-login-btn-h: clamp(42px, 3.2vw, 48px);
+  --sc-login-radius: clamp(14px, 1.3vw, 20px);
+
   background: radial-gradient(1200px 600px at 20% 10%, rgba(37, 99, 235, 0.14), transparent 60%),
               radial-gradient(900px 500px at 80% 20%, rgba(16, 185, 129, 0.10), transparent 55%),
               #f6f7fb;
@@ -15,10 +26,11 @@
 }
 
 .sc-login {
-  max-width: 420px;
+  width: var(--sc-login-card-w);
+  max-width: calc(100vw - 48px);
   margin: 0 auto;
-  padding: 32px 28px !important;
-  border-radius: 18px;
+  padding: var(--sc-login-pad-y) var(--sc-login-pad-x) !important;
+  border-radius: var(--sc-login-radius);
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(10px);
   box-shadow: 0 18px 60px rgba(15, 23, 42, 0.12);
@@ -27,19 +39,19 @@
 
 .sc-login-brand {
   text-align: center;
-  margin-bottom: 18px;
+  margin-bottom: clamp(14px, 1.2vw, 18px);
 }
 
 .sc-login-brand-logo {
-  width: 88px;
-  height: 88px;
+  width: var(--sc-login-logo);
+  height: var(--sc-login-logo);
   object-fit: contain;
-  border-radius: 18px;
+  border-radius: calc(var(--sc-login-radius) * 0.9);
   margin-bottom: 10px;
 }
 
 .sc-login-title {
-  font-size: 20px;
+  font-size: var(--sc-login-title);
   font-weight: 800;
   letter-spacing: 0.2px;
   margin: 0 0 6px 0;
@@ -48,7 +60,7 @@
 
 .sc-login-subtitle {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--sc-login-subtitle);
   line-height: 1.6;
   color: rgba(15, 23, 42, 0.62);
 }
@@ -76,16 +88,22 @@
 
 .sc-login label,
 .sc-login .form-label {
-  font-size: 12px;
+  font-size: var(--sc-login-label);
   color: rgba(15, 23, 42, 0.70);
   margin-bottom: 6px;
+}
+
+.sc-login .form-group,
+.sc-login .mb-3 {
+  margin-bottom: clamp(12px, 1.2vw, 16px) !important;
 }
 
 .sc-login input[type="text"],
 .sc-login input[type="password"],
 .sc-login input.form-control {
-  height: 44px;
-  border-radius: 12px;
+  height: var(--sc-login-input-h);
+  border-radius: calc(var(--sc-login-radius) * 0.75);
+  padding: 0 12px;
   border: 1px solid rgba(15, 23, 42, 0.14);
   background: rgba(248, 250, 252, 0.9);
   box-shadow: none;
@@ -100,11 +118,12 @@
 
 .sc-login button[type="submit"],
 .sc-login .btn-primary {
-  height: 44px;
-  border-radius: 12px;
+  height: var(--sc-login-btn-h);
+  border-radius: calc(var(--sc-login-radius) * 0.75);
   font-weight: 700;
   letter-spacing: 0.4px;
   border: 0;
+  width: 100%;
   background: linear-gradient(135deg, #1d4ed8, #2563eb);
   box-shadow: 0 10px 26px rgba(37, 99, 235, 0.28);
   transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
@@ -122,7 +141,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: clamp(12px, 1.2vw, 16px);
   font-size: 12px;
 }
 
@@ -150,4 +169,10 @@
 
 .oe_login_buttons button[name='redirect'] {
   display: none !important;
+}
+
+@media (min-width: 1400px) {
+  .sc-login-page {
+    --sc-login-card-w: clamp(420px, 24vw, 560px);
+  }
 }
