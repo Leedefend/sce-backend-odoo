@@ -12,10 +12,10 @@
             <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
                 <t t-set="sc_login_env"
                    t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
-                <div class="sc-login-brand">
+                <div class="sc-login-brand sc-auth-header">
                     <img class="sc-login-brand-logo" src="/smart_construction_core/static/png/system-icon-1.png" alt="Smart Construction"/>
                     <div class="sc-login-title">智能工程项目管理系统</div>
-                    <div class="sc-login-subtitle">工程全链路协同平台 · 项目 · 合同 · 结算 · 支付</div>
+                    <div class="sc-login-subtitle">为工程项目提供结构化、可演进的管理能力</div>
                 </div>
                 <t t-if="sc_login_env == 'demo'">
                     <div class="sc-login-env-badge is-demo">DEMO 环境</div>
@@ -23,7 +23,7 @@
             </t>
         </xpath>
         <xpath expr="//form" position="attributes">
-            <attribute name="class">oe_login_form sc-login-form</attribute>
+            <attribute name="class">oe_login_form sc-login-form sc-auth-body</attribute>
         </xpath>
         <xpath expr="//label[@for='login']" position="replace">
             <label for="login" class="form-label">账号</label>
@@ -40,10 +40,13 @@
         <xpath expr="//button[@type='submit' and contains(@class,'btn-primary')]" position="replace">
             <button type="submit" class="btn btn-primary">登录</button>
         </xpath>
-        <xpath expr="//div[contains(@t-attf-class,'oe_login_buttons')]" position="after">
-            <div class="sc-login-links">
-                <a href="/web/signup">注册账号</a>
-                <a href="/web/reset_password">忘记密码</a>
+        <xpath expr="//form" position="after">
+            <div class="sc-login__footer sc-auth-footer">
+                <div class="sc-login-links">
+                    <a href="/web/signup">注册账号</a>
+                    <a href="/web/reset_password">忘记密码</a>
+                </div>
+                <div class="sc-login-author">开发者 · 数字禅房</div>
             </div>
         </xpath>
         <xpath expr="//form//div[.//input[@name='db']]" position="attributes">
@@ -76,6 +79,7 @@
         </xpath>
         <xpath expr="//head" position="inside">
             <link rel="icon" type="image/png" href="/smart_construction_core/static/png/system-icon-1.png"/>
+            <link rel="shortcut icon" type="image/png" href="/smart_construction_core/static/png/system-icon-1.png"/>
         </xpath>
     </template>
 

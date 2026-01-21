@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Signup/Reset labels in Chinese -->
+    <template id="sc_auth_signup_fields_cn" inherit_id="auth_signup.fields">
+        <xpath expr="//label[@for='name']" position="replace">
+            <label for="name" class="form-label">姓名</label>
+        </xpath>
+        <xpath expr="//input[@name='name']" position="attributes">
+            <attribute name="placeholder">姓名</attribute>
+        </xpath>
+
+        <xpath expr="//label[@for='login']" position="replace">
+            <label for="login" class="form-label">邮箱</label>
+        </xpath>
+        <xpath expr="//input[@name='login']" position="attributes">
+            <attribute name="placeholder">邮箱</attribute>
+        </xpath>
+
+        <xpath expr="//label[@for='password']" position="replace">
+            <label for="password" class="form-label">密码</label>
+        </xpath>
+        <xpath expr="//input[@name='password']" position="attributes">
+            <attribute name="placeholder">密码</attribute>
+        </xpath>
+
+        <xpath expr="//label[@for='confirm_password']" position="replace">
+            <label for="confirm_password" class="form-label">确认密码</label>
+        </xpath>
+        <xpath expr="//input[@name='confirm_password']" position="attributes">
+            <attribute name="placeholder">确认密码</attribute>
+        </xpath>
+    </template>
+
+    <template id="sc_auth_signup_buttons_cn" inherit_id="auth_signup.signup">
+        <xpath expr="//form//a[contains(@href, '/web/login') or contains(@t-att-href, '/web/login') or contains(@t-attf-href, '/web/login')]" position="replace" optional="1">
+        </xpath>
+        <xpath expr="//form" position="attributes">
+            <attribute name="class" add=" sc-signup sc-auth-body"/>
+        </xpath>
+        <xpath expr="//form" position="before">
+            <div class="sc-login-brand sc-auth-header">
+                <img class="sc-login-brand-logo" src="/smart_construction_core/static/png/system-icon-1.png" alt="系统图标"/>
+                <h1 class="sc-login-title">智能工程项目管理系统</h1>
+                <p class="sc-login-subtitle">为工程项目提供结构化、可演进的管理能力</p>
+            </div>
+        </xpath>
+        <xpath expr="//button[@type='submit']" position="replace">
+            <button type="submit" class="btn btn-primary w-100">注册并进入系统</button>
+        </xpath>
+        <xpath expr="//form" position="after">
+            <div class="sc-login__footer sc-auth-footer">
+                <div class="sc-login-links">
+                    <a href="/web/login">已有账号？返回登录</a>
+                </div>
+                <div class="sc-login-author">开发者 · 数字禅房</div>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="sc_auth_signup_reset_cn" inherit_id="auth_signup.reset_password">
+        <xpath expr="//label[@for='login']" position="replace">
+            <label for="login" class="form-label">邮箱</label>
+        </xpath>
+        <xpath expr="//input[@name='login']" position="attributes">
+            <attribute name="placeholder">邮箱</attribute>
+        </xpath>
+        <xpath expr="//button[@type='submit']" position="replace">
+            <button type="submit" class="btn btn-primary w-100">重置密码</button>
+        </xpath>
+    </template>
+</odoo>

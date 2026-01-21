@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <template id="sc_login_layout_facelift" inherit_id="web.login_layout" name="SC Login - facelift">
-        <xpath expr="//t[@t-set='body_classname']" position="attributes">
-            <attribute name="t-value">'bg-100 sc-login-page'</attribute>
+        <xpath expr="//t[@t-set='body_classname']" position="after">
+            <t t-set="body_classname" t-value="(body_classname or '') + ' sc-login-page sc-auth-page'"/>
         </xpath>
         <xpath expr="//div[hasclass('container') and hasclass('py-5')]" position="attributes">
-            <attribute name="class">container py-5 sc-login-wrap</attribute>
+            <attribute name="class" add=" sc-login-wrap sc-auth-wrap"/>
         </xpath>
         <xpath expr="//div[contains(@t-attf-class,'o_database_list')]" position="attributes">
-            <attribute name="t-attf-class">card border-0 mx-auto bg-100 {{login_card_classes}} o_database_list sc-login sc-login-card</attribute>
-            <attribute name="style">max-width: 420px;</attribute>
+            <attribute name="t-attf-class">card border-0 mx-auto bg-100 {{login_card_classes}} o_database_list sc-login sc-login-card sc-auth-card</attribute>
         </xpath>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">
