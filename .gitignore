@@ -78,3 +78,7 @@ tmp/
 out/
 # generated audit outputs
 docs/audit/*.csv
+
+# local image artifacts
+*.tar.gz
+*.tar.gz.sha256
