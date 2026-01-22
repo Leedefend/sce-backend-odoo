@@ -14,7 +14,7 @@ services:
       - db_data:/var/lib/postgresql/data
       - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${DB_NAME:-sc_odoo} || exit 1"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-odoo} -d ${DB_NAME:-sc_odoo} || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,7 +29,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -41,7 +41,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: odoo17-odoo:latest
+    image: ${ODOO_IMAGE:-odoo17-odoo:latest}
     restart: unless-stopped
 
     depends_on:
@@ -78,9 +78,9 @@ services:
     ports:
       - "${ODOO_PORT:-8069}:8069"
 
-    entrypoint: ["/bin/sh", "/usr/local/bin/odoo-entrypoint.sh"]
+    entrypoint: [ "/bin/sh", "/usr/local/bin/odoo-entrypoint.sh" ]
     healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8069/web/login', timeout=8)\""]
+      test: [ "CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8069/web/login', timeout=8)\"" ]
       interval: 10s
       timeout: 10s
       retries: 30
@@ -100,7 +100,7 @@ services:
     ports:
       - "${NGINX_PORT:-18080}:80"
     healthcheck:
-      test: ["CMD-SHELL", "nginx -t || exit 1"]
+      test: [ "CMD-SHELL", "nginx -t || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
