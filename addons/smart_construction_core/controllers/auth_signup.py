@@ -51,12 +51,35 @@ class ScAuthSignup(AuthSignupHome):
         if mode in ("off", "invite"):
             raise NotFound()
 
-    def _assert_rate_limit(self):
-        now = int(time.time())
-        last = request.session.get("sc_signup_last_ts")
-        if last and now - int(last) < 60:
-            raise Forbidden("Too many signup attempts")
-        request.session["sc_signup_last_ts"] = now
+    def _get_rate_limit_config(self):
+        icp = request.env["ir.config_parameter"].sudo()
+        window_sec = int(icp.get_param("sc.signup.ratelimit.window_sec", "60") or 60)
+        max_per_ip = int(icp.get_param("sc.signup.ratelimit.max_per_ip", "3") or 3)
+        max_per_email = int(icp.get_param("sc.signup.ratelimit.max_per_email", "2") or 2)
+        return window_sec, max_per_ip, max_per_email
+
+    def _get_client_ip(self):
+        req = request.httprequest
+        remote_addr = (req.remote_addr or "").strip()
+        xff = (req.headers.get("X-Forwarded-For") or "").strip()
+        if remote_addr in ("127.0.0.1", "::1") and xff:
+            return xff.split(",")[0].strip()
+        return remote_addr or "unknown"
+
+    def _assert_rate_limit(self, login=None):
+        window_sec, max_per_ip, max_per_email = self._get_rate_limit_config()
+        if window_sec <= 0:
+            return
+        Throttle = request.env["sc.signup.throttle"].sudo()
+        ip = self._get_client_ip()
+        if max_per_ip > 0:
+            ok = Throttle.check_and_bump(f"ip:{ip}", window_sec, max_per_ip)
+            if not ok:
+                raise Forbidden(_("操作过于频繁，请稍后再试"))
+        if login and max_per_email > 0:
+            ok = Throttle.check_and_bump(f"email:{login.lower()}", window_sec, max_per_email)
+            if not ok:
+                raise Forbidden(_("操作过于频繁，请稍后再试"))
 
     def _assert_password_strength(self, password):
         if not password or len(password) < 8:
@@ -178,10 +201,9 @@ class ScAuthSignup(AuthSignupHome):
     def do_signup(self, qcontext):
         token = qcontext.get("token")
         self._assert_open_allowed(token=token)
-        self._assert_rate_limit()
-
         password = qcontext.get("password")
         login = qcontext.get("login") or qcontext.get("email")
+        self._assert_rate_limit(login)
         self._assert_password_strength(password)
         self._assert_email_allowed(login)
 
