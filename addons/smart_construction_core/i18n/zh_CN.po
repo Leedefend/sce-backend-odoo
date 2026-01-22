@@ -58,3 +58,63 @@ msgstr "操作过于频繁，请稍后再试"
 #. module: smart_construction_core
 msgid "激活链接已失效或已使用，请重新发送激活邮件。"
 msgstr "激活链接已失效或已使用，请重新发送激活邮件。"
+
+#. module: smart_construction_core
+msgid "Password reset instructions sent to your email"
+msgstr "重置密码邮件已发送，请查收邮箱"
+
+#. module: smart_construction_core
+msgid "Password reset"
+msgstr "密码重置"
+
+#. module: smart_construction_core
+msgid "Reset Password"
+msgstr "重置密码"
+
+#. module: smart_construction_core
+msgid "Back to Login"
+msgstr "返回登录"
+
+#. module: smart_construction_core
+msgid "Sign up"
+msgstr "注册"
+
+#. module: smart_construction_core
+msgid "Already have an account?"
+msgstr "已有账号？返回登录"
+
+#. module: smart_construction_core
+msgid "Your Email"
+msgstr "邮箱"
+
+#. module: smart_construction_core
+msgid "Invalid signup token"
+msgstr "激活链接已失效或已使用"
+
+#. module: smart_construction_core
+msgid "No account found for this login"
+msgstr "未找到该账号"
+
+#. module: smart_construction_core
+msgid "Multiple accounts found for this login"
+msgstr "该账号存在多个记录"
+
+#. module: smart_construction_core
+msgid "Cannot send email: user %s has no email address."
+msgstr "无法发送邮件：用户 %s 未配置邮箱"
+
+#. module: smart_construction_core
+msgid "You cannot perform this action on an archived user."
+msgstr "已归档用户无法执行此操作"
+
+#. module: smart_construction_core
+msgid "There was an error when trying to deliver your Email, please check your configuration"
+msgstr "发送邮件失败，请检查邮件配置"
+
+#. module: smart_construction_core
+msgid "Could not contact the mail server, please check your outgoing email server configuration"
+msgstr "无法连接邮件服务器，请检查发件服务器配置"
+
+#. module: smart_construction_core
+msgid "Sign in"
+msgstr "登录"

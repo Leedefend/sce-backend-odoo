@@ -65,6 +65,9 @@
     </template>
 
     <template id="sc_auth_signup_reset_cn" inherit_id="auth_signup.reset_password">
+        <xpath expr="//p[hasclass('alert') and hasclass('alert-success') and @t-if='message']" position="replace">
+            <p class="alert alert-success" role="status">重置密码邮件已发送，请查收邮箱。</p>
+        </xpath>
         <xpath expr="//div[hasclass('oe_login_form')]" position="before" optional="1">
             <t t-if="message">
                 <div class="sc-login-brand sc-auth-header">
