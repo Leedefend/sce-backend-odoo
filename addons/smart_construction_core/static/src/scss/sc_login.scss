@@ -162,6 +162,9 @@
 .o_login a[href*='/web/signup'] {
   display: none !important;
 }
+.o_login .justify-content-between.mt-2.d-flex.small {
+  display: none !important;
+}
 
 .o_login .o_login_footer,
 .sc-login .text-muted,

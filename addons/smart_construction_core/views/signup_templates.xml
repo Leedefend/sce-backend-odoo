@@ -49,6 +49,16 @@
         <xpath expr="//button[@type='submit']" position="replace">
             <button type="submit" class="btn btn-primary w-100">注册并进入系统</button>
         </xpath>
+        <xpath expr="//p[hasclass('alert') and hasclass('alert-danger') and @t-if='error']" position="replace">
+            <p class="alert alert-danger" t-if="error" role="alert">
+                <t t-set="err" t-value="error"/>
+                <t t-if="err == 'Another user is already registered using this email address.'">该邮箱已注册，请直接登录或找回密码。</t>
+                <t t-elif="err == 'Invalid signup token'">激活链接已失效或已使用。</t>
+                <t t-elif="err == 'No account found for this login'">未找到该账号。</t>
+                <t t-elif="err == 'Multiple accounts found for this login'">该账号存在多个记录。</t>
+                <t t-else=""><t t-esc="err"/></t>
+            </p>
+        </xpath>
         <xpath expr="//p[@t-if='error']" position="after" optional="1">
             <p class="alert alert-warning" t-if="warning" role="alert">
                 <t t-esc="warning"/>
@@ -65,8 +75,10 @@
     </template>
 
     <template id="sc_auth_signup_reset_cn" inherit_id="auth_signup.reset_password">
-        <xpath expr="//p[hasclass('alert') and hasclass('alert-success') and @t-if='message']" position="replace">
-            <p class="alert alert-success" role="status">重置密码邮件已发送，请查收邮箱。</p>
+        <xpath expr="//div[@t-if='message' and hasclass('oe_login_form')]" position="replace">
+            <div class="oe_login_form clearfix">
+                <p class="alert alert-success" role="status">重置密码邮件已发送，请查收邮箱。</p>
+            </div>
         </xpath>
         <xpath expr="//div[hasclass('oe_login_form')]" position="before" optional="1">
             <t t-if="message">
@@ -92,8 +104,6 @@
         <xpath expr="//form" position="attributes">
             <attribute name="class">oe_reset_password_form sc-auth-body sc-login-form</attribute>
         </xpath>
-        <xpath expr="//div[hasclass('oe_login_form')]//a[contains(@href, '/web/login')]" position="replace" optional="1"/>
-        <xpath expr="//div[hasclass('oe_login_buttons')]//a[contains(@href, '/web/login')]" position="replace" optional="1"/>
         <xpath expr="//label[@for='login']" position="replace">
             <label for="login" class="form-label">邮箱</label>
         </xpath>
@@ -102,6 +112,15 @@
         </xpath>
         <xpath expr="//button[@type='submit']" position="replace">
             <button type="submit" class="btn btn-primary w-100">重置密码</button>
+        </xpath>
+        <xpath expr="//p[hasclass('alert') and hasclass('alert-danger') and @t-if='error']" position="replace">
+            <p class="alert alert-danger" t-if="error" role="alert">
+                <t t-set="err" t-value="error"/>
+                <t t-if="err == 'No account found for this login'">未找到该账号。</t>
+                <t t-elif="err == 'Multiple accounts found for this login'">该账号存在多个记录。</t>
+                <t t-elif="err == 'Invalid signup token'">激活链接已失效或已使用。</t>
+                <t t-else=""><t t-esc="err"/></t>
+            </p>
         </xpath>
         <xpath expr="//form" position="after">
             <t t-if="not message">
