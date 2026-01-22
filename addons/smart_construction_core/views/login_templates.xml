@@ -5,10 +5,13 @@
             <t t-set="body_classname" t-value="(body_classname or '') + ' sc-login-page sc-auth-page'"/>
         </xpath>
         <xpath expr="//div[hasclass('container') and hasclass('py-5')]" position="attributes">
-            <attribute name="class" add=" sc-login-wrap sc-auth-wrap"/>
+            <attribute name="class">container py-5 sc-login-wrap sc-auth-wrap</attribute>
         </xpath>
         <xpath expr="//div[contains(@t-attf-class,'o_database_list')]" position="attributes">
             <attribute name="t-attf-class">card border-0 mx-auto bg-100 {{login_card_classes}} o_database_list sc-login sc-login-card sc-auth-card</attribute>
+        </xpath>
+        <xpath expr="//div[contains(@t-attf-class,'o_database_list')]" position="attributes">
+            <attribute name="style"></attribute>
         </xpath>
         <xpath expr="//a[@href='/web/database/manager']" position="attributes">
             <attribute name="t-if">

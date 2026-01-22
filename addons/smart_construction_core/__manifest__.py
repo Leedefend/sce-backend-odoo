@@ -87,6 +87,10 @@
         'actions/project_native_action_overrides.xml',
     ],
     'assets': {
+        'web.assets_frontend_minimal': [
+            'smart_construction_core/static/src/js/auth_favicon.js',
+            'smart_construction_core/static/src/scss/sc_login.scss',
+        ],
         'web.assets_frontend': [
             'smart_construction_core/static/src/js/auth_favicon.js',
             'smart_construction_core/static/src/scss/sc_login.scss',

@@ -21,6 +21,7 @@
         </xpath>
         <xpath expr="//input[@name='password']" position="attributes">
             <attribute name="placeholder">密码</attribute>
+            <attribute name="autocomplete">new-password</attribute>
         </xpath>
 
         <xpath expr="//label[@for='confirm_password']" position="replace">
@@ -28,6 +29,7 @@
         </xpath>
         <xpath expr="//input[@name='confirm_password']" position="attributes">
             <attribute name="placeholder">确认密码</attribute>
+            <attribute name="autocomplete">new-password</attribute>
         </xpath>
     </template>
 
@@ -63,6 +65,32 @@
     </template>
 
     <template id="sc_auth_signup_reset_cn" inherit_id="auth_signup.reset_password">
+        <xpath expr="//div[hasclass('oe_login_form')]" position="before" optional="1">
+            <t t-if="message">
+                <div class="sc-login-brand sc-auth-header">
+                    <img class="sc-login-brand-logo" src="/smart_construction_core/static/png/system-icon-1.png" alt="系统图标"/>
+                    <h1 class="sc-login-title">智能工程项目管理系统</h1>
+                    <p class="sc-login-subtitle">为工程项目提供结构化、可演进的管理能力</p>
+                </div>
+            </t>
+        </xpath>
+        <xpath expr="//form" position="before">
+            <t t-if="not message">
+                <div class="sc-login-brand sc-auth-header">
+                    <img class="sc-login-brand-logo" src="/smart_construction_core/static/png/system-icon-1.png" alt="系统图标"/>
+                    <h1 class="sc-login-title">智能工程项目管理系统</h1>
+                    <p class="sc-login-subtitle">为工程项目提供结构化、可演进的管理能力</p>
+                </div>
+            </t>
+        </xpath>
+        <xpath expr="//div[hasclass('oe_login_form')]" position="attributes" optional="1">
+            <attribute name="class" add=" sc-auth-body"/>
+        </xpath>
+        <xpath expr="//form" position="attributes">
+            <attribute name="class">oe_reset_password_form sc-auth-body sc-login-form</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('oe_login_form')]//a[contains(@href, '/web/login')]" position="replace" optional="1"/>
+        <xpath expr="//div[hasclass('oe_login_buttons')]//a[contains(@href, '/web/login')]" position="replace" optional="1"/>
         <xpath expr="//label[@for='login']" position="replace">
             <label for="login" class="form-label">邮箱</label>
         </xpath>
@@ -71,6 +99,26 @@
         </xpath>
         <xpath expr="//button[@type='submit']" position="replace">
             <button type="submit" class="btn btn-primary w-100">重置密码</button>
+        </xpath>
+        <xpath expr="//form" position="after">
+            <t t-if="not message">
+                <div class="sc-login__footer sc-auth-footer">
+                    <div class="sc-login-links">
+                        <a href="/web/login">返回登录</a>
+                    </div>
+                    <div class="sc-login-author">开发者 · 数字禅房</div>
+                </div>
+            </t>
+        </xpath>
+        <xpath expr="//div[hasclass('oe_login_form')]" position="after" optional="1">
+            <t t-if="message">
+                <div class="sc-login__footer sc-auth-footer">
+                    <div class="sc-login-links">
+                        <a href="/web/login">返回登录</a>
+                    </div>
+                    <div class="sc-login-author">开发者 · 数字禅房</div>
+                </div>
+            </t>
         </xpath>
     </template>
 </odoo>

@@ -73,11 +73,11 @@
 .sc-auth-body input[type="text"],
 .sc-auth-body input[type="password"],
 .sc-auth-body input.form-control {
-  height: 46px;
-  border-radius: 12px;
+  height: 46px !important;
+  border-radius: 12px !important;
   padding: 0 14px;
-  border: 1px solid rgba(15, 23, 42, 0.14);
-  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  background: rgba(248, 250, 252, 0.9) !important;
   box-shadow: none;
   transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
@@ -91,12 +91,43 @@
 .sc-auth-body button[type="submit"],
 .sc-auth-body .btn-primary {
   margin-top: 10px;
-  height: 48px;
-  border-radius: 14px;
+  height: 48px !important;
+  border-radius: 14px !important;
   font-weight: 700;
-  background: linear-gradient(135deg, #1d4ed8, #2563eb);
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.28);
-  border: 0;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.28) !important;
+  border: 0 !important;
+  width: 100%;
+}
+
+/* Reset password page fallback (when form lacks sc-auth-body) */
+.oe_reset_password_form input[type="text"],
+.oe_reset_password_form input[type="password"],
+.oe_reset_password_form input.form-control {
+  height: 46px !important;
+  border-radius: 12px !important;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  background: rgba(248, 250, 252, 0.9) !important;
+  box-shadow: none;
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.oe_reset_password_form input:focus {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+  outline: none;
+}
+
+.oe_reset_password_form button[type="submit"],
+.oe_reset_password_form .btn-primary {
+  margin-top: 10px;
+  height: 48px !important;
+  border-radius: 14px !important;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.28) !important;
+  border: 0 !important;
   width: 100%;
 }
 
@@ -143,6 +174,11 @@
 }
 
 .oe_login_buttons button[name='redirect'] {
+  display: none !important;
+}
+
+/* Hide default reset-password back link (we render our own footer) */
+.oe_reset_password_form .oe_login_buttons a {
   display: none !important;
 }
 
