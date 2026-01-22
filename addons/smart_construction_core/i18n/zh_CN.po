@@ -1,0 +1,60 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* smart_construction_core
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"POT-Creation-Date: 2026-01-21 00:00+0000\n"
+"PO-Revision-Date: 2026-01-21 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. module: smart_construction_core
+msgid "Wrong login/password"
+msgstr "账号或密码错误"
+
+#. module: smart_construction_core
+msgid "Wrong login/password."
+msgstr "账号或密码错误。"
+
+#. module: smart_construction_core
+msgid "密码太短，请至少包含 8 位字符"
+msgstr "密码太短，请至少包含 8 位字符"
+
+#. module: smart_construction_core
+msgid "密码强度不足，请至少包含字母和数字"
+msgstr "密码强度不足，请至少包含字母和数字"
+
+#. module: smart_construction_core
+msgid "该邮箱域名不在允许范围"
+msgstr "该邮箱域名不在允许范围"
+
+#. module: smart_construction_core
+msgid "验证码校验失败，请稍后再试"
+msgstr "验证码校验失败，请稍后再试"
+
+#. module: smart_construction_core
+msgid "验证码未通过，本次已放行"
+msgstr "验证码未通过，本次已放行"
+
+#. module: smart_construction_core
+msgid "该邮箱已注册，请直接登录或找回密码"
+msgstr "该邮箱已注册，请直接登录或找回密码"
+
+#. module: smart_construction_core
+msgid "无法创建新账号"
+msgstr "无法创建新账号"
+
+#. module: smart_construction_core
+msgid "操作过于频繁，请稍后再试"
+msgstr "操作过于频繁，请稍后再试"
+
+#. module: smart_construction_core
+msgid "激活链接已失效或已使用，请重新发送激活邮件。"
+msgstr "激活链接已失效或已使用，请重新发送激活邮件。"

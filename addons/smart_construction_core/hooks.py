@@ -144,6 +144,7 @@ def post_init_hook(env):
     """Install-time hook to ensure core taxes are present."""
     ensure_core_taxes(env)
     _archive_default_project_stages(env)
+    _ensure_signup_defaults(env)
 
 
 def _archive_default_project_stages(env):
@@ -161,3 +162,31 @@ def _archive_default_project_stages(env):
         stages = Stage.search([("name", "ilike", name), ("active", "=", True)])
         if stages:
             stages.write({"active": False})
+
+
+def _ensure_signup_defaults(env):
+    """Seed signup defaults once; never override explicit operator config."""
+    ICP = env["ir.config_parameter"].sudo()
+    if not ICP.get_param("sc.signup.mode"):
+        login_env = ICP.get_param("sc.login.env", "prod")
+        mode = "invite" if login_env in ("prod", "production") else "open"
+        ICP.set_param("sc.signup.mode", mode)
+
+    if ICP.get_param("sc.signup.require_email_verify") in (None, False, ""):
+        ICP.set_param("sc.signup.require_email_verify", "true")
+    if ICP.get_param("sc.signup.default_group_xmlids") in (None, False, ""):
+        ICP.set_param("sc.signup.default_group_xmlids", "base.group_portal")
+    if ICP.get_param("sc.signup.domain_whitelist") in (None, False):
+        ICP.set_param("sc.signup.domain_whitelist", "")
+    if ICP.get_param("sc.signup.recaptcha.mode") in (None, False, ""):
+        ICP.set_param("sc.signup.recaptcha.mode", "soft")
+    if ICP.get_param("sc.signup.token_expiration_hours") in (None, False, ""):
+        ICP.set_param("sc.signup.token_expiration_hours", "24")
+    if ICP.get_param("sc.signup.ratelimit.window_sec") in (None, False, ""):
+        ICP.set_param("sc.signup.ratelimit.window_sec", "60")
+    if ICP.get_param("sc.signup.ratelimit.max_per_ip") in (None, False, ""):
+        ICP.set_param("sc.signup.ratelimit.max_per_ip", "3")
+    if ICP.get_param("sc.signup.ratelimit.max_per_email") in (None, False, ""):
+        ICP.set_param("sc.signup.ratelimit.max_per_email", "2")
+    if ICP.get_param("sc.signup.ratelimit.gc_days") in (None, False, ""):
+        ICP.set_param("sc.signup.ratelimit.gc_days", "7")

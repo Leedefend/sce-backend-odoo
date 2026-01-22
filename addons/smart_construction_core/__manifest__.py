@@ -2,7 +2,7 @@
 # pyright: reportUnusedExpression=false
 {
     'name': 'Smart Construction Core',
-    'version': '17.0.0.1',
+    'version': '17.0.0.3',
     'summary': 'Core module for construction enterprise management (Architecture 2.0)',
     'author': 'Leedefend',
     'depends': [
@@ -11,6 +11,7 @@
         'stock',
         'account',
         'mail',
+        'auth_signup',
         'uom',
         'product',
         'web',
@@ -21,6 +22,7 @@
         # 基础数据
         'data/sequence.xml',
         'data/project_stage_data.xml',
+        'data/cron_signup_throttle_gc.xml',
 
         # 安全
         'security/sc_groups.xml',
@@ -78,12 +80,22 @@
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
         'views/web_login_views.xml',
+        'views/login_templates.xml',
+        'views/signup_templates.xml',
         # Patch 文件移到最后加载
         'security/action_groups_patch.xml',
         'security/menu_tech_hide_patch.xml',
         'actions/project_native_action_overrides.xml',
     ],
     'assets': {
+        'web.assets_frontend_minimal': [
+            'smart_construction_core/static/src/js/auth_favicon.js',
+            'smart_construction_core/static/src/scss/sc_login.scss',
+        ],
+        'web.assets_frontend': [
+            'smart_construction_core/static/src/js/auth_favicon.js',
+            'smart_construction_core/static/src/scss/sc_login.scss',
+        ],
         'web.assets_backend': [
             'smart_construction_core/static/src/scss/sc_theme.scss',
             'smart_construction_core/static/src/js/title_manager.js',
