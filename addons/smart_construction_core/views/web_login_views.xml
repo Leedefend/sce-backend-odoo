@@ -46,7 +46,7 @@
         <xpath expr="//div[.//input[@name='db']]//label[@for='db']" position="replace">
             <label for="db" class="col-form-label">数据库</label>
         </xpath>
-        <xpath expr="//div[.//input[@name='db']]//a[hasclass('btn') and contains(., 'Select')]" position="replace">
+        <xpath expr="//div[.//input[@name='db']]//a[@href='/web/database/selector' and hasclass('btn')]" position="replace">
             <a role="button" href="/web/database/selector" class="btn btn-secondary">选择 <i class="fa fa-database" role="img" aria-label="数据库" title="数据库"></i></a>
         </xpath>
         <xpath expr="//p[hasclass('alert') and hasclass('alert-danger') and @t-if='error']" position="replace">
