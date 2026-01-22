@@ -219,6 +219,7 @@ class ScAuthSignup(AuthSignupHome):
         self._apply_user_defaults(user)
 
         if require_verify:
+            user.sudo().write({"active": False})
             self._send_activation_email(user)
         return True
 
