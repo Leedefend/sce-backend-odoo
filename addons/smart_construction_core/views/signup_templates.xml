@@ -47,6 +47,11 @@
         <xpath expr="//button[@type='submit']" position="replace">
             <button type="submit" class="btn btn-primary w-100">注册并进入系统</button>
         </xpath>
+        <xpath expr="//p[@t-if='error']" position="after" optional="1">
+            <p class="alert alert-warning" t-if="warning" role="alert">
+                <t t-esc="warning"/>
+            </p>
+        </xpath>
         <xpath expr="//form" position="after">
             <div class="sc-login__footer sc-auth-footer">
                 <div class="sc-login-links">

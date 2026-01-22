@@ -5,9 +5,9 @@ from urllib.parse import urlencode
 
 from werkzeug.exceptions import Forbidden, NotFound
 
-from odoo import http
+from odoo import _, http
 from odoo.http import request
-from odoo.addons.auth_signup.controllers.main import AuthSignupHome
+from odoo.addons.auth_signup.controllers.main import AuthSignupHome, SignupError, UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -38,6 +38,11 @@ class ScAuthSignup(AuthSignupHome):
         if "base.group_portal" not in xmlids:
             xmlids.insert(0, "base.group_portal")
         return xmlids
+
+    def _get_recaptcha_mode(self):
+        icp = request.env["ir.config_parameter"].sudo()
+        mode = (icp.get_param("sc.signup.recaptcha.mode") or "soft").strip().lower()
+        return mode if mode in ("off", "soft", "hard") else "soft"
 
     def _assert_open_allowed(self, token=None):
         mode = self._get_signup_mode()
@@ -75,7 +80,7 @@ class ScAuthSignup(AuthSignupHome):
         if not user:
             return
         vals = {}
-        if not user.lang:
+        if not user.lang or user.lang == "en_US":
             vals["lang"] = "zh_CN"
         if not user.tz:
             vals["tz"] = "Asia/Shanghai"
@@ -84,6 +89,9 @@ class ScAuthSignup(AuthSignupHome):
             vals["company_ids"] = [(4, request.env.company.id)]
         if vals:
             user.sudo().write(vals)
+            partner_vals = {k: v for k, v in vals.items() if k in ("lang", "tz")}
+            if partner_vals and user.partner_id:
+                user.partner_id.sudo().write(partner_vals)
 
         groups = []
         for xmlid in self._get_default_group_xmlids():
@@ -116,8 +124,53 @@ class ScAuthSignup(AuthSignupHome):
         }
         request.env["mail.mail"].sudo().create(mail_vals).send()
 
+    @http.route("/web/signup", type="http", auth="public", website=True, sitemap=False)
+    def web_auth_signup(self, *args, **kw):
+        qcontext = self.get_auth_signup_qcontext()
+        token = qcontext.get("token")
+        mode = self._get_signup_mode()
+        recaptcha_mode = self._get_recaptcha_mode()
+
+        if not token and mode in ("off", "invite"):
+            raise NotFound()
+
+        if "error" not in qcontext and request.httprequest.method == "POST":
+            try:
+                if recaptcha_mode != "off":
+                    ok = request.env["ir.http"]._verify_request_recaptcha_token("signup")
+                    if not ok:
+                        if recaptcha_mode == "hard":
+                            raise UserError(_("验证码校验失败，请稍后再试"))
+                        _logger.warning("signup recaptcha failed (mode=soft), allow proceed")
+                        qcontext["warning"] = _("验证码未通过，本次已放行")
+
+                self.do_signup(qcontext)
+
+                if (not token) and self._require_email_verify():
+                    login = qcontext.get("login") or qcontext.get("email")
+                    return request.redirect("/web/login?" + urlencode({"login": login or "", "signup": "1"}))
+
+                return self.web_login(*args, **kw)
+            except UserError as e:
+                qcontext["error"] = e.args[0]
+            except (SignupError, AssertionError, Forbidden) as e:
+                if request.env["res.users"].sudo().search([("login", "=", qcontext.get("login"))]):
+                    qcontext["error"] = _("该邮箱已注册，请直接登录或找回密码")
+                else:
+                    _logger.warning("%s", e)
+                    qcontext["error"] = _("无法创建新账号") + "\n" + str(e)
+
+        response = request.render("auth_signup.signup", qcontext)
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Content-Security-Policy"] = "frame-ancestors 'self'"
+        return response
+
     def get_auth_signup_qcontext(self):
         qcontext = super().get_auth_signup_qcontext()
+        token_param = request.params.get("token")
+        if not token_param and self._get_signup_mode() == "open":
+            qcontext.pop("token", None)
+            qcontext.pop("invalid_token", None)
         token = qcontext.get("token")
         self._assert_open_allowed(token=token)
         return qcontext
@@ -132,22 +185,27 @@ class ScAuthSignup(AuthSignupHome):
         self._assert_password_strength(password)
         self._assert_email_allowed(login)
 
-        res = super().do_signup(qcontext)
+        require_verify = (not token) and self._require_email_verify()
+        if require_verify:
+            values = self._prepare_signup_values(qcontext)
+            values["active"] = False
+            login, password = request.env["res.users"].sudo().signup(values, token)
+        else:
+            super().do_signup(qcontext)
 
         user = request.env["res.users"].sudo().search([("login", "=", login)], order="id desc", limit=1)
         self._apply_user_defaults(user)
 
-        if not token and self._require_email_verify():
-            user.sudo().write({"active": False})
+        if require_verify:
             self._send_activation_email(user)
-        return res
+        return True
 
-    @http.route("/sc/auth/activate/<string:token>", type="http", auth="public", website=True, csrf=False)
+    @http.route("/sc/auth/activate/<string:token>", type="http", auth="public", website=False, csrf=False)
     def sc_activate_account(self, token, **kwargs):
-        partner = request.env["res.partner"].sudo().search([("signup_token", "=", token)], limit=1)
-        if not partner or not partner.user_ids:
+        partner = request.env["res.partner"].sudo()._signup_retrieve_partner(token, check_validity=True)
+        user = partner.with_context(active_test=False).user_ids[:1] if partner else False
+        if not partner or not user:
             raise NotFound()
-        user = partner.user_ids[0]
         user.sudo().write({"active": True})
         partner.sudo().write({"signup_token": False, "signup_expiration": False, "signup_type": False})
 
