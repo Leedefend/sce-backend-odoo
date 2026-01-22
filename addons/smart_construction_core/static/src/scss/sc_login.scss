@@ -1,0 +1,190 @@
+/* Auth pages - stable shell */
+.sc-auth-page {
+  background:
+    radial-gradient(1200px 600px at 20% 10%, rgba(37, 99, 235, 0.14), transparent 60%),
+    radial-gradient(900px 500px at 80% 20%, rgba(16, 185, 129, 0.10), transparent 55%),
+    #f6f7fb;
+  min-height: 100vh;
+}
+
+.sc-auth-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.sc-auth-card {
+  width: clamp(520px, 36vw, 680px) !important;
+  max-width: calc(100vw - 48px) !important;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.14);
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-auth-header {
+  padding: 28px 40px 18px;
+  text-align: center;
+}
+
+.sc-auth-header img {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 14px;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.sc-auth-header h1,
+.sc-auth-header .sc-login-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: rgba(15, 23, 42, 0.86);
+}
+
+.sc-auth-header p,
+.sc-auth-header .sc-login-subtitle {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(15, 23, 42, 0.6);
+  margin: 0;
+}
+
+.sc-auth-body {
+  padding: 0 40px;
+}
+
+.sc-auth-body .form-group,
+.sc-auth-body .mb-3 {
+  margin-bottom: 16px !important;
+}
+
+.sc-auth-body label,
+.sc-auth-body .form-label {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.7);
+  margin-bottom: 6px;
+}
+
+.sc-auth-body input[type="text"],
+.sc-auth-body input[type="password"],
+.sc-auth-body input.form-control {
+  height: 46px !important;
+  border-radius: 12px !important;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  background: rgba(248, 250, 252, 0.9) !important;
+  box-shadow: none;
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.sc-auth-body input:focus {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+  outline: none;
+}
+
+.sc-auth-body button[type="submit"],
+.sc-auth-body .btn-primary {
+  margin-top: 10px;
+  height: 48px !important;
+  border-radius: 14px !important;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.28) !important;
+  border: 0 !important;
+  width: 100%;
+}
+
+/* Reset password page fallback (when form lacks sc-auth-body) */
+.oe_reset_password_form input[type="text"],
+.oe_reset_password_form input[type="password"],
+.oe_reset_password_form input.form-control {
+  height: 46px !important;
+  border-radius: 12px !important;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  background: rgba(248, 250, 252, 0.9) !important;
+  box-shadow: none;
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.oe_reset_password_form input:focus {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+  outline: none;
+}
+
+.oe_reset_password_form button[type="submit"],
+.oe_reset_password_form .btn-primary {
+  margin-top: 10px;
+  height: 48px !important;
+  border-radius: 14px !important;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.28) !important;
+  border: 0 !important;
+  width: 100%;
+}
+
+.sc-auth-footer {
+  padding: 20px 40px 28px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.sc-auth-footer .sc-login-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.sc-auth-footer a {
+  color: rgba(37, 99, 235, 0.86);
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.sc-auth-footer a:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+
+/* Hide default Odoo bits */
+.o_login a[href*='/web/reset_password'],
+.o_login a[href*='/web/signup'] {
+  display: none !important;
+}
+
+.o_login .o_login_footer,
+.sc-login .text-muted,
+.sc-login small,
+.o_login .o_login_logo,
+.o_login .o_login_image,
+.o_database_list > .card-body > .text-center.pb-3.border-bottom,
+.o_database_list img[alt='Logo'] {
+  display: none !important;
+}
+
+.oe_login_buttons button[name='redirect'] {
+  display: none !important;
+}
+
+/* Hide default reset-password back link (we render our own footer) */
+.oe_reset_password_form .oe_login_buttons a {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .sc-auth-wrap { padding: 18px; }
+  .sc-auth-card { width: calc(100vw - 36px) !important; }
+  .sc-auth-body { padding: 0 18px; }
+  .sc-auth-footer { padding: 18px; }
+}

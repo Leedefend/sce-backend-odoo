@@ -1,20 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <template id="sc_web_login_disable_footer" inherit_id="web.login" priority="1000">
+        <xpath expr="//t[@t-call='web.login_layout']" position="before">
+            <t t-set="disable_footer" t-value="True"/>
+            <t t-set="disable_database_manager" t-value="True"/>
+        </xpath>
+    </template>
+
     <template id="sc_web_login_inherit" inherit_id="web.login">
         <xpath expr="//form" position="before">
             <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
                 <t t-set="sc_login_env"
                    t-value="request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod')"/>
-                <div class="sc-login-branding">
-                    <h2>智能工程项目管理系统</h2>
-                    <div class="sc-subtitle">项目 · 合同 · 结算 · 支付一体化</div>
+                <div class="sc-login-brand sc-auth-header">
+                    <img class="sc-login-brand-logo" src="/smart_construction_core/static/png/system-icon-1.png" alt="Smart Construction"/>
+                    <div class="sc-login-title">智能工程项目管理系统</div>
+                    <div class="sc-login-subtitle">为工程项目提供结构化、可演进的管理能力</div>
                 </div>
                 <t t-if="sc_login_env == 'demo'">
                     <div class="sc-login-env-badge is-demo">DEMO 环境</div>
                 </t>
             </t>
         </xpath>
-
+        <xpath expr="//form" position="attributes">
+            <attribute name="class">oe_login_form sc-login-form sc-auth-body</attribute>
+        </xpath>
+        <xpath expr="//label[@for='login']" position="replace">
+            <label for="login" class="form-label">账号</label>
+        </xpath>
+        <xpath expr="//label[@for='password']" position="replace">
+            <label for="password" class="form-label">密码</label>
+        </xpath>
+        <xpath expr="//input[@name='login']" position="attributes">
+            <attribute name="placeholder">手机号/邮箱/用户名</attribute>
+        </xpath>
+        <xpath expr="//input[@name='password']" position="attributes">
+            <attribute name="placeholder">密码</attribute>
+        </xpath>
+        <xpath expr="//button[@type='submit' and hasclass('btn-primary')]" position="replace">
+            <button type="submit" class="btn btn-primary">登录</button>
+        </xpath>
+        <xpath expr="//form" position="after">
+            <div class="sc-login__footer sc-auth-footer">
+                <div class="sc-login-links">
+                    <a href="/web/signup">注册账号</a>
+                    <a href="/web/reset_password">忘记密码</a>
+                </div>
+                <div class="sc-login-author">开发者 · 数字禅房</div>
+            </div>
+        </xpath>
         <xpath expr="//form//div[.//input[@name='db']]" position="attributes">
             <attribute name="t-if">
                 not (
@@ -39,47 +73,14 @@
         </xpath>
     </template>
 
-    <template id="sc_web_login_layout_inherit" inherit_id="web.login_layout">
-        <xpath expr="." position="inside">
-            <t t-if="request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')">
-                <style>
-                    .sc-login-branding h2{
-                        margin: 0 0 8px 0;
-                        font-weight: 700;
-                        font-size: 22px;
-                        line-height: 1.2;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-                    .sc-login-branding .sc-subtitle{
-                        color: #666;
-                        font-size: 13px;
-                        margin-bottom: 8px;
-                    }
-                    .sc-login-env-badge{
-                        display: inline-block;
-                        padding: 2px 8px;
-                        border-radius: 999px;
-                        font-size: 12px;
-                        font-weight: 600;
-                        background: #eef6ff;
-                        color: #1d4ed8;
-                        margin-bottom: 10px;
-                    }
-                    .sc-login-env-badge.is-demo{ background: #ecfdf5; color: #047857; }
-                    .sc-login-env-badge.is-prod{ background: #fff7ed; color: #9a3412; }
-                    .oe_login_buttons button[name='redirect']{ display: none !important; }
-                </style>
-            </t>
+    <template id="sc_web_layout_branding" inherit_id="web.layout">
+        <xpath expr="//head/title" position="replace">
+            <title>智能工程项目管理系统</title>
         </xpath>
-        <xpath expr="//a[@href='/web/database/manager']" position="attributes">
-            <attribute name="t-if">
-                not (
-                request.env['ir.config_parameter'].sudo().get_param('sc.login.custom_enabled', '1') in ('1','true','True')
-                and request.env['ir.config_parameter'].sudo().get_param('sc.login.env', 'prod') in ('demo','prod')
-                )
-            </attribute>
+        <xpath expr="//head" position="inside">
+            <link rel="icon" type="image/png" href="/smart_construction_core/static/png/system-icon-1.png"/>
+            <link rel="shortcut icon" type="image/png" href="/smart_construction_core/static/png/system-icon-1.png"/>
         </xpath>
     </template>
+
 </odoo>
