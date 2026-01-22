@@ -5,7 +5,9 @@ from urllib.parse import urlencode
 
 from werkzeug.exceptions import Forbidden, NotFound
 
-from odoo import _, http
+from dateutil.relativedelta import relativedelta
+
+from odoo import _, fields, http
 from odoo.http import request
 from odoo.addons.auth_signup.controllers.main import AuthSignupHome, SignupError, UserError
 
@@ -38,6 +40,14 @@ class ScAuthSignup(AuthSignupHome):
         if "base.group_portal" not in xmlids:
             xmlids.insert(0, "base.group_portal")
         return xmlids
+
+    def _get_token_expiration_hours(self):
+        icp = request.env["ir.config_parameter"].sudo()
+        try:
+            hours = int(icp.get_param("sc.signup.token_expiration_hours", "24") or 24)
+        except ValueError:
+            hours = 24
+        return max(hours, 0)
 
     def _get_recaptcha_mode(self):
         icp = request.env["ir.config_parameter"].sudo()
@@ -127,7 +137,9 @@ class ScAuthSignup(AuthSignupHome):
     def _send_activation_email(self, user):
         partner = user.partner_id.sudo()
         if hasattr(partner, "signup_prepare"):
-            partner.signup_prepare()
+            hours = self._get_token_expiration_hours()
+            expiration = fields.Datetime.now() + relativedelta(hours=hours) if hours else False
+            partner.signup_prepare(expiration=expiration)
         token = partner.signup_token
         if not token:
             _logger.warning("signup token missing for user %s", user.id)
@@ -225,7 +237,15 @@ class ScAuthSignup(AuthSignupHome):
 
     @http.route("/sc/auth/activate/<string:token>", type="http", auth="public", website=False, csrf=False)
     def sc_activate_account(self, token, **kwargs):
-        partner = request.env["res.partner"].sudo()._signup_retrieve_partner(token, check_validity=True)
+        try:
+            partner = request.env["res.partner"].sudo()._signup_retrieve_partner(token, check_validity=True, raise_exception=True)
+        except UserError:
+            qcontext = self.get_auth_signup_qcontext()
+            qcontext["error"] = _("激活链接已失效或已使用，请重新发送激活邮件。")
+            response = request.render("auth_signup.signup", qcontext)
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"
+            response.headers["Content-Security-Policy"] = "frame-ancestors 'self'"
+            return response
         user = partner.with_context(active_test=False).user_ids[:1] if partner else False
         if not partner or not user:
             raise NotFound()

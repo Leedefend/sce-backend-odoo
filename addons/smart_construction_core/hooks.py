@@ -180,9 +180,13 @@ def _ensure_signup_defaults(env):
         ICP.set_param("sc.signup.domain_whitelist", "")
     if ICP.get_param("sc.signup.recaptcha.mode") in (None, False, ""):
         ICP.set_param("sc.signup.recaptcha.mode", "soft")
+    if ICP.get_param("sc.signup.token_expiration_hours") in (None, False, ""):
+        ICP.set_param("sc.signup.token_expiration_hours", "24")
     if ICP.get_param("sc.signup.ratelimit.window_sec") in (None, False, ""):
         ICP.set_param("sc.signup.ratelimit.window_sec", "60")
     if ICP.get_param("sc.signup.ratelimit.max_per_ip") in (None, False, ""):
         ICP.set_param("sc.signup.ratelimit.max_per_ip", "3")
     if ICP.get_param("sc.signup.ratelimit.max_per_email") in (None, False, ""):
         ICP.set_param("sc.signup.ratelimit.max_per_email", "2")
+    if ICP.get_param("sc.signup.ratelimit.gc_days") in (None, False, ""):
+        ICP.set_param("sc.signup.ratelimit.gc_days", "7")

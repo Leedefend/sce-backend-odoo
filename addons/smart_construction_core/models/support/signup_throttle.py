@@ -48,3 +48,20 @@ class ScSignupThrottle(models.Model):
             }
         )
         return True
+
+    @api.model
+    def gc_expired(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        try:
+            days = int(icp.get_param("sc.signup.ratelimit.gc_days", "7") or 7)
+        except ValueError:
+            days = 7
+        days = max(days, 0)
+        if days == 0:
+            return 0
+        cutoff = int(time.time()) - days * 86400
+        records = self.sudo().search([("last_seen", "<", cutoff)])
+        count = len(records)
+        if count:
+            records.unlink()
+        return count
