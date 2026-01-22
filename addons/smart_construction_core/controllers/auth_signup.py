@@ -83,11 +83,11 @@ class ScAuthSignup(AuthSignupHome):
 
     def _assert_password_strength(self, password):
         if not password or len(password) < 8:
-            raise Forbidden("Password too short")
+            raise Forbidden(_("密码太短，请至少包含 8 位字符"))
         has_alpha = any(ch.isalpha() for ch in password)
         has_digit = any(ch.isdigit() for ch in password)
         if not (has_alpha and has_digit):
-            raise Forbidden("Password too weak")
+            raise Forbidden(_("密码强度不足，请至少包含字母和数字"))
 
     def _assert_email_allowed(self, email):
         if not email:
@@ -97,7 +97,7 @@ class ScAuthSignup(AuthSignupHome):
             return
         domain = email.split("@")[-1].lower()
         if domain not in whitelist:
-            raise Forbidden("Email domain not allowed")
+            raise Forbidden(_("该邮箱域名不在允许范围"))
 
     def _apply_user_defaults(self, user):
         if not user:
