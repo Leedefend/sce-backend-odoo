@@ -23,7 +23,7 @@
             </t>
         </xpath>
         <xpath expr="//form" position="attributes">
-            <attribute name="class">oe_login_form sc-login-form sc-auth-body</attribute>
+            <attribute name="class" add="sc-login-form sc-auth-body"/>
         </xpath>
         <xpath expr="//label[@for='login']" position="replace">
             <label for="login" class="form-label">账号</label>
@@ -65,8 +65,8 @@
                 <t t-else=""><t t-esc="msg"/></t>
             </p>
         </xpath>
-        <xpath expr="//form" position="after">
-            <div class="sc-login__footer sc-auth-footer">
+        <xpath expr="//form" position="inside">
+            <div class="sc-login__footer sc-auth-footer mt-3">
                 <div class="sc-login-links">
                     <a href="/web/signup">注册账号</a>
                     <a href="/web/reset_password">忘记密码</a>
