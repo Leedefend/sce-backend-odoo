@@ -6,9 +6,11 @@ import { debounce } from "@web/core/utils/timing";
 import { patch } from "@web/core/utils/patch";
 import { useBus, useService } from "@web/core/utils/hooks";
 
+const originalSetup = FormController.prototype.setup;
+
 patch(FormController.prototype, {
     setup() {
-        this._super(...arguments);
+        originalSetup.call(this, ...arguments);
         this.notification = useService("notification");
         this._scAutosaveInFlight = false;
         this._scAutosaveTrigger = debounce(this._scAutosave.bind(this), 1500);
