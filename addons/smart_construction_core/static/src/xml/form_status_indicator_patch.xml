@@ -1,0 +1,10 @@
+<odoo>
+    <t t-inherit="web.FormStatusIndicator" t-inherit-mode="extension">
+        <xpath expr="//button[contains(@class, 'o_form_button_save')]" position="inside">
+            <span class="sc-btn-label ms-1"><t t-esc="_t('保存')"/></span>
+        </xpath>
+        <xpath expr="//button[contains(@class, 'o_form_button_cancel')]" position="inside">
+            <span class="sc-btn-label ms-1"><t t-esc="_t('放弃变更')"/></span>
+        </xpath>
+    </t>
+</odoo>

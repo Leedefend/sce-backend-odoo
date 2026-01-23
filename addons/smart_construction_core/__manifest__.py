@@ -109,6 +109,7 @@
             'smart_construction_core/static/src/scss/sc_sidebar.scss',
             'smart_construction_core/static/src/scss/sc_company_switcher.scss',
             'smart_construction_core/static/src/scss/sc_workbench.scss',
+            'smart_construction_core/static/src/xml/form_status_indicator_patch.xml',
             'smart_construction_core/static/src/js/project_form_tab_jump.js',
             'smart_construction_core/static/src/js/project_quota_center.js',
             'smart_construction_core/static/src/xml/project_quota_center.xml',
