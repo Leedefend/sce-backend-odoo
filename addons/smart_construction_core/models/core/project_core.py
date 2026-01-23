@@ -1716,6 +1716,11 @@ class ProjectProject(models.Model):
         self.action_set_lifecycle_state(target_state)
         return True
 
+    def action_sc_submit(self):
+        """提交立项：从草稿进入在建。"""
+        self.action_set_lifecycle_state("in_progress")
+        return True
+
     def _sc_required_fields_for_transition(self, target_state):
         return {
             "in_progress": [

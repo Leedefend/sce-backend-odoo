@@ -43,6 +43,13 @@
                        widget="statusbar"
                        statusbar_visible="draft,in_progress,paused,done,closing,warranty,closed"/>
             </xpath>
+            <xpath expr="//form/header" position="inside">
+                <button name="action_sc_submit"
+                        type="object"
+                        string="提交立项"
+                        class="btn-primary"
+                        invisible="lifecycle_state != 'draft'"/>
+            </xpath>
 
             <!-- 重做按钮区：仅保留主流程按钮 -->
             <xpath expr="//sheet/div[@name='button_box']" position="replace">
