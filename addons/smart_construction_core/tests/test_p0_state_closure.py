@@ -11,7 +11,15 @@ class TestP0StateClosure(TransactionCase):
         self.uom_unit = self.env.ref("uom.product_uom_unit")
 
     def _create_project(self, name, with_boq=False):
-        project = self.env["project.project"].create({"name": name})
+        owner = self._create_partner(f"{name} Owner")
+        project = self.env["project.project"].create(
+            {
+                "name": name,
+                "owner_id": owner.id,
+                "manager_id": self.env.user.id,
+                "location": "Test Location",
+            }
+        )
         if with_boq:
             self.env["project.boq.line"].create(
                 {
