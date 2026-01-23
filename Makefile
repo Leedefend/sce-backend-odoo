@@ -349,7 +349,7 @@ mod.upgrade: guard.prod.danger check-compose-project check-compose-env
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix p2.smoke p3.smoke p3.audit codex.preflight db.policy stage.preflight stage.run
+.PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix p2.smoke p3.smoke p3.audit codex.preflight db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
 policy.apply.role_matrix: guard.prod.danger check-compose-project check-compose-env
@@ -384,6 +384,19 @@ stage.preflight:
 
 stage.run:
 	@STAGE=$(STAGE) DB=$(DB_NAME) bash scripts/ops/stage_run.sh
+
+# ------------------ Auth policy (dev-style) ------------------
+AUTH_PROJECT ?= sc-backend-odoo-prod
+AUTH_DB      ?= sc_prod
+
+ops.auth.dev.apply:
+	@./scripts/ops/auth_policy.sh apply -p $(AUTH_PROJECT) -d $(AUTH_DB)
+
+ops.auth.dev.rollback:
+	@./scripts/ops/auth_policy.sh rollback -p $(AUTH_PROJECT) -d $(AUTH_DB)
+
+ops.auth.dev.verify:
+	@./scripts/ops/auth_policy.sh verify -p $(AUTH_PROJECT) -d $(AUTH_DB)
 
 .PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions
 demo.verify: guard.prod.forbid check-compose-project check-compose-env
