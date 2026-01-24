@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="sc_sidebar_header_templates" xml:space="preserve">
+    <t t-name="smart_construction_core.ScSidebarHeader">
+        <div class="sc-sidebar__header">
+            <div class="sc-sidebar__brand">
+                <span class="sc-sidebar__brandIcon" aria-hidden="true">
+                    <img src="/smart_construction_core/static/png/system-icon-1.png" alt=""/>
+                </span>
+                <span class="sc-sidebar__brandText">智能施工</span>
+                <span class="sc-sidebar__brandTag">平台</span>
+            </div>
+            <div class="sc-sidebar__identity">
+                <ScCompanySwitcherSidebar/>
+                <span class="sc-sidebar__userChip" t-if="userLabel">
+                    <t t-esc="userLabel"/>
+                </span>
+            </div>
+        </div>
+    </t>
+</templates>
