@@ -37,7 +37,6 @@
 
         # 顶级菜单基础
         'actions/project_list_actions.xml',
-        'actions/project_actions.xml',
         'views/menu_root.xml',
 
         # 视图
@@ -54,6 +53,7 @@
         'views/core/material_plan_views.xml',
         'actions/finance_actions.xml',
         'views/core/project_views.xml',
+        'actions/project_actions.xml',
         'views/core/task_boq_views.xml',
         'views/support/work_breakdown_views.xml',
         'views/support/tender_views.xml',
