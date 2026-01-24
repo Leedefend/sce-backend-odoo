@@ -9,6 +9,14 @@
                         <t t-esc="state.debugMessage"/>
                     </div>
                 </t>
+                <t t-if="state.enableRoleEntries">
+                    <section class="sc-sidebar__section sc-sidebar__section--role">
+                        <div class="sc-sidebar__title sc-sidebar__title--meta">
+                            <span class="sc-sidebar__titleText">我的工作</span>
+                        </div>
+                        <div class="sc-sidebar__items"></div>
+                    </section>
+                </t>
                 <div class="sc-sidebar__search">
                     <input type="text"
                            class="o_input sc-sidebar__searchInput"

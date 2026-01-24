@@ -22,6 +22,7 @@ const OVERVIEW_ACTION_XMLID = "smart_construction_core.action_sc_project_workben
 const DEBUG_ENABLED = Boolean(
   (window.odoo && window.odoo.__DEBUG__) || /\bdebug\b/.test(window.location.search || "")
 );
+const ENABLE_ROLE_ENTRIES = getConfigFlag("sc_role_entries", true);
 
 export class ScSidebarHeader extends Component {
   static template = "smart_construction_core.ScSidebarHeader";
@@ -59,6 +60,8 @@ export class ScSidebar extends Component {
       searchTerm: "",
       recentMenus: [],
       favoriteMenus: [],
+      roleEntries: [],
+      enableRoleEntries: ENABLE_ROLE_ENTRIES,
       pinnedEntries: [],
       debugMessage: "",
       showOverview: SHOW_OVERVIEW,
