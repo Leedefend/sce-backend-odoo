@@ -58,6 +58,7 @@ export class ScSidebar extends Component {
       visible: false,
       sections: [],
       activeMenuId: 0,
+      activeAction: "",
       searchTerm: "",
       recentMenus: [],
       favoriteMenus: [],
@@ -106,6 +107,15 @@ export class ScSidebar extends Component {
     this.onDomainTitleClick = (domain) => {
       if (!domain) return;
       this.toggleDomain(domain.id);
+    };
+    this.isRoleEntryActive = (entry) => {
+      if (!entry) return false;
+      if (entry.menuId && entry.menuId === this.state.activeMenuId) return true;
+      const actionValue = this.state.activeAction;
+      if (!actionValue) return false;
+      if (entry.actionId && String(entry.actionId) === String(actionValue)) return true;
+      if (entry.actionXmlid && entry.actionXmlid === actionValue) return true;
+      return false;
     };
     this.openPinnedEntry = async (entry) => {
       if (!entry || entry.disabled) return;
@@ -322,7 +332,9 @@ export class ScSidebar extends Component {
 
   syncActiveMenu() {
     const id = getActiveMenuId();
+    const action = getActiveAction();
     this.state.activeMenuId = id || 0;
+    this.state.activeAction = action || "";
     if (id) this.scrollActiveIntoView();
     this.maybeReloadForCompany();
   }
@@ -485,6 +497,11 @@ function getCompanyKeyFromHash() {
 
 function getActiveMenuId() {
   return parseInt(parseHashParams().menu_id || "0", 10);
+}
+
+function getActiveAction() {
+  const action = parseHashParams().action;
+  return action ? String(action) : "";
 }
 
 export function normalizeMenus(raw, onMap) {

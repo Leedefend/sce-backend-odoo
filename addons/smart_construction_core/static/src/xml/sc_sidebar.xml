@@ -17,6 +17,7 @@
                         <div class="sc-sidebar__items">
                             <t t-foreach="state.roleEntries" t-as="entry" t-key="entry.key">
                                 <a class="sc-sidebar__item sc-sidebar__item--role"
+                                   t-att-class="isRoleEntryActive(entry) ? 'is-active' : ''"
                                    t-on-click.prevent="() => openRoleEntry(entry)"
                                    t-attf-href="#menu_id=#{entry.menuId}&amp;action=#{entry.actionId}">
                                     <span class="sc-sidebar__roleIcon" t-if="entry.icon" aria-hidden="true">
