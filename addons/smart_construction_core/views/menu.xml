@@ -1,7 +1,7 @@
 <odoo>
     <!-- 项目中心 -->
     <menuitem id="menu_sc_project_center"
-              name="项目中心"
+              name="项目管理"
               parent="menu_sc_root"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_project_read"/>
@@ -76,7 +76,7 @@
 
     <!-- 合同中心 -->
     <menuitem id="menu_sc_contract_center"
-              name="合同台账"
+              name="合同管理"
               parent="menu_sc_root"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
@@ -106,7 +106,7 @@
 
     <!-- 成控中心 -->
     <menuitem id="menu_sc_cost_center"
-              name="费用/成本"
+              name="成本管理"
               parent="menu_sc_root"
               action="smart_construction_core.action_project_cost_compare"
               sequence="25"
@@ -169,7 +169,7 @@
 
     <!-- 物资中心 -->
     <menuitem id="menu_sc_material_center"
-              name="物资/采购"
+              name="物资管理"
               parent="menu_sc_root"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
@@ -188,14 +188,14 @@
 
     <!-- 数据中心 -->
     <menuitem id="menu_sc_data_center"
-              name="数据中心"
+              name="数据分析"
               parent="menu_sc_root"
               sequence="80"
               groups="smart_construction_core.group_sc_cap_data_read"/>
 
     <!-- 配置中心 -->
     <menuitem id="menu_sc_config_center"
-              name="配置中心"
+              name="基础资料"
               parent="menu_sc_root"
               sequence="90"
               groups="smart_construction_core.group_sc_cap_config_admin"/>

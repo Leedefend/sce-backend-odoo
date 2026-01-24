@@ -106,6 +106,7 @@
             'smart_construction_core/static/src/js/sc_project_workbench.js',
             'smart_construction_core/static/src/js/sc_project_workbench_client_action.js',
             'smart_construction_core/static/src/xml/sc_sidebar.xml',
+            'smart_construction_core/static/src/xml/sc_sidebar_header.xml',
             'smart_construction_core/static/src/xml/sc_project_workbench.xml',
             'smart_construction_core/static/src/scss/sc_sidebar.scss',
             'smart_construction_core/static/src/scss/sc_company_switcher.scss',

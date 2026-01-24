@@ -1,7 +1,7 @@
 <odoo>
     <!-- 财务中心：父级菜单，供付款/收款申请、审批等子菜单使用 -->
     <menuitem id="menu_sc_finance_center"
-              name="结算/财务"
+              name="财务账款"
               parent="smart_construction_core.menu_sc_root"
               action="smart_construction_core.action_sc_finance_dashboard"
               sequence="40"
