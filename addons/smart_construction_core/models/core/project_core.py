@@ -8,7 +8,7 @@ from odoo import models, fields, api
 
 from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -577,6 +577,15 @@ class ProjectProject(models.Model):
         default='draft',
         tracking=True,
         help='驱动项目级联动控制：暂停/关闭禁止新增进度、成本等业务数据；结算中限制部分操作。'
+    )
+    sc_draft_autosaved_at = fields.Datetime(
+        '草稿自动保存时间',
+        readonly=True,
+    )
+    sc_draft_autosave_uid = fields.Many2one(
+        'res.users',
+        string='草稿自动保存人',
+        readonly=True,
     )
 
     def is_funding_ready(self):
@@ -1707,6 +1716,36 @@ class ProjectProject(models.Model):
         self.action_set_lifecycle_state(target_state)
         return True
 
+    def action_sc_submit(self):
+        """提交立项：从草稿进入在建。"""
+        self.action_set_lifecycle_state("in_progress")
+        return True
+
+    def _sc_required_fields_for_transition(self, target_state):
+        return {
+            "in_progress": [
+                "owner_id",
+                "manager_id",
+                "location",
+            ],
+        }.get(target_state, [])
+
+    def _sc_validate_for_transition(self, target_state):
+        required_fields = self._sc_required_fields_for_transition(target_state)
+        if not required_fields:
+            return
+        for project in self:
+            missing = []
+            for field_name in required_fields:
+                if not project[field_name]:
+                    field = project._fields.get(field_name)
+                    missing.append(field.string if field else field_name)
+            if missing:
+                raise ValidationError(
+                    "项目[%s] 立项前需补齐：%s。"
+                    % (project.display_name, "、".join(missing))
+                )
+
     def _validate_lifecycle_transition(self, target_state):
         for project in self:
             ScStateMachine.assert_transition(
@@ -1715,6 +1754,8 @@ class ProjectProject(models.Model):
                 target_state,
                 obj_display=project.display_name,
             )
+            if project.lifecycle_state == "draft" and target_state == "in_progress":
+                project._sc_validate_for_transition(target_state)
             if target_state in ("warranty", "closed"):
                 project._guard_project_close_by_settlement(target_state)
                 project._guard_project_close_by_payment(target_state)
@@ -1728,6 +1769,12 @@ class ProjectProject(models.Model):
         return True
 
     def write(self, vals):
+        if self.env.context.get("sc_autosave") and all(
+            project.lifecycle_state == "draft" for project in self
+        ):
+            vals = dict(vals)
+            vals.setdefault("sc_draft_autosaved_at", fields.Datetime.now())
+            vals.setdefault("sc_draft_autosave_uid", self.env.user.id)
         if "lifecycle_state" in vals:
             self._validate_lifecycle_transition(vals.get("lifecycle_state"))
             if "stage_id" not in vals:
