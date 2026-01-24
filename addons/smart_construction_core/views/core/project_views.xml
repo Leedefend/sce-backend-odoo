@@ -137,7 +137,9 @@
             </xpath>
 
             <xpath expr="//sheet/div[@name='button_box']" position="after">
-                <widget name="sc_insight_banner" options="{'scene': 'project.entry'}"/>
+                <widget name="sc_insight_banner"
+                        options="{'scene': 'project.entry'}"
+                        invisible="lifecycle_state == 'draft'"/>
             </xpath>
 
             <!-- 概览/施工/协作页插入到原生 notebook 开头 -->
