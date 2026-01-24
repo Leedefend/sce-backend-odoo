@@ -58,6 +58,7 @@ def run(env):
         groups_xmlids=[
             base_group,
             "smart_construction_core.group_sc_business_full",
+            "smart_construction_core.group_sc_cap_project_read",
         ],
         password=password,
         lang=lang,

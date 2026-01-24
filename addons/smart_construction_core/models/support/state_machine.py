@@ -17,7 +17,7 @@ class ScStateMachine:
     PAYMENT_REQUEST = "payment.request"
 
     PROJECT_STATES = [
-        ("draft", _("立项")),
+        ("draft", _("草稿")),
         ("in_progress", _("在建")),
         ("paused", _("停工")),
         ("done", _("竣工")),

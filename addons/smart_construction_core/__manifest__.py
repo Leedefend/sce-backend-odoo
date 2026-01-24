@@ -109,6 +109,8 @@
             'smart_construction_core/static/src/scss/sc_sidebar.scss',
             'smart_construction_core/static/src/scss/sc_company_switcher.scss',
             'smart_construction_core/static/src/scss/sc_workbench.scss',
+            'smart_construction_core/static/src/js/draft_autosave_ui_patch.js',
+            'smart_construction_core/static/src/js/draft_autosave_patch.js',
             'smart_construction_core/static/src/js/form_status_indicator_patch.js',
             'smart_construction_core/static/src/xml/form_status_indicator_patch.xml',
             'smart_construction_core/static/src/scss/form_status_indicator.scss',
