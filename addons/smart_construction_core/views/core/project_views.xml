@@ -37,6 +37,7 @@
             <tree string="我的项目">
                 <field name="name"/>
                 <field name="manager_id"/>
+                <field name="owner_id"/>
                 <field name="lifecycle_state"/>
                 <field name="write_date"/>
             </tree>
