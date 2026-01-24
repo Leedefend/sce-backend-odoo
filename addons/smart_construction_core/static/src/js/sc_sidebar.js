@@ -146,6 +146,12 @@ export class ScSidebar extends Component {
       await this.action.doAction(entry.actionXmlid || entry.actionId, { clearBreadcrumbs: false });
       window.setTimeout(() => this.syncActiveMenu(), 0);
     };
+    this.openRoleQuickAction = async (action) => {
+      if (!action || !action.actionId) return;
+      setHashParams({ action: action.actionId });
+      await this.action.doAction(action.actionId, { clearBreadcrumbs: false });
+      window.setTimeout(() => this.syncActiveMenu(), 0);
+    };
     this.persistOpenSections = () => {
       if (!this.storageKey) return;
       const openIds = [];
