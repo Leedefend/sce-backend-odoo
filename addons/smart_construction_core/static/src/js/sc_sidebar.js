@@ -5,6 +5,7 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { ScCompanySwitcherSidebar } from "./sc_company_switcher_sidebar";
 import { DOMAIN_NAV_MAP, DEFAULT_DOMAIN_KEY, PINNED_ENTRIES } from "@smart_construction_core/config/domain_nav_map";
+import { ROLE_ENTRY_MAP } from "@smart_construction_core/config/role_entry_map";
 
 const mainComponents = registry.category("main_components");
 const ROOT_XMLID = "smart_construction_core.menu_sc_root";
@@ -60,7 +61,7 @@ export class ScSidebar extends Component {
       searchTerm: "",
       recentMenus: [],
       favoriteMenus: [],
-      roleEntries: [],
+      roleEntries: Array.isArray(ROLE_ENTRY_MAP) ? ROLE_ENTRY_MAP : [],
       enableRoleEntries: ENABLE_ROLE_ENTRIES,
       pinnedEntries: [],
       debugMessage: "",
