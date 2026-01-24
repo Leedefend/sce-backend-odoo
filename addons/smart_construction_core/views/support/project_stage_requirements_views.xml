@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_project_stage_requirement_wizard" model="ir.ui.view">
+        <field name="name">sc.project.stage.requirement.wizard.form</field>
+        <field name="model">sc.project.stage.requirement.wizard</field>
+        <field name="arch" type="xml">
+            <form string="阶段要求">
+                <sheet>
+                    <group>
+                        <field name="project_id" readonly="1"/>
+                        <field name="lifecycle_state" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="checklist" readonly="1" nolabel="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="关闭" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

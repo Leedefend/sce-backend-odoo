@@ -81,6 +81,7 @@
         'views/project_workbench_action.xml',
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
+        'views/support/project_stage_requirements_views.xml',
         'views/web_login_views.xml',
         'views/login_templates.xml',
         'views/signup_templates.xml',
