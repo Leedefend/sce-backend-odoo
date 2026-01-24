@@ -16,15 +16,26 @@
                         </div>
                         <div class="sc-sidebar__items">
                             <t t-foreach="state.roleEntries" t-as="entry" t-key="entry.key">
-                                <a class="sc-sidebar__item sc-sidebar__item--role"
-                                   t-att-class="isRoleEntryActive(entry) ? 'is-active' : ''"
-                                   t-on-click.prevent="() => openRoleEntry(entry)"
-                                   t-attf-href="#menu_id=#{entry.menuId}&amp;action=#{entry.actionId}">
-                                    <span class="sc-sidebar__roleIcon" t-if="entry.icon" aria-hidden="true">
-                                        <t t-esc="entry.icon"/>
-                                    </span>
-                                    <span class="sc-sidebar__itemLabel"><t t-esc="entry.label"/></span>
-                                </a>
+                                <div class="sc-sidebar__roleEntry">
+                                    <a class="sc-sidebar__item sc-sidebar__item--role"
+                                       t-att-class="isRoleEntryActive(entry) ? 'is-active' : ''"
+                                       t-on-click.prevent="() => openRoleEntry(entry)"
+                                       t-attf-href="#menu_id=#{entry.menuId}&amp;action=#{entry.actionId}">
+                                        <span class="sc-sidebar__roleIcon" t-if="entry.icon" aria-hidden="true">
+                                            <t t-esc="entry.icon"/>
+                                        </span>
+                                        <span class="sc-sidebar__itemLabel"><t t-esc="entry.label"/></span>
+                                    </a>
+                                    <div class="sc-sidebar__roleQuick" t-if="entry.quickActions &amp;&amp; entry.quickActions.length">
+                                        <t t-foreach="entry.quickActions" t-as="quick" t-key="quick.actionId">
+                                            <button type="button"
+                                                    class="sc-sidebar__roleQuickButton"
+                                                    t-on-click.stop="() => openRoleQuickAction(quick)">
+                                                <t t-esc="quick.label"/>
+                                            </button>
+                                        </t>
+                                    </div>
+                                </div>
                             </t>
                         </div>
                     </section>

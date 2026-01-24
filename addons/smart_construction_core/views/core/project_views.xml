@@ -30,6 +30,39 @@
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user')), (4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
     </record>
 
+    <record id="view_project_my_list_tree" model="ir.ui.view">
+        <field name="name">project.project.tree.sc.my.list</field>
+        <field name="model">project.project</field>
+        <field name="arch" type="xml">
+            <tree string="我的项目">
+                <field name="name"/>
+                <field name="manager_id"/>
+                <field name="owner_id"/>
+                <field name="lifecycle_state"/>
+                <field name="write_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_project_project_search_my" model="ir.ui.view">
+        <field name="name">project.project.search.sc.my</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_project_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter name="filter_my_projects"
+                        string="我的项目"
+                        domain="['|', ('manager_id', '=', uid), '|', ('owner_id', '=', uid), ('user_id', '=', uid)]"/>
+                <filter name="filter_draft"
+                        string="草稿"
+                        domain="[('lifecycle_state', '=', 'draft')]"/>
+                <filter name="filter_in_progress"
+                        string="进行中"
+                        domain="[('lifecycle_state', '=', 'in_progress')]"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- 项目表单扩展：施工信息 + 工程资料 + 合同 -->
     <record id="view_project_form_sc_core" model="ir.ui.view">
         <field name="name">project.project.form.sc.core</field>
@@ -104,7 +137,9 @@
             </xpath>
 
             <xpath expr="//sheet/div[@name='button_box']" position="after">
-                <widget name="sc_insight_banner" options="{'scene': 'project.entry'}"/>
+                <widget name="sc_insight_banner"
+                        options="{'scene': 'project.entry'}"
+                        invisible="lifecycle_state == 'draft'"/>
             </xpath>
 
             <!-- 概览/施工/协作页插入到原生 notebook 开头 -->

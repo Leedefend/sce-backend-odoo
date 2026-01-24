@@ -53,6 +53,7 @@
         'views/core/material_plan_views.xml',
         'actions/finance_actions.xml',
         'views/core/project_views.xml',
+        'actions/project_actions.xml',
         'views/core/task_boq_views.xml',
         'views/support/work_breakdown_views.xml',
         'views/support/tender_views.xml',
