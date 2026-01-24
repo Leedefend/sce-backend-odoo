@@ -101,6 +101,7 @@
             'smart_construction_core/static/src/js/title_manager.js',
             'smart_construction_core/static/src/xml/title_manager.xml',
             'smart_construction_core/static/src/config/domain_nav_map.js',
+            'smart_construction_core/static/src/config/role_entry_map.js',
             'smart_construction_core/static/src/js/sc_sidebar.js',
             'smart_construction_core/static/src/js/sc_company_switcher_sidebar.js',
             'smart_construction_core/static/src/js/sc_project_workbench.js',

@@ -9,6 +9,26 @@
                         <t t-esc="state.debugMessage"/>
                     </div>
                 </t>
+                <t t-if="state.enableRoleEntries &amp;&amp; state.roleEntries.length">
+                    <section class="sc-sidebar__section sc-sidebar__section--role">
+                        <div class="sc-sidebar__title sc-sidebar__title--meta">
+                            <span class="sc-sidebar__titleText">我的工作</span>
+                        </div>
+                        <div class="sc-sidebar__items">
+                            <t t-foreach="state.roleEntries" t-as="entry" t-key="entry.key">
+                                <a class="sc-sidebar__item sc-sidebar__item--role"
+                                   t-att-class="isRoleEntryActive(entry) ? 'is-active' : ''"
+                                   t-on-click.prevent="() => openRoleEntry(entry)"
+                                   t-attf-href="#menu_id=#{entry.menuId}&amp;action=#{entry.actionId}">
+                                    <span class="sc-sidebar__roleIcon" t-if="entry.icon" aria-hidden="true">
+                                        <t t-esc="entry.icon"/>
+                                    </span>
+                                    <span class="sc-sidebar__itemLabel"><t t-esc="entry.label"/></span>
+                                </a>
+                            </t>
+                        </div>
+                    </section>
+                </t>
                 <div class="sc-sidebar__search">
                     <input type="text"
                            class="o_input sc-sidebar__searchInput"
