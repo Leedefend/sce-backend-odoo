@@ -1447,6 +1447,14 @@ class ProjectProject(models.Model):
         action["context"] = ctx
         return action
 
+    def sc_get_next_actions(self, limit=3):
+        """Return next action suggestions for overview UI."""
+        self.ensure_one()
+        self.check_access_rights("read")
+        self.check_access_rule("read")
+        service = self.env["sc.project.next_action.service"]
+        return service.get_next_actions(self, limit=limit)
+
     def action_open_project_progress_entry(self):
         return self._action_open_related('smart_construction_core.action_project_progress_entry')
 

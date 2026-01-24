@@ -22,6 +22,7 @@
         # 基础数据
         'data/sequence.xml',
         'data/project_stage_data.xml',
+        'data/project_next_action_rules.xml',
         'data/cron_signup_throttle_gc.xml',
 
         # 安全

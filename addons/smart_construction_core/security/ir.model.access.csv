@@ -78,6 +78,7 @@ access_project_budget_line_user,access_project_budget_line_user,model_project_bu
 access_project_wbs_user,access_project_wbs_user,model_project_wbs,smart_construction_core.group_sc_cap_project_user,1,0,0,0
 access_project_dictionary_user,project.dictionary.user,model_project_dictionary,smart_construction_core.group_sc_cap_data_read,1,0,0,0
 access_project_dictionary_manager,project.dictionary.manager,model_project_dictionary,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_project_stage_requirement_wizard,sc.project.stage.requirement.wizard,model_sc_project_stage_requirement_wizard,smart_construction_core.group_sc_cap_project_read,1,0,0,0
 access_quota_import_wizard_manager,quota.import.wizard.manager,model_quota_import_wizard,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_project_settlement_manager,project.settlement.manager,model_project_settlement,smart_construction_core.group_sc_cap_finance_manager,1,1,1,1
 access_project_settlement_user,project.settlement.user,model_project_settlement,smart_construction_core.group_sc_cap_finance_user,1,1,1,0
@@ -121,3 +122,5 @@ access_sc_partner_contact_manager,sc.partner.contact.manager,base.model_res_part
 access_sc_audit_log_system,sc.audit.log.system,model_sc_audit_log,base.group_system,1,1,1,1
 access_sc_audit_log_admin,sc.audit.log.admin,model_sc_audit_log,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_signup_throttle_admin,sc.signup.throttle.admin,model_sc_signup_throttle,base.group_system,1,1,1,1
+access_sc_project_next_action_rule_admin,sc.project.next.action.rule.admin,model_sc_project_next_action_rule,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_project_next_action_rule_read,sc.project.next.action.rule.read,model_sc_project_next_action_rule,smart_construction_core.group_sc_cap_project_read,1,0,0,0
