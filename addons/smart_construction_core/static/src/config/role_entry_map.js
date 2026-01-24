@@ -7,8 +7,12 @@ export const ROLE_ENTRY_MAP = [
     icon: "P",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_sc_project_project",
-      action_xmlid: "smart_construction_core.action_sc_project_list",
+      action_xmlid: "smart_construction_core.action_sc_project_my_list",
     },
+    quick_actions: [
+      { label: "新建项目", action_xmlid: "smart_construction_core.action_project_initiation" },
+      { label: "项目看板", action_xmlid: "smart_construction_core.action_project_dashboard" },
+    ],
   },
   {
     key: "contract_work",
@@ -16,8 +20,12 @@ export const ROLE_ENTRY_MAP = [
     icon: "C",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_sc_contract_income",
-      action_xmlid: "smart_construction_core.action_construction_contract_income",
+      action_xmlid: "smart_construction_core.action_construction_contract_my",
     },
+    quick_actions: [
+      { label: "收入合同", action_xmlid: "smart_construction_core.action_construction_contract_income" },
+      { label: "支出合同", action_xmlid: "smart_construction_core.action_construction_contract_expense" },
+    ],
   },
   {
     key: "cost_work",
@@ -25,8 +33,12 @@ export const ROLE_ENTRY_MAP = [
     icon: "K",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_sc_project_cost_ledger",
-      action_xmlid: "smart_construction_core.action_project_cost_ledger",
+      action_xmlid: "smart_construction_core.action_project_cost_ledger_my",
     },
+    quick_actions: [
+      { label: "成本台账", action_xmlid: "smart_construction_core.action_project_cost_ledger" },
+      { label: "项目预算", action_xmlid: "smart_construction_core.action_project_budget" },
+    ],
   },
   {
     key: "finance_work",
@@ -34,7 +46,11 @@ export const ROLE_ENTRY_MAP = [
     icon: "F",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_payment_request",
-      action_xmlid: "smart_construction_core.action_payment_request",
+      action_xmlid: "smart_construction_core.action_payment_request_my",
     },
+    quick_actions: [
+      { label: "待我审批", action_xmlid: "smart_construction_core.action_sc_tier_review_my_payment_request" },
+      { label: "资金台账", action_xmlid: "smart_construction_core.action_sc_treasury_ledger" },
+    ],
   },
 ];
