@@ -83,16 +83,15 @@ export class ScNextActionsWidget extends Component {
   async onActionClick(item) {
     if (!item) return;
     try {
-      if (item.action_type === "act_window_xmlid") {
-        await this.action.doAction(item.action_ref, { clearBreadcrumbs: false });
-        return;
+      const result = await this.orm.call(this.model, "sc_execute_next_action", [
+        [this.resId],
+        item.action_type,
+        item.action_ref,
+      ]);
+      if (result) {
+        await this.action.doAction(result, { clearBreadcrumbs: false });
       }
-      if (item.action_type === "object_method") {
-        const result = await this.orm.call(this.model, item.action_ref, [[this.resId]]);
-        if (result) await this.action.doAction(result, { clearBreadcrumbs: false });
-        await this.load();
-        return;
-      }
+      await this.load();
     } catch (err) {
       this.notification.add("执行下一步动作失败，请稍后重试。", { type: "danger" });
     }

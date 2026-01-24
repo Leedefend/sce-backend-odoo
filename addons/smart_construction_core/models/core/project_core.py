@@ -1455,6 +1455,28 @@ class ProjectProject(models.Model):
         service = self.env["sc.project.next_action.service"]
         return service.get_next_actions(self, limit=limit)
 
+    def sc_execute_next_action(self, action_type, action_ref):
+        """Execute next action target and return action dict if needed."""
+        self.ensure_one()
+        self.check_access_rights("read")
+        self.check_access_rule("read")
+        if action_type == "act_window_xmlid":
+            try:
+                action = self.env.ref(action_ref).read()[0]
+            except Exception:
+                return False
+            ctx = dict(action.get("context") or {})
+            ctx.setdefault("default_project_id", self.id)
+            ctx.setdefault("search_default_project_id", self.id)
+            action["context"] = ctx
+            return action
+        if action_type == "object_method":
+            method = getattr(self, action_ref, None)
+            if not method:
+                return False
+            return method()
+        return False
+
     def action_open_project_progress_entry(self):
         return self._action_open_related('smart_construction_core.action_project_progress_entry')
 
