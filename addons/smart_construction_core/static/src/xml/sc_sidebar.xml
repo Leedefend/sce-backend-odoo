@@ -92,71 +92,104 @@
                             </div>
                         </section>
                     </t>
-                    <t t-foreach="sectionsForRender" t-as="section" t-key="section.id">
-                        <section class="sc-sidebar__section">
-                            <div class="sc-sidebar__title">
+                    <t t-foreach="sectionsForRender" t-as="domain" t-key="domain.id">
+                        <section class="sc-sidebar__section sc-sidebar__section--domain">
+                            <div class="sc-sidebar__title sc-sidebar__title--domain">
                                 <button type="button"
                                         class="sc-sidebar__titleButton"
-                                        t-on-click="() => onSectionTitleClick(section)">
+                                        t-on-click="() => onDomainTitleClick(domain)">
+                                    <span class="sc-sidebar__domainIcon" t-if="domain.icon" aria-hidden="true">
+                                        <t t-esc="domain.icon"/>
+                                    </span>
                                     <span class="sc-sidebar__titleText">
-                                        <t t-if="section._label">
-                                            <t t-foreach="section._label" t-as="token" t-key="token_index">
+                                        <t t-if="domain._label">
+                                            <t t-foreach="domain._label" t-as="token" t-key="token_index">
                                                 <span t-att-class="token.match ? 'sc-sidebar__highlight' : ''">
                                                     <t t-esc="token.text"/>
                                                 </span>
                                             </t>
                                         </t>
-                                        <t t-else=""><t t-esc="section.name"/></t>
+                                        <t t-else=""><t t-esc="domain.name"/></t>
                                     </span>
                                 </button>
                                 <button type="button"
                                         class="sc-sidebar__toggleButton"
-                                        t-att-aria-expanded="section.isOpen || state.searchTerm ? 'true' : 'false'"
-                                        t-on-click="() => toggleSection(section.id)"
+                                        t-att-aria-expanded="domain.isOpen || state.searchTerm ? 'true' : 'false'"
+                                        t-on-click="() => toggleDomain(domain.id)"
                                         aria-label="展开或收起">
-                                    <span class="sc-sidebar__chev" t-att-class="section.isOpen ? 'is-open' : ''">▸</span>
+                                    <span class="sc-sidebar__chev" t-att-class="domain.isOpen ? 'is-open' : ''">▸</span>
                                 </button>
                             </div>
                             <div class="sc-sidebar__items"
-                                 t-att-class="section.isOpen || state.searchTerm ? '' : 'is-collapsed'">
-                                <t t-if="section.showOverviewEntry">
-                                    <a class="sc-sidebar__item"
-                                       t-att-class="section.id === state.activeMenuId ? 'is-active' : ''"
-                                       t-on-click.prevent="() => openMenu(section.id, section.overviewActionId || section.actionId, section.name)"
-                                       t-attf-href="#menu_id=#{section.id}&amp;action=#{section.overviewActionId || section.actionId}">
-                                        <span class="sc-sidebar__itemLabel">概览</span>
-                                        <button type="button"
-                                                class="sc-sidebar__favButton"
-                                                t-att-class="isFavorite(section.id) ? 'is-active' : ''"
-                                                t-on-click.stop="() => toggleFavorite(section.id, section.actionId, section.name)"
-                                                aria-label="收藏">
-                                            ★
-                                        </button>
-                                    </a>
-                                </t>
-                                <t t-foreach="section.children" t-as="child" t-key="child.id">
-                                    <a class="sc-sidebar__item sc-sidebar__item--child"
-                                       t-att-class="child.id === state.activeMenuId ? 'is-active' : ''"
-                                       t-on-click.prevent="() => openMenu(child.id, child.actionId, child.name)"
-                                       t-attf-href="#menu_id=#{child.id}&amp;action=#{child.actionId}">
-                                        <span class="sc-sidebar__itemLabel">
-                                            <t t-if="child._label">
-                                                <t t-foreach="child._label" t-as="token" t-key="token_index">
-                                                    <span t-att-class="token.match ? 'sc-sidebar__highlight' : ''">
-                                                        <t t-esc="token.text"/>
-                                                    </span>
-                                                </t>
+                                 t-att-class="domain.isOpen || state.searchTerm ? '' : 'is-collapsed'">
+                                <t t-foreach="domain.sections" t-as="section" t-key="section.id">
+                                    <section class="sc-sidebar__section">
+                                        <div class="sc-sidebar__title">
+                                            <button type="button"
+                                                    class="sc-sidebar__titleButton"
+                                                    t-on-click="() => onSectionTitleClick(section)">
+                                                <span class="sc-sidebar__titleText">
+                                                    <t t-if="section._label">
+                                                        <t t-foreach="section._label" t-as="token" t-key="token_index">
+                                                            <span t-att-class="token.match ? 'sc-sidebar__highlight' : ''">
+                                                                <t t-esc="token.text"/>
+                                                            </span>
+                                                        </t>
+                                                    </t>
+                                                    <t t-else=""><t t-esc="section.name"/></t>
+                                                </span>
+                                            </button>
+                                            <button type="button"
+                                                    class="sc-sidebar__toggleButton"
+                                                    t-att-aria-expanded="section.isOpen || state.searchTerm ? 'true' : 'false'"
+                                                    t-on-click="() => toggleSection(section.id)"
+                                                    aria-label="展开或收起">
+                                                <span class="sc-sidebar__chev" t-att-class="section.isOpen ? 'is-open' : ''">▸</span>
+                                            </button>
+                                        </div>
+                                        <div class="sc-sidebar__items"
+                                             t-att-class="section.isOpen || state.searchTerm ? '' : 'is-collapsed'">
+                                            <t t-if="section.showOverviewEntry">
+                                                <a class="sc-sidebar__item"
+                                                   t-att-class="section.id === state.activeMenuId ? 'is-active' : ''"
+                                                   t-on-click.prevent="() => openMenu(section.id, section.overviewActionId || section.actionId, section.name)"
+                                                   t-attf-href="#menu_id=#{section.id}&amp;action=#{section.overviewActionId || section.actionId}">
+                                                    <span class="sc-sidebar__itemLabel">概览</span>
+                                                    <button type="button"
+                                                            class="sc-sidebar__favButton"
+                                                            t-att-class="isFavorite(section.id) ? 'is-active' : ''"
+                                                            t-on-click.stop="() => toggleFavorite(section.id, section.actionId, section.name)"
+                                                            aria-label="收藏">
+                                                        ★
+                                                    </button>
+                                                </a>
                                             </t>
-                                            <t t-else=""><t t-esc="child.name"/></t>
-                                        </span>
-                                        <button type="button"
-                                                class="sc-sidebar__favButton"
-                                                t-att-class="isFavorite(child.id) ? 'is-active' : ''"
-                                                t-on-click.stop="() => toggleFavorite(child.id, child.actionId, child.name)"
-                                                aria-label="收藏">
-                                            ★
-                                        </button>
-                                    </a>
+                                            <t t-foreach="section.children" t-as="child" t-key="child.id">
+                                                <a class="sc-sidebar__item sc-sidebar__item--child"
+                                                   t-att-class="child.id === state.activeMenuId ? 'is-active' : ''"
+                                                   t-on-click.prevent="() => openMenu(child.id, child.actionId, child.name)"
+                                                   t-attf-href="#menu_id=#{child.id}&amp;action=#{child.actionId}">
+                                                    <span class="sc-sidebar__itemLabel">
+                                                        <t t-if="child._label">
+                                                            <t t-foreach="child._label" t-as="token" t-key="token_index">
+                                                                <span t-att-class="token.match ? 'sc-sidebar__highlight' : ''">
+                                                                    <t t-esc="token.text"/>
+                                                                </span>
+                                                            </t>
+                                                        </t>
+                                                        <t t-else=""><t t-esc="child.name"/></t>
+                                                    </span>
+                                                    <button type="button"
+                                                            class="sc-sidebar__favButton"
+                                                            t-att-class="isFavorite(child.id) ? 'is-active' : ''"
+                                                            t-on-click.stop="() => toggleFavorite(child.id, child.actionId, child.name)"
+                                                            aria-label="收藏">
+                                                        ★
+                                                    </button>
+                                                </a>
+                                            </t>
+                                        </div>
+                                    </section>
                                 </t>
                             </div>
                         </section>

@@ -26,7 +26,7 @@
               sequence="10"
               groups="smart_construction_core.group_sc_cap_project_read"/>
     <menuitem id="menu_sc_project_project"
-              name="项目列表"
+              name="项目台账（试点）"
               parent="menu_sc_project_center"
               action="action_sc_project_list"
               sequence="10"
@@ -38,7 +38,7 @@
               sequence="5"
               groups="smart_construction_core.group_sc_cap_project_read"/>
     <menuitem id="menu_sc_project_budget_center"
-              name="项目预算"
+              name="预算/成本"
               parent="menu_sc_project_center"
               action="action_project_budget"
               sequence="30"
@@ -76,7 +76,7 @@
 
     <!-- 合同中心 -->
     <menuitem id="menu_sc_contract_center"
-              name="合同中心"
+              name="合同台账"
               parent="menu_sc_root"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
@@ -106,7 +106,7 @@
 
     <!-- 成控中心 -->
     <menuitem id="menu_sc_cost_center"
-              name="成控中心"
+              name="费用/成本"
               parent="menu_sc_root"
               action="smart_construction_core.action_project_cost_compare"
               sequence="25"
@@ -169,7 +169,7 @@
 
     <!-- 物资中心 -->
     <menuitem id="menu_sc_material_center"
-              name="物资中心"
+              name="物资/采购"
               parent="menu_sc_root"
               sequence="30"
               groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
@@ -195,7 +195,7 @@
 
     <!-- 配置中心 -->
     <menuitem id="menu_sc_config_center"
-              name="配置"
+              name="配置中心"
               parent="menu_sc_root"
               sequence="90"
               groups="smart_construction_core.group_sc_cap_config_admin"/>
