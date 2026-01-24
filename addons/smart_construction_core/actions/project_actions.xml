@@ -4,7 +4,7 @@
         <field name="name">我的项目</field>
         <field name="res_model">project.project</field>
         <field name="view_mode">tree,form,kanban</field>
-        <field name="domain">[('manager_id', '=', uid)]</field>
+        <field name="domain">['|', ('manager_id', '=', uid), '|', ('owner_id', '=', uid), ('user_id', '=', uid)]</field>
         <field name="context">{'search_default_filter_my_projects': 1}</field>
         <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
         <field name="views" eval="[(ref('smart_construction_core.view_project_my_list_tree'), 'tree'), (False, 'form'), (False, 'kanban')]"/>

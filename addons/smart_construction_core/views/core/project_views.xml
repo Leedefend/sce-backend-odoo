@@ -52,7 +52,7 @@
             <xpath expr="//search" position="inside">
                 <filter name="filter_my_projects"
                         string="我的项目"
-                        domain="[('manager_id', '=', uid)]"/>
+                        domain="['|', ('manager_id', '=', uid), '|', ('owner_id', '=', uid), ('user_id', '=', uid)]"/>
                 <filter name="filter_draft"
                         string="草稿"
                         domain="[('lifecycle_state', '=', 'draft')]"/>
