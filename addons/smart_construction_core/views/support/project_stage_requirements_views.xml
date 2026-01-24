@@ -11,7 +11,18 @@
                         <field name="lifecycle_state" readonly="1"/>
                     </group>
                     <group>
-                        <field name="checklist" readonly="1" nolabel="1"/>
+                        <field name="line_ids" nolabel="1">
+                            <tree string="阶段要求" editable="false">
+                                <field name="name"/>
+                                <field name="required"/>
+                                <field name="action_xmlid" invisible="1"/>
+                                <button name="action_go"
+                                        type="object"
+                                        string="去完成"
+                                        class="btn-link"
+                                        invisible="action_xmlid == False"/>
+                            </tree>
+                        </field>
                     </group>
                 </sheet>
                 <footer>

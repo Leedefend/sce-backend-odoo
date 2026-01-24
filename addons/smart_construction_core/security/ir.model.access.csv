@@ -122,5 +122,8 @@ access_sc_partner_contact_manager,sc.partner.contact.manager,base.model_res_part
 access_sc_audit_log_system,sc.audit.log.system,model_sc_audit_log,base.group_system,1,1,1,1
 access_sc_audit_log_admin,sc.audit.log.admin,model_sc_audit_log,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_signup_throttle_admin,sc.signup.throttle.admin,model_sc_signup_throttle,base.group_system,1,1,1,1
+access_sc_project_stage_requirement_item_admin,sc.project.stage.requirement.item.admin,model_sc_project_stage_requirement_item,smart_construction_core.group_sc_super_admin,1,1,1,1
+access_sc_project_stage_requirement_item_read,sc.project.stage.requirement.item.read,model_sc_project_stage_requirement_item,smart_construction_core.group_sc_cap_project_read,1,0,0,0
+access_sc_project_stage_requirement_wizard_line_user,sc.project.stage.requirement.wizard.line.user,model_sc_project_stage_requirement_wizard_line,smart_construction_core.group_sc_cap_project_read,1,1,1,1
 access_sc_project_next_action_rule_admin,sc.project.next.action.rule.admin,model_sc_project_next_action_rule,smart_construction_core.group_sc_super_admin,1,1,1,1
 access_sc_project_next_action_rule_read,sc.project.next.action.rule.read,model_sc_project_next_action_rule,smart_construction_core.group_sc_cap_project_read,1,0,0,0
