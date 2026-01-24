@@ -4,6 +4,7 @@ import { Component, onMounted, onWillStart, onWillUnmount, useState } from "@odo
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { ScCompanySwitcherSidebar } from "./sc_company_switcher_sidebar";
+import { DOMAIN_NAV_MAP, DEFAULT_DOMAIN_KEY, PINNED_ENTRIES } from "@smart_construction_core/config/domain_nav_map";
 
 const mainComponents = registry.category("main_components");
 const ROOT_XMLID = "smart_construction_core.menu_sc_root";
@@ -22,10 +23,25 @@ const DEBUG_ENABLED = Boolean(
   (window.odoo && window.odoo.__DEBUG__) || /\bdebug\b/.test(window.location.search || "")
 );
 
+export class ScSidebarHeader extends Component {
+  static template = "smart_construction_core.ScSidebarHeader";
+  static props = {};
+  static components = { ScCompanySwitcherSidebar };
+
+  setup() {
+    this.user = useService("user");
+  }
+
+  get userLabel() {
+    if (!this.user) return "";
+    return this.user.name || this.user.userName || this.user.displayName || "";
+  }
+}
+
 export class ScSidebar extends Component {
   static template = "smart_construction_core.ScSidebar";
   static props = {};
-  static components = { ScCompanySwitcherSidebar };
+  static components = { ScCompanySwitcherSidebar, ScSidebarHeader };
 
   setup() {
     this.orm = useService("orm");
@@ -43,6 +59,7 @@ export class ScSidebar extends Component {
       searchTerm: "",
       recentMenus: [],
       favoriteMenus: [],
+      pinnedEntries: [],
       debugMessage: "",
       showOverview: SHOW_OVERVIEW,
       allowedCompanies: [],
@@ -61,8 +78,13 @@ export class ScSidebar extends Component {
       if (DEBUG_ENABLED) console.log("[SC][sidebar]", ...args);
     };
     this.toggleSection = (sectionId) => {
-      const section = this.state.sections.find((item) => item.id === sectionId);
+      const section = findSectionById(this.state.sections, sectionId);
       if (section) section.isOpen = !section.isOpen;
+      this.persistOpenSections();
+    };
+    this.toggleDomain = (domainId) => {
+      const domain = this.state.sections.find((item) => item.id === domainId);
+      if (domain) domain.isOpen = !domain.isOpen;
       this.persistOpenSections();
     };
     this.onSectionTitleClick = (section) => {
@@ -77,9 +99,24 @@ export class ScSidebar extends Component {
       }
       this.toggleSection(section.id);
     };
+    this.onDomainTitleClick = (domain) => {
+      if (!domain) return;
+      this.toggleDomain(domain.id);
+    };
+    this.openPinnedEntry = async (entry) => {
+      if (!entry || entry.disabled) return;
+      if (entry.menuId && entry.actionId) {
+        await this.openMenu(entry.menuId, entry.actionId, entry.name);
+        return;
+      }
+      if (entry.actionId) {
+        await this.action.doAction(entry.actionId, { clearBreadcrumbs: false });
+      }
+    };
     this.openMenu = async (menuId, actionId, label) => {
       this.state.activeMenuId = menuId;
       this.addRecentMenu(menuId, actionId, label);
+      setHashParams({ menu_id: menuId, action: actionId });
       if (actionId) {
         await this.action.doAction(actionId, { clearBreadcrumbs: false });
       }
@@ -87,7 +124,13 @@ export class ScSidebar extends Component {
     };
     this.persistOpenSections = () => {
       if (!this.storageKey) return;
-      const openIds = this.state.sections.filter((section) => section.isOpen).map((section) => section.id);
+      const openIds = [];
+      for (const domain of this.state.sections) {
+        if (domain.isOpen) openIds.push(domain.id);
+        for (const section of domain.sections || []) {
+          if (section.isOpen) openIds.push(section.id);
+        }
+      }
       saveOpenSectionIds(this.storageKey, openIds);
     };
     this.addRecentMenu = (menuId, actionId, label) => {
@@ -199,8 +242,18 @@ export class ScSidebar extends Component {
     }
 
     const sections = buildMenuSections(rootMenu, this.menuMap);
-    this.debugLog("sections", sections);
-    if (!sections.length) {
+    const domainSections = buildDomainSections(sections, this.menuMap);
+    for (const domain of domainSections) {
+      const isSingleSection = domain.sections.length === 1;
+      for (const section of domain.sections) {
+        section._hideTitle = shouldFlattenSection(domain, section, isSingleSection);
+        if (section._hideTitle) {
+          section.isOpen = true;
+        }
+      }
+    }
+    this.debugLog("sections", domainSections);
+    if (!domainSections.length) {
       this.state.visible = false;
       this.state.debugMessage = DEBUG_ENABLED ? "No visible sections for root menu." : "";
       this._loading = false;
@@ -210,20 +263,30 @@ export class ScSidebar extends Component {
     const activeId = getActiveMenuId();
     this.state.activeMenuId = activeId;
     const storedOpen = this.storageKey ? loadOpenSectionIds(this.storageKey) : null;
-    for (const section of sections) {
-      section.isOpen = storedOpen ? storedOpen.includes(section.id) : false;
-      if (section.id === activeId || section.children.some((child) => child.id === activeId)) {
-        section.isOpen = true;
+    for (const domain of domainSections) {
+      domain.isOpen = storedOpen ? storedOpen.includes(domain.id) : false;
+      for (const section of domain.sections) {
+        section.isOpen = storedOpen ? storedOpen.includes(section.id) : false;
+        if (section.id === activeId || section.children.some((child) => child.id === activeId)) {
+          section.isOpen = true;
+          domain.isOpen = true;
+        }
+        if (section._hideTitle) {
+          section.isOpen = true;
+        }
       }
     }
-    if (!sections.some((section) => section.isOpen)) {
-      sections[0].isOpen = true;
+    if (!domainSections.some((domain) => domain.isOpen)) {
+      const defaultDomain = domainSections.find((domain) => domain.key === "project_center");
+      if (defaultDomain) defaultDomain.isOpen = true;
+      else domainSections[0].isOpen = true;
     }
-    this.state.sections = sections;
+    this.state.sections = domainSections;
+    this.state.pinnedEntries = buildPinnedEntries(PINNED_ENTRIES, menus, this.menuMap);
     this.state.visible = true;
     this.state.debugMessage = "";
     this._lastCompanyKey = getCompanyKeyFromHash() || getCompanyKey(this.user);
-    this.menuIndex = buildMenuIndex(sections);
+    this.menuIndex = buildMenuIndex(domainSections);
     this.state.recentMenus = loadMenuEntries(this.recentKey);
     this.state.favoriteMenus = loadMenuEntries(this.favoriteKey);
     this.syncCompanyState();
@@ -240,10 +303,8 @@ export class ScSidebar extends Component {
 
   syncActiveMenu() {
     const id = getActiveMenuId();
-    if (id) {
-      this.state.activeMenuId = id;
-      this.scrollActiveIntoView();
-    }
+    this.state.activeMenuId = id || 0;
+    if (id) this.scrollActiveIntoView();
     this.maybeReloadForCompany();
   }
 
@@ -278,23 +339,56 @@ export class ScSidebar extends Component {
     const term = normalizeSearch(this.state.searchTerm);
     if (!term) return this.state.sections;
     const parts = term.split(/\s+/).filter(Boolean);
-    const filtered = [];
-    for (const section of this.state.sections) {
-      const sectionName = resolveName(section.name);
-      const sectionMatch = matchesText(sectionName, parts);
-      const sectionLabel = highlightLabel(sectionName, parts);
-      if (sectionMatch) {
-        filtered.push({ ...section, isOpen: true, _label: sectionLabel });
+    const filteredDomains = [];
+    for (const domain of this.state.sections) {
+      const domainName = resolveName(domain.name);
+      const domainMatch = matchesText(domainName, parts);
+      const domainLabel = highlightLabel(domainName, parts);
+      const matchedSections = [];
+      for (const section of domain.sections) {
+        const sectionName = resolveName(section.name);
+        const sectionMatch = matchesText(sectionName, parts);
+        const sectionLabel = highlightLabel(sectionName, parts);
+        if (sectionMatch) {
+          matchedSections.push({
+            ...section,
+            isOpen: true,
+            _label: sectionLabel,
+            _hideTitle: shouldFlattenSection(domain, section, domain.sections.length === 1),
+          });
+          continue;
+        }
+        const children = section.children
+          .filter((child) => matchesText(resolveName(child.name), parts))
+          .map((child) => ({ ...child, _label: highlightLabel(resolveName(child.name), parts) }));
+        if (children.length) {
+          matchedSections.push({
+            ...section,
+            children,
+            isOpen: true,
+            _label: sectionLabel,
+            _hideTitle: shouldFlattenSection(domain, section, domain.sections.length === 1),
+          });
+        }
+      }
+      if (domainMatch) {
+        filteredDomains.push({
+          ...domain,
+          isOpen: true,
+          _label: domainLabel,
+          sections: domain.sections.map((section) => ({
+            ...section,
+            isOpen: section._hideTitle ? true : section.isOpen,
+            _hideTitle: shouldFlattenSection(domain, section, domain.sections.length === 1),
+          })),
+        });
         continue;
       }
-      const children = section.children
-        .filter((child) => matchesText(resolveName(child.name), parts))
-        .map((child) => ({ ...child, _label: highlightLabel(resolveName(child.name), parts) }));
-      if (children.length) {
-        filtered.push({ ...section, children, isOpen: true, _label: sectionLabel });
+      if (matchedSections.length) {
+        filteredDomains.push({ ...domain, sections: matchedSections, isOpen: true, _label: domainLabel });
       }
     }
-    return filtered;
+    return filteredDomains;
   }
 
   get recentForRender() {
@@ -491,20 +585,52 @@ export function parseActionId(menu) {
   return Number.isNaN(id) ? null : id;
 }
 
+function resolveNodeAction(node, menuMap) {
+  const actionId = parseActionId(node);
+  if (actionId) return { actionId, disabled: false };
+  const fallback = findFirstActionMenu(node, menuMap);
+  if (fallback) return { actionId: parseActionId(fallback), disabled: false };
+  return { actionId: null, disabled: true };
+}
+
 function findFirstActionMenu(menu, menuMap) {
+  const candidates = collectActionCandidates(menu, menuMap);
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => {
+    const scoreA = scoreViewMode(a);
+    const scoreB = scoreViewMode(b);
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    return sortBySequenceThenName(a, b, menuMap);
+  });
+  return candidates[0] || null;
+}
+
+function collectActionCandidates(menu, menuMap) {
+  const out = [];
   const queue = [menu];
   while (queue.length) {
     const node = queue.shift();
-    if (parseActionId(node)) return node;
-    const children = resolveChildren(node, menuMap);
+    if (parseActionId(node)) out.push(node);
+    const children = resolveChildren(node, menuMap).slice();
+    children.sort((a, b) => sortBySequenceThenName(a, b, menuMap));
     for (const child of children) queue.push(child);
   }
-  return null;
+  return out;
+}
+
+function scoreViewMode(node) {
+  const raw = node && (node.view_mode || node.viewMode);
+  const viewMode = raw ? String(raw).toLowerCase() : "";
+  if (viewMode.includes("tree") || viewMode.includes("list")) return 0;
+  if (viewMode.includes("kanban")) return 1;
+  if (viewMode.includes("form")) return 2;
+  return 9;
 }
 
 export function buildMenuSections(rootMenu, menuMap) {
   const sections = [];
-  const children = resolveChildren(rootMenu, menuMap);
+  const children = resolveChildren(rootMenu, menuMap).slice();
+  children.sort((a, b) => sortBySequenceThenName(a, b, menuMap));
   if (!OVERVIEW_MENU_IDS.size) {
     for (const child of children) {
       const menuRecord = menuMap && menuMap[child.id] ? menuMap[child.id] : child;
@@ -525,6 +651,7 @@ export function buildMenuSections(rootMenu, menuMap) {
       xmlid: menuRecord && menuRecord.xmlid ? menuRecord.xmlid : null,
       showOverviewEntry: false,
       children: [],
+      sequence: resolveMenuSequence(child, menuRecord),
     };
     item.showOverviewEntry = shouldShowOverviewEntry(item);
     if (item.showOverviewEntry) {
@@ -532,28 +659,34 @@ export function buildMenuSections(rootMenu, menuMap) {
     }
     const sub = resolveChildren(child, menuMap);
     for (const node of sub) {
-      const nodeAction = parseActionId(node);
-      if (nodeAction) {
+      const resolved = resolveNodeAction(node, menuMap);
+      const entryName = resolveName(node && node.name);
+      const sequence = resolveMenuSequence(node, menuMap && menuMap[node.id] ? menuMap[node.id] : node);
+      if (resolved.actionId) {
         item.children.push({
           id: node.id,
-          name: resolveName(node && node.name),
-          actionId: nodeAction,
+          name: entryName,
+          actionId: resolved.actionId,
+          sequence,
         });
         continue;
       }
-      const fallback = findFirstActionMenu(node, menuMap);
-      if (fallback) {
+      if (entryName) {
         item.children.push({
-          id: fallback.id,
-          name: resolveName(node && node.name),
-          actionId: parseActionId(fallback),
+          id: node.id,
+          name: entryName,
+          actionId: null,
+          disabled: true,
+          sequence,
         });
       }
     }
+    item.children.sort((a, b) => sortBySequenceThenName(a, b, menuMap));
     if (item.actionId || item.children.length) {
       sections.push(item);
     }
   }
+  sections.sort((a, b) => sortBySequenceThenName(a, b, menuMap));
   return sections;
 }
 
@@ -577,19 +710,154 @@ function resolveName(name) {
   return String(name);
 }
 
+function shouldFlattenSection(domain, section, isSingleSection) {
+  if (!domain || !section) return false;
+  if (isSingleSection) return true;
+  if (!section.children || !section.children.length) return false;
+  const domainName = resolveName(domain.name);
+  const sectionName = resolveName(section.name);
+  if (domainName && sectionName && domainName === sectionName) return true;
+  if (Array.isArray(domain.menu_xmlids) && domain.menu_xmlids.includes(section.xmlid)) return true;
+  return false;
+}
+
 function findFirstActionFromSections(sections) {
-  for (const section of sections) {
-    if (section.actionId) return { menuId: section.id, actionId: section.actionId };
-    for (const child of section.children) {
-      if (child.actionId) return { menuId: child.id, actionId: child.actionId };
+  for (const domain of sections) {
+    for (const section of domain.sections) {
+      if (section.actionId) return { menuId: section.id, actionId: section.actionId };
+      for (const child of section.children) {
+        if (child.actionId) return { menuId: child.id, actionId: child.actionId };
+      }
     }
   }
   return null;
 }
 
-function getStorageKey(user, prefix) {
+function findSectionById(domains, sectionId) {
+  for (const domain of domains) {
+    for (const section of domain.sections) {
+      if (section.id === sectionId) return section;
+    }
+  }
+  return null;
+}
+
+function resolveMenuSequence(node, menuRecord) {
+  if (menuRecord && typeof menuRecord.sequence === "number") return menuRecord.sequence;
+  if (node && typeof node.sequence === "number") return node.sequence;
+  return 0;
+}
+
+function sortBySequenceThenName(a, b, menuMap) {
+  const seqA = resolveMenuSequence(a, menuMap && menuMap[a.id] ? menuMap[a.id] : a);
+  const seqB = resolveMenuSequence(b, menuMap && menuMap[b.id] ? menuMap[b.id] : b);
+  if (seqA !== seqB) return seqA - seqB;
+  const nameA = resolveName(a && a.name);
+  const nameB = resolveName(b && b.name);
+  return nameA.localeCompare(nameB, "zh-Hans-CN");
+}
+
+function normalizeDomainMap() {
+  const map = Array.isArray(DOMAIN_NAV_MAP) ? DOMAIN_NAV_MAP : [];
+  const normalized = map
+    .map((domain) => ({
+      key: domain.key,
+      name: domain.name_cn || domain.name || domain.key,
+      icon: domain.icon || "",
+      sequence: typeof domain.sequence === "number" ? domain.sequence : 0,
+      menu_xmlids: Array.isArray(domain.menu_xmlids) ? domain.menu_xmlids : [],
+      menu_name_keywords: Array.isArray(domain.menu_name_keywords) ? domain.menu_name_keywords : [],
+    }))
+    .sort((a, b) => a.sequence - b.sequence);
+  return ensureDefaultDomain(normalized);
+}
+
+function ensureDefaultDomain(domainMap) {
+  const out = Array.isArray(domainMap) ? domainMap.slice() : [];
+  if (!out.some((item) => item.key === DEFAULT_DOMAIN_KEY)) {
+    out.push({
+      key: DEFAULT_DOMAIN_KEY,
+      name: "其他",
+      icon: "",
+      sequence: 9999,
+      menu_xmlids: [],
+      menu_name_keywords: [],
+    });
+  }
+  return out;
+}
+
+function mapSectionToDomain(section, domainMap) {
+  if (!section) return null;
+  const xmlid = section.xmlid || section.menu_xmlid || "";
+  if (xmlid) {
+    for (const domain of domainMap) {
+      if (domain.menu_xmlids.includes(xmlid)) return domain;
+    }
+  }
+  const name = resolveName(section.name);
+  if (name) {
+    const hits = [];
+    for (const domain of domainMap) {
+      if (domain.menu_name_keywords.some((keyword) => name.includes(keyword))) {
+        hits.push(domain);
+      }
+    }
+    if (hits.length === 1) return hits[0];
+    if (hits.length > 1) {
+      console.warn("[sc_sidebar] domain keyword conflict", {
+        name,
+        xmlid,
+        hits: hits.map((hit) => hit.key),
+      });
+      return null;
+    }
+  }
+  return null;
+}
+
+function buildDomainSections(menuSections, menuMap) {
+  const domainMap = normalizeDomainMap();
+  const buckets = new Map();
+  const defaultDomain =
+    domainMap.find((item) => item.key === DEFAULT_DOMAIN_KEY) || ensureDefaultDomain([])[0];
+  for (const section of menuSections) {
+    const domain = mapSectionToDomain(section, domainMap) || defaultDomain;
+    if (!buckets.has(domain.key)) {
+      buckets.set(domain.key, {
+        id: `domain:${domain.key}`,
+        key: domain.key,
+        name: domain.name,
+        icon: domain.icon,
+        sequence: domain.sequence,
+        sections: [],
+        isOpen: false,
+      });
+    }
+    buckets.get(domain.key).sections.push(section);
+  }
+  const out = Array.from(buckets.values());
+  for (const domain of out) {
+    domain.sections.sort((a, b) => sortBySequenceThenName(a, b, menuMap));
+  }
+  out.sort((a, b) => a.sequence - b.sequence);
+  return out;
+}
+
+function getStorageKey(user, suffix) {
   const userId = getUserId(user);
-  return `${prefix}_${userId || "guest"}`;
+  const { db, uid } = getSessionKeyParts(userId);
+  return {
+    key: `sc:${db}:${uid}:sidebar:${suffix}`,
+    legacy: suffix,
+  };
+}
+
+function getSessionKeyParts(userId) {
+  const session = window.odoo && window.odoo.session_info ? window.odoo.session_info : {};
+  const db = session.db || session.database || "unknown";
+  const uid = typeof session.uid === "number" ? session.uid : userId || 0;
+  return { db, uid };
 }
 
 function getUserId(user) {
@@ -600,26 +868,61 @@ function getUserId(user) {
   return null;
 }
 
-function loadOpenSectionIds(key) {
-  if (!key) return null;
+function normalizeStorageKey(key) {
+  if (!key) return { key: null, legacy: null };
+  if (typeof key === "string") return { key, legacy: null };
+  if (typeof key === "object" && key.key) return { key: key.key, legacy: key.legacy || null };
+  return { key: null, legacy: null };
+}
+
+function readStorageValue(key) {
+  const { key: storageKey, legacy } = normalizeStorageKey(key);
+  if (!storageKey) return null;
   try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
+    let raw = window.localStorage.getItem(storageKey);
+    if (raw === null && legacy) {
+      const legacyValue = window.localStorage.getItem(legacy);
+      if (legacyValue !== null) {
+        window.localStorage.setItem(storageKey, legacyValue);
+        raw = legacyValue;
+      }
+    }
+    return raw;
+  } catch (err) {
+    return null;
+  }
+}
+
+function writeStorageValue(key, value) {
+  const { key: storageKey } = normalizeStorageKey(key);
+  if (!storageKey) return;
+  try {
+    window.localStorage.setItem(storageKey, value);
+  } catch (err) {
+    // ignore
+  }
+}
+
+function loadOpenSectionIds(key) {
+  const raw = readStorageValue(key);
+  if (!raw) return null;
+  try {
     const ids = JSON.parse(raw);
     if (!Array.isArray(ids)) return null;
-    return ids.map((id) => parseInt(id, 10)).filter((id) => Number.isFinite(id));
+    return ids
+      .map((id) => {
+        if (typeof id === "string") return id;
+        const parsed = parseInt(id, 10);
+        return Number.isFinite(parsed) ? parsed : null;
+      })
+      .filter((id) => id !== null);
   } catch (err) {
     return null;
   }
 }
 
 function saveOpenSectionIds(key, ids) {
-  if (!key) return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(ids || []));
-  } catch (err) {
-    // ignore
-  }
+  writeStorageValue(key, JSON.stringify(ids || []));
 }
 
 function normalizeSearch(term) {
@@ -686,9 +989,9 @@ function getConfigFlag(key, fallback) {
 
 function loadMenuEntries(key) {
   if (!key) return [];
+  const raw = readStorageValue(key);
+  if (!raw) return [];
   try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return [];
     const items = JSON.parse(raw);
     if (!Array.isArray(items)) return [];
     return items
@@ -705,11 +1008,7 @@ function loadMenuEntries(key) {
 
 function saveMenuEntries(key, entries) {
   if (!key) return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(entries || []));
-  } catch (err) {
-    // ignore
-  }
+  writeStorageValue(key, JSON.stringify(entries || []));
 }
 
 function addRecentEntry(list, entry, limit) {
@@ -731,13 +1030,58 @@ function resolveMenuLabel(menuId, index) {
 
 function buildMenuIndex(sections) {
   const index = {};
-  for (const section of sections) {
-    index[section.id] = { name: section.name, actionId: section.actionId };
-    for (const child of section.children) {
-      index[child.id] = { name: child.name, actionId: child.actionId };
+  for (const domain of sections) {
+    for (const section of domain.sections) {
+      index[section.id] = { name: section.name, actionId: section.actionId };
+      for (const child of section.children) {
+        index[child.id] = { name: child.name, actionId: child.actionId };
+      }
     }
   }
   return index;
+}
+
+function buildPinnedEntries(config, menus, menuMap) {
+  const entries = Array.isArray(config) ? config : [];
+  return entries
+    .map((entry, idx) => {
+      if (!entry) return null;
+      const key = entry.key || `pinned_${idx}`;
+      const name = entry.name || "";
+      let menuId = null;
+      let actionId = null;
+      let disabled = false;
+      let menuNode = null;
+      if (entry.menu_xmlid) {
+        menuNode = findMenuByXmlid(null, menuMap || menus, entry.menu_xmlid);
+      }
+      if (menuNode) {
+        menuId = menuNode.id;
+        const resolved = resolveNodeAction(menuNode, menuMap);
+        actionId = resolved.actionId;
+        disabled = resolved.disabled;
+      }
+      if (!actionId && entry.action_xmlid) {
+        actionId = entry.action_xmlid;
+      }
+      if (!actionId) disabled = true;
+      const href = actionId
+        ? menuId
+          ? `#menu_id=${menuId}&action=${actionId}`
+          : `#action=${actionId}`
+        : "#";
+      return {
+        key,
+        name,
+        icon: entry.icon || "",
+        tag: entry.tag || "",
+        menuId,
+        actionId,
+        href,
+        disabled,
+      };
+    })
+    .filter((entry) => entry && entry.name);
 }
 
 function getCompanyKey(user) {

@@ -79,7 +79,7 @@
 
     <!-- Menu -->
     <menuitem id="menu_sc_projection_root"
-              name="看板"
+              name="看板中心"
               parent="smart_construction_core.menu_sc_root"
               sequence="35"
               groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
