@@ -61,7 +61,7 @@ export class ScSidebar extends Component {
       searchTerm: "",
       recentMenus: [],
       favoriteMenus: [],
-      roleEntries: Array.isArray(ROLE_ENTRY_MAP) ? ROLE_ENTRY_MAP : [],
+      roleEntries: [],
       enableRoleEntries: ENABLE_ROLE_ENTRIES,
       pinnedEntries: [],
       debugMessage: "",
@@ -124,6 +124,16 @@ export class ScSidebar extends Component {
       if (actionId) {
         await this.action.doAction(actionId, { clearBreadcrumbs: false });
       }
+      window.setTimeout(() => this.syncActiveMenu(), 0);
+    };
+    this.openRoleEntry = async (entry) => {
+      if (!entry || entry.disabled) return;
+      if (entry.menuId) {
+        await this.openMenu(entry.menuId, entry.actionId, entry.label);
+        return;
+      }
+      setHashParams({ action: entry.actionXmlid || entry.actionId });
+      await this.action.doAction(entry.actionXmlid || entry.actionId, { clearBreadcrumbs: false });
       window.setTimeout(() => this.syncActiveMenu(), 0);
     };
     this.persistOpenSections = () => {
@@ -286,6 +296,11 @@ export class ScSidebar extends Component {
       else domainSections[0].isOpen = true;
     }
     this.state.sections = domainSections;
+    if (this.state.enableRoleEntries) {
+      this.state.roleEntries = await buildRoleEntries(ROLE_ENTRY_MAP, this.menuMap, this.orm);
+    } else {
+      this.state.roleEntries = [];
+    }
     this.state.pinnedEntries = buildPinnedEntries(PINNED_ENTRIES, menus, this.menuMap);
     this.state.visible = true;
     this.state.debugMessage = "";
@@ -1086,6 +1101,58 @@ function buildPinnedEntries(config, menus, menuMap) {
       };
     })
     .filter((entry) => entry && entry.name);
+}
+
+async function buildRoleEntries(config, menuMap, orm) {
+  const entries = Array.isArray(config) ? config : [];
+  const out = [];
+  for (const entry of entries) {
+    if (!entry) continue;
+    const key = entry.key || "";
+    const label = entry.label || "";
+    if (!key || !label) continue;
+    const action = entry.default_action || {};
+    const menuXmlid = action.menu_xmlid || "";
+    const actionXmlid = action.action_xmlid || "";
+    let menuNode = null;
+    let menuId = null;
+    let actionId = null;
+    let disabled = false;
+    if (menuXmlid) {
+      menuNode = findMenuByXmlid(null, menuMap, menuXmlid);
+    }
+    if (menuNode) {
+      menuId = menuNode.id;
+      const resolved = resolveNodeAction(menuNode, menuMap);
+      actionId = resolved.actionId;
+      disabled = resolved.disabled;
+    } else if (actionXmlid && orm) {
+      actionId = await resolveActionXmlid(orm, actionXmlid);
+      disabled = !actionId;
+    } else {
+      disabled = true;
+    }
+    if (disabled || !actionId) continue;
+    out.push({
+      key,
+      label,
+      icon: entry.icon || "",
+      menuId,
+      actionId,
+      actionXmlid,
+    });
+  }
+  return out;
+}
+
+async function resolveActionXmlid(orm, xmlid) {
+  if (!orm || !xmlid) return null;
+  try {
+    const resId = await orm.call("ir.model.data", "xmlid_to_res_id", [xmlid, false]);
+    return typeof resId === "number" && resId > 0 ? resId : null;
+  } catch (err) {
+    return null;
+  }
 }
 
 function getCompanyKey(user) {
