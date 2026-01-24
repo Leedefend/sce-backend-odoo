@@ -128,6 +128,9 @@
             'smart_construction_core/static/src/js/insight/insight_widget.js',
             'smart_construction_core/static/src/js/insight/insight_view_widget.js',
             'smart_construction_core/static/src/scss/insight_banner.scss',
+            'smart_construction_core/static/src/js/next_actions/next_actions_widget.js',
+            'smart_construction_core/static/src/js/next_actions/next_actions_view_widget.js',
+            'smart_construction_core/static/src/scss/next_actions.scss',
         ],
         'web.assets_tests': [
             'smart_construction_core/static/tests/sc_sidebar_tests.js',
