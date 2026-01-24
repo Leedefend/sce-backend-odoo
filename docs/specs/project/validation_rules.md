@@ -27,3 +27,9 @@
 - 草稿项目可保存不完整信息
 - 立项（状态切换到 `in_progress`）时缺字段报 `ValidationError`
 - 补齐必填字段后可成功立项
+
+## UI Smoke 验收口径（Discard 按钮隐藏）
+
+- 非 `project.project`：不隐藏 discard 按钮
+- `project.project` 且非草稿态：不隐藏 discard 按钮
+- `project.project` 且草稿态且有改动（dirty）：隐藏 discard 按钮

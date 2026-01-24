@@ -9,20 +9,14 @@ patch(FormStatusIndicator.prototype, {
         if (!root) {
             return false;
         }
-        const resModel =
-            root.resModel ||
-            root.model ||
-            root.res_model ||
-            root.modelName ||
-            this.props?.resModel ||
-            "";
+        const resModel = root.resModel || this.props?.resModel || "";
         if (resModel !== "project.project") {
             return false;
         }
-        const state = root.data?.lifecycle_state || root.data?.state || "";
+        const state = root.data?.lifecycle_state || "";
         if (state !== "draft") {
             return false;
         }
-        return Boolean(root.dirty || this.state?.fieldIsDirty);
+        return Boolean(root.dirty);
     },
 });
