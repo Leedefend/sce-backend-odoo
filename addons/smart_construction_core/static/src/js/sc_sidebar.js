@@ -1150,6 +1150,18 @@ async function buildRoleEntries(config, menuMap, orm) {
       disabled = true;
     }
     if (disabled || !actionId) continue;
+    const quickActions = [];
+    const quickList = Array.isArray(entry.quick_actions) ? entry.quick_actions.slice(0, 2) : [];
+    for (const quick of quickList) {
+      if (!quick || !quick.label || !quick.action_xmlid) continue;
+      const quickId = await resolveActionXmlid(orm, quick.action_xmlid);
+      if (!quickId) continue;
+      quickActions.push({
+        label: quick.label,
+        actionId: quickId,
+        actionXmlid: quick.action_xmlid,
+      });
+    }
     out.push({
       key,
       label,
@@ -1157,6 +1169,7 @@ async function buildRoleEntries(config, menuMap, orm) {
       menuId,
       actionId,
       actionXmlid,
+      quickActions,
     });
   }
   return out;
