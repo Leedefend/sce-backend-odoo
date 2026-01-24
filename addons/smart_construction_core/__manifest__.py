@@ -37,6 +37,7 @@
 
         # 顶级菜单基础
         'actions/project_list_actions.xml',
+        'actions/project_actions.xml',
         'views/menu_root.xml',
 
         # 视图
