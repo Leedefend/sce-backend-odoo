@@ -20,7 +20,7 @@ export const ROLE_ENTRY_MAP = [
     icon: "C",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_sc_contract_income",
-      action_xmlid: "smart_construction_core.action_construction_contract_income",
+      action_xmlid: "smart_construction_core.action_construction_contract_my",
     },
     quick_actions: [
       { label: "收入合同", action_xmlid: "smart_construction_core.action_construction_contract_income" },
@@ -33,7 +33,7 @@ export const ROLE_ENTRY_MAP = [
     icon: "K",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_sc_project_cost_ledger",
-      action_xmlid: "smart_construction_core.action_project_cost_ledger",
+      action_xmlid: "smart_construction_core.action_project_cost_ledger_my",
     },
     quick_actions: [
       { label: "成本台账", action_xmlid: "smart_construction_core.action_project_cost_ledger" },
@@ -46,7 +46,7 @@ export const ROLE_ENTRY_MAP = [
     icon: "F",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_payment_request",
-      action_xmlid: "smart_construction_core.action_payment_request",
+      action_xmlid: "smart_construction_core.action_payment_request_my",
     },
     quick_actions: [
       { label: "待我审批", action_xmlid: "smart_construction_core.action_sc_tier_review_my_payment_request" },

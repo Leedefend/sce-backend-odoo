@@ -127,23 +127,29 @@ export class ScSidebar extends Component {
         await this.action.doAction(entry.actionId, { clearBreadcrumbs: false });
       }
     };
-    this.openMenu = async (menuId, actionId, label) => {
+    this.openMenu = async (menuId, actionId, label, extraContext) => {
       this.state.activeMenuId = menuId;
       this.addRecentMenu(menuId, actionId, label);
       setHashParams({ menu_id: menuId, action: actionId });
       if (actionId) {
-        await this.action.doAction(actionId, { clearBreadcrumbs: false });
+        const options = extraContext
+          ? { clearBreadcrumbs: false, additionalContext: extraContext }
+          : { clearBreadcrumbs: false };
+        await this.action.doAction(actionId, options);
       }
       window.setTimeout(() => this.syncActiveMenu(), 0);
     };
     this.openRoleEntry = async (entry) => {
       if (!entry || entry.disabled) return;
       if (entry.menuId) {
-        await this.openMenu(entry.menuId, entry.actionId, entry.label);
+        await this.openMenu(entry.menuId, entry.actionId, entry.label, entry.menuContext);
         return;
       }
       setHashParams({ action: entry.actionXmlid || entry.actionId });
-      await this.action.doAction(entry.actionXmlid || entry.actionId, { clearBreadcrumbs: false });
+      const options = entry.menuContext
+        ? { clearBreadcrumbs: false, additionalContext: entry.menuContext }
+        : { clearBreadcrumbs: false };
+      await this.action.doAction(entry.actionXmlid || entry.actionId, options);
       window.setTimeout(() => this.syncActiveMenu(), 0);
     };
     this.openRoleQuickAction = async (action) => {
@@ -1140,19 +1146,30 @@ async function buildRoleEntries(config, menuMap, orm) {
     let menuNode = null;
     let menuId = null;
     let actionId = null;
+    let menuContext = null;
     let disabled = false;
     if (menuXmlid) {
       menuNode = findMenuByXmlid(null, menuMap, menuXmlid);
     }
     if (menuNode) {
       menuId = menuNode.id;
+      if (menuNode.context) menuContext = menuNode.context;
       const resolved = resolveNodeAction(menuNode, menuMap);
       actionId = resolved.actionId;
       disabled = resolved.disabled;
-    } else if (actionXmlid && orm) {
-      actionId = await resolveActionXmlid(orm, actionXmlid);
-      disabled = !actionId;
-    } else {
+    }
+    if (actionXmlid && orm) {
+      const overrideId = await resolveActionXmlid(orm, actionXmlid);
+      if (overrideId) {
+        actionId = overrideId;
+        disabled = false;
+      } else {
+        // Fall back to action xmlid when res_id cannot be resolved (no access).
+        actionId = actionXmlid;
+        disabled = false;
+      }
+    }
+    if (!actionId) {
       disabled = true;
     }
     if (disabled || !actionId) continue;
@@ -1175,6 +1192,7 @@ async function buildRoleEntries(config, menuMap, orm) {
       menuId,
       actionId,
       actionXmlid,
+      menuContext,
       quickActions,
     });
   }
