@@ -5,6 +5,7 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { ScCompanySwitcherSidebar } from "./sc_company_switcher_sidebar";
 import { DOMAIN_NAV_MAP, DEFAULT_DOMAIN_KEY, PINNED_ENTRIES } from "@smart_construction_core/config/domain_nav_map";
+import { ROLE_ENTRY_MAP } from "@smart_construction_core/config/role_entry_map";
 
 const mainComponents = registry.category("main_components");
 const ROOT_XMLID = "smart_construction_core.menu_sc_root";
@@ -22,6 +23,7 @@ const OVERVIEW_ACTION_XMLID = "smart_construction_core.action_sc_project_workben
 const DEBUG_ENABLED = Boolean(
   (window.odoo && window.odoo.__DEBUG__) || /\bdebug\b/.test(window.location.search || "")
 );
+const ENABLE_ROLE_ENTRIES = getConfigFlag("sc_role_entries", true);
 
 export class ScSidebarHeader extends Component {
   static template = "smart_construction_core.ScSidebarHeader";
@@ -56,9 +58,12 @@ export class ScSidebar extends Component {
       visible: false,
       sections: [],
       activeMenuId: 0,
+      activeAction: "",
       searchTerm: "",
       recentMenus: [],
       favoriteMenus: [],
+      roleEntries: [],
+      enableRoleEntries: ENABLE_ROLE_ENTRIES,
       pinnedEntries: [],
       debugMessage: "",
       showOverview: SHOW_OVERVIEW,
@@ -103,6 +108,15 @@ export class ScSidebar extends Component {
       if (!domain) return;
       this.toggleDomain(domain.id);
     };
+    this.isRoleEntryActive = (entry) => {
+      if (!entry) return false;
+      if (entry.menuId && entry.menuId === this.state.activeMenuId) return true;
+      const actionValue = this.state.activeAction;
+      if (!actionValue) return false;
+      if (entry.actionId && String(entry.actionId) === String(actionValue)) return true;
+      if (entry.actionXmlid && entry.actionXmlid === actionValue) return true;
+      return false;
+    };
     this.openPinnedEntry = async (entry) => {
       if (!entry || entry.disabled) return;
       if (entry.menuId && entry.actionId) {
@@ -120,6 +134,16 @@ export class ScSidebar extends Component {
       if (actionId) {
         await this.action.doAction(actionId, { clearBreadcrumbs: false });
       }
+      window.setTimeout(() => this.syncActiveMenu(), 0);
+    };
+    this.openRoleEntry = async (entry) => {
+      if (!entry || entry.disabled) return;
+      if (entry.menuId) {
+        await this.openMenu(entry.menuId, entry.actionId, entry.label);
+        return;
+      }
+      setHashParams({ action: entry.actionXmlid || entry.actionId });
+      await this.action.doAction(entry.actionXmlid || entry.actionId, { clearBreadcrumbs: false });
       window.setTimeout(() => this.syncActiveMenu(), 0);
     };
     this.persistOpenSections = () => {
@@ -282,6 +306,11 @@ export class ScSidebar extends Component {
       else domainSections[0].isOpen = true;
     }
     this.state.sections = domainSections;
+    if (this.state.enableRoleEntries) {
+      this.state.roleEntries = await buildRoleEntries(ROLE_ENTRY_MAP, this.menuMap, this.orm);
+    } else {
+      this.state.roleEntries = [];
+    }
     this.state.pinnedEntries = buildPinnedEntries(PINNED_ENTRIES, menus, this.menuMap);
     this.state.visible = true;
     this.state.debugMessage = "";
@@ -303,7 +332,9 @@ export class ScSidebar extends Component {
 
   syncActiveMenu() {
     const id = getActiveMenuId();
+    const action = getActiveAction();
     this.state.activeMenuId = id || 0;
+    this.state.activeAction = action || "";
     if (id) this.scrollActiveIntoView();
     this.maybeReloadForCompany();
   }
@@ -466,6 +497,11 @@ function getCompanyKeyFromHash() {
 
 function getActiveMenuId() {
   return parseInt(parseHashParams().menu_id || "0", 10);
+}
+
+function getActiveAction() {
+  const action = parseHashParams().action;
+  return action ? String(action) : "";
 }
 
 export function normalizeMenus(raw, onMap) {
@@ -1082,6 +1118,58 @@ function buildPinnedEntries(config, menus, menuMap) {
       };
     })
     .filter((entry) => entry && entry.name);
+}
+
+async function buildRoleEntries(config, menuMap, orm) {
+  const entries = Array.isArray(config) ? config : [];
+  const out = [];
+  for (const entry of entries) {
+    if (!entry) continue;
+    const key = entry.key || "";
+    const label = entry.label || "";
+    if (!key || !label) continue;
+    const action = entry.default_action || {};
+    const menuXmlid = action.menu_xmlid || "";
+    const actionXmlid = action.action_xmlid || "";
+    let menuNode = null;
+    let menuId = null;
+    let actionId = null;
+    let disabled = false;
+    if (menuXmlid) {
+      menuNode = findMenuByXmlid(null, menuMap, menuXmlid);
+    }
+    if (menuNode) {
+      menuId = menuNode.id;
+      const resolved = resolveNodeAction(menuNode, menuMap);
+      actionId = resolved.actionId;
+      disabled = resolved.disabled;
+    } else if (actionXmlid && orm) {
+      actionId = await resolveActionXmlid(orm, actionXmlid);
+      disabled = !actionId;
+    } else {
+      disabled = true;
+    }
+    if (disabled || !actionId) continue;
+    out.push({
+      key,
+      label,
+      icon: entry.icon || "",
+      menuId,
+      actionId,
+      actionXmlid,
+    });
+  }
+  return out;
+}
+
+async function resolveActionXmlid(orm, xmlid) {
+  if (!orm || !xmlid) return null;
+  try {
+    const resId = await orm.call("ir.model.data", "xmlid_to_res_id", [xmlid, false]);
+    return typeof resId === "number" && resId > 0 ? resId : null;
+  } catch (err) {
+    return null;
+  }
 }
 
 function getCompanyKey(user) {
