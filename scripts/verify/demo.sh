@@ -17,6 +17,7 @@ fail() {
   exit 1
 }
 
+
 check_eq() {
   local desc="$1" expected="$2" sql="$3"
   local val
