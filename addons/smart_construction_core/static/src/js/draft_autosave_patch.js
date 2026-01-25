@@ -7,11 +7,13 @@ import { patch } from "@web/core/utils/patch";
 import { useBus, useService } from "@web/core/utils/hooks";
 
 const originalSetup = FormController.prototype.setup;
+const originalSave = FormController.prototype.save;
 
 patch(FormController.prototype, {
     setup() {
         originalSetup.call(this, ...arguments);
         this.notification = useService("notification");
+        this.action = useService("action");
         this._scAutosaveInFlight = false;
         this._scAutosaveTrigger = debounce(this._scAutosave.bind(this), 1500);
         useBus(this.model.bus, "FIELD_IS_DIRTY", this._scOnDirty.bind(this));
@@ -76,5 +78,24 @@ patch(FormController.prototype, {
         } finally {
             this._scAutosaveInFlight = false;
         }
+    },
+
+    _scShouldReturnToOverview() {
+        const ctx = this.props?.context || this.model?.config?.context || {};
+        if (!ctx || !ctx.sc_return_to_overview) return false;
+        if (ctx.sc_autosave) return false;
+        return Boolean(ctx.sc_overview_action_xmlid);
+    },
+
+    async save() {
+        const result = await originalSave.call(this, ...arguments);
+        if (result && this._scShouldReturnToOverview()) {
+            const ctx = this.props?.context || this.model?.config?.context || {};
+            const xmlid = ctx.sc_overview_action_xmlid;
+            if (xmlid) {
+                await this.action.doAction(xmlid, { clearBreadcrumbs: false });
+            }
+        }
+        return result;
     },
 });

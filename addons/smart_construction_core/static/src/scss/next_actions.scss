@@ -4,4 +4,30 @@
     flex-direction: column;
     gap: 0.5rem;
   }
+
+  .sc-next-actions__item {
+    padding: 0.5rem 0;
+  }
+
+  .sc-next-actions__index {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: rgba(248, 250, 252, 0.2);
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .sc-next-actions__headline {
+    font-weight: 700;
+  }
+
+  .sc-next-actions__hint {
+    color: rgba(248, 250, 252, 0.7);
+    margin-bottom: 0.35rem;
+  }
 }

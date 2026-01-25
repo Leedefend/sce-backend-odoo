@@ -1484,7 +1484,33 @@ class ProjectProject(models.Model):
         self.check_access_rights("read")
         self.check_access_rule("read")
         service = self.env["sc.project.next_action.service"]
-        return service.get_next_actions(self, limit=limit)
+        actions = service.get_next_actions(self, limit=limit)
+        formatted = []
+        for item in actions:
+            hint = item.get("hint") or "未完成"
+            formatted.append({
+                "title": item.get("name") or "",
+                "hint": hint,
+                "action_type": item.get("action_type"),
+                "action_ref": item.get("action_ref"),
+                "payload": {
+                    "project_id": self.id,
+                    "sc_return_to_overview": 1,
+                    "sc_overview_action_xmlid": "smart_construction_core.action_sc_project_overview",
+                },
+            })
+        fallback = {
+            "title": "查看阶段要求",
+            "action_type": "object_method",
+            "action_ref": "action_view_stage_requirements",
+            "payload": {"project_id": self.id},
+        }
+        return {
+            "status": "ok",
+            "project_id": self.id,
+            "actions": formatted,
+            "fallback": fallback,
+        }
 
     def sc_get_stage_requirements(self, limit=3):
         """Return current stage requirements with completion info."""
@@ -1521,21 +1547,25 @@ class ProjectProject(models.Model):
         self.ensure_one()
         self.check_access_rights("read")
         self.check_access_rule("read")
+        ctx = dict(self.env.context or {})
+        if payload and isinstance(payload, dict):
+            ctx.update(payload)
+        ctx.setdefault("default_project_id", self.id)
+        ctx.setdefault("search_default_project_id", self.id)
         if action_type == "act_window_xmlid":
             try:
                 action = self.env.ref(action_ref).read()[0]
             except Exception:
                 return False
-            ctx = dict(action.get("context") or {})
-            ctx.setdefault("default_project_id", self.id)
-            ctx.setdefault("search_default_project_id", self.id)
-            action["context"] = ctx
+            action_ctx = dict(action.get("context") or {})
+            action_ctx.update(ctx)
+            action["context"] = action_ctx
             return action
         if action_type == "object_method":
             method = getattr(self, action_ref, None)
             if not method:
                 return False
-            return method()
+            return method.with_context(ctx)()
         return False
 
     def action_open_project_progress_entry(self):

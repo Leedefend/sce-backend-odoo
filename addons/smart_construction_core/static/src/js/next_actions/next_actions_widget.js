@@ -6,28 +6,51 @@ import { useService } from "@web/core/utils/hooks";
 export class ScNextActionsWidget extends Component {
   static template = xml`
     <div class="sc-next-actions">
-      <div class="fw-bold mb-2">建议动作</div>
       <t t-if="state.loading">
         <div class="text-muted">正在生成建议动作…</div>
       </t>
-      <t t-elif="!resId">
-        <div class="text-muted">保存项目后生成建议动作。</div>
+      <t t-elif="state.status === 'need_save'">
+        <div class="text-muted" t-esc="state.message"/>
+        <button type="button" class="btn btn-light btn-sm mt-2"
+                t-on-click="() => window.scrollTo({top: 0, behavior: 'smooth'})">
+          继续完善并保存
+        </button>
       </t>
       <t t-elif="state.error">
-        <div class="text-muted">建议动作生成失败，请稍后重试。</div>
+        <div class="text-muted">下一步指令生成失败，请稍后重试。</div>
       </t>
       <t t-elif="state.items.length === 0">
-        <div class="text-muted">暂无建议动作。</div>
+        <div class="text-muted">暂无下一步指令。</div>
+        <t t-if="state.fallback">
+          <button type="button" class="btn btn-light btn-sm mt-2"
+                  t-on-click="() => this.onActionClick(state.fallback)">
+            查看阶段要求
+          </button>
+        </t>
       </t>
       <t t-else="">
         <div class="sc-next-actions__list">
-          <t t-foreach="state.items" t-as="item" t-key="item.action_ref + item.name">
-            <div class="sc-next-actions__item d-flex align-items-center flex-wrap gap-2">
-              <button type="button" class="btn btn-secondary"
-                      t-on-click="() => this.onActionClick(item)">
-                <t t-esc="item.name"/>
-              </button>
-              <span class="text-muted" t-if="item.hint" t-esc="item.hint"/>
+          <t t-foreach="state.items" t-as="item" t-key="item.action_ref + item.title">
+            <div class="sc-next-actions__item d-flex align-items-start gap-3">
+              <div class="sc-next-actions__index">
+                <t t-esc="state.items.indexOf(item) + 1"/>
+              </div>
+              <div class="sc-next-actions__body">
+                <div class="sc-next-actions__headline" t-esc="item.title"/>
+                <div class="sc-next-actions__hint" t-if="item.hint" t-esc="item.hint"/>
+                <t t-if="state.items.indexOf(item) === 0">
+                  <button type="button" class="btn btn-primary btn-sm"
+                          t-on-click="() => this.onActionClick(item)">
+                    去完成
+                  </button>
+                </t>
+                <t t-else="">
+                  <button type="button" class="btn btn-link btn-sm"
+                          t-on-click="() => this.onActionClick(item)">
+                    去完成
+                  </button>
+                </t>
+              </div>
             </div>
           </t>
         </div>
@@ -44,7 +67,7 @@ export class ScNextActionsWidget extends Component {
     this.orm = useService("orm");
     this.action = useService("action");
     this.notification = useService("notification");
-    this.state = useState({ loading: true, items: [], error: null });
+    this.state = useState({ loading: true, items: [], error: null, status: "idle", message: "", fallback: null });
 
     onWillStart(() => this.load());
   }
@@ -68,11 +91,18 @@ export class ScNextActionsWidget extends Component {
     this.state.items = [];
     if (!resId) {
       this.state.loading = false;
+      this.state.status = "need_save";
+      this.state.message = "请先完成创建（保存）以生成建议动作。";
+      this.state.items = [];
       return;
     }
     try {
-      const items = await this.orm.call(this.model, "sc_get_next_actions", [[resId], this.limit]);
-      this.state.items = Array.isArray(items) ? items : [];
+      const payload = await this.orm.call(this.model, "sc_get_next_actions", [[resId], this.limit]);
+      const actions = payload && Array.isArray(payload.actions) ? payload.actions : [];
+      this.state.items = actions;
+      this.state.status = payload && payload.status ? payload.status : "ok";
+      this.state.message = payload && payload.message ? payload.message : "";
+      this.state.fallback = payload && payload.fallback ? payload.fallback : null;
     } catch (err) {
       this.state.error = err;
     } finally {
@@ -87,6 +117,7 @@ export class ScNextActionsWidget extends Component {
         [this.resId],
         item.action_type,
         item.action_ref,
+        item.payload || {},
       ]);
       if (result) {
         await this.action.doAction(result, { clearBreadcrumbs: false });
