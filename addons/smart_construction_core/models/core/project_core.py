@@ -778,6 +778,12 @@ class ProjectProject(models.Model):
     sc_overview_task_in_progress_count = fields.Integer(
         '概览进行中任务数', compute='_compute_overview_counts', store=False
     )
+    sc_stage_required_total = fields.Integer(
+        '阶段要求总数', compute='_compute_stage_progress', store=False
+    )
+    sc_stage_required_done = fields.Integer(
+        '阶段要求已完成数', compute='_compute_stage_progress', store=False
+    )
     boq_status = fields.Selection(
         [
             ("empty", "未导入"),
@@ -1424,6 +1430,31 @@ class ProjectProject(models.Model):
             project.sc_overview_task_count = stats.get("task", {}).get("count", 0)
             project.sc_overview_task_in_progress_count = stats.get("task", {}).get("in_progress", 0)
 
+    def _compute_stage_progress(self):
+        Item = self.env["sc.project.stage.requirement.item"]
+        for project in self:
+            items = Item.search([
+                ("active", "=", True),
+                ("lifecycle_state", "=", project.lifecycle_state),
+                ("required", "=", True),
+            ], order="sequence, id")
+            total = 0
+            done = 0
+            for item in items:
+                total += 1
+                if project._sc_is_requirement_done(item):
+                    done += 1
+            project.sc_stage_required_total = total
+            project.sc_stage_required_done = done
+
+    def _sc_is_requirement_done(self, item):
+        target_field = (item.target_field or "").strip()
+        if not target_field:
+            return True
+        if target_field == "manager_or_user":
+            return bool(self.user_id or self.manager_id)
+        return bool(getattr(self, target_field, False))
+
     # ========== Action 打开各种子模块 ==========
     def action_open_project_budget(self):
         return self._action_open_related('smart_construction_core.action_project_budget')
@@ -1455,7 +1486,37 @@ class ProjectProject(models.Model):
         service = self.env["sc.project.next_action.service"]
         return service.get_next_actions(self, limit=limit)
 
-    def sc_execute_next_action(self, action_type, action_ref):
+    def sc_get_stage_requirements(self, limit=3):
+        """Return current stage requirements with completion info."""
+        self.ensure_one()
+        self.check_access_rights("read")
+        self.check_access_rule("read")
+        Item = self.env["sc.project.stage.requirement.item"]
+        items = Item.search([
+            ("active", "=", True),
+            ("lifecycle_state", "=", self.lifecycle_state),
+        ], order="sequence, id")
+        if limit:
+            items = items[:limit]
+        out = []
+        for item in items:
+            done = self._sc_is_requirement_done(item)
+            action_ref = item.action_xmlid or "smart_construction_core.action_sc_project_manage"
+            out.append({
+                "title": item.name,
+                "required": bool(item.required),
+                "done": bool(done),
+                "action_type": "act_window_xmlid",
+                "action_ref": action_ref,
+                "payload": {
+                    "project_id": self.id,
+                    "sc_return_to_overview": 1,
+                    "sc_overview_action_xmlid": "smart_construction_core.action_sc_project_overview",
+                },
+            })
+        return out
+
+    def sc_execute_next_action(self, action_type, action_ref, payload=None):
         """Execute next action target and return action dict if needed."""
         self.ensure_one()
         self.check_access_rights("read")

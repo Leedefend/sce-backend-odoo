@@ -26,6 +26,7 @@
                         <field name="sequence"/>
                         <field name="required"/>
                         <field name="active"/>
+                        <field name="target_field"/>
                         <field name="action_xmlid"/>
                     </group>
                 </sheet>

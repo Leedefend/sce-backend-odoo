@@ -23,6 +23,10 @@ class ScProjectStageRequirementItem(models.Model):
         "执行动作(XMLID)",
         help="可选：点击去完成时跳转的动作 XMLID",
     )
+    target_field = fields.Char(
+        "关联字段",
+        help="用于判断完成度的字段名，如 owner_id/location/manager_or_user",
+    )
 
 
 class ScProjectStageRequirementWizard(models.TransientModel):
