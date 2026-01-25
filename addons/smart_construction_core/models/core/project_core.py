@@ -758,6 +758,32 @@ class ProjectProject(models.Model):
     boq_imported = fields.Boolean(
         '清单已导入', compute='_compute_boq_status', store=True, compute_sudo=True
     )
+
+    # ---------- 概览页统计 ----------
+    sc_overview_contract_count = fields.Integer(
+        '概览合同数', compute='_compute_overview_counts', store=False
+    )
+    sc_overview_cost_count = fields.Integer(
+        '概览成本数', compute='_compute_overview_counts', store=False
+    )
+    sc_overview_payment_count = fields.Integer(
+        '概览付款数', compute='_compute_overview_counts', store=False
+    )
+    sc_overview_payment_pending_count = fields.Integer(
+        '概览付款待审批数', compute='_compute_overview_counts', store=False
+    )
+    sc_overview_task_count = fields.Integer(
+        '概览任务数', compute='_compute_overview_counts', store=False
+    )
+    sc_overview_task_in_progress_count = fields.Integer(
+        '概览进行中任务数', compute='_compute_overview_counts', store=False
+    )
+    sc_stage_required_total = fields.Integer(
+        '阶段要求总数', compute='_compute_stage_progress', store=False
+    )
+    sc_stage_required_done = fields.Integer(
+        '阶段要求已完成数', compute='_compute_stage_progress', store=False
+    )
     boq_status = fields.Selection(
         [
             ("empty", "未导入"),
@@ -1391,12 +1417,156 @@ class ProjectProject(models.Model):
         for project in self:
             project.tender_count = len(project.tender_bid_ids) if can_tender else 0
 
+    def _compute_overview_counts(self):
+        ids = self.ids
+        service = self.env["sc.project.overview.service"]
+        overview = service.get_overview(ids)
+        for project in self:
+            stats = overview.get(project.id, {})
+            project.sc_overview_contract_count = stats.get("contract", {}).get("count", 0)
+            project.sc_overview_cost_count = stats.get("cost", {}).get("count", 0)
+            project.sc_overview_payment_count = stats.get("payment", {}).get("count", 0)
+            project.sc_overview_payment_pending_count = stats.get("payment", {}).get("pending", 0)
+            project.sc_overview_task_count = stats.get("task", {}).get("count", 0)
+            project.sc_overview_task_in_progress_count = stats.get("task", {}).get("in_progress", 0)
+
+    def _compute_stage_progress(self):
+        Item = self.env["sc.project.stage.requirement.item"]
+        for project in self:
+            items = Item.search([
+                ("active", "=", True),
+                ("lifecycle_state", "=", project.lifecycle_state),
+                ("required", "=", True),
+            ], order="sequence, id")
+            total = 0
+            done = 0
+            for item in items:
+                total += 1
+                if project._sc_is_requirement_done(item):
+                    done += 1
+            project.sc_stage_required_total = total
+            project.sc_stage_required_done = done
+
+    def _sc_is_requirement_done(self, item):
+        target_field = (item.target_field or "").strip()
+        if not target_field:
+            return True
+        if target_field == "manager_or_user":
+            return bool(self.user_id or self.manager_id)
+        return bool(getattr(self, target_field, False))
+
     # ========== Action 打开各种子模块 ==========
     def action_open_project_budget(self):
         return self._action_open_related('smart_construction_core.action_project_budget')
 
     def action_open_project_cost_ledger(self):
         return self._action_open_related('smart_construction_core.action_project_cost_ledger')
+
+    def action_view_my_tasks(self):
+        """Open tasks for current project with a 'my tasks' filter."""
+        self.ensure_one()
+        action = self.env.ref("project.action_view_task").read()[0]
+        action["domain"] = [
+            ("project_id", "=", self.id),
+            "|",
+            ("user_ids", "in", [self.env.user.id]),
+            ("user_id", "=", self.env.user.id),
+        ]
+        ctx = dict(self._context or {})
+        ctx.setdefault("default_project_id", self.id)
+        ctx.setdefault("search_default_project_id", self.id)
+        action["context"] = ctx
+        return action
+
+    def sc_get_next_actions(self, limit=3):
+        """Return next action suggestions for overview UI."""
+        self.ensure_one()
+        self.check_access_rights("read")
+        self.check_access_rule("read")
+        service = self.env["sc.project.next_action.service"]
+        actions = service.get_next_actions(self, limit=limit)
+        formatted = []
+        for item in actions:
+            hint = item.get("hint") or "未完成"
+            formatted.append({
+                "title": item.get("name") or "",
+                "hint": hint,
+                "action_type": item.get("action_type"),
+                "action_ref": item.get("action_ref"),
+                "payload": {
+                    "project_id": self.id,
+                    "sc_return_to_overview": 1,
+                    "sc_overview_action_xmlid": "smart_construction_core.action_sc_project_overview",
+                },
+            })
+        fallback = {
+            "title": "查看阶段要求",
+            "action_type": "object_method",
+            "action_ref": "action_view_stage_requirements",
+            "payload": {"project_id": self.id},
+        }
+        return {
+            "status": "ok",
+            "project_id": self.id,
+            "actions": formatted,
+            "fallback": fallback,
+        }
+
+    def sc_get_stage_requirements(self, limit=3):
+        """Return current stage requirements with completion info."""
+        self.ensure_one()
+        self.check_access_rights("read")
+        self.check_access_rule("read")
+        Item = self.env["sc.project.stage.requirement.item"]
+        items = Item.search([
+            ("active", "=", True),
+            ("lifecycle_state", "=", self.lifecycle_state),
+        ], order="sequence, id")
+        if limit:
+            items = items[:limit]
+        out = []
+        for item in items:
+            done = self._sc_is_requirement_done(item)
+            action_ref = item.action_xmlid or "smart_construction_core.action_sc_project_manage"
+            out.append({
+                "title": item.name,
+                "required": bool(item.required),
+                "done": bool(done),
+                "action_type": "act_window_xmlid",
+                "action_ref": action_ref,
+                "payload": {
+                    "project_id": self.id,
+                    "sc_return_to_overview": 1,
+                    "sc_overview_action_xmlid": "smart_construction_core.action_sc_project_overview",
+                },
+            })
+        return out
+
+    def sc_execute_next_action(self, action_type, action_ref, payload=None):
+        """Execute next action target and return action dict if needed."""
+        self.ensure_one()
+        self.check_access_rights("read")
+        self.check_access_rule("read")
+        ctx = dict(self.env.context or {})
+        if payload and isinstance(payload, dict):
+            ctx.update(payload)
+        ctx.setdefault("default_project_id", self.id)
+        ctx.setdefault("search_default_project_id", self.id)
+        if action_type == "act_window_xmlid":
+            try:
+                action = self.env.ref(action_ref).read()[0]
+            except Exception:
+                return False
+            action_ctx = dict(action.get("context") or {})
+            action_ctx.update(ctx)
+            action["context"] = action_ctx
+            return action
+        if action_type == "object_method":
+            method = getattr(self, action_ref, None)
+            if not method:
+                return False
+            return method.with_context(ctx)()
+        return False
 
     def action_open_project_progress_entry(self):
         return self._action_open_related('smart_construction_core.action_project_progress_entry')
@@ -1718,14 +1888,20 @@ class ProjectProject(models.Model):
 
     def action_sc_submit(self):
         """提交立项：从草稿进入在建。"""
+        if not (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_project_user")
+            or self.env.user.has_group("smart_construction_core.group_sc_cap_project_manager")
+            or self.env.user.has_group("smart_construction_core.group_sc_super_admin")
+        ):
+            raise UserError("你没有权限推进项目阶段。")
         self.action_set_lifecycle_state("in_progress")
         return True
 
     def _sc_required_fields_for_transition(self, target_state):
         return {
             "in_progress": [
+                "name",
                 "owner_id",
-                "manager_id",
                 "location",
             ],
         }.get(target_state, [])
@@ -1740,11 +1916,28 @@ class ProjectProject(models.Model):
                 if not project[field_name]:
                     field = project._fields.get(field_name)
                     missing.append(field.string if field else field_name)
+            if not project.manager_id and not project.user_id:
+                missing.append("项目负责人/项目管理者")
             if missing:
                 raise ValidationError(
                     "项目[%s] 立项前需补齐：%s。"
                     % (project.display_name, "、".join(missing))
                 )
+
+    def action_view_stage_requirements(self):
+        """Open stage requirements wizard."""
+        self.ensure_one()
+        wizard = self.env["sc.project.stage.requirement.wizard"].create(
+            {"project_id": self.id, "lifecycle_state": self.lifecycle_state}
+        )
+        return {
+            "name": "阶段要求",
+            "type": "ir.actions.act_window",
+            "res_model": "sc.project.stage.requirement.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "res_id": wizard.id,
+        }
 
     def _validate_lifecycle_transition(self, target_state):
         for project in self:

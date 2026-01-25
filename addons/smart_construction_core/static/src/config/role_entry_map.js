@@ -7,7 +7,7 @@ export const ROLE_ENTRY_MAP = [
     icon: "P",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_sc_project_project",
-      action_xmlid: "smart_construction_core.action_sc_project_my_list",
+      action_xmlid: "smart_construction_core.action_sc_project_overview",
     },
     quick_actions: [
       { label: "新建项目", action_xmlid: "smart_construction_core.action_project_initiation" },

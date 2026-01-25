@@ -1,5 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <record id="action_sc_project_overview" model="ir.actions.act_window">
+        <field name="name">项目概览</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">['|', ('manager_id', '=', uid), '|', ('owner_id', '=', uid), ('user_id', '=', uid)]</field>
+        <field name="context">{'search_default_filter_my_projects': 1}</field>
+        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+
+    <record id="action_sc_project_overview_tree_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="10"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="smart_construction_core.view_project_my_list_tree"/>
+        <field name="act_window_id" ref="smart_construction_core.action_sc_project_overview"/>
+    </record>
+
+    <record id="action_sc_project_overview_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="20"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_construction_core.view_project_overview_form"/>
+        <field name="act_window_id" ref="smart_construction_core.action_sc_project_overview"/>
+    </record>
+
+    <record id="action_sc_project_manage" model="ir.actions.act_window">
+        <field name="name">项目管理</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_manager'), ref('smart_construction_core.group_sc_super_admin')])]"/>
+    </record>
+
     <record id="action_sc_project_my_list" model="ir.actions.act_window">
         <field name="name">我的项目</field>
         <field name="res_model">project.project</field>
