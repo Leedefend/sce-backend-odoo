@@ -98,6 +98,38 @@ class TestRecordRuleBehaviorGate(TransactionCase):
 
         cls.partner = _ctx("res.partner").create({"name": "RR Partner"})
 
+        tax = cls.env["account.tax"].search([], limit=1)
+        if not tax:
+            tax = _ctx("account.tax").create(
+                {
+                    "name": "RR Contract Tax",
+                    "amount": 0.0,
+                    "amount_type": "percent",
+                    "type_tax_use": "sale",
+                }
+            )
+
+        def _create_contract(name, project):
+            return _ctx("construction.contract").create(
+                {
+                    "subject": name,
+                    "type": "out",
+                    "project_id": project.id,
+                    "partner_id": cls.partner.id,
+                    "tax_id": tax.id,
+                }
+            )
+
+        cls.contract_settlement_read = _create_contract(
+            "RR Contract Settlement Read", cls.project_settlement_read
+        )
+        cls.contract_settlement_user = _create_contract(
+            "RR Contract Settlement User", cls.project_settlement
+        )
+        cls.contract_settlement_other = _create_contract(
+            "RR Contract Settlement Other", cls.project_other
+        )
+
         cls.payment_req_read = _ctx("payment.request").create(
             {
                 "project_id": cls.project_finance_read.id,
@@ -127,6 +159,7 @@ class TestRecordRuleBehaviorGate(TransactionCase):
             {
                 "project_id": cls.project_settlement_read.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_settlement_read.id,
                 "line_ids": [(0, 0, {"name": "RR Line Read", "amount": 10.0})],
             }
         )
@@ -134,6 +167,7 @@ class TestRecordRuleBehaviorGate(TransactionCase):
             {
                 "project_id": cls.project_settlement.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_settlement_user.id,
                 "line_ids": [(0, 0, {"name": "RR Line User", "amount": 20.0})],
             }
         )
@@ -141,6 +175,7 @@ class TestRecordRuleBehaviorGate(TransactionCase):
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_settlement_other.id,
                 "line_ids": [(0, 0, {"name": "RR Line Other", "amount": 30.0})],
             }
         )
