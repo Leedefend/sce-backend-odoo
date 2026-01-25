@@ -133,7 +133,10 @@
             'smart_construction_core/static/src/scss/insight_banner.scss',
             'smart_construction_core/static/src/js/next_actions/next_actions_widget.js',
             'smart_construction_core/static/src/js/next_actions/next_actions_view_widget.js',
+            'smart_construction_core/static/src/js/stage_requirements/stage_requirements_widget.js',
+            'smart_construction_core/static/src/js/stage_requirements/stage_requirements_view_widget.js',
             'smart_construction_core/static/src/scss/next_actions.scss',
+            'smart_construction_core/static/src/scss/project_overview.scss',
         ],
         'web.assets_tests': [
             'smart_construction_core/static/tests/sc_sidebar_tests.js',

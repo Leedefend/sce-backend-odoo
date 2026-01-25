@@ -1,0 +1,58 @@
+.sc-project-overview {
+  .sc-project-title .o_field_widget {
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .sc-project-stage {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+  }
+
+  .sc-project-stage__label {
+    font-weight: 600;
+  }
+
+  .sc-project-stage__req-item {
+    font-size: 0.9rem;
+    color: #111827;
+  }
+
+  .sc-stage-req__item {
+    font-size: 0.9rem;
+    padding: 0.2rem 0;
+  }
+
+  .sc-project-next {
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.75rem;
+    background: #0f172a;
+    color: #f8fafc;
+  }
+
+  .sc-project-next__title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .sc-project-next .btn {
+    background: #f8fafc;
+    color: #0f172a;
+    border: none;
+  }
+
+  .sc-project-next .text-muted {
+    color: rgba(248, 250, 252, 0.7) !important;
+  }
+
+  .sc-project-cards__title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .card .fw-bold {
+    font-size: 0.95rem;
+  }
+}
