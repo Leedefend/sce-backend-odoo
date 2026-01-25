@@ -1,0 +1,51 @@
+{
+  "case": "attachment_list_pm",
+  "trace_id": "0b3eb2a8-d076-4ac5-b255-6693c86b5061",
+  "exported_at": "2026-01-25T05:57:50Z",
+  "contract_version": "v1",
+  "model": "ir.attachment",
+  "view_type": "list",
+  "op": "model",
+  "user": "pm",
+  "user_fallback": "admin",
+  "fallback": true,
+  "action": null,
+  "ui_contract": {
+    "model": "ir.attachment",
+    "view_type": "list",
+    "columns": [
+      "name",
+      "res_model",
+      "res_field",
+      "res_id",
+      "type",
+      "file_size",
+      "create_uid",
+      "create_date"
+    ],
+    "columnsSchema": []
+  },
+  "ui_contract_raw": {
+    "views": {
+      "tree": {
+        "columns": [
+          "name",
+          "res_model",
+          "res_field",
+          "res_id",
+          "type",
+          "file_size",
+          "create_uid",
+          "create_date"
+        ],
+        "columns_schema": []
+      }
+    },
+    "fields": {}
+  },
+  "record": null,
+  "record_error": null,
+  "meta_fields": null,
+  "execute_result": null,
+  "execute_error": null
+}

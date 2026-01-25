@@ -1,0 +1,457 @@
+{
+  "case": "execute_button_missing_method",
+  "trace_id": "912304a6-7946-49d4-bceb-c4addb444d86",
+  "exported_at": "2026-01-25T05:51:41Z",
+  "contract_version": "v1",
+  "model": "project.project",
+  "view_type": "form",
+  "op": "model",
+  "user": "pm",
+  "user_fallback": "admin",
+  "fallback": true,
+  "action": null,
+  "ui_contract": {
+    "model": "project.project",
+    "view_type": "form",
+    "titleField": "name",
+    "headerButtons": [],
+    "statButtons": [],
+    "ribbon": null,
+    "sheet": [
+      {
+        "type": "field",
+        "name": "company_id"
+      },
+      {
+        "type": "field",
+        "name": "analytic_account_id"
+      },
+      {
+        "type": "field",
+        "name": "lifecycle_state"
+      },
+      {
+        "type": "field",
+        "name": "open_task_count"
+      },
+      {
+        "type": "field",
+        "name": "last_update_color"
+      },
+      {
+        "type": "field",
+        "name": "last_update_status"
+      },
+      {
+        "type": "field",
+        "name": "is_favorite"
+      },
+      {
+        "type": "field",
+        "name": "name"
+      },
+      {
+        "type": "field",
+        "name": "label_tasks"
+      },
+      {
+        "type": "field",
+        "name": "partner_id"
+      },
+      {
+        "type": "field",
+        "name": "tag_ids"
+      },
+      {
+        "type": "field",
+        "name": "active"
+      },
+      {
+        "type": "field",
+        "name": "user_id"
+      },
+      {
+        "type": "field",
+        "name": "date_start"
+      },
+      {
+        "type": "field",
+        "name": "date"
+      },
+      {
+        "type": "field",
+        "name": "description"
+      },
+      {
+        "type": "field",
+        "name": "privacy_visibility"
+      },
+      {
+        "type": "field",
+        "name": "access_instruction_message"
+      },
+      {
+        "type": "field",
+        "name": "privacy_visibility_warning"
+      },
+      {
+        "type": "field",
+        "name": "alias_id"
+      },
+      {
+        "type": "field",
+        "name": "alias_email"
+      },
+      {
+        "type": "field",
+        "name": "alias_name"
+      },
+      {
+        "type": "field",
+        "name": "alias_domain_id"
+      },
+      {
+        "type": "field",
+        "name": "alias_contact"
+      },
+      {
+        "type": "field",
+        "name": "allow_rating"
+      },
+      {
+        "type": "field",
+        "name": "task_ids"
+      },
+      {
+        "type": "field",
+        "name": "sequence"
+      },
+      {
+        "type": "field",
+        "name": "allow_milestones"
+      },
+      {
+        "type": "field",
+        "name": "subtask_count"
+      },
+      {
+        "type": "field",
+        "name": "closed_subtask_count"
+      },
+      {
+        "type": "field",
+        "name": "id"
+      },
+      {
+        "type": "field",
+        "name": "priority"
+      },
+      {
+        "type": "field",
+        "name": "state"
+      },
+      {
+        "type": "field",
+        "name": "name"
+      },
+      {
+        "type": "field",
+        "name": "project_id"
+      },
+      {
+        "type": "field",
+        "name": "partner_id"
+      },
+      {
+        "type": "field",
+        "name": "user_ids"
+      },
+      {
+        "type": "field",
+        "name": "company_id"
+      },
+      {
+        "type": "field",
+        "name": "date_deadline"
+      },
+      {
+        "type": "field",
+        "name": "activity_ids"
+      },
+      {
+        "type": "field",
+        "name": "my_activity_date_deadline"
+      },
+      {
+        "type": "field",
+        "name": "rating_active"
+      },
+      {
+        "type": "field",
+        "name": "tag_ids"
+      },
+      {
+        "type": "field",
+        "name": "date_last_stage_update"
+      },
+      {
+        "type": "field",
+        "name": "stage_id"
+      },
+      {
+        "type": "field",
+        "name": "personal_stage_type_id"
+      },
+      {
+        "type": "field",
+        "name": "task_properties"
+      },
+      {
+        "type": "field",
+        "name": "recurrence_id"
+      },
+      {
+        "type": "field",
+        "name": "collaborator_ids"
+      },
+      {
+        "type": "field",
+        "name": "partner_id"
+      },
+      {
+        "type": "field",
+        "name": "partner_email"
+      },
+      {
+        "type": "field",
+        "name": "analytic_account_id"
+      }
+    ],
+    "chatter": {}
+  },
+  "ui_contract_raw": {
+    "views": {
+      "form": {
+        "layout": [
+          {
+            "type": "field",
+            "name": "company_id"
+          },
+          {
+            "type": "field",
+            "name": "analytic_account_id"
+          },
+          {
+            "type": "field",
+            "name": "lifecycle_state"
+          },
+          {
+            "type": "field",
+            "name": "open_task_count"
+          },
+          {
+            "type": "field",
+            "name": "last_update_color"
+          },
+          {
+            "type": "field",
+            "name": "last_update_status"
+          },
+          {
+            "type": "field",
+            "name": "is_favorite"
+          },
+          {
+            "type": "field",
+            "name": "name"
+          },
+          {
+            "type": "field",
+            "name": "label_tasks"
+          },
+          {
+            "type": "field",
+            "name": "partner_id"
+          },
+          {
+            "type": "field",
+            "name": "tag_ids"
+          },
+          {
+            "type": "field",
+            "name": "active"
+          },
+          {
+            "type": "field",
+            "name": "user_id"
+          },
+          {
+            "type": "field",
+            "name": "date_start"
+          },
+          {
+            "type": "field",
+            "name": "date"
+          },
+          {
+            "type": "field",
+            "name": "description"
+          },
+          {
+            "type": "field",
+            "name": "privacy_visibility"
+          },
+          {
+            "type": "field",
+            "name": "access_instruction_message"
+          },
+          {
+            "type": "field",
+            "name": "privacy_visibility_warning"
+          },
+          {
+            "type": "field",
+            "name": "alias_id"
+          },
+          {
+            "type": "field",
+            "name": "alias_email"
+          },
+          {
+            "type": "field",
+            "name": "alias_name"
+          },
+          {
+            "type": "field",
+            "name": "alias_domain_id"
+          },
+          {
+            "type": "field",
+            "name": "alias_contact"
+          },
+          {
+            "type": "field",
+            "name": "allow_rating"
+          },
+          {
+            "type": "field",
+            "name": "task_ids"
+          },
+          {
+            "type": "field",
+            "name": "sequence"
+          },
+          {
+            "type": "field",
+            "name": "allow_milestones"
+          },
+          {
+            "type": "field",
+            "name": "subtask_count"
+          },
+          {
+            "type": "field",
+            "name": "closed_subtask_count"
+          },
+          {
+            "type": "field",
+            "name": "id"
+          },
+          {
+            "type": "field",
+            "name": "priority"
+          },
+          {
+            "type": "field",
+            "name": "state"
+          },
+          {
+            "type": "field",
+            "name": "name"
+          },
+          {
+            "type": "field",
+            "name": "project_id"
+          },
+          {
+            "type": "field",
+            "name": "partner_id"
+          },
+          {
+            "type": "field",
+            "name": "user_ids"
+          },
+          {
+            "type": "field",
+            "name": "company_id"
+          },
+          {
+            "type": "field",
+            "name": "date_deadline"
+          },
+          {
+            "type": "field",
+            "name": "activity_ids"
+          },
+          {
+            "type": "field",
+            "name": "my_activity_date_deadline"
+          },
+          {
+            "type": "field",
+            "name": "rating_active"
+          },
+          {
+            "type": "field",
+            "name": "tag_ids"
+          },
+          {
+            "type": "field",
+            "name": "date_last_stage_update"
+          },
+          {
+            "type": "field",
+            "name": "stage_id"
+          },
+          {
+            "type": "field",
+            "name": "personal_stage_type_id"
+          },
+          {
+            "type": "field",
+            "name": "task_properties"
+          },
+          {
+            "type": "field",
+            "name": "recurrence_id"
+          },
+          {
+            "type": "field",
+            "name": "collaborator_ids"
+          },
+          {
+            "type": "field",
+            "name": "partner_id"
+          },
+          {
+            "type": "field",
+            "name": "partner_email"
+          },
+          {
+            "type": "field",
+            "name": "analytic_account_id"
+          }
+        ],
+        "header_buttons": [],
+        "stat_buttons": [],
+        "chatter": {}
+      }
+    },
+    "fields": {}
+  },
+  "record": null,
+  "record_error": "不允许访问\"项目合同\"（construction.contract）记录。\n\n允许对以下组进行此操作：\n\t- Smart Construction/SC 能力 - 合同中心只读\n\t- Smart Construction/SC 能力 - 合同中心审批\n\t- Smart Construction/SC 能力 - 合同中心经办\n\t- Smart Construction/SC 能力 - 财务中心只读\n\t- Smart Construction/SC 能力 - 财务中心审批\n\t- Smart Construction/SC 能力 - 财务中心经办\n\t- Smart Construction/合同中心-只读\n\t- Smart Construction/合同中心-审批\n\t- Smart Construction/合同中心-经办\n\n如有必要，请联系您的管理员申请访问权限。",
+  "meta_fields": null,
+  "execute_result": null,
+  "execute_error": "method not callable"
+}

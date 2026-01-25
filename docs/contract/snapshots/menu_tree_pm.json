@@ -1,0 +1,143 @@
+{
+  "case": "menu_tree_pm",
+  "trace_id": "427fcb61-33c9-4172-8b16-f25252046afd",
+  "exported_at": "2026-01-25T05:56:59Z",
+  "contract_version": "v1",
+  "model": null,
+  "view_type": null,
+  "op": "nav",
+  "user": "pm",
+  "user_fallback": "admin",
+  "fallback": true,
+  "action": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "nav": [
+      {
+        "id": 76,
+        "name": "Discuss",
+        "action": "ir.actions.client",
+        "action_id": 119,
+        "children": []
+      },
+      {
+        "id": 243,
+        "name": "To-do",
+        "action": "ir.actions.server",
+        "action_id": 421,
+        "children": []
+      },
+      {
+        "id": 190,
+        "name": "Dashboards",
+        "action": "ir.actions.client",
+        "action_id": 329,
+        "children": [
+          {
+            "id": 191,
+            "name": "Dashboards",
+            "action": "ir.actions.client",
+            "action_id": 329,
+            "children": []
+          },
+          {
+            "id": 192,
+            "name": "Configuration",
+            "action": null,
+            "action_id": null,
+            "children": [
+              {
+                "id": 193,
+                "name": "Dashboards",
+                "action": "ir.actions.act_window",
+                "action_id": 330,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "name": "Apps",
+        "action": null,
+        "action_id": null,
+        "children": [
+          {
+            "id": 47,
+            "name": "Apps",
+            "action": null,
+            "action_id": null,
+            "children": [
+              {
+                "id": 48,
+                "name": "Main Apps",
+                "action": "ir.actions.act_window",
+                "action_id": 38,
+                "children": []
+              },
+              {
+                "id": 51,
+                "name": "Theme Store",
+                "action": "ir.actions.act_url",
+                "action_id": 40,
+                "children": []
+              },
+              {
+                "id": 50,
+                "name": "Third-Party Apps",
+                "action": "ir.actions.act_url",
+                "action_id": 39,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 1,
+        "name": "Settings",
+        "action": null,
+        "action_id": null,
+        "children": [
+          {
+            "id": 66,
+            "name": "General Settings",
+            "action": "ir.actions.act_window",
+            "action_id": 84,
+            "children": []
+          },
+          {
+            "id": 3,
+            "name": "Users & Companies",
+            "action": null,
+            "action_id": null,
+            "children": [
+              {
+                "id": 60,
+                "name": "Users",
+                "action": "ir.actions.act_window",
+                "action_id": 69,
+                "children": []
+              },
+              {
+                "id": 57,
+                "name": "Companies",
+                "action": "ir.actions.act_window",
+                "action_id": 52,
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "fallback": true,
+    "error": "'app.menu.config'"
+  },
+  "record": null,
+  "record_error": null,
+  "meta_fields": null,
+  "execute_result": null,
+  "execute_error": null
+}
