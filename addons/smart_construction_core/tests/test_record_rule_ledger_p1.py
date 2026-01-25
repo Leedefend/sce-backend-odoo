@@ -63,10 +63,40 @@ class TestRecordRuleLedgerP1(TransactionCase):
 
         cls.partner = _ctx("res.partner").create({"name": "RR Ledger Partner"})
 
+        tax = cls.env["account.tax"].search([], limit=1)
+        if not tax:
+            tax = _ctx("account.tax").create(
+                {
+                    "name": "RR Ledger Tax",
+                    "amount": 0.0,
+                    "amount_type": "percent",
+                    "type_tax_use": "sale",
+                }
+            )
+
+        def _create_contract(name, project):
+            return _ctx("construction.contract").create(
+                {
+                    "subject": name,
+                    "type": "out",
+                    "project_id": project.id,
+                    "partner_id": cls.partner.id,
+                    "tax_id": tax.id,
+                }
+            )
+
+        cls.contract_same = _create_contract(
+            "RR Ledger Contract Same", cls.project_same
+        )
+        cls.contract_other = _create_contract(
+            "RR Ledger Contract Other", cls.project_other
+        )
+
         cls.settlement_same = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_same.id,
                 "line_ids": [(0, 0, {"name": "RR Ledger Line Same", "amount": 10.0})],
             }
         )
@@ -74,6 +104,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_other.id,
                 "line_ids": [(0, 0, {"name": "RR Ledger Line Other", "amount": 20.0})],
             }
         )

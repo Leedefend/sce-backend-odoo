@@ -84,11 +84,40 @@ class TestP0FinanceAggregateGate(TransactionCase):
         cls.partner_other = _ctx("res.partner").create(
             {"name": "P0 Finance Agg Partner Other"}
         )
+        tax = cls.env["account.tax"].search([], limit=1)
+        if not tax:
+            tax = _ctx("account.tax").create(
+                {
+                    "name": "P0 Finance Agg Tax",
+                    "amount": 0.0,
+                    "amount_type": "percent",
+                    "type_tax_use": "sale",
+                }
+            )
+
+        def _create_contract(name, project, partner):
+            return _ctx("construction.contract").create(
+                {
+                    "subject": name,
+                    "type": "out",
+                    "project_id": project.id,
+                    "partner_id": partner.id,
+                    "tax_id": tax.id,
+                }
+            )
+
+        cls.contract_same = _create_contract(
+            "P0 Finance Agg Contract Same", cls.project_same, cls.partner
+        )
+        cls.contract_other = _create_contract(
+            "P0 Finance Agg Contract Other", cls.project_other, cls.partner_other
+        )
 
         cls.settlement_same = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_same.id,
                 "line_ids": [(0, 0, {"name": "P0 Agg Line", "amount": 120.0})],
             }
         )
@@ -96,6 +125,7 @@ class TestP0FinanceAggregateGate(TransactionCase):
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner_other.id,
+                "contract_id": cls.contract_other.id,
                 "line_ids": [(0, 0, {"name": "P0 Agg Line Other", "amount": 80.0})],
             }
         )
