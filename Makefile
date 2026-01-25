@@ -80,6 +80,15 @@ ODOO_SERVICE ?= odoo
 ODOO_CONF    ?= /var/lib/odoo/odoo.conf
 ODOO_DB      ?= $(DB_NAME)
 
+# ------------------ Contract / Snapshot ------------------
+CONTRACT_USER   ?= admin
+CONTRACT_CASE   ?=
+CONTRACT_MODEL  ?= project.project
+CONTRACT_ID     ?=
+CONTRACT_VIEW   ?= form
+CONTRACT_OUTDIR ?= docs/contract/snapshots
+CONTRACT_CONFIG ?= $(ODOO_CONF)
+
 # Unified Odoo execution (never bypass entrypoint config)
 ODOO_EXEC = $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) odoo -c $(ODOO_CONF) -d $(ODOO_DB)
 
@@ -179,6 +188,34 @@ guard.prod.danger:
 	  echo "❌ prod danger guard: set PROD_DANGER=1 to proceed"; \
 	  exit 2; \
 	fi
+
+# ======================================================
+# ================== Contract ==========================
+# ======================================================
+.PHONY: contract.export contract.export_all gate.contract gate.contract.bootstrap gate.contract.bootstrap-pass
+
+contract.export:
+	@DB="$(DB_NAME)" scripts/contract/snapshot_export.sh \
+	  --db "$(DB_NAME)" \
+	  --user "$(CONTRACT_USER)" \
+	  --case "$(CONTRACT_CASE)" \
+	  --model "$(CONTRACT_MODEL)" \
+	  $(if $(CONTRACT_ID),--id "$(CONTRACT_ID)",) \
+	  --view_type "$(CONTRACT_VIEW)" \
+	  --config "$(CONTRACT_CONFIG)" \
+	  --outdir "$(CONTRACT_OUTDIR)"
+
+contract.export_all:
+	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" OUTDIR="$(CONTRACT_OUTDIR)" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/export_all.sh
+
+gate.contract:
+	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh
+
+gate.contract.bootstrap:
+	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh --bootstrap
+
+gate.contract.bootstrap-pass:
+	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh --bootstrap --bootstrap-pass
 
 check-compose-project:
 	@if [ -z "$${COMPOSE_PROJECT_NAME:-}" ]; then \

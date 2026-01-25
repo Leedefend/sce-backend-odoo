@@ -1,0 +1,89 @@
+[
+  {
+    "case": "menu_tree_admin",
+    "user": "admin",
+    "op": "nav"
+  },
+  {
+    "case": "menu_tree_pm",
+    "user": "pm",
+    "op": "nav"
+  },
+  {
+    "case": "project_list_pm",
+    "user": "pm",
+    "model": "project.project",
+    "view_type": "list",
+    "op": "model",
+    "include_meta": true
+  },
+  {
+    "case": "project_form_pm",
+    "user": "pm",
+    "model": "project.project",
+    "view_type": "form",
+    "id": 1,
+    "op": "model",
+    "include_meta": true
+  },
+  {
+    "case": "execute_button_pm",
+    "user": "pm",
+    "model": "project.project",
+    "view_type": "form",
+    "id": 1,
+    "op": "model",
+    "execute_method": "action_sc_submit"
+  },
+  {
+    "case": "execute_button_missing_method",
+    "user": "pm",
+    "model": "project.project",
+    "view_type": "form",
+    "id": 1,
+    "op": "model",
+    "execute_method": "action_missing_method"
+  },
+  {
+    "case": "execute_button_missing_record",
+    "user": "pm",
+    "model": "project.project",
+    "view_type": "form",
+    "id": 999999,
+    "op": "model",
+    "execute_method": "action_sc_submit"
+  },
+  {
+    "case": "execute_button_not_allowed",
+    "user": "pm",
+    "model": "project.project",
+    "view_type": "form",
+    "id": 1,
+    "op": "model",
+    "execute_method": "action_sc_project_manage"
+  },
+  {
+    "case": "execute_button_error",
+    "user": "pm",
+    "model": "project.project",
+    "view_type": "form",
+    "id": 1,
+    "op": "model",
+    "execute_method": "action_sc_submit"
+  },
+  {
+    "case": "form_save_simple_pm",
+    "user": "pm",
+    "model": "project.project",
+    "view_type": "form",
+    "id": 1,
+    "op": "model"
+  },
+  {
+    "case": "attachment_list_pm",
+    "user": "pm",
+    "model": "ir.attachment",
+    "view_type": "list",
+    "op": "model"
+  }
+]
