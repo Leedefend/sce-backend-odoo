@@ -14,6 +14,7 @@ _REGISTRY: Dict[str, SeedStep] = {}
 _PROFILES: Dict[str, List[str]] = {
     "base": [
         "sanity",
+        "company_currency_cny",
         "tax_defaults",
         "icp_defaults",
         "dictionary_min",
@@ -23,6 +24,7 @@ _PROFILES: Dict[str, List[str]] = {
     "demo_full": [
         "sanity",
         "dictionary",
+        "company_currency_cny",
         "tax_defaults",
         "demo_10_users",
         "demo_user_prefs",
