@@ -22,6 +22,8 @@
         # 基础数据
         'data/sequence.xml',
         'data/project_stage_data.xml',
+        'data/project_next_action_rules.xml',
+        'data/project_stage_requirement_items.xml',
         'data/cron_signup_throttle_gc.xml',
 
         # 安全
@@ -80,6 +82,8 @@
         'views/project_workbench_action.xml',
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
+        'views/support/project_stage_requirements_views.xml',
+        'views/support/project_stage_requirement_item_views.xml',
         'views/web_login_views.xml',
         'views/login_templates.xml',
         'views/signup_templates.xml',
@@ -127,6 +131,12 @@
             'smart_construction_core/static/src/js/insight/insight_widget.js',
             'smart_construction_core/static/src/js/insight/insight_view_widget.js',
             'smart_construction_core/static/src/scss/insight_banner.scss',
+            'smart_construction_core/static/src/js/next_actions/next_actions_widget.js',
+            'smart_construction_core/static/src/js/next_actions/next_actions_view_widget.js',
+            'smart_construction_core/static/src/js/stage_requirements/stage_requirements_widget.js',
+            'smart_construction_core/static/src/js/stage_requirements/stage_requirements_view_widget.js',
+            'smart_construction_core/static/src/scss/next_actions.scss',
+            'smart_construction_core/static/src/scss/project_overview.scss',
         ],
         'web.assets_tests': [
             'smart_construction_core/static/tests/sc_sidebar_tests.js',

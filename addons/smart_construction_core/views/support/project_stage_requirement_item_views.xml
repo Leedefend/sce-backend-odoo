@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_project_stage_requirement_item_tree" model="ir.ui.view">
+        <field name="name">sc.project.stage.requirement.item.tree</field>
+        <field name="model">sc.project.stage.requirement.item</field>
+        <field name="arch" type="xml">
+            <tree string="阶段要求配置">
+                <field name="sequence"/>
+                <field name="lifecycle_state"/>
+                <field name="name"/>
+                <field name="required"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_project_stage_requirement_item_form" model="ir.ui.view">
+        <field name="name">sc.project.stage.requirement.item.form</field>
+        <field name="model">sc.project.stage.requirement.item</field>
+        <field name="arch" type="xml">
+            <form string="阶段要求配置">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="lifecycle_state"/>
+                        <field name="sequence"/>
+                        <field name="required"/>
+                        <field name="active"/>
+                        <field name="target_field"/>
+                        <field name="action_xmlid"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_project_stage_requirement_items" model="ir.actions.act_window">
+        <field name="name">阶段要求配置</field>
+        <field name="res_model">sc.project.stage.requirement.item</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p>维护各生命周期阶段的要求清单。</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_sc_project_stage_requirement_items"
+              name="阶段要求配置"
+              parent="menu_sc_project_manage"
+              action="action_sc_project_stage_requirement_items"
+              sequence="95"
+              groups="smart_construction_core.group_sc_cap_project_manager,smart_construction_core.group_sc_super_admin"/>
+</odoo>

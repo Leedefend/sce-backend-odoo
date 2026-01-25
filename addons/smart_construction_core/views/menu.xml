@@ -8,8 +8,9 @@
     <record id="action_project_initiation" model="ir.actions.act_window">
         <field name="name">项目立项</field>
         <field name="res_model">project.project</field>
-        <field name="view_mode">form,tree,kanban</field>
-        <field name="context">{'default_project_code': '新项目'}</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_construction_core.view_project_create_form"/>
+        <field name="context">{'default_project_code': '新项目', 'sc_return_to_overview': 1, 'sc_overview_action_xmlid': 'smart_construction_core.action_sc_project_overview'}</field>
         <field name="target">current</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
     </record>
@@ -28,7 +29,7 @@
     <menuitem id="menu_sc_project_project"
               name="项目台账（试点）"
               parent="menu_sc_project_center"
-              action="action_sc_project_list"
+              action="action_sc_project_overview"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_project_read"/>
     <menuitem id="menu_sc_project_wbs"
@@ -73,6 +74,13 @@
               action="smart_construction_core.action_sc_project_structure"
               sequence="52"
               groups="smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+
+    <menuitem id="menu_sc_project_manage"
+              name="项目管理（后台）"
+              parent="menu_sc_project_center"
+              action="action_sc_project_manage"
+              sequence="90"
+              groups="smart_construction_core.group_sc_cap_project_manager,smart_construction_core.group_sc_super_admin"/>
 
     <!-- 合同中心 -->
     <menuitem id="menu_sc_contract_center"

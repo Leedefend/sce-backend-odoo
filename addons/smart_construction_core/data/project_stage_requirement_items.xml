@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Draft stage requirements -->
+    <record id="sc_stage_req_draft_owner" model="sc.project.stage.requirement.item">
+        <field name="name">业主单位</field>
+        <field name="lifecycle_state">draft</field>
+        <field name="sequence">10</field>
+        <field name="required">1</field>
+        <field name="target_field">owner_id</field>
+        <field name="action_xmlid">smart_construction_core.action_sc_project_manage</field>
+    </record>
+    <record id="sc_stage_req_draft_location" model="sc.project.stage.requirement.item">
+        <field name="name">项目地点</field>
+        <field name="lifecycle_state">draft</field>
+        <field name="sequence">20</field>
+        <field name="required">1</field>
+        <field name="target_field">location</field>
+        <field name="action_xmlid">smart_construction_core.action_sc_project_manage</field>
+    </record>
+    <record id="sc_stage_req_draft_manager" model="sc.project.stage.requirement.item">
+        <field name="name">项目负责人/经理</field>
+        <field name="lifecycle_state">draft</field>
+        <field name="sequence">30</field>
+        <field name="required">1</field>
+        <field name="target_field">manager_or_user</field>
+        <field name="action_xmlid">smart_construction_core.action_sc_project_manage</field>
+    </record>
+
+    <!-- In progress stage requirements -->
+    <record id="sc_stage_req_progress_tasks" model="sc.project.stage.requirement.item">
+        <field name="name">持续更新项目任务与执行结构</field>
+        <field name="lifecycle_state">in_progress</field>
+        <field name="sequence">10</field>
+        <field name="required">0</field>
+        <field name="action_xmlid">project.action_view_task</field>
+    </record>
+    <record id="sc_stage_req_progress_cost" model="sc.project.stage.requirement.item">
+        <field name="name">维护成本台账与付款申请</field>
+        <field name="lifecycle_state">in_progress</field>
+        <field name="sequence">20</field>
+        <field name="required">0</field>
+        <field name="action_xmlid">smart_construction_core.action_project_cost_ledger_my</field>
+    </record>
+    <record id="sc_stage_req_progress_contract" model="sc.project.stage.requirement.item">
+        <field name="name">跟踪合同执行与项目进度</field>
+        <field name="lifecycle_state">in_progress</field>
+        <field name="sequence">30</field>
+        <field name="required">0</field>
+        <field name="action_xmlid">smart_construction_core.action_project_contract_overview</field>
+    </record>
+</odoo>
