@@ -234,6 +234,10 @@
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
     </record>
 
+    <record id="ir_cron_sc_signup_throttle_gc_ir_actions_server" model="ir.actions.server">
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_super_admin')), (4, ref('base.group_system'))]"/>
+    </record>
+
   <data noupdate="1">
 
     <!-- ===== Settings / Configuration (lock to System Settings) ===== -->
