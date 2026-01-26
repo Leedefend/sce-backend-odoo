@@ -28,8 +28,9 @@ class PortalController(http.Controller):
             return fail("NOT_FOUND", "Portal disabled", http_status=404)
         payload = _merge_payload(params)
         route = payload.get("route") or "/portal/lifecycle"
+        trace_id = payload.get("trace_id")
         service = PortalContractService(request.env)
-        data = service.build_lifecycle_dashboard(route=route)
+        data = service.build_lifecycle_dashboard(route=route, trace_id=trace_id)
         return ok(data, status=200)
 
 

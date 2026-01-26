@@ -122,9 +122,14 @@
       .map((code) => {
         const info = capabilities[code] || {mode: "deny"};
         const mode = info.mode || "deny";
+        const label = info.ui_label || code;
+        const hint = info.ui_hint || "";
         return `
           <div class="sc-portal__cap-row">
-            <div class="sc-portal__cap-name">${escapeHtml(code)}</div>
+            <div class="sc-portal__cap-name">
+              <div class="sc-portal__cap-title">${escapeHtml(label)}</div>
+              <div class="sc-portal__cap-hint">${escapeHtml(hint)}</div>
+            </div>
             <div class="sc-portal__cap-mode mode-${mode}">${escapeHtml(mode)}</div>
           </div>
         `;

@@ -53,6 +53,8 @@ for case in cases:
         cmd += ["--route", case["route"]]
     if case.get("project_id"):
         cmd += ["--project_id", str(case["project_id"])]
+    if case.get("trace_id"):
+        cmd += ["--trace_id", str(case["trace_id"])]
     if case.get("op"):
         cmd += ["--op", case["op"]]
     if case.get("execute_method"):
