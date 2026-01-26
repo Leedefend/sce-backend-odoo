@@ -19,11 +19,22 @@ def parse_args():
     parser.add_argument("--case", required=True, help="Snapshot case name")
     parser.add_argument("--model", default="", help="Model name")
     parser.add_argument("--id", dest="record_id", type=int, default=0, help="Record id (optional)")
-    parser.add_argument("--view_type", default="form", choices=["form", "list", "kanban"], help="View type")
-    parser.add_argument("--project_id", type=int, default=0, help="Project id (optional)")
+    parser.add_argument(
+        "--view_type",
+        default="form",
+        choices=["form", "list", "kanban"],
+        help="View type (default: form)",
+    )
+    parser.add_argument("--project_id", type=int, default=0, help="Project id (required for meta.describe_project_capabilities)")
     parser.add_argument("--menu_id", type=int, default=0, help="Menu id (optional)")
     parser.add_argument("--action_xmlid", default="", help="Action xmlid (optional)")
-    parser.add_argument("--op", default="", help="Operation (nav/menu/action_open/model)")
+    parser.add_argument(
+        "--op",
+        default="",
+        help="Operation (nav/menu/action_open/model/ui.contract/meta.describe_project_capabilities)",
+    )
+    parser.add_argument("--route", default="", help="Route for ui.contract (required when op=ui.contract)")
+    parser.add_argument("--trace_id", default="", help="Trace id override for ui.contract (optional)")
     parser.add_argument("--execute_method", default="", help="Execute object method (optional)")
     parser.add_argument("--config", default=os.environ.get("ODOO_CONF", "/etc/odoo/odoo.conf"))
     parser.add_argument("--outdir", default="docs/contract/snapshots")
@@ -213,6 +224,10 @@ def export_snapshot():
             payload.update({"model": args.model, "view_type": view_type})
         if op == "meta.describe_project_capabilities":
             payload.update({"project_id": args.project_id})
+        if op == "ui.contract":
+            payload.update({"route": args.route})
+            if args.trace_id:
+                payload.update({"trace_id": args.trace_id})
 
         action_data = None
         if op == "menu" or args.menu_id:
@@ -240,6 +255,19 @@ def export_snapshot():
 
             service = LifecycleCapabilityService(env)
             res = {"data": service.describe_project(project)}
+        elif op == "ui.contract":
+            if not args.route:
+                raise SystemExit("route required for ui.contract")
+            from odoo.addons.smart_construction_portal.services.portal_contract_service import (
+                PortalContractService,
+            )
+
+            service = PortalContractService(env)
+            res = {
+                "data": service.build_lifecycle_dashboard(
+                    route=args.route, trace_id=args.trace_id or None
+                )
+            }
         else:
             handler = UiContractHandler(env, request=None, payload=payload)
             try:

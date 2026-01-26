@@ -9,6 +9,25 @@ SHELL := bash
 
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
+# ======================================================
+# ==================== Codex SOP =======================
+# ======================================================
+# 目标：让执行器（Codex）按“最小动作”迭代，避免每次都 upgrade/reset/gate。
+#
+# Two modes:
+#   - CODEX_MODE=fast (default): 禁止重动作；允许 restart；升级需显式允许。
+#   - CODEX_MODE=gate: 允许 demo.reset + gate.full，用于合并/打 tag 前验收。
+#
+# Knobs:
+#   - CODEX_NEED_UPGRADE=1   # 仅当本次改动涉及 views/security/data/schema 才允许升级
+#   - CODEX_MODULES=...      # 需要升级的模块列表（逗号或空格分隔，按你 scripts/mod/upgrade.sh 支持的形式）
+#   - CODEX_DB=...           # 默认复用 DB_NAME
+#
+CODEX_MODE        ?= fast
+CODEX_NEED_UPGRADE ?= 0
+CODEX_MODULES     ?= $(MODULE)
+CODEX_DB          ?= $(DB_NAME)
+
 # Load env file (repo-level)
 ENV ?= dev
 ENV_FILE ?=
@@ -189,6 +208,22 @@ guard.prod.danger:
 	  exit 2; \
 	fi
 
+# ------------------ Codex Guards ------------------
+.PHONY: guard.codex.fast.noheavy guard.codex.fast.upgrade
+
+guard.codex.fast.noheavy:
+	@if [ "$(CODEX_MODE)" = "fast" ]; then \
+	  echo "❌ [codex] mode=fast: heavy targets are forbidden (demo.reset/gate.full/dev.rebuild/gate.demo/gate.baseline)"; \
+	  exit 2; \
+	fi
+
+guard.codex.fast.upgrade:
+	@if [ "$(CODEX_MODE)" = "fast" ] && [ "$(CODEX_NEED_UPGRADE)" != "1" ]; then \
+	  echo "❌ [codex] mode=fast: module upgrade is blocked by default."; \
+	  echo "   Set CODEX_NEED_UPGRADE=1 and CODEX_MODULES=... only when changes touch views/security/data/schema."; \
+	  exit 2; \
+	fi
+
 # ======================================================
 # ================== Contract ==========================
 # ======================================================
@@ -275,6 +310,11 @@ help:
 	@echo "  make ci.clean | ci.ps | ci.logs"
 	@echo "  make diag.compose | verify.ops"
 	@echo
+	@echo "Codex SOP:"
+	@echo "  make codex.fast [CODEX_MODULES=...] [CODEX_NEED_UPGRADE=1]   # 快迭代：默认不升级不重建"
+	@echo "  make codex.gate [CODEX_MODULES=...] [CODEX_NEED_UPGRADE=1]   # 门禁验收：reset+contract+gate"
+	@echo "  vars: CODEX_MODE=$(CODEX_MODE) CODEX_NEED_UPGRADE=$(CODEX_NEED_UPGRADE) CODEX_DB=$(CODEX_DB)"
+	@echo
 	@echo "Common vars:"
 	@echo "  MODULE=$(MODULE) DB_NAME=$(DB_NAME) DB_CI=$(DB_CI) TEST_TAGS=$(TEST_TAGS)"
 	@echo "  ENV=$(ENV) ENV_FILE=$(ENV_FILE)"
@@ -305,7 +345,7 @@ prod.restart.full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 
 .PHONY: dev.rebuild
-dev.rebuild: guard.prod.forbid check-compose-project check-compose-env gate.compose.config
+dev.rebuild: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env gate.compose.config
 	@$(RUN_ENV) bash scripts/dev/down.sh || true
 	@$(RUN_ENV) bash scripts/dev/up.sh
 	@$(MAKE) db.reset
@@ -336,7 +376,7 @@ db.reset: guard.prod.forbid check-compose-project check-compose-env diag.project
 	@$(RUN_ENV) bash scripts/db/reset.sh
 
 # demo.reset 必须走 scripts/demo/reset.sh（含 seed/demo 安装）
-demo.reset: guard.prod.forbid check-compose-project check-compose-env diag.project
+demo.reset: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env diag.project
 	@$(RUN_ENV) bash scripts/demo/reset.sh
 
 # 兼容旧快捷命令：固定 sc_demo
@@ -379,11 +419,11 @@ prod.guard.mail_from: check-compose-project check-compose-env
 prod.fix.mail_from: guard.prod.danger check-compose-project check-compose-env
 	@DB_NAME=$(DB_NAME) bash scripts/prod/fix_mail_from.sh
 
-gate.baseline: guard.prod.forbid check-compose-project check-compose-env
+gate.baseline: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 
-gate.demo: guard.prod.forbid check-compose-project check-compose-env
+gate.demo: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/verify/demo.sh
 
@@ -393,7 +433,7 @@ gate.demo: guard.prod.forbid check-compose-project check-compose-env
 .PHONY: mod.install mod.upgrade
 mod.install: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/mod/install.sh
-mod.upgrade: guard.prod.danger check-compose-project check-compose-env
+mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/mod/upgrade.sh
 
 # ======================================================
@@ -502,10 +542,45 @@ audit.pull:
 audit.boundary:
 	@bash scripts/audit/boundary_lint.sh
 
-gate.full: guard.prod.forbid check-compose-project check-compose-env
+gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
 	@$(MAKE) audit.pull DB_NAME=$(DB_NAME)
+
+# ======================================================
+# ==================== Codex Targets ===================
+# ======================================================
+.PHONY: codex.fast codex.gate codex.print
+
+codex.print:
+	@echo "== Codex SOP =="
+	@echo "CODEX_MODE=$(CODEX_MODE) CODEX_DB=$(CODEX_DB) CODEX_MODULES=$(CODEX_MODULES) CODEX_NEED_UPGRADE=$(CODEX_NEED_UPGRADE)"
+	@echo "fast: restart (optional upgrade only if CODEX_NEED_UPGRADE=1) ; forbid demo.reset/gate.full"
+	@echo "gate: optional upgrade + demo.reset + contract.export_all + gate.full"
+
+codex.fast: guard.prod.forbid check-compose-project check-compose-env
+	@echo "[codex.fast] mode=fast db=$(CODEX_DB) modules=$(CODEX_MODULES) need_upgrade=$(CODEX_NEED_UPGRADE)"
+	@$(MAKE) restart CODEX_MODE=fast DB=$(CODEX_DB)
+	@if [ "$(CODEX_NEED_UPGRADE)" = "1" ]; then \
+	  echo "[codex.fast] upgrading modules (explicitly allowed) ..."; \
+	  $(MAKE) mod.upgrade CODEX_MODE=fast CODEX_NEED_UPGRADE=1 MODULE="$(CODEX_MODULES)" DB="$(CODEX_DB)"; \
+	else \
+	  echo "[codex.fast] skip module upgrade (default)"; \
+	fi
+	@echo "[codex.fast] done. (No demo.reset / No gate.full)"
+
+codex.gate: guard.prod.forbid check-compose-project check-compose-env
+	@echo "[codex.gate] mode=gate db=$(CODEX_DB) modules=$(CODEX_MODULES) need_upgrade=$(CODEX_NEED_UPGRADE)"
+	@if [ "$(CODEX_NEED_UPGRADE)" = "1" ]; then \
+	  echo "[codex.gate] upgrading modules ..."; \
+	  $(MAKE) mod.upgrade CODEX_MODE=gate CODEX_NEED_UPGRADE=1 MODULE="$(CODEX_MODULES)" DB="$(CODEX_DB)"; \
+	else \
+	  echo "[codex.gate] skip module upgrade (not needed)"; \
+	fi
+	@$(MAKE) demo.reset CODEX_MODE=gate DB="$(CODEX_DB)"
+	@$(MAKE) contract.export_all DB="$(CODEX_DB)"
+	@$(MAKE) gate.full CODEX_MODE=gate BD="$(CODEX_DB)"
+	@echo "[codex.gate] ✅ gate flow done."
 
 # ======================================================
 # ==================== Dev Test ========================

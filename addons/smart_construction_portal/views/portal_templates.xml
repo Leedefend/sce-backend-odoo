@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <template id="portal_lifecycle_page" name="Portal Lifecycle Dashboard">
+    <t t-call="web.layout">
+      <t t-set="title">项目生命周期驾驶舱</t>
+      <t t-call-assets="smart_construction_portal.assets_portal" t-js="true" t-css="true"/>
+      <div id="sc-portal-root" class="sc-portal" t-att-data-project-id="project_id">
+        <div class="sc-portal__header">
+          <div class="sc-portal__title">项目生命周期驾驶舱</div>
+          <div class="sc-portal__subtitle">Contract v1 + lifecycle/capability</div>
+        </div>
+        <div class="sc-portal__body">
+          <div class="sc-portal__panel" data-portal="lifecycle"></div>
+          <div class="sc-portal__panel" data-portal="detail"></div>
+          <div class="sc-portal__panel" data-portal="capabilities"></div>
+        </div>
+      </div>
+    </t>
+  </template>
+</odoo>
