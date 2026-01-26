@@ -1,0 +1,90 @@
+draft:
+  project.edit_basic: allow
+  project.lifecycle.transition: allow
+  project.close: deny
+  task.create: deny
+  task.start: deny
+  task.complete: deny
+  finance.settlement.create: deny
+  finance.payment.submit: deny
+  contract.create: allow
+  boq.edit: allow
+  cost.entry: deny
+
+in_progress:
+  project.edit_basic: allow
+  project.lifecycle.transition: allow
+  project.close: deny
+  task.create: allow
+  task.start: allow
+  task.complete: allow
+  finance.settlement.create: allow
+  finance.payment.submit: allow
+  contract.create: allow
+  boq.edit: allow
+  cost.entry: allow
+
+paused:
+  project.edit_basic: readonly
+  project.lifecycle.transition: allow
+  project.close: deny
+  task.create: deny
+  task.start: deny
+  task.complete: deny
+  finance.settlement.create: deny
+  finance.payment.submit: deny
+  contract.create: deny
+  boq.edit: deny
+  cost.entry: deny
+
+done:
+  project.edit_basic: readonly
+  project.lifecycle.transition: allow
+  project.close: deny
+  task.create: deny
+  task.start: deny
+  task.complete: readonly
+  finance.settlement.create: allow
+  finance.payment.submit: allow
+  contract.create: deny
+  boq.edit: deny
+  cost.entry: readonly
+
+closing:
+  project.edit_basic: readonly
+  project.lifecycle.transition: allow
+  project.close: deny
+  task.create: deny
+  task.start: deny
+  task.complete: readonly
+  finance.settlement.create: readonly
+  finance.payment.submit: allow
+  contract.create: deny
+  boq.edit: deny
+  cost.entry: readonly
+
+warranty:
+  project.edit_basic: readonly
+  project.lifecycle.transition: allow
+  project.close: deny
+  task.create: deny
+  task.start: deny
+  task.complete: readonly
+  finance.settlement.create: deny
+  finance.payment.submit: deny
+  contract.create: deny
+  boq.edit: deny
+  cost.entry: deny
+
+closed:
+  project.edit_basic: readonly
+  project.lifecycle.transition: deny
+  project.close: deny
+  task.create: deny
+  task.start: deny
+  task.complete: deny
+  finance.settlement.create: deny
+  finance.payment.submit: deny
+  contract.create: deny
+  boq.edit: deny
+  cost.entry: deny
