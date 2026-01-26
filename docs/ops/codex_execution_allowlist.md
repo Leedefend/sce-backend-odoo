@@ -1,173 +1,238 @@
-# Codex Execution Allowlist
-（Codex 自动执行授权清单 · Policy as Code）
+# Codex Execution Allowlist (Autonomous Mode)
+（Codex 自治执行授权清单 · v2）
 
-## 目的（Why）
+## 0. 定位（What Codex Is）
 
-本清单用于**授权 Codex 在无需人工逐条许可的前提下**，在本仓库内执行**受限、可重复、可审计**的工程验证与迭代操作。
+Codex 在本仓库中的角色被明确为：
 
-目标不是“让 Codex 更自由”，而是：
-- 把日常验证流程**固化为标准工程动作**
-- 避免每次迭代都触发 **模块升级 / DB 重建 / demo.reset**
-- 让所有重动作**只能在明确的 Gate 模式下发生**
-- 确保所有执行都有 **日志与证据产出**
+> **自治执行体（Autonomous Engineering Executor）**
 
-> Codex 被视为一个 **CI Runner / 初级工程执行者**，而非系统管理员。
+其职责是在**独立分支（feature/* / feat/* / codex/*）**内，
+围绕既定目标进行**连续的代码迭代、验证与交互完善**，
+并在不需要人工逐步授权的前提下，完成以下闭环：
 
----
+- 实现改动
+- 运行验证
+- 修复失败
+- 重复迭代
+- 输出可审计结果
 
-## 核心原则（Non-Negotiable Rules）
-
-1. **所有操作必须通过 Makefile target 执行**
-   - ❌ 禁止直接运行 `docker compose exec odoo -u ...`
-   - ❌ 禁止直接连接 `psql` 执行破坏性 SQL
-   - ❌ 禁止绕过 Makefile 的 prod guard
-
-2. **默认最小动作原则（Fast by Default）**
-   - 未显式声明 Gate 模式前，禁止重建 / 重置 / 全量门禁
-
-3. **模式即授权（Mode = Authority）**
-   - `CODEX_MODE=fast`：只允许轻量迭代
-   - `CODEX_MODE=gate`：允许门禁级动作
-
-4. **升级必须显式声明**
-   - 模块升级不是默认行为
-   - 只有在明确涉及入库元数据时才允许
+Codex **不是管理员**，也**不是决策者**；
+Codex 是一个**被严格约束的工程执行单元**。
 
 ---
 
-## 执行模式定义（Execution Modes）
+## 1. 执行边界总原则（Hard Rules）
 
-### MODE=fast（默认 · 快迭代模式）
+### 1.1 分支约束（最重要）
 
-**用途**
-- 前端 UI / Portal 页面调试
-- Python 业务逻辑修正
-- Contract 输出结构微调
-- 文档 / 脚本调整
+Codex **只能** 在以下分支类型中执行自治操作：
 
-**允许的 Make Targets**
-- `make restart`
-- `make odoo.recreate`
-- `make logs`
-- `make ps`
-- `make odoo-shell`（只读调试，不执行破坏性命令）
-- `make contract.export`（单 case）
-- `make mod.upgrade`  
-  ⚠️ **仅当同时满足：**
-  - `CODEX_NEED_UPGRADE=1`
-  - 明确声明 `CODEX_MODULES=...`
+- `feat/*`
+- `feature/*`
+- `codex/*`
+- `experiment/*`
 
-**禁止的 Make Targets**
-- ❌ `make demo.reset`
-- ❌ `make db.reset`
-- ❌ `make dev.rebuild`
-- ❌ `make gate.full`
-- ❌ `make gate.demo`
-- ❌ `make gate.baseline`
+❌ 严禁：
+- `main`
+- `master`
+- `release/*`
+- 任何已打 tag 的分支
 
-**升级判定说明**
-只有当改动涉及以下路径，才允许设置 `CODEX_NEED_UPGRADE=1`：
-- `addons/**/views/**`
-- `addons/**/security/**`
-- `addons/**/data/**`
-- `addons/**/ir.model.access.csv`
-- 新增/修改模型字段（schema 变化）
+若当前分支不符合要求，Codex **必须停止并报告**。
 
 ---
 
-### MODE=gate（门禁 / 验收模式）
+### 1.2 环境约束
 
-**用途**
-- 合并分支前
-- 打 tag / Release 前
-- Contract 协议稳定性验证
-- Demo/Scenario 可重复性验收
+- 仅允许 `ENV=dev` / `ENV=test`
+- ❌ 禁止 `ENV=prod`
+- ❌ 禁止使用 `.env.prod`
+- ❌ 禁止设置或使用 `PROD_DANGER=1`
 
-**允许的 Make Targets**
-- MODE=fast 中的全部
+---
+
+### 1.3 执行方式约束
+
+- 所有操作 **必须通过 Makefile target**
+- ❌ 禁止直接调用：
+  - `docker compose exec ... odoo -u`
+  - `psql`
+  - `curl` 直接修改系统状态（只允许只读 smoke）
+
+---
+
+## 2. Codex 的“自治生命周期”（你要的关键补齐）
+
+在**独立分支**内，Codex 被授权执行完整的自治循环：
+
+```
+理解目标
+↓
+修改代码
+↓
+选择合适执行模式（fast / gate）
+↓
+执行验证
+↓
+失败 → 定位 → 修复
+↓
+再次验证
+↓
+直到通过
+```
+
+> 在该循环中，**不需要人工逐步授权**。
+
+---
+
+## 3. 执行模式（Execution Modes）
+
+### 3.1 MODE=fast（默认 · 连续迭代模式）
+
+#### 适用范围
+- UI / Portal 交互调优
+- Python 逻辑修正
+- Contract 输出结构演进
+- 文档、脚本、工具链改进
+
+#### 允许的 Make Targets（完整）
+
+- 生命周期/运行态
+  - `make restart`
+  - `make odoo.recreate`
+  - `make logs`
+  - `make ps`
+  - `make odoo-shell`（只读）
+
+- 合同与接口
+  - `make contract.export`
+  - `make contract.export_all`（允许，用于对比）
+
+- 模块操作
+  - `make mod.upgrade`
+    - 前提：
+      - `CODEX_NEED_UPGRADE=1`
+      - 明确 `CODEX_MODULES=...`
+
+- 验证（轻量）
+  - `make smoke.*`
+  - 自定义 `scripts/verify/*_smoke.sh`
+
+#### 明确禁止
+- ❌ `demo.reset`
+- ❌ `db.reset`
+- ❌ `dev.rebuild`
+- ❌ `gate.full`
+- ❌ `gate.demo`
+- ❌ `gate.baseline`
+
+---
+
+### 3.2 MODE=gate（自治验收模式）
+
+> **在独立分支中，Codex 被授权自行进入 gate 模式。**
+
+#### 适用范围
+- 本阶段目标完成后的自验收
+- Contract 稳定性验证
+- Demo 场景回归
+
+#### 允许的 Make Targets
+
+- MODE=fast 的全部
 - `make demo.reset`
 - `make contract.export_all`
 - `make gate.full`
 
-**推荐标准执行链**
-1. （可选）`make mod.upgrade`
-2. `make demo.reset`
-3. `make contract.export_all`
-4. `make gate.full`
+#### 推荐自治执行链
+
+```
+（可选）mod.upgrade
+→ demo.reset
+→ contract.export_all
+→ gate.full
+```
 
 ---
 
-## Codex 标准入口（Single Entry Points）
+## 4. 模块升级授权（升级不是默认）
 
-Codex **必须** 通过以下入口执行：
-
-### 快迭代
-```bash
-make codex.fast
-```
-
-如需升级模块（明确声明）：
+Codex **只能在以下情况下**设置：
 
 ```bash
-make codex.fast CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_construction_portal
+CODEX_NEED_UPGRADE=1
 ```
 
-### 门禁验收
+### 允许升级的改动类型
 
-```bash
-make codex.gate
-```
+* `addons/**/views/**`
+* `addons/**/security/**`
+* `addons/**/data/**`
+* `addons/**/ir.model.access.csv`
+* 新增/修改模型字段（schema 变化）
 
-或（涉及入库变更）：
+### 禁止因以下原因升级
 
-```bash
-make codex.gate CODEX_NEED_UPGRADE=1 CODEX_MODULES=smart_construction_portal
-```
-
-> Codex **不得** 直接调用被禁止的 Make targets；
-> 若违反，本仓库的 guard 将强制失败。
+* JS / SCSS / 前端表现问题
+* Python 纯逻辑修正
+* 文档或脚本调整
 
 ---
 
-## 环境与安全约束（Safety Constraints）
+## 5. 失败即许可（Failure Is Allowed）
 
-* ❌ 禁止在 `ENV=prod` 或 `.env.prod` 下执行任何 reset / rebuild / gate
-* ❌ 禁止在未设置 `PROD_DANGER=1` 的情况下执行危险操作
-* ❌ 禁止在 Codex 执行中修改 `.env*` 文件
+在自治执行过程中：
+
+* ❌ Gate / Smoke 失败
+* ❌ Contract diff 不一致
+* ❌ 校验脚本返回非 0
+
+**都是被允许的状态**。
+
+Codex 的责任是：
+
+* 读取失败信息
+* 修复代码
+* 重新执行
+* 直到通过或触发“停机条件”
 
 ---
 
-## 产出与审计（Artifacts & Evidence）
+## 6. 唯一需要中断并请求人工的情况（极少数）
 
-每次 Codex 执行应至少产出：
+Codex **必须停止并请求人工决策**，仅限以下情况：
 
-* 控制台日志（stdout/stderr）
-* Contract snapshots（如涉及 contract）
-* CI / gate 日志（MODE=gate）
+1. **需要改动 main / release 分支**
+2. **需要新增/修改 prod 策略**
+3. **需要执行不可逆 DB 操作**
+4. **连续 N 次（建议 N=3） gate.full 失败，且失败原因不收敛**
+5. **需要引入全新模块 / 外部依赖**
 
-推荐输出目录：
+---
+
+## 7. 产出与证据（必须）
+
+在一次自治执行周期内，Codex 应产出：
+
+* 日志摘要
+* Gate / Smoke 结果
+* Contract snapshot diff（如有）
+* 最终状态说明（通过 / 阻塞）
+
+推荐目录：
 
 ```
-artifacts/codex/<timestamp>/
+artifacts/codex/<branch>/<timestamp>/
 ```
 
 ---
 
-## 违规处理（Failure is Correct）
+## 8. 一句话执行准则（给 Codex 用）
 
-* 若 Codex 触发 guard 并失败：
-
-  * 这是**正确行为**
-  * 表示操作超出了授权清单
-* Codex 应停止执行并报告：
-
-  * 当前模式
-  * 尝试执行的目标
-  * 被拒绝原因
-
----
-
-## 最终原则（One Sentence）
-
-> **Codex 不被“信任”，Codex 被“约束”；
-> 所有允许的能力，必须写进仓库。**
+> **只在独立分支；  
+> 默认 fast；  
+> 升级需声明；  
+> gate 可自治；  
+> 失败可重试；  
+> 越权即停。**
