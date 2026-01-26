@@ -145,6 +145,7 @@ def post_init_hook(env):
     ensure_core_taxes(env)
     _archive_default_project_stages(env)
     _ensure_signup_defaults(env)
+    _task_sc_state_backfill(env)
 
 
 def _archive_default_project_stages(env):
@@ -190,3 +191,37 @@ def _ensure_signup_defaults(env):
         ICP.set_param("sc.signup.ratelimit.max_per_email", "2")
     if ICP.get_param("sc.signup.ratelimit.gc_days") in (None, False, ""):
         ICP.set_param("sc.signup.ratelimit.gc_days", "7")
+
+
+_TASK_SC_STATE_BACKFILL_KEY = "sc.task_sc_state.backfill.v0_1"
+_TASK_SC_STATE_BACKFILL_COUNT_KEY = "sc.task_sc_state.backfill.v0_1.count"
+
+
+def _task_sc_state_backfill(env):
+    """Backfill sc_state once for legacy tasks; never overwrite user data."""
+    ICP = env["ir.config_parameter"].sudo()
+    if ICP.get_param(_TASK_SC_STATE_BACKFILL_KEY) == "1":
+        return
+
+    Task = env["project.task"].sudo()
+    ids = Task.search([("sc_state", "=", False)]).ids
+    if not ids:
+        ICP.set_param(_TASK_SC_STATE_BACKFILL_KEY, "1")
+        ICP.set_param(_TASK_SC_STATE_BACKFILL_COUNT_KEY, "0")
+        return
+
+    updated = 0
+    batch_size = 2000
+    for i in range(0, len(ids), batch_size):
+        batch = Task.browse(ids[i : i + batch_size])
+        for task in batch:
+            if task.sc_state:
+                continue
+            inferred = "draft"
+            if getattr(task, "state", None) == "done":
+                inferred = "done"
+            task.with_context(allow_transition=True).write({"sc_state": inferred})
+            updated += 1
+
+    ICP.set_param(_TASK_SC_STATE_BACKFILL_KEY, "1")
+    ICP.set_param(_TASK_SC_STATE_BACKFILL_COUNT_KEY, str(updated))

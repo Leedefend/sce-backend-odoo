@@ -1,0 +1,23 @@
+<odoo>
+    <record id="view_task_form_sc_state" model="ir.ui.view">
+        <field name="name">project.task.form.sc_state</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="sc_state" widget="statusbar" options="{'clickable': false}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_task_tree_sc_state" model="ir.ui.view">
+        <field name="name">project.task.tree.sc_state</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_tree2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree//field[@name='name']" position="after">
+                <field name="sc_state"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
