@@ -50,7 +50,8 @@ def post_init_hook(env_or_cr, registry=None):
     if profile:
         steps_sel = f"profile:{profile}"
 
-    if ICP.get_param("sc.login.env") == "demo" or mode == "demo":
+    is_demo_db = env.cr.dbname in ("sc_demo", "sc_test")
+    if ICP.get_param("sc.login.env") == "demo" or mode == "demo" or is_demo_db:
         _logger.info("Seed: ensure company currency is CNY for demo env")
         _ensure_company_currency_cny(env)
 
