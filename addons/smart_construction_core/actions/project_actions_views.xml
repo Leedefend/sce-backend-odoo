@@ -18,6 +18,15 @@
         <field name="act_window_id" ref="smart_construction_core.action_sc_project_overview"/>
     </record>
 
+    <record id="action_sc_project_kanban_lifecycle" model="ir.actions.act_window">
+        <field name="name">项目看板（生命周期）</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_project_kanban_lifecycle"/>
+        <field name="context">{}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+
     <record id="action_sc_project_my_list" model="ir.actions.act_window">
         <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
         <field name="views" eval="[(ref('smart_construction_core.view_project_my_list_tree'), 'tree'), (False, 'form'), (False, 'kanban')]"/>

@@ -51,6 +51,7 @@
         'actions/execution_structure_actions.xml',
         'actions/project_structure_actions.xml',
         'views/core/boq_views.xml',
+        'views/core/project_lifecycle_kanban_views.xml',
         'wizard/material_plan_to_rfq_views.xml',
         'views/core/material_plan_views.xml',
         'actions/finance_actions.xml',
