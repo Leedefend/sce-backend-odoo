@@ -94,5 +94,12 @@
     "view_type": "kanban",
     "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
     "include_meta": true
+  },
+  {
+    "case": "project_capability_matrix_pm",
+    "user": "pm",
+    "op": "meta.describe_project_capabilities",
+    "model": "project.project",
+    "project_id": 1
   }
 ]
