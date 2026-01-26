@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <record id="action_sc_portal_lifecycle" model="ir.actions.act_url">
+    <field name="name">生命周期驾驶舱</field>
+    <field name="url">/portal/lifecycle</field>
+    <field name="target">self</field>
+  </record>
+
+  <menuitem
+    id="menu_sc_portal_lifecycle"
+    name="生命周期驾驶舱"
+    parent="smart_construction_core.menu_sc_project_center"
+    action="action_sc_portal_lifecycle"
+    groups="smart_construction_core.group_sc_cap_project_manager,base.group_system"
+    sequence="15"/>
+</odoo>
