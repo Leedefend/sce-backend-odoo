@@ -211,6 +211,24 @@ Codex **必须停止并请求人工决策**，仅限以下情况：
 
 ---
 
+## 6.1 Branch-local autonomy (codex/* only)
+
+仅在 `codex/*` 分支允许以下流程动作，并且必须通过 Makefile 入口执行：
+
+允许的 Make targets（ONLY）：
+- `make codex.run FLOW=fast|snapshot|gate|pr|cleanup|main`
+- `make pr.create PR_TITLE=... PR_BODY_FILE=...`
+- `make branch.cleanup CLEAN_BRANCH=codex/...`
+- `make main.sync`（仅 fast-forward）
+
+硬性约束：
+- PR 与 cleanup 必须在 `codex/*` 分支执行。
+- 禁止任何直接 `gh` / `git branch` / `git push --delete`。
+- 禁止任何包含 shell 重定向的命令（`>`, `2>&1`, `| tee`）；日志必须由 Makefile/scripts 内部处理。
+- main 受保护：禁止 reset/force-push/重写历史。
+
+---
+
 ## 7. 产出与证据（必须）
 
 在一次自治执行周期内，Codex 应产出：
