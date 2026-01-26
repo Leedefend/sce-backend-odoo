@@ -460,14 +460,48 @@ def run(env):
             BudgetLine.create(vals)
 
     CostCode = env["project.cost.code"].sudo()
-    cost_material = env.ref("smart_construction_core.sc_cost_code_root_material", raise_if_not_found=False)
-    cost_sub = env.ref("smart_construction_core.sc_cost_code_root_subcontract", raise_if_not_found=False)
-    if not cost_material:
-        cost_material = CostCode.search([("type", "=", "material")], limit=1)
-    if not cost_sub:
-        cost_sub = CostCode.search([("type", "=", "subcontract")], limit=1)
-    if not cost_material or not cost_sub:
-        raise UserError("Missing cost codes required for demo cost ledger.")
+
+    def _ensure_demo_cost_code(xmlid, code, name, type_key):
+        record = env.ref(xmlid, raise_if_not_found=False)
+        if record:
+            return record
+        record = CostCode.search([("code", "=", code)], limit=1)
+        if not record:
+            record = CostCode.create(
+                {
+                    "name": name,
+                    "code": code,
+                    "type": type_key,
+                }
+            )
+        module, xml_name = xmlid.split(".")
+        imd = env["ir.model.data"].sudo().search(
+            [("module", "=", module), ("name", "=", xml_name)], limit=1
+        )
+        if not imd:
+            env["ir.model.data"].sudo().create(
+                {
+                    "module": module,
+                    "name": xml_name,
+                    "model": "project.cost.code",
+                    "res_id": record.id,
+                    "noupdate": False,
+                }
+            )
+        return record
+
+    cost_material = _ensure_demo_cost_code(
+        "smart_construction_demo.sc_cost_code_root_material",
+        "MAT",
+        "材料费",
+        "material",
+    )
+    cost_sub = _ensure_demo_cost_code(
+        "smart_construction_demo.sc_cost_code_root_subcontract",
+        "SUB",
+        "分包费",
+        "subcontract",
+    )
 
     CostLedger = env["project.cost.ledger"].sudo()
     ledger_vals = [

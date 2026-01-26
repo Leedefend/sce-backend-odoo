@@ -3,6 +3,7 @@ import logging
 import os
 
 from odoo import SUPERUSER_ID, api, fields
+from odoo.exceptions import UserError
 
 from .seed import run_steps
 
@@ -13,6 +14,22 @@ def _as_env(env_or_cr, registry=None):
     if isinstance(env_or_cr, api.Environment):
         return env_or_cr
     return api.Environment(env_or_cr, SUPERUSER_ID, {})
+
+def _ensure_company_currency_cny(env):
+    currency = env.ref("base.CNY", raise_if_not_found=False)
+    if not currency:
+        Currency = env["res.currency"].sudo().with_context(active_test=False)
+        currency = Currency.search([("name", "=", "CNY")], limit=1)
+    if not currency:
+        raise UserError("CNY currency not found. Install currency data before running seed.")
+
+    Company = env["res.company"].sudo()
+    if Company.search_count([("currency_id", "!=", currency.id)]) == 0:
+        return
+    if env["account.move.line"].sudo().search_count([]):
+        raise UserError("Cannot switch company currency to CNY after journal items exist.")
+    Company.search([]).write({"currency_id": currency.id})
+
 
 
 def post_init_hook(env_or_cr, registry=None):
@@ -32,6 +49,11 @@ def post_init_hook(env_or_cr, registry=None):
     steps_sel = env_steps if env_steps is not None else ICP.get_param("sc.seed.steps", "all")
     if profile:
         steps_sel = f"profile:{profile}"
+
+    is_demo_db = env.cr.dbname in ("sc_demo", "sc_test")
+    if ICP.get_param("sc.login.env") == "demo" or mode == "demo" or is_demo_db:
+        _logger.info("Seed: ensure company currency is CNY for demo env")
+        _ensure_company_currency_cny(env)
 
     if not enabled:
         _logger.info("Seed skipped: sc.bootstrap.seed_enabled=%s mode=%s", seed_enabled, mode)

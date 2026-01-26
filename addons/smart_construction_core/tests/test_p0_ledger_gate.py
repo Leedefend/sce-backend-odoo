@@ -63,10 +63,44 @@ class TestP0LedgerGate(TransactionCase):
         )
         cls.partner = _ctx("res.partner").create({"name": "P0 Ledger Partner"})
 
+        tax = cls.env["account.tax"].search(
+            [
+                ("type_tax_use", "=", "purchase"),
+                ("amount_type", "=", "percent"),
+                ("price_include", "=", False),
+            ],
+            limit=1,
+        )
+        if not tax:
+            tax = _ctx("account.tax").create(
+                {
+                    "name": "P0 Ledger Tax",
+                    "amount": 0.0,
+                    "amount_type": "percent",
+                    "type_tax_use": "purchase",
+                    "price_include": False,
+                }
+            )
+
+        def _create_contract(name, project, partner):
+            return _ctx("construction.contract").create(
+                {
+                    "subject": name,
+                    "type": "in",
+                    "project_id": project.id,
+                    "partner_id": partner.id,
+                    "tax_id": tax.id,
+                }
+            )
+
+        cls.contract_main = _create_contract(
+            "P0 Ledger Contract", cls.project, cls.partner
+        )
         cls.settlement_ok = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.project.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_main.id,
                 "line_ids": [(0, 0, {"name": "P0 Ledger Line", "amount": 100.0})],
             }
         )
@@ -76,6 +110,7 @@ class TestP0LedgerGate(TransactionCase):
             {
                 "project_id": cls.project.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_main.id,
                 "line_ids": [(0, 0, {"name": "P0 Ledger Line Draft", "amount": 100.0})],
             }
         )
@@ -84,6 +119,7 @@ class TestP0LedgerGate(TransactionCase):
             {
                 "project_id": cls.project.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_main.id,
                 "settlement_id": cls.settlement_ok.id,
                 "amount": 100.0,
                 "type": "pay",
@@ -93,6 +129,7 @@ class TestP0LedgerGate(TransactionCase):
             {
                 "project_id": cls.project.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_main.id,
                 "settlement_id": cls.settlement_draft.id,
                 "amount": 100.0,
                 "type": "pay",
@@ -107,10 +144,12 @@ class TestP0LedgerGate(TransactionCase):
             }
         )
         cls.other_partner = _ctx("res.partner").create({"name": "P0 Ledger Partner Other"})
+        cls.contract_other = _create_contract("P0 Ledger Contract Other", cls.other_project, cls.other_partner)
         cls.other_settlement = _ctx("sc.settlement.order").create(
             {
                 "project_id": cls.other_project.id,
                 "partner_id": cls.other_partner.id,
+                "contract_id": cls.contract_other.id,
                 "line_ids": [(0, 0, {"name": "P0 Ledger Line Other", "amount": 80.0})],
             }
         )
@@ -119,6 +158,7 @@ class TestP0LedgerGate(TransactionCase):
             {
                 "project_id": cls.other_project.id,
                 "partner_id": cls.other_partner.id,
+                "contract_id": cls.contract_other.id,
                 "settlement_id": cls.other_settlement.id,
                 "amount": 80.0,
                 "type": "pay",
