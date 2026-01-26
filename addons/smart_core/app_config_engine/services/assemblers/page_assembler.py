@@ -72,9 +72,14 @@ class PageAssembler:
 
         # 1) 字段：从模型配置生成；再归一化到 {name: {...}} 形式
         #    - 使用 su_env 读模型元数据，避免被权限限制
-        mcfg = su['app.model.config']._generate_from_ir_model(model)
-        data["fields"] = self._to_fields_map(mcfg.get_model_contract().get("fields", []), env=env, model=mcfg.model)
-        versions["model"] = mcfg.version
+        try:
+            mcfg = su['app.model.config']._generate_from_ir_model(model)
+            data["fields"] = self._to_fields_map(mcfg.get_model_contract().get("fields", []), env=env, model=mcfg.model)
+            versions["model"] = mcfg.version
+        except KeyError:
+            _logger.warning("app.model.config missing; fallback to ORM fields for model=%s", model)
+            data["fields"] = self._to_fields_map(list(env[model]._fields.keys()), env=env, model=model)
+            versions["model"] = 0
 
         # 2) 从原始 tree 视图 XML 严格提取列（★ P0 修复核心）
         original_tree_cols = []
@@ -90,8 +95,13 @@ class PageAssembler:
         # 3) 视图契约（多视图）——视图元信息用 su_env 获取，运行时修剪在各自组装器里完成
         v_versions = []
         for vt in view_types:
-            vcfg = su['app.view.config']._generate_from_fields_view_get(model, vt)
-            v_contract = vcfg.get_contract_api(filter_runtime=True, check_model_acl=True)
+            try:
+                vcfg = su['app.view.config']._generate_from_fields_view_get(model, vt)
+                v_contract = vcfg.get_contract_api(filter_runtime=True, check_model_acl=True)
+                v_versions.append(str(vcfg.version))
+            except KeyError:
+                _logger.warning("app.view.config missing; fallback view contract for model=%s vt=%s", model, vt)
+                v_contract = {"type": vt}
 
             if vt == 'tree':
                 # 解析器没产出 columns 时，用严格列兜底
@@ -103,26 +113,40 @@ class PageAssembler:
                 # 禁用对 columns 的二次“脏覆盖”
 
             data["views"][vt] = v_contract
-            v_versions.append(str(vcfg.version))
         versions["view"] = ",".join(v_versions) if v_versions else "1"
 
         # 4) 搜索条件（运行时需要当前用户上下文，因此用 env）
-        scfg = env['app.search.config']._generate_from_search(model)
-        data["search"] = scfg.get_search_contract(filter_runtime=True, include_user_filters=True)
-        versions["search"] = scfg.version
+        try:
+            scfg = env['app.search.config']._generate_from_search(model)
+            data["search"] = scfg.get_search_contract(filter_runtime=True, include_user_filters=True)
+            versions["search"] = scfg.version
+        except KeyError:
+            _logger.warning("app.search.config missing; fallback search contract for model=%s", model)
+            data["search"] = {}
+            versions["search"] = 0
 
         # 5) 权限契约（★ 关键改造点）
         #    - 用 su_env 生成完整权限聚合
         #    - 返回时开启 filter_runtime=True，按“当前用户组”裁剪出 effective.rights/rules
-        pcfg = su['app.permission.config']._generate_from_access_rights(model)
-        data["permissions"] = pcfg.get_permission_contract(filter_runtime=True)
-        versions["perm"] = pcfg.version
+        try:
+            pcfg = su['app.permission.config']._generate_from_access_rights(model)
+            data["permissions"] = pcfg.get_permission_contract(filter_runtime=True)
+            versions["perm"] = pcfg.version
+        except KeyError:
+            _logger.warning("app.permission.config missing; fallback permissions for model=%s", model)
+            data["permissions"] = {}
+            versions["perm"] = 0
 
         # 6) 动作按钮 + 工具栏（元数据可 su_env，最终显隐由前端结合 groups/permissions 再次裁剪）
-        acfg = su['app.action.config']._generate_from_ir_actions(model)
-        buttons_data = acfg.get_action_contract()
+        try:
+            acfg = su['app.action.config']._generate_from_ir_actions(model)
+            buttons_data = acfg.get_action_contract()
+            versions["actions"] = acfg.version if getattr(acfg, 'version', None) else 1
+        except KeyError:
+            _logger.warning("app.action.config missing; fallback empty actions for model=%s", model)
+            buttons_data = []
+            versions["actions"] = 0
         data["buttons"] = buttons_data
-        versions["actions"] = acfg.version if getattr(acfg, 'version', None) else 1
         toolbar = {
             "header": [a for a in buttons_data if a.get('level') == 'toolbar'],
             "sidebar": [a for a in buttons_data if a.get('level') == 'sidebar'],
@@ -131,17 +155,32 @@ class PageAssembler:
         data["toolbar"] = toolbar if any(toolbar.values()) else {"header": [], "sidebar": [], "footer": []}
 
         # 7) 报表/流程/校验器（报表/流程元信息可 su_env；校验器通常也用 su_env 生成）
-        rcfg = su['app.report.config']._generate_from_reports(model)
-        data["reports"] = rcfg.get_report_contract(filter_runtime=True)
-        versions["reports"] = rcfg.version
+        try:
+            rcfg = su['app.report.config']._generate_from_reports(model)
+            data["reports"] = rcfg.get_report_contract(filter_runtime=True)
+            versions["reports"] = rcfg.version
+        except KeyError:
+            _logger.warning("app.report.config missing; fallback empty reports for model=%s", model)
+            data["reports"] = []
+            versions["reports"] = 0
 
-        wcfg = su['app.workflow.config']._generate_from_workflow(model)
-        data["workflow"] = wcfg.get_workflow_contract(filter_runtime=True)
-        versions["workflow"] = wcfg.version
+        try:
+            wcfg = su['app.workflow.config']._generate_from_workflow(model)
+            data["workflow"] = wcfg.get_workflow_contract(filter_runtime=True)
+            versions["workflow"] = wcfg.version
+        except KeyError:
+            _logger.warning("app.workflow.config missing; fallback empty workflow for model=%s", model)
+            data["workflow"] = {}
+            versions["workflow"] = 0
 
-        vcfg2 = su['app.validator.config']._generate_from_validators(model)
-        data["validator"] = vcfg2.get_validator_contract()
-        versions["validator"] = vcfg2.version
+        try:
+            vcfg2 = su['app.validator.config']._generate_from_validators(model)
+            data["validator"] = vcfg2.get_validator_contract()
+            versions["validator"] = vcfg2.version
+        except KeyError:
+            _logger.warning("app.validator.config missing; fallback empty validator for model=%s", model)
+            data["validator"] = {}
+            versions["validator"] = 0
 
         # 8) head（标题/ACL 概览/上下文）
         #    - ACL 概览继续用 check_access_rights（仅四权），与 permissions.effective.rights 一致

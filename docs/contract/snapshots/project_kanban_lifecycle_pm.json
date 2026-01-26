@@ -1,91 +1,3522 @@
 {
   "case": "project_kanban_lifecycle_pm",
-  "trace_id": "e9ca3343-9075-42ad-a9a7-9ac487158fd8",
-  "exported_at": "2026-01-26T04:57:45Z",
+  "trace_id": "8e04e23c-034d-4ff5-bca3-0b714e680126",
+  "exported_at": "2026-01-26T08:31:11Z",
   "contract_version": "v1",
   "model": "project.project",
-  "view_type": "kanban",
-  "op": "model",
+  "view_type": null,
+  "op": "action_open",
   "user": "pm",
   "user_fallback": "admin",
-  "fallback": true,
+  "fallback": false,
   "action": null,
-  "ui_contract": {
-    "model": "project.project",
-    "view_type": "kanban",
-    "fields": [
-      "display_name",
-      "partner_id",
-      "color",
-      "task_count",
-      "closed_task_count",
-      "open_task_count",
-      "allow_milestones",
-      "label_tasks",
-      "alias_email",
-      "is_favorite",
-      "rating_count",
-      "rating_avg",
-      "rating_status",
-      "rating_active",
-      "analytic_account_id",
-      "date",
-      "privacy_visibility",
-      "last_update_color",
-      "last_update_status",
-      "tag_ids",
-      "sequence",
-      "is_favorite",
-      "date_start",
-      "date",
-      "tag_ids",
-      "activity_ids",
-      "user_id",
-      "last_update_status",
-      "id"
-    ]
-  },
+  "ui_contract": null,
   "ui_contract_raw": {
-    "views": {
-      "kanban": {
-        "fields": [
-          "display_name",
-          "partner_id",
-          "color",
-          "task_count",
-          "closed_task_count",
-          "open_task_count",
-          "allow_milestones",
-          "label_tasks",
-          "alias_email",
-          "is_favorite",
-          "rating_count",
-          "rating_avg",
-          "rating_status",
-          "rating_active",
-          "analytic_account_id",
-          "date",
-          "privacy_visibility",
-          "last_update_color",
-          "last_update_status",
-          "tag_ids",
-          "sequence",
-          "is_favorite",
-          "date_start",
-          "date",
-          "tag_ids",
-          "activity_ids",
-          "user_id",
-          "last_update_status",
-          "id"
-        ]
+    "head": {
+      "title": null,
+      "model": "project.project",
+      "view_type": "kanban,tree,form",
+      "action_id": 495,
+      "context": null,
+      "permissions": {
+        "read": true,
+        "write": true,
+        "create": true,
+        "unlink": true
       }
     },
-    "fields": {}
+    "views": {
+      "kanban": {
+        "type": "kanban"
+      },
+      "tree": {
+        "type": "tree"
+      },
+      "form": {
+        "type": "form"
+      }
+    },
+    "fields": {
+      "activity_ids": {
+        "name": "activity_ids",
+        "string": "Activities",
+        "type": "one2many",
+        "relation": "mail.activity"
+      },
+      "activity_state": {
+        "name": "activity_state",
+        "string": "Activity State",
+        "type": "selection"
+      },
+      "activity_user_id": {
+        "name": "activity_user_id",
+        "string": "Responsible User",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "activity_type_id": {
+        "name": "activity_type_id",
+        "string": "Next Activity Type",
+        "type": "many2one",
+        "relation": "mail.activity.type"
+      },
+      "activity_type_icon": {
+        "name": "activity_type_icon",
+        "string": "Activity Type Icon",
+        "type": "char"
+      },
+      "activity_date_deadline": {
+        "name": "activity_date_deadline",
+        "string": "Next Activity Deadline",
+        "type": "date"
+      },
+      "my_activity_date_deadline": {
+        "name": "my_activity_date_deadline",
+        "string": "My Activity Deadline",
+        "type": "date"
+      },
+      "activity_summary": {
+        "name": "activity_summary",
+        "string": "Next Activity Summary",
+        "type": "char"
+      },
+      "activity_exception_decoration": {
+        "name": "activity_exception_decoration",
+        "string": "Activity Exception Decoration",
+        "type": "selection"
+      },
+      "activity_exception_icon": {
+        "name": "activity_exception_icon",
+        "string": "Icon",
+        "type": "char"
+      },
+      "message_is_follower": {
+        "name": "message_is_follower",
+        "string": "Is Follower",
+        "type": "boolean"
+      },
+      "message_follower_ids": {
+        "name": "message_follower_ids",
+        "string": "Followers",
+        "type": "one2many",
+        "relation": "mail.followers"
+      },
+      "message_partner_ids": {
+        "name": "message_partner_ids",
+        "string": "Followers (Partners)",
+        "type": "many2many",
+        "relation": "res.partner"
+      },
+      "message_ids": {
+        "name": "message_ids",
+        "string": "Messages",
+        "type": "one2many",
+        "relation": "mail.message"
+      },
+      "has_message": {
+        "name": "has_message",
+        "string": "Has Message",
+        "type": "boolean"
+      },
+      "message_needaction": {
+        "name": "message_needaction",
+        "string": "Action Needed",
+        "type": "boolean"
+      },
+      "message_needaction_counter": {
+        "name": "message_needaction_counter",
+        "string": "Number of Actions",
+        "type": "integer"
+      },
+      "message_has_error": {
+        "name": "message_has_error",
+        "string": "Message Delivery error",
+        "type": "boolean"
+      },
+      "message_has_error_counter": {
+        "name": "message_has_error_counter",
+        "string": "Number of errors",
+        "type": "integer"
+      },
+      "message_attachment_count": {
+        "name": "message_attachment_count",
+        "string": "Attachment Count",
+        "type": "integer"
+      },
+      "rating_ids": {
+        "name": "rating_ids",
+        "string": "Ratings",
+        "type": "one2many",
+        "relation": "rating.rating"
+      },
+      "website_message_ids": {
+        "name": "website_message_ids",
+        "string": "Website Messages",
+        "type": "one2many",
+        "relation": "mail.message"
+      },
+      "message_has_sms_error": {
+        "name": "message_has_sms_error",
+        "string": "SMS Delivery error",
+        "type": "boolean"
+      },
+      "rating_percentage_satisfaction": {
+        "name": "rating_percentage_satisfaction",
+        "string": "Rating Satisfaction",
+        "type": "integer"
+      },
+      "rating_count": {
+        "name": "rating_count",
+        "string": "# Ratings",
+        "type": "integer"
+      },
+      "rating_avg": {
+        "name": "rating_avg",
+        "string": "Average Rating",
+        "type": "float"
+      },
+      "rating_avg_percentage": {
+        "name": "rating_avg_percentage",
+        "string": "Average Rating (%)",
+        "type": "float"
+      },
+      "alias_id": {
+        "name": "alias_id",
+        "string": "Alias",
+        "type": "many2one",
+        "relation": "mail.alias"
+      },
+      "alias_name": {
+        "name": "alias_name",
+        "string": "Alias Name",
+        "type": "char"
+      },
+      "alias_domain_id": {
+        "name": "alias_domain_id",
+        "string": "Alias Domain",
+        "type": "many2one",
+        "relation": "mail.alias.domain"
+      },
+      "alias_domain": {
+        "name": "alias_domain",
+        "string": "Alias Domain Name",
+        "type": "char"
+      },
+      "alias_defaults": {
+        "name": "alias_defaults",
+        "string": "Default Values",
+        "type": "text"
+      },
+      "alias_email": {
+        "name": "alias_email",
+        "string": "Email Alias",
+        "type": "char"
+      },
+      "access_url": {
+        "name": "access_url",
+        "string": "Portal Access URL",
+        "type": "char"
+      },
+      "access_token": {
+        "name": "access_token",
+        "string": "Security Token",
+        "type": "char"
+      },
+      "access_warning": {
+        "name": "access_warning",
+        "string": "Access warning",
+        "type": "text"
+      },
+      "name": {
+        "name": "name",
+        "string": "Name",
+        "type": "char"
+      },
+      "description": {
+        "name": "description",
+        "string": "Description",
+        "type": "html"
+      },
+      "active": {
+        "name": "active",
+        "string": "Active",
+        "type": "boolean"
+      },
+      "sequence": {
+        "name": "sequence",
+        "string": "Sequence",
+        "type": "integer"
+      },
+      "partner_id": {
+        "name": "partner_id",
+        "string": "Customer",
+        "type": "many2one",
+        "relation": "res.partner"
+      },
+      "company_id": {
+        "name": "company_id",
+        "string": "Company",
+        "type": "many2one",
+        "relation": "res.company"
+      },
+      "currency_id": {
+        "name": "currency_id",
+        "string": "Currency",
+        "type": "many2one",
+        "relation": "res.currency"
+      },
+      "analytic_account_id": {
+        "name": "analytic_account_id",
+        "string": "Analytic Account",
+        "type": "many2one",
+        "relation": "account.analytic.account"
+      },
+      "analytic_account_balance": {
+        "name": "analytic_account_balance",
+        "string": "Balance",
+        "type": "monetary"
+      },
+      "favorite_user_ids": {
+        "name": "favorite_user_ids",
+        "string": "Members",
+        "type": "many2many",
+        "relation": "res.users"
+      },
+      "is_favorite": {
+        "name": "is_favorite",
+        "string": "Show Project on Dashboard",
+        "type": "boolean"
+      },
+      "label_tasks": {
+        "name": "label_tasks",
+        "string": "Use Tasks as",
+        "type": "char"
+      },
+      "tasks": {
+        "name": "tasks",
+        "string": "Task Activities",
+        "type": "one2many",
+        "relation": "project.task"
+      },
+      "resource_calendar_id": {
+        "name": "resource_calendar_id",
+        "string": "Working Time",
+        "type": "many2one",
+        "relation": "resource.calendar"
+      },
+      "type_ids": {
+        "name": "type_ids",
+        "string": "Tasks Stages",
+        "type": "many2many",
+        "relation": "project.task.type"
+      },
+      "task_count": {
+        "name": "task_count",
+        "string": "Task Count",
+        "type": "integer"
+      },
+      "open_task_count": {
+        "name": "open_task_count",
+        "string": "Open Task Count",
+        "type": "integer"
+      },
+      "closed_task_count": {
+        "name": "closed_task_count",
+        "string": "Closed Task Count",
+        "type": "integer"
+      },
+      "task_ids": {
+        "name": "task_ids",
+        "string": "Tasks",
+        "type": "one2many",
+        "relation": "project.task"
+      },
+      "color": {
+        "name": "color",
+        "string": "Color Index",
+        "type": "integer"
+      },
+      "user_id": {
+        "name": "user_id",
+        "string": "Project Manager",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "privacy_visibility": {
+        "name": "privacy_visibility",
+        "string": "Visibility",
+        "type": "selection"
+      },
+      "privacy_visibility_warning": {
+        "name": "privacy_visibility_warning",
+        "string": "Privacy Visibility Warning",
+        "type": "char"
+      },
+      "access_instruction_message": {
+        "name": "access_instruction_message",
+        "string": "Access Instruction Message",
+        "type": "char"
+      },
+      "doc_count": {
+        "name": "doc_count",
+        "string": "Number of documents attached",
+        "type": "integer"
+      },
+      "date_start": {
+        "name": "date_start",
+        "string": "Start Date",
+        "type": "date"
+      },
+      "date": {
+        "name": "date",
+        "string": "Expiration Date",
+        "type": "date"
+      },
+      "allow_task_dependencies": {
+        "name": "allow_task_dependencies",
+        "string": "Task Dependencies",
+        "type": "boolean"
+      },
+      "allow_milestones": {
+        "name": "allow_milestones",
+        "string": "Milestones",
+        "type": "boolean"
+      },
+      "tag_ids": {
+        "name": "tag_ids",
+        "string": "Tags",
+        "type": "many2many",
+        "relation": "project.tags"
+      },
+      "task_properties_definition": {
+        "name": "task_properties_definition",
+        "string": "Task Properties",
+        "type": "properties_definition"
+      },
+      "collaborator_ids": {
+        "name": "collaborator_ids",
+        "string": "Collaborators",
+        "type": "one2many",
+        "relation": "project.collaborator"
+      },
+      "collaborator_count": {
+        "name": "collaborator_count",
+        "string": "# Collaborators",
+        "type": "integer"
+      },
+      "rating_request_deadline": {
+        "name": "rating_request_deadline",
+        "string": "Rating Request Deadline",
+        "type": "datetime"
+      },
+      "rating_active": {
+        "name": "rating_active",
+        "string": "Customer Ratings",
+        "type": "boolean"
+      },
+      "allow_rating": {
+        "name": "allow_rating",
+        "string": "Allow Customer Ratings",
+        "type": "boolean"
+      },
+      "rating_status": {
+        "name": "rating_status",
+        "string": "Customer Ratings Status",
+        "type": "selection"
+      },
+      "rating_status_period": {
+        "name": "rating_status_period",
+        "string": "Rating Frequency",
+        "type": "selection"
+      },
+      "stage_id": {
+        "name": "stage_id",
+        "string": "阶段",
+        "type": "many2one",
+        "relation": "project.project.stage"
+      },
+      "update_ids": {
+        "name": "update_ids",
+        "string": "Update",
+        "type": "one2many",
+        "relation": "project.update"
+      },
+      "last_update_id": {
+        "name": "last_update_id",
+        "string": "Last Update",
+        "type": "many2one",
+        "relation": "project.update"
+      },
+      "last_update_status": {
+        "name": "last_update_status",
+        "string": "Last Update Status",
+        "type": "selection"
+      },
+      "last_update_color": {
+        "name": "last_update_color",
+        "string": "Last Update Color",
+        "type": "integer"
+      },
+      "milestone_ids": {
+        "name": "milestone_ids",
+        "string": "Milestone",
+        "type": "one2many",
+        "relation": "project.milestone"
+      },
+      "milestone_count": {
+        "name": "milestone_count",
+        "string": "Milestone Count",
+        "type": "integer"
+      },
+      "milestone_count_reached": {
+        "name": "milestone_count_reached",
+        "string": "Milestone Count Reached",
+        "type": "integer"
+      },
+      "is_milestone_exceeded": {
+        "name": "is_milestone_exceeded",
+        "string": "Is Milestone Exceeded",
+        "type": "boolean"
+      },
+      "id": {
+        "name": "id",
+        "string": "ID",
+        "type": "integer"
+      },
+      "display_name": {
+        "name": "display_name",
+        "string": "Display Name",
+        "type": "char"
+      },
+      "create_uid": {
+        "name": "create_uid",
+        "string": "Created by",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "create_date": {
+        "name": "create_date",
+        "string": "Created on",
+        "type": "datetime"
+      },
+      "write_uid": {
+        "name": "write_uid",
+        "string": "Last Updated by",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "write_date": {
+        "name": "write_date",
+        "string": "Last Updated on",
+        "type": "datetime"
+      },
+      "purchase_orders_count": {
+        "name": "purchase_orders_count",
+        "string": "# Purchase Orders",
+        "type": "integer"
+      },
+      "contract_ids": {
+        "name": "contract_ids",
+        "string": "项目合同",
+        "type": "one2many",
+        "relation": "construction.contract"
+      },
+      "contract_count": {
+        "name": "contract_count",
+        "string": "合同数量",
+        "type": "integer"
+      },
+      "contract_income_total": {
+        "name": "contract_income_total",
+        "string": "收入合同金额",
+        "type": "monetary"
+      },
+      "contract_expense_total": {
+        "name": "contract_expense_total",
+        "string": "支出合同金额",
+        "type": "monetary"
+      },
+      "project_code": {
+        "name": "project_code",
+        "string": "项目编号",
+        "type": "char"
+      },
+      "code": {
+        "name": "code",
+        "string": "项目编号(别名)",
+        "type": "char"
+      },
+      "project_type_id": {
+        "name": "project_type_id",
+        "string": "项目类型",
+        "type": "many2one",
+        "relation": "sc.dictionary"
+      },
+      "project_category_id": {
+        "name": "project_category_id",
+        "string": "项目类别",
+        "type": "many2one",
+        "relation": "sc.dictionary"
+      },
+      "owner_id": {
+        "name": "owner_id",
+        "string": "业主单位",
+        "type": "many2one",
+        "relation": "res.partner"
+      },
+      "owner_contact": {
+        "name": "owner_contact",
+        "string": "业主联系人",
+        "type": "char"
+      },
+      "manager_id": {
+        "name": "manager_id",
+        "string": "项目经理",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "cost_manager_id": {
+        "name": "cost_manager_id",
+        "string": "成本负责人",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "doc_manager_id": {
+        "name": "doc_manager_id",
+        "string": "资料负责人",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "location": {
+        "name": "location",
+        "string": "项目地点",
+        "type": "char"
+      },
+      "contract_no": {
+        "name": "contract_no",
+        "string": "主合同编号",
+        "type": "char"
+      },
+      "sc_demo_showcase": {
+        "name": "sc_demo_showcase",
+        "string": "演示项目池",
+        "type": "boolean"
+      },
+      "sc_demo_showcase_ready": {
+        "name": "sc_demo_showcase_ready",
+        "string": "演示项目可展示",
+        "type": "boolean"
+      },
+      "start_date": {
+        "name": "start_date",
+        "string": "计划开工日期",
+        "type": "date"
+      },
+      "end_date": {
+        "name": "end_date",
+        "string": "计划竣工日期",
+        "type": "date"
+      },
+      "funding_enabled": {
+        "name": "funding_enabled",
+        "string": "资金承载开关",
+        "type": "boolean"
+      },
+      "lifecycle_state": {
+        "name": "lifecycle_state",
+        "string": "项目状态",
+        "type": "selection"
+      },
+      "sc_draft_autosaved_at": {
+        "name": "sc_draft_autosaved_at",
+        "string": "草稿自动保存时间",
+        "type": "datetime"
+      },
+      "sc_draft_autosave_uid": {
+        "name": "sc_draft_autosave_uid",
+        "string": "草稿自动保存人",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "phase_key": {
+        "name": "phase_key",
+        "string": "项目阶段",
+        "type": "selection"
+      },
+      "responsibility_ids": {
+        "name": "responsibility_ids",
+        "string": "责任矩阵",
+        "type": "one2many",
+        "relation": "project.responsibility"
+      },
+      "payment_request_ids": {
+        "name": "payment_request_ids",
+        "string": "付款申请",
+        "type": "one2many",
+        "relation": "payment.request"
+      },
+      "funding_baseline_ids": {
+        "name": "funding_baseline_ids",
+        "string": "资金基准",
+        "type": "one2many",
+        "relation": "project.funding.baseline"
+      },
+      "company_currency_id": {
+        "name": "company_currency_id",
+        "string": "公司本位币",
+        "type": "many2one",
+        "relation": "res.currency"
+      },
+      "budget_total": {
+        "name": "budget_total",
+        "string": "目标成本(预算)",
+        "type": "monetary"
+      },
+      "cost_committed": {
+        "name": "cost_committed",
+        "string": "已承诺成本",
+        "type": "monetary"
+      },
+      "cost_actual": {
+        "name": "cost_actual",
+        "string": "已发生成本",
+        "type": "monetary"
+      },
+      "cost_variance": {
+        "name": "cost_variance",
+        "string": "成本差异",
+        "type": "monetary"
+      },
+      "settlement_ids": {
+        "name": "settlement_ids",
+        "string": "结算单",
+        "type": "one2many",
+        "relation": "project.settlement"
+      },
+      "pay_contract_total": {
+        "name": "pay_contract_total",
+        "string": "已付款合同额",
+        "type": "monetary"
+      },
+      "pay_settlement_total": {
+        "name": "pay_settlement_total",
+        "string": "已结算金额",
+        "type": "monetary"
+      },
+      "pay_paid_total": {
+        "name": "pay_paid_total",
+        "string": "已付款金额",
+        "type": "monetary"
+      },
+      "pay_unpaid_total": {
+        "name": "pay_unpaid_total",
+        "string": "未付款金额",
+        "type": "monetary"
+      },
+      "funding_cap_amount": {
+        "name": "funding_cap_amount",
+        "string": "资金上限",
+        "type": "monetary"
+      },
+      "funding_reserved_amount": {
+        "name": "funding_reserved_amount",
+        "string": "资金已占用",
+        "type": "monetary"
+      },
+      "funding_remaining_amount": {
+        "name": "funding_remaining_amount",
+        "string": "资金可用余额",
+        "type": "monetary"
+      },
+      "plan_percent": {
+        "name": "plan_percent",
+        "string": "计划完成率(%)",
+        "type": "float"
+      },
+      "actual_percent": {
+        "name": "actual_percent",
+        "string": "实际完成率(%)",
+        "type": "float"
+      },
+      "budget_ids": {
+        "name": "budget_ids",
+        "string": "预算版本",
+        "type": "one2many",
+        "relation": "project.budget"
+      },
+      "cost_ledger_ids": {
+        "name": "cost_ledger_ids",
+        "string": "成本台账",
+        "type": "one2many",
+        "relation": "project.cost.ledger"
+      },
+      "tender_bid_ids": {
+        "name": "tender_bid_ids",
+        "string": "投标记录",
+        "type": "one2many",
+        "relation": "tender.bid"
+      },
+      "progress_entry_ids": {
+        "name": "progress_entry_ids",
+        "string": "进度计量",
+        "type": "one2many",
+        "relation": "project.progress.entry"
+      },
+      "work_ids": {
+        "name": "work_ids",
+        "string": "施工结构",
+        "type": "one2many",
+        "relation": "construction.work.breakdown"
+      },
+      "boq_line_ids": {
+        "name": "boq_line_ids",
+        "string": "工程量清单",
+        "type": "one2many",
+        "relation": "project.boq.line"
+      },
+      "structure_ids": {
+        "name": "structure_ids",
+        "string": "工程结构（WBS）",
+        "type": "one2many",
+        "relation": "sc.project.structure"
+      },
+      "wbs_count": {
+        "name": "wbs_count",
+        "string": "工程结构数",
+        "type": "integer"
+      },
+      "wbs_node_count": {
+        "name": "wbs_node_count",
+        "string": "工程结构节点数",
+        "type": "integer"
+      },
+      "wbs_ready": {
+        "name": "wbs_ready",
+        "string": "工程结构已就绪",
+        "type": "boolean"
+      },
+      "boq_amount_total": {
+        "name": "boq_amount_total",
+        "string": "清单总额",
+        "type": "monetary"
+      },
+      "boq_amount_building": {
+        "name": "boq_amount_building",
+        "string": "建筑工程额",
+        "type": "monetary"
+      },
+      "boq_amount_installation": {
+        "name": "boq_amount_installation",
+        "string": "安装工程额",
+        "type": "monetary"
+      },
+      "boq_line_count": {
+        "name": "boq_line_count",
+        "string": "清单行数",
+        "type": "integer"
+      },
+      "boq_imported": {
+        "name": "boq_imported",
+        "string": "清单已导入",
+        "type": "boolean"
+      },
+      "sc_overview_contract_count": {
+        "name": "sc_overview_contract_count",
+        "string": "概览合同数",
+        "type": "integer"
+      },
+      "sc_overview_cost_count": {
+        "name": "sc_overview_cost_count",
+        "string": "概览成本数",
+        "type": "integer"
+      },
+      "sc_overview_payment_count": {
+        "name": "sc_overview_payment_count",
+        "string": "概览付款数",
+        "type": "integer"
+      },
+      "sc_overview_payment_pending_count": {
+        "name": "sc_overview_payment_pending_count",
+        "string": "概览付款待审批数",
+        "type": "integer"
+      },
+      "sc_overview_task_count": {
+        "name": "sc_overview_task_count",
+        "string": "概览任务数",
+        "type": "integer"
+      },
+      "sc_overview_task_in_progress_count": {
+        "name": "sc_overview_task_in_progress_count",
+        "string": "概览进行中任务数",
+        "type": "integer"
+      },
+      "sc_stage_required_total": {
+        "name": "sc_stage_required_total",
+        "string": "阶段要求总数",
+        "type": "integer"
+      },
+      "sc_stage_required_done": {
+        "name": "sc_stage_required_done",
+        "string": "阶段要求已完成数",
+        "type": "integer"
+      },
+      "boq_status": {
+        "name": "boq_status",
+        "string": "清单状态",
+        "type": "selection"
+      },
+      "boq_version_latest": {
+        "name": "boq_version_latest",
+        "string": "清单版本(最近)",
+        "type": "char"
+      },
+      "boq_amount_leaf_total": {
+        "name": "boq_amount_leaf_total",
+        "string": "清单合价(叶子)",
+        "type": "monetary"
+      },
+      "budget_active_id": {
+        "name": "budget_active_id",
+        "string": "当前预算",
+        "type": "many2one",
+        "relation": "project.budget"
+      },
+      "budget_active_cost_target": {
+        "name": "budget_active_cost_target",
+        "string": "当前预算成本",
+        "type": "monetary"
+      },
+      "budget_active_revenue_target": {
+        "name": "budget_active_revenue_target",
+        "string": "当前预算收入",
+        "type": "monetary"
+      },
+      "budget_count": {
+        "name": "budget_count",
+        "string": "预算版本数",
+        "type": "integer"
+      },
+      "cost_ledger_amount_actual": {
+        "name": "cost_ledger_amount_actual",
+        "string": "台账实际成本",
+        "type": "monetary"
+      },
+      "cost_ledger_entry_count": {
+        "name": "cost_ledger_entry_count",
+        "string": "台账记录数",
+        "type": "integer"
+      },
+      "cost_budget_gap": {
+        "name": "cost_budget_gap",
+        "string": "预算差异(台账)",
+        "type": "monetary"
+      },
+      "progress_entry_count": {
+        "name": "progress_entry_count",
+        "string": "进度记录数",
+        "type": "integer"
+      },
+      "progress_rate_latest": {
+        "name": "progress_rate_latest",
+        "string": "最新进度(%)",
+        "type": "float"
+      },
+      "document_ids": {
+        "name": "document_ids",
+        "string": "工程资料",
+        "type": "one2many",
+        "relation": "sc.project.document"
+      },
+      "wbs_ids": {
+        "name": "wbs_ids",
+        "string": "WBS结构",
+        "type": "one2many",
+        "relation": "construction.work.breakdown"
+      },
+      "tender_count": {
+        "name": "tender_count",
+        "string": "投标数",
+        "type": "integer"
+      },
+      "document_count": {
+        "name": "document_count",
+        "string": "资料数量",
+        "type": "integer"
+      },
+      "document_required_count": {
+        "name": "document_required_count",
+        "string": "必备资料数",
+        "type": "integer"
+      },
+      "document_missing_count": {
+        "name": "document_missing_count",
+        "string": "缺失必备资料",
+        "type": "integer"
+      },
+      "document_completion_rate": {
+        "name": "document_completion_rate",
+        "string": "资料完备率（统计）",
+        "type": "float"
+      },
+      "contract_amount": {
+        "name": "contract_amount",
+        "string": "合同总额",
+        "type": "monetary"
+      },
+      "subcontract_amount": {
+        "name": "subcontract_amount",
+        "string": "分包合同金额",
+        "type": "monetary"
+      },
+      "dashboard_revenue_actual": {
+        "name": "dashboard_revenue_actual",
+        "string": "实际收入",
+        "type": "monetary"
+      },
+      "dashboard_cost_actual": {
+        "name": "dashboard_cost_actual",
+        "string": "实际成本",
+        "type": "monetary"
+      },
+      "dashboard_profit_actual": {
+        "name": "dashboard_profit_actual",
+        "string": "项目毛利",
+        "type": "monetary"
+      },
+      "dashboard_invoice_amount": {
+        "name": "dashboard_invoice_amount",
+        "string": "已开票金额",
+        "type": "monetary"
+      },
+      "dashboard_payment_in": {
+        "name": "dashboard_payment_in",
+        "string": "收款申请金额",
+        "type": "monetary"
+      },
+      "dashboard_payment_out": {
+        "name": "dashboard_payment_out",
+        "string": "付款申请金额",
+        "type": "monetary"
+      },
+      "dashboard_document_completion": {
+        "name": "dashboard_document_completion",
+        "string": "资料完备率(%)",
+        "type": "float"
+      },
+      "dashboard_progress_rate": {
+        "name": "dashboard_progress_rate",
+        "string": "驾驶舱进度(%)",
+        "type": "float"
+      },
+      "cost_actual_pct": {
+        "name": "cost_actual_pct",
+        "string": "实际/预算%",
+        "type": "float"
+      },
+      "cost_commit_pct": {
+        "name": "cost_commit_pct",
+        "string": "承诺/预算%",
+        "type": "float"
+      },
+      "schedule_delta": {
+        "name": "schedule_delta",
+        "string": "进度偏差",
+        "type": "float"
+      },
+      "health_state": {
+        "name": "health_state",
+        "string": "健康度",
+        "type": "selection"
+      },
+      "dashboard_alert_1": {
+        "name": "dashboard_alert_1",
+        "string": "驾驶舱提示1",
+        "type": "char"
+      },
+      "dashboard_alert_2": {
+        "name": "dashboard_alert_2",
+        "string": "驾驶舱提示2",
+        "type": "char"
+      },
+      "dashboard_alert_3": {
+        "name": "dashboard_alert_3",
+        "string": "驾驶舱提示3",
+        "type": "char"
+      },
+      "alias_full_name": {
+        "name": "alias_full_name",
+        "string": "Alias Email",
+        "type": "char"
+      },
+      "alias_model_id": {
+        "name": "alias_model_id",
+        "string": "Aliased Model",
+        "type": "many2one",
+        "relation": "ir.model"
+      },
+      "alias_force_thread_id": {
+        "name": "alias_force_thread_id",
+        "string": "Record Thread ID",
+        "type": "integer"
+      },
+      "alias_parent_model_id": {
+        "name": "alias_parent_model_id",
+        "string": "Parent Model",
+        "type": "many2one",
+        "relation": "ir.model"
+      },
+      "alias_parent_thread_id": {
+        "name": "alias_parent_thread_id",
+        "string": "Parent Record Thread ID",
+        "type": "integer"
+      },
+      "alias_contact": {
+        "name": "alias_contact",
+        "string": "Alias Contact Security",
+        "type": "selection"
+      },
+      "alias_incoming_local": {
+        "name": "alias_incoming_local",
+        "string": "Local-part based incoming detection",
+        "type": "boolean"
+      },
+      "alias_bounced_content": {
+        "name": "alias_bounced_content",
+        "string": "Custom Bounced Message",
+        "type": "html"
+      },
+      "alias_status": {
+        "name": "alias_status",
+        "string": "Alias Status",
+        "type": "selection"
+      }
+    },
+    "search": {},
+    "permissions": {},
+    "buttons": [],
+    "toolbar": {
+      "header": [],
+      "sidebar": [],
+      "footer": []
+    },
+    "workflow": {},
+    "reports": [],
+    "validator": {}
   },
   "record": null,
   "record_error": null,
-  "meta_fields": null,
+  "meta_fields": [
+    {
+      "name": "access_instruction_message",
+      "string": "Access Instruction Message",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "access_token",
+      "string": "Security Token",
+      "ttype": "char",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "access_url",
+      "string": "Portal Access URL",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Customer Portal URL"
+    },
+    {
+      "name": "access_warning",
+      "string": "Access warning",
+      "ttype": "text",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "active",
+      "string": "Active",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "If the active field is set to False, it will allow you to hide the project without removing it."
+    },
+    {
+      "name": "activity_date_deadline",
+      "string": "Next Activity Deadline",
+      "ttype": "date",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "activity_exception_decoration",
+      "string": "Activity Exception Decoration",
+      "ttype": "selection",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": [
+        [
+          "warning",
+          "Alert"
+        ],
+        [
+          "danger",
+          "Error"
+        ]
+      ],
+      "domain": null,
+      "help": "Type of the exception activity on record."
+    },
+    {
+      "name": "activity_exception_icon",
+      "string": "Icon",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Icon to indicate an exception activity."
+    },
+    {
+      "name": "activity_ids",
+      "string": "Activities",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "mail.activity",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "activity_state",
+      "string": "Activity State",
+      "ttype": "selection",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": [
+        [
+          "overdue",
+          "Overdue"
+        ],
+        [
+          "today",
+          "Today"
+        ],
+        [
+          "planned",
+          "Planned"
+        ]
+      ],
+      "domain": null,
+      "help": "Status based on activities\nOverdue: Due date is already passed\nToday: Activity date is today\nPlanned: Future activities."
+    },
+    {
+      "name": "activity_summary",
+      "string": "Next Activity Summary",
+      "ttype": "char",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "activity_type_icon",
+      "string": "Activity Type Icon",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Font awesome icon e.g. fa-tasks"
+    },
+    {
+      "name": "activity_type_id",
+      "string": "Next Activity Type",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "mail.activity.type",
+      "selection": null,
+      "domain": "['|', ('res_model', '=', False), ('res_model', '=', res_model)]",
+      "help": null
+    },
+    {
+      "name": "activity_user_id",
+      "string": "Responsible User",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": true,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "actual_percent",
+      "string": "实际完成率(%)",
+      "ttype": "float",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "结合工程量计量或节点验收计算出的真实进度。"
+    },
+    {
+      "name": "alias_bounced_content",
+      "string": "Custom Bounced Message",
+      "ttype": "html",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "If set, this content will automatically be sent out to unauthorized users instead of the default message."
+    },
+    {
+      "name": "alias_contact",
+      "string": "Alias Contact Security",
+      "ttype": "selection",
+      "required": true,
+      "readonly": false,
+      "relation": null,
+      "selection": [
+        [
+          "everyone",
+          "Everyone"
+        ],
+        [
+          "partners",
+          "Authenticated Partners"
+        ],
+        [
+          "followers",
+          "Followers only"
+        ]
+      ],
+      "domain": null,
+      "help": "Policy to post a message on the document using the mailgateway.\n- everyone: everyone can post\n- partners: only authenticated partners\n- followers: only followers of the related document or members of following channels\n"
+    },
+    {
+      "name": "alias_defaults",
+      "string": "Default Values",
+      "ttype": "text",
+      "required": true,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "A Python dictionary that will be evaluated to provide default values when creating new records for this alias."
+    },
+    {
+      "name": "alias_domain",
+      "string": "Alias Domain Name",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Email domain e.g. 'example.com' in 'odoo@example.com'"
+    },
+    {
+      "name": "alias_domain_id",
+      "string": "Alias Domain",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "mail.alias.domain",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "alias_email",
+      "string": "Email Alias",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "alias_force_thread_id",
+      "string": "Record Thread ID",
+      "ttype": "integer",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Optional ID of a thread (record) to which all incoming messages will be attached, even if they did not reply to it. If set, this will disable the creation of new records completely."
+    },
+    {
+      "name": "alias_full_name",
+      "string": "Alias Email",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "alias_id",
+      "string": "Alias",
+      "ttype": "many2one",
+      "required": true,
+      "readonly": false,
+      "relation": "mail.alias",
+      "selection": null,
+      "domain": [],
+      "help": "Internal email associated with this project. Incoming emails are automatically synchronized with Tasks (or optionally Issues if the Issue Tracker module is installed)."
+    },
+    {
+      "name": "alias_incoming_local",
+      "string": "Local-part based incoming detection",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "alias_model_id",
+      "string": "Aliased Model",
+      "ttype": "many2one",
+      "required": true,
+      "readonly": false,
+      "relation": "ir.model",
+      "selection": null,
+      "domain": "[('field_id.name', '=', 'message_ids')]",
+      "help": "The model (Odoo Document Kind) to which this alias corresponds. Any incoming email that does not reply to an existing record will cause the creation of a new record of this model (e.g. a Project Task)"
+    },
+    {
+      "name": "alias_name",
+      "string": "Alias Name",
+      "ttype": "char",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "The name of the email alias, e.g. 'jobs' if you want to catch emails for <jobs@example.odoo.com>"
+    },
+    {
+      "name": "alias_parent_model_id",
+      "string": "Parent Model",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "ir.model",
+      "selection": null,
+      "domain": [],
+      "help": "Parent model holding the alias. The model holding the alias reference is not necessarily the model given by alias_model_id (example: project (parent_model) and task (model))"
+    },
+    {
+      "name": "alias_parent_thread_id",
+      "string": "Parent Record Thread ID",
+      "ttype": "integer",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "ID of the parent record holding the alias (example: project holding the task creation alias)"
+    },
+    {
+      "name": "alias_status",
+      "string": "Alias Status",
+      "ttype": "selection",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": [
+        [
+          "not_tested",
+          "Not Tested"
+        ],
+        [
+          "valid",
+          "Valid"
+        ],
+        [
+          "invalid",
+          "Invalid"
+        ]
+      ],
+      "domain": null,
+      "help": "Alias status assessed on the last message received."
+    },
+    {
+      "name": "allow_milestones",
+      "string": "Milestones",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "allow_rating",
+      "string": "Allow Customer Ratings",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "allow_task_dependencies",
+      "string": "Task Dependencies",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "analytic_account_balance",
+      "string": "Balance",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "analytic_account_id",
+      "string": "Analytic Account",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "account.analytic.account",
+      "selection": null,
+      "domain": "(company_id and ['|', ('company_id', '=', False), ('company_id', 'parent_of', [company_id])] or ['|', ('company_id', '=', False), ('company_id', 'parent_of', [''])]) + (['|', ('company_id', '=', False), ('company_id', '=?', company_id)])",
+      "help": "Analytic account to which this project, its tasks and its timesheets are linked. \nTrack the costs and revenues of your project by setting this analytic account on your related documents (e.g. sales orders, invoices, purchase orders, vendor bills, expenses etc.).\nThis analytic account can be changed on each task individually if necessary.\nAn analytic account is required in order to use timesheets."
+    },
+    {
+      "name": "boq_amount_building",
+      "string": "建筑工程额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "boq_amount_installation",
+      "string": "安装工程额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "boq_amount_leaf_total",
+      "string": "清单合价(叶子)",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "boq_amount_total",
+      "string": "清单总额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "boq_imported",
+      "string": "清单已导入",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "boq_line_count",
+      "string": "清单行数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "boq_line_ids",
+      "string": "工程量清单",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.boq.line",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "boq_status",
+      "string": "清单状态",
+      "ttype": "selection",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": [
+        [
+          "empty",
+          "未导入"
+        ],
+        [
+          "imported",
+          "已导入"
+        ]
+      ],
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "boq_version_latest",
+      "string": "清单版本(最近)",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "budget_active_cost_target",
+      "string": "当前预算成本",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "budget_active_id",
+      "string": "当前预算",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": true,
+      "relation": "project.budget",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "budget_active_revenue_target",
+      "string": "当前预算收入",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "budget_count",
+      "string": "预算版本数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "budget_ids",
+      "string": "预算版本",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.budget",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "budget_total",
+      "string": "目标成本(预算)",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "项目立项时确定的目标成本总额。"
+    },
+    {
+      "name": "closed_task_count",
+      "string": "Closed Task Count",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "code",
+      "string": "项目编号(别名)",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "collaborator_count",
+      "string": "# Collaborators",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "collaborator_ids",
+      "string": "Collaborators",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.collaborator",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "color",
+      "string": "Color Index",
+      "ttype": "integer",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "company_currency_id",
+      "string": "公司本位币",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": true,
+      "relation": "res.currency",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "company_id",
+      "string": "Company",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "res.company",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "contract_amount",
+      "string": "合同总额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "contract_count",
+      "string": "合同数量",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "contract_expense_total",
+      "string": "支出合同金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "contract_ids",
+      "string": "项目合同",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "construction.contract",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "contract_income_total",
+      "string": "收入合同金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "contract_no",
+      "string": "主合同编号",
+      "ttype": "char",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "cost_actual",
+      "string": "已发生成本",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "已实际记账的成本。"
+    },
+    {
+      "name": "cost_actual_pct",
+      "string": "实际/预算%",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "cost_budget_gap",
+      "string": "预算差异(台账)",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "当前预算成本与台账实际成本之间的差值。"
+    },
+    {
+      "name": "cost_commit_pct",
+      "string": "承诺/预算%",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "cost_committed",
+      "string": "已承诺成本",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "已通过合同/订单等形式锁定的成本。"
+    },
+    {
+      "name": "cost_ledger_amount_actual",
+      "string": "台账实际成本",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "cost_ledger_entry_count",
+      "string": "台账记录数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "cost_ledger_ids",
+      "string": "成本台账",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.cost.ledger",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "cost_manager_id",
+      "string": "成本负责人",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "cost_variance",
+      "string": "成本差异",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "create_date",
+      "string": "Created on",
+      "ttype": "datetime",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "create_uid",
+      "string": "Created by",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": true,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "currency_id",
+      "string": "Currency",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": true,
+      "relation": "res.currency",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "dashboard_alert_1",
+      "string": "驾驶舱提示1",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_alert_2",
+      "string": "驾驶舱提示2",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_alert_3",
+      "string": "驾驶舱提示3",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_cost_actual",
+      "string": "实际成本",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_document_completion",
+      "string": "资料完备率(%)",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_invoice_amount",
+      "string": "已开票金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_payment_in",
+      "string": "收款申请金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_payment_out",
+      "string": "付款申请金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_profit_actual",
+      "string": "项目毛利",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_progress_rate",
+      "string": "驾驶舱进度(%)",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "dashboard_revenue_actual",
+      "string": "实际收入",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "date",
+      "string": "Expiration Date",
+      "ttype": "date",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Date on which this project ends. The timeframe defined on the project is taken into account when viewing its planning."
+    },
+    {
+      "name": "date_start",
+      "string": "Start Date",
+      "ttype": "date",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "description",
+      "string": "Description",
+      "ttype": "html",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Description to provide more information and context about this project"
+    },
+    {
+      "name": "display_name",
+      "string": "Display Name",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "doc_count",
+      "string": "Number of documents attached",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "doc_manager_id",
+      "string": "资料负责人",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "document_completion_rate",
+      "string": "资料完备率（统计）",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "document_count",
+      "string": "资料数量",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "document_ids",
+      "string": "工程资料",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "sc.project.document",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "document_missing_count",
+      "string": "缺失必备资料",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "document_required_count",
+      "string": "必备资料数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "end_date",
+      "string": "计划竣工日期",
+      "ttype": "date",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "favorite_user_ids",
+      "string": "Members",
+      "ttype": "many2many",
+      "required": false,
+      "readonly": false,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "funding_baseline_ids",
+      "string": "资金基准",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.funding.baseline",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "funding_cap_amount",
+      "string": "资金上限",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "funding_enabled",
+      "string": "资金承载开关",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "用于控制项目是否具备资金承载资格的最小语义。"
+    },
+    {
+      "name": "funding_remaining_amount",
+      "string": "资金可用余额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "funding_reserved_amount",
+      "string": "资金已占用",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "has_message",
+      "string": "Has Message",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "health_state",
+      "string": "健康度",
+      "ttype": "selection",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": [
+        [
+          "good",
+          "健康"
+        ],
+        [
+          "warn",
+          "预警"
+        ],
+        [
+          "risk",
+          "风险"
+        ]
+      ],
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "id",
+      "string": "ID",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "is_favorite",
+      "string": "Show Project on Dashboard",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "is_milestone_exceeded",
+      "string": "Is Milestone Exceeded",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "label_tasks",
+      "string": "Use Tasks as",
+      "ttype": "char",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Name used to refer to the tasks of your project e.g. tasks, tickets, sprints, etc..."
+    },
+    {
+      "name": "last_update_color",
+      "string": "Last Update Color",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "last_update_id",
+      "string": "Last Update",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "project.update",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "last_update_status",
+      "string": "Last Update Status",
+      "ttype": "selection",
+      "required": true,
+      "readonly": false,
+      "relation": null,
+      "selection": [
+        [
+          "on_track",
+          "On Track"
+        ],
+        [
+          "at_risk",
+          "At Risk"
+        ],
+        [
+          "off_track",
+          "Off Track"
+        ],
+        [
+          "on_hold",
+          "On Hold"
+        ],
+        [
+          "to_define",
+          "Set Status"
+        ],
+        [
+          "done",
+          "Done"
+        ]
+      ],
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "lifecycle_state",
+      "string": "项目状态",
+      "ttype": "selection",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": [
+        [
+          "draft",
+          "草稿"
+        ],
+        [
+          "in_progress",
+          "在建"
+        ],
+        [
+          "paused",
+          "停工"
+        ],
+        [
+          "done",
+          "竣工"
+        ],
+        [
+          "closing",
+          "结算中"
+        ],
+        [
+          "warranty",
+          "保修期"
+        ],
+        [
+          "closed",
+          "关闭"
+        ]
+      ],
+      "domain": null,
+      "help": "驱动项目级联动控制：暂停/关闭禁止新增进度、成本等业务数据；结算中限制部分操作。"
+    },
+    {
+      "name": "location",
+      "string": "项目地点",
+      "ttype": "char",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "manager_id",
+      "string": "项目经理",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "message_attachment_count",
+      "string": "Attachment Count",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "message_follower_ids",
+      "string": "Followers",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "mail.followers",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "message_has_error",
+      "string": "Message Delivery error",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "If checked, some messages have a delivery error."
+    },
+    {
+      "name": "message_has_error_counter",
+      "string": "Number of errors",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Number of messages with delivery error"
+    },
+    {
+      "name": "message_has_sms_error",
+      "string": "SMS Delivery error",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "If checked, some messages have a delivery error."
+    },
+    {
+      "name": "message_ids",
+      "string": "Messages",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "mail.message",
+      "selection": null,
+      "domain": [
+        [
+          "message_type",
+          "!=",
+          "user_notification"
+        ]
+      ],
+      "help": null
+    },
+    {
+      "name": "message_is_follower",
+      "string": "Is Follower",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "message_needaction",
+      "string": "Action Needed",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "If checked, new messages require your attention."
+    },
+    {
+      "name": "message_needaction_counter",
+      "string": "Number of Actions",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Number of messages requiring action"
+    },
+    {
+      "name": "message_partner_ids",
+      "string": "Followers (Partners)",
+      "ttype": "many2many",
+      "required": false,
+      "readonly": false,
+      "relation": "res.partner",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "milestone_ids",
+      "string": "Milestone",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.milestone",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "my_activity_date_deadline",
+      "string": "My Activity Deadline",
+      "ttype": "date",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "name",
+      "string": "Name",
+      "ttype": "char",
+      "required": true,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "open_task_count",
+      "string": "Open Task Count",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "owner_contact",
+      "string": "业主联系人",
+      "ttype": "char",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "owner_id",
+      "string": "业主单位",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "res.partner",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "partner_id",
+      "string": "Customer",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "res.partner",
+      "selection": null,
+      "domain": "['|', ('company_id', '=?', company_id), ('company_id', '=', False)]",
+      "help": null
+    },
+    {
+      "name": "pay_contract_total",
+      "string": "已付款合同额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "pay_paid_total",
+      "string": "已付款金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "pay_settlement_total",
+      "string": "已结算金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "pay_unpaid_total",
+      "string": "未付款金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "payment_request_ids",
+      "string": "付款申请",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "payment.request",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "phase_key",
+      "string": "项目阶段",
+      "ttype": "selection",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": [
+        [
+          "initiation",
+          "立项阶段"
+        ],
+        [
+          "execution",
+          "执行阶段"
+        ],
+        [
+          "settlement",
+          "结算阶段"
+        ],
+        [
+          "finance",
+          "资金阶段"
+        ],
+        [
+          "archive",
+          "资料归档"
+        ]
+      ],
+      "domain": null,
+      "help": "用于对齐 WBS / 财务节点的阶段标识，可结合审批流与报表过滤使用。"
+    },
+    {
+      "name": "plan_percent",
+      "string": "计划完成率(%)",
+      "ttype": "float",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "结合工期或产值计划给出的阶段性目标完成率。"
+    },
+    {
+      "name": "privacy_visibility",
+      "string": "Visibility",
+      "ttype": "selection",
+      "required": true,
+      "readonly": false,
+      "relation": null,
+      "selection": [
+        [
+          "followers",
+          "Invited internal users (private)"
+        ],
+        [
+          "employees",
+          "All internal users"
+        ],
+        [
+          "portal",
+          "Invited portal users and all internal users (public)"
+        ]
+      ],
+      "domain": null,
+      "help": "People to whom this project and its tasks will be visible.\n\n- Invited internal users: when following a project, internal users will get access to all of its tasks without distinction. Otherwise, they will only get access to the specific tasks they are following.\n A user with the project > administrator access right level can still access this project and its tasks, even if they are not explicitly part of the followers.\n\n- All internal users: all internal users can access the project and all of its tasks without distinction.\n\n- Invited portal users and all internal users: all internal users can access the project and all of its tasks without distinction.\nWhen following a project, portal users will get access to all of its tasks without distinction. Otherwise, they will only get access to the specific tasks they are following.\n\nWhen a project is shared in read-only, the portal user is redirected to their portal. They can view the tasks, but not edit them.\nWhen a project is shared in edit, the portal user is redirected to the kanban and list views of the tasks. They can modify a selected number of fields on the tasks.\n\nIn any case, an internal user with no project access rights can still access a task, provided that they are given the corresponding URL (and that they are part of the followers if the project is private)."
+    },
+    {
+      "name": "privacy_visibility_warning",
+      "string": "Privacy Visibility Warning",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "progress_entry_count",
+      "string": "进度记录数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "progress_entry_ids",
+      "string": "进度计量",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.progress.entry",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "progress_rate_latest",
+      "string": "最新进度(%)",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "取项目进度计量记录中最新/最大完成率。"
+    },
+    {
+      "name": "project_category_id",
+      "string": "项目类别",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "sc.dictionary",
+      "selection": null,
+      "domain": [
+        [
+          "type",
+          "=",
+          "project_category"
+        ]
+      ],
+      "help": null
+    },
+    {
+      "name": "project_code",
+      "string": "项目编号",
+      "ttype": "char",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "project_type_id",
+      "string": "项目类型",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "sc.dictionary",
+      "selection": null,
+      "domain": [
+        [
+          "type",
+          "=",
+          "project_type"
+        ]
+      ],
+      "help": null
+    },
+    {
+      "name": "purchase_orders_count",
+      "string": "# Purchase Orders",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "rating_active",
+      "string": "Customer Ratings",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "rating_avg",
+      "string": "Average Rating",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "rating_avg_percentage",
+      "string": "Average Rating (%)",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "rating_count",
+      "string": "# Ratings",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "rating_ids",
+      "string": "Ratings",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "rating.rating",
+      "selection": null,
+      "domain": [
+        [
+          "parent_res_model",
+          "=",
+          "project.project"
+        ]
+      ],
+      "help": null
+    },
+    {
+      "name": "rating_percentage_satisfaction",
+      "string": "Rating Satisfaction",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "Percentage of happy ratings"
+    },
+    {
+      "name": "rating_request_deadline",
+      "string": "Rating Request Deadline",
+      "ttype": "datetime",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "rating_status",
+      "string": "Customer Ratings Status",
+      "ttype": "selection",
+      "required": true,
+      "readonly": false,
+      "relation": null,
+      "selection": [
+        [
+          "stage",
+          "when reaching a given stage"
+        ],
+        [
+          "periodic",
+          "on a periodic basis"
+        ]
+      ],
+      "domain": null,
+      "help": "Collect feedback from your customers by sending them a rating request when a task enters a certain stage. To do so, define a rating email template on the corresponding stages.\nRating when changing stage: an email will be automatically sent when the task reaches the stage on which the rating email template is set.\nPeriodic rating: an email will be automatically sent at regular intervals as long as the task remains in the stage in which the rating email template is set."
+    },
+    {
+      "name": "rating_status_period",
+      "string": "Rating Frequency",
+      "ttype": "selection",
+      "required": true,
+      "readonly": false,
+      "relation": null,
+      "selection": [
+        [
+          "daily",
+          "Daily"
+        ],
+        [
+          "weekly",
+          "Weekly"
+        ],
+        [
+          "bimonthly",
+          "Twice a Month"
+        ],
+        [
+          "monthly",
+          "Once a Month"
+        ],
+        [
+          "quarterly",
+          "Quarterly"
+        ],
+        [
+          "yearly",
+          "Yearly"
+        ]
+      ],
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "resource_calendar_id",
+      "string": "Working Time",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": true,
+      "relation": "resource.calendar",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "responsibility_ids",
+      "string": "责任矩阵",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.responsibility",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "sc_demo_showcase",
+      "string": "演示项目池",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "用于标记演示项目池的入口筛选项目。"
+    },
+    {
+      "name": "sc_demo_showcase_ready",
+      "string": "演示项目可展示",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "用于演示入口硬筛选，仅展示数据补齐完成的项目。"
+    },
+    {
+      "name": "sc_draft_autosave_uid",
+      "string": "草稿自动保存人",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": true,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "sc_draft_autosaved_at",
+      "string": "草稿自动保存时间",
+      "ttype": "datetime",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "sc_overview_contract_count",
+      "string": "概览合同数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "sc_overview_cost_count",
+      "string": "概览成本数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "sc_overview_payment_count",
+      "string": "概览付款数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "sc_overview_payment_pending_count",
+      "string": "概览付款待审批数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "sc_overview_task_count",
+      "string": "概览任务数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "sc_overview_task_in_progress_count",
+      "string": "概览进行中任务数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "sc_stage_required_done",
+      "string": "阶段要求已完成数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "sc_stage_required_total",
+      "string": "阶段要求总数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "schedule_delta",
+      "string": "进度偏差",
+      "ttype": "float",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": "实际完成率 - 计划完成率，负数表示落后。"
+    },
+    {
+      "name": "sequence",
+      "string": "Sequence",
+      "ttype": "integer",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "settlement_ids",
+      "string": "结算单",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.settlement",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "start_date",
+      "string": "计划开工日期",
+      "ttype": "date",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "structure_ids",
+      "string": "工程结构（WBS）",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "sc.project.structure",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "subcontract_amount",
+      "string": "分包合同金额",
+      "ttype": "monetary",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "tag_ids",
+      "string": "Tags",
+      "ttype": "many2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.tags",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "task_count",
+      "string": "Task Count",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "task_ids",
+      "string": "Tasks",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.task",
+      "selection": null,
+      "domain": [
+        [
+          "state",
+          "in",
+          [
+            "01_in_progress",
+            "02_changes_requested",
+            "03_approved",
+            "04_waiting_normal"
+          ]
+        ]
+      ],
+      "help": null
+    },
+    {
+      "name": "task_properties_definition",
+      "string": "Task Properties",
+      "ttype": "properties_definition",
+      "required": false,
+      "readonly": false,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "tasks",
+      "string": "Task Activities",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.task",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "tender_bid_ids",
+      "string": "投标记录",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "tender.bid",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "tender_count",
+      "string": "投标数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "type_ids",
+      "string": "Tasks Stages",
+      "ttype": "many2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.task.type",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "update_ids",
+      "string": "Update",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "project.update",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "user_id",
+      "string": "Project Manager",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": false,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "wbs_count",
+      "string": "工程结构数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "wbs_ids",
+      "string": "WBS结构",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "construction.work.breakdown",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "wbs_node_count",
+      "string": "工程结构节点数",
+      "ttype": "integer",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "wbs_ready",
+      "string": "工程结构已就绪",
+      "ttype": "boolean",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "website_message_ids",
+      "string": "Website Messages",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "mail.message",
+      "selection": null,
+      "domain": [
+        [
+          "model",
+          "=",
+          "project.project"
+        ],
+        [
+          "message_type",
+          "in",
+          [
+            "comment",
+            "email",
+            "email_outgoing",
+            "auto_comment"
+          ]
+        ]
+      ],
+      "help": "Website communication history"
+    },
+    {
+      "name": "work_ids",
+      "string": "施工结构",
+      "ttype": "one2many",
+      "required": false,
+      "readonly": false,
+      "relation": "construction.work.breakdown",
+      "selection": null,
+      "domain": [],
+      "help": null
+    },
+    {
+      "name": "write_date",
+      "string": "Last Updated on",
+      "ttype": "datetime",
+      "required": false,
+      "readonly": true,
+      "relation": null,
+      "selection": null,
+      "domain": null,
+      "help": null
+    },
+    {
+      "name": "write_uid",
+      "string": "Last Updated by",
+      "ttype": "many2one",
+      "required": false,
+      "readonly": true,
+      "relation": "res.users",
+      "selection": null,
+      "domain": [],
+      "help": null
+    }
+  ],
   "execute_result": null,
   "execute_error": null
 }
