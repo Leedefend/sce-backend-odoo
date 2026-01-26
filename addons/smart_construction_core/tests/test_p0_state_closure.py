@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import base64
+
+from odoo import fields
 from odoo.exceptions import UserError, ValidationError
 from odoo.tests.common import TransactionCase, tagged
 
@@ -60,21 +63,81 @@ class TestP0StateClosure(TransactionCase):
             }
         )
 
+    def _create_finance_user(self, login="p0_finance_user_state_closure"):
+        finance_group = self.env.ref("smart_construction_core.group_sc_cap_finance_user")
+        return self.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": "P0 Finance User",
+                "login": login,
+                "company_id": self.company.id,
+                "company_ids": [(6, 0, [self.company.id])],
+                "groups_id": [(6, 0, [finance_group.id])],
+                "email": f"{login}@test.local",
+            }
+        )
+
+    def _create_purchase_order(self, partner):
+        product = self.env["product.product"].create(
+            {
+                "name": "P0 PO Product",
+                "type": "service",
+                "uom_id": self.uom_unit.id,
+                "uom_po_id": self.uom_unit.id,
+            }
+        )
+        po = self.env["purchase.order"].create(
+            {
+                "partner_id": partner.id,
+                "order_line": [
+                    (
+                        0,
+                        0,
+                        {
+                            "name": product.name,
+                            "product_id": product.id,
+                            "product_qty": 1.0,
+                            "product_uom": self.uom_unit.id,
+                            "price_unit": 1.0,
+                            "date_planned": fields.Datetime.now(),
+                        },
+                    )
+                ],
+            }
+        )
+        po.write({"state": "purchase"})
+        return po
+
     def _enable_funding(self, project, cap=1000.0):
         project.write({"funding_enabled": True})
         self.env["project.funding.baseline"].create(
             {"project_id": project.id, "total_amount": cap, "state": "active"}
         )
 
-    def _create_settlement_order(self, project, partner, contract, amount=100.0, state="approve"):
-        return self.env["sc.settlement.order"].create(
+    def _create_settlement_order(
+        self, project, partner, contract, amount=100.0, state="approve", purchase_orders=None
+    ):
+        vals = {
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "contract_id": contract.id,
+            "settlement_type": "out",
+            "line_ids": [(0, 0, {"name": "P0 Line", "qty": 1.0, "price_unit": amount})],
+            "state": state,
+        }
+        purchase_orders = purchase_orders or self.env["purchase.order"]
+        if purchase_orders:
+            vals["purchase_order_ids"] = [(6, 0, purchase_orders.ids)]
+        return self.env["sc.settlement.order"].create(vals)
+
+    def _attach_dummy(self, record, name="test.pdf"):
+        self.env["ir.attachment"].create(
             {
-                "project_id": project.id,
-                "partner_id": partner.id,
-                "contract_id": contract.id,
-                "settlement_type": "out",
-                "line_ids": [(0, 0, {"name": "P0 Line", "qty": 1.0, "price_unit": amount})],
-                "state": state,
+                "name": name,
+                "type": "binary",
+                "datas": base64.b64encode(b"test").decode("ascii"),
+                "res_model": record._name,
+                "res_id": record.id,
+                "mimetype": "application/pdf",
             }
         )
 
@@ -109,7 +172,15 @@ class TestP0StateClosure(TransactionCase):
         partner = self._create_partner("P0 Payee")
         contract = self._create_contract(project, partner)
         self._enable_funding(project, cap=1000.0)
-        settlement = self._create_settlement_order(project, partner, contract, amount=100.0, state="approve")
+        purchase_order = self._create_purchase_order(partner)
+        settlement = self._create_settlement_order(
+            project,
+            partner,
+            contract,
+            amount=100.0,
+            state="approve",
+            purchase_orders=purchase_order,
+        )
 
         pr = self.env["payment.request"].sudo().create(
             {
@@ -123,8 +194,11 @@ class TestP0StateClosure(TransactionCase):
                 "state": "draft",
             }
         )
-        # Avoid validator dependencies (e.g., PO link) and simulate pending payment.
-        pr.sudo().write({"state": "submit"})
+        self._attach_dummy(pr)
+        finance_user = self._create_finance_user()
+        project.sudo().message_subscribe(partner_ids=[finance_user.partner_id.id])
+        pr.with_user(finance_user).action_submit()
+        self.assertEqual(pr.state, "submit")
         with self.assertRaises(UserError):
             project.action_set_lifecycle_state("warranty")
 

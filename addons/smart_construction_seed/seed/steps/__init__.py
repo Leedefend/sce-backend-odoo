@@ -12,6 +12,7 @@ from . import step_payment_ledger_p1  # noqa: F401
 from . import step_boq_sample  # noqa: F401
 from . import step_metrics_smoke  # noqa: F401
 from . import step_tax  # noqa: F401
+from . import step_company_currency  # noqa: F401
 from . import step_demo_showroom  # noqa: F401
 from . import step_demo_user_prefs  # noqa: F401
 from . import step_dictionary_min  # noqa: F401
