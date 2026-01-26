@@ -49,6 +49,10 @@ for case in cases:
         cmd += ["--menu_id", str(case["menu_id"])]
     if case.get("action_xmlid"):
         cmd += ["--action_xmlid", case["action_xmlid"]]
+    if case.get("route"):
+        cmd += ["--route", case["route"]]
+    if case.get("project_id"):
+        cmd += ["--project_id", str(case["project_id"])]
     if case.get("op"):
         cmd += ["--op", case["op"]]
     if case.get("execute_method"):

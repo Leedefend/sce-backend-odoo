@@ -101,5 +101,11 @@
     "op": "meta.describe_project_capabilities",
     "model": "project.project",
     "project_id": 1
+  },
+  {
+    "case": "portal_lifecycle_dashboard_pm",
+    "user": "pm",
+    "op": "ui.contract",
+    "route": "/portal/lifecycle"
   }
 ]
