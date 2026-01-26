@@ -57,6 +57,27 @@ class PageAssembler:
         env = self.env
         su = self.su_env
 
+        required_models = {
+            "app.model.config": True,
+            "app.view.config": True,
+            "app.search.config": False,
+            "app.permission.config": False,
+            "app.action.config": False,
+            "app.report.config": False,
+            "app.workflow.config": False,
+            "app.validator.config": False,
+        }
+        missing_models = []
+        warnings = []
+
+        def mark_missing(model_name):
+            if model_name not in missing_models:
+                missing_models.append(model_name)
+            if required_models.get(model_name, False):
+                warnings.append(f"required_missing:{model_name}")
+            else:
+                warnings.append(f"optional_missing:{model_name}")
+
         data = {
             "head": {},
             "views": {},
@@ -66,7 +87,10 @@ class PageAssembler:
             "buttons": [],
             "toolbar": {"header": [], "sidebar": [], "footer": []},
             "workflow": {},
-            "reports": []
+            "reports": [],
+            "degraded": False,
+            "missing_models": [],
+            "warnings": [],
         }
         versions = {}
 
@@ -77,6 +101,7 @@ class PageAssembler:
             data["fields"] = self._to_fields_map(mcfg.get_model_contract().get("fields", []), env=env, model=mcfg.model)
             versions["model"] = mcfg.version
         except KeyError:
+            mark_missing("app.model.config")
             _logger.warning("app.model.config missing; fallback to ORM fields for model=%s", model)
             data["fields"] = self._to_fields_map(list(env[model]._fields.keys()), env=env, model=model)
             versions["model"] = 0
@@ -100,6 +125,7 @@ class PageAssembler:
                 v_contract = vcfg.get_contract_api(filter_runtime=True, check_model_acl=True)
                 v_versions.append(str(vcfg.version))
             except KeyError:
+                mark_missing("app.view.config")
                 _logger.warning("app.view.config missing; fallback view contract for model=%s vt=%s", model, vt)
                 v_contract = {"type": vt}
 
@@ -121,6 +147,7 @@ class PageAssembler:
             data["search"] = scfg.get_search_contract(filter_runtime=True, include_user_filters=True)
             versions["search"] = scfg.version
         except KeyError:
+            mark_missing("app.search.config")
             _logger.warning("app.search.config missing; fallback search contract for model=%s", model)
             data["search"] = {}
             versions["search"] = 0
@@ -133,6 +160,7 @@ class PageAssembler:
             data["permissions"] = pcfg.get_permission_contract(filter_runtime=True)
             versions["perm"] = pcfg.version
         except KeyError:
+            mark_missing("app.permission.config")
             _logger.warning("app.permission.config missing; fallback permissions for model=%s", model)
             data["permissions"] = {}
             versions["perm"] = 0
@@ -143,6 +171,7 @@ class PageAssembler:
             buttons_data = acfg.get_action_contract()
             versions["actions"] = acfg.version if getattr(acfg, 'version', None) else 1
         except KeyError:
+            mark_missing("app.action.config")
             _logger.warning("app.action.config missing; fallback empty actions for model=%s", model)
             buttons_data = []
             versions["actions"] = 0
@@ -160,6 +189,7 @@ class PageAssembler:
             data["reports"] = rcfg.get_report_contract(filter_runtime=True)
             versions["reports"] = rcfg.version
         except KeyError:
+            mark_missing("app.report.config")
             _logger.warning("app.report.config missing; fallback empty reports for model=%s", model)
             data["reports"] = []
             versions["reports"] = 0
@@ -169,6 +199,7 @@ class PageAssembler:
             data["workflow"] = wcfg.get_workflow_contract(filter_runtime=True)
             versions["workflow"] = wcfg.version
         except KeyError:
+            mark_missing("app.workflow.config")
             _logger.warning("app.workflow.config missing; fallback empty workflow for model=%s", model)
             data["workflow"] = {}
             versions["workflow"] = 0
@@ -178,6 +209,7 @@ class PageAssembler:
             data["validator"] = vcfg2.get_validator_contract()
             versions["validator"] = vcfg2.version
         except KeyError:
+            mark_missing("app.validator.config")
             _logger.warning("app.validator.config missing; fallback empty validator for model=%s", model)
             data["validator"] = {}
             versions["validator"] = 0
@@ -203,6 +235,10 @@ class PageAssembler:
         if p.get("with_data"):
             data["data"] = self._fetch_initial_data(env, model, view_types, p, data)
 
+        if missing_models:
+            data["degraded"] = True
+            data["missing_models"] = missing_models
+            data["warnings"] = warnings
         return data, versions
 
     # ---------------- 首屏数据 ----------------
