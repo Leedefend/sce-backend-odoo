@@ -1,47 +1,202 @@
 {
   "case": "attachment_list_pm",
-  "trace_id": "0b3eb2a8-d076-4ac5-b255-6693c86b5061",
-  "exported_at": "2026-01-25T05:57:50Z",
+  "trace_id": "2a6835d5-a7bf-407a-b542-84a1cefcd0e4",
+  "exported_at": "2026-01-26T08:31:05Z",
   "contract_version": "v1",
   "model": "ir.attachment",
   "view_type": "list",
   "op": "model",
   "user": "pm",
   "user_fallback": "admin",
-  "fallback": true,
+  "fallback": false,
   "action": null,
   "ui_contract": {
     "model": "ir.attachment",
     "view_type": "list",
-    "columns": [
-      "name",
-      "res_model",
-      "res_field",
-      "res_id",
-      "type",
-      "file_size",
-      "create_uid",
-      "create_date"
-    ],
+    "columns": [],
     "columnsSchema": []
   },
   "ui_contract_raw": {
+    "head": {},
     "views": {
       "tree": {
-        "columns": [
-          "name",
-          "res_model",
-          "res_field",
-          "res_id",
-          "type",
-          "file_size",
-          "create_uid",
-          "create_date"
-        ],
-        "columns_schema": []
+        "type": "tree"
+      },
+      "form": {}
+    },
+    "fields": {
+      "name": {
+        "name": "name",
+        "string": "Name",
+        "type": "char"
+      },
+      "description": {
+        "name": "description",
+        "string": "Description",
+        "type": "text"
+      },
+      "res_name": {
+        "name": "res_name",
+        "string": "Resource Name",
+        "type": "char"
+      },
+      "res_model": {
+        "name": "res_model",
+        "string": "Resource Model",
+        "type": "char"
+      },
+      "res_field": {
+        "name": "res_field",
+        "string": "Resource Field",
+        "type": "char"
+      },
+      "res_id": {
+        "name": "res_id",
+        "string": "Resource ID",
+        "type": "many2one_reference"
+      },
+      "company_id": {
+        "name": "company_id",
+        "string": "Company",
+        "type": "many2one",
+        "relation": "res.company"
+      },
+      "type": {
+        "name": "type",
+        "string": "Type",
+        "type": "selection"
+      },
+      "url": {
+        "name": "url",
+        "string": "Url",
+        "type": "char"
+      },
+      "public": {
+        "name": "public",
+        "string": "Is public document",
+        "type": "boolean"
+      },
+      "access_token": {
+        "name": "access_token",
+        "string": "Access Token",
+        "type": "char"
+      },
+      "raw": {
+        "name": "raw",
+        "string": "File Content (raw)",
+        "type": "binary"
+      },
+      "datas": {
+        "name": "datas",
+        "string": "File Content (base64)",
+        "type": "binary"
+      },
+      "db_datas": {
+        "name": "db_datas",
+        "string": "Database Data",
+        "type": "binary"
+      },
+      "store_fname": {
+        "name": "store_fname",
+        "string": "Stored Filename",
+        "type": "char"
+      },
+      "file_size": {
+        "name": "file_size",
+        "string": "File Size",
+        "type": "integer"
+      },
+      "checksum": {
+        "name": "checksum",
+        "string": "Checksum/SHA1",
+        "type": "char"
+      },
+      "mimetype": {
+        "name": "mimetype",
+        "string": "Mime Type",
+        "type": "char"
+      },
+      "index_content": {
+        "name": "index_content",
+        "string": "Indexed Content",
+        "type": "text"
+      },
+      "id": {
+        "name": "id",
+        "string": "ID",
+        "type": "integer"
+      },
+      "display_name": {
+        "name": "display_name",
+        "string": "Display Name",
+        "type": "char"
+      },
+      "create_uid": {
+        "name": "create_uid",
+        "string": "Created by",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "create_date": {
+        "name": "create_date",
+        "string": "Created on",
+        "type": "datetime"
+      },
+      "write_uid": {
+        "name": "write_uid",
+        "string": "Last Updated by",
+        "type": "many2one",
+        "relation": "res.users"
+      },
+      "write_date": {
+        "name": "write_date",
+        "string": "Last Updated on",
+        "type": "datetime"
+      },
+      "voice_ids": {
+        "name": "voice_ids",
+        "string": "Voice",
+        "type": "one2many",
+        "relation": "discuss.voice.metadata"
+      },
+      "local_url": {
+        "name": "local_url",
+        "string": "Attachment URL",
+        "type": "char"
+      },
+      "image_src": {
+        "name": "image_src",
+        "string": "Image Src",
+        "type": "char"
+      },
+      "image_width": {
+        "name": "image_width",
+        "string": "Image Width",
+        "type": "integer"
+      },
+      "image_height": {
+        "name": "image_height",
+        "string": "Image Height",
+        "type": "integer"
+      },
+      "original_id": {
+        "name": "original_id",
+        "string": "Original (unoptimized, unresized) attachment",
+        "type": "many2one",
+        "relation": "ir.attachment"
       }
     },
-    "fields": {}
+    "search": {},
+    "permissions": {},
+    "buttons": [],
+    "toolbar": {
+      "header": [],
+      "sidebar": [],
+      "footer": []
+    },
+    "workflow": {},
+    "reports": [],
+    "validator": {}
   },
   "record": null,
   "record_error": null,
