@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+  <record id="param_portal_lifecycle_enabled" model="ir.config_parameter">
+    <field name="key">sc.portal.lifecycle.enabled</field>
+    <field name="value">1</field>
+  </record>
+</odoo>
