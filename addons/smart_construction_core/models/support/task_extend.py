@@ -9,7 +9,7 @@ from .state_guard import raise_guard
 class ProjectTask(models.Model):
     _inherit = "project.task"
 
-    state = fields.Selection(
+    sc_state = fields.Selection(
         [
             ("draft", "草稿"),
             ("ready", "就绪"),
@@ -17,7 +17,7 @@ class ProjectTask(models.Model):
             ("done", "已完成"),
             ("cancelled", "已取消"),
         ],
-        string="状态",
+        string="工程状态",
         default="draft",
         required=True,
         index=True,
@@ -102,7 +102,7 @@ class ProjectTask(models.Model):
             task.boq_amount_total = amount
             task.boq_uom_id = task.boq_line_ids[:1].uom_id.id if task.boq_line_ids else False
 
-    @api.depends("project_id", "work_id", "state")
+    @api.depends("project_id", "work_id", "sc_state")
     def _compute_readiness(self):
         for task in self:
             missing_fields, blockers = task._get_readiness_state()
@@ -112,8 +112,8 @@ class ProjectTask(models.Model):
                 task.readiness_status = "missing"
             else:
                 task.readiness_status = "ready"
-            task.readiness_missing_fields = json.dumps(missing_fields, ensure_ascii=True)
-            task.readiness_blockers = json.dumps(blockers, ensure_ascii=True)
+            task.readiness_missing_fields = json.dumps(missing_fields, ensure_ascii=False)
+            task.readiness_blockers = json.dumps(blockers, ensure_ascii=False)
 
     def _get_readiness_state(self):
         missing_fields = []
@@ -148,8 +148,8 @@ class ProjectTask(models.Model):
                 model=task._name,
                 res_id=task.id,
                 action=action,
-                before={"state": before_state},
-                after={"state": after_state},
+                before={"sc_state": before_state},
+                after={"sc_state": after_state},
                 reason=reason,
                 require_reason=(event_code == "task_cancelled"),
                 project_id=task.project_id.id if task.project_id else False,
@@ -166,12 +166,12 @@ class ProjectTask(models.Model):
             )
 
     def _ensure_no_direct_state_write(self, vals):
-        if "state" in vals and not self.env.context.get("allow_transition"):
+        if "sc_state" in vals and not self.env.context.get("allow_transition"):
             raise_guard(
                 "TASK_GUARD_DIRECT_STATE_WRITE",
                 "Task",
                 "Write",
-                reasons=["state change must use transition methods"],
+                reasons=["sc_state change must use transition methods"],
             )
 
     @api.model_create_multi
@@ -186,12 +186,12 @@ class ProjectTask(models.Model):
 
     def action_prepare_task(self):
         for task in self:
-            if task.state != "draft":
+            if task.sc_state != "draft":
                 raise_guard(
                     "TASK_GUARD_MISSING_FIELDS",
                     task.display_name,
                     "Prepare",
-                    reasons=["state must be draft"],
+                    reasons=["sc_state must be draft"],
                 )
             missing_fields, blockers = task._get_readiness_state()
             if blockers:
@@ -208,19 +208,19 @@ class ProjectTask(models.Model):
                     "Prepare",
                     reasons=missing_fields,
                 )
-            before_state = task.state
-            task.with_context(allow_transition=True).write({"state": "ready"})
+            before_state = task.sc_state
+            task.with_context(allow_transition=True).write({"sc_state": "ready"})
             task._audit_transition("task_ready", "action_prepare_task", before_state, "ready")
         return True
 
     def action_start_task(self):
         for task in self:
-            if task.state != "ready":
+            if task.sc_state != "ready":
                 raise_guard(
                     "TASK_GUARD_PROJECT_BLOCKED",
                     task.display_name,
                     "Start",
-                    reasons=["state must be ready"],
+                    reasons=["sc_state must be ready"],
                 )
             if task.project_id and "lifecycle_state" in task.project_id._fields:
                 if task.project_id.lifecycle_state in ("paused", "closed"):
@@ -230,19 +230,19 @@ class ProjectTask(models.Model):
                         "Start",
                         reasons=["project is paused/closed"],
                     )
-            before_state = task.state
-            task.with_context(allow_transition=True).write({"state": "in_progress"})
+            before_state = task.sc_state
+            task.with_context(allow_transition=True).write({"sc_state": "in_progress"})
             task._audit_transition("task_started", "action_start_task", before_state, "in_progress")
         return True
 
     def action_mark_done(self):
         for task in self:
-            if task.state != "in_progress":
+            if task.sc_state != "in_progress":
                 raise_guard(
                     "TASK_GUARD_NOT_COMPLETE",
                     task.display_name,
                     "Complete",
-                    reasons=["state must be in_progress"],
+                    reasons=["sc_state must be in_progress"],
                 )
             progress = task._get_progress_ratio()
             if progress is not None and progress < 1.0:
@@ -252,16 +252,16 @@ class ProjectTask(models.Model):
                     "Complete",
                     reasons=["progress not complete"],
                 )
-            before_state = task.state
-            task.with_context(allow_transition=True).write({"state": "done"})
+            before_state = task.sc_state
+            task.with_context(allow_transition=True).write({"sc_state": "done"})
             task._audit_transition("task_done", "action_mark_done", before_state, "done")
         return True
 
     def action_cancel_task(self, reason=None):
         self._ensure_manager_role()
         for task in self:
-            before_state = task.state
-            task.with_context(allow_transition=True).write({"state": "cancelled"})
+            before_state = task.sc_state
+            task.with_context(allow_transition=True).write({"sc_state": "cancelled"})
             task._audit_transition(
                 "task_cancelled",
                 "action_cancel_task",
