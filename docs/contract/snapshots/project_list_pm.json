@@ -1,7 +1,7 @@
 {
   "case": "project_list_pm",
-  "trace_id": "03147f7e-ebfb-4b14-90d9-6e7a7bb9052e",
-  "exported_at": "2026-01-26T08:30:08Z",
+  "trace_id": "6bc32928-0ebc-4876-8b9e-f6939bb9c838",
+  "exported_at": "2026-01-26T08:59:15Z",
   "contract_version": "v1",
   "model": "project.project",
   "view_type": "list",
@@ -1089,6 +1089,27 @@
     },
     "workflow": {},
     "reports": [],
+    "degraded": true,
+    "missing_models": [
+      "app.model.config",
+      "app.view.config",
+      "app.search.config",
+      "app.permission.config",
+      "app.action.config",
+      "app.report.config",
+      "app.workflow.config",
+      "app.validator.config"
+    ],
+    "warnings": [
+      "required_missing:app.model.config",
+      "required_missing:app.view.config",
+      "optional_missing:app.search.config",
+      "optional_missing:app.permission.config",
+      "optional_missing:app.action.config",
+      "optional_missing:app.report.config",
+      "optional_missing:app.workflow.config",
+      "optional_missing:app.validator.config"
+    ],
     "validator": {}
   },
   "record": null,

@@ -394,7 +394,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
-.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
+.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.smart_core verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
 verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo: guard.prod.forbid check-compose-project check-compose-env
@@ -409,6 +409,8 @@ verify.overview.entry: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/overview_entry.sh
 verify.overview.logic: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/overview_logic.sh
+verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
 verify.prod.guard: check-compose-env
 	@bash scripts/verify/prod_guard_smoke.sh
 

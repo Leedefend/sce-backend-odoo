@@ -1,7 +1,7 @@
 {
   "case": "execute_button_not_allowed",
-  "trace_id": "ca4bda8c-9e85-4ac2-8951-13b51cbc14e8",
-  "exported_at": "2026-01-26T08:30:44Z",
+  "trace_id": "12cd971d-9fc5-4476-bb21-f7e10d26129e",
+  "exported_at": "2026-01-26T08:59:53Z",
   "contract_version": "v1",
   "model": "project.project",
   "view_type": "form",
@@ -1092,6 +1092,27 @@
     },
     "workflow": {},
     "reports": [],
+    "degraded": true,
+    "missing_models": [
+      "app.model.config",
+      "app.view.config",
+      "app.search.config",
+      "app.permission.config",
+      "app.action.config",
+      "app.report.config",
+      "app.workflow.config",
+      "app.validator.config"
+    ],
+    "warnings": [
+      "required_missing:app.model.config",
+      "required_missing:app.view.config",
+      "optional_missing:app.search.config",
+      "optional_missing:app.permission.config",
+      "optional_missing:app.action.config",
+      "optional_missing:app.report.config",
+      "optional_missing:app.workflow.config",
+      "optional_missing:app.validator.config"
+    ],
     "validator": {}
   },
   "record": null,
