@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--case", required=True, help="Snapshot case name")
     parser.add_argument("--model", default="", help="Model name")
     parser.add_argument("--id", dest="record_id", type=int, default=0, help="Record id (optional)")
-    parser.add_argument("--view_type", default="form", choices=["form", "list"], help="View type")
+    parser.add_argument("--view_type", default="form", choices=["form", "list", "kanban"], help="View type")
     parser.add_argument("--menu_id", type=int, default=0, help="Menu id (optional)")
     parser.add_argument("--action_xmlid", default="", help="Action xmlid (optional)")
     parser.add_argument("--op", default="", help="Operation (nav/menu/action_open/model)")
@@ -56,6 +56,16 @@ def normalize_contract(env, data, model, view_type):
             "ribbon": form.get("ribbon"),
             "sheet": form.get("layout") or [],
             "chatter": form.get("chatter") or {},
+        }
+    if view_type == "kanban":
+        kanban = views.get("kanban") or {}
+        fields = kanban.get("fields") or kanban.get("columns") or []
+        if not fields and kanban.get("arch"):
+            fields = _extract_fields_from_arch(kanban.get("arch"))
+        return {
+            "model": model,
+            "view_type": "kanban",
+            "fields": fields or [],
         }
     tree = views.get("tree") or views.get("list") or {}
     return {
@@ -114,6 +124,11 @@ def fallback_contract(env, model, view_type):
         layout = [{"type": "field", "name": name} for name in field_names]
         data = {
             "views": {"form": {"layout": layout, "header_buttons": [], "stat_buttons": [], "chatter": {}}},
+            "fields": fields,
+        }
+    elif view_type == "kanban":
+        data = {
+            "views": {"kanban": {"fields": field_names}},
             "fields": fields,
         }
     else:
