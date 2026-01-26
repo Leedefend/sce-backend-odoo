@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_sc_project_overview" model="ir.actions.act_window">
+        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
+    </record>
+
+    <record id="action_sc_project_overview_tree_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="10"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="smart_construction_core.view_project_my_list_tree"/>
+        <field name="act_window_id" ref="smart_construction_core.action_sc_project_overview"/>
+    </record>
+
+    <record id="action_sc_project_overview_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="20"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_construction_core.view_project_overview_form"/>
+        <field name="act_window_id" ref="smart_construction_core.action_sc_project_overview"/>
+    </record>
+
+    <record id="action_sc_project_my_list" model="ir.actions.act_window">
+        <field name="search_view_id" ref="smart_construction_core.view_project_project_search_my"/>
+        <field name="views" eval="[(ref('smart_construction_core.view_project_my_list_tree'), 'tree'), (False, 'form'), (False, 'kanban')]"/>
+    </record>
+</odoo>
