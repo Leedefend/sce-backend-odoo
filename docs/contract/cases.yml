@@ -85,5 +85,14 @@
     "model": "ir.attachment",
     "view_type": "list",
     "op": "model"
+  },
+  {
+    "case": "project_kanban_lifecycle_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "project.project",
+    "view_type": "kanban",
+    "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+    "include_meta": true
   }
 ]
