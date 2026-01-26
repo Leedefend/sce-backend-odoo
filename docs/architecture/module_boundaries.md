@@ -5,7 +5,7 @@ since: v0.3.0-stable
 ---
 # Module Boundaries
 
-This document defines responsibilities and dependency rules for modules.
+This document defines responsibilities, red lines, and lightweight move rules for modules.
 
 ## Dependency Direction (must be one-way)
 
@@ -19,43 +19,49 @@ odoo_test_helper (tools)
            -> smart_construction_demo (demo data)
 ```
 
-Core must **not** depend on demo/seed/custom. Demo and custom must not push business logic into core.
+Core must not depend on demo/seed/custom. Seed must not depend on demo.
 
 ## Module Responsibilities
 
+### smart_construction_bootstrap
+- Minimal system bring-up: locale/timezone/currency, required parameters, safe defaults.
+- No business models or demo content.
+
 ### smart_construction_core
-- Business models, fields, views, menus, actions.
-- ACLs/record rules.
-- UI components (sidebar, workbench, login redirect).
-- Must be installable without demo/seed.
-
-### smart_construction_seed
-- Idempotent baseline initialization (ICP defaults, dictionaries, minimal stages).
-- Profiles (`base`, `demo_full`).
-- Must be safe to re-run.
-
-### smart_construction_demo
-- Demo data only (users, demo projects, demo dictionaries).
-- No behavior hooks.
-- Must be removable without affecting production behavior.
+- Product models, business rules, state machine, ACL/record rules.
+- Official views/actions/menus and UI contract behavior.
+- Contract v1 APIs and UI contracts live here.
 
 ### smart_construction_custom
-- Client-specific variations (workflow differences, reports, labels).
-- Should not be required for demo unless explicitly planned.
+- Client-specific fields, workflows, reports, and UI overrides.
+- Must extend core contracts, not replace them.
 
-### smart_construction_bootstrap
-- Installation/initial setup helpers (if module-based).
+### smart_construction_seed
+- Deterministic, idempotent initialization for new databases.
+- Baseline dictionaries, minimal system data, environment consistency.
+- Must fail fast with a clear message on old/non-empty databases.
+
+### smart_construction_demo
+- Demo-only data, showcase content, demo users/roles.
+- No business logic or guard bypasses.
 
 ### sc_norm_engine
-- Industry standards, dictionaries, validations.
+- Industry standards and validation dictionaries.
 
 ### odoo_test_helper
-- Test helpers only (no production behavior).
+- Test utilities only.
 
-## Forbidden Patterns
-- Core depends on demo/seed/custom.
-- Demo provides behavior hooks that change production behavior.
-- Seed writes demo-only data into prod.
+## Red Lines
+- Core must not include demo/seed-only shortcuts or guards.
+- Demo must not introduce or modify production behavior.
+- Seed must be idempotent and safe to re-run on new DBs only.
+- Custom must not alter Contract v1 semantics.
+
+## Lightweight Move Rules
+- Action/view definitions referenced by other XML must load before use; if needed, split into a small `*_views.xml` or `*_actions_views.xml` and load early.
+- Demo data belongs in `smart_construction_demo`; never in core.
+- Seed steps belong in `smart_construction_seed/seed/steps`, and may create minimal records required by guards (with explicit comments).
+- Contract v1 endpoints and UI contracts belong to core; custom may add fields via extension points only.
 
 ## Related SOP
 - Seed lifecycle: `docs/ops/seed_lifecycle.md`
