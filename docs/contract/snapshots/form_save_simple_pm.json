@@ -1,7 +1,7 @@
 {
   "case": "form_save_simple_pm",
-  "trace_id": "958920b6-76fd-4844-baf2-bcc75ba0c8c8",
-  "exported_at": "2026-01-26T09:00:08Z",
+  "trace_id": "66ad9cf8-9c49-46d8-a22f-a2cf41d2e4c1",
+  "exported_at": "2026-01-26T09:29:35Z",
   "contract_version": "v1",
   "model": "project.project",
   "view_type": "form",

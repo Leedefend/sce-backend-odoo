@@ -1,7 +1,7 @@
 {
   "case": "project_kanban_lifecycle_pm",
-  "trace_id": "b876bbc3-bac8-450b-b81a-6481fc3ccfc0",
-  "exported_at": "2026-01-26T09:00:21Z",
+  "trace_id": "0683dc4a-04d9-4b15-9a53-aa211d26b774",
+  "exported_at": "2026-01-26T09:29:46Z",
   "contract_version": "v1",
   "model": "project.project",
   "view_type": null,
