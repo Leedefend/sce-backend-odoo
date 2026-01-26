@@ -106,6 +106,14 @@
     "case": "portal_lifecycle_dashboard_pm",
     "user": "pm",
     "op": "ui.contract",
-    "route": "/portal/lifecycle"
+    "route": "/portal/lifecycle",
+    "trace_id": "portal_snapshot"
+  },
+  {
+    "case": "portal_lifecycle_dashboard_pm_contractmeta",
+    "user": "pm",
+    "op": "ui.contract",
+    "route": "/portal/lifecycle",
+    "trace_id": "portal_snapshot_contractmeta"
   }
 ]

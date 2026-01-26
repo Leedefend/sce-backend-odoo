@@ -197,6 +197,17 @@
   word-break: break-all;
 }
 
+.sc-portal__cap-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sc-portal__cap-hint {
+  font-size: 11px;
+  color: var(--portal-muted);
+  margin-top: 2px;
+}
+
 .sc-portal__cap-mode {
   min-width: 70px;
   text-align: right;
