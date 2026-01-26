@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument("--model", default="", help="Model name")
     parser.add_argument("--id", dest="record_id", type=int, default=0, help="Record id (optional)")
     parser.add_argument("--view_type", default="form", choices=["form", "list", "kanban"], help="View type")
+    parser.add_argument("--project_id", type=int, default=0, help="Project id (optional)")
     parser.add_argument("--menu_id", type=int, default=0, help="Menu id (optional)")
     parser.add_argument("--action_xmlid", default="", help="Action xmlid (optional)")
     parser.add_argument("--op", default="", help="Operation (nav/menu/action_open/model)")
@@ -210,6 +211,8 @@ def export_snapshot():
             if not args.model:
                 raise SystemExit("model required for op=model")
             payload.update({"model": args.model, "view_type": view_type})
+        if op == "meta.describe_project_capabilities":
+            payload.update({"project_id": args.project_id})
 
         action_data = None
         if op == "menu" or args.menu_id:
@@ -224,22 +227,35 @@ def export_snapshot():
                 raise SystemExit("action xmlid not found")
             payload = {"op": "action_open", "action_id": action.id}
 
-        handler = UiContractHandler(env, request=None, payload=payload)
         fallback_used = False
-        try:
-            res = handler.handle(payload=payload)
-            if isinstance(res, dict) and res.get("ok") is False:
-                raise SystemExit(res.get("error"))
-        except Exception as exc:
-            if payload.get("op") == "nav":
-                fallback_used = True
-                res = {"data": {"nav": build_menu_tree(env), "fallback": True, "error": str(exc)}}
-            elif payload.get("op") == "model":
-                fallback_used = True
-                data = fallback_contract(env, args.model, view_type)
-                res = {"data": data, "fallback": True, "error": str(exc)}
-            else:
-                raise
+        if op == "meta.describe_project_capabilities":
+            if not args.project_id:
+                raise SystemExit("project_id required for meta.describe_project_capabilities")
+            project = env["project.project"].browse(args.project_id).exists()
+            if not project:
+                raise SystemExit("project not found")
+            from odoo.addons.smart_construction_core.services.lifecycle_capability_service import (
+                LifecycleCapabilityService,
+            )
+
+            service = LifecycleCapabilityService(env)
+            res = {"data": service.describe_project(project)}
+        else:
+            handler = UiContractHandler(env, request=None, payload=payload)
+            try:
+                res = handler.handle(payload=payload)
+                if isinstance(res, dict) and res.get("ok") is False:
+                    raise SystemExit(res.get("error"))
+            except Exception as exc:
+                if payload.get("op") == "nav":
+                    fallback_used = True
+                    res = {"data": {"nav": build_menu_tree(env), "fallback": True, "error": str(exc)}}
+                elif payload.get("op") == "model":
+                    fallback_used = True
+                    data = fallback_contract(env, args.model, view_type)
+                    res = {"data": data, "fallback": True, "error": str(exc)}
+                else:
+                    raise
 
         data = res.get("data") if isinstance(res, dict) else {}
         if payload.get("op") in ("menu", "action_open"):
