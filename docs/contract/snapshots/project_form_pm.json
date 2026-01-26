@@ -1,7 +1,7 @@
 {
   "case": "project_form_pm",
-  "trace_id": "b12f62b0-14e6-4d18-864f-b12214332315",
-  "exported_at": "2026-01-26T08:30:15Z",
+  "trace_id": "1e08d4b4-6d20-41bd-b772-3239cb2305d2",
+  "exported_at": "2026-01-26T09:28:57Z",
   "contract_version": "v1",
   "model": "project.project",
   "view_type": "form",
@@ -1092,6 +1092,27 @@
     },
     "workflow": {},
     "reports": [],
+    "degraded": true,
+    "missing_models": [
+      "app.model.config",
+      "app.view.config",
+      "app.search.config",
+      "app.permission.config",
+      "app.action.config",
+      "app.report.config",
+      "app.workflow.config",
+      "app.validator.config"
+    ],
+    "warnings": [
+      "required_missing:app.model.config",
+      "required_missing:app.view.config",
+      "optional_missing:app.search.config",
+      "optional_missing:app.permission.config",
+      "optional_missing:app.action.config",
+      "optional_missing:app.report.config",
+      "optional_missing:app.workflow.config",
+      "optional_missing:app.validator.config"
+    ],
     "validator": {}
   },
   "record": null,
