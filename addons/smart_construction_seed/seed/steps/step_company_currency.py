@@ -17,15 +17,16 @@ def _find_cny(env):
 
 
 def _run(env):
-    company = env.company.sudo()
     currency = _find_cny(env)
     if not currency:
         _logger.warning("Seed currency skipped: base.CNY not found")
         return
-    if company.currency_id.id != currency.id:
-        if env["account.move.line"].sudo().search_count([]):
-            raise UserError("Cannot switch company currency to CNY after journal items exist.")
-        company.write({"currency_id": currency.id})
+    Company = env["res.company"].sudo()
+    if Company.search_count([("currency_id", "!=", currency.id)]) == 0:
+        return
+    if env["account.move.line"].sudo().search_count([]):
+        raise UserError("Cannot switch company currency to CNY after journal items exist.")
+    Company.search([]).write({"currency_id": currency.id})
     env["ir.config_parameter"].sudo().set_param("sc.seed.company_currency", currency.name)
 
 
