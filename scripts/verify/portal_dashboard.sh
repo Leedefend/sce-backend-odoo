@@ -8,7 +8,7 @@ tmp_dir="/tmp/portal_dashboard_verify"
 mkdir -p "${tmp_dir}"
 out="${tmp_dir}/portal_dashboard_pm.json"
 
-scripts/contract/snapshot_export.sh \
+SC_FORCE_DOCKER=1 scripts/contract/snapshot_export.sh \
   --db "${DB_NAME}" \
   --user pm \
   --case portal_dashboard_pm \

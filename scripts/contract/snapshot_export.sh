@@ -18,7 +18,7 @@ if [ "${SC_CONTRACT_STABLE:-}" = "1" ]; then
   stable_args+=(--stable)
 fi
 
-if python3 - <<'PY' >/dev/null 2>&1
+if [ "${SC_FORCE_DOCKER:-}" != "1" ] && python3 - <<'PY' >/dev/null 2>&1
 import odoo  # noqa: F401
 PY
 then
