@@ -1,5 +1,5 @@
 # Codex Execution Allowlist (Autonomous Mode)
-（Codex 自治执行授权清单 · v2）
+（Codex 自治执行授权清单 · v3）
 
 ## 0. 定位（What Codex Is）
 
@@ -104,10 +104,12 @@ Codex **只能** 在以下分支类型中执行自治操作：
   - `make logs`
   - `make ps`
   - `make odoo-shell`（只读）
+  - `make codex.preflight`
 
 - 合同与接口
   - `make contract.export`
   - `make contract.export_all`（允许，用于对比）
+  - `make codex.run FLOW=snapshot`（稳定快照）
 
 - 模块操作
   - `make mod.upgrade`
@@ -144,6 +146,7 @@ Codex **只能** 在以下分支类型中执行自治操作：
 - `make demo.reset`
 - `make contract.export_all`
 - `make gate.full`
+ - `make codex.run FLOW=gate`
 
 #### 推荐自治执行链
 
@@ -216,7 +219,11 @@ Codex **必须停止并请求人工决策**，仅限以下情况：
 仅在 `codex/*` 分支允许以下流程动作，并且必须通过 Makefile 入口执行：
 
 允许的 Make targets（ONLY）：
+- `make codex.preflight`
 - `make codex.run FLOW=fast|snapshot|gate|pr|cleanup|main`
+- `make codex.pr PR_TITLE=... PR_BODY_FILE=...`
+- `make codex.cleanup CLEAN_BRANCH=codex/...`
+- `make codex.sync-main`
 - `make pr.create PR_TITLE=... PR_BODY_FILE=...`
 - `make branch.cleanup CLEAN_BRANCH=codex/...`
 - `make main.sync`（仅 fast-forward）

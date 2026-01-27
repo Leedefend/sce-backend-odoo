@@ -241,7 +241,7 @@ contract.export:
 	  --outdir "$(CONTRACT_OUTDIR)"
 
 contract.export_all:
-	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" OUTDIR="$(CONTRACT_OUTDIR)" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/export_all.sh
+	@SC_CONTRACT_STABLE=1 DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" OUTDIR="$(CONTRACT_OUTDIR)" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/export_all.sh
 
 gate.contract:
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh
@@ -588,18 +588,29 @@ codex.snapshot: guard.prod.forbid check-compose-project check-compose-env
 	@echo "[codex.snapshot] db=$(CODEX_DB)"
 	@$(MAKE) contract.export_all DB="$(CODEX_DB)"
 
+.PHONY: codex.pr codex.cleanup codex.sync-main
+
+codex.pr: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) pr.create
+
+codex.cleanup: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) branch.cleanup
+
+codex.sync-main: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) main.sync
+
 .PHONY: codex.run
 codex.run: guard.prod.forbid check-compose-project check-compose-env
 	@if [ -z "$(FLOW)" ]; then \
 	  echo "❌ FLOW is required (fast|snapshot|gate|pr|cleanup|main)"; exit 2; \
 	fi
 	@case "$(FLOW)" in \
-	  fast) $(MAKE) codex.fast CODEX_MODE=fast ;; \
-	  snapshot) $(MAKE) codex.snapshot CODEX_MODE=fast ;; \
-	  gate) $(MAKE) codex.gate CODEX_MODE=gate ;; \
-	  pr) $(MAKE) pr.create ;; \
-	  cleanup) $(MAKE) branch.cleanup ;; \
-	  main) $(MAKE) main.sync ;; \
+	  fast) FLOW=fast bash scripts/ops/codex_run.sh ;; \
+	  snapshot) FLOW=snapshot bash scripts/ops/codex_run.sh ;; \
+	  gate) FLOW=gate bash scripts/ops/codex_run.sh ;; \
+	  pr) $(MAKE) codex.pr ;; \
+	  cleanup) $(MAKE) codex.cleanup ;; \
+	  main) $(MAKE) codex.sync-main ;; \
 	  *) echo "❌ unknown FLOW=$(FLOW)"; exit 2 ;; \
 	esac
 

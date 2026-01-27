@@ -13,6 +13,12 @@ if [[ "$branch" == "main" ]]; then
   exit 1
 fi
 
+if ! docker ps >/dev/null 2>&1; then
+  echo "FAIL: docker ps failed (restart shell or ensure docker is running)"
+  exit 1
+fi
+echo "OK: docker ps"
+
 status="$(git status --porcelain)"
 if [[ -z "$status" ]]; then
   echo "OK: working tree clean"
