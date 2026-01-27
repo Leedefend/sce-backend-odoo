@@ -27,24 +27,24 @@ check_eq() {
 }
 
 menu_action=$(psql_cmd "SELECT m.action FROM ir_ui_menu m JOIN ir_model_data d ON d.res_id=m.id WHERE d.module='smart_construction_core' AND d.name='menu_sc_project_project';")
-action_id=$(psql_cmd "SELECT res_id FROM ir_model_data WHERE module='smart_construction_core' AND name='action_sc_project_overview';")
-view_id=$(psql_cmd "SELECT res_id FROM ir_model_data WHERE module='smart_construction_core' AND name='view_project_overview_form';")
+action_id=$(psql_cmd "SELECT res_id FROM ir_model_data WHERE module='smart_construction_core' AND name='action_sc_project_kanban_lifecycle';")
+view_id=$(psql_cmd "SELECT res_id FROM ir_model_data WHERE module='smart_construction_core' AND name='view_sc_project_kanban_lifecycle';")
 cap_menu_action=$(psql_cmd "SELECT m.action FROM ir_ui_menu m JOIN ir_model_data d ON d.res_id=m.id WHERE d.module='smart_construction_portal' AND d.name='menu_sc_portal_capability_matrix';")
 cap_action_id=$(psql_cmd "SELECT res_id FROM ir_model_data WHERE module='smart_construction_portal' AND name='action_sc_portal_capability_matrix';")
 
 check_eq "menu_sc_project_project action" "ir.actions.act_window,${action_id}" "SELECT m.action FROM ir_ui_menu m JOIN ir_model_data d ON d.res_id=m.id WHERE d.module='smart_construction_core' AND d.name='menu_sc_project_project';"
-check_eq "action_sc_project_overview exists" "${action_id}" "SELECT id FROM ir_act_window WHERE id=${action_id};"
+check_eq "action_sc_project_kanban_lifecycle exists" "${action_id}" "SELECT id FROM ir_act_window WHERE id=${action_id};"
 check_eq "menu_sc_portal_capability_matrix action" "ir.actions.act_url,${cap_action_id}" "SELECT m.action FROM ir_ui_menu m JOIN ir_model_data d ON d.res_id=m.id WHERE d.module='smart_construction_portal' AND d.name='menu_sc_portal_capability_matrix';"
 check_eq "action_sc_portal_capability_matrix exists" "${cap_action_id}" "SELECT id FROM ir_act_url WHERE id=${cap_action_id};"
 
 view_mode=$(psql_cmd "SELECT view_mode FROM ir_act_window WHERE id=${action_id};")
-echo "[verify.overview.entry] INFO action_sc_project_overview view_mode=${view_mode}"
+echo "[verify.overview.entry] INFO action_sc_project_kanban_lifecycle view_mode=${view_mode}"
 
 has_view=$(psql_cmd "SELECT 1 FROM ir_act_window_view WHERE act_window_id=${action_id} AND view_id=${view_id} LIMIT 1;")
 if [[ "${has_view}" != "1" ]]; then
-  fail "overview form view bound" "1" "${has_view}"
+  fail "lifecycle kanban view bound" "1" "${has_view}"
 else
-  echo "[verify.overview.entry] PASS item=overview form view bound value=1"
+  echo "[verify.overview.entry] PASS item=lifecycle kanban view bound value=1"
 fi
 
 echo "[verify.overview.entry] PASS ALL on ${DB_NAME}"

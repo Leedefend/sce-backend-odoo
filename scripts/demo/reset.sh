@@ -55,7 +55,7 @@ odoo --config="$ODOO_CONF" \
   --db_host=db --db_port=5432 --db_user="$DB_USER" --db_password="$DB_PASSWORD" \
   --addons-path="$ODOO_ADDONS_PATH" \
   -d "$DB_NAME" \
-  -i smart_construction_core,smart_construction_seed,smart_construction_demo \
+  -i smart_construction_core,smart_construction_seed,smart_construction_demo,smart_construction_portal \
   $WITHOUT_DEMO_FLAG \
   --no-http --workers=0 --max-cron-threads=0 --stop-after-init \
   2>&1 | tee "$DEMO_LOGFILE"
