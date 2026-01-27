@@ -8,4 +8,8 @@
     <field name="key">sc.portal.capability_matrix.enabled</field>
     <field name="value">1</field>
   </record>
+  <record id="param_portal_dashboard_enabled" model="ir.config_parameter">
+    <field name="key">sc.portal.dashboard.enabled</field>
+    <field name="value">1</field>
+  </record>
 </odoo>

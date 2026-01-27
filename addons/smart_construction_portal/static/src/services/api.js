@@ -46,11 +46,16 @@
     return getJson("/api/contract/capability_matrix");
   }
 
+  function getPortalDashboard() {
+    return getJson("/api/contract/portal_dashboard");
+  }
+
   root.api = {
     intent,
     listProjects,
     getProjectCapabilities,
     getPortalContract,
     getCapabilityMatrix,
+    getPortalDashboard,
   };
 })();

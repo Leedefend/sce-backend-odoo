@@ -120,5 +120,10 @@
     "op": "ui.contract",
     "route": "/portal/lifecycle",
     "trace_id": "portal_snapshot_contractmeta"
+  },
+  {
+    "case": "portal_dashboard_pm",
+    "user": "pm",
+    "op": "contract.portal_dashboard"
   }
 ]

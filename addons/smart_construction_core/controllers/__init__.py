@@ -4,4 +4,5 @@ from . import auth_signup
 from . import capability_matrix_controller
 from . import execute_controller
 from . import meta_controller
+from . import portal_dashboard_controller
 from . import ui_contract_controller

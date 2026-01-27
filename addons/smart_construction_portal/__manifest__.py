@@ -17,6 +17,7 @@
         "smart_construction_portal.assets_portal": [
             "smart_construction_portal/static/src/scss/portal.scss",
             "smart_construction_portal/static/src/services/api.js",
+            "smart_construction_portal/static/src/pages/dashboard.js",
             "smart_construction_portal/static/src/pages/lifecycle.js",
             "smart_construction_portal/static/src/pages/capability_matrix.js",
             "smart_construction_portal/static/src/app/app.js",
