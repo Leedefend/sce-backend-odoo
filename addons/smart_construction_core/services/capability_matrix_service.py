@@ -38,7 +38,7 @@ class CapabilityMatrixService:
             if not menu:
                 allowed = False
                 deny_reason.append("menu_not_found")
-            elif not menu._is_visible():
+            elif not self._menu_visible(menu):
                 allowed = False
                 deny_reason.append("menu_not_visible")
         if action_xmlid:
@@ -81,6 +81,14 @@ class CapabilityMatrixService:
                 url = f"/web#menu_id={menu_id}&action={action.id}"
             return url
         return None
+
+    def _menu_visible(self, menu):
+        if hasattr(menu, "_is_visible"):
+            return bool(menu._is_visible())
+        groups = getattr(menu, "groups_id", None)
+        if groups and not (groups & self.env.user.groups_id):
+            return False
+        return True
 
     def _ref(self, xmlid):
         if not xmlid:
