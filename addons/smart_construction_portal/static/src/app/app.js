@@ -11,6 +11,10 @@
       root.capabilityMatrix.init(el);
       return;
     }
+    if (page === "dashboard" && root.dashboard && root.dashboard.init) {
+      root.dashboard.init(el);
+      return;
+    }
     if (root.lifecycle && root.lifecycle.init) {
       root.lifecycle.init(el);
     }
