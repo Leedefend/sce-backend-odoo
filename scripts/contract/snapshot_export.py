@@ -39,6 +39,11 @@ def parse_args():
     parser.add_argument("--config", default=os.environ.get("ODOO_CONF", "/etc/odoo/odoo.conf"))
     parser.add_argument("--outdir", default="docs/contract/snapshots")
     parser.add_argument("--include_meta", action="store_true")
+    parser.add_argument(
+        "--stable",
+        action="store_true",
+        help="Enable stable snapshot output (strip volatile metadata and sort keys)",
+    )
     parser.add_argument("--stdout", action="store_true", help="Print snapshot JSON to stdout")
     return parser.parse_args()
 
@@ -195,8 +200,51 @@ def _normalize_meta_fields(meta_fields):
     return cleaned
 
 
+VOLATILE_KEYS = {"trace_id", "exported_at", "generated_at", "request_id"}
+UNORDERED_LIST_KEYS = {"actions", "reports", "buttons"}
+
+
+def _strip_volatile(value):
+    if isinstance(value, dict):
+        cleaned = {}
+        for key, item in value.items():
+            if key in VOLATILE_KEYS:
+                continue
+            cleaned[key] = _strip_volatile(item)
+        return cleaned
+    if isinstance(value, list):
+        return [_strip_volatile(item) for item in value]
+    return value
+
+
+def _stable_sort_list(items, key_name):
+    if not items:
+        return items
+    if all(isinstance(item, (str, int, float)) for item in items):
+        return sorted(items, key=lambda item: str(item))
+    if all(isinstance(item, dict) for item in items):
+        for sort_key in ("xml_id", "id", "name", "code"):
+            if all(sort_key in item for item in items):
+                return sorted(items, key=lambda item: str(item.get(sort_key)))
+    return items
+
+
+def _stable_normalize(value, path=None):
+    if path is None:
+        path = []
+    if isinstance(value, dict):
+        return {key: _stable_normalize(item, path + [key]) for key, item in value.items()}
+    if isinstance(value, list):
+        normalized = [_stable_normalize(item, path) for item in value]
+        if path and path[-1] in UNORDERED_LIST_KEYS:
+            return _stable_sort_list(normalized, path[-1])
+        return normalized
+    return value
+
+
 def export_snapshot():
     args = parse_args()
+    stable = args.stable or os.environ.get("SC_CONTRACT_STABLE") in ("1", "true", "yes")
     config.parse_config(["-c", args.config, "-d", args.db])
     os.environ.setdefault("SC_LIGHT_IMPORT", "1")
     from odoo.addons.smart_core.handlers.ui_contract import UiContractHandler
@@ -357,15 +405,17 @@ def export_snapshot():
         }
 
         snapshot["meta_fields"] = _normalize_meta_fields(snapshot.get("meta_fields"))
+        if stable:
+            snapshot = _stable_normalize(_strip_volatile(snapshot))
 
         if args.stdout:
-            print(json.dumps(snapshot, ensure_ascii=False, indent=2, default=str))
+            print(json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=stable, default=str))
         else:
             outdir = args.outdir
             os.makedirs(outdir, exist_ok=True)
             outpath = os.path.join(outdir, f"{args.case}.json")
             with open(outpath, "w", encoding="utf-8") as f:
-                json.dump(snapshot, f, ensure_ascii=False, indent=2, default=str)
+                json.dump(snapshot, f, ensure_ascii=False, indent=2, sort_keys=stable, default=str)
             print(outpath)
 
 

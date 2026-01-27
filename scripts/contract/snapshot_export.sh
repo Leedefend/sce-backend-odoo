@@ -13,11 +13,16 @@ for ((i=0; i<${#args[@]}; i++)); do
   fi
 done
 
+stable_args=()
+if [ "${SC_CONTRACT_STABLE:-}" = "1" ]; then
+  stable_args+=(--stable)
+fi
+
 if python3 - <<'PY' >/dev/null 2>&1
 import odoo  # noqa: F401
 PY
 then
-  exec python3 scripts/contract/snapshot_export.py "$@"
+  exec python3 scripts/contract/snapshot_export.py "${stable_args[@]}" "$@"
 fi
 
 if [ -z "$outdir" ]; then
@@ -30,13 +35,13 @@ fi
 mkdir -p "$outdir"
 
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-  docker compose exec -T odoo python3 - --stdout "$@" < scripts/contract/snapshot_export.py > "${outdir}/${case_name}.json"
+  docker compose exec -T odoo python3 - --stdout "${stable_args[@]}" "$@" < scripts/contract/snapshot_export.py > "${outdir}/${case_name}.json"
   echo "${outdir}/${case_name}.json"
   exit 0
 fi
 
 if command -v docker-compose >/dev/null 2>&1 && docker-compose version >/dev/null 2>&1; then
-  docker-compose exec -T odoo python3 - --stdout "$@" < scripts/contract/snapshot_export.py > "${outdir}/${case_name}.json"
+  docker-compose exec -T odoo python3 - --stdout "${stable_args[@]}" "$@" < scripts/contract/snapshot_export.py > "${outdir}/${case_name}.json"
   echo "${outdir}/${case_name}.json"
   exit 0
 fi

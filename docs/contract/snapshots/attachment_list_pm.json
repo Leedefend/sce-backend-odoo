@@ -1,90 +1,51 @@
 {
-  "case": "attachment_list_pm",
-  "trace_id": "5e0089ff-74ab-4597-be4e-a33eb4a3af5e",
-  "exported_at": "2026-01-26T09:29:40Z",
-  "contract_version": "v1",
-  "model": "ir.attachment",
-  "view_type": "list",
-  "op": "model",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
+  "case": "attachment_list_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": "ir.attachment",
+  "op": "model",
+  "record": null,
+  "record_error": null,
   "ui_contract": {
-    "model": "ir.attachment",
-    "view_type": "list",
     "columns": [],
-    "columnsSchema": []
+    "columnsSchema": [],
+    "model": "ir.attachment",
+    "view_type": "list"
   },
   "ui_contract_raw": {
-    "head": {},
-    "views": {
-      "tree": {
-        "type": "tree"
-      },
-      "form": {}
-    },
+    "buttons": [],
+    "degraded": true,
     "fields": {
-      "name": {
-        "name": "name",
-        "string": "Name",
-        "type": "char"
-      },
-      "description": {
-        "name": "description",
-        "string": "Description",
-        "type": "text"
-      },
-      "res_name": {
-        "name": "res_name",
-        "string": "Resource Name",
-        "type": "char"
-      },
-      "res_model": {
-        "name": "res_model",
-        "string": "Resource Model",
-        "type": "char"
-      },
-      "res_field": {
-        "name": "res_field",
-        "string": "Resource Field",
-        "type": "char"
-      },
-      "res_id": {
-        "name": "res_id",
-        "string": "Resource ID",
-        "type": "many2one_reference"
-      },
-      "company_id": {
-        "name": "company_id",
-        "string": "Company",
-        "type": "many2one",
-        "relation": "res.company"
-      },
-      "type": {
-        "name": "type",
-        "string": "Type",
-        "type": "selection"
-      },
-      "url": {
-        "name": "url",
-        "string": "Url",
-        "type": "char"
-      },
-      "public": {
-        "name": "public",
-        "string": "Is public document",
-        "type": "boolean"
-      },
       "access_token": {
         "name": "access_token",
         "string": "Access Token",
         "type": "char"
       },
-      "raw": {
-        "name": "raw",
-        "string": "File Content (raw)",
-        "type": "binary"
+      "checksum": {
+        "name": "checksum",
+        "string": "Checksum/SHA1",
+        "type": "char"
+      },
+      "company_id": {
+        "name": "company_id",
+        "relation": "res.company",
+        "string": "Company",
+        "type": "many2one"
+      },
+      "create_date": {
+        "name": "create_date",
+        "string": "Created on",
+        "type": "datetime"
+      },
+      "create_uid": {
+        "name": "create_uid",
+        "relation": "res.users",
+        "string": "Created by",
+        "type": "many2one"
       },
       "datas": {
         "name": "datas",
@@ -96,9 +57,14 @@
         "string": "Database Data",
         "type": "binary"
       },
-      "store_fname": {
-        "name": "store_fname",
-        "string": "Stored Filename",
+      "description": {
+        "name": "description",
+        "string": "Description",
+        "type": "text"
+      },
+      "display_name": {
+        "name": "display_name",
+        "string": "Display Name",
         "type": "char"
       },
       "file_size": {
@@ -106,63 +72,15 @@
         "string": "File Size",
         "type": "integer"
       },
-      "checksum": {
-        "name": "checksum",
-        "string": "Checksum/SHA1",
-        "type": "char"
-      },
-      "mimetype": {
-        "name": "mimetype",
-        "string": "Mime Type",
-        "type": "char"
-      },
-      "index_content": {
-        "name": "index_content",
-        "string": "Indexed Content",
-        "type": "text"
-      },
       "id": {
         "name": "id",
         "string": "ID",
         "type": "integer"
       },
-      "display_name": {
-        "name": "display_name",
-        "string": "Display Name",
-        "type": "char"
-      },
-      "create_uid": {
-        "name": "create_uid",
-        "string": "Created by",
-        "type": "many2one",
-        "relation": "res.users"
-      },
-      "create_date": {
-        "name": "create_date",
-        "string": "Created on",
-        "type": "datetime"
-      },
-      "write_uid": {
-        "name": "write_uid",
-        "string": "Last Updated by",
-        "type": "many2one",
-        "relation": "res.users"
-      },
-      "write_date": {
-        "name": "write_date",
-        "string": "Last Updated on",
-        "type": "datetime"
-      },
-      "voice_ids": {
-        "name": "voice_ids",
-        "string": "Voice",
-        "type": "one2many",
-        "relation": "discuss.voice.metadata"
-      },
-      "local_url": {
-        "name": "local_url",
-        "string": "Attachment URL",
-        "type": "char"
+      "image_height": {
+        "name": "image_height",
+        "string": "Image Height",
+        "type": "integer"
       },
       "image_src": {
         "name": "image_src",
@@ -174,29 +92,96 @@
         "string": "Image Width",
         "type": "integer"
       },
-      "image_height": {
-        "name": "image_height",
-        "string": "Image Height",
-        "type": "integer"
+      "index_content": {
+        "name": "index_content",
+        "string": "Indexed Content",
+        "type": "text"
+      },
+      "local_url": {
+        "name": "local_url",
+        "string": "Attachment URL",
+        "type": "char"
+      },
+      "mimetype": {
+        "name": "mimetype",
+        "string": "Mime Type",
+        "type": "char"
+      },
+      "name": {
+        "name": "name",
+        "string": "Name",
+        "type": "char"
       },
       "original_id": {
         "name": "original_id",
+        "relation": "ir.attachment",
         "string": "Original (unoptimized, unresized) attachment",
-        "type": "many2one",
-        "relation": "ir.attachment"
+        "type": "many2one"
+      },
+      "public": {
+        "name": "public",
+        "string": "Is public document",
+        "type": "boolean"
+      },
+      "raw": {
+        "name": "raw",
+        "string": "File Content (raw)",
+        "type": "binary"
+      },
+      "res_field": {
+        "name": "res_field",
+        "string": "Resource Field",
+        "type": "char"
+      },
+      "res_id": {
+        "name": "res_id",
+        "string": "Resource ID",
+        "type": "many2one_reference"
+      },
+      "res_model": {
+        "name": "res_model",
+        "string": "Resource Model",
+        "type": "char"
+      },
+      "res_name": {
+        "name": "res_name",
+        "string": "Resource Name",
+        "type": "char"
+      },
+      "store_fname": {
+        "name": "store_fname",
+        "string": "Stored Filename",
+        "type": "char"
+      },
+      "type": {
+        "name": "type",
+        "string": "Type",
+        "type": "selection"
+      },
+      "url": {
+        "name": "url",
+        "string": "Url",
+        "type": "char"
+      },
+      "voice_ids": {
+        "name": "voice_ids",
+        "relation": "discuss.voice.metadata",
+        "string": "Voice",
+        "type": "one2many"
+      },
+      "write_date": {
+        "name": "write_date",
+        "string": "Last Updated on",
+        "type": "datetime"
+      },
+      "write_uid": {
+        "name": "write_uid",
+        "relation": "res.users",
+        "string": "Last Updated by",
+        "type": "many2one"
       }
     },
-    "search": {},
-    "permissions": {},
-    "buttons": [],
-    "toolbar": {
-      "header": [],
-      "sidebar": [],
-      "footer": []
-    },
-    "workflow": {},
-    "reports": [],
-    "degraded": true,
+    "head": {},
     "missing_models": [
       "app.model.config",
       "app.view.config",
@@ -207,6 +192,21 @@
       "app.workflow.config",
       "app.validator.config"
     ],
+    "permissions": {},
+    "reports": [],
+    "search": {},
+    "toolbar": {
+      "footer": [],
+      "header": [],
+      "sidebar": []
+    },
+    "validator": {},
+    "views": {
+      "form": {},
+      "tree": {
+        "type": "tree"
+      }
+    },
     "warnings": [
       "required_missing:app.model.config",
       "required_missing:app.view.config",
@@ -217,11 +217,9 @@
       "optional_missing:app.workflow.config",
       "optional_missing:app.validator.config"
     ],
-    "validator": {}
+    "workflow": {}
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": "list"
 }
