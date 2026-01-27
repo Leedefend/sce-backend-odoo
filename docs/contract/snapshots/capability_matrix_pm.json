@@ -1,0 +1,41 @@
+{
+  "action": null,
+  "case": "capability_matrix_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "contract.capability_matrix",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "sections": [
+      {
+        "items": [
+          {
+            "action_id": 517,
+            "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
+            "allowed": true,
+            "deny_reason": [],
+            "desc": "查看角色可用能力",
+            "icon": null,
+            "key": "capability_matrix",
+            "label": "能力矩阵",
+            "menu_id": 327,
+            "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix",
+            "order": 10,
+            "target_url": "/portal/capability-matrix"
+          }
+        ],
+        "key": "overview",
+        "label": "概览"
+      }
+    ]
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}

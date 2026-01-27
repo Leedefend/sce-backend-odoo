@@ -34,6 +34,8 @@ check_eq "project initiation view" "smart_construction_core.view_project_create_
 # 2) Menu groups for manage / stage requirement config
 manage_menu_groups=$(psql_cmd "SELECT string_agg(gid::text, ',') FROM ir_ui_menu_group_rel WHERE menu_id=(SELECT res_id FROM ir_model_data WHERE module='smart_construction_core' AND name='menu_sc_project_manage');")
 stage_menu_groups=$(psql_cmd "SELECT string_agg(gid::text, ',') FROM ir_ui_menu_group_rel WHERE menu_id=(SELECT res_id FROM ir_model_data WHERE module='smart_construction_core' AND name='menu_sc_project_stage_requirement_items');")
+cap_menu_groups=$(psql_cmd "SELECT string_agg(gid::text, ',') FROM ir_ui_menu_group_rel WHERE menu_id=(SELECT res_id FROM ir_model_data WHERE module='smart_construction_portal' AND name='menu_sc_portal_capability_matrix');")
+cap_action_url=$(psql_cmd "SELECT url FROM ir_act_url WHERE id=(SELECT res_id FROM ir_model_data WHERE module='smart_construction_portal' AND name='action_sc_portal_capability_matrix');")
 
 if [[ -z "${manage_menu_groups}" ]]; then
   fail "project manage menu groups" "non-empty" "empty"
@@ -45,5 +47,13 @@ if [[ -z "${stage_menu_groups}" ]]; then
 else
   echo "[verify.overview.logic] PASS item=stage requirement menu groups value=${stage_menu_groups}"
 fi
+
+if [[ -z "${cap_menu_groups}" ]]; then
+  fail "capability matrix menu groups" "non-empty" "empty"
+else
+  echo "[verify.overview.logic] PASS item=capability matrix menu groups value=${cap_menu_groups}"
+fi
+
+check_eq "capability matrix action url" "/portal/capability-matrix" "SELECT url FROM ir_act_url WHERE id=(SELECT res_id FROM ir_model_data WHERE module='smart_construction_portal' AND name='action_sc_portal_capability_matrix');"
 
 echo "[verify.overview.logic] PASS ALL on ${DB_NAME}"
