@@ -639,8 +639,22 @@ branch.cleanup: guard.prod.forbid
 	@git fetch origin main >/dev/null 2>&1 || true
 	@branch_sha="$$(git rev-parse "$(CLEAN_BRANCH)")"; \
 	main_sha="$$(git rev-parse origin/main 2>/dev/null || git rev-parse main)"; \
-	git merge-base --is-ancestor "$$branch_sha" "$$main_sha" || \
-	  (echo "❌ branch not merged into main yet: $(CLEAN_BRANCH)" && exit 2)
+	if git merge-base --is-ancestor "$$branch_sha" "$$main_sha"; then \
+	  echo "[branch.cleanup] merge-base check: ok"; \
+	else \
+	  echo "[branch.cleanup] merge-base check failed; checking merged PR via gh ..."; \
+	  if ! command -v gh >/dev/null 2>&1; then \
+	    echo "❌ gh not found; cannot verify merged PR for $(CLEAN_BRANCH)"; \
+	    exit 2; \
+	  fi; \
+	  pr_count="$$(gh pr list --state merged --search 'head:$(CLEAN_BRANCH)' --json number --jq 'length')" || \
+	    (echo "❌ gh pr list failed; network/auth required to verify merge for $(CLEAN_BRANCH)" && exit 2); \
+	  if [ "$$pr_count" -lt 1 ]; then \
+	    echo "❌ branch not merged into main yet: $(CLEAN_BRANCH)"; \
+	    exit 2; \
+	  fi; \
+	  echo "[branch.cleanup] merged PR detected for $(CLEAN_BRANCH)"; \
+	fi
 	@echo "[branch.cleanup] deleting local: $(CLEAN_BRANCH)"
 	@git branch -d "$(CLEAN_BRANCH)"
 	@echo "[branch.cleanup] deleting remote: $(CLEAN_BRANCH)"
