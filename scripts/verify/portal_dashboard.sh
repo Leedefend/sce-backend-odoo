@@ -3,6 +3,7 @@ set -euo pipefail
 source "$(dirname "$0")/../_lib/common.sh"
 
 : "${DB_NAME:?DB_NAME required}"
+CONFIG="${ODOO_CONF:-/etc/odoo/odoo.conf}"
 
 tmp_dir="/tmp/portal_dashboard_verify"
 mkdir -p "${tmp_dir}"
@@ -13,6 +14,7 @@ SC_FORCE_DOCKER=1 scripts/contract/snapshot_export.sh \
   --user pm \
   --case portal_dashboard_pm \
   --op contract.portal_dashboard \
+  --config "${CONFIG}" \
   --outdir "${tmp_dir}" >/dev/null
 
 python3 - <<'PY'
