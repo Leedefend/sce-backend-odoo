@@ -568,13 +568,17 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 # ======================================================
 # ==================== Codex Targets ===================
 # ======================================================
-.PHONY: codex.fast codex.gate codex.print codex.pr codex.cleanup codex.sync-main
+.PHONY: codex.fast codex.gate codex.print codex.pr codex.cleanup codex.sync-main codex.cli
 
 codex.print:
 	@echo "== Codex SOP =="
 	@echo "CODEX_MODE=$(CODEX_MODE) CODEX_DB=$(CODEX_DB) CODEX_MODULES=$(CODEX_MODULES) CODEX_NEED_UPGRADE=$(CODEX_NEED_UPGRADE)"
 	@echo "fast: restart (optional upgrade only if CODEX_NEED_UPGRADE=1) ; forbid demo.reset/gate.full"
 	@echo "gate: optional upgrade + demo.reset + contract.export_all + gate.full"
+
+CODEX_CLI_ARGS ?=
+codex.cli: guard.prod.forbid
+	@bash scripts/ops/codex_cli.sh $(CODEX_CLI_ARGS)
 
 codex.fast: guard.prod.forbid check-compose-project check-compose-env
 	@echo "[codex.fast] mode=fast db=$(CODEX_DB) modules=$(CODEX_MODULES) need_upgrade=$(CODEX_NEED_UPGRADE)"
