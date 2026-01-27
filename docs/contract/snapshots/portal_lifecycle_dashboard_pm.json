@@ -1,30 +1,20 @@
 {
-  "case": "portal_lifecycle_dashboard_pm",
-  "trace_id": "4a8e352c-878e-45ba-b010-84315b906f96",
-  "exported_at": "2026-01-26T09:29:58Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "ui.contract",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
+  "case": "portal_lifecycle_dashboard_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "ui.contract",
+  "record": null,
+  "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
+    "capability_codes": [],
     "contract_version": "v1",
-    "profile": {
-      "name": "portal.lifecycle_dashboard",
-      "company_id": 1,
-      "lang": null,
-      "tz": "Asia/Shanghai"
-    },
-    "trace_id": "portal_snapshot",
-    "subject": "ui.contract",
-    "route": "/portal/lifecycle",
-    "schema_version": "portal-lifecycle-v1",
     "layout": {
-      "title": "项目生命周期驾驶舱",
       "columns": [
         {
           "key": "lifecycle",
@@ -38,18 +28,25 @@
           "key": "capabilities",
           "title": "能力矩阵"
         }
-      ]
+      ],
+      "title": "项目生命周期驾驶舱"
     },
     "lifecycle_states": [],
-    "capability_codes": [],
     "matrix_meta": {
-      "path": "/mnt/docs/architecture/lifecycle_capability_matrix.yaml",
-      "error": "matrix_not_found"
-    }
+      "error": "matrix_not_found",
+      "path": "/mnt/docs/architecture/lifecycle_capability_matrix.yaml"
+    },
+    "profile": {
+      "company_id": 1,
+      "lang": null,
+      "name": "portal.lifecycle_dashboard",
+      "tz": "Asia/Shanghai"
+    },
+    "route": "/portal/lifecycle",
+    "schema_version": "portal-lifecycle-v1",
+    "subject": "ui.contract"
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
 }
