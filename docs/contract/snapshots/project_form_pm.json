@@ -1824,6 +1824,17 @@
     {
       "domain": null,
       "help": null,
+      "name": "purchase_orders_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "# Purchase Orders",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
       "name": "rating_active",
       "readonly": false,
       "relation": null,
@@ -2409,7 +2420,7 @@
   "model": "project.project",
   "op": "model",
   "record": null,
-  "record_error": "因为安全限制，请求的操作未能完成。\n\n文档类型：Project (project.project)\n操作：read\n用户：2\n字段：\n- milestone_count (允许分组 'Technical / Use Milestones')\n- milestone_count_reached (允许分组 'Technical / Use Milestones')\n- purchase_orders_count (允许分组 'Purchase / User')\n- stage_id (允许分组 'Technical / Use Stages on Project')",
+  "record_error": "因为安全限制，请求的操作未能完成。\n\n文档类型：Project (project.project)\n操作：read\n用户：2\n字段：\n- milestone_count (允许分组 'Technical / Use Milestones')\n- milestone_count_reached (允许分组 'Technical / Use Milestones')\n- stage_id (允许分组 'Technical / Use Stages on Project')",
   "ui_contract": {
     "chatter": {},
     "headerButtons": [],

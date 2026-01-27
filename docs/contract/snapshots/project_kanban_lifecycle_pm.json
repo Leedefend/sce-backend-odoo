@@ -1824,6 +1824,17 @@
     {
       "domain": null,
       "help": null,
+      "name": "purchase_orders_count",
+      "readonly": true,
+      "relation": null,
+      "required": false,
+      "selection": null,
+      "string": "# Purchase Orders",
+      "ttype": "integer"
+    },
+    {
+      "domain": null,
+      "help": null,
       "name": "rating_active",
       "readonly": false,
       "relation": null,

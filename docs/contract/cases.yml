@@ -103,6 +103,11 @@
     "project_id": 1
   },
   {
+    "case": "capability_matrix_pm",
+    "user": "pm",
+    "op": "contract.capability_matrix"
+  },
+  {
     "case": "portal_lifecycle_dashboard_pm",
     "user": "pm",
     "op": "ui.contract",

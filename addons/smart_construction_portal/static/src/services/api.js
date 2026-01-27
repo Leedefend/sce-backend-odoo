@@ -42,10 +42,15 @@
     return getJson(`/api/portal/contract?route=${encoded}`);
   }
 
+  function getCapabilityMatrix() {
+    return getJson("/api/contract/capability_matrix");
+  }
+
   root.api = {
     intent,
     listProjects,
     getProjectCapabilities,
     getPortalContract,
+    getCapabilityMatrix,
   };
 })();

@@ -4,7 +4,7 @@
     <t t-call="web.layout">
       <t t-set="title">项目生命周期驾驶舱</t>
       <t t-call-assets="smart_construction_portal.assets_portal" t-js="true" t-css="true"/>
-      <div id="sc-portal-root" class="sc-portal" t-att-data-project-id="project_id">
+      <div id="sc-portal-root" class="sc-portal" data-page="lifecycle" t-att-data-project-id="project_id">
         <div class="sc-portal__header">
           <div class="sc-portal__title">项目生命周期驾驶舱</div>
           <div class="sc-portal__subtitle">Contract v1 + lifecycle/capability</div>
@@ -13,6 +13,22 @@
           <div class="sc-portal__panel" data-portal="lifecycle"></div>
           <div class="sc-portal__panel" data-portal="detail"></div>
           <div class="sc-portal__panel" data-portal="capabilities"></div>
+        </div>
+      </div>
+    </t>
+  </template>
+
+  <template id="portal_capability_matrix_page" name="Portal Capability Matrix">
+    <t t-call="web.layout">
+      <t t-set="title">能力矩阵</t>
+      <t t-call-assets="smart_construction_portal.assets_portal" t-js="true" t-css="true"/>
+      <div id="sc-portal-root" class="sc-portal" data-page="capability-matrix">
+        <div class="sc-portal__header">
+          <div class="sc-portal__title">能力矩阵</div>
+          <div class="sc-portal__subtitle">可用入口与权限范围</div>
+        </div>
+        <div class="sc-portal__body sc-portal__body--matrix">
+          <div class="sc-portal__panel" data-portal="capability-matrix"></div>
         </div>
       </div>
     </t>
