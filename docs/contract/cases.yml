@@ -125,5 +125,18 @@
     "case": "portal_dashboard_pm",
     "user": "pm",
     "op": "contract.portal_dashboard"
+  },
+  {
+    "case": "portal_execute_button_pm",
+    "user": "pm",
+    "op": "contract.portal_execute_button"
+  },
+  {
+    "case": "portal_execute_button_not_allowed",
+    "user": "pm",
+    "op": "contract.portal_execute_button",
+    "model": "project.project",
+    "id": 1,
+    "execute_method": "action_sc_project_manage"
   }
 ]
