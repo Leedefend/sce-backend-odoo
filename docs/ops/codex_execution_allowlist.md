@@ -239,6 +239,24 @@ Codex **必须停止并请求人工决策**，仅限以下情况：
 
 ---
 
+## 6.2 Codex CLI Entrypoint (codex.cli)
+
+为了让授权规则持久化到 `~/.codex`，必须通过仓库入口启动 Codex CLI：
+
+- `make codex.cli`
+
+默认参数（由 `scripts/ops/codex_cli.sh` 固化）：
+- `--add-dir "$HOME/.codex"` 允许写入规则文件
+- `--sandbox workspace-write`
+- `--ask-for-approval on-failure`
+
+约束：
+- 仅允许在 `codex/*` 分支使用该入口
+- 禁止 `danger-full-access`
+- 如需更改参数，只允许通过环境变量（`CODEX_ADD_DIR`/`CODEX_SANDBOX`/`CODEX_APPROVAL_POLICY`）
+
+---
+
 ## 7. 产出与证据（必须）
 
 在一次自治执行周期内，Codex 应产出：
