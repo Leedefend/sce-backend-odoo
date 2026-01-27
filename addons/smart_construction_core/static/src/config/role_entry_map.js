@@ -15,6 +15,16 @@ export const ROLE_ENTRY_MAP = [
     ],
   },
   {
+    key: "capability_matrix",
+    label: "能力矩阵",
+    icon: "M",
+    default_action: {
+      menu_xmlid: "smart_construction_portal.menu_sc_portal_capability_matrix",
+      action_xmlid: "smart_construction_portal.action_sc_portal_capability_matrix",
+    },
+    quick_actions: [],
+  },
+  {
     key: "contract_work",
     label: "合同工作",
     icon: "C",

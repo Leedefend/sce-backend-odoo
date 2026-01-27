@@ -52,6 +52,10 @@
   gap: 20px;
 }
 
+.sc-portal__body--matrix {
+  grid-template-columns: 1fr;
+}
+
 .sc-portal__panel {
   background: var(--portal-panel);
   border: 1px solid var(--portal-border);
@@ -181,6 +185,58 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.sc-portal__matrix-section {
+  margin-bottom: 16px;
+}
+
+.sc-portal__matrix-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.sc-portal__matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.sc-portal__matrix-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.sc-portal__matrix-card:hover {
+  border-color: var(--portal-accent);
+  transform: translateY(-2px);
+}
+
+.sc-portal__matrix-card.is-disabled {
+  cursor: not-allowed;
+  color: var(--portal-muted);
+  background: #f8fafc;
+  border-color: #eef2f7;
+  transform: none;
+}
+
+.sc-portal__matrix-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sc-portal__matrix-desc {
+  font-size: 12px;
+  color: var(--portal-muted);
 }
 
 .sc-portal__cap-row {

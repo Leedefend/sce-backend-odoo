@@ -22,6 +22,15 @@ class PortalController(http.Controller):
             {"project_id": project_id or ""},
         )
 
+    @http.route("/portal/capability-matrix", type="http", auth="user", methods=["GET"], csrf=False)
+    def portal_capability_matrix(self, **params):
+        if not _portal_capability_matrix_enabled(request.env):
+            return request.not_found()
+        return request.render(
+            "smart_construction_portal.portal_capability_matrix_page",
+            {},
+        )
+
     @http.route("/api/portal/contract", type="http", auth="user", methods=["GET", "POST"], csrf=False)
     def portal_contract(self, **params):
         if not _portal_enabled(request.env):
@@ -46,4 +55,9 @@ def _merge_payload(params):
 
 def _portal_enabled(env):
     value = env["ir.config_parameter"].sudo().get_param("sc.portal.lifecycle.enabled", "1")
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _portal_capability_matrix_enabled(env):
+    value = env["ir.config_parameter"].sudo().get_param("sc.portal.capability_matrix.enabled", "1")
     return str(value).strip().lower() in {"1", "true", "yes", "on"}

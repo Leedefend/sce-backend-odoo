@@ -5,10 +5,15 @@
 
   function bootstrap() {
     const el = document.getElementById("sc-portal-root");
-    if (!el || !root.lifecycle || !root.lifecycle.init) {
+    if (!el) return;
+    const page = el.dataset.page || "lifecycle";
+    if (page === "capability-matrix" && root.capabilityMatrix && root.capabilityMatrix.init) {
+      root.capabilityMatrix.init(el);
       return;
     }
-    root.lifecycle.init(el);
+    if (root.lifecycle && root.lifecycle.init) {
+      root.lifecycle.init(el);
+    }
   }
 
   if (document.readyState === "loading") {
