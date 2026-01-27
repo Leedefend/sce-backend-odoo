@@ -31,6 +31,15 @@ class PortalController(http.Controller):
             {},
         )
 
+    @http.route("/portal/dashboard", type="http", auth="user", methods=["GET"], csrf=False)
+    def portal_dashboard(self, **params):
+        if not _portal_dashboard_enabled(request.env):
+            return request.not_found()
+        return request.render(
+            "smart_construction_portal.portal_dashboard_page",
+            {},
+        )
+
     @http.route("/api/portal/contract", type="http", auth="user", methods=["GET", "POST"], csrf=False)
     def portal_contract(self, **params):
         if not _portal_enabled(request.env):
@@ -60,4 +69,9 @@ def _portal_enabled(env):
 
 def _portal_capability_matrix_enabled(env):
     value = env["ir.config_parameter"].sudo().get_param("sc.portal.capability_matrix.enabled", "1")
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _portal_dashboard_enabled(env):
+    value = env["ir.config_parameter"].sudo().get_param("sc.portal.dashboard.enabled", "1")
     return str(value).strip().lower() in {"1", "true", "yes", "on"}

@@ -33,4 +33,20 @@
       </div>
     </t>
   </template>
+
+  <template id="portal_dashboard_page" name="Portal Dashboard">
+    <t t-call="web.layout">
+      <t t-set="title">我的工作台</t>
+      <t t-call-assets="smart_construction_portal.assets_portal" t-js="true" t-css="true"/>
+      <div id="sc-portal-root" class="sc-portal" data-page="dashboard">
+        <div class="sc-portal__header">
+          <div class="sc-portal__title">我的工作台</div>
+          <div class="sc-portal__subtitle">基于角色的入口编排</div>
+        </div>
+        <div class="sc-portal__body sc-portal__body--dashboard">
+          <div class="sc-portal__panel" data-portal="dashboard"></div>
+        </div>
+      </div>
+    </t>
+  </template>
 </odoo>

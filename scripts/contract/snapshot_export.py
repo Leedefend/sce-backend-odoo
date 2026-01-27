@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument(
         "--op",
         default="",
-        help="Operation (nav/menu/action_open/model/ui.contract/meta.describe_project_capabilities/contract.capability_matrix)",
+        help="Operation (nav/menu/action_open/model/ui.contract/meta.describe_project_capabilities/contract.capability_matrix/contract.portal_dashboard)",
     )
     parser.add_argument("--route", default="", help="Route for ui.contract (required when op=ui.contract)")
     parser.add_argument("--trace_id", default="", help="Trace id override for ui.contract (optional)")
@@ -310,6 +310,13 @@ def export_snapshot():
 
             service = CapabilityMatrixService(env)
             res = {"data": service.build_matrix()}
+        elif op == "contract.portal_dashboard":
+            from odoo.addons.smart_construction_core.services.portal_dashboard_service import (
+                PortalDashboardService,
+            )
+
+            service = PortalDashboardService(env)
+            res = {"data": service.build_dashboard()}
         elif op == "ui.contract":
             if not args.route:
                 raise SystemExit("route required for ui.contract")
