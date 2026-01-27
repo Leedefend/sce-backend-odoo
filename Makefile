@@ -441,7 +441,7 @@ mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project ch
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix p2.smoke p3.smoke p3.audit codex.preflight db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+.PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
 policy.apply.role_matrix: guard.prod.danger check-compose-project check-compose-env
@@ -467,6 +467,18 @@ p3.audit: guard.prod.forbid check-compose-project check-compose-env
 
 codex.preflight:
 	@bash scripts/ops/codex_preflight.sh
+
+codex.merge: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/ops/codex_merge.sh
+
+codex.rollback: guard.prod.forbid
+	@bash scripts/ops/codex_rollback.sh
+
+codex.pr.body: guard.prod.forbid
+	@bash scripts/ops/codex_pr_body.sh "$(PR_BODY_FILE)" "artifacts/codex/$$(git rev-parse --abbrev-ref HEAD)"
+
+codex.release.note: guard.prod.forbid
+	@bash scripts/ops/codex_release_note.sh "docs/ops/releases/README.md"
 
 db.policy:
 	@DB=$(DB) bash scripts/ops/check_db_policy.sh
@@ -552,7 +564,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 # ======================================================
 # ==================== Codex Targets ===================
 # ======================================================
-.PHONY: codex.fast codex.gate codex.print
+.PHONY: codex.fast codex.gate codex.print codex.pr codex.cleanup codex.sync-main
 
 codex.print:
 	@echo "== Codex SOP =="
@@ -591,6 +603,7 @@ codex.snapshot: guard.prod.forbid check-compose-project check-compose-env
 .PHONY: codex.pr codex.cleanup codex.sync-main
 
 codex.pr: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) codex.pr.body
 	@$(MAKE) pr.create
 
 codex.cleanup: guard.prod.forbid check-compose-project check-compose-env
@@ -602,13 +615,16 @@ codex.sync-main: guard.prod.forbid check-compose-project check-compose-env
 .PHONY: codex.run
 codex.run: guard.prod.forbid check-compose-project check-compose-env
 	@if [ -z "$(FLOW)" ]; then \
-	  echo "❌ FLOW is required (fast|snapshot|gate|pr|cleanup|main)"; exit 2; \
+	  echo "❌ FLOW is required (fast|snapshot|gate|pr|merge|cleanup|rollback|release|main)"; exit 2; \
 	fi
 	@case "$(FLOW)" in \
 	  fast) FLOW=fast bash scripts/ops/codex_run.sh ;; \
 	  snapshot) FLOW=snapshot bash scripts/ops/codex_run.sh ;; \
 	  gate) FLOW=gate bash scripts/ops/codex_run.sh ;; \
 	  pr) $(MAKE) codex.pr ;; \
+	  merge) $(MAKE) codex.merge ;; \
+	  rollback) $(MAKE) codex.rollback ;; \
+	  release) $(MAKE) codex.release.note ;; \
 	  cleanup) $(MAKE) codex.cleanup ;; \
 	  main) $(MAKE) codex.sync-main ;; \
 	  *) echo "❌ unknown FLOW=$(FLOW)"; exit 2 ;; \

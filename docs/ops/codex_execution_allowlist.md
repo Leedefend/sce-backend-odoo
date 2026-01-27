@@ -1,5 +1,5 @@
 # Codex Execution Allowlist (Autonomous Mode)
-（Codex 自治执行授权清单 · v3）
+（Codex 自治执行授权清单 · v4）
 
 ## 0. 定位（What Codex Is）
 
@@ -220,8 +220,11 @@ Codex **必须停止并请求人工决策**，仅限以下情况：
 
 允许的 Make targets（ONLY）：
 - `make codex.preflight`
-- `make codex.run FLOW=fast|snapshot|gate|pr|cleanup|main`
+- `make codex.run FLOW=fast|snapshot|gate|pr|merge|cleanup|rollback|release|main`
 - `make codex.pr PR_TITLE=... PR_BODY_FILE=...`
+- `make codex.merge MERGE_COMMIT_MSG=...`
+- `make codex.rollback`
+- `make codex.release.note`
 - `make codex.cleanup CLEAN_BRANCH=codex/...`
 - `make codex.sync-main`
 - `make pr.create PR_TITLE=... PR_BODY_FILE=...`
