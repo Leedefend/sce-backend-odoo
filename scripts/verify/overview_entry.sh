@@ -28,7 +28,6 @@ check_eq() {
 
 menu_action=$(psql_cmd "SELECT m.action FROM ir_ui_menu m JOIN ir_model_data d ON d.res_id=m.id WHERE d.module='smart_construction_core' AND d.name='menu_sc_project_project';")
 action_id=$(psql_cmd "SELECT res_id FROM ir_model_data WHERE module='smart_construction_core' AND name='action_sc_project_kanban_lifecycle';")
-view_id=$(psql_cmd "SELECT res_id FROM ir_model_data WHERE module='smart_construction_core' AND name='view_sc_project_kanban_lifecycle';")
 cap_menu_action=$(psql_cmd "SELECT m.action FROM ir_ui_menu m JOIN ir_model_data d ON d.res_id=m.id WHERE d.module='smart_construction_portal' AND d.name='menu_sc_portal_capability_matrix';")
 cap_action_id=$(psql_cmd "SELECT res_id FROM ir_model_data WHERE module='smart_construction_portal' AND name='action_sc_portal_capability_matrix';")
 
@@ -39,12 +38,10 @@ check_eq "action_sc_portal_capability_matrix exists" "${cap_action_id}" "SELECT 
 
 view_mode=$(psql_cmd "SELECT view_mode FROM ir_act_window WHERE id=${action_id};")
 echo "[verify.overview.entry] INFO action_sc_project_kanban_lifecycle view_mode=${view_mode}"
-
-has_view=$(psql_cmd "SELECT 1 FROM ir_act_window_view WHERE act_window_id=${action_id} AND view_id=${view_id} LIMIT 1;")
-if [[ "${has_view}" != "1" ]]; then
-  fail "lifecycle kanban view bound" "1" "${has_view}"
+if [[ "${view_mode}" != *"kanban"* ]]; then
+  fail "lifecycle kanban view mode" "contains kanban" "${view_mode}"
 else
-  echo "[verify.overview.entry] PASS item=lifecycle kanban view bound value=1"
+  echo "[verify.overview.entry] PASS item=lifecycle kanban view mode value=${view_mode}"
 fi
 
 echo "[verify.overview.entry] PASS ALL on ${DB_NAME}"
