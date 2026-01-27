@@ -584,6 +584,77 @@ codex.gate: guard.prod.forbid check-compose-project check-compose-env
 	@$(MAKE) gate.full CODEX_MODE=gate BD="$(CODEX_DB)"
 	@echo "[codex.gate] ✅ gate flow done."
 
+codex.snapshot: guard.prod.forbid check-compose-project check-compose-env
+	@echo "[codex.snapshot] db=$(CODEX_DB)"
+	@$(MAKE) contract.export_all DB="$(CODEX_DB)"
+
+.PHONY: codex.run
+codex.run: guard.prod.forbid check-compose-project check-compose-env
+	@if [ -z "$(FLOW)" ]; then \
+	  echo "❌ FLOW is required (fast|snapshot|gate|pr|cleanup|main)"; exit 2; \
+	fi
+	@case "$(FLOW)" in \
+	  fast) $(MAKE) codex.fast CODEX_MODE=fast ;; \
+	  snapshot) $(MAKE) codex.snapshot CODEX_MODE=fast ;; \
+	  gate) $(MAKE) codex.gate CODEX_MODE=gate ;; \
+	  pr) $(MAKE) pr.create ;; \
+	  cleanup) $(MAKE) branch.cleanup ;; \
+	  main) $(MAKE) main.sync ;; \
+	  *) echo "❌ unknown FLOW=$(FLOW)"; exit 2 ;; \
+	esac
+
+# ------------------ PR (Codex-safe) ------------------
+.PHONY: pr.create pr.status
+
+PR_BASE ?= main
+PR_TITLE ?=
+PR_BODY_FILE ?= artifacts/pr_body.md
+
+pr.create: guard.prod.forbid
+	@branch="$$(git rev-parse --abbrev-ref HEAD)"; \
+	if ! echo "$$branch" | grep -qE '^codex/'; then \
+	  echo "❌ pr.create only allowed on codex/* branches (current=$$branch)"; exit 2; \
+	fi; \
+	if [ -z "$(PR_TITLE)" ]; then \
+	  echo "❌ PR_TITLE is required"; exit 2; \
+	fi; \
+	if [ ! -f "$(PR_BODY_FILE)" ]; then \
+	  echo "❌ PR_BODY_FILE not found: $(PR_BODY_FILE)"; exit 2; \
+	fi; \
+	echo "[pr.create] base=$(PR_BASE) head=$$branch title=$(PR_TITLE) body=$(PR_BODY_FILE)"; \
+	gh pr create --base "$(PR_BASE)" --head "$$branch" --title "$(PR_TITLE)" --body-file "$(PR_BODY_FILE)"
+
+pr.status:
+	@gh pr status || true
+
+# ------------------ Branch cleanup (Codex-safe) ------------------
+.PHONY: branch.cleanup
+
+CLEAN_BRANCH ?=
+
+branch.cleanup: guard.prod.forbid
+	@if [ -z "$(CLEAN_BRANCH)" ]; then echo "❌ CLEAN_BRANCH is required"; exit 2; fi
+	@if ! echo "$(CLEAN_BRANCH)" | grep -qE '^codex/'; then echo "❌ only codex/* can be deleted"; exit 2; fi
+	@echo "[branch.cleanup] checking merged into main: $(CLEAN_BRANCH)"
+	@git fetch origin main >/dev/null 2>&1 || true
+	@branch_sha="$$(git rev-parse "$(CLEAN_BRANCH)")"; \
+	main_sha="$$(git rev-parse origin/main 2>/dev/null || git rev-parse main)"; \
+	git merge-base --is-ancestor "$$branch_sha" "$$main_sha" || \
+	  (echo "❌ branch not merged into main yet: $(CLEAN_BRANCH)" && exit 2)
+	@echo "[branch.cleanup] deleting local: $(CLEAN_BRANCH)"
+	@git branch -d "$(CLEAN_BRANCH)"
+	@echo "[branch.cleanup] deleting remote: $(CLEAN_BRANCH)"
+	@git push origin --delete "$(CLEAN_BRANCH)"
+	@echo "✅ [branch.cleanup] done"
+
+# ------------------ Main sync (safe) ------------------
+.PHONY: main.sync
+
+main.sync: guard.prod.forbid
+	@echo "[main.sync] checkout main + fast-forward pull"
+	@git checkout main
+	@git pull --ff-only origin main
+
 # ======================================================
 # ==================== Dev Test ========================
 # ======================================================
