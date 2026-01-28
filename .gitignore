@@ -74,6 +74,11 @@ docs/audit/*.sc_*.csv
 docs/audit/*.tsv
 docs/audit/*.json
 tmp/
+.tmp/
+.codex_home/
+.cache/
+.state/
+.config/
 # stage execution reports
 out/
 # generated audit outputs

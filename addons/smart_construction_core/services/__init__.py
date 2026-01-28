@@ -6,3 +6,4 @@ from . import execute_button_service
 from . import lifecycle_capability_service
 from . import capability_matrix_service
 from . import portal_dashboard_service
+from . import portal_execute_button_service

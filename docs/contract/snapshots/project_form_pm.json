@@ -3477,11 +3477,6 @@
         "string": "施工结构",
         "type": "one2many"
       },
-      "write_date": {
-        "name": "write_date",
-        "string": "Last Updated on",
-        "type": "datetime"
-      },
       "write_uid": {
         "name": "write_uid",
         "relation": "res.users",

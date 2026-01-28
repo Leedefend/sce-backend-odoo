@@ -1,0 +1,31 @@
+{
+  "action": null,
+  "case": "portal_execute_button_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "contract.portal_execute_button",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "action": {
+      "code": "portal_demo_ping",
+      "desc": "触发一次安全的演示动作",
+      "label": "执行演示动作"
+    },
+    "allowed": true,
+    "error": null,
+    "target": {
+      "method": "action_portal_demo_ping",
+      "model": "project.project",
+      "res_id": 1
+    }
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}

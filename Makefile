@@ -394,7 +394,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
-.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.portal.dashboard verify.smart_core verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
+.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.portal.dashboard verify.portal.execute_button verify.smart_core verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
 verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo: guard.prod.forbid check-compose-project check-compose-env
@@ -411,6 +411,8 @@ verify.overview.logic: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/overview_logic.sh
 verify.portal.dashboard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/portal_dashboard.sh
+verify.portal.execute_button: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/portal_execute_button.sh
 verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
 verify.prod.guard: check-compose-env
@@ -566,13 +568,17 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 # ======================================================
 # ==================== Codex Targets ===================
 # ======================================================
-.PHONY: codex.fast codex.gate codex.print codex.pr codex.cleanup codex.sync-main
+.PHONY: codex.fast codex.gate codex.print codex.pr codex.cleanup codex.sync-main codex.cli
 
 codex.print:
 	@echo "== Codex SOP =="
 	@echo "CODEX_MODE=$(CODEX_MODE) CODEX_DB=$(CODEX_DB) CODEX_MODULES=$(CODEX_MODULES) CODEX_NEED_UPGRADE=$(CODEX_NEED_UPGRADE)"
 	@echo "fast: restart (optional upgrade only if CODEX_NEED_UPGRADE=1) ; forbid demo.reset/gate.full"
 	@echo "gate: optional upgrade + demo.reset + contract.export_all + gate.full"
+
+CODEX_CLI_ARGS ?=
+codex.cli: guard.prod.forbid
+	@bash scripts/ops/codex_cli.sh $(CODEX_CLI_ARGS)
 
 codex.fast: guard.prod.forbid check-compose-project check-compose-env
 	@echo "[codex.fast] mode=fast db=$(CODEX_DB) modules=$(CODEX_MODULES) need_upgrade=$(CODEX_NEED_UPGRADE)"

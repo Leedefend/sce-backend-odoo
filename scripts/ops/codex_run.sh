@@ -58,6 +58,7 @@ case "$flow" in
     ;;
   gate)
     command="make codex.gate"
+    export SC_CONTRACT_STABLE=1
     if ! make codex.gate >"${log_file}" 2>&1; then
       status="FAIL"
     fi

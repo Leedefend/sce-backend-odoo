@@ -1,0 +1,34 @@
+{
+  "action": null,
+  "case": "portal_execute_button_not_allowed",
+  "contract_version": "v1",
+  "execute_error": "method not callable",
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": "project.project",
+  "op": "contract.portal_execute_button",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "action": {
+      "code": null,
+      "desc": null,
+      "label": null
+    },
+    "allowed": false,
+    "error": {
+      "code": "not_allowed",
+      "message": "method not allowed"
+    },
+    "target": {
+      "method": "action_sc_project_manage",
+      "model": "project.project",
+      "res_id": 1
+    }
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}

@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument(
         "--op",
         default="",
-        help="Operation (nav/menu/action_open/model/ui.contract/meta.describe_project_capabilities/contract.capability_matrix/contract.portal_dashboard)",
+        help="Operation (nav/menu/action_open/model/ui.contract/meta.describe_project_capabilities/contract.capability_matrix/contract.portal_dashboard/contract.portal_execute_button)",
     )
     parser.add_argument("--route", default="", help="Route for ui.contract (required when op=ui.contract)")
     parser.add_argument("--trace_id", default="", help="Trace id override for ui.contract (optional)")
@@ -201,6 +201,20 @@ def _normalize_meta_fields(meta_fields):
 
 
 VOLATILE_KEYS = {"trace_id", "exported_at", "generated_at", "request_id"}
+DENYLIST_FIELDS = {
+    "created_at",
+    "write_date",
+    "__generated_at",
+    "generated_at",
+    "timestamp",
+    "hostname",
+    "odoo_version",
+    "build",
+    "container_id",
+    "env",
+    "db_name",
+    "user_agent",
+}
 UNORDERED_LIST_KEYS = {"actions", "reports", "buttons"}
 
 
@@ -239,6 +253,19 @@ def _stable_normalize(value, path=None):
         if path and path[-1] in UNORDERED_LIST_KEYS:
             return _stable_sort_list(normalized, path[-1])
         return normalized
+    return value
+
+
+def _strip_denylist(value):
+    if isinstance(value, dict):
+        cleaned = {}
+        for key, item in value.items():
+            if key in DENYLIST_FIELDS:
+                continue
+            cleaned[key] = _strip_denylist(item)
+        return cleaned
+    if isinstance(value, list):
+        return [_strip_denylist(item) for item in value]
     return value
 
 
@@ -317,6 +344,19 @@ def export_snapshot():
 
             service = PortalDashboardService(env)
             res = {"data": service.build_dashboard()}
+        elif op == "contract.portal_execute_button":
+            from odoo.addons.smart_construction_core.services.portal_execute_button_service import (
+                PortalExecuteButtonService,
+            )
+
+            service = PortalExecuteButtonService(env)
+            res = {
+                "data": service.build_contract(
+                    model=args.model or None,
+                    res_id=args.record_id or None,
+                    method=args.execute_method or None,
+                )
+            }
         elif op == "ui.contract":
             if not args.route:
                 raise SystemExit("route required for ui.contract")
@@ -421,6 +461,7 @@ def export_snapshot():
         snapshot["meta_fields"] = _normalize_meta_fields(snapshot.get("meta_fields"))
         if stable:
             snapshot = _stable_normalize(_strip_volatile(snapshot))
+            snapshot = _strip_denylist(snapshot)
 
         if args.stdout:
             print(json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=stable, default=str))
