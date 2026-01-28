@@ -44,6 +44,7 @@
           <div class="sc-portal__subtitle">基于角色的入口编排</div>
         </div>
         <div class="sc-portal__body sc-portal__body--dashboard">
+          <div class="sc-portal__panel" data-portal="dashboard-action"></div>
           <div class="sc-portal__panel" data-portal="dashboard"></div>
         </div>
       </div>

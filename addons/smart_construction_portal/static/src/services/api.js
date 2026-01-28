@@ -50,6 +50,16 @@
     return getJson("/api/contract/portal_dashboard");
   }
 
+  function getPortalExecuteButton(params) {
+    const query = new URLSearchParams(params || {}).toString();
+    const url = query ? `/api/contract/portal_execute_button?${query}` : "/api/contract/portal_execute_button";
+    return getJson(url);
+  }
+
+  function executePortalButton(payload) {
+    return jsonRequest("/api/portal/execute_button", payload);
+  }
+
   root.api = {
     intent,
     listProjects,
@@ -57,5 +67,7 @@
     getPortalContract,
     getCapabilityMatrix,
     getPortalDashboard,
+    getPortalExecuteButton,
+    executePortalButton,
   };
 })();
