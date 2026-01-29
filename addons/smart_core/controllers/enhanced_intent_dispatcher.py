@@ -17,7 +17,7 @@ _logger = logging.getLogger(__name__)
 register_middlewares(enhanced_router)
 
 class IntentDispatcher(http.Controller):
-    @http.route('/api/v1/intent', type='http', auth='public', methods=['POST'], csrf=False)
+    @http.route('/api/v1/intent_enhanced', type='http', auth='public', methods=['POST'], csrf=False)
     def handle_intent(self, **kwargs):
         try:
             # ------- 请求解析 -------
