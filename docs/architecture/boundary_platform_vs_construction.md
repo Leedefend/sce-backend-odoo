@@ -41,13 +41,23 @@ Configuration:
 - `ir.config_parameter`: `sc.core.extension_modules`
 - Format: comma-separated module names (e.g. `smart_construction_core,smart_construction_portal`)
 
+Example:
+```
+sc.core.extension_modules = smart_construction_core
+```
+
+Demo intent (from smart_construction_core):
+- `system.ping.construction`
+
 Behavior:
 - Missing modules are skipped with a warning (no crash).
 - Hook is optional; modules without it are skipped with a warning.
+
+### Frontend API note
+The `/api/login`, `/api/session/get`, and `/api/menu/tree` endpoints are business-facing controllers and live in `smart_construction_core`. Ensure that module is installed in environments where those endpoints are required. When not installed, a 404 or friendly error is expected.
 
 ## How to Add a New Business Intent
 1) Implement handler in a construction module.
 2) Add `smart_core_register(registry)` in that module.
 3) Add module name to `sc.core.extension_modules`.
 4) Verify with `make audit.boundary.smart_core` and `make verify.smart_core`.
-

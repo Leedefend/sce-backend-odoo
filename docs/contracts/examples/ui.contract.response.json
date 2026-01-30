@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "data": {
+    "views": {},
+    "fields": {},
+    "buttons": [],
+    "actions": [],
+    "permissions": {}
+  },
+  "meta": {
+    "etag": "<etag>",
+    "intent": "ui.contract",
+    "trace_id": "xxxxxx"
+  }
+}
