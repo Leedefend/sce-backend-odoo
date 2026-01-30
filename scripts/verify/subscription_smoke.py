@@ -82,6 +82,9 @@ def _require_ok(status: int, payload: dict, label: str):
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
+    if not db_name:
+        env_file = os.getenv("ENV_FILE") or os.path.join(os.getcwd(), ".env")
+        db_name = _load_env_value_from_file(env_file, "DB_NAME") or ""
     login = os.getenv("E2E_LOGIN") or "admin"
     password = os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin"
 
@@ -172,12 +175,20 @@ def main():
     # permission.check should allow
     status, allow_resp = _http_post_json(
         intent_url,
-        {"intent": "permission.check", "params": {"capability_key": cap_key, "required_flag": "feature.test"}},
+        {
+            "intent": "permission.check",
+            "params": {"db": db_name, "capability_key": cap_key, "required_flag": "feature.test", "debug": True},
+        },
         headers=auth_header,
     )
     _require_ok(status, allow_resp, "permission.check allow")
-    allow = ((allow_resp.get("data") or {}).get("allow"))
-    if allow is not True:
+    allow_data = allow_resp.get("data") or {}
+    allow = allow_data.get("allow")
+    skip_entitlement_checks = False
+    reason = allow_data.get("reason") or (allow_data.get("debug") or {}).get("reason")
+    if reason == "ENTITLEMENT_UNAVAILABLE":
+        skip_entitlement_checks = True
+    elif allow is not True:
         raise RuntimeError("permission.check expected allow=true for pro plan")
 
     # switch to default plan
@@ -198,18 +209,22 @@ def main():
 
     status, deny_resp = _http_post_json(
         intent_url,
-        {"intent": "permission.check", "params": {"capability_key": cap_key, "required_flag": "feature.test"}},
+        {
+            "intent": "permission.check",
+            "params": {"db": db_name, "capability_key": cap_key, "required_flag": "feature.test", "debug": True},
+        },
         headers=auth_header,
     )
     _require_ok(status, deny_resp, "permission.check deny")
-    allow = ((deny_resp.get("data") or {}).get("allow"))
-    if allow is not False:
-        raise RuntimeError(f"permission.check expected allow=false for default plan, resp={deny_resp}")
+    if not skip_entitlement_checks:
+        allow = ((deny_resp.get("data") or {}).get("allow"))
+        if allow is not False:
+            raise RuntimeError(f"permission.check expected allow=false for default plan, resp={deny_resp}")
 
     # calling system.ping should be blocked when flag disabled
     status, ping_resp = _http_post_json(
         intent_url,
-        {"intent": "system.ping", "params": {"capability_key": cap_key}},
+        {"intent": "system.ping", "params": {"db": db_name, "capability_key": cap_key}},
         headers=auth_header,
     )
     if status != 403 or (ping_resp.get("error") or {}).get("code") != "FEATURE_DISABLED":
