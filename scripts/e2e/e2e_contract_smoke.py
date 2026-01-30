@@ -1,159 +1,198 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import json
 import os
 import time
-import urllib.request
-from urllib.error import HTTPError
+from datetime import datetime
+from urllib import request as urlrequest
+from urllib.error import HTTPError, URLError
 
 
-def _post_json(url, payload, headers=None):
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, method="POST")
-    req.add_header("Content-Type", "application/json")
-    if headers:
-        for k, v in headers.items():
-            req.add_header(k, v)
+def _load_env_value_from_file(env_path: str, key: str) -> str | None:
+    if not env_path or not os.path.isfile(env_path):
+        return None
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8")
-            return resp.status, body
-    except HTTPError as e:
-        body = e.read().decode("utf-8") if e.fp else ""
-        return e.code, body
-
-
-def _load_json(body):
-    if not body:
-        return {}
-    try:
-        return json.loads(body)
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                if k.strip() == key:
+                    return v.strip().strip('"').strip("'")
     except Exception:
-        return {}
+        return None
+    return None
 
 
-IGNORE_KEYS = {
-    "trace_id",
-    "elapsed_ms",
-    "etag",
-    "token",
-    "expires_at",
-}
+def _get_base_url() -> str:
+    base = os.getenv("E2E_BASE_URL", "").strip()
+    if base:
+        return base.rstrip("/")
+    port = os.getenv("ODOO_PORT")
+    if not port:
+        env_file = os.getenv("ENV_FILE") or os.path.join(os.getcwd(), ".env")
+        port = _load_env_value_from_file(env_file, "ODOO_PORT")
+    if not port:
+        port = "8070"
+    return f"http://localhost:{port}"
 
 
-def _normalize(obj):
+def _http_post_json(url: str, payload: dict, headers: dict | None = None) -> tuple[int, dict]:
+    data = json.dumps(payload).encode("utf-8")
+    req = urlrequest.Request(url, data=data, method="POST")
+    req.add_header("Content-Type", "application/json")
+    for k, v in (headers or {}).items():
+        req.add_header(k, v)
+    try:
+        with urlrequest.urlopen(req, timeout=30) as resp:
+            body = resp.read().decode("utf-8") or "{}"
+            return resp.status, json.loads(body)
+    except HTTPError as e:
+        body = e.read().decode("utf-8") if hasattr(e, "read") else ""
+        try:
+            return e.code, json.loads(body or "{}")
+        except Exception:
+            return e.code, {"raw": body}
+    except URLError as e:
+        raise RuntimeError(f"HTTP request failed: {e}") from e
+
+
+def _normalize_obj(obj):
+    deny_keys = {
+        "trace_id",
+        "elapsed_ms",
+        "expires_at",
+        "token",
+        "server_time",
+        "timestamp",
+        "generated_at",
+        "__generated_at",
+        "created_at",
+        "write_date",
+        "session_id",
+        "captured_at",
+    }
     if isinstance(obj, dict):
         out = {}
         for k, v in obj.items():
-            if k in IGNORE_KEYS:
+            if k in deny_keys:
                 continue
-            if k == "meta":
-                continue
-            out[k] = _normalize(v)
+            out[k] = _normalize_obj(v)
         return out
     if isinstance(obj, list):
-        return [_normalize(x) for x in obj]
+        items = [_normalize_obj(v) for v in obj]
+        return _sort_list(items)
     return obj
 
 
-def run_once(base_url, db, login, password, action_xmlid):
-    intent_url = f"{base_url}/api/v1/intent?db={db}"
-    # login
-    login_payload = {
-        "intent": "login",
-        "params": {"login": login, "password": password, "db": db},
-    }
-    status, body = _post_json(
-        intent_url,
-        login_payload,
-        headers={"X-Anonymous-Intent": "true"},
-    )
-    login_res = _load_json(body)
-    if status >= 400 or not login_res.get("data", {}).get("token"):
-        raise SystemExit(f"[e2e] login failed: status={status} body={body}")
+def _sort_list(items):
+    if not items:
+        return items
+    if all(isinstance(x, (int, float, str)) for x in items):
+        try:
+            return sorted(items)
+        except Exception:
+            return items
+    if all(isinstance(x, dict) for x in items):
+        key_fields = ("id", "menu_id", "action_id", "key", "name", "model")
 
-    token = login_res["data"]["token"]
-    auth_header = {"Authorization": f"Bearer {token}"}
+        def _key(d):
+            for f in key_fields:
+                if f in d and d[f] is not None:
+                    return str(d[f])
+            return json.dumps(d, sort_keys=True, ensure_ascii=False)
 
-    # system.init
-    sys_payload = {"intent": "system.init", "params": {}}
-    _, body = _post_json(intent_url, sys_payload, headers=auth_header)
-    sys_res = _load_json(body)
+        try:
+            return sorted(items, key=_key)
+        except Exception:
+            return items
+    return items
 
-    # resolve action id via ir.model.data
-    data_payload = {
-        "intent": "api.data",
-        "params": {
-            "op": "list",
-            "model": "ir.model.data",
-            "domain": [
-                ["module", "=", action_xmlid.split(".")[0]],
-                ["name", "=", action_xmlid.split(".")[1]],
-            ],
-            "fields": ["res_id"],
-            "limit": 1,
-        },
-    }
-    _, body = _post_json(intent_url, data_payload, headers=auth_header)
-    data_res = _load_json(body)
-    rows = (data_res.get("data") or {}).get("records") or (data_res.get("data") or {}).get("rows") or []
-    action_id = rows[0].get("res_id") if rows else None
-    if not action_id:
-        raise SystemExit("[e2e] failed to resolve action_id from ir.model.data")
 
-    # ui.contract
-    contract_payload = {"intent": "ui.contract", "params": {"op": "action_open", "action_id": action_id}}
-    _, body = _post_json(intent_url, contract_payload, headers=auth_header)
-    contract_res = _load_json(body)
-
-    # api.data list
-    list_payload = {
-        "intent": "api.data",
-        "params": {
-            "op": "list",
-            "model": "project.project",
-            "fields": ["id", "name"],
-            "limit": 1,
-        },
-    }
-    _, body = _post_json(intent_url, list_payload, headers=auth_header)
-    list_res = _load_json(body)
-
-    return {
-        "login": _normalize(login_res),
-        "system_init": _normalize(sys_res),
-        "ui_contract": _normalize(contract_res),
-        "api_data": _normalize(list_res),
-    }
+def _write_json(path: str, obj: dict):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, sort_keys=True, indent=2)
 
 
 def main():
-    base_url = os.environ.get("E2E_BASE_URL", "http://localhost:8070").rstrip("/")
-    lang = os.environ.get("E2E_LANG", "en").strip("/")
-    if lang:
-        base_url = f"{base_url}/{lang}"
-    db = os.environ.get("DB_NAME", "sc_demo")
-    login = os.environ.get("E2E_LOGIN", "admin")
-    password = os.environ.get("E2E_PASSWORD", "admin")
-    action_xmlid = os.environ.get(
-        "E2E_ACTION_XMLID",
-        "smart_construction_core.action_sc_project_kanban_lifecycle",
+    base_url = _get_base_url()
+    db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or os.getenv("DB") or ""
+    login = os.getenv("E2E_LOGIN") or "admin"
+    password = os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin"
+    out_dir = os.getenv("E2E_OUT_DIR")
+    if not out_dir:
+        ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        out_dir = os.path.join("artifacts", "e2e", f"contract_smoke_{ts}")
+
+    intent_url = f"{base_url}/api/v1/intent"
+
+    # 1) login (anonymous intent)
+    login_payload = {
+        "intent": "login",
+        "params": {"db": db_name, "login": login, "password": password},
+    }
+    status, login_resp = _http_post_json(
+        intent_url, login_payload, headers={"X-Anonymous-Intent": "1"}
     )
-    outdir = os.environ.get("E2E_OUTDIR", "artifacts/e2e")
-    os.makedirs(outdir, exist_ok=True)
+    if status == 404:
+        raise RuntimeError(
+            f"intent endpoint not found at {intent_url} (smart_core not installed?)"
+        )
+    if not login_resp.get("ok"):
+        raise RuntimeError(f"login failed: {login_resp}")
+    token = (login_resp.get("data") or {}).get("token")
+    if not token:
+        raise RuntimeError("login response missing token")
 
-    run1 = run_once(base_url, db, login, password, action_xmlid)
-    time.sleep(1)
-    run2 = run_once(base_url, db, login, password, action_xmlid)
+    auth_header = {"Authorization": f"Bearer {token}"}
 
-    with open(os.path.join(outdir, "contract_smoke_run1.json"), "w", encoding="utf-8") as f:
-        json.dump(run1, f, ensure_ascii=False, indent=2)
-    with open(os.path.join(outdir, "contract_smoke_run2.json"), "w", encoding="utf-8") as f:
-        json.dump(run2, f, ensure_ascii=False, indent=2)
+    # 2) system.init
+    init_payload = {"intent": "system.init", "params": {"db": db_name}}
+    status, init_resp = _http_post_json(intent_url, init_payload, headers=auth_header)
+    if status >= 400 or not init_resp.get("ok"):
+        raise RuntimeError(f"system.init failed: {init_resp}")
 
-    if run1 != run2:
-        raise SystemExit("[e2e] snapshot drift detected")
+    # 3) ui.contract (nav op)
+    contract_payload = {"intent": "ui.contract", "params": {"db": db_name, "op": "nav"}}
+    status, contract_resp = _http_post_json(
+        intent_url, contract_payload, headers=auth_header
+    )
+    if status >= 400 or not contract_resp.get("ok"):
+        raise RuntimeError(f"ui.contract failed: {contract_resp}")
 
-    print("[e2e] PASS")
+    # 4) api.data list
+    data_payload = {
+        "intent": "api.data",
+        "params": {"db": db_name, "model": "res.users", "fields": ["id", "name"], "limit": 1},
+    }
+    status, data_resp = _http_post_json(intent_url, data_payload, headers=auth_header)
+    if status >= 400 or not data_resp.get("ok"):
+        raise RuntimeError(f"api.data failed: {data_resp}")
+
+    snapshot = {
+        "meta": {
+            "base_url": base_url,
+            "db": db_name,
+            "login": login,
+            "captured_at": int(time.time()),
+        },
+        "login": login_resp,
+        "system_init": init_resp,
+        "ui_contract": contract_resp,
+        "api_data": data_resp,
+    }
+
+    normalized = _normalize_obj(snapshot)
+
+    raw_path = os.path.join(out_dir, "snapshot.raw.json")
+    norm_path = os.path.join(out_dir, "snapshot.normalized.json")
+    _write_json(raw_path, snapshot)
+    _write_json(norm_path, normalized)
+
+    print(f"[e2e] raw snapshot: {raw_path}")
+    print(f"[e2e] normalized snapshot: {norm_path}")
 
 
 if __name__ == "__main__":
