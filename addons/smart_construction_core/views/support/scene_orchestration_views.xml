@@ -11,6 +11,7 @@
                     <field name="key"/>
                     <field name="name"/>
                     <field name="intent"/>
+                    <field name="required_flag"/>
                     <field name="status"/>
                     <field name="active"/>
                 </tree>
@@ -30,10 +31,12 @@
                             <field name="ui_label"/>
                             <field name="ui_hint"/>
                             <field name="intent"/>
+                            <field name="required_flag"/>
                             <field name="status"/>
                             <field name="version"/>
                             <field name="tags"/>
                             <field name="required_group_ids" widget="many2many_tags"/>
+                            <field name="is_test"/>
                         </group>
                         <group>
                             <field name="default_payload" widget="json"/>
@@ -61,6 +64,7 @@
                     <field name="layout"/>
                     <field name="state"/>
                     <field name="is_default"/>
+                    <field name="is_test"/>
                     <field name="active"/>
                 </tree>
             </field>
@@ -89,6 +93,7 @@
                             <field name="active_version_id"/>
                             <field name="published_at" readonly="1"/>
                             <field name="published_by" readonly="1"/>
+                            <field name="is_test"/>
                             <field name="target_group_ids" widget="many2many_tags"/>
                             <field name="description"/>
                         </group>
