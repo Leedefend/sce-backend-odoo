@@ -510,3 +510,23 @@ class ScSceneAuditLog(models.Model):
     version_id = fields.Many2one("sc.scene.version", ondelete="set null")
     payload_diff = fields.Json()
     created_at = fields.Datetime()
+
+
+class ScCapabilityAuditLog(models.Model):
+    _name = "sc.capability.audit.log"
+    _description = "SC Capability Audit Log"
+    _order = "created_at desc, id desc"
+
+    event = fields.Selection(
+        [
+            ("create", "Create"),
+            ("update", "Update"),
+            ("import", "Import"),
+        ],
+        required=True,
+    )
+    actor_user_id = fields.Many2one("res.users")
+    capability_id = fields.Many2one("sc.capability", ondelete="set null")
+    source_pack_id = fields.Char()
+    payload_diff = fields.Json()
+    created_at = fields.Datetime()
