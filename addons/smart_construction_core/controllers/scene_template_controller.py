@@ -174,6 +174,8 @@ class SceneTemplateController(http.Controller):
                     "status": cap.get("status") or "alpha",
                     "version": cap.get("version") or "v0.1",
                     "required_group_ids": [(6, 0, group_ids)],
+                    "smoke_test": bool(cap.get("smoke_test", False)),
+                    "is_test": bool(cap.get("is_test", False)),
                 }
                 if rec:
                     diff["capabilities"]["update"].append(key)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo import models, fields, _
+from odoo import api, models, fields, _
 from odoo.exceptions import UserError
 
 
@@ -26,6 +26,8 @@ class ScCapability(models.Model):
         required=True,
     )
     version = fields.Char(default="v0.1")
+    smoke_test = fields.Boolean(default=False, help="Include in capability smoke tests")
+    is_test = fields.Boolean(default=False, help="Mark as test-only capability (excluded from lint by default)")
 
     _sql_constraints = [
         ("sc_capability_key_uniq", "unique(key)", "Capability key must be unique."),
@@ -36,16 +38,29 @@ class ScCapability(models.Model):
             return True
         return bool(self.required_group_ids & user.groups_id)
 
+    def _resolve_payload(self, payload):
+        resolved = dict(payload or {})
+        if resolved.get("action_xmlid") and not resolved.get("action_id"):
+            action_ref = self.env.ref(resolved.get("action_xmlid"), raise_if_not_found=False)
+            if action_ref:
+                resolved["action_id"] = action_ref.id
+        if resolved.get("menu_xmlid") and not resolved.get("menu_id"):
+            menu_ref = self.env.ref(resolved.get("menu_xmlid"), raise_if_not_found=False)
+            if menu_ref:
+                resolved["menu_id"] = menu_ref.id
+        return resolved
+
     def to_public_dict(self, user):
         self.ensure_one()
         group_xmlids = self.required_group_ids.get_external_id()
+        payload = self._resolve_payload(self.default_payload or {})
         return {
             "key": self.key,
             "name": self.name,
             "ui_label": self.ui_label or self.name,
             "ui_hint": self.ui_hint or "",
             "intent": self.intent or "",
-            "default_payload": self.default_payload or {},
+            "default_payload": payload,
             "required_groups": [
                 group_xmlids.get(g.id)
                 for g in self.required_group_ids
@@ -54,7 +69,102 @@ class ScCapability(models.Model):
             "tags": [t.strip() for t in (self.tags or "").split(",") if t.strip()],
             "status": self.status,
             "version": self.version,
+            "smoke_test": bool(self.smoke_test),
         }
+
+    @api.model
+    def lint_capabilities(self, ignore_keys=None, include_tests=False):
+        issues = []
+        domain = [("active", "=", True)]
+        if not include_tests:
+            domain.append(("is_test", "=", False))
+        caps = self.search(domain, order="sequence, id")
+        allowed_intents = self.env["sc.scene"].browse()._get_allowed_intents()
+        ignore_set = {k for k in (ignore_keys or []) if k}
+        seen_keys = {}
+        for cap in caps:
+            if not cap.is_test and isinstance(cap.key, str) and cap.key.startswith("scene.validation."):
+                # Auto-heal legacy test-only capabilities created by smoke imports.
+                try:
+                    cap.sudo().write({"is_test": True})
+                except Exception:
+                    pass
+            if cap.is_test and not include_tests:
+                continue
+            if cap.key in ignore_set:
+                continue
+            if cap.key in seen_keys:
+                issues.append({
+                    "code": "DUPLICATE_KEY",
+                    "message": _("Duplicate capability key."),
+                    "detail": {"capability_key": cap.key, "capability_id": cap.id},
+                })
+            seen_keys[cap.key] = cap.id
+
+            if not cap.intent:
+                issues.append({
+                    "code": "INTENT_MISSING",
+                    "message": _("Capability intent is missing."),
+                    "detail": {"capability_key": cap.key},
+                })
+            elif cap.intent not in allowed_intents:
+                issues.append({
+                    "code": "INTENT_NOT_ALLOWED",
+                    "message": _("Capability intent is not allowed."),
+                    "detail": {"capability_key": cap.key, "intent": cap.intent},
+                })
+
+            if cap.required_group_ids:
+                group_xmlids = cap.required_group_ids.get_external_id()
+                missing = [
+                    g.id for g in cap.required_group_ids if not group_xmlids.get(g.id)
+                ]
+                if missing:
+                    issues.append({
+                        "code": "GROUP_XMLID_MISSING",
+                        "message": _("Required groups missing xmlid."),
+                        "detail": {"capability_key": cap.key, "group_ids": missing},
+                    })
+
+            payload = cap.default_payload or {}
+            menu_xmlid = payload.get("menu_xmlid")
+            if menu_xmlid and not self.env.ref(menu_xmlid, raise_if_not_found=False):
+                issues.append({
+                    "code": "MENU_XMLID_NOT_FOUND",
+                    "message": _("Menu xmlid not found."),
+                    "detail": {"capability_key": cap.key, "menu_xmlid": menu_xmlid},
+                })
+            action_xmlid = payload.get("action_xmlid")
+            if action_xmlid and not self.env.ref(action_xmlid, raise_if_not_found=False):
+                issues.append({
+                    "code": "ACTION_XMLID_NOT_FOUND",
+                    "message": _("Action xmlid not found."),
+                    "detail": {"capability_key": cap.key, "action_xmlid": action_xmlid},
+                })
+            menu_id = payload.get("menu_id")
+            if menu_id:
+                try:
+                    if not self.env["ir.ui.menu"].browse(int(menu_id)).exists():
+                        raise ValueError
+                except Exception:
+                    issues.append({
+                        "code": "MENU_ID_NOT_FOUND",
+                        "message": _("Menu id not found."),
+                        "detail": {"capability_key": cap.key, "menu_id": menu_id},
+                    })
+            action_id = payload.get("action_id")
+            if action_id:
+                try:
+                    if not self.env["ir.actions.actions"].browse(int(action_id)).exists():
+                        raise ValueError
+                except Exception:
+                    issues.append({
+                        "code": "ACTION_ID_NOT_FOUND",
+                        "message": _("Action id not found."),
+                        "detail": {"capability_key": cap.key, "action_id": action_id},
+                    })
+
+        return issues
 
 
 class ScScene(models.Model):

@@ -713,7 +713,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.frontend_api
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.capability.lint verify.frontend_api
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -722,6 +722,12 @@ verify.e2e.scene: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/e2e/e2e_scene_smoke.py
 verify.e2e.scene_admin: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/scene_admin_smoke.sh
+
+verify.e2e.capability_smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/verify/capability_smoke.sh
+
+verify.capability.lint: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/verify/capability_lint.sh
 
 verify.frontend_api: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/frontend_api_smoke.py
