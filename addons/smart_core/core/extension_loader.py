@@ -91,3 +91,30 @@ def load_extensions(env, registry):
         total_after,
     )
     _loaded = True
+
+
+def run_extension_hooks(env, hook_name: str, *args, **kwargs):
+    if env is None:
+        return
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("sc.core.extension_modules") or ""
+    except Exception as e:
+        _logger.warning("[extension_loader] failed to read config: %s", e)
+        return
+
+    modules = _parse_modules(raw)
+    if not modules:
+        return
+
+    for mod in modules:
+        try:
+            m = importlib.import_module(f"odoo.addons.{mod}")
+        except Exception as e:
+            _logger.debug("[extension_loader] hook import failed: %s (%s)", mod, e)
+            continue
+        hook = getattr(m, hook_name, None)
+        if callable(hook):
+            try:
+                hook(*args, **kwargs)
+            except Exception as e:
+                _logger.warning("[extension_loader] hook %s failed: %s (%s)", hook_name, mod, e)

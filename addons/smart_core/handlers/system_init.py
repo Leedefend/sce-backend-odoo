@@ -14,6 +14,7 @@ from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatche
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.app_config_engine.utils.misc import stable_etag, format_versions
 from odoo.addons.smart_core.core.handler_registry import HANDLER_REGISTRY
+from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
 
 _logger = logging.getLogger(__name__)
 
@@ -285,6 +286,9 @@ class SystemInitHandler(BaseIntentHandler):
         if preload_items:
             data["preload"].extend(preload_items)
 
+        # 扩展模块可附加场景/能力等（不影响主流程）
+        run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
+
         # 分部 etag：加入导航
         etags["nav"] = nav_fp
 
@@ -304,6 +308,8 @@ class SystemInitHandler(BaseIntentHandler):
             "default_route": data["default_route"],
             "feature_flags": data["feature_flags"],
             "intents": data["intents"],
+            "scenes": data.get("scenes"),
+            "capabilities": data.get("capabilities"),
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
         })

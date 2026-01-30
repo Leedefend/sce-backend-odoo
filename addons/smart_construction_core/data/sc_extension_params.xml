@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="param_sc_extension_modules_default" model="ir.config_parameter">
+            <field name="key">sc.core.extension_modules</field>
+            <field name="value">smart_construction_core</field>
+        </record>
+    </data>
+</odoo>
