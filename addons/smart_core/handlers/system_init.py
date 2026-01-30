@@ -17,6 +17,10 @@ from odoo.addons.smart_core.core.handler_registry import HANDLER_REGISTRY
 
 _logger = logging.getLogger(__name__)
 
+# Contract/API version markers for client compatibility
+CONTRACT_VERSION = "v0.1"
+API_VERSION = "v1"
+
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
 
 def _user_group_xmlids(user) -> set:
@@ -289,6 +293,8 @@ class SystemInitHandler(BaseIntentHandler):
             "parts": {"nav": format_versions(nav_versions), **parts_version},
             "etags": etags,
             "intent": self.INTENT_TYPE,
+            "contract_version": CONTRACT_VERSION,
+            "api_version": API_VERSION,
         }
 
         # 顶层 ETag：纳入用户、导航指纹、默认路由、特性开关、可用意图
