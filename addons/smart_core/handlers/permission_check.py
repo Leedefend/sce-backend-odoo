@@ -13,11 +13,9 @@ class PermissionCheckHandler(BaseIntentHandler):
     DESCRIPTION = "Check entitlement/permission for intent or capability"
 
     def handle(self, payload, ctx):
-        params = {}
-        if isinstance(payload, dict):
-            params = payload.get("params") or {}
-        if not params:
-            params = getattr(self, "params", {}) or {}
+        params = getattr(self, "params", {})
+        if not isinstance(params, dict):
+            params = {}
         cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
         Entitlement = self.env.get("sc.entitlement")
         if not Entitlement:
