@@ -28,6 +28,9 @@ These fields allow clients to detect contract schema changes and apply compatibi
 - ETag MUST change when `contract_version` changes.
 - Clients MUST treat different `contract_version` values as incompatible cached schema.
 
+## Error codes
+- See `docs/contracts/error_codes_v0_1.md` for standardized error envelope and handling guidance.
+
 ## Notes
 - `contract_version` is a contract schema marker for client compatibility.
 - `api_version` tracks the intent API surface (routing, auth, error envelope).
