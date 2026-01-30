@@ -718,7 +718,7 @@ test.safe: guard.prod.forbid check-compose-project check-compose-env
 # ======================================================
 .PHONY: ci.gate ci.smoke ci.full ci.repro \
 	test-install-gate test-upgrade-gate \
-	ci.clean ci.ps ci.logs
+	ci.clean ci.ps ci.logs gate.boundary
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid
@@ -747,6 +747,9 @@ ci.ps: guard.prod.forbid
 	@$(RUN_ENV) bash scripts/ci/ci_ps.sh
 ci.logs: guard.prod.forbid
 	@$(RUN_ENV) bash scripts/ci/ci_logs.sh
+
+gate.boundary: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) audit.boundary.smart_core
 
 # ======================================================
 # ==================== Diagnostics ======================
