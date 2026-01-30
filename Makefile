@@ -718,7 +718,7 @@ test.safe: guard.prod.forbid check-compose-project check-compose-env
 # ======================================================
 .PHONY: ci.gate ci.smoke ci.full ci.repro \
 	test-install-gate test-upgrade-gate \
-	ci.clean ci.ps ci.logs
+	ci.clean ci.ps ci.logs gate.boundary
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid
@@ -748,10 +748,13 @@ ci.ps: guard.prod.forbid
 ci.logs: guard.prod.forbid
 	@$(RUN_ENV) bash scripts/ci/ci_logs.sh
 
+gate.boundary: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) audit.boundary.smart_core
+
 # ======================================================
 # ==================== Diagnostics ======================
 # ======================================================
-.PHONY: diag.compose verify.ops gate.audit ci.gate.tp08
+.PHONY: diag.compose verify.ops gate.audit ci.gate.tp08 audit.boundary.smart_core
 diag.compose: check-compose-env
 	@echo "=== base ==="
 	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
@@ -778,6 +781,18 @@ verify.ops: guard.prod.forbid check-compose-project check-compose-env
 
 gate.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit.sh
+
+# ======================================================
+# ==================== Boundary Audit ==================
+# ======================================================
+audit.boundary.smart_core: guard.prod.forbid
+	@$(RUN_ENV) python3 scripts/audit/boundary_audit_smart_core.py \
+		--root "$(ROOT_DIR)" \
+		--scan-dir "addons/smart_core" \
+		--json-out "artifacts/boundary_audit/smart_core_hits.json" \
+		--md-out "docs/ops/boundary_audit_smart_core_20260130.md" \
+		--allowlist "scripts/audit/boundary_allowlist.txt" \
+		--fail-on-reverse-deps
 
 ci.gate.tp08: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit_tp08.sh
