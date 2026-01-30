@@ -170,6 +170,7 @@ def main():
                 "name": "Scene Validation Bad",
                 "intent": "ui.contract",
                 "default_payload": {"action_xmlid": "invalid.action_xmlid"},
+                "is_test": True,
             }
         ],
         "scenes": [
