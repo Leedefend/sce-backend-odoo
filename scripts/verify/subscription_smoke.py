@@ -105,13 +105,15 @@ def main():
         raise RuntimeError("login response missing token")
     auth_header = {"Authorization": f"Bearer {token}"}
 
-    # get company id
+    # get company id (prefer current user company)
+    company_id = ((login_resp.get("data") or {}).get("user") or {}).get("company_id")
     status, tenants_resp = _http_get_json(ops_tenants_url, headers=auth_header)
     _require_ok(status, tenants_resp, "ops.tenants")
     tenants = (tenants_resp.get("data") or {}).get("tenants") or []
     if not tenants:
         raise RuntimeError("ops.tenants returned empty list")
-    company_id = tenants[0].get("company_id")
+    if not company_id:
+        company_id = tenants[0].get("company_id")
     if not company_id:
         raise RuntimeError("company_id missing")
 
