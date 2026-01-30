@@ -17,15 +17,34 @@ class PermissionCheckHandler(BaseIntentHandler):
         if not isinstance(params, dict):
             params = {}
         cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
-        Entitlement = self.env.get("sc.entitlement")
+        required_flag = params.get("required_flag")
+        debug = bool(params.get("debug") or params.get("_debug"))
+        registry = getattr(self.env, "registry", None)
+        model_present = bool(registry and hasattr(registry, "models") and "sc.entitlement" in registry.models)
+        try:
+            Entitlement = self.env["sc.entitlement"]
+        except Exception:
+            Entitlement = None
         if not Entitlement:
-            return {"ok": True, "data": {"allow": True}}
+            data = {"allow": True}
+            if required_flag:
+                data.update({
+                    "reason": "ENTITLEMENT_UNAVAILABLE",
+                    "details": {"required_flag": required_flag, "capability_key": cap_key},
+                })
+            if debug:
+                data["debug"] = {
+                    "reason": "entitlement_model_missing",
+                    "db": self.env.cr.dbname,
+                    "model_present": model_present,
+                }
+            return {"ok": True, "data": data}
         ent = Entitlement.get_effective(self.env.user.company_id) if Entitlement else None
         flags = ent.effective_flags_json or {} if ent else {}
         cap = None
         if cap_key:
             cap = self.env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
-        required_flag = (cap.required_flag if cap else None) or params.get("required_flag")
+        required_flag = (cap.required_flag if cap else None) or required_flag
         if required_flag:
             allow = Entitlement._flag_enabled(flags, required_flag)
             _logger.warning(
@@ -36,14 +55,32 @@ class PermissionCheckHandler(BaseIntentHandler):
                 allow,
             )
             if not allow:
-                return {
-                    "ok": True,
-                    "data": {
-                        "allow": False,
-                        "reason": "FEATURE_DISABLED",
-                        "details": {"required_flag": required_flag, "capability_key": cap.key if cap else cap_key},
-                    },
+                data = {
+                    "allow": False,
+                    "reason": "FEATURE_DISABLED",
+                    "details": {"required_flag": required_flag, "capability_key": cap.key if cap else cap_key},
                 }
+                if debug:
+                    data["debug"] = {
+                        "flags": flags,
+                        "required_flag": required_flag,
+                        "cap_found": bool(cap),
+                        "db": self.env.cr.dbname,
+                    }
+                return {"ok": True, "data": data}
         else:
             _logger.warning("[permission.check] cap_missing_or_no_flag cap=%s flags=%s", cap_key, flags)
+        if debug:
+            return {
+                "ok": True,
+                "data": {
+                    "allow": True,
+                    "debug": {
+                        "flags": flags,
+                        "required_flag": required_flag,
+                        "cap_found": bool(cap),
+                        "db": self.env.cr.dbname,
+                    },
+                },
+            }
         return {"ok": True, "data": {"allow": True}}
