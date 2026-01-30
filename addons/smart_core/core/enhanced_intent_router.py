@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from collections import defaultdict
 
 from .base_handler import BaseIntentHandler
-from .intent_router import IntentNotFound, IntentBadRequest
+from .exceptions import IntentNotFound, IntentBadRequest
 from .middlewares import BaseMiddleware, DEFAULT_MIDDLEWARES
 
 _logger = logging.getLogger(__name__)
@@ -73,40 +73,36 @@ class RouteTrie:
         # 在叶子节点添加处理器
         node.handlers.append(handler)
     
-    def match(self, path: str) -> Tuple[Optional[RouteRule], Dict[str, str]]:
+    def match(self, path: str) -> Tuple[List[RouteRule], Dict[str, str]]:
         """匹配路由路径"""
         parts = path.split('/')
         return self._match_recursive(self.root, parts, 0, {})
     
-    def _match_recursive(self, node: TrieNode, parts: List[str], index: int, 
-                        params: Dict[str, str]) -> Tuple[Optional[RouteRule], Dict[str, str]]:
+    def _match_recursive(self, node: TrieNode, parts: List[str], index: int,
+                        params: Dict[str, str]) -> Tuple[List[RouteRule], Dict[str, str]]:
         """递归匹配路由"""
         if index == len(parts):
-            # 匹配成功，返回优先级最高的处理器
-            if node.handlers:
-                # 按优先级排序，返回最高优先级的处理器
-                sorted_handlers = sorted(node.handlers, key=lambda x: x.priority, reverse=True)
-                return sorted_handlers[0], params
-            return None, params
+            # 匹配成功，返回全部处理器列表
+            return list(node.handlers or []), params
         
         part = parts[index]
         
         # 精确匹配
         if part in node.children:
-            result = self._match_recursive(node.children[part], parts, index + 1, params)
-            if result[0]:
-                return result
+            handlers, out_params = self._match_recursive(node.children[part], parts, index + 1, params)
+            if handlers:
+                return handlers, out_params
         
         # 参数匹配
         if '*' in node.children:
             param_node = node.children['*']
             new_params = params.copy()
             new_params[param_node.param_name] = part
-            result = self._match_recursive(param_node, parts, index + 1, new_params)
-            if result[0]:
-                return result
+            handlers, out_params = self._match_recursive(param_node, parts, index + 1, new_params)
+            if handlers:
+                return handlers, out_params
         
-        return None, params
+        return [], params
 
 class Middleware:
     """中间件基类"""
@@ -122,7 +118,7 @@ class EnhancedIntentRouter:
     """增强的意图路由器"""
     
     def __init__(self):
-        self.routes: Dict[str, RouteRule] = {}
+        self.routes: Dict[str, List[RouteRule]] = {}
         self.trie = RouteTrie()
         self.middlewares: List[BaseMiddleware] = []
         self.route_cache: Dict[str, Tuple[RouteRule, Dict[str, str]]] = {}
@@ -169,8 +165,9 @@ class EnhancedIntentRouter:
             param_names=param_names
         )
         
-        # 添加到路由表
-        self.routes[pattern] = route_rule
+        # 添加到路由表（支持同一 intent 多版本）
+        self.routes.setdefault(pattern, [])
+        self.routes[pattern].append(route_rule)
         
         # 添加到前缀树
         self.trie.insert(pattern, route_rule)
@@ -242,6 +239,35 @@ class EnhancedIntentRouter:
         self.route_cache[intent_name] = (route_rule, params)
         self.cache_timestamps[intent_name] = time.time()
     
+    def _pick_best_version(self, rules: List[RouteRule], requested_version: Optional[str]) -> Optional[RouteRule]:
+        """从候选规则中选择最合适版本"""
+        if not rules:
+            return None
+
+        def _version_key(v: Optional[str]) -> Tuple[int, ...]:
+            if not v:
+                return (0,)
+            try:
+                return tuple(int(x) for x in v.split("."))
+            except Exception:
+                return (0,)
+
+        if requested_version:
+            compat = [r for r in rules if r.version and self._is_version_compatible(r.version, requested_version)]
+            if compat:
+                return sorted(compat, key=lambda r: _version_key(r.version), reverse=True)[0]
+            # 若无兼容版本，尝试无版本路由
+            nov = [r for r in rules if not r.version]
+            if nov:
+                return nov[0]
+            return None
+
+        # 未指定版本：优先最高版本
+        versioned = [r for r in rules if r.version]
+        if versioned:
+            return sorted(versioned, key=lambda r: _version_key(r.version), reverse=True)[0]
+        return rules[0]
+
     def match_route(self, intent_name: str, version: str = None) -> Tuple[Optional[RouteRule], Dict[str, str]]:
         """匹配路由规则"""
         # 构造缓存键，包含版本信息
@@ -254,39 +280,30 @@ class EnhancedIntentRouter:
         
         # 先精确匹配
         if intent_name in self.routes:
-            route_rule = self.routes[intent_name]
-            # 检查版本兼容性
-            if version and route_rule.version:
-                if self._is_version_compatible(route_rule.version, version):
-                    self._cache_route(cache_key, route_rule, {})
-                    return route_rule, {}
-            elif not version:  # 如果没有指定版本，返回匹配的路由
+            route_rule = self._pick_best_version(self.routes[intent_name], version)
+            if route_rule:
                 self._cache_route(cache_key, route_rule, {})
                 return route_rule, {}
         
         # 使用前缀树匹配
-        route_rule, params = self.trie.match(intent_name)
+        route_rules, params = self.trie.match(intent_name)
+        route_rule = self._pick_best_version(route_rules, version)
         if route_rule:
-            # 检查版本兼容性
-            if version and route_rule.version:
-                if self._is_version_compatible(route_rule.version, version):
-                    self._cache_route(cache_key, route_rule, params)
-                    return route_rule, params
-            elif not version:  # 如果没有指定版本，返回匹配的路由
-                self._cache_route(cache_key, route_rule, params)
-                return route_rule, params
+            self._cache_route(cache_key, route_rule, params)
+            return route_rule, params
         
         # 如果指定了版本但没有找到匹配的路由，尝试查找不带版本的路由
         if version and intent_name in self.routes:
-            route_rule = self.routes[intent_name]
-            if not route_rule.version:  # 如果路由没有版本要求
+            route_rule = self._pick_best_version(self.routes[intent_name], version)
+            if route_rule:
                 self._cache_route(cache_key, route_rule, {})
                 return route_rule, {}
         
         # 如果指定了版本但没有找到匹配的路由，尝试使用前缀树查找不带版本的路由
         if version:
-            route_rule, params = self.trie.match(intent_name)
-            if route_rule and not route_rule.version:
+            route_rules, params = self.trie.match(intent_name)
+            route_rule = self._pick_best_version(route_rules, version)
+            if route_rule:
                 self._cache_route(cache_key, route_rule, params)
                 return route_rule, params
         

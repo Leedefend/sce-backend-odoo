@@ -4,6 +4,7 @@ from odoo import http
 from odoo.http import request
 import logging
 import json
+import uuid
 
 from ..core.intent_router import route_intent_payload   # ✅ 改用结构化路由
 from ..core.enhanced_intent_router import route_intent_enhanced, enhanced_router  # ✅ 增强路由（可选）
@@ -17,7 +18,7 @@ _logger = logging.getLogger(__name__)
 register_middlewares(enhanced_router)
 
 class IntentDispatcher(http.Controller):
-    @http.route('/api/v1/intent', type='http', auth='public', methods=['POST'], csrf=False)
+    @http.route('/api/v1/intent_enhanced', type='http', auth='public', methods=['POST'], csrf=False)
     def handle_intent(self, **kwargs):
         try:
             # ------- 请求解析 -------
@@ -85,6 +86,19 @@ class IntentDispatcher(http.Controller):
     @http.route('/api/v2/intent', type='http', auth='public', methods=['POST'], csrf=False)
     def handle_enhanced_intent(self, **kwargs):
         """增强意图处理端点"""
+        trace_id = uuid.uuid4().hex[:12]
+        return request.make_json_response(
+            {
+                "ok": False,
+                "error": {
+                    "code": 501,
+                    "message": "enhanced intent router is experimental / not enabled",
+                },
+                "code": 501,
+                "meta": {"trace_id": trace_id},
+            },
+            status=501,
+        )
         try:
             # ------- 请求解析 -------
             _logger.info("Enhanced request type: %s", type(request))
