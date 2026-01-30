@@ -157,9 +157,13 @@ def main():
         headers=auth_header,
     )
     _require_ok(status, dry_run_resp, "scenes.import dry_run")
-    diff = (dry_run_resp.get("data") or {}).get("diff") or {}
+    data = dry_run_resp.get("data") or {}
+    diff = data.get("diff") or {}
+    diff_v2 = data.get("diff_v2") or {}
     if not isinstance(diff, dict) or "capabilities" not in diff or "scenes" not in diff:
         raise RuntimeError("dry_run diff missing expected keys")
+    if diff_v2 and not ("creates" in diff_v2 and "updates" in diff_v2 and "deletes" in diff_v2):
+        raise RuntimeError("dry_run diff_v2 missing expected keys")
 
     # validation failure on publish (bad tile)
     bad_payload = {
