@@ -6,6 +6,7 @@ from . import capability_catalog_controller
 from . import scene_controller
 from . import preference_controller
 from . import scene_template_controller
+from . import pack_controller
 from . import execute_controller
 from . import frontend_api
 from . import meta_controller
