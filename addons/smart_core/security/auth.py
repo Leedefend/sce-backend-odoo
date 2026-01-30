@@ -1,6 +1,8 @@
 # smart_core/security/auth.py
 import jwt
 import logging
+import os
+import time
 from odoo.http import request
 from odoo import http, SUPERUSER_ID, api
 from odoo.exceptions import AccessDenied
@@ -8,18 +10,63 @@ from odoo.modules.registry import Registry
 
 _logger = logging.getLogger(__name__)
 
-SECRET_KEY = "odoo-smart-core"
+DEFAULT_SECRET_KEY = "odoo-smart-core"
 ALGORITHM = "HS256"
+DEFAULT_EXP_SECONDS = 8 * 60 * 60  # 8h
+_warned_missing_secret = False
+
+
+def _get_secret_key():
+    global _warned_missing_secret
+    secret = os.getenv("SC_JWT_SECRET") or os.getenv("JWT_SECRET")
+    env = getattr(request, "env", None)
+    if not secret and env is not None:
+        try:
+            secret = env["ir.config_parameter"].sudo().get_param("sc.jwt.secret")
+        except Exception:
+            secret = None
+    if not secret:
+        if not _warned_missing_secret:
+            _logger.warning("JWT secret not configured; falling back to default secret.")
+            _warned_missing_secret = True
+        secret = DEFAULT_SECRET_KEY
+    return secret
+
+
+def get_token_exp_seconds():
+    env = getattr(request, "env", None)
+    raw = os.getenv("SC_JWT_EXP_SECONDS")
+    if not raw and env is not None:
+        try:
+            raw = env["ir.config_parameter"].sudo().get_param("sc.jwt.exp_seconds")
+        except Exception:
+            raw = None
+    try:
+        val = int(raw)
+        if val > 0:
+            return val
+    except Exception:
+        pass
+    return DEFAULT_EXP_SECONDS
 
 def generate_token(user_id):
-    payload = {"user_id": user_id}
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    now = int(time.time())
+    exp = now + get_token_exp_seconds()
+    payload = {"user_id": user_id, "iat": now, "exp": exp}
+    return jwt.encode(payload, _get_secret_key(), algorithm=ALGORITHM)
 
 def decode_token(token):
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return jwt.decode(
+            token,
+            _get_secret_key(),
+            algorithms=[ALGORITHM],
+            options={"require": ["exp", "iat"]},
+        )
     except jwt.ExpiredSignatureError:
         raise AccessDenied("Token 已过期")
+    except jwt.MissingRequiredClaimError:
+        raise AccessDenied("Token 缺少必要字段")
     except jwt.InvalidTokenError:
         raise AccessDenied("无效的 Token")
 
@@ -48,11 +95,11 @@ def get_user_from_token():
     else:
         raise AccessDenied("未提供 Token 或未登录 Session")
 
-def authenticate_user(login, password):
+def authenticate_user(login, password, db: str | None = None):
     """
     基于用户名和密码校验用户身份，并返回登录用户对象
     """
-    db = request.session.db or request.httprequest.args.get("db") or "odoo17-dev01"
+    db = db or request.session.db or request.httprequest.args.get("db") or "odoo17-dev01"
     if not db:
         raise AccessDenied("未指定数据库")
     registry = Registry(db)

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
+import time
 from typing import Dict, Any, Optional
 
 from odoo.http import request
 from ..core.base_handler import BaseIntentHandler
-from ..security.auth import authenticate_user, generate_token
+from ..security.auth import authenticate_user, generate_token, get_token_exp_seconds
 from ..core.handler_registry import HANDLER_REGISTRY  # 全局注册表
 
 _logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ class LoginHandler(BaseIntentHandler):
         # 2) 鉴权（自定义逻辑，建议内部做 active 检查 / 锁定策略 / 审计）
         try:
             # authenticate_user 可自行支持 db 选择（若你有多库登录）
-            user_dict = authenticate_user(login, password)
+            user_dict = authenticate_user(login, password, db=db)
         except Exception as e:
             # 避免回显敏感信息
             _logger.info("Login failed for %s: %s", login, e)
@@ -77,6 +78,7 @@ class LoginHandler(BaseIntentHandler):
         # 3) 生成访问令牌（JWT/HMAC 等）
         token = generate_token(user_id)
         token_type = "Bearer"
+        expires_at = int(time.time()) + get_token_exp_seconds()
 
         # 4) 汇总用户信息（sudo 只用于读取自身静态资料）
         env = _safe_env()
@@ -99,6 +101,7 @@ class LoginHandler(BaseIntentHandler):
         data = {
             "token": token,
             "token_type": token_type,
+            "expires_at": expires_at,
             "user": {
                 "id": user.id,
                 "name": user.name,
