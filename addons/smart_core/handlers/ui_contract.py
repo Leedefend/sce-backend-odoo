@@ -15,6 +15,9 @@ from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispat
 
 _logger = logging.getLogger(__name__)
 
+CONTRACT_VERSION = "v0.1"
+API_VERSION = "v1"
+
 VALID_VIEWS = {
     "form","tree","kanban","search","pivot","graph","calendar","gantt","activity","dashboard"
 }
@@ -153,12 +156,14 @@ class UiContractHandler(BaseIntentHandler):
         if if_none_match and if_none_match == etag and not force_refresh:
             return {"ok": True, "data": None,
                     "meta": {"intent": self.INTENT_TYPE, "op": op, "etag": etag,
-                             "version": self.VERSION, "elapsed_ms": int((time.time()-t0)*1000)},
+                             "version": self.VERSION, "elapsed_ms": int((time.time()-t0)*1000),
+                             "contract_version": CONTRACT_VERSION, "api_version": API_VERSION},
                     "code": 304}
 
         meta_out = dict(meta)
         meta_out.update({"intent": self.INTENT_TYPE, "op": op, "version": self.VERSION,
-                         "etag": etag, "elapsed_ms": int((time.time()-t0)*1000)})
+                         "etag": etag, "elapsed_ms": int((time.time()-t0)*1000),
+                         "contract_version": CONTRACT_VERSION, "api_version": API_VERSION})
         return {"ok": True, "data": data or {}, "meta": meta_out}
 
     # ---------------- op 实现 ----------------
@@ -305,6 +310,8 @@ class UiContractHandler(BaseIntentHandler):
             "menu_id": self._get_param(p, "menu_id","menuId","id"),
             "model": self._get_param(p, "model","model_code","modelCode"),
             "action_id": self._get_param(p, "action_id","actionId"),
+            "contract_version": CONTRACT_VERSION,
+            "api_version": API_VERSION,
         })
         return hashlib.sha1(etag_src.encode("utf-8")).hexdigest()
 

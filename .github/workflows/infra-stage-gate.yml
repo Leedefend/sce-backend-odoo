@@ -69,6 +69,13 @@ jobs:
       - name: Gate tp08
         run: |
           make ci.gate.tp08 DB=sc_demo
+      - name: Gate boundary audit
+        run: |
+          make gate.boundary
+
+      - name: Verify E2E contract
+        run: |
+          make verify.e2e.contract
 
       - name: Stage p2
         run: |
