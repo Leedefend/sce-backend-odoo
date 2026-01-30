@@ -73,6 +73,7 @@
             <field name="name">默认场景</field>
             <field name="layout">grid</field>
             <field name="is_default">1</field>
+            <field name="state">published</field>
             <field name="version">v0.1</field>
         </record>
 
