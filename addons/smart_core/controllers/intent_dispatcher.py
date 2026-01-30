@@ -134,6 +134,12 @@ class IntentDispatcher(http.Controller):
         intent_name = None  # 便于异常日志打印
 
         try:
+            _logger.info(
+                "[intent] controller=%s module=%s trace=%s",
+                self.__class__.__name__,
+                self.__class__.__module__,
+                trace_id,
+            )
             # ---------- 预检短路 ----------
             if request.httprequest.method == "OPTIONS":
                 return _respond_empty(status=204)

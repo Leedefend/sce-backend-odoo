@@ -9,23 +9,27 @@ import json
 from unittest.mock import Mock, patch
 
 from ..core.enhanced_intent_router import EnhancedIntentRouter, RouteRule
-from ..core.base_handler import BaseIntentHandler
 from ..core.middlewares import LoggingMiddleware, PerformanceMonitoringMiddleware
 
-class TestHandler(BaseIntentHandler):
+class TestHandler:
     """测试处理程序"""
-    INTENT_TYPE = "test.intent"
-    
-    def handle(self):
-        return {"message": "test"}, {}
+    def __init__(self, context, request=None):
+        self.context = context
+        self.request = request
 
-class TestParamHandler(BaseIntentHandler):
+    def run(self):
+        return {"ok": True, "data": {"message": "test"}, "meta": {}}
+
+class TestParamHandler:
     """带参数的测试处理程序"""
-    INTENT_TYPE = "test.param"
-    
-    def handle(self):
-        model_name = self.get_path_param("model_name", "default")
-        return {"model_name": model_name}, {}
+    def __init__(self, context, request=None):
+        self.context = context
+        self.request = request
+
+    def run(self):
+        params = getattr(self.context, "path_params", {}) or {}
+        model_name = params.get("model_name", "default")
+        return {"ok": True, "data": {"model_name": model_name}, "meta": {}}
 
 class TestEnhancedIntentRouter(unittest.TestCase):
     """增强意图路由器测试用例"""
@@ -47,7 +51,9 @@ class TestEnhancedIntentRouter(unittest.TestCase):
         
         # 验证路由已添加
         self.assertIn("test.route", self.router.routes)
-        route_rule = self.router.routes["test.route"]
+        route_rules = self.router.routes["test.route"]
+        self.assertTrue(route_rules)
+        route_rule = route_rules[0]
         self.assertEqual(route_rule.pattern, "test.route")
         self.assertEqual(route_rule.handler_cls, TestHandler)
     
@@ -194,8 +200,9 @@ class TestEnhancedIntentRouter(unittest.TestCase):
         
         # 验证路由已添加
         self.assertIn("test.versioned", self.router.routes)
-        route_rule = self.router.routes["test.versioned"]
-        self.assertEqual(route_rule.version, "1.0.0")
+        route_rules = self.router.routes["test.versioned"]
+        self.assertTrue(route_rules)
+        self.assertEqual(route_rules[0].version, "1.0.0")
 
 if __name__ == '__main__':
     unittest.main()

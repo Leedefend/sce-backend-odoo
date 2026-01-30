@@ -50,6 +50,11 @@ class BaseIntentHandler:
             self.params = self.payload.get("params") or {}
         else:
             self.params = self.payload or {}
+        # 路径参数（增强路由可用）
+        if isinstance(self.context, dict) and "path_params" in self.context:
+            self.path_params = self.context.get("path_params") or {}
+        else:
+            self.path_params = {}
     # ---- 权限校验（按需覆盖/增强）----
     def _check_permissions(self):
         # 这里可以做 REQUIRED_GROUPS 校验（按 xmlid 或 id）
@@ -117,3 +122,47 @@ class BaseIntentHandler:
             except TypeError:
                 # 最后退化：无参
                 return self.handle()
+
+    # ---- 轻量工具方法（供测试/增强 handler 使用）----
+    def err(self, code: int, message: str):
+        return {"ok": False, "error": {"code": code, "message": message}, "code": code}
+
+    def get_str(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        val = self.params.get(key) if isinstance(self.params, dict) else None
+        if val is None:
+            return default
+        return str(val)
+
+    def get_int(self, key: str, default: int = 0) -> int:
+        val = self.params.get(key) if isinstance(self.params, dict) else None
+        try:
+            return int(val)
+        except Exception:
+            return default
+
+    def get_bool(self, key: str, default: bool = False) -> bool:
+        val = self.params.get(key) if isinstance(self.params, dict) else None
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, (int, float)):
+            return bool(val)
+        if isinstance(val, str):
+            return val.strip().lower() in ("1", "true", "yes", "y", "on")
+        return default
+
+    def get_enum(self, key: str, allowed: list, default: Optional[str] = None) -> Optional[str]:
+        val = self.get_str(key, default)
+        if val in allowed:
+            return val
+        return default
+
+    def get_path_param(self, name: str, default: Any = None) -> Any:
+        if isinstance(self.path_params, dict) and name in self.path_params:
+            return self.path_params.get(name, default)
+        if isinstance(self.context, dict):
+            ctx_pp = self.context.get("path_params")
+            if isinstance(ctx_pp, dict) and name in ctx_pp:
+                return ctx_pp.get(name, default)
+        if isinstance(self.params, dict) and name in self.params:
+            return self.params.get(name, default)
+        return default
