@@ -1,0 +1,2 @@
+# Allowlist for smart_core boundary audit (one file per line).
+# Use sparingly; default should be empty.
