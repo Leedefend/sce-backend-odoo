@@ -7,6 +7,7 @@ from typing import Optional, Type, Dict, Any, Tuple
 import odoo
 from .base_handler import BaseIntentHandler
 from .handler_registry import HANDLER_REGISTRY  # import 时已完成注册
+from .extension_loader import load_extensions
 
 _logger = logging.getLogger(__name__)
 
@@ -110,6 +111,12 @@ def route_intent_payload(payload: dict, ctx) -> dict:
     控制器调用的统一入口。
     payload: { "intent": "...", "params": {...}, "context": {...}, "meta": {...} }
     """
+    # Load extension modules once (if configured)
+    try:
+        load_extensions(request.env, HANDLER_REGISTRY)
+    except Exception:
+        _logger.exception("[intent_router] extension loader failed")
+
     intent = (payload or {}).get("intent") or ""
     params = (payload or {}).get("params") or {}
     context = (payload or {}).get("context") or {}
