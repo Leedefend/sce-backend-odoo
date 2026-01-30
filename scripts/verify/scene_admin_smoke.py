@@ -90,6 +90,7 @@ def main():
     pref_get_url = f"{base_url}/api/preferences/get"
     pref_set_url = f"{base_url}/api/preferences/set"
     export_url = f"{base_url}/api/scenes/export"
+    import_url = f"{base_url}/api/scenes/import"
 
     # login (JWT)
     login_payload = {
@@ -148,6 +149,53 @@ def main():
     for scene in export_scenes:
         if "state" not in scene or "tiles" not in scene:
             raise RuntimeError("scenes.export scene missing state/tiles")
+
+    # dry-run import should return diff
+    status, dry_run_resp = _http_post_json(
+        import_url,
+        {"mode": "merge", "dry_run": True, "capabilities": export_data.get("capabilities"), "scenes": export_scenes},
+        headers=auth_header,
+    )
+    _require_ok(status, dry_run_resp, "scenes.import dry_run")
+    diff = (dry_run_resp.get("data") or {}).get("diff") or {}
+    if not isinstance(diff, dict) or "capabilities" not in diff or "scenes" not in diff:
+        raise RuntimeError("dry_run diff missing expected keys")
+
+    # validation failure on publish (bad tile)
+    bad_payload = {
+        "mode": "merge",
+        "capabilities": [
+            {
+                "key": "scene.validation.bad",
+                "name": "Scene Validation Bad",
+                "intent": "ui.contract",
+                "default_payload": {"action_xmlid": "invalid.action_xmlid"},
+            }
+        ],
+        "scenes": [
+            {
+                "code": "scene_validation_bad",
+                "name": "Scene Validation Bad",
+                "layout": "grid",
+                "state": "published",
+                "tiles": [
+                    {
+                        "capability_key": "scene.validation.bad",
+                        "sequence": 10,
+                    }
+                ],
+            }
+        ],
+    }
+    status, bad_resp = _http_post_json(import_url, bad_payload, headers=auth_header)
+    if status < 400 or bad_resp.get("ok") is True:
+        raise RuntimeError("expected validation error for bad scene import")
+    error = bad_resp.get("error") or {}
+    if error.get("code") != "VALIDATION_ERROR":
+        raise RuntimeError("expected VALIDATION_ERROR for bad scene import")
+    details = error.get("details") or {}
+    if not (isinstance(details, dict) and details.get("issues")):
+        raise RuntimeError("validation issues missing in error details")
 
     print("[scene_admin_smoke] PASS")
 
