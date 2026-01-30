@@ -58,6 +58,19 @@ def _http_post_json(url: str, payload: dict, headers: dict | None = None) -> tup
         raise RuntimeError(f"HTTP request failed: {e}") from e
 
 
+def _assert_error(resp: dict, code: str):
+    if resp.get("ok") is not False:
+        raise RuntimeError(f"expected error envelope, got ok={resp.get('ok')} resp={resp}")
+    err = resp.get("error") or {}
+    if err.get("code") != code:
+        raise RuntimeError(
+            f"error code mismatch: expected {code}, got {err.get('code')} resp={resp}"
+        )
+    meta = resp.get("meta") or {}
+    if not meta.get("trace_id"):
+        raise RuntimeError("missing meta.trace_id in error response")
+
+
 def _normalize_obj(obj):
     deny_keys = {
         "trace_id",
@@ -148,6 +161,14 @@ def main():
 
     auth_header = {"Authorization": f"Bearer {token}"}
 
+    # 1.1) negative: call system.init without token
+    status, init_noauth = _http_post_json(
+        intent_url, {"intent": "system.init", "params": {"db": db_name}}
+    )
+    if status < 400:
+        raise RuntimeError("system.init without token should fail")
+    _assert_error(init_noauth, "AUTH_REQUIRED")
+
     # 2) system.init
     init_payload = {"intent": "system.init", "params": {"db": db_name}}
     status, init_resp = _http_post_json(intent_url, init_payload, headers=auth_header)
@@ -171,6 +192,20 @@ def main():
     if status >= 400 or not data_resp.get("ok"):
         raise RuntimeError(f"api.data failed: {data_resp}")
 
+    # 5) logout and verify revoked token
+    status, logout_resp = _http_post_json(
+        intent_url, {"intent": "auth.logout", "params": {"db": db_name}}, headers=auth_header
+    )
+    if status >= 400 or not logout_resp.get("ok"):
+        raise RuntimeError(f"logout failed: {logout_resp}")
+
+    status, init_revoked = _http_post_json(
+        intent_url, {"intent": "system.init", "params": {"db": db_name}}, headers=auth_header
+    )
+    if status < 400:
+        raise RuntimeError("system.init with revoked token should fail")
+    _assert_error(init_revoked, "AUTH_REQUIRED")
+
     snapshot = {
         "meta": {
             "base_url": base_url,
@@ -179,9 +214,12 @@ def main():
             "captured_at": int(time.time()),
         },
         "login": login_resp,
+        "system_init_noauth": init_noauth,
         "system_init": init_resp,
         "ui_contract": contract_resp,
         "api_data": data_resp,
+        "logout": logout_resp,
+        "system_init_revoked": init_revoked,
     }
 
     normalized = _normalize_obj(snapshot)
