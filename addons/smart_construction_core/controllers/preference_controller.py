@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 
 from odoo.exceptions import AccessDenied
@@ -27,6 +27,12 @@ class PreferenceController(http.Controller):
                 "pinned_tile_keys": pref.pinned_tile_keys or [],
                 "recent_tiles": pref.recent_tiles or [],
             }
+            env["sc.scene.audit.log"].sudo().create({
+                "event": "update_pref",
+                "actor_user_id": user.id,
+                "payload_diff": payload,
+                "created_at": fields.Datetime.now(),
+            })
             return ok(payload, status=200)
         except AccessDenied as exc:
             return fail("AUTH_REQUIRED", str(exc), http_status=401)

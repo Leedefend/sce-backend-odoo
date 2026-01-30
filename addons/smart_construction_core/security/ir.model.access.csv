@@ -32,6 +32,10 @@ access_sc_scene_version_read,sc.scene.version.read,model_sc_scene_version,smart_
 access_sc_scene_version_admin,sc.scene.version.admin,model_sc_scene_version,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_user_pref_user,sc.user.preference.user,model_sc_user_preference,smart_construction_core.group_sc_internal_user,1,1,1,0
 access_sc_user_pref_admin,sc.user.preference.admin,model_sc_user_preference,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_scene_validation_read,sc.scene.validation.read,model_sc_scene_validation,smart_construction_core.group_sc_internal_user,1,0,0,0
+access_sc_scene_validation_admin,sc.scene.validation.admin,model_sc_scene_validation,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_scene_audit_read,sc.scene.audit.read,model_sc_scene_audit_log,smart_construction_core.group_sc_internal_user,1,0,0,0
+access_sc_scene_audit_admin,sc.scene.audit.admin,model_sc_scene_audit_log,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_project_budget_manager,project.budget.manager,model_project_budget,smart_construction_core.group_sc_cap_cost_manager,1,1,1,1
 access_sc_project_budget_user,project.budget.user,model_project_budget,smart_construction_core.group_sc_cap_cost_read,1,0,0,0
 access_sc_project_budget_boq_manager,project.budget.boq.line.manager,model_project_budget_boq_line,smart_construction_core.group_sc_cap_cost_manager,1,1,1,1
