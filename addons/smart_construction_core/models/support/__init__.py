@@ -27,3 +27,4 @@ from . import project_next_action_rule
 from . import portal_execute
 from . import scene_orchestration
 from . import pack_registry
+from . import subscription

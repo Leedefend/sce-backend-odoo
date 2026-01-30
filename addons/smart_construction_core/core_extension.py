@@ -32,13 +32,23 @@ def smart_core_extend_system_init(data, env, user):
     try:
         Cap = env["sc.capability"].sudo()
         Scene = env["sc.scene"].sudo()
+        Entitlement = env.get("sc.entitlement")
+        Usage = env.get("sc.usage.counter")
         caps = Cap.search([("active", "=", True)], order="sequence, id")
-        scenes = Scene.search([("active", "=", True), ("state", "=", "published")], order="sequence, id")
+        scenes = Scene.search([
+            ("active", "=", True),
+            ("state", "=", "published"),
+            ("is_test", "=", False),
+        ], order="sequence, id")
         data["capabilities"] = [
             rec.to_public_dict(user) for rec in caps if rec._user_allowed(user)
         ]
         data["scenes"] = [
             scene.to_public_dict(user) for scene in scenes if scene._user_allowed(user)
         ]
+        if Entitlement:
+            data["entitlements"] = Entitlement.get_payload(user)
+        if Usage:
+            data["usage"] = Usage.get_usage_map(user.company_id)
     except Exception as exc:
         _logger.warning("[smart_core_extend_system_init] failed: %s", exc)
