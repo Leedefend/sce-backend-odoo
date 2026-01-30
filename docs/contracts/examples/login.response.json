@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "data": {
+    "token": "<token>",
+    "token_type": "Bearer",
+    "expires_at": 1700000000,
+    "user": {
+      "id": 2,
+      "name": "Demo User",
+      "login": "demo",
+      "groups": [
+        "base.group_user"
+      ],
+      "lang": "zh_CN",
+      "tz": "Asia/Shanghai",
+      "company_id": 1,
+      "allowed_company_ids": [
+        1
+      ]
+    },
+    "system": {
+      "intents": [
+        {
+          "name": "system.init",
+          "description": "系统初始化"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "trace_id": "xxxxxx"
+  }
+}
