@@ -70,8 +70,8 @@ def check_intent_permission(ctx):
             cap = None
             if cap_key:
                 cap = env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
-            plan = Entitlement._resolve_plan(env.user.company_id) if Entitlement else None
-            flags = plan.feature_flags_json or {} if plan else {}
+            ent = Entitlement.get_effective(env.user.company_id)
+            flags = ent.effective_flags_json or {}
             if cap and cap.required_flag:
                 if not Entitlement._flag_enabled(flags, cap.required_flag):
                     raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}'}}")
