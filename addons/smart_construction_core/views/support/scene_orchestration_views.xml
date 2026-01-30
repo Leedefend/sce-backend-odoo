@@ -158,6 +158,104 @@
             <field name="view_mode">tree,form</field>
         </record>
 
+        <!-- Pack Registry -->
+        <record id="view_sc_pack_registry_tree" model="ir.ui.view">
+            <field name="name">sc.pack.registry.tree</field>
+            <field name="model">sc.pack.registry</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="pack_id"/>
+                    <field name="name"/>
+                    <field name="pack_version"/>
+                    <field name="vendor"/>
+                    <field name="channel"/>
+                    <field name="pack_type"/>
+                    <field name="industry_code"/>
+                    <field name="published_at"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_pack_registry_form" model="ir.ui.view">
+            <field name="name">sc.pack.registry.form</field>
+            <field name="model">sc.pack.registry</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="active"/>
+                            <field name="pack_id"/>
+                            <field name="name"/>
+                            <field name="pack_version"/>
+                            <field name="vendor"/>
+                            <field name="channel"/>
+                            <field name="pack_type"/>
+                            <field name="industry_code"/>
+                            <field name="depends_on_ids" widget="many2many_tags"/>
+                            <field name="pack_hash"/>
+                            <field name="signed_by"/>
+                            <field name="published_at" readonly="1"/>
+                            <field name="published_by" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="notes"/>
+                            <field name="changelog"/>
+                        </group>
+                        <group>
+                            <field name="payload_json" widget="json"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_sc_pack_registry" model="ir.actions.act_window">
+            <field name="name">交付包注册表</field>
+            <field name="res_model">sc.pack.registry</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Pack Installation -->
+        <record id="view_sc_pack_installation_tree" model="ir.ui.view">
+            <field name="name">sc.pack.installation.tree</field>
+            <field name="model">sc.pack.installation</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="pack_id"/>
+                    <field name="installed_version"/>
+                    <field name="status"/>
+                    <field name="installed_at"/>
+                    <field name="installed_by"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_pack_installation_form" model="ir.ui.view">
+            <field name="name">sc.pack.installation.form</field>
+            <field name="model">sc.pack.installation</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="pack_id"/>
+                            <field name="installed_version"/>
+                            <field name="status"/>
+                            <field name="installed_at" readonly="1"/>
+                            <field name="installed_by" readonly="1"/>
+                            <field name="source_hash"/>
+                        </group>
+                        <group>
+                            <field name="last_diff_json" widget="json"/>
+                            <field name="upgrade_history" widget="json"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_sc_pack_installation" model="ir.actions.act_window">
+            <field name="name">交付包安装记录</field>
+            <field name="res_model">sc.pack.installation</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
         <!-- Menu -->
         <menuitem id="menu_sc_scene_root"
                   name="场景与能力"
@@ -181,6 +279,18 @@
                   parent="menu_sc_scene_root"
                   action="action_sc_scene_version"
                   sequence="30"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_pack_registry"
+                  name="交付包注册表"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_pack_registry"
+                  sequence="40"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_pack_installation"
+                  name="交付包安装记录"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_pack_installation"
+                  sequence="50"
                   groups="smart_construction_core.group_sc_cap_config_admin"/>
     </data>
 </odoo>
