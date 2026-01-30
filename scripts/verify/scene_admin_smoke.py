@@ -87,6 +87,7 @@ def main():
 
     intent_url = f"{base_url}/api/v1/intent"
     scenes_url = f"{base_url}/api/scenes/my"
+    scenes_url_tests = f"{scenes_url}?include_tests=1"
     pref_get_url = f"{base_url}/api/preferences/get"
     pref_set_url = f"{base_url}/api/preferences/set"
     export_url = f"{base_url}/api/scenes/export"
@@ -106,103 +107,151 @@ def main():
         raise RuntimeError("login response missing token")
     auth_header = {"Authorization": f"Bearer {token}"}
 
-    # scenes.my should be OK and non-empty
-    status, scenes_resp = _http_get_json(scenes_url, headers=auth_header)
-    _require_ok(status, scenes_resp, "scenes.my")
-    scenes_data = scenes_resp.get("data") or {}
-    scenes = scenes_data.get("scenes") or []
-    if not scenes:
-        raise RuntimeError("scenes.my returned empty list")
-    default_scene = scenes_data.get("default_scene") or scenes[0].get("code")
-    if not default_scene:
-        raise RuntimeError("default_scene missing")
-
-    # preference set/get should round-trip
-    status, pref_set = _http_post_json(
-        pref_set_url, {"default_scene": default_scene}, headers=auth_header
-    )
-    _require_ok(status, pref_set, "preferences.set")
-    status, pref_get = _http_get_json(pref_get_url, headers=auth_header)
-    _require_ok(status, pref_get, "preferences.get")
-    pref_default = (pref_get.get("data") or {}).get("default_scene")
-    if pref_default != default_scene:
-        raise RuntimeError("preferences default_scene mismatch")
-
-    # scenes.my should reflect default_scene
-    status, scenes_resp2 = _http_get_json(scenes_url, headers=auth_header)
-    _require_ok(status, scenes_resp2, "scenes.my (after pref)")
-    if (scenes_resp2.get("data") or {}).get("default_scene") != default_scene:
-        raise RuntimeError("scenes.my default_scene did not update")
-
-    # export should be forbidden without auth
-    status, export_noauth = _http_get_json(export_url)
-    if status not in (401, 403):
-        raise RuntimeError(f"export without auth should be 401/403, got {status}")
-
-    # export with auth should succeed
-    status, export_resp = _http_get_json(export_url, headers=auth_header)
-    _require_ok(status, export_resp, "scenes.export")
-    export_data = export_resp.get("data") or {}
-    export_scenes = export_data.get("scenes") or []
-    if not export_scenes:
-        raise RuntimeError("scenes.export returned empty scenes")
-    for scene in export_scenes:
-        if "state" not in scene or "tiles" not in scene:
-            raise RuntimeError("scenes.export scene missing state/tiles")
-
-    # dry-run import should return diff
-    status, dry_run_resp = _http_post_json(
-        import_url,
-        {"mode": "merge", "dry_run": True, "capabilities": export_data.get("capabilities"), "scenes": export_scenes},
-        headers=auth_header,
-    )
-    _require_ok(status, dry_run_resp, "scenes.import dry_run")
-    data = dry_run_resp.get("data") or {}
-    diff = data.get("diff") or {}
-    diff_v2 = data.get("diff_v2") or {}
-    if not isinstance(diff, dict) or "capabilities" not in diff or "scenes" not in diff:
-        raise RuntimeError("dry_run diff missing expected keys")
-    if diff_v2 and not ("creates" in diff_v2 and "updates" in diff_v2 and "deletes" in diff_v2):
-        raise RuntimeError("dry_run diff_v2 missing expected keys")
-
-    # validation failure on publish (bad tile)
-    bad_payload = {
+    created_test = False
+    seed_payload = {
         "mode": "merge",
         "capabilities": [
             {
-                "key": "scene.validation.bad",
-                "name": "Scene Validation Bad",
-                "intent": "ui.contract",
-                "default_payload": {"action_xmlid": "invalid.action_xmlid"},
+                "key": "scene.smoke.default",
+                "name": "Scene Smoke Default",
+                "intent": "system.ping",
                 "is_test": True,
             }
         ],
         "scenes": [
             {
-                "code": "scene_validation_bad",
-                "name": "Scene Validation Bad",
+                "code": "scene_smoke_default",
+                "name": "Scene Smoke Default",
                 "layout": "grid",
                 "state": "published",
+                "is_test": True,
                 "tiles": [
                     {
-                        "capability_key": "scene.validation.bad",
+                        "capability_key": "scene.smoke.default",
                         "sequence": 10,
                     }
                 ],
             }
         ],
     }
-    status, bad_resp = _http_post_json(import_url, bad_payload, headers=auth_header)
-    if status < 400 or bad_resp.get("ok") is True:
-        raise RuntimeError("expected validation error for bad scene import")
-    error = bad_resp.get("error") or {}
-    if error.get("code") != "VALIDATION_ERROR":
-        raise RuntimeError("expected VALIDATION_ERROR for bad scene import")
-    details = error.get("details") or {}
-    if not (isinstance(details, dict) and details.get("issues")):
-        raise RuntimeError("validation issues missing in error details")
+    try:
+        # scenes.my should be OK and non-empty
+        status, scenes_resp = _http_get_json(scenes_url, headers=auth_header)
+        _require_ok(status, scenes_resp, "scenes.my")
+        scenes_data = scenes_resp.get("data") or {}
+        scenes = scenes_data.get("scenes") or []
+        if not scenes:
+            status, seed_resp = _http_post_json(import_url, seed_payload, headers=auth_header)
+            _require_ok(status, seed_resp, "scenes.import seed")
+            created_test = True
+            status, scenes_resp = _http_get_json(scenes_url_tests, headers=auth_header)
+            _require_ok(status, scenes_resp, "scenes.my (after seed)")
+            scenes_data = scenes_resp.get("data") or {}
+            scenes = scenes_data.get("scenes") or []
+            if not scenes:
+                raise RuntimeError("scenes.my returned empty list after seed")
+        default_scene = scenes_data.get("default_scene") or scenes[0].get("code")
+        if not default_scene:
+            raise RuntimeError("default_scene missing")
 
-    print("[scene_admin_smoke] PASS")
+        # preference set/get should round-trip
+        status, pref_set = _http_post_json(
+            pref_set_url, {"default_scene": default_scene}, headers=auth_header
+        )
+        _require_ok(status, pref_set, "preferences.set")
+        status, pref_get = _http_get_json(pref_get_url, headers=auth_header)
+        _require_ok(status, pref_get, "preferences.get")
+        pref_default = (pref_get.get("data") or {}).get("default_scene")
+        if pref_default != default_scene:
+            raise RuntimeError("preferences default_scene mismatch")
+
+        # scenes.my should reflect default_scene
+        status, scenes_resp2 = _http_get_json(scenes_url, headers=auth_header)
+        _require_ok(status, scenes_resp2, "scenes.my (after pref)")
+        if (scenes_resp2.get("data") or {}).get("default_scene") != default_scene:
+            raise RuntimeError("scenes.my default_scene did not update")
+
+        # export should be forbidden without auth
+        status, export_noauth = _http_get_json(export_url)
+        if status not in (401, 403):
+            raise RuntimeError(f"export without auth should be 401/403, got {status}")
+
+        # export with auth should succeed
+        status, export_resp = _http_get_json(export_url, headers=auth_header)
+        _require_ok(status, export_resp, "scenes.export")
+        export_data = export_resp.get("data") or {}
+        export_scenes = export_data.get("scenes") or []
+        if not export_scenes:
+            raise RuntimeError("scenes.export returned empty scenes")
+        for scene in export_scenes:
+            if "state" not in scene or "tiles" not in scene:
+                raise RuntimeError("scenes.export scene missing state/tiles")
+
+        # dry-run import should return diff
+        status, dry_run_resp = _http_post_json(
+            import_url,
+            {"mode": "merge", "dry_run": True, "capabilities": export_data.get("capabilities"), "scenes": export_scenes},
+            headers=auth_header,
+        )
+        _require_ok(status, dry_run_resp, "scenes.import dry_run")
+        data = dry_run_resp.get("data") or {}
+        diff = data.get("diff") or {}
+        diff_v2 = data.get("diff_v2") or {}
+        if not isinstance(diff, dict) or "capabilities" not in diff or "scenes" not in diff:
+            raise RuntimeError("dry_run diff missing expected keys")
+        if diff_v2 and not ("creates" in diff_v2 and "updates" in diff_v2 and "deletes" in diff_v2):
+            raise RuntimeError("dry_run diff_v2 missing expected keys")
+
+        # validation failure on publish (bad tile)
+        bad_payload = {
+            "mode": "merge",
+            "capabilities": [
+                {
+                    "key": "scene.validation.bad",
+                    "name": "Scene Validation Bad",
+                    "intent": "ui.contract",
+                    "default_payload": {"action_xmlid": "invalid.action_xmlid"},
+                    "is_test": True,
+                }
+            ],
+            "scenes": [
+                {
+                    "code": "scene_validation_bad",
+                    "name": "Scene Validation Bad",
+                    "layout": "grid",
+                    "state": "published",
+                    "is_test": True,
+                    "tiles": [
+                        {
+                            "capability_key": "scene.validation.bad",
+                            "sequence": 10,
+                        }
+                    ],
+                }
+            ],
+        }
+        status, bad_resp = _http_post_json(import_url, bad_payload, headers=auth_header)
+        if status < 400 or bad_resp.get("ok") is True:
+            raise RuntimeError("expected validation error for bad scene import")
+        error = bad_resp.get("error") or {}
+        if error.get("code") != "VALIDATION_ERROR":
+            raise RuntimeError("expected VALIDATION_ERROR for bad scene import")
+        details = error.get("details") or {}
+        if not (isinstance(details, dict) and details.get("issues")):
+            raise RuntimeError("validation issues missing in error details")
+
+        print("[scene_admin_smoke] PASS")
+    finally:
+        if created_test:
+            _http_post_json(
+                import_url,
+                {
+                    "cleanup_test": True,
+                    "capabilities": seed_payload.get("capabilities"),
+                    "scenes": seed_payload.get("scenes"),
+                },
+                headers=auth_header,
+            )
 
 
 if __name__ == "__main__":
