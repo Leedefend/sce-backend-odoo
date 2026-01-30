@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 
 from odoo.http import request
 from ..core.base_handler import BaseIntentHandler
-from ..security.auth import authenticate_user, generate_token, get_token_exp_seconds
+from ..security.auth import authenticate_user, generate_token, get_token_exp_seconds, get_user_from_token
 from ..core.handler_registry import HANDLER_REGISTRY  # 全局注册表
 
 _logger = logging.getLogger(__name__)
@@ -75,14 +75,15 @@ class LoginHandler(BaseIntentHandler):
 
         user_id = int(user_dict["id"])
 
-        # 3) 生成访问令牌（JWT/HMAC 等）
-        token = generate_token(user_id)
-        token_type = "Bearer"
-        expires_at = int(time.time()) + get_token_exp_seconds()
-
-        # 4) 汇总用户信息（sudo 只用于读取自身静态资料）
+        # 3) 汇总用户信息（sudo 只用于读取自身静态资料）
         env = _safe_env()
         user = env["res.users"].sudo().browse(user_id)
+
+        # 4) 生成访问令牌（JWT/HMAC 等）
+        token_version = int(getattr(user, "token_version", 0) or 0)
+        token = generate_token(user_id, token_version=token_version)
+        token_type = "Bearer"
+        expires_at = int(time.time()) + get_token_exp_seconds()
 
         # 可选：切换公司（若传入）
         if want_company_id:
@@ -140,6 +141,15 @@ class LogoutHandler(BaseIntentHandler):
                 request.session.logout()
         except Exception as e:
             _logger.debug("auth.logout: session.logout ignored: %s", e)
+
+        # 撤销当前 token（若存在且有效）
+        try:
+            user = get_user_from_token()
+            if user and user.exists():
+                user.sudo().write({"token_version": int(getattr(user, "token_version", 0) or 0) + 1})
+        except Exception:
+            # 无 token 或 token 已无效时保持幂等
+            pass
 
         # 如需“拉黑 token”（有 jti/redis 黑名单机制），可在此记录
         return {"message": "logged out"}, {}

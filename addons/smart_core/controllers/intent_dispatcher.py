@@ -3,14 +3,25 @@
 
 from odoo import http
 from odoo.http import request
-import logging, uuid, time
+import logging, time
 from typing import Dict, Any
 
 from werkzeug.exceptions import Unauthorized, Forbidden, BadRequest, NotFound
+from odoo.exceptions import AccessError, MissingError, AccessDenied
 
 from ..core.intent_router import route_intent_payload
 from ..core.context import RequestContext
 from ..security.intent_permission import check_intent_permission
+from ..core.trace import get_trace_id
+from ..core.exceptions import (
+    BAD_REQUEST,
+    AUTH_REQUIRED,
+    PERMISSION_DENIED,
+    INTENT_NOT_FOUND,
+    INTERNAL_ERROR,
+    map_http_status_to_code,
+    build_error_envelope,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -24,6 +35,9 @@ INTENT_ALIASES = {
     "system.init": "system.init",
     "auth.login": "login",
 }
+
+API_VERSION = "v1"
+CONTRACT_VERSION = "v0.1"
 
 def _canon_intent(name: str) -> str:
     return INTENT_ALIASES.get(name or "", name or "")
@@ -60,10 +74,12 @@ def _respond_json(payload: Any, *, status: int = 200):
     return request.make_json_response(payload, status=status, headers=_cors_headers())
 
 
-def _respond_empty(*, status: int = 204):
+def _respond_empty(*, status: int = 204, trace_id: str | None = None):
     """统一空返回（预检/304 等）"""
     resp = request.make_response("", status=status)
     resp.headers.update(_cors_headers())
+    if trace_id:
+        resp.headers["X-Trace-Id"] = trace_id
     return resp
 
 
@@ -76,6 +92,19 @@ def _is_anon_req(headers) -> bool:
     """宽松识别匿名意图触发标记"""
     v = (headers.get("X-Anonymous-Intent") or "").strip().lower()
     return v in {"1", "true", "yes", "on"}
+
+def _error_response(code: str, message: str, status: int, trace_id: str, details: dict | None = None):
+    payload = build_error_envelope(
+        code=code,
+        message=message,
+        trace_id=trace_id,
+        details=details,
+        api_version=API_VERSION,
+        contract_version=CONTRACT_VERSION,
+    )
+    resp = _respond_json(payload, status=status)
+    resp.headers["X-Trace-Id"] = trace_id
+    return resp
 
 # ===================== 结果归一化 =====================
 
@@ -130,7 +159,8 @@ class IntentDispatcher(http.Controller):
     @http.route('/api/v1/intent', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
     def handle_intent(self, **kwargs):
         ts0 = time.time()
-        trace_id = uuid.uuid4().hex[:12]
+        headers = request.httprequest.headers
+        trace_id = get_trace_id(headers)
         intent_name = None  # 便于异常日志打印
 
         try:
@@ -142,7 +172,7 @@ class IntentDispatcher(http.Controller):
             )
             # ---------- 预检短路 ----------
             if request.httprequest.method == "OPTIONS":
-                return _respond_empty(status=204)
+                return _respond_empty(status=204, trace_id=trace_id)
 
             # ---------- 读取并归一请求体 ----------
             body = request.httprequest.get_json(force=True, silent=True) or {}
@@ -153,11 +183,7 @@ class IntentDispatcher(http.Controller):
             intent_name_in = (body.get("intent") or "").strip()
             intent_name = _canon_intent(intent_name_in)
             if not intent_name:
-                return _respond_json(
-                    {"ok": False, "error": {"code": 400, "message": "缺少 intent 参数"}, "code": 400,
-                     "meta": {"trace_id": trace_id}},
-                    status=400
-                )
+                return _error_response(BAD_REQUEST, "缺少 intent 参数", 400, trace_id)
 
             # 兼容 params/payload
             params = body.get("params")
@@ -193,6 +219,8 @@ class IntentDispatcher(http.Controller):
             setattr(ctx, "trace_id", trace_id)
             setattr(ctx, "is_anonymous", is_anon)
             setattr(ctx, "db", params.get("db"))
+            # 将 trace_id 透传给 handler
+            context_in["trace_id"] = trace_id
 
             _logger.info(
                 "[intent] trace=%s intent=%s anon=%s db=%s params.keys=%s",
@@ -218,6 +246,7 @@ class IntentDispatcher(http.Controller):
             # ---------- 统一响应（含 CORS/ETag/304） ----------
             status = 200
             headers = _cors_headers()
+            headers["X-Trace-Id"] = trace_id
 
             if isinstance(result, dict):
                 status = int(result.get("code", 200)) if isinstance(result.get("code"), (int, str)) else 200
@@ -229,6 +258,25 @@ class IntentDispatcher(http.Controller):
                 meta.setdefault("trace_id", trace_id)
                 meta.setdefault("intent", intent_name)
                 meta.setdefault("elapsed_ms", int((time.time() - ts0) * 1000))
+                meta.setdefault("api_version", API_VERSION)
+                meta.setdefault("contract_version", CONTRACT_VERSION)
+
+                # 标准化错误结构
+                if result.get("ok") is False:
+                    err = result.get("error") if isinstance(result.get("error"), dict) else {}
+                    if "code" not in err or "message" not in err:
+                        result = build_error_envelope(
+                            code=map_http_status_to_code(status),
+                            message=str(err or "请求失败"),
+                            trace_id=trace_id,
+                            api_version=API_VERSION,
+                            contract_version=CONTRACT_VERSION,
+                        )
+                        status = status if status and status >= 400 else 500
+                    else:
+                        if isinstance(err.get("code"), int):
+                            err["code"] = map_http_status_to_code(status)
+                            result["error"] = err
 
             if status == 304:
                 # 304 必须空体，但要带 ETag/CORS 头
@@ -237,42 +285,18 @@ class IntentDispatcher(http.Controller):
                 return resp
 
             return request.make_json_response(result, status=status, headers=headers)
-
-        # ========== 更友好的错误分层 ==========
-        except BadRequest as e:
-            _logger.warning("[intent] trace=%s intent=%s 400 %s", trace_id, intent_name, str(e))
-            return _respond_json(
-                {"ok": False, "error": {"code": 400, "message": str(e)}, "code": 400,
-                 "meta": {"trace_id": trace_id, "elapsed_ms": int((time.time() - ts0) * 1000)}},
-                status=400
-            )
-        except Unauthorized as e:
-            _logger.info("[intent] trace=%s intent=%s 401 %s", trace_id, intent_name, str(e))
-            return _respond_json(
-                {"ok": False, "error": {"code": 401, "message": "未登录或登录失效"}, "code": 401,
-                 "meta": {"trace_id": trace_id, "elapsed_ms": int((time.time() - ts0) * 1000)}},
-                status=401
-            )
-        except Forbidden as e:
-            _logger.info("[intent] trace=%s intent=%s 403 %s", trace_id, intent_name, str(e))
-            return _respond_json(
-                {"ok": False, "error": {"code": 403, "message": "无权限访问该意图"}, "code": 403,
-                 "meta": {"trace_id": trace_id, "elapsed_ms": int((time.time() - ts0) * 1000)}},
-                status=403
-            )
-        except NotFound as e:
-            _logger.info("[intent] trace=%s intent=%s 404 %s", trace_id, intent_name, str(e))
-            return _respond_json(
-                {"ok": False, "error": {"code": 404, "message": str(e)}, "code": 404,
-                 "meta": {"trace_id": trace_id, "elapsed_ms": int((time.time() - ts0) * 1000)}},
-                status=404
-            )
+        except AccessDenied:
+            return _error_response(AUTH_REQUIRED, "认证失败或 token 无效", 401, trace_id)
+        except AccessError as e:
+            return _error_response(PERMISSION_DENIED, str(e), 403, trace_id)
+        except MissingError as e:
+            return _error_response(INTENT_NOT_FOUND, str(e), 404, trace_id)
+        except (BadRequest, Unauthorized, Forbidden, NotFound) as e:
+            status = getattr(e, "code", 400) or 400
+            code = map_http_status_to_code(status)
+            return _error_response(code, str(e), status, trace_id)
         except Exception as e:
-            _logger.exception("[intent] trace=%s intent=%s error=%s", trace_id, intent_name, str(e))
-            return _respond_json(
-                {"ok": False,
-                 "error": {"code": 500, "message": f"执行异常: {str(e)}"},
-                 "code": 500,
-                 "meta": {"trace_id": trace_id, "elapsed_ms": int((time.time() - ts0) * 1000)}},
-                status=500
-            )
+            if isinstance(e, AccessDenied) or e.__class__.__name__ == "AccessDenied":
+                return _error_response(AUTH_REQUIRED, "认证失败或 token 无效", 401, trace_id)
+            _logger.exception("intent dispatcher failed: %s", e)
+            return _error_response(INTERNAL_ERROR, "内部错误", 500, trace_id)
