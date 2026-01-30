@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 
-from odoo.exceptions import AccessDenied
+from odoo.exceptions import AccessDenied, UserError
 from odoo.addons.smart_core.security.auth import get_user_from_token
 
 from .api_base import fail, fail_from_exception, ok
@@ -19,6 +19,14 @@ def _has_admin(user):
     return user.has_group("smart_construction_core.group_sc_cap_config_admin") or user.has_group("base.group_system")
 
 
+def _parse_bool(val, default=False):
+    if val is None:
+        return default
+    if isinstance(val, bool):
+        return val
+    return str(val).strip().lower() in {"1", "true", "yes", "y"}
+
+
 class SceneTemplateController(http.Controller):
     @http.route("/api/scenes/export", type="http", auth="public", methods=["GET"], csrf=False)
     def export_scenes(self, **params):
@@ -29,6 +37,7 @@ class SceneTemplateController(http.Controller):
             env = request.env(user=user)
             code = (params.get("code") or "").strip()
             include_caps = str(params.get("include_caps") or "1").lower() in {"1", "true", "yes"}
+            contract_version = env["ir.config_parameter"].sudo().get_param("sc.contract.version", "v0.1")
 
             Scene = env["sc.scene"].sudo()
             domain = [("code", "=", code)] if code else []
@@ -89,9 +98,26 @@ class SceneTemplateController(http.Controller):
                     })
 
             payload = {
+                "pack_meta": {
+                    "pack_version": "v0.1",
+                    "generated_at": fields.Datetime.now(),
+                    "source_db": request.db,
+                    "modules": ["smart_construction_core"],
+                    "contract_version": contract_version,
+                },
+                "upgrade_policy": {
+                    "default_mode": "merge",
+                    "replace_confirm_required": True,
+                },
                 "capabilities": out_caps,
                 "scenes": out_scenes,
             }
+            env["sc.scene.audit.log"].sudo().create({
+                "event": "export",
+                "actor_user_id": user.id,
+                "payload_diff": {"scene_count": len(out_scenes), "cap_count": len(out_caps)},
+                "created_at": fields.Datetime.now(),
+            })
             return ok(payload, status=200)
         except AccessDenied as exc:
             return fail("PERMISSION_DENIED", str(exc), http_status=403)
@@ -109,10 +135,22 @@ class SceneTemplateController(http.Controller):
             mode = (body.get("mode") or "merge").strip().lower()
             if mode not in {"merge", "replace"}:
                 mode = "merge"
+            dry_run = _parse_bool(body.get("dry_run"), False)
+            confirm = _parse_bool(body.get("confirm"), False)
+            if mode == "replace" and not confirm and not dry_run:
+                return fail("BAD_REQUEST", "replace mode requires confirm=true", http_status=400)
 
             Cap = env["sc.capability"].sudo()
             Scene = env["sc.scene"].sudo()
             Tile = env["sc.scene.tile"].sudo()
+
+            diff = {
+                "mode": mode,
+                "dry_run": dry_run,
+                "capabilities": {"create": [], "update": []},
+                "scenes": {"create": [], "update": []},
+                "tiles": {"create": [], "update": [], "delete": []},
+            }
 
             # upsert capabilities
             caps_in = body.get("capabilities") or []
@@ -138,10 +176,14 @@ class SceneTemplateController(http.Controller):
                     "required_group_ids": [(6, 0, group_ids)],
                 }
                 if rec:
-                    rec.write(vals)
+                    diff["capabilities"]["update"].append(key)
+                    if not dry_run:
+                        rec.write(vals)
                 else:
                     vals["key"] = key
-                    Cap.create(vals)
+                    diff["capabilities"]["create"].append(key)
+                    if not dry_run:
+                        Cap.create(vals)
 
             # upsert scenes + tiles
             scenes_in = body.get("scenes") or []
@@ -150,21 +192,33 @@ class SceneTemplateController(http.Controller):
                 if not code:
                     continue
                 scene = Scene.search([("code", "=", code)], limit=1)
+                state_in = scene_in.get("state") or "draft"
+                write_state = "draft" if state_in == "published" else state_in
                 vals = {
                     "name": scene_in.get("name") or code,
                     "layout": scene_in.get("layout") or "grid",
                     "is_default": bool(scene_in.get("is_default")),
                     "version": scene_in.get("version") or "v0.1",
-                    "state": scene_in.get("state") or "draft",
+                    "state": write_state,
                 }
                 if scene:
-                    scene.write(vals)
+                    diff["scenes"]["update"].append(code)
+                    if not dry_run:
+                        scene.write(vals)
                 else:
                     vals["code"] = code
-                    scene = Scene.create(vals)
+                    diff["scenes"]["create"].append(code)
+                    if not dry_run:
+                        scene = Scene.create(vals)
+                    else:
+                        scene = Scene.new(vals)
 
                 if mode == "replace":
-                    Tile.search([("scene_id", "=", scene.id)]).unlink()
+                    existing_tiles = Tile.search([("scene_id", "=", scene.id)])
+                    if existing_tiles:
+                        diff["tiles"]["delete"].extend([t.id for t in existing_tiles])
+                    if not dry_run:
+                        existing_tiles.unlink()
 
                 tiles_in = scene_in.get("tiles") or []
                 for tile_in in tiles_in:
@@ -193,14 +247,43 @@ class SceneTemplateController(http.Controller):
                         ("capability_id", "=", cap.id),
                     ], limit=1)
                     if existing and mode == "merge":
-                        existing.write(tile_vals)
+                        diff["tiles"]["update"].append({"scene": code, "capability": cap_key})
+                        if not dry_run:
+                            existing.write(tile_vals)
                     else:
-                        Tile.create(tile_vals)
+                        diff["tiles"]["create"].append({"scene": code, "capability": cap_key})
+                        if not dry_run:
+                            Tile.create(tile_vals)
 
-                if scene.state == "published":
-                    scene.action_publish()
+                if not dry_run and state_in == "published":
+                    try:
+                        scene.with_context(publish_source="import").action_publish()
+                    except UserError:
+                        issues = []
+                        validation = env["sc.scene.validation"].sudo().search(
+                            [("scene_id", "=", scene.id)],
+                            order="checked_at desc, id desc",
+                            limit=1,
+                        )
+                        if validation:
+                            issues = validation.issues_json or []
+                        return fail(
+                            "VALIDATION_ERROR",
+                            "Scene validation failed",
+                            details={"scene": code, "issues": issues},
+                            http_status=400,
+                        )
 
-            return ok({"status": "ok"}, status=200)
+            if dry_run:
+                return ok({"status": "dry_run", "diff": diff}, status=200)
+
+            env["sc.scene.audit.log"].sudo().create({
+                "event": "import",
+                "actor_user_id": user.id,
+                "payload_diff": diff,
+                "created_at": fields.Datetime.now(),
+            })
+            return ok({"status": "ok", "diff": diff}, status=200)
         except AccessDenied as exc:
             return fail("PERMISSION_DENIED", str(exc), http_status=403)
         except Exception as exc:
