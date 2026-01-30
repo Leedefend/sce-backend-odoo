@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="base.user_admin" model="res.users">
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        </record>
+    </data>
+</odoo>
