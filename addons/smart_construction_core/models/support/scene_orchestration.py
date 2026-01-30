@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo import models, fields
+from odoo import models, fields, _
+from odoo.exceptions import UserError
 
 
 class ScCapability(models.Model):
@@ -125,14 +126,129 @@ class ScScene(models.Model):
             "tiles": tiles,
         }
 
+    def _get_allowed_intents(self):
+        param = self.env["ir.config_parameter"].sudo().get_param("sc.scene.allowed_intents", "")
+        if param:
+            return {v.strip() for v in param.split(",") if v.strip()}
+        return {
+            "ui.contract",
+            "api.data",
+            "execute_button",
+            "system.init",
+            "system.ping",
+            "login",
+        }
+
+    def _validate_scene(self):
+        self.ensure_one()
+        issues = []
+        allowed_intents = self._get_allowed_intents()
+        group_xmlids = {}
+        for tile in self.tile_ids.filtered(lambda t: t.active and t.visible):
+            cap = tile.capability_id
+            if not cap:
+                issues.append({
+                    "code": "CAPABILITY_MISSING",
+                    "message": _("Tile has no capability."),
+                    "detail": {"tile_id": tile.id},
+                })
+                continue
+            if not cap.active:
+                issues.append({
+                    "code": "CAPABILITY_INACTIVE",
+                    "message": _("Capability is inactive."),
+                    "detail": {"tile_id": tile.id, "capability_key": cap.key},
+                })
+            if cap.intent and cap.intent not in allowed_intents:
+                issues.append({
+                    "code": "INTENT_NOT_ALLOWED",
+                    "message": _("Capability intent is not allowed."),
+                    "detail": {"tile_id": tile.id, "capability_key": cap.key, "intent": cap.intent},
+                })
+
+            if cap.required_group_ids:
+                if not group_xmlids:
+                    group_xmlids = cap.required_group_ids.get_external_id()
+                missing = [
+                    g.id for g in cap.required_group_ids if not group_xmlids.get(g.id)
+                ]
+                if missing:
+                    issues.append({
+                        "code": "GROUP_XMLID_MISSING",
+                        "message": _("Required groups missing xmlid."),
+                        "detail": {"tile_id": tile.id, "capability_key": cap.key, "group_ids": missing},
+                    })
+
+            payload = tile._merge_payload(cap.default_payload or {}, tile.payload_override or {})
+            menu_xmlid = payload.get("menu_xmlid")
+            if menu_xmlid:
+                if not self.env.ref(menu_xmlid, raise_if_not_found=False):
+                    issues.append({
+                        "code": "MENU_XMLID_NOT_FOUND",
+                        "message": _("Menu xmlid not found."),
+                        "detail": {"tile_id": tile.id, "menu_xmlid": menu_xmlid},
+                    })
+            action_xmlid = payload.get("action_xmlid")
+            if action_xmlid:
+                if not self.env.ref(action_xmlid, raise_if_not_found=False):
+                    issues.append({
+                        "code": "ACTION_XMLID_NOT_FOUND",
+                        "message": _("Action xmlid not found."),
+                        "detail": {"tile_id": tile.id, "action_xmlid": action_xmlid},
+                    })
+            menu_id = payload.get("menu_id")
+            if menu_id:
+                if not self.env["ir.ui.menu"].browse(int(menu_id)).exists():
+                    issues.append({
+                        "code": "MENU_ID_NOT_FOUND",
+                        "message": _("Menu id not found."),
+                        "detail": {"tile_id": tile.id, "menu_id": menu_id},
+                    })
+            action_id = payload.get("action_id")
+            if action_id:
+                if not self.env["ir.actions.actions"].browse(int(action_id)).exists():
+                    issues.append({
+                        "code": "ACTION_ID_NOT_FOUND",
+                        "message": _("Action id not found."),
+                        "detail": {"tile_id": tile.id, "action_id": action_id},
+                    })
+
+        status = "pass" if not issues else "fail"
+        validation = self.env["sc.scene.validation"].sudo().create({
+            "scene_id": self.id,
+            "status": status,
+            "issues_json": issues,
+            "checked_at": fields.Datetime.now(),
+            "checked_by": self.env.user.id,
+        })
+        return status, issues, validation
+
+    def _log_audit(self, event, version=None, payload_diff=None):
+        self.env["sc.scene.audit.log"].sudo().create({
+            "event": event,
+            "actor_user_id": self.env.user.id,
+            "scene_id": self.id,
+            "version_id": version.id if version else None,
+            "payload_diff": payload_diff or {},
+            "created_at": fields.Datetime.now(),
+        })
+
     def action_publish(self):
         for scene in self:
+            status, issues, validation = scene._validate_scene()
+            if status != "pass":
+                raise UserError(
+                    _("Scene validation failed. Please fix issues before publish. (validation_id=%s)")
+                    % validation.id
+                )
             payload = scene._build_version_payload(scene.env.user)
             version_seq = scene.env["sc.scene.version"].search_count([("scene_id", "=", scene.id)]) + 1
             ver = scene.env["sc.scene.version"].create({
                 "scene_id": scene.id,
                 "version": f"v{version_seq}",
                 "payload_json": payload,
+                "note": self.env.context.get("publish_note") or "",
+                "source": self.env.context.get("publish_source") or "manual",
             })
             scene.write({
                 "active_version_id": ver.id,
@@ -140,9 +256,12 @@ class ScScene(models.Model):
                 "published_at": fields.Datetime.now(),
                 "published_by": scene.env.user.id,
             })
+            scene._log_audit("publish", version=ver)
 
     def action_archive(self):
         self.write({"state": "archived"})
+        for scene in self:
+            scene._log_audit("archive")
 
     def action_set_active_version(self, version_id):
         version = self.env["sc.scene.version"].browse(version_id)
@@ -153,6 +272,7 @@ class ScScene(models.Model):
                 "published_at": fields.Datetime.now(),
                 "published_by": self.env.user.id,
             })
+            version.scene_id._log_audit("rollback", version=version)
 
 
 class ScSceneTile(models.Model):
@@ -216,6 +336,11 @@ class ScSceneVersion(models.Model):
     scene_id = fields.Many2one("sc.scene", required=True, ondelete="cascade")
     version = fields.Char(required=True)
     payload_json = fields.Json(required=True)
+    note = fields.Char()
+    source = fields.Selection(
+        [("manual", "Manual"), ("import", "Import"), ("system", "System")],
+        default="manual",
+    )
     create_date = fields.Datetime(readonly=True)
     create_uid = fields.Many2one("res.users", readonly=True)
 
@@ -240,3 +365,38 @@ class ScUserPreference(models.Model):
         if pref:
             return pref
         return env["sc.user.preference"].sudo().create({"user_id": user.id})
+
+
+class ScSceneValidation(models.Model):
+    _name = "sc.scene.validation"
+    _description = "SC Scene Validation"
+    _order = "checked_at desc, id desc"
+
+    scene_id = fields.Many2one("sc.scene", required=True, ondelete="cascade")
+    status = fields.Selection([("pass", "Pass"), ("fail", "Fail")], required=True)
+    issues_json = fields.Json()
+    checked_at = fields.Datetime()
+    checked_by = fields.Many2one("res.users")
+
+
+class ScSceneAuditLog(models.Model):
+    _name = "sc.scene.audit.log"
+    _description = "SC Scene Audit Log"
+    _order = "created_at desc, id desc"
+
+    event = fields.Selection(
+        [
+            ("publish", "Publish"),
+            ("rollback", "Rollback"),
+            ("archive", "Archive"),
+            ("import", "Import"),
+            ("export", "Export"),
+            ("update_pref", "Update Preference"),
+        ],
+        required=True,
+    )
+    actor_user_id = fields.Many2one("res.users")
+    scene_id = fields.Many2one("sc.scene", ondelete="set null")
+    version_id = fields.Many2one("sc.scene.version", ondelete="set null")
+    payload_diff = fields.Json()
+    created_at = fields.Datetime()
