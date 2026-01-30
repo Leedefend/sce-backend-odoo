@@ -8,6 +8,7 @@ from . import preference_controller
 from . import scene_template_controller
 from . import pack_controller
 from . import execute_controller
+from . import ops_controller
 from . import frontend_api
 from . import meta_controller
 from . import portal_dashboard_controller
