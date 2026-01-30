@@ -787,7 +787,9 @@ audit.boundary.smart_core: guard.prod.forbid
 		--root "$(ROOT_DIR)" \
 		--scan-dir "addons/smart_core" \
 		--json-out "artifacts/boundary_audit/smart_core_hits.json" \
-		--md-out "docs/ops/boundary_audit_smart_core_20260130.md"
+		--md-out "docs/ops/boundary_audit_smart_core_20260130.md" \
+		--allowlist "scripts/audit/boundary_allowlist.txt" \
+		--fail-on-reverse-deps
 
 ci.gate.tp08: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit_tp08.sh
