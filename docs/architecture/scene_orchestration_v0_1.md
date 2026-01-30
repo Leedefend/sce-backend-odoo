@@ -18,11 +18,14 @@ Frontend renders tiles and executes intents; backend governs visibility, orderin
 - **layout**: `grid` / `flow`.
 - **target_groups**: groups allowed to see the scene.
 - **tiles**: ordered list of `sc.scene.tile`.
+- **state**: `draft` / `published` / `archived`.
+- **active_version**: published snapshot used by APIs.
 
 ### Tile (`sc.scene.tile`)
 - **capability**: link to `sc.capability`.
 - **payload_override**: JSON payload overrides capability defaults.
 - **title/subtitle/icon**: frontend display fields.
+- **layout hints**: `visible`, `span`, `min_width`, `badge`.
 
 ## Orchestration Flow
 1. User logs in and calls `/api/scenes/my`.
@@ -33,9 +36,19 @@ Frontend renders tiles and executes intents; backend governs visibility, orderin
 
 ### `GET /api/scenes/my`
 Returns scenes visible to the current user and their tiles.
+Only `published` scenes are returned; if a published version exists, the snapshot is served.
 
 ### `GET /api/capabilities/export`
 Exports the capability catalog (JSON).
+
+### `GET /api/scenes/export`
+Exports scenes (and optionally capabilities) as a template JSON.
+
+### `POST /api/scenes/import`
+Imports scene templates. Supports `mode=merge|replace`.
+
+### `POST /api/preferences/get` / `POST /api/preferences/set`
+Gets/sets user-level defaults (e.g., default scene, pinned tiles).
 
 ## Backend Extension Hooks
 If `sc.core.extension_modules` includes `smart_construction_core`, smart_core `system.init`
