@@ -121,6 +121,8 @@ class PackController(http.Controller):
     def _install_pack(self, user, env, pack_id, mode, dry_run, confirm, strict):
         Registry = env["sc.pack.registry"].sudo()
         Installation = env["sc.pack.installation"].sudo()
+        Usage = env.get("sc.usage.counter")
+        Entitlement = env.get("sc.entitlement")
         record = Registry.search([("pack_id", "=", pack_id)], limit=1)
         if not record:
             return {"ok": False, "http_status": 404, "error": {"code": "PACK_NOT_FOUND", "message": "Pack not found"}}
@@ -138,6 +140,26 @@ class PackController(http.Controller):
                 "error": {"code": "DEPENDENCY_MISSING", "message": "Pack dependencies not installed", "details": {"missing": missing}},
             }
 
+        if Entitlement and not dry_run:
+            ent = Entitlement.get_effective(user.company_id)
+            limits = ent.effective_limits_json or {}
+            max_packs = int(limits.get("max_packs_installed") or 0)
+            if max_packs:
+                current = Installation.search_count([
+                    ("company_id", "=", user.company_id.id),
+                    ("status", "in", ("installed", "upgraded")),
+                ])
+                if current >= max_packs:
+                    return {
+                        "ok": False,
+                        "http_status": 403,
+                        "error": {
+                            "code": "LIMIT_EXCEEDED",
+                            "message": "pack installation limit exceeded",
+                            "details": {"limit_key": "max_packs_installed", "current": current, "limit": max_packs},
+                        },
+                    }
+
         payload = record.payload_json or {}
         payload["mode"] = mode
         payload["dry_run"] = dry_run
@@ -151,6 +173,7 @@ class PackController(http.Controller):
         if not dry_run:
             inst = Installation.search([("pack_id", "=", record.id)], limit=1)
             vals = {
+                "company_id": user.company_id.id,
                 "pack_id": record.id,
                 "installed_version": record.pack_version,
                 "installed_at": fields.Datetime.now(),
@@ -170,6 +193,8 @@ class PackController(http.Controller):
                 inst.write(vals)
             else:
                 Installation.create(vals)
+            if Usage:
+                Usage.bump(user.company_id, "packs_installed", 1)
 
         return {"ok": True, "http_status": 200, "data": data}
 

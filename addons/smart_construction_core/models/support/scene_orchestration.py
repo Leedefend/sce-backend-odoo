@@ -350,6 +350,26 @@ class ScScene(models.Model):
 
     def action_publish(self):
         for scene in self:
+            Entitlement = scene.env.get("sc.entitlement")
+            Usage = scene.env.get("sc.usage.counter")
+            if Entitlement:
+                ent = Entitlement.get_effective(scene.env.user.company_id)
+                limits = ent.effective_limits_json or {}
+                max_scenes = int(limits.get("max_scenes") or 0)
+                if max_scenes:
+                    current = None
+                    if Usage:
+                        current = Usage.get_usage_map(scene.env.user.company_id).get("scenes_published")
+                    if current is None:
+                        current = scene.env["sc.scene"].search_count([
+                            ("active", "=", True),
+                            ("state", "=", "published"),
+                            ("is_test", "=", False),
+                        ])
+                    if current >= max_scenes:
+                        raise UserError(
+                            _("LIMIT_EXCEEDED: max_scenes=%s current=%s") % (max_scenes, current)
+                        )
             status, issues, validation = scene._validate_scene()
             if status != "pass":
                 raise UserError(
@@ -372,6 +392,8 @@ class ScScene(models.Model):
                 "published_by": scene.env.user.id,
             })
             scene._log_audit("publish", version=ver)
+            if Usage:
+                Usage.bump(scene.env.user.company_id, "scenes_published", 1)
 
     def action_archive(self):
         self.write({"state": "archived"})

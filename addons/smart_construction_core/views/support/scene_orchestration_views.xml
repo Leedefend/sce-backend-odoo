@@ -225,6 +225,7 @@
             <field name="model">sc.pack.installation</field>
             <field name="arch" type="xml">
                 <tree>
+                    <field name="company_id"/>
                     <field name="pack_id"/>
                     <field name="installed_version"/>
                     <field name="status"/>
@@ -240,6 +241,7 @@
                 <form>
                     <sheet>
                         <group>
+                            <field name="company_id"/>
                             <field name="pack_id"/>
                             <field name="installed_version"/>
                             <field name="status"/>
