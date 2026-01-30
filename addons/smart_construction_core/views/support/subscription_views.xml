@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Subscription Plan -->
+        <record id="view_sc_subscription_plan_tree" model="ir.ui.view">
+            <field name="name">sc.subscription.plan.tree</field>
+            <field name="model">sc.subscription.plan</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="sequence"/>
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_subscription_plan_form" model="ir.ui.view">
+            <field name="name">sc.subscription.plan.form</field>
+            <field name="model">sc.subscription.plan</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="feature_flags_json" widget="json"/>
+                            <field name="limits_json" widget="json"/>
+                            <field name="description"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_sc_subscription_plan" model="ir.actions.act_window">
+            <field name="name">订阅套餐</field>
+            <field name="res_model">sc.subscription.plan</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Subscription -->
+        <record id="view_sc_subscription_tree" model="ir.ui.view">
+            <field name="name">sc.subscription.tree</field>
+            <field name="model">sc.subscription</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="company_id"/>
+                    <field name="plan_id"/>
+                    <field name="state"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="is_trial"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_subscription_form" model="ir.ui.view">
+            <field name="name">sc.subscription.form</field>
+            <field name="model">sc.subscription</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="plan_id"/>
+                            <field name="state"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="is_trial"/>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_sc_subscription" model="ir.actions.act_window">
+            <field name="name">订阅实例</field>
+            <field name="res_model">sc.subscription</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Entitlement -->
+        <record id="view_sc_entitlement_tree" model="ir.ui.view">
+            <field name="name">sc.entitlement.tree</field>
+            <field name="model">sc.entitlement</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="company_id"/>
+                    <field name="plan_id"/>
+                    <field name="updated_at"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_entitlement_form" model="ir.ui.view">
+            <field name="name">sc.entitlement.form</field>
+            <field name="model">sc.entitlement</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="plan_id"/>
+                            <field name="updated_at"/>
+                        </group>
+                        <group>
+                            <field name="effective_flags_json" widget="json"/>
+                            <field name="effective_limits_json" widget="json"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_sc_entitlement" model="ir.actions.act_window">
+            <field name="name">授权快照</field>
+            <field name="res_model">sc.entitlement</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Usage Counter -->
+        <record id="view_sc_usage_counter_tree" model="ir.ui.view">
+            <field name="name">sc.usage.counter.tree</field>
+            <field name="model">sc.usage.counter</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="company_id"/>
+                    <field name="key"/>
+                    <field name="value"/>
+                    <field name="updated_at"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_usage_counter_form" model="ir.ui.view">
+            <field name="name">sc.usage.counter.form</field>
+            <field name="model">sc.usage.counter</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="key"/>
+                            <field name="value"/>
+                            <field name="updated_at"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_sc_usage_counter" model="ir.actions.act_window">
+            <field name="name">用量统计</field>
+            <field name="res_model">sc.usage.counter</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Ops Job -->
+        <record id="view_sc_ops_job_tree" model="ir.ui.view">
+            <field name="name">sc.ops.job.tree</field>
+            <field name="model">sc.ops.job</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="job_type"/>
+                    <field name="status"/>
+                    <field name="started_at"/>
+                    <field name="finished_at"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_ops_job_form" model="ir.ui.view">
+            <field name="name">sc.ops.job.form</field>
+            <field name="model">sc.ops.job</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="job_type"/>
+                            <field name="status"/>
+                            <field name="started_at"/>
+                            <field name="finished_at"/>
+                            <field name="trace_id"/>
+                        </group>
+                        <group>
+                            <field name="payload_json" widget="json"/>
+                            <field name="result_json" widget="json"/>
+                            <field name="error_message"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="action_sc_ops_job" model="ir.actions.act_window">
+            <field name="name">运营任务</field>
+            <field name="res_model">sc.ops.job</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Menu -->
+        <menuitem id="menu_sc_subscription_plan"
+                  name="订阅套餐"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_subscription_plan"
+                  sequence="60"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_subscription"
+                  name="订阅实例"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_subscription"
+                  sequence="61"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_entitlement"
+                  name="授权快照"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_entitlement"
+                  sequence="62"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_usage_counter"
+                  name="用量统计"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_usage_counter"
+                  sequence="63"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_ops_job"
+                  name="运营任务"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_ops_job"
+                  sequence="64"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+    </data>
+</odoo>

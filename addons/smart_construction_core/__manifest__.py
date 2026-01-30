@@ -28,6 +28,7 @@
         'data/sc_extension_params.xml',
         'data/sc_scene_seed.xml',
         'data/sc_cap_config_admin_user.xml',
+        'data/sc_subscription_default.xml',
 
         # 安全
         'security/sc_groups.xml',
@@ -95,6 +96,7 @@
         'views/support/project_stage_requirements_views.xml',
         'views/support/project_stage_requirement_item_views.xml',
         'views/support/scene_orchestration_views.xml',
+        'views/support/subscription_views.xml',
         'views/web_login_views.xml',
         'views/login_templates.xml',
         'views/signup_templates.xml',
