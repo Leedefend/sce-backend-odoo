@@ -5,6 +5,7 @@ from odoo.http import request
 import logging
 import json
 import uuid
+from odoo.exceptions import AccessError
 
 from ..core.intent_router import route_intent_payload   # ✅ 改用结构化路由
 from ..core.enhanced_intent_router import route_intent_enhanced, enhanced_router  # ✅ 增强路由（可选）
@@ -76,6 +77,19 @@ class IntentDispatcher(http.Controller):
             # 其余：直接透传 Handler 的结构（不再外层包 {status,message,data}）
             return request.make_json_response(result, status=status, headers=headers)
 
+        except AccessError as e:
+            msg = str(e)
+            code = 403
+            err_code = "PERMISSION_DENIED"
+            if msg.startswith("FEATURE_DISABLED"):
+                err_code = "FEATURE_DISABLED"
+            elif msg.startswith("LIMIT_EXCEEDED"):
+                err_code = "LIMIT_EXCEEDED"
+                code = 429
+            return request.make_json_response(
+                {"ok": False, "error": {"code": err_code, "message": msg}, "code": code},
+                status=code,
+            )
         except Exception as e:
             _logger.exception("Intent 处理异常：%s", str(e))
             return request.make_json_response(

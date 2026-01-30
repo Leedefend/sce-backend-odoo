@@ -61,4 +61,21 @@ def check_intent_permission(ctx):
         if action.groups_id and not (action.groups_id & env.user.groups_id):
             raise AccessError(f"用户无权执行动作 {action.name}")
 
+    # ✅ 授权/功能开关检查（若启用）
+    try:
+        Entitlement = env.get("sc.entitlement")
+        if Entitlement:
+            params = ctx.params.get("params") or {}
+            cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
+            cap = None
+            if cap_key:
+                cap = env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
+            plan = Entitlement._resolve_plan(env.user.company_id) if Entitlement else None
+            flags = plan.feature_flags_json or {} if plan else {}
+            if cap and cap.required_flag:
+                if not Entitlement._flag_enabled(flags, cap.required_flag):
+                    raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}'}}")
+    except Exception:
+        raise
+
     return True

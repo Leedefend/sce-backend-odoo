@@ -17,6 +17,7 @@ class ScCapability(models.Model):
     ui_label = fields.Char()
     ui_hint = fields.Char()
     intent = fields.Char(help="Intent to execute, e.g. ui.contract / api.data / execute_button")
+    required_flag = fields.Char(help="Entitlement flag required to use this capability")
     default_payload = fields.Json()
     required_group_ids = fields.Many2many("res.groups", string="Required Groups")
     tags = fields.Char(help="Comma-separated tags, e.g. project,contract,cost")
@@ -60,6 +61,7 @@ class ScCapability(models.Model):
             "ui_label": self.ui_label or self.name,
             "ui_hint": self.ui_hint or "",
             "intent": self.intent or "",
+            "required_flag": self.required_flag or "",
             "default_payload": payload,
             "required_groups": [
                 group_xmlids.get(g.id)
