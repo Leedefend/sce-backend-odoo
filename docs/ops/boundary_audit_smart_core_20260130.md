@@ -1,11 +1,12 @@
 # smart_core boundary audit
 
 - Scan root: addons/smart_core
-- Generated at (UTC): 2026-01-30T01:27:16.267446Z
+- Generated at (UTC): 2026-01-30T01:31:39.920261Z
 - Files scanned: 115
 
 ## Keyword Hits
-- addons/smart_core/controllers/frontend_api.py
+- None
+
 
 ## Reverse Dependency Hits
 - None
