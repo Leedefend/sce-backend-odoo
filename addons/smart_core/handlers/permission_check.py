@@ -22,8 +22,8 @@ class PermissionCheckHandler(BaseIntentHandler):
         Entitlement = self.env.get("sc.entitlement")
         if not Entitlement:
             return {"ok": True, "data": {"allow": True}}
-        plan = Entitlement._resolve_plan(self.env.user.company_id) if Entitlement else None
-        flags = plan.feature_flags_json or {} if plan else {}
+        ent = Entitlement.get_effective(self.env.user.company_id) if Entitlement else None
+        flags = ent.effective_flags_json or {} if ent else {}
         cap = None
         if cap_key:
             cap = self.env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
