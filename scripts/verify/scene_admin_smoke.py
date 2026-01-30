@@ -78,6 +78,17 @@ def _require_ok(status: int, payload: dict, label: str):
     if status >= 400 or not payload.get("ok"):
         raise RuntimeError(f"{label} failed: status={status} payload={payload}")
 
+def _cleanup_test_pack(import_url: str, auth_header: dict, payload: dict) -> None:
+    _http_post_json(
+        import_url,
+        {
+            "cleanup_test": True,
+            "capabilities": payload.get("capabilities"),
+            "scenes": payload.get("scenes"),
+        },
+        headers=auth_header,
+    )
+
 
 def main():
     base_url = _get_base_url()
@@ -128,6 +139,33 @@ def main():
                 "tiles": [
                     {
                         "capability_key": "scene.smoke.default",
+                        "sequence": 10,
+                    }
+                ],
+            }
+        ],
+    }
+    bad_payload = {
+        "mode": "merge",
+        "capabilities": [
+            {
+                "key": "scene.validation.bad",
+                "name": "Scene Validation Bad",
+                "intent": "ui.contract",
+                "default_payload": {"action_xmlid": "invalid.action_xmlid"},
+                "is_test": True,
+            }
+        ],
+        "scenes": [
+            {
+                "code": "scene_validation_bad",
+                "name": "Scene Validation Bad",
+                "layout": "grid",
+                "state": "published",
+                "is_test": True,
+                "tiles": [
+                    {
+                        "capability_key": "scene.validation.bad",
                         "sequence": 10,
                     }
                 ],
@@ -203,33 +241,7 @@ def main():
             raise RuntimeError("dry_run diff_v2 missing expected keys")
 
         # validation failure on publish (bad tile)
-        bad_payload = {
-            "mode": "merge",
-            "capabilities": [
-                {
-                    "key": "scene.validation.bad",
-                    "name": "Scene Validation Bad",
-                    "intent": "ui.contract",
-                    "default_payload": {"action_xmlid": "invalid.action_xmlid"},
-                    "is_test": True,
-                }
-            ],
-            "scenes": [
-                {
-                    "code": "scene_validation_bad",
-                    "name": "Scene Validation Bad",
-                    "layout": "grid",
-                    "state": "published",
-                    "is_test": True,
-                    "tiles": [
-                        {
-                            "capability_key": "scene.validation.bad",
-                            "sequence": 10,
-                        }
-                    ],
-                }
-            ],
-        }
+        _cleanup_test_pack(import_url, auth_header, bad_payload)
         status, bad_resp = _http_post_json(import_url, bad_payload, headers=auth_header)
         if status < 400 or bad_resp.get("ok") is True:
             raise RuntimeError("expected validation error for bad scene import")
@@ -243,15 +255,8 @@ def main():
         print("[scene_admin_smoke] PASS")
     finally:
         if created_test:
-            _http_post_json(
-                import_url,
-                {
-                    "cleanup_test": True,
-                    "capabilities": seed_payload.get("capabilities"),
-                    "scenes": seed_payload.get("scenes"),
-                },
-                headers=auth_header,
-            )
+            _cleanup_test_pack(import_url, auth_header, seed_payload)
+        _cleanup_test_pack(import_url, auth_header, bad_payload)
 
 
 if __name__ == "__main__":
