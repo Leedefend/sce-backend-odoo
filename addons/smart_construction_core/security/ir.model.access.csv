@@ -28,6 +28,10 @@ access_sc_scene_read,sc.scene.read,model_sc_scene,smart_construction_core.group_
 access_sc_scene_admin,sc.scene.admin,model_sc_scene,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_scene_tile_read,sc.scene.tile.read,model_sc_scene_tile,smart_construction_core.group_sc_internal_user,1,0,0,0
 access_sc_scene_tile_admin,sc.scene.tile.admin,model_sc_scene_tile,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_scene_version_read,sc.scene.version.read,model_sc_scene_version,smart_construction_core.group_sc_internal_user,1,0,0,0
+access_sc_scene_version_admin,sc.scene.version.admin,model_sc_scene_version,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_user_pref_user,sc.user.preference.user,model_sc_user_preference,smart_construction_core.group_sc_internal_user,1,1,1,0
+access_sc_user_pref_admin,sc.user.preference.admin,model_sc_user_preference,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_project_budget_manager,project.budget.manager,model_project_budget,smart_construction_core.group_sc_cap_cost_manager,1,1,1,1
 access_sc_project_budget_user,project.budget.user,model_project_budget,smart_construction_core.group_sc_cap_cost_read,1,0,0,0
 access_sc_project_budget_boq_manager,project.budget.boq.line.manager,model_project_budget_boq_line,smart_construction_core.group_sc_cap_cost_manager,1,1,1,1

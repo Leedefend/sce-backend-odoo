@@ -17,13 +17,19 @@ class SceneController(http.Controller):
             user = get_user_from_token()
             env = request.env(user=user)
             Scene = env["sc.scene"].sudo()
-            scenes = Scene.search([("active", "=", True)], order="sequence, id")
+            scenes = Scene.search([("active", "=", True), ("state", "=", "published")], order="sequence, id")
             out = [scene.to_public_dict(user) for scene in scenes if scene._user_allowed(user)]
-            default_scene = next((s for s in out if s.get("is_default")), None)
+            pref = env["sc.user.preference"].sudo().search([("user_id", "=", user.id)], limit=1)
+            default_scene_code = None
+            if pref and pref.default_scene_id:
+                default_scene_code = pref.default_scene_id.code
+            if not default_scene_code:
+                default_scene = next((s for s in out if s.get("is_default")), None)
+                default_scene_code = default_scene["code"] if default_scene else None
             payload = {
                 "scenes": out,
                 "count": len(out),
-                "default_scene": default_scene["code"] if default_scene else None,
+                "default_scene": default_scene_code,
             }
             return ok(payload, status=200)
         except AccessDenied as exc:

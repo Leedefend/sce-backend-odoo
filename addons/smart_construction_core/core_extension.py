@@ -28,7 +28,7 @@ def smart_core_extend_system_init(data, env, user):
         Cap = env["sc.capability"].sudo()
         Scene = env["sc.scene"].sudo()
         caps = Cap.search([("active", "=", True)], order="sequence, id")
-        scenes = Scene.search([("active", "=", True)], order="sequence, id")
+        scenes = Scene.search([("active", "=", True), ("state", "=", "published")], order="sequence, id")
         data["capabilities"] = [
             rec.to_public_dict(user) for rec in caps if rec._user_allowed(user)
         ]
