@@ -178,6 +178,7 @@ class ScScene(models.Model):
     code = fields.Char(required=True, index=True)
     layout = fields.Selection([("grid", "Grid"), ("flow", "Flow")], default="grid")
     is_default = fields.Boolean(default=False)
+    is_test = fields.Boolean(default=False, help="Mark as test-only scene (hidden by default).")
     version = fields.Char(default="v0.1")
     state = fields.Selection(
         [("draft", "Draft"), ("published", "Published"), ("archived", "Archived")],
@@ -215,6 +216,7 @@ class ScScene(models.Model):
             "name": self.name,
             "layout": self.layout,
             "is_default": bool(self.is_default),
+            "is_test": bool(self.is_test),
             "version": self.version,
             "tiles": tiles,
         }
@@ -232,6 +234,7 @@ class ScScene(models.Model):
             "name": self.name,
             "layout": self.layout,
             "is_default": bool(self.is_default),
+            "is_test": bool(self.is_test),
             "version": self.version,
             "tiles": tiles,
         }
