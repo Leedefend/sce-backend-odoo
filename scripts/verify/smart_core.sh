@@ -49,9 +49,31 @@ def load(path):
 def normalize(payload):
     if not isinstance(payload, dict):
         return payload
-    payload = dict(payload)
+    payload = json.loads(json.dumps(payload))
     for key in ("exported_at", "trace_id"):
         payload.pop(key, None)
+    ui = payload.get("ui_contract_raw") or payload.get("ui_contract")
+    if isinstance(ui, dict):
+        validator = ui.get("validator")
+        if isinstance(validator, dict):
+            validator.pop("version", None)
+            rules = validator.get("field_rules")
+            if isinstance(rules, dict):
+                for rule in rules.values():
+                    if not isinstance(rule, dict):
+                        continue
+                    domain_raw = rule.get("domain_raw")
+                    if not isinstance(domain_raw, list):
+                        continue
+                    for cond in domain_raw:
+                        if not (isinstance(cond, list) and len(cond) == 3):
+                            continue
+                        op = cond[1]
+                        val = cond[2]
+                        if op in ("in", "not in") and isinstance(val, list) and all(
+                            isinstance(x, (str, int, float)) for x in val
+                        ):
+                            cond[2] = sorted(val)
     return payload
 
 outdir = os.environ["OUTDIR"]
@@ -95,9 +117,31 @@ def load(path):
 def normalize(payload):
     if not isinstance(payload, dict):
         return payload
-    payload = dict(payload)
+    payload = json.loads(json.dumps(payload))
     for key in ("exported_at", "trace_id"):
         payload.pop(key, None)
+    ui = payload.get("ui_contract_raw") or payload.get("ui_contract")
+    if isinstance(ui, dict):
+        validator = ui.get("validator")
+        if isinstance(validator, dict):
+            validator.pop("version", None)
+            rules = validator.get("field_rules")
+            if isinstance(rules, dict):
+                for rule in rules.values():
+                    if not isinstance(rule, dict):
+                        continue
+                    domain_raw = rule.get("domain_raw")
+                    if not isinstance(domain_raw, list):
+                        continue
+                    for cond in domain_raw:
+                        if not (isinstance(cond, list) and len(cond) == 3):
+                            continue
+                        op = cond[1]
+                        val = cond[2]
+                        if op in ("in", "not in") and isinstance(val, list) and all(
+                            isinstance(x, (str, int, float)) for x in val
+                        ):
+                            cond[2] = sorted(val)
     return payload
 
 outdir = os.environ["OUTDIR"]

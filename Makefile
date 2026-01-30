@@ -394,7 +394,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
-.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.portal.dashboard verify.portal.execute_button verify.smart_core verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
+.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.portal.dashboard verify.portal.execute_button verify.smart_core verify.e2e.contract verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
 verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo: guard.prod.forbid check-compose-project check-compose-env
@@ -415,6 +415,8 @@ verify.portal.execute_button: guard.prod.forbid check-compose-project check-comp
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/portal_execute_button.sh
 verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
+verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
 verify.prod.guard: check-compose-env
 	@bash scripts/verify/prod_guard_smoke.sh
 
