@@ -136,3 +136,19 @@
   }
 }
 ```
+
+## E2E 运行前置条件
+`make verify.e2e.contract` 需要以下模块已安装：
+- `smart_core`
+- `smart_construction_core`
+
+自愈方式（推荐）：
+```
+E2E_AUTO_INSTALL=1 make verify.e2e.contract
+```
+
+手动安装：
+```
+CODEX_NEED_UPGRADE=1 MODULE=smart_core ODOO_ARGS="-i smart_core" make mod.upgrade
+CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core ODOO_ARGS="-i smart_construction_core" make mod.upgrade
+```
