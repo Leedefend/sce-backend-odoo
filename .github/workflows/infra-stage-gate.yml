@@ -76,6 +76,9 @@ jobs:
       - name: Verify E2E contract
         run: |
           make verify.e2e.contract
+      - name: Verify E2E scene
+        run: |
+          make verify.e2e.scene
 
       - name: Stage p2
         run: |
