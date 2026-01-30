@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Capability -->
+        <record id="view_sc_capability_tree" model="ir.ui.view">
+            <field name="name">sc.capability.tree</field>
+            <field name="model">sc.capability</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="sequence"/>
+                    <field name="key"/>
+                    <field name="name"/>
+                    <field name="intent"/>
+                    <field name="status"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_capability_form" model="ir.ui.view">
+            <field name="name">sc.capability.form</field>
+            <field name="model">sc.capability</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="key"/>
+                            <field name="name"/>
+                            <field name="ui_label"/>
+                            <field name="ui_hint"/>
+                            <field name="intent"/>
+                            <field name="status"/>
+                            <field name="version"/>
+                            <field name="tags"/>
+                            <field name="required_group_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <field name="default_payload" widget="json"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_capability" model="ir.actions.act_window">
+            <field name="name">能力目录</field>
+            <field name="res_model">sc.capability</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Scene -->
+        <record id="view_sc_scene_tree" model="ir.ui.view">
+            <field name="name">sc.scene.tree</field>
+            <field name="model">sc.scene</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="sequence"/>
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="layout"/>
+                    <field name="is_default"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_sc_scene_form" model="ir.ui.view">
+            <field name="name">sc.scene.form</field>
+            <field name="model">sc.scene</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="layout"/>
+                            <field name="is_default"/>
+                            <field name="version"/>
+                            <field name="target_group_ids" widget="many2many_tags"/>
+                            <field name="description"/>
+                        </group>
+                        <notebook>
+                            <page string="Tiles">
+                                <field name="tile_ids">
+                                    <tree editable="bottom">
+                                        <field name="sequence"/>
+                                        <field name="capability_id"/>
+                                        <field name="title"/>
+                                        <field name="subtitle"/>
+                                        <field name="icon"/>
+                                        <field name="active"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_scene" model="ir.actions.act_window">
+            <field name="name">场景编排</field>
+            <field name="res_model">sc.scene</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Menu -->
+        <menuitem id="menu_sc_scene_root"
+                  name="场景与能力"
+                  parent="menu_sc_config_center"
+                  sequence="70"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_capability"
+                  name="能力目录"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_capability"
+                  sequence="10"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+        <menuitem id="menu_sc_scene"
+                  name="场景编排"
+                  parent="menu_sc_scene_root"
+                  action="action_sc_scene"
+                  sequence="20"
+                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+    </data>
+</odoo>

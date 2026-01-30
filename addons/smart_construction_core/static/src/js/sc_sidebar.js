@@ -24,6 +24,7 @@ const DEBUG_ENABLED = Boolean(
   (window.odoo && window.odoo.__DEBUG__) || /\bdebug\b/.test(window.location.search || "")
 );
 const ENABLE_ROLE_ENTRIES = getConfigFlag("sc_role_entries", true);
+const ROLE_ENTRY_INDEX = buildRoleEntryIndex(ROLE_ENTRY_MAP);
 
 export class ScSidebarHeader extends Component {
   static template = "smart_construction_core.ScSidebarHeader";
@@ -319,7 +320,7 @@ export class ScSidebar extends Component {
     }
     this.state.sections = domainSections;
     if (this.state.enableRoleEntries) {
-      this.state.roleEntries = await buildRoleEntries(ROLE_ENTRY_MAP, this.menuMap, this.orm);
+      this.state.roleEntries = await buildRoleEntriesFromScenes(this.menuMap, this.orm);
     } else {
       this.state.roleEntries = [];
     }
@@ -1194,6 +1195,102 @@ async function buildRoleEntries(config, menuMap, orm) {
       actionXmlid,
       menuContext,
       quickActions,
+    });
+  }
+  return out;
+}
+
+function buildRoleEntryIndex(config) {
+  const map = {};
+  const entries = Array.isArray(config) ? config : [];
+  for (const entry of entries) {
+    if (entry && entry.key) map[entry.key] = entry;
+  }
+  return map;
+}
+
+async function fetchScenesPayload() {
+  try {
+    const resp = await fetch("/api/scenes/my", { credentials: "include" });
+    if (!resp.ok) return null;
+    const payload = await resp.json();
+    if (!payload || payload.ok !== true) return null;
+    return payload.data || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+async function buildRoleEntriesFromScenes(menuMap, orm) {
+  const payload = await fetchScenesPayload();
+  if (!payload || !Array.isArray(payload.scenes)) {
+    return buildRoleEntries(ROLE_ENTRY_MAP, menuMap, orm);
+  }
+  const scenes = payload.scenes || [];
+  const defaultScene =
+    scenes.find((scene) => scene && scene.is_default) || scenes[0] || null;
+  if (!defaultScene || !Array.isArray(defaultScene.tiles)) {
+    return buildRoleEntries(ROLE_ENTRY_MAP, menuMap, orm);
+  }
+  return buildSceneEntries(defaultScene.tiles, menuMap, orm);
+}
+
+async function buildSceneEntries(tiles, menuMap, orm) {
+  const out = [];
+  for (const tile of tiles) {
+    if (!tile) continue;
+    const key = tile.key || "";
+    const label = tile.title || "";
+    if (!key || !label) continue;
+    const payload = tile.payload || {};
+    const fallback = ROLE_ENTRY_INDEX[key] || {};
+    const icon = tile.icon || fallback.icon || "";
+    const quickActions = [];
+    let menuNode = null;
+    let menuId = null;
+    let actionId = null;
+    let menuContext = null;
+    let disabled = false;
+    if (payload.menu_id && menuMap && menuMap[payload.menu_id]) {
+      menuNode = menuMap[payload.menu_id];
+    } else if (payload.menu_xmlid) {
+      menuNode = findMenuByXmlid(null, menuMap, payload.menu_xmlid);
+    }
+    if (menuNode) {
+      menuId = menuNode.id;
+      if (menuNode.context) menuContext = menuNode.context;
+      const resolved = resolveNodeAction(menuNode, menuMap);
+      actionId = resolved.actionId;
+      disabled = resolved.disabled;
+    }
+    if (!actionId && payload.action_id) {
+      actionId = payload.action_id;
+    }
+    if (payload.action_xmlid && orm) {
+      const overrideId = await resolveActionXmlid(orm, payload.action_xmlid);
+      if (overrideId) {
+        actionId = overrideId;
+        disabled = false;
+      } else {
+        actionId = payload.action_xmlid;
+        disabled = false;
+      }
+    }
+    if (!actionId && payload.action_id) {
+      actionId = payload.action_id;
+    }
+    if (!actionId) disabled = true;
+    if (disabled) continue;
+    out.push({
+      key,
+      label,
+      icon,
+      menuId,
+      actionId,
+      actionXmlid: payload.action_xmlid || "",
+      menuContext,
+      quickActions,
+      disabled,
     });
   }
   return out;
