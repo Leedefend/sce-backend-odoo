@@ -3,6 +3,7 @@ import jwt
 import logging
 import os
 import time
+import uuid
 from odoo.http import request
 from odoo import http, SUPERUSER_ID, api
 from odoo.exceptions import AccessDenied
@@ -49,10 +50,17 @@ def get_token_exp_seconds():
         pass
     return DEFAULT_EXP_SECONDS
 
-def generate_token(user_id):
+def generate_token(user_id, token_version: int | None = None):
     now = int(time.time())
     exp = now + get_token_exp_seconds()
-    payload = {"user_id": user_id, "iat": now, "exp": exp}
+    payload = {
+        "user_id": user_id,
+        "iat": now,
+        "exp": exp,
+        "jti": uuid.uuid4().hex,
+    }
+    if token_version is not None:
+        payload["token_version"] = int(token_version)
     return jwt.encode(payload, _get_secret_key(), algorithm=ALGORITHM)
 
 def decode_token(token):
@@ -61,7 +69,7 @@ def decode_token(token):
             token,
             _get_secret_key(),
             algorithms=[ALGORITHM],
-            options={"require": ["exp", "iat"]},
+            options={"require": ["exp", "iat", "jti", "token_version"]},
         )
     except jwt.ExpiredSignatureError:
         raise AccessDenied("Token 已过期")
@@ -75,15 +83,21 @@ def get_user_from_token():
     从请求中提取 Token 并解析用户对象。兼容系统原生登录与自定义 Token 登录。
     """
     auth_header = request.httprequest.headers.get("Authorization")
-    session_uid = request.session.uid
+    session = getattr(request, "session", None)
+    session_uid = getattr(session, "uid", None)
 
     if auth_header:
         token = auth_header.split(" ")[-1]
         payload = decode_token(token)
         user_id = payload.get("user_id")
-        user = request.env["res.users"].browse(user_id)
+        user = request.env["res.users"].sudo().browse(user_id)
         if not user.exists():
             raise AccessDenied("Token 中指定的用户不存在")
+        # token_version 校验：用于撤销/踢下线
+        current_version = int(getattr(user, "token_version", 0) or 0)
+        token_version = int(payload.get("token_version") or 0)
+        if token_version != current_version:
+            raise AccessDenied("Token 已撤销")
         return user
 
     elif session_uid:

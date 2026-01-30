@@ -19,6 +19,7 @@ from . import core
 from . import handlers
 from . import view
 from . import utils
+from . import models
 
 # 设置日志
 _logger = logging.getLogger(__name__)
