@@ -53,6 +53,9 @@ Behavior:
 - Missing modules are skipped with a warning (no crash).
 - Hook is optional; modules without it are skipped with a warning.
 
+### Frontend API note
+The `/api/login`, `/api/session/get`, and `/api/menu/tree` endpoints are business-facing controllers and live in `smart_construction_core`. Ensure that module is installed in environments where those endpoints are required. When not installed, a 404 or friendly error is expected.
+
 ## How to Add a New Business Intent
 1) Implement handler in a construction module.
 2) Add `smart_core_register(registry)` in that module.
