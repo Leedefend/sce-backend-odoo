@@ -310,6 +310,8 @@ class UiContractHandler(BaseIntentHandler):
             "menu_id": self._get_param(p, "menu_id","menuId","id"),
             "model": self._get_param(p, "model","model_code","modelCode"),
             "action_id": self._get_param(p, "action_id","actionId"),
+            "contract_version": CONTRACT_VERSION,
+            "api_version": API_VERSION,
         })
         return hashlib.sha1(etag_src.encode("utf-8")).hexdigest()
 

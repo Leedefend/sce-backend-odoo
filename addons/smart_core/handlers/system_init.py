@@ -304,6 +304,8 @@ class SystemInitHandler(BaseIntentHandler):
             "default_route": data["default_route"],
             "feature_flags": data["feature_flags"],
             "intents": data["intents"],
+            "contract_version": CONTRACT_VERSION,
+            "api_version": API_VERSION,
         })
 
         return {"status": "success", "data": data, "meta": {**meta, "etag": top_etag}, "ok": True}
