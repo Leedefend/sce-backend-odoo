@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "data": {
+    "user": {
+      "id": 2,
+      "name": "Demo User",
+      "groups_xmlids": [
+        "base.group_user"
+      ],
+      "lang": "zh_CN",
+      "tz": "Asia/Shanghai",
+      "company_id": 1
+    },
+    "nav": [],
+    "nav_meta": {
+      "fingerprint": "<fp>"
+    },
+    "default_route": {
+      "menu_id": null
+    },
+    "intents": [
+      "system.init",
+      "ui.contract"
+    ],
+    "feature_flags": {
+      "ai_enabled": true
+    },
+    "preload": []
+  },
+  "meta": {
+    "etag": "<etag>",
+    "trace_id": "xxxxxx"
+  }
+}
