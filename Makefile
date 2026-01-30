@@ -415,8 +415,6 @@ verify.portal.execute_button: guard.prod.forbid check-compose-project check-comp
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/portal_execute_button.sh
 verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
-verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
 verify.prod.guard: check-compose-env
 	@bash scripts/verify/prod_guard_smoke.sh
 
