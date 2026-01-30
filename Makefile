@@ -751,7 +751,7 @@ ci.logs: guard.prod.forbid
 # ======================================================
 # ==================== Diagnostics ======================
 # ======================================================
-.PHONY: diag.compose verify.ops gate.audit ci.gate.tp08
+.PHONY: diag.compose verify.ops gate.audit ci.gate.tp08 audit.boundary.smart_core
 diag.compose: check-compose-env
 	@echo "=== base ==="
 	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
@@ -778,6 +778,16 @@ verify.ops: guard.prod.forbid check-compose-project check-compose-env
 
 gate.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit.sh
+
+# ======================================================
+# ==================== Boundary Audit ==================
+# ======================================================
+audit.boundary.smart_core: guard.prod.forbid
+	@$(RUN_ENV) python3 scripts/audit/boundary_audit_smart_core.py \
+		--root "$(ROOT_DIR)" \
+		--scan-dir "addons/smart_core" \
+		--json-out "artifacts/boundary_audit/smart_core_hits.json" \
+		--md-out "docs/ops/boundary_audit_smart_core_20260130.md"
 
 ci.gate.tp08: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit_tp08.sh
