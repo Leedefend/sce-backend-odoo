@@ -1,6 +1,7 @@
 # smart_core/core/context.py
 from odoo.http import request
 from ..security.auth import get_user_from_token
+from .trace import get_trace_id
 
 class RequestContext:
     def __init__(self, env, user, params, request_obj=None):
@@ -22,8 +23,12 @@ class RequestContext:
             user = get_user_from_token()
             env = request.env(user=user) if user else request.env
 
-        # 把全局 request 传进去
-        return cls(env, user, params, request)
+        ctx = cls(env, user, params, request)
+        try:
+            ctx.trace_id = get_trace_id(request.httprequest.headers)
+        except Exception:
+            ctx.trace_id = None
+        return ctx
 
 
     def has_param(self, key):

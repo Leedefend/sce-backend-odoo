@@ -5,6 +5,63 @@
 用于增强错误处理和异常管理机制
 """
 
+# Error codes (contract v0.1)
+BAD_REQUEST = "BAD_REQUEST"
+AUTH_REQUIRED = "AUTH_REQUIRED"
+PERMISSION_DENIED = "PERMISSION_DENIED"
+INTENT_NOT_FOUND = "INTENT_NOT_FOUND"
+VALIDATION_ERROR = "VALIDATION_ERROR"
+INTERNAL_ERROR = "INTERNAL_ERROR"
+
+DEFAULT_API_VERSION = "v1"
+DEFAULT_CONTRACT_VERSION = "v0.1"
+
+_HTTP_STATUS_TO_CODE = {
+    400: BAD_REQUEST,
+    401: AUTH_REQUIRED,
+    403: PERMISSION_DENIED,
+    404: INTENT_NOT_FOUND,
+    422: VALIDATION_ERROR,
+    500: INTERNAL_ERROR,
+}
+
+
+def map_http_status_to_code(status: int, default: str = INTERNAL_ERROR) -> str:
+    try:
+        return _HTTP_STATUS_TO_CODE.get(int(status), default)
+    except Exception:
+        return default
+
+
+def build_error_envelope(
+    *,
+    code: str,
+    message: str,
+    trace_id: str | None = None,
+    details: dict | None = None,
+    hint: str | None = None,
+    fields: dict | None = None,
+    retryable: bool | None = None,
+    api_version: str = DEFAULT_API_VERSION,
+    contract_version: str = DEFAULT_CONTRACT_VERSION,
+) -> dict:
+    error = {"code": code, "message": message}
+    if details:
+        error["details"] = details
+    if hint:
+        error["hint"] = hint
+    if fields:
+        error["fields"] = fields
+    if retryable is not None:
+        error["retryable"] = bool(retryable)
+
+    meta = {
+        "trace_id": trace_id,
+        "api_version": api_version,
+        "contract_version": contract_version,
+    }
+    return {"ok": False, "error": error, "meta": meta}
+
 class SmartCoreException(Exception):
     """智能核心异常基类"""
     def __init__(self, message: str, code: int = 500, details: dict = None):

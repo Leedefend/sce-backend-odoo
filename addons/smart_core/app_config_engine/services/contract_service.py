@@ -28,6 +28,15 @@ from odoo.addons.smart_core.app_config_engine.utils.misc import stable_etag, for
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.menu_dispatcher import MenuDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
+from odoo.addons.smart_core.core.trace import get_trace_id
+from odoo.addons.smart_core.core.exceptions import (
+    BAD_REQUEST,
+    VALIDATION_ERROR,
+    INTERNAL_ERROR,
+    DEFAULT_API_VERSION,
+    DEFAULT_CONTRACT_VERSION,
+    build_error_envelope,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -48,6 +57,22 @@ class ContractService:
         - body: 二进制 JSON
         """
         ts0 = time.time()
+        trace_id = get_trace_id(request.httprequest.headers)
+
+        def _err(status: int, code: str, message: str, details: dict | None = None):
+            body = build_error_envelope(
+                code=code,
+                message=message,
+                trace_id=trace_id,
+                details=details,
+                api_version=DEFAULT_API_VERSION,
+                contract_version=DEFAULT_CONTRACT_VERSION,
+            )
+            headers = [
+                ("Content-Type", "application/json; charset=utf-8"),
+                ("X-Trace-Id", trace_id),
+            ]
+            return False, status, headers, json.dumps(body, ensure_ascii=False).encode("utf-8")
 
         # 1) 读取 body 与请求头
         payload = read_json_body()
@@ -69,8 +94,7 @@ class ContractService:
         elif subject in ('action', 'model', 'operation'):
             data, versions = ActionDispatcher(self.env, self.su_env).dispatch(p)
         else:
-            # 一律在服务层抛出，控制器层统一捕获
-            raise ValueError("不支持的 subject")
+            return _err(400, BAD_REQUEST, "不支持的 subject", {"subject": subject})
 
         # 3.x) 统一化后处理（关键嵌点）
         # -----------------------------------------
@@ -86,9 +110,7 @@ class ContractService:
         except AssertionError as ae:
             # 统一化自检失败：返回 422，方便开发期快速定位脏数据/不一致
             _logger.exception("contract finalize self-check failed")
-            err = {"ok": False, "error": "contract_self_check_failed", "detail": str(ae)}
-            return False, 422, [('Content-Type', 'application/json; charset=utf-8')], \
-                json.dumps(err, ensure_ascii=False).encode('utf-8')
+            return _err(422, VALIDATION_ERROR, "contract_self_check_failed", {"detail": str(ae)})
         # -----------------------------------------
 
         # 4) 计算 ETag，支持 304
@@ -97,7 +119,7 @@ class ContractService:
         skip_cache = bool(p.get("with_data"))
         if not skip_cache and client_etag and client_etag == etag:
             # 命中 304：只回 ETag，body 为空
-            return True, 304, [('ETag', etag)], b''
+            return True, 304, [("ETag", etag), ("X-Trace-Id", trace_id)], b''
 
         # 5) 拼装 meta，包含版本/耗时等
         elapsed = int((time.time() - ts0) * 1000)
@@ -107,11 +129,18 @@ class ContractService:
             "etag": etag,
             "ts": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
             "elapsed_ms": elapsed,
+            "trace_id": trace_id,
+            "api_version": DEFAULT_API_VERSION,
+            "contract_version": DEFAULT_CONTRACT_VERSION,
         }
 
         # 6) 返回成功响应
         body = json.dumps({"ok": True, "data": data, "meta": meta}, ensure_ascii=False, default=str).encode('utf-8')
-        return True, 200, [('Content-Type','application/json; charset=utf-8'), ('ETag', etag)], body
+        return True, 200, [
+            ('Content-Type','application/json; charset=utf-8'),
+            ('ETag', etag),
+            ("X-Trace-Id", trace_id),
+        ], body
 
     # =========================
     # 对外唯一需要调用的入口
