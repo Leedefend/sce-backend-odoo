@@ -1,5 +1,5 @@
 # Continue DeepSeek 配置脚本 (PowerShell)
-# 使用方法: .\scripts\setup-continue-deepseek.ps1
+# 使用方法: .\tools\continue\ps1\setup-continue-deepseek.ps1
 
 Write-Host "=== Continue DeepSeek 配置工具 ===" -ForegroundColor Cyan
 
@@ -111,4 +111,4 @@ Write-Host "   - 输入 '@ 写一个 Python Hello World 程序'" -ForegroundColo
 
 Write-Host "\n=== 配置完成 ===" -ForegroundColor Green
 Write-Host "配置文件位置: $configDest" -ForegroundColor Gray
-Write-Host "文档参考: docs/continue-deepseek-config.md" -ForegroundColor Gray
+Write-Host "文档参考: tools/continue/docs/continue-deepseek-config.md" -ForegroundColor Gray

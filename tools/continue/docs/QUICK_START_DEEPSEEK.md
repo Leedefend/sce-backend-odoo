@@ -20,7 +20,7 @@
 ```powershell
 # 1. 打开 PowerShell
 # 2. 运行配置脚本
-.\scripts\setup-continue-deepseek.ps1
+.\tools\continue\ps1\setup-continue-deepseek.ps1
 
 # 3. 按照提示输入 API Key
 ```
@@ -28,10 +28,10 @@
 #### macOS/Linux 用户：
 ```bash
 # 1. 给脚本执行权限
-chmod +x scripts/setup-continue-deepseek.sh
+chmod +x tools/continue/scripts/setup-continue-deepseek.sh
 
 # 2. 运行配置脚本
-./scripts/setup-continue-deepseek.sh
+./tools/continue/scripts/setup-continue-deepseek.sh
 
 # 3. 按照提示输入 API Key
 ```
@@ -167,8 +167,8 @@ A: 检查配置文件 JSON 格式是否正确，可以使用 [JSONLint](https://
 
 ## 获取帮助
 
-1. **详细文档**: 查看 `docs/continue-deepseek-config.md`
-2. **配置文件示例**: 查看 `config/continue-deepseek.json`
+1. **详细文档**: 查看 `tools/continue/docs/continue-deepseek-config.md`
+2. **配置文件示例**: 查看 `tools/continue/config/continue-deepseek.json`
 3. **脚本帮助**: 运行配置脚本查看帮助信息
 
 ---
