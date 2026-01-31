@@ -921,6 +921,47 @@ cn.test:
 		echo "⚠ 项目配置不存在"; \
 	fi
 
+# ======================================================
+# ==================== Continue Audit ===================
+# ======================================================
+# 文档字符串审计
+CN_AUDIT_MODULE ?= addons/smart_construction_core
+CN_AUDIT_OUTDIR ?= artifacts/continue
+
+# 文档字符串审计主任务
+cn.audit.docstrings:
+	@echo "▶ 开始文档字符串审计"
+	@echo "模块: $(CN_AUDIT_MODULE)"
+	@echo "输出目录: $(CN_AUDIT_OUTDIR)"
+	@echo "扫描器: tools/continue/auditors/docstrings_scanner.py"
+	@mkdir -p "$(CN_AUDIT_OUTDIR)"
+	@python3 tools/continue/auditors/docstrings_scanner.py "$(CN_AUDIT_MODULE)" "$(CN_AUDIT_OUTDIR)"
+	@echo ""
+	@echo "📊 审计报告:"
+	@echo "  - $(CN_AUDIT_OUTDIR)/audit_docstrings.md (人读报告)"
+	@echo "  - $(CN_AUDIT_OUTDIR)/audit_docstrings.json (机器数据)"
+	@echo ""
+	@echo "✅ 文档字符串审计完成"
+
+# 文档字符串审计测试（小样本）
+cn.audit.docstrings.test:
+	@echo "▶ 测试文档字符串审计（小样本）"
+	@echo "测试目录: addons/smart_construction_core/controllers"
+	@echo "输出目录: $(CN_AUDIT_OUTDIR)"
+	@mkdir -p "$(CN_AUDIT_OUTDIR)"
+	@python3 tools/continue/auditors/docstrings_scanner.py "addons/smart_construction_core/controllers" "$(CN_AUDIT_OUTDIR)"
+	@echo ""
+	@echo "✅ 测试审计完成（仅扫描controllers目录）"
+
+# 清理审计产物
+cn.audit.docstrings.clean:
+	@echo "▶ 清理审计产物"
+	@rm -rf "$(CN_AUDIT_OUTDIR)/audit_docstrings.md" "$(CN_AUDIT_OUTDIR)/audit_docstrings.json" 2>/dev/null || true
+	@echo "✅ 清理完成"
+
+# ======================================================
+# ==================== Continue Help ====================
+# ======================================================
 # 显示帮助信息
 cn.help:
 	@echo "Continue CLI 集成帮助:"
@@ -939,8 +980,15 @@ cn.help:
 	@echo "测试连接:"
 	@echo "  make cn.test"
 	@echo ""
+	@echo "审计功能:"
+	@echo "  make cn.audit.docstrings          # 文档字符串审计"
+	@echo "  make cn.audit.docstrings.test     # 测试审计（小样本）"
+	@echo "  make cn.audit.docstrings.clean    # 清理审计产物"
+	@echo ""
 	@echo "配置路径: $(CN_PROJECT_CONFIG)"
 	@echo "脚本路径: $(CN_PRINT_SCRIPT)"
+	@echo "审计模块: $(CN_AUDIT_MODULE)"
+	@echo "审计输出: $(CN_AUDIT_OUTDIR)"
 	@echo ""
 	@echo "注意:"
 	@echo "  - 闪烁问题由交互式 TUI 引起，批处理模式可避免"
