@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="sc_subscription_plan_default" model="sc.subscription.plan">
+            <field name="code">default</field>
+            <field name="name">Default</field>
+            <field name="sequence">10</field>
+            <field name="active">1</field>
+            <field name="feature_flags_json" eval="{}"/>
+            <field name="limits_json" eval="{}"/>
+        </record>
+        <record id="sc_subscription_plan_pro" model="sc.subscription.plan">
+            <field name="code">pro</field>
+            <field name="name">Pro</field>
+            <field name="sequence">20</field>
+            <field name="active">1</field>
+            <field name="feature_flags_json" eval="{'feature.test': True}"/>
+            <field name="limits_json" eval="{'max_scenes': 999}"/>
+        </record>
+    </data>
+</odoo>

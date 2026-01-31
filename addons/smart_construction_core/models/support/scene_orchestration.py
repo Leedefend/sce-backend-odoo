@@ -17,6 +17,7 @@ class ScCapability(models.Model):
     ui_label = fields.Char()
     ui_hint = fields.Char()
     intent = fields.Char(help="Intent to execute, e.g. ui.contract / api.data / execute_button")
+    required_flag = fields.Char(help="Entitlement flag required to use this capability")
     default_payload = fields.Json()
     required_group_ids = fields.Many2many("res.groups", string="Required Groups")
     tags = fields.Char(help="Comma-separated tags, e.g. project,contract,cost")
@@ -60,6 +61,7 @@ class ScCapability(models.Model):
             "ui_label": self.ui_label or self.name,
             "ui_hint": self.ui_hint or "",
             "intent": self.intent or "",
+            "required_flag": self.required_flag or "",
             "default_payload": payload,
             "required_groups": [
                 group_xmlids.get(g.id)
@@ -178,6 +180,7 @@ class ScScene(models.Model):
     code = fields.Char(required=True, index=True)
     layout = fields.Selection([("grid", "Grid"), ("flow", "Flow")], default="grid")
     is_default = fields.Boolean(default=False)
+    is_test = fields.Boolean(default=False, help="Mark as test-only scene (hidden by default).")
     version = fields.Char(default="v0.1")
     state = fields.Selection(
         [("draft", "Draft"), ("published", "Published"), ("archived", "Archived")],
@@ -215,6 +218,7 @@ class ScScene(models.Model):
             "name": self.name,
             "layout": self.layout,
             "is_default": bool(self.is_default),
+            "is_test": bool(self.is_test),
             "version": self.version,
             "tiles": tiles,
         }
@@ -232,6 +236,7 @@ class ScScene(models.Model):
             "name": self.name,
             "layout": self.layout,
             "is_default": bool(self.is_default),
+            "is_test": bool(self.is_test),
             "version": self.version,
             "tiles": tiles,
         }
@@ -345,6 +350,26 @@ class ScScene(models.Model):
 
     def action_publish(self):
         for scene in self:
+            Entitlement = scene.env.get("sc.entitlement")
+            Usage = scene.env.get("sc.usage.counter")
+            if Entitlement:
+                ent = Entitlement.get_effective(scene.env.user.company_id)
+                limits = ent.effective_limits_json or {}
+                max_scenes = int(limits.get("max_scenes") or 0)
+                if max_scenes:
+                    current = None
+                    if Usage:
+                        current = Usage.get_usage_map(scene.env.user.company_id).get("scenes_published")
+                    if current is None:
+                        current = scene.env["sc.scene"].search_count([
+                            ("active", "=", True),
+                            ("state", "=", "published"),
+                            ("is_test", "=", False),
+                        ])
+                    if current >= max_scenes:
+                        raise UserError(
+                            _("LIMIT_EXCEEDED: max_scenes=%s current=%s") % (max_scenes, current)
+                        )
             status, issues, validation = scene._validate_scene()
             if status != "pass":
                 raise UserError(
@@ -367,6 +392,8 @@ class ScScene(models.Model):
                 "published_by": scene.env.user.id,
             })
             scene._log_audit("publish", version=ver)
+            if Usage:
+                Usage.bump(scene.env.user.company_id, "scenes_published", 1)
 
     def action_archive(self):
         self.write({"state": "archived"})

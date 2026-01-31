@@ -1,0 +1,32 @@
+{
+  "name": "local-deepseek",
+  "version": "1.0.0",
+  "schema": "v1",
+  "models": [
+    {
+      "name": "DeepSeek Chat",
+      "provider": "openai",
+      "model": "deepseek-chat",
+      "apiKey": "${env:DEEPSEEK_API_KEY}",
+      "apiBase": "https://api.deepseek.com/v1"
+    },
+    {
+      "name": "DeepSeek Coder",
+      "provider": "openai",
+      "model": "deepseek-coder",
+      "apiKey": "${env:DEEPSEEK_API_KEY}",
+      "apiBase": "https://api.deepseek.com/v1"
+    }
+  ],
+  "roles": {
+    "chat": "DeepSeek Chat",
+    "edit": "DeepSeek Chat",
+    "apply": "DeepSeek Chat",
+    "summarize": "DeepSeek Chat",
+    "autocomplete": "DeepSeek Coder"
+  },
+  "allowAnonymousTelemetry": false,
+  "experimental": {
+    "disableIndexing": true
+  }
+}

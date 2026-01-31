@@ -1,0 +1,43 @@
+{
+  "models": [
+    {
+      "title": "DeepSeek Coder",
+      "provider": "openai",
+      "model": "deepseek-coder",
+      "apiKey": "${env:DEEPSEEK_API_KEY}",
+      "apiBase": "https://api.deepseek.com",
+      "contextLength": 16384
+    },
+    {
+      "title": "DeepSeek Chat",
+      "provider": "openai",
+      "model": "deepseek-chat",
+      "apiKey": "${env:DEEPSEEK_API_KEY}",
+      "apiBase": "https://api.deepseek.com",
+      "contextLength": 32768
+    },
+    {
+      "title": "GPT-4",
+      "provider": "openai",
+      "model": "gpt-4",
+      "apiKey": "${env:OPENAI_API_KEY}"
+    }
+  ],
+  "defaultModel": "DeepSeek Coder",
+  "tabAutocompleteModel": {
+    "title": "DeepSeek Coder",
+    "provider": "openai",
+    "model": "deepseek-coder",
+    "apiKey": "${env:DEEPSEEK_API_KEY}",
+    "apiBase": "https://api.deepseek.com"
+  },
+  "embeddingsProvider": {
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "apiKey": "${env:OPENAI_API_KEY}"
+  },
+  "allowAnonymousTelemetry": false,
+  "experimental": {
+    "disableIndexing": true
+  }
+}

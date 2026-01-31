@@ -288,7 +288,12 @@ class IntentDispatcher(http.Controller):
         except AccessDenied:
             return _error_response(AUTH_REQUIRED, "认证失败或 token 无效", 401, trace_id)
         except AccessError as e:
-            return _error_response(PERMISSION_DENIED, str(e), 403, trace_id)
+            msg = str(e)
+            if msg.startswith("FEATURE_DISABLED"):
+                return _error_response("FEATURE_DISABLED", msg, 403, trace_id)
+            if msg.startswith("LIMIT_EXCEEDED"):
+                return _error_response("LIMIT_EXCEEDED", msg, 429, trace_id)
+            return _error_response(PERMISSION_DENIED, msg, 403, trace_id)
         except MissingError as e:
             return _error_response(INTENT_NOT_FOUND, str(e), 404, trace_id)
         except (BadRequest, Unauthorized, Forbidden, NotFound) as e:

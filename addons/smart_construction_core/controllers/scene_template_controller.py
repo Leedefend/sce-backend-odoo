@@ -126,6 +126,7 @@ def _apply_pack(env, user, body):
             "ui_label": cap.get("ui_label") or "",
             "ui_hint": cap.get("ui_hint") or "",
             "intent": cap.get("intent") or "",
+            "required_flag": cap.get("required_flag") or "",
             "default_payload": cap.get("default_payload") or {},
             "tags": cap.get("tags") or "",
             "status": cap.get("status") or "alpha",
@@ -141,6 +142,7 @@ def _apply_pack(env, user, body):
                 "ui_label": rec.ui_label or "",
                 "ui_hint": rec.ui_hint or "",
                 "intent": rec.intent or "",
+                "required_flag": rec.required_flag or "",
                 "default_payload": rec.default_payload or {},
                 "tags": rec.tags or "",
                 "status": rec.status,
@@ -156,6 +158,7 @@ def _apply_pack(env, user, body):
                 "ui_label": vals.get("ui_label") or "",
                 "ui_hint": vals.get("ui_hint") or "",
                 "intent": vals.get("intent") or "",
+                "required_flag": vals.get("required_flag") or "",
                 "default_payload": vals.get("default_payload") or {},
                 "tags": vals.get("tags") or "",
                 "status": vals.get("status"),
@@ -218,6 +221,7 @@ def _apply_pack(env, user, body):
             "name": scene_in.get("name") or code,
             "layout": scene_in.get("layout") or "grid",
             "is_default": bool(scene_in.get("is_default")),
+            "is_test": bool(scene_in.get("is_test", False)),
             "version": scene_in.get("version") or "v0.1",
             "state": write_state,
         }
@@ -227,6 +231,7 @@ def _apply_pack(env, user, body):
                 "name": scene.name,
                 "layout": scene.layout,
                 "is_default": bool(scene.is_default),
+                "is_test": bool(scene.is_test),
                 "version": scene.version,
                 "state": scene.state,
             }
@@ -234,6 +239,7 @@ def _apply_pack(env, user, body):
                 "name": vals.get("name"),
                 "layout": vals.get("layout"),
                 "is_default": bool(vals.get("is_default")),
+                "is_test": bool(vals.get("is_test")),
                 "version": vals.get("version"),
                 "state": vals.get("state"),
             }
@@ -456,6 +462,8 @@ class SceneTemplateController(http.Controller):
 
             Scene = env["sc.scene"].sudo()
             domain = [("code", "=", code)] if code else []
+            if not include_tests:
+                domain.append(("is_test", "=", False))
             scenes = Scene.search(domain, order="sequence, id")
             out_scenes = []
             cap_keys = set()
@@ -484,6 +492,7 @@ class SceneTemplateController(http.Controller):
                     "name": scene.name,
                     "layout": scene.layout,
                     "is_default": bool(scene.is_default),
+                    "is_test": bool(scene.is_test),
                     "version": scene.version,
                     "state": scene.state,
                     "tiles": tiles,
@@ -504,6 +513,7 @@ class SceneTemplateController(http.Controller):
                         "ui_label": cap.ui_label or "",
                         "ui_hint": cap.ui_hint or "",
                         "intent": cap.intent or "",
+                        "required_flag": cap.required_flag or "",
                         "default_payload": cap.default_payload or {},
                         "required_groups": [
                             group_xmlids.get(g.id)
@@ -525,6 +535,7 @@ class SceneTemplateController(http.Controller):
                         "ui_label",
                         "ui_hint",
                         "intent",
+                        "required_flag",
                         "default_payload",
                         "tags",
                         "status",
@@ -537,6 +548,7 @@ class SceneTemplateController(http.Controller):
                         "name",
                         "layout",
                         "is_default",
+                        "is_test",
                         "version",
                         "state",
                     ],
@@ -600,6 +612,18 @@ class SceneTemplateController(http.Controller):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             body = _get_json_body()
+            if body.get("cleanup_test"):
+                cap_keys = [c.get("key") for c in (body.get("capabilities") or []) if c.get("key")]
+                scene_codes = [s.get("code") for s in (body.get("scenes") or []) if s.get("code")]
+                Cap = env["sc.capability"].sudo()
+                Scene = env["sc.scene"].sudo()
+                caps = Cap.search([("key", "in", cap_keys), ("is_test", "=", True)])
+                scenes = Scene.search([("code", "in", scene_codes), ("is_test", "=", True)])
+                cap_count = len(caps)
+                scene_count = len(scenes)
+                scenes.unlink()
+                caps.unlink()
+                return ok({"deleted_scenes": scene_count, "deleted_capabilities": cap_count}, status=200)
             result = _apply_pack(env, user, body)
             if not result.get("ok"):
                 error = result.get("error") or {}

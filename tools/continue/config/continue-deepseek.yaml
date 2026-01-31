@@ -1,0 +1,25 @@
+name: sc-backend-odoo-deepseek
+version: 0.1.0
+schema: v1
+
+models:
+  - name: DeepSeek Chat
+    provider: deepseek
+    model: deepseek-chat
+    apiKey: ${env:DEEPSEEK_API_KEY}
+    roles: [chat, summarize]
+
+  - name: DeepSeek Code Editor
+    provider: deepseek
+    model: deepseek-chat
+    apiKey: ${env:DEEPSEEK_API_KEY}
+    roles: [edit, apply]
+
+  - name: DeepSeek Autocomplete
+    provider: deepseek
+    model: deepseek-chat
+    apiKey: ${env:DEEPSEEK_API_KEY}
+    roles: [autocomplete]
+
+experimental:
+  disableIndexing: true
