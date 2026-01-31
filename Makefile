@@ -854,13 +854,13 @@ cn.p: guard.cn.prompt
 	@echo "▶ 执行 Continue 批处理任务 (无闪烁模式)"
 	@echo "提示: $(PROMPT)"
 	@echo "配置: $(CN_PROJECT_CONFIG)"
-	@bash "$(CN_PRINT_SCRIPT)" "$(PROMPT)"
+	@CN_CONFIG="$(CN_PROJECT_CONFIG)" bash "$(CN_PRINT_SCRIPT)" "$(PROMPT)"
 
 # 管道输入模式
 cn.p.stdin: guard.cn.prompt
 	@echo "▶ 执行 Continue 批处理任务 (管道输入模式)"
 	@echo "配置: $(CN_PROJECT_CONFIG)"
-	@PROMPT_STDIN=1 bash "$(CN_PRINT_SCRIPT)"
+	@CN_CONFIG="$(CN_PROJECT_CONFIG)" bash "$(CN_PRINT_SCRIPT)"
 
 # 交互式 TUI 模式 (可能闪烁)
 cn.tui:
