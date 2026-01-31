@@ -107,8 +107,34 @@ class DocstringsScanner:
         """判断是否是魔术方法（dunder method）"""
         return name.startswith('__') and name.endswith('__')
     
+    def expr_to_str(self, node: ast.AST) -> str:
+        """将AST表达式转换为字符串（安全处理链式属性）"""
+        if isinstance(node, ast.Name):
+            return node.id
+        elif isinstance(node, ast.Attribute):
+            try:
+                value_str = self.expr_to_str(node.value)
+                return f"{value_str}.{node.attr}"
+            except (AttributeError, TypeError):
+                return f"<Attribute>.{node.attr}"
+        elif isinstance(node, ast.Call):
+            try:
+                return self.expr_to_str(node.func)
+            except (AttributeError, TypeError):
+                return "<Call>"
+        elif isinstance(node, ast.Constant):
+            return repr(node.value)
+        elif isinstance(node, ast.Subscript):
+            try:
+                return f"{self.expr_to_str(node.value)}[...]"
+            except (AttributeError, TypeError):
+                return "<Subscript>"
+        else:
+            return node.__class__.__name__
+    
     def scan_file(self, filepath: Path) -> Dict[str, Any]:
         """扫描单个Python文件"""
+        encoding_used = "utf-8"
         try:
             # 检查文件编码
             try:
@@ -119,6 +145,7 @@ class DocstringsScanner:
                 try:
                     with open(filepath, 'r', encoding='latin-1') as f:
                         content = f.read()
+                    encoding_used = "latin-1"
                 except Exception as e:
                     raise UnicodeDecodeError(f"无法解码文件 {filepath}: {e}")
             
@@ -199,6 +226,15 @@ class DocstringsScanner:
             visitor = NodeVisitor(stats, self.is_dunder_method)
             visitor.visit(tree)
             
+            # 确保文件内部排序稳定
+            stats["classes"].sort(key=lambda x: (x["line"], x["name"]))
+            stats["functions"].sort(key=lambda x: (x["line"], x["name"]))
+            stats["methods"].sort(key=lambda x: (x["line"], x["name"]))
+            
+            # 记录编码信息
+            stats["encoding_used"] = encoding_used
+            stats["decode_fallback"] = encoding_used == "latin-1"
+            
             return stats
             
         except SyntaxError as e:
@@ -206,30 +242,53 @@ class DocstringsScanner:
             return {
                 "file": str(filepath.relative_to(self.module_path)),
                 "error": error_msg,
-                "error_type": "syntax_error"
+                "error_type": "syntax_error",
+                "classes": [],
+                "functions": [],
+                "methods": [],
+                "has_module_docstring": False,
+                "qualified_names": []
             }
         except UnicodeDecodeError as e:
             return {
                 "file": str(filepath.relative_to(self.module_path)),
                 "error": str(e),
-                "error_type": "encoding_error"
+                "error_type": "encoding_error",
+                "classes": [],
+                "functions": [],
+                "methods": [],
+                "has_module_docstring": False,
+                "qualified_names": []
             }
         except Exception as e:
             return {
                 "file": str(filepath.relative_to(self.module_path)),
                 "error": f"{type(e).__name__}: {str(e)}",
-                "error_type": "other_error"
+                "error_type": "other_error",
+                "classes": [],
+                "functions": [],
+                "methods": [],
+                "has_module_docstring": False,
+                "qualified_names": []
             }
     
     def scan_module(self):
         """扫描整个模块"""
+        total_found = 0
         python_files = []
+        
+        # 单次遍历，同时计数和过滤
         for filepath in self.module_path.rglob("*.py"):
+            total_found += 1
             if not self.should_exclude_file(filepath):
                 python_files.append(filepath)
         
+        # 按路径排序，确保遍历顺序稳定
+        python_files.sort(key=lambda x: str(x))
+        
+        excluded = total_found - len(python_files)
         print(f"扫描模块: {self.module_path}")
-        print(f"找到 {len(python_files)} 个Python文件（已排除 {len(list(self.module_path.rglob('*.py'))) - len(python_files)} 个排除文件）")
+        print(f"找到 {len(python_files)} 个Python文件（已排除 {excluded} 个排除文件）")
         
         for i, filepath in enumerate(python_files, 1):
             print(f"  [{i}/{len(python_files)}] 扫描: {filepath.relative_to(self.module_path)}")
@@ -240,6 +299,10 @@ class DocstringsScanner:
                 print(f"    ⚠ 错误: {file_stats['error']}")
             else:
                 self.scan_results["files"].append(file_stats)
+        
+        # 文件列表也按路径排序，确保JSON输出稳定
+        self.scan_results["files"].sort(key=lambda x: x["file"])
+        self.scan_results["errors"].sort(key=lambda x: x["file"])
         
         self.calculate_statistics()
     
