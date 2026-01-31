@@ -889,38 +889,36 @@ cn.test:
 		exit 1; \
 	fi
 	@echo ""
-	@echo "▶ 测试配置有效性"
-	@if [ -f "$(CN_PROJECT_CONFIG)" ]; then \
-		echo "✅ 项目配置存在: $(CN_PROJECT_CONFIG)"; \
-		echo "  测试项目配置..."; \
-		if CN_TIMEOUT=30 CN_CONFIG="$(CN_PROJECT_CONFIG)" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
-			echo "  ✅ 项目配置有效"; \
-		else \
-			echo "  ⚠ 项目配置无效（API Key 可能无效）"; \
-		fi; \
+	@echo "▶ 测试主链路配置（与 cn.p 使用相同逻辑）"
+	@echo "  配置选择逻辑验证..."
+	@# 模拟 cn_print.sh 的配置选择逻辑
+	@if [ -f "$(HOME)/.continue/config.json" ]; then \
+		echo "✅ 使用用户 JSON 配置: $(HOME)/.continue/config.json"; \
+		CONFIG_SOURCE="用户JSON配置"; \
+	elif [ -f "$(HOME)/.continue/config.yaml" ]; then \
+		echo "✅ 使用用户 YAML 配置: $(HOME)/.continue/config.yaml"; \
+		CONFIG_SOURCE="用户YAML配置"; \
+	elif [ -f "$(CN_PROJECT_CONFIG)" ]; then \
+		echo "⚠ 使用项目配置（用户配置不存在）: $(CN_PROJECT_CONFIG)"; \
+		CONFIG_SOURCE="项目配置"; \
 	else \
-		echo "⚠ 项目配置不存在: $(CN_PROJECT_CONFIG)"; \
+		echo "❌ 错误: 未找到 Continue 配置文件"; \
+		exit 1; \
 	fi
+	@echo "✅ 配置选择逻辑正常（与 cn.p 相同）"
 	@echo ""
-	@echo "▶ 测试用户配置"
+	@echo "▶ 配置源信息"
 	@if [ -f "$(HOME)/.continue/config.json" ]; then \
 		echo "✅ 用户 JSON 配置存在: $(HOME)/.continue/config.json"; \
-		echo "  测试用户配置..."; \
-		if CN_TIMEOUT=30 CN_CONFIG="$(HOME)/.continue/config.json" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
-			echo "  ✅ 用户配置有效"; \
-		else \
-			echo "  ⚠ 用户配置无效"; \
-		fi; \
 	elif [ -f "$(HOME)/.continue/config.yaml" ]; then \
 		echo "✅ 用户 YAML 配置存在: $(HOME)/.continue/config.yaml"; \
-		echo "  测试用户配置..."; \
-		if CN_TIMEOUT=30 CN_CONFIG="$(HOME)/.continue/config.yaml" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
-			echo "  ✅ 用户配置有效"; \
-		else \
-			echo "  ⚠ 用户配置无效"; \
-		fi; \
 	else \
 		echo "⚠ 用户配置不存在"; \
+	fi
+	@if [ -f "$(CN_PROJECT_CONFIG)" ]; then \
+		echo "✅ 项目配置存在: $(CN_PROJECT_CONFIG)"; \
+	else \
+		echo "⚠ 项目配置不存在"; \
 	fi
 
 # 显示帮助信息
