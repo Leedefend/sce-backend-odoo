@@ -27,25 +27,51 @@ $env:DEEPSEEK_API_KEY = "sk-你的_deepseek_api_key"
 [System.Environment]::SetEnvironmentVariable('DEEPSEEK_API_KEY', 'sk-你的_api_key', 'User')
 ```
 
-### 步骤 3：创建配置文件
+### 步骤 3：创建配置文件（推荐 JSON v1）
 
-创建文件：`C:\Users\Admin\.continue\config.json`
+创建文件（Windows）：`C:\Users\Admin\.continue\config.json`  
+创建文件（macOS/Linux）：`~/.continue/config.json`
 
 内容：
 ```json
 {
+  "name": "local-deepseek",
+  "version": "1.0.0",
+  "schema": "v1",
   "models": [
     {
-      "title": "DeepSeek Coder",
+      "name": "DeepSeek Chat",
+      "provider": "openai",
+      "model": "deepseek-chat",
+      "apiKey": "${env:DEEPSEEK_API_KEY}",
+      "apiBase": "https://api.deepseek.com/v1"
+    },
+    {
+      "name": "DeepSeek Coder",
       "provider": "openai",
       "model": "deepseek-coder",
       "apiKey": "${env:DEEPSEEK_API_KEY}",
-      "apiBase": "https://api.deepseek.com"
+      "apiBase": "https://api.deepseek.com/v1"
     }
   ],
-  "defaultModel": "DeepSeek Coder"
+  "roles": {
+    "chat": "DeepSeek Chat",
+    "edit": "DeepSeek Chat",
+    "apply": "DeepSeek Chat",
+    "summarize": "DeepSeek Chat",
+    "autocomplete": "DeepSeek Coder"
+  },
+  "allowAnonymousTelemetry": false,
+  "experimental": {
+    "disableIndexing": true
+  }
 }
 ```
+
+> **注意**
+> - Continue CLI v1 更稳定地读取 **JSON v1 schema**。  
+> - YAML 中的 `${env:DEEPSEEK_API_KEY}` 在部分版本不会被展开，常见报错是 `****KEY}`。
+> - 如果必须用 YAML，建议直接写入真实 API Key（并确保该文件不提交）。
 
 ### 步骤 4：创建 cn 别名
 
@@ -155,11 +181,13 @@ npm install -g @continuedev/cli
 # 访问 https://nodejs.org 下载安装
 ```
 
-### Q3: 配置文件错误
+### Q3: 配置文件错误 / 读取到了错误模型
 **解决**:
 1. 检查 JSON 格式：https://jsonlint.com
-2. 确保文件路径正确：`C:\Users\Admin\.continue\config.json`
-3. 重启 PowerShell
+2. 确保文件路径正确：`C:\Users\Admin\.continue\config.json` 或 `~/.continue/config.json`
+3. 不要传空的 `--config ""`；如果使用 `--config`，先 `export CFG=~/.continue/config.json`
+4. 优先使用 JSON v1 schema；YAML 的环境变量展开可能失败
+5. 重启 PowerShell / 终端后再运行 `cn`
 
 ### Q4: API Key 无效
 **解决**:
@@ -214,39 +242,58 @@ foreach ($file in Get-ChildItem *.py) {
 
 ## 高级配置
 
-### 多模型配置
+### 多模型配置（v1 schema）
 ```json
 {
+  "name": "local-multi",
+  "version": "1.0.0",
+  "schema": "v1",
   "models": [
     {
-      "title": "DeepSeek Coder",
+      "name": "DeepSeek Coder",
       "provider": "openai",
       "model": "deepseek-coder",
       "apiKey": "${env:DEEPSEEK_API_KEY}",
-      "apiBase": "https://api.deepseek.com"
+      "apiBase": "https://api.deepseek.com/v1"
     },
     {
-      "title": "GPT-4",
+      "name": "GPT-4",
       "provider": "openai",
       "model": "gpt-4",
       "apiKey": "${env:OPENAI_API_KEY}"
     }
   ],
-  "defaultModel": "DeepSeek Coder"
+  "roles": {
+    "chat": "DeepSeek Coder",
+    "edit": "DeepSeek Coder",
+    "apply": "DeepSeek Coder",
+    "summarize": "DeepSeek Coder",
+    "autocomplete": "DeepSeek Coder"
+  }
 }
 ```
 
-### 自定义系统提示
+### 自定义系统提示（v1 schema）
 ```json
 {
+  "name": "local-deepseek",
+  "version": "1.0.0",
+  "schema": "v1",
   "models": [{
-    "title": "DeepSeek Coder",
+    "name": "DeepSeek Coder",
     "provider": "openai",
     "model": "deepseek-coder",
     "apiKey": "${env:DEEPSEEK_API_KEY}",
-    "apiBase": "https://api.deepseek.com",
+    "apiBase": "https://api.deepseek.com/v1",
     "systemMessage": "你是一个专业的编程助手，擅长 Python 和 Odoo 开发。请用中文回答，代码注释用英文。"
-  }]
+  }],
+  "roles": {
+    "chat": "DeepSeek Coder",
+    "edit": "DeepSeek Coder",
+    "apply": "DeepSeek Coder",
+    "summarize": "DeepSeek Coder",
+    "autocomplete": "DeepSeek Coder"
+  }
 }
 ```
 
