@@ -41,10 +41,10 @@ echo 'export DEEPSEEK_API_KEY="你的_deepseek_api_key"' >> ~/.bashrc
 
 ```bash
 # Windows
-copy config\continue-deepseek.json "%USERPROFILE%\.continue\config.json"
+copy tools\continue\config\continue-deepseek.json "%USERPROFILE%\.continue\config.json"
 
 # macOS/Linux
-cp config/continue-deepseek.json ~/.continue/config.json
+cp tools/continue/config/continue-deepseek.json ~/.continue/config.json
 ```
 
 2. 或者手动创建 `~/.continue/config.json`：

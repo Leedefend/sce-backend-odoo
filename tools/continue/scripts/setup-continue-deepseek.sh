@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Continue DeepSeek 配置脚本 (Bash)
-# 使用方法: ./scripts/setup-continue-deepseek.sh
+# 使用方法: ./tools/continue/scripts/setup-continue-deepseek.sh
 
 echo "=== Continue DeepSeek 配置工具 ==="
 
@@ -111,4 +111,4 @@ echo "   - 输入 '@ 写一个 Python Hello World 程序'"
 
 echo -e "\n=== 配置完成 ==="
 echo "配置文件位置: $CONFIG_DEST"
-echo "文档参考: docs/continue-deepseek-config.md"
+echo "文档参考: tools/continue/docs/continue-deepseek-config.md"

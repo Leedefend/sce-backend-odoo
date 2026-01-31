@@ -133,4 +133,4 @@ if (-not $env:DEEPSEEK_API_KEY) {
     Write-Host "4. 设置 API Key: `$env:DEEPSEEK_API_KEY = 'sk-xxx'" -ForegroundColor Gray
 }
 
-Write-Host "\n详细指南请查看: SETUP_GUIDE.md" -ForegroundColor Gray
+Write-Host "\n详细指南请查看: tools/continue/docs/SETUP_GUIDE.md" -ForegroundColor Gray

@@ -139,4 +139,4 @@ Write-Host "2. 设置 API Key (见上面的命令)" -ForegroundColor Gray
 Write-Host "3. 重启 PowerShell 或运行: . `$PROFILE" -ForegroundColor Gray
 Write-Host "4. 测试: cn "你好，请用中文回答"" -ForegroundColor Gray
 
-Write-Host "\n如果仍有问题，请查看详细指南: SETUP_GUIDE.md" -ForegroundColor Gray
+Write-Host "\n如果仍有问题，请查看详细指南: tools/continue/docs/SETUP_GUIDE.md" -ForegroundColor Gray
