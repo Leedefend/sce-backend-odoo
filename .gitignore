@@ -41,6 +41,14 @@ docs/devtools/continue/*.backup
 docs/devtools/continue/.cache/
 docs/devtools/continue/scan_results/
 docs/devtools/continue/temp/
+
+# Continue 审计产物（通常不入库，如需归档请显式添加）
+artifacts/continue/*.json
+artifacts/continue/*.log
+artifacts/continue/*.tmp
+artifacts/continue/*.cache
+artifacts/continue/audit_*.md
+artifacts/continue/audit_*.json
 # -----------------------------------------
 .env
 .env.local
