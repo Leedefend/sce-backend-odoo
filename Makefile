@@ -835,9 +835,83 @@ ci.gate.tp08: guard.prod.forbid check-compose-project check-compose-env
 #   echo "任务" | make cn.p.stdin        # 管道输入模式
 
 # 项目配置路径
-CN_PROJECT_CONFIG ?= tools/continue/config/continue-deepseek.json
+CN_PROJECT_CONFIG ?= $(ROOT_DIR)/tools/continue/config/continue-deepseek.json
 
+# Continue CLI 脚本路径
+CN_PRINT_SCRIPT ?= scripts/ops/cn_print.sh
+
+# 验证提示参数
+guard.cn.prompt:
+	@if [ -z "$(PROMPT)" ] && [ -t 0 ]; then \
+		echo "❌ 错误: 需要提供提示 (PROMPT=... 或通过管道输入)"; \
+		echo "用法: make cn.p PROMPT=\"任务描述\""; \
+		echo "用法: echo \"任务\" | make cn.p.stdin"; \
+		exit 2; \
+	fi
+
+# 无闪烁批处理模式
+cn.p: guard.cn.prompt
+	@echo "▶ 执行 Continue 批处理任务 (无闪烁模式)"
+	@echo "提示: $(PROMPT)"
+	@echo "配置: $(CN_PROJECT_CONFIG)"
+	@bash "$(CN_PRINT_SCRIPT)" "$(PROMPT)"
+
+# 管道输入模式
+cn.p.stdin: guard.cn.prompt
+	@echo "▶ 执行 Continue 批处理任务 (管道输入模式)"
+	@echo "配置: $(CN_PROJECT_CONFIG)"
+	@PROMPT_STDIN=1 bash "$(CN_PRINT_SCRIPT)"
+
+# 交互式 TUI 模式 (可能闪烁)
+cn.tui:
+	@echo "⚠ 警告: 交互式 TUI 模式可能导致屏幕闪烁"
+	@echo "提示: 按 Ctrl+C 退出"
+	@if [ -f "$(CN_PROJECT_CONFIG)" ]; then \
+		cn --config "$(CN_PROJECT_CONFIG)"; \
+	else \
+		cn; \
+	fi
+
+# 测试 Continue CLI 连接
+cn.test:
+	@echo "▶ 测试 Continue CLI 连接"
+	@if command -v cn >/dev/null 2>&1; then \
+		echo "✅ Continue CLI 已安装"; \
+		cn --version || echo "⚠ 无法获取版本信息"; \
+	else \
+		echo "❌ Continue CLI 未安装"; \
+		echo "安装: npm install -g @continuedev/cli"; \
+		exit 1; \
+	fi
+	@if [ -f "$(CN_PROJECT_CONFIG)" ]; then \
+		echo "✅ 项目配置存在: $(CN_PROJECT_CONFIG)"; \
+	else \
+		echo "⚠ 项目配置不存在: $(CN_PROJECT_CONFIG)"; \
+	fi
+
+# 显示帮助信息
+cn.help:
+	@echo "Continue CLI 集成帮助:"
+	@echo ""
+	@echo "无闪烁批处理模式:"
+	@echo "  make cn.p PROMPT=\"任务描述\""
+	@echo "  示例: make cn.p PROMPT=\"分析代码问题\""
+	@echo ""
+	@echo "管道输入模式:"
+	@echo "  echo \"任务描述\" | make cn.p.stdin"
+	@echo "  示例: echo \"修复bug\" | make cn.p.stdin"
+	@echo ""
+	@echo "交互式 TUI 模式 (可能闪烁):"
+	@echo "  make cn.tui"
+	@echo ""
+	@echo "测试连接:"
+	@echo "  make cn.test"
+	@echo ""
+	@echo "配置路径: $(CN_PROJECT_CONFIG)"
+	@echo "脚本路径: $(CN_PRINT_SCRIPT)"
+	@echo ""
+	@echo "注意:"
 	@echo "  - 闪烁问题由交互式 TUI 引起，批处理模式可避免"
-	@echo "  - 默认使用项目配置: $(CN_PROJECT_CONFIG)"
+	@echo "  - 确保已安装 Continue CLI: npm install -g @continuedev/cli"
 
 .PHONY: cn.p cn.p.stdin cn.tui cn.test cn.help guard.cn.prompt
