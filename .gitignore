@@ -30,6 +30,17 @@ runtime/
 .env.continue.*
 .continue/
 continue_config.json
+
+# Devtools / Continue 生成物
+docs/devtools/continue/*.json
+docs/devtools/continue/*.log
+docs/devtools/continue/*.tmp
+docs/devtools/continue/*.cache
+docs/devtools/continue/*.bak
+docs/devtools/continue/*.backup
+docs/devtools/continue/.cache/
+docs/devtools/continue/scan_results/
+docs/devtools/continue/temp/
 # -----------------------------------------
 .env
 .env.local
