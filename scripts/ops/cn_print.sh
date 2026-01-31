@@ -14,32 +14,70 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 配置优先级
-# 1. 项目配置 (tools/continue/config/continue-deepseek.json)
+# 配置优先级（从高到低）：
+# 1. 环境变量 CN_CONFIG（由 Makefile 传入）
 # 2. 用户配置 (~/.continue/config.json)
 # 3. 用户配置 (~/.continue/config.yaml)
+# 4. 项目配置 (tools/continue/config/continue-deepseek.json)
+
+# 项目配置路径
 PROJECT_CONFIG="/mnt/e/sc-backend-odoo/tools/continue/config/continue-deepseek.json"
 USER_CONFIG_JSON="$HOME/.continue/config.json"
 USER_CONFIG_YAML="$HOME/.continue/config.yaml"
 
-# 选择配置文件（优先用户配置，因为项目配置可能缺少有效 API Key）
+# 函数：测试配置是否有效
+test_config() {
+    local config_file="$1"
+    local test_prompt="测试配置有效性"
+    
+    # 快速测试配置
+    if CI=1 NO_COLOR=1 TERM=dumb timeout 10 cn --print --config "$config_file" -- "$test_prompt" >/dev/null 2>&1; then
+        return 0  # 配置有效
+    else
+        return 1  # 配置无效
+    fi
+}
+
+# 选择配置文件（智能回退）
 CONFIG_FILE=""
-if [[ -f "$USER_CONFIG_JSON" ]]; then
-    CONFIG_FILE="$USER_CONFIG_JSON"
-    echo -e "${BLUE}ℹ 使用用户 JSON 配置: $USER_CONFIG_JSON${NC}"
-elif [[ -f "$USER_CONFIG_YAML" ]]; then
-    CONFIG_FILE="$USER_CONFIG_YAML"
-    echo -e "${BLUE}ℹ 使用用户 YAML 配置: $USER_CONFIG_YAML${NC}"
-elif [[ -f "$PROJECT_CONFIG" ]]; then
-    CONFIG_FILE="$PROJECT_CONFIG"
-    echo -e "${YELLOW}⚠ 使用项目配置: $PROJECT_CONFIG（用户配置未找到）${NC}"
-else
-    echo -e "${RED}✗ 错误: 未找到 Continue 配置文件${NC}"
-    echo "请检查以下位置:"
-    echo "  1. $USER_CONFIG_JSON"
-    echo "  2. $USER_CONFIG_YAML"
-    echo "  3. $PROJECT_CONFIG"
-    exit 1
+CONFIG_SOURCE=""
+
+# 尝试传入配置（如果有效）
+if [[ -n "${CN_CONFIG:-}" && -f "$CN_CONFIG" ]]; then
+    echo -e "${GREEN}✓ 检测到传入配置: $CN_CONFIG${NC}"
+    echo -e "${BLUE}ℹ 测试配置有效性...${NC}"
+    if test_config "$CN_CONFIG"; then
+        CONFIG_FILE="$CN_CONFIG"
+        CONFIG_SOURCE="传入配置"
+        echo -e "${GREEN}✓ 传入配置有效，使用: $CN_CONFIG${NC}"
+    else
+        echo -e "${YELLOW}⚠ 传入配置无效，回退到用户配置${NC}"
+    fi
+fi
+
+# 如果传入配置无效或不存在，使用用户配置
+if [[ -z "$CONFIG_FILE" ]]; then
+    # 优先用户JSON配置
+    if [[ -f "$USER_CONFIG_JSON" ]]; then
+        CONFIG_FILE="$USER_CONFIG_JSON"
+        CONFIG_SOURCE="用户JSON配置"
+        echo -e "${BLUE}ℹ 使用用户 JSON 配置: $USER_CONFIG_JSON${NC}"
+    elif [[ -f "$USER_CONFIG_YAML" ]]; then
+        CONFIG_FILE="$USER_CONFIG_YAML"
+        CONFIG_SOURCE="用户YAML配置"
+        echo -e "${BLUE}ℹ 使用用户 YAML 配置: $USER_CONFIG_YAML${NC}"
+    elif [[ -f "$PROJECT_CONFIG" ]]; then
+        CONFIG_FILE="$PROJECT_CONFIG"
+        CONFIG_SOURCE="项目配置"
+        echo -e "${YELLOW}⚠ 使用项目配置: $PROJECT_CONFIG（用户配置未找到）${NC}"
+    else
+        echo -e "${RED}✗ 错误: 未找到有效的 Continue 配置文件${NC}"
+        echo "请检查以下位置:"
+        echo "  1. $USER_CONFIG_JSON"
+        echo "  2. $USER_CONFIG_YAML"
+        echo "  3. $PROJECT_CONFIG"
+        exit 1
+    fi
 fi
 
 # 读取提示
@@ -78,10 +116,22 @@ echo "配置: $CONFIG_FILE"
 echo "超时: ${TIMEOUT}秒"
 echo "提示摘要: ${PROMPT:0:100}..."
 
-# 执行命令
+# 硬修复：强制headless、禁用TUI、禁用重绘
+echo -e "${BLUE}ℹ 应用硬修复: CI=1 NO_COLOR=1 TERM=dumb${NC}"
+
+# 临时错误文件
+ERROR_FILE=$(mktemp /tmp/cn_print.err.XXXXXX)
+trap 'rm -f "$ERROR_FILE"' EXIT
+
+# 执行命令（硬修复版本）
 set +e  # 允许命令失败，以便处理超时
-if timeout $TIMEOUT cn --print --config "$CONFIG_FILE" "$PROMPT"; then
+if CI=1 NO_COLOR=1 TERM=dumb timeout $TIMEOUT cn --print --config "$CONFIG_FILE" -- "$PROMPT" 2>"$ERROR_FILE"; then
     echo -e "${GREEN}✓ 任务完成${NC}"
+    # 检查是否有警告信息
+    if [[ -s "$ERROR_FILE" ]]; then
+        echo -e "${YELLOW}⚠ 警告信息:${NC}"
+        cat "$ERROR_FILE" | head -20
+    fi
     exit 0
 else
     EXIT_CODE=$?
@@ -93,12 +143,20 @@ else
         echo "  3. 分步骤执行复杂任务"
     elif [[ $EXIT_CODE -eq 1 ]]; then
         echo -e "${RED}✗ 任务失败: Continue CLI 错误${NC}"
+        if [[ -s "$ERROR_FILE" ]]; then
+            echo "错误详情:"
+            cat "$ERROR_FILE" | head -20
+        fi
         echo "可能原因:"
         echo "  1. 配置错误"
         echo "  2. API Key 无效"
         echo "  3. 网络问题"
     else
         echo -e "${RED}✗ 任务失败，退出码: $EXIT_CODE${NC}"
+        if [[ -s "$ERROR_FILE" ]]; then
+            echo "错误详情:"
+            cat "$ERROR_FILE" | head -20
+        fi
     fi
     exit $EXIT_CODE
 fi
