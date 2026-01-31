@@ -24,6 +24,12 @@ runtime/
 
 # -----------------------------------------
 # Environment & secrets
+
+# Continue AI 配置
+.env.continue
+.env.continue.*
+.continue/
+continue_config.json
 # -----------------------------------------
 .env
 .env.local
