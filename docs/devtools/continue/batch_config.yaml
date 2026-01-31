@@ -1,0 +1,53 @@
+# Continue 批处理模式配置
+# 用于避免"闪烁"问题的优化配置
+
+name: batch-deepseek
+version: 1.0.0
+schema: v1
+
+models:
+  - name: DeepSeek Chat (Batch)
+    provider: openai
+    model: deepseek-chat
+    apiKey: ${env:DEEPSEEK_API_KEY}
+    apiBase: https://api.deepseek.com/v1
+    # 可能的优化参数（如果支持）
+    # max_tokens: 8192
+    # stream: false  # 关闭流式输出
+
+roles:
+  chat: DeepSeek Chat (Batch)
+  edit: DeepSeek Chat (Batch)
+  apply: DeepSeek Chat (Batch)
+  summarize: DeepSeek Chat (Batch)
+  autocomplete: DeepSeek Coder
+
+# 实验性设置
+experimental:
+  disableIndexing: true
+  # 可能的优化（如果支持）
+  # autoContinue: true
+  # disableInteractivePauses: true
+
+# 工具策略
+toolPolicies:
+  # 允许的工具
+  allow:
+    - Read
+    - Write
+    - List
+    - Bash
+    - Edit
+    - Checklist
+  
+  # 需要确认的工具（减少中断）
+  ask: []
+  
+  # 排除的工具
+  exclude: []
+
+# 会话设置
+session:
+  # 可能的优化（如果支持）
+  # timeout: 300  # 5分钟超时
+  # maxTokensPerResponse: 8192
