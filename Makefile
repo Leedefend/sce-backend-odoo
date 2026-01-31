@@ -840,6 +840,9 @@ CN_PROJECT_CONFIG ?= $(ROOT_DIR)/tools/continue/config/continue-deepseek.json
 # Continue CLI 脚本路径
 CN_PRINT_SCRIPT ?= scripts/ops/cn_print.sh
 
+# Continue CLI 超时设置（秒）
+CN_TIMEOUT ?= 180
+
 # 验证提示参数
 guard.cn.prompt:
 	@if [ -z "$(PROMPT)" ] && [ -t 0 ]; then \
@@ -854,13 +857,15 @@ cn.p: guard.cn.prompt
 	@echo "▶ 执行 Continue 批处理任务 (无闪烁模式)"
 	@echo "提示: $(PROMPT)"
 	@echo "配置: $(CN_PROJECT_CONFIG)"
-	@CN_CONFIG="$(CN_PROJECT_CONFIG)" bash "$(CN_PRINT_SCRIPT)" "$(PROMPT)"
+	@echo "超时: $(CN_TIMEOUT)秒"
+	@CN_CONFIG="$(CN_PROJECT_CONFIG)" CN_TIMEOUT="$(CN_TIMEOUT)" bash "$(CN_PRINT_SCRIPT)" "$(PROMPT)"
 
 # 管道输入模式
 cn.p.stdin: guard.cn.prompt
 	@echo "▶ 执行 Continue 批处理任务 (管道输入模式)"
 	@echo "配置: $(CN_PROJECT_CONFIG)"
-	@CN_CONFIG="$(CN_PROJECT_CONFIG)" bash "$(CN_PRINT_SCRIPT)"
+	@echo "超时: $(CN_TIMEOUT)秒"
+	@CN_CONFIG="$(CN_PROJECT_CONFIG)" CN_TIMEOUT="$(CN_TIMEOUT)" bash "$(CN_PRINT_SCRIPT)"
 
 # 交互式 TUI 模式 (可能闪烁)
 cn.tui:
@@ -883,10 +888,39 @@ cn.test:
 		echo "安装: npm install -g @continuedev/cli"; \
 		exit 1; \
 	fi
+	@echo ""
+	@echo "▶ 测试配置有效性"
 	@if [ -f "$(CN_PROJECT_CONFIG)" ]; then \
 		echo "✅ 项目配置存在: $(CN_PROJECT_CONFIG)"; \
+		echo "  测试项目配置..."; \
+		if CN_TIMEOUT=30 CN_CONFIG="$(CN_PROJECT_CONFIG)" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
+			echo "  ✅ 项目配置有效"; \
+		else \
+			echo "  ⚠ 项目配置无效（API Key 可能无效）"; \
+		fi; \
 	else \
 		echo "⚠ 项目配置不存在: $(CN_PROJECT_CONFIG)"; \
+	fi
+	@echo ""
+	@echo "▶ 测试用户配置"
+	@if [ -f "$(HOME)/.continue/config.json" ]; then \
+		echo "✅ 用户 JSON 配置存在: $(HOME)/.continue/config.json"; \
+		echo "  测试用户配置..."; \
+		if CN_TIMEOUT=30 CN_CONFIG="$(HOME)/.continue/config.json" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
+			echo "  ✅ 用户配置有效"; \
+		else \
+			echo "  ⚠ 用户配置无效"; \
+		fi; \
+	elif [ -f "$(HOME)/.continue/config.yaml" ]; then \
+		echo "✅ 用户 YAML 配置存在: $(HOME)/.continue/config.yaml"; \
+		echo "  测试用户配置..."; \
+		if CN_TIMEOUT=30 CN_CONFIG="$(HOME)/.continue/config.yaml" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
+			echo "  ✅ 用户配置有效"; \
+		else \
+			echo "  ⚠ 用户配置无效"; \
+		fi; \
+	else \
+		echo "⚠ 用户配置不存在"; \
 	fi
 
 # 显示帮助信息
