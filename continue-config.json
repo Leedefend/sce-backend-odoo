@@ -1,0 +1,22 @@
+{
+  "models": [
+    {
+      "title": "DeepSeek Coder",
+      "provider": "openai",
+      "model": "deepseek-coder",
+      "apiKey": "${env:DEEPSEEK_API_KEY}",
+      "apiBase": "https://api.deepseek.com",
+      "contextLength": 16384
+    },
+    {
+      "title": "DeepSeek Chat",
+      "provider": "openai",
+      "model": "deepseek-chat",
+      "apiKey": "${env:DEEPSEEK_API_KEY}",
+      "apiBase": "https://api.deepseek.com",
+      "contextLength": 32768
+    }
+  ],
+  "defaultModel": "DeepSeek Coder",
+  "allowAnonymousTelemetry": false
+}
