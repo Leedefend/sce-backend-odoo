@@ -35,6 +35,10 @@
 
 👉 `docs/dev-env.md`
 
+### 可选开发工具（Continue / DeepSeek）
+
+如果团队需要本地 AI 辅助开发配置，请参考：`tools/continue/README.md`。
+
 ## Quick Start (Dev)
 
 ```bash

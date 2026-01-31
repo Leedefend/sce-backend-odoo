@@ -50,6 +50,7 @@ class ScPackInstallation(models.Model):
     _description = "SC Pack Installation"
     _order = "installed_at desc, id desc"
 
+    company_id = fields.Many2one("res.company", ondelete="set null")
     pack_id = fields.Many2one("sc.pack.registry", required=True, ondelete="cascade")
     installed_version = fields.Char()
     installed_at = fields.Datetime()

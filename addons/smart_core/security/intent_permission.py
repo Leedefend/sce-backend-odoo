@@ -19,6 +19,9 @@ def check_intent_permission(ctx):
     # 2. 切换 request.env 用户
     request.env = request.env(user=user_id)
     env = request.env
+    intent_name = (ctx.params.get("intent") or "").strip()
+    if intent_name == "permission.check":
+        return True
 
     # 3. 正常的权限检查逻辑
     model = ctx.params.get("model")
@@ -60,5 +63,32 @@ def check_intent_permission(ctx):
         # 集合交集判断
         if action.groups_id and not (action.groups_id & env.user.groups_id):
             raise AccessError(f"用户无权执行动作 {action.name}")
+
+    # ✅ 授权/功能开关检查（若启用）
+    try:
+        try:
+            Entitlement = env["sc.entitlement"]
+        except Exception:
+            Entitlement = None
+        if Entitlement:
+            params = ctx.params.get("params") or {}
+            cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
+            cap = None
+            if cap_key:
+                cap = env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
+            ent = Entitlement.get_effective(env.user.company_id)
+            flags = ent.effective_flags_json or {}
+            if cap and cap.required_flag:
+                if not Entitlement._flag_enabled(flags, cap.required_flag):
+                    raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}'}}")
+        else:
+            params = ctx.params.get("params") or {}
+            cap_key = params.get("capability_key") or params.get("capability") or params.get("key")
+            if cap_key:
+                cap = env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
+                if cap and cap.required_flag:
+                    raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}', 'reason': 'ENTITLEMENT_UNAVAILABLE'}}")
+    except Exception:
+        raise
 
     return True
