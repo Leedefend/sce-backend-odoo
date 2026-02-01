@@ -41,6 +41,12 @@ docs/devtools/continue/*.backup
 docs/devtools/continue/.cache/
 docs/devtools/continue/scan_results/
 docs/devtools/continue/temp/
+
+# Continue 审计产物：默认全部不入库
+artifacts/continue/**
+
+# 但允许保留目录占位
+!artifacts/continue/.gitkeep
 # -----------------------------------------
 .env
 .env.local
