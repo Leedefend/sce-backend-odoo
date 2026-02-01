@@ -27,7 +27,7 @@ export async function listRecords(params: {
   };
   return intentRequest<ApiDataListResult>({
     intent: 'api.data',
-    params: payload as unknown as Record<string, unknown>,
+    params: payload,
   });
 }
 
@@ -46,7 +46,7 @@ export async function readRecord(params: {
   };
   return intentRequest<ApiDataReadResult>({
     intent: 'api.data',
-    params: payload as unknown as Record<string, unknown>,
+    params: payload,
   });
 }
 
