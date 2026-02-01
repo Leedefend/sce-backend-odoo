@@ -8,6 +8,7 @@
     "preview": "pnpm -C apps/web preview",
     "lint": "pnpm -C apps/web lint",
     "typecheck": "pnpm -C apps/web typecheck",
+    "gate": "pnpm lint && pnpm typecheck && pnpm build",
     "format": "prettier -w ."
   },
   "devDependencies": {

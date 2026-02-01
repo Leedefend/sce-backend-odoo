@@ -11,7 +11,7 @@
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
-import { resolveMenu } from '../app/menu';
+import { resolveMenuAction } from '../app/resolvers/menuResolver';
 
 const route = useRoute();
 const router = useRouter();
@@ -24,7 +24,7 @@ onMounted(async () => {
     if (!menuId) {
       throw new Error('invalid menu id');
     }
-    const meta = resolveMenu(session.menuTree, menuId);
+    const meta = resolveMenuAction(session.menuTree, menuId);
     session.setActionMeta(meta);
     await router.replace(`/a/${meta.action_id}?menu_id=${menuId}`);
   } catch (err) {
