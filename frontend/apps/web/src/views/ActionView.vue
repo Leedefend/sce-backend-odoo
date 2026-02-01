@@ -54,6 +54,25 @@ const actionMeta = computed(() => {
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const title = computed(() => actionMeta.value?.action_id ? `Action ${actionMeta.value?.action_id}` : 'Action');
+const menuId = computed(() => Number(route.query.menu_id ?? 0));
+
+function mergeContext(base: Record<string, unknown> | string | undefined) {
+  if (!base || typeof base === 'string') {
+    return menuId.value ? { menu_id: menuId.value } : {};
+  }
+  if (!menuId.value) {
+    return base;
+  }
+  return { ...base, menu_id: menuId.value };
+}
+
+function normalizeDomain(domain: unknown) {
+  if (!domain) {
+    return [];
+  }
+  return domain;
+}
+
 function pickColumns(rows: Array<Record<string, unknown>>) {
   if (!rows.length) {
     return ['id', 'name'];
@@ -105,8 +124,8 @@ async function load() {
     const result = await listRecords({
       model: model.value,
       fields: contractColumns.length ? contractColumns : ['id', 'name'],
-      domain: (actionMeta.value?.domain as unknown[]) ?? [],
-      context: (actionMeta.value?.context as Record<string, unknown>) ?? {},
+      domain: normalizeDomain(actionMeta.value?.domain),
+      context: mergeContext(actionMeta.value?.context),
       limit: 40,
       offset: 0,
     });
