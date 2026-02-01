@@ -123,6 +123,25 @@ export interface ApiDataWriteRequest {
   context?: Record<string, unknown>;
 }
 
+export interface ExecuteButtonRequest {
+  model: string;
+  res_id: number;
+  button: {
+    name: string;
+    type?: string;
+  };
+  context?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+}
+
+export interface ExecuteButtonResult {
+  type: 'refresh' | 'action' | 'noop';
+  res_model?: string;
+  res_id?: number;
+  raw_action?: Record<string, unknown>;
+  message?: string;
+}
+
 export interface LoadViewRequest {
   model: string;
   view_type: string;
@@ -149,6 +168,20 @@ export interface ViewContract {
   layout: FormLayout;
 }
 
+export interface ViewButton {
+  name?: string;
+  string?: string;
+  type?: string;
+  class?: string;
+  context?: Record<string, unknown>;
+  invisible?: unknown;
+  icon?: string;
+  groups?: string[];
+  hotkey?: string;
+  visible?: boolean;
+  level?: string;
+}
+
 export interface FieldDescriptor {
   name?: string;
   string?: string;
@@ -162,8 +195,8 @@ export interface FieldDescriptor {
 
 export interface FormLayout {
   titleField?: string | null;
-  headerButtons?: unknown[];
-  statButtons?: unknown[];
+  headerButtons?: ViewButton[];
+  statButtons?: ViewButton[];
   ribbon?: unknown;
   groups?: Array<FormGroup>;
   notebooks?: Array<FormNotebook>;

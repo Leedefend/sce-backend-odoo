@@ -6,7 +6,16 @@
         <p class="meta">Model: {{ model }} · ID: {{ recordIdDisplay }}</p>
       </div>
       <div class="actions">
-        <button @click="save" :disabled="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
+        <button
+          v-for="btn in headerButtons"
+          :key="btn.name ?? btn.string"
+          :disabled="!recordId || saving || loading || executing === btn.name"
+          class="action secondary"
+          @click="runButton(btn)"
+        >
+          {{ buttonLabel(btn) }}
+        </button>
+        <button :disabled="saving" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
         <button @click="reload">Reload</button>
       </div>
     </header>
@@ -22,7 +31,7 @@
     />
 
     <section v-else class="card">
-      <div class="field" v-for="field in fields" :key="field.name">
+      <div v-for="field in fields" :key="field.name" class="field">
         <label class="label">{{ field.label }}</label>
         <template v-if="field.readonly">
           <FieldValue :value="formData[field.name]" :field="field.descriptor" />
@@ -50,10 +59,11 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
 import { createRecord, readRecord, writeRecord } from '../api/data';
+import { executeButton } from '../api/executeButton';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
-import type { ViewContract } from '@sc/schema';
+import type { ViewButton, ViewContract } from '@sc/schema';
 import { recordTrace, createTraceId } from '../services/trace';
 
 const route = useRoute();
@@ -63,16 +73,26 @@ const error = ref('');
 const traceId = ref('');
 const loading = ref(false);
 const saving = ref(false);
+const executing = ref<string | null>(null);
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
 const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new'));
 const title = computed(() => `Form: ${model.value}`);
 
+const viewContract = ref<ViewContract | null>(null);
 const fields = ref<
   Array<{ name: string; label: string; descriptor?: ViewContract['fields'][string]; readonly?: boolean }>
 >([]);
-const formData = reactive<Record<string, any>>({});
+const formData = reactive<Record<string, unknown>>({});
+
+const headerButtons = computed(() => {
+  const raw =
+    viewContract.value?.layout?.headerButtons ??
+    (viewContract.value as { layout?: { header_buttons?: ViewButton[] } } | null)?.layout?.header_buttons ??
+    [];
+  return normalizeButtons(raw);
+});
 
 function isTextField(field: (typeof fields.value)[number]) {
   const ttype = field.descriptor?.ttype;
@@ -106,6 +126,7 @@ async function load() {
 
   try {
     const view = await resolveView(model.value, 'form');
+    viewContract.value = view;
     const fieldNames = extractFieldNames(view.layout).filter(Boolean);
     const read = recordId.value
       ? await readRecord({
@@ -188,6 +209,71 @@ async function save() {
     }
   } finally {
     saving.value = false;
+  }
+}
+
+function normalizeButtons(raw: unknown): ViewButton[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw.filter((btn) => btn && typeof btn === 'object') as ViewButton[];
+}
+
+function buttonLabel(btn: ViewButton) {
+  return btn.string || btn.name || 'Action';
+}
+
+function getQueryNumber(key: string) {
+  const val = route.query[key];
+  if (Array.isArray(val)) {
+    const n = Number(val[0]);
+    return Number.isNaN(n) ? undefined : n;
+  }
+  if (typeof val === 'string') {
+    const n = Number(val);
+    return Number.isNaN(n) ? undefined : n;
+  }
+  return undefined;
+}
+
+async function runButton(btn: ViewButton) {
+  if (!model.value || !recordId.value || !btn.name) {
+    return;
+  }
+  executing.value = btn.name;
+  try {
+    const response = await executeButton({
+      model: model.value,
+      res_id: recordId.value,
+      button: { name: btn.name, type: btn.type ?? 'object' },
+      context: btn.context ?? {},
+      meta: {
+        menu_id: getQueryNumber('menu_id'),
+        action_id: getQueryNumber('action_id'),
+        view_id: viewContract.value?.view_id,
+      },
+    });
+    recordTrace({
+      ts: Date.now(),
+      trace_id: createTraceId(),
+      intent: 'execute_button',
+      status: 'ok',
+      model: model.value,
+      view_mode: 'form',
+      params_digest: JSON.stringify({ id: recordId.value, name: btn.name }),
+    });
+    if (response?.result?.type === 'refresh') {
+      await load();
+    }
+  } catch (err) {
+    if (err instanceof ApiError) {
+      traceId.value = err.traceId ?? '';
+      error.value = err.message;
+    } else {
+      error.value = err instanceof Error ? err.message : 'failed to execute button';
+    }
+  } finally {
+    executing.value = null;
   }
 }
 
