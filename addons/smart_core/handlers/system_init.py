@@ -281,7 +281,12 @@ class SystemInitHandler(BaseIntentHandler):
         data = {
             "user": user_dict,
             "nav": nav_tree,
-            "nav_meta": {"fingerprint": nav_fp, **(nav_versions or {})},         # ✅ 导航指纹 + scope info
+            "nav_meta": {                                                       # ✅ 导航指纹 + scope info
+                "fingerprint": nav_fp,
+                **(nav_versions or {}),
+                "debug_params_keys": sorted(list(params.keys())) if isinstance(params, dict) else [],
+                "debug_root_xmlid": params.get("root_xmlid") if isinstance(params, dict) else None,
+            },
             "default_route": nav_data.get("defaultRoute") or {"menu_id": None},  # ✅ snake_case
             "intents": intents,                                                  # ✅ 动态意图（主名）
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
