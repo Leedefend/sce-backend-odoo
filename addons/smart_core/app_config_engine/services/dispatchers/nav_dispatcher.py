@@ -58,6 +58,10 @@ class NavDispatcher:
                 filters=fallback_filters,
             )
             tree_raw = contract.get("nav") or []
+            if not tree_raw:
+                _logger.warning("NAV_DEBUG: empty nav after relax filters, disable runtime filter")
+                contract = cfg.get_menu_contract(model_name=None, filter_runtime=False, scene=scene)
+                tree_raw = contract.get("nav") or []
 
         # 2) 归一根集合
         roots = self._flatten_roots(tree_raw)
