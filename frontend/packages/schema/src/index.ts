@@ -6,6 +6,21 @@ export interface IntentEnvelope<T> {
   code?: number;
 }
 
+export interface IntentRequest<T = Record<string, unknown>> {
+  intent: string;
+  params?: T;
+  context?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+}
+
+export interface IntentResponse<T> {
+  ok?: boolean;
+  data?: T;
+  meta?: Record<string, unknown>;
+  status?: string;
+  code?: number;
+}
+
 export interface LoginResponse {
   token: string;
   token_type?: string;
@@ -69,8 +84,45 @@ export interface ApiDataListResult {
   total?: number;
 }
 
+export interface ApiDataListRequest {
+  op: 'list';
+  model: string;
+  fields?: string[] | '*';
+  domain?: unknown[] | string;
+  limit?: number;
+  offset?: number;
+  order?: string;
+  context?: Record<string, unknown>;
+}
+
 export interface ApiDataReadResult {
   records: Array<Record<string, unknown>>;
+}
+
+export interface ApiDataReadRequest {
+  op: 'read';
+  model: string;
+  ids: number[];
+  fields?: string[] | '*';
+  context?: Record<string, unknown>;
+}
+
+export interface LoadViewRequest {
+  model: string;
+  view_type: string;
+  view_id?: number;
+}
+
+export interface ActionContract {
+  model?: string;
+  view_type?: string;
+  ui_contract_raw?: {
+    fields?: Record<string, FieldDescriptor>;
+  };
+  ui_contract?: {
+    columns?: string[];
+    columnsSchema?: Array<{ name: string; string?: string }>;
+  };
 }
 
 export interface ViewContract {

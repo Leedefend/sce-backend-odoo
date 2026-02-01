@@ -7,7 +7,10 @@ export interface SessionState {
   user: AppInitResponse['user'] | null;
   menuTree: NavNode[];
   currentAction: NavMeta | null;
+  isReady: boolean;
 }
+
+const STORAGE_KEY = 'sc_frontend_session_v0_2';
 
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
@@ -15,19 +18,50 @@ export const useSessionStore = defineStore('session', {
     user: null,
     menuTree: [],
     currentAction: null,
+    isReady: false,
   }),
   actions: {
     setToken(token: string) {
       this.token = token;
+      sessionStorage.setItem('sc_auth_token', token);
+    },
+    restore() {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as Partial<SessionState>;
+          this.user = parsed.user ?? null;
+          this.menuTree = parsed.menuTree ?? [];
+          this.currentAction = parsed.currentAction ?? null;
+        } catch {
+          // ignore corrupted cache
+        }
+      }
+      const token = sessionStorage.getItem('sc_auth_token');
+      if (token) {
+        this.token = token;
+      }
     },
     clearSession() {
       this.token = null;
       this.user = null;
       this.menuTree = [];
       this.currentAction = null;
+      this.isReady = false;
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem('sc_auth_token');
     },
     setActionMeta(meta: NavMeta) {
       this.currentAction = meta;
+      this.persist();
+    },
+    persist() {
+      const snapshot: Partial<SessionState> = {
+        user: this.user,
+        menuTree: this.menuTree,
+        currentAction: this.currentAction,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
     },
     async login(username: string, password: string) {
       const result = await intentRequest<LoginResponse>({
@@ -35,6 +69,15 @@ export const useSessionStore = defineStore('session', {
         params: { login: username, password },
       });
       this.token = result.token;
+      sessionStorage.setItem('sc_auth_token', result.token);
+    },
+    async logout() {
+      try {
+        await intentRequest<{ message?: string }>({ intent: 'auth.logout' });
+      } catch {
+        // ignore logout failure
+      }
+      this.clearSession();
     },
     async loadAppInit() {
       const result = await intentRequest<AppInitResponse>({
@@ -43,6 +86,14 @@ export const useSessionStore = defineStore('session', {
       });
       this.user = result.user;
       this.menuTree = result.nav ?? [];
+      this.isReady = true;
+      this.persist();
+    },
+    async ensureReady() {
+      if (this.isReady) {
+        return;
+      }
+      await this.loadAppInit();
     },
   },
 });

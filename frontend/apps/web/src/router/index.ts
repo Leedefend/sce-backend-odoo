@@ -17,10 +17,17 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const session = useSessionStore();
   if (to.name !== 'login' && !session.token) {
     return { name: 'login' };
+  }
+  if (to.name !== 'login' && session.token && !session.isReady) {
+    try {
+      await session.ensureReady();
+    } catch {
+      return { name: 'login' };
+    }
   }
   return true;
 });
