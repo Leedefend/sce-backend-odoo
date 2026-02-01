@@ -8,21 +8,33 @@ export interface IntentPayload {
   meta?: Record<string, unknown>;
 }
 
-function buildHeaders(intent: string) {
+function buildHeaders(intent: string, traceId: string) {
+  const headers: Record<string, string> = {
+    'X-Trace-Id': traceId,
+  };
   if (intent === 'login' || intent === 'auth.login') {
-    return {
-      'X-Anonymous-Intent': 'true',
-    };
+    headers['X-Anonymous-Intent'] = 'true';
   }
-  return undefined;
+  return headers;
+}
+
+function generateTraceId() {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `trace_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
 export async function intentRequest<T>(payload: IntentPayload) {
+  const traceId = generateTraceId();
   const response = await apiRequest<IntentEnvelope<T>>('/api/v1/intent', {
     method: 'POST',
-    headers: buildHeaders(payload.intent),
+    headers: buildHeaders(payload.intent, traceId),
     body: JSON.stringify(payload),
   });
+
+  // eslint-disable-next-line no-console
+  console.info(`[trace] intent=${payload.intent} status=ok trace=${traceId}`);
 
   if (response && typeof response === 'object' && 'data' in response) {
     return response.data as T;

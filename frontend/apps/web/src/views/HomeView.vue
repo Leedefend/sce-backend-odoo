@@ -36,8 +36,8 @@ function openMenu(menuId?: number) {
   router.push(`/m/${menuId}`);
 }
 
-function logout() {
-  session.clearSession();
+async function logout() {
+  await session.logout();
   router.push('/login');
 }
 </script>

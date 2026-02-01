@@ -26,7 +26,7 @@ onMounted(async () => {
     }
     const meta = resolveMenu(session.menuTree, menuId);
     session.setActionMeta(meta);
-    await router.replace(`/a/${meta.action_id}`);
+    await router.replace(`/a/${meta.action_id}?menu_id=${menuId}`);
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'resolve menu failed';
   }

@@ -10,8 +10,9 @@ function generateTraceId() {
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}) {
   const session = useSessionStore();
-  const traceId = generateTraceId();
   const headers = new Headers(options.headers ?? {});
+  const existingTrace = headers.get('x-trace-id');
+  const traceId = existingTrace || generateTraceId();
 
   headers.set('Content-Type', 'application/json');
   headers.set('x-trace-id', traceId);
@@ -28,6 +29,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}) {
   const response = await fetch(`${config.apiBaseUrl}${path}`, {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   if (response.status === 401) {

@@ -35,6 +35,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecords } from '../api/data';
+import { loadActionContract } from '../api/contract';
 import { useSessionStore } from '../stores/session';
 import { findActionMeta } from '../app/menu';
 
@@ -53,6 +54,24 @@ const actionMeta = computed(() => {
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const title = computed(() => actionMeta.value?.action_id ? `Action ${actionMeta.value?.action_id}` : 'Action');
+const menuId = computed(() => Number(route.query.menu_id ?? 0));
+
+function mergeContext(base: Record<string, unknown> | string | undefined) {
+  if (!base || typeof base === 'string') {
+    return menuId.value ? { menu_id: menuId.value } : {};
+  }
+  if (!menuId.value) {
+    return base;
+  }
+  return { ...base, menu_id: menuId.value };
+}
+
+function normalizeDomain(domain: unknown) {
+  if (Array.isArray(domain)) {
+    return domain;
+  }
+  return [];
+}
 
 function pickColumns(rows: Array<Record<string, unknown>>) {
   if (!rows.length) {
@@ -73,6 +92,22 @@ function formatValue(value: unknown) {
   return value ?? '';
 }
 
+function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
+  const columns = contract?.ui_contract?.columns;
+  if (Array.isArray(columns) && columns.length) {
+    return columns;
+  }
+  const schema = contract?.ui_contract?.columnsSchema;
+  if (Array.isArray(schema) && schema.length) {
+    return schema.map((col) => col.name).filter(Boolean);
+  }
+  const rawFields = contract?.ui_contract_raw?.fields;
+  if (rawFields && typeof rawFields === 'object') {
+    return Object.keys(rawFields);
+  }
+  return [];
+}
+
 async function load() {
   error.value = '';
   records.value = [];
@@ -84,16 +119,18 @@ async function load() {
   }
 
   try {
+    const contract = await loadActionContract(actionId.value);
+    const contractColumns = extractColumnsFromContract(contract);
     const result = await listRecords({
       model: model.value,
-      fields: '*',
-      domain: (actionMeta.value?.domain as unknown[]) ?? [],
-      context: (actionMeta.value?.context as Record<string, unknown>) ?? {},
+      fields: contractColumns.length ? contractColumns : ['id', 'name'],
+      domain: normalizeDomain(actionMeta.value?.domain),
+      context: mergeContext(actionMeta.value?.context),
       limit: 40,
       offset: 0,
     });
     records.value = result.records ?? [];
-    columns.value = pickColumns(records.value);
+    columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'failed to load list';
   }

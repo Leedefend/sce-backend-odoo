@@ -58,7 +58,7 @@ def _cors_headers() -> Dict[str, str]:
         "Access-Control-Allow-Methods": "POST, OPTIONS",
         "Access-Control-Allow-Headers": (
             "Content-Type, Authorization, X-Odoo-DB, X-DB, X-Anonymous-Intent, "
-            "If-None-Match, If-Match, Accept, X-Requested-With"
+            "X-Trace-Id, X-Tenant, If-None-Match, If-Match, Accept, X-Requested-With"
         ),
         "Access-Control-Expose-Headers": "ETag",
         "Access-Control-Max-Age": "86400",

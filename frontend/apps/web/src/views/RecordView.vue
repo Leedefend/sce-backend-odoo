@@ -25,7 +25,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { intentRequest } from '../api/intents';
 import { readRecord } from '../api/data';
-import type { ViewContract, FormField } from '@sc/schema';
+import type { ViewContract, FormField, LoadViewRequest } from '@sc/schema';
 
 const route = useRoute();
 const error = ref('');
@@ -75,7 +75,7 @@ async function load() {
   try {
     const view = await intentRequest<ViewContract>({
       intent: 'load_view',
-      params: { model: model.value, view_type: 'form' },
+      params: { model: model.value, view_type: 'form' } as Record<string, unknown>,
     });
 
     const fieldNames = extractFieldNames(view.layout).filter(Boolean);
