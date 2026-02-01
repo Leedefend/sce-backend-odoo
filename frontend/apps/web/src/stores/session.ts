@@ -85,7 +85,16 @@ export const useSessionStore = defineStore('session', {
         params: { scene: 'web', with_preload: false },
       });
       this.user = result.user;
-      this.menuTree = result.nav ?? [];
+      const candidates = [
+        result.nav,
+        // tolerate legacy/misaligned keys during bootstrap
+        (result as AppInitResponse & { menuTree?: NavNode[] }).menuTree,
+        (result as AppInitResponse & { menu_tree?: NavNode[] }).menu_tree,
+        (result as AppInitResponse & { menus?: NavNode[] }).menus,
+        (result as AppInitResponse & { sections?: NavNode[] }).sections,
+      ];
+      const nav = candidates.find((entry) => Array.isArray(entry)) ?? [];
+      this.menuTree = nav as NavNode[];
       this.isReady = true;
       this.persist();
     },
