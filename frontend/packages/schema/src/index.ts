@@ -52,6 +52,7 @@ export interface NavNode {
 export interface NavMeta {
   menu_id?: number;
   menu_xmlid?: string;
+  sequence?: number;
   action_id?: number;
   action_type?: string;
   action_xmlid?: string;
