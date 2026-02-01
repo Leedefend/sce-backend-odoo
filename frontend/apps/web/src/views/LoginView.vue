@@ -20,10 +20,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
+const route = useRoute();
 const session = useSessionStore();
 
 const username = ref('');
@@ -37,7 +38,8 @@ async function onSubmit() {
   try {
     await session.login(username.value, password.value);
     await session.loadAppInit();
-    await router.push('/');
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
+    await router.push(redirect);
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Login failed';
   } finally {

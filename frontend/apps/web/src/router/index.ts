@@ -20,7 +20,7 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const session = useSessionStore();
   if (to.name !== 'login' && !session.token) {
-    return { name: 'login' };
+    return { name: 'login', query: { redirect: to.fullPath } };
   }
   if (to.name !== 'login' && session.token && !session.isReady) {
     try {
