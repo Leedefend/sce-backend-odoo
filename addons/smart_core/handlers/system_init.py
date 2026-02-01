@@ -281,7 +281,7 @@ class SystemInitHandler(BaseIntentHandler):
         data = {
             "user": user_dict,
             "nav": nav_tree,
-            "nav_meta": {"fingerprint": nav_fp},                                 # ✅ 导航指纹
+            "nav_meta": {"fingerprint": nav_fp, **(nav_versions or {})},         # ✅ 导航指纹 + scope info
             "default_route": nav_data.get("defaultRoute") or {"menu_id": None},  # ✅ snake_case
             "intents": intents,                                                  # ✅ 动态意图（主名）
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）

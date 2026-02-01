@@ -86,8 +86,9 @@ class NavDispatcher:
 
         # 4) 可选：限定根菜单（在过滤前裁剪，避免 root 被过滤导致丢失）
         resolved_root_id = self._resolve_menu_id(root_menu_id, root_xmlid)
+        root_found = None
         if resolved_root_id:
-            tree = self._slice_raw_tree_by_root(tree, resolved_root_id)
+            tree, root_found = self._slice_raw_tree_by_root(tree, resolved_root_id)
 
         # 5) 富化（批量化尽量避免 N+1）
         if do_enrich and tree:
@@ -123,6 +124,10 @@ class NavDispatcher:
         meta = {
             "menu": int(getattr(cfg, "version", 1) or 1),
             "fingerprint": self._nav_fingerprint(cfg.version, scene, user_groups_xmlids),
+            "root_xmlid": root_xmlid,
+            "root_menu_id": root_menu_id,
+            "root_resolved_id": resolved_root_id,
+            "root_found": root_found,
         }
 
         _logger.info("NAV_DEBUG: final_count=%s (scene=%s, uid=%s)", len(nav), scene, self.env.user.id)
@@ -159,7 +164,7 @@ class NavDispatcher:
         root = find_node(nav)
         return [root] if root else nav
 
-    def _slice_raw_tree_by_root(self, tree: List[Dict[str, Any]], root_id: int) -> List[Dict[str, Any]]:
+    def _slice_raw_tree_by_root(self, tree: List[Dict[str, Any]], root_id: int) -> tuple[List[Dict[str, Any]], bool]:
         def find_node(nodes: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
             for node in nodes or []:
                 if node.get("menu_id") == root_id or node.get("id") == root_id:
@@ -170,7 +175,9 @@ class NavDispatcher:
             return None
 
         root = find_node(tree)
-        return [root] if root else tree
+        if root:
+            return [root], True
+        return tree, False
 
     # ========================= 工具：根集合归一 ========================= #
 
