@@ -7,11 +7,7 @@
       </header>
       <div class="menu">
         <h2>Menu</h2>
-        <ul>
-          <li v-for="node in menuTree" :key="node.key">
-            <button @click="openMenu(node.menu_id)">{{ node.label }}</button>
-          </li>
-        </ul>
+        <MenuTree :nodes="menuTree" @select="handleSelect" />
       </div>
       <button class="logout" @click="logout">Logout</button>
     </section>
@@ -22,18 +18,19 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
+import MenuTree from '../components/MenuTree.vue';
+import { openAction } from '../services/action_service';
 
 const router = useRouter();
 const session = useSessionStore();
 
 const userName = computed(() => session.user?.name ?? 'unknown');
-const menuTree = computed(() => session.menuTree.slice(0, 8));
+const menuTree = computed(() => session.menuTree);
 
-function openMenu(menuId?: number) {
-  if (!menuId) {
-    return;
+function handleSelect(node: { meta?: { action_id?: number } } & { menu_id?: number }) {
+  if (node.meta?.action_id) {
+    openAction(router, node.meta, node.menu_id);
   }
-  router.push(`/m/${menuId}`);
 }
 
 async function logout() {
@@ -52,7 +49,7 @@ async function logout() {
 }
 
 .card {
-  width: min(520px, 92vw);
+  width: min(720px, 92vw);
   background: white;
   padding: 32px;
   border-radius: 16px;
@@ -61,22 +58,9 @@ async function logout() {
   gap: 16px;
 }
 
-.menu ul {
-  display: grid;
-  gap: 8px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.menu button {
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  cursor: pointer;
+.menu {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
 }
 
 .logout {
