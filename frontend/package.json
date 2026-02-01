@@ -1,0 +1,16 @@
+{
+  "name": "sc-frontend",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "dev": "pnpm -C apps/web dev",
+    "build": "pnpm -C apps/web build",
+    "preview": "pnpm -C apps/web preview",
+    "lint": "pnpm -C apps/web lint",
+    "typecheck": "pnpm -C apps/web typecheck",
+    "format": "prettier -w ."
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  }
+}
