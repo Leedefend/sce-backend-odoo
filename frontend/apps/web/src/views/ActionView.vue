@@ -67,10 +67,10 @@ function mergeContext(base: Record<string, unknown> | string | undefined) {
 }
 
 function normalizeDomain(domain: unknown) {
-  if (!domain) {
-    return [];
+  if (Array.isArray(domain)) {
+    return domain;
   }
-  return domain;
+  return [];
 }
 
 function pickColumns(rows: Array<Record<string, unknown>>) {

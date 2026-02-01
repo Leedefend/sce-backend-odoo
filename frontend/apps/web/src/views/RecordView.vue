@@ -75,7 +75,7 @@ async function load() {
   try {
     const view = await intentRequest<ViewContract>({
       intent: 'load_view',
-      params: { model: model.value, view_type: 'form' } as LoadViewRequest,
+      params: { model: model.value, view_type: 'form' } as Record<string, unknown>,
     });
 
     const fieldNames = extractFieldNames(view.layout).filter(Boolean);
