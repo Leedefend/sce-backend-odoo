@@ -13,6 +13,7 @@
           <p>No menu data received. Check app.init response.</p>
           <div class="debug-actions">
             <button class="secondary" @click="reloadApp">Reload App Init</button>
+            <button class="secondary" @click="fetchNav">Fetch Nav</button>
             <button class="secondary" @click="dumpMenu">Dump Menu</button>
           </div>
         </div>
@@ -44,6 +45,10 @@ function handleSelect(node: { meta?: { action_id?: number } } & { menu_id?: numb
 
 async function reloadApp() {
   await session.loadAppInit();
+}
+
+async function fetchNav() {
+  await session.loadNavFallback();
 }
 
 function dumpMenu() {

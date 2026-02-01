@@ -84,6 +84,10 @@ export const useSessionStore = defineStore('session', {
         intent: 'app.init',
         params: { scene: 'web', with_preload: false },
       });
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.info('[debug] app.init result', result);
+      }
       this.user = result.user;
       const candidates = [
         result.nav,
@@ -94,9 +98,38 @@ export const useSessionStore = defineStore('session', {
         (result as AppInitResponse & { sections?: NavNode[] }).sections,
       ];
       const nav = candidates.find((entry) => Array.isArray(entry)) ?? [];
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.info('[debug] app.init nav length', (nav as NavNode[]).length);
+      }
       this.menuTree = nav as NavNode[];
+      if (!this.menuTree.length) {
+        await this.loadNavFallback();
+      }
       this.isReady = true;
       this.persist();
+    },
+    async loadNavFallback() {
+      try {
+        const result = await intentRequest<{ nav?: NavNode[] }>({
+          intent: 'ui.contract',
+          params: { op: 'nav' },
+        });
+        const nav = result.nav ?? [];
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.info('[debug] ui.contract nav length', nav.length);
+        }
+        if (nav.length) {
+          this.menuTree = nav;
+          this.persist();
+        }
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn('[debug] ui.contract nav failed', err);
+        }
+      }
     },
     async ensureReady() {
       if (this.isReady) {
