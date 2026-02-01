@@ -107,6 +107,21 @@ export interface ApiDataReadRequest {
   context?: Record<string, unknown>;
 }
 
+export interface ApiDataCreateRequest {
+  op: 'create';
+  model: string;
+  vals: Record<string, unknown>;
+  context?: Record<string, unknown>;
+}
+
+export interface ApiDataWriteRequest {
+  op: 'write';
+  model: string;
+  ids: number[];
+  vals: Record<string, unknown>;
+  context?: Record<string, unknown>;
+}
+
 export interface LoadViewRequest {
   model: string;
   view_type: string;
