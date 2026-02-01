@@ -82,7 +82,11 @@ export const useSessionStore = defineStore('session', {
     async loadAppInit() {
       const result = await intentRequest<AppInitResponse>({
         intent: 'app.init',
-        params: { scene: 'web', with_preload: false },
+        params: {
+          scene: 'web',
+          with_preload: false,
+          root_xmlid: 'smart_construction_core.menu_sc_root',
+        },
       });
       if (import.meta.env.DEV) {
         // eslint-disable-next-line no-console
@@ -113,7 +117,7 @@ export const useSessionStore = defineStore('session', {
       try {
         const result = await intentRequest<{ nav?: NavNode[] }>({
           intent: 'ui.contract',
-          params: { op: 'nav' },
+          params: { op: 'nav', root_xmlid: 'smart_construction_core.menu_sc_root' },
         });
         const nav = result.nav ?? [];
         if (import.meta.env.DEV) {

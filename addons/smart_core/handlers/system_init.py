@@ -209,6 +209,10 @@ class SystemInitHandler(BaseIntentHandler):
 
         # -------- 2) 导航（净化 + 指纹）--------
         p_nav = {"subject": "nav", "scene": scene}
+        if payload.get("root_xmlid"):
+            p_nav["root_xmlid"] = payload.get("root_xmlid")
+        if payload.get("root_menu_id"):
+            p_nav["root_menu_id"] = payload.get("root_menu_id")
         nav_data, nav_versions = NavDispatcher(env, su_env).build_nav(p_nav)
 
         nav_tree_raw = nav_data.get("nav") or []

@@ -33,6 +33,8 @@ class NavDispatcher:
         scene = p.get("scene") or self.env.context.get("scene") or "web"
         enrich_mode = (p.get("enrich_mode") or "model").lower()
         do_enrich = bool(p.get("enrich_nav", True))
+        root_xmlid = p.get("root_xmlid")
+        root_menu_id = p.get("root_menu_id")
 
         # 1) 从配置服务获取菜单树（sudo，避免权限阻塞元数据）
         cfg_model = self.su_env["app.menu.config"]
@@ -92,6 +94,11 @@ class NavDispatcher:
         # 7) 前端契约整形（去路由化；稳定键基于 menu_id）
         nav = self._to_front_contract(filtered)
 
+        # 7.5) 可选：限定根菜单（仅保留指定 root 的子树）
+        resolved_root_id = self._resolve_menu_id(root_menu_id, root_xmlid)
+        if resolved_root_id:
+            nav = self._slice_nav_by_root(nav, resolved_root_id)
+
         # 8) 默认注入目标：首个“叶子且有 menu_id”的节点；否则回退字符串 '/workbench'
         default_route = self._infer_default_injection(nav)
 
@@ -105,6 +112,36 @@ class NavDispatcher:
         _logger.info("NAV_DEBUG: final_count=%s (scene=%s, uid=%s)", len(nav), scene, self.env.user.id)
         data = {"nav": nav, "defaultRoute": default_route}
         return data, meta
+
+    # ========================= 工具：root menu 选择 ========================= #
+
+    def _resolve_menu_id(self, menu_id: Optional[Any], xmlid: Optional[str]) -> Optional[int]:
+        if menu_id:
+            try:
+                return int(menu_id)
+            except Exception:
+                return None
+        if xmlid and isinstance(xmlid, str) and "." in xmlid:
+            imd = self.su_env["ir.model.data"].search(
+                [("model", "=", "ir.ui.menu"), ("module", "=", xmlid.split(".")[0]), ("name", "=", xmlid.split(".")[1])],
+                limit=1,
+            )
+            if imd and imd.res_id:
+                return int(imd.res_id)
+        return None
+
+    def _slice_nav_by_root(self, nav: List[Dict[str, Any]], root_id: int) -> List[Dict[str, Any]]:
+        def find_node(nodes: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+            for node in nodes or []:
+                if node.get("menu_id") == root_id or node.get("id") == root_id:
+                    return node
+                found = find_node(node.get("children") or [])
+                if found:
+                    return found
+            return None
+
+        root = find_node(nav)
+        return [root] if root else nav
 
     # ========================= 工具：根集合归一 ========================= #
 
