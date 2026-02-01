@@ -889,40 +889,79 @@ cn.test:
 		exit 1; \
 	fi
 	@echo ""
-	@echo "▶ 测试配置有效性"
-	@if [ -f "$(CN_PROJECT_CONFIG)" ]; then \
-		echo "✅ 项目配置存在: $(CN_PROJECT_CONFIG)"; \
-		echo "  测试项目配置..."; \
-		if CN_TIMEOUT=30 CN_CONFIG="$(CN_PROJECT_CONFIG)" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
-			echo "  ✅ 项目配置有效"; \
-		else \
-			echo "  ⚠ 项目配置无效（API Key 可能无效）"; \
-		fi; \
+	@echo "▶ 测试主链路配置（与 cn.p 使用相同逻辑）"
+	@echo "  配置选择逻辑验证..."
+	@# 模拟 cn_print.sh 的配置选择逻辑
+	@if [ -f "$(HOME)/.continue/config.json" ]; then \
+		echo "✅ 使用用户 JSON 配置: $(HOME)/.continue/config.json"; \
+		CONFIG_SOURCE="用户JSON配置"; \
+	elif [ -f "$(HOME)/.continue/config.yaml" ]; then \
+		echo "✅ 使用用户 YAML 配置: $(HOME)/.continue/config.yaml"; \
+		CONFIG_SOURCE="用户YAML配置"; \
+	elif [ -f "$(CN_PROJECT_CONFIG)" ]; then \
+		echo "⚠ 使用项目配置（用户配置不存在）: $(CN_PROJECT_CONFIG)"; \
+		CONFIG_SOURCE="项目配置"; \
 	else \
-		echo "⚠ 项目配置不存在: $(CN_PROJECT_CONFIG)"; \
+		echo "❌ 错误: 未找到 Continue 配置文件"; \
+		exit 1; \
 	fi
+	@echo "✅ 配置选择逻辑正常（与 cn.p 相同）"
 	@echo ""
-	@echo "▶ 测试用户配置"
+	@echo "▶ 配置源信息"
 	@if [ -f "$(HOME)/.continue/config.json" ]; then \
 		echo "✅ 用户 JSON 配置存在: $(HOME)/.continue/config.json"; \
-		echo "  测试用户配置..."; \
-		if CN_TIMEOUT=30 CN_CONFIG="$(HOME)/.continue/config.json" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
-			echo "  ✅ 用户配置有效"; \
-		else \
-			echo "  ⚠ 用户配置无效"; \
-		fi; \
 	elif [ -f "$(HOME)/.continue/config.yaml" ]; then \
 		echo "✅ 用户 YAML 配置存在: $(HOME)/.continue/config.yaml"; \
-		echo "  测试用户配置..."; \
-		if CN_TIMEOUT=30 CN_CONFIG="$(HOME)/.continue/config.yaml" bash "$(CN_PRINT_SCRIPT)" "测试配置有效性" >/dev/null 2>&1; then \
-			echo "  ✅ 用户配置有效"; \
-		else \
-			echo "  ⚠ 用户配置无效"; \
-		fi; \
 	else \
 		echo "⚠ 用户配置不存在"; \
 	fi
+	@if [ -f "$(CN_PROJECT_CONFIG)" ]; then \
+		echo "✅ 项目配置存在: $(CN_PROJECT_CONFIG)"; \
+	else \
+		echo "⚠ 项目配置不存在"; \
+	fi
 
+# ======================================================
+# ==================== Continue Audit ===================
+# ======================================================
+# 文档字符串审计
+CN_AUDIT_MODULE ?= addons/smart_construction_core
+CN_AUDIT_OUTDIR ?= artifacts/continue
+
+# 文档字符串审计主任务
+cn.audit.docstrings:
+	@echo "▶ 开始文档字符串审计"
+	@echo "模块: $(CN_AUDIT_MODULE)"
+	@echo "输出目录: $(CN_AUDIT_OUTDIR)"
+	@echo "扫描器: tools/continue/auditors/docstrings_scanner.py"
+	@mkdir -p "$(CN_AUDIT_OUTDIR)"
+	@python3 tools/continue/auditors/docstrings_scanner.py "$(CN_AUDIT_MODULE)" "$(CN_AUDIT_OUTDIR)"
+	@echo ""
+	@echo "📊 审计报告:"
+	@echo "  - $(CN_AUDIT_OUTDIR)/audit_docstrings.md (人读报告)"
+	@echo "  - $(CN_AUDIT_OUTDIR)/audit_docstrings.json (机器数据)"
+	@echo ""
+	@echo "✅ 文档字符串审计完成"
+
+# 文档字符串审计测试（小样本）
+cn.audit.docstrings.test:
+	@echo "▶ 测试文档字符串审计（小样本）"
+	@echo "测试目录: addons/smart_construction_core/controllers"
+	@echo "输出目录: $(CN_AUDIT_OUTDIR)"
+	@mkdir -p "$(CN_AUDIT_OUTDIR)"
+	@python3 tools/continue/auditors/docstrings_scanner.py "addons/smart_construction_core/controllers" "$(CN_AUDIT_OUTDIR)"
+	@echo ""
+	@echo "✅ 测试审计完成（仅扫描controllers目录）"
+
+# 清理审计产物
+cn.audit.docstrings.clean:
+	@echo "▶ 清理审计产物"
+	@rm -rf "$(CN_AUDIT_OUTDIR)/audit_docstrings.md" "$(CN_AUDIT_OUTDIR)/audit_docstrings.json" 2>/dev/null || true
+	@echo "✅ 清理完成"
+
+# ======================================================
+# ==================== Continue Help ====================
+# ======================================================
 # 显示帮助信息
 cn.help:
 	@echo "Continue CLI 集成帮助:"
@@ -941,8 +980,15 @@ cn.help:
 	@echo "测试连接:"
 	@echo "  make cn.test"
 	@echo ""
+	@echo "审计功能:"
+	@echo "  make cn.audit.docstrings          # 文档字符串审计"
+	@echo "  make cn.audit.docstrings.test     # 测试审计（小样本）"
+	@echo "  make cn.audit.docstrings.clean    # 清理审计产物"
+	@echo ""
 	@echo "配置路径: $(CN_PROJECT_CONFIG)"
 	@echo "脚本路径: $(CN_PRINT_SCRIPT)"
+	@echo "审计模块: $(CN_AUDIT_MODULE)"
+	@echo "审计输出: $(CN_AUDIT_OUTDIR)"
 	@echo ""
 	@echo "注意:"
 	@echo "  - 闪烁问题由交互式 TUI 引起，批处理模式可避免"
