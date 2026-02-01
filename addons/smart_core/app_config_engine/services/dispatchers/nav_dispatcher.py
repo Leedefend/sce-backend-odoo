@@ -36,8 +36,28 @@ class NavDispatcher:
 
         # 1) 从配置服务获取菜单树（sudo，避免权限阻塞元数据）
         cfg_model = self.su_env["app.menu.config"]
-        cfg = cfg_model._generate_from_menus(model_name=None)
-        tree_raw = cfg.get_menu_contract(model_name=None) or []
+        cfg = cfg_model._generate_from_menus(model_name=None, scene=scene)
+        contract = cfg.get_menu_contract(model_name=None, filter_runtime=True, scene=scene)
+        tree_raw = contract.get("nav") or []
+        # 若过度过滤导致为空，放宽过滤参数（仍保留用户组过滤）
+        if not tree_raw:
+            _logger.warning("NAV_DEBUG: empty nav after runtime filters, relax filters for scene=%s", scene)
+            fallback_filters = {
+                "leaf_only": False,
+                "hide_without_action": False,
+                "only_act_window": False,
+                "hide_unreadable_model": False,
+                "model_whitelist": [],
+                "max_depth": 0,
+                "prune_single_chain": False,
+            }
+            contract = cfg.get_menu_contract(
+                model_name=None,
+                filter_runtime=True,
+                scene=scene,
+                filters=fallback_filters,
+            )
+            tree_raw = contract.get("nav") or []
 
         # 2) 归一根集合
         roots = self._flatten_roots(tree_raw)
