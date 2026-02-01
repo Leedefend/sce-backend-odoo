@@ -74,6 +74,8 @@ addons/smart_construction_core/models/var/**
 # Node modules (未来前端整合时)
 # -----------------------------------------
 node_modules/
+frontend/apps/web/.vite/
+frontend/apps/web/dist/
 config/odoo.conf
 
 config/odoo.conf

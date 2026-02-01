@@ -8,7 +8,17 @@
       <button @click="reload">Reload</button>
     </header>
 
-    <section class="table" v-if="records.length">
+    <StatusPanel v-if="loading" title="Loading list..." variant="info" />
+    <StatusPanel
+      v-else-if="error"
+      title="Request failed"
+      :message="error"
+      :trace-id="traceId"
+      variant="error"
+      :on-retry="reload"
+    />
+
+    <section v-else-if="records.length" class="table">
       <table>
         <thead>
           <tr>
@@ -26,8 +36,6 @@
     </section>
 
     <p v-else class="empty">No data loaded.</p>
-
-    <p v-if="error" class="error">{{ error }}</p>
   </main>
 </template>
 
@@ -35,22 +43,24 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecords } from '../api/data';
+import { ApiError } from '../api/client';
+import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { useSessionStore } from '../stores/session';
-import { findActionMeta } from '../app/menu';
+import StatusPanel from '../components/StatusPanel.vue';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 
 const error = ref('');
+const traceId = ref('');
+const loading = ref(false);
 const records = ref<Array<Record<string, unknown>>>([]);
 const columns = ref<string[]>([]);
 
 const actionId = computed(() => Number(route.params.actionId));
-const actionMeta = computed(() => {
-  return session.currentAction ?? findActionMeta(session.menuTree, actionId.value);
-});
+const actionMeta = computed(() => session.currentAction);
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const title = computed(() => actionMeta.value?.action_id ? `Action ${actionMeta.value?.action_id}` : 'Action');
@@ -110,16 +120,19 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
 
 async function load() {
   error.value = '';
+  traceId.value = '';
   records.value = [];
   columns.value = [];
+  loading.value = true;
 
   if (!model.value) {
     error.value = 'Action has no model';
+    loading.value = false;
     return;
   }
 
   try {
-    const contract = await loadActionContract(actionId.value);
+    const { contract } = await resolveAction(session.menuTree, actionId.value, actionMeta.value);
     const contractColumns = extractColumnsFromContract(contract);
     const result = await listRecords({
       model: model.value,
@@ -132,7 +145,14 @@ async function load() {
     records.value = result.records ?? [];
     columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'failed to load list';
+    if (err instanceof ApiError) {
+      traceId.value = err.traceId ?? '';
+      error.value = err.message;
+    } else {
+      error.value = err instanceof Error ? err.message : 'failed to load list';
+    }
+  } finally {
+    loading.value = false;
   }
 }
 

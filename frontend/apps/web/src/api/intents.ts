@@ -27,18 +27,24 @@ function generateTraceId() {
 
 export async function intentRequest<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
-  const response = await apiRequest<IntentEnvelope<T>>('/api/v1/intent', {
-    method: 'POST',
-    headers: buildHeaders(payload.intent, traceId),
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await apiRequest<IntentEnvelope<T>>('/api/v1/intent', {
+      method: 'POST',
+      headers: buildHeaders(payload.intent, traceId),
+      body: JSON.stringify(payload),
+    });
 
-  // eslint-disable-next-line no-console
-  console.info(`[trace] intent=${payload.intent} status=ok trace=${traceId}`);
+    // eslint-disable-next-line no-console
+    console.info(`[trace] intent=${payload.intent} status=ok trace=${traceId}`);
 
-  if (response && typeof response === 'object' && 'data' in response) {
-    return response.data as T;
+    if (response && typeof response === 'object' && 'data' in response) {
+      return response.data as T;
+    }
+
+    return response as T;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn(`[trace] intent=${payload.intent} status=error trace=${traceId}`);
+    throw err;
   }
-
-  return response as T;
 }

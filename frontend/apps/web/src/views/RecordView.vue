@@ -8,75 +8,61 @@
       <button @click="reload">Reload</button>
     </header>
 
-    <section class="card" v-if="fields.length">
-      <div class="field" v-for="field in fields" :key="field.name">
+    <StatusPanel v-if="loading" title="Loading record..." variant="info" />
+    <StatusPanel
+      v-else-if="error"
+      title="Request failed"
+      :message="error"
+      :trace-id="traceId"
+      variant="error"
+      :on-retry="reload"
+    />
+
+    <section v-else-if="fields.length" class="card">
+      <div v-for="field in fields" :key="field.name" class="field">
         <span class="label">{{ field.label }}</span>
-        <span class="value">{{ formatValue(field.value) }}</span>
+        <span class="value"><FieldValue :value="field.value" :field="field.descriptor" /></span>
       </div>
     </section>
 
     <p v-else class="empty">No fields loaded.</p>
-    <p v-if="error" class="error">{{ error }}</p>
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { intentRequest } from '../api/intents';
+import { ApiError } from '../api/client';
 import { readRecord } from '../api/data';
-import type { ViewContract, FormField, LoadViewRequest } from '@sc/schema';
+import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
+import type { ViewContract } from '@sc/schema';
+import FieldValue from '../components/FieldValue.vue';
+import StatusPanel from '../components/StatusPanel.vue';
 
 const route = useRoute();
 const error = ref('');
-const fields = ref<Array<{ name: string; label: string; value: unknown }>>([]);
+const traceId = ref('');
+const loading = ref(false);
+const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
 const title = computed(() => `Record ${recordId.value}`);
 
-function extractFieldNames(layout: ViewContract['layout']) {
-  const names: string[] = [];
-  const pushField = (field?: FormField) => {
-    if (field?.name && !names.includes(field.name)) {
-      names.push(field.name);
-    }
-  };
-
-  layout.groups?.forEach((group) => {
-    group.fields?.forEach((field) => pushField(field));
-    group.sub_groups?.forEach((sub) => sub.fields?.forEach((field) => pushField(field)));
-  });
-
-  layout.notebooks?.forEach((notebook) => {
-    notebook.pages?.forEach((page) => {
-      page.groups?.forEach((group) => {
-        group.fields?.forEach((field) => pushField(field));
-      });
-    });
-  });
-
-  if (layout.titleField) {
-    pushField({ name: layout.titleField });
-  }
-
-  return names;
-}
-
 async function load() {
   error.value = '';
+  traceId.value = '';
   fields.value = [];
+  loading.value = true;
 
   if (!model.value || !recordId.value) {
     error.value = 'Missing model or id';
+    loading.value = false;
     return;
   }
 
   try {
-    const view = await intentRequest<ViewContract>({
-      intent: 'load_view',
-      params: { model: model.value, view_type: 'form' } as Record<string, unknown>,
-    });
+    const view = await resolveView(model.value, 'form');
 
     const fieldNames = extractFieldNames(view.layout).filter(Boolean);
     const read = await readRecord({
@@ -90,20 +76,18 @@ async function load() {
       name,
       label: view.fields?.[name]?.string ?? name,
       value: record[name],
+      descriptor: view.fields?.[name],
     }));
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'failed to load record';
+    if (err instanceof ApiError) {
+      traceId.value = err.traceId ?? '';
+      error.value = err.message;
+    } else {
+      error.value = err instanceof Error ? err.message : 'failed to load record';
+    }
+  } finally {
+    loading.value = false;
   }
-}
-
-function formatValue(value: unknown) {
-  if (Array.isArray(value)) {
-    return value.join(', ');
-  }
-  if (value && typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-  return value ?? '';
 }
 
 function reload() {

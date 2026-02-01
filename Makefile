@@ -699,6 +699,20 @@ branch.cleanup: guard.prod.forbid
 # ------------------ Main sync (safe) ------------------
 .PHONY: main.sync
 
+# ======================================================
+# ==================== Frontend ========================
+# ======================================================
+.PHONY: fe.install fe.dev fe.gate
+
+fe.install:
+	@pnpm -C frontend install
+
+fe.dev:
+	@pnpm -C frontend dev
+
+fe.gate:
+	@pnpm -C frontend gate
+
 main.sync: guard.prod.forbid
 	@echo "[main.sync] checkout main + fast-forward pull"
 	@git checkout main
