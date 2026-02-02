@@ -13,5 +13,21 @@
   // ✅ 先别跑 git safe.directory（你用 alpine 还没装 git，会报 git not found）
   "postCreateCommand": "true",
 
+  // 解决屏幕闪烁问题 - 终端配置
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "bash",
+      "args": ["-l"]
+    }
+  },
+  
+  // 设置终端环境变量
+  "terminal.integrated.env.linux": {
+    "TERM": "xterm-256color",
+    "COLORTERM": "truecolor",
+    "DEBIAN_FRONTEND": "noninteractive"
+  },
+
   "shutdownAction": "stopCompose"
 }

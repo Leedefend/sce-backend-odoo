@@ -1,0 +1,103 @@
+#!/bin/bash
+# 解决屏幕闪烁问题的bash配置 - 特别针对授权时闪烁
+
+# 设置终端类型
+export TERM=xterm-256color
+export COLORTERM=truecolor
+export DEBIAN_FRONTEND=noninteractive
+
+# 禁用某些可能导致闪烁的特性
+export LESS="-R -X -F"
+export MANPAGER="less -R -X -F"
+
+# 设置语言环境
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# 设置提示符 - 简洁版，减少重绘
+PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+
+# 别名
+alias ll='ls -la'
+alias la='ls -A'
+alias l='ls -CF'
+
+# 历史记录设置
+export HISTSIZE=10000
+export HISTFILESIZE=20000
+export HISTCONTROL=ignoreboth:erasedups
+shopt -s histappend
+
+# 检查并设置正确的终端
+if [ -t 1 ]; then
+    # 如果是交互式终端
+    stty sane 2>/dev/null
+    stty erase '^?' 2>/dev/null
+    stty -ixon -ixoff 2>/dev/null  # 禁用流控制
+    
+    # 禁用某些可能导致闪烁的终端特性
+    if [ "$TERM" != "dumb" ]; then
+        # 确保终端正确初始化
+        tput init 2>/dev/null || true
+        # 禁用某些终端模式
+        tput rmcup 2>/dev/null || true  # 退出备用屏幕模式
+    fi
+fi
+
+# 函数：安全的sudo包装器，避免屏幕闪烁
+safe_sudo() {
+    # 保存当前终端设置
+    local old_stty=$(stty -g 2>/dev/null)
+    
+    # 设置终端为原始模式，避免闪烁
+    if [ -n "$old_stty" ]; then
+        stty -echo -icanon min 1 time 0 2>/dev/null
+    fi
+    
+    # 执行sudo命令
+    sudo "$@"
+    local exit_code=$?
+    
+    # 恢复终端设置
+    if [ -n "$old_stty" ]; then
+        stty "$old_stty" 2>/dev/null
+    fi
+    
+    return $exit_code
+}
+
+# 函数：安全的docker包装器
+safe_docker() {
+    # 检查是否需要sudo
+    if docker info >/dev/null 2>&1; then
+        docker "$@"
+    else
+        echo "需要授权访问Docker..."
+        safe_sudo docker "$@"
+    fi
+}
+
+# 函数：安全的docker-compose包装器
+safe_docker_compose() {
+    # 检查是否需要sudo
+    if docker info >/dev/null 2>&1; then
+        docker-compose "$@"
+    else
+        echo "需要授权访问Docker..."
+        safe_sudo docker-compose "$@"
+    fi
+}
+
+# 导出函数
+export -f safe_sudo safe_docker safe_docker_compose
+
+# 创建别名
+alias sudo='safe_sudo '
+alias docker='safe_docker '
+alias docker-compose='safe_docker_compose '
+
+# 欢迎信息
+echo "终端环境已配置 - 授权时屏幕闪烁问题已解决"
+echo "TERM: $TERM"
+echo "COLORTERM: $COLORTERM"
+echo "已启用安全命令包装器: safe_sudo, safe_docker, safe_docker_compose"

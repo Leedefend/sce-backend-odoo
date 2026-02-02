@@ -202,8 +202,14 @@ class IntentDispatcher(http.Controller):
             # 从 Header 注入多库/匿名标识
             hdr = request.httprequest.headers
             x_db_hdr = hdr.get("X-Odoo-DB") or hdr.get("X-DB")
+            # 调试：打印头信息
+            _logger.info(
+                "[intent][debug] X-Odoo-DB header: %s, X-DB header: %s, all headers: %s",
+                hdr.get("X-Odoo-DB"), hdr.get("X-DB"), dict(hdr)
+            )
             if x_db_hdr and not params.get("db"):
                 params["db"] = x_db_hdr
+                _logger.info("[intent][debug] Set db param from header: %s", x_db_hdr)
             is_anon = _is_anon_req(hdr)
 
             # 统一 payload 下发给路由

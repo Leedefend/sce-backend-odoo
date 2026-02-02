@@ -6,5 +6,6 @@ export const config = {
     .split(',')
     .map((flag: string) => flag.trim())
     .filter(Boolean),
-  odooDb: import.meta.env.VITE_ODOO_DB ?? '',
+  // 临时硬编码数据库名，用于测试
+  odooDb: import.meta.env.VITE_ODOO_DB ?? 'sc_demo',
 };

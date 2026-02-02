@@ -184,6 +184,16 @@ class SystemInitHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         ts0 = time.time()
+        params = payload.get("params") if isinstance(payload, dict) else None
+        if not isinstance(params, dict):
+            params = payload if isinstance(payload, dict) else {}
+        
+        # 调试：打印参数
+        import logging
+        _logger = logging.getLogger(__name__)
+        _logger.info("[system_init][debug] params: %s", params)
+        _logger.info("[system_init][debug] self.params: %s", getattr(self, 'params', {}))
+        _logger.info("[system_init][debug] self.env.cr.dbname: %s", self.env.cr.dbname)
 
         # 统一使用 self.env / self.su_env（不要直接用 odoo.http.request.env）
         env = self.env
@@ -193,7 +203,7 @@ class SystemInitHandler(BaseIntentHandler):
         cs = ContractService(su_env)
 
         # -------- 1) 用户/环境 --------
-        scene = payload.get("scene") or "web"
+        scene = params.get("scene") or "web"
 
         user = env.user
         user_groups_xmlids = _user_group_xmlids(user)
@@ -209,6 +219,10 @@ class SystemInitHandler(BaseIntentHandler):
 
         # -------- 2) 导航（净化 + 指纹）--------
         p_nav = {"subject": "nav", "scene": scene}
+        if params.get("root_xmlid"):
+            p_nav["root_xmlid"] = params.get("root_xmlid")
+        if params.get("root_menu_id"):
+            p_nav["root_menu_id"] = params.get("root_menu_id")
         nav_data, nav_versions = NavDispatcher(env, su_env).build_nav(p_nav)
 
         nav_tree_raw = nav_data.get("nav") or []
@@ -218,7 +232,7 @@ class SystemInitHandler(BaseIntentHandler):
         nav_fp = _fingerprint({"scene": scene, "nav": nav_tree})
 
         default_home_action = (
-            payload.get("home_action_id")
+            params.get("home_action_id")
             or nav_data.get("default_home_action")
             or None
         )
@@ -248,8 +262,8 @@ class SystemInitHandler(BaseIntentHandler):
 
         # -------- 4) 可选预取（仅结构指纹，不回传整包契约）--------
         preload_items = []
-        want_preload = bool(payload.get("with_preload", True))
-        preload_actions = payload.get("preload_actions") or []
+        want_preload = bool(params.get("with_preload", True))
+        preload_actions = params.get("preload_actions") or []
 
         if want_preload and preload_actions:
             for act in preload_actions:
@@ -274,7 +288,12 @@ class SystemInitHandler(BaseIntentHandler):
         data = {
             "user": user_dict,
             "nav": nav_tree,
-            "nav_meta": {"fingerprint": nav_fp},                                 # ✅ 导航指纹
+            "nav_meta": {                                                       # ✅ 导航指纹 + scope info
+                "fingerprint": nav_fp,
+                **(nav_versions or {}),
+                "debug_params_keys": sorted(list(params.keys())) if isinstance(params, dict) else [],
+                "debug_root_xmlid": params.get("root_xmlid") if isinstance(params, dict) else None,
+            },
             "default_route": nav_data.get("defaultRoute") or {"menu_id": None},  # ✅ snake_case
             "intents": intents,                                                  # ✅ 动态意图（主名）
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
