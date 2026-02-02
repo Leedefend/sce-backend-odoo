@@ -7,7 +7,18 @@
         <p class="meta">Menu items: {{ menuCount }}</p>
       </header>
       <div class="menu">
-        <h2>Menu</h2>
+        <h2>Menu ({{ menuCount }} items)</h2>
+        <!-- 简单测试：直接显示菜单项名称 -->
+        <div v-if="menuCount > 0" class="simple-menu">
+          <h3>简单菜单列表（测试用）</h3>
+          <div v-for="(item, index) in menuTree" :key="item.key || index" class="menu-item">
+            <strong>{{ index + 1 }}.</strong> 
+            {{ item.title || item.name || item.label || 'Unnamed' }}
+            <span class="menu-id">(ID: {{ item.menu_id }})</span>
+            <span v-if="item.children?.length" class="children-count"> - {{ item.children.length }} 个子菜单</span>
+            <span v-else class="children-count"> - 无子菜单</span>
+          </div>
+        </div>
         <MenuTree :nodes="menuTree" @select="handleSelect" />
         <div v-if="menuCount === 0" class="empty">
           <p>No menu data received. Check app.init response.</p>
@@ -54,6 +65,22 @@ async function fetchNav() {
 function dumpMenu() {
   // eslint-disable-next-line no-console
   console.info('[debug] menuTree', session.menuTree);
+  // 详细打印每个菜单项
+  session.menuTree.forEach((item, index) => {
+    console.info(`[debug] Menu item ${index}:`, {
+      key: item.key,
+      name: item.name,
+      label: item.label,
+      title: item.title,
+      menu_id: item.menu_id,
+      id: (item as any).id,
+      children: item.children?.length || 0,
+      meta: item.meta
+    });
+  });
+  
+  // 同时打印从 app.init 返回的原始 nav 数据
+  console.info('[debug] Full app.init response nav data:', JSON.stringify(session.menuTree, null, 2));
 }
 
 async function logout() {
@@ -124,5 +151,41 @@ async function logout() {
   background: white;
   cursor: pointer;
   color: #1f2937;
+}
+
+.simple-menu {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #f8fafc;
+}
+
+.menu-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.simple-menu h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #334155;
+  font-size: 16px;
+}
+
+.menu-id {
+  font-size: 12px;
+  color: #64748b;
+  margin-left: 8px;
+}
+
+.children-count {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
 }
 </style>

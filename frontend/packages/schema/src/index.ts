@@ -42,8 +42,18 @@ export interface LoginResponse {
 
 export interface NavNode {
   key: string;
-  label: string;
+  label?: string;  // 改为可选，因为 Odoo 返回的是 name
+  name?: string;   // Odoo 返回的 name 字段
+  title?: string;  // Odoo 返回的 title 字段
   menu_id?: number;
+  id?: number;     // Odoo 返回的 id 字段
+  sequence?: number;
+  parent_id?: number;
+  xml_id?: string;
+  module?: string;
+  web_icon?: boolean | string;
+  groups?: number[];
+  action?: any;
   icon?: string | null;
   meta?: NavMeta;
   children?: NavNode[];
