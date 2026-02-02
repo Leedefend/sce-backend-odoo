@@ -113,7 +113,19 @@ def authenticate_user(login, password, db: str | None = None):
     """
     基于用户名和密码校验用户身份，并返回登录用户对象
     """
+    import logging
+    _logger = logging.getLogger(__name__)
+    
+    # 调试：打印传入的db参数
+    _logger.info("[auth][debug] authenticate_user called with db param: %s", db)
+    _logger.info("[auth][debug] request.session.db: %s", getattr(request, 'session', {}).get('db'))
+    _logger.info("[auth][debug] request.httprequest.args.get('db'): %s", request.httprequest.args.get('db'))
+    
     db = db or request.session.db or request.httprequest.args.get("db") or "odoo17-dev01"
+    
+    # 调试：打印最终选择的db
+    _logger.info("[auth][debug] Final db selected: %s", db)
+    
     if not db:
         raise AccessDenied("未指定数据库")
     registry = Registry(db)

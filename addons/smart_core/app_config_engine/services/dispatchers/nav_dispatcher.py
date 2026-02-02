@@ -87,8 +87,11 @@ class NavDispatcher:
         # 4) 可选：限定根菜单（在过滤前裁剪，避免 root 被过滤导致丢失）
         resolved_root_id = self._resolve_menu_id(root_menu_id, root_xmlid)
         root_found = None
+        _logger.info("[NavDispatcher][debug] resolved_root_id: %s (from root_xmlid=%s, root_menu_id=%s)", 
+                    resolved_root_id, root_xmlid, root_menu_id)
         if resolved_root_id:
             tree, root_found = self._slice_raw_tree_by_root(tree, resolved_root_id)
+            _logger.info("[NavDispatcher][debug] root_found: %s", root_found)
 
         # 5) 富化（批量化尽量避免 N+1）
         if do_enrich and tree:

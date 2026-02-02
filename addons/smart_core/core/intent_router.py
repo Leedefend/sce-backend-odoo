@@ -37,8 +37,16 @@ def _build_envs(params: Dict[str, Any], add_ctx: Dict[str, Any]) -> Tuple[api.En
     - 如果切换了 DB，会新开 cursor，调用方必须在 finally 里 cr.close()
     - 如果没切库，extra_cursor 为 None
     """
+    import logging
+    _logger = logging.getLogger(__name__)
+    
     target_db = (params or {}).get("db") or request.env.cr.dbname
     cur_db = request.env.cr.dbname
+    
+    # 调试：打印数据库信息
+    _logger.info("[intent_router][debug] _build_envs target_db: %s", target_db)
+    _logger.info("[intent_router][debug] _build_envs cur_db: %s", cur_db)
+    _logger.info("[intent_router][debug] _build_envs request.env.cr.dbname: %s", request.env.cr.dbname)
 
     # 合并上下文：以传入的 add_ctx 覆盖 request.env.context
     base_ctx = dict(request.env.context or {})
@@ -70,6 +78,14 @@ def _dispatch(intent: str, params: dict, context: dict):
     """
     统一分发：显式依据 params.db 选择环境，合并 context，实例化 Handler 并调用。
     """
+    import logging
+    _logger = logging.getLogger(__name__)
+    
+    # 调试：打印参数
+    _logger.info("[intent_router][debug] _dispatch called with intent: %s", intent)
+    _logger.info("[intent_router][debug] params: %s", params)
+    _logger.info("[intent_router][debug] params.get('db'): %s", params.get('db'))
+    
     handler_cls = resolve_handler(intent)
     if not handler_cls:
         return {"ok": False, "error": {"code": 404, "message": f"Unknown intent: {intent}"}}

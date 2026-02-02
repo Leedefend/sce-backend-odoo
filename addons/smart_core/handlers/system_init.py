@@ -187,6 +187,13 @@ class SystemInitHandler(BaseIntentHandler):
         params = payload.get("params") if isinstance(payload, dict) else None
         if not isinstance(params, dict):
             params = payload if isinstance(payload, dict) else {}
+        
+        # 调试：打印参数
+        import logging
+        _logger = logging.getLogger(__name__)
+        _logger.info("[system_init][debug] params: %s", params)
+        _logger.info("[system_init][debug] self.params: %s", getattr(self, 'params', {}))
+        _logger.info("[system_init][debug] self.env.cr.dbname: %s", self.env.cr.dbname)
 
         # 统一使用 self.env / self.su_env（不要直接用 odoo.http.request.env）
         env = self.env
