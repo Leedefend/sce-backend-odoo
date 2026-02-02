@@ -3,7 +3,7 @@ import type { IntentEnvelope } from '@sc/schema';
 
 export interface IntentPayload {
   intent: string;
-  params?: Record<string, unknown>;
+  params?: unknown;
   context?: Record<string, unknown>;
   meta?: Record<string, unknown>;
 }

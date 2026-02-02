@@ -17,12 +17,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     docker.io \
     docker-compose \
- && rm -rf /var/lib/apt/lists/*
+    # 终端工具，解决屏幕闪烁问题
+    ncurses-term \
+    screen \
+    tmux \
+    vim \
+    # 授权和密码输入相关工具
+    sudo \
+    passwd \
+    # 语言环境支持
+    locales \
+    # 终端优化工具
+    stty \
+    tput \
+ && rm -rf /var/lib/apt/lists/* \
+ && locale-gen en_US.UTF-8 \
+ && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
 # 创建开发用户（与你现在习惯一致：odoo:1000）
 RUN useradd -m -u 1000 -s /bin/bash odoo \
  && mkdir -p /workspaces \
  && chown -R odoo:odoo /workspaces
+
+# 复制bash配置文件
+COPY bashrc /home/odoo/.bashrc
+RUN chown odoo:odoo /home/odoo/.bashrc
 
 USER odoo
 WORKDIR /workspaces

@@ -42,8 +42,18 @@ export interface LoginResponse {
 
 export interface NavNode {
   key: string;
-  label: string;
+  label?: string;  // 改为可选，因为 Odoo 返回的是 name
+  name?: string;   // Odoo 返回的 name 字段
+  title?: string;  // Odoo 返回的 title 字段
   menu_id?: number;
+  id?: number;     // Odoo 返回的 id 字段
+  sequence?: number;
+  parent_id?: number;
+  xml_id?: string;
+  module?: string;
+  web_icon?: boolean | string;
+  groups?: number[];
+  action?: any;
   icon?: string | null;
   meta?: NavMeta;
   children?: NavNode[];
@@ -52,6 +62,7 @@ export interface NavNode {
 export interface NavMeta {
   menu_id?: number;
   menu_xmlid?: string;
+  sequence?: number;
   action_id?: number;
   action_type?: string;
   action_xmlid?: string;
@@ -107,6 +118,40 @@ export interface ApiDataReadRequest {
   context?: Record<string, unknown>;
 }
 
+export interface ApiDataCreateRequest {
+  op: 'create';
+  model: string;
+  vals: Record<string, unknown>;
+  context?: Record<string, unknown>;
+}
+
+export interface ApiDataWriteRequest {
+  op: 'write';
+  model: string;
+  ids: number[];
+  vals: Record<string, unknown>;
+  context?: Record<string, unknown>;
+}
+
+export interface ExecuteButtonRequest {
+  model: string;
+  res_id: number;
+  button: {
+    name: string;
+    type?: string;
+  };
+  context?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+}
+
+export interface ExecuteButtonResult {
+  type: 'refresh' | 'action' | 'noop';
+  res_model?: string;
+  res_id?: number;
+  raw_action?: Record<string, unknown>;
+  message?: string;
+}
+
 export interface LoadViewRequest {
   model: string;
   view_type: string;
@@ -133,6 +178,20 @@ export interface ViewContract {
   layout: FormLayout;
 }
 
+export interface ViewButton {
+  name?: string;
+  string?: string;
+  type?: string;
+  class?: string;
+  context?: Record<string, unknown>;
+  invisible?: unknown;
+  icon?: string;
+  groups?: string[];
+  hotkey?: string;
+  visible?: boolean;
+  level?: string;
+}
+
 export interface FieldDescriptor {
   name?: string;
   string?: string;
@@ -146,8 +205,8 @@ export interface FieldDescriptor {
 
 export interface FormLayout {
   titleField?: string | null;
-  headerButtons?: unknown[];
-  statButtons?: unknown[];
+  headerButtons?: ViewButton[];
+  statButtons?: ViewButton[];
   ribbon?: unknown;
   groups?: Array<FormGroup>;
   notebooks?: Array<FormNotebook>;

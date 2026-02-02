@@ -30,8 +30,20 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}) {
   headers.set('x-trace-id', traceId);
   headers.set('x-tenant', config.tenant);
 
-  if (config.odooDb) {
-    headers.set('X-Odoo-DB', config.odooDb);
+  // 调试：打印配置信息
+  if (import.meta.env.DEV) {
+    console.log('[debug] config.odooDb:', config.odooDb);
+    console.log('[debug] config.apiBaseUrl:', config.apiBaseUrl);
+    console.log('[debug] import.meta.env.VITE_ODOO_DB:', import.meta.env.VITE_ODOO_DB);
+  }
+
+  // 总是设置X-Odoo-DB头，即使config.odooDb为空也使用默认值
+  const dbHeader = config.odooDb || 'sc_demo';
+  headers.set('X-Odoo-DB', dbHeader);
+  
+  // 调试：打印最终设置的header
+  if (import.meta.env.DEV) {
+    console.log('[debug] Setting X-Odoo-DB header:', dbHeader);
   }
 
   if (session.token) {

@@ -168,7 +168,11 @@ class UiContractHandler(BaseIntentHandler):
 
     # ---------------- op 实现 ----------------
     def _op_nav(self, ctx):
-        data, versions = NavDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).build_nav({"subject":"nav"})
+        data, versions = NavDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).build_nav({
+            "subject": "nav",
+            "root_xmlid": self._get_param(self.params, "root_xmlid", "rootXmlid"),
+            "root_menu_id": self._get_param(self.params, "root_menu_id", "rootMenuId"),
+        })
         # 统一服务 finalize（轻量清洗）
         cs = ContractService(self.env)
         fixed = cs.finalize_contract({"ok": True, "data": {"nav": data.get("nav")}, "meta": {"subject": "nav", "version": format_versions_safe(versions)}})

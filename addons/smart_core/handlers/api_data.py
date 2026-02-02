@@ -230,6 +230,10 @@ class ApiDataHandler(BaseIntentHandler):
             return self._op_read(model, p, context, use_sudo)
         elif op in ("count", "search_count"):
             return self._op_count(model, p, context, use_sudo)
+        elif op in ("create",):
+            return self._op_create(model, p, context, use_sudo)
+        elif op in ("write",):
+            return self._op_write(model, p, context, use_sudo)
         else:
             return self._err(400, f"不支持的操作: {op}")
 
@@ -313,4 +317,64 @@ class ApiDataHandler(BaseIntentHandler):
         total = env_model.search_count(domain or [])
         data = {"total": int(total or 0)}
         meta = {"op": "count", "model": model}
+        return data, meta
+
+    def _op_create(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
+        vals = self._dig(p, "vals") or self._dig(p, "values") or {}
+        if not isinstance(vals, dict) or not vals:
+            return self._err(400, "缺少参数 vals")
+
+        env_model = self.env[model].with_context(ctx)
+        if sudo:
+            env_model = env_model.sudo()
+
+        # 过滤非法字段，避免写入不存在字段
+        safe_vals = {k: v for k, v in vals.items() if k in env_model._fields}
+        if not safe_vals:
+            return self._err(400, "vals 中无可写字段")
+
+        try:
+            rec = env_model.create(safe_vals)
+        except AccessError as ae:
+            _logger.warning("create AccessError on %s: %s", model, ae)
+            return self._err(403, "无创建权限")
+        except Exception as e:
+            _logger.exception("create failed on %s", model)
+            return self._err(500, str(e))
+
+        data = {"id": rec.id}
+        meta = {"op": "create", "model": model, "id": rec.id}
+        return data, meta
+
+    def _op_write(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
+        ids = self._get_list(p, "ids", [])
+        vals = self._dig(p, "vals") or self._dig(p, "values") or {}
+        if not ids:
+            return self._err(400, "缺少参数 ids")
+        if not isinstance(vals, dict) or not vals:
+            return self._err(400, "缺少参数 vals")
+
+        env_model = self.env[model].with_context(ctx)
+        if sudo:
+            env_model = env_model.sudo()
+
+        recs = env_model.browse(ids).exists()
+        if not recs:
+            return self._err(404, "记录不存在")
+
+        safe_vals = {k: v for k, v in vals.items() if k in env_model._fields}
+        if not safe_vals:
+            return self._err(400, "vals 中无可写字段")
+
+        try:
+            recs.write(safe_vals)
+        except AccessError as ae:
+            _logger.warning("write AccessError on %s: %s", model, ae)
+            return self._err(403, "无写入权限")
+        except Exception as e:
+            _logger.exception("write failed on %s", model)
+            return self._err(500, str(e))
+
+        data = {"ids": recs.ids}
+        meta = {"op": "write", "model": model, "count": len(recs)}
         return data, meta

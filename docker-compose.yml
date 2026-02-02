@@ -44,6 +44,10 @@ services:
     image: ${ODOO_IMAGE:-odoo17-odoo:latest}
     restart: unless-stopped
 
+    # 解决屏幕闪烁问题
+    tty: true
+    stdin_open: true
+
     depends_on:
       db:
         condition: service_healthy
@@ -66,6 +70,10 @@ services:
       # === 新增：runtime 明确配置出口 ===
       ODOO_CONF_OUT: /var/lib/odoo/odoo.conf
       ODOO_DB: ${DB_NAME}
+      
+      # 终端环境变量
+      TERM: xterm-256color
+      COLORTERM: truecolor
 
     volumes:
       - odoo_data:/var/lib/odoo
