@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { AppInitResponse, LoginResponse, NavMeta, NavNode } from '@sc/schema';
 import { intentRequest } from '../api/intents';
+import { ApiError } from '../api/client';
 
 export interface SessionState {
   token: string | null;
@@ -8,6 +9,10 @@ export interface SessionState {
   menuTree: NavNode[];
   currentAction: NavMeta | null;
   isReady: boolean;
+  initStatus: 'idle' | 'loading' | 'ready' | 'error';
+  initError: string | null;
+  initTraceId: string | null;
+  initMeta: AppInitResponse['meta'] | null;
 }
 
 const STORAGE_KEY = 'sc_frontend_session_v0_2';
@@ -19,6 +24,10 @@ export const useSessionStore = defineStore('session', {
     menuTree: [],
     currentAction: null,
     isReady: false,
+    initStatus: 'idle',
+    initError: null,
+    initTraceId: null,
+    initMeta: null,
   }),
   actions: {
     setToken(token: string) {
@@ -33,6 +42,7 @@ export const useSessionStore = defineStore('session', {
           this.user = parsed.user ?? null;
           this.menuTree = parsed.menuTree ?? [];
           this.currentAction = parsed.currentAction ?? null;
+          this.initMeta = parsed.initMeta ?? null;
         } catch {
           // ignore corrupted cache
         }
@@ -40,6 +50,10 @@ export const useSessionStore = defineStore('session', {
       const token = sessionStorage.getItem('sc_auth_token');
       if (token) {
         this.token = token;
+      }
+      if (this.menuTree.length) {
+        this.isReady = true;
+        this.initStatus = 'ready';
       }
     },
     clearSession() {
@@ -60,6 +74,7 @@ export const useSessionStore = defineStore('session', {
         user: this.user,
         menuTree: this.menuTree,
         currentAction: this.currentAction,
+        initMeta: this.initMeta,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
     },
@@ -80,6 +95,9 @@ export const useSessionStore = defineStore('session', {
       this.clearSession();
     },
     async loadAppInit() {
+      this.initStatus = 'loading';
+      this.initError = null;
+      this.initTraceId = null;
       const debugIntent =
         import.meta.env.DEV ||
         localStorage.getItem('DEBUG_INTENT') === '1' ||
@@ -109,7 +127,19 @@ export const useSessionStore = defineStore('session', {
         console.groupEnd();
       }
 
-      const result = await intentRequest<AppInitResponse>(requestParams);
+      let result: AppInitResponse;
+      try {
+        result = await intentRequest<AppInitResponse>(requestParams);
+      } catch (err) {
+        if (err instanceof ApiError) {
+          this.initError = err.message;
+          this.initTraceId = err.traceId ?? null;
+        } else {
+          this.initError = err instanceof Error ? err.message : 'init failed';
+        }
+        this.initStatus = 'error';
+        throw err;
+      }
       // A1: 打印响应诊断信息
       if (debugIntent) {
         console.group('[A1] app.init 响应诊断');
@@ -145,6 +175,10 @@ export const useSessionStore = defineStore('session', {
         console.info('[debug] app.init result', result);
       }
       this.user = result.user;
+      this.initMeta = {
+        ...(result.meta ?? {}),
+        nav_meta: (result as AppInitResponse & { nav_meta?: unknown }).nav_meta ?? null,
+      } as AppInitResponse['meta'];
       const candidates = [
         result.nav,
         // tolerate legacy/misaligned keys during bootstrap
@@ -170,18 +204,13 @@ export const useSessionStore = defineStore('session', {
         }
       }
       // 为导航项添加 key 属性
-      const menuTreeWithKeys = (nav as any[]).map((item, index) => {
-        return {
-          ...item,
-          key: item.key || `menu_${item.menu_id || item.id || index}`
-        };
-      }) as NavNode[];
-      
+      const menuTreeWithKeys = (nav as any[]).map((item, index) => addKeys(item, index)) as NavNode[];
       this.menuTree = menuTreeWithKeys;
       if (!this.menuTree.length) {
         await this.loadNavFallback();
       }
       this.isReady = true;
+      this.initStatus = 'ready';
       this.persist();
     },
     async loadNavFallback() {
@@ -218,3 +247,9 @@ export const useSessionStore = defineStore('session', {
     },
   },
 });
+
+function addKeys(node: NavNode, index = 0): NavNode {
+  const key = node.key || `menu_${node.menu_id || node.id || index}`;
+  const children = node.children?.map((child, idx) => addKeys(child, idx)) ?? [];
+  return { ...node, key, children };
+}
