@@ -4,6 +4,7 @@ import logging
 import time
 import json
 import hashlib
+import os
 from typing import Iterable, Dict, List, Tuple
 
 from odoo import api, SUPERUSER_ID
@@ -23,6 +24,15 @@ CONTRACT_VERSION = "v0.1"
 API_VERSION = "v1"
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
+
+def _diagnostics_enabled(env) -> bool:
+    env_flag = (os.environ.get("ENV") or "").lower()
+    if env_flag in {"dev", "test", "local"}:
+        return True
+    try:
+        return env.user.has_group("base.group_system")
+    except Exception:
+        return False
 
 def _user_group_xmlids(user) -> set:
     """把用户组转为 xmlid 集合（与菜单过滤口径一致）"""
@@ -188,12 +198,39 @@ class SystemInitHandler(BaseIntentHandler):
         if not isinstance(params, dict):
             params = payload if isinstance(payload, dict) else {}
         
-        # 调试：打印参数
-        import logging
-        _logger = logging.getLogger(__name__)
-        _logger.info("[system_init][debug] params: %s", params)
-        _logger.info("[system_init][debug] self.params: %s", getattr(self, 'params', {}))
-        _logger.info("[system_init][debug] self.env.cr.dbname: %s", self.env.cr.dbname)
+        diag_enabled = _diagnostics_enabled(self.env)
+        diagnostic_info = None
+        if diag_enabled:
+            # 收集请求头信息（白名单）
+            try:
+                from odoo import http
+                request = http.request
+                headers = request.httprequest.headers
+                x_odoo_db = headers.get("X-Odoo-DB")
+                x_db = headers.get("X-DB")
+                authorization = headers.get("Authorization")
+            except Exception:
+                x_odoo_db = None
+                x_db = None
+                authorization = None
+
+            diagnostic_info = {
+                "effective_db": self.env.cr.dbname if hasattr(self.env, "cr") and self.env.cr else "unknown",
+                "db_source": "env_cr",
+                "header_x_odoo_db": x_odoo_db,
+                "header_x_db": x_db,
+                "has_authorization": bool(authorization),
+                "effective_root_xmlid": params.get("root_xmlid") if isinstance(params, dict) else None,
+                "root_source": "params" if params and params.get("root_xmlid") else "default",
+                "uid": self.env.uid,
+                "login": self.env.user.login if hasattr(self.env, "user") else "unknown",
+                "params_keys": list(params.keys()) if isinstance(params, dict) else [],
+            }
+
+            _logger.info("[B1] system.init 诊断信息: %s", diagnostic_info)
+            _logger.info("[system_init][debug] params: %s", params)
+            _logger.info("[system_init][debug] self.params: %s", getattr(self, "params", {}))
+            _logger.info("[system_init][debug] self.env.cr.dbname: %s", self.env.cr.dbname)
 
         # 统一使用 self.env / self.su_env（不要直接用 odoo.http.request.env）
         env = self.env
@@ -319,6 +356,8 @@ class SystemInitHandler(BaseIntentHandler):
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
         }
+        if diag_enabled and diagnostic_info is not None:
+            data["diagnostic"] = diagnostic_info
 
         # 顶层 ETag：纳入用户、导航指纹、默认路由、特性开关、可用意图
         top_etag = stable_etag({

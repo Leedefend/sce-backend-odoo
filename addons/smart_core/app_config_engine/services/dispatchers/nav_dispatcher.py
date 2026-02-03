@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import logging
 import hashlib
+import os
 from typing import Dict, Any, List, Optional, Union, Iterable, Tuple
 from collections.abc import Mapping
 from odoo.exceptions import AccessError, MissingError
@@ -26,6 +27,15 @@ class NavDispatcher:
     def __init__(self, env, su_env):
         self.env = env       # 当前用户 env（用于 groups/权限过滤）
         self.su_env = su_env # sudo env（用于元数据与菜单树生成）
+
+    def _diagnostics_enabled(self) -> bool:
+        env_flag = (os.environ.get("ENV") or "").lower()
+        if env_flag in {"dev", "test", "local"}:
+            return True
+        try:
+            return self.env.user.has_group("base.group_system")
+        except Exception:
+            return False
 
     # ========================= 对外入口 ========================= #
 
@@ -141,6 +151,15 @@ class NavDispatcher:
             "root_resolved_id": resolved_root_id,
             "root_found": root_found,
         }
+        if self._diagnostics_enabled():
+            meta["diagnostic"] = {
+                "effective_db": self.env.cr.dbname if hasattr(self.env, "cr") and self.env.cr else "unknown",
+                "db_source": "env_cr",
+                "effective_root_xmlid": root_xmlid,
+                "root_source": "params" if root_xmlid else "default",
+                "uid": self.env.uid,
+                "login": self.env.user.login if hasattr(self.env, "user") else "unknown",
+            }
 
         _logger.info("NAV_DEBUG: final_count=%s (scene=%s, uid=%s)", len(nav), scene, self.env.user.id)
         data = {"nav": nav, "defaultRoute": default_route}

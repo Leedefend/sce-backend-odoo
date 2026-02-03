@@ -6,6 +6,27 @@
         <p>User: {{ userName }}</p>
         <p class="meta">Menu items: {{ menuCount }}</p>
       </header>
+      
+      <!-- A3: 根菜单不匹配错误面板 -->
+      <div v-if="showRootMismatchError" class="root-mismatch-error">
+        <h2>⚠️ Root Menu Mismatch Error</h2>
+        <div class="error-details">
+          <p><strong>Expected root:</strong> smart_construction_core.menu_sc_root</p>
+          <p><strong>Got root:</strong> {{ detectedRootName }}</p>
+          <p><strong>Effective DB:</strong> {{ effectiveDb }}</p>
+          <p><strong>First 3 menu items:</strong></p>
+          <ul>
+            <li v-for="(item, index) in firstThreeMenus" :key="index">
+              {{ index + 1 }}. "{{ item.name }}" (xmlid: {{ item.xmlid || 'N/A' }}, id: {{ item.id || 'N/A' }})
+            </li>
+          </ul>
+        </div>
+        <div class="debug-actions">
+          <button class="secondary" @click="reloadApp">Reload App Init</button>
+          <button class="secondary" @click="dumpMenu">Dump Menu Details</button>
+        </div>
+      </div>
+      
       <div class="menu">
         <h2>Menu ({{ menuCount }} items)</h2>
         <!-- 简单测试：直接显示菜单项名称 -->
@@ -22,7 +43,7 @@
         <MenuTree :nodes="menuTree" @select="handleSelect" />
         <div v-if="menuCount === 0" class="empty">
           <p>No menu data received. Check app.init response.</p>
-          <div class="debug-actions">
+          <div v-if="debugIntent" class="debug-actions">
             <button class="secondary" @click="reloadApp">Reload App Init</button>
             <button class="secondary" @click="fetchNav">Fetch Nav</button>
             <button class="secondary" @click="dumpMenu">Dump Menu</button>
@@ -35,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import MenuTree from '../components/MenuTree.vue';
@@ -47,6 +68,50 @@ const session = useSessionStore();
 const userName = computed(() => session.user?.name ?? 'unknown');
 const menuTree = computed(() => session.menuTree);
 const menuCount = computed(() => menuTree.value.length);
+const debugIntent =
+  import.meta.env.DEV ||
+  localStorage.getItem('DEBUG_INTENT') === '1' ||
+  new URLSearchParams(window.location.search).get('debug') === '1';
+
+// A3: 根菜单不匹配检测
+const effectiveDb = ref<string>('N/A');
+const detectedRootName = ref<string>('N/A');
+const firstThreeMenus = ref<any[]>([]);
+
+const showRootMismatchError = computed(() => {
+  if (!debugIntent) return false;
+  // 检查是否是Odoo原生应用菜单
+  if (menuTree.value.length === 0) return false;
+  
+  const firstMenu = menuTree.value[0];
+  const firstMenuName = firstMenu.title || firstMenu.name || firstMenu.label || '';
+  
+  // Odoo原生应用菜单的典型名称
+  const odooNativeMenuNames = [
+    '讨论', '待办', '仪表板', '发票', '采购', '库存', '应用', '设置',
+    'Discuss', 'To-do', 'Dashboard', 'Invoicing', 'Purchase', 'Inventory', 'Apps', 'Settings'
+  ];
+  
+  return odooNativeMenuNames.includes(firstMenuName);
+});
+
+// 检测根菜单信息
+function detectRootInfo() {
+  if (menuTree.value.length > 0) {
+    const firstMenu = menuTree.value[0];
+    detectedRootName.value = firstMenu.title || firstMenu.name || firstMenu.label || 'Unknown';
+    firstThreeMenus.value = menuTree.value.slice(0, 3).map(item => ({
+      name: item.title || item.name || item.label || 'Unnamed',
+      xmlid: item.xmlid || 'N/A',
+      id: item.menu_id || (item as any).id || 'N/A'
+    }));
+  }
+}
+
+// 在菜单变化时检测
+onMounted(() => {
+  detectRootInfo();
+});
 
 function handleSelect(node: { meta?: { action_id?: number } } & { menu_id?: number }) {
   if (node.meta?.action_id) {
@@ -63,24 +128,50 @@ async function fetchNav() {
 }
 
 function dumpMenu() {
-  // eslint-disable-next-line no-console
+  if (!debugIntent) return;
+  console.group('[A3] 菜单详细诊断');
+  
+  // 打印菜单树
   console.info('[debug] menuTree', session.menuTree);
+  
   // 详细打印每个菜单项
+  console.info('[debug] 菜单项详情:');
   session.menuTree.forEach((item, index) => {
-    console.info(`[debug] Menu item ${index}:`, {
+    console.info(`  [${index}]`, {
       key: item.key,
       name: item.name,
       label: item.label,
       title: item.title,
       menu_id: item.menu_id,
       id: (item as any).id,
+      xmlid: item.xmlid || 'N/A',
       children: item.children?.length || 0,
       meta: item.meta
     });
   });
   
-  // 同时打印从 app.init 返回的原始 nav 数据
+  // 检查是否是Odoo原生菜单
+  const firstMenu = session.menuTree[0];
+  if (firstMenu) {
+    const firstMenuName = firstMenu.title || firstMenu.name || firstMenu.label || '';
+    const odooNativeMenuNames = [
+      '讨论', '待办', '仪表板', '发票', '采购', '库存', '应用', '设置',
+      'Discuss', 'To-do', 'Dashboard', 'Invoicing', 'Purchase', 'Inventory', 'Apps', 'Settings'
+    ];
+    
+    if (odooNativeMenuNames.includes(firstMenuName)) {
+      console.warn('⚠️ 检测到Odoo原生应用菜单作为根菜单！');
+      console.warn('   第一个菜单名称:', firstMenuName);
+      console.warn('   这表示后端可能没有使用 smart_construction_core.menu_sc_root 作为根');
+    } else {
+      console.info('✅ 第一个菜单不是Odoo原生应用菜单:', firstMenuName);
+    }
+  }
+  
+  // 打印完整的app.init响应数据
   console.info('[debug] Full app.init response nav data:', JSON.stringify(session.menuTree, null, 2));
+  
+  console.groupEnd();
 }
 
 async function logout() {
@@ -187,5 +278,45 @@ async function logout() {
   font-size: 12px;
   color: #94a3b8;
   font-style: italic;
+}
+
+/* A3: 根菜单不匹配错误面板样式 */
+.root-mismatch-error {
+  border: 2px solid #ef4444;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: #fef2f2;
+}
+
+.root-mismatch-error h2 {
+  color: #dc2626;
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.error-details {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #fecaca;
+}
+
+.error-details p {
+  margin: 6px 0;
+  color: #374151;
+}
+
+.error-details ul {
+  margin: 8px 0 0 20px;
+  padding: 0;
+}
+
+.error-details li {
+  margin: 4px 0;
+  color: #4b5563;
+  font-size: 14px;
 }
 </style>
