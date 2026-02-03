@@ -14,6 +14,8 @@
 - [x] `make verify.portal.v0_5 DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
 - [x] `make verify.portal.v0_5.container DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
 - [x] `make verify.portal.view_state` (PASS)
+- [x] `make verify.portal.fe_smoke.container DB_NAME=sc_demo E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
+- [x] `make verify.portal.v0_5.container DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T061415` (PASS)
 - [ ] `make verify.portal.fe_smoke BASE_URL=http://localhost:8069 DB_NAME=sc_demo` (FAIL: status=000, AUTH_REQUIRED, curl connect)
 - [ ] `make verify.portal.v0_5 DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T055140` (FAIL: connect EPERM 127.0.0.1:8070)
 
@@ -44,6 +46,25 @@ FAIL: connect EPERM 127.0.0.1:8070 - Local (undefined:undefined)
 make: *** [Makefile:435: verify.portal.v0_5] Error 1
 ```
 
+`make verify.portal.fe_smoke.container DB_NAME=sc_demo E2E_LOGIN=svc_project_ro E2E_PASSWORD=***`
+```text
+[06:13:57] fe_smoke: base=http://localhost:8069 db=sc_demo
+[06:14:01] OK: app.init 200
+nav_version=1
+trace_id=4be26575a0fa
+```
+
+`make verify.portal.v0_5.container DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T061415`
+```text
+[fe_mvp_list_smoke] login: svc_project_ro db=sc_demo
+[fe_mvp_list_smoke] app.init
+[fe_mvp_list_smoke] ui.contract action_open action_id=495
+[fe_mvp_list_smoke] api.data list model=project.project
+[fe_mvp_list_smoke] load_view + api.data read model=project.project id=22
+[fe_mvp_list_smoke] PASS list_status=ok record_status=ok
+[fe_mvp_list_smoke] artifacts: /mnt/artifacts/codex/portal-shell-v0_5/20260203T061415
+```
+
 ## MVP Trace
 - record_id: 22
 - nav_version: 36
@@ -55,6 +76,9 @@ make: *** [Makefile:435: verify.portal.v0_5] Error 1
 - fe_mvp_list.log: artifacts/codex/portal-shell-v0_5/20260203T055140/fe_mvp_list.log
 - fe_mvp_record.log: artifacts/codex/portal-shell-v0_5/20260203T055140/fe_mvp_record.log
 - summary.md: artifacts/codex/portal-shell-v0_5/20260203T055140/summary.md
+- fe_mvp_list.log: artifacts/codex/portal-shell-v0_5/20260203T061415/fe_mvp_list.log
+- fe_mvp_record.log: artifacts/codex/portal-shell-v0_5/20260203T061415/fe_mvp_record.log
+- summary.md: artifacts/codex/portal-shell-v0_5/20260203T061415/summary.md
 
 ## Fixes Included in v0.5 PASS
 - `addons/smart_core/handlers/system_init.py`: use `sudo()` for group xmlid resolution; fixes menu filtering for service users (reason: BSI groups unreadable caused root/menu not found; impact: all env).
