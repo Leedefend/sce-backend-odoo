@@ -83,3 +83,27 @@ export async function writeRecord(params: {
     },
   });
 }
+
+export type ApiDataWriteContract = {
+  id: number;
+  model: string;
+  written_fields: string[];
+  values: Record<string, unknown>;
+};
+
+export async function writeRecordV6(params: {
+  model: string;
+  id: number;
+  values: Record<string, unknown>;
+  context?: Record<string, unknown>;
+}) {
+  return intentRequest<ApiDataWriteContract>({
+    intent: 'api.data.write',
+    params: {
+      model: params.model,
+      id: params.id,
+      values: params.values,
+      context: params.context ?? {},
+    },
+  });
+}

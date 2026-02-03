@@ -212,6 +212,7 @@ Codex **只能** 在以下分支类型中执行自治操作：
 * `make verify.portal.v0_5.host`（host 调试用，非 gate）
 * `make verify.portal.v0_5.all`
 * `make verify.portal.v0_5.container`
+* `make verify.portal.v0_6.container`
 * `scripts/verify/*_smoke.sh`
 
 #### 明确禁止
