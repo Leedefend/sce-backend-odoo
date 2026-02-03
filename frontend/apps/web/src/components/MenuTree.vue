@@ -1,7 +1,13 @@
 <template>
   <ul class="tree">
     <li v-for="node in sorted" :key="node.key || node.menu_id">
-      <div class="node" :class="{ active: activeMenuId === (node.menu_id ?? node.id) }">
+      <div
+        class="node"
+        :class="{
+          active: activeMenuId === (node.menu_id ?? node.id),
+          ancestor: activeParents.has(nodeKey(node)),
+        }"
+      >
         <button v-if="node.children?.length" class="toggle" @click="toggle(nodeKey(node))">
           {{ expanded.has(nodeKey(node)) ? '▾' : '▸' }}
         </button>
@@ -10,12 +16,14 @@
           <span v-if="node.children?.length" class="child-count">({{ node.children.length }})</span>
         </button>
       </div>
-      <MenuTree
-        v-if="node.children?.length && expanded.has(nodeKey(node))"
-        :nodes="node.children"
-        :active-menu-id="activeMenuId"
-        @select="emit('select', $event)"
-      />
+      <transition name="expand">
+        <MenuTree
+          v-if="node.children?.length && expanded.has(nodeKey(node))"
+          :nodes="node.children"
+          :active-menu-id="activeMenuId"
+          @select="emit('select', $event)"
+        />
+      </transition>
     </li>
   </ul>
 </template>
@@ -28,6 +36,7 @@ const props = defineProps<{ nodes: NavNode[]; activeMenuId?: number }>();
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
 
 const expanded = ref<Set<string>>(new Set());
+const activeParents = ref<Set<string>>(new Set());
 
 const sorted = computed(() => {
   return [...props.nodes].sort((a, b) => {
@@ -75,6 +84,7 @@ function ensureExpandedForActive(nodes: NavNode[], menuId?: number): Set<string>
 
 watchEffect(() => {
   expanded.value = ensureExpandedForActive(props.nodes, props.activeMenuId);
+  activeParents.value = new Set(expanded.value);
 });
 
 // 调试：打印接收到的节点
@@ -123,6 +133,10 @@ onMounted(() => {
   color: #2563eb;
 }
 
+.node.ancestor .label {
+  color: #64748b;
+}
+
 .toggle {
   width: 20px;
   border: none;
@@ -145,5 +159,16 @@ onMounted(() => {
 
 .label:hover {
   background-color: #f1f5f9;
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.18s ease;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 </style>

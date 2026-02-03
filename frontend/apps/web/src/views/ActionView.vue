@@ -28,10 +28,11 @@
       :model="model"
       :status="status"
       :loading="status === 'loading'"
-      :error-message="error"
+      :error-message="errorMessage"
       :trace-id="traceId"
       :columns="columns"
       :records="records"
+      :sort-label="sortLabel"
       :on-reload="reload"
       :on-row-click="handleRowClick"
     />
@@ -55,6 +56,7 @@ const session = useSessionStore();
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const error = ref('');
+const errorCode = ref<number | null>(null);
 const traceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const columns = ref<string[]>([]);
@@ -67,6 +69,19 @@ const title = computed(() => actionMeta.value?.action_id ? `Action ${actionMeta.
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const listTitle = computed(() => actionMeta.value?.name || title.value);
+const errorMessage = computed(() => {
+  if (!error.value) {
+    return '';
+  }
+  return errorCode.value ? `code=${errorCode.value} · ${error.value}` : error.value;
+});
+const sortLabel = computed(() => {
+  const order = (actionMeta.value as any)?.order;
+  if (typeof order === 'string' && order.trim()) {
+    return order;
+  }
+  return 'id asc';
+});
 
 function mergeContext(base: Record<string, unknown> | string | undefined) {
   if (!base || typeof base === 'string') {
@@ -113,6 +128,7 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
 async function load() {
   status.value = 'loading';
   error.value = '';
+  errorCode.value = null;
   traceId.value = '';
   records.value = [];
   columns.value = [];
@@ -141,6 +157,7 @@ async function load() {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
       error.value = err.message;
+      errorCode.value = err.status ?? null;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to load list';
     }
@@ -154,9 +171,15 @@ function handleRowClick(row: Record<string, unknown>) {
     return;
   }
   if (typeof id === 'number') {
-    router.push(`/r/${model.value}/${id}`);
+    router.push({
+      path: `/r/${model.value}/${id}`,
+      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined },
+    });
   } else if (typeof id === 'string' && id) {
-    router.push(`/r/${model.value}/${id}`);
+    router.push({
+      path: `/r/${model.value}/${id}`,
+      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined },
+    });
   }
 }
 

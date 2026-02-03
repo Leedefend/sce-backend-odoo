@@ -5,7 +5,10 @@
         <h2>{{ title }}</h2>
         <p class="meta">Model: {{ model || 'N/A' }}</p>
       </div>
-      <button @click="onReload" :disabled="loading">Reload</button>
+      <div class="actions">
+        <span class="pill" :class="status">{{ statusLabel }}</span>
+        <button @click="onReload" :disabled="loading">Reload</button>
+      </div>
     </header>
 
     <section class="summary">
@@ -16,6 +19,10 @@
       <div>
         <p class="label">Records</p>
         <p class="value">{{ records.length || '0' }}</p>
+      </div>
+      <div>
+        <p class="label">Sort</p>
+        <p class="value">{{ sortLabel || 'default' }}</p>
       </div>
     </section>
 
@@ -56,6 +63,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 
 const props = defineProps<{
@@ -69,7 +77,15 @@ const props = defineProps<{
   records: Array<Record<string, unknown>>;
   onReload: () => void;
   onRowClick: (row: Record<string, unknown>) => void;
+  sortLabel?: string;
 }>();
+
+const statusLabel = computed(() => {
+  if (props.status === 'loading') return 'Loading';
+  if (props.status === 'error') return 'Error';
+  if (props.status === 'empty') return 'Empty';
+  return 'Ready';
+});
 
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
@@ -95,6 +111,12 @@ function handleRow(row: Record<string, unknown>) {
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
   align-items: center;
 }
 
@@ -149,6 +171,36 @@ td {
 tr:hover {
   background: #f1f5f9;
   cursor: pointer;
+}
+
+.pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.pill.ok {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.pill.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.pill.loading {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.pill.empty {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 button {
