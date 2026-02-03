@@ -368,6 +368,10 @@ odoo.exec: check-compose-project check-compose-env
 diag.project: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/diag/project.sh
 
+.PHONY: diag.nav_root
+diag.nav_root: check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/diag/nav_root_db_check.sh
+
 # ======================================================
 # ==================== DB / Demo =======================
 # ======================================================

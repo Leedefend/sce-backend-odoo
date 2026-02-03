@@ -7,6 +7,9 @@ These scripts support menu root and DB resolution diagnostics. They are intended
 - `scripts/diag/check-root-menu.py`
 Usage: `python scripts/diag/check-root-menu.py --db <db_name> [--xmlid module.menu_xmlid]`
 
+- `scripts/diag/nav_root_db_check.sh`
+Usage: `make diag.nav_root DB_NAME=<db_name> ROOT_XMLID=<module.menu_xmlid> LOGIN=<login> [LANG_OVERRIDE=en_US]`
+
 - `scripts/diag/test-default-menu.py`
 Usage: `python scripts/diag/test-default-menu.py`
 
