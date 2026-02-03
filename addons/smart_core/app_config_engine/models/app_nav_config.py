@@ -201,7 +201,7 @@ class AppMenuConfig(models.Model):
 
         try:
             # 1) 全量抓取菜单（sudo，避免 groups 限制影响元数据完整性）
-            all_menus = self.env['ir.ui.menu'].sudo().search([], order='sequence,id')
+            all_menus = self.env['ir.ui.menu'].sudo().with_context(**{'ir.ui.menu.full_list': True}).search([], order='sequence,id')
             roots = all_menus.filtered(lambda m: not m.parent_id).sorted(key=lambda m: (m.sequence, m.id))
 
             tree, action_index = [], {}
