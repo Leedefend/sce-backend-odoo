@@ -270,6 +270,18 @@ Codex **必须停止并请求人工决策**，仅限以下情况：
 5. **需要引入全新模块 / 外部依赖**
 
 ---
+### 6.0 Codex Branch Bootstrap Rule
+
+For any new codex/* branch:
+- Initial remote branch creation (`git push -u origin codex/*`)
+  MUST be performed by a human operator.
+- After the remote branch exists, Codex takes full control:
+  - PR creation
+  - Validation
+  - Merge / cleanup
+
+This bootstrap step is a one-time exception and does not constitute
+a violation of Codex autonomy.
 
 ## 6.1 Branch-local autonomy (codex/* only)
 
