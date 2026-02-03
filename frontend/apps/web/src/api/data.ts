@@ -31,6 +31,31 @@ export async function listRecords(params: {
   });
 }
 
+export async function listRecordsRaw(params: {
+  model: string;
+  fields?: string[] | '*';
+  domain?: unknown[];
+  limit?: number;
+  offset?: number;
+  order?: string;
+  context?: Record<string, unknown>;
+}) {
+  const payload: ApiDataListRequest = {
+    op: 'list',
+    model: params.model,
+    fields: params.fields ?? ['id', 'name'],
+    domain: params.domain ?? [],
+    limit: params.limit ?? 40,
+    offset: params.offset ?? 0,
+    order: params.order ?? '',
+    context: params.context ?? {},
+  };
+  return intentRequestRaw<ApiDataListResult>({
+    intent: 'api.data',
+    params: payload,
+  });
+}
+
 export async function readRecord(params: {
   model: string;
   ids: number[];
@@ -45,6 +70,25 @@ export async function readRecord(params: {
     context: params.context ?? {},
   };
   return intentRequest<ApiDataReadResult>({
+    intent: 'api.data',
+    params: payload,
+  });
+}
+
+export async function readRecordRaw(params: {
+  model: string;
+  ids: number[];
+  fields?: string[] | '*';
+  context?: Record<string, unknown>;
+}) {
+  const payload: ApiDataReadRequest = {
+    op: 'read',
+    model: params.model,
+    ids: params.ids,
+    fields: params.fields ?? ['id', 'name'],
+    context: params.context ?? {},
+  };
+  return intentRequestRaw<ApiDataReadResult>({
     intent: 'api.data',
     params: payload,
   });

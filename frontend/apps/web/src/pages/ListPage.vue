@@ -3,26 +3,26 @@
     <header class="header">
       <div>
         <h2>{{ title }}</h2>
-        <p class="meta">Model: {{ model || 'N/A' }}</p>
+        <p class="meta">{{ subtitle }}</p>
       </div>
       <div class="actions">
         <span class="pill" :class="status">{{ statusLabel }}</span>
-        <button @click="onReload" :disabled="loading">Reload</button>
+        <button class="ghost" @click="onReload" :disabled="loading">Reload</button>
       </div>
     </header>
 
-    <section class="summary">
-      <div>
-        <p class="label">Columns</p>
-        <p class="value">{{ columns.length || 'N/A' }}</p>
+    <section class="toolbar">
+      <div class="search">
+        <input type="search" placeholder="Search" disabled />
       </div>
-      <div>
-        <p class="label">Records</p>
-        <p class="value">{{ records.length || '0' }}</p>
+      <div class="filters">
+        <span class="filter">All</span>
+        <span class="filter">Active</span>
+        <span class="filter">Archived</span>
       </div>
-      <div>
-        <p class="label">Sort</p>
-        <p class="value">{{ sortLabel || 'default' }}</p>
+      <div class="sort">
+        <span class="label">Sort</span>
+        <span class="value">{{ sortLabel || 'default' }}</span>
       </div>
     </section>
 
@@ -87,6 +87,9 @@ const statusLabel = computed(() => {
   return 'Ready';
 });
 
+const subtitle = computed(() => {
+  return `${props.records.length} records · ${props.columns.length} columns`;
+});
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
     return value.join(', ');
@@ -125,26 +128,52 @@ function handleRow(row: Record<string, unknown>) {
   font-size: 14px;
 }
 
-.summary {
+.toolbar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: 1fr auto auto;
   gap: 12px;
   background: white;
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px 16px;
   box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
+  align-items: center;
 }
 
-.summary .label {
-  margin: 0;
+.search input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: #f8fafc;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filter {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
   font-size: 12px;
-  color: #6b7280;
+  color: #475569;
+}
+
+.sort {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.sort .label {
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  color: #94a3b8;
 }
 
-.summary .value {
-  margin: 4px 0 0;
+.sort .value {
   font-weight: 600;
 }
 
@@ -166,6 +195,13 @@ td {
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   font-size: 14px;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
 }
 
 tr:hover {
@@ -204,12 +240,18 @@ tr:hover {
 }
 
 button {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: none;
   border-radius: 10px;
   background: #111827;
   color: white;
   cursor: pointer;
+}
+
+.ghost {
+  background: transparent;
+  color: #111827;
+  border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
 button:disabled {

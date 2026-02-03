@@ -3,25 +3,14 @@
     <header class="header">
       <div>
         <h2>{{ title }}</h2>
-        <p class="meta">Model: {{ model || 'N/A' }}</p>
+        <p class="meta">{{ subtitle }}</p>
       </div>
-      <button @click="reload">Reload</button>
+      <div class="actions">
+        <span class="status-dot" :class="status"></span>
+        <span class="status-text">{{ statusLabel }}</span>
+        <button class="ghost" @click="reload">Reload</button>
+      </div>
     </header>
-
-    <section class="summary">
-      <div>
-        <p class="label">Action ID</p>
-        <p class="value">{{ actionId || 'N/A' }}</p>
-      </div>
-      <div>
-        <p class="label">View Mode</p>
-        <p class="value">{{ viewMode }}</p>
-      </div>
-      <div>
-        <p class="label">Menu ID</p>
-        <p class="value">{{ menuId || 'N/A' }}</p>
-      </div>
-    </section>
 
     <ListPage
       :title="listTitle"
@@ -36,19 +25,28 @@
       :on-reload="reload"
       :on-row-click="handleRowClick"
     />
+
+    <DevContextPanel
+      :visible="showHud"
+      title="Action Context"
+      :entries="hudEntries"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecords } from '../api/data';
+import { listRecordsRaw } from '../api/data';
 import { ApiError } from '../api/client';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
+import DevContextPanel from '../components/DevContextPanel.vue';
 import { deriveListStatus } from '../app/view_state';
+import { isHudEnabled } from '../config/debug';
+import type { NavNode } from '@sc/schema';
 
 const route = useRoute();
 const router = useRouter();
@@ -65,16 +63,13 @@ const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
 
 const model = computed(() => actionMeta.value?.model ?? '');
-const title = computed(() => actionMeta.value?.action_id ? `Action ${actionMeta.value?.action_id}` : 'Action');
+const title = computed(() => {
+  const menuLabel = findMenuName(session.menuTree, menuId.value);
+  return menuLabel || actionMeta.value?.name || 'List';
+});
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const listTitle = computed(() => actionMeta.value?.name || title.value);
-const errorMessage = computed(() => {
-  if (!error.value) {
-    return '';
-  }
-  return errorCode.value ? `code=${errorCode.value} · ${error.value}` : error.value;
-});
 const sortLabel = computed(() => {
   const order = (actionMeta.value as any)?.order;
   if (typeof order === 'string' && order.trim()) {
@@ -82,6 +77,47 @@ const sortLabel = computed(() => {
   }
   return 'id asc';
 });
+const subtitle = computed(() => `${records.value.length} records · sorted by ${sortLabel.value}`);
+const statusLabel = computed(() => {
+  if (status.value === 'loading') return 'Loading';
+  if (status.value === 'error') return 'Error';
+  if (status.value === 'empty') return 'Empty';
+  return 'Ready';
+});
+const showHud = computed(() => isHudEnabled(route));
+const errorMessage = computed(() => {
+  if (!error.value) {
+    return '';
+  }
+  return errorCode.value ? `code=${errorCode.value} · ${error.value}` : error.value;
+});
+
+function findMenuName(nodes: NavNode[], menuId?: number): string {
+  if (!menuId) {
+    return '';
+  }
+  const walk = (items: NavNode[]): string | null => {
+    for (const node of items) {
+      if (node.menu_id === menuId || node.id === menuId) {
+        return node.title || node.name || node.label || '';
+      }
+      if (node.children?.length) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nodes) || '';
+}
+const hudEntries = computed(() => [
+  { label: 'action_id', value: actionId.value || '-' },
+  { label: 'menu_id', value: menuId.value || '-' },
+  { label: 'model', value: model.value || '-' },
+  { label: 'view_mode', value: viewMode.value || '-' },
+  { label: 'route', value: route.fullPath },
+  { label: 'trace_id', value: traceId.value || '-' },
+]);
 
 function mergeContext(base: Record<string, unknown> | string | undefined) {
   if (!base || typeof base === 'string') {
@@ -142,7 +178,7 @@ async function load() {
   try {
     const { contract } = await resolveAction(session.menuTree, actionId.value, actionMeta.value);
     const contractColumns = extractColumnsFromContract(contract);
-    const result = await listRecords({
+    const result = await listRecordsRaw({
       model: model.value,
       fields: contractColumns.length ? contractColumns : ['id', 'name'],
       domain: normalizeDomain(actionMeta.value?.domain),
@@ -150,9 +186,12 @@ async function load() {
       limit: 40,
       offset: 0,
     });
-    records.value = result.records ?? [];
+    records.value = result.data?.records ?? [];
     columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
     status.value = deriveListStatus({ error: '', recordsLength: records.value.length });
+    if (result.meta?.trace_id) {
+      traceId.value = String(result.meta.trace_id);
+    }
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
@@ -202,32 +241,45 @@ onMounted(load);
   align-items: center;
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.status-dot.loading {
+  background: #38bdf8;
+}
+
+.status-dot.error {
+  background: #ef4444;
+}
+
+.status-dot.empty {
+  background: #f59e0b;
+}
+
+.status-dot.ok {
+  background: #22c55e;
+}
+
+.status-text {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
 .meta {
   color: #64748b;
   font-size: 14px;
-}
-
-.summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
-}
-
-.summary .label {
-  margin: 0;
-  font-size: 12px;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.summary .value {
-  margin: 4px 0 0;
-  font-weight: 600;
 }
 
 button {
@@ -237,5 +289,11 @@ button {
   background: #111827;
   color: white;
   cursor: pointer;
+}
+
+.ghost {
+  background: transparent;
+  color: #111827;
+  border: 1px solid rgba(15, 23, 42, 0.12);
 }
 </style>
