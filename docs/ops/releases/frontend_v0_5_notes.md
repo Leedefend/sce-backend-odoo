@@ -13,6 +13,36 @@
 - [x] `make bsi.verify DB_NAME=sc_demo SERVICE_LOGIN=svc_project_ro MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root`
 - [x] `make verify.portal.v0_5 DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
 - [x] `make verify.portal.v0_5.container DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
+- [x] `make verify.portal.view_state` (PASS)
+- [ ] `make verify.portal.fe_smoke BASE_URL=http://localhost:8069 DB_NAME=sc_demo` (FAIL: status=000, AUTH_REQUIRED, curl connect)
+- [ ] `make verify.portal.v0_5 DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T055140` (FAIL: connect EPERM 127.0.0.1:8070)
+
+### Verification Output (2026-02-03)
+`make verify.portal.view_state`
+```text
+PASS: Action ok
+PASS: Action empty
+PASS: Action error
+PASS: Record ok
+PASS: Record empty
+PASS: Record error
+```
+
+`make verify.portal.fe_smoke BASE_URL=http://localhost:8069 DB_NAME=sc_demo`
+```text
+[14:05:59] fe_smoke: base=http://localhost:8069 db=sc_demo
+[14:05:59] FAIL: status=000
+response:
+{"ok": false, "error": {"code": "AUTH_REQUIRED", "message": "认证失败或 token 无效"}, "meta": {"trace_id": "263a1fc09060", "api_version": "v1", "contract_version": "v0.1"}}curl: (7) Couldn't connect to server
+make: *** [Makefile:430: verify.portal.fe_smoke] Error 1
+```
+
+`make verify.portal.v0_5 DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T055140`
+```text
+[fe_mvp_list_smoke] login: svc_project_ro db=sc_demo
+FAIL: connect EPERM 127.0.0.1:8070 - Local (undefined:undefined)
+make: *** [Makefile:435: verify.portal.v0_5] Error 1
+```
 
 ## MVP Trace
 - record_id: 22
