@@ -1,4 +1,4 @@
-import { intentRequest } from './intents';
+import { intentRequest, intentRequestRaw } from './intents';
 import type {
   ApiDataListResult,
   ApiDataReadResult,
@@ -98,6 +98,23 @@ export async function writeRecordV6(params: {
   context?: Record<string, unknown>;
 }) {
   return intentRequest<ApiDataWriteContract>({
+    intent: 'api.data.write',
+    params: {
+      model: params.model,
+      id: params.id,
+      values: params.values,
+      context: params.context ?? {},
+    },
+  });
+}
+
+export async function writeRecordV6Raw(params: {
+  model: string;
+  id: number;
+  values: Record<string, unknown>;
+  context?: Record<string, unknown>;
+}) {
+  return intentRequestRaw<ApiDataWriteContract>({
     intent: 'api.data.write',
     params: {
       model: params.model,

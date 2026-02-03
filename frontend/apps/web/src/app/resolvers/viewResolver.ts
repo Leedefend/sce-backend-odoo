@@ -1,4 +1,5 @@
 import type { FormField, ViewContract } from '@sc/schema';
+import { asArray } from '../../utils/guards';
 import { intentRequest } from '../../api/intents';
 
 export async function resolveView(model: string, viewType: string) {
@@ -16,15 +17,15 @@ export function extractFieldNames(layout: ViewContract['layout']) {
     }
   };
 
-  layout.groups?.forEach((group) => {
-    group.fields?.forEach((field) => pushField(field));
-    group.sub_groups?.forEach((sub) => sub.fields?.forEach((field) => pushField(field)));
+  asArray(layout.groups).forEach((group) => {
+    asArray(group.fields).forEach((field) => pushField(field));
+    asArray(group.sub_groups).forEach((sub) => asArray(sub.fields).forEach((field) => pushField(field)));
   });
 
-  layout.notebooks?.forEach((notebook) => {
-    notebook.pages?.forEach((page) => {
-      page.groups?.forEach((group) => {
-        group.fields?.forEach((field) => pushField(field));
+  asArray(layout.notebooks).forEach((notebook) => {
+    asArray(notebook.pages).forEach((page) => {
+      asArray(page.groups).forEach((group) => {
+        asArray(group.fields).forEach((field) => pushField(field));
       });
     });
   });
