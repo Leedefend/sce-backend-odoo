@@ -8,8 +8,10 @@ from __future__ import annotations
 import json
 import logging
 import hashlib
+import os
 from typing import Dict, Any, List, Optional, Union, Iterable, Tuple
 from collections.abc import Mapping
+from odoo.exceptions import AccessError, MissingError
 
 _logger = logging.getLogger(__name__)
 
@@ -26,6 +28,15 @@ class NavDispatcher:
         self.env = env       # 当前用户 env（用于 groups/权限过滤）
         self.su_env = su_env # sudo env（用于元数据与菜单树生成）
 
+    def _diagnostics_enabled(self) -> bool:
+        env_flag = (os.environ.get("ENV") or "").lower()
+        if env_flag in {"dev", "test", "local"}:
+            return True
+        try:
+            return self.env.user.has_group("base.group_system")
+        except Exception:
+            return False
+
     # ========================= 对外入口 ========================= #
 
     def build_nav(self, p: Optional[Dict[str, Any]]):
@@ -37,7 +48,8 @@ class NavDispatcher:
         root_menu_id = p.get("root_menu_id")
 
         # 1) 从配置服务获取菜单树（sudo，避免权限阻塞元数据）
-        cfg_model = self.su_env["app.menu.config"]
+        # use user env for filtering, generation itself uses sudo internally
+        cfg_model = self.env["app.menu.config"]
         cfg = cfg_model._generate_from_menus(model_name=None, scene=scene)
         # root scoped: relax filters so root can be found even if model whitelist prunes it
         root_filters = None
@@ -92,6 +104,29 @@ class NavDispatcher:
         if resolved_root_id:
             tree, root_found = self._slice_raw_tree_by_root(tree, resolved_root_id)
             _logger.info("[NavDispatcher][debug] root_found: %s", root_found)
+            if not root_found:
+                # retry with user.lang context to ensure correct cache (e.g., en_US)
+                try:
+                    user_lang = getattr(self.env.user, "lang", None)
+                    ctx_lang = self.env.context.get("lang") if isinstance(self.env.context, dict) else None
+                    if user_lang and user_lang != ctx_lang:
+                        _logger.warning(
+                            "NavDispatcher: root not found, retry with lang=%s (ctx_lang=%s)",
+                            user_lang, ctx_lang
+                        )
+                        cfg_model_lang = self.su_env["app.menu.config"].with_context(lang=user_lang)
+                        contract = cfg_model_lang.get_menu_contract(
+                            model_name=None, filter_runtime=True, scene=scene, filters=root_filters
+                        )
+                        tree_raw = contract.get("nav") or []
+                        roots = self._flatten_roots(tree_raw)
+                        tree = [self._node_to_dict(n) for n in roots if n is not None]
+                        tree, root_found = self._slice_raw_tree_by_root(tree, resolved_root_id)
+                        _logger.info("[NavDispatcher][debug] root_found after lang retry: %s", root_found)
+                except Exception as e:
+                    _logger.warning("NavDispatcher: lang retry failed: %s", e)
+                if not root_found:
+                    raise MissingError(f"Root menu not found: {root_xmlid or resolved_root_id}")
 
         # 5) 富化（批量化尽量避免 N+1）
         if do_enrich and tree:
@@ -104,10 +139,16 @@ class NavDispatcher:
         # 6) 过滤 + scene 继承（管理员短路）
         filtered = self._filter_and_normalize_nav(tree, scene=scene)
 
-        # 管理员兜底（若被错误过滤为空）
-        if not filtered and self.env.user.has_group("base.group_system") and tree:
-            _logger.warning("NAV_DEBUG: filtered empty for admin -> fallback to unfiltered")
-            filtered = self._mark_all_visible(self._inherit_scene(tree, parent_scene="web"))
+        # 权限过滤导致 root 被清空时：非管理员不兜底，管理员可兜底
+        if not filtered and tree:
+            if resolved_root_id and root_found:
+                if self.env.user.has_group("base.group_system"):
+                    _logger.warning("NAV_DEBUG: filtered empty for admin -> fallback to unfiltered")
+                    filtered = self._mark_all_visible(self._inherit_scene(tree, parent_scene="web"))
+                else:
+                    raise AccessError(f"Root menu not accessible: {root_xmlid or resolved_root_id}")
+            else:
+                _logger.warning("NAV_DEBUG: filtered empty without explicit root, no fallback")
 
         # 7) 子树稳定排序（sequence → label）
         filtered = self._sort_subtrees(filtered)
@@ -132,6 +173,15 @@ class NavDispatcher:
             "root_resolved_id": resolved_root_id,
             "root_found": root_found,
         }
+        if self._diagnostics_enabled():
+            meta["diagnostic"] = {
+                "effective_db": self.env.cr.dbname if hasattr(self.env, "cr") and self.env.cr else "unknown",
+                "db_source": "env_cr",
+                "effective_root_xmlid": root_xmlid,
+                "root_source": "params" if root_xmlid else "default",
+                "uid": self.env.uid,
+                "login": self.env.user.login if hasattr(self.env, "user") else "unknown",
+            }
 
         _logger.info("NAV_DEBUG: final_count=%s (scene=%s, uid=%s)", len(nav), scene, self.env.user.id)
         data = {"nav": nav, "defaultRoute": default_route}

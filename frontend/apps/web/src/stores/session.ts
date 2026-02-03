@@ -80,24 +80,69 @@ export const useSessionStore = defineStore('session', {
       this.clearSession();
     },
     async loadAppInit() {
-      const result = await intentRequest<AppInitResponse>({
+      const debugIntent =
+        import.meta.env.DEV ||
+        localStorage.getItem('DEBUG_INTENT') === '1' ||
+        new URLSearchParams(window.location.search).get('debug') === '1';
+
+      // A1: 打印本次 app.init 的有效参数
+      if (debugIntent) {
+        console.group('[A1] app.init 请求诊断');
+        console.log('1. API Base URL:', import.meta.env.VITE_API_BASE_URL);
+        console.log('2. Authorization 存在:', !!this.token);
+        if (this.token) {
+          console.log('   Token 前10位:', this.token.substring(0, 10) + '...');
+        }
+        console.log('3. X-Odoo-DB 环境变量:', import.meta.env.VITE_ODOO_DB);
+      }
+
+      const requestParams = {
         intent: 'app.init',
         params: {
           scene: 'web',
           with_preload: false,
-          // 暂时注释掉 root_xmlid，看看返回什么
-          // root_xmlid: 'smart_construction_core.menu_sc_root',
+          root_xmlid: 'smart_construction_core.menu_sc_root',
         },
-      });
-      if (import.meta.env.DEV) {
+      };
+      if (debugIntent) {
+        console.log('4. Request params:', JSON.stringify(requestParams, null, 2));
+        console.groupEnd();
+      }
+
+      const result = await intentRequest<AppInitResponse>(requestParams);
+      // A1: 打印响应诊断信息
+      if (debugIntent) {
+        console.group('[A1] app.init 响应诊断');
+        console.log('1. Response keys:', Object.keys(result));
+
+        // 检查 meta 字段
+        if (result.meta) {
+          console.log('2. Meta 字段:', result.meta);
+          console.log('   effective_db:', result.meta.effective_db);
+          console.log('   effective_root_xmlid:', result.meta.effective_root_xmlid);
+        } else {
+          console.log('2. Meta 字段: 不存在');
+        }
+
+        // 检查 nav 字段
+        if (result.nav) {
+          console.log('3. Nav 字段存在，类型:', typeof result.nav, '是否为数组:', Array.isArray(result.nav));
+          if (Array.isArray(result.nav) && result.nav.length > 0) {
+            console.log('   菜单数量:', result.nav.length);
+            console.log('   前3个菜单:');
+            result.nav.slice(0, 3).forEach((item, index) => {
+              console.log(`     [${index}] name: "${item.name}", xmlid: "${item.xmlid || 'N/A'}", id: ${item.id || 'N/A'}`);
+            });
+          }
+        } else {
+          console.log('3. Nav 字段: 不存在');
+        }
+        console.groupEnd();
+      }
+
+      if (debugIntent) {
         // eslint-disable-next-line no-console
         console.info('[debug] app.init result', result);
-        // 调试：打印result的所有键
-        console.info('[debug] app.init result keys', Object.keys(result));
-        // 调试：检查nav是否存在
-        if (result.nav) {
-          console.info('[debug] app.init nav exists, type:', typeof result.nav, 'is array:', Array.isArray(result.nav));
-        }
       }
       this.user = result.user;
       const candidates = [
@@ -108,7 +153,7 @@ export const useSessionStore = defineStore('session', {
         (result as AppInitResponse & { menus?: NavNode[] }).menus,
         (result as AppInitResponse & { sections?: NavNode[] }).sections,
       ];
-      if (import.meta.env.DEV) {
+      if (debugIntent) {
         console.info('[debug] app.init candidates:', candidates.map(c => ({
           type: typeof c,
           isArray: Array.isArray(c),
@@ -116,7 +161,7 @@ export const useSessionStore = defineStore('session', {
         })));
       }
       const nav = candidates.find((entry) => Array.isArray(entry)) ?? [];
-      if (import.meta.env.DEV) {
+      if (debugIntent) {
         // eslint-disable-next-line no-console
         console.info('[debug] app.init nav length', (nav as NavNode[]).length);
         // 调试：打印第一个导航项的结构
@@ -140,13 +185,17 @@ export const useSessionStore = defineStore('session', {
       this.persist();
     },
     async loadNavFallback() {
+      const debugIntent =
+        import.meta.env.DEV ||
+        localStorage.getItem('DEBUG_INTENT') === '1' ||
+        new URLSearchParams(window.location.search).get('debug') === '1';
       try {
         const result = await intentRequest<{ nav?: NavNode[] }>({
           intent: 'ui.contract',
           params: { op: 'nav', root_xmlid: 'smart_construction_core.menu_sc_root' },
         });
         const nav = result.nav ?? [];
-        if (import.meta.env.DEV) {
+        if (debugIntent) {
           // eslint-disable-next-line no-console
           console.info('[debug] ui.contract nav length', nav.length);
         }
@@ -155,7 +204,7 @@ export const useSessionStore = defineStore('session', {
           this.persist();
         }
       } catch (err) {
-        if (import.meta.env.DEV) {
+        if (debugIntent) {
           // eslint-disable-next-line no-console
           console.warn('[debug] ui.contract nav failed', err);
         }

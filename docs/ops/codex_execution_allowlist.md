@@ -61,6 +61,63 @@ Codex **只能** 在以下分支类型中执行自治操作：
   - `curl` 直接修改系统状态（只允许只读 smoke）
 
 ---
+### 1.4 Git 执行边界（Safe Git Rules）
+
+为支持 Codex 的日常工程自治，允许执行 **受限 Git 操作子集**。
+
+#### 1.4.1 允许的 Git 命令（Safe Git）
+
+仅允许以下 Git 操作，且 **只能在允许的分支类型中执行**（见 1.1）：
+
+- 只读类
+  - `git status`
+  - `git diff`
+  - `git diff --stat`
+  - `git log --oneline -n <N>`
+  - `git show <commit>`
+  - `git branch --show-current`
+
+- 本地写入（不影响远端）
+  - `git add <path>`
+  - `git restore <path>`
+  - `git commit -m "<message>"`
+  - `git commit --amend`（仅允许修改 message，不允许加 --no-edit）
+
+- 分支内操作
+  - `git switch <allowed-branch>`
+  - `git checkout <allowed-branch>`（等价）
+  - `git pull --ff-only origin <same-branch>`
+
+#### 明确禁止的 Git 命令（Hard Ban）
+
+- ❌ `git push`（任何形式）
+- ❌ `git push --force / -f`
+- ❌ `git reset --hard`
+- ❌ `git rebase`
+- ❌ `git cherry-pick`
+- ❌ `git merge`
+- ❌ `git tag`
+- ❌ `git branch -d / -D`
+- ❌ `git worktree`
+- ❌ `git config`
+
+> ⚠️ 所有 **远端状态变更** 必须通过 Makefile 封装流程完成。
+### 1.5 Git 与分支绑定规则（Critical）
+
+- Codex 执行任何 Git 写操作前，必须确认：
+  - 当前分支 ∈ {feat/*, feature/*, codex/*, experiment/*}
+- 若检测到当前分支为：
+  - `main`
+  - `master`
+  - `release/*`
+  
+  Codex **必须立即停止**，不得执行任何 Git 写操作（包括 git add / commit）。
+
+- 对 main 的同步行为：
+  - 仅允许：
+    - `git pull --ff-only origin main`
+  - 且只能通过：
+    - `make main.sync`
 
 ## 2. Codex 的“自治生命周期”（你要的关键补齐）
 
