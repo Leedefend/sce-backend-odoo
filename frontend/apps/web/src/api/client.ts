@@ -46,7 +46,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}) {
   // A2: 网络级别校验 - 针对 app.init 请求
   let appInitPayload: any | null = null;
   let isAppInitRequest = false;
-  if (path === '/api/intent' && options.body && typeof options.body === 'string') {
+  if (path === '/api/v1/intent' && options.body && typeof options.body === 'string') {
     try {
       appInitPayload = JSON.parse(options.body);
       isAppInitRequest = appInitPayload?.intent === 'app.init';
