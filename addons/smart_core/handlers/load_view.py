@@ -6,7 +6,7 @@ class LoadModelViewHandler(BaseIntentHandler):
     INTENT_TYPE = "load_view"
     DESCRIPTION = "加载模型视图结构"
 
-    def run(self):
+    def run(self, **_kwargs):
         model_name = self.params.get("model")
         view_type = self.params.get("view_type")
         view_id = self.params.get("view_id")

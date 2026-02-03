@@ -36,7 +36,7 @@ def _diagnostics_enabled(env) -> bool:
 
 def _user_group_xmlids(user) -> set:
     """把用户组转为 xmlid 集合（与菜单过滤口径一致）"""
-    ext_map = user.groups_id.get_external_id()  # {id: 'module.xmlid' or False}
+    ext_map = user.groups_id.sudo().get_external_id()  # {id: 'module.xmlid' or False}
     return {xml for xml in ext_map.values() if xml}
 
 def _to_group_xmlid(env, g) -> str | None:
@@ -47,10 +47,10 @@ def _to_group_xmlid(env, g) -> str | None:
         # 允许直接是 xmlid（module.name）
         return g if "." in g else None
     if isinstance(g, int):
-        imd = env["ir.model.data"].search([("model", "=", "res.groups"), ("res_id", "=", g)], limit=1)
+        imd = env["ir.model.data"].sudo().search([("model", "=", "res.groups"), ("res_id", "=", g)], limit=1)
         return f"{imd.module}.{imd.name}" if imd and imd.module and imd.name else None
     if getattr(g, "_name", None) == "res.groups":
-        imd = env["ir.model.data"].search([("model", "=", "res.groups"), ("res_id", "=", g.id)], limit=1)
+        imd = env["ir.model.data"].sudo().search([("model", "=", "res.groups"), ("res_id", "=", g.id)], limit=1)
         return f"{imd.module}.{imd.name}" if imd and imd.module and imd.name else None
     return None
 
@@ -103,7 +103,7 @@ def _to_xmlid_list(env, maybe_ids_or_xmlids):
         elif isinstance(g, int):
             int_ids.append(g)
     if int_ids:
-        imds = env["ir.model.data"].search([
+        imds = env["ir.model.data"].sudo().search([
             ("model", "=", "res.groups"),
             ("res_id", "in", int_ids)
         ])
