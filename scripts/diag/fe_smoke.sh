@@ -4,12 +4,48 @@ set -euo pipefail
 BASE_URL="${BASE_URL:-http://localhost:8070}"
 DB_NAME="${DB_NAME:-sc_demo}"
 AUTH_TOKEN="${AUTH_TOKEN:-}"
+E2E_LOGIN="${E2E_LOGIN:-}"
+E2E_PASSWORD="${E2E_PASSWORD:-}"
 
 ts() {
   date +"%H:%M:%S"
 }
 
 echo "[$(ts)] fe_smoke: base=${BASE_URL} db=${DB_NAME}"
+
+if [[ -z "${AUTH_TOKEN}" && -n "${E2E_LOGIN}" && -n "${E2E_PASSWORD}" ]]; then
+  login_payload='{"intent":"login","params":{"db":"'"${DB_NAME}"'","login":"'"${E2E_LOGIN}"'","password":"'"${E2E_PASSWORD}"'"}}'
+  login_status="$(
+    curl -sS -o /tmp/fe_smoke_login.json -w "%{http_code}" \
+      -H "Content-Type: application/json" \
+      -H "X-Anonymous-Intent: 1" \
+      -d "${login_payload}" \
+      "${BASE_URL}/api/v1/intent" || true
+  )"
+  if [[ "${login_status}" != "200" ]]; then
+    echo "[$(ts)] FAIL: login status=${login_status}"
+    if [[ -f /tmp/fe_smoke_login.json ]]; then
+      echo "login response:"
+      cat /tmp/fe_smoke_login.json
+    fi
+    exit 1
+  fi
+  AUTH_TOKEN="$(python3 - <<'PY'
+import json
+import sys
+try:
+  data=json.load(open("/tmp/fe_smoke_login.json"))
+except Exception:
+  sys.exit(0)
+token=(data.get("data") or {}).get("token") or ""
+print(token)
+PY
+)"
+  if [[ -z "${AUTH_TOKEN}" ]]; then
+    echo "[$(ts)] FAIL: login token missing"
+    exit 1
+  fi
+fi
 
 payload='{"intent":"app.init","params":{"scene":"web","with_preload":false,"root_xmlid":"smart_construction_core.menu_sc_root"}}'
 

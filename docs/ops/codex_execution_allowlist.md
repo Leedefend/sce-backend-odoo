@@ -207,9 +207,11 @@ Codex **只能** 在以下分支类型中执行自治操作：
 
 * `make smoke.*`
 * `make verify.portal.fe_smoke`
+* `make verify.portal.fe_smoke.container`
 * `make verify.portal.view_state`
 * `make verify.portal.v0_5`
 * `make verify.portal.v0_5.all`
+* `make verify.portal.v0_5.container`
 * `scripts/verify/*_smoke.sh`
 
 #### 明确禁止
@@ -384,4 +386,3 @@ artifacts/codex/<branch>/<timestamp>/
 > 越权即停。**
 
 ---
-
