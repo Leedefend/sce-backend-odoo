@@ -354,7 +354,7 @@ class NavDispatcher:
 
         def xmlid_of(rec) -> Optional[str]:
             try:
-                mapping = rec.get_external_id()
+                mapping = rec.sudo().get_external_id()
                 if mapping:
                     return next(iter(mapping.values()))
             except Exception:
@@ -681,7 +681,7 @@ class NavDispatcher:
 
     def _groups_to_xmlids(self, groups_rec) -> set[str]:
         try:
-            mapping = groups_rec.get_external_id()
+            mapping = groups_rec.sudo().get_external_id()
             return {x for x in mapping.values() if x}
         except Exception:
             imd = self.su_env["ir.model.data"].search(

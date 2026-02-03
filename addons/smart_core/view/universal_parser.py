@@ -209,6 +209,8 @@ class UniversalViewSemanticParser:
         """
         合并 ui.dynamic.config 的动态配置
         """
+        if 'ui.dynamic.config' not in self.env:
+            return layout
         overrides = self.env['ui.dynamic.config'].search([
             ('model', '=', self.model),
             ('view_id', '=', self.view_id or False)

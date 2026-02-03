@@ -368,6 +368,15 @@ odoo.exec: check-compose-project check-compose-env
 diag.project: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/diag/project.sh
 
+.PHONY: bsi.create bsi.verify
+bsi.create: ## Create/update Business Service Identity user (system-bound)
+	@DB_NAME=$(DB_NAME) SERVICE_LOGIN=$(SERVICE_LOGIN) SERVICE_PASSWORD=$(SERVICE_PASSWORD) GROUP_XMLIDS="$(GROUP_XMLIDS)" \
+		bash scripts/ops/bsi_create.sh
+
+bsi.verify: ## Verify BSI can see business menu/root menu (system-bound)
+	@DB_NAME=$(DB_NAME) SERVICE_LOGIN=$(SERVICE_LOGIN) MENU_XMLID=$(MENU_XMLID) ROOT_XMLID=$(ROOT_XMLID) \
+		bash scripts/ops/bsi_verify.sh
+
 .PHONY: diag.nav_root
 diag.nav_root: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/diag/nav_root_db_check.sh
@@ -398,7 +407,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 # ======================================================
 # ==================== Verify / Gate ===================
 # ======================================================
-.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.portal.dashboard verify.portal.execute_button verify.smart_core verify.e2e.contract verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
+.PHONY: verify.baseline verify.demo verify.p0 verify.p0.flow verify.overview verify.overview.entry verify.overview.logic verify.portal.dashboard verify.portal.execute_button verify.portal.fe_smoke.host verify.portal.fe_smoke.container verify.portal.view_state verify.portal.v0_5.host verify.portal.v0_5.all verify.portal.v0_5.container verify.smart_core verify.e2e.contract verify.prod.guard prod.guard.mail_from prod.fix.mail_from gate.baseline gate.demo gate.full
 verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo: guard.prod.forbid check-compose-project check-compose-env
@@ -417,6 +426,20 @@ verify.portal.dashboard: guard.prod.forbid check-compose-project check-compose-e
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/portal_dashboard.sh
 verify.portal.execute_button: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/portal_execute_button.sh
+verify.portal.fe_smoke.host: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) BASE_URL=$(BASE_URL) DB_NAME=$(DB_NAME) AUTH_TOKEN=$(AUTH_TOKEN) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) \
+		bash scripts/diag/fe_smoke.sh
+verify.portal.fe_smoke.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) AUTH_TOKEN=$(AUTH_TOKEN) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) bash /mnt/scripts/diag/fe_smoke.sh"
+verify.portal.view_state: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) node scripts/verify/fe_view_state_smoke.js
+verify.portal.v0_5.host: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MVP_MENU_XMLID=$(MVP_MENU_XMLID) ROOT_XMLID=$(ROOT_XMLID) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) ARTIFACTS_DIR=$(ARTIFACTS_DIR) \
+		node scripts/verify/fe_mvp_list_smoke.js
+verify.portal.v0_5.all: verify.portal.view_state verify.portal.v0_5.container
+	@echo "[OK] verify.portal.v0_5.all done"
+verify.portal.v0_5.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) MVP_MENU_XMLID=$(MVP_MENU_XMLID) ROOT_XMLID=$(ROOT_XMLID) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node /mnt/scripts/verify/fe_mvp_list_smoke.js"
 verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
 verify.prod.guard: check-compose-env

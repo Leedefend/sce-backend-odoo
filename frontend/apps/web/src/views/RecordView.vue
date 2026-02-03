@@ -1,48 +1,58 @@
 <template>
-  <main class="page">
+  <section class="page">
     <header class="header">
       <div>
-        <h1>{{ title }}</h1>
+        <h2>{{ title }}</h2>
         <p class="meta">Model: {{ model }} · ID: {{ recordId }}</p>
       </div>
-      <button @click="reload">Reload</button>
+      <div class="actions">
+        <button class="ghost" @click="goBack">Back</button>
+        <button @click="reload" :disabled="status === 'loading'">Reload</button>
+      </div>
     </header>
 
-    <StatusPanel v-if="loading" title="Loading record..." variant="info" />
+    <StatusPanel v-if="status === 'loading'" title="Loading record..." variant="info" />
     <StatusPanel
-      v-else-if="error"
+      v-else-if="status === 'error'"
       title="Request failed"
       :message="error"
       :trace-id="traceId"
       variant="error"
       :on-retry="reload"
     />
+    <StatusPanel
+      v-else-if="status === 'empty'"
+      title="No data"
+      message="Record not found or not readable."
+      variant="info"
+      :on-retry="reload"
+    />
 
-    <section v-else-if="fields.length" class="card">
+    <section v-else class="card">
       <div v-for="field in fields" :key="field.name" class="field">
         <span class="label">{{ field.label }}</span>
         <span class="value"><FieldValue :value="field.value" :field="field.descriptor" /></span>
       </div>
     </section>
-
-    <p v-else class="empty">No fields loaded.</p>
-  </main>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
 import { readRecord } from '../api/data';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
+import { deriveRecordStatus } from '../app/view_state';
 import type { ViewContract } from '@sc/schema';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 
 const route = useRoute();
+const router = useRouter();
 const error = ref('');
 const traceId = ref('');
-const loading = ref(false);
+const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
 
 const model = computed(() => String(route.params.model || ''));
@@ -53,11 +63,11 @@ async function load() {
   error.value = '';
   traceId.value = '';
   fields.value = [];
-  loading.value = true;
+  status.value = 'loading';
 
   if (!model.value || !recordId.value) {
     error.value = 'Missing model or id';
-    loading.value = false;
+    status.value = deriveRecordStatus({ error: error.value, fieldsLength: 0 });
     return;
   }
 
@@ -78,6 +88,7 @@ async function load() {
       value: record[name],
       descriptor: view.fields?.[name],
     }));
+    status.value = deriveRecordStatus({ error: '', fieldsLength: fields.value.length });
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
@@ -85,8 +96,7 @@ async function load() {
     } else {
       error.value = err instanceof Error ? err.message : 'failed to load record';
     }
-  } finally {
-    loading.value = false;
+    status.value = deriveRecordStatus({ error: error.value, fieldsLength: 0 });
   }
 }
 
@@ -94,15 +104,17 @@ function reload() {
   load();
 }
 
+function goBack() {
+  router.back();
+}
+
 onMounted(load);
 </script>
 
 <style scoped>
 .page {
-  min-height: 100vh;
-  padding: 32px;
-  background: #f1f5f9;
-  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  display: grid;
+  gap: 16px;
   color: #0f172a;
 }
 
@@ -110,7 +122,11 @@ onMounted(load);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
 }
 
 .meta {
@@ -153,12 +169,14 @@ button {
   cursor: pointer;
 }
 
-.error {
-  margin-top: 16px;
-  color: #dc2626;
+.ghost {
+  background: transparent;
+  color: #111827;
+  border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
-.empty {
-  color: #64748b;
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

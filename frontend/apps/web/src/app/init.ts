@@ -6,5 +6,9 @@ export async function bootstrapApp() {
   if (!session.token) {
     return;
   }
-  await session.loadAppInit();
+  try {
+    await session.loadAppInit();
+  } catch {
+    // initStatus handled in store; avoid unhandled promise
+  }
 }
