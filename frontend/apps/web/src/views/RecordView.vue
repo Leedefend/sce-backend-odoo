@@ -3,7 +3,10 @@
     <header class="header">
       <div>
         <h2>{{ title }}</h2>
-        <p class="meta">Model: {{ model }} · ID: {{ recordId }}</p>
+        <p class="meta">
+          Model: {{ model }} · ID: {{ recordId }}
+          <span class="meta-pill" :class="statusTone">{{ statusLabel }}</span>
+        </p>
       </div>
       <div class="actions">
         <button class="ghost" @click="goBack">Back</button>
@@ -19,7 +22,7 @@
     <StatusPanel
       v-else-if="status === 'error'"
       title="Request failed"
-      :message="error"
+      :message="errorCode ? `code=${errorCode} · ${error}` : error"
       :trace-id="traceId"
       variant="error"
       :on-retry="reload"
@@ -32,7 +35,10 @@
       :on-retry="reload"
     />
 
-    <section v-else class="card">
+    <section v-else class="card" :class="{ editing: status === 'editing' }">
+      <div v-if="status === 'ok' && lastAction === 'save'" class="banner success">
+        Saved. Changes have been applied.
+      </div>
       <div v-for="field in fields" :key="field.name" class="field">
         <span class="label">{{ field.label }}</span>
         <span class="value">
@@ -46,6 +52,42 @@
         </span>
       </div>
     </section>
+
+    <footer class="footer">
+      <div class="meta-row">
+        <span class="meta-key">Record</span>
+        <span class="meta-value">{{ recordId }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Last intent</span>
+        <span class="meta-value">{{ lastIntent || '-' }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Write mode</span>
+        <span class="meta-value">{{ lastWriteMode || '-' }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Trace ID</span>
+        <span class="meta-value">{{ traceId || lastTraceId || '-' }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Latency</span>
+        <span class="meta-value">{{ lastLatencyMs ? `${lastLatencyMs}ms` : '-' }}</span>
+      </div>
+    </footer>
+
+    <aside v-if="showHud" class="hud">
+      <h3>Verification HUD</h3>
+      <pre>
+model: {{ model }}
+record_id: {{ recordId }}
+status: {{ status }}
+last_intent: {{ lastIntent || '-' }}
+write_mode: {{ lastWriteMode || '-' }}
+trace_id: {{ traceId || lastTraceId || '-' }}
+latency_ms: {{ lastLatencyMs || '-' }}
+      </pre>
+    </aside>
   </section>
 </template>
 
@@ -53,9 +95,10 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
-import { readRecord, writeRecordV6 } from '../api/data';
+import { readRecord, writeRecordV6Raw } from '../api/data';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import { deriveRecordStatus } from '../app/view_state';
+import { isHudEnabled } from '../config/debug';
 import type { ViewContract } from '@sc/schema';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -63,21 +106,45 @@ import StatusPanel from '../components/StatusPanel.vue';
 const route = useRoute();
 const router = useRouter();
 const error = ref('');
+const errorCode = ref<number | null>(null);
 const traceId = ref('');
+const lastTraceId = ref('');
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error' | 'editing' | 'saving'>('idle');
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
 const draftName = ref('');
+const lastIntent = ref('');
+const lastWriteMode = ref('');
+const lastLatencyMs = ref<number | null>(null);
+const lastAction = ref<'save' | 'load' | ''>('');
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
 const title = computed(() => `Record ${recordId.value}`);
 const canEdit = computed(() => model.value === 'project.project');
+const showHud = computed(() => isHudEnabled(route));
+const statusLabel = computed(() => {
+  if (status.value === 'editing') return 'Editing';
+  if (status.value === 'saving') return 'Saving';
+  if (status.value === 'loading') return 'Loading';
+  if (status.value === 'error') return 'Error';
+  if (status.value === 'empty') return 'Empty';
+  return 'Ready';
+});
+const statusTone = computed(() => {
+  if (status.value === 'error') return 'danger';
+  if (status.value === 'editing' || status.value === 'saving') return 'warn';
+  return 'ok';
+});
 
 async function load() {
   error.value = '';
+  errorCode.value = null;
   traceId.value = '';
   fields.value = [];
   status.value = 'loading';
+  lastIntent.value = 'api.data.read';
+  lastAction.value = 'load';
+  const startedAt = Date.now();
 
   if (!model.value || !recordId.value) {
     error.value = 'Missing model or id';
@@ -87,31 +154,47 @@ async function load() {
 
   try {
     const view = await resolveView(model.value, 'form');
+    const layout = view?.layout;
+    if (!layout) {
+      error.value = 'Missing view layout';
+      status.value = 'empty';
+      lastLatencyMs.value = Date.now() - startedAt;
+      return;
+    }
 
-    const fieldNames = extractFieldNames(view.layout).filter(Boolean);
+    const fieldNames = extractFieldNames(layout).filter(Boolean);
     const read = await readRecord({
       model: model.value,
       ids: [recordId.value],
       fields: fieldNames.length ? fieldNames : '*',
     });
 
-    const record = read.records?.[0] ?? {};
+    const record = read?.records?.[0] ?? null;
+    if (!record) {
+      status.value = 'empty';
+      lastLatencyMs.value = Date.now() - startedAt;
+      return;
+    }
     fields.value = (fieldNames.length ? fieldNames : Object.keys(record)).map((name) => ({
       name,
-      label: view.fields?.[name]?.string ?? name,
-      value: record[name],
-      descriptor: view.fields?.[name],
+      label: view?.fields?.[name]?.string ?? name,
+      value: (record as Record<string, unknown>)[name],
+      descriptor: view?.fields?.[name],
     }));
     status.value = deriveRecordStatus({ error: '', fieldsLength: fields.value.length });
     draftName.value = String(record?.name ?? '');
+    lastLatencyMs.value = Date.now() - startedAt;
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
+      lastTraceId.value = err.traceId ?? '';
+      errorCode.value = err.status ?? null;
       error.value = err.message;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to load record';
     }
     status.value = deriveRecordStatus({ error: error.value, fieldsLength: 0 });
+    lastLatencyMs.value = Date.now() - startedAt;
   }
 }
 
@@ -144,25 +227,39 @@ async function save() {
     return;
   }
   error.value = '';
+  errorCode.value = null;
   traceId.value = '';
   status.value = 'saving';
+  lastIntent.value = 'api.data.write';
+  lastWriteMode.value = 'update';
+  lastAction.value = 'save';
+  const startedAt = Date.now();
 
   try {
-    await writeRecordV6({
+    const result = await writeRecordV6Raw({
       model: model.value,
       id: recordId.value,
       values: { name: draftName.value.trim() },
     });
+    if (result?.meta?.trace_id) {
+      lastTraceId.value = String(result.meta.trace_id);
+    } else if (result?.traceId) {
+      lastTraceId.value = String(result.traceId);
+    }
     status.value = 'ok';
+    lastLatencyMs.value = Date.now() - startedAt;
     await load();
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
+      lastTraceId.value = err.traceId ?? '';
+      errorCode.value = err.status ?? null;
       error.value = err.message;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to save record';
     }
     status.value = 'error';
+    lastLatencyMs.value = Date.now() - startedAt;
   }
 }
 
@@ -194,6 +291,36 @@ onMounted(load);
 .meta {
   color: #64748b;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meta-pill {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.meta-pill.ok {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.meta-pill.warn {
+  background: #fef9c3;
+  color: #713f12;
+}
+
+.meta-pill.danger {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .card {
@@ -203,6 +330,11 @@ onMounted(load);
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
   display: grid;
   gap: 12px;
+}
+
+.card.editing {
+  border: 1px dashed #94a3b8;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
 }
 
 .field {
@@ -228,6 +360,74 @@ onMounted(load);
   border-radius: 8px;
   border: 1px solid #cbd5f5;
   font-size: 14px;
+}
+
+.banner {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.banner.success {
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  color: #155e75;
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.meta-row {
+  display: grid;
+  gap: 6px;
+}
+
+.meta-key {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.meta-value {
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.hud {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 280px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+  z-index: 10;
+}
+
+.hud h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #f8fafc;
+}
+
+.hud pre {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 button {

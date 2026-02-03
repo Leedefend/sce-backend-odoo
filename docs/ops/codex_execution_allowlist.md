@@ -209,10 +209,13 @@ Codex **只能** 在以下分支类型中执行自治操作：
 * `make verify.portal.fe_smoke.host`（host 调试用，非 gate）
 * `make verify.portal.fe_smoke.container`
 * `make verify.portal.view_state`
+* `make verify.portal.guard_groups`
 * `make verify.portal.v0_5.host`（host 调试用，非 gate）
 * `make verify.portal.v0_5.all`
 * `make verify.portal.v0_5.container`
 * `make verify.portal.v0_6.container`
+* `make verify.portal.recordview_hud_smoke.container`
+* `make verify.portal.ui.v0_7.container`
 * `scripts/verify/*_smoke.sh`
 
 #### 明确禁止

@@ -48,3 +48,18 @@ export async function intentRequest<T>(payload: IntentPayload) {
     throw err;
   }
 }
+
+export async function intentRequestRaw<T>(payload: IntentPayload) {
+  const traceId = generateTraceId();
+  const response = await apiRequest<IntentEnvelope<T>>('/api/v1/intent', {
+    method: 'POST',
+    headers: buildHeaders(payload.intent, traceId),
+    body: JSON.stringify(payload),
+  });
+
+  if (response && typeof response === 'object' && 'data' in response) {
+    return { data: response.data as T, meta: response.meta || {}, traceId };
+  }
+
+  return { data: response as T, meta: {}, traceId };
+}
