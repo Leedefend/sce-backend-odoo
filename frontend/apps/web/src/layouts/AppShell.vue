@@ -102,10 +102,10 @@ const initTraceId = computed(() => session.initTraceId);
 const currentTitle = computed(() => {
   const name = route.name?.toString() ?? '';
   if (name === 'action') {
-    return `Action ${route.params.actionId ?? ''}`.trim();
+    return session.currentAction?.name || 'List';
   }
   if (name === 'record') {
-    return `Record ${route.params.id ?? ''}`.trim();
+    return 'Record';
   }
   return 'Workspace';
 });

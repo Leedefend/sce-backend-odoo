@@ -3,14 +3,15 @@
     <header class="header">
       <div>
         <h2>{{ title }}</h2>
-        <p class="meta">Model: {{ model }} · ID: {{ recordId }}</p>
+        <p class="meta">{{ subtitle }}</p>
       </div>
       <div class="actions">
+        <span class="pill" :class="statusTone">{{ statusLabel }}</span>
         <button class="ghost" @click="goBack">Back</button>
         <button v-if="status === 'ok' && canEdit" @click="startEdit">Edit</button>
         <button v-if="status === 'editing'" @click="save" :disabled="isSaveDisabled">Save</button>
         <button v-if="status === 'editing'" class="ghost" @click="cancelEdit">Cancel</button>
-        <button @click="reload" :disabled="status === 'loading' || status === 'saving'">Reload</button>
+        <button class="ghost" @click="reload" :disabled="status === 'loading' || status === 'saving'">Reload</button>
       </div>
     </header>
 
@@ -19,7 +20,7 @@
     <StatusPanel
       v-else-if="status === 'error'"
       title="Request failed"
-      :message="error"
+      :message="errorCode ? `code=${errorCode} · ${error}` : error"
       :trace-id="traceId"
       variant="error"
       :on-retry="reload"
@@ -32,7 +33,10 @@
       :on-retry="reload"
     />
 
-    <section v-else class="card">
+    <section v-else class="card" :class="{ editing: status === 'editing' }">
+      <div v-if="status === 'ok' && lastAction === 'save'" class="banner success">
+        Saved. Changes have been applied.
+      </div>
       <div v-for="field in fields" :key="field.name" class="field">
         <span class="label">{{ field.label }}</span>
         <span class="value">
@@ -46,6 +50,12 @@
         </span>
       </div>
     </section>
+
+    <DevContextPanel
+      :visible="showHud"
+      title="Record Context"
+      :entries="hudEntries"
+    />
   </section>
 </template>
 
@@ -53,31 +63,69 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
-import { readRecord, writeRecordV6 } from '../api/data';
+import { readRecordRaw, writeRecordV6Raw } from '../api/data';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import { deriveRecordStatus } from '../app/view_state';
 import type { ViewContract } from '@sc/schema';
 import FieldValue from '../components/FieldValue.vue';
+import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import { isHudEnabled } from '../config/debug';
 
 const route = useRoute();
 const router = useRouter();
 const error = ref('');
+const errorCode = ref<number | null>(null);
 const traceId = ref('');
+const lastTraceId = ref('');
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error' | 'editing' | 'saving'>('idle');
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
 const draftName = ref('');
+const lastIntent = ref('');
+const lastWriteMode = ref('');
+const lastLatencyMs = ref<number | null>(null);
+const lastAction = ref<'save' | 'load' | ''>('');
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
-const title = computed(() => `Record ${recordId.value}`);
+const recordTitle = ref<string | null>(null);
+const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
+const subtitle = computed(() => (status.value === 'editing' ? 'Editing name' : 'Record details'));
 const canEdit = computed(() => model.value === 'project.project');
+const showHud = computed(() => isHudEnabled(route));
+const statusLabel = computed(() => {
+  if (status.value === 'editing') return 'Editing';
+  if (status.value === 'saving') return 'Saving';
+  if (status.value === 'loading') return 'Loading';
+  if (status.value === 'error') return 'Error';
+  if (status.value === 'empty') return 'Empty';
+  return 'Ready';
+});
+const statusTone = computed(() => {
+  if (status.value === 'error') return 'danger';
+  if (status.value === 'editing' || status.value === 'saving') return 'warn';
+  return 'ok';
+});
+const hudEntries = computed(() => [
+  { label: 'model', value: model.value },
+  { label: 'record_id', value: recordId.value },
+  { label: 'status', value: status.value },
+  { label: 'last_intent', value: lastIntent.value || '-' },
+  { label: 'write_mode', value: lastWriteMode.value || '-' },
+  { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
+  { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
+  { label: 'route', value: route.fullPath },
+]);
 
 async function load() {
   error.value = '';
+  errorCode.value = null;
   traceId.value = '';
   fields.value = [];
   status.value = 'loading';
+  lastIntent.value = 'api.data.read';
+  lastAction.value = 'load';
+  const startedAt = Date.now();
 
   if (!model.value || !recordId.value) {
     error.value = 'Missing model or id';
@@ -87,31 +135,52 @@ async function load() {
 
   try {
     const view = await resolveView(model.value, 'form');
+    const layout = view?.layout;
+    if (!layout) {
+      error.value = 'Missing view layout';
+      status.value = 'empty';
+      lastLatencyMs.value = Date.now() - startedAt;
+      return;
+    }
 
-    const fieldNames = extractFieldNames(view.layout).filter(Boolean);
-    const read = await readRecord({
+    const fieldNames = extractFieldNames(layout).filter(Boolean);
+    const read = await readRecordRaw({
       model: model.value,
       ids: [recordId.value],
       fields: fieldNames.length ? fieldNames : '*',
     });
 
-    const record = read.records?.[0] ?? {};
-    fields.value = (fieldNames.length ? fieldNames : Object.keys(record)).map((name) => ({
+    const record = read?.data?.records?.[0] ?? null;
+    if (!record) {
+      status.value = 'empty';
+      lastLatencyMs.value = Date.now() - startedAt;
+      return;
+    }
+    fields.value = (fieldNames.length ? fieldNames : Object.keys(record as Record<string, unknown>)).map((name) => ({
       name,
-      label: view.fields?.[name]?.string ?? name,
-      value: record[name],
-      descriptor: view.fields?.[name],
+      label: view?.fields?.[name]?.string ?? name,
+      value: (record as Record<string, unknown>)[name],
+      descriptor: view?.fields?.[name],
     }));
     status.value = deriveRecordStatus({ error: '', fieldsLength: fields.value.length });
     draftName.value = String(record?.name ?? '');
+    recordTitle.value = String(record?.name ?? '') || null;
+    if (read.meta?.trace_id) {
+      traceId.value = String(read.meta.trace_id);
+      lastTraceId.value = String(read.meta.trace_id);
+    }
+    lastLatencyMs.value = Date.now() - startedAt;
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
+      lastTraceId.value = err.traceId ?? '';
+      errorCode.value = err.status ?? null;
       error.value = err.message;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to load record';
     }
     status.value = deriveRecordStatus({ error: error.value, fieldsLength: 0 });
+    lastLatencyMs.value = Date.now() - startedAt;
   }
 }
 
@@ -144,25 +213,39 @@ async function save() {
     return;
   }
   error.value = '';
+  errorCode.value = null;
   traceId.value = '';
   status.value = 'saving';
+  lastIntent.value = 'api.data.write';
+  lastWriteMode.value = 'update';
+  lastAction.value = 'save';
+  const startedAt = Date.now();
 
   try {
-    await writeRecordV6({
+    const result = await writeRecordV6Raw({
       model: model.value,
       id: recordId.value,
       values: { name: draftName.value.trim() },
     });
+    if (result?.meta?.trace_id) {
+      lastTraceId.value = String(result.meta.trace_id);
+    } else if (result?.traceId) {
+      lastTraceId.value = String(result.traceId);
+    }
     status.value = 'ok';
+    lastLatencyMs.value = Date.now() - startedAt;
     await load();
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
+      lastTraceId.value = err.traceId ?? '';
+      errorCode.value = err.status ?? null;
       error.value = err.message;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to save record';
     }
     status.value = 'error';
+    lastLatencyMs.value = Date.now() - startedAt;
   }
 }
 
@@ -196,6 +279,31 @@ onMounted(load);
   font-size: 14px;
 }
 
+.pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.pill.ok {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.pill.warn {
+  background: #fef9c3;
+  color: #713f12;
+}
+
+.pill.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .card {
   background: white;
   border-radius: 12px;
@@ -203,6 +311,10 @@ onMounted(load);
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
   display: grid;
   gap: 12px;
+}
+
+.card.editing {
+  border: 1px dashed #94a3b8;
 }
 
 .field {
@@ -228,6 +340,18 @@ onMounted(load);
   border-radius: 8px;
   border: 1px solid #cbd5f5;
   font-size: 14px;
+}
+
+.banner {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.banner.success {
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  color: #155e75;
 }
 
 button {
