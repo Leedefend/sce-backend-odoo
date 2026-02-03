@@ -3,7 +3,7 @@ set -e
 
 TPL="/etc/odoo/odoo.conf.template"
 OUT="${ODOO_CONF_OUT:-/var/lib/odoo/odoo.conf}"
-DB="${ODOO_DB:-${DB_NAME:-sc_odoo}}"
+DB="${ODOO_DB:-${DB_NAME}}"
 
 echo "[entrypoint] render odoo.conf: ${TPL} -> ${OUT}"
 

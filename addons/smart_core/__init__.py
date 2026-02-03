@@ -21,6 +21,9 @@ from . import view
 from . import utils
 from . import models
 
+# Ensure intent controllers are registered on module load
+from .controllers import intent_dispatcher
+
 # 设置日志
 _logger = logging.getLogger(__name__)
 _logger.info("✅ Smart Core Engine 模块已加载")

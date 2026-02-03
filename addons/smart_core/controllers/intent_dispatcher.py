@@ -4,6 +4,7 @@
 from odoo import http
 from odoo.http import request
 import logging, time
+import os
 from typing import Dict, Any
 
 from werkzeug.exceptions import Unauthorized, Forbidden, BadRequest, NotFound
@@ -199,17 +200,59 @@ class IntentDispatcher(http.Controller):
                 if k in context_in and k not in params:
                     params[k] = context_in[k]
 
-            # 从 Header 注入多库/匿名标识
+            # 修复 Header 传 DB 但后端不读的问题：统一 DB 解析优先级 + 安全边界
             hdr = request.httprequest.headers
             x_db_hdr = hdr.get("X-Odoo-DB") or hdr.get("X-DB")
-            # 调试：打印头信息
-            _logger.info(
-                "[intent][debug] X-Odoo-DB header: %s, X-DB header: %s, all headers: %s",
-                hdr.get("X-Odoo-DB"), hdr.get("X-DB"), dict(hdr)
-            )
-            if x_db_hdr and not params.get("db"):
-                params["db"] = x_db_hdr
-                _logger.info("[intent][debug] Set db param from header: %s", x_db_hdr)
+
+            def _env_is_dev() -> bool:
+                env = (os.environ.get("ENV") or "").lower()
+                return env in {"dev", "test", "local"}
+
+            def _user_is_admin() -> bool:
+                try:
+                    return request.env.user.has_group("base.group_system")
+                except Exception:
+                    return False
+
+            def _default_db() -> str | None:
+                if request.session.db:
+                    return request.session.db
+                if hasattr(request.env, "cr") and request.env.cr:
+                    return request.env.cr.dbname
+                return None
+
+            # DB 解析优先级: params > query > header > session > env
+            effective_db = None
+            db_source = "unknown"
+
+            if params.get("db"):
+                effective_db = params.get("db")
+                db_source = "params"
+            elif kwargs.get("db"):
+                effective_db = kwargs.get("db")
+                db_source = "query"
+            elif x_db_hdr:
+                effective_db = x_db_hdr
+                db_source = "header"
+            elif request.session.db:
+                effective_db = request.session.db
+                db_source = "session"
+
+            # 非 DEV 且非管理员：禁止通过 params/query/header 覆盖 DB
+            if effective_db and db_source in {"params", "query", "header"} and not _env_is_dev() and not _user_is_admin():
+                _logger.warning("Blocked db override from %s in non-dev env", db_source)
+                effective_db = _default_db()
+                db_source = "session" if request.session.db else "env_default"
+
+            if not effective_db:
+                effective_db = _default_db()
+                db_source = "session" if request.session.db else "env_default"
+
+            if effective_db:
+                params["db"] = params.get("db") or effective_db
+                if request.session.db != effective_db:
+                    request.session.db = effective_db
+
             is_anon = _is_anon_req(hdr)
 
             # 统一 payload 下发给路由
