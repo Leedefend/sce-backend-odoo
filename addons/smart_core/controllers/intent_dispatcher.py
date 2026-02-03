@@ -204,9 +204,24 @@ class IntentDispatcher(http.Controller):
             hdr = request.httprequest.headers
             x_db_hdr = hdr.get("X-Odoo-DB") or hdr.get("X-DB")
 
+            def _is_local_request() -> bool:
+                try:
+                    remote = request.httprequest.remote_addr or ""
+                    host = request.httprequest.host or ""
+                except Exception:
+                    return False
+                if remote in {"127.0.0.1", "::1"}:
+                    return True
+                return "localhost" in host or "127.0.0.1" in host
+
             def _env_is_dev() -> bool:
                 env = (os.environ.get("ENV") or "").lower()
-                return env in {"dev", "test", "local"}
+                if env in {"dev", "test", "local"}:
+                    return True
+                # 未设置 ENV 时，允许本地请求作为 DEV
+                if not env and _is_local_request():
+                    return True
+                return False
 
             def _user_is_admin() -> bool:
                 try:
