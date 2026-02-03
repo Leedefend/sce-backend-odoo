@@ -6,6 +6,15 @@ export const config = {
     .split(',')
     .map((flag: string) => flag.trim())
     .filter(Boolean),
-  // 临时硬编码数据库名，用于测试
   odooDb: import.meta.env.VITE_ODOO_DB ?? 'sc_demo',
 };
+
+// C1: 在开发模式下打印环境变量
+if (import.meta.env.DEV) {
+  console.group('[C1] 环境变量配置');
+  console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+  console.log('VITE_ODOO_DB:', import.meta.env.VITE_ODOO_DB);
+  console.log('VITE_APP_ENV:', import.meta.env.VITE_APP_ENV);
+  console.log('最终配置:', config);
+  console.groupEnd();
+}
