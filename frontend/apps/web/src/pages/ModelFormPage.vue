@@ -197,7 +197,7 @@ async function save() {
           view_mode: 'form',
           params_digest: JSON.stringify({ id: created.id }),
         });
-        router.replace(`/m/${model.value}/${created.id}?view_mode=form`);
+        router.replace(`/r/${model.value}/${created.id}?view_mode=form`);
       }
     }
   } catch (err) {

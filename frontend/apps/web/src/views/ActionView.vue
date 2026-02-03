@@ -1,42 +1,41 @@
 <template>
-  <main class="page">
+  <section class="page">
     <header class="header">
       <div>
-        <h1>{{ title }}</h1>
-        <p class="meta">Model: {{ model }}</p>
+        <h2>{{ title }}</h2>
+        <p class="meta">Model: {{ model || 'N/A' }}</p>
       </div>
       <button @click="reload">Reload</button>
     </header>
 
-    <StatusPanel v-if="loading" title="Loading list..." variant="info" />
-    <StatusPanel
-      v-else-if="error"
-      title="Request failed"
-      :message="error"
-      :trace-id="traceId"
-      variant="error"
-      :on-retry="reload"
-    />
-
-    <section v-else-if="records.length" class="table">
-      <table>
-        <thead>
-          <tr>
-            <th v-for="col in columns" :key="col">{{ col }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="openRecord(row.id)">
-            <td v-for="col in columns" :key="col">
-              {{ formatValue(row[col]) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <section class="summary">
+      <div>
+        <p class="label">Action ID</p>
+        <p class="value">{{ actionId || 'N/A' }}</p>
+      </div>
+      <div>
+        <p class="label">View Mode</p>
+        <p class="value">{{ viewMode }}</p>
+      </div>
+      <div>
+        <p class="label">Menu ID</p>
+        <p class="value">{{ menuId || 'N/A' }}</p>
+      </div>
     </section>
 
-    <p v-else class="empty">No data loaded.</p>
-  </main>
+    <ListPage
+      :title="listTitle"
+      :model="model"
+      :status="status"
+      :loading="status === 'loading'"
+      :error-message="error"
+      :trace-id="traceId"
+      :columns="columns"
+      :records="records"
+      :on-reload="reload"
+      :on-row-click="handleRowClick"
+    />
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -47,15 +46,16 @@ import { ApiError } from '../api/client';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { useSessionStore } from '../stores/session';
-import StatusPanel from '../components/StatusPanel.vue';
+import ListPage from '../pages/ListPage.vue';
+import { deriveListStatus } from '../app/view_state';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 
+const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const error = ref('');
 const traceId = ref('');
-const loading = ref(false);
 const records = ref<Array<Record<string, unknown>>>([]);
 const columns = ref<string[]>([]);
 
@@ -65,6 +65,8 @@ const actionMeta = computed(() => session.currentAction);
 const model = computed(() => actionMeta.value?.model ?? '');
 const title = computed(() => actionMeta.value?.action_id ? `Action ${actionMeta.value?.action_id}` : 'Action');
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
+const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
+const listTitle = computed(() => actionMeta.value?.name || title.value);
 
 function mergeContext(base: Record<string, unknown> | string | undefined) {
   if (!base || typeof base === 'string') {
@@ -92,16 +94,6 @@ function pickColumns(rows: Array<Record<string, unknown>>) {
   return keys.slice(0, 6);
 }
 
-function formatValue(value: unknown) {
-  if (Array.isArray(value)) {
-    return value.join(', ');
-  }
-  if (value && typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-  return value ?? '';
-}
-
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
   const columns = contract?.ui_contract?.columns;
   if (Array.isArray(columns) && columns.length) {
@@ -119,15 +111,15 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
 }
 
 async function load() {
+  status.value = 'loading';
   error.value = '';
   traceId.value = '';
   records.value = [];
   columns.value = [];
-  loading.value = true;
 
   if (!model.value) {
     error.value = 'Action has no model';
-    loading.value = false;
+    status.value = deriveListStatus({ error: error.value, recordsLength: 0 });
     return;
   }
 
@@ -144,6 +136,7 @@ async function load() {
     });
     records.value = result.records ?? [];
     columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
+    status.value = deriveListStatus({ error: '', recordsLength: records.value.length });
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
@@ -151,12 +144,12 @@ async function load() {
     } else {
       error.value = err instanceof Error ? err.message : 'failed to load list';
     }
-  } finally {
-    loading.value = false;
+    status.value = deriveListStatus({ error: error.value, recordsLength: 0 });
   }
 }
 
-function openRecord(id: unknown) {
+function handleRowClick(row: Record<string, unknown>) {
+  const id = row.id;
   if (!model.value) {
     return;
   }
@@ -176,18 +169,14 @@ onMounted(load);
 
 <style scoped>
 .page {
-  min-height: 100vh;
-  padding: 32px;
-  background: #f8fafc;
-  font-family: "IBM Plex Sans", system-ui, sans-serif;
-  color: #0f172a;
+  display: grid;
+  gap: 16px;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
 }
 
 .meta {
@@ -195,29 +184,27 @@ onMounted(load);
   font-size: 14px;
 }
 
-.table {
-  overflow: auto;
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  padding: 16px;
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+.summary .label {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-th,
-td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  font-size: 14px;
-}
-
-tr:hover {
-  background: #f1f5f9;
-  cursor: pointer;
+.summary .value {
+  margin: 4px 0 0;
+  font-weight: 600;
 }
 
 button {
@@ -227,14 +214,5 @@ button {
   background: #111827;
   color: white;
   cursor: pointer;
-}
-
-.error {
-  margin-top: 16px;
-  color: #dc2626;
-}
-
-.empty {
-  color: #64748b;
 }
 </style>

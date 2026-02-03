@@ -38,7 +38,7 @@ export function openAction(router: Router, action: NavMeta, menuId?: number) {
     params_digest: digestParams({ domain: normalizeDomain(action.domain), context: normalizeContext(action.context) }),
   });
 
-  router.push({ path: `/m/${model}`, query });
+  router.push({ path: `/a/${action.action_id}`, query });
 }
 
 export function openForm(router: Router, model: string, id: number, action?: NavMeta, menuId?: number) {
@@ -61,5 +61,5 @@ export function openForm(router: Router, model: string, id: number, action?: Nav
     params_digest: digestParams({ id }),
   });
 
-  router.push({ path: `/m/${model}/${id}`, query });
+  router.push({ path: `/r/${model}/${id}`, query });
 }

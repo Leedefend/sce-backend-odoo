@@ -2,16 +2,19 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import HomeView from '../views/HomeView.vue';
 import LoginView from '../views/LoginView.vue';
-import ModelListPage from '../pages/ModelListPage.vue';
-import ModelFormPage from '../pages/ModelFormPage.vue';
+import MenuView from '../views/MenuView.vue';
+import ActionView from '../views/ActionView.vue';
+import RecordView from '../views/RecordView.vue';
+import { ApiError } from '../api/client';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: LoginView },
-    { path: '/', name: 'home', component: HomeView },
-    { path: '/m/:model', name: 'model-list', component: ModelListPage, props: true },
-    { path: '/m/:model/:id', name: 'model-form', component: ModelFormPage, props: true },
+    { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
+    { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
+    { path: '/a/:actionId', name: 'action', component: ActionView, meta: { layout: 'shell' } },
+    { path: '/r/:model/:id', name: 'record', component: RecordView, meta: { layout: 'shell' } },
   ],
 });
 
@@ -23,8 +26,11 @@ router.beforeEach(async (to) => {
   if (to.name !== 'login' && session.token && !session.isReady) {
     try {
       await session.ensureReady();
-    } catch {
-      return { name: 'login', query: { redirect: to.fullPath } };
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        return { name: 'login', query: { redirect: to.fullPath } };
+      }
+      return true;
     }
   }
   return true;
