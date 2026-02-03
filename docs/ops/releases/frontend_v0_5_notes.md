@@ -8,16 +8,20 @@
 - view_mode: kanban,tree,form
 
 ## Verification (System-bound)
+### Verification Plane
+Official release gate is **container plane** only:
+- Required: `verify.portal.view_state`, `verify.portal.fe_smoke.container`, `verify.portal.v0_5.container`
+- Host plane (`*.host`) is **optional debug** and may fail if `8070` is not reachable on host.
+
 - [x] `MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project DB_NAME=sc_demo ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** node scripts/verify/fe_mvp_list_smoke.js` (PASS)
 - [x] `make bsi.create DB_NAME=sc_demo SERVICE_LOGIN=svc_project_ro SERVICE_PASSWORD=*** GROUP_XMLIDS=smart_construction_core.group_project_ro`
 - [x] `make bsi.verify DB_NAME=sc_demo SERVICE_LOGIN=svc_project_ro MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root`
-- [x] `make verify.portal.v0_5 DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
 - [x] `make verify.portal.v0_5.container DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
 - [x] `make verify.portal.view_state` (PASS)
 - [x] `make verify.portal.fe_smoke.container DB_NAME=sc_demo E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
 - [x] `make verify.portal.v0_5.container DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T061415` (PASS)
-- [ ] `make verify.portal.fe_smoke BASE_URL=http://localhost:8069 DB_NAME=sc_demo` (FAIL: status=000, AUTH_REQUIRED, curl connect)
-- [ ] `make verify.portal.v0_5 DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T055140` (FAIL: connect EPERM 127.0.0.1:8070)
+- [ ] `make verify.portal.fe_smoke.host BASE_URL=http://localhost:8069 DB_NAME=sc_demo` (FAIL: status=000, AUTH_REQUIRED, curl connect)
+- [ ] `make verify.portal.v0_5.host DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T055140` (FAIL: connect EPERM 127.0.0.1:8070)
 
 ### Verification Output (2026-02-03)
 `make verify.portal.view_state`
@@ -30,7 +34,7 @@ PASS: Record empty
 PASS: Record error
 ```
 
-`make verify.portal.fe_smoke BASE_URL=http://localhost:8069 DB_NAME=sc_demo`
+`make verify.portal.fe_smoke.host BASE_URL=http://localhost:8069 DB_NAME=sc_demo`
 ```text
 [14:05:59] fe_smoke: base=http://localhost:8069 db=sc_demo
 [14:05:59] FAIL: status=000
@@ -39,7 +43,7 @@ response:
 make: *** [Makefile:430: verify.portal.fe_smoke] Error 1
 ```
 
-`make verify.portal.v0_5 DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T055140`
+`make verify.portal.v0_5.host DB_NAME=sc_demo MVP_MENU_XMLID=smart_construction_core.menu_sc_project_project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_5/20260203T055140`
 ```text
 [fe_mvp_list_smoke] login: svc_project_ro db=sc_demo
 FAIL: connect EPERM 127.0.0.1:8070 - Local (undefined:undefined)
@@ -73,9 +77,6 @@ trace_id=4be26575a0fa
 - list_empty_reason:
 
 ## Artifacts
-- fe_mvp_list.log: artifacts/codex/portal-shell-v0_5/20260203T055140/fe_mvp_list.log
-- fe_mvp_record.log: artifacts/codex/portal-shell-v0_5/20260203T055140/fe_mvp_record.log
-- summary.md: artifacts/codex/portal-shell-v0_5/20260203T055140/summary.md
 - fe_mvp_list.log: artifacts/codex/portal-shell-v0_5/20260203T061415/fe_mvp_list.log
 - fe_mvp_record.log: artifacts/codex/portal-shell-v0_5/20260203T061415/fe_mvp_record.log
 - summary.md: artifacts/codex/portal-shell-v0_5/20260203T061415/summary.md

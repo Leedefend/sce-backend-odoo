@@ -206,10 +206,10 @@ Codex **只能** 在以下分支类型中执行自治操作：
 **轻量验证**
 
 * `make smoke.*`
-* `make verify.portal.fe_smoke`
+* `make verify.portal.fe_smoke.host`（host 调试用，非 gate）
 * `make verify.portal.fe_smoke.container`
 * `make verify.portal.view_state`
-* `make verify.portal.v0_5`
+* `make verify.portal.v0_5.host`（host 调试用，非 gate）
 * `make verify.portal.v0_5.all`
 * `make verify.portal.v0_5.container`
 * `scripts/verify/*_smoke.sh`
