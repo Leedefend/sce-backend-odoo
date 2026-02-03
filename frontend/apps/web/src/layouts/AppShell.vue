@@ -30,10 +30,23 @@
     <section class="content">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Portal Shell v0.2</p>
+          <p class="eyebrow">Portal Shell v0.7 · UX Hardening</p>
+          <div class="breadcrumb">
+            <button
+              v-for="(item, index) in breadcrumb"
+              :key="`${item.label}-${index}`"
+              class="crumb"
+              :class="{ active: index === breadcrumb.length - 1 }"
+              @click="item.to && router.push(item.to)"
+              :disabled="!item.to"
+            >
+              {{ item.label }}
+            </button>
+          </div>
           <h1 class="headline">{{ currentTitle }}</h1>
         </div>
         <div class="meta">
+          <span>User: {{ userName }}</span>
           <span>DB: {{ effectiveDb }}</span>
           <span>Nav v{{ navVersion }}</span>
         </div>
@@ -108,6 +121,55 @@ const currentTitle = computed(() => {
     return 'Record';
   }
   return 'Workspace';
+});
+
+function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {
+  if (!menuId) {
+    return [];
+  }
+  const walk = (items: NavNode[], parents: NavNode[] = []): NavNode[] | null => {
+    for (const node of items) {
+      const nextParents = [...parents, node];
+      if (node.menu_id === menuId || node.id === menuId) {
+        return nextParents;
+      }
+      if (node.children?.length) {
+        const found = walk(node.children, nextParents);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+  return walk(menuTree.value, []) || [];
+}
+
+const breadcrumb = computed(() => {
+  const crumbs: Array<{ label: string; to?: string }> = [];
+  const menuId = activeMenuId.value;
+  const menuPath = findMenuPath(menuTree.value, menuId);
+  if (menuPath.length) {
+    menuPath.forEach((node) => {
+      const label = node.title || node.name || node.label || 'Menu';
+      const id = node.menu_id ?? node.id;
+      if (id) {
+        crumbs.push({ label, to: `/m/${id}` });
+      }
+    });
+  }
+  if (route.name === 'action') {
+    const label = session.currentAction?.name || `Action ${route.params.actionId ?? ''}`.trim();
+    crumbs.push({ label });
+  }
+  if (route.name === 'record') {
+    const recordLabel = `Record ${route.params.id ?? ''}`.trim();
+    crumbs.push({ label: recordLabel });
+  }
+  if (!crumbs.length) {
+    crumbs.push({ label: 'Workspace' });
+  }
+  return crumbs;
 });
 
 const showRefresh = computed(() => import.meta.env.DEV || localStorage.getItem('DEBUG_INTENT') === '1');
@@ -274,6 +336,36 @@ async function logout() {
 .headline {
   margin: 4px 0 0;
   font-size: 24px;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.crumb {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.crumb.active {
+  background: rgba(47, 58, 95, 0.12);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.crumb:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 .meta {

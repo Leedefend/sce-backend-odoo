@@ -315,6 +315,7 @@ onMounted(load);
 
 .card.editing {
   border: 1px dashed #94a3b8;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
 }
 
 .field {
@@ -353,7 +354,6 @@ onMounted(load);
   border: 1px solid #a5f3fc;
   color: #155e75;
 }
-
 button {
   padding: 10px 14px;
   border: none;

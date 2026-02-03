@@ -90,7 +90,6 @@ const statusLabel = computed(() => {
 const subtitle = computed(() => {
   return `${props.records.length} records · ${props.columns.length} columns`;
 });
-
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
     return value.join(', ');

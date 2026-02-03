@@ -46,6 +46,7 @@ import ListPage from '../pages/ListPage.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
+import type { NavNode } from '@sc/schema';
 
 const route = useRoute();
 const router = useRouter();
