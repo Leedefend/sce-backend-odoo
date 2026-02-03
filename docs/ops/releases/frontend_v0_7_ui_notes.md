@@ -31,11 +31,11 @@ make verify.portal.ui.v0_7.container \
 - [x] `make verify.portal.fe_smoke.container DB_NAME=sc_demo E2E_LOGIN=svc_project_ro E2E_PASSWORD=***` (PASS)
 - [x] `make verify.portal.v0_6.container DB_NAME=sc_demo MVP_MODEL=project.project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_6/20260203T081729` (PASS)
 - [x] `make verify.portal.recordview_hud_smoke.container DB_NAME=sc_demo MVP_MODEL=project.project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_7-ui/20260203T081747` (PASS)
-  - Note: `make verify.portal.ui.v0_7.container` timed out in terminal after v0.6 write smoke; all constituent steps passed.
+- [x] `make verify.portal.ui.v0_7.container DB_NAME=sc_demo MVP_MODEL=project.project ROOT_XMLID=smart_construction_core.menu_sc_root E2E_LOGIN=svc_project_ro E2E_PASSWORD=*** ARTIFACTS_DIR=artifacts/codex/portal-shell-v0_7-ui/20260203T081924` (PASS)
 
 ## Evidence (Artifacts)
-- v0.6 write regression: artifacts/codex/portal-shell-v0_6/20260203T081729/
-- HUD smoke: artifacts/codex/portal-shell-v0_7-ui/20260203T081747/
+- v0.6 write regression: artifacts/codex/portal-shell-v0_6/20260203T081920/
+- HUD smoke: artifacts/codex/portal-shell-v0_7-ui/20260203T081924/
 
 ## Manual UX Verification (Phase 7)
 - [ ] Loading state visible
