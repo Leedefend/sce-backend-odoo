@@ -15,9 +15,10 @@
     <StatusPanel
       v-else-if="error"
       title="Request failed"
-      :message="error"
-      :trace-id="traceId"
-      :error-code="errorCode"
+      :message="error?.message"
+      :trace-id="error?.traceId"
+      :error-code="error?.code"
+      :hint="error?.hint"
       variant="error"
       :on-retry="reload"
     />
@@ -52,7 +53,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ApiError } from '../api/client';
 import { listRecords } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { openForm } from '../services/action_service';
@@ -60,14 +60,13 @@ import { recordTrace, createTraceId } from '../services/trace';
 import { useSessionStore } from '../stores/session';
 import StatusPanel from '../components/StatusPanel.vue';
 import FieldValue from '../components/FieldValue.vue';
+import { useStatus } from '../composables/useStatus';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 
-const error = ref('');
-const errorCode = ref<number | null>(null);
-const traceId = ref('');
+const { error, clearError, setError } = useStatus();
 const loading = ref(false);
 const records = ref<Array<Record<string, unknown>>>([]);
 const columns = ref<string[]>([]);
@@ -92,13 +91,11 @@ function pickColumns(rows: Array<Record<string, unknown>>) {
 }
 
 async function load() {
-  error.value = '';
-  errorCode.value = null;
-  traceId.value = '';
+  clearError();
   loading.value = true;
 
   if (!model.value) {
-    error.value = 'Missing model';
+    setError(new Error('Missing model'), 'Missing model');
     loading.value = false;
     return;
   }
@@ -134,13 +131,7 @@ async function load() {
       params_digest: JSON.stringify({ offset: offset.value, order: order.value }),
     });
   } catch (err) {
-    if (err instanceof ApiError) {
-      traceId.value = err.traceId ?? '';
-      errorCode.value = err.status ?? null;
-      error.value = err.message;
-    } else {
-      error.value = err instanceof Error ? err.message : 'failed to load list';
-    }
+    setError(err, 'failed to load list');
   } finally {
     loading.value = false;
   }
