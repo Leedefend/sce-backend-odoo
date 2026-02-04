@@ -32,6 +32,8 @@
       title="Request failed"
       :message="errorMessage"
       :trace-id="traceId"
+      :error-code="errorCode"
+      :hint="errorHint"
       variant="error"
       :on-retry="onReload"
     />
@@ -73,6 +75,8 @@ const props = defineProps<{
   loading: boolean;
   errorMessage?: string;
   traceId?: string;
+  errorCode?: number | null;
+  errorHint?: string;
   columns: string[];
   records: Array<Record<string, unknown>>;
   onReload: () => void;

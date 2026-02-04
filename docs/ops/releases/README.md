@@ -18,7 +18,15 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 
 ## Release List (Newest First)
 
-1) 2026-01-20 — Infra Stage Exec v0.3 (SOP squash rebuild)
+1) 2026-02-04 — Portal Shell UI v0.7.1
+   - Tag: `portal-shell-ui-v0.7.1` (planned)
+   - Type: frontend
+   - Status: draft
+   - Docs: `docs/ops/releases/frontend_v0_7_1_ui_notes.md`
+   - Verify: `make verify.portal.ui.v0_7.container`, `make verify.portal.guard_groups`, `make verify.portal.recordview_hud_smoke.container`
+   - GitHub Release: (not published)
+
+2) 2026-01-20 — Infra Stage Exec v0.3 (SOP squash rebuild)
    - Tag: `infra-stage-exec-v0.3-squash1` (canonical)
    - Type: infra
    - Status: released
@@ -26,7 +34,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make stage.run STAGE=p2 DB=sc_p2`, `make stage.run STAGE=p3-runtime-r1 DB=sc_p3`
    - GitHub Release: (not published)
 
-2) 2026-01-20 — Infra Stage Exec v0.3
+3) 2026-01-20 — Infra Stage Exec v0.3
    - Tag: `infra-stage-exec-v0.3` (legacy, non-SOP; do not use)
    - Type: infra
    - Status: released
@@ -34,7 +42,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make stage.run STAGE=p2 DB=sc_p2`, `make stage.run STAGE=p3-runtime-r1 DB=sc_p3`
    - GitHub Release: (not published)
 
-3) 2026-01-20 — Infra Stage Exec v0.2
+4) 2026-01-20 — Infra Stage Exec v0.2
    - Tag: `infra-stage-exec-v0.2`
    - Type: infra
    - Status: released
@@ -42,7 +50,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make stage.run STAGE=p2 DB=sc_p2`, `make stage.run STAGE=p3-runtime-r1 DB=sc_p3`
    - GitHub Release: (not published)
 
-4) 2026-01-20 — Infra Stage Exec v0.1
+5) 2026-01-20 — Infra Stage Exec v0.1
    - Tag: `infra-stage-exec-v0.1`
    - Type: infra
    - Status: released
@@ -50,7 +58,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make stage.run STAGE=p2 DB=sc_p2`, `make stage.run STAGE=p3-runtime-r1 DB=sc_p3`
    - GitHub Release: (not published)
 
-5) 2026-01-20 — Infra Codex Policy v0.1
+6) 2026-01-20 — Infra Codex Policy v0.1
    - Tag: `infra-codex-policy-v0.1`
    - Type: infra
    - Status: merged
@@ -58,7 +66,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make codex.preflight`, `make ci.gate.tp08 DB=sc_demo`
    - GitHub Release: (not published)
 
-6) 2026-01-20 — P3 Runtime R1 v0.1
+7) 2026-01-20 — P3 Runtime R1 v0.1
    - Tag: `p3-runtime-r1-v0.1`
    - Type: runtime
    - Status: active
@@ -66,7 +74,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make ci.gate.tp08 DB=sc_demo`, `make p3.smoke DB=sc_p3`, `make p3.audit DB=sc_p3`
    - GitHub Release: (not published)
 
-7) 2026-01-20 — P2 Runtime v0.1
+8) 2026-01-20 — P2 Runtime v0.1
    - Tag: `p2-runtime-v0.1`
    - Type: runtime
    - Status: active
@@ -74,7 +82,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make p2.smoke DB=sc_p2`
    - GitHub Release: (not published)
 
-8) 2026-01-19 — Gate P2 v0.1
+9) 2026-01-19 — Gate P2 v0.1
    - Tag: `p2-gate-v0.1`
    - Type: gate
    - Status: active
@@ -82,7 +90,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make ci.gate.tp08 DB=sc_demo`, `make p2.smoke DB=sc_p2`
    - GitHub Release: https://github.com/Leedefend/sce-backend-odoo/releases/tag/p2-gate-v0.1
 
-9) 2026-01-19 — P1 Initiation v0.1
+10) 2026-01-19 — P1 Initiation v0.1
    - Tag: `p1-initiation-v0.1`
    - Type: phase
    - Status: active
@@ -90,7 +98,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Verify: `make ci.gate.tp08 DB=sc_demo`
    - GitHub Release: (not published)
 
-10) 2026-01-18 — v0.3.0-stable
+11) 2026-01-18 — v0.3.0-stable
    - Tag: `v0.3.0-stable`
    - Type: runtime
    - Status: stable

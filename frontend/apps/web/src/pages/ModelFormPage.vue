@@ -26,6 +26,7 @@
       title="Request failed"
       :message="error"
       :trace-id="traceId"
+      :error-code="errorCode"
       variant="error"
       :on-retry="reload"
     />
@@ -70,6 +71,7 @@ const route = useRoute();
 const router = useRouter();
 
 const error = ref('');
+const errorCode = ref<number | null>(null);
 const traceId = ref('');
 const loading = ref(false);
 const saving = ref(false);
@@ -115,6 +117,7 @@ function fieldInputType(field: (typeof fields.value)[number]) {
 
 async function load() {
   error.value = '';
+  errorCode.value = null;
   traceId.value = '';
   loading.value = true;
 
@@ -159,6 +162,7 @@ async function load() {
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
+      errorCode.value = err.status ?? null;
       error.value = err.message;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to load record';
@@ -203,6 +207,7 @@ async function save() {
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
+      errorCode.value = err.status ?? null;
       error.value = err.message;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to save';

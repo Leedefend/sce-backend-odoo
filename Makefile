@@ -185,7 +185,7 @@ endef
 # ======================================================
 # ==================== Guards ==========================
 # ======================================================
-.PHONY: check-compose-project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config
+.PHONY: check-compose-project check.compose.project check-compose-env check-external-addons check-odoo-conf diag.project gate.compose.config
 
 IS_PROD := 0
 ifneq (,$(filter prod,$(ENV)))
@@ -252,7 +252,7 @@ gate.contract.bootstrap:
 gate.contract.bootstrap-pass:
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh --bootstrap --bootstrap-pass
 
-check-compose-project:
+check.compose.project:
 	@if [ -z "$${COMPOSE_PROJECT_NAME:-}" ]; then \
 	  echo "[FATAL] COMPOSE_PROJECT_NAME is required. Set it or create .env"; \
 	  exit 2; \
@@ -268,6 +268,8 @@ check-compose-project:
 	    fi; \
 	  fi; \
 	done
+
+check-compose-project: check.compose.project
 
 check-compose-env:
 	@bash scripts/common/check_env.sh
@@ -645,18 +647,19 @@ codex.snapshot: guard.prod.forbid check-compose-project check-compose-env
 
 .PHONY: codex.pr codex.cleanup codex.sync-main
 
-codex.pr: guard.prod.forbid check-compose-project check-compose-env
+codex.pr: guard.prod.forbid
 	@$(MAKE) codex.pr.body
+	@$(MAKE) pr.push
 	@$(MAKE) pr.create
 
-codex.cleanup: guard.prod.forbid check-compose-project check-compose-env
+codex.cleanup: guard.prod.forbid
 	@$(MAKE) branch.cleanup
 
-codex.sync-main: guard.prod.forbid check-compose-project check-compose-env
+codex.sync-main: guard.prod.forbid
 	@$(MAKE) main.sync
 
 .PHONY: codex.run
-codex.run: guard.prod.forbid check-compose-project check-compose-env
+codex.run: guard.prod.forbid
 	@if [ -z "$(FLOW)" ]; then \
 	  echo "❌ FLOW is required (fast|snapshot|gate|pr|merge|cleanup|rollback|release|main)"; exit 2; \
 	fi
@@ -674,7 +677,7 @@ codex.run: guard.prod.forbid check-compose-project check-compose-env
 	esac
 
 # ------------------ PR (Codex-safe) ------------------
-.PHONY: pr.create pr.status
+.PHONY: pr.create pr.status pr.push
 
 PR_BASE ?= main
 PR_TITLE ?=
@@ -682,8 +685,8 @@ PR_BODY_FILE ?= artifacts/pr_body.md
 
 pr.create: guard.prod.forbid
 	@branch="$$(git rev-parse --abbrev-ref HEAD)"; \
-	if ! echo "$$branch" | grep -qE '^codex/'; then \
-	  echo "❌ pr.create only allowed on codex/* branches (current=$$branch)"; exit 2; \
+	if ! echo "$$branch" | grep -qE '^(codex|feat|feature|experiment)/'; then \
+	  echo "❌ pr.create only allowed on codex/*, feat/*, feature/*, experiment/* (current=$$branch)"; exit 2; \
 	fi; \
 	if [ -z "$(PR_TITLE)" ]; then \
 	  echo "❌ PR_TITLE is required"; exit 2; \
@@ -693,6 +696,9 @@ pr.create: guard.prod.forbid
 	fi; \
 	echo "[pr.create] base=$(PR_BASE) head=$$branch title=$(PR_TITLE) body=$(PR_BODY_FILE)"; \
 	gh pr create --base "$(PR_BASE)" --head "$$branch" --title "$(PR_TITLE)" --body-file "$(PR_BODY_FILE)"
+
+pr.push: guard.prod.forbid
+	@bash scripts/ops/git_safe_push.sh
 
 pr.status:
 	@gh pr status || true

@@ -212,7 +212,7 @@ function handleSelect(node: NavNode) {
     node.menu_id = node.id as number;
   }
   if (node.menu_id) {
-    router.push(`/m/${node.menu_id}`);
+    router.push(`/m/${node.menu_id}`).catch(() => {});
   }
 }
 
