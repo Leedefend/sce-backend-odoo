@@ -120,10 +120,16 @@
           <div class="chatter-block">
             <h4>Attachments</h4>
             <p v-if="!chatterAttachments.length" class="meta">No attachments yet.</p>
+            <div class="chatter-upload">
+              <input type="file" @change="onAttachmentSelected" />
+              <span v-if="chatterUploading" class="meta">Uploading…</span>
+              <span v-if="chatterUploadError" class="meta">{{ chatterUploadError }}</span>
+            </div>
             <ul v-else class="chatter-list">
               <li v-for="att in chatterAttachments" :key="String(att.id)" class="chatter-item">
                 <div class="chatter-title">{{ att.name || 'Attachment' }}</div>
                 <div class="chatter-meta">{{ att.mimetype || 'unknown' }} · {{ att.file_size || '-' }}</div>
+                <button class="ghost" type="button" @click="downloadAttachment(att)">Download</button>
               </li>
             </ul>
           </div>
@@ -145,6 +151,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { listRecords, readRecordRaw, writeRecordV6Raw } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import { postChatterMessage } from '../api/chatter';
+import { downloadFile, fileToBase64, uploadFile } from '../api/files';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import { deriveRecordStatus } from '../app/view_state';
 import type { ViewButton, ViewContract } from '@sc/schema';
@@ -172,6 +179,8 @@ const chatterAttachments = ref<Array<Record<string, unknown>>>([]);
 const chatterError = ref('');
 const chatterDraft = ref('');
 const chatterPosting = ref(false);
+const chatterUploading = ref(false);
+const chatterUploadError = ref('');
 const draftName = ref('');
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -290,6 +299,7 @@ async function load() {
   chatterMessages.value = [];
   chatterAttachments.value = [];
   chatterError.value = '';
+  chatterUploadError.value = '';
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
   status.value = 'loading';
   lastIntent.value = 'api.data.read';
@@ -408,6 +418,53 @@ async function sendChatter() {
     chatterError.value = err instanceof Error ? err.message : 'Failed to post chatter message';
   } finally {
     chatterPosting.value = false;
+  }
+}
+
+async function onAttachmentSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file || !model.value || !recordId.value) {
+    return;
+  }
+  chatterUploading.value = true;
+  chatterUploadError.value = '';
+  try {
+    const { data, mimetype } = await fileToBase64(file);
+    await uploadFile({
+      model: model.value,
+      res_id: recordId.value,
+      name: file.name,
+      mimetype,
+      data,
+    });
+    await loadChatter();
+  } catch (err) {
+    chatterUploadError.value = err instanceof Error ? err.message : 'Failed to upload file';
+  } finally {
+    chatterUploading.value = false;
+    input.value = '';
+  }
+}
+
+async function downloadAttachment(att: { id?: number; name?: string; mimetype?: string }) {
+  if (!att?.id) return;
+  try {
+    const payload = await downloadFile({ id: Number(att.id) });
+    const binary = atob(payload.datas || '');
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: payload.mimetype || att.mimetype || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = payload.name || att.name || 'download';
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    chatterUploadError.value = err instanceof Error ? err.message : 'Failed to download file';
   }
 }
 
@@ -804,6 +861,11 @@ onMounted(load);
   border: 1px solid rgba(148, 163, 184, 0.4);
   padding: 10px;
   font-size: 13px;
+}
+.chatter-upload {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 button {
   padding: 10px 14px;

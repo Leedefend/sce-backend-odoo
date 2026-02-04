@@ -171,6 +171,34 @@ export interface ExecuteButtonResponse {
   effect?: ButtonEffect;
 }
 
+export interface FileUploadRequest {
+  model: string;
+  res_id: number;
+  name: string;
+  mimetype: string;
+  data: string;
+}
+
+export interface FileUploadResponse {
+  id: number;
+  name: string;
+  model: string;
+  res_id: number;
+}
+
+export interface FileDownloadRequest {
+  id: number;
+}
+
+export interface FileDownloadResponse {
+  id: number;
+  name: string;
+  mimetype: string;
+  datas: string;
+  res_model: string;
+  res_id: number;
+}
+
 export interface LoadViewRequest {
   model: string;
   view_type: string;
