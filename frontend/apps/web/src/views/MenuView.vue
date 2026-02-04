@@ -22,6 +22,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import StatusPanel from '../components/StatusPanel.vue';
+import { ErrorCodes } from '../app/error_codes';
+import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
 
 const route = useRoute();
 const router = useRouter();
@@ -41,13 +43,29 @@ async function resolve() {
     }
     const result = resolveMenuAction(session.menuTree, menuId);
     if (result.kind === 'leaf') {
+      const required = getRequiredCapabilities(result.node?.meta);
+      const capCheck = checkCapabilities(required, session.capabilities);
+      if (!capCheck.ok) {
+        await router.replace({
+          name: 'workbench',
+          query: {
+            menu_id: menuId,
+            action_id: result.meta.action_id,
+            reason: ErrorCodes.CAPABILITY_MISSING,
+          },
+        });
+        return;
+      }
       session.setActionMeta(result.meta);
       await router.replace(`/a/${result.meta.action_id}?menu_id=${menuId}`);
       return;
     }
-    if (result.kind === 'group') {
-      const label = result.node.title || result.node.name || result.node.label || 'This menu';
-      info.value = `${label} is a group. Select a submenu to continue.`;
+    if (result.kind === 'group' || result.reason === 'menu has no action') {
+      const label = result.node?.title || result.node?.name || result.node?.label || 'This menu';
+      await router.replace({
+        name: 'workbench',
+        query: { menu_id: menuId, reason: ErrorCodes.NAV_MENU_NO_ACTION, label },
+      });
       return;
     }
     error.value = result.reason || 'resolve menu failed';

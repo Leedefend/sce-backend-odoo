@@ -30,10 +30,10 @@
     <StatusPanel
       v-else-if="status === 'error'"
       title="Request failed"
-      :message="errorMessage"
-      :trace-id="traceId"
-      :error-code="errorCode"
-      :hint="errorHint"
+      :message="error?.message || errorMessage"
+      :trace-id="error?.traceId || traceId"
+      :error-code="error?.code || errorCode"
+      :hint="error?.hint || errorHint"
       variant="error"
       :on-retry="onReload"
     />
@@ -67,6 +67,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import type { StatusError } from '../composables/useStatus';
 
 const props = defineProps<{
   title: string;
@@ -77,6 +78,7 @@ const props = defineProps<{
   traceId?: string;
   errorCode?: number | null;
   errorHint?: string;
+  error?: StatusError | null;
   columns: string[];
   records: Array<Record<string, unknown>>;
   onReload: () => void;

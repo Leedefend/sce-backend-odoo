@@ -6,12 +6,18 @@
         :class="{
           active: activeMenuId === (node.menu_id ?? node.id),
           ancestor: activeParents.has(nodeKey(node)),
+          disabled: isBlocked(node),
         }"
       >
         <button v-if="node.children?.length" class="toggle" @click="toggle(nodeKey(node))">
           {{ expanded.has(nodeKey(node)) ? '▾' : '▸' }}
         </button>
-        <button class="label" @click="onSelect(node)">
+        <button
+          class="label"
+          :disabled="isBlocked(node)"
+          :title="blockedTitle(node)"
+          @click="onSelect(node)"
+        >
           {{ node.title || node.name || node.label || 'Unnamed' }}
           <span v-if="node.children?.length" class="child-count">({{ node.children.length }})</span>
         </button>
@@ -31,8 +37,9 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watchEffect } from 'vue';
 import type { NavNode } from '@sc/schema';
+import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
 
-const props = defineProps<{ nodes: NavNode[]; activeMenuId?: number }>();
+const props = defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[] }>();
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
 
 const expanded = ref<Set<string>>(new Set());
@@ -59,6 +66,9 @@ function nodeKey(node: NavNode) {
 }
 
 function onSelect(node: NavNode) {
+  if (isBlocked(node)) {
+    return;
+  }
   emit('select', node);
 }
 
@@ -86,6 +96,26 @@ watchEffect(() => {
   expanded.value = ensureExpandedForActive(props.nodes, props.activeMenuId);
   activeParents.value = new Set(expanded.value);
 });
+
+function isBlocked(node: NavNode) {
+  const required = getRequiredCapabilities(node.meta);
+  if (!required.length) {
+    return false;
+  }
+  return !checkCapabilities(required, props.capabilities).ok;
+}
+
+function blockedTitle(node: NavNode) {
+  const required = getRequiredCapabilities(node.meta);
+  if (!required.length) {
+    return undefined;
+  }
+  const missing = checkCapabilities(required, props.capabilities).missing;
+  if (!missing.length) {
+    return undefined;
+  }
+  return `Missing capabilities: ${missing.join(', ')}`;
+}
 
 // 调试：打印接收到的节点
 onMounted(() => {
@@ -135,6 +165,15 @@ onMounted(() => {
 
 .node.ancestor .label {
   color: #64748b;
+}
+
+.node.disabled .label {
+  cursor: not-allowed;
+  color: #94a3b8;
+}
+
+.node.disabled .label:hover {
+  background-color: transparent;
 }
 
 .toggle {

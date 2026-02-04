@@ -6,21 +6,31 @@
       <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
       <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
       <p v-if="hint" class="trace">Hint: {{ hint }}</p>
+      <button v-if="traceId" class="trace-copy" @click="copyTrace">Copy trace</button>
     </div>
     <button v-if="onRetry" @click="onRetry">Retry</button>
   </section>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   title: string;
   message?: string;
   traceId?: string;
   errorCode?: number | null;
   hint?: string;
-  variant?: 'error' | 'info';
+  variant?: 'error' | 'info' | 'forbidden_capability';
   onRetry?: () => void;
 }>();
+
+function copyTrace() {
+  if (!props.traceId) {
+    return;
+  }
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(props.traceId).catch(() => {});
+  }
+}
 </script>
 
 <style scoped>
@@ -37,6 +47,11 @@ defineProps<{
 .panel.error {
   border-color: #fecaca;
   background: #fff1f2;
+}
+
+.panel.forbidden_capability {
+  border-color: #fde68a;
+  background: #fffbeb;
 }
 
 .error-meta {
@@ -57,5 +72,15 @@ button {
   background: #111827;
   color: white;
   cursor: pointer;
+}
+
+.trace-copy {
+  justify-self: start;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: transparent;
+  color: #111827;
+  font-size: 12px;
 }
 </style>

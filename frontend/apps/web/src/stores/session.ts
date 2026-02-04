@@ -8,6 +8,11 @@ export interface SessionState {
   user: AppInitResponse['user'] | null;
   menuTree: NavNode[];
   currentAction: NavMeta | null;
+  capabilities: string[];
+  lastTraceId: string;
+  lastIntent: string;
+  lastLatencyMs: number | null;
+  lastWriteMode: string;
   isReady: boolean;
   initStatus: 'idle' | 'loading' | 'ready' | 'error';
   initError: string | null;
@@ -23,6 +28,11 @@ export const useSessionStore = defineStore('session', {
     user: null,
     menuTree: [],
     currentAction: null,
+    capabilities: [],
+    lastTraceId: '',
+    lastIntent: '',
+    lastLatencyMs: null,
+    lastWriteMode: '',
     isReady: false,
     initStatus: 'idle',
     initError: null,
@@ -42,6 +52,11 @@ export const useSessionStore = defineStore('session', {
           this.user = parsed.user ?? null;
           this.menuTree = parsed.menuTree ?? [];
           this.currentAction = parsed.currentAction ?? null;
+          this.capabilities = parsed.capabilities ?? [];
+          this.lastTraceId = parsed.lastTraceId ?? '';
+          this.lastIntent = parsed.lastIntent ?? '';
+          this.lastLatencyMs = parsed.lastLatencyMs ?? null;
+          this.lastWriteMode = parsed.lastWriteMode ?? '';
           this.initMeta = parsed.initMeta ?? null;
         } catch {
           // ignore corrupted cache
@@ -61,6 +76,11 @@ export const useSessionStore = defineStore('session', {
       this.user = null;
       this.menuTree = [];
       this.currentAction = null;
+      this.capabilities = [];
+      this.lastTraceId = '';
+      this.lastIntent = '';
+      this.lastLatencyMs = null;
+      this.lastWriteMode = '';
       this.isReady = false;
       localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem('sc_auth_token');
@@ -74,9 +94,23 @@ export const useSessionStore = defineStore('session', {
         user: this.user,
         menuTree: this.menuTree,
         currentAction: this.currentAction,
+        capabilities: this.capabilities,
+        lastTraceId: this.lastTraceId,
+        lastIntent: this.lastIntent,
+        lastLatencyMs: this.lastLatencyMs,
+        lastWriteMode: this.lastWriteMode,
         initMeta: this.initMeta,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    },
+    recordIntentTrace(params: { traceId?: string; intent: string; latencyMs?: number | null; writeMode?: string }) {
+      if (params.traceId) {
+        this.lastTraceId = params.traceId;
+      }
+      this.lastIntent = params.intent;
+      this.lastLatencyMs = params.latencyMs ?? null;
+      this.lastWriteMode = params.writeMode ?? '';
+      this.persist();
     },
     async login(username: string, password: string) {
       const result = await intentRequest<LoginResponse>({
@@ -175,6 +209,7 @@ export const useSessionStore = defineStore('session', {
         console.info('[debug] app.init result', result);
       }
       this.user = result.user;
+      this.capabilities = ((result as AppInitResponse & { capabilities?: string[] }).capabilities ?? []).filter(Boolean);
       this.initMeta = {
         ...(result.meta ?? {}),
         nav_meta: (result as AppInitResponse & { nav_meta?: unknown }).nav_meta ?? null,

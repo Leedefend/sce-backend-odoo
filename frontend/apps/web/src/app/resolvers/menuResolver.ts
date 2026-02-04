@@ -1,5 +1,5 @@
 import type { NavMeta, NavNode } from '@sc/schema';
-import { findMenuNode } from '../menu';
+import { resolveMenuActionCore } from './menuResolverCore';
 
 export type MenuResolveResult =
   | { kind: 'leaf'; meta: NavMeta; node: NavNode }
@@ -7,15 +7,5 @@ export type MenuResolveResult =
   | { kind: 'broken'; node: NavNode | null; reason: string };
 
 export function resolveMenuAction(menuTree: NavNode[], menuId: number): MenuResolveResult {
-  const node = findMenuNode(menuTree, menuId);
-  if (!node) {
-    return { kind: 'broken', node: null, reason: 'menu not found' };
-  }
-  if (node.meta?.action_id) {
-    return { kind: 'leaf', meta: node.meta, node };
-  }
-  if (node.children?.length) {
-    return { kind: 'group', node };
-  }
-  return { kind: 'broken', node, reason: 'menu has no action' };
+  return resolveMenuActionCore(menuTree, menuId) as MenuResolveResult;
 }

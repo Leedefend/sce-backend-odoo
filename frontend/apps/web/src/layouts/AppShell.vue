@@ -17,6 +17,7 @@
         <MenuTree
           :nodes="filteredMenu"
           :active-menu-id="activeMenuId"
+          :capabilities="capabilities"
           @select="handleSelect"
         />
       </div>
@@ -66,6 +67,12 @@
         :on-retry="refreshInit"
       />
       <StatusPanel
+        v-else-if="showSceneErrors"
+        title="Scene registry invalid"
+        :message="sceneErrorMessage"
+        variant="error"
+      />
+      <StatusPanel
         v-else-if="initStatus === 'ready' && !menuCount"
         title="No navigation data"
         message="Menu tree is empty. Try refreshing app init."
@@ -86,6 +93,7 @@ import { useRoute, useRouter } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { useSessionStore } from '../stores/session';
+import { getSceneByKey, getSceneRegistryDiagnostics } from '../app/resolvers/sceneRegistry';
 import type { NavNode } from '@sc/schema';
 
 const session = useSessionStore();
@@ -102,6 +110,7 @@ const rootTitle = computed(() => {
   return root?.title || root?.name || root?.label || 'Smart Construction';
 });
 const userName = computed(() => session.user?.name ?? 'Guest');
+const capabilities = computed(() => session.capabilities);
 const effectiveDb = computed(() => (session.initMeta as any)?.effective_db ?? 'N/A');
 const navVersion = computed(() => {
   const meta = session.initMeta as any;
@@ -111,14 +120,37 @@ const navVersion = computed(() => {
 const initStatus = computed(() => session.initStatus);
 const initError = computed(() => session.initError);
 const initTraceId = computed(() => session.initTraceId);
+const showSceneErrors = computed(() => import.meta.env.DEV && sceneRegistryErrors.length > 0);
+const sceneRegistryErrors = getSceneRegistryDiagnostics().errors;
+const sceneErrorMessage = computed(() => {
+  if (!sceneRegistryErrors.length) {
+    return '';
+  }
+  const sample = sceneRegistryErrors.slice(0, 3).map((err) => {
+    const key = err.key ? `key=${err.key}` : `index=${err.index}`;
+    return `${key} (${err.issues.join(', ')})`;
+  });
+  const suffix = sceneRegistryErrors.length > 3 ? ` +${sceneRegistryErrors.length - 3} more` : '';
+  return `Scene registry validation failed: ${sample.join(' | ')}${suffix}`;
+});
 
 const currentTitle = computed(() => {
   const name = route.name?.toString() ?? '';
+  const sceneKey = route.meta?.sceneKey as string | undefined;
+  if (sceneKey) {
+    const scene = getSceneByKey(sceneKey);
+    if (scene?.label) {
+      return scene.label;
+    }
+  }
   if (name === 'action') {
     return session.currentAction?.name || 'List';
   }
   if (name === 'record') {
     return 'Record';
+  }
+  if (name === 'workbench') {
+    return 'Workbench';
   }
   return 'Workspace';
 });

@@ -19,8 +19,7 @@
       :loading="status === 'loading'"
       :error-message="errorMessage"
       :trace-id="traceId"
-      :error-code="errorCode"
-      :error-hint="errorHint"
+      :error="error"
       :columns="columns"
       :records="records"
       :sort-label="sortLabel"
@@ -40,7 +39,6 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecordsRaw } from '../api/data';
-import { ApiError } from '../api/client';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { useSessionStore } from '../stores/session';
@@ -49,14 +47,15 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
 import type { NavNode } from '@sc/schema';
+import { ErrorCodes } from '../app/error_codes';
+import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
+import { useStatus } from '../composables/useStatus';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
-const error = ref('');
-const errorCode = ref<number | null>(null);
 const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
@@ -64,6 +63,7 @@ const columns = ref<string[]>([]);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
+const { error, clearError, setError } = useStatus();
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
@@ -91,18 +91,7 @@ const statusLabel = computed(() => {
   return 'Ready';
 });
 const showHud = computed(() => isHudEnabled(route));
-const errorMessage = computed(() => {
-  if (!error.value) {
-    return '';
-  }
-  return errorCode.value ? `code=${errorCode.value} · ${error.value}` : error.value;
-});
-const errorHint = computed(() => {
-  if (errorCode.value === 401) return 'Check login session and token.';
-  if (errorCode.value === 403) return 'Check access rights for this menu.';
-  if (errorCode.value === 404) return 'Resource not found or menu is missing.';
-  return '';
-});
+const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
 
 function findMenuName(nodes: NavNode[], menuId?: number): string {
   if (!menuId) {
@@ -176,10 +165,26 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
   return [];
 }
 
+function getActionType(meta: unknown) {
+  const raw = (meta as { type?: string; action_type?: string }) || {};
+  return String(raw.type || raw.action_type || '').toLowerCase();
+}
+
+function isClientAction(meta: unknown) {
+  const raw = meta as { tag?: string; type?: string; action_type?: string };
+  const tag = String(raw?.tag || '').toLowerCase();
+  const actionType = getActionType(meta);
+  return actionType.includes('client') || tag.length > 0;
+}
+
+function isWindowAction(meta: unknown) {
+  const actionType = getActionType(meta);
+  return actionType.includes('act_window') || actionType.includes('window') || actionType === '';
+}
+
 async function load() {
   status.value = 'loading';
-  error.value = '';
-  errorCode.value = null;
+  clearError();
   traceId.value = '';
   lastIntent.value = 'api.data.list';
   lastWriteMode.value = 'read';
@@ -189,8 +194,8 @@ async function load() {
   const startedAt = Date.now();
 
   if (!actionId.value) {
-    error.value = 'Action id missing';
-    status.value = deriveListStatus({ error: error.value, recordsLength: 0 });
+    setError(new Error('Action id missing'), 'Action id missing');
+    status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
     return;
   }
 
@@ -199,10 +204,45 @@ async function load() {
     if (meta) {
       session.setActionMeta(meta);
     }
+    const requiredCaps = getRequiredCapabilities(meta);
+    const capCheck = checkCapabilities(requiredCaps, session.capabilities);
+    if (!capCheck.ok) {
+      await router.replace({
+        name: 'workbench',
+        query: {
+          menu_id: menuId.value || undefined,
+          action_id: actionId.value || undefined,
+          reason: ErrorCodes.CAPABILITY_MISSING,
+        },
+      });
+      return;
+    }
     const resolvedModel = meta?.model ?? model.value;
     if (!resolvedModel) {
-      error.value = 'Action has no model';
-      status.value = deriveListStatus({ error: error.value, recordsLength: 0 });
+      if (isClientAction(meta)) {
+        await router.replace({
+          name: 'workbench',
+          query: {
+            menu_id: menuId.value || undefined,
+            action_id: actionId.value || undefined,
+            reason: ErrorCodes.ACT_NO_MODEL,
+          },
+        });
+        return;
+      }
+      if (!isWindowAction(meta)) {
+        await router.replace({
+          name: 'workbench',
+          query: {
+            menu_id: menuId.value || undefined,
+            action_id: actionId.value || undefined,
+            reason: ErrorCodes.ACT_UNSUPPORTED_TYPE,
+          },
+        });
+        return;
+      }
+      setError(new Error('Action has no model'), 'Action has no model');
+      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
       return;
     }
     const contractColumns = extractColumnsFromContract(contract);
@@ -226,15 +266,10 @@ async function load() {
     }
     lastLatencyMs.value = Date.now() - startedAt;
   } catch (err) {
-    if (err instanceof ApiError) {
-      traceId.value = err.traceId ?? '';
-      lastTraceId.value = err.traceId ?? '';
-      error.value = err.message;
-      errorCode.value = err.status ?? null;
-    } else {
-      error.value = err instanceof Error ? err.message : 'failed to load list';
-    }
-    status.value = deriveListStatus({ error: error.value, recordsLength: 0 });
+    setError(err, 'failed to load list');
+    traceId.value = error.value?.traceId || '';
+    lastTraceId.value = error.value?.traceId || '';
+    status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
     lastLatencyMs.value = Date.now() - startedAt;
   }
 }

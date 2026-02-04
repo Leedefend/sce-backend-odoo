@@ -24,9 +24,10 @@
     <StatusPanel
       v-else-if="error"
       title="Request failed"
-      :message="error"
-      :trace-id="traceId"
-      :error-code="errorCode"
+      :message="error?.message"
+      :trace-id="error?.traceId"
+      :error-code="error?.code"
+      :hint="error?.hint"
       variant="error"
       :on-retry="reload"
     />
@@ -58,7 +59,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ApiError } from '../api/client';
 import { createRecord, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
@@ -66,13 +66,12 @@ import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import type { ViewButton, ViewContract } from '@sc/schema';
 import { recordTrace, createTraceId } from '../services/trace';
+import { useStatus } from '../composables/useStatus';
 
 const route = useRoute();
 const router = useRouter();
 
-const error = ref('');
-const errorCode = ref<number | null>(null);
-const traceId = ref('');
+const { error, clearError, setError } = useStatus();
 const loading = ref(false);
 const saving = ref(false);
 const executing = ref<string | null>(null);
@@ -116,13 +115,11 @@ function fieldInputType(field: (typeof fields.value)[number]) {
 }
 
 async function load() {
-  error.value = '';
-  errorCode.value = null;
-  traceId.value = '';
+  clearError();
   loading.value = true;
 
   if (!model.value) {
-    error.value = 'Missing model';
+    setError(new Error('Missing model'), 'Missing model');
     loading.value = false;
     return;
   }
@@ -160,13 +157,7 @@ async function load() {
       params_digest: JSON.stringify({ id: recordId.value }),
     });
   } catch (err) {
-    if (err instanceof ApiError) {
-      traceId.value = err.traceId ?? '';
-      errorCode.value = err.status ?? null;
-      error.value = err.message;
-    } else {
-      error.value = err instanceof Error ? err.message : 'failed to load record';
-    }
+    setError(err, 'failed to load record');
   } finally {
     loading.value = false;
   }
@@ -205,13 +196,7 @@ async function save() {
       }
     }
   } catch (err) {
-    if (err instanceof ApiError) {
-      traceId.value = err.traceId ?? '';
-      errorCode.value = err.status ?? null;
-      error.value = err.message;
-    } else {
-      error.value = err instanceof Error ? err.message : 'failed to save';
-    }
+    setError(err, 'failed to save');
   } finally {
     saving.value = false;
   }
@@ -271,12 +256,7 @@ async function runButton(btn: ViewButton) {
       await load();
     }
   } catch (err) {
-    if (err instanceof ApiError) {
-      traceId.value = err.traceId ?? '';
-      error.value = err.message;
-    } else {
-      error.value = err instanceof Error ? err.message : 'failed to execute button';
-    }
+    setError(err, 'failed to execute button');
   } finally {
     executing.value = null;
   }
