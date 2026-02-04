@@ -157,12 +157,27 @@ async function main() {
   const blockingMissing = missing.filter((node) => !allowedMissing.has(node));
 
   summary.push(`layout_ok: ${layoutOk ? 'true' : 'false'}`);
+  summary.push(`present_count: ${present.size}`);
+  summary.push(`required_count: ${REQUIRED_NODES.length}`);
+  summary.push(`missing_count: ${missing.length}`);
   summary.push(`present_nodes: ${[...present].sort().join(',') || '-'}`);
   summary.push(`required_nodes: ${REQUIRED_NODES.join(',')}`);
   summary.push(`supported_nodes: ${[...supported].sort().join(',')}`);
   summary.push(`missing_nodes: ${missing.join(',') || '-'}`);
   summary.push(`allowed_missing: ${ALLOWED_MISSING.join(',') || '-'}`);
 
+  writeJson(path.join(outDir, 'coverage.json'), {
+    model: MODEL,
+    view_type: VIEW_TYPE,
+    present_count: present.size,
+    required_count: REQUIRED_NODES.length,
+    missing_count: missing.length,
+    present_nodes: [...present].sort(),
+    required_nodes: REQUIRED_NODES,
+    missing_nodes: missing,
+    allowed_missing: ALLOWED_MISSING,
+    blocking_missing: blockingMissing,
+  });
   writeSummary(summary);
 
   if (blockingMissing.length) {
