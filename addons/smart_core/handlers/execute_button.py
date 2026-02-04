@@ -8,13 +8,14 @@ class ExecuteButtonHandler(BaseIntentHandler):
     INTENT_TYPE = "execute_button"
     DESCRIPTION = "执行模型按钮方法"
 
-    def run(self):
+    def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
         model = params.get("model") or params.get("res_model")
         button = params.get("button") if isinstance(params.get("button"), dict) else {}
 
         button_type = button.get("type") or button.get("buttonType") or params.get("button_type") or "object"
         method_name = button.get("name") or params.get("method_name") or params.get("button_name")
+        dry_run = bool(params.get("dry_run"))
 
         res_id = params.get("res_id") or params.get("record_id") or self.context.get("record_id")
         res_ids = _coerce_ids(res_id)
@@ -39,7 +40,17 @@ class ExecuteButtonHandler(BaseIntentHandler):
         if not callable(method):
             raise AccessError(f"方法不可调用: {method_name}")
 
-        # 4. 执行方法
+        # 4. 执行方法（支持 dry_run）
+        if dry_run:
+            payload = {
+                "type": "dry_run",
+                "res_model": model,
+                "res_id": res_ids[0],
+                "method": method_name,
+                "button_type": button_type,
+            }
+            return {"result": payload}, {}
+
         result = method()
 
         # 5. 标准化返回（MVP 统一 refresh）
@@ -52,6 +63,10 @@ class ExecuteButtonHandler(BaseIntentHandler):
             payload["raw_action"] = result
 
         return {"result": payload}, {}
+
+    # 兼容旧调用
+    def run(self, **_kwargs):
+        return self.handle()
 
 
 def _coerce_ids(value: Any) -> List[int]:

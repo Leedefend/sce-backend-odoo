@@ -17,7 +17,7 @@ const props = defineProps<{
   title: string;
   message?: string;
   traceId?: string;
-  errorCode?: number | null;
+  errorCode?: number | string | null;
   hint?: string;
   variant?: 'error' | 'info' | 'forbidden_capability';
   onRetry?: () => void;
