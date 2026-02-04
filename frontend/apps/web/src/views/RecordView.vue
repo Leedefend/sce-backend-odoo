@@ -22,6 +22,8 @@
       title="Request failed"
       :message="errorCode ? `code=${errorCode} · ${error}` : error"
       :trace-id="traceId"
+      :error-code="errorCode"
+      :hint="errorHint"
       variant="error"
       :on-retry="reload"
     />
@@ -101,6 +103,12 @@ const statusLabel = computed(() => {
   if (status.value === 'empty') return 'Empty';
   return 'Ready';
 });
+const errorHint = computed(() => {
+  if (errorCode.value === 401) return 'Check login session and token.';
+  if (errorCode.value === 403) return 'Check access rights for this record.';
+  if (errorCode.value === 404) return 'Record not found.';
+  return '';
+});
 const statusTone = computed(() => {
   if (status.value === 'error') return 'danger';
   if (status.value === 'editing' || status.value === 'saving') return 'warn';
@@ -124,6 +132,7 @@ async function load() {
   fields.value = [];
   status.value = 'loading';
   lastIntent.value = 'api.data.read';
+  lastWriteMode.value = 'read';
   lastAction.value = 'load';
   const startedAt = Date.now();
 
@@ -168,6 +177,9 @@ async function load() {
     if (read.meta?.trace_id) {
       traceId.value = String(read.meta.trace_id);
       lastTraceId.value = String(read.meta.trace_id);
+    } else if (read.traceId) {
+      traceId.value = String(read.traceId);
+      lastTraceId.value = String(read.traceId);
     }
     lastLatencyMs.value = Date.now() - startedAt;
   } catch (err) {

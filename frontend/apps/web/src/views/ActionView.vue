@@ -19,6 +19,8 @@
       :loading="status === 'loading'"
       :error-message="errorMessage"
       :trace-id="traceId"
+      :error-code="errorCode"
+      :error-hint="errorHint"
       :columns="columns"
       :records="records"
       :sort-label="sortLabel"
@@ -56,8 +58,12 @@ const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const error = ref('');
 const errorCode = ref<number | null>(null);
 const traceId = ref('');
+const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const columns = ref<string[]>([]);
+const lastIntent = ref('');
+const lastWriteMode = ref('');
+const lastLatencyMs = ref<number | null>(null);
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
@@ -91,6 +97,12 @@ const errorMessage = computed(() => {
   }
   return errorCode.value ? `code=${errorCode.value} · ${error.value}` : error.value;
 });
+const errorHint = computed(() => {
+  if (errorCode.value === 401) return 'Check login session and token.';
+  if (errorCode.value === 403) return 'Check access rights for this menu.';
+  if (errorCode.value === 404) return 'Resource not found or menu is missing.';
+  return '';
+});
 
 function findMenuName(nodes: NavNode[], menuId?: number): string {
   if (!menuId) {
@@ -115,8 +127,11 @@ const hudEntries = computed(() => [
   { label: 'menu_id', value: menuId.value || '-' },
   { label: 'model', value: model.value || '-' },
   { label: 'view_mode', value: viewMode.value || '-' },
+  { label: 'last_intent', value: lastIntent.value || '-' },
+  { label: 'write_mode', value: lastWriteMode.value || '-' },
+  { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
+  { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
-  { label: 'trace_id', value: traceId.value || '-' },
 ]);
 
 function mergeContext(base: Record<string, unknown> | string | undefined) {
@@ -166,23 +181,36 @@ async function load() {
   error.value = '';
   errorCode.value = null;
   traceId.value = '';
+  lastIntent.value = 'api.data.list';
+  lastWriteMode.value = 'read';
+  lastLatencyMs.value = null;
   records.value = [];
   columns.value = [];
+  const startedAt = Date.now();
 
-  if (!model.value) {
-    error.value = 'Action has no model';
+  if (!actionId.value) {
+    error.value = 'Action id missing';
     status.value = deriveListStatus({ error: error.value, recordsLength: 0 });
     return;
   }
 
   try {
-    const { contract } = await resolveAction(session.menuTree, actionId.value, actionMeta.value);
+    const { contract, meta } = await resolveAction(session.menuTree, actionId.value, actionMeta.value);
+    if (meta) {
+      session.setActionMeta(meta);
+    }
+    const resolvedModel = meta?.model ?? model.value;
+    if (!resolvedModel) {
+      error.value = 'Action has no model';
+      status.value = deriveListStatus({ error: error.value, recordsLength: 0 });
+      return;
+    }
     const contractColumns = extractColumnsFromContract(contract);
     const result = await listRecordsRaw({
-      model: model.value,
+      model: resolvedModel,
       fields: contractColumns.length ? contractColumns : ['id', 'name'],
-      domain: normalizeDomain(actionMeta.value?.domain),
-      context: mergeContext(actionMeta.value?.context),
+      domain: normalizeDomain(meta?.domain),
+      context: mergeContext(meta?.context),
       limit: 40,
       offset: 0,
     });
@@ -191,16 +219,23 @@ async function load() {
     status.value = deriveListStatus({ error: '', recordsLength: records.value.length });
     if (result.meta?.trace_id) {
       traceId.value = String(result.meta.trace_id);
+      lastTraceId.value = String(result.meta.trace_id);
+    } else if (result.traceId) {
+      traceId.value = String(result.traceId);
+      lastTraceId.value = String(result.traceId);
     }
+    lastLatencyMs.value = Date.now() - startedAt;
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
+      lastTraceId.value = err.traceId ?? '';
       error.value = err.message;
       errorCode.value = err.status ?? null;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to load list';
     }
     status.value = deriveListStatus({ error: error.value, recordsLength: 0 });
+    lastLatencyMs.value = Date.now() - startedAt;
   }
 }
 
