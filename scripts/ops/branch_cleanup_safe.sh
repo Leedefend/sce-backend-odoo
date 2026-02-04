@@ -45,17 +45,21 @@ main_sha="$(git rev-parse origin/main 2>/dev/null || git rev-parse main)"
 if git merge-base --is-ancestor "$branch_sha" "$main_sha"; then
   echo "[branch.cleanup.feature] merge-base check: ok"
 else
-  if ! command -v gh >/dev/null 2>&1; then
-    echo "❌ gh not found; cannot verify merged PR for ${branch}" >&2
-    exit 2
+  if [[ "${CLEANUP_FORCE:-0}" == "1" ]]; then
+    echo "⚠️  CLEANUP_FORCE=1 set; skipping merge verification for ${branch}"
+  else
+    if ! command -v gh >/dev/null 2>&1; then
+      echo "❌ gh not found; cannot verify merged PR for ${branch}" >&2
+      exit 2
+    fi
+    pr_count="$(gh pr list --state merged --search "head:${branch}" --json number --jq 'length')" || \
+      (echo "❌ gh pr list failed; network/auth required to verify merge for ${branch}" >&2; exit 2)
+    if [[ "$pr_count" -lt 1 ]]; then
+      echo "❌ branch not merged into main yet: ${branch}" >&2
+      exit 2
+    fi
+    echo "[branch.cleanup.feature] merged PR detected for ${branch}"
   fi
-  pr_count="$(gh pr list --state merged --search "head:${branch}" --json number --jq 'length')" || \
-    (echo "❌ gh pr list failed; network/auth required to verify merge for ${branch}" >&2; exit 2)
-  if [[ "$pr_count" -lt 1 ]]; then
-    echo "❌ branch not merged into main yet: ${branch}" >&2
-    exit 2
-  fi
-  echo "[branch.cleanup.feature] merged PR detected for ${branch}"
 fi
 
 echo "[branch.cleanup.feature] deleting local: ${branch}"
