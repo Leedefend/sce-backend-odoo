@@ -9,8 +9,9 @@
         <button
           v-for="btn in headerButtons"
           :key="btn.name ?? btn.string"
-          :disabled="!recordId || saving || loading || executing === btn.name"
+          :disabled="!recordId || saving || loading || executing === btn.name || buttonState(btn).state !== 'enabled'"
           class="action secondary"
+          :title="buttonTooltip(btn)"
           @click="runButton(btn)"
         >
           {{ buttonLabel(btn) }}
@@ -31,28 +32,49 @@
       variant="error"
       :on-retry="reload"
     />
+    <StatusPanel
+      v-else-if="renderBlocked"
+      title="View node unsupported"
+      message="Layout nodes are present but renderer support is incomplete."
+      error-code="VIEW_NODE_UNSUPPORTED"
+      variant="error"
+      :on-retry="reload"
+    />
 
     <section v-else class="card">
-      <div v-for="field in fields" :key="field.name" class="field">
-        <label class="label">{{ field.label }}</label>
-        <template v-if="field.readonly">
-          <FieldValue :value="formData[field.name]" :field="field.descriptor" />
-        </template>
-        <template v-else>
-          <input
-            v-if="isTextField(field)"
-            v-model="formData[field.name]"
-            :type="fieldInputType(field)"
-          />
-          <select v-else-if="field.descriptor?.ttype === 'selection'" v-model="formData[field.name]">
-            <option v-for="opt in field.descriptor?.selection || []" :key="opt[0]" :value="opt[0]">
-              {{ opt[1] }}
-            </option>
-          </select>
-          <input v-else v-model="formData[field.name]" />
-        </template>
+      <ViewLayoutRenderer
+        v-if="renderMode === 'layout_tree'"
+        :layout="viewContract?.layout || {}"
+        :fields="viewContract?.fields"
+        :record="formData"
+        :editing="true"
+        :draft-name="draftName"
+        :edit-mode="'all'"
+        @update:field="handleFieldUpdate"
+      />
+      <div v-else>
+        <div v-for="field in fields" :key="field.name" class="field">
+          <label class="label">{{ field.label }}</label>
+          <template v-if="field.readonly">
+            <FieldValue :value="formData[field.name]" :field="field.descriptor" />
+          </template>
+          <template v-else>
+            <input
+              v-if="isTextField(field)"
+              v-model="formData[field.name]"
+              :type="fieldInputType(field)"
+            />
+            <select v-else-if="field.descriptor?.ttype === 'selection'" v-model="formData[field.name]">
+              <option v-for="opt in field.descriptor?.selection || []" :key="opt[0]" :value="opt[0]">
+                {{ opt[1] }}
+              </option>
+            </select>
+            <input v-else v-model="formData[field.name]" />
+          </template>
+        </div>
       </div>
     </section>
+    <DevContextPanel :visible="showHud" title="Form Context" :entries="hudEntries" />
   </main>
 </template>
 
@@ -64,9 +86,15 @@ import { executeButton } from '../api/executeButton';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
 import type { ViewButton, ViewContract } from '@sc/schema';
 import { recordTrace, createTraceId } from '../services/trace';
 import { useStatus } from '../composables/useStatus';
+import DevContextPanel from '../components/DevContextPanel.vue';
+import { isHudEnabled } from '../config/debug';
+import { useSessionStore } from '../stores/session';
+import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
+import { ErrorCodes } from '../app/error_codes';
 
 const route = useRoute();
 const router = useRouter();
@@ -86,6 +114,8 @@ const fields = ref<
   Array<{ name: string; label: string; descriptor?: ViewContract['fields'][string]; readonly?: boolean }>
 >([]);
 const formData = reactive<Record<string, unknown>>({});
+const draftName = ref('');
+const layoutStats = ref({ field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 });
 
 const headerButtons = computed(() => {
   const raw =
@@ -94,6 +124,41 @@ const headerButtons = computed(() => {
     [];
   return normalizeButtons(raw);
 });
+const renderMode = computed(() => (viewContract.value?.layout ? 'layout_tree' : 'fallback_fields'));
+const supportedNodes = ['field', 'group', 'notebook', 'page', 'headerButtons', 'statButtons', 'ribbon', 'chatter'];
+const missingNodes = computed(() => {
+  const layout = viewContract.value?.layout;
+  if (!layout) return [];
+  const present = new Set<string>();
+  if (Array.isArray(layout.groups) && layout.groups.length) present.add('group');
+  const groupFields = Array.isArray(layout.groups)
+    ? layout.groups.some((group: any) => (Array.isArray(group.fields) && group.fields.length) || (Array.isArray(group.sub_groups) && group.sub_groups.length))
+    : false;
+  if (groupFields) present.add('field');
+  if (Array.isArray(layout.notebooks) && layout.notebooks.length) present.add('notebook');
+  const hasPages = Array.isArray(layout.notebooks)
+    ? layout.notebooks.some((notebook: any) => Array.isArray(notebook.pages) && notebook.pages.length)
+    : false;
+  if (hasPages) present.add('page');
+  if (Array.isArray(layout.headerButtons) && layout.headerButtons.length) present.add('headerButtons');
+  if (Array.isArray(layout.statButtons) && layout.statButtons.length) present.add('statButtons');
+  if (layout.ribbon) present.add('ribbon');
+  if (layout.chatter) present.add('chatter');
+  return Array.from(present).filter((node) => !supportedNodes.includes(node));
+});
+const renderBlocked = computed(() => showHud.value && renderMode.value === 'layout_tree' && missingNodes.value.length > 0);
+const showHud = computed(() => isHudEnabled(route));
+const session = useSessionStore();
+const userGroups = computed(() => session.user?.groups_xmlids ?? []);
+const hudEntries = computed(() => [
+  { label: 'model', value: model.value },
+  { label: 'record_id', value: recordIdDisplay.value },
+  { label: 'render_mode', value: renderMode.value },
+  { label: 'layout_present', value: Boolean(viewContract.value?.layout) },
+  { label: 'layout_nodes', value: JSON.stringify(layoutStats.value) },
+  { label: 'unsupported_nodes', value: missingNodes.value.join(',') || '-' },
+  { label: 'coverage_supported', value: supportedNodes.join(',') },
+]);
 
 function isTextField(field: (typeof fields.value)[number]) {
   const ttype = field.descriptor?.ttype;
@@ -117,6 +182,7 @@ function fieldInputType(field: (typeof fields.value)[number]) {
 async function load() {
   clearError();
   loading.value = true;
+  layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
 
   if (!model.value) {
     setError(new Error('Missing model'), 'Missing model');
@@ -127,6 +193,9 @@ async function load() {
   try {
     const view = await resolveView(model.value, 'form');
     viewContract.value = view;
+    if (view.layout) {
+      layoutStats.value = analyzeLayout(view.layout);
+    }
     const fieldNames = extractFieldNames(view.layout).filter(Boolean);
     const read = recordId.value
       ? await readRecord({
@@ -147,6 +216,7 @@ async function load() {
     fields.value.forEach((field) => {
       formData[field.name] = record[field.name] ?? '';
     });
+    draftName.value = String(record?.name ?? '');
     recordTrace({
       ts: Date.now(),
       trace_id: createTraceId(),
@@ -213,6 +283,40 @@ function buttonLabel(btn: ViewButton) {
   return btn.string || btn.name || 'Action';
 }
 
+function buttonState(btn: ViewButton) {
+  const requiredCaps = getRequiredCapabilities(btn);
+  const capCheck = checkCapabilities(requiredCaps, session.capabilities);
+  if (!capCheck.ok) {
+    return { state: 'disabled_capability', missing: capCheck.missing };
+  }
+  const groups = Array.isArray(btn.groups) ? btn.groups : [];
+  if (groups.length && !groups.some((g) => userGroups.value.includes(g))) {
+    return { state: 'disabled_permission', missing: [] };
+  }
+  return { state: 'enabled', missing: [] };
+}
+
+function buttonTooltip(btn: ViewButton) {
+  const state = buttonState(btn);
+  if (state.state === 'disabled_capability') {
+    return `Missing capabilities: ${state.missing.join(', ')}`;
+  }
+  if (state.state === 'disabled_permission') {
+    return 'Permission required';
+  }
+  return '';
+}
+
+function handleFieldUpdate(payload: { name: string; value: string }) {
+  if (!payload.name) {
+    return;
+  }
+  formData[payload.name] = payload.value;
+  if (payload.name === 'name') {
+    draftName.value = payload.value;
+  }
+}
+
 function getQueryNumber(key: string) {
   const val = route.query[key];
   if (Array.isArray(val)) {
@@ -227,6 +331,15 @@ function getQueryNumber(key: string) {
 }
 
 async function runButton(btn: ViewButton) {
+  const state = buttonState(btn);
+  if (state.state === 'disabled_capability') {
+    await router.push({ name: 'workbench', query: { reason: ErrorCodes.CAPABILITY_MISSING } });
+    return;
+  }
+  if (state.state === 'disabled_permission') {
+    error.value = { message: 'Permission denied', code: 403, hint: 'Check access rights.' };
+    return;
+  }
   if (!model.value || !recordId.value || !btn.name) {
     return;
   }
@@ -267,6 +380,37 @@ function reload() {
 }
 
 onMounted(load);
+
+function analyzeLayout(layout: ViewContract['layout']) {
+  const stats = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
+  const countGroup = (group: any) => {
+    stats.group += 1;
+    const fields = Array.isArray(group.fields) ? group.fields : [];
+    stats.field += fields.length;
+    const subGroups = Array.isArray(group.sub_groups) ? group.sub_groups : [];
+    subGroups.forEach((sub) => countGroup(sub));
+  };
+  const groups = Array.isArray(layout.groups) ? layout.groups : [];
+  groups.forEach((group) => countGroup(group));
+  const notebooks = Array.isArray(layout.notebooks) ? layout.notebooks : [];
+  stats.notebook += notebooks.length;
+  notebooks.forEach((notebook) => {
+    const pages = Array.isArray(notebook.pages) ? notebook.pages : [];
+    stats.page += pages.length;
+    pages.forEach((page) => {
+      const pageGroups = Array.isArray(page.groups) ? page.groups : [];
+      pageGroups.forEach((group) => countGroup(group));
+    });
+  });
+  const unsupported = [
+    Array.isArray(layout.headerButtons) ? layout.headerButtons.length : 0,
+    Array.isArray(layout.statButtons) ? layout.statButtons.length : 0,
+    layout.ribbon ? 1 : 0,
+    layout.chatter ? 1 : 0,
+  ].reduce((sum, value) => sum + value, 0);
+  stats.unsupported = unsupported;
+  return stats;
+}
 </script>
 
 <style scoped>
