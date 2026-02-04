@@ -145,11 +145,30 @@ export interface ExecuteButtonRequest {
 }
 
 export interface ExecuteButtonResult {
-  type: 'refresh' | 'action' | 'noop';
+  type: 'refresh' | 'action' | 'noop' | 'dry_run';
   res_model?: string;
   res_id?: number;
   raw_action?: Record<string, unknown>;
   message?: string;
+}
+
+export interface ButtonEffectTarget {
+  kind: 'record' | 'action' | 'url';
+  model?: string;
+  id?: number;
+  action_id?: number;
+  url?: string;
+}
+
+export interface ButtonEffect {
+  type: 'reload_record' | 'reload_action' | 'navigate' | 'toast';
+  target?: ButtonEffectTarget;
+  message?: string;
+}
+
+export interface ExecuteButtonResponse {
+  result: ExecuteButtonResult;
+  effect?: ButtonEffect;
 }
 
 export interface LoadViewRequest {
@@ -201,6 +220,7 @@ export interface FieldDescriptor {
   readonly?: boolean;
   selection?: Array<[string, string]>;
   relation?: string;
+  relation_field?: string;
 }
 
 export interface FormLayout {

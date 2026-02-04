@@ -49,7 +49,11 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 "method": method_name,
                 "button_type": button_type,
             }
-            return {"result": payload}, {}
+            effect = {
+                "type": "toast",
+                "message": "dry_run",
+            }
+            return {"result": payload, "effect": effect}, {}
 
         result = method()
 
@@ -59,10 +63,48 @@ class ExecuteButtonHandler(BaseIntentHandler):
             "res_model": model,
             "res_id": res_ids[0],
         }
+        effect = {
+            "type": "reload_record",
+            "target": {
+                "kind": "record",
+                "model": model,
+                "id": res_ids[0],
+            },
+        }
         if isinstance(result, dict):
             payload["raw_action"] = result
+            action_type = result.get("type")
+            action_id = result.get("id")
+            action_model = result.get("res_model")
+            action_res_id = result.get("res_id")
+            action_url = result.get("url")
+            if action_model and action_res_id:
+                effect = {
+                    "type": "navigate",
+                    "target": {
+                        "kind": "record",
+                        "model": action_model,
+                        "id": action_res_id,
+                    },
+                }
+            elif action_id:
+                effect = {
+                    "type": "navigate",
+                    "target": {
+                        "kind": "action",
+                        "action_id": action_id,
+                    },
+                }
+            elif action_type == "ir.actions.act_url" and action_url:
+                effect = {
+                    "type": "navigate",
+                    "target": {
+                        "kind": "url",
+                        "url": action_url,
+                    },
+                }
 
-        return {"result": payload}, {}
+        return {"result": payload, "effect": effect}, {}
 
     # 兼容旧调用
     def run(self, **_kwargs):

@@ -1,8 +1,8 @@
 import { intentRequest } from './intents';
-import type { ExecuteButtonRequest, ExecuteButtonResult } from '@sc/schema';
+import type { ExecuteButtonRequest, ExecuteButtonResponse } from '@sc/schema';
 
 export async function executeButton(params: ExecuteButtonRequest) {
-  return intentRequest<{ result: ExecuteButtonResult }>({
+  return intentRequest<ExecuteButtonResponse>({
     intent: 'execute_button',
     params: {
       model: params.model,

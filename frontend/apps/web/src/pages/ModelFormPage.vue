@@ -47,6 +47,7 @@
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
         :record="formData"
+        :parent-id="recordId || undefined"
         :editing="true"
         :draft-name="draftName"
         :edit-mode="'all'"

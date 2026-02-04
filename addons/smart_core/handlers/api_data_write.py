@@ -26,8 +26,10 @@ class ApiDataWriteHandler(BaseIntentHandler):
     VERSION = "0.6.0"
     ETAG_ENABLED = False
 
-    ALLOWED_MODEL = "project.project"
-    ALLOWED_FIELDS = {"name", "description", "date_start"}
+    ALLOWED_MODELS = {
+        "project.project": {"name", "description", "date_start"},
+        "project.task": {"name", "description", "date_deadline", "project_id"},
+    }
 
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}
@@ -79,7 +81,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
 
         if not model:
             return self._err(400, "缺少参数 model")
-        if model != self.ALLOWED_MODEL:
+        allowed_fields = self.ALLOWED_MODELS.get(model)
+        if not allowed_fields:
             return self._err(403, f"模型不允许写入: {model}")
         if model not in self.env:
             return self._err(404, f"未知模型: {model}")
@@ -88,11 +91,11 @@ class ApiDataWriteHandler(BaseIntentHandler):
         if not vals:
             return self._err(400, "缺少参数 vals")
 
-        illegal_fields = sorted(set(vals.keys()) - self.ALLOWED_FIELDS)
+        illegal_fields = sorted(set(vals.keys()) - allowed_fields)
         if illegal_fields:
             return self._err(400, f"字段不允许写入: {', '.join(illegal_fields)}")
 
-        safe_vals = self._filter_vals(vals)
+        safe_vals = {k: v for k, v in vals.items() if k in allowed_fields}
         if not safe_vals:
             return self._err(400, "vals 中无可写字段")
 

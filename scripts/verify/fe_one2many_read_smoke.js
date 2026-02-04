@@ -15,14 +15,16 @@ const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const MODEL = process.env.MVP_MODEL || 'project.project';
 const VIEW_TYPE = process.env.MVP_VIEW_TYPE || 'form';
+const RECORD_ID = Number(process.env.RECORD_ID || 0);
+const ONE2MANY_FIELD = process.env.ONE2MANY_FIELD || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-semantic', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-5', ts);
 
 function log(msg) {
-  console.log(`[fe_execute_button_smoke] ${msg}`);
+  console.log(`[fe_one2many_read_smoke] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -68,6 +70,30 @@ function requestJson(url, payload, headers = {}) {
     req.write(body);
     req.end();
   });
+}
+
+function collectLayoutFields(layout) {
+  const names = new Set();
+  if (!layout || typeof layout !== 'object') {
+    return names;
+  }
+  const pushField = (field) => {
+    if (field && typeof field === 'object' && field.name) {
+      names.add(field.name);
+    }
+  };
+  const walkGroup = (group) => {
+    if (!group || typeof group !== 'object') return;
+    (group.fields || []).forEach(pushField);
+    (group.sub_groups || []).forEach(walkGroup);
+  };
+  (layout.groups || []).forEach(walkGroup);
+  (layout.notebooks || []).forEach((notebook) => {
+    (notebook.pages || []).forEach((page) => {
+      (page.groups || []).forEach(walkGroup);
+    });
+  });
+  return names;
 }
 
 async function main() {
@@ -121,66 +147,89 @@ async function main() {
   if (viewResp.status >= 400 || !viewResp.body.ok) {
     throw new Error(`load_view failed: status=${viewResp.status}`);
   }
+
   const viewData = viewResp.body.data || {};
-  const layout = (viewData && viewData.layout) || {};
-  const buttons = [...(layout.headerButtons || []), ...(layout.statButtons || [])];
-  const button =
-    buttons.find((b) => b && b.name && /^[A-Za-z_]/.test(String(b.name)) && (b.type || 'object') === 'object') ||
-    buttons.find((b) => b && b.name) ||
-    null;
-  if (!button) {
-    throw new Error('no button available for execute_button dry_run');
+  const fields = viewData.fields || {};
+  const layout = viewData.layout || {};
+  const layoutFields = collectLayoutFields(layout);
+
+  let fieldName = '';
+  let descriptor = null;
+  if (ONE2MANY_FIELD) {
+    const candidate = fields[ONE2MANY_FIELD];
+    const candidateType = candidate ? candidate.ttype || candidate.type : '';
+    if (!candidate || candidateType !== 'one2many') {
+      writeSummary([`one2many_field: ${ONE2MANY_FIELD}`, 'error: invalid one2many field']);
+      throw new Error(`ONE2MANY_FIELD=${ONE2MANY_FIELD} not found or not one2many`);
+    }
+    fieldName = ONE2MANY_FIELD;
+    descriptor = candidate;
+  } else {
+    const one2manyEntry = Object.entries(fields).find(([, desc]) => desc && (desc.ttype === 'one2many' || desc.type === 'one2many'));
+    if (!one2manyEntry) {
+      writeSummary(['one2many_field: none']);
+      throw new Error('no one2many field found in view contract (set ONE2MANY_FIELD or MVP_MODEL)');
+    }
+    [fieldName, descriptor] = one2manyEntry;
+  }
+  const inLayout = layoutFields.has(fieldName);
+  summary.push(`one2many_field: ${fieldName}`);
+  summary.push(`relation: ${descriptor.relation || '-'}`);
+  summary.push(`in_layout: ${inLayout ? 'true' : 'false'}`);
+
+  if (!inLayout) {
+    writeSummary(summary);
+    throw new Error('one2many field not found in layout');
   }
 
-  log('api.data.list');
-  const listPayload = { intent: 'api.data', params: { op: 'list', model: MODEL, fields: ['id', 'name'], limit: 1 } };
-  const listResp = await requestJson(intentUrl, listPayload, authHeader);
-  writeJson(path.join(outDir, 'list.log'), listResp);
-  if (listResp.status >= 400 || !listResp.body.ok) {
-    throw new Error(`list failed: status=${listResp.status}`);
-  }
-  const listData = (listResp.body && listResp.body.data) || {};
-  const records = Array.isArray(listData.records) ? listData.records : [];
-  const record = records[0];
-  if (!record || !record.id) {
-    throw new Error('list returned no record');
+  let targetId = RECORD_ID;
+  if (!targetId) {
+    log('api.data.list');
+    const listPayload = {
+      intent: 'api.data',
+      params: { op: 'list', model: MODEL, fields: ['id'], domain: [], limit: 1 },
+    };
+    const listResp = await requestJson(intentUrl, listPayload, authHeader);
+    writeJson(path.join(outDir, 'list.log'), listResp);
+    if (listResp.status >= 400 || !listResp.body.ok) {
+      throw new Error(`list failed: status=${listResp.status}`);
+    }
+    const listRecords = (listResp.body.data || {}).records || [];
+    if (!listRecords.length) {
+      throw new Error('no records found for model');
+    }
+    targetId = Number(listRecords[0].id);
   }
 
-  log('execute_button dry_run');
-  const execPayload = {
-    intent: 'execute_button',
-    params: {
-      model: MODEL,
-      res_id: record.id,
-      button: { name: button.name, type: button.type || 'object' },
-      dry_run: 1,
-    },
+  log('api.data.read');
+  const readPayload = {
+    intent: 'api.data',
+    params: { op: 'read', model: MODEL, ids: [targetId], fields: [fieldName] },
   };
-  const execResp = await requestJson(intentUrl, execPayload, authHeader);
-  writeJson(path.join(outDir, 'execute_button.log'), execResp);
-  if (execResp.status >= 400 || !execResp.body.ok) {
-    throw new Error(`execute_button failed: status=${execResp.status}`);
+  const readResp = await requestJson(intentUrl, readPayload, authHeader);
+  writeJson(path.join(outDir, 'read.log'), readResp);
+  if (readResp.status >= 400 || !readResp.body.ok) {
+    throw new Error(`read failed: status=${readResp.status}`);
   }
-  const execData = (execResp.body && execResp.body.data) || {};
-  const resultType = (execData.result && execData.result.type) || '';
-  const effectType = (execData.effect && execData.effect.type) || '';
-  summary.push(`button_name: ${button.name}`);
-  summary.push(`result_type: ${resultType}`);
-  summary.push(`effect_type: ${effectType || '-'}`);
+
+  const record = ((readResp.body.data || {}).records || [])[0] || {};
+  const value = record[fieldName];
+  const isArray = Array.isArray(value);
+  summary.push(`record_id: ${targetId}`);
+  summary.push(`value_is_array: ${isArray ? 'true' : 'false'}`);
+  summary.push(`value_length: ${isArray ? value.length : 0}`);
+
   writeSummary(summary);
 
-  if (resultType !== 'dry_run') {
-    throw new Error(`expected dry_run, got ${resultType}`);
-  }
-  if (effectType !== 'toast') {
-    throw new Error(`expected effect toast, got ${effectType}`);
+  if (!isArray) {
+    throw new Error('one2many field value is not array');
   }
 
-  log('PASS execute_button dry_run');
+  log(`PASS one2many_field=${fieldName}`);
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_execute_button_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_one2many_read_smoke] FAIL: ${err.message}`);
   process.exit(1);
 });

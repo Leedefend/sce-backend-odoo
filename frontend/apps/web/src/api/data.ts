@@ -128,6 +128,21 @@ export async function writeRecord(params: {
   });
 }
 
+export async function unlinkRecord(params: {
+  model: string;
+  ids: number[];
+  context?: Record<string, unknown>;
+}) {
+  return intentRequest<{ ids: number[] }>({
+    intent: 'api.data.unlink',
+    params: {
+      model: params.model,
+      ids: params.ids,
+      context: params.context ?? {},
+    },
+  });
+}
+
 export type ApiDataWriteContract = {
   id: number;
   model: string;

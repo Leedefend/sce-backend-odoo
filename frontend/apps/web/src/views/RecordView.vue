@@ -76,6 +76,7 @@
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
         :record="recordData"
+        :parent-id="recordId"
         :editing="status === 'editing'"
         :draft-name="draftName"
         :edit-mode="status === 'editing' ? 'name' : 'none'"
@@ -490,7 +491,9 @@ async function runHeaderButton(btn: ViewButton) {
       meta: { view_id: viewContract.value?.view_id },
     });
     lastLatencyMs.value = Date.now() - startedAt;
-    if (response?.result?.type === 'refresh') {
+    if (response?.effect) {
+      await applyButtonEffect(response.effect);
+    } else if (response?.result?.type === 'refresh') {
       await load();
     } else if (response?.result?.action_id) {
       await router.push({ name: 'action', params: { actionId: response.result.action_id } });
@@ -506,6 +509,39 @@ async function runHeaderButton(btn: ViewButton) {
 
 async function runStatButton(btn: ViewButton) {
   await runHeaderButton(btn);
+}
+
+async function applyButtonEffect(effect: { type: string; target?: Record<string, unknown>; message?: string }) {
+  if (!effect || typeof effect !== 'object') {
+    return;
+  }
+  if (effect.type === 'reload_record') {
+    await load();
+    return;
+  }
+  if (effect.type === 'reload_action') {
+    await load();
+    return;
+  }
+  if (effect.type === 'navigate' && effect.target) {
+    const target = effect.target as { kind?: string; model?: string; id?: number; action_id?: number; url?: string };
+    if (target.kind === 'record' && target.model && target.id) {
+      await router.push({ name: 'record', params: { model: target.model, id: target.id } });
+      return;
+    }
+    if (target.kind === 'action' && target.action_id) {
+      await router.push({ name: 'action', params: { actionId: target.action_id } });
+      return;
+    }
+    if (target.kind === 'url' && target.url) {
+      window.open(target.url, '_blank');
+    }
+    return;
+  }
+  if (effect.type === 'toast' && effect.message) {
+    // eslint-disable-next-line no-console
+    console.info(`[toast] ${effect.message}`);
+  }
 }
 
 function startEdit() {
