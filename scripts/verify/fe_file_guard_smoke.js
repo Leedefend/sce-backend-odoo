@@ -14,25 +14,20 @@ const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const MODEL = process.env.MVP_MODEL || 'project.project';
-const VIEW_TYPE = process.env.MVP_VIEW_TYPE || 'form';
+const RECORD_ID = Number(process.env.RECORD_ID || 0);
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-semantic', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-5', ts);
 
 function log(msg) {
-  console.log(`[fe_execute_button_smoke] ${msg}`);
+  console.log(`[fe_file_guard_smoke] ${msg}`);
 }
 
 function writeJson(file, obj) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(obj, null, 2));
-}
-
-function writeSummary(lines) {
-  fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'summary.md'), lines.join('\n'));
 }
 
 function requestJson(url, payload, headers = {}) {
@@ -76,15 +71,11 @@ async function main() {
   }
 
   const intentUrl = `${BASE_URL}/api/v1/intent`;
-  const summary = [];
 
   let token = AUTH_TOKEN;
   if (!token && BOOTSTRAP_SECRET) {
     log('bootstrap: session.bootstrap');
-    const bootstrapPayload = {
-      intent: 'bootstrap',
-      params: { db: DB_NAME, login: BOOTSTRAP_LOGIN },
-    };
+    const bootstrapPayload = { intent: 'bootstrap', params: { db: DB_NAME, login: BOOTSTRAP_LOGIN } };
     const bootstrapResp = await requestJson(intentUrl, bootstrapPayload, {
       'X-Bootstrap-Secret': BOOTSTRAP_SECRET,
       'X-Anonymous-Intent': '1',
@@ -114,73 +105,74 @@ async function main() {
     'X-Odoo-DB': DB_NAME,
   };
 
-  log('load_view');
-  const viewPayload = { intent: 'load_view', params: { model: MODEL, view_type: VIEW_TYPE } };
-  const viewResp = await requestJson(intentUrl, viewPayload, authHeader);
-  writeJson(path.join(outDir, 'load_view.log'), viewResp);
-  if (viewResp.status >= 400 || !viewResp.body.ok) {
-    throw new Error(`load_view failed: status=${viewResp.status}`);
-  }
-  const viewData = viewResp.body.data || {};
-  const layout = (viewData && viewData.layout) || {};
-  const buttons = [...(layout.headerButtons || []), ...(layout.statButtons || [])];
-  const button =
-    buttons.find((b) => b && b.name && /^[A-Za-z_]/.test(String(b.name)) && (b.type || 'object') === 'object') ||
-    buttons.find((b) => b && b.name) ||
-    null;
-  if (!button) {
-    throw new Error('no button available for execute_button dry_run');
-  }
-
-  log('api.data.list');
-  const listPayload = { intent: 'api.data', params: { op: 'list', model: MODEL, fields: ['id', 'name'], limit: 1 } };
-  const listResp = await requestJson(intentUrl, listPayload, authHeader);
-  writeJson(path.join(outDir, 'list.log'), listResp);
-  if (listResp.status >= 400 || !listResp.body.ok) {
-    throw new Error(`list failed: status=${listResp.status}`);
-  }
-  const listData = (listResp.body && listResp.body.data) || {};
-  const records = Array.isArray(listData.records) ? listData.records : [];
-  const record = records[0];
-  if (!record || !record.id) {
-    throw new Error('list returned no record');
+  let targetId = RECORD_ID;
+  if (!targetId) {
+    log('api.data.list (model)');
+    const listPayload = {
+      intent: 'api.data',
+      params: { op: 'list', model: MODEL, fields: ['id'], domain: [], limit: 1 },
+    };
+    const listResp = await requestJson(intentUrl, listPayload, authHeader);
+    writeJson(path.join(outDir, 'list.log'), listResp);
+    if (listResp.status >= 400 || !listResp.body.ok) {
+      throw new Error(`list failed: status=${listResp.status}`);
+    }
+    const listRecords = (listResp.body.data || {}).records || [];
+    if (!listRecords.length) {
+      throw new Error('no records found for model');
+    }
+    targetId = Number(listRecords[0].id);
   }
 
-  log('execute_button dry_run');
-  const execPayload = {
-    intent: 'execute_button',
+  log('file.upload (deny)');
+  const uploadPayload = {
+    intent: 'file.upload',
     params: {
-      model: MODEL,
-      res_id: record.id,
-      button: { name: button.name, type: button.type || 'object' },
-      dry_run: 1,
+      model: 'res.users',
+      res_id: 1,
+      name: 'blocked.txt',
+      mimetype: 'text/plain',
+      data: Buffer.from('blocked').toString('base64'),
     },
   };
-  const execResp = await requestJson(intentUrl, execPayload, authHeader);
-  writeJson(path.join(outDir, 'execute_button.log'), execResp);
-  if (execResp.status >= 400 || !execResp.body.ok) {
-    throw new Error(`execute_button failed: status=${execResp.status}`);
-  }
-  const execData = (execResp.body && execResp.body.data) || {};
-  const resultType = (execData.result && execData.result.type) || '';
-  const effectType = (execData.effect && execData.effect.type) || '';
-  summary.push(`button_name: ${button.name}`);
-  summary.push(`result_type: ${resultType}`);
-  summary.push(`effect_type: ${effectType || '-'}`);
-  writeSummary(summary);
-
-  if (resultType !== 'dry_run') {
-    throw new Error(`expected dry_run, got ${resultType}`);
-  }
-  if (effectType !== 'toast') {
-    throw new Error(`expected effect toast, got ${effectType}`);
+  const uploadResp = await requestJson(intentUrl, uploadPayload, authHeader);
+  writeJson(path.join(outDir, 'upload_block.log'), uploadResp);
+  if (uploadResp.status < 400) {
+    throw new Error('expected upload blocked for res.users');
   }
 
-  log('PASS execute_button dry_run');
-  log(`artifacts: ${outDir}`);
+  log('file.download (deny)');
+  const attListPayload = {
+    intent: 'api.data',
+    params: {
+      op: 'list',
+      model: 'ir.attachment',
+      fields: ['id', 'res_model'],
+      domain: [['res_model', 'not in', ['project.project', 'project.task']]],
+      limit: 1,
+    },
+  };
+  const attListResp = await requestJson(intentUrl, attListPayload, authHeader);
+  writeJson(path.join(outDir, 'attachment_list.log'), attListResp);
+  if (attListResp.status >= 400 || !attListResp.body.ok) {
+    throw new Error(`attachment list failed: status=${attListResp.status}`);
+  }
+  const attachments = (attListResp.body.data || {}).records || [];
+  if (attachments.length) {
+    const attId = attachments[0].id;
+    const downloadPayload = { intent: 'file.download', params: { id: attId } };
+    const downloadResp = await requestJson(intentUrl, downloadPayload, authHeader);
+    writeJson(path.join(outDir, 'download_block.log'), downloadResp);
+    if (downloadResp.status < 400) {
+      throw new Error('expected download blocked for non-allowed attachment');
+    }
+  }
+
+  log('PASS file guard');
+  console.log(`[fe_file_guard_smoke] artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_execute_button_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_file_guard_smoke] FAIL: ${err.message}`);
   process.exit(1);
 });

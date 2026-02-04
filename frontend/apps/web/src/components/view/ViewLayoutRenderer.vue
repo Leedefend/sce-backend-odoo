@@ -6,6 +6,7 @@
       :group="group"
       :fields="fields"
       :record="record"
+      :parent-id="parentId"
       :editing="editing"
       :draft-name="draftName"
       :edit-mode="editMode"
@@ -18,6 +19,7 @@
       :notebook="notebook"
       :fields="fields"
       :record="record"
+      :parent-id="parentId"
       :editing="editing"
       :draft-name="draftName"
       :edit-mode="editMode"
@@ -41,6 +43,7 @@ const props = defineProps<{
   layout: ViewLayoutNode;
   fields?: ViewContract['fields'];
   record?: Record<string, unknown> | null;
+  parentId?: number;
   editing: boolean;
   draftName: string;
   editMode: 'none' | 'name' | 'all';

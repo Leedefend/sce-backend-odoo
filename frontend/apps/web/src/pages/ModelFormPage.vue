@@ -47,6 +47,7 @@
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
         :record="formData"
+        :parent-id="recordId || undefined"
         :editing="true"
         :draft-name="draftName"
         :edit-mode="'all'"
@@ -93,7 +94,7 @@ import { useStatus } from '../composables/useStatus';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { useSessionStore } from '../stores/session';
-import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
+import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 
 const route = useRoute();
@@ -284,27 +285,16 @@ function buttonLabel(btn: ViewButton) {
 }
 
 function buttonState(btn: ViewButton) {
-  const requiredCaps = getRequiredCapabilities(btn);
-  const capCheck = checkCapabilities(requiredCaps, session.capabilities);
-  if (!capCheck.ok) {
-    return { state: 'disabled_capability', missing: capCheck.missing };
-  }
-  const groups = Array.isArray(btn.groups) ? btn.groups : [];
-  if (groups.length && !groups.some((g) => userGroups.value.includes(g))) {
-    return { state: 'disabled_permission', missing: [] };
-  }
-  return { state: 'enabled', missing: [] };
+  return evaluateCapabilityPolicy({
+    source: btn,
+    available: session.capabilities,
+    groups: Array.isArray(btn.groups) ? btn.groups : [],
+    userGroups: userGroups.value,
+  });
 }
 
 function buttonTooltip(btn: ViewButton) {
-  const state = buttonState(btn);
-  if (state.state === 'disabled_capability') {
-    return `Missing capabilities: ${state.missing.join(', ')}`;
-  }
-  if (state.state === 'disabled_permission') {
-    return 'Permission required';
-  }
-  return '';
+  return capabilityTooltip(buttonState(btn));
 }
 
 function handleFieldUpdate(payload: { name: string; value: string }) {

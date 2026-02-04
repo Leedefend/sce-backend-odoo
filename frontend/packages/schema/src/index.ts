@@ -145,11 +145,58 @@ export interface ExecuteButtonRequest {
 }
 
 export interface ExecuteButtonResult {
-  type: 'refresh' | 'action' | 'noop';
+  type: 'refresh' | 'action' | 'noop' | 'dry_run';
   res_model?: string;
   res_id?: number;
   raw_action?: Record<string, unknown>;
   message?: string;
+}
+
+export interface ButtonEffectTarget {
+  kind: 'record' | 'action' | 'url';
+  model?: string;
+  id?: number;
+  action_id?: number;
+  url?: string;
+}
+
+export interface ButtonEffect {
+  type: 'reload_record' | 'reload_action' | 'navigate' | 'toast';
+  target?: ButtonEffectTarget;
+  message?: string;
+}
+
+export interface ExecuteButtonResponse {
+  result: ExecuteButtonResult;
+  effect?: ButtonEffect;
+}
+
+export interface FileUploadRequest {
+  model: string;
+  res_id: number;
+  name: string;
+  mimetype: string;
+  data: string;
+}
+
+export interface FileUploadResponse {
+  id: number;
+  name: string;
+  model: string;
+  res_id: number;
+}
+
+export interface FileDownloadRequest {
+  id: number;
+}
+
+export interface FileDownloadResponse {
+  id: number;
+  name: string;
+  mimetype: string;
+  datas: string;
+  res_model: string;
+  res_id: number;
 }
 
 export interface LoadViewRequest {
@@ -201,6 +248,7 @@ export interface FieldDescriptor {
   readonly?: boolean;
   selection?: Array<[string, string]>;
   relation?: string;
+  relation_field?: string;
 }
 
 export interface FormLayout {

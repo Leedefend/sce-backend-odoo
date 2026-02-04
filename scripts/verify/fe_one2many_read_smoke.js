@@ -15,19 +15,16 @@ const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const MODEL = process.env.MVP_MODEL || 'project.project';
 const VIEW_TYPE = process.env.MVP_VIEW_TYPE || 'form';
-const ALLOWED_MISSING = (process.env.ALLOWED_MISSING || '').split(',').map((s) => s.trim()).filter(Boolean);
-const REQUIRED_NODES = (process.env.REQUIRED_NODES || 'field,group,notebook,page,headerButtons,statButtons,ribbon,chatter')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
+const RECORD_ID = Number(process.env.RECORD_ID || 0);
+const ONE2MANY_FIELD = process.env.ONE2MANY_FIELD || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-semantic', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-5', ts);
 
 function log(msg) {
-  console.log(`[fe_view_contract_coverage_smoke] ${msg}`);
+  console.log(`[fe_one2many_read_smoke] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -75,10 +72,28 @@ function requestJson(url, payload, headers = {}) {
   });
 }
 
-function asArray(value) {
-  if (Array.isArray(value)) return value;
-  if (value && typeof value === 'object') return [value];
-  return [];
+function collectLayoutFields(layout) {
+  const names = new Set();
+  if (!layout || typeof layout !== 'object') {
+    return names;
+  }
+  const pushField = (field) => {
+    if (field && typeof field === 'object' && field.name) {
+      names.add(field.name);
+    }
+  };
+  const walkGroup = (group) => {
+    if (!group || typeof group !== 'object') return;
+    (group.fields || []).forEach(pushField);
+    (group.sub_groups || []).forEach(walkGroup);
+  };
+  (layout.groups || []).forEach(walkGroup);
+  (layout.notebooks || []).forEach((notebook) => {
+    (notebook.pages || []).forEach((page) => {
+      (page.groups || []).forEach(walkGroup);
+    });
+  });
+  return names;
 }
 
 async function main() {
@@ -134,61 +149,87 @@ async function main() {
   }
 
   const viewData = viewResp.body.data || {};
-  const layout = viewData.layout;
-  const layoutOk = Boolean(layout && typeof layout === 'object');
-  if (!layoutOk) {
-    throw new Error('layout missing');
+  const fields = viewData.fields || {};
+  const layout = viewData.layout || {};
+  const layoutFields = collectLayoutFields(layout);
+
+  let fieldName = '';
+  let descriptor = null;
+  if (ONE2MANY_FIELD) {
+    const candidate = fields[ONE2MANY_FIELD];
+    const candidateType = candidate ? candidate.ttype || candidate.type : '';
+    if (!candidate || candidateType !== 'one2many') {
+      writeSummary([`one2many_field: ${ONE2MANY_FIELD}`, 'error: invalid one2many field']);
+      throw new Error(`ONE2MANY_FIELD=${ONE2MANY_FIELD} not found or not one2many`);
+    }
+    fieldName = ONE2MANY_FIELD;
+    descriptor = candidate;
+  } else {
+    const one2manyEntry = Object.entries(fields).find(([, desc]) => desc && (desc.ttype === 'one2many' || desc.type === 'one2many'));
+    if (!one2manyEntry) {
+      writeSummary(['one2many_field: none']);
+      throw new Error('no one2many field found in view contract (set ONE2MANY_FIELD or MVP_MODEL)');
+    }
+    [fieldName, descriptor] = one2manyEntry;
+  }
+  const inLayout = layoutFields.has(fieldName);
+  summary.push(`one2many_field: ${fieldName}`);
+  summary.push(`relation: ${descriptor.relation || '-'}`);
+  summary.push(`in_layout: ${inLayout ? 'true' : 'false'}`);
+
+  if (!inLayout) {
+    writeSummary(summary);
+    throw new Error('one2many field not found in layout');
   }
 
-  const present = new Set();
-  if (asArray(layout.groups).length) present.add('group');
-  const groupFields = asArray(layout.groups).some((g) => asArray(g.fields).length || asArray(g.sub_groups).length);
-  if (groupFields) present.add('field');
-  if (asArray(layout.notebooks).length) present.add('notebook');
-  if (asArray(layout.notebooks).some((nb) => asArray(nb.pages).length)) present.add('page');
-  if (asArray(layout.headerButtons).length) present.add('headerButtons');
-  if (asArray(layout.statButtons).length) present.add('statButtons');
-  if (layout.ribbon) present.add('ribbon');
-  if (layout.chatter) present.add('chatter');
+  let targetId = RECORD_ID;
+  if (!targetId) {
+    log('api.data.list');
+    const listPayload = {
+      intent: 'api.data',
+      params: { op: 'list', model: MODEL, fields: ['id'], domain: [], limit: 1 },
+    };
+    const listResp = await requestJson(intentUrl, listPayload, authHeader);
+    writeJson(path.join(outDir, 'list.log'), listResp);
+    if (listResp.status >= 400 || !listResp.body.ok) {
+      throw new Error(`list failed: status=${listResp.status}`);
+    }
+    const listRecords = (listResp.body.data || {}).records || [];
+    if (!listRecords.length) {
+      throw new Error('no records found for model');
+    }
+    targetId = Number(listRecords[0].id);
+  }
 
-  const supported = new Set(['field', 'group', 'notebook', 'page', 'headerButtons', 'statButtons', 'ribbon', 'chatter']);
-  const missing = REQUIRED_NODES.filter((node) => !present.has(node));
-  const allowedMissing = new Set(ALLOWED_MISSING);
-  const blockingMissing = missing.filter((node) => !allowedMissing.has(node));
+  log('api.data.read');
+  const readPayload = {
+    intent: 'api.data',
+    params: { op: 'read', model: MODEL, ids: [targetId], fields: [fieldName] },
+  };
+  const readResp = await requestJson(intentUrl, readPayload, authHeader);
+  writeJson(path.join(outDir, 'read.log'), readResp);
+  if (readResp.status >= 400 || !readResp.body.ok) {
+    throw new Error(`read failed: status=${readResp.status}`);
+  }
 
-  summary.push(`layout_ok: ${layoutOk ? 'true' : 'false'}`);
-  summary.push(`present_count: ${present.size}`);
-  summary.push(`required_count: ${REQUIRED_NODES.length}`);
-  summary.push(`missing_count: ${missing.length}`);
-  summary.push(`present_nodes: ${[...present].sort().join(',') || '-'}`);
-  summary.push(`required_nodes: ${REQUIRED_NODES.join(',')}`);
-  summary.push(`supported_nodes: ${[...supported].sort().join(',')}`);
-  summary.push(`missing_nodes: ${missing.join(',') || '-'}`);
-  summary.push(`allowed_missing: ${ALLOWED_MISSING.join(',') || '-'}`);
+  const record = ((readResp.body.data || {}).records || [])[0] || {};
+  const value = record[fieldName];
+  const isArray = Array.isArray(value);
+  summary.push(`record_id: ${targetId}`);
+  summary.push(`value_is_array: ${isArray ? 'true' : 'false'}`);
+  summary.push(`value_length: ${isArray ? value.length : 0}`);
 
-  writeJson(path.join(outDir, 'coverage.json'), {
-    model: MODEL,
-    view_type: VIEW_TYPE,
-    present_count: present.size,
-    required_count: REQUIRED_NODES.length,
-    missing_count: missing.length,
-    present_nodes: [...present].sort(),
-    required_nodes: REQUIRED_NODES,
-    missing_nodes: missing,
-    allowed_missing: ALLOWED_MISSING,
-    blocking_missing: blockingMissing,
-  });
   writeSummary(summary);
 
-  if (blockingMissing.length) {
-    throw new Error(`missing nodes: ${blockingMissing.join(',')}`);
+  if (!isArray) {
+    throw new Error('one2many field value is not array');
   }
 
-  log('PASS contract coverage');
+  log(`PASS one2many_field=${fieldName}`);
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_view_contract_coverage_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_one2many_read_smoke] FAIL: ${err.message}`);
   process.exit(1);
 });
