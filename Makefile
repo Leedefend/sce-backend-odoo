@@ -704,7 +704,7 @@ pr.status:
 	@gh pr status || true
 
 # ------------------ Branch cleanup (Codex-safe) ------------------
-.PHONY: branch.cleanup
+.PHONY: branch.cleanup branch.cleanup.feature
 
 CLEAN_BRANCH ?=
 
@@ -736,6 +736,9 @@ branch.cleanup: guard.prod.forbid
 	@echo "[branch.cleanup] deleting remote: $(CLEAN_BRANCH)"
 	@git push origin --delete "$(CLEAN_BRANCH)"
 	@echo "✅ [branch.cleanup] done"
+
+branch.cleanup.feature: guard.prod.forbid
+	@bash scripts/ops/branch_cleanup_safe.sh "$(CLEAN_BRANCH)"
 
 # ------------------ Main sync (safe) ------------------
 .PHONY: main.sync
