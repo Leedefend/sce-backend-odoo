@@ -54,7 +54,7 @@
     />
 
     <section v-else class="card" :class="{ editing: status === 'editing' }">
-      <div v-if="status === 'ok' && lastAction === 'save'" class="banner success">
+      <div v-if="editTx.state === 'saved'" class="banner success">
         Saved. Changes have been applied.
       </div>
       <div v-if="ribbon" class="ribbon">{{ ribbon.title || 'Ribbon' }}</div>
@@ -161,6 +161,7 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { useStatus } from '../composables/useStatus';
+import { useEditTx } from '../composables/useEditTx';
 import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
@@ -188,6 +189,7 @@ const lastLatencyMs = ref<number | null>(null);
 const lastAction = ref<'save' | 'load' | 'execute' | ''>('');
 const executing = ref<string | null>(null);
 const layoutStats = ref({ field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 });
+const editTx = useEditTx();
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
@@ -597,6 +599,7 @@ function startEdit() {
   const nameField = fields.value.find((field) => field.name === 'name');
   draftName.value = String(nameField?.value ?? '');
   status.value = 'editing';
+  editTx.beginEdit();
 }
 
 function cancelEdit() {
@@ -606,6 +609,7 @@ function cancelEdit() {
   const nameField = fields.value.find((field) => field.name === 'name');
   draftName.value = String(nameField?.value ?? '');
   status.value = 'ok';
+  editTx.cancelEdit();
 }
 
 const isSaveDisabled = computed(() => status.value === 'saving' || !draftName.value.trim());
@@ -623,15 +627,21 @@ async function save() {
   const startedAt = Date.now();
 
   try {
-    const result = await writeRecordV6Raw({
-      model: model.value,
-      id: recordId.value,
-      values: { name: draftName.value.trim() },
+    const result = await editTx.save(async () => {
+      return writeRecordV6Raw({
+        model: model.value,
+        id: recordId.value,
+        values: { name: draftName.value.trim() },
+      });
     });
     if (result?.meta?.trace_id) {
       lastTraceId.value = String(result.meta.trace_id);
+      editTx.markSaved(String(result.meta.trace_id));
     } else if (result?.traceId) {
       lastTraceId.value = String(result.traceId);
+      editTx.markSaved(String(result.traceId));
+    } else {
+      editTx.markSaved();
     }
     status.value = 'ok';
     lastLatencyMs.value = Date.now() - startedAt;
@@ -642,6 +652,7 @@ async function save() {
     lastTraceId.value = error.value?.traceId || '';
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
+    editTx.markError(error.value?.code ? String(error.value?.code) : '');
   }
 }
 

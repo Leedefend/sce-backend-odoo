@@ -26,6 +26,8 @@
     <div v-if="editorVisible" class="relational-editor">
       <div class="editor-card">
         <div class="editor-title">{{ editorTitle }}</div>
+        <div v-if="editTx.state === 'saved'" class="editor-banner">Saved.</div>
+        <div v-else-if="editTx.state === 'saving'" class="editor-banner">Saving…</div>
         <label class="editor-label">Name</label>
         <input v-model="draftName" class="editor-input" type="text" />
         <div class="editor-actions">
@@ -44,6 +46,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { createRecord, listRecords, unlinkRecord, writeRecord } from '../../api/data';
+import { useEditTx } from '../../composables/useEditTx';
 
 const props = defineProps<{
   ids: number[];
@@ -64,6 +67,7 @@ const editorTargetId = ref<number | null>(null);
 const draftName = ref('');
 const saving = ref(false);
 const editorError = ref('');
+const editTx = useEditTx();
 
 const headerLabel = computed(() => (props.model ? props.model : 'Related'));
 const countLabel = computed(() => `${props.ids.length} items`);
@@ -114,6 +118,7 @@ function startCreate() {
   editorMode.value = 'create';
   editorTargetId.value = null;
   draftName.value = '';
+  editTx.beginEdit();
 }
 
 function startEdit(row: { id: number; name?: string }) {
@@ -122,12 +127,14 @@ function startEdit(row: { id: number; name?: string }) {
   editorMode.value = 'edit';
   editorTargetId.value = row.id;
   draftName.value = row.name || '';
+  editTx.beginEdit();
 }
 
 function cancelEdit() {
   editorVisible.value = false;
   editorTargetId.value = null;
   draftName.value = '';
+  editTx.cancelEdit();
 }
 
 async function saveRow() {
@@ -139,27 +146,33 @@ async function saveRow() {
   saving.value = true;
   editorError.value = '';
   try {
-    if (editorMode.value === 'create') {
-      await createRecord({
-        model: props.model,
-        vals: {
-          name: draftName.value.trim(),
-          [props.relationField]: props.parentId,
-        },
-      });
-    } else if (editorTargetId.value) {
-      await writeRecord({
-        model: props.model,
-        ids: [editorTargetId.value],
-        vals: { name: draftName.value.trim() },
-      });
-    }
+    await editTx.save(async () => {
+      if (editorMode.value === 'create') {
+        return createRecord({
+          model: props.model,
+          vals: {
+            name: draftName.value.trim(),
+            [props.relationField]: props.parentId,
+          },
+        });
+      }
+      if (editorTargetId.value) {
+        return writeRecord({
+          model: props.model,
+          ids: [editorTargetId.value],
+          vals: { name: draftName.value.trim() },
+        });
+      }
+      return null;
+    });
+    editTx.markSaved();
     editorVisible.value = false;
     editorTargetId.value = null;
     draftName.value = '';
     await load();
   } catch (err) {
     editorError.value = err instanceof Error ? err.message : 'Failed to save related record';
+    editTx.markError();
   } finally {
     saving.value = false;
   }
@@ -169,10 +182,14 @@ async function removeRow(row: { id: number }) {
   if (!props.model) return;
   if (!confirm('Delete this related record?')) return;
   try {
-    await unlinkRecord({ model: props.model, ids: [row.id] });
+    await editTx.save(async () => {
+      return unlinkRecord({ model: props.model, ids: [row.id] });
+    });
+    editTx.markSaved();
     await load();
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to delete related record';
+    editTx.markError();
   }
 }
 
@@ -306,6 +323,15 @@ onMounted(load);
   border: 1px solid rgba(148, 163, 184, 0.4);
   padding: 8px;
   font-size: 13px;
+}
+
+.editor-banner {
+  font-size: 12px;
+  color: #0f172a;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
 .editor-actions {
