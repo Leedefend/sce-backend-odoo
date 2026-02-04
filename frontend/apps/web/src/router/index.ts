@@ -5,6 +5,8 @@ import LoginView from '../views/LoginView.vue';
 import MenuView from '../views/MenuView.vue';
 import ActionView from '../views/ActionView.vue';
 import RecordView from '../views/RecordView.vue';
+import WorkbenchView from '../views/WorkbenchView.vue';
+import SceneView from '../views/SceneView.vue';
 import { ApiError } from '../api/client';
 
 const router = createRouter({
@@ -12,7 +14,10 @@ const router = createRouter({
   routes: [
     { path: '/login', name: 'login', component: LoginView },
     { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
+    { path: '/projects', name: 'scene-projects', component: SceneView, meta: { layout: 'shell', sceneKey: 'projects' } },
+    { path: '/projects/:id', name: 'scene-project', component: SceneView, meta: { layout: 'shell', sceneKey: 'project-record' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
+    { path: '/workbench', name: 'workbench', component: WorkbenchView, meta: { layout: 'shell' } },
     { path: '/a/:actionId', name: 'action', component: ActionView, meta: { layout: 'shell' } },
     { path: '/r/:model/:id', name: 'record', component: RecordView, meta: { layout: 'shell' } },
   ],

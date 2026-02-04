@@ -20,10 +20,10 @@
     <StatusPanel
       v-else-if="status === 'error'"
       title="Request failed"
-      :message="errorCode ? `code=${errorCode} · ${error}` : error"
-      :trace-id="traceId"
-      :error-code="errorCode"
-      :hint="errorHint"
+      :message="error?.code ? `code=${error.code} · ${error.message}` : error?.message"
+      :trace-id="error?.traceId || traceId"
+      :error-code="error?.code"
+      :hint="error?.hint"
       variant="error"
       :on-retry="reload"
     />
@@ -64,7 +64,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ApiError } from '../api/client';
 import { readRecordRaw, writeRecordV6Raw } from '../api/data';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import { deriveRecordStatus } from '../app/view_state';
@@ -73,13 +72,13 @@ import FieldValue from '../components/FieldValue.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { isHudEnabled } from '../config/debug';
+import { useStatus } from '../composables/useStatus';
 
 const route = useRoute();
 const router = useRouter();
-const error = ref('');
-const errorCode = ref<number | null>(null);
 const traceId = ref('');
 const lastTraceId = ref('');
+const { error, clearError, setError } = useStatus();
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error' | 'editing' | 'saving'>('idle');
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
 const draftName = ref('');
@@ -103,12 +102,6 @@ const statusLabel = computed(() => {
   if (status.value === 'empty') return 'Empty';
   return 'Ready';
 });
-const errorHint = computed(() => {
-  if (errorCode.value === 401) return 'Check login session and token.';
-  if (errorCode.value === 403) return 'Check access rights for this record.';
-  if (errorCode.value === 404) return 'Record not found.';
-  return '';
-});
 const statusTone = computed(() => {
   if (status.value === 'error') return 'danger';
   if (status.value === 'editing' || status.value === 'saving') return 'warn';
@@ -126,8 +119,7 @@ const hudEntries = computed(() => [
 ]);
 
 async function load() {
-  error.value = '';
-  errorCode.value = null;
+  clearError();
   traceId.value = '';
   fields.value = [];
   status.value = 'loading';
@@ -137,8 +129,8 @@ async function load() {
   const startedAt = Date.now();
 
   if (!model.value || !recordId.value) {
-    error.value = 'Missing model or id';
-    status.value = deriveRecordStatus({ error: error.value, fieldsLength: 0 });
+    setError(new Error('Missing model or id'), 'Missing model or id');
+    status.value = deriveRecordStatus({ error: error.value?.message || '', fieldsLength: 0 });
     return;
   }
 
@@ -146,7 +138,7 @@ async function load() {
     const view = await resolveView(model.value, 'form');
     const layout = view?.layout;
     if (!layout) {
-      error.value = 'Missing view layout';
+      setError(new Error('Missing view layout'), 'Missing view layout');
       status.value = 'empty';
       lastLatencyMs.value = Date.now() - startedAt;
       return;
@@ -183,15 +175,10 @@ async function load() {
     }
     lastLatencyMs.value = Date.now() - startedAt;
   } catch (err) {
-    if (err instanceof ApiError) {
-      traceId.value = err.traceId ?? '';
-      lastTraceId.value = err.traceId ?? '';
-      errorCode.value = err.status ?? null;
-      error.value = err.message;
-    } else {
-      error.value = err instanceof Error ? err.message : 'failed to load record';
-    }
-    status.value = deriveRecordStatus({ error: error.value, fieldsLength: 0 });
+    setError(err, 'failed to load record');
+    traceId.value = error.value?.traceId || '';
+    lastTraceId.value = error.value?.traceId || '';
+    status.value = deriveRecordStatus({ error: error.value?.message || '', fieldsLength: 0 });
     lastLatencyMs.value = Date.now() - startedAt;
   }
 }
@@ -224,8 +211,7 @@ async function save() {
   if (status.value !== 'editing') {
     return;
   }
-  error.value = '';
-  errorCode.value = null;
+  clearError();
   traceId.value = '';
   status.value = 'saving';
   lastIntent.value = 'api.data.write';
@@ -248,14 +234,9 @@ async function save() {
     lastLatencyMs.value = Date.now() - startedAt;
     await load();
   } catch (err) {
-    if (err instanceof ApiError) {
-      traceId.value = err.traceId ?? '';
-      lastTraceId.value = err.traceId ?? '';
-      errorCode.value = err.status ?? null;
-      error.value = err.message;
-    } else {
-      error.value = err instanceof Error ? err.message : 'failed to save record';
-    }
+    setError(err, 'failed to save record');
+    traceId.value = error.value?.traceId || '';
+    lastTraceId.value = error.value?.traceId || '';
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
   }

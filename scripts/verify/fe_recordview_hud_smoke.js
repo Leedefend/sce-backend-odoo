@@ -114,6 +114,8 @@ async function main() {
   if (listResp.status >= 400 || !listResp.body.ok) {
     throw new Error(`list failed: status=${listResp.status}`);
   }
+  const listMeta = listResp.body.meta || {};
+  const listTraceOk = Boolean(listMeta.trace_id);
   const listData = unwrap(listResp.body);
   const firstRecord = (listData.records || [])[0];
   if (!firstRecord || !firstRecord.id) {
@@ -134,11 +136,13 @@ async function main() {
   const latencyMs = Date.now() - writeStart;
   const writeMeta = writeResp.body.meta || {};
 
-  const hudFieldsOk = Boolean(writeMeta.trace_id && writeMeta.write_mode);
+  const hudFieldsOk = Boolean(writeMeta.trace_id && writeMeta.write_mode && listTraceOk);
   const footerMetaOk = Boolean(recordId && latencyMs >= 0);
 
+  summary.push(`list_trace_ok: ${listTraceOk ? 'true' : 'false'}`);
   summary.push(`hud_fields_ok: ${hudFieldsOk ? 'true' : 'false'}`);
   summary.push(`footer_meta_ok: ${footerMetaOk ? 'true' : 'false'}`);
+  summary.push(`list_trace_id: ${listMeta.trace_id || ''}`);
   summary.push(`trace_id: ${writeMeta.trace_id || ''}`);
   summary.push(`write_mode: ${writeMeta.write_mode || ''}`);
   summary.push(`record_id: ${recordId}`);

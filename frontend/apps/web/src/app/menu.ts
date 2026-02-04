@@ -30,6 +30,21 @@ export function findActionMeta(nodes: NavNode[], actionId: number): NavMeta | nu
   return null;
 }
 
+export function findActionNodeByModel(nodes: NavNode[], model: string): NavNode | null {
+  for (const node of nodes) {
+    if (node.meta?.model === model && node.meta?.action_id) {
+      return node;
+    }
+    if (node.children?.length) {
+      const found = findActionNodeByModel(node.children, model);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+}
+
 export function resolveMenu(nodes: NavNode[], menuId: number): NavMeta {
   const node = findMenuNode(nodes, menuId);
   if (!node?.meta?.action_id) {

@@ -20,7 +20,27 @@ function generateTraceId() {
   return `trace_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-export async function apiRequest<T>(path: string, options: RequestInit = {}) {
+function extractTraceIdFromBody(body: unknown) {
+  if (!body || typeof body !== 'object') {
+    return undefined;
+  }
+  const raw = body as {
+    meta?: { trace_id?: string; traceId?: string };
+    trace_id?: string;
+    traceId?: string;
+  };
+  return raw.meta?.trace_id || raw.meta?.traceId || raw.trace_id || raw.traceId;
+}
+
+function resolveTraceId(response: Response, body: unknown, fallback: string) {
+  const headerTrace =
+    response.headers.get('x-trace-id') ||
+    response.headers.get('x-request-id') ||
+    response.headers.get('x-odoo-trace-id');
+  return headerTrace || extractTraceIdFromBody(body) || fallback;
+}
+
+export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) {
   const session = useSessionStore();
   const headers = new Headers(options.headers ?? {});
   const existingTrace = headers.get('x-trace-id');
@@ -118,23 +138,33 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     let message = `request failed: ${response.status}`;
-    let traceId: string | undefined;
+    let traceIdFromBody: string | undefined;
+    let body: unknown;
     try {
-      const body = await response.json();
-      message = body?.error?.message || body?.message || message;
-      traceId = body?.meta?.trace_id || body?.meta?.traceId || body?.trace_id;
+      body = await response.json();
+      const payload = body as { error?: { message?: string }; message?: string };
+      message = payload?.error?.message || payload?.message || message;
+      traceIdFromBody = extractTraceIdFromBody(body);
     } catch {
       const text = await response.text();
       if (text) {
         message = text;
       }
     }
-    throw new ApiError(message, response.status, traceId);
+    const resolvedTrace = resolveTraceId(response, body, traceId);
+    throw new ApiError(message, response.status, traceIdFromBody || resolvedTrace);
   }
 
   if (response.status === 204) {
-    return undefined as T;
+    return { body: undefined as T, traceId };
   }
 
-  return (await response.json()) as T;
+  const body = (await response.json()) as T;
+  const resolvedTrace = resolveTraceId(response, body, traceId);
+  return { body, traceId: resolvedTrace };
+}
+
+export async function apiRequest<T>(path: string, options: RequestInit = {}) {
+  const response = await apiRequestRaw<T>(path, options);
+  return response.body as T;
 }
