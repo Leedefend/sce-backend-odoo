@@ -29,7 +29,18 @@
       </div>
       <div class="sort">
         <span class="label">Sort</span>
-        <span class="value">{{ sortLabel || 'default' }}</span>
+        <div class="sort-options">
+          <button
+            v-for="opt in sortOptions"
+            :key="opt.value"
+            type="button"
+            class="sort-option"
+            :class="{ active: opt.value === sortValue }"
+            @click="onSort(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
       </div>
     </section>
 
@@ -91,8 +102,11 @@ const props = defineProps<{
   onReload: () => void;
   onRowClick: (row: Record<string, unknown>) => void;
   onSearch: (value: string) => void;
+  onSort: (value: string) => void;
   sortLabel?: string;
   searchTerm?: string;
+  sortOptions?: Array<{ label: string; value: string }>;
+  sortValue?: string;
 }>();
 
 const statusLabel = computed(() => {
@@ -197,8 +211,25 @@ function submitSearch() {
   color: #94a3b8;
 }
 
-.sort .value {
-  font-weight: 600;
+.sort-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.sort-option {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #f8fafc;
+  font-size: 12px;
+  color: #475569;
+}
+
+.sort-option.active {
+  background: #111827;
+  color: #f8fafc;
 }
 
 .table {

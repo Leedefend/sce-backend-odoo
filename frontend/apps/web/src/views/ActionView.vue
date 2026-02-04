@@ -23,9 +23,12 @@
       :columns="columns"
       :records="records"
       :sort-label="sortLabel"
+      :sort-options="sortOptions"
+      :sort-value="sortValue"
       :search-term="searchTerm"
       :on-reload="reload"
       :on-search="handleSearch"
+      :on-sort="handleSort"
       :on-row-click="handleRowClick"
     />
 
@@ -62,6 +65,7 @@ const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const searchTerm = ref('');
+const sortValue = ref('');
 const columns = ref<string[]>([]);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -79,13 +83,13 @@ const title = computed(() => {
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const listTitle = computed(() => actionMeta.value?.name || title.value);
-const sortLabel = computed(() => {
-  const order = (actionMeta.value as any)?.order;
-  if (typeof order === 'string' && order.trim()) {
-    return order;
-  }
-  return 'id asc';
-});
+const sortLabel = computed(() => sortValue.value || 'id asc');
+const sortOptions = computed(() => [
+  { label: 'Name ↑', value: 'name asc' },
+  { label: 'Name ↓', value: 'name desc' },
+  { label: 'Updated ↓', value: 'write_date desc' },
+  { label: 'Updated ↑', value: 'write_date asc' },
+]);
 const subtitle = computed(() => `${records.value.length} records · sorted by ${sortLabel.value}`);
 const statusLabel = computed(() => {
   if (status.value === 'loading') return 'Loading';
@@ -119,6 +123,7 @@ const hudEntries = computed(() => [
   { label: 'menu_id', value: menuId.value || '-' },
   { label: 'model', value: model.value || '-' },
   { label: 'view_mode', value: viewMode.value || '-' },
+  { label: 'order', value: sortLabel.value || '-' },
   { label: 'last_intent', value: lastIntent.value || '-' },
   { label: 'write_mode', value: lastWriteMode.value || '-' },
   { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
@@ -206,6 +211,14 @@ async function load() {
     const { contract, meta } = await resolveAction(session.menuTree, actionId.value, actionMeta.value);
     if (meta) {
       session.setActionMeta(meta);
+    }
+    if (!sortValue.value) {
+      const order = (meta as any)?.order;
+      if (typeof order === 'string' && order.trim()) {
+        sortValue.value = order;
+      } else {
+        sortValue.value = 'id asc';
+      }
     }
     const policy = evaluateCapabilityPolicy({ source: meta, available: session.capabilities });
     if (policy.state !== 'enabled') {
@@ -303,6 +316,11 @@ function reload() {
 
 function handleSearch(value: string) {
   searchTerm.value = value;
+  load();
+}
+
+function handleSort(value: string) {
+  sortValue.value = value;
   load();
 }
 
