@@ -166,14 +166,14 @@ git branch --show-current
 
 以下命令 **任何情况下都禁止**：
 
-* ❌ `git push`
+* ❌ `git push`（**除非** 通过 `make pr.push` / `make branch.cleanup.feature` 执行）
 * ❌ `git push --force / -f`
 * ❌ `git reset --hard`
 * ❌ `git rebase`
 * ❌ `git cherry-pick`
 * ❌ `git merge`
 * ❌ `git tag`
-* ❌ `git branch -d / -D`
+* ❌ `git branch -d / -D`（**除非** 通过 `make branch.cleanup.feature` 执行）
 * ❌ `git worktree`
 * ❌ `git config`
 * ❌ `git clean -fdx`
@@ -342,4 +342,3 @@ artifacts/codex/<branch>/<timestamp>/
 > 越权即停。**
 
 ---
-
