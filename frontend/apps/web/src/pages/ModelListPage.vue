@@ -17,6 +17,7 @@
       title="Request failed"
       :message="error"
       :trace-id="traceId"
+      :error-code="errorCode"
       variant="error"
       :on-retry="reload"
     />
@@ -65,6 +66,7 @@ const router = useRouter();
 const session = useSessionStore();
 
 const error = ref('');
+const errorCode = ref<number | null>(null);
 const traceId = ref('');
 const loading = ref(false);
 const records = ref<Array<Record<string, unknown>>>([]);
@@ -91,6 +93,7 @@ function pickColumns(rows: Array<Record<string, unknown>>) {
 
 async function load() {
   error.value = '';
+  errorCode.value = null;
   traceId.value = '';
   loading.value = true;
 
@@ -133,6 +136,7 @@ async function load() {
   } catch (err) {
     if (err instanceof ApiError) {
       traceId.value = err.traceId ?? '';
+      errorCode.value = err.status ?? null;
       error.value = err.message;
     } else {
       error.value = err instanceof Error ? err.message : 'failed to load list';

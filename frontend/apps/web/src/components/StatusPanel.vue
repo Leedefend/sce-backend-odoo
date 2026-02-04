@@ -2,13 +2,25 @@
   <section class="panel" :class="variant">
     <h2>{{ title }}</h2>
     <p v-if="message">{{ message }}</p>
-    <p v-if="traceId" class="trace">Trace: {{ traceId }}</p>
+    <div v-if="variant === 'error'" class="error-meta">
+      <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
+      <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
+      <p v-if="hint" class="trace">Hint: {{ hint }}</p>
+    </div>
     <button v-if="onRetry" @click="onRetry">Retry</button>
   </section>
 </template>
 
 <script setup lang="ts">
-defineProps<{ title: string; message?: string; traceId?: string; variant?: 'error' | 'info'; onRetry?: () => void }>();
+defineProps<{
+  title: string;
+  message?: string;
+  traceId?: string;
+  errorCode?: number | null;
+  hint?: string;
+  variant?: 'error' | 'info';
+  onRetry?: () => void;
+}>();
 </script>
 
 <style scoped>
@@ -25,6 +37,11 @@ defineProps<{ title: string; message?: string; traceId?: string; variant?: 'erro
 .panel.error {
   border-color: #fecaca;
   background: #fff1f2;
+}
+
+.error-meta {
+  display: grid;
+  gap: 4px;
 }
 
 .trace {
