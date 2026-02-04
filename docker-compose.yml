@@ -65,6 +65,8 @@ services:
 
       ADMIN_PASSWD: ${ADMIN_PASSWD}
       JWT_SECRET: ${JWT_SECRET}
+      SC_BOOTSTRAP_SECRET: ${SC_BOOTSTRAP_SECRET}
+      SC_BOOTSTRAP_LOGIN: ${SC_BOOTSTRAP_LOGIN}
 
       REDIS_HOST: redis
       # === 新增：runtime 明确配置出口 ===

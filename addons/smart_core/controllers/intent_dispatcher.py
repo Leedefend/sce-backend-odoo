@@ -268,7 +268,7 @@ class IntentDispatcher(http.Controller):
                 if request.session.db != effective_db:
                     request.session.db = effective_db
 
-            is_anon = _is_anon_req(hdr)
+            is_anon = _is_anon_req(hdr) or intent_name == "session.bootstrap"
 
             # 统一 payload 下发给路由
             payload = {
@@ -293,7 +293,10 @@ class IntentDispatcher(http.Controller):
             )
 
             # ---------- 权限校验 ----------
-            if not (is_anon and intent_name in ANON_ALLOWLIST):
+            skip_auth = is_anon and intent_name in ANON_ALLOWLIST
+            if intent_name == "session.bootstrap":
+                skip_auth = True
+            if not skip_auth:
                 check_intent_permission(ctx)
 
             # ---------- 分发（关键：传递正确的 ctx） ----------
