@@ -88,6 +88,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
             return self._err(404, f"未知模型: {model}")
 
         vals = self._get_vals(params)
+        dry_run = bool(params.get("dry_run"))
         if not vals:
             return self._err(400, "缺少参数 vals")
 
@@ -118,7 +119,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
             try:
                 env_model.check_access_rights("write")
                 rec.check_access_rule("write")
-                rec.write(safe_vals)
+                if not dry_run:
+                    rec.write(safe_vals)
             except AccessError as ae:
                 _logger.warning("api.data.write AccessError on %s: %s", model, ae)
                 return self._err(403, "无写入权限")
@@ -131,6 +133,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 "model": model,
                 "written_fields": sorted(safe_vals.keys()),
                 "values": safe_vals,
+                "dry_run": dry_run,
             }
             meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell"}
             return {"ok": True, "data": data, "meta": meta}
@@ -138,7 +141,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
         if intent == "api.data.create":
             try:
                 env_model.check_access_rights("create")
-                rec = env_model.create(safe_vals)
+                rec = env_model.create(safe_vals) if not dry_run else None
             except AccessError as ae:
                 _logger.warning("api.data.create AccessError on %s: %s", model, ae)
                 return self._err(403, "无创建权限")
@@ -147,10 +150,11 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 return self._err(500, str(e))
 
             data = {
-                "id": rec.id,
+                "id": rec.id if rec else 0,
                 "model": model,
                 "written_fields": sorted(safe_vals.keys()),
                 "values": safe_vals,
+                "dry_run": dry_run,
             }
             meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell"}
             return {"ok": True, "data": data, "meta": meta}

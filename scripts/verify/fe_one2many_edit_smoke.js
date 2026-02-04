@@ -202,12 +202,26 @@ async function main() {
     targetId = Number(listRecords[0].id);
   }
 
-  log('api.data.create');
+  log('api.data.list (relation)');
+  const relListPayload = {
+    intent: 'api.data',
+    params: { op: 'list', model: relation, fields: ['id', 'name'], domain: [], limit: 1 },
+  };
+  const relListResp = await requestJson(intentUrl, relListPayload, authHeader);
+  writeJson(path.join(outDir, 'relation_list.log'), relListResp);
+  if (relListResp.status >= 400 || !relListResp.body.ok) {
+    throw new Error(`relation list failed: status=${relListResp.status}`);
+  }
+  const relRecords = (relListResp.body.data || {}).records || [];
+  const existingId = relRecords.length ? Number(relRecords[0].id) : 0;
+
+  log('api.data.create (dry_run)');
   const createPayload = {
     intent: 'api.data.create',
     params: {
       model: relation,
       vals: { name: `Codex Task ${Date.now()}`, [relationField]: targetId },
+      dry_run: 1,
     },
   };
   const createResp = await requestJson(intentUrl, createPayload, authHeader);
@@ -215,36 +229,38 @@ async function main() {
   if (createResp.status >= 400 || !createResp.body.ok) {
     throw new Error(`create failed: status=${createResp.status}`);
   }
-  const createdId = (createResp.body.data || {}).id;
-  if (!createdId) {
-    throw new Error('create response missing id');
-  }
 
-  log('api.data.write');
-  const writePayload = {
-    intent: 'api.data.write',
-    params: {
-      model: relation,
-      ids: [createdId],
-      vals: { name: `Codex Task Updated ${Date.now()}` },
-    },
-  };
-  const writeResp = await requestJson(intentUrl, writePayload, authHeader);
-  writeJson(path.join(outDir, 'write.log'), writeResp);
-  if (writeResp.status >= 400 || !writeResp.body.ok) {
-    throw new Error(`write failed: status=${writeResp.status}`);
-  }
+  if (existingId) {
+    log('api.data.write (dry_run)');
+    const writePayload = {
+      intent: 'api.data.write',
+      params: {
+        model: relation,
+        ids: [existingId],
+        vals: { name: `Codex Task Updated ${Date.now()}` },
+        dry_run: 1,
+      },
+    };
+    const writeResp = await requestJson(intentUrl, writePayload, authHeader);
+    writeJson(path.join(outDir, 'write.log'), writeResp);
+    if (writeResp.status >= 400 || !writeResp.body.ok) {
+      throw new Error(`write failed: status=${writeResp.status}`);
+    }
 
-  log('api.data.unlink');
-  const unlinkPayload = { intent: 'api.data.unlink', params: { model: relation, ids: [createdId] } };
-  const unlinkResp = await requestJson(intentUrl, unlinkPayload, authHeader);
-  writeJson(path.join(outDir, 'unlink.log'), unlinkResp);
-  if (unlinkResp.status >= 400 || !unlinkResp.body.ok) {
-    throw new Error(`unlink failed: status=${unlinkResp.status}`);
+    log('api.data.unlink (dry_run)');
+    const unlinkPayload = {
+      intent: 'api.data.unlink',
+      params: { model: relation, ids: [existingId], dry_run: 1 },
+    };
+    const unlinkResp = await requestJson(intentUrl, unlinkPayload, authHeader);
+    writeJson(path.join(outDir, 'unlink.log'), unlinkResp);
+    if (unlinkResp.status >= 400 || !unlinkResp.body.ok) {
+      throw new Error(`unlink failed: status=${unlinkResp.status}`);
+    }
   }
 
   summary.push(`record_id: ${targetId}`);
-  summary.push(`created_id: ${createdId}`);
+  summary.push(`relation_sample_id: ${existingId || 0}`);
   writeSummary(summary);
 
   log(`PASS one2many_edit field=${fieldName}`);

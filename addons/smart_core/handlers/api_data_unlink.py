@@ -63,6 +63,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             return self._err(404, f"未知模型: {model}")
 
         ids = self._get_ids(params)
+        dry_run = bool(params.get("dry_run"))
         if not ids:
             return self._err(400, "缺少参数 ids")
 
@@ -78,7 +79,8 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         try:
             env_model.check_access_rights("unlink")
             recs.check_access_rule("unlink")
-            recs.unlink()
+            if not dry_run:
+                recs.unlink()
         except AccessError as ae:
             _logger.warning("api.data.unlink AccessError on %s: %s", model, ae)
             return self._err(403, "无删除权限")
@@ -86,6 +88,6 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             _logger.exception("api.data.unlink failed on %s", model)
             return self._err(500, str(e))
 
-        data = {"ids": ids, "model": model}
+        data = {"ids": ids, "model": model, "dry_run": dry_run}
         meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell"}
         return {"ok": True, "data": data, "meta": meta}
