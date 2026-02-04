@@ -158,13 +158,26 @@ function pickColumns(rows: Array<Record<string, unknown>>) {
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
-  const columns = contract?.ui_contract?.columns;
+  const directViews = (contract as any)?.views || (contract as any)?.ui_contract?.views;
+  if (directViews) {
+    const treeBlock = directViews.tree || directViews.list;
+    const treeColumns = treeBlock?.columns;
+    if (Array.isArray(treeColumns) && treeColumns.length) {
+      return treeColumns;
+    }
+    const treeSchema = treeBlock?.columnsSchema || treeBlock?.columns_schema;
+    if (Array.isArray(treeSchema) && treeSchema.length) {
+      return treeSchema.map((col: { name?: string }) => col.name).filter(Boolean);
+    }
+  }
+
+  const columns = (contract as any)?.ui_contract?.columns;
   if (Array.isArray(columns) && columns.length) {
     return columns;
   }
-  const schema = contract?.ui_contract?.columnsSchema;
+  const schema = (contract as any)?.ui_contract?.columnsSchema;
   if (Array.isArray(schema) && schema.length) {
-    return schema.map((col) => col.name).filter(Boolean);
+    return schema.map((col: { name?: string }) => col.name).filter(Boolean);
   }
   const rawFields = contract?.ui_contract_raw?.fields;
   if (rawFields && typeof rawFields === 'object') {
@@ -213,7 +226,8 @@ async function load() {
       session.setActionMeta(meta);
     }
     if (!sortValue.value) {
-      const order = (meta as any)?.order;
+      const viewOrder = (contract as any)?.views?.tree?.order || (contract as any)?.ui_contract?.views?.tree?.order;
+      const order = viewOrder || (meta as any)?.order;
       if (typeof order === 'string' && order.trim()) {
         sortValue.value = order;
       } else {
