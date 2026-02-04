@@ -172,6 +172,7 @@ export async function writeRecordV6Raw(params: {
   id: number;
   values: Record<string, unknown>;
   context?: Record<string, unknown>;
+  ifMatch?: string;
 }) {
   return intentRequestRaw<ApiDataWriteContract>({
     intent: 'api.data.write',
@@ -180,6 +181,7 @@ export async function writeRecordV6Raw(params: {
       id: params.id,
       values: params.values,
       context: params.context ?? {},
+      if_match: params.ifMatch,
     },
   });
 }

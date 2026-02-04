@@ -149,6 +149,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecords, readRecordRaw, writeRecordV6Raw } from '../api/data';
+import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { postChatterMessage } from '../api/chatter';
 import { downloadFile, fileToBase64, uploadFile } from '../api/files';
@@ -317,10 +318,14 @@ async function load() {
     layoutStats.value = analyzeLayout(layout);
 
     const fieldNames = extractFieldNames(layout).filter(Boolean);
+    const readFields = fieldNames.length ? [...fieldNames] : ['*'];
+    if (readFields.length && readFields[0] !== '*' && !readFields.includes('write_date')) {
+      readFields.push('write_date');
+    }
     const read = await readRecordRaw({
       model: model.value,
       ids: [recordId.value],
-      fields: fieldNames.length ? fieldNames : '*',
+      fields: readFields,
     });
 
     const record = read?.data?.records?.[0] ?? null;
@@ -330,7 +335,10 @@ async function load() {
       return;
     }
     recordData.value = record as Record<string, unknown>;
-    fields.value = (fieldNames.length ? fieldNames : Object.keys(record as Record<string, unknown>)).map((name) => ({
+    const displayFields = (fieldNames.length ? fieldNames : Object.keys(record as Record<string, unknown>)).filter(
+      (name) => name !== 'write_date',
+    );
+    fields.value = displayFields.map((name) => ({
       name,
       label: view?.fields?.[name]?.string ?? name,
       value: (record as Record<string, unknown>)[name],
@@ -632,6 +640,7 @@ async function save() {
         model: model.value,
         id: recordId.value,
         values: { name: draftName.value.trim() },
+        ifMatch: recordData.value?.write_date ? String(recordData.value?.write_date) : undefined,
       });
     });
     if (result?.meta?.trace_id) {
@@ -647,7 +656,11 @@ async function save() {
     lastLatencyMs.value = Date.now() - startedAt;
     await load();
   } catch (err) {
-    setError(err, 'failed to save record');
+    if (err instanceof ApiError && err.status === 409) {
+      setError(err, 'Record changed, reload and retry');
+    } else {
+      setError(err, 'failed to save record');
+    }
     traceId.value = error.value?.traceId || '';
     lastTraceId.value = error.value?.traceId || '';
     status.value = 'error';
