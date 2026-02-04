@@ -13,10 +13,9 @@ class LoadModelViewHandler(BaseIntentHandler):
 
         if not model_name or not view_type:
             return {
-                "status": "error",
+                "ok": False,
+                "error": {"code": 400, "message": "缺少必要参数 model 或 view_type"},
                 "code": 400,
-                "message": "缺少必要参数 model 或 view_type",
-                "data": None
             }
 
         View = self.env["ir.ui.view"]
@@ -30,16 +29,19 @@ class LoadModelViewHandler(BaseIntentHandler):
                 # 如果默认视图类型不匹配，则用 search 找对应类型
                 default_view = View.search([("model", "=", model_name), ("type", "=", view_type)], limit=1)
                 if not default_view:
-                    return {"status": "error", "code": 404, "message": f"未找到模型 {model_name} 的 {view_type} 视图"}
+                    return {
+                        "ok": False,
+                        "error": {"code": 404, "message": f"未找到模型 {model_name} 的 {view_type} 视图"},
+                        "code": 404,
+                    }
                 view = self.env[model_name].get_view(view_id=default_view.id, view_type=view_type)
                 
 
             if not view:
                 return {
-                    "status": "error",
+                    "ok": False,
+                    "error": {"code": 404, "message": f"未找到模型 {model_name} 的 {view_type} 视图"},
                     "code": 404,
-                    "message": f"未找到模型 {model_name} 的 {view_type} 视图",
-                    "data": None
                 }
 
 
@@ -54,12 +56,11 @@ class LoadModelViewHandler(BaseIntentHandler):
             result = parser.parse()
 
             # 3. 返回结果
-            return result
+            return {"ok": True, "data": result}
 
         except Exception as e:
             return {
-                "status": "error",
+                "ok": False,
+                "error": {"code": 500, "message": str(e)},
                 "code": 500,
-                "message": str(e),
-                "data": None
             }

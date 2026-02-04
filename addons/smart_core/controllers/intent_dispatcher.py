@@ -307,6 +307,17 @@ class IntentDispatcher(http.Controller):
 
             result = _normalize_result_shape(raw_result)
 
+            # Backward-compat: legacy load_view handlers may return view payload at top-level
+            if intent_name == "load_view" and isinstance(result, dict):
+                data = result.get("data")
+                if not data and any(k in result for k in ("layout", "view_type", "model", "permissions", "fields")):
+                    legacy_data = {
+                        k: result.pop(k)
+                        for k in list(result.keys())
+                        if k not in {"ok", "data", "meta", "code", "error", "status"}
+                    }
+                    result["data"] = legacy_data
+
             # ---------- 统一响应（含 CORS/ETag/304） ----------
             status = 200
             headers = _cors_headers()
