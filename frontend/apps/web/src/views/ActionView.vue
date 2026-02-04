@@ -12,7 +12,22 @@
       </div>
     </header>
 
+    <KanbanPage
+      v-if="viewMode === 'kanban'"
+      :title="listTitle"
+      :status="status"
+      :loading="status === 'loading'"
+      :error-message="errorMessage"
+      :trace-id="traceId"
+      :error="error"
+      :records="records"
+      :fields="kanbanFields"
+      :title-field="kanbanTitleField"
+      :on-reload="reload"
+      :on-card-click="handleRowClick"
+    />
     <ListPage
+      v-else
       :title="listTitle"
       :model="model"
       :status="status"
@@ -23,7 +38,12 @@
       :columns="columns"
       :records="records"
       :sort-label="sortLabel"
+      :sort-options="sortOptions"
+      :sort-value="sortValue"
+      :search-term="searchTerm"
       :on-reload="reload"
+      :on-search="handleSearch"
+      :on-sort="handleSort"
       :on-row-click="handleRowClick"
     />
 
@@ -43,6 +63,7 @@ import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
+import KanbanPage from '../pages/KanbanPage.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
@@ -59,7 +80,10 @@ const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
+const searchTerm = ref('');
+const sortValue = ref('');
 const columns = ref<string[]>([]);
+const kanbanFields = ref<string[]>([]);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
@@ -76,14 +100,19 @@ const title = computed(() => {
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const listTitle = computed(() => actionMeta.value?.name || title.value);
-const sortLabel = computed(() => {
-  const order = (actionMeta.value as any)?.order;
-  if (typeof order === 'string' && order.trim()) {
-    return order;
-  }
-  return 'id asc';
-});
+const sortLabel = computed(() => sortValue.value || 'id asc');
+const sortOptions = computed(() => [
+  { label: 'Name ↑', value: 'name asc' },
+  { label: 'Name ↓', value: 'name desc' },
+  { label: 'Updated ↓', value: 'write_date desc' },
+  { label: 'Updated ↑', value: 'write_date asc' },
+]);
 const subtitle = computed(() => `${records.value.length} records · sorted by ${sortLabel.value}`);
+const kanbanTitleField = computed(() => {
+  const candidates = ['display_name', 'name'];
+  const found = candidates.find((field) => kanbanFields.value.includes(field));
+  return found || kanbanFields.value[0] || 'id';
+});
 const statusLabel = computed(() => {
   if (status.value === 'loading') return 'Loading';
   if (status.value === 'error') return 'Error';
@@ -116,6 +145,7 @@ const hudEntries = computed(() => [
   { label: 'menu_id', value: menuId.value || '-' },
   { label: 'model', value: model.value || '-' },
   { label: 'view_mode', value: viewMode.value || '-' },
+  { label: 'order', value: sortLabel.value || '-' },
   { label: 'last_intent', value: lastIntent.value || '-' },
   { label: 'write_mode', value: lastWriteMode.value || '-' },
   { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
@@ -150,19 +180,53 @@ function pickColumns(rows: Array<Record<string, unknown>>) {
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
-  const columns = contract?.ui_contract?.columns;
+  const directViews = (contract as any)?.views || (contract as any)?.ui_contract?.views;
+  if (directViews) {
+    const treeBlock = directViews.tree || directViews.list;
+    const treeColumns = treeBlock?.columns;
+    if (Array.isArray(treeColumns) && treeColumns.length) {
+      return treeColumns;
+    }
+    const treeSchema = treeBlock?.columnsSchema || treeBlock?.columns_schema;
+    if (Array.isArray(treeSchema) && treeSchema.length) {
+      return treeSchema.map((col: { name?: string }) => col.name).filter(Boolean);
+    }
+  }
+
+  const columns = (contract as any)?.ui_contract?.columns;
   if (Array.isArray(columns) && columns.length) {
     return columns;
   }
-  const schema = contract?.ui_contract?.columnsSchema;
+  const schema = (contract as any)?.ui_contract?.columnsSchema;
   if (Array.isArray(schema) && schema.length) {
-    return schema.map((col) => col.name).filter(Boolean);
+    return schema.map((col: { name?: string }) => col.name).filter(Boolean);
   }
   const rawFields = contract?.ui_contract_raw?.fields;
   if (rawFields && typeof rawFields === 'object') {
     return Object.keys(rawFields);
   }
   return [];
+}
+
+function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContract>>) {
+  const directViews = (contract as any)?.views || (contract as any)?.ui_contract?.views;
+  if (directViews) {
+    const kanbanBlock = directViews.kanban;
+    if (Array.isArray(kanbanBlock?.fields) && kanbanBlock.fields.length) {
+      return kanbanBlock.fields;
+    }
+  }
+  const fieldsMap = (contract as any)?.fields || (contract as any)?.ui_contract_raw?.fields;
+  if (fieldsMap && typeof fieldsMap === 'object') {
+    const preferred = ['display_name', 'name', 'stage_id', 'user_id', 'partner_id', 'write_date', 'create_date'];
+    const available = Object.keys(fieldsMap);
+    const picked = preferred.filter((field) => available.includes(field));
+    if (picked.length) {
+      return picked;
+    }
+    return available.slice(0, 6);
+  }
+  return ['name', 'id'];
 }
 
 function getActionType(meta: unknown) {
@@ -191,6 +255,7 @@ async function load() {
   lastLatencyMs.value = null;
   records.value = [];
   columns.value = [];
+  kanbanFields.value = [];
   const startedAt = Date.now();
 
   if (!actionId.value) {
@@ -203,6 +268,15 @@ async function load() {
     const { contract, meta } = await resolveAction(session.menuTree, actionId.value, actionMeta.value);
     if (meta) {
       session.setActionMeta(meta);
+    }
+    if (!sortValue.value) {
+      const viewOrder = (contract as any)?.views?.tree?.order || (contract as any)?.ui_contract?.views?.tree?.order;
+      const order = viewOrder || (meta as any)?.order;
+      if (typeof order === 'string' && order.trim()) {
+        sortValue.value = order;
+      } else {
+        sortValue.value = 'id asc';
+      }
     }
     const policy = evaluateCapabilityPolicy({ source: meta, available: session.capabilities });
     if (policy.state !== 'enabled') {
@@ -246,13 +320,18 @@ async function load() {
       return;
     }
     const contractColumns = extractColumnsFromContract(contract);
+    const kanbanContractFields = extractKanbanFields(contract);
+    kanbanFields.value = kanbanContractFields;
+    const requestedFields = viewMode.value === 'kanban' ? kanbanContractFields : contractColumns;
     const result = await listRecordsRaw({
       model: resolvedModel,
-      fields: contractColumns.length ? contractColumns : ['id', 'name'],
+      fields: requestedFields.length ? requestedFields : ['id', 'name'],
       domain: normalizeDomain(meta?.domain),
       context: mergeContext(meta?.context),
       limit: 40,
       offset: 0,
+      search_term: searchTerm.value.trim() || undefined,
+      order: sortLabel.value,
     });
     records.value = result.data?.records ?? [];
     columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
@@ -293,6 +372,16 @@ function handleRowClick(row: Record<string, unknown>) {
 }
 
 function reload() {
+  load();
+}
+
+function handleSearch(value: string) {
+  searchTerm.value = value;
+  load();
+}
+
+function handleSort(value: string) {
+  sortValue.value = value;
   load();
 }
 

@@ -245,6 +245,17 @@ class ApiDataHandler(BaseIntentHandler):
         offset = self._get_int(p, "offset", 0)
         order = self._get_str(p, "order", "")
         domain = self._normalize_domain(self._dig(p, "domain"))
+        search_term = self._get_str(p, "search_term", "").strip()
+
+        if search_term:
+            try:
+                search_id = int(search_term)
+            except Exception:
+                search_id = None
+            if search_id is not None:
+                domain = domain + ["|", ("name", "ilike", search_term), ("id", "=", search_id)]
+            else:
+                domain = domain + [("name", "ilike", search_term)]
 
         env_model = self.env[model].with_context(ctx)
         if sudo:

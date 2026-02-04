@@ -55,6 +55,9 @@ class ApiDataWriteHandler(BaseIntentHandler):
         vals = params.get("vals") or params.get("values") or {}
         return vals if isinstance(vals, dict) else {}
 
+    def _get_if_match(self, params: Dict[str, Any]) -> str:
+        return str(params.get("if_match") or params.get("ifMatch") or params.get("write_date") or "").strip()
+
     def _get_id(self, params: Dict[str, Any]) -> int:
         for key in ("id", "record_id"):
             if key in params:
@@ -117,6 +120,11 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 return self._err(404, "记录不存在")
 
             try:
+                if_match = self._get_if_match(params)
+                if if_match:
+                    current = rec.write_date and rec.write_date.strftime("%Y-%m-%d %H:%M:%S") or ""
+                    if current and current != if_match:
+                        return {"ok": False, "error": {"code": "CONFLICT", "message": "Record changed"}, "code": 409}
                 env_model.check_access_rights("write")
                 rec.check_access_rule("write")
                 if not dry_run:

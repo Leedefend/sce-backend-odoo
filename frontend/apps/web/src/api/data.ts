@@ -13,6 +13,7 @@ export async function listRecords(params: {
   limit?: number;
   offset?: number;
   order?: string;
+  search_term?: string;
   context?: Record<string, unknown>;
 }) {
   const payload: ApiDataListRequest = {
@@ -23,6 +24,7 @@ export async function listRecords(params: {
     limit: params.limit ?? 40,
     offset: params.offset ?? 0,
     order: params.order ?? '',
+    search_term: params.search_term,
     context: params.context ?? {},
   };
   return intentRequest<ApiDataListResult>({
@@ -38,6 +40,7 @@ export async function listRecordsRaw(params: {
   limit?: number;
   offset?: number;
   order?: string;
+  search_term?: string;
   context?: Record<string, unknown>;
 }) {
   const payload: ApiDataListRequest = {
@@ -48,6 +51,7 @@ export async function listRecordsRaw(params: {
     limit: params.limit ?? 40,
     offset: params.offset ?? 0,
     order: params.order ?? '',
+    search_term: params.search_term,
     context: params.context ?? {},
   };
   return intentRequestRaw<ApiDataListResult>({
@@ -172,6 +176,7 @@ export async function writeRecordV6Raw(params: {
   id: number;
   values: Record<string, unknown>;
   context?: Record<string, unknown>;
+  ifMatch?: string;
 }) {
   return intentRequestRaw<ApiDataWriteContract>({
     intent: 'api.data.write',
@@ -180,6 +185,7 @@ export async function writeRecordV6Raw(params: {
       id: params.id,
       values: params.values,
       context: params.context ?? {},
+      if_match: params.ifMatch,
     },
   });
 }
