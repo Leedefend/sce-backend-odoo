@@ -12,16 +12,18 @@ const display = computed(() => {
   const field = props.field;
   const value = props.value;
 
-  if (field?.ttype === 'boolean') {
+  const fieldType = field?.ttype || field?.type;
+
+  if (fieldType === 'boolean') {
     return value ? 'Yes' : 'No';
   }
 
-  if (field?.ttype === 'selection' && Array.isArray(field.selection)) {
+  if (fieldType === 'selection' && Array.isArray(field.selection)) {
     const match = field.selection.find((item) => item[0] === value);
     return match ? match[1] : value ?? '';
   }
 
-  if (field?.ttype === 'many2one') {
+  if (fieldType === 'many2one') {
     if (Array.isArray(value)) {
       return value[1] ?? value[0];
     }

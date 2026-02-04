@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, watchEffect } from 'vue';
 import type { NavNode } from '@sc/schema';
-import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
+import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 
 const props = defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[] }>();
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
@@ -98,23 +98,13 @@ watchEffect(() => {
 });
 
 function isBlocked(node: NavNode) {
-  const required = getRequiredCapabilities(node.meta);
-  if (!required.length) {
-    return false;
-  }
-  return !checkCapabilities(required, props.capabilities).ok;
+  return evaluateCapabilityPolicy({ source: node.meta, available: props.capabilities }).state !== 'enabled';
 }
 
 function blockedTitle(node: NavNode) {
-  const required = getRequiredCapabilities(node.meta);
-  if (!required.length) {
-    return undefined;
-  }
-  const missing = checkCapabilities(required, props.capabilities).missing;
-  if (!missing.length) {
-    return undefined;
-  }
-  return `Missing capabilities: ${missing.join(', ')}`;
+  const policy = evaluateCapabilityPolicy({ source: node.meta, available: props.capabilities });
+  const tip = capabilityTooltip(policy);
+  return tip || undefined;
 }
 
 // 调试：打印接收到的节点

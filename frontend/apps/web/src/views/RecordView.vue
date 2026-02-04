@@ -76,6 +76,7 @@
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
         :record="recordData"
+        :parent-id="recordId"
         :editing="status === 'editing'"
         :draft-name="draftName"
         :edit-mode="status === 'editing' ? 'name' : 'none'"
@@ -119,10 +120,16 @@
           <div class="chatter-block">
             <h4>Attachments</h4>
             <p v-if="!chatterAttachments.length" class="meta">No attachments yet.</p>
+            <div class="chatter-upload">
+              <input type="file" @change="onAttachmentSelected" />
+              <span v-if="chatterUploading" class="meta">Uploading…</span>
+              <span v-if="chatterUploadError" class="meta">{{ chatterUploadError }}</span>
+            </div>
             <ul v-else class="chatter-list">
               <li v-for="att in chatterAttachments" :key="String(att.id)" class="chatter-item">
                 <div class="chatter-title">{{ att.name || 'Attachment' }}</div>
                 <div class="chatter-meta">{{ att.mimetype || 'unknown' }} · {{ att.file_size || '-' }}</div>
+                <button class="ghost" type="button" @click="downloadAttachment(att)">Download</button>
               </li>
             </ul>
           </div>
@@ -144,6 +151,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { listRecords, readRecordRaw, writeRecordV6Raw } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import { postChatterMessage } from '../api/chatter';
+import { downloadFile, fileToBase64, uploadFile } from '../api/files';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import { deriveRecordStatus } from '../app/view_state';
 import type { ViewButton, ViewContract } from '@sc/schema';
@@ -154,7 +162,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { useStatus } from '../composables/useStatus';
 import { useSessionStore } from '../stores/session';
-import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
+import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 
 const route = useRoute();
@@ -171,6 +179,8 @@ const chatterAttachments = ref<Array<Record<string, unknown>>>([]);
 const chatterError = ref('');
 const chatterDraft = ref('');
 const chatterPosting = ref(false);
+const chatterUploading = ref(false);
+const chatterUploadError = ref('');
 const draftName = ref('');
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -253,27 +263,16 @@ const hudEntries = computed(() => [
 ]);
 
 function buttonState(btn: ViewButton) {
-  const requiredCaps = getRequiredCapabilities(btn);
-  const capCheck = checkCapabilities(requiredCaps, session.capabilities);
-  if (!capCheck.ok) {
-    return { state: 'disabled_capability', missing: capCheck.missing };
-  }
-  const groups = Array.isArray(btn.groups) ? btn.groups : [];
-  if (groups.length && !groups.some((g) => userGroups.value.includes(g))) {
-    return { state: 'disabled_permission', missing: [] };
-  }
-  return { state: 'enabled', missing: [] };
+  return evaluateCapabilityPolicy({
+    source: btn,
+    available: session.capabilities,
+    groups: Array.isArray(btn.groups) ? btn.groups : [],
+    userGroups: userGroups.value,
+  });
 }
 
 function buttonTooltip(btn: ViewButton) {
-  const state = buttonState(btn);
-  if (state.state === 'disabled_capability') {
-    return `Missing capabilities: ${state.missing.join(', ')}`;
-  }
-  if (state.state === 'disabled_permission') {
-    return 'Permission required';
-  }
-  return '';
+  return capabilityTooltip(buttonState(btn));
 }
 
 function stripHtml(input: string) {
@@ -289,6 +288,7 @@ async function load() {
   chatterMessages.value = [];
   chatterAttachments.value = [];
   chatterError.value = '';
+  chatterUploadError.value = '';
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
   status.value = 'loading';
   lastIntent.value = 'api.data.read';
@@ -410,6 +410,53 @@ async function sendChatter() {
   }
 }
 
+async function onAttachmentSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file || !model.value || !recordId.value) {
+    return;
+  }
+  chatterUploading.value = true;
+  chatterUploadError.value = '';
+  try {
+    const { data, mimetype } = await fileToBase64(file);
+    await uploadFile({
+      model: model.value,
+      res_id: recordId.value,
+      name: file.name,
+      mimetype,
+      data,
+    });
+    await loadChatter();
+  } catch (err) {
+    chatterUploadError.value = err instanceof Error ? err.message : 'Failed to upload file';
+  } finally {
+    chatterUploading.value = false;
+    input.value = '';
+  }
+}
+
+async function downloadAttachment(att: { id?: number; name?: string; mimetype?: string }) {
+  if (!att?.id) return;
+  try {
+    const payload = await downloadFile({ id: Number(att.id) });
+    const binary = atob(payload.datas || '');
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: payload.mimetype || att.mimetype || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = payload.name || att.name || 'download';
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    chatterUploadError.value = err instanceof Error ? err.message : 'Failed to download file';
+  }
+}
+
 function analyzeLayout(layout: ViewContract['layout']) {
   const stats = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
   const countGroup = (group: any) => {
@@ -490,7 +537,9 @@ async function runHeaderButton(btn: ViewButton) {
       meta: { view_id: viewContract.value?.view_id },
     });
     lastLatencyMs.value = Date.now() - startedAt;
-    if (response?.result?.type === 'refresh') {
+    if (response?.effect) {
+      await applyButtonEffect(response.effect);
+    } else if (response?.result?.type === 'refresh') {
       await load();
     } else if (response?.result?.action_id) {
       await router.push({ name: 'action', params: { actionId: response.result.action_id } });
@@ -506,6 +555,39 @@ async function runHeaderButton(btn: ViewButton) {
 
 async function runStatButton(btn: ViewButton) {
   await runHeaderButton(btn);
+}
+
+async function applyButtonEffect(effect: { type: string; target?: Record<string, unknown>; message?: string }) {
+  if (!effect || typeof effect !== 'object') {
+    return;
+  }
+  if (effect.type === 'reload_record') {
+    await load();
+    return;
+  }
+  if (effect.type === 'reload_action') {
+    await load();
+    return;
+  }
+  if (effect.type === 'navigate' && effect.target) {
+    const target = effect.target as { kind?: string; model?: string; id?: number; action_id?: number; url?: string };
+    if (target.kind === 'record' && target.model && target.id) {
+      await router.push({ name: 'record', params: { model: target.model, id: target.id } });
+      return;
+    }
+    if (target.kind === 'action' && target.action_id) {
+      await router.push({ name: 'action', params: { actionId: target.action_id } });
+      return;
+    }
+    if (target.kind === 'url' && target.url) {
+      window.open(target.url, '_blank');
+    }
+    return;
+  }
+  if (effect.type === 'toast' && effect.message) {
+    // eslint-disable-next-line no-console
+    console.info(`[toast] ${effect.message}`);
+  }
 }
 
 function startEdit() {
@@ -768,6 +850,11 @@ onMounted(load);
   border: 1px solid rgba(148, 163, 184, 0.4);
   padding: 10px;
   font-size: 13px;
+}
+.chatter-upload {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 button {
   padding: 10px 14px;

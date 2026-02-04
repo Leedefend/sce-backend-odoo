@@ -7,6 +7,7 @@
         :field="field"
         :descriptor="fields?.[field.name || '']"
         :value="record?.[field.name || '']"
+        :parent-id="parentId"
         :editing="editing"
         :draft-name="draftName"
         :edit-mode="editMode"
@@ -18,6 +19,7 @@
         :group="sub"
         :fields="fields"
         :record="record"
+        :parent-id="parentId"
         :editing="editing"
         :draft-name="draftName"
         :edit-mode="editMode"
@@ -42,6 +44,7 @@ const props = defineProps<{
   group: ViewGroupNode;
   fields?: ViewContract['fields'];
   record?: Record<string, unknown> | null;
+  parentId?: number;
   editing: boolean;
   draftName: string;
   editMode: 'none' | 'name' | 'all';

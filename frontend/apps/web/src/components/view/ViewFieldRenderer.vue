@@ -2,8 +2,16 @@
   <div v-if="!isHidden" class="view-field">
     <label class="view-label">{{ label }}</label>
     <div class="view-value">
+      <ViewRelationalRenderer
+        v-if="isRelational"
+        :ids="relationIds"
+        :model="relationModel"
+        :relation-field="relationField"
+        :parent-id="parentId"
+        :editable="relationalEditable"
+      />
       <input
-        v-if="canEdit && !isSelection"
+        v-else-if="canEdit && !isSelection"
         class="view-input"
         :type="inputType"
         :value="inputValue"
@@ -22,6 +30,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import FieldValue from '../FieldValue.vue';
+import ViewRelationalRenderer from './ViewRelationalRenderer.vue';
 import type { ViewContract } from '@sc/schema';
 
 interface ViewFieldNode {
@@ -36,6 +45,7 @@ const props = defineProps<{
   field: ViewFieldNode;
   descriptor?: ViewContract['fields'][string];
   value: unknown;
+  parentId?: number;
   editing: boolean;
   draftName: string;
   editMode: 'none' | 'name' | 'all';
@@ -51,8 +61,35 @@ const canEdit = computed(() => {
   if (props.editMode === 'name') return isNameField.value;
   return true;
 });
-const isSelection = computed(() => props.descriptor?.ttype === 'selection');
+const fieldType = computed(() => props.descriptor?.ttype || props.descriptor?.type || '');
+const isSelection = computed(() => fieldType.value === 'selection');
 const selectionOptions = computed(() => (Array.isArray(props.descriptor?.selection) ? props.descriptor?.selection : []));
+const isRelational = computed(() => ['one2many', 'many2many'].includes(String(fieldType.value)));
+const relationIds = computed(() => {
+  if (!Array.isArray(props.value)) return [];
+  const ids = [];
+  for (const item of props.value) {
+    if (typeof item === 'number') {
+      ids.push(item);
+      continue;
+    }
+    if (Array.isArray(item) && typeof item[0] === 'number') {
+      ids.push(item[0]);
+      continue;
+    }
+    if (item && typeof item === 'object' && 'id' in item && typeof item.id === 'number') {
+      ids.push(item.id);
+    }
+  }
+  return ids;
+});
+const relationField = computed(() => props.descriptor?.relation_field || '');
+const relationModel = computed(() => props.descriptor?.relation || '');
+const relationalEditable = computed(() => {
+  if (!props.editing) return false;
+  if (props.descriptor?.readonly) return false;
+  return Boolean(props.descriptor?.editable ?? true);
+});
 const inputValue = computed(() => {
   if (canEdit.value && isNameField.value) {
     return props.draftName;
@@ -60,7 +97,7 @@ const inputValue = computed(() => {
   return String(props.value ?? '');
 });
 const inputType = computed(() => {
-  switch (props.descriptor?.ttype) {
+  switch (fieldType.value) {
     case 'integer':
     case 'float':
       return 'number';

@@ -48,7 +48,7 @@ import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
 import type { NavNode } from '@sc/schema';
 import { ErrorCodes } from '../app/error_codes';
-import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
+import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useStatus } from '../composables/useStatus';
 
 const route = useRoute();
@@ -204,15 +204,15 @@ async function load() {
     if (meta) {
       session.setActionMeta(meta);
     }
-    const requiredCaps = getRequiredCapabilities(meta);
-    const capCheck = checkCapabilities(requiredCaps, session.capabilities);
-    if (!capCheck.ok) {
+    const policy = evaluateCapabilityPolicy({ source: meta, available: session.capabilities });
+    if (policy.state !== 'enabled') {
       await router.replace({
         name: 'workbench',
         query: {
           menu_id: menuId.value || undefined,
           action_id: actionId.value || undefined,
           reason: ErrorCodes.CAPABILITY_MISSING,
+          missing: policy.missing.join(','),
         },
       });
       return;

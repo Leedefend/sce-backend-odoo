@@ -14,20 +14,15 @@ const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const MODEL = process.env.MVP_MODEL || 'project.project';
-const VIEW_TYPE = process.env.MVP_VIEW_TYPE || 'form';
-const ALLOWED_MISSING = (process.env.ALLOWED_MISSING || '').split(',').map((s) => s.trim()).filter(Boolean);
-const REQUIRED_NODES = (process.env.REQUIRED_NODES || 'field,group,notebook,page,headerButtons,statButtons,ribbon,chatter')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
+const RECORD_ID = Number(process.env.RECORD_ID || 0);
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-semantic', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_8-5', ts);
 
 function log(msg) {
-  console.log(`[fe_view_contract_coverage_smoke] ${msg}`);
+  console.log(`[fe_attachment_list_smoke] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -75,12 +70,6 @@ function requestJson(url, payload, headers = {}) {
   });
 }
 
-function asArray(value) {
-  if (Array.isArray(value)) return value;
-  if (value && typeof value === 'object') return [value];
-  return [];
-}
-
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -92,10 +81,7 @@ async function main() {
   let token = AUTH_TOKEN;
   if (!token && BOOTSTRAP_SECRET) {
     log('bootstrap: session.bootstrap');
-    const bootstrapPayload = {
-      intent: 'bootstrap',
-      params: { db: DB_NAME, login: BOOTSTRAP_LOGIN },
-    };
+    const bootstrapPayload = { intent: 'bootstrap', params: { db: DB_NAME, login: BOOTSTRAP_LOGIN } };
     const bootstrapResp = await requestJson(intentUrl, bootstrapPayload, {
       'X-Bootstrap-Secret': BOOTSTRAP_SECRET,
       'X-Anonymous-Intent': '1',
@@ -125,70 +111,55 @@ async function main() {
     'X-Odoo-DB': DB_NAME,
   };
 
-  log('load_view');
-  const viewPayload = { intent: 'load_view', params: { model: MODEL, view_type: VIEW_TYPE } };
-  const viewResp = await requestJson(intentUrl, viewPayload, authHeader);
-  writeJson(path.join(outDir, 'load_view.log'), viewResp);
-  if (viewResp.status >= 400 || !viewResp.body.ok) {
-    throw new Error(`load_view failed: status=${viewResp.status}`);
+  let targetId = RECORD_ID;
+  if (!targetId) {
+    log('api.data.list (model)');
+    const listPayload = {
+      intent: 'api.data',
+      params: { op: 'list', model: MODEL, fields: ['id'], domain: [], limit: 1 },
+    };
+    const listResp = await requestJson(intentUrl, listPayload, authHeader);
+    writeJson(path.join(outDir, 'list.log'), listResp);
+    if (listResp.status >= 400 || !listResp.body.ok) {
+      throw new Error(`list failed: status=${listResp.status}`);
+    }
+    const listRecords = (listResp.body.data || {}).records || [];
+    if (!listRecords.length) {
+      throw new Error('no records found for model');
+    }
+    targetId = Number(listRecords[0].id);
   }
 
-  const viewData = viewResp.body.data || {};
-  const layout = viewData.layout;
-  const layoutOk = Boolean(layout && typeof layout === 'object');
-  if (!layoutOk) {
-    throw new Error('layout missing');
+  log('api.data.list (attachments)');
+  const attPayload = {
+    intent: 'api.data',
+    params: {
+      op: 'list',
+      model: 'ir.attachment',
+      fields: ['id', 'name', 'mimetype'],
+      domain: [
+        ['res_model', '=', MODEL],
+        ['res_id', '=', targetId],
+      ],
+      limit: 10,
+    },
+  };
+  const attResp = await requestJson(intentUrl, attPayload, authHeader);
+  writeJson(path.join(outDir, 'attachments.log'), attResp);
+  if (attResp.status >= 400 || !attResp.body.ok) {
+    throw new Error(`attachment list failed: status=${attResp.status}`);
   }
+  const attachments = (attResp.body.data || {}).records || [];
 
-  const present = new Set();
-  if (asArray(layout.groups).length) present.add('group');
-  const groupFields = asArray(layout.groups).some((g) => asArray(g.fields).length || asArray(g.sub_groups).length);
-  if (groupFields) present.add('field');
-  if (asArray(layout.notebooks).length) present.add('notebook');
-  if (asArray(layout.notebooks).some((nb) => asArray(nb.pages).length)) present.add('page');
-  if (asArray(layout.headerButtons).length) present.add('headerButtons');
-  if (asArray(layout.statButtons).length) present.add('statButtons');
-  if (layout.ribbon) present.add('ribbon');
-  if (layout.chatter) present.add('chatter');
-
-  const supported = new Set(['field', 'group', 'notebook', 'page', 'headerButtons', 'statButtons', 'ribbon', 'chatter']);
-  const missing = REQUIRED_NODES.filter((node) => !present.has(node));
-  const allowedMissing = new Set(ALLOWED_MISSING);
-  const blockingMissing = missing.filter((node) => !allowedMissing.has(node));
-
-  summary.push(`layout_ok: ${layoutOk ? 'true' : 'false'}`);
-  summary.push(`present_count: ${present.size}`);
-  summary.push(`required_count: ${REQUIRED_NODES.length}`);
-  summary.push(`missing_count: ${missing.length}`);
-  summary.push(`present_nodes: ${[...present].sort().join(',') || '-'}`);
-  summary.push(`required_nodes: ${REQUIRED_NODES.join(',')}`);
-  summary.push(`supported_nodes: ${[...supported].sort().join(',')}`);
-  summary.push(`missing_nodes: ${missing.join(',') || '-'}`);
-  summary.push(`allowed_missing: ${ALLOWED_MISSING.join(',') || '-'}`);
-
-  writeJson(path.join(outDir, 'coverage.json'), {
-    model: MODEL,
-    view_type: VIEW_TYPE,
-    present_count: present.size,
-    required_count: REQUIRED_NODES.length,
-    missing_count: missing.length,
-    present_nodes: [...present].sort(),
-    required_nodes: REQUIRED_NODES,
-    missing_nodes: missing,
-    allowed_missing: ALLOWED_MISSING,
-    blocking_missing: blockingMissing,
-  });
+  summary.push(`record_id: ${targetId}`);
+  summary.push(`attachments: ${attachments.length}`);
   writeSummary(summary);
 
-  if (blockingMissing.length) {
-    throw new Error(`missing nodes: ${blockingMissing.join(',')}`);
-  }
-
-  log('PASS contract coverage');
+  log(`PASS attachments=${attachments.length}`);
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_view_contract_coverage_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_attachment_list_smoke] FAIL: ${err.message}`);
   process.exit(1);
 });
