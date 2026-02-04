@@ -13,7 +13,14 @@
 
     <section class="toolbar">
       <div class="search">
-        <input type="search" placeholder="Search" disabled />
+        <input
+          type="search"
+          placeholder="Search"
+          :value="searchTerm"
+          :disabled="loading"
+          @input="onSearchInput"
+          @keydown.enter.prevent="submitSearch"
+        />
       </div>
       <div class="filters">
         <span class="filter">All</span>
@@ -83,7 +90,9 @@ const props = defineProps<{
   records: Array<Record<string, unknown>>;
   onReload: () => void;
   onRowClick: (row: Record<string, unknown>) => void;
+  onSearch: (value: string) => void;
   sortLabel?: string;
+  searchTerm?: string;
 }>();
 
 const statusLabel = computed(() => {
@@ -108,6 +117,15 @@ function formatValue(value: unknown) {
 
 function handleRow(row: Record<string, unknown>) {
   props.onRowClick(row);
+}
+
+function onSearchInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  props.onSearch(target.value);
+}
+
+function submitSearch() {
+  props.onSearch(props.searchTerm || '');
 }
 </script>
 

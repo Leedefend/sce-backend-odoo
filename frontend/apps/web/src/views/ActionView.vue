@@ -23,7 +23,9 @@
       :columns="columns"
       :records="records"
       :sort-label="sortLabel"
+      :search-term="searchTerm"
       :on-reload="reload"
+      :on-search="handleSearch"
       :on-row-click="handleRowClick"
     />
 
@@ -59,6 +61,7 @@ const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');
 const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
+const searchTerm = ref('');
 const columns = ref<string[]>([]);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -253,6 +256,8 @@ async function load() {
       context: mergeContext(meta?.context),
       limit: 40,
       offset: 0,
+      search_term: searchTerm.value.trim() || undefined,
+      order: sortLabel.value,
     });
     records.value = result.data?.records ?? [];
     columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
@@ -293,6 +298,11 @@ function handleRowClick(row: Record<string, unknown>) {
 }
 
 function reload() {
+  load();
+}
+
+function handleSearch(value: string) {
+  searchTerm.value = value;
   load();
 }
 
