@@ -125,7 +125,7 @@
               <span v-if="chatterUploading" class="meta">Uploading…</span>
               <span v-if="chatterUploadError" class="meta">{{ chatterUploadError }}</span>
             </div>
-            <ul v-else class="chatter-list">
+            <ul v-if="chatterAttachments.length" class="chatter-list">
               <li v-for="att in chatterAttachments" :key="String(att.id)" class="chatter-item">
                 <div class="chatter-title">{{ att.name || 'Attachment' }}</div>
                 <div class="chatter-meta">{{ att.mimetype || 'unknown' }} · {{ att.file_size || '-' }}</div>
