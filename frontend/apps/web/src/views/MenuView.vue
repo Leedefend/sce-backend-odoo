@@ -23,7 +23,7 @@ import { useSessionStore } from '../stores/session';
 import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import StatusPanel from '../components/StatusPanel.vue';
 import { ErrorCodes } from '../app/error_codes';
-import { checkCapabilities, getRequiredCapabilities } from '../app/capability';
+import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 
 const route = useRoute();
 const router = useRouter();
@@ -43,15 +43,15 @@ async function resolve() {
     }
     const result = resolveMenuAction(session.menuTree, menuId);
     if (result.kind === 'leaf') {
-      const required = getRequiredCapabilities(result.node?.meta);
-      const capCheck = checkCapabilities(required, session.capabilities);
-      if (!capCheck.ok) {
+      const policy = evaluateCapabilityPolicy({ source: result.node?.meta, available: session.capabilities });
+      if (policy.state !== 'enabled') {
         await router.replace({
           name: 'workbench',
           query: {
             menu_id: menuId,
             action_id: result.meta.action_id,
             reason: ErrorCodes.CAPABILITY_MISSING,
+            missing: policy.missing.join(','),
           },
         });
         return;

@@ -20,7 +20,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { useSessionStore } from '../stores/session';
 import { findActionNodeByModel } from '../app/menu';
-import { checkCapabilities } from '../app/capability';
+import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { useStatus } from '../composables/useStatus';
 
@@ -52,8 +52,8 @@ async function resolveScene() {
     return;
   }
 
-  const capCheck = checkCapabilities(scene.capabilities || [], session.capabilities);
-  if (!capCheck.ok) {
+  const policy = evaluateCapabilityPolicy({ required: scene.capabilities || [], available: session.capabilities });
+  if (policy.state !== 'enabled') {
     await router.replace({
       name: 'workbench',
       query: { reason: ErrorCodes.CAPABILITY_MISSING },
