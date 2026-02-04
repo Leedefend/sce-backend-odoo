@@ -54,7 +54,7 @@
     />
 
     <section v-else class="card" :class="{ editing: status === 'editing' }">
-      <div v-if="status === 'ok' && lastAction === 'save'" class="banner success">
+      <div v-if="editTx.state === 'saved'" class="banner success">
         Saved. Changes have been applied.
       </div>
       <div v-if="ribbon" class="ribbon">{{ ribbon.title || 'Ribbon' }}</div>
@@ -149,6 +149,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecords, readRecordRaw, writeRecordV6Raw } from '../api/data';
+import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { postChatterMessage } from '../api/chatter';
 import { downloadFile, fileToBase64, uploadFile } from '../api/files';
@@ -161,6 +162,7 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { useStatus } from '../composables/useStatus';
+import { useEditTx } from '../composables/useEditTx';
 import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
@@ -188,6 +190,7 @@ const lastLatencyMs = ref<number | null>(null);
 const lastAction = ref<'save' | 'load' | 'execute' | ''>('');
 const executing = ref<string | null>(null);
 const layoutStats = ref({ field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 });
+const editTx = useEditTx();
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
@@ -315,10 +318,14 @@ async function load() {
     layoutStats.value = analyzeLayout(layout);
 
     const fieldNames = extractFieldNames(layout).filter(Boolean);
+    const readFields = fieldNames.length ? [...fieldNames] : ['*'];
+    if (readFields.length && readFields[0] !== '*' && !readFields.includes('write_date')) {
+      readFields.push('write_date');
+    }
     const read = await readRecordRaw({
       model: model.value,
       ids: [recordId.value],
-      fields: fieldNames.length ? fieldNames : '*',
+      fields: readFields,
     });
 
     const record = read?.data?.records?.[0] ?? null;
@@ -328,7 +335,10 @@ async function load() {
       return;
     }
     recordData.value = record as Record<string, unknown>;
-    fields.value = (fieldNames.length ? fieldNames : Object.keys(record as Record<string, unknown>)).map((name) => ({
+    const displayFields = (fieldNames.length ? fieldNames : Object.keys(record as Record<string, unknown>)).filter(
+      (name) => name !== 'write_date',
+    );
+    fields.value = displayFields.map((name) => ({
       name,
       label: view?.fields?.[name]?.string ?? name,
       value: (record as Record<string, unknown>)[name],
@@ -597,6 +607,7 @@ function startEdit() {
   const nameField = fields.value.find((field) => field.name === 'name');
   draftName.value = String(nameField?.value ?? '');
   status.value = 'editing';
+  editTx.beginEdit();
 }
 
 function cancelEdit() {
@@ -606,6 +617,7 @@ function cancelEdit() {
   const nameField = fields.value.find((field) => field.name === 'name');
   draftName.value = String(nameField?.value ?? '');
   status.value = 'ok';
+  editTx.cancelEdit();
 }
 
 const isSaveDisabled = computed(() => status.value === 'saving' || !draftName.value.trim());
@@ -623,25 +635,37 @@ async function save() {
   const startedAt = Date.now();
 
   try {
-    const result = await writeRecordV6Raw({
-      model: model.value,
-      id: recordId.value,
-      values: { name: draftName.value.trim() },
+    const result = await editTx.save(async () => {
+      return writeRecordV6Raw({
+        model: model.value,
+        id: recordId.value,
+        values: { name: draftName.value.trim() },
+        ifMatch: recordData.value?.write_date ? String(recordData.value?.write_date) : undefined,
+      });
     });
     if (result?.meta?.trace_id) {
       lastTraceId.value = String(result.meta.trace_id);
+      editTx.markSaved(String(result.meta.trace_id));
     } else if (result?.traceId) {
       lastTraceId.value = String(result.traceId);
+      editTx.markSaved(String(result.traceId));
+    } else {
+      editTx.markSaved();
     }
     status.value = 'ok';
     lastLatencyMs.value = Date.now() - startedAt;
     await load();
   } catch (err) {
-    setError(err, 'failed to save record');
+    if (err instanceof ApiError && err.status === 409) {
+      setError(err, 'Record changed, reload and retry');
+    } else {
+      setError(err, 'failed to save record');
+    }
     traceId.value = error.value?.traceId || '';
     lastTraceId.value = error.value?.traceId || '';
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
+    editTx.markError(error.value?.code ? String(error.value?.code) : '');
   }
 }
 

@@ -13,7 +13,14 @@
 
     <section class="toolbar">
       <div class="search">
-        <input type="search" placeholder="Search" disabled />
+        <input
+          type="search"
+          placeholder="Search"
+          :value="searchTerm"
+          :disabled="loading"
+          @input="onSearchInput"
+          @keydown.enter.prevent="submitSearch"
+        />
       </div>
       <div class="filters">
         <span class="filter">All</span>
@@ -22,7 +29,18 @@
       </div>
       <div class="sort">
         <span class="label">Sort</span>
-        <span class="value">{{ sortLabel || 'default' }}</span>
+        <div class="sort-options">
+          <button
+            v-for="opt in sortOptions"
+            :key="opt.value"
+            type="button"
+            class="sort-option"
+            :class="{ active: opt.value === sortValue }"
+            @click="onSort(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
       </div>
     </section>
 
@@ -83,7 +101,12 @@ const props = defineProps<{
   records: Array<Record<string, unknown>>;
   onReload: () => void;
   onRowClick: (row: Record<string, unknown>) => void;
+  onSearch: (value: string) => void;
+  onSort: (value: string) => void;
   sortLabel?: string;
+  searchTerm?: string;
+  sortOptions?: Array<{ label: string; value: string }>;
+  sortValue?: string;
 }>();
 
 const statusLabel = computed(() => {
@@ -108,6 +131,15 @@ function formatValue(value: unknown) {
 
 function handleRow(row: Record<string, unknown>) {
   props.onRowClick(row);
+}
+
+function onSearchInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  props.onSearch(target.value);
+}
+
+function submitSearch() {
+  props.onSearch(props.searchTerm || '');
 }
 </script>
 
@@ -179,8 +211,25 @@ function handleRow(row: Record<string, unknown>) {
   color: #94a3b8;
 }
 
-.sort .value {
-  font-weight: 600;
+.sort-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.sort-option {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #f8fafc;
+  font-size: 12px;
+  color: #475569;
+}
+
+.sort-option.active {
+  background: #111827;
+  color: #f8fafc;
 }
 
 .table {
