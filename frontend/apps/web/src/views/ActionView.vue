@@ -12,7 +12,22 @@
       </div>
     </header>
 
+    <KanbanPage
+      v-if="viewMode === 'kanban'"
+      :title="listTitle"
+      :status="status"
+      :loading="status === 'loading'"
+      :error-message="errorMessage"
+      :trace-id="traceId"
+      :error="error"
+      :records="records"
+      :fields="kanbanFields"
+      :title-field="kanbanTitleField"
+      :on-reload="reload"
+      :on-card-click="handleRowClick"
+    />
     <ListPage
+      v-else
       :title="listTitle"
       :model="model"
       :status="status"
@@ -48,6 +63,7 @@ import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
+import KanbanPage from '../pages/KanbanPage.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
@@ -67,6 +83,7 @@ const records = ref<Array<Record<string, unknown>>>([]);
 const searchTerm = ref('');
 const sortValue = ref('');
 const columns = ref<string[]>([]);
+const kanbanFields = ref<string[]>([]);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
@@ -91,6 +108,11 @@ const sortOptions = computed(() => [
   { label: 'Updated ↑', value: 'write_date asc' },
 ]);
 const subtitle = computed(() => `${records.value.length} records · sorted by ${sortLabel.value}`);
+const kanbanTitleField = computed(() => {
+  const candidates = ['display_name', 'name'];
+  const found = candidates.find((field) => kanbanFields.value.includes(field));
+  return found || kanbanFields.value[0] || 'id';
+});
 const statusLabel = computed(() => {
   if (status.value === 'loading') return 'Loading';
   if (status.value === 'error') return 'Error';
@@ -186,6 +208,27 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
   return [];
 }
 
+function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContract>>) {
+  const directViews = (contract as any)?.views || (contract as any)?.ui_contract?.views;
+  if (directViews) {
+    const kanbanBlock = directViews.kanban;
+    if (Array.isArray(kanbanBlock?.fields) && kanbanBlock.fields.length) {
+      return kanbanBlock.fields;
+    }
+  }
+  const fieldsMap = (contract as any)?.fields || (contract as any)?.ui_contract_raw?.fields;
+  if (fieldsMap && typeof fieldsMap === 'object') {
+    const preferred = ['display_name', 'name', 'stage_id', 'user_id', 'partner_id', 'write_date', 'create_date'];
+    const available = Object.keys(fieldsMap);
+    const picked = preferred.filter((field) => available.includes(field));
+    if (picked.length) {
+      return picked;
+    }
+    return available.slice(0, 6);
+  }
+  return ['name', 'id'];
+}
+
 function getActionType(meta: unknown) {
   const raw = (meta as { type?: string; action_type?: string }) || {};
   return String(raw.type || raw.action_type || '').toLowerCase();
@@ -212,6 +255,7 @@ async function load() {
   lastLatencyMs.value = null;
   records.value = [];
   columns.value = [];
+  kanbanFields.value = [];
   const startedAt = Date.now();
 
   if (!actionId.value) {
@@ -276,9 +320,12 @@ async function load() {
       return;
     }
     const contractColumns = extractColumnsFromContract(contract);
+    const kanbanContractFields = extractKanbanFields(contract);
+    kanbanFields.value = kanbanContractFields;
+    const requestedFields = viewMode.value === 'kanban' ? kanbanContractFields : contractColumns;
     const result = await listRecordsRaw({
       model: resolvedModel,
-      fields: contractColumns.length ? contractColumns : ['id', 'name'],
+      fields: requestedFields.length ? requestedFields : ['id', 'name'],
       domain: normalizeDomain(meta?.domain),
       context: mergeContext(meta?.context),
       limit: 40,
