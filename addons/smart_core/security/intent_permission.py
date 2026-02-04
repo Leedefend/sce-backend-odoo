@@ -13,15 +13,18 @@ def check_intent_permission(ctx):
     """
     
 
+    intent_name = (ctx.params.get("intent") or "").strip()
+    if intent_name == "session.bootstrap":
+        return True
+    if intent_name == "permission.check":
+        return True
+
     user_id = get_user_from_token()
     if not user_id:
         raise AccessError("Token 无效或缺少 user_id")
     # 2. 切换 request.env 用户
     request.env = request.env(user=user_id)
     env = request.env
-    intent_name = (ctx.params.get("intent") or "").strip()
-    if intent_name == "permission.check":
-        return True
 
     # 3. 正常的权限检查逻辑
     model = ctx.params.get("model")

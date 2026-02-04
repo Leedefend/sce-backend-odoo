@@ -16,7 +16,7 @@ class RequestContext:
         params =  request.httprequest.get_json(force=True, silent=True) or dict(request.params)
         intent_name = (params.get("intent") or "").strip()
 
-        if intent_name == "login":
+        if intent_name in {"login", "auth.login", "sys.intents", "session.bootstrap", "bootstrap"}:
             user = None
             env = request.env
         else:
