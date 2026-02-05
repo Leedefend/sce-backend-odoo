@@ -127,6 +127,76 @@ def _normalize_nav_groups(env, nodes):
         if n.get("children"):
             _normalize_nav_groups(env, n["children"])
 
+def _resolve_action_ids(env, action_xmlids: Dict[str, str]) -> Dict[int, str]:
+    resolved = {}
+    for xmlid, scene_key in action_xmlids.items():
+        try:
+            rec = env.ref(xmlid, raise_if_not_found=False)
+            if rec and rec.id:
+                resolved[rec.id] = scene_key
+        except Exception:
+            continue
+    return resolved
+
+def _normalize_view_mode(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    val = str(raw).strip().lower()
+    if val in {"tree", "list", "kanban"}:
+        return "list"
+    if val in {"form"}:
+        return "form"
+    return val
+
+def _apply_scene_keys(env, nodes):
+    """
+    Inject nav.node.scene_key using priority:
+      menu_xmlid -> action_id -> model/view_mode
+    Also ensure node.xmlid is emitted if menu_xmlid exists.
+    """
+    menu_map = {
+        "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
+        "smart_construction_core.menu_sc_project_initiation": "projects.intake",
+    }
+    action_xmlid_map = {
+        "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
+        "smart_construction_core.action_project_initiation": "projects.intake",
+    }
+    action_id_map = _resolve_action_ids(env, action_xmlid_map)
+    model_view_map = {
+        ("project.project", "list"): "projects.list",
+        ("project.project", "form"): "projects.intake",
+    }
+
+    for n in nodes or []:
+        meta = n.get("meta") or {}
+        menu_xmlid = meta.get("menu_xmlid") or n.get("xmlid")
+        if menu_xmlid:
+            n["xmlid"] = menu_xmlid
+        scene_key = None
+        if menu_xmlid and menu_xmlid in menu_map:
+            scene_key = menu_map[menu_xmlid]
+        if not scene_key:
+            action_id = meta.get("action_id")
+            if action_id in action_id_map:
+                scene_key = action_id_map[action_id]
+        if not scene_key:
+            model = meta.get("model")
+            view_mode = meta.get("view_mode") or meta.get("view_type")
+            if not view_mode:
+                view_modes = meta.get("view_modes")
+                if isinstance(view_modes, list) and view_modes:
+                    view_mode = view_modes[0]
+            key = (model, _normalize_view_mode(view_mode)) if model else None
+            if key in model_view_map:
+                scene_key = model_view_map[key]
+        if scene_key:
+            n["scene_key"] = scene_key
+            meta["scene_key"] = scene_key
+            n["meta"] = meta
+        if n.get("children"):
+            _apply_scene_keys(env, n["children"])
+
 
 
 def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
@@ -266,6 +336,7 @@ class SystemInitHandler(BaseIntentHandler):
         nav_tree = _clean_nav(nav_tree_raw)
         # ✅ 统一 groups_xmlids 口径（字符串 xmlid）
         _normalize_nav_groups(env, nav_tree)
+        _apply_scene_keys(env, nav_tree)
         nav_fp = _fingerprint({"scene": scene, "nav": nav_tree})
         if nav_versions and nav_versions.get("root_filtered_fallback"):
             _logger.warning(
@@ -343,6 +414,8 @@ class SystemInitHandler(BaseIntentHandler):
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
             "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
             "preload": [],
+            "scenes": [],
+            "scene_version": "v1",
         }
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload

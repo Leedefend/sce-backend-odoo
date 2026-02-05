@@ -10,6 +10,19 @@ export interface SceneTarget {
   route?: string;
 }
 
+export interface SceneTile {
+  key?: string;
+  title?: string;
+  subtitle?: string;
+  icon?: string;
+  route?: string;
+  intent?: string;
+  payload?: Record<string, unknown>;
+  capabilities?: string[];
+  required_capabilities?: string[];
+  requiredCapabilities?: string[];
+}
+
 export interface Scene {
   key: string;
   label: string;
@@ -18,22 +31,62 @@ export interface Scene {
   target: SceneTarget;
   capabilities?: string[];
   breadcrumbs?: Array<{ label: string; to?: string }>;
+  tiles?: SceneTile[];
 }
 
-const validation = validateSceneRegistry(SCENES as Scene[]);
-const errors = validation.errors as Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }>;
+let sceneRegistry: Scene[] = [];
+let errors: Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }> = [];
 
-if (errors.length) {
-  // eslint-disable-next-line no-console
-  console.warn('[scene-registry] invalid scenes detected', errors);
+function coerceSceneSource(source: Scene[]) {
+  return source
+    .map((scene) => {
+      if (scene && typeof scene === 'object' && 'key' in scene && 'route' in scene) {
+        return scene;
+      }
+      const raw = scene as unknown as { code?: string; name?: string; tiles?: SceneTile[] };
+      if (raw?.code) {
+        const route = `/s/${raw.code}`;
+        return {
+          key: raw.code,
+          label: raw.name || raw.code,
+          route,
+          target: { route: `/workbench?scene=${raw.code}` },
+          tiles: raw.tiles ?? [],
+        } as Scene;
+      }
+      return null;
+    })
+    .filter((scene): scene is Scene => Boolean(scene));
 }
 
-export const sceneRegistry = validation.validScenes as Scene[];
+function buildSceneRegistry(source: Scene[]) {
+  const normalized = coerceSceneSource(source);
+  const validation = validateSceneRegistry(normalized as Scene[]);
+  const nextErrors = validation.errors as Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }>;
+  if (nextErrors.length) {
+    // eslint-disable-next-line no-console
+    console.warn('[scene-registry] invalid scenes detected', nextErrors);
+  }
+  errors = nextErrors;
+  sceneRegistry = validation.validScenes as Scene[];
+  return sceneRegistry;
+}
+
+buildSceneRegistry(SCENES as Scene[]);
 
 export function getSceneRegistryDiagnostics() {
   return { errors };
 }
 
+export function setSceneRegistry(scenes?: Scene[] | null) {
+  const source = Array.isArray(scenes) && scenes.length ? scenes : (SCENES as Scene[]);
+  return buildSceneRegistry(source);
+}
+
 export function getSceneByKey(key: string) {
   return sceneRegistry.find((scene) => scene.key === key) || null;
+}
+
+export function getSceneRegistry() {
+  return sceneRegistry;
 }

@@ -16,6 +16,24 @@
       :variant="panelVariant"
     />
 
+    <section v-if="tiles.length" class="tiles">
+      <button
+        v-for="tile in tiles"
+        :key="tile.key || tile.title"
+        class="tile"
+        :class="{ disabled: tile.policy.state !== 'enabled' }"
+        :title="tile.tooltip"
+        type="button"
+        @click="handleTileClick(tile)"
+      >
+        <div class="tile-icon">{{ tile.icon || '•' }}</div>
+        <div class="tile-body">
+          <div class="tile-title">{{ tile.title || tile.key }}</div>
+          <div class="tile-subtitle">{{ tile.subtitle || '' }}</div>
+        </div>
+      </button>
+    </section>
+
     <div class="details">
       <div class="detail">
         <span class="label">Reason</span>
@@ -50,21 +68,40 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { ErrorCodes } from '../app/error_codes';
 import { useSessionStore } from '../stores/session';
 import { isHudEnabled } from '../config/debug';
+import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 
 const route = useRoute();
+const router = useRouter();
 
 const reason = computed(() => String(route.query.reason || ''));
 const menuId = computed(() => Number(route.query.menu_id || 0) || undefined);
 const actionId = computed(() => Number(route.query.action_id || 0) || undefined);
+const sceneKey = computed(() => String(route.query.scene || route.query.scene_key || route.query.sceneKey || ''));
 const session = useSessionStore();
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
 const lastIntent = computed(() => session.lastIntent || '');
+const scene = computed(() => {
+  if (!sceneKey.value) return null;
+  return session.scenes.find((item: any) => item?.key === sceneKey.value || item?.code === sceneKey.value) || null;
+});
+const tiles = computed(() => {
+  const rawTiles = (scene.value as any)?.tiles ?? [];
+  if (!Array.isArray(rawTiles)) return [];
+  return rawTiles.map((tile: any) => {
+    const policy = evaluateCapabilityPolicy({ source: tile, available: session.capabilities });
+    return {
+      ...tile,
+      policy,
+      tooltip: capabilityTooltip(policy),
+    };
+  });
+});
 
 const reasonLabel = computed(() => {
   switch (reason.value) {
@@ -107,6 +144,38 @@ function refresh() {
   window.location.reload();
 }
 
+async function handleTileClick(tile: any) {
+  if (tile.policy?.state === 'disabled_capability') {
+    await router.replace({
+      name: 'workbench',
+      query: {
+        reason: ErrorCodes.CAPABILITY_MISSING,
+        scene: sceneKey.value || undefined,
+        missing: (tile.policy.missing || []).join(',') || undefined,
+      },
+    });
+    return;
+  }
+  if (tile.route) {
+    await router.push(String(tile.route));
+    return;
+  }
+  const payload = tile.payload || {};
+  if (payload.action_id) {
+    await router.push({
+      path: `/a/${payload.action_id}`,
+      query: { menu_id: payload.menu_id || undefined },
+    });
+    return;
+  }
+  if (payload.model && payload.record_id) {
+    await router.push({
+      path: `/r/${payload.model}/${payload.record_id}`,
+      query: { menu_id: payload.menu_id || undefined, action_id: payload.action_id || undefined },
+    });
+  }
+}
+
 async function copyTrace() {
   if (!lastTraceId.value) return;
   try {
@@ -143,6 +212,51 @@ async function copyTrace() {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
+}
+
+.tiles {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 20px rgba(15, 23, 42, 0.08);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tile.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tile-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.08);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #334155;
+}
+
+.tile-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.tile-subtitle {
+  font-size: 12px;
+  color: #64748b;
 }
 
 .detail {
