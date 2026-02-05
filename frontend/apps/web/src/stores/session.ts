@@ -225,7 +225,10 @@ export const useSessionStore = defineStore('session', {
         console.info('[debug] app.init result', result);
       }
       this.user = result.user;
-      this.capabilities = ((result as AppInitResponse & { capabilities?: string[] }).capabilities ?? []).filter(Boolean);
+      const rawCapabilities = (result as AppInitResponse & { capabilities?: Array<string | { key?: string }> }).capabilities ?? [];
+      this.capabilities = rawCapabilities
+        .map((cap) => (typeof cap === 'string' ? cap : cap?.key || ''))
+        .filter((cap) => typeof cap === 'string' && cap.length > 0);
       this.scenes = ((result as AppInitResponse & { scenes?: Scene[] }).scenes ?? []).filter(Boolean);
       this.sceneVersion = (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).scene_version ?? (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).sceneVersion ?? null;
       setSceneRegistry(this.scenes);
