@@ -41,13 +41,19 @@
       <table>
         <thead>
           <tr>
-            <th v-for="col in columns" :key="col">{{ col }}</th>
+            <th v-for="col in displayedColumns" :key="col">{{ columnLabel(col) }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRow(row)">
-            <td v-for="col in columns" :key="col">
-              {{ formatValue(row[col]) }}
+            <td v-for="col in displayedColumns" :key="col">
+              <div v-if="col === rowPrimary" class="cell-primary">
+                <div class="primary">{{ formatValue(row[col]) }}</div>
+                <div v-if="rowSecondary" class="secondary">{{ formatValue(row[rowSecondary]) }}</div>
+              </div>
+              <div v-else>
+                {{ formatValue(row[col]) }}
+              </div>
             </td>
           </tr>
         </tbody>
@@ -57,10 +63,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import PageToolbar from '../components/page/PageToolbar.vue';
 import type { StatusError } from '../composables/useStatus';
+import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 
 const props = defineProps<{
   title: string;
@@ -84,9 +92,13 @@ const props = defineProps<{
   sortValue?: string;
   subtitle: string;
   statusLabel: string;
+  listProfile?: SceneListProfile | null;
 }>();
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
+    if (value.length === 2 && typeof value[1] === 'string') {
+      return value[1];
+    }
     return value.join(', ');
   }
   if (value && typeof value === 'object') {
@@ -97,6 +109,26 @@ function formatValue(value: unknown) {
 
 function handleRow(row: Record<string, unknown>) {
   props.onRowClick(row);
+}
+
+const rowPrimary = computed(() => props.listProfile?.row_primary || '');
+const rowSecondary = computed(() => props.listProfile?.row_secondary || '');
+const hiddenColumns = computed(() => {
+  return (props.listProfile?.hidden_columns || []).reduce<Record<string, true>>((acc, col) => {
+    acc[col] = true;
+    return acc;
+  }, {});
+});
+const preferredColumns = computed(() => props.listProfile?.columns || []);
+const columnLabels = computed(() => props.listProfile?.column_labels || {});
+const displayedColumns = computed(() => {
+  const source = preferredColumns.value.length ? preferredColumns.value : props.columns;
+  const filtered = source.filter((col) => !hiddenColumns.value[col]);
+  return filtered.length ? filtered : props.columns.filter((col) => !hiddenColumns.value[col]);
+});
+
+function columnLabel(col: string) {
+  return columnLabels.value[col] || col;
 }
 
 </script>
