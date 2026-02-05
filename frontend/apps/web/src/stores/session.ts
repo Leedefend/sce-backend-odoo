@@ -9,6 +9,7 @@ export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
   menuTree: NavNode[];
+  menuExpandedKeys: string[];
   currentAction: NavMeta | null;
   capabilities: string[];
   scenes: Scene[];
@@ -31,6 +32,7 @@ export const useSessionStore = defineStore('session', {
     token: null,
     user: null,
     menuTree: [],
+    menuExpandedKeys: [],
     currentAction: null,
     capabilities: [],
     scenes: [],
@@ -57,6 +59,7 @@ export const useSessionStore = defineStore('session', {
           const parsed = JSON.parse(cached) as Partial<SessionState>;
           this.user = parsed.user ?? null;
           this.menuTree = parsed.menuTree ?? [];
+          this.menuExpandedKeys = parsed.menuExpandedKeys ?? [];
           this.currentAction = parsed.currentAction ?? null;
           this.capabilities = parsed.capabilities ?? [];
           this.scenes = parsed.scenes ?? [];
@@ -86,6 +89,7 @@ export const useSessionStore = defineStore('session', {
       this.token = null;
       this.user = null;
       this.menuTree = [];
+      this.menuExpandedKeys = [];
       this.currentAction = null;
       this.capabilities = [];
       this.scenes = [];
@@ -103,10 +107,35 @@ export const useSessionStore = defineStore('session', {
       this.currentAction = meta;
       this.persist();
     },
+    toggleMenuExpanded(key: string) {
+      const set = new Set(this.menuExpandedKeys);
+      if (set.has(key)) {
+        set.delete(key);
+      } else {
+        set.add(key);
+      }
+      this.menuExpandedKeys = [...set];
+      this.persist();
+    },
+    ensureMenuExpanded(keys: string[]) {
+      const set = new Set(this.menuExpandedKeys);
+      let changed = false;
+      keys.forEach((key) => {
+        if (!set.has(key)) {
+          set.add(key);
+          changed = true;
+        }
+      });
+      if (changed) {
+        this.menuExpandedKeys = [...set];
+        this.persist();
+      }
+    },
     persist() {
       const snapshot: Partial<SessionState> = {
         user: this.user,
         menuTree: this.menuTree,
+        menuExpandedKeys: this.menuExpandedKeys,
         currentAction: this.currentAction,
         capabilities: this.capabilities,
         scenes: this.scenes,
@@ -263,6 +292,7 @@ export const useSessionStore = defineStore('session', {
       // 为导航项添加 key 属性
       const menuTreeWithKeys = (nav as any[]).map((item, index) => addKeys(item, index)) as NavNode[];
       this.menuTree = menuTreeWithKeys;
+      this.menuExpandedKeys = filterExpandedKeys(this.menuTree, this.menuExpandedKeys);
       if (!this.menuTree.length) {
         await this.loadNavFallback();
       }
@@ -306,7 +336,26 @@ export const useSessionStore = defineStore('session', {
 });
 
 function addKeys(node: NavNode, index = 0): NavNode {
-  const key = node.key || `menu_${node.menu_id || node.id || index}`;
+  const key = (node as NavNode & { xmlid?: string }).xmlid || node.key || `menu_${node.menu_id || node.id || index}`;
   const children = node.children?.map((child, idx) => addKeys(child, idx)) ?? [];
   return { ...node, key, children };
+}
+
+function filterExpandedKeys(tree: NavNode[], keys: string[]): string[] {
+  if (!keys.length || !tree.length) {
+    return [];
+  }
+  const available = new Set<string>();
+  const walk = (nodes: NavNode[]) => {
+    nodes.forEach((node) => {
+      if (node.key) {
+        available.add(node.key);
+      }
+      if (node.children?.length) {
+        walk(node.children);
+      }
+    });
+  };
+  walk(tree);
+  return keys.filter((key) => available.has(key));
 }
