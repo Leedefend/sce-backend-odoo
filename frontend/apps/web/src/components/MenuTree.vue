@@ -1,6 +1,6 @@
 <template>
   <ul class="tree">
-    <li v-for="node in sorted" :key="node.key || node.menu_id">
+    <li v-for="node in sorted" :key="nodeKey(node)">
       <div
         class="node"
         :class="{
@@ -24,7 +24,8 @@
       </div>
       <transition name="expand">
         <MenuTree
-          v-if="node.children?.length && expanded.has(nodeKey(node))"
+          v-if="node.children?.length"
+          v-show="expanded.has(nodeKey(node))"
           :nodes="node.children"
           :active-menu-id="activeMenuId"
           @select="emit('select', $event)"
@@ -38,11 +39,13 @@
 import { computed, ref, onMounted, watchEffect } from 'vue';
 import type { NavNode } from '@sc/schema';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
+import { useSessionStore } from '../stores/session';
 
 const props = defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[] }>();
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
 
-const expanded = ref<Set<string>>(new Set());
+const session = useSessionStore();
+const expanded = computed(() => new Set(session.menuExpandedKeys));
 const activeParents = ref<Set<string>>(new Set());
 
 const sorted = computed(() => {
@@ -54,15 +57,11 @@ const sorted = computed(() => {
 });
 
 function toggle(key: string) {
-  if (expanded.value.has(key)) {
-    expanded.value.delete(key);
-  } else {
-    expanded.value.add(key);
-  }
+  session.toggleMenuExpanded(key);
 }
 
 function nodeKey(node: NavNode) {
-  return node.key || `menu_${node.menu_id || node.id}`;
+  return (node as NavNode & { xmlid?: string }).xmlid || node.key || `menu_${node.menu_id || node.id}`;
 }
 
 function onSelect(node: NavNode) {
@@ -74,9 +73,9 @@ function onSelect(node: NavNode) {
 
 function ensureExpandedForActive(nodes: NavNode[], menuId?: number): Set<string> {
   if (!menuId) {
-    return expanded.value;
+    return new Set();
   }
-  const next = new Set(expanded.value);
+  const next = new Set<string>();
   const walk = (items: NavNode[], parents: string[] = []) => {
     for (const node of items) {
       const key = nodeKey(node);
@@ -93,8 +92,11 @@ function ensureExpandedForActive(nodes: NavNode[], menuId?: number): Set<string>
 }
 
 watchEffect(() => {
-  expanded.value = ensureExpandedForActive(props.nodes, props.activeMenuId);
-  activeParents.value = new Set(expanded.value);
+  const parents = ensureExpandedForActive(props.nodes, props.activeMenuId);
+  if (parents.size) {
+    session.ensureMenuExpanded([...parents]);
+  }
+  activeParents.value = parents;
 });
 
 function isBlocked(node: NavNode) {

@@ -1,8 +1,11 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
 
 export function isHudEnabled(route: RouteLocationNormalizedLoaded) {
-  if (import.meta.env.DEV) {
+  if (!import.meta.env.DEV) {
+    return false;
+  }
+  if (route.query.hud === '1') {
     return true;
   }
-  return route.query.hud === '1';
+  return localStorage.getItem('__HUD__') === '1';
 }
