@@ -336,6 +336,8 @@ class SystemInitHandler(BaseIntentHandler):
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
             "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
             "preload": [],
+            "scenes": [],
+            "scene_version": "v1",
         }
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload

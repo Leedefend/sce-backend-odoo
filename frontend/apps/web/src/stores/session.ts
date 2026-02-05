@@ -2,6 +2,8 @@ import { defineStore } from 'pinia';
 import type { AppInitResponse, LoginResponse, NavMeta, NavNode } from '@sc/schema';
 import { intentRequest } from '../api/intents';
 import { ApiError } from '../api/client';
+import { setSceneRegistry } from '../app/resolvers/sceneRegistry';
+import type { Scene } from '../app/resolvers/sceneRegistry';
 
 export interface SessionState {
   token: string | null;
@@ -9,6 +11,8 @@ export interface SessionState {
   menuTree: NavNode[];
   currentAction: NavMeta | null;
   capabilities: string[];
+  scenes: Scene[];
+  sceneVersion: string | null;
   lastTraceId: string;
   lastIntent: string;
   lastLatencyMs: number | null;
@@ -29,6 +33,8 @@ export const useSessionStore = defineStore('session', {
     menuTree: [],
     currentAction: null,
     capabilities: [],
+    scenes: [],
+    sceneVersion: null,
     lastTraceId: '',
     lastIntent: '',
     lastLatencyMs: null,
@@ -53,6 +59,11 @@ export const useSessionStore = defineStore('session', {
           this.menuTree = parsed.menuTree ?? [];
           this.currentAction = parsed.currentAction ?? null;
           this.capabilities = parsed.capabilities ?? [];
+          this.scenes = parsed.scenes ?? [];
+          this.sceneVersion = parsed.sceneVersion ?? null;
+          if (this.scenes.length) {
+            setSceneRegistry(this.scenes);
+          }
           this.lastTraceId = parsed.lastTraceId ?? '';
           this.lastIntent = parsed.lastIntent ?? '';
           this.lastLatencyMs = parsed.lastLatencyMs ?? null;
@@ -77,6 +88,9 @@ export const useSessionStore = defineStore('session', {
       this.menuTree = [];
       this.currentAction = null;
       this.capabilities = [];
+      this.scenes = [];
+      this.sceneVersion = null;
+      setSceneRegistry([]);
       this.lastTraceId = '';
       this.lastIntent = '';
       this.lastLatencyMs = null;
@@ -95,6 +109,8 @@ export const useSessionStore = defineStore('session', {
         menuTree: this.menuTree,
         currentAction: this.currentAction,
         capabilities: this.capabilities,
+        scenes: this.scenes,
+        sceneVersion: this.sceneVersion,
         lastTraceId: this.lastTraceId,
         lastIntent: this.lastIntent,
         lastLatencyMs: this.lastLatencyMs,
@@ -210,6 +226,9 @@ export const useSessionStore = defineStore('session', {
       }
       this.user = result.user;
       this.capabilities = ((result as AppInitResponse & { capabilities?: string[] }).capabilities ?? []).filter(Boolean);
+      this.scenes = ((result as AppInitResponse & { scenes?: Scene[] }).scenes ?? []).filter(Boolean);
+      this.sceneVersion = (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).scene_version ?? (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).sceneVersion ?? null;
+      setSceneRegistry(this.scenes);
       this.initMeta = {
         ...(result.meta ?? {}),
         nav_meta: (result as AppInitResponse & { nav_meta?: unknown }).nav_meta ?? null,
