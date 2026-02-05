@@ -1,6 +1,11 @@
 <template>
-  <div class="shell">
-    <aside class="sidebar">
+  <div
+    class="shell"
+    :data-layout-kind="activeLayout.kind"
+    :data-sidebar-mode="activeLayout.sidebar"
+    :data-header-mode="activeLayout.header"
+  >
+    <aside class="sidebar" :class="sidebarClass">
       <div class="brand">
         <div class="logo">SC</div>
         <div>
@@ -29,7 +34,7 @@
     </aside>
 
     <section class="content">
-      <header class="topbar">
+      <header class="topbar" :class="{ 'topbar--compact': activeLayout.header === 'compact' }">
         <div>
           <p class="eyebrow">Portal Shell v0.7 · UX Hardening</p>
           <div class="breadcrumb">
@@ -95,7 +100,7 @@ import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
-import { getSceneByKey, getSceneRegistryDiagnostics } from '../app/resolvers/sceneRegistry';
+import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { isHudEnabled } from '../config/debug';
 import type { NavNode } from '@sc/schema';
 
@@ -125,6 +130,14 @@ const initError = computed(() => session.initError);
 const initTraceId = computed(() => session.initTraceId);
 const showSceneErrors = computed(() => import.meta.env.DEV && sceneRegistryErrors.length > 0);
 const sceneRegistryErrors = getSceneRegistryDiagnostics().errors;
+const activeLayout = computed(() => {
+  const sceneKey = route.meta?.sceneKey as string | undefined;
+  const scene = sceneKey ? getSceneByKey(sceneKey) : null;
+  return resolveSceneLayout(scene);
+});
+const sidebarClass = computed(() =>
+  activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
+);
 const sceneErrorMessage = computed(() => {
   if (!sceneRegistryErrors.length) {
     return '';
@@ -323,6 +336,10 @@ async function logout() {
   overflow: hidden;
 }
 
+.sidebar--scroll {
+  overflow: auto;
+}
+
 .brand {
   display: flex;
   gap: 12px;
@@ -397,6 +414,18 @@ async function logout() {
   border-radius: 16px;
   padding: 18px 24px;
   box-shadow: 0 18px 32px rgba(15, 23, 42, 0.08);
+}
+
+.topbar--compact {
+  padding: 12px 18px;
+}
+
+.topbar--compact .breadcrumb {
+  display: none;
+}
+
+.topbar--compact .headline {
+  font-size: 20px;
 }
 
 .eyebrow {

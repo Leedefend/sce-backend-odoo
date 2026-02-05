@@ -17,7 +17,7 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
-import { getSceneByKey } from '../app/resolvers/sceneRegistry';
+import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { useSessionStore } from '../stores/session';
 import { findActionNodeByModel } from '../app/menu';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
@@ -62,34 +62,77 @@ async function resolveScene() {
   }
 
   const target = scene.target || {};
-  if (target.action_id) {
-    await router.replace({
-      path: `/a/${target.action_id}`,
-      query: { menu_id: target.menu_id || undefined },
-    });
+  const layout = resolveSceneLayout(scene);
+  if (layout.kind === 'workspace') {
+    await router.replace({ name: 'workbench', query: { scene: sceneKey || undefined } });
     return;
   }
 
-  if (target.model) {
-    const node = findActionNodeByModel(session.menuTree, target.model);
-    const menuId = node?.menu_id ?? node?.id;
-    const actionId = node?.meta?.action_id;
-    const recordId = resolveRecordId(target.record_id ?? route.params.id);
+  if (layout.kind === 'record') {
+    if (target.model) {
+      const node = findActionNodeByModel(session.menuTree, target.model);
+      const menuId = node?.menu_id ?? node?.id;
+      const actionId = node?.meta?.action_id;
+      const recordId = resolveRecordId(target.record_id ?? route.params.id);
+      if (recordId) {
+        await router.replace({
+          path: `/r/${target.model}/${recordId}`,
+          query: { menu_id: menuId || undefined, action_id: actionId || undefined },
+        });
+        return;
+      }
+      if (actionId) {
+        await router.replace({
+          path: `/a/${actionId}`,
+          query: { menu_id: menuId || undefined },
+        });
+        return;
+      }
+    }
+    if (target.action_id) {
+      await router.replace({
+        path: `/a/${target.action_id}`,
+        query: { menu_id: target.menu_id || undefined },
+      });
+      return;
+    }
+  }
 
-    if (recordId) {
+  if (layout.kind === 'list' || layout.kind === 'ledger') {
+    if (target.action_id) {
       await router.replace({
-        path: `/r/${target.model}/${recordId}`,
-        query: { menu_id: menuId || undefined, action_id: actionId || undefined },
+        path: `/a/${target.action_id}`,
+        query: { menu_id: target.menu_id || undefined },
       });
       return;
     }
-    if (actionId) {
-      await router.replace({
-        path: `/a/${actionId}`,
-        query: { menu_id: menuId || undefined },
-      });
-      return;
+    if (target.model) {
+      const node = findActionNodeByModel(session.menuTree, target.model);
+      const menuId = node?.menu_id ?? node?.id;
+      const actionId = node?.meta?.action_id;
+      if (actionId) {
+        await router.replace({
+          path: `/a/${actionId}`,
+          query: { menu_id: menuId || undefined },
+        });
+        return;
+      }
+      if (target.record_id) {
+        const recordId = resolveRecordId(target.record_id);
+        if (recordId) {
+          await router.replace({
+            path: `/r/${target.model}/${recordId}`,
+            query: { menu_id: menuId || undefined, action_id: actionId || undefined },
+          });
+          return;
+        }
+      }
     }
+  }
+
+  if (target.route) {
+    await router.replace(target.route);
+    return;
   }
 
   const menuHint = Number(route.query.menu_id || 0) || undefined;
@@ -110,7 +153,7 @@ async function resolveScene() {
     return;
   }
 
-  setError(new Error('scene target unsupported'), 'scene target unsupported');
+  setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
   status.value = 'error';
 }
 
