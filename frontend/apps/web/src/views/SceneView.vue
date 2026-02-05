@@ -92,8 +92,43 @@ async function resolveScene() {
     }
   }
 
+  const menuHint = Number(route.query.menu_id || 0) || undefined;
+  if (menuHint) {
+    await router.replace({ path: `/m/${menuHint}` });
+    return;
+  }
+  const sceneNode = findActionNodeBySceneKey(session.menuTree, sceneKey);
+  if (sceneNode?.meta?.action_id) {
+    await router.replace({
+      path: `/a/${sceneNode.meta.action_id}`,
+      query: { menu_id: sceneNode.menu_id || sceneNode.id || undefined },
+    });
+    return;
+  }
+  if (sceneNode?.menu_id || sceneNode?.id) {
+    await router.replace({ path: `/m/${sceneNode.menu_id || sceneNode.id}` });
+    return;
+  }
+
   setError(new Error('scene target unsupported'), 'scene target unsupported');
   status.value = 'error';
+}
+
+function findActionNodeBySceneKey(nodes: Array<Record<string, any>>, sceneKey: string) {
+  if (!sceneKey) return null;
+  const walk = (items: Array<Record<string, any>>): Record<string, any> | null => {
+    for (const node of items) {
+      if (node?.scene_key === sceneKey || node?.meta?.scene_key === sceneKey) {
+        return node;
+      }
+      if (node.children?.length) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nodes) || null;
 }
 
 watch(
