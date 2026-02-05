@@ -257,6 +257,28 @@ def _normalize_scene_targets(scenes, nav_targets):
     return scenes
 
 
+def _normalize_scene_layouts(scenes):
+    defaults = {"kind": "workspace", "sidebar": "fixed", "header": "full"}
+    layout_map = {
+        "projects.list": {"kind": "list", "sidebar": "fixed", "header": "full"},
+        "projects.intake": {"kind": "record", "sidebar": "fixed", "header": "full"},
+        "projects.ledger": {"kind": "ledger", "sidebar": "fixed", "header": "full"},
+    }
+    for scene in scenes:
+        code = scene.get("code") or scene.get("key")
+        layout = scene.get("layout")
+        if not isinstance(layout, dict):
+            layout = {}
+        if code in layout_map:
+            layout.update(layout_map[code])
+        scene["layout"] = {
+            "kind": layout.get("kind", defaults["kind"]),
+            "sidebar": layout.get("sidebar", defaults["sidebar"]),
+            "header": layout.get("header", defaults["header"]),
+        }
+    return scenes
+
+
 
 def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
     """
@@ -477,6 +499,7 @@ class SystemInitHandler(BaseIntentHandler):
                 {
                     "code": "projects.ledger",
                     "name": "项目台账（试点）",
+                    "layout": {"kind": "ledger", "sidebar": "fixed", "header": "full"},
                     "list_profile": {
                         "columns": [
                             "name",
@@ -525,6 +548,7 @@ class SystemInitHandler(BaseIntentHandler):
             code = scene.get("code") or scene.get("key")
             if code == "projects.ledger":
                 has_ledger = True
+                scene.setdefault("layout", {"kind": "ledger", "sidebar": "fixed", "header": "full"})
                 if "list_profile" not in scene:
                     scene["list_profile"] = {
                         "columns": [
@@ -560,6 +584,7 @@ class SystemInitHandler(BaseIntentHandler):
             scenes_payload.append({
                 "code": "projects.ledger",
                 "name": "项目台账（试点）",
+                "layout": {"kind": "ledger", "sidebar": "fixed", "header": "full"},
                 "list_profile": {
                     "columns": [
                         "name",
@@ -590,6 +615,7 @@ class SystemInitHandler(BaseIntentHandler):
                 "filters": [],
                 "default_sort": "write_date desc",
             })
+        _normalize_scene_layouts(scenes_payload)
         nav_targets = _index_nav_scene_targets(nav_tree)
         _normalize_scene_targets(scenes_payload, nav_targets)
         ledger_action_id = _resolve_action_id(env, "smart_construction_core.action_sc_project_kanban_lifecycle")

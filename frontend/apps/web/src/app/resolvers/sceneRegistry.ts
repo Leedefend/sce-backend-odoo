@@ -31,6 +31,12 @@ export interface SceneListProfile {
   row_secondary?: string;
 }
 
+export interface SceneLayout {
+  kind: 'list' | 'record' | 'workspace' | 'ledger';
+  sidebar: 'fixed' | 'scroll';
+  header: 'compact' | 'full';
+}
+
 export interface Scene {
   key: string;
   label: string;
@@ -43,16 +49,34 @@ export interface Scene {
   list_profile?: SceneListProfile;
   filters?: unknown[];
   default_sort?: string;
+  layout?: SceneLayout;
 }
+
+export const DEFAULT_SCENE_LAYOUT: SceneLayout = {
+  kind: 'workspace',
+  sidebar: 'fixed',
+  header: 'full',
+};
 
 let sceneRegistry: Scene[] = [];
 let errors: Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }> = [];
+
+function normalizeSceneLayout(layout?: Partial<SceneLayout> | null): SceneLayout {
+  if (!layout || typeof layout !== 'object') {
+    return { ...DEFAULT_SCENE_LAYOUT };
+  }
+  return {
+    kind: layout?.kind ?? DEFAULT_SCENE_LAYOUT.kind,
+    sidebar: layout?.sidebar ?? DEFAULT_SCENE_LAYOUT.sidebar,
+    header: layout?.header ?? DEFAULT_SCENE_LAYOUT.header,
+  };
+}
 
 function coerceSceneSource(source: Scene[]) {
   return source
     .map((scene) => {
       if (scene && typeof scene === 'object' && 'key' in scene && 'route' in scene) {
-        return scene;
+        return { ...scene, layout: normalizeSceneLayout(scene.layout) };
       }
       const raw = scene as unknown as {
         code?: string;
@@ -73,6 +97,7 @@ function coerceSceneSource(source: Scene[]) {
           list_profile: raw.list_profile,
           filters: raw.filters,
           default_sort: raw.default_sort,
+          layout: normalizeSceneLayout(),
         } as Scene;
       }
       return null;
@@ -110,4 +135,8 @@ export function getSceneByKey(key: string) {
 
 export function getSceneRegistry() {
   return sceneRegistry;
+}
+
+export function resolveSceneLayout(scene?: Scene | null) {
+  return normalizeSceneLayout(scene?.layout);
 }
