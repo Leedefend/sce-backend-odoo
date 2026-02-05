@@ -1,20 +1,8 @@
 <template>
   <section class="page">
-    <header class="header">
-      <div>
-        <h2>{{ title }}</h2>
-        <p class="meta">{{ subtitle }}</p>
-      </div>
-      <div class="actions">
-        <span class="status-dot" :class="status"></span>
-        <span class="status-text">{{ statusLabel }}</span>
-        <button class="ghost" @click="reload">Reload</button>
-      </div>
-    </header>
-
     <KanbanPage
       v-if="viewMode === 'kanban'"
-      :title="listTitle"
+      :title="pageTitle"
       :status="status"
       :loading="status === 'loading'"
       :error-message="errorMessage"
@@ -23,12 +11,14 @@
       :records="records"
       :fields="kanbanFields"
       :title-field="kanbanTitleField"
+      :subtitle="subtitle"
+      :status-label="statusLabel"
       :on-reload="reload"
       :on-card-click="handleRowClick"
     />
     <ListPage
       v-else
-      :title="listTitle"
+      :title="pageTitle"
       :model="model"
       :status="status"
       :loading="status === 'loading'"
@@ -41,6 +31,8 @@
       :sort-options="sortOptions"
       :sort-value="sortValue"
       :search-term="searchTerm"
+      :subtitle="subtitle"
+      :status-label="statusLabel"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
@@ -49,14 +41,14 @@
 
     <DevContextPanel
       :visible="showHud"
-      title="Action Context"
+      title="View Context"
       :entries="hudEntries"
     />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { listRecordsRaw } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -67,7 +59,6 @@ import KanbanPage from '../pages/KanbanPage.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
-import type { NavNode } from '@sc/schema';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useStatus } from '../composables/useStatus';
@@ -93,13 +84,9 @@ const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
 
 const model = computed(() => actionMeta.value?.model ?? '');
-const title = computed(() => {
-  const menuLabel = findMenuName(session.menuTree, menuId.value);
-  return menuLabel || actionMeta.value?.name || 'List';
-});
+const injectedTitle = inject('pageTitle', computed(() => ''));
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
-const listTitle = computed(() => actionMeta.value?.name || title.value);
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
   { label: 'Name ↑', value: 'name asc' },
@@ -119,27 +106,9 @@ const statusLabel = computed(() => {
   if (status.value === 'empty') return 'Empty';
   return 'Ready';
 });
+const pageTitle = computed(() => injectedTitle?.value || actionMeta.value?.name || 'Workspace');
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
-
-function findMenuName(nodes: NavNode[], menuId?: number): string {
-  if (!menuId) {
-    return '';
-  }
-  const walk = (items: NavNode[]): string | null => {
-    for (const node of items) {
-      if (node.menu_id === menuId || node.id === menuId) {
-        return node.title || node.name || node.label || '';
-      }
-      if (node.children?.length) {
-        const found = walk(node.children);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-  return walk(nodes) || '';
-}
 const hudEntries = computed(() => [
   { label: 'action_id', value: actionId.value || '-' },
   { label: 'menu_id', value: menuId.value || '-' },
@@ -392,67 +361,5 @@ onMounted(load);
 .page {
   display: grid;
   gap: 16px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #94a3b8;
-}
-
-.status-dot.loading {
-  background: #38bdf8;
-}
-
-.status-dot.error {
-  background: #ef4444;
-}
-
-.status-dot.empty {
-  background: #f59e0b;
-}
-
-.status-dot.ok {
-  background: #22c55e;
-}
-
-.status-text {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #64748b;
-}
-
-.meta {
-  color: #64748b;
-  font-size: 14px;
-}
-
-button {
-  padding: 10px 14px;
-  border: none;
-  border-radius: 10px;
-  background: #111827;
-  color: white;
-  cursor: pointer;
-}
-
-.ghost {
-  background: transparent;
-  color: #111827;
-  border: 1px solid rgba(15, 23, 42, 0.12);
 }
 </style>
