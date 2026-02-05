@@ -23,6 +23,14 @@ export interface SceneTile {
   requiredCapabilities?: string[];
 }
 
+export interface SceneListProfile {
+  columns?: string[];
+  hidden_columns?: string[];
+  column_labels?: Record<string, string>;
+  row_primary?: string;
+  row_secondary?: string;
+}
+
 export interface Scene {
   key: string;
   label: string;
@@ -32,6 +40,9 @@ export interface Scene {
   capabilities?: string[];
   breadcrumbs?: Array<{ label: string; to?: string }>;
   tiles?: SceneTile[];
+  list_profile?: SceneListProfile;
+  filters?: unknown[];
+  default_sort?: string;
 }
 
 let sceneRegistry: Scene[] = [];
@@ -43,7 +54,14 @@ function coerceSceneSource(source: Scene[]) {
       if (scene && typeof scene === 'object' && 'key' in scene && 'route' in scene) {
         return scene;
       }
-      const raw = scene as unknown as { code?: string; name?: string; tiles?: SceneTile[] };
+      const raw = scene as unknown as {
+        code?: string;
+        name?: string;
+        tiles?: SceneTile[];
+        list_profile?: SceneListProfile;
+        filters?: unknown[];
+        default_sort?: string;
+      };
       if (raw?.code) {
         const route = `/s/${raw.code}`;
         return {
@@ -52,6 +70,9 @@ function coerceSceneSource(source: Scene[]) {
           route,
           target: { route: `/workbench?scene=${raw.code}` },
           tiles: raw.tiles ?? [],
+          list_profile: raw.list_profile,
+          filters: raw.filters,
+          default_sort: raw.default_sort,
         } as Scene;
       }
       return null;
