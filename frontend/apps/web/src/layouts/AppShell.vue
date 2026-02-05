@@ -44,12 +44,7 @@
               {{ item.label }}
             </button>
           </div>
-          <h1 class="headline">{{ currentTitle }}</h1>
-        </div>
-        <div class="meta">
-          <span>User: {{ userName }}</span>
-          <span>DB: {{ effectiveDb }}</span>
-          <span>Nav v{{ navVersion }}</span>
+          <h1 class="headline">{{ pageTitle }}</h1>
         </div>
       </header>
 
@@ -83,17 +78,25 @@
       <div v-else class="router-host">
         <slot />
       </div>
+
+      <DevContextPanel
+        :visible="showHud"
+        title="Page Context"
+        :entries="hudEntries"
+      />
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, provide, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics } from '../app/resolvers/sceneRegistry';
+import { isHudEnabled } from '../config/debug';
 import type { NavNode } from '@sc/schema';
 
 const session = useSessionStore();
@@ -134,8 +137,17 @@ const sceneErrorMessage = computed(() => {
   return `Scene registry validation failed: ${sample.join(' | ')}${suffix}`;
 });
 
-const currentTitle = computed(() => {
-  const name = route.name?.toString() ?? '';
+const menuLabel = computed(() => {
+  const menuId = activeMenuId.value;
+  if (!menuId) {
+    return '';
+  }
+  const menuPath = findMenuPath(menuTree.value, menuId);
+  const node = menuPath[menuPath.length - 1];
+  return node?.title || node?.name || node?.label || '';
+});
+
+const pageTitle = computed(() => {
   const sceneKey = route.meta?.sceneKey as string | undefined;
   if (sceneKey) {
     const scene = getSceneByKey(sceneKey);
@@ -143,17 +155,36 @@ const currentTitle = computed(() => {
       return scene.label;
     }
   }
-  if (name === 'action') {
-    return session.currentAction?.name || 'List';
+  if (menuLabel.value) {
+    return menuLabel.value;
   }
-  if (name === 'record') {
-    return 'Record';
+  if (session.currentAction?.name) {
+    return session.currentAction.name;
   }
-  if (name === 'workbench') {
+  const modelLabel = (session.currentAction as any)?.model_label || (session.currentAction as any)?.model;
+  if (modelLabel) {
+    return modelLabel;
+  }
+  if (route.name === 'workbench') {
     return 'Workbench';
+  }
+  if (route.name === 'record') {
+    return 'Record';
   }
   return 'Workspace';
 });
+
+provide('pageTitle', pageTitle);
+const showHud = computed(() => isHudEnabled(route));
+const hudEntries = computed(() => [
+  { label: 'scene_key', value: (route.meta?.sceneKey as string | undefined) || '-' },
+  { label: 'menu_id', value: activeMenuId.value || '-' },
+  { label: 'menu_label', value: menuLabel.value || '-' },
+  { label: 'route', value: route.fullPath },
+  { label: 'user', value: userName.value || '-' },
+  { label: 'db', value: effectiveDb.value || '-' },
+  { label: 'nav_version', value: navVersion.value || '-' },
+]);
 
 function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {
   if (!menuId) {
@@ -403,14 +434,6 @@ async function logout() {
 .crumb:disabled {
   cursor: default;
   opacity: 0.6;
-}
-
-.meta {
-  display: grid;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--muted);
-  text-align: right;
 }
 
 .router-host {
