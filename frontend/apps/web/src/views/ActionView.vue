@@ -33,6 +33,7 @@
       :search-term="searchTerm"
       :subtitle="subtitle"
       :status-label="statusLabel"
+      :list-profile="listProfile"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
@@ -62,6 +63,7 @@ import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useStatus } from '../composables/useStatus';
+import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
 const router = useRouter();
@@ -109,9 +111,23 @@ const statusLabel = computed(() => {
 const pageTitle = computed(() => injectedTitle?.value || actionMeta.value?.name || 'Workspace');
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
+const sceneKey = computed(() => {
+  const metaKey = route.meta?.sceneKey as string | undefined;
+  if (metaKey) return metaKey;
+  const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
+  if (queryKey) return String(queryKey);
+  const node = findMenuNode(session.menuTree, menuId.value);
+  return (node?.scene_key || node?.meta?.scene_key || '') as string;
+});
+const scene = computed<Scene | null>(() => {
+  if (!sceneKey.value) return null;
+  return session.scenes.find((item: Scene) => item.key === sceneKey.value || (item as any)?.code === sceneKey.value) || null;
+});
+const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
 const hudEntries = computed(() => [
   { label: 'action_id', value: actionId.value || '-' },
   { label: 'menu_id', value: menuId.value || '-' },
+  { label: 'scene_key', value: sceneKey.value || '-' },
   { label: 'model', value: model.value || '-' },
   { label: 'view_mode', value: viewMode.value || '-' },
   { label: 'order', value: sortLabel.value || '-' },
@@ -137,6 +153,53 @@ function normalizeDomain(domain: unknown) {
     return domain;
   }
   return [];
+}
+
+function mergeSceneDomain(base: unknown, sceneFilters: unknown) {
+  const baseDomain = normalizeDomain(base);
+  const sceneDomain = normalizeDomain(sceneFilters);
+  if (!sceneDomain.length) {
+    return baseDomain;
+  }
+  if (!baseDomain.length) {
+    return sceneDomain;
+  }
+  return [...sceneDomain, ...baseDomain];
+}
+
+function uniqueFields(fields: string[]) {
+  const seen = new Set<string>();
+  return fields.filter((field) => {
+    if (!field) return false;
+    if (seen.has(field)) return false;
+    seen.add(field);
+    return true;
+  });
+}
+
+function resolveRequestedFields(contractFields: string[], profile: SceneListProfile | null) {
+  const profileColumns = profile?.columns ?? [];
+  const secondary = profile?.row_secondary ? [profile.row_secondary] : [];
+  return uniqueFields([...profileColumns, ...secondary, ...contractFields]);
+}
+
+function findMenuNode(nodes: Array<Record<string, any>>, menuId?: number) {
+  if (!menuId) {
+    return null;
+  }
+  const walk = (items: Array<Record<string, any>>): Record<string, any> | null => {
+    for (const node of items) {
+      if (node.menu_id === menuId || node.id === menuId) {
+        return node;
+      }
+      if (node.children?.length) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nodes) || null;
 }
 
 function pickColumns(rows: Array<Record<string, unknown>>) {
@@ -240,7 +303,7 @@ async function load() {
     }
     if (!sortValue.value) {
       const viewOrder = (contract as any)?.views?.tree?.order || (contract as any)?.ui_contract?.views?.tree?.order;
-      const order = viewOrder || (meta as any)?.order;
+      const order = scene.value?.default_sort || viewOrder || (meta as any)?.order;
       if (typeof order === 'string' && order.trim()) {
         sortValue.value = order;
       } else {
@@ -291,11 +354,14 @@ async function load() {
     const contractColumns = extractColumnsFromContract(contract);
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
-    const requestedFields = viewMode.value === 'kanban' ? kanbanContractFields : contractColumns;
+    const requestedFields =
+      viewMode.value === 'kanban'
+        ? kanbanContractFields
+        : resolveRequestedFields(contractColumns, listProfile.value);
     const result = await listRecordsRaw({
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
-      domain: normalizeDomain(meta?.domain),
+      domain: mergeSceneDomain(meta?.domain, scene.value?.filters),
       context: mergeContext(meta?.context),
       limit: 40,
       offset: 0,
