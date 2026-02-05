@@ -1,15 +1,13 @@
 <template>
   <section class="page">
-    <header class="header">
-      <div>
-        <h2>{{ title }}</h2>
-        <p class="meta">{{ subtitle }}</p>
-      </div>
-      <div class="actions">
-        <span class="pill" :class="status">{{ statusLabel }}</span>
-        <button class="ghost" @click="onReload" :disabled="loading">Reload</button>
-      </div>
-    </header>
+    <PageHeader
+      :title="title"
+      :subtitle="subtitle"
+      :status="status"
+      :status-label="statusLabel"
+      :loading="loading"
+      :on-reload="onReload"
+    />
 
     <StatusPanel v-if="loading" title="Loading cards..." variant="info" />
     <StatusPanel
@@ -52,6 +50,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import PageHeader from '../components/page/PageHeader.vue';
 import type { StatusError } from '../composables/useStatus';
 
 const props = defineProps<{
@@ -68,16 +67,9 @@ const props = defineProps<{
   titleField: string;
   onReload: () => void;
   onCardClick: (row: Record<string, unknown>) => void;
+  subtitle: string;
+  statusLabel: string;
 }>();
-
-const statusLabel = computed(() => {
-  if (props.status === 'loading') return 'Loading';
-  if (props.status === 'error') return 'Error';
-  if (props.status === 'empty') return 'Empty';
-  return 'Ready';
-});
-
-const subtitle = computed(() => `${props.records.length} cards · ${props.fields.length} fields`);
 
 const metaFields = computed(() => props.fields.filter((field) => field !== props.titleField).slice(0, 4));
 
@@ -102,22 +94,6 @@ function handleCard(row: Record<string, unknown>) {
   gap: 16px;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.meta {
-  color: #64748b;
-  font-size: 14px;
-}
 
 .grid {
   display: grid;
