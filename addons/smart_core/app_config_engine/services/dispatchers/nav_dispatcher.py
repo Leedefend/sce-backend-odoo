@@ -46,6 +46,13 @@ class NavDispatcher:
         do_enrich = bool(p.get("enrich_nav", True))
         root_xmlid = p.get("root_xmlid")
         root_menu_id = p.get("root_menu_id")
+        resolved_root_id = self._resolve_menu_id(root_menu_id, root_xmlid)
+        root_exists = False
+        if resolved_root_id:
+            try:
+                root_exists = bool(self.su_env["ir.ui.menu"].browse(resolved_root_id).exists())
+            except Exception:
+                root_exists = False
 
         # 1) 从配置服务获取菜单树（sudo，避免权限阻塞元数据）
         # use user env for filtering, generation itself uses sudo internally
@@ -65,6 +72,7 @@ class NavDispatcher:
             }
         contract = cfg.get_menu_contract(model_name=None, filter_runtime=True, scene=scene, filters=root_filters)
         tree_raw = contract.get("nav") or []
+        fallback_used = False
         # 若过度过滤导致为空，放宽过滤参数（仍保留用户组过滤）
         if not tree_raw:
             _logger.warning("NAV_DEBUG: empty nav after runtime filters, relax filters for scene=%s", scene)
@@ -84,10 +92,21 @@ class NavDispatcher:
                 filters=fallback_filters,
             )
             tree_raw = contract.get("nav") or []
-            if not tree_raw:
-                _logger.warning("NAV_DEBUG: empty nav after relax filters, disable runtime filter")
-                contract = cfg.get_menu_contract(model_name=None, filter_runtime=False, scene=scene)
-                tree_raw = contract.get("nav") or []
+            if not tree_raw and root_exists and (root_xmlid or root_menu_id):
+                if self.env.user.has_group("base.group_system"):
+                    _logger.warning(
+                        "NAV_DEBUG: empty nav after relax filters with root, disable runtime filter for admin"
+                    )
+                    contract = cfg.get_menu_contract(
+                        model_name=None,
+                        filter_runtime=False,
+                        scene=scene,
+                        filters=root_filters,
+                    )
+                    tree_raw = contract.get("nav") or []
+                    fallback_used = bool(tree_raw)
+                else:
+                    _logger.warning("NAV_DEBUG: empty nav after relax filters (no admin fallback)")
 
         # 2) 归一根集合
         roots = self._flatten_roots(tree_raw)
@@ -97,7 +116,6 @@ class NavDispatcher:
         tree: List[Dict[str, Any]] = [self._node_to_dict(n) for n in roots if n is not None]
 
         # 4) 可选：限定根菜单（在过滤前裁剪，避免 root 被过滤导致丢失）
-        resolved_root_id = self._resolve_menu_id(root_menu_id, root_xmlid)
         root_found = None
         _logger.info("[NavDispatcher][debug] resolved_root_id: %s (from root_xmlid=%s, root_menu_id=%s)", 
                     resolved_root_id, root_xmlid, root_menu_id)
@@ -125,6 +143,29 @@ class NavDispatcher:
                         _logger.info("[NavDispatcher][debug] root_found after lang retry: %s", root_found)
                 except Exception as e:
                     _logger.warning("NavDispatcher: lang retry failed: %s", e)
+                if not root_found and root_exists and (root_xmlid or root_menu_id):
+                    if self.env.user.has_group("base.group_system"):
+                        _logger.warning(
+                            "NavDispatcher: root filtered, retry with filter_runtime=False for admin root_xmlid=%s",
+                            root_xmlid,
+                        )
+                        try:
+                            contract = cfg.get_menu_contract(
+                                model_name=None,
+                                filter_runtime=False,
+                                scene=scene,
+                                filters=root_filters,
+                            )
+                            tree_raw = contract.get("nav") or []
+                            roots = self._flatten_roots(tree_raw)
+                            tree = [self._node_to_dict(n) for n in roots if n is not None]
+                            tree, root_found = self._slice_raw_tree_by_root(tree, resolved_root_id)
+                            _logger.info("[NavDispatcher][debug] root_found after admin fallback: %s", root_found)
+                            fallback_used = bool(root_found) or fallback_used
+                        except Exception as e:
+                            _logger.warning("NavDispatcher: admin fallback failed: %s", e)
+                    else:
+                        _logger.warning("NavDispatcher: root filtered (no admin fallback)")
                 if not root_found:
                     raise MissingError(f"Root menu not found: {root_xmlid or resolved_root_id}")
 
@@ -172,6 +213,7 @@ class NavDispatcher:
             "root_menu_id": root_menu_id,
             "root_resolved_id": resolved_root_id,
             "root_found": root_found,
+            "root_filtered_fallback": fallback_used,
         }
         if self._diagnostics_enabled():
             meta["diagnostic"] = {
