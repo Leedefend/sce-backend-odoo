@@ -267,6 +267,13 @@ class SystemInitHandler(BaseIntentHandler):
         # ✅ 统一 groups_xmlids 口径（字符串 xmlid）
         _normalize_nav_groups(env, nav_tree)
         nav_fp = _fingerprint({"scene": scene, "nav": nav_tree})
+        if nav_versions and nav_versions.get("root_filtered_fallback"):
+            _logger.warning(
+                "NAV_ROOT_FILTERED_FALLBACK_USED uid=%s root_xmlid=%s trace=%s",
+                env.uid,
+                params.get("root_xmlid"),
+                self.trace_id if hasattr(self, "trace_id") else None,
+            )
 
         default_home_action = (
             params.get("home_action_id")
