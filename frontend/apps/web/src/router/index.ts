@@ -16,6 +16,7 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
     { path: '/projects', name: 'scene-projects', component: SceneView, meta: { layout: 'shell', sceneKey: 'projects' } },
     { path: '/projects/:id', name: 'scene-project', component: SceneView, meta: { layout: 'shell', sceneKey: 'project-record' } },
+    { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
     { path: '/workbench', name: 'workbench', component: WorkbenchView, meta: { layout: 'shell' } },
     { path: '/a/:actionId', name: 'action', component: ActionView, meta: { layout: 'shell' } },
