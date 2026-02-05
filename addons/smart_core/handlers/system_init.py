@@ -157,10 +157,12 @@ def _apply_scene_keys(env, nodes):
     menu_map = {
         "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
         "smart_construction_core.menu_sc_project_initiation": "projects.intake",
+        "smart_construction_core.menu_sc_project_project": "projects.ledger",
     }
     action_xmlid_map = {
         "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
         "smart_construction_core.action_project_initiation": "projects.intake",
+        "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
     }
     action_id_map = _resolve_action_ids(env, action_xmlid_map)
     model_view_map = {
@@ -414,7 +416,41 @@ class SystemInitHandler(BaseIntentHandler):
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
             "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
             "preload": [],
-            "scenes": [],
+            "scenes": [
+                {
+                    "code": "projects.ledger",
+                    "name": "项目台账（试点）",
+                    "list_profile": {
+                        "columns": [
+                            "name",
+                            "project_code",
+                            "partner_id",
+                            "user_id",
+                            "stage_id",
+                            "write_date",
+                        ],
+                        "hidden_columns": [
+                            "message_needaction",
+                            "message_unread",
+                            "is_favorite",
+                            "display_name",
+                            "__last_update",
+                        ],
+                        "column_labels": {
+                            "name": "项目名称",
+                            "project_code": "项目编号",
+                            "partner_id": "客户",
+                            "user_id": "负责人",
+                            "stage_id": "状态",
+                            "write_date": "更新时间",
+                        },
+                        "row_primary": "name",
+                        "row_secondary": "partner_id",
+                    },
+                    "filters": [],
+                    "default_sort": "write_date desc",
+                }
+            ],
             "scene_version": "v1",
         }
         if home_contract:
@@ -424,6 +460,50 @@ class SystemInitHandler(BaseIntentHandler):
 
         # 扩展模块可附加场景/能力等（不影响主流程）
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
+
+        # Ensure list_profile fallback for projects.ledger when extensions do not provide it.
+        scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+        has_ledger = False
+        for scene in scenes_payload:
+            code = scene.get("code") or scene.get("key")
+            if code == "projects.ledger":
+                has_ledger = True
+                break
+        if not has_ledger:
+            scenes_payload.append({
+                "code": "projects.ledger",
+                "name": "项目台账（试点）",
+                "list_profile": {
+                    "columns": [
+                        "name",
+                        "project_code",
+                        "partner_id",
+                        "user_id",
+                        "stage_id",
+                        "write_date",
+                    ],
+                    "hidden_columns": [
+                        "message_needaction",
+                        "message_unread",
+                        "is_favorite",
+                        "display_name",
+                        "__last_update",
+                    ],
+                    "column_labels": {
+                        "name": "项目名称",
+                        "project_code": "项目编号",
+                        "partner_id": "客户",
+                        "user_id": "负责人",
+                        "stage_id": "状态",
+                        "write_date": "更新时间",
+                    },
+                    "row_primary": "name",
+                    "row_secondary": "partner_id",
+                },
+                "filters": [],
+                "default_sort": "write_date desc",
+            })
+        data["scenes"] = scenes_payload
 
         # 分部 etag：加入导航
         etags["nav"] = nav_fp
