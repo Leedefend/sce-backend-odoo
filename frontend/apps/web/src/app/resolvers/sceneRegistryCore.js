@@ -17,6 +17,7 @@ export function validateSceneRegistry(scenes) {
     const label = scene && scene.label;
     const route = scene && scene.route;
     const target = scene && scene.target;
+    const layout = scene && scene.layout;
 
     if (!key || typeof key !== 'string') {
       issues.push('key is required');
@@ -36,6 +37,23 @@ export function validateSceneRegistry(scenes) {
 
     if (!target || typeof target !== 'object') {
       issues.push('target is required');
+    }
+
+    if (!layout || typeof layout !== 'object') {
+      issues.push('layout is required');
+    } else {
+      const kind = layout.kind;
+      const sidebar = layout.sidebar;
+      const header = layout.header;
+      if (!['list', 'record', 'workspace', 'ledger'].includes(kind)) {
+        issues.push('layout.kind invalid');
+      }
+      if (!['fixed', 'scroll'].includes(sidebar)) {
+        issues.push('layout.sidebar invalid');
+      }
+      if (!['compact', 'full'].includes(header)) {
+        issues.push('layout.header invalid');
+      }
     }
 
     if (issues.length) {
