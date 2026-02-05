@@ -20,20 +20,36 @@ export interface Scene {
   breadcrumbs?: Array<{ label: string; to?: string }>;
 }
 
-const validation = validateSceneRegistry(SCENES as Scene[]);
-const errors = validation.errors as Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }>;
+let sceneRegistry: Scene[] = [];
+let errors: Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }> = [];
 
-if (errors.length) {
-  // eslint-disable-next-line no-console
-  console.warn('[scene-registry] invalid scenes detected', errors);
+function buildSceneRegistry(source: Scene[]) {
+  const validation = validateSceneRegistry(source as Scene[]);
+  const nextErrors = validation.errors as Array<{ index: number; key?: string | null; route?: string | null; issues: string[] }>;
+  if (nextErrors.length) {
+    // eslint-disable-next-line no-console
+    console.warn('[scene-registry] invalid scenes detected', nextErrors);
+  }
+  errors = nextErrors;
+  sceneRegistry = validation.validScenes as Scene[];
+  return sceneRegistry;
 }
 
-export const sceneRegistry = validation.validScenes as Scene[];
+buildSceneRegistry(SCENES as Scene[]);
 
 export function getSceneRegistryDiagnostics() {
   return { errors };
 }
 
+export function setSceneRegistry(scenes?: Scene[] | null) {
+  const source = Array.isArray(scenes) && scenes.length ? scenes : (SCENES as Scene[]);
+  return buildSceneRegistry(source);
+}
+
 export function getSceneByKey(key: string) {
   return sceneRegistry.find((scene) => scene.key === key) || null;
+}
+
+export function getSceneRegistry() {
+  return sceneRegistry;
 }
