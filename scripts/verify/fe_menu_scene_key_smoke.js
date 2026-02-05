@@ -8,8 +8,13 @@ const https = require('https');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
-const LOGIN = process.env.E2E_LOGIN || 'admin';
-const PASSWORD = process.env.E2E_PASSWORD || process.env.ADMIN_PASSWD || 'admin';
+const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'svc_project_ro';
+const PASSWORD =
+  process.env.SCENE_PASSWORD ||
+  process.env.SVC_PASSWORD ||
+  process.env.E2E_PASSWORD ||
+  process.env.ADMIN_PASSWD ||
+  'ChangeMe_123!';
 const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
