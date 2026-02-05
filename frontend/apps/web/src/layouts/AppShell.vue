@@ -243,6 +243,11 @@ function handleSelect(node: NavNode) {
   if (!node.menu_id && node.id) {
     node.menu_id = node.id as number;
   }
+  const sceneKey = (node as any).scene_key || (node as any).sceneKey || node.meta?.scene_key;
+  if (sceneKey) {
+    router.push({ path: `/s/${sceneKey}`, query: { menu_id: node.menu_id || undefined } }).catch(() => {});
+    return;
+  }
   if (node.menu_id) {
     router.push(`/m/${node.menu_id}`).catch(() => {});
   }
