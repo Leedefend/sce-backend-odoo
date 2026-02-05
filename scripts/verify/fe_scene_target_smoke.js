@@ -124,17 +124,33 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const unsupported = [];
+  for (const scene of scenes) {
+    const code = scene && (scene.code || scene.key);
+    if (!code) continue;
+    const target = scene.target || {};
+    const ok = Boolean(target.action_id || target.model || target.route);
+    if (!ok) {
+      unsupported.push(code);
+    }
+  }
+
   const ledger = scenes.find((item) => (item && (item.code === 'projects.ledger' || item.key === 'projects.ledger')));
   if (!ledger) {
     throw new Error('scene projects.ledger missing');
   }
   const target = ledger.target || {};
 
-  summary.push(`target_action_id: ${target.action_id || '-'}`);
+  summary.push(`scene_count: ${scenes.length}`);
+  summary.push(`unsupported: ${unsupported.join(',') || '-'}`);
+  summary.push(`ledger_action_id: ${target.action_id || '-'}`);
   writeSummary(summary);
 
+  if (unsupported.length) {
+    throw new Error(`scene target missing for: ${unsupported.join(', ')}`);
+  }
   if (!target.action_id) {
-    throw new Error('scene target.action_id missing');
+    throw new Error('projects.ledger target.action_id missing');
   }
 
   log('PASS target action_id');

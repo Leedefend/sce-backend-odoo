@@ -212,6 +212,51 @@ def _resolve_action_id(env, xmlid: str | None) -> int | None:
     return None
 
 
+def _index_nav_scene_targets(nodes):
+    targets = {}
+    def walk(items):
+        for node in items or []:
+            meta = node.get("meta") or {}
+            scene_key = node.get("scene_key") or meta.get("scene_key")
+            if scene_key:
+                targets[scene_key] = {
+                    "menu_id": node.get("menu_id") or node.get("id"),
+                    "action_id": meta.get("action_id"),
+                    "model": meta.get("model"),
+                    "view_mode": meta.get("view_mode") or meta.get("view_type"),
+                }
+            if node.get("children"):
+                walk(node["children"])
+    walk(nodes)
+    return targets
+
+
+def _normalize_scene_targets(scenes, nav_targets):
+    for scene in scenes:
+        code = scene.get("code") or scene.get("key")
+        if not code:
+            continue
+        target = scene.get("target") or {}
+        if target.get("action_id") or target.get("model") or target.get("route"):
+            scene["target"] = target
+            continue
+        nav = nav_targets.get(code) or {}
+        resolved = {}
+        if nav.get("action_id"):
+            resolved["action_id"] = nav.get("action_id")
+        elif nav.get("model"):
+            resolved["model"] = nav.get("model")
+            if nav.get("view_mode"):
+                resolved["view_mode"] = nav.get("view_mode")
+        if nav.get("menu_id"):
+            resolved["menu_id"] = nav.get("menu_id")
+        if resolved:
+            scene["target"] = resolved
+        else:
+            scene["target"] = {"route": f"/workbench?scene={code}&reason=TARGET_MISSING"}
+    return scenes
+
+
 
 def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
     """
@@ -480,17 +525,41 @@ class SystemInitHandler(BaseIntentHandler):
             code = scene.get("code") or scene.get("key")
             if code == "projects.ledger":
                 has_ledger = True
-                if not scene.get("target"):
-                    action_id = _resolve_action_id(env, "smart_construction_core.action_sc_project_kanban_lifecycle")
-                    if action_id:
-                        scene["target"] = {"action_id": action_id}
+                if "list_profile" not in scene:
+                    scene["list_profile"] = {
+                        "columns": [
+                            "name",
+                            "project_code",
+                            "partner_id",
+                            "user_id",
+                            "stage_id",
+                            "write_date",
+                        ],
+                        "hidden_columns": [
+                            "message_needaction",
+                            "message_unread",
+                            "is_favorite",
+                            "display_name",
+                            "__last_update",
+                        ],
+                        "column_labels": {
+                            "name": "项目名称",
+                            "project_code": "项目编号",
+                            "partner_id": "客户",
+                            "user_id": "负责人",
+                            "stage_id": "状态",
+                            "write_date": "更新时间",
+                        },
+                        "row_primary": "name",
+                        "row_secondary": "partner_id",
+                    }
+                scene.setdefault("filters", [])
+                scene.setdefault("default_sort", "write_date desc")
                 break
         if not has_ledger:
-            action_id = _resolve_action_id(env, "smart_construction_core.action_sc_project_kanban_lifecycle")
             scenes_payload.append({
                 "code": "projects.ledger",
                 "name": "项目台账（试点）",
-                "target": {"action_id": action_id} if action_id else {},
                 "list_profile": {
                     "columns": [
                         "name",
@@ -521,6 +590,16 @@ class SystemInitHandler(BaseIntentHandler):
                 "filters": [],
                 "default_sort": "write_date desc",
             })
+        nav_targets = _index_nav_scene_targets(nav_tree)
+        _normalize_scene_targets(scenes_payload, nav_targets)
+        ledger_action_id = _resolve_action_id(env, "smart_construction_core.action_sc_project_kanban_lifecycle")
+        for scene in scenes_payload:
+            code = scene.get("code") or scene.get("key")
+            if code == "projects.ledger" and ledger_action_id:
+                target = scene.get("target") or {}
+                target.setdefault("action_id", ledger_action_id)
+                scene["target"] = target
+                break
         data["scenes"] = scenes_payload
 
         # 分部 etag：加入导航
