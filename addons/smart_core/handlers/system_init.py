@@ -200,6 +200,18 @@ def _apply_scene_keys(env, nodes):
             _apply_scene_keys(env, n["children"])
 
 
+def _resolve_action_id(env, xmlid: str | None) -> int | None:
+    if not xmlid:
+        return None
+    try:
+        rec = env.ref(xmlid, raise_if_not_found=False)
+        if rec and rec.id:
+            return int(rec.id)
+    except Exception:
+        return None
+    return None
+
+
 
 def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
     """
@@ -468,11 +480,17 @@ class SystemInitHandler(BaseIntentHandler):
             code = scene.get("code") or scene.get("key")
             if code == "projects.ledger":
                 has_ledger = True
+                if not scene.get("target"):
+                    action_id = _resolve_action_id(env, "smart_construction_core.action_sc_project_kanban_lifecycle")
+                    if action_id:
+                        scene["target"] = {"action_id": action_id}
                 break
         if not has_ledger:
+            action_id = _resolve_action_id(env, "smart_construction_core.action_sc_project_kanban_lifecycle")
             scenes_payload.append({
                 "code": "projects.ledger",
                 "name": "项目台账（试点）",
+                "target": {"action_id": action_id} if action_id else {},
                 "list_profile": {
                     "columns": [
                         "name",
