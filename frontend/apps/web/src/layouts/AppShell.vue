@@ -303,8 +303,9 @@ async function logout() {
   --accent-2: #e07a5f;
   --panel: #ffffff;
   min-height: 100vh;
+  height: 100vh;
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 280px minmax(0, 1fr);
   background: radial-gradient(circle at top left, #f7e9dc 0%, #f6f3ef 45%, #eef1f7 100%);
   color: var(--ink);
   font-family: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
@@ -313,10 +314,13 @@ async function logout() {
 .sidebar {
   padding: 24px 18px;
   display: grid;
+  grid-template-rows: auto auto 1fr auto;
   gap: 16px;
   border-right: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(12px);
+  height: 100vh;
+  overflow: hidden;
 }
 
 .brand {
@@ -359,6 +363,7 @@ async function logout() {
 .menu {
   overflow: auto;
   padding-right: 4px;
+  min-height: 0;
 }
 
 .footer {
@@ -381,6 +386,7 @@ async function logout() {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 18px;
+  min-width: 0;
 }
 
 .topbar {
@@ -438,6 +444,7 @@ async function logout() {
 
 .router-host {
   min-height: 0;
+  min-width: 0;
 }
 
 @media (max-width: 960px) {
@@ -448,6 +455,7 @@ async function logout() {
     grid-row: 2;
     border-right: none;
     border-top: 1px solid rgba(15, 23, 42, 0.08);
+    height: auto;
   }
 }
 </style>
