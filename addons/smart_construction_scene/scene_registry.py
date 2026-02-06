@@ -5,6 +5,18 @@ SCHEMA_VERSION = "v2"
 PROJECTS_DEFAULT_SORT = "write_date desc"
 
 
+def _append_drift(drift, *, scene_key, kind, fields, severity="info", source="db->registry"):
+    if drift is None:
+        return
+    drift.append({
+        "scene_key": scene_key or "",
+        "kind": kind,
+        "fields": list(fields or []),
+        "severity": severity,
+        "source": source,
+    })
+
+
 def _projects_list_profile():
     return {
         "columns": [
@@ -91,7 +103,7 @@ def _normalize_layout(layout):
     return {"kind": "workspace", "sidebar": "fixed", "header": "full"}
 
 
-def _normalize_scene(scene):
+def _normalize_scene(scene, drift=None, source="registry"):
     if not isinstance(scene, dict):
         return None
     if not scene.get("code") and scene.get("key"):
@@ -108,19 +120,25 @@ def _normalize_scene(scene):
                     payload = tile.get("payload") if isinstance(tile.get("payload"), dict) else {}
                     payload.setdefault("scene_key", "projects.ledger")
                     tile["payload"] = payload
-    scene = _apply_scene_defaults(scene)
+    scene = _apply_scene_defaults(scene, drift=drift, source=source)
     return scene
 
 
-def _apply_scene_defaults(scene):
+def _apply_scene_defaults(scene, drift=None, source="registry"):
     code = scene.get("code") or scene.get("key") or ""
     if code in ("projects.list", "projects.ledger"):
         if not scene.get("list_profile"):
             scene["list_profile"] = _projects_list_profile()
+            if source == "db":
+                _append_drift(drift, scene_key=code, kind="db_missing_field_filled", fields=["list_profile"])
         if not scene.get("default_sort"):
             scene["default_sort"] = PROJECTS_DEFAULT_SORT
+            if source == "db":
+                _append_drift(drift, scene_key=code, kind="db_missing_field_filled", fields=["default_sort"])
         if scene.get("tiles") is None:
             scene["tiles"] = []
+            if source == "db":
+                _append_drift(drift, scene_key=code, kind="db_missing_field_filled", fields=["tiles"])
     if code == "projects.intake":
         target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
         if not (
@@ -133,10 +151,18 @@ def _apply_scene_defaults(scene):
         ):
             target["route"] = "/workbench?scene=projects.intake&reason=TARGET_MISSING"
             scene["target"] = target
+            if source == "db":
+                _append_drift(
+                    drift,
+                    scene_key=code,
+                    kind="fallback_override",
+                    fields=["target"],
+                    severity="warn",
+                )
     return scene
 
 
-def _load_from_db(env):
+def _load_from_db(env, drift=None):
     if env is None:
         return []
     try:
@@ -147,15 +173,15 @@ def _load_from_db(env):
     out = []
     for scene in scenes:
         payload = scene.to_public_dict(env.user)
-        normalized = _normalize_scene(payload)
+        normalized = _normalize_scene(payload, drift=drift, source="db")
         if normalized:
             out.append(normalized)
     return out
 
 
-def load_scene_configs(env):
+def load_scene_configs(env, drift=None):
     # Prefer DB scenes if present; fallback to code-defined scenes.
-    db_scenes = _load_from_db(env)
+    db_scenes = _load_from_db(env, drift=drift)
     # Note: keep configs data-only; target IDs are resolved by system_init.
     fallback = [
         {

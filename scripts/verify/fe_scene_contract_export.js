@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { canonicalizeScenes } = require('./lib/scene_snapshot');
+const { loadProfiles, normalizeVersion } = require('./lib/scene_schema_loader');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -20,12 +22,17 @@ const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
+const CONTRACT_OUT =
+  process.env.CONTRACT_OUT || 'docs/contract/exports/scenes/scene_contract.v10_0.json';
+const CONTRACT_LATEST = process.env.CONTRACT_LATEST || 'docs/contract/exports/scenes/LATEST.json';
+const INCLUDE_GENERATED_AT = process.env.INCLUDE_GENERATED_AT === '1';
+
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-8', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v10_0', ts);
 
 function log(msg) {
-  console.log(`[fe_scene_diagnostics_smoke] ${msg}`);
+  console.log(`[fe_scene_contract_export] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -71,6 +78,12 @@ function requestJson(url, payload, headers = {}) {
     req.write(body);
     req.end();
   });
+}
+
+function resolveWritePath(relPath) {
+  if (path.isAbsolute(relPath)) return relPath;
+  const root = process.env.CONTRACT_ROOT || process.env.SNAPSHOT_ROOT || '/mnt/extra-addons';
+  return path.join(root, relPath);
 }
 
 async function main() {
@@ -123,53 +136,41 @@ async function main() {
   }
 
   const data = initResp.body.data || {};
-  const diag = data.scene_diagnostics;
-  if (!diag || typeof diag !== 'object') {
-    throw new Error('scene_diagnostics missing');
-  }
-  if (!diag.schema_version) {
-    throw new Error('scene_diagnostics.schema_version missing');
-  }
-  if (!diag.scene_version) {
-    throw new Error('scene_diagnostics.scene_version missing');
-  }
-  if (!Array.isArray(diag.resolve_errors)) {
-    throw new Error('scene_diagnostics.resolve_errors not array');
-  }
-  if (!Array.isArray(diag.drift)) {
-    throw new Error('scene_diagnostics.drift not array');
-  }
-  const allowedSeverities = new Set(['critical', 'non_critical']);
-  const invalidErrors = diag.resolve_errors.filter(
-    (err) => !err || !err.scene_key || !err.code || !err.severity || !allowedSeverities.has(err.severity)
-  );
-  if (invalidErrors.length) {
-    throw new Error(`resolve_errors invalid entries (${invalidErrors.length})`);
-  }
-  const criticalErrors = diag.resolve_errors.filter((err) => err.severity === 'critical');
-  if (criticalErrors.length) {
-    throw new Error(`resolve_errors critical (${criticalErrors.length})`);
-  }
-  if (diag.normalize_warnings && Array.isArray(diag.normalize_warnings)) {
-    const bad = diag.normalize_warnings.filter((item) => !item || !item.code || !item.message);
-    if (bad.length) {
-      throw new Error('normalize_warnings contains invalid entries');
-    }
+  const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const canonical = canonicalizeScenes(scenes);
+  const schemaVersion = normalizeVersion(data.schema_version || 'v1', 'v1');
+  const profiles = loadProfiles(schemaVersion);
+
+  const contract = {
+    schema_version: data.schema_version || schemaVersion,
+    scene_version: data.scene_version || '',
+    profiles_version: profiles.version || '',
+    scenes: canonical,
+  };
+  if (INCLUDE_GENERATED_AT) {
+    contract.generated_at = new Date().toISOString();
   }
 
-  summary.push(`schema_version: ${diag.schema_version}`);
-  summary.push(`scene_version: ${diag.scene_version}`);
-  summary.push(`loaded_from: ${diag.loaded_from || '-'}`);
-  summary.push(`resolve_errors: ${diag.resolve_errors.length}`);
-  summary.push(`drift: ${diag.drift.length}`);
-  summary.push(`normalize_warnings: ${(diag.normalize_warnings || []).length}`);
+  const outPath = resolveWritePath(CONTRACT_OUT);
+  const latestPath = resolveWritePath(CONTRACT_LATEST);
+  writeJson(outPath, contract);
+  if (CONTRACT_LATEST) {
+    writeJson(latestPath, contract);
+  }
+
+  summary.push(`contract_out: ${outPath}`);
+  summary.push(`contract_latest: ${latestPath}`);
+  summary.push(`scene_count: ${canonical.length}`);
+  summary.push(`schema_version: ${contract.schema_version}`);
+  summary.push(`scene_version: ${contract.scene_version}`);
+  summary.push(`profiles_version: ${contract.profiles_version}`);
   writeSummary(summary);
 
-  log('PASS diagnostics');
+  log('PASS contract export');
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_scene_diagnostics_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_scene_contract_export] FAIL: ${err.message}`);
   process.exit(1);
 });
