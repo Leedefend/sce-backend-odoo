@@ -30,7 +30,6 @@ act_window,51,base.action_menu_ir_profile,Ir profile,ir.profile,"tree,form",acti
 act_window,52,base.action_res_company_form,Companies,res.company,"tree,kanban,form",action,0,
 act_window,53,base.res_lang_act_window,Languages,res.lang,"tree,form",action,0,
 act_window,66,base.action_currency_form,Currencies,res.currency,"tree,kanban,form",action,0,
-act_window,68,base.action_res_groups,Groups,res.groups,"tree,form",action,1,smart_construction_core.group_sc_cap_config_admin;smart_construction_core.group_sc_super_admin
 act_window,69,base.action_res_users,Users,res.users,"tree,kanban,form",action,0,
 act_window,73,base.ir_property_form,Company Properties,ir.property,"tree,form",action,0,
 act_window,84,base_setup.action_general_configuration,Settings,res.config.settings,form,action,1,smart_construction_core.group_sc_super_admin
@@ -92,13 +91,10 @@ act_window,280,account.action_account_fiscal_position_form,Fiscal Positions,acco
 act_window,281,account.res_partner_action_customer,Customers,res.partner,"kanban,tree,form",action,0,
 act_window,282,account.res_partner_action_supplier,Vendors,res.partner,"kanban,tree,form",action,0,
 act_window,286,account.action_incoterms_tree,Incoterms,account.incoterms,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager
-act_window,293,project.project_project_stage_configure,Project Stages,project.project.stage,"tree,kanban,form",action,0,
 act_window,295,project.project_share_wizard_action,Share Project,project.share.wizard,form,action,1,smart_construction_core.group_sc_super_admin;base.group_system
 act_window,300,project.action_send_mail_project_project,Send Email,mail.compose.message,form,action,1,smart_construction_core.group_sc_super_admin;base.group_system
 act_window,302,project.open_view_project_all,Projects,project.project,"kanban,tree,form",action,1,smart_construction_core.group_sc_cap_project_read
-act_window,303,project.open_view_project_all_group_stage,Projects,project.project,"kanban,tree,form,calendar,activity",action,0,
 act_window,304,project.open_view_project_all_config,Projects,project.project,"tree,kanban,form",action,0,
-act_window,305,project.open_view_project_all_config_group_stage,Projects,project.project,"tree,kanban,form,calendar,activity",action,0,
 act_window,312,project.action_view_all_task,All Tasks,project.task,"tree,kanban,form,calendar,pivot,graph,activity",action,0,
 act_window,320,project.project_tags_action,Tags,project.tags,"tree,form",action,0,
 act_window,321,project.project_config_settings_action,Settings,res.config.settings,form,action,1,smart_construction_core.group_sc_super_admin
@@ -126,41 +122,3 @@ act_window,436,purchase.action_purchase_configuration,Settings,res.config.settin
 act_window,439,purchase.action_purchase_order_report_all,Purchase Analysis,purchase.report,"graph,pivot",action,1,purchase.group_purchase_user
 act_window,440,stock_account.stock_valuation_layer_action,Stock Valuation,stock.valuation.layer,"tree,form,pivot",action,0,
 act_window,442,stock_account.inventory_aging_action,Inventory Aging,stock.valuation.layer,"pivot,tree,graph",action,0,
-act_window,448,smart_construction_core.action_project_budget,项目预算,project.budget,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
-act_window,449,smart_construction_core.action_project_cost_code,成本科目,project.cost.code,"tree,form",action,1,smart_construction_core.group_sc_cap_config_admin
-act_window,450,smart_construction_core.action_project_cost_compare,项目成本预算 vs 实际,project.cost.compare,"tree,pivot",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
-act_window,451,smart_construction_core.action_project_profit_compare,项目经营利润,project.profit.compare,"tree,pivot",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
-act_window,452,smart_construction_core.action_project_cost_ledger,成本台账,project.cost.ledger,"tree,form,pivot,graph",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
-act_window,453,smart_construction_core.action_project_budget_cost_alloc,预算清单分摊,project.budget.cost.alloc,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
-act_window,454,smart_construction_core.action_project_wbs,工程结构,construction.work.breakdown,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user;smart_construction_core.group_sc_cap_project_manager;smart_construction_core.group_sc_cap_project_user
-act_window,455,smart_construction_core.action_project_progress_entry,进度计量,project.progress.entry,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
-act_window,458,smart_construction_core.action_sc_project_structure,工程结构（清单 WBS）,sc.project.structure,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
-act_window,459,smart_construction_core.action_project_boq_line,工程量清单,project.boq.line,"tree,form,pivot",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_cost_manager;smart_construction_core.group_sc_cap_cost_user
-act_window,462,smart_construction_core.action_project_material_plan,物资计划,project.material.plan,"tree,form",action,1,smart_construction_core.group_sc_cap_material_manager;smart_construction_core.group_sc_cap_material_user
-act_window,463,smart_construction_core.action_sc_finance_dashboard,财务中心,payment.request,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager;smart_construction_core.group_sc_cap_finance_user
-act_window,467,smart_construction_core.action_project_contract_overview,项目合同汇总,construction.contract,"tree,form",action,1,smart_construction_core.group_sc_cap_contract_manager;smart_construction_core.group_sc_cap_contract_user
-act_window,468,smart_construction_core.action_work_breakdown,工程结构,construction.work.breakdown,"tree,form",action,1,smart_construction_core.group_sc_cap_project_manager;smart_construction_core.group_sc_cap_project_user
-act_window,469,smart_construction_core.action_tender_bid,投标管理,tender.bid,"tree,form",action,1,smart_construction_core.group_sc_cap_project_read
-act_window,470,smart_construction_core.action_sc_project_document,工程资料,sc.project.document,"tree,form",action,1,smart_construction_core.group_sc_cap_project_read
-act_window,471,smart_construction_core.action_sc_operating_metrics_project,经营指标（项目）,sc.operating.metrics.project,"tree,pivot",action,1,smart_construction_core.group_sc_cap_cost_user
-act_window,474,smart_construction_core.action_project_dashboard,项目驾驶舱,project.project,"kanban,tree,form",action,1,smart_construction_core.group_sc_cap_project_read
-act_window,476,smart_construction_core.action_construction_contract_income,收入合同,construction.contract,"tree,form",action,1,smart_construction_core.group_sc_cap_contract_read;smart_construction_core.group_sc_cap_contract_manager;smart_construction_core.group_sc_cap_contract_user
-act_window,477,smart_construction_core.action_construction_contract_expense,支出合同,construction.contract,"tree,form",action,1,smart_construction_core.group_sc_cap_contract_read;smart_construction_core.group_sc_cap_contract_manager;smart_construction_core.group_sc_cap_contract_user
-act_window,479,smart_construction_core.action_sc_tier_review_my_payment_request,待我审批（付款申请）,tier.review,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager
-act_window,480,smart_construction_core.action_sc_tier_review_my_material_plan,待我审批（物资计划）,tier.review,"tree,form",action,1,smart_construction_core.group_sc_cap_material_manager
-act_window,481,smart_construction_core.action_payment_request,付款/收款申请,payment.request,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_manager;smart_construction_core.group_sc_cap_finance_user
-act_window,482,smart_construction_core.action_sc_settlement_order,结算单,sc.settlement.order,"tree,form",action,1,smart_construction_core.group_sc_cap_cost_read;smart_construction_core.group_sc_cap_settlement_read;smart_construction_core.group_sc_cap_settlement_manager;smart_construction_core.group_sc_cap_settlement_user;smart_construction_core.group_sc_cap_finance_read;smart_construction_core.group_sc_cap_project_read
-act_window,483,smart_construction_core.action_sc_treasury_ledger,资金台账,sc.treasury.ledger,"tree,form",action,1,smart_construction_core.group_sc_cap_finance_read;smart_construction_core.group_sc_cap_finance_manager;smart_construction_core.group_sc_cap_finance_user
-act_window,484,smart_construction_core.action_sc_workflow_def,工作流定义,sc.workflow.def,"tree,form",action,1,smart_construction_core.group_sc_cap_config_admin
-act_window,485,smart_construction_core.action_sc_workflow_instance,工作流实例,sc.workflow.instance,"tree,form",action,1,smart_construction_core.group_sc_cap_config_admin
-act_window,486,smart_construction_core.action_sc_workflow_workitem,工作项,sc.workflow.workitem,tree,action,1,smart_construction_core.group_sc_cap_config_admin
-act_window,487,smart_construction_core.action_sc_workflow_log,工作流日志,sc.workflow.log,tree,action,1,smart_construction_core.group_sc_cap_config_admin
-act_window,488,smart_construction_core.action_project_initiation,项目立项,project.project,"form,tree,kanban",action,1,smart_construction_core.group_sc_cap_project_manager;smart_construction_core.group_sc_cap_project_user
-act_window,489,smart_construction_core.action_project_dictionary,数据字典（全部）,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
-act_window,490,smart_construction_core.action_project_dictionary_discipline,专业,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
-act_window,491,smart_construction_core.action_project_dictionary_chapter,章节,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
-act_window,492,smart_construction_core.action_project_dictionary_quota_item,定额项目,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
-act_window,493,smart_construction_core.action_project_dictionary_sub_item,子目,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
-act_window,494,smart_construction_core.action_project_quota_subitem,定额子目,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
-act_window,495,smart_construction_core.action_project_quota_tree,定额体系树,project.dictionary,"tree,form",action,1,smart_construction_core.group_sc_cap_data_read
-act_window,497,smart_construction_core.action_quota_import_wizard,四川定额导入,quota.import.wizard,form,action,1,smart_construction_core.group_sc_cap_config_admin
