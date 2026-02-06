@@ -883,7 +883,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.gate
+.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict
 
 fe.install:
 	@pnpm -C frontend install
@@ -893,6 +893,12 @@ fe.dev:
 
 fe.gate:
 	@pnpm -C frontend gate
+
+verify.frontend.build: guard.prod.forbid
+	@pnpm -C frontend/apps/web build
+
+verify.frontend.typecheck.strict: guard.prod.forbid
+	@pnpm -C frontend/apps/web typecheck:strict
 
 main.sync: guard.prod.forbid
 	@echo "[main.sync] checkout main + fast-forward pull"

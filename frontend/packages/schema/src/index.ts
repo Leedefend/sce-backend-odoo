@@ -50,6 +50,7 @@ export interface NavNode {
   sequence?: number;
   parent_id?: number;
   xml_id?: string;
+  xmlid?: string;
   module?: string;
   web_icon?: boolean | string;
   groups?: number[];
@@ -60,6 +61,8 @@ export interface NavNode {
 }
 
 export interface NavMeta {
+  name?: string;
+  scene_key?: string;
   menu_id?: number;
   menu_xmlid?: string;
   sequence?: number;
@@ -87,6 +90,7 @@ export interface AppInitResponse {
   default_route?: { menu_id?: number } | string;
   intents?: string[];
   feature_flags?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
 }
 
 export interface ApiDataListResult {
@@ -100,6 +104,7 @@ export interface ApiDataListRequest {
   model: string;
   fields?: string[] | '*';
   domain?: unknown[] | string;
+  search_term?: string;
   limit?: number;
   offset?: number;
   order?: string;

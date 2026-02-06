@@ -87,16 +87,16 @@
       </section>
 
       <details open>
-        <summary>Resolve Errors ({{ health.details.resolve_errors.length }})</summary>
-        <pre>{{ JSON.stringify(health.details.resolve_errors, null, 2) }}</pre>
+        <summary>Resolve Errors ({{ health.details?.resolve_errors?.length || 0 }})</summary>
+        <pre>{{ JSON.stringify(health.details?.resolve_errors || [], null, 2) }}</pre>
       </details>
       <details>
-        <summary>Drift ({{ health.details.drift.length }})</summary>
-        <pre>{{ JSON.stringify(health.details.drift, null, 2) }}</pre>
+        <summary>Drift ({{ health.details?.drift?.length || 0 }})</summary>
+        <pre>{{ JSON.stringify(health.details?.drift || [], null, 2) }}</pre>
       </details>
       <details>
-        <summary>Debt ({{ health.details.debt.length }})</summary>
-        <pre>{{ JSON.stringify(health.details.debt, null, 2) }}</pre>
+        <summary>Debt ({{ health.details?.debt?.length || 0 }})</summary>
+        <pre>{{ JSON.stringify(health.details?.debt || [], null, 2) }}</pre>
       </details>
     </div>
   </section>
@@ -105,42 +105,24 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
-import { intentRequest, intentRequestRaw } from '../api/intents';
-
-type SceneHealth = {
-  company_id: number | null;
-  scene_channel: string;
-  rollback_active: boolean;
-  scene_version: string;
-  schema_version: string;
-  contract_ref: string;
-  summary: {
-    critical_resolve_errors_count: number;
-    critical_drift_warn_count: number;
-    non_critical_debt_count: number;
-  };
-  details: {
-    resolve_errors: Array<Record<string, unknown>>;
-    drift: Array<Record<string, unknown>>;
-    debt: Array<Record<string, unknown>>;
-  };
-  auto_degrade?: {
-    triggered?: boolean;
-    reason_codes?: string[];
-    action_taken?: string;
-  };
-  last_updated_at: string;
-  trace_id: string;
-};
+import { intentRequest } from '../api/intents';
+import {
+  fetchSceneHealth,
+  governanceExportContract,
+  governancePinStable,
+  governanceRollback,
+  governanceSetChannel,
+} from '../api/scene';
+import type { SceneChannel, SceneHealthContract } from '../contracts/scene';
 
 const loading = ref(false);
 const governanceBusy = ref(false);
-const health = ref<SceneHealth | null>(null);
+const health = ref<SceneHealthContract | null>(null);
 const errorText = ref('');
 const errorTraceId = ref('');
 const companyIdText = ref('');
 const companies = ref<Array<{ id: number; name: string }>>([]);
-const targetChannel = ref('stable');
+const targetChannel = ref<SceneChannel>('stable');
 const governanceReason = ref('');
 const governanceTraceId = ref('');
 
@@ -151,7 +133,7 @@ const autoDegradeLabel = computed(() => {
   return `triggered=${Boolean(value.triggered)} action=${value.action_taken || '-'} reasons=${reasons}`;
 });
 
-function validateHealthContract(raw: unknown): SceneHealth {
+function validateHealthContract(raw: unknown): SceneHealthContract {
   if (!raw || typeof raw !== 'object') throw new Error('scene.health response missing');
   const value = raw as Record<string, unknown>;
   const requiredRoot = ['scene_channel', 'rollback_active', 'summary', 'details', 'trace_id'];
@@ -167,11 +149,13 @@ function validateHealthContract(raw: unknown): SceneHealth {
   ) {
     throw new Error('scene.health.summary critical counters missing');
   }
-  const details = value.details as Record<string, unknown>;
-  if (!Array.isArray(details?.resolve_errors) || !Array.isArray(details?.drift) || !Array.isArray(details?.debt)) {
-    throw new Error('scene.health.details arrays missing');
+  if ('details' in value) {
+    const details = value.details as Record<string, unknown>;
+    if (!Array.isArray(details?.resolve_errors) || !Array.isArray(details?.drift) || !Array.isArray(details?.debt)) {
+      throw new Error('scene.health.details arrays missing');
+    }
   }
-  return value as SceneHealth;
+  return value as unknown as SceneHealthContract;
 }
 
 async function loadCompanies() {
@@ -198,14 +182,11 @@ async function loadHealth() {
   errorTraceId.value = '';
   try {
     const companyId = companyIdText.value ? Number(companyIdText.value) : undefined;
-    const response = await intentRequestRaw<SceneHealth>({
-      intent: 'scene.health',
-      params: {
-        mode: 'full',
-        limit: 100,
-        offset: 0,
-        ...(companyId ? { company_id: companyId } : {}),
-      },
+    const response = await fetchSceneHealth({
+      mode: 'full',
+      limit: 100,
+      offset: 0,
+      ...(companyId ? { company_id: companyId } : {}),
     });
     const parsed = validateHealthContract(response.data);
     health.value = parsed;
@@ -238,21 +219,21 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
       }
     }
     const companyId = companyIdText.value ? Number(companyIdText.value) : undefined;
-    let intent = '';
-    let params: Record<string, unknown> = { reason };
+    let response: { readonly data: { readonly trace_id: string }; readonly traceId: string };
     if (action === 'set_channel') {
-      intent = 'scene.governance.set_channel';
-      params = { ...params, channel: targetChannel.value, ...(companyId ? { company_id: companyId } : {}) };
+      response = await governanceSetChannel({
+        reason,
+        channel: targetChannel.value,
+        ...(companyId ? { company_id: companyId } : {}),
+      });
     } else if (action === 'rollback') {
-      intent = 'scene.governance.rollback';
+      response = await governanceRollback({ reason });
     } else if (action === 'pin_stable') {
-      intent = 'scene.governance.pin_stable';
+      response = await governancePinStable({ reason });
     } else {
-      intent = 'scene.governance.export_contract';
-      params = { ...params, channel: targetChannel.value };
+      response = await governanceExportContract({ reason, channel: targetChannel.value });
     }
-    const result = await intentRequestRaw<{ trace_id?: string }>({ intent, params });
-    governanceTraceId.value = (result.data && result.data.trace_id) || result.traceId || '';
+    governanceTraceId.value = response.data.trace_id || response.traceId || '';
     await loadHealth();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : 'governance action failed';
