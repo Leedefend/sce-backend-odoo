@@ -438,6 +438,98 @@ def _get_auto_degrade_policy(env) -> dict:
     }
 
 
+def _get_auto_degrade_notify_policy(env) -> dict:
+    defaults = {
+        "enabled": True,
+        "channels": ["internal"],
+    }
+    try:
+        config = env["ir.config_parameter"].sudo()
+    except Exception:
+        return defaults
+
+    enabled_raw = config.get_param("sc.scene.auto_degrade.notify.enabled")
+    enabled = defaults["enabled"] if enabled_raw in (None, "") else _is_truthy(enabled_raw)
+    raw_channels = (config.get_param("sc.scene.auto_degrade.notify.channels") or "internal").strip().lower()
+    allowed = {"email", "internal", "webhook"}
+    channels = [item.strip() for item in raw_channels.split(",") if item.strip() in allowed]
+    if not channels:
+        channels = ["internal"]
+    return {"enabled": enabled, "channels": channels}
+
+
+def _notify_auto_degrade(env, *, user, trace_id: str, reason_codes: list, action_taken: str, from_channel: str, to_channel: str):
+    policy = _get_auto_degrade_notify_policy(env)
+    if not policy.get("enabled"):
+        return {"sent": False, "channels": [], "trace_id": trace_id or ""}
+
+    sent_channels = []
+    message_payload = {
+        "trace_id": trace_id or "",
+        "reason_codes": list(reason_codes or []),
+        "action_taken": action_taken,
+        "from_channel": from_channel,
+        "to_channel": to_channel,
+        "company_id": user.company_id.id if user and user.company_id else None,
+        "suggestion": "Please review scene targets and resolve critical drift/resolve errors.",
+    }
+    body = (
+        "Auto-degrade triggered.\n"
+        f"trace_id={message_payload['trace_id']}\n"
+        f"action_taken={action_taken}\n"
+        f"from={from_channel} to={to_channel}\n"
+        f"reason_codes={','.join(message_payload['reason_codes']) or '-'}"
+    )
+
+    for channel in policy.get("channels") or []:
+        if channel == "internal":
+            try:
+                env["sc.audit.log"].sudo().write_event(
+                    event_code="SCENE_AUTO_DEGRADE_NOTIFY",
+                    model="system.init",
+                    res_id=0,
+                    action="auto_degrade_notify_internal",
+                    after={"channel": "internal", **message_payload},
+                    reason="auto degrade internal notification",
+                    trace_id=trace_id or "",
+                    company_id=message_payload["company_id"],
+                )
+                sent_channels.append("internal")
+            except Exception:
+                pass
+        elif channel == "email":
+            try:
+                partner = user.partner_id if user else None
+                email_to = partner.email if partner and partner.email else None
+                if email_to:
+                    Mail = env["mail.mail"].sudo()
+                    Mail.create({
+                        "subject": "[Scene] Auto-degrade triggered",
+                        "body_html": body.replace("\n", "<br/>"),
+                        "email_to": email_to,
+                    })
+                    sent_channels.append("email")
+            except Exception:
+                pass
+        elif channel == "webhook":
+            try:
+                env["sc.audit.log"].sudo().write_event(
+                    event_code="SCENE_AUTO_DEGRADE_NOTIFY",
+                    model="system.init",
+                    res_id=0,
+                    action="auto_degrade_notify_webhook_pending",
+                    after={"channel": "webhook", **message_payload},
+                    reason="auto degrade webhook notification placeholder",
+                    trace_id=trace_id or "",
+                    company_id=message_payload["company_id"],
+                )
+                sent_channels.append("webhook")
+            except Exception:
+                pass
+
+    return {"sent": bool(sent_channels), "channels": sent_channels, "trace_id": trace_id or ""}
+
+
 def _log_auto_degrade_once(env, *, trace_id: str, user, from_channel: str, to_channel: str, reason_codes: list, action_taken: str):
     try:
         Log = env["sc.scene.governance.log"].sudo()
@@ -507,6 +599,7 @@ def _evaluate_auto_degrade(env, *, user, scene_channel: str, diagnostics: dict, 
         "triggered": False,
         "reason_codes": [],
         "action_taken": "none",
+        "notifications": {"sent": False, "channels": []},
         "policy": policy,
         "pre_counts": {
             "critical_resolve_errors_count": 0,
@@ -557,10 +650,20 @@ def _evaluate_auto_degrade(env, *, user, scene_channel: str, diagnostics: dict, 
         reason_codes=reason_codes,
         action_taken=action,
     )
+    notify_result = _notify_auto_degrade(
+        env,
+        user=user,
+        trace_id=trace_id,
+        reason_codes=reason_codes,
+        action_taken=action,
+        from_channel=scene_channel,
+        to_channel=to_channel,
+    )
 
     result["triggered"] = True
     result["reason_codes"] = reason_codes
     result["action_taken"] = action
+    result["notifications"] = notify_result
     return result
 
 

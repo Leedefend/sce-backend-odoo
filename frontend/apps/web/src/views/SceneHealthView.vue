@@ -59,7 +59,32 @@
         <p><strong>trace_id:</strong> {{ health.trace_id || '-' }}</p>
         <p><strong>updated_at:</strong> {{ health.last_updated_at || '-' }}</p>
         <p><strong>auto_degrade:</strong> {{ autoDegradeLabel }}</p>
+        <p v-if="governanceTraceId"><strong>governance_trace:</strong> {{ governanceTraceId }}</p>
       </article>
+
+      <section class="governance">
+        <h3>Governance Actions</h3>
+        <div class="governance-grid">
+          <label>
+            <span>Target Channel</span>
+            <select v-model="targetChannel">
+              <option value="stable">stable</option>
+              <option value="beta">beta</option>
+              <option value="dev">dev</option>
+            </select>
+          </label>
+          <label class="reason">
+            <span>Reason (required)</span>
+            <input v-model="governanceReason" type="text" placeholder="input reason" />
+          </label>
+        </div>
+        <div class="governance-actions">
+          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('set_channel')">Set Channel</button>
+          <button class="danger" :disabled="governanceBusy" @click="runGovernance('rollback')">Rollback</button>
+          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('pin_stable')">Pin Stable</button>
+          <button class="secondary" :disabled="governanceBusy" @click="runGovernance('export_contract')">Export Contract</button>
+        </div>
+      </section>
 
       <details open>
         <summary>Resolve Errors ({{ health.details.resolve_errors.length }})</summary>
@@ -109,11 +134,15 @@ type SceneHealth = {
 };
 
 const loading = ref(false);
+const governanceBusy = ref(false);
 const health = ref<SceneHealth | null>(null);
 const errorText = ref('');
 const errorTraceId = ref('');
 const companyIdText = ref('');
 const companies = ref<Array<{ id: number; name: string }>>([]);
+const targetChannel = ref('stable');
+const governanceReason = ref('');
+const governanceTraceId = ref('');
 
 const autoDegradeLabel = computed(() => {
   const value = health.value?.auto_degrade;
@@ -172,6 +201,9 @@ async function loadHealth() {
     const response = await intentRequestRaw<SceneHealth>({
       intent: 'scene.health',
       params: {
+        mode: 'full',
+        limit: 100,
+        offset: 0,
         ...(companyId ? { company_id: companyId } : {}),
       },
     });
@@ -186,6 +218,49 @@ async function loadHealth() {
     }
   } finally {
     loading.value = false;
+  }
+}
+
+async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' | 'export_contract') {
+  const reason = governanceReason.value.trim();
+  if (!reason) {
+    errorText.value = 'reason is required for governance action';
+    return;
+  }
+  governanceBusy.value = true;
+  errorText.value = '';
+  try {
+    if (action === 'rollback') {
+      const ok = window.confirm('Confirm rollback to stable pinned mode?');
+      if (!ok) {
+        governanceBusy.value = false;
+        return;
+      }
+    }
+    const companyId = companyIdText.value ? Number(companyIdText.value) : undefined;
+    let intent = '';
+    let params: Record<string, unknown> = { reason };
+    if (action === 'set_channel') {
+      intent = 'scene.governance.set_channel';
+      params = { ...params, channel: targetChannel.value, ...(companyId ? { company_id: companyId } : {}) };
+    } else if (action === 'rollback') {
+      intent = 'scene.governance.rollback';
+    } else if (action === 'pin_stable') {
+      intent = 'scene.governance.pin_stable';
+    } else {
+      intent = 'scene.governance.export_contract';
+      params = { ...params, channel: targetChannel.value };
+    }
+    const result = await intentRequestRaw<{ trace_id?: string }>({ intent, params });
+    governanceTraceId.value = (result.data && result.data.trace_id) || result.traceId || '';
+    await loadHealth();
+  } catch (err) {
+    errorText.value = err instanceof Error ? err.message : 'governance action failed';
+    if (err && typeof err === 'object' && 'traceId' in err) {
+      errorTraceId.value = String((err as { traceId?: string }).traceId || '');
+    }
+  } finally {
+    governanceBusy.value = false;
   }
 }
 
@@ -299,6 +374,48 @@ onMounted(async () => {
 
 .meta p {
   margin: 4px 0;
+}
+
+.governance {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 12px 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.governance h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.governance-grid {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+}
+
+.governance-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.governance-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.danger {
+  border: 1px solid rgba(185, 28, 28, 0.4);
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
 }
 
 details {
