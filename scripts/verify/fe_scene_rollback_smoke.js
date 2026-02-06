@@ -5,7 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
-const { canonicalizeScenes } = require('./lib/scene_snapshot');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -20,16 +19,17 @@ const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
-
-const SCENE_CHANNEL = process.env.SCENE_CHANNEL || '';
-const CONTRACT_OUT = process.env.CONTRACT_OUT || '/mnt/artifacts/scenes/scene_contract.latest.json';
+const SCENE_CHANNEL = process.env.SCENE_CHANNEL || 'stable';
+const SCENE_USE_PINNED = '1';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v10_0', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v10_1', ts);
+
+const CRITICAL_SCENES = new Set(['projects.list', 'projects.ledger']);
 
 function log(msg) {
-  console.log(`[fe_scene_contract_export_smoke] ${msg}`);
+  console.log(`[fe_scene_rollback_smoke] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -119,9 +119,10 @@ async function main() {
   };
 
   log('app.init');
-  const initParams = { scene: 'web', with_preload: false };
-  if (SCENE_CHANNEL) initParams.scene_channel = SCENE_CHANNEL;
-  const initPayload = { intent: 'app.init', params: initParams };
+  const initPayload = {
+    intent: 'app.init',
+    params: { scene: 'web', with_preload: false, scene_channel: SCENE_CHANNEL, scene_use_pinned: SCENE_USE_PINNED },
+  };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
   if (initResp.status >= 400 || !initResp.body.ok) {
@@ -129,35 +130,51 @@ async function main() {
   }
 
   const data = initResp.body.data || {};
-  const scenes = Array.isArray(data.scenes) ? data.scenes : [];
-  const canonical = canonicalizeScenes(scenes);
-  const contract = {
-    schema_version: data.schema_version || '',
-    scene_version: data.scene_version || '',
-    scenes: canonical,
-  };
+  const diag = data.scene_diagnostics || {};
+  const channel = data.scene_channel || '';
+  const contractRef = data.scene_contract_ref || '';
+  const rollbackActive = Boolean(diag.rollback_active);
+  const rollbackRef = diag.rollback_ref || '';
+  const resolveErrors = Array.isArray(diag.resolve_errors) ? diag.resolve_errors : [];
+  const drift = Array.isArray(diag.drift) ? diag.drift : [];
 
-  writeJson(CONTRACT_OUT, contract);
-  if (!fs.existsSync(CONTRACT_OUT)) {
-    throw new Error(`contract export missing: ${CONTRACT_OUT}`);
-  }
-  const loaded = JSON.parse(fs.readFileSync(CONTRACT_OUT, 'utf-8'));
-  const contractScenes = Array.isArray(loaded.scenes) ? loaded.scenes : [];
+  const criticalErrors = resolveErrors.filter((err) => err && err.severity === 'critical');
+  const criticalWarn = drift.filter(
+    (entry) => entry && entry.severity === 'warn' && CRITICAL_SCENES.has(entry.scene_key)
+  );
 
-  summary.push(`contract_out: ${CONTRACT_OUT}`);
-  summary.push(`scene_count: ${canonical.length}`);
-  summary.push(`export_scene_count: ${contractScenes.length}`);
+  summary.push(`scene_channel: ${channel || '-'}`);
+  summary.push(`scene_contract_ref: ${contractRef || '-'}`);
+  summary.push(`rollback_active: ${rollbackActive}`);
+  summary.push(`rollback_ref: ${rollbackRef || '-'}`);
+  summary.push(`critical_errors: ${criticalErrors.length}`);
+  summary.push(`critical_drift_warn: ${criticalWarn.length}`);
   writeSummary(summary);
 
-  if (contractScenes.length !== canonical.length) {
-    throw new Error(`export scene count mismatch: ${contractScenes.length} != ${canonical.length}`);
+  if (channel !== 'stable') {
+    throw new Error(`scene_channel not stable in rollback: ${channel}`);
+  }
+  if (!rollbackActive) {
+    throw new Error('rollback_active=false');
+  }
+  if (!rollbackRef || !rollbackRef.includes('stable/PINNED.json')) {
+    throw new Error(`rollback_ref mismatch: ${rollbackRef}`);
+  }
+  if (!contractRef || !contractRef.includes('stable/PINNED.json')) {
+    throw new Error(`scene_contract_ref mismatch: ${contractRef}`);
+  }
+  if (criticalErrors.length) {
+    throw new Error(`critical resolve_errors (${criticalErrors.length})`);
+  }
+  if (criticalWarn.length) {
+    throw new Error(`critical drift warn (${criticalWarn.length})`);
   }
 
-  log('PASS contract export smoke');
+  log('PASS rollback smoke');
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_scene_contract_export_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_scene_rollback_smoke] FAIL: ${err.message}`);
   process.exit(1);
 });
