@@ -17,18 +17,43 @@ class SceneGovernanceService:
             raise ValueError("reason is required")
 
     def _log(self, action, *, company_id=None, from_channel=None, to_channel=None, reason, payload=None, trace_id=None):
-        Log = self.env["sc.scene.governance.log"].sudo()
-        Log.create({
-            "action": action,
-            "actor_id": self.user.id if self.user else None,
-            "company_id": company_id,
-            "from_channel": from_channel,
-            "to_channel": to_channel,
-            "reason": reason,
-            "trace_id": trace_id,
-            "payload_json": payload or {},
-            "created_at": fields.Datetime.now(),
-        })
+        try:
+            Log = self.env["sc.scene.governance.log"].sudo()
+            Log.create({
+                "action": action,
+                "actor_id": self.user.id if self.user else None,
+                "company_id": company_id,
+                "from_channel": from_channel,
+                "to_channel": to_channel,
+                "reason": reason,
+                "trace_id": trace_id,
+                "payload_json": payload or {},
+                "created_at": fields.Datetime.now(),
+            })
+            return
+        except Exception:
+            pass
+
+        # fallback keeps governance evidence available even when scene governance models are unavailable
+        try:
+            Audit = self.env["sc.audit.log"].sudo()
+            Audit.write_event(
+                event_code="SCENE_GOVERNANCE_ACTION",
+                model="scene.governance",
+                res_id=0,
+                action=action,
+                after={
+                    "company_id": company_id,
+                    "from_channel": from_channel,
+                    "to_channel": to_channel,
+                    "payload": payload or {},
+                },
+                reason=reason,
+                trace_id=trace_id or "",
+                company_id=company_id,
+            )
+        except Exception:
+            return
 
     def set_company_channel(self, company_id, channel, reason, trace_id=None):
         self._require_reason(reason)
@@ -48,7 +73,13 @@ class SceneGovernanceService:
             payload={"key": key},
             trace_id=trace_id,
         )
-        return True
+        return {
+            "action": "set_channel",
+            "company_id": company_id,
+            "from_channel": before or "stable",
+            "to_channel": channel,
+            "trace_id": trace_id or "",
+        }
 
     def pin_stable(self, reason, trace_id=None):
         self._require_reason(reason)
@@ -56,25 +87,40 @@ class SceneGovernanceService:
         latest = os.path.join(root, "docs/contract/exports/scenes/stable/LATEST.json")
         with open(latest, "r", encoding="utf-8") as fh:
             payload = json.load(fh)
-        self.env["ir.config_parameter"].sudo().set_param("sc.scene.contract.pinned", json.dumps(payload))
+        config = self.env["ir.config_parameter"].sudo()
+        config.set_param("sc.scene.contract.pinned", json.dumps(payload))
+        config.set_param("sc.scene.use_pinned", "1")
+        config.set_param("sc.scene.rollback", "1")
         self._log(
             "pin_stable",
             reason=reason,
             payload={"source": latest},
             trace_id=trace_id,
         )
-        return True
+        return {
+            "action": "pin_stable",
+            "from_channel": "stable",
+            "to_channel": "stable",
+            "trace_id": trace_id or "",
+        }
 
     def rollback_stable(self, reason, trace_id=None):
         self._require_reason(reason)
-        self.env["ir.config_parameter"].sudo().set_param("sc.scene.rollback", "1")
+        config = self.env["ir.config_parameter"].sudo()
+        config.set_param("sc.scene.rollback", "1")
+        config.set_param("sc.scene.use_pinned", "1")
         self._log(
             "rollback",
             reason=reason,
             payload={"mode": "stable_pinned"},
             trace_id=trace_id,
         )
-        return True
+        return {
+            "action": "rollback",
+            "from_channel": "stable",
+            "to_channel": "stable",
+            "trace_id": trace_id or "",
+        }
 
     def export_contract(self, channel, reason, trace_id=None):
         self._require_reason(reason)
@@ -89,7 +135,12 @@ class SceneGovernanceService:
             payload={"channel": channel},
             trace_id=trace_id,
         )
-        return True
+        return {
+            "action": "export_contract",
+            "from_channel": None,
+            "to_channel": channel,
+            "trace_id": trace_id or "",
+        }
 
     def snapshot_update(self, channel, reason, trace_id=None):
         self._require_reason(reason)
