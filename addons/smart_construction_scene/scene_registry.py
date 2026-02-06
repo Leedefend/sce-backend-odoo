@@ -7,18 +7,31 @@ def get_scene_version():
     return SCENE_VERSION
 
 
-def _tile(key, title, subtitle, icon, *, action_xmlid=None, menu_xmlid=None, required_caps=None):
+def _tile(
+    key,
+    title,
+    subtitle,
+    icon,
+    *,
+    action_xmlid=None,
+    menu_xmlid=None,
+    required_caps=None,
+    scene_key=None,
+):
     payload = {}
     if action_xmlid:
         payload["action_xmlid"] = action_xmlid
     if menu_xmlid:
         payload["menu_xmlid"] = menu_xmlid
+    if scene_key:
+        payload["scene_key"] = scene_key
     return {
         "key": key,
         "title": title,
         "subtitle": subtitle,
         "icon": icon,
         "payload": payload,
+        "scene_key": scene_key,
         "required_capabilities": required_caps or [],
     }
 
@@ -35,6 +48,17 @@ def _normalize_scene(scene):
     if not scene.get("code") and scene.get("key"):
         scene["code"] = scene.get("key")
     scene["layout"] = _normalize_layout(scene.get("layout"))
+    if scene.get("code") == "default":
+        tiles = scene.get("tiles") if isinstance(scene.get("tiles"), list) else []
+        for tile in tiles:
+            if not isinstance(tile, dict):
+                continue
+            if tile.get("key") == "project.work":
+                if not tile.get("scene_key") and not (tile.get("payload") or {}).get("scene_key"):
+                    tile["scene_key"] = "projects.ledger"
+                    payload = tile.get("payload") if isinstance(tile.get("payload"), dict) else {}
+                    payload.setdefault("scene_key", "projects.ledger")
+                    tile["payload"] = payload
     return scene
 
 
@@ -74,6 +98,7 @@ def load_scene_configs(env):
                     action_xmlid="smart_construction_core.action_sc_project_kanban_lifecycle",
                     menu_xmlid="smart_construction_core.menu_sc_project_project",
                     required_caps=["project.work"],
+                    scene_key="projects.ledger",
                 ),
                 _tile(
                     "capability.matrix",
