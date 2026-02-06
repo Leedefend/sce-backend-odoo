@@ -1,6 +1,37 @@
 # -*- coding: utf-8 -*-
 
 SCENE_VERSION = "v2"
+PROJECTS_DEFAULT_SORT = "write_date desc"
+
+
+def _projects_list_profile():
+    return {
+        "columns": [
+            "name",
+            "project_code",
+            "partner_id",
+            "user_id",
+            "stage_id",
+            "write_date",
+        ],
+        "hidden_columns": [
+            "message_needaction",
+            "message_unread",
+            "is_favorite",
+            "display_name",
+            "__last_update",
+        ],
+        "column_labels": {
+            "name": "项目名称",
+            "project_code": "项目编号",
+            "partner_id": "客户",
+            "user_id": "负责人",
+            "stage_id": "状态",
+            "write_date": "更新时间",
+        },
+        "row_primary": "name",
+        "row_secondary": "partner_id",
+    }
 
 
 def get_scene_version():
@@ -59,6 +90,17 @@ def _normalize_scene(scene):
                     payload = tile.get("payload") if isinstance(tile.get("payload"), dict) else {}
                     payload.setdefault("scene_key", "projects.ledger")
                     tile["payload"] = payload
+    scene = _apply_scene_defaults(scene)
+    return scene
+
+
+def _apply_scene_defaults(scene):
+    code = scene.get("code") or scene.get("key") or ""
+    if code in ("projects.list", "projects.ledger"):
+        if not scene.get("list_profile"):
+            scene["list_profile"] = _projects_list_profile()
+        if not scene.get("default_sort"):
+            scene["default_sort"] = PROJECTS_DEFAULT_SORT
     return scene
 
 
@@ -153,6 +195,9 @@ def load_scene_configs(env):
                 "menu_xmlid": "smart_construction_demo.menu_sc_project_list_showcase",
                 "action_xmlid": "smart_construction_demo.action_sc_project_list_showcase",
             },
+            "list_profile": _projects_list_profile(),
+            "filters": [],
+            "default_sort": PROJECTS_DEFAULT_SORT,
         },
         {
             "code": "projects.intake",
@@ -170,35 +215,9 @@ def load_scene_configs(env):
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
                 "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
             },
-            "list_profile": {
-                "columns": [
-                    "name",
-                    "project_code",
-                    "partner_id",
-                    "user_id",
-                    "stage_id",
-                    "write_date",
-                ],
-                "hidden_columns": [
-                    "message_needaction",
-                    "message_unread",
-                    "is_favorite",
-                    "display_name",
-                    "__last_update",
-                ],
-                "column_labels": {
-                    "name": "项目名称",
-                    "project_code": "项目编号",
-                    "partner_id": "客户",
-                    "user_id": "负责人",
-                    "stage_id": "状态",
-                    "write_date": "更新时间",
-                },
-                "row_primary": "name",
-                "row_secondary": "partner_id",
-            },
+            "list_profile": _projects_list_profile(),
             "filters": [],
-            "default_sort": "write_date desc",
+            "default_sort": PROJECTS_DEFAULT_SORT,
         },
     ]
     if not db_scenes:
