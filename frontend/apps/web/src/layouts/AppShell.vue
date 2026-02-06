@@ -179,7 +179,7 @@ const pageTitle = computed(() => {
     return modelLabel;
   }
   if (route.name === 'workbench') {
-    return 'Workbench';
+    return 'Navigation issue';
   }
   if (route.name === 'record') {
     return 'Record';
