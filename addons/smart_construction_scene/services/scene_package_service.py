@@ -35,6 +35,19 @@ class ScenePackageService:
             return copy.deepcopy(fallback)
         return parsed if isinstance(parsed, type(fallback)) else copy.deepcopy(fallback)
 
+    def _semver_key(self, version):
+        raw = str(version or "").strip()
+        parts = raw.split(".")
+        out = []
+        for part in parts:
+            try:
+                out.append(int(part))
+            except Exception:
+                out.append(0)
+        while len(out) < 3:
+            out.append(0)
+        return tuple(out[:3])
+
     def _require_reason(self, reason):
         if not reason or not str(reason).strip():
             raise ValueError("reason is required")
@@ -131,12 +144,114 @@ class ScenePackageService:
             return
 
     def _installed_packages(self):
+        # Compatibility fallback for legacy storage before installation registry model was introduced.
         raw = self._config().get_param("sc.scene.package.installed")
         parsed = self._safe_json_loads(raw, [])
         return parsed if isinstance(parsed, list) else []
 
-    def _save_installed_packages(self, rows):
-        self._config().set_param("sc.scene.package.installed", json.dumps(rows, ensure_ascii=True))
+    def _normalize_installation_row(self, row):
+        item = row if isinstance(row, dict) else {}
+        package_name = str(item.get("package_name") or "").strip()
+        installed_version = str(item.get("installed_version") or item.get("package_version") or "").strip()
+        return {
+            "package_name": package_name,
+            "installed_version": installed_version,
+            "channel": str(item.get("channel") or "").strip(),
+            "installed_at": item.get("installed_at") or item.get("imported_at"),
+            "last_upgrade_at": item.get("last_upgrade_at"),
+            "source": str(item.get("source") or "import"),
+            "checksum": str(item.get("checksum") or "").strip(),
+            "active": bool(item.get("active", True)),
+        }
+
+    def _list_installed_packages(self):
+        try:
+            rows = self.env["sc.scene.package.installation"].sudo().search([], order="installed_at desc, id desc")
+        except Exception:
+            return [self._normalize_installation_row(row) for row in self._installed_packages()]
+        return [self._normalize_installation_row({
+            "package_name": row.package_name,
+            "installed_version": row.installed_version,
+            "channel": row.channel,
+            "installed_at": row.installed_at,
+            "last_upgrade_at": row.last_upgrade_at,
+            "source": row.source,
+            "checksum": row.checksum,
+            "active": row.active,
+        }) for row in rows]
+
+    def _record_installation(self, *, package_name, package_version, channel, source, checksum):
+        try:
+            Installation = self.env["sc.scene.package.installation"].sudo()
+            active_current = Installation.search([
+                ("package_name", "=", package_name),
+                ("active", "=", True),
+            ])
+            from_version = None
+            if active_current:
+                versions = [str(row.installed_version or "").strip() for row in active_current if row.installed_version]
+                if versions:
+                    from_version = sorted(set(versions), key=self._semver_key)[-1]
+            last_upgrade_at = fields.Datetime.now() if active_current else False
+            if active_current:
+                active_current.write({"active": False})
+            created = Installation.create({
+                "package_name": package_name,
+                "installed_version": package_version,
+                "installed_at": fields.Datetime.now(),
+                "last_upgrade_at": last_upgrade_at,
+                "channel": channel,
+                "source": source,
+                "checksum": checksum or "",
+                "active": True,
+            })
+            return created, from_version
+        except Exception:
+            # Keep import path backward compatible if registry model/table is not ready yet.
+            installed = self._installed_packages()
+            from_version = None
+            for row in installed:
+                if str((row or {}).get("package_name") or "") != package_name:
+                    continue
+                val = str((row or {}).get("installed_version") or (row or {}).get("package_version") or "").strip()
+                if val and (from_version is None or self._semver_key(val) > self._semver_key(from_version)):
+                    from_version = val
+                if bool((row or {}).get("active")):
+                    row["active"] = False
+            installed.append({
+                "package_name": package_name,
+                "installed_version": package_version,
+                "channel": channel,
+                "installed_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+                "last_upgrade_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z" if from_version else None,
+                "source": source,
+                "checksum": checksum or "",
+                "active": True,
+            })
+            self._config().set_param("sc.scene.package.installed", json.dumps(installed, ensure_ascii=True))
+            return None, from_version
+
+    def _known_versions(self, package_name):
+        name = str(package_name or "").strip()
+        if not name:
+            return []
+        versions = []
+        try:
+            rows = self.env["sc.scene.package.installation"].sudo().search([
+                ("package_name", "=", name),
+            ])
+            versions.extend([str(row.installed_version or "").strip() for row in rows])
+        except Exception:
+            pass
+        legacy = self._installed_packages()
+        for row in legacy:
+            if str((row or {}).get("package_name") or "").strip() != name:
+                continue
+            val = str((row or {}).get("package_version") or (row or {}).get("installed_version") or "").strip()
+            if val:
+                versions.append(val)
+        unique = sorted(set([v for v in versions if v]), key=self._semver_key)
+        return unique
 
     def _imported_scene_map(self):
         raw = self._config().get_param("sc.scene.package.imported_scenes")
@@ -193,9 +308,10 @@ class ScenePackageService:
             idx += 1
 
     def list_packages(self):
+        items = self._list_installed_packages()
         return {
-            "items": self._installed_packages(),
-            "count": len(self._installed_packages()),
+            "items": items,
+            "count": len(items),
         }
 
     def export_package(self, package_name, package_version, scene_channel="stable", reason="scene package export", trace_id=None):
@@ -223,12 +339,19 @@ class ScenePackageService:
         schema_version = str(init_data.get("schema_version") or "v2")
         scene_version = str(init_data.get("scene_version") or "")
         scenes = self._canonicalize_scenes(init_data.get("scenes") if isinstance(init_data.get("scenes"), list) else [])
+        previous_versions = [v for v in self._known_versions(name) if v != version]
 
         payload = {
             "package_name": name,
             "package_version": version,
             "schema_version": schema_version,
             "scene_version": scene_version,
+            "previous_versions": previous_versions,
+            "upgrade": {
+                "type": "inplace",
+                "supported_from": previous_versions,
+                "breaking": False,
+            },
             "scenes": scenes,
             "profiles": self._load_profiles(schema_version),
             "defaults": {
@@ -368,27 +491,13 @@ class ScenePackageService:
 
         self._save_imported_scene_map(imported_map)
 
-        installed = self._installed_packages()
-        now = datetime.utcnow().isoformat() + "Z"
-        installed = [
-            row for row in installed
-            if not (
-                str((row or {}).get("package_name") or "") == str(package.get("package_name") or "")
-                and str((row or {}).get("package_version") or "") == str(package.get("package_version") or "")
-            )
-        ]
-        installed.append({
-            "package_name": package.get("package_name"),
-            "package_version": package.get("package_version"),
-            "schema_version": package.get("schema_version"),
-            "scene_version": package.get("scene_version"),
-            "scene_count": len(package.get("scenes") or []),
-            "checksum": package.get("checksum"),
-            "imported_at": now,
-            "strategy": strategy,
-        })
-        installed.sort(key=lambda row: (str(row.get("package_name") or ""), str(row.get("package_version") or "")))
-        self._save_installed_packages(installed)
+        installation, from_version = self._record_installation(
+            package_name=str(package.get("package_name") or ""),
+            package_version=str(package.get("package_version") or ""),
+            channel=self._normalize_channel((package.get("defaults") or {}).get("scene_channel") if isinstance(package.get("defaults"), dict) else "stable"),
+            source="import",
+            checksum=str(package.get("checksum") or ""),
+        )
 
         self._governance_log(
             "package_import",
@@ -401,6 +510,18 @@ class ScenePackageService:
                 "skipped_scene_keys": skipped_keys,
                 "renamed": renamed,
                 "checksum": package.get("checksum"),
+            },
+            trace_id=trace_id,
+            company_id=self.user.company_id.id if self.user and self.user.company_id else None,
+        )
+        self._governance_log(
+            "package_install",
+            reason=str(reason),
+            payload={
+                "package_name": package.get("package_name"),
+                "from_version": from_version,
+                "to_version": package.get("package_version"),
+                "strategy": strategy,
             },
             trace_id=trace_id,
             company_id=self.user.company_id.id if self.user and self.user.company_id else None,
@@ -419,5 +540,11 @@ class ScenePackageService:
                 "imported_count": len(imported_keys),
                 "skipped_count": len(skipped_keys),
                 "renamed_count": len(renamed),
+            },
+            "installation": {
+                "id": installation.id if installation else None,
+                "package_name": installation.package_name if installation else package.get("package_name"),
+                "installed_version": installation.installed_version if installation else package.get("package_version"),
+                "active": bool(installation.active) if installation else True,
             },
         }
