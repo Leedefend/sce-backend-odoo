@@ -22,6 +22,7 @@ _logger = logging.getLogger(__name__)
 # Contract/API version markers for client compatibility
 CONTRACT_VERSION = "v0.1"
 API_VERSION = "v1"
+SCENE_CHANNELS = {"stable", "beta", "dev"}
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
 
@@ -88,6 +89,71 @@ def _clean_nav(nodes: list) -> list:
         c["children"] = _clean_nav(n.get("children") or [])
         cleaned.append(c)
     return cleaned
+
+def _get_request_header(name: str) -> str | None:
+    try:
+        from odoo import http
+        request = http.request
+        if not request or not request.httprequest:
+            return None
+        return request.httprequest.headers.get(name)
+    except Exception:
+        return None
+
+def _normalize_scene_channel(value: str | None) -> str | None:
+    if not value:
+        return None
+    raw = str(value).strip().lower()
+    return raw if raw in SCENE_CHANNELS else None
+
+def _resolve_scene_channel(params: dict | None) -> str:
+    channel = None
+    if isinstance(params, dict):
+        channel = _normalize_scene_channel(params.get("scene_channel") or params.get("channel"))
+    if not channel:
+        channel = _normalize_scene_channel(_get_request_header("X-Scene-Channel"))
+    if not channel:
+        channel = _normalize_scene_channel(os.environ.get("SCENE_CHANNEL"))
+    return channel or "stable"
+
+def _is_truthy(value) -> bool:
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+def _resolve_scene_contract_path(rel_path: str) -> str | None:
+    roots = [
+        os.environ.get("SCENE_CONTRACT_ROOT"),
+        "/mnt/extra-addons",
+        "/mnt/addons_external",
+        "/mnt/odoo",
+        "/mnt/e/sc-backend-odoo",
+        "/mnt",
+    ]
+    for root in roots:
+        if not root:
+            continue
+        candidate = os.path.join(root, rel_path)
+        if os.path.exists(candidate):
+            return candidate
+    return None
+
+def _load_scene_contract(scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
+    if use_pinned:
+        rel_path = "docs/contract/exports/scenes/stable/PINNED.json"
+        ref = "stable/PINNED.json"
+    else:
+        rel_path = f"docs/contract/exports/scenes/{scene_channel}/LATEST.json"
+        ref = f"{scene_channel}/LATEST.json"
+    path = _resolve_scene_contract_path(rel_path)
+    if not path:
+        return None, ref
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return json.load(fh), ref
+    except Exception as e:
+        _logger.warning("scene contract load failed: %s (%s)", path, e)
+        return None, ref
 # 在文件工具函数区追加：
 def _to_xmlid_list(env, maybe_ids_or_xmlids):
     """
@@ -428,6 +494,19 @@ class SystemInitHandler(BaseIntentHandler):
         params = payload.get("params") if isinstance(payload, dict) else None
         if not isinstance(params, dict):
             params = payload if isinstance(payload, dict) else {}
+
+        scene_channel = _resolve_scene_channel(params)
+        pinned_param = params.get("scene_use_pinned") if isinstance(params, dict) else None
+        rollback_param = params.get("scene_rollback") if isinstance(params, dict) else None
+        try:
+            rollback_active = bool(self.get_bool("scene_use_pinned", False) or self.get_bool("scene_rollback", False))
+        except Exception:
+            rollback_active = _is_truthy(pinned_param) or _is_truthy(rollback_param)
+        if pinned_param is not None and str(pinned_param).strip() not in {"", "0", "false", "no", "off"}:
+            rollback_active = True
+        rollback_active = rollback_active or _is_truthy(os.environ.get("SCENE_USE_PINNED")) or             _is_truthy(os.environ.get("SCENE_ROLLBACK"))
+        if rollback_active:
+            scene_channel = "stable"
         
         diag_enabled = _diagnostics_enabled(self.env)
         diagnostic_info = None
@@ -456,6 +535,9 @@ class SystemInitHandler(BaseIntentHandler):
                 "uid": self.env.uid,
                 "login": self.env.user.login if hasattr(self.env, "user") else "unknown",
                 "params_keys": list(params.keys()) if isinstance(params, dict) else [],
+                "scene_channel_param": params.get("scene_channel") if isinstance(params, dict) else None,
+                "scene_use_pinned_param": params.get("scene_use_pinned") if isinstance(params, dict) else None,
+                "scene_rollback_param": params.get("scene_rollback") if isinstance(params, dict) else None,
             }
 
             _logger.info("[B1] system.init 诊断信息: %s", diagnostic_info)
@@ -578,6 +660,8 @@ class SystemInitHandler(BaseIntentHandler):
             "scenes": [],
             "scene_version": "v1",
             "schema_version": "v1",
+            "scene_channel": scene_channel,
+            "scene_contract_ref": None,
         }
         scene_diagnostics = {
             "schema_version": data.get("schema_version"),
@@ -586,6 +670,8 @@ class SystemInitHandler(BaseIntentHandler):
             "normalize_warnings": [],
             "resolve_errors": [],
             "drift": [],
+            "rollback_active": bool(rollback_active),
+            "rollback_ref": None,
             "timings": {},
         }
         if home_contract:
@@ -596,27 +682,39 @@ class SystemInitHandler(BaseIntentHandler):
         # 扩展模块可附加场景/能力等（不影响主流程）
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
 
-        # Scene orchestration source (smart_construction_scene)
-        try:
-            from odoo.addons.smart_construction_scene.scene_registry import (
-                load_scene_configs,
-                get_scene_version,
-                get_schema_version,
-                has_db_scenes,
-            )
-            t_load_start = time.time()
-            drift_entries = scene_diagnostics["drift"]
-            scenes_payload = load_scene_configs(env, drift=drift_entries) or []
-            scene_diagnostics["loaded_from"] = "db" if has_db_scenes(env) else "fallback"
-            scene_diagnostics["timings"]["load_ms"] = int((time.time() - t_load_start) * 1000)
-            if scenes_payload:
-                data["scenes"] = scenes_payload
-                data["scene_version"] = get_scene_version() or data.get("scene_version")
-                data["schema_version"] = get_schema_version() or data.get("schema_version")
-                scene_diagnostics["scene_version"] = data.get("scene_version")
-                scene_diagnostics["schema_version"] = data.get("schema_version")
-        except Exception as e:
-            _logger.warning("system.init scene source load failed: %s", e)
+        # Scene orchestration source (contract export or smart_construction_scene)
+        contract_payload, contract_ref = _load_scene_contract(scene_channel, rollback_active)
+        data["scene_contract_ref"] = contract_ref
+        if rollback_active:
+            scene_diagnostics["rollback_ref"] = contract_ref
+        if contract_payload:
+            data["scenes"] = contract_payload.get("scenes") or []
+            data["scene_version"] = contract_payload.get("scene_version") or data.get("scene_version")
+            data["schema_version"] = contract_payload.get("schema_version") or data.get("schema_version")
+            scene_diagnostics["scene_version"] = data.get("scene_version")
+            scene_diagnostics["schema_version"] = data.get("schema_version")
+            scene_diagnostics["loaded_from"] = "contract"
+        else:
+            try:
+                from odoo.addons.smart_construction_scene.scene_registry import (
+                    load_scene_configs,
+                    get_scene_version,
+                    get_schema_version,
+                    has_db_scenes,
+                )
+                t_load_start = time.time()
+                drift_entries = scene_diagnostics["drift"]
+                scenes_payload = load_scene_configs(env, drift=drift_entries) or []
+                scene_diagnostics["loaded_from"] = "db" if has_db_scenes(env) else "fallback"
+                scene_diagnostics["timings"]["load_ms"] = int((time.time() - t_load_start) * 1000)
+                if scenes_payload:
+                    data["scenes"] = scenes_payload
+                    data["scene_version"] = get_scene_version() or data.get("scene_version")
+                    data["schema_version"] = get_schema_version() or data.get("schema_version")
+                    scene_diagnostics["scene_version"] = data.get("scene_version")
+                    scene_diagnostics["schema_version"] = data.get("schema_version")
+            except Exception as e:
+                _logger.warning("system.init scene source load failed: %s", e)
 
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
         t_norm_start = time.time()
@@ -651,6 +749,8 @@ class SystemInitHandler(BaseIntentHandler):
             "feature_flags": data["feature_flags"],
             "intents": data["intents"],
             "scenes": data.get("scenes"),
+            "scene_channel": data.get("scene_channel"),
+            "scene_contract_ref": data.get("scene_contract_ref"),
             "capabilities": data.get("capabilities"),
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
