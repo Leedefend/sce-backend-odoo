@@ -136,15 +136,21 @@ async function main() {
   if (!Array.isArray(diag.resolve_errors)) {
     throw new Error('scene_diagnostics.resolve_errors not array');
   }
-  const critical = new Set(['projects.list', 'projects.ledger']);
-  const criticalErrors = diag.resolve_errors.filter((err) => critical.has(err.code));
+  const allowedSeverities = new Set(['critical', 'non_critical']);
+  const invalidErrors = diag.resolve_errors.filter(
+    (err) => !err || !err.scene_key || !err.code || !err.severity || !allowedSeverities.has(err.severity)
+  );
+  if (invalidErrors.length) {
+    throw new Error(`resolve_errors invalid entries (${invalidErrors.length})`);
+  }
+  const criticalErrors = diag.resolve_errors.filter((err) => err.severity === 'critical');
   if (criticalErrors.length) {
-    throw new Error(`resolve_errors for critical scenes (${criticalErrors.length})`);
+    throw new Error(`resolve_errors critical (${criticalErrors.length})`);
   }
   if (diag.normalize_warnings && Array.isArray(diag.normalize_warnings)) {
-    const bad = diag.normalize_warnings.filter((item) => !item || !item.reason);
+    const bad = diag.normalize_warnings.filter((item) => !item || !item.code || !item.message);
     if (bad.length) {
-      throw new Error('normalize_warnings contains entries without reason');
+      throw new Error('normalize_warnings contains invalid entries');
     }
   }
 
