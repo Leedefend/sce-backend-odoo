@@ -124,17 +124,27 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
-  const ledger = scenes.find((item) => (item && (item.code === 'projects.ledger' || item.key === 'projects.ledger')));
+  const getScene = (key) => scenes.find((item) => item && (item.code === key || item.key === key));
+  const ledger = getScene('projects.ledger');
+  const list = getScene('projects.list');
   if (!ledger) {
     throw new Error('scene projects.ledger missing');
   }
-  const defaultSort = ledger.default_sort || '';
+  if (!list) {
+    throw new Error('scene projects.list missing');
+  }
+  const ledgerSort = ledger.default_sort || '';
+  const listSort = list.default_sort || '';
 
-  summary.push(`default_sort: ${defaultSort || '-'}`);
+  summary.push(`ledger_default_sort: ${ledgerSort || '-'}`);
+  summary.push(`list_default_sort: ${listSort || '-'}`);
   writeSummary(summary);
 
-  if (!defaultSort) {
-    throw new Error('default_sort missing');
+  if (!ledgerSort.trim()) {
+    throw new Error('projects.ledger default_sort missing');
+  }
+  if (!listSort.trim()) {
+    throw new Error('projects.list default_sort missing');
   }
 
   log('PASS default_sort');

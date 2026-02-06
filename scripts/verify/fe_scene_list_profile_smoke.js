@@ -124,25 +124,44 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
-  const ledger = scenes.find((item) => (item && (item.code === 'projects.ledger' || item.key === 'projects.ledger')));
+  const getScene = (key) => scenes.find((item) => item && (item.code === key || item.key === key));
+  const ledger = getScene('projects.ledger');
+  const list = getScene('projects.list');
   if (!ledger) {
     throw new Error('scene projects.ledger missing');
   }
-  const profile = ledger.list_profile || {};
-  const columns = profile.columns || [];
-  const hidden = profile.hidden_columns || [];
+  if (!list) {
+    throw new Error('scene projects.list missing');
+  }
 
-  summary.push(`scene_found: ${Boolean(ledger)}`);
-  summary.push(`columns_count: ${columns.length}`);
-  summary.push(`hidden_count: ${hidden.length}`);
-  summary.push(`default_sort: ${ledger.default_sort || '-'}`);
+  const ledgerProfile = ledger.list_profile || {};
+  const listProfile = list.list_profile || {};
+  const ledgerColumns = ledgerProfile.columns || [];
+  const listColumns = listProfile.columns || [];
+  const ledgerHidden = ledgerProfile.hidden_columns || [];
+  const listHidden = listProfile.hidden_columns || [];
+
+  summary.push(`ledger_found: ${Boolean(ledger)}`);
+  summary.push(`ledger_columns: ${ledgerColumns.length}`);
+  summary.push(`ledger_hidden: ${ledgerHidden.length}`);
+  summary.push(`ledger_default_sort: ${ledger.default_sort || '-'}`);
+  summary.push(`list_found: ${Boolean(list)}`);
+  summary.push(`list_columns: ${listColumns.length}`);
+  summary.push(`list_hidden: ${listHidden.length}`);
+  summary.push(`list_default_sort: ${list.default_sort || '-'}`);
   writeSummary(summary);
 
-  if (!columns.length) {
-    throw new Error('list_profile.columns missing');
+  if (!ledgerColumns.length) {
+    throw new Error('projects.ledger list_profile.columns missing');
   }
-  if (!hidden.includes('message_needaction')) {
-    throw new Error('list_profile.hidden_columns missing message_needaction');
+  if (!listColumns.length) {
+    throw new Error('projects.list list_profile.columns missing');
+  }
+  if (!ledgerHidden.includes('message_needaction')) {
+    throw new Error('projects.ledger list_profile.hidden_columns missing message_needaction');
+  }
+  if (!listHidden.includes('message_needaction')) {
+    throw new Error('projects.list list_profile.hidden_columns missing message_needaction');
   }
 
   log('PASS list_profile');
