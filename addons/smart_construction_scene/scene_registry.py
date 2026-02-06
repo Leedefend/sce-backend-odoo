@@ -23,9 +23,43 @@ def _tile(key, title, subtitle, icon, *, action_xmlid=None, menu_xmlid=None, req
     }
 
 
+def _normalize_layout(layout):
+    if isinstance(layout, dict):
+        return layout
+    return {"kind": "workspace", "sidebar": "fixed", "header": "full"}
+
+
+def _normalize_scene(scene):
+    if not isinstance(scene, dict):
+        return None
+    if not scene.get("code") and scene.get("key"):
+        scene["code"] = scene.get("key")
+    scene["layout"] = _normalize_layout(scene.get("layout"))
+    return scene
+
+
+def _load_from_db(env):
+    if env is None:
+        return []
+    try:
+        Scene = env["sc.scene"].sudo()
+    except Exception:
+        return []
+    scenes = Scene.search([("active", "=", True), ("state", "=", "published")], order="sequence, id")
+    out = []
+    for scene in scenes:
+        payload = scene.to_public_dict(env.user)
+        normalized = _normalize_scene(payload)
+        if normalized:
+            out.append(normalized)
+    return out
+
+
 def load_scene_configs(env):
+    # Prefer DB scenes if present; fallback to code-defined scenes.
+    db_scenes = _load_from_db(env)
     # Note: keep configs data-only; target IDs are resolved by system_init.
-    return [
+    fallback = [
         {
             "code": "default",
             "name": "默认场景",
@@ -142,3 +176,12 @@ def load_scene_configs(env):
             "default_sort": "write_date desc",
         },
     ]
+    if not db_scenes:
+        return fallback
+
+    fallback_map = {scene.get("code"): scene for scene in fallback}
+    seen = {scene.get("code") for scene in db_scenes if scene.get("code")}
+    for code, scene in fallback_map.items():
+        if code not in seen:
+            db_scenes.append(scene)
+    return db_scenes
