@@ -585,6 +585,7 @@ class SystemInitHandler(BaseIntentHandler):
             "loaded_from": None,
             "normalize_warnings": [],
             "resolve_errors": [],
+            "drift": [],
             "timings": {},
         }
         if home_contract:
@@ -604,7 +605,8 @@ class SystemInitHandler(BaseIntentHandler):
                 has_db_scenes,
             )
             t_load_start = time.time()
-            scenes_payload = load_scene_configs(env) or []
+            drift_entries = scene_diagnostics["drift"]
+            scenes_payload = load_scene_configs(env, drift=drift_entries) or []
             scene_diagnostics["loaded_from"] = "db" if has_db_scenes(env) else "fallback"
             scene_diagnostics["timings"]["load_ms"] = int((time.time() - t_load_start) * 1000)
             if scenes_payload:
