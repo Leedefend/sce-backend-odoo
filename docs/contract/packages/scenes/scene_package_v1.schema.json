@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scene_package_v1.schema.json",
+  "title": "Scene Package v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "package_name",
+    "package_version",
+    "schema_version",
+    "scene_version",
+    "scenes",
+    "profiles",
+    "defaults",
+    "policies",
+    "compatibility",
+    "checksum"
+  ],
+  "properties": {
+    "package_name": { "type": "string", "minLength": 1 },
+    "package_version": { "type": "string", "minLength": 1 },
+    "schema_version": { "type": "string", "minLength": 1 },
+    "scene_version": { "type": "string", "minLength": 1 },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "name"],
+        "properties": {
+          "code": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "profiles": { "type": "object" },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "compatibility": {
+      "type": "object",
+      "required": ["min_core_version", "supported_schema_versions"],
+      "properties": {
+        "min_core_version": { "type": "string", "minLength": 1 },
+        "supported_schema_versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "generated_at": { "type": "string" },
+    "checksum": { "type": "string", "minLength": 32 }
+  }
+}

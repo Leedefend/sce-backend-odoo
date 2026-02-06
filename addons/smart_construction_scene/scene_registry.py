@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import json
 
 SCENE_VERSION = "v2"
 SCHEMA_VERSION = "v2"
 PROJECTS_DEFAULT_SORT = "write_date desc"
+IMPORTED_SCENES_PARAM = "sc.scene.package.imported_scenes"
 
 
 def _append_drift(drift, *, scene_key, kind, fields, severity="info", source="db->registry"):
@@ -179,9 +181,39 @@ def _load_from_db(env, drift=None):
     return out
 
 
+def _load_imported_scenes(env, drift=None):
+    if env is None:
+        return []
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param(IMPORTED_SCENES_PARAM)
+    except Exception:
+        return []
+    if not raw:
+        return []
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        return []
+    if not isinstance(payload, dict):
+        return []
+
+    out = []
+    for code, scene in payload.items():
+        if not isinstance(scene, dict):
+            continue
+        item = dict(scene)
+        if not item.get("code"):
+            item["code"] = str(code or "").strip()
+        normalized = _normalize_scene(item, drift=drift, source="db")
+        if normalized and normalized.get("code"):
+            out.append(normalized)
+    return out
+
+
 def load_scene_configs(env, drift=None):
     # Prefer DB scenes if present; fallback to code-defined scenes.
     db_scenes = _load_from_db(env, drift=drift)
+    imported_scenes = _load_imported_scenes(env, drift=drift)
     # Note: keep configs data-only; target IDs are resolved by system_init.
     fallback = [
         {
@@ -281,9 +313,17 @@ def load_scene_configs(env, drift=None):
         },
     ]
     if not db_scenes:
-        return fallback
+        if not imported_scenes:
+            return fallback
+        imported_codes = {scene.get("code") for scene in imported_scenes if scene.get("code")}
+        merged = list(imported_scenes)
+        for scene in fallback:
+            if scene.get("code") not in imported_codes:
+                merged.append(scene)
+        return merged
 
     fallback_map = {scene.get("code"): scene for scene in fallback}
+    imported_map = {scene.get("code"): scene for scene in imported_scenes if scene.get("code")}
     seen = {scene.get("code") for scene in db_scenes if scene.get("code")}
 
     def _merge_missing(scene, defaults):
@@ -310,6 +350,14 @@ def load_scene_configs(env, drift=None):
         defaults = fallback_map.get(code)
         if defaults:
             _merge_missing(scene, defaults)
+        imported = imported_map.get(code)
+        if imported:
+            _merge_missing(scene, imported)
+
+    for code, scene in imported_map.items():
+        if code not in seen:
+            db_scenes.append(scene)
+            seen.add(code)
 
     for code, scene in fallback_map.items():
         if code not in seen:
