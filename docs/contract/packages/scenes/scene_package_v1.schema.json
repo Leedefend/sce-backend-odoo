@@ -18,9 +18,46 @@
   ],
   "properties": {
     "package_name": { "type": "string", "minLength": 1 },
-    "package_version": { "type": "string", "minLength": 1 },
-    "schema_version": { "type": "string", "minLength": 1 },
-    "scene_version": { "type": "string", "minLength": 1 },
+    "package_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Package semantic version (semver) of the distributable package itself."
+    },
+    "schema_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Contract structure version for package payload shape."
+    },
+    "scene_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Scene content version independent from package semver."
+    },
+    "previous_versions": {
+      "type": "array",
+      "description": "Historical package versions that can be upgraded into this package.",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "upgrade": {
+      "type": "object",
+      "description": "Upgrade compatibility metadata. If upgrade.breaking=true, later gates should apply stricter checks.",
+      "additionalProperties": false,
+      "required": ["type", "supported_from", "breaking"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["inplace"],
+          "default": "inplace"
+        },
+        "supported_from": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "default": []
+        },
+        "breaking": { "type": "boolean", "default": false }
+      }
+    },
     "scenes": {
       "type": "array",
       "items": {

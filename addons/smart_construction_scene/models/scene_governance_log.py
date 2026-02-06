@@ -17,6 +17,7 @@ class ScSceneGovernanceLog(models.Model):
             ("auto_degrade_triggered", "Auto Degrade Triggered"),
             ("package_export", "Package Export"),
             ("package_import", "Package Import"),
+            ("package_install", "Package Install"),
         ],
         required=True,
     )
