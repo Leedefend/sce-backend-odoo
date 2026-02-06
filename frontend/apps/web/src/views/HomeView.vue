@@ -22,6 +22,7 @@
         <h3>Scene Health</h3>
         <p>管理员可在 Dashboard 中查看 channel/rollback/drift/debt 与自动降级状态。</p>
         <RouterLink class="link" to="/admin/scene-health">打开 Health Dashboard</RouterLink>
+        <RouterLink class="link" to="/admin/scene-packages">打开 Scene Packages</RouterLink>
       </article>
     </div>
   </section>
