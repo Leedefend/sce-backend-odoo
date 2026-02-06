@@ -296,6 +296,7 @@ def load_scene_configs(env, drift=None):
             "layout": {"kind": "record", "sidebar": "fixed", "header": "full"},
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_project_initiation",
+                "action_xmlid": "smart_construction_core.action_project_initiation",
             },
         },
         {
@@ -343,6 +344,29 @@ def load_scene_configs(env, drift=None):
             if isinstance(value, list) and not isinstance(current, list):
                 scene[key] = value
 
+    def _upgrade_fallback_target(scene, defaults):
+        current = scene.get("target")
+        default_target = defaults.get("target") if isinstance(defaults, dict) else None
+        if not isinstance(current, dict) or not isinstance(default_target, dict):
+            return
+        code = scene.get("code")
+        route = current.get("route")
+        if not isinstance(route, str) or not code:
+            return
+        is_scene_fallback = route.startswith(f"/workbench?scene={code}")
+        is_missing_reason = "TARGET_MISSING" in route
+        if not (is_scene_fallback or is_missing_reason):
+            return
+        has_resolvable_default = bool(
+            default_target.get("action_xmlid")
+            or default_target.get("menu_xmlid")
+            or default_target.get("action_id")
+            or default_target.get("menu_id")
+            or default_target.get("model")
+        )
+        if has_resolvable_default:
+            scene["target"] = dict(default_target)
+
     for scene in db_scenes:
         code = scene.get("code")
         if not code:
@@ -350,6 +374,7 @@ def load_scene_configs(env, drift=None):
         defaults = fallback_map.get(code)
         if defaults:
             _merge_missing(scene, defaults)
+            _upgrade_fallback_target(scene, defaults)
         imported = imported_map.get(code)
         if imported:
             _merge_missing(scene, imported)
