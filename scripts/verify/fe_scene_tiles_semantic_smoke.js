@@ -5,8 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
-const { loadSchema, loadProfiles, normalizeVersion } = require('./lib/scene_schema_loader');
-const { validateScene } = require('./lib/scene_schema_validator');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -24,10 +22,10 @@ const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-6', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-7', ts);
 
 function log(msg) {
-  console.log(`[fe_scene_schema_smoke] ${msg}`);
+  console.log(`[fe_scene_tiles_semantic_smoke] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -73,6 +71,41 @@ function requestJson(url, payload, headers = {}) {
     req.write(body);
     req.end();
   });
+}
+
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validateTile(tile, sceneKey, errors) {
+  if (!isObject(tile)) {
+    errors.push(`${sceneKey}: tile not object`);
+    return;
+  }
+  const caps = tile.required_capabilities;
+  if (caps !== undefined) {
+    if (!Array.isArray(caps)) {
+      errors.push(`${sceneKey}: tile ${tile.key || '-'} required_capabilities not array`);
+    } else if (caps.some((item) => typeof item !== 'string')) {
+      errors.push(`${sceneKey}: tile ${tile.key || '-'} required_capabilities must be string[]`);
+    }
+  }
+  const payload = tile.payload;
+  if (!isObject(payload)) {
+    errors.push(`${sceneKey}: tile ${tile.key || '-'} payload missing`);
+    return;
+  }
+  const hasActionField = Object.prototype.hasOwnProperty.call(payload, 'action_xmlid');
+  const hasMenuField = Object.prototype.hasOwnProperty.call(payload, 'menu_xmlid');
+  if (hasActionField || hasMenuField) {
+    const actionVal = payload.action_xmlid;
+    const menuVal = payload.menu_xmlid;
+    const hasAction = typeof actionVal === 'string' && actionVal.trim().length > 0;
+    const hasMenu = typeof menuVal === 'string' && menuVal.trim().length > 0;
+    if (!hasAction && !hasMenu) {
+      errors.push(`${sceneKey}: tile ${tile.key || '-'} action/menu xmlid empty`);
+    }
+  }
 }
 
 async function main() {
@@ -126,48 +159,37 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
-  const schemaVersion = normalizeVersion(data.schema_version || 'v1', 'v1');
-  const schema = loadSchema(schemaVersion);
-  const profiles = loadProfiles(schemaVersion);
-  const profilesMap = (profiles || {}).scenes || {};
   const getScene = (key) => scenes.find((item) => item && (item.code === key || item.key === key));
 
   const targets = ['projects.list', 'projects.ledger'];
   const errors = [];
-  const profileErrors = [];
 
-  for (const key of targets) {
+  targets.forEach((key) => {
     const scene = getScene(key);
     if (!scene) {
       errors.push(`scene ${key} missing`);
-      continue;
+      return;
     }
-    const profile = profilesMap[key] || {};
-    const sceneErrors = validateScene(scene, schema, profile);
-    if (sceneErrors.length) {
-      profileErrors.push(`${key}: ${sceneErrors.join('; ')}`);
+    if (!Array.isArray(scene.tiles)) {
+      errors.push(`${key}: tiles must be array`);
+      return;
     }
-  }
+    scene.tiles.forEach((tile) => validateTile(tile, key, errors));
+  });
 
   summary.push(`scene_count: ${scenes.length}`);
-  summary.push(`schema_version: ${schema.version || '-'}`);
-  summary.push(`profiles_version: ${profiles.version || '-'}`);
   summary.push(`errors: ${errors.length}`);
-  summary.push(`profile_errors: ${profileErrors.length}`);
   writeSummary(summary);
 
   if (errors.length) {
     throw new Error(errors.join(' | '));
   }
-  if (profileErrors.length) {
-    throw new Error(profileErrors.join(' | '));
-  }
 
-  log('PASS schema');
+  log('PASS tiles');
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_scene_schema_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_scene_tiles_semantic_smoke] FAIL: ${err.message}`);
   process.exit(1);
 });
