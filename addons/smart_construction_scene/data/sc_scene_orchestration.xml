@@ -134,7 +134,36 @@
                 'target': {
                     'menu_xmlid': 'smart_construction_demo.menu_sc_project_list_showcase',
                     'action_xmlid': 'smart_construction_demo.action_sc_project_list_showcase'
-                }
+                },
+                'list_profile': {
+                    'columns': [
+                        'name',
+                        'project_code',
+                        'partner_id',
+                        'user_id',
+                        'stage_id',
+                        'write_date'
+                    ],
+                    'hidden_columns': [
+                        'message_needaction',
+                        'message_unread',
+                        'is_favorite',
+                        'display_name',
+                        '__last_update'
+                    ],
+                    'column_labels': {
+                        'name': '项目名称',
+                        'project_code': '项目编号',
+                        'partner_id': '客户',
+                        'user_id': '负责人',
+                        'stage_id': '状态',
+                        'write_date': '更新时间'
+                    },
+                    'row_primary': 'name',
+                    'row_secondary': 'partner_id'
+                },
+                'filters': [],
+                'default_sort': 'write_date desc'
             }"/>
         </record>
 
