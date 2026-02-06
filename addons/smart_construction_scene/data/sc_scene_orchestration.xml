@@ -24,9 +24,11 @@
                         'title': '项目工作',
                         'subtitle': '项目看板与概览入口',
                         'icon': 'P',
+                        'scene_key': 'projects.ledger',
                         'payload': {
                             'action_xmlid': 'smart_construction_core.action_sc_project_kanban_lifecycle',
-                            'menu_xmlid': 'smart_construction_core.menu_sc_project_project'
+                            'menu_xmlid': 'smart_construction_core.menu_sc_project_project',
+                            'scene_key': 'projects.ledger'
                         },
                         'required_capabilities': ['project.work']
                     },

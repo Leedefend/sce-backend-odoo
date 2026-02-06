@@ -145,6 +145,11 @@ function refresh() {
 }
 
 async function handleTileClick(tile: any) {
+  const explicitScene = tile.scene_key || tile.sceneKey || tile?.payload?.scene_key || tile?.payload?.sceneKey;
+  if (explicitScene) {
+    await router.push({ path: `/s/${explicitScene}` });
+    return;
+  }
   if (tile.policy?.state === 'disabled_capability') {
     await router.replace({
       name: 'workbench',
