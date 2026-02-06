@@ -29,6 +29,7 @@ const router = useRouter();
 const session = useSessionStore();
 const status = ref<'loading' | 'error' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
+const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger', 'projects.intake']);
 
 function resolveRecordId(targetRecord: unknown) {
   if (typeof targetRecord === 'string' && targetRecord.startsWith(':')) {
@@ -64,6 +65,10 @@ async function resolveScene() {
   const target = scene.target || {};
   const layout = resolveSceneLayout(scene);
   if (layout.kind === 'workspace') {
+    if (CORE_SCENE_FALLBACK.has(sceneKey)) {
+      await router.replace('/s/projects.list');
+      return;
+    }
     await router.replace({ name: 'workbench', query: { scene: sceneKey || undefined } });
     return;
   }
@@ -150,6 +155,10 @@ async function resolveScene() {
   }
   if (sceneNode?.menu_id || sceneNode?.id) {
     await router.replace({ path: `/m/${sceneNode.menu_id || sceneNode.id}` });
+    return;
+  }
+  if (CORE_SCENE_FALLBACK.has(sceneKey)) {
+    await router.replace('/s/projects.list');
     return;
   }
 
