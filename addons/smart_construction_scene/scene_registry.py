@@ -42,6 +42,19 @@ def get_scene_version():
 def get_schema_version():
     return SCHEMA_VERSION
 
+def has_db_scenes(env):
+    if env is None:
+        return False
+    try:
+        Scene = env['sc.scene'].sudo()
+    except Exception:
+        return False
+    try:
+        return Scene.search_count([('active', '=', True), ('state', '=', 'published')]) > 0
+    except Exception:
+        return False
+
+
 
 def _tile(
     key,
@@ -108,6 +121,18 @@ def _apply_scene_defaults(scene):
             scene["default_sort"] = PROJECTS_DEFAULT_SORT
         if scene.get("tiles") is None:
             scene["tiles"] = []
+    if code == "projects.intake":
+        target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
+        if not (
+            target.get("menu_xmlid")
+            or target.get("menu_id")
+            or target.get("action_xmlid")
+            or target.get("action_id")
+            or target.get("model")
+            or target.get("route")
+        ):
+            target["route"] = "/workbench?scene=projects.intake&reason=TARGET_MISSING"
+            scene["target"] = target
     return scene
 
 
@@ -234,6 +259,32 @@ def load_scene_configs(env):
 
     fallback_map = {scene.get("code"): scene for scene in fallback}
     seen = {scene.get("code") for scene in db_scenes if scene.get("code")}
+
+    def _merge_missing(scene, defaults):
+        for key, value in defaults.items():
+            current = scene.get(key)
+            if key not in scene or current in (None, "", [], {}):
+                scene[key] = value
+                continue
+            if isinstance(value, dict):
+                if not isinstance(current, dict):
+                    scene[key] = value
+                    continue
+                for d_key, d_val in value.items():
+                    if d_key not in current or current.get(d_key) in (None, "", [], {}):
+                        current[d_key] = d_val
+                continue
+            if isinstance(value, list) and not isinstance(current, list):
+                scene[key] = value
+
+    for scene in db_scenes:
+        code = scene.get("code")
+        if not code:
+            continue
+        defaults = fallback_map.get(code)
+        if defaults:
+            _merge_missing(scene, defaults)
+
     for code, scene in fallback_map.items():
         if code not in seen:
             db_scenes.append(scene)
