@@ -81,23 +81,41 @@ function coerceSceneSource(source: Scene[]) {
       const raw = scene as unknown as {
         code?: string;
         name?: string;
+        route?: string;
+        target?: SceneTarget;
+        layout?: Partial<SceneLayout>;
+        icon?: string;
+        capabilities?: string[];
+        breadcrumbs?: Array<{ label: string; to?: string }>;
         tiles?: SceneTile[];
         list_profile?: SceneListProfile;
         filters?: unknown[];
         default_sort?: string;
       };
       if (raw?.code) {
-        const route = `/s/${raw.code}`;
+        const route = raw.route || `/s/${raw.code}`;
+        const target =
+          raw.target && typeof raw.target === 'object' && (
+            raw.target.action_id ||
+            raw.target.menu_id ||
+            raw.target.model ||
+            raw.target.route
+          )
+            ? raw.target
+            : { route: `/workbench?scene=${raw.code}` };
         return {
           key: raw.code,
           label: raw.name || raw.code,
+          icon: raw.icon,
           route,
-          target: { route: `/workbench?scene=${raw.code}` },
+          target,
+          capabilities: raw.capabilities ?? [],
+          breadcrumbs: raw.breadcrumbs ?? [],
           tiles: raw.tiles ?? [],
           list_profile: raw.list_profile,
           filters: raw.filters,
           default_sort: raw.default_sort,
-          layout: normalizeSceneLayout(),
+          layout: normalizeSceneLayout(raw.layout),
         } as Scene;
       }
       return null;
