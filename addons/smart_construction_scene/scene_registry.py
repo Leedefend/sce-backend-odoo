@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 SCENE_VERSION = "v2"
+SCHEMA_VERSION = "v2"
 PROJECTS_DEFAULT_SORT = "write_date desc"
 
 
@@ -36,6 +37,10 @@ def _projects_list_profile():
 
 def get_scene_version():
     return SCENE_VERSION
+
+
+def get_schema_version():
+    return SCHEMA_VERSION
 
 
 def _tile(
@@ -101,6 +106,8 @@ def _apply_scene_defaults(scene):
             scene["list_profile"] = _projects_list_profile()
         if not scene.get("default_sort"):
             scene["default_sort"] = PROJECTS_DEFAULT_SORT
+        if scene.get("tiles") is None:
+            scene["tiles"] = []
     return scene
 
 
@@ -198,6 +205,7 @@ def load_scene_configs(env):
             "list_profile": _projects_list_profile(),
             "filters": [],
             "default_sort": PROJECTS_DEFAULT_SORT,
+            "tiles": [],
         },
         {
             "code": "projects.intake",
@@ -218,6 +226,7 @@ def load_scene_configs(env):
             "list_profile": _projects_list_profile(),
             "filters": [],
             "default_sort": PROJECTS_DEFAULT_SORT,
+            "tiles": [],
         },
     ]
     if not db_scenes:

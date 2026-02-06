@@ -511,6 +511,7 @@ class SystemInitHandler(BaseIntentHandler):
             "preload": [],
             "scenes": [],
             "scene_version": "v1",
+            "schema_version": "v1",
         }
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
@@ -525,11 +526,13 @@ class SystemInitHandler(BaseIntentHandler):
             from odoo.addons.smart_construction_scene.scene_registry import (
                 load_scene_configs,
                 get_scene_version,
+                get_schema_version,
             )
             scenes_payload = load_scene_configs(env) or []
             if scenes_payload:
                 data["scenes"] = scenes_payload
                 data["scene_version"] = get_scene_version() or data.get("scene_version")
+                data["schema_version"] = get_schema_version() or data.get("schema_version")
         except Exception as e:
             _logger.warning("system.init scene source load failed: %s", e)
 

@@ -1,0 +1,57 @@
+{
+  "version": "v2",
+  "required": ["code", "name", "layout"],
+  "fields": {
+    "code": {"type": "string"},
+    "name": {"type": "string"},
+    "version": {"type": "string", "required": false},
+    "scene_version": {"type": "string", "required": false},
+    "layout": {
+      "type": "object",
+      "required": true,
+      "fields": {
+        "kind": {"type": "string", "required": true},
+        "sidebar": {"type": "string", "required": true},
+        "header": {"type": "string", "required": true}
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": false,
+      "at_least_one": ["action_id", "menu_id", "model", "route"],
+      "fields": {
+        "action_id": {"type": "number"},
+        "menu_id": {"type": "number"},
+        "model": {"type": "string"},
+        "view_mode": {"type": "string"},
+        "route": {"type": "string"}
+      }
+    },
+    "list_profile": {
+      "type": "object",
+      "required": false,
+      "fields": {
+        "columns": {"type": "array"},
+        "hidden_columns": {"type": "array"},
+        "column_labels": {"type": "object"},
+        "row_primary": {"type": "string"},
+        "row_secondary": {"type": "string"}
+      }
+    },
+    "default_sort": {"type": "string", "required": false},
+    "filters": {"type": "array", "required": false},
+    "tiles": {
+      "type": "array",
+      "required": false,
+      "item_fields": {
+        "key": {"type": "string"},
+        "title": {"type": "string"},
+        "subtitle": {"type": "string"},
+        "icon": {"type": "string"},
+        "scene_key": {"type": "string"},
+        "required_capabilities": {"type": "array"},
+        "payload": {"type": "object"}
+      }
+    }
+  }
+}

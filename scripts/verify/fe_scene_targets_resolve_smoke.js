@@ -5,8 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
-const { loadSchema, loadProfiles, normalizeVersion } = require('./lib/scene_schema_loader');
-const { validateScene } = require('./lib/scene_schema_validator');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -24,10 +22,10 @@ const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-6', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-7', ts);
 
 function log(msg) {
-  console.log(`[fe_scene_schema_smoke] ${msg}`);
+  console.log(`[fe_scene_targets_resolve_smoke] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -126,48 +124,38 @@ async function main() {
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
-  const schemaVersion = normalizeVersion(data.schema_version || 'v1', 'v1');
-  const schema = loadSchema(schemaVersion);
-  const profiles = loadProfiles(schemaVersion);
-  const profilesMap = (profiles || {}).scenes || {};
   const getScene = (key) => scenes.find((item) => item && (item.code === key || item.key === key));
 
   const targets = ['projects.list', 'projects.ledger'];
   const errors = [];
-  const profileErrors = [];
 
-  for (const key of targets) {
+  targets.forEach((key) => {
     const scene = getScene(key);
     if (!scene) {
       errors.push(`scene ${key} missing`);
-      continue;
+      return;
     }
-    const profile = profilesMap[key] || {};
-    const sceneErrors = validateScene(scene, schema, profile);
-    if (sceneErrors.length) {
-      profileErrors.push(`${key}: ${sceneErrors.join('; ')}`);
+    const target = scene.target || {};
+    const actionId = target.action_id;
+    const menuId = target.menu_id;
+    if (!actionId || !menuId) {
+      errors.push(`${key}: target action_id/menu_id missing`);
     }
-  }
+  });
 
   summary.push(`scene_count: ${scenes.length}`);
-  summary.push(`schema_version: ${schema.version || '-'}`);
-  summary.push(`profiles_version: ${profiles.version || '-'}`);
   summary.push(`errors: ${errors.length}`);
-  summary.push(`profile_errors: ${profileErrors.length}`);
   writeSummary(summary);
 
   if (errors.length) {
     throw new Error(errors.join(' | '));
   }
-  if (profileErrors.length) {
-    throw new Error(profileErrors.join(' | '));
-  }
 
-  log('PASS schema');
+  log('PASS targets');
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_scene_schema_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_scene_targets_resolve_smoke] FAIL: ${err.message}`);
   process.exit(1);
 });

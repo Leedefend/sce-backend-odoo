@@ -163,7 +163,8 @@
                     'row_secondary': 'partner_id'
                 },
                 'filters': [],
-                'default_sort': 'write_date desc'
+                'default_sort': 'write_date desc',
+                'tiles': []
             }"/>
         </record>
 
@@ -251,7 +252,8 @@
                     'row_secondary': 'partner_id'
                 },
                 'filters': [],
-                'default_sort': 'write_date desc'
+                'default_sort': 'write_date desc',
+                'tiles': []
             }"/>
         </record>
 
