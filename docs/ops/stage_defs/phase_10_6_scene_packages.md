@@ -34,6 +34,23 @@ Rules:
 - `scene.package.dry_run_import`
 - `scene.package.import`
 
+## Installed Package Registry
+- Model: `sc.scene.package.installation`
+- Purpose: factual installation ledger, independent from upgrade inference.
+- Key fields:
+  - `package_name`: package identity
+  - `installed_version`: package semver (`package_version`)
+  - `channel`: target channel when installed
+  - `installed_at` / `last_upgrade_at`
+  - `source` (`import`/`export`)
+  - `checksum`
+  - `active`
+
+Version terms:
+- `package_version`: distributable package semver
+- `scene_version`: scene content version
+- `schema_version`: package contract structure version
+
 Import strategies:
 - `skip_existing`
 - `override_existing`

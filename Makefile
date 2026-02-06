@@ -418,6 +418,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 .PHONY: verify.portal.scene_health_contract_smoke.container verify.portal.scene_auto_degrade_smoke.container
 .PHONY: verify.portal.scene_health_pagination_smoke.container verify.portal.scene_governance_action_smoke.container verify.portal.scene_auto_degrade_notify_smoke.container
 .PHONY: verify.portal.scene_package_dry_run_smoke.container verify.portal.scene_package_import_smoke.container verify.portal.scene_package_ui_smoke.container
+.PHONY: verify.portal.scene_package_installed_smoke.container
 verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo: guard.prod.forbid check-compose-project check-compose-env
@@ -558,6 +559,8 @@ verify.portal.scene_package_import_smoke.container: guard.prod.forbid check-comp
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) node /mnt/scripts/verify/fe_scene_package_import_smoke.js"
 verify.portal.scene_package_ui_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) node /mnt/scripts/verify/fe_portal_scene_package_ui_smoke.js"
+verify.portal.scene_package_installed_smoke.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) node /mnt/scripts/verify/fe_scene_package_installed_smoke.js"
 verify.portal.scene_resolve_errors_debt_guard.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "DEBT_ROOT=/mnt DEBT_OUT=/mnt/artifacts/resolve_errors_debt.latest.json BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) BOOTSTRAP_SECRET=$(BOOTSTRAP_SECRET) BOOTSTRAP_LOGIN=$(BOOTSTRAP_LOGIN) node /mnt/scripts/verify/fe_scene_resolve_errors_debt_guard.js"
 verify.portal.scene_contract_export_smoke.container: guard.prod.forbid check-compose-project check-compose-env
