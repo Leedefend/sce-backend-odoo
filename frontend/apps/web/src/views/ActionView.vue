@@ -54,6 +54,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { listRecordsRaw } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
+import { config } from '../config';
 import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
 import KanbanPage from '../pages/KanbanPage.vue';
@@ -261,6 +262,22 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
   return ['name', 'id'];
 }
 
+function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
+  const direct = (contract as any)?.model;
+  if (typeof direct === 'string' && direct.trim()) {
+    return direct.trim();
+  }
+  const headModel = (contract as any)?.head?.model;
+  if (typeof headModel === 'string' && headModel.trim()) {
+    return headModel.trim();
+  }
+  const viewModel = (contract as any)?.views?.tree?.model || (contract as any)?.views?.form?.model || (contract as any)?.views?.kanban?.model;
+  if (typeof viewModel === 'string' && viewModel.trim()) {
+    return viewModel.trim();
+  }
+  return '';
+}
+
 function getActionType(meta: unknown) {
   const raw = (meta as { type?: string; action_type?: string }) || {};
   return String(raw.type || raw.action_type || '').toLowerCase();
@@ -271,6 +288,130 @@ function isClientAction(meta: unknown) {
   const tag = String(raw?.tag || '').toLowerCase();
   const actionType = getActionType(meta);
   return actionType.includes('client') || tag.length > 0;
+}
+
+function isUrlAction(meta: unknown, contract: unknown) {
+  const actionType = getActionType(meta);
+  if (actionType.includes('act_url') || actionType.includes('url')) {
+    return true;
+  }
+  const contractType = String((contract as any)?.data?.type || '').toLowerCase();
+  return contractType === 'url_redirect';
+}
+
+function normalizeUrlTarget(target: unknown) {
+  const raw = String(target || '').toLowerCase();
+  if (raw === 'self' || raw === 'current' || raw === 'main') {
+    return 'self';
+  }
+  return 'new';
+}
+
+function isShellRoute(url: string) {
+  return (
+    url === '/' ||
+    url.startsWith('/s/') ||
+    url.startsWith('/m/') ||
+    url.startsWith('/a/') ||
+    url.startsWith('/r/') ||
+    url.startsWith('/login') ||
+    url.startsWith('/admin/')
+  );
+}
+
+function resolveNavigationUrl(url: string) {
+  const raw = String(url || '').trim();
+  if (!raw) {
+    return '';
+  }
+  if (/^https?:\/\//i.test(raw)) {
+    return raw;
+  }
+  if (!raw.startsWith('/')) {
+    return raw;
+  }
+  try {
+    return new URL(raw, config.apiBaseUrl).toString();
+  } catch {
+    return raw;
+  }
+}
+
+function isPortalPath(url: string) {
+  return url.startsWith('/portal/');
+}
+
+function resolvePortalBridgeBase() {
+  try {
+    const base = new URL(config.apiBaseUrl);
+    if (base.hostname === 'localhost') {
+      base.hostname = '127.0.0.1';
+    }
+    return base.toString();
+  } catch {
+    return config.apiBaseUrl;
+  }
+}
+
+function buildPortalBridgeUrl(url: string) {
+  const nextPath = url.startsWith('/') ? url : `/${url}`;
+  const bridge = new URL('/portal/bridge', resolvePortalBridgeBase());
+  bridge.searchParams.set('next', nextPath);
+  if (session.token) {
+    bridge.searchParams.set('token', session.token);
+  }
+  if (config.odooDb) {
+    bridge.searchParams.set('db', config.odooDb);
+  }
+  return bridge.toString();
+}
+
+function resolveActionUrl(meta: unknown, contract: unknown) {
+  const metaUrl = String((meta as any)?.url || '').trim();
+  if (metaUrl) {
+    return metaUrl;
+  }
+  const contractUrl = String((contract as any)?.data?.url || '').trim();
+  if (contractUrl) {
+    return contractUrl;
+  }
+  return '';
+}
+
+async function redirectUrlAction(meta: unknown, contract: unknown) {
+  const url = resolveActionUrl(meta, contract);
+  if (!url) {
+    const actionType = getActionType(meta);
+    const contractType = String((contract as any)?.data?.type || '').toLowerCase();
+    await router.replace({
+      name: 'workbench',
+      query: {
+        menu_id: menuId.value || undefined,
+        action_id: actionId.value || undefined,
+        reason: ErrorCodes.ACT_UNSUPPORTED_TYPE,
+        diag: 'act_url_empty',
+        diag_action_type: actionType || undefined,
+        diag_contract_type: contractType || undefined,
+      },
+    });
+    return true;
+  }
+  const target = normalizeUrlTarget((meta as any)?.target || (contract as any)?.data?.target);
+  if (target === 'self' && url.startsWith('/')) {
+    if (isShellRoute(url)) {
+      await router.replace(url);
+    } else {
+      if (isPortalPath(url)) {
+        window.location.assign(buildPortalBridgeUrl(url));
+      } else {
+        window.location.assign(resolveNavigationUrl(url));
+      }
+    }
+    return true;
+  }
+  const navUrl = resolveNavigationUrl(url);
+  window.open(navUrl, target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
+  return true;
 }
 
 function isWindowAction(meta: unknown) {
@@ -301,6 +442,10 @@ async function load() {
     if (meta) {
       session.setActionMeta(meta);
     }
+    if (isUrlAction(meta, contract)) {
+      await redirectUrlAction(meta, contract);
+      return;
+    }
     if (!sortValue.value) {
       const viewOrder = (contract as any)?.views?.tree?.order || (contract as any)?.ui_contract?.views?.tree?.order;
       const order = scene.value?.default_sort || viewOrder || (meta as any)?.order;
@@ -323,7 +468,11 @@ async function load() {
       });
       return;
     }
-    const resolvedModel = meta?.model ?? model.value;
+    const contractModel = resolveModelFromContract(contract);
+    const resolvedModel = meta?.model ?? model.value ?? contractModel;
+    if (meta && !meta.model && resolvedModel) {
+      session.setActionMeta({ ...(meta as any), model: resolvedModel });
+    }
     if (!resolvedModel) {
       if (isClientAction(meta)) {
         await router.replace({
@@ -337,12 +486,21 @@ async function load() {
         return;
       }
       if (!isWindowAction(meta)) {
+        const actionType = getActionType(meta);
+        const contractType = String((contract as any)?.data?.type || '').toLowerCase();
+        const contractUrl = String((contract as any)?.data?.url || '');
+        const metaUrl = String((meta as any)?.url || '');
         await router.replace({
           name: 'workbench',
           query: {
             menu_id: menuId.value || undefined,
             action_id: actionId.value || undefined,
             reason: ErrorCodes.ACT_UNSUPPORTED_TYPE,
+            diag: 'non_window_action',
+            diag_action_type: actionType || undefined,
+            diag_contract_type: contractType || undefined,
+            diag_contract_url: contractUrl || undefined,
+            diag_meta_url: metaUrl || undefined,
           },
         });
         return;
