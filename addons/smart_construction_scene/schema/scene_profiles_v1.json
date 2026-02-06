@@ -1,0 +1,19 @@
+{
+  "version": "v1",
+  "scenes": {
+    "projects.list": {
+      "required": ["list_profile", "default_sort"],
+      "list_profile": {
+        "required": ["columns", "hidden_columns"],
+        "hidden_columns_must_include": ["message_needaction"]
+      }
+    },
+    "projects.ledger": {
+      "required": ["list_profile", "default_sort"],
+      "list_profile": {
+        "required": ["columns", "hidden_columns"],
+        "hidden_columns_must_include": ["message_needaction"]
+      }
+    }
+  }
+}
