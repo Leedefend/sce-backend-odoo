@@ -216,6 +216,33 @@ def _resolve_xmlid(env, xmlid: str | None) -> int | None:
     return _resolve_action_id(env, xmlid)
 
 
+CRITICAL_SCENES = {
+    "projects.list",
+    "projects.ledger",
+}
+
+
+def _scene_severity(scene_key: str | None) -> str:
+    if scene_key and scene_key in CRITICAL_SCENES:
+        return "critical"
+    return "non_critical"
+
+
+def _append_resolve_error(resolve_errors, *, scene_key, kind, code, ref=None, message=None, severity=None, field=None):
+    entry = {
+        "scene_key": scene_key or "",
+        "kind": kind,
+        "code": code,
+        "severity": severity or _scene_severity(scene_key),
+        "message": message or "",
+    }
+    if ref:
+        entry["ref"] = ref
+    if field:
+        entry["field"] = field
+    resolve_errors.append(entry)
+
+
 def _index_nav_scene_targets(nodes):
     targets = {}
     def walk(items):
@@ -237,8 +264,8 @@ def _index_nav_scene_targets(nodes):
 
 def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
     for scene in scenes:
-        code = scene.get("code") or scene.get("key")
-        if not code:
+        scene_key = scene.get("code") or scene.get("key")
+        if not scene_key:
             continue
         target = scene.get("target") or {}
         action_xmlid = target.get("action_xmlid") or target.get("actionXmlid")
@@ -248,23 +275,29 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
             if action_id:
                 target["action_id"] = action_id
             else:
-                resolve_errors.append({
-                    "code": code,
-                    "field": "action_xmlid",
-                    "xmlid": action_xmlid,
-                    "reason": "not_found",
-                })
+                _append_resolve_error(
+                    resolve_errors,
+                    scene_key=scene_key,
+                    kind="target",
+                    code="XMLID_NOT_FOUND",
+                    ref=action_xmlid,
+                    field="action_xmlid",
+                    message="action_xmlid not found",
+                )
         if menu_xmlid and not target.get("menu_id"):
             menu_id = _resolve_xmlid(env, menu_xmlid)
             if menu_id:
                 target["menu_id"] = menu_id
             else:
-                resolve_errors.append({
-                    "code": code,
-                    "field": "menu_xmlid",
-                    "xmlid": menu_xmlid,
-                    "reason": "not_found",
-                })
+                _append_resolve_error(
+                    resolve_errors,
+                    scene_key=scene_key,
+                    kind="target",
+                    code="XMLID_NOT_FOUND",
+                    ref=menu_xmlid,
+                    field="menu_xmlid",
+                    message="menu_xmlid not found",
+                )
         if "action_xmlid" in target:
             target.pop("action_xmlid", None)
         if "actionXmlid" in target:
@@ -276,7 +309,7 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
         if target.get("action_id") or target.get("model") or target.get("route"):
             scene["target"] = target
             continue
-        nav = nav_targets.get(code) or {}
+        nav = nav_targets.get(scene_key) or {}
         resolved = {}
         if nav.get("action_id"):
             resolved["action_id"] = nav.get("action_id")
@@ -289,22 +322,31 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
         if resolved:
             scene["target"] = resolved
         else:
-            scene["target"] = {"route": f"/workbench?scene={code}&reason=TARGET_MISSING"}
-            resolve_errors.append({
-                "code": code,
-                "field": "target",
-                "reason": "missing",
-            })
+            fallback_route = f"/workbench?scene={scene_key}&reason=TARGET_MISSING"
+            scene["target"] = {"route": fallback_route}
+            _append_resolve_error(
+                resolve_errors,
+                scene_key=scene_key,
+                kind="target",
+                code="MISSING_TARGET",
+                ref=fallback_route,
+                field="target",
+                message="target missing; fallback route applied",
+            )
     return scenes
 
 
 def _normalize_scene_layouts(scenes, warnings):
     defaults = {"kind": "workspace", "sidebar": "fixed", "header": "full"}
     for scene in scenes:
+        scene_key = scene.get("code") or scene.get("key") or ""
         layout = scene.get("layout")
         if not isinstance(layout, dict):
             warnings.append({
-                "code": scene.get("code") or scene.get("key") or "",
+                "code": "LAYOUT_MISSING_OR_INVALID",
+                "severity": "non_critical",
+                "scene_key": scene_key,
+                "message": "layout missing or invalid; defaults applied",
                 "field": "layout",
                 "reason": "missing_or_invalid",
             })
