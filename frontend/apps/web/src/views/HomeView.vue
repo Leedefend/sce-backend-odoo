@@ -18,9 +18,18 @@
         <h3>错误可视</h3>
         <p>任何错误都会回到 StatusPanel，支持快速定位与重试。</p>
       </article>
+      <article class="card">
+        <h3>Scene Health</h3>
+        <p>管理员可在 Dashboard 中查看 channel/rollback/drift/debt 与自动降级状态。</p>
+        <RouterLink class="link" to="/admin/scene-health">打开 Health Dashboard</RouterLink>
+      </article>
     </div>
   </section>
 </template>
+
+<script setup lang="ts">
+import { RouterLink } from 'vue-router';
+</script>
 
 <style scoped>
 .home {
@@ -60,5 +69,13 @@
 
 .card h3 {
   margin-top: 0;
+}
+
+.link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #1e3a8a;
+  font-weight: 600;
+  text-decoration: none;
 }
 </style>

@@ -5,9 +5,10 @@ import time
 import json
 import hashlib
 import os
+from datetime import datetime, timedelta
 from typing import Iterable, Dict, List, Tuple
 
-from odoo import api, SUPERUSER_ID
+from odoo import api, fields, SUPERUSER_ID
 
 from ..core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
@@ -330,6 +331,239 @@ def _scene_severity(scene_key: str | None) -> str:
     return "non_critical"
 
 
+def _is_critical_drift_warn(entry: dict) -> bool:
+    if not isinstance(entry, dict):
+        return False
+    if str(entry.get("severity") or "").strip().lower() != "warn":
+        return False
+    scene_key = entry.get("scene_key")
+    return scene_key in CRITICAL_SCENES
+
+
+def _build_scene_health_payload(data: dict, trace_id: str = "", company_id: int | None = None) -> dict:
+    data = data or {}
+    user = data.get("user") if isinstance(data.get("user"), dict) else {}
+    diag = data.get("scene_diagnostics") if isinstance(data.get("scene_diagnostics"), dict) else {}
+    resolve_errors = diag.get("resolve_errors") if isinstance(diag.get("resolve_errors"), list) else []
+    drift = diag.get("drift") if isinstance(diag.get("drift"), list) else []
+    normalize_warnings = diag.get("normalize_warnings") if isinstance(diag.get("normalize_warnings"), list) else []
+
+    critical_resolve_errors = [
+        entry for entry in resolve_errors
+        if isinstance(entry, dict) and str(entry.get("severity") or "").strip().lower() == "critical"
+    ]
+    critical_drift_warn = [entry for entry in drift if _is_critical_drift_warn(entry)]
+
+    debt = []
+    for entry in resolve_errors:
+        if not isinstance(entry, dict):
+            continue
+        severity = str(entry.get("severity") or "").strip().lower()
+        if severity != "critical":
+            debt.append({"type": "resolve_error", **entry})
+    for entry in drift:
+        if not isinstance(entry, dict):
+            continue
+        if not _is_critical_drift_warn(entry):
+            debt.append({"type": "drift", **entry})
+    for entry in normalize_warnings:
+        if isinstance(entry, dict):
+            debt.append({"type": "normalize_warning", **entry})
+
+    resolved_company_id = company_id
+    if resolved_company_id is None:
+        raw_company_id = user.get("company_id") if isinstance(user, dict) else None
+        try:
+            resolved_company_id = int(raw_company_id) if raw_company_id else None
+        except Exception:
+            resolved_company_id = None
+
+    return {
+        "company_id": resolved_company_id,
+        "scene_channel": data.get("scene_channel"),
+        "rollback_active": bool(diag.get("rollback_active")),
+        "scene_version": data.get("scene_version"),
+        "schema_version": data.get("schema_version"),
+        "contract_ref": data.get("scene_contract_ref"),
+        "summary": {
+            "critical_resolve_errors_count": len(critical_resolve_errors),
+            "critical_drift_warn_count": len(critical_drift_warn),
+            "non_critical_debt_count": len(debt),
+        },
+        "details": {
+            "resolve_errors": resolve_errors,
+            "drift": drift,
+            "debt": debt,
+        },
+        "auto_degrade": diag.get("auto_degrade") if isinstance(diag.get("auto_degrade"), dict) else {
+            "triggered": False,
+            "reason_codes": [],
+            "action_taken": "none",
+        },
+        "last_updated_at": fields.Datetime.now(),
+        "trace_id": trace_id or "",
+    }
+
+
+def _get_auto_degrade_policy(env) -> dict:
+    defaults = {
+        "enabled": True,
+        "critical_threshold_resolve_errors": 1,
+        "critical_threshold_drift_warn": 1,
+        "action": "rollback_pinned",
+    }
+    try:
+        config = env["ir.config_parameter"].sudo()
+    except Exception:
+        return defaults
+
+    def _get_int(name: str, fallback: int) -> int:
+        try:
+            raw = config.get_param(name)
+            return int(raw) if raw not in (None, "") else fallback
+        except Exception:
+            return fallback
+
+    enabled_raw = config.get_param("sc.scene.auto_degrade.enabled")
+    enabled = defaults["enabled"] if enabled_raw in (None, "") else _is_truthy(enabled_raw)
+    action = (config.get_param("sc.scene.auto_degrade.action") or defaults["action"]).strip().lower()
+    if action not in {"rollback_pinned", "stable_latest"}:
+        action = defaults["action"]
+
+    return {
+        "enabled": enabled,
+        "critical_threshold_resolve_errors": max(1, _get_int("sc.scene.auto_degrade.critical_threshold.resolve_errors", 1)),
+        "critical_threshold_drift_warn": max(1, _get_int("sc.scene.auto_degrade.critical_threshold.drift_warn", 1)),
+        "action": action,
+    }
+
+
+def _log_auto_degrade_once(env, *, trace_id: str, user, from_channel: str, to_channel: str, reason_codes: list, action_taken: str):
+    try:
+        Log = env["sc.scene.governance.log"].sudo()
+        now = datetime.utcnow()
+        window_start = fields.Datetime.to_string(now - timedelta(minutes=1))
+        domain = [
+            ("action", "=", "auto_degrade_triggered"),
+            ("created_at", ">=", window_start),
+        ]
+        if trace_id:
+            domain.append(("trace_id", "=", trace_id))
+        if Log.search_count(domain):
+            return
+        Log.create({
+            "action": "auto_degrade_triggered",
+            "actor_id": user.id if user and user.id else None,
+            "company_id": user.company_id.id if user and user.company_id else None,
+            "from_channel": from_channel,
+            "to_channel": to_channel,
+            "reason": "auto degrade triggered by scene diagnostics",
+            "trace_id": trace_id or "",
+            "payload_json": {
+                "reason_codes": list(reason_codes or []),
+                "action_taken": action_taken,
+            },
+            "created_at": fields.Datetime.now(),
+        })
+        return
+    except Exception:
+        pass
+
+    # fallback: if scene governance model is unavailable, keep audit evidence in core audit log
+    try:
+        Audit = env["sc.audit.log"].sudo()
+        now = datetime.utcnow()
+        window_start = fields.Datetime.to_string(now - timedelta(minutes=1))
+        domain = [
+            ("event_code", "=", "SCENE_AUTO_DEGRADE_TRIGGERED"),
+            ("ts", ">=", window_start),
+        ]
+        if trace_id:
+            domain.append(("trace_id", "=", trace_id))
+        if Audit.search_count(domain):
+            return
+        Audit.write_event(
+            event_code="SCENE_AUTO_DEGRADE_TRIGGERED",
+            model="system.init",
+            res_id=0,
+            action="auto_degrade_triggered",
+            after={
+                "from_channel": from_channel,
+                "to_channel": to_channel,
+                "reason_codes": list(reason_codes or []),
+                "action_taken": action_taken,
+            },
+            reason="auto degrade triggered by scene diagnostics",
+            trace_id=trace_id or "",
+            company_id=user.company_id.id if user and user.company_id else None,
+        )
+    except Exception:
+        return
+
+
+def _evaluate_auto_degrade(env, *, user, scene_channel: str, diagnostics: dict, trace_id: str) -> dict:
+    policy = _get_auto_degrade_policy(env)
+    result = {
+        "triggered": False,
+        "reason_codes": [],
+        "action_taken": "none",
+        "policy": policy,
+        "pre_counts": {
+            "critical_resolve_errors_count": 0,
+            "critical_drift_warn_count": 0,
+        },
+    }
+    if not policy.get("enabled"):
+        return result
+
+    resolve_errors = diagnostics.get("resolve_errors") if isinstance(diagnostics.get("resolve_errors"), list) else []
+    drift = diagnostics.get("drift") if isinstance(diagnostics.get("drift"), list) else []
+    critical_resolve_errors_count = len(
+        [
+            entry for entry in resolve_errors
+            if isinstance(entry, dict) and str(entry.get("severity") or "").strip().lower() == "critical"
+        ]
+    )
+    critical_drift_warn_count = len([entry for entry in drift if _is_critical_drift_warn(entry)])
+    result["pre_counts"] = {
+        "critical_resolve_errors_count": critical_resolve_errors_count,
+        "critical_drift_warn_count": critical_drift_warn_count,
+    }
+
+    reason_codes = []
+    if critical_resolve_errors_count >= int(policy.get("critical_threshold_resolve_errors") or 1):
+        reason_codes.append("critical_resolve_errors")
+    if critical_drift_warn_count >= int(policy.get("critical_threshold_drift_warn") or 1):
+        reason_codes.append("critical_drift_warn")
+    if not reason_codes:
+        return result
+
+    action = policy.get("action") or "rollback_pinned"
+    to_channel = "stable"
+    rollback_active = action == "rollback_pinned"
+    try:
+        config = env["ir.config_parameter"].sudo()
+        config.set_param("sc.scene.rollback", "1" if rollback_active else "0")
+        config.set_param("sc.scene.use_pinned", "1" if rollback_active else "0")
+    except Exception:
+        pass
+
+    _log_auto_degrade_once(
+        env,
+        trace_id=trace_id,
+        user=user,
+        from_channel=scene_channel,
+        to_channel=to_channel,
+        reason_codes=reason_codes,
+        action_taken=action,
+    )
+
+    result["triggered"] = True
+    result["reason_codes"] = reason_codes
+    result["action_taken"] = action
+    return result
+
+
 def _append_resolve_error(resolve_errors, *, scene_key, kind, code, ref=None, message=None, severity=None, field=None):
     entry = {
         "scene_key": scene_key or "",
@@ -530,6 +764,11 @@ class SystemInitHandler(BaseIntentHandler):
         params = payload.get("params") if isinstance(payload, dict) else None
         if not isinstance(params, dict):
             params = payload if isinstance(payload, dict) else {}
+        trace_id = ""
+        try:
+            trace_id = str((self.context or {}).get("trace_id") or "")
+        except Exception:
+            trace_id = ""
 
         env = self.env
         su_env = self.su_env or api.Environment(env.cr, SUPERUSER_ID, dict(env.context or {}))
@@ -716,6 +955,7 @@ class SystemInitHandler(BaseIntentHandler):
             "rollback_ref": None,
             "channel_selector": channel_selector,
             "channel_source_ref": channel_source_ref,
+            "auto_degrade": {"triggered": False, "reason_codes": [], "action_taken": "none"},
             "timings": {},
         }
         if home_contract:
@@ -768,6 +1008,57 @@ class SystemInitHandler(BaseIntentHandler):
         t_resolve_start = time.time()
         _normalize_scene_targets(env, scenes_payload, nav_targets, scene_diagnostics["resolve_errors"])
         scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
+
+        # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
+        if _is_truthy(params.get("scene_inject_critical_error")) and _diagnostics_enabled(env):
+            _append_resolve_error(
+                scene_diagnostics["resolve_errors"],
+                scene_key="projects.list",
+                kind="target",
+                code="TEST_CRITICAL_INJECTED",
+                ref="smart_construction_scene.test.injected",
+                message="injected critical resolve error for auto-degrade smoke",
+                severity="critical",
+            )
+
+        auto_degrade = _evaluate_auto_degrade(
+            env,
+            user=user,
+            scene_channel=scene_channel,
+            diagnostics=scene_diagnostics,
+            trace_id=trace_id,
+        )
+        scene_diagnostics["auto_degrade"] = auto_degrade
+        if auto_degrade.get("triggered"):
+            action_taken = auto_degrade.get("action_taken") or "rollback_pinned"
+            scene_channel = "stable"
+            rollback_active = action_taken == "rollback_pinned"
+            data["scene_channel"] = scene_channel
+            data["scene_contract_ref"] = "stable/PINNED.json" if rollback_active else "stable/LATEST.json"
+            scene_diagnostics["rollback_active"] = bool(rollback_active)
+            scene_diagnostics["rollback_ref"] = data["scene_contract_ref"] if rollback_active else None
+
+            degraded_payload, degraded_ref = _load_scene_contract(env, scene_channel, rollback_active)
+            data["scene_contract_ref"] = degraded_ref
+            if rollback_active:
+                scene_diagnostics["rollback_ref"] = degraded_ref
+            if degraded_payload:
+                data["scenes"] = degraded_payload.get("scenes") or []
+                data["scene_version"] = degraded_payload.get("scene_version") or data.get("scene_version")
+                data["schema_version"] = degraded_payload.get("schema_version") or data.get("schema_version")
+                scene_diagnostics["scene_version"] = data.get("scene_version")
+                scene_diagnostics["schema_version"] = data.get("schema_version")
+                scene_diagnostics["loaded_from"] = "contract"
+                scene_diagnostics["resolve_errors"] = []
+                scene_diagnostics["drift"] = []
+                scene_diagnostics["normalize_warnings"] = []
+                t_norm2 = time.time()
+                _normalize_scene_layouts(data["scenes"], scene_diagnostics["normalize_warnings"])
+                scene_diagnostics["timings"]["normalize_after_degrade_ms"] = int((time.time() - t_norm2) * 1000)
+                t_resolve2 = time.time()
+                _normalize_scene_targets(env, data["scenes"], nav_targets, scene_diagnostics["resolve_errors"])
+                scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
+        scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload
         data["scene_diagnostics"] = scene_diagnostics
 
