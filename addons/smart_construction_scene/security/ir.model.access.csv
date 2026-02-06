@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sc_scene_governance_log_read,sc.scene.governance.log.read,model_sc_scene_governance_log,smart_construction_core.group_sc_internal_user,1,0,0,0
+access_sc_scene_governance_log_admin,sc.scene.governance.log.admin,model_sc_scene_governance_log,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_scene_company_channel_admin,sc.scene.company.channel.admin,model_sc_scene_company_channel,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_scene_governance_wizard_admin,sc.scene.governance.wizard.admin,model_sc_scene_governance_wizard,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
