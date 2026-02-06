@@ -8,6 +8,8 @@
         "smart_construction_core",
     ],
     "data": [
+        "security/ir.model.access.csv",
+        "views/scene_governance_views.xml",
         "data/sc_scene_orchestration.xml",
     ],
     "installable": True,

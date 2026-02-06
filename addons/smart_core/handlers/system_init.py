@@ -106,15 +106,45 @@ def _normalize_scene_channel(value: str | None) -> str | None:
     raw = str(value).strip().lower()
     return raw if raw in SCENE_CHANNELS else None
 
-def _resolve_scene_channel(params: dict | None) -> str:
+def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     channel = None
+    selector = "default"
+    source_ref = "default"
     if isinstance(params, dict):
         channel = _normalize_scene_channel(params.get("scene_channel") or params.get("channel"))
-    if not channel:
-        channel = _normalize_scene_channel(_get_request_header("X-Scene-Channel"))
-    if not channel:
-        channel = _normalize_scene_channel(os.environ.get("SCENE_CHANNEL"))
-    return channel or "stable"
+        if channel:
+            selector = "param"
+            source_ref = "param:scene_channel"
+            return channel, selector, source_ref
+    header_val = _normalize_scene_channel(_get_request_header("X-Scene-Channel"))
+    if header_val:
+        return header_val, "param", "header:X-Scene-Channel"
+
+    try:
+        config = env["ir.config_parameter"].sudo()
+        user_val = None
+        if user and user.id:
+            user_val = _normalize_scene_channel(config.get_param(f"sc.scene.channel.user.{user.id}") or "")
+        if user_val:
+            return user_val, "user", f"user_id={user.id}"
+
+        company_id = user.company_id.id if user and user.company_id else None
+        if company_id:
+            company_val = _normalize_scene_channel(config.get_param(f"sc.scene.channel.company.{company_id}") or "")
+            if company_val:
+                return company_val, "company", f"company_id={company_id}"
+
+        default_val = _normalize_scene_channel(config.get_param("sc.scene.channel.default") or "")
+        if default_val:
+            return default_val, "config", "sc.scene.channel.default"
+    except Exception:
+        pass
+
+    env_val = _normalize_scene_channel(os.environ.get("SCENE_CHANNEL"))
+    if env_val:
+        return env_val, "env", "SCENE_CHANNEL"
+
+    return "stable", selector, source_ref
 
 def _is_truthy(value) -> bool:
     if value is None:
@@ -138,10 +168,16 @@ def _resolve_scene_contract_path(rel_path: str) -> str | None:
             return candidate
     return None
 
-def _load_scene_contract(scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
+def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     if use_pinned:
-        rel_path = "docs/contract/exports/scenes/stable/PINNED.json"
         ref = "stable/PINNED.json"
+        try:
+            param = env["ir.config_parameter"].sudo().get_param("sc.scene.contract.pinned")
+            if param:
+                return json.loads(param), ref
+        except Exception:
+            pass
+        rel_path = "docs/contract/exports/scenes/stable/PINNED.json"
     else:
         rel_path = f"docs/contract/exports/scenes/{scene_channel}/LATEST.json"
         ref = f"{scene_channel}/LATEST.json"
@@ -495,7 +531,10 @@ class SystemInitHandler(BaseIntentHandler):
         if not isinstance(params, dict):
             params = payload if isinstance(payload, dict) else {}
 
-        scene_channel = _resolve_scene_channel(params)
+        env = self.env
+        su_env = self.su_env or api.Environment(env.cr, SUPERUSER_ID, dict(env.context or {}))
+
+        scene_channel, channel_selector, channel_source_ref = _resolve_scene_channel(env, env.user, params)
         pinned_param = params.get("scene_use_pinned") if isinstance(params, dict) else None
         rollback_param = params.get("scene_rollback") if isinstance(params, dict) else None
         try:
@@ -504,6 +543,11 @@ class SystemInitHandler(BaseIntentHandler):
             rollback_active = _is_truthy(pinned_param) or _is_truthy(rollback_param)
         if pinned_param is not None and str(pinned_param).strip() not in {"", "0", "false", "no", "off"}:
             rollback_active = True
+        try:
+            config = env["ir.config_parameter"].sudo()
+            rollback_active = rollback_active or _is_truthy(config.get_param("sc.scene.use_pinned")) or                 _is_truthy(config.get_param("sc.scene.rollback"))
+        except Exception:
+            pass
         rollback_active = rollback_active or _is_truthy(os.environ.get("SCENE_USE_PINNED")) or             _is_truthy(os.environ.get("SCENE_ROLLBACK"))
         if rollback_active:
             scene_channel = "stable"
@@ -544,10 +588,6 @@ class SystemInitHandler(BaseIntentHandler):
             _logger.info("[system_init][debug] params: %s", params)
             _logger.info("[system_init][debug] self.params: %s", getattr(self, "params", {}))
             _logger.info("[system_init][debug] self.env.cr.dbname: %s", self.env.cr.dbname)
-
-        # 统一使用 self.env / self.su_env（不要直接用 odoo.http.request.env）
-        env = self.env
-        su_env = self.su_env or api.Environment(env.cr, SUPERUSER_ID, dict(env.context or {}))
 
         # 如果 finalize_contract 内部不读 ORM，可用 env；若会读，推荐 su_env
         cs = ContractService(su_env)
@@ -661,6 +701,8 @@ class SystemInitHandler(BaseIntentHandler):
             "scene_version": "v1",
             "schema_version": "v1",
             "scene_channel": scene_channel,
+            "scene_channel_selector": channel_selector,
+            "scene_channel_source_ref": channel_source_ref,
             "scene_contract_ref": None,
         }
         scene_diagnostics = {
@@ -672,6 +714,8 @@ class SystemInitHandler(BaseIntentHandler):
             "drift": [],
             "rollback_active": bool(rollback_active),
             "rollback_ref": None,
+            "channel_selector": channel_selector,
+            "channel_source_ref": channel_source_ref,
             "timings": {},
         }
         if home_contract:
@@ -683,7 +727,7 @@ class SystemInitHandler(BaseIntentHandler):
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
 
         # Scene orchestration source (contract export or smart_construction_scene)
-        contract_payload, contract_ref = _load_scene_contract(scene_channel, rollback_active)
+        contract_payload, contract_ref = _load_scene_contract(env, scene_channel, rollback_active)
         data["scene_contract_ref"] = contract_ref
         if rollback_active:
             scene_diagnostics["rollback_ref"] = contract_ref
