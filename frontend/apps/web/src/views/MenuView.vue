@@ -60,7 +60,36 @@ async function resolve() {
       await router.replace(`/a/${result.meta.action_id}?menu_id=${menuId}`);
       return;
     }
-    if (result.kind === 'group' || result.reason === 'menu has no action') {
+    if (result.kind === 'redirect') {
+      if (result.target.action_id) {
+        const policy = evaluateCapabilityPolicy({ source: result.target.meta, available: session.capabilities });
+        if (policy.state !== 'enabled') {
+          await router.replace({
+            name: 'workbench',
+            query: {
+              menu_id: result.target.menu_id,
+              action_id: result.target.action_id,
+              reason: ErrorCodes.CAPABILITY_MISSING,
+              missing: policy.missing.join(','),
+            },
+          });
+          return;
+        }
+        if (result.target.meta) {
+          session.setActionMeta(result.target.meta);
+        }
+        await router.replace(`/a/${result.target.action_id}?menu_id=${result.target.menu_id}`);
+        return;
+      }
+      if (result.target.scene_key) {
+        await router.replace({
+          path: `/s/${result.target.scene_key}`,
+          query: { menu_id: result.target.menu_id },
+        });
+        return;
+      }
+    }
+    if (result.kind === 'group' || (result.kind === 'broken' && result.reason === 'menu has no action')) {
       const label = result.node?.title || result.node?.name || result.node?.label || 'This menu';
       await router.replace({
         name: 'workbench',
@@ -68,7 +97,11 @@ async function resolve() {
       });
       return;
     }
-    error.value = result.reason || 'resolve menu failed';
+    if (result.kind === 'broken') {
+      error.value = result.reason || 'resolve menu failed';
+      return;
+    }
+    error.value = 'resolve menu failed';
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'resolve menu failed';
   } finally {
