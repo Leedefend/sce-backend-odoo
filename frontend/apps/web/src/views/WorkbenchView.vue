@@ -2,21 +2,23 @@
   <section class="workbench">
     <header class="header">
       <div>
-        <h2>Workbench</h2>
-        <p class="meta">Safe landing for non-standard navigation targets.</p>
+        <h2>Navigation unavailable</h2>
+        <p class="meta">This page appears only when the requested target cannot be opened.</p>
       </div>
       <div class="actions">
+        <button class="ghost" @click="goToProjects">Back to home</button>
+        <button class="ghost" @click="openFirstReachableMenu">Open menu</button>
         <button class="ghost" @click="refresh">Refresh</button>
       </div>
     </header>
 
     <StatusPanel
-      title="Workspace ready"
+      title="We could not open that page"
       :message="message"
       :variant="panelVariant"
     />
 
-    <section v-if="tiles.length" class="tiles">
+    <section v-if="showTiles" class="tiles">
       <button
         v-for="tile in tiles"
         :key="tile.key || tile.title"
@@ -90,6 +92,7 @@ const scene = computed(() => {
   if (!sceneKey.value) return null;
   return session.scenes.find((item: any) => item?.key === sceneKey.value || item?.code === sceneKey.value) || null;
 });
+const showTiles = computed(() => reason.value === ErrorCodes.CAPABILITY_MISSING && tiles.value.length > 0);
 const tiles = computed(() => {
   const rawTiles = (scene.value as any)?.tiles ?? [];
   if (!Array.isArray(rawTiles)) return [];
@@ -121,7 +124,7 @@ const reasonLabel = computed(() => {
 const message = computed(() => {
   switch (reason.value) {
     case ErrorCodes.NAV_MENU_NO_ACTION:
-      return 'This menu is a directory. Select a submenu to continue.';
+      return 'This menu is a directory and no reachable submenu is available.';
     case ErrorCodes.ACT_NO_MODEL:
       return 'This action opens a custom workspace without a model.';
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
@@ -129,7 +132,7 @@ const message = computed(() => {
     case ErrorCodes.CAPABILITY_MISSING:
       return 'This capability is not enabled for your account.';
     default:
-      return 'Use the menu to continue.';
+      return 'Return to home or open the menu to continue.';
   }
 });
 
@@ -137,11 +140,25 @@ const panelVariant = computed(() => {
   if (reason.value === ErrorCodes.CAPABILITY_MISSING) {
     return 'forbidden_capability';
   }
-  return 'info';
+  return 'error';
 });
+
+const firstReachableMenuId = computed(() => findFirstReachableMenuId(session.menuTree));
 
 function refresh() {
   window.location.reload();
+}
+
+async function goToProjects() {
+  await router.push('/s/projects.list');
+}
+
+async function openFirstReachableMenu() {
+  if (firstReachableMenuId.value) {
+    await router.push(`/m/${firstReachableMenuId.value}`);
+    return;
+  }
+  await goToProjects();
 }
 
 async function handleTileClick(tile: any) {
@@ -188,6 +205,31 @@ async function copyTrace() {
   } catch {
     // noop
   }
+}
+
+function findFirstReachableMenuId(nodes: any[]): number | null {
+  if (!Array.isArray(nodes)) {
+    return null;
+  }
+  for (const node of nodes) {
+    if (!node) {
+      continue;
+    }
+    const menuId = Number(node.menu_id || node.id || 0) || 0;
+    if (menuId) {
+      if (node?.meta?.action_id) {
+        return menuId;
+      }
+      if (node?.scene_key || node?.sceneKey || node?.meta?.scene_key) {
+        return menuId;
+      }
+    }
+    const nested = findFirstReachableMenuId(node?.children || []);
+    if (nested) {
+      return nested;
+    }
+  }
+  return null;
 }
 </script>
 
