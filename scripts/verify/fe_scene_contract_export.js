@@ -22,9 +22,17 @@ const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
-const CONTRACT_OUT =
-  process.env.CONTRACT_OUT || 'docs/contract/exports/scenes/scene_contract.v10_0.json';
-const CONTRACT_LATEST = process.env.CONTRACT_LATEST || 'docs/contract/exports/scenes/LATEST.json';
+const CHANNELS = new Set(['stable', 'beta', 'dev']);
+
+function normalizeChannel(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return CHANNELS.has(raw) ? raw : 'stable';
+}
+
+const SCENE_CHANNEL = normalizeChannel(process.env.SCENE_CHANNEL || 'stable');
+const DEFAULT_CONTRACT_OUT = `docs/contract/exports/scenes/${SCENE_CHANNEL}/LATEST.json`;
+const CONTRACT_OUT = process.env.CONTRACT_OUT || DEFAULT_CONTRACT_OUT;
+const CONTRACT_LATEST = process.env.CONTRACT_LATEST || DEFAULT_CONTRACT_OUT;
 const INCLUDE_GENERATED_AT = process.env.INCLUDE_GENERATED_AT === '1';
 
 const now = new Date();
@@ -128,7 +136,9 @@ async function main() {
   };
 
   log('app.init');
-  const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
+  const initParams = { scene: 'web', with_preload: false };
+  if (SCENE_CHANNEL) initParams.scene_channel = SCENE_CHANNEL;
+  const initPayload = { intent: 'app.init', params: initParams };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
   if (initResp.status >= 400 || !initResp.body.ok) {
@@ -160,6 +170,7 @@ async function main() {
 
   summary.push(`contract_out: ${outPath}`);
   summary.push(`contract_latest: ${latestPath}`);
+  summary.push(`scene_channel: ${SCENE_CHANNEL}`);
   summary.push(`scene_count: ${canonical.length}`);
   summary.push(`schema_version: ${contract.schema_version}`);
   summary.push(`scene_version: ${contract.scene_version}`);

@@ -21,11 +21,19 @@ const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
+const CHANNELS = new Set(['stable', 'beta', 'dev']);
+const SCENE_CHANNEL = CHANNELS.has(String(process.env.SCENE_CHANNEL || '').toLowerCase())
+  ? String(process.env.SCENE_CHANNEL || '').toLowerCase()
+  : 'stable';
+const USE_PINNED = ['1', 'true', 'yes', 'on'].includes(String(process.env.SCENE_USE_PINNED || process.env.SCENE_ROLLBACK || '').toLowerCase());
+
 const DRIFT_BASELINE =
   process.env.DRIFT_BASELINE || 'docs/contract/snapshots/scenes/scene_drift_debt.v10_0.json';
 const DRIFT_OUT = process.env.DRIFT_OUT || '/mnt/artifacts/scenes/scene_drift_report.latest.json';
-const CONTRACT_BASELINE =
-  process.env.CONTRACT_BASELINE || 'docs/contract/exports/scenes/scene_contract.v10_0.json';
+const DEFAULT_CONTRACT_BASELINE = USE_PINNED
+  ? 'docs/contract/exports/scenes/stable/PINNED.json'
+  : `docs/contract/exports/scenes/${SCENE_CHANNEL}/LATEST.json`;
+const CONTRACT_BASELINE = process.env.CONTRACT_BASELINE || DEFAULT_CONTRACT_BASELINE;
 const CONTRACT_OUT = process.env.CONTRACT_OUT || '/mnt/artifacts/scenes/scene_contract.latest.json';
 const CONTRACT_DIFF = process.env.CONTRACT_DIFF || '/mnt/artifacts/scenes/scene_contract.diff.txt';
 
@@ -157,7 +165,10 @@ async function main() {
   };
 
   log('app.init');
-  const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
+  const initParams = { scene: 'web', with_preload: false };
+  if (SCENE_CHANNEL) initParams.scene_channel = SCENE_CHANNEL;
+  if (USE_PINNED) initParams.scene_use_pinned = '1';
+  const initPayload = { intent: 'app.init', params: initParams };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
   if (initResp.status >= 400 || !initResp.body.ok) {
