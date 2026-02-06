@@ -235,7 +235,7 @@ def _index_nav_scene_targets(nodes):
     return targets
 
 
-def _normalize_scene_targets(env, scenes, nav_targets):
+def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
     for scene in scenes:
         code = scene.get("code") or scene.get("key")
         if not code:
@@ -247,10 +247,24 @@ def _normalize_scene_targets(env, scenes, nav_targets):
             action_id = _resolve_xmlid(env, action_xmlid)
             if action_id:
                 target["action_id"] = action_id
+            else:
+                resolve_errors.append({
+                    "code": code,
+                    "field": "action_xmlid",
+                    "xmlid": action_xmlid,
+                    "reason": "not_found",
+                })
         if menu_xmlid and not target.get("menu_id"):
             menu_id = _resolve_xmlid(env, menu_xmlid)
             if menu_id:
                 target["menu_id"] = menu_id
+            else:
+                resolve_errors.append({
+                    "code": code,
+                    "field": "menu_xmlid",
+                    "xmlid": menu_xmlid,
+                    "reason": "not_found",
+                })
         if "action_xmlid" in target:
             target.pop("action_xmlid", None)
         if "actionXmlid" in target:
@@ -276,14 +290,24 @@ def _normalize_scene_targets(env, scenes, nav_targets):
             scene["target"] = resolved
         else:
             scene["target"] = {"route": f"/workbench?scene={code}&reason=TARGET_MISSING"}
+            resolve_errors.append({
+                "code": code,
+                "field": "target",
+                "reason": "missing",
+            })
     return scenes
 
 
-def _normalize_scene_layouts(scenes):
+def _normalize_scene_layouts(scenes, warnings):
     defaults = {"kind": "workspace", "sidebar": "fixed", "header": "full"}
     for scene in scenes:
         layout = scene.get("layout")
         if not isinstance(layout, dict):
+            warnings.append({
+                "code": scene.get("code") or scene.get("key") or "",
+                "field": "layout",
+                "reason": "missing_or_invalid",
+            })
             layout = {}
         scene["layout"] = {
             "kind": layout.get("kind", defaults["kind"]),
@@ -513,6 +537,14 @@ class SystemInitHandler(BaseIntentHandler):
             "scene_version": "v1",
             "schema_version": "v1",
         }
+        scene_diagnostics = {
+            "schema_version": data.get("schema_version"),
+            "scene_version": data.get("scene_version"),
+            "loaded_from": None,
+            "normalize_warnings": [],
+            "resolve_errors": [],
+            "timings": {},
+        }
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
         if preload_items:
@@ -527,20 +559,31 @@ class SystemInitHandler(BaseIntentHandler):
                 load_scene_configs,
                 get_scene_version,
                 get_schema_version,
+                has_db_scenes,
             )
+            t_load_start = time.time()
             scenes_payload = load_scene_configs(env) or []
+            scene_diagnostics["loaded_from"] = "db" if has_db_scenes(env) else "fallback"
+            scene_diagnostics["timings"]["load_ms"] = int((time.time() - t_load_start) * 1000)
             if scenes_payload:
                 data["scenes"] = scenes_payload
                 data["scene_version"] = get_scene_version() or data.get("scene_version")
                 data["schema_version"] = get_schema_version() or data.get("schema_version")
+                scene_diagnostics["scene_version"] = data.get("scene_version")
+                scene_diagnostics["schema_version"] = data.get("schema_version")
         except Exception as e:
             _logger.warning("system.init scene source load failed: %s", e)
 
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
-        _normalize_scene_layouts(scenes_payload)
+        t_norm_start = time.time()
+        _normalize_scene_layouts(scenes_payload, scene_diagnostics["normalize_warnings"])
+        scene_diagnostics["timings"]["normalize_ms"] = int((time.time() - t_norm_start) * 1000)
         nav_targets = _index_nav_scene_targets(nav_tree)
-        _normalize_scene_targets(env, scenes_payload, nav_targets)
+        t_resolve_start = time.time()
+        _normalize_scene_targets(env, scenes_payload, nav_targets, scene_diagnostics["resolve_errors"])
+        scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
         data["scenes"] = scenes_payload
+        data["scene_diagnostics"] = scene_diagnostics
 
         # 分部 etag：加入导航
         etags["nav"] = nav_fp
