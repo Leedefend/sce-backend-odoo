@@ -20,12 +20,17 @@ const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
+const DEBT_BASELINE =
+  process.env.DEBT_BASELINE || 'docs/contract/snapshots/scenes/resolve_errors_debt.v0_9_9.json';
+const DEBT_OUT = process.env.DEBT_OUT || 'docs/contract/snapshots/scenes/LATEST.resolve_errors_debt.json';
+const DEBT_UPDATE = process.env.DEBT_UPDATE === '1';
+
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-2', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-9', ts);
 
 function log(msg) {
-  console.log(`[fe_scene_target_smoke] ${msg}`);
+  console.log(`[fe_scene_resolve_errors_debt_guard] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -71,6 +76,44 @@ function requestJson(url, payload, headers = {}) {
     req.write(body);
     req.end();
   });
+}
+
+function resolveReadPath(relPath) {
+  const roots = [
+    process.env.DEBT_ROOT,
+    '/mnt',
+    '/mnt/extra-addons',
+    '/mnt/addons_external',
+    '/mnt/odoo',
+    '/mnt/e/sc-backend-odoo',
+  ].filter(Boolean);
+  const stripped = relPath.startsWith('docs/') ? relPath : relPath;
+  for (const root of roots) {
+    const candidate = path.join(root, stripped);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  const fallback = path.join(__dirname, 'baselines', path.basename(relPath));
+  if (fs.existsSync(fallback)) return fallback;
+  return '';
+}
+
+function resolveWritePath(relPath) {
+  if (path.isAbsolute(relPath)) return relPath;
+  const root = process.env.DEBT_ROOT || '/mnt/extra-addons';
+  return path.join(root, relPath);
+}
+
+function normalizeDebtEntries(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (raw && Array.isArray(raw.entries)) return raw.entries;
+  return [];
+}
+
+function debtKey(entry) {
+  const sceneKey = entry.scene_key || '';
+  const code = entry.code || '';
+  const ref = entry.ref || '';
+  return `${sceneKey}::${code}::${ref}`;
 }
 
 async function main() {
@@ -123,41 +166,69 @@ async function main() {
   }
 
   const data = initResp.body.data || {};
-  const scenes = Array.isArray(data.scenes) ? data.scenes : [];
-  const unsupported = [];
-  for (const scene of scenes) {
-    const code = scene && (scene.code || scene.key);
-    if (!code) continue;
-    const target = scene.target || {};
-    const ok = Boolean(target.action_id || target.menu_id || target.model || target.route);
-    if (!ok) {
-      unsupported.push(code);
-    }
+  const diag = data.scene_diagnostics || {};
+  const resolveErrors = Array.isArray(diag.resolve_errors) ? diag.resolve_errors : [];
+
+  const invalid = resolveErrors.filter(
+    (err) => !err || !err.scene_key || !err.code || !err.severity || !err.kind
+  );
+  if (invalid.length) {
+    writeJson(path.join(outDir, 'resolve_errors_invalid.json'), invalid);
+    throw new Error(`resolve_errors invalid entries (${invalid.length})`);
   }
 
-  const ledger = scenes.find((item) => (item && (item.code === 'projects.ledger' || item.key === 'projects.ledger')));
-  if (!ledger) {
-    throw new Error('scene projects.ledger missing');
+  const criticalErrors = resolveErrors.filter((err) => err.severity === 'critical');
+  if (criticalErrors.length) {
+    writeJson(path.join(outDir, 'resolve_errors_critical.json'), criticalErrors);
+    throw new Error(`critical resolve_errors (${criticalErrors.length})`);
   }
-  const target = ledger.target || {};
 
-  summary.push(`scene_count: ${scenes.length}`);
-  summary.push(`unsupported: ${unsupported.join(',') || '-'}`);
-  summary.push(`ledger_action_id: ${target.action_id || '-'}`);
+  const nonCritical = resolveErrors.filter((err) => err.severity === 'non_critical');
+  const currentDebt = nonCritical.map((err) => ({
+    scene_key: err.scene_key,
+    code: err.code,
+    ref: err.ref || '',
+  }));
+
+  const baselinePath = resolveReadPath(DEBT_BASELINE);
+  if (!baselinePath) {
+    throw new Error(`debt baseline not found: ${DEBT_BASELINE}`);
+  }
+  const baselineRaw = fs.readFileSync(baselinePath, 'utf-8');
+  const baseline = normalizeDebtEntries(JSON.parse(baselineRaw));
+  const baselineKeys = new Set(baseline.map(debtKey));
+
+  const missing = currentDebt.filter((entry) => !baselineKeys.has(debtKey(entry)));
+  const snapshotPath = resolveWritePath(DEBT_OUT);
+  writeJson(snapshotPath, { version: 'current', entries: currentDebt });
+
+  if (DEBT_UPDATE) {
+    const updatePath = resolveWritePath(DEBT_BASELINE);
+    writeJson(updatePath, { version: 'v0_9_9', generated_at: new Date().toISOString(), entries: currentDebt });
+    summary.push(`debt_updated: ${updatePath}`);
+    summary.push(`non_critical: ${currentDebt.length}`);
+    writeSummary(summary);
+    log('PASS debt update');
+    log(`artifacts: ${outDir}`);
+    return;
+  }
+
+  summary.push(`baseline: ${baselinePath}`);
+  summary.push(`debt_out: ${snapshotPath}`);
+  summary.push(`non_critical: ${currentDebt.length}`);
+  summary.push(`missing: ${missing.length}`);
   writeSummary(summary);
 
-  if (unsupported.length) {
-    throw new Error(`scene target missing for: ${unsupported.join(', ')}`);
-  }
-  if (!target.action_id) {
-    throw new Error('projects.ledger target.action_id missing');
+  if (missing.length) {
+    writeJson(path.join(outDir, 'resolve_errors_missing_debt.json'), missing);
+    throw new Error(`resolve_errors debt missing (${missing.length})`);
   }
 
-  log('PASS target action_id');
+  log('PASS resolve_errors debt guard');
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_scene_target_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_scene_resolve_errors_debt_guard] FAIL: ${err.message}`);
   process.exit(1);
 });
