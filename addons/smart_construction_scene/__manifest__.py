@@ -7,7 +7,9 @@
     "depends": [
         "smart_construction_core",
     ],
-    "data": [],
+    "data": [
+        "data/sc_scene_orchestration.xml",
+    ],
     "installable": True,
     "application": False,
     "license": "LGPL-3",
