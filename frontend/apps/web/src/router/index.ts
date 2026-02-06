@@ -7,6 +7,7 @@ import ActionView from '../views/ActionView.vue';
 import RecordView from '../views/RecordView.vue';
 import WorkbenchView from '../views/WorkbenchView.vue';
 import SceneView from '../views/SceneView.vue';
+import SceneHealthView from '../views/SceneHealthView.vue';
 import { ApiError } from '../api/client';
 
 const router = createRouter({
@@ -19,6 +20,7 @@ const router = createRouter({
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
     { path: '/workbench', name: 'workbench', component: WorkbenchView, meta: { layout: 'shell' } },
+    { path: '/admin/scene-health', name: 'scene-health', component: SceneHealthView, meta: { layout: 'shell', adminOnly: true } },
     { path: '/a/:actionId', name: 'action', component: ActionView, meta: { layout: 'shell' } },
     { path: '/r/:model/:id', name: 'record', component: RecordView, meta: { layout: 'shell' } },
   ],
@@ -37,6 +39,15 @@ router.beforeEach(async (to) => {
         return { name: 'login', query: { redirect: to.fullPath } };
       }
       return true;
+    }
+  }
+  if (to.meta?.adminOnly) {
+    const groups = session.user?.groups_xmlids || [];
+    const isAdmin =
+      groups.includes('base.group_system') ||
+      groups.includes('smart_construction_core.group_sc_cap_config_admin');
+    if (!isAdmin) {
+      return { name: 'home' };
     }
   }
   return true;
