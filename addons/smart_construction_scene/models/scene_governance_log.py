@@ -15,6 +15,8 @@ class ScSceneGovernanceLog(models.Model):
             ("export_contract", "Export Contract"),
             ("update_snapshot", "Update Snapshot"),
             ("auto_degrade_triggered", "Auto Degrade Triggered"),
+            ("package_export", "Package Export"),
+            ("package_import", "Package Import"),
         ],
         required=True,
     )
