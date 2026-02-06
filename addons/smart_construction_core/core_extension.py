@@ -43,9 +43,10 @@ def smart_core_extend_system_init(data, env, user):
         data["capabilities"] = [
             rec.to_public_dict(user) for rec in caps if rec._user_allowed(user)
         ]
-        data["scenes"] = [
-            scene.to_public_dict(user) for scene in scenes if scene._user_allowed(user)
-        ]
+        if not data.get("scenes"):
+            data["scenes"] = [
+                scene.to_public_dict(user) for scene in scenes if scene._user_allowed(user)
+            ]
         if Entitlement:
             data["entitlements"] = Entitlement.get_payload(user)
         if Usage:

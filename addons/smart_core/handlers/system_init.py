@@ -212,6 +212,10 @@ def _resolve_action_id(env, xmlid: str | None) -> int | None:
     return None
 
 
+def _resolve_xmlid(env, xmlid: str | None) -> int | None:
+    return _resolve_action_id(env, xmlid)
+
+
 def _index_nav_scene_targets(nodes):
     targets = {}
     def walk(items):
@@ -231,12 +235,30 @@ def _index_nav_scene_targets(nodes):
     return targets
 
 
-def _normalize_scene_targets(scenes, nav_targets):
+def _normalize_scene_targets(env, scenes, nav_targets):
     for scene in scenes:
         code = scene.get("code") or scene.get("key")
         if not code:
             continue
         target = scene.get("target") or {}
+        action_xmlid = target.get("action_xmlid") or target.get("actionXmlid")
+        menu_xmlid = target.get("menu_xmlid") or target.get("menuXmlid")
+        if action_xmlid and not target.get("action_id"):
+            action_id = _resolve_xmlid(env, action_xmlid)
+            if action_id:
+                target["action_id"] = action_id
+        if menu_xmlid and not target.get("menu_id"):
+            menu_id = _resolve_xmlid(env, menu_xmlid)
+            if menu_id:
+                target["menu_id"] = menu_id
+        if "action_xmlid" in target:
+            target.pop("action_xmlid", None)
+        if "actionXmlid" in target:
+            target.pop("actionXmlid", None)
+        if "menu_xmlid" in target:
+            target.pop("menu_xmlid", None)
+        if "menuXmlid" in target:
+            target.pop("menuXmlid", None)
         if target.get("action_id") or target.get("model") or target.get("route"):
             scene["target"] = target
             continue
@@ -259,18 +281,10 @@ def _normalize_scene_targets(scenes, nav_targets):
 
 def _normalize_scene_layouts(scenes):
     defaults = {"kind": "workspace", "sidebar": "fixed", "header": "full"}
-    layout_map = {
-        "projects.list": {"kind": "list", "sidebar": "fixed", "header": "full"},
-        "projects.intake": {"kind": "record", "sidebar": "fixed", "header": "full"},
-        "projects.ledger": {"kind": "ledger", "sidebar": "fixed", "header": "full"},
-    }
     for scene in scenes:
-        code = scene.get("code") or scene.get("key")
         layout = scene.get("layout")
         if not isinstance(layout, dict):
             layout = {}
-        if code in layout_map:
-            layout.update(layout_map[code])
         scene["layout"] = {
             "kind": layout.get("kind", defaults["kind"]),
             "sidebar": layout.get("sidebar", defaults["sidebar"]),
@@ -495,42 +509,7 @@ class SystemInitHandler(BaseIntentHandler):
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
             "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
             "preload": [],
-            "scenes": [
-                {
-                    "code": "projects.ledger",
-                    "name": "项目台账（试点）",
-                    "layout": {"kind": "ledger", "sidebar": "fixed", "header": "full"},
-                    "list_profile": {
-                        "columns": [
-                            "name",
-                            "project_code",
-                            "partner_id",
-                            "user_id",
-                            "stage_id",
-                            "write_date",
-                        ],
-                        "hidden_columns": [
-                            "message_needaction",
-                            "message_unread",
-                            "is_favorite",
-                            "display_name",
-                            "__last_update",
-                        ],
-                        "column_labels": {
-                            "name": "项目名称",
-                            "project_code": "项目编号",
-                            "partner_id": "客户",
-                            "user_id": "负责人",
-                            "stage_id": "状态",
-                            "write_date": "更新时间",
-                        },
-                        "row_primary": "name",
-                        "row_secondary": "partner_id",
-                    },
-                    "filters": [],
-                    "default_sort": "write_date desc",
-                }
-            ],
+            "scenes": [],
             "scene_version": "v1",
         }
         if home_contract:
@@ -541,91 +520,23 @@ class SystemInitHandler(BaseIntentHandler):
         # 扩展模块可附加场景/能力等（不影响主流程）
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
 
-        # Ensure list_profile fallback for projects.ledger when extensions do not provide it.
+        # Scene orchestration source (smart_construction_scene)
+        try:
+            from odoo.addons.smart_construction_scene.scene_registry import (
+                load_scene_configs,
+                get_scene_version,
+            )
+            scenes_payload = load_scene_configs(env) or []
+            if scenes_payload:
+                data["scenes"] = scenes_payload
+                data["scene_version"] = get_scene_version() or data.get("scene_version")
+        except Exception as e:
+            _logger.warning("system.init scene source load failed: %s", e)
+
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
-        has_ledger = False
-        for scene in scenes_payload:
-            code = scene.get("code") or scene.get("key")
-            if code == "projects.ledger":
-                has_ledger = True
-                scene.setdefault("layout", {"kind": "ledger", "sidebar": "fixed", "header": "full"})
-                if "list_profile" not in scene:
-                    scene["list_profile"] = {
-                        "columns": [
-                            "name",
-                            "project_code",
-                            "partner_id",
-                            "user_id",
-                            "stage_id",
-                            "write_date",
-                        ],
-                        "hidden_columns": [
-                            "message_needaction",
-                            "message_unread",
-                            "is_favorite",
-                            "display_name",
-                            "__last_update",
-                        ],
-                        "column_labels": {
-                            "name": "项目名称",
-                            "project_code": "项目编号",
-                            "partner_id": "客户",
-                            "user_id": "负责人",
-                            "stage_id": "状态",
-                            "write_date": "更新时间",
-                        },
-                        "row_primary": "name",
-                        "row_secondary": "partner_id",
-                    }
-                scene.setdefault("filters", [])
-                scene.setdefault("default_sort", "write_date desc")
-                break
-        if not has_ledger:
-            scenes_payload.append({
-                "code": "projects.ledger",
-                "name": "项目台账（试点）",
-                "layout": {"kind": "ledger", "sidebar": "fixed", "header": "full"},
-                "list_profile": {
-                    "columns": [
-                        "name",
-                        "project_code",
-                        "partner_id",
-                        "user_id",
-                        "stage_id",
-                        "write_date",
-                    ],
-                    "hidden_columns": [
-                        "message_needaction",
-                        "message_unread",
-                        "is_favorite",
-                        "display_name",
-                        "__last_update",
-                    ],
-                    "column_labels": {
-                        "name": "项目名称",
-                        "project_code": "项目编号",
-                        "partner_id": "客户",
-                        "user_id": "负责人",
-                        "stage_id": "状态",
-                        "write_date": "更新时间",
-                    },
-                    "row_primary": "name",
-                    "row_secondary": "partner_id",
-                },
-                "filters": [],
-                "default_sort": "write_date desc",
-            })
         _normalize_scene_layouts(scenes_payload)
         nav_targets = _index_nav_scene_targets(nav_tree)
-        _normalize_scene_targets(scenes_payload, nav_targets)
-        ledger_action_id = _resolve_action_id(env, "smart_construction_core.action_sc_project_kanban_lifecycle")
-        for scene in scenes_payload:
-            code = scene.get("code") or scene.get("key")
-            if code == "projects.ledger" and ledger_action_id:
-                target = scene.get("target") or {}
-                target.setdefault("action_id", ledger_action_id)
-                scene["target"] = target
-                break
+        _normalize_scene_targets(env, scenes_payload, nav_targets)
         data["scenes"] = scenes_payload
 
         # 分部 etag：加入导航
