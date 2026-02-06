@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { canonicalizeScenes } = require('./lib/scene_snapshot');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -20,12 +21,14 @@ const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
+const CONTRACT_OUT = process.env.CONTRACT_OUT || '/mnt/artifacts/scenes/scene_contract.latest.json';
+
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-8', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v10_0', ts);
 
 function log(msg) {
-  console.log(`[fe_scene_diagnostics_smoke] ${msg}`);
+  console.log(`[fe_scene_contract_export_smoke] ${msg}`);
 }
 
 function writeJson(file, obj) {
@@ -123,53 +126,35 @@ async function main() {
   }
 
   const data = initResp.body.data || {};
-  const diag = data.scene_diagnostics;
-  if (!diag || typeof diag !== 'object') {
-    throw new Error('scene_diagnostics missing');
-  }
-  if (!diag.schema_version) {
-    throw new Error('scene_diagnostics.schema_version missing');
-  }
-  if (!diag.scene_version) {
-    throw new Error('scene_diagnostics.scene_version missing');
-  }
-  if (!Array.isArray(diag.resolve_errors)) {
-    throw new Error('scene_diagnostics.resolve_errors not array');
-  }
-  if (!Array.isArray(diag.drift)) {
-    throw new Error('scene_diagnostics.drift not array');
-  }
-  const allowedSeverities = new Set(['critical', 'non_critical']);
-  const invalidErrors = diag.resolve_errors.filter(
-    (err) => !err || !err.scene_key || !err.code || !err.severity || !allowedSeverities.has(err.severity)
-  );
-  if (invalidErrors.length) {
-    throw new Error(`resolve_errors invalid entries (${invalidErrors.length})`);
-  }
-  const criticalErrors = diag.resolve_errors.filter((err) => err.severity === 'critical');
-  if (criticalErrors.length) {
-    throw new Error(`resolve_errors critical (${criticalErrors.length})`);
-  }
-  if (diag.normalize_warnings && Array.isArray(diag.normalize_warnings)) {
-    const bad = diag.normalize_warnings.filter((item) => !item || !item.code || !item.message);
-    if (bad.length) {
-      throw new Error('normalize_warnings contains invalid entries');
-    }
-  }
+  const scenes = Array.isArray(data.scenes) ? data.scenes : [];
+  const canonical = canonicalizeScenes(scenes);
+  const contract = {
+    schema_version: data.schema_version || '',
+    scene_version: data.scene_version || '',
+    scenes: canonical,
+  };
 
-  summary.push(`schema_version: ${diag.schema_version}`);
-  summary.push(`scene_version: ${diag.scene_version}`);
-  summary.push(`loaded_from: ${diag.loaded_from || '-'}`);
-  summary.push(`resolve_errors: ${diag.resolve_errors.length}`);
-  summary.push(`drift: ${diag.drift.length}`);
-  summary.push(`normalize_warnings: ${(diag.normalize_warnings || []).length}`);
+  writeJson(CONTRACT_OUT, contract);
+  if (!fs.existsSync(CONTRACT_OUT)) {
+    throw new Error(`contract export missing: ${CONTRACT_OUT}`);
+  }
+  const loaded = JSON.parse(fs.readFileSync(CONTRACT_OUT, 'utf-8'));
+  const contractScenes = Array.isArray(loaded.scenes) ? loaded.scenes : [];
+
+  summary.push(`contract_out: ${CONTRACT_OUT}`);
+  summary.push(`scene_count: ${canonical.length}`);
+  summary.push(`export_scene_count: ${contractScenes.length}`);
   writeSummary(summary);
 
-  log('PASS diagnostics');
+  if (contractScenes.length !== canonical.length) {
+    throw new Error(`export scene count mismatch: ${contractScenes.length} != ${canonical.length}`);
+  }
+
+  log('PASS contract export smoke');
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_scene_diagnostics_smoke] FAIL: ${err.message}`);
+  console.error(`[fe_scene_contract_export_smoke] FAIL: ${err.message}`);
   process.exit(1);
 });
