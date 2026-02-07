@@ -55,3 +55,20 @@ export async function completeMyWorkItem(params: { id: number; source: string; n
     params,
   });
 }
+
+export async function completeMyWorkItemsBatch(params: { ids: number[]; source: string; note?: string }) {
+  return intentRequest<{
+    source: string;
+    success: boolean;
+    reason_code: string;
+    message: string;
+    done_count: number;
+    failed_count: number;
+    completed_ids: number[];
+    failed_items: Array<{ id: number; message: string }>;
+    done_at: string;
+  }>({
+    intent: 'my.work.complete_batch',
+    params,
+  });
+}

@@ -119,7 +119,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
-import { completeMyWorkItem, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
+import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import StatusPanel from '../components/StatusPanel.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 
@@ -262,15 +262,17 @@ async function completeSelectedTodos() {
   errorText.value = '';
   statusError.value = null;
   try {
-    await Promise.all(
-      todoSelectionIds.value.map((id) =>
-        completeMyWorkItem({
-          id,
-          source: 'mail.activity',
-          note: 'Completed from my-work batch action.',
-        }),
-      ),
-    );
+    const result = await completeMyWorkItemsBatch({
+      ids: [...todoSelectionIds.value],
+      source: 'mail.activity',
+      note: 'Completed from my-work batch action.',
+    });
+    if (!result.success) {
+      const first = result.failed_items?.[0];
+      errorText.value = `批量完成部分失败：${result.done_count} 成功，${result.failed_count} 失败${
+        first ? `（示例 #${first.id}: ${first.message}）` : ''
+      }`;
+    }
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '批量完成待办失败';
