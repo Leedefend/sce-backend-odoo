@@ -3,6 +3,10 @@
 import hashlib
 import json
 import logging
+import base64
+import csv
+import io
+from datetime import datetime
 from datetime import timedelta
 from typing import Any, Dict, List
 
@@ -70,6 +74,12 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if isinstance(vals, dict) and vals:
             return action or "write", vals
         return action, {}
+
+    def _get_int(self, params: Dict[str, Any], key: str, default: int):
+        try:
+            return int(params.get(key))
+        except Exception:
+            return default
 
     def _normalize_if_match_map(self, params: Dict[str, Any]) -> Dict[int, str]:
         raw = params.get("if_match_map") or {}
@@ -156,6 +166,29 @@ class ApiDataBatchHandler(BaseIntentHandler):
         except Exception:
             return
 
+    def _build_failed_csv(self, model: str, action: str, failed_rows: List[Dict[str, Any]]):
+        if not failed_rows:
+            return {"file_name": "", "content_b64": "", "count": 0}
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["model", "action", "id", "reason_code", "message"])
+        for row in failed_rows:
+            writer.writerow([
+                model,
+                action,
+                row.get("id") or "",
+                row.get("reason_code") or "",
+                row.get("message") or "",
+            ])
+        raw = buf.getvalue().encode("utf-8-sig")
+        b64 = base64.b64encode(raw).decode("ascii")
+        stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        return {
+            "file_name": f"{model.replace('.', '_')}_{action}_failed_{stamp}.csv",
+            "content_b64": b64,
+            "count": len(failed_rows),
+        }
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
@@ -164,6 +197,9 @@ class ApiDataBatchHandler(BaseIntentHandler):
         action, vals = self._resolve_vals(params)
         idempotency_key = str(params.get("idempotency_key") or "").strip()
         if_match_map = self._normalize_if_match_map(params)
+        preview_limit = self._get_int(params, "failed_preview_limit", 10)
+        preview_limit = max(1, min(preview_limit, 200))
+        export_failed_csv = bool(params.get("export_failed_csv"))
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
 
         if not model:
@@ -255,10 +291,17 @@ class ApiDataBatchHandler(BaseIntentHandler):
             "succeeded": success,
             "failed": failed,
             "results": results,
+            "failed_preview": [item for item in results if not item.get("ok")][:preview_limit],
+            "failed_truncated": max(0, failed - min(failed, preview_limit)),
             "idempotency_key": idempotency_key,
             "idempotency_fingerprint": idempotency_fingerprint,
             "idempotent_replay": False,
         }
+        if export_failed_csv and failed > 0:
+            failed_csv = self._build_failed_csv(model, action or "write", [item for item in results if not item.get("ok")])
+            data["failed_csv_file_name"] = failed_csv.get("file_name")
+            data["failed_csv_content_b64"] = failed_csv.get("content_b64")
+            data["failed_csv_count"] = failed_csv.get("count")
         self._write_batch_audit(
             trace_id=trace_id,
             model=model,

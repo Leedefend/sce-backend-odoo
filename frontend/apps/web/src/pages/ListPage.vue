@@ -58,6 +58,15 @@
 
     <section v-if="status === 'ok' && batchDetails.length" class="batch-details">
       <p v-for="(line, idx) in batchDetails" :key="idx">{{ line }}</p>
+      <button
+        v-if="failedCsvAvailable"
+        type="button"
+        class="batch-download"
+        :disabled="loading"
+        @click="downloadFailedCsv"
+      >
+        下载失败清单 CSV
+      </button>
     </section>
 
     <section v-if="status === 'ok'" class="table">
@@ -146,6 +155,8 @@ const props = defineProps<{
   onClearSelection?: () => void;
   batchMessage?: string;
   batchDetails?: string[];
+  failedCsvAvailable?: boolean;
+  onDownloadFailedCsv?: () => void;
   showAssign?: boolean;
   assigneeOptions?: Array<{ id: number; name: string }>;
   selectedAssigneeId?: number | null;
@@ -246,6 +257,10 @@ function onAssigneeSelectChange(event: Event) {
   props.onAssigneeChange(Number.isNaN(id) ? null : id);
 }
 
+function downloadFailedCsv() {
+  props.onDownloadFailedCsv?.();
+}
+
 const rowPrimary = computed(() => props.listProfile?.row_primary || '');
 const rowSecondary = computed(() => props.listProfile?.row_secondary || '');
 const hiddenColumns = computed(() => {
@@ -321,6 +336,16 @@ function columnLabel(col: string) {
 
 .batch-details p {
   margin: 3px 0;
+}
+
+.batch-download {
+  margin-top: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 table {
