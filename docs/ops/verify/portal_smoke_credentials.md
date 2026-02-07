@@ -25,6 +25,9 @@ Provide these at runtime (do not hardcode in CI configs):
 - `svc_project_ro` is a read-only service account; 401 in UI smokes is expected.
 - `svc_e2e_smoke` is reserved for future CI hardening and is not required for RC.
 
+## E2E Contract
+- See `docs/ops/verify/e2e_user_contract.md` for Phase 9.4 definition.
+
 ## Verified Result (Demo Data)
 When demo seed data is present, `demo_pm` with password `demo` passes the container smokes.
 
