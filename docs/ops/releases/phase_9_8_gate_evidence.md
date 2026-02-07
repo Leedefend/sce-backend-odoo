@@ -25,18 +25,16 @@
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`
-  - `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T051349`
+  - `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T061808`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_warnings_guard.container`
-  - `/mnt/artifacts/codex/portal-scene-warnings/20260207T052709`
+  - `/mnt/artifacts/codex/portal-scene-warnings/20260207T061815`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_warnings_limit.container`
-  - `/mnt/artifacts/codex/portal-scene-warnings/20260207T052724`
+  - `/mnt/artifacts/codex/portal-scene-warnings/20260207T061818`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.act_url_missing_scene_report.container`
-  - `/mnt/artifacts/codex/portal-scene-warnings/20260207T053445`
+  - `/mnt/artifacts/codex/portal-scene-warnings/20260207T061821`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.phase_9_8.gate_summary`
   - `artifacts/codex/phase-9-8/gate_summary.json`
-- `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make gate.full`: FAIL
-  - Failure: existing core gate tests (actions missing groups_id + menu/action bypass) in `smart_construction_core`
-  - This failure is pre-existing and not introduced by Phase 9.8 changes
+- `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make gate.full`: PASS
 
 ## Safety / Rollback
 - Disable strict guards:
@@ -51,4 +49,8 @@
 ## Known Limitations
 - RC smoke user is `demo_pm` (demo data required).
 - `svc_e2e_smoke` remains future hardening work.
-- `gate.full` currently fails on core action groups gate until actions gain `groups_id` (tracked separately).
+
+## Demo Baseline Note
+- Demo currency baseline is enforced by keeping `CNY` active only.
+- Company currency is not hard-set in demo data to avoid journal conflicts.
+- A demo DB reset is required to apply currency seed changes before verification.
