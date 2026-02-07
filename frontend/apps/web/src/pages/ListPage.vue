@@ -14,8 +14,10 @@
       :search-term="searchTerm || ''"
       :sort-options="sortOptions || []"
       :sort-value="sortValue || ''"
+      :filter-value="filterValue || 'all'"
       :on-search="onSearch"
       :on-sort="onSort"
+      :on-filter="onFilter"
     />
 
     <StatusPanel v-if="loading" title="Loading list..." variant="info" />
@@ -90,9 +92,11 @@ const props = defineProps<{
   searchTerm?: string;
   sortOptions?: Array<{ label: string; value: string }>;
   sortValue?: string;
+  filterValue?: 'all' | 'active' | 'archived';
   subtitle: string;
   statusLabel: string;
   listProfile?: SceneListProfile | null;
+  onFilter: (value: 'all' | 'active' | 'archived') => void;
 }>();
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {

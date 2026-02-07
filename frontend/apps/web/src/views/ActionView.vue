@@ -30,6 +30,7 @@
       :sort-label="sortLabel"
       :sort-options="sortOptions"
       :sort-value="sortValue"
+      :filter-value="filterValue"
       :search-term="searchTerm"
       :subtitle="subtitle"
       :status-label="statusLabel"
@@ -37,6 +38,7 @@
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
+      :on-filter="handleFilter"
       :on-row-click="handleRowClick"
     />
 
@@ -76,8 +78,10 @@ const lastTraceId = ref('');
 const records = ref<Array<Record<string, unknown>>>([]);
 const searchTerm = ref('');
 const sortValue = ref('');
+const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
 const kanbanFields = ref<string[]>([]);
+const hasActiveField = ref(false);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
@@ -92,10 +96,10 @@ const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
-  { label: 'Name ↑', value: 'name asc' },
-  { label: 'Name ↓', value: 'name desc' },
-  { label: 'Updated ↓', value: 'write_date desc' },
-  { label: 'Updated ↑', value: 'write_date asc' },
+  { label: 'Updated ↓ / Name ↑', value: 'write_date desc,name asc' },
+  { label: 'Updated ↑ / Name ↑', value: 'write_date asc,name asc' },
+  { label: 'Name ↑ / Updated ↓', value: 'name asc,write_date desc' },
+  { label: 'Name ↓ / Updated ↓', value: 'name desc,write_date desc' },
 ]);
 const subtitle = computed(() => `${records.value.length} records · sorted by ${sortLabel.value}`);
 const kanbanTitleField = computed(() => {
@@ -166,6 +170,18 @@ function mergeSceneDomain(base: unknown, sceneFilters: unknown) {
     return sceneDomain;
   }
   return [...sceneDomain, ...baseDomain];
+}
+
+function mergeActiveFilter(base: unknown) {
+  const domain = normalizeDomain(base);
+  if (!hasActiveField.value || filterValue.value === 'all') {
+    return domain;
+  }
+  const activeClause = ['active', '=', filterValue.value === 'active'];
+  if (!domain.length) {
+    return [activeClause];
+  }
+  return [...domain, activeClause];
 }
 
 function uniqueFields(fields: string[]) {
@@ -512,6 +528,7 @@ async function load() {
     const contractColumns = extractColumnsFromContract(contract);
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
+    hasActiveField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.active);
     const requestedFields =
       viewMode.value === 'kanban'
         ? kanbanContractFields
@@ -519,7 +536,7 @@ async function load() {
     const result = await listRecordsRaw({
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
-      domain: mergeSceneDomain(meta?.domain, scene.value?.filters),
+      domain: mergeActiveFilter(mergeSceneDomain(meta?.domain, scene.value?.filters)),
       context: mergeContext(meta?.context),
       limit: 40,
       offset: 0,
@@ -575,6 +592,11 @@ function handleSearch(value: string) {
 
 function handleSort(value: string) {
   sortValue.value = value;
+  load();
+}
+
+function handleFilter(value: 'all' | 'active' | 'archived') {
+  filterValue.value = value;
   load();
 }
 
