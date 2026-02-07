@@ -36,6 +36,7 @@
       :status-label="statusLabel"
       :selected-ids="selectedIds"
       :batch-message="batchMessage"
+      :batch-details="batchDetails"
       :show-assign="hasAssigneeField"
       :assignee-options="assigneeOptions"
       :selected-assignee-id="selectedAssigneeId"
@@ -65,7 +66,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { exportRecordsCsv, listRecords, listRecordsRaw, writeRecord } from '../api/data';
+import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { config } from '../config';
@@ -99,6 +100,7 @@ const assigneeOptions = ref<Array<{ id: number; name: string }>>([]);
 const selectedAssigneeId = ref<number | null>(null);
 const selectedIds = ref<number[]>([]);
 const batchMessage = ref('');
+const batchDetails = ref<string[]>([]);
 const batchBusy = ref(false);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -716,6 +718,7 @@ function handleToggleSelectionAll(ids: number[], selected: boolean) {
 
 async function handleBatchAction(action: 'archive' | 'activate') {
   batchMessage.value = '';
+  batchDetails.value = [];
   if (!model.value || !selectedIds.value.length) return;
   if (!hasActiveField.value) {
     batchMessage.value = '当前模型不支持 active 字段，无法批量归档/激活';
@@ -723,19 +726,26 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   }
   batchBusy.value = true;
   try {
-    const result = await writeRecord({
+    const result = await batchUpdateRecords({
       model: model.value,
       ids: selectedIds.value,
-      vals: { active: action === 'activate' },
+      action,
       context: mergeContext(actionMeta.value?.context),
     });
-    const affected = Array.isArray(result.ids) ? result.ids.length : selectedIds.value.length;
-    batchMessage.value = action === 'activate' ? `已批量激活 ${affected} 条记录` : `已批量归档 ${affected} 条记录`;
+    batchMessage.value =
+      action === 'activate'
+        ? `批量激活完成：成功 ${result.succeeded}，失败 ${result.failed}`
+        : `批量归档完成：成功 ${result.succeeded}，失败 ${result.failed}`;
+    batchDetails.value = (result.results || [])
+      .filter((item) => !item.ok)
+      .slice(0, 10)
+      .map((item) => `#${item.id} ${item.reason_code}: ${item.message}`);
     clearSelection();
     await load();
   } catch (err) {
     setError(err, 'batch operation failed');
     batchMessage.value = action === 'activate' ? '批量激活失败' : '批量归档失败';
+    batchDetails.value = [];
   } finally {
     batchBusy.value = false;
   }
@@ -743,6 +753,7 @@ async function handleBatchAction(action: 'archive' | 'activate') {
 
 async function handleBatchAssign(assigneeId: number) {
   batchMessage.value = '';
+  batchDetails.value = [];
   if (!model.value || !selectedIds.value.length) return;
   if (!hasAssigneeField.value) {
     batchMessage.value = '当前模型不支持负责人字段，无法批量指派';
@@ -754,20 +765,25 @@ async function handleBatchAssign(assigneeId: number) {
   }
   batchBusy.value = true;
   try {
-    const result = await writeRecord({
+    const result = await batchUpdateRecords({
       model: model.value,
       ids: selectedIds.value,
-      vals: { user_id: assigneeId },
+      action: 'assign',
+      assigneeId,
       context: mergeContext(actionMeta.value?.context),
     });
-    const affected = Array.isArray(result.ids) ? result.ids.length : selectedIds.value.length;
     const assignee = assigneeOptions.value.find((opt) => opt.id === assigneeId)?.name || `#${assigneeId}`;
-    batchMessage.value = `已批量指派 ${affected} 条记录给 ${assignee}`;
+    batchMessage.value = `批量指派给 ${assignee}：成功 ${result.succeeded}，失败 ${result.failed}`;
+    batchDetails.value = (result.results || [])
+      .filter((item) => !item.ok)
+      .slice(0, 10)
+      .map((item) => `#${item.id} ${item.reason_code}: ${item.message}`);
     clearSelection();
     await load();
   } catch (err) {
     setError(err, 'batch assign failed');
     batchMessage.value = '批量指派失败';
+    batchDetails.value = [];
   } finally {
     batchBusy.value = false;
   }
@@ -779,6 +795,7 @@ function handleBatchExport(scope: 'selected' | 'all') {
 
 async function exportByBackend(scope: 'selected' | 'all') {
   batchMessage.value = '';
+  batchDetails.value = [];
   if (!model.value) return;
   if (scope === 'selected' && !selectedIds.value.length) {
     batchMessage.value = '没有可导出的选中记录';

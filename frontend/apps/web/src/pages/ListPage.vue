@@ -56,6 +56,10 @@
       <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
     </section>
 
+    <section v-if="status === 'ok' && batchDetails.length" class="batch-details">
+      <p v-for="(line, idx) in batchDetails" :key="idx">{{ line }}</p>
+    </section>
+
     <section v-if="status === 'ok'" class="table">
       <table>
         <thead>
@@ -141,6 +145,7 @@ const props = defineProps<{
   onAssigneeChange?: (assigneeId: number | null) => void;
   onClearSelection?: () => void;
   batchMessage?: string;
+  batchDetails?: string[];
   showAssign?: boolean;
   assigneeOptions?: Array<{ id: number; name: string }>;
   selectedAssigneeId?: number | null;
@@ -176,6 +181,7 @@ function rowId(row: Record<string, unknown>) {
 
 const selectedIdSet = computed(() => new Set((props.selectedIds || []).filter((id) => Number.isFinite(id))));
 const selectedCount = computed(() => (props.selectedIds || []).length);
+const batchDetails = computed(() => (Array.isArray(props.batchDetails) ? props.batchDetails : []));
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
 const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll && !!props.onBatchAction);
 const showBatchBar = computed(() => showSelectionColumn.value);
@@ -302,6 +308,19 @@ function columnLabel(col: string) {
   margin-left: auto;
   font-size: 13px;
   color: #166534;
+}
+
+.batch-details {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 10px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.batch-details p {
+  margin: 3px 0;
 }
 
 table {

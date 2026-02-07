@@ -162,6 +162,23 @@ export type ApiDataExportCsvResult = {
   fields: string[];
 };
 
+export type ApiDataBatchItemResult = {
+  id: number;
+  ok: boolean;
+  reason_code: string;
+  message: string;
+};
+
+export type ApiDataBatchResult = {
+  model: string;
+  action: string;
+  values: Record<string, unknown>;
+  requested_ids: number[];
+  succeeded: number;
+  failed: number;
+  results: ApiDataBatchItemResult[];
+};
+
 export async function writeRecordV6(params: {
   model: string;
   id: number;
@@ -217,6 +234,27 @@ export async function exportRecordsCsv(params: {
       ids: params.ids ?? [],
       order: params.order ?? '',
       limit: params.limit ?? 2000,
+      context: params.context ?? {},
+    },
+  });
+}
+
+export async function batchUpdateRecords(params: {
+  model: string;
+  ids: number[];
+  action?: 'archive' | 'activate' | 'assign' | string;
+  assigneeId?: number;
+  vals?: Record<string, unknown>;
+  context?: Record<string, unknown>;
+}) {
+  return intentRequest<ApiDataBatchResult>({
+    intent: 'api.data.batch',
+    params: {
+      model: params.model,
+      ids: params.ids,
+      action: params.action ?? '',
+      assignee_id: params.assigneeId,
+      vals: params.vals ?? {},
       context: params.context ?? {},
     },
   });
