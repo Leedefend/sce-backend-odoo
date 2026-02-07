@@ -19,6 +19,8 @@
   - Files: docs/architecture/scene_governance.md, docs/ops/verify/README.md
 - Updated canonical smoke user documentation.
   - Files: docs/ops/verify/portal_smoke_credentials.md, docs/ops/verify/e2e_user_contract.md
+- Prepared PR body template.
+  - File: docs/ops/releases/TEMP_phase_9_9_pr_body.md
 
 ## Verification
 - Not run in this change set. Recommend:
