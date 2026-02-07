@@ -65,7 +65,7 @@ export async function completeMyWorkItemsBatch(params: { ids: number[]; source: 
     done_count: number;
     failed_count: number;
     completed_ids: number[];
-    failed_items: Array<{ id: number; message: string }>;
+    failed_items: Array<{ id: number; reason_code: string; message: string }>;
     done_at: string;
   }>({
     intent: 'my.work.complete_batch',

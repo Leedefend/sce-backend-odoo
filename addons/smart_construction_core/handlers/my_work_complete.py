@@ -56,7 +56,12 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 _complete_activity(self.env, source=source, activity_id=activity_id, note=note)
                 completed.append(activity_id)
             except Exception as exc:
-                failed.append({"id": _safe_int(raw_id), "message": str(exc) or "failed"})
+                reason_code = _reason_code_for_exception(exc)
+                failed.append({
+                    "id": _safe_int(raw_id),
+                    "reason_code": reason_code,
+                    "message": str(exc) or "failed",
+                })
 
         ok = len(failed) == 0
         data = {
@@ -100,3 +105,18 @@ def _safe_int(value):
         return int(value)
     except Exception:
         return 0
+
+
+def _reason_code_for_exception(exc):
+    if isinstance(exc, AccessError):
+        return "PERMISSION_DENIED"
+    if isinstance(exc, UserError):
+        msg = str(exc) or ""
+        if "不存在" in msg:
+            return "NOT_FOUND"
+        if "无效" in msg:
+            return "INVALID_ID"
+        if "仅支持" in msg:
+            return "UNSUPPORTED_SOURCE"
+        return "USER_ERROR"
+    return "INTERNAL_ERROR"

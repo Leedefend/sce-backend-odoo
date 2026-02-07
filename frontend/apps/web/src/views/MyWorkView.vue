@@ -280,8 +280,12 @@ async function completeSelectedTodos() {
     });
     if (!result.success) {
       const first = result.failed_items?.[0];
+      const failedPreview = (result.failed_items || [])
+        .slice(0, 3)
+        .map((item) => `#${item.id} ${item.reason_code}: ${item.message}`)
+        .join('；');
       actionFeedback.value = `批量完成部分失败：${result.done_count} 成功，${result.failed_count} 失败${
-        first ? `（示例 #${first.id}: ${first.message}）` : ''
+        first ? `（${failedPreview}）` : ''
       }`;
       actionFeedbackError.value = true;
     } else {
