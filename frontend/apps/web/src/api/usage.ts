@@ -37,3 +37,25 @@ export async function fetchUsageReport(top = 10) {
     params: { top },
   });
 }
+
+export type CapabilityVisibilityReport = {
+  user: { id?: number; name?: string; login?: string };
+  role_codes: string[];
+  summary: {
+    total: number;
+    visible: number;
+    hidden: number;
+    ready: number;
+    preview: number;
+    locked: number;
+  };
+  reason_counts: Array<{ reason_code: string; count: number }>;
+  hidden_samples: Array<{ key: string; name: string; reason_code: string; reason: string }>;
+};
+
+export async function fetchCapabilityVisibilityReport() {
+  return intentRequest<CapabilityVisibilityReport>({
+    intent: 'capability.visibility.report',
+    params: {},
+  });
+}

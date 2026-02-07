@@ -44,6 +44,27 @@
         </article>
       </section>
 
+      <section class="summary-grid">
+        <article class="summary-card">
+          <p class="label">Capability Total</p>
+          <p class="count">{{ visibility?.summary.total ?? 0 }}</p>
+        </article>
+        <article class="summary-card">
+          <p class="label">Visible / Hidden</p>
+          <p class="count small">{{ visibility?.summary.visible ?? 0 }} / {{ visibility?.summary.hidden ?? 0 }}</p>
+        </article>
+        <article class="summary-card">
+          <p class="label">Ready / Preview / Locked</p>
+          <p class="count small">
+            {{ visibility?.summary.ready ?? 0 }} / {{ visibility?.summary.preview ?? 0 }} / {{ visibility?.summary.locked ?? 0 }}
+          </p>
+        </article>
+        <article class="summary-card">
+          <p class="label">Role Codes</p>
+          <p class="count small">{{ (visibility?.role_codes || []).join(', ') || '-' }}</p>
+        </article>
+      </section>
+
       <section class="tables">
         <article class="table-card">
           <h3>Top Scenes</h3>
@@ -77,6 +98,40 @@
           </table>
         </article>
       </section>
+
+      <section class="tables">
+        <article class="table-card">
+          <h3>Visibility Reason Counts</h3>
+          <table>
+            <thead>
+              <tr><th>Reason Code</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <tr v-if="!reasonCounts.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-for="item in reasonCounts" :key="item.reason_code">
+                <td>{{ item.reason_code }}</td>
+                <td>{{ item.count }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="table-card">
+          <h3>Hidden Capability Samples</h3>
+          <table>
+            <thead>
+              <tr><th>Key</th><th>Reason</th></tr>
+            </thead>
+            <tbody>
+              <tr v-if="!hiddenSamples.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-for="item in hiddenSamples" :key="item.key">
+                <td>{{ item.key }}</td>
+                <td>{{ item.reason_code || item.reason || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
     </template>
   </section>
 </template>
@@ -84,7 +139,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { ApiError } from '../api/client';
-import { fetchUsageReport, type UsageReport } from '../api/usage';
+import { fetchCapabilityVisibilityReport, fetchUsageReport, type CapabilityVisibilityReport, type UsageReport } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 
 const loading = ref(false);
@@ -92,16 +147,24 @@ const errorText = ref('');
 const errorTraceId = ref('');
 const topN = ref(10);
 const report = ref<UsageReport | null>(null);
+const visibility = ref<CapabilityVisibilityReport | null>(null);
 
 const sceneTop = computed(() => report.value?.scene_top || []);
 const capabilityTop = computed(() => report.value?.capability_top || []);
+const reasonCounts = computed(() => visibility.value?.reason_counts || []);
+const hiddenSamples = computed(() => visibility.value?.hidden_samples || []);
 
 async function load() {
   loading.value = true;
   errorText.value = '';
   errorTraceId.value = '';
   try {
-    report.value = await fetchUsageReport(topN.value);
+    const [usage, vis] = await Promise.all([
+      fetchUsageReport(topN.value),
+      fetchCapabilityVisibilityReport(),
+    ]);
+    report.value = usage;
+    visibility.value = vis;
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : 'Failed to load usage report';
     if (err instanceof ApiError) {
