@@ -24,6 +24,11 @@
     <p v-if="!loading && !errorText && actionFeedback" class="action-feedback" :class="{ error: actionFeedbackError }">
       {{ actionFeedback }}
     </p>
+    <div v-if="!loading && !errorText && retryFailedIds.length" class="retry-bar">
+      <span>失败待办 {{ retryFailedIds.length }} 条</span>
+      <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
+      <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
+    </div>
     <template v-if="!loading && !errorText">
       <section class="summary-grid">
         <article
@@ -136,6 +141,7 @@ const summary = ref<MyWorkSummaryItem[]>([]);
 const items = ref<MyWorkRecordItem[]>([]);
 const activeSection = ref<string>('todo');
 const todoSelectionIds = ref<number[]>([]);
+const retryFailedIds = ref<number[]>([]);
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
@@ -233,11 +239,16 @@ function clearTodoSelection() {
   todoSelectionIds.value = [];
 }
 
+function clearRetryFailed() {
+  retryFailedIds.value = [];
+}
+
 async function completeItem(item: MyWorkRecordItem) {
   if (!item?.id || !item?.source) return;
   loading.value = true;
   actionFeedback.value = '';
   actionFeedbackError.value = false;
+  retryFailedIds.value = [];
   try {
     const result = await completeMyWorkItem({
       id: item.id,
@@ -272,6 +283,7 @@ async function completeSelectedTodos() {
   statusError.value = null;
   actionFeedback.value = '';
   actionFeedbackError.value = false;
+  retryFailedIds.value = [];
   try {
     const result = await completeMyWorkItemsBatch({
       ids: [...todoSelectionIds.value],
@@ -284,6 +296,7 @@ async function completeSelectedTodos() {
         .slice(0, 3)
         .map((item) => `#${item.id} ${item.reason_code}: ${item.message}`)
         .join('；');
+      retryFailedIds.value = (result.failed_items || []).map((item) => item.id).filter((id) => Number.isFinite(id) && id > 0);
       actionFeedback.value = `批量完成部分失败：${result.done_count} 成功，${result.failed_count} 失败${
         first ? `（${failedPreview}）` : ''
       }`;
@@ -295,6 +308,48 @@ async function completeSelectedTodos() {
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '批量完成待办失败';
+    if (err instanceof ApiError) {
+      statusError.value = {
+        message: err.message,
+        traceId: err.traceId,
+        code: err.status,
+        hint: err.hint,
+        kind: err.kind,
+        reasonCode: err.reasonCode,
+      };
+    }
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function retryFailedTodos() {
+  if (!retryFailedIds.value.length) return;
+  loading.value = true;
+  errorText.value = '';
+  statusError.value = null;
+  try {
+    const result = await completeMyWorkItemsBatch({
+      ids: [...retryFailedIds.value],
+      source: 'mail.activity',
+      note: 'Retry failed items from my-work.',
+    });
+    if (!result.success) {
+      const failedPreview = (result.failed_items || [])
+        .slice(0, 3)
+        .map((item) => `#${item.id} ${item.reason_code}: ${item.message}`)
+        .join('；');
+      retryFailedIds.value = (result.failed_items || []).map((item) => item.id).filter((id) => Number.isFinite(id) && id > 0);
+      actionFeedback.value = `重试后仍有失败：${result.done_count} 成功，${result.failed_count} 失败（${failedPreview}）`;
+      actionFeedbackError.value = true;
+    } else {
+      retryFailedIds.value = [];
+      actionFeedback.value = `重试成功：${result.done_count} 条`;
+      actionFeedbackError.value = false;
+    }
+    await load();
+  } catch (err) {
+    errorText.value = err instanceof Error ? err.message : '重试失败项失败';
     if (err instanceof ApiError) {
       statusError.value = {
         message: err.message,
@@ -408,6 +463,12 @@ onMounted(load);
 }
 
 .batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.retry-bar {
   display: flex;
   align-items: center;
   gap: 8px;
