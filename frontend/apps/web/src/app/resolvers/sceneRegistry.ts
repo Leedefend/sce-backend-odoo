@@ -15,6 +15,10 @@ export interface SceneTile {
   title?: string;
   subtitle?: string;
   icon?: string;
+  status?: string;
+  state?: 'READY' | 'LOCKED' | 'PREVIEW' | string;
+  reason?: string;
+  reason_code?: string;
   route?: string;
   intent?: string;
   payload?: Record<string, unknown>;

@@ -20,6 +20,8 @@ class ScCapability(models.Model):
     required_flag = fields.Char(help="Entitlement flag required to use this capability")
     default_payload = fields.Json()
     required_group_ids = fields.Many2many("res.groups", string="Required Groups")
+    role_scope = fields.Char(help="Comma-separated role codes, e.g. project_manager,finance_manager")
+    capability_scope = fields.Char(help="Comma-separated dependency capability keys")
     tags = fields.Char(help="Comma-separated tags, e.g. project,contract,cost")
     status = fields.Selection(
         [("alpha", "Alpha"), ("beta", "Beta"), ("ga", "GA")],
@@ -35,9 +37,130 @@ class ScCapability(models.Model):
     ]
 
     def _user_allowed(self, user):
-        if not self.required_group_ids:
+        self.ensure_one()
+        return bool(self._access_context(user).get("allowed"))
+
+    def _user_visible(self, user):
+        self.ensure_one()
+        return bool(self._access_context(user).get("visible"))
+
+    @api.model
+    def _csv_items(self, raw):
+        if not raw:
+            return []
+        return [x.strip() for x in str(raw).split(",") if x and x.strip()]
+
+    def _role_codes_for_user(self, user):
+        if not user:
+            return set()
+        role_codes = set()
+        group_xmlids = user.groups_id.get_external_id().values()
+        prefix = "smart_construction_core.group_sc_role_"
+        for xmlid in group_xmlids:
+            if isinstance(xmlid, str) and xmlid.startswith(prefix):
+                role_codes.add(xmlid[len(prefix):])
+        if user.has_group("base.group_system"):
+            role_codes.add("admin")
+        return role_codes
+
+    def _flag_enabled(self, flags, flag):
+        if not flag:
             return True
-        return bool(self.required_group_ids & user.groups_id)
+        val = (flags or {}).get(flag)
+        if isinstance(val, bool):
+            return val is True
+        if isinstance(val, (int, float)):
+            return val == 1
+        if isinstance(val, str):
+            return val.strip().lower() in {"1", "true", "yes", "y", "on"}
+        return False
+
+    def _access_context(self, user):
+        return self._access_context_inner(user, seen=set())
+
+    def _access_context_inner(self, user, seen):
+        self.ensure_one()
+        seen = set(seen or set())
+        cap_key = str(self.key or f"id:{self.id}")
+        if cap_key in seen:
+            return {
+                "visible": True,
+                "allowed": False,
+                "state": "LOCKED",
+                "reason_code": "CAPABILITY_SCOPE_CYCLE",
+                "reason": _("能力依赖存在循环"),
+            }
+        seen.add(cap_key)
+
+        # Role/group mismatch: hide from directory.
+        role_scope_items = self._csv_items(self.role_scope)
+        if role_scope_items:
+            role_codes = self._role_codes_for_user(user)
+            if not (set(role_scope_items) & role_codes):
+                return {
+                    "visible": False,
+                    "allowed": False,
+                    "state": "LOCKED",
+                    "reason_code": "ROLE_SCOPE_MISMATCH",
+                    "reason": _("角色范围不匹配"),
+                }
+        if self.required_group_ids and not bool(self.required_group_ids & user.groups_id):
+            return {
+                "visible": False,
+                "allowed": False,
+                "state": "LOCKED",
+                "reason_code": "PERMISSION_DENIED",
+                "reason": _("权限不足"),
+            }
+
+        reason_code = ""
+        reason = ""
+        allowed = True
+
+        # Entitlement mismatch: visible but locked.
+        if self.required_flag:
+            flags = {}
+            Entitlement = self.env.get("sc.entitlement")
+            if Entitlement and user:
+                try:
+                    payload = Entitlement.get_payload(user) or {}
+                    flags = payload.get("flags") or {}
+                except Exception:
+                    flags = {}
+            if not self._flag_enabled(flags, self.required_flag):
+                allowed = False
+                reason_code = "FEATURE_DISABLED"
+                reason = _("订阅未开通")
+
+        # Capability dependency mismatch: visible but locked.
+        dep_keys = self._csv_items(self.capability_scope)
+        if dep_keys:
+            deps = self.sudo().search([("key", "in", dep_keys), ("active", "=", True)])
+            dep_map = {cap.key: cap for cap in deps}
+            missing = []
+            for key in dep_keys:
+                dep = dep_map.get(key)
+                if not dep:
+                    missing.append(key)
+                    continue
+                dep_access = dep._access_context_inner(user, seen=seen)
+                if not dep_access.get("allowed"):
+                    missing.append(key)
+            if missing:
+                allowed = False
+                reason_code = "CAPABILITY_SCOPE_MISSING"
+                reason = _("缺少前置能力: %s") % ",".join(missing)
+
+        state = "READY" if self.status == "ga" else "PREVIEW"
+        if not allowed:
+            state = "LOCKED"
+        return {
+            "visible": True,
+            "allowed": allowed,
+            "state": state,
+            "reason_code": reason_code,
+            "reason": reason,
+        }
 
     def _resolve_payload(self, payload):
         resolved = dict(payload or {})
@@ -55,6 +178,7 @@ class ScCapability(models.Model):
         self.ensure_one()
         group_xmlids = self.required_group_ids.get_external_id()
         payload = self._resolve_payload(self.default_payload or {})
+        access = self._access_context(user)
         return {
             "key": self.key,
             "name": self.name,
@@ -68,10 +192,15 @@ class ScCapability(models.Model):
                 for g in self.required_group_ids
                 if group_xmlids.get(g.id)
             ],
+            "role_scope": self._csv_items(self.role_scope),
+            "capability_scope": self._csv_items(self.capability_scope),
             "tags": [t.strip() for t in (self.tags or "").split(",") if t.strip()],
             "status": self.status,
             "version": self.version,
             "smoke_test": bool(self.smoke_test),
+            "state": access.get("state"),
+            "reason_code": access.get("reason_code"),
+            "reason": access.get("reason"),
         }
 
     @api.model
@@ -126,6 +255,33 @@ class ScCapability(models.Model):
                         "code": "GROUP_XMLID_MISSING",
                         "message": _("Required groups missing xmlid."),
                         "detail": {"capability_key": cap.key, "group_ids": missing},
+                    })
+
+            role_scope_items = self._csv_items(cap.role_scope)
+            if role_scope_items:
+                known_roles = set()
+                groups = self.env["res.groups"].sudo().search([
+                    ("category_id", "=", self.env.ref("smart_construction_core.module_category_smart_construction").id),
+                ])
+                for xmlid in groups.get_external_id().values():
+                    prefix = "smart_construction_core.group_sc_role_"
+                    if isinstance(xmlid, str) and xmlid.startswith(prefix):
+                        known_roles.add(xmlid[len(prefix):])
+                unknown_roles = [r for r in role_scope_items if r not in known_roles]
+                if unknown_roles:
+                    issues.append({
+                        "code": "ROLE_SCOPE_UNKNOWN",
+                        "message": _("Role scope contains unknown role codes."),
+                        "detail": {"capability_key": cap.key, "role_scope": unknown_roles},
+                    })
+
+            for dep_key in self._csv_items(cap.capability_scope):
+                dep = self.search([("key", "=", dep_key)], limit=1)
+                if not dep:
+                    issues.append({
+                        "code": "CAPABILITY_SCOPE_NOT_FOUND",
+                        "message": _("Capability scope key not found."),
+                        "detail": {"capability_key": cap.key, "dependency": dep_key},
                     })
 
             payload = cap.default_payload or {}
@@ -207,10 +363,12 @@ class ScScene(models.Model):
         self.ensure_one()
         version_payload = self.active_version_id.payload_json if self.active_version_id else None
         if self.state == "published" and isinstance(version_payload, dict):
-            return version_payload
+            payload = dict(version_payload)
+            payload["tiles"] = self._filter_payload_tiles(payload.get("tiles") or [], user)
+            return payload
         tiles = []
         for tile in self.tile_ids.filtered(lambda t: t.active and t.visible):
-            if tile.capability_id and not tile.capability_id._user_allowed(user):
+            if tile.capability_id and not tile.capability_id._user_visible(user):
                 continue
             tiles.append(tile.to_public_dict(user))
         return {
@@ -228,7 +386,7 @@ class ScScene(models.Model):
         user = user or self.env.user
         tiles = []
         for tile in self.tile_ids.filtered(lambda t: t.active and t.visible):
-            if tile.capability_id and not tile.capability_id._user_allowed(user):
+            if tile.capability_id and not tile.capability_id._user_visible(user):
                 continue
             tiles.append(tile.to_public_dict(user))
         return {
@@ -240,6 +398,30 @@ class ScScene(models.Model):
             "version": self.version,
             "tiles": tiles,
         }
+
+    def _filter_payload_tiles(self, payload_tiles, user):
+        Cap = self.env["sc.capability"].sudo()
+        keys = [str(tile.get("key") or "") for tile in payload_tiles if isinstance(tile, dict)]
+        caps = Cap.search([("key", "in", [k for k in keys if k]), ("active", "=", True)])
+        cap_map = {cap.key: cap for cap in caps}
+        filtered = []
+        for tile in payload_tiles:
+            if not isinstance(tile, dict):
+                continue
+            key = str(tile.get("key") or "")
+            cap = cap_map.get(key)
+            if not cap:
+                continue
+            if not cap._user_visible(user):
+                continue
+            access = cap._access_context(user)
+            item = dict(tile)
+            item["status"] = cap.status
+            item["state"] = access.get("state")
+            item["reason_code"] = access.get("reason_code")
+            item["reason"] = access.get("reason")
+            filtered.append(item)
+        return filtered
 
     def _get_allowed_intents(self):
         param = self.env["ir.config_parameter"].sudo().get_param("sc.scene.allowed_intents", "")
@@ -449,6 +631,7 @@ class ScSceneTile(models.Model):
             menu_ref = self.env.ref(payload.get("menu_xmlid"), raise_if_not_found=False)
             if menu_ref:
                 payload["menu_id"] = menu_ref.id
+        access = cap._access_context(user)
         return {
             "key": cap.key,
             "title": self.title or cap.ui_label or cap.name,
@@ -462,6 +645,9 @@ class ScSceneTile(models.Model):
             "payload": payload,
             "status": cap.status,
             "version": cap.version,
+            "state": access.get("state"),
+            "reason_code": access.get("reason_code"),
+            "reason": access.get("reason"),
         }
 
 

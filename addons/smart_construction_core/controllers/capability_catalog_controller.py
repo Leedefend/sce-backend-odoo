@@ -18,7 +18,7 @@ class CapabilityCatalogController(http.Controller):
             env = request.env(user=user)
             Cap = env["sc.capability"].sudo()
             records = Cap.search([("active", "=", True)], order="sequence, id")
-            data = [rec.to_public_dict(user) for rec in records if rec._user_allowed(user)]
+            data = [rec.to_public_dict(user) for rec in records if rec._user_visible(user)]
             payload = {"capabilities": data, "count": len(data)}
             return ok(payload, status=200)
         except AccessDenied as exc:
@@ -62,7 +62,7 @@ class CapabilityCatalogController(http.Controller):
 
             data = []
             for rec in records:
-                if not allow_all and not rec._user_allowed(user):
+                if not allow_all and not rec._user_visible(user):
                     continue
                 if tag_set:
                     rec_tags = {t.strip() for t in (rec.tags or "").split(",") if t.strip()}

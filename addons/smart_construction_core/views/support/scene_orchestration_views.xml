@@ -12,6 +12,8 @@
                     <field name="name"/>
                     <field name="intent"/>
                     <field name="required_flag"/>
+                    <field name="role_scope"/>
+                    <field name="capability_scope"/>
                     <field name="status"/>
                     <field name="active"/>
                 </tree>
@@ -32,6 +34,8 @@
                             <field name="ui_hint"/>
                             <field name="intent"/>
                             <field name="required_flag"/>
+                            <field name="role_scope"/>
+                            <field name="capability_scope"/>
                             <field name="status"/>
                             <field name="version"/>
                             <field name="tags"/>

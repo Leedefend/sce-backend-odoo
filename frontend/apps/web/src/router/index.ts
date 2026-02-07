@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import LoginView from '../views/LoginView.vue';
+import HomeView from '../views/HomeView.vue';
 import MenuView from '../views/MenuView.vue';
 import ActionView from '../views/ActionView.vue';
 import RecordView from '../views/RecordView.vue';
@@ -14,7 +15,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: LoginView },
-    { path: '/', name: 'home', redirect: '/s/projects.list', meta: { layout: 'shell' } },
+    { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
     { path: '/projects', name: 'scene-projects', component: SceneView, meta: { layout: 'shell', sceneKey: 'projects' } },
     { path: '/projects/:id', name: 'scene-project', component: SceneView, meta: { layout: 'shell', sceneKey: 'project-record' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
