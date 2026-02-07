@@ -26,7 +26,6 @@
         'data/project_stage_requirement_items.xml',
         'data/cron_signup_throttle_gc.xml',
         'data/sc_extension_params.xml',
-        'data/sc_scene_seed.xml',
         'data/sc_cap_config_admin_user.xml',
         'data/sc_subscription_default.xml',
 
@@ -38,6 +37,7 @@
         'security/ir.model.access.csv',
         'security/sc_record_rules.xml',
         'security/sc_scene_rules.xml',
+        'data/sc_scene_seed.xml',
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
