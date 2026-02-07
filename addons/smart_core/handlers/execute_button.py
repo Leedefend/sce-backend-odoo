@@ -3,6 +3,7 @@ from typing import Any, List, Optional
 
 from ..core.base_handler import BaseIntentHandler
 from odoo.exceptions import AccessError, UserError
+from odoo import fields
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -91,6 +92,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 "res_model": model,
                 "res_id": res_ids[0],
             }
+            self._maybe_create_followup(recordset, method_name, payload)
             effect = {
                 "type": "reload_record",
                 "target": {
@@ -160,6 +162,53 @@ class ExecuteButtonHandler(BaseIntentHandler):
     def run(self, **_kwargs):
         return self.handle()
 
+    def _maybe_create_followup(self, recordset, method_name: str, payload: dict):
+        if not _should_generate_todo(method_name):
+            return
+        if not recordset or not recordset.exists():
+            return
+        record = recordset[0]
+        assignee = _resolve_assignee(record, self.env.user)
+        if not assignee:
+            return
+        Activity = self.env.get("mail.activity")
+        IrModel = self.env.get("ir.model")
+        if not Activity or not IrModel:
+            return
+        model_rec = IrModel.sudo().search([("model", "=", record._name)], limit=1)
+        if not model_rec:
+            return
+        todo_type = self.env.ref("mail.mail_activity_data_todo", raise_if_not_found=False)
+        if not todo_type:
+            return
+        summary = _build_activity_summary(method_name, record)
+        note = _build_activity_note(method_name, payload, self.env.user)
+        try:
+            Activity.sudo().create(
+                {
+                    "res_model_id": model_rec.id,
+                    "res_id": record.id,
+                    "user_id": assignee.id,
+                    "activity_type_id": todo_type.id,
+                    "summary": summary,
+                    "note": note,
+                    "date_deadline": fields.Date.context_today(self.env.user),
+                }
+            )
+        except Exception as exc:
+            _logger.warning("execute_button followup activity skipped: %s", exc)
+            return
+        try:
+            if hasattr(record, "message_post"):
+                partner_ids = [assignee.partner_id.id] if assignee.partner_id else []
+                record.message_post(
+                    body=note,
+                    subject=summary,
+                    partner_ids=partner_ids,
+                )
+        except Exception as exc:
+            _logger.warning("execute_button followup notify skipped: %s", exc)
+
 
 def _coerce_ids(value: Any) -> List[int]:
     if value is None:
@@ -184,3 +233,44 @@ def _failure_result(model: Optional[str], res_id: Optional[int], reason_code: st
     }
     effect = {"type": "toast", "message": payload["message"]}
     return {"result": payload, "effect": effect}, {}
+
+
+def _should_generate_todo(method_name: str) -> bool:
+    value = str(method_name or "").lower()
+    keywords = ("submit", "confirm", "approve", "reject", "done", "complete")
+    return any(token in value for token in keywords)
+
+
+def _resolve_assignee(record, fallback_user):
+    user_field = getattr(record, "_fields", {}).get("user_id")
+    if user_field and getattr(user_field, "comodel_name", "") == "res.users":
+        assignee = getattr(record, "user_id", False)
+        if assignee:
+            return assignee
+    return fallback_user
+
+
+def _build_activity_summary(method_name: str, record) -> str:
+    label = _semantic_action_label(method_name)
+    name = getattr(record, "display_name", "") or getattr(record, "name", "") or f"{record._name}#{record.id}"
+    return f"{label}待处理: {name}"
+
+
+def _build_activity_note(method_name: str, payload: dict, actor) -> str:
+    reason = payload.get("reason_code") or "OK"
+    return f"{actor.display_name or actor.login or 'System'} 执行了“{_semantic_action_label(method_name)}”操作。reason={reason}"
+
+
+def _semantic_action_label(method_name: str) -> str:
+    name = str(method_name or "").lower()
+    if "submit" in name:
+        return "提交"
+    if "confirm" in name:
+        return "确认"
+    if "approve" in name:
+        return "审批"
+    if "reject" in name:
+        return "退回"
+    if "done" in name or "complete" in name:
+        return "完成"
+    return "处理"
