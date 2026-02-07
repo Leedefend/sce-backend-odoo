@@ -6,6 +6,7 @@
         <p class="lead">选择你要完成的工作，直接进入场景。</p>
       </div>
       <div class="view-toggle">
+        <button class="my-work-btn" @click="router.push({ path: '/my-work' })">我的工作</button>
         <button :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'">卡片</button>
         <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">列表</button>
       </div>
@@ -146,6 +147,10 @@ async function openScene(entry: CapabilityEntry) {
 .view-toggle button.active {
   background: #1d4ed8;
   color: white;
+}
+
+.my-work-btn {
+  border-right: 1px solid #d1d5db !important;
 }
 
 .empty {

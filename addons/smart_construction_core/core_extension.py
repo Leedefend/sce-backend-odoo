@@ -15,14 +15,19 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.capability_describe import (
             CapabilityDescribeHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.my_work_summary import (
+            MyWorkSummaryHandler,
+        )
     except Exception as e:
         _logger.warning("[smart_core_register] import handler failed: %s", e)
         return
 
     registry["system.ping.construction"] = SystemPingConstructionHandler
     registry["capability.describe"] = CapabilityDescribeHandler
+    registry["my.work.summary"] = MyWorkSummaryHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
+    _logger.info("[smart_core_register] registered my.work.summary")
 
 
 def smart_core_extend_system_init(data, env, user):

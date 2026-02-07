@@ -9,6 +9,7 @@ import WorkbenchView from '../views/WorkbenchView.vue';
 import SceneView from '../views/SceneView.vue';
 import SceneHealthView from '../views/SceneHealthView.vue';
 import ScenePackagesView from '../views/ScenePackagesView.vue';
+import MyWorkView from '../views/MyWorkView.vue';
 import { ApiError } from '../api/client';
 
 const router = createRouter({
@@ -18,6 +19,7 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
     { path: '/projects', name: 'scene-projects', component: SceneView, meta: { layout: 'shell', sceneKey: 'projects' } },
     { path: '/projects/:id', name: 'scene-project', component: SceneView, meta: { layout: 'shell', sceneKey: 'project-record' } },
+    { path: '/my-work', name: 'my-work', component: MyWorkView, meta: { layout: 'shell' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
     // Diagnostic-only surface; must not be used as product navigation.
