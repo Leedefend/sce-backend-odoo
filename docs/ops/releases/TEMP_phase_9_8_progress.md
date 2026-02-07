@@ -70,3 +70,5 @@
 - This change is safe and additive: it only enables scene_key inference from action_xmlid when action_id mapping is missing.
 - Recommended next step when Docker is available:
   - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`
+- gate.full failure root cause remediation:
+  - add groups_id to config/admin actions in scene_orchestration_views.xml and subscription_views.xml
