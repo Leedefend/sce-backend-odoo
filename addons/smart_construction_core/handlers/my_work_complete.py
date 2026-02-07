@@ -59,12 +59,16 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 _complete_activity(self.env, source=source, activity_id=activity_id, note=note)
                 completed.append(activity_id)
             except Exception as exc:
-                reason_code = _reason_code_for_exception(exc)
+                failed_meta = _failure_meta_for_exception(exc)
+                reason_code = failed_meta["reason_code"]
                 reason_counter[reason_code] += 1
                 failed.append({
                     "id": _safe_int(raw_id),
                     "reason_code": reason_code,
                     "message": str(exc) or "failed",
+                    "retryable": bool(failed_meta["retryable"]),
+                    "error_category": failed_meta["error_category"],
+                    "suggested_action": failed_meta["suggested_action"],
                 })
 
         ok = len(failed) == 0
@@ -78,6 +82,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             "completed_ids": completed,
             "failed_items": failed,
             "failed_reason_summary": _reason_summary(reason_counter),
+            "failed_retryable_summary": _retryable_summary(failed),
             "done_at": fields.Datetime.now(),
         }
         return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE}}
@@ -113,21 +118,66 @@ def _safe_int(value):
 
 
 def _reason_code_for_exception(exc):
+    return _failure_meta_for_exception(exc)["reason_code"]
+
+
+def _failure_meta_for_exception(exc):
     if isinstance(exc, AccessError):
-        return "PERMISSION_DENIED"
+        return {
+            "reason_code": "PERMISSION_DENIED",
+            "retryable": False,
+            "error_category": "permission",
+            "suggested_action": "request_access",
+        }
     if isinstance(exc, UserError):
         msg = str(exc) or ""
         if "不存在" in msg:
-            return "NOT_FOUND"
+            return {
+                "reason_code": "NOT_FOUND",
+                "retryable": False,
+                "error_category": "not_found",
+                "suggested_action": "refresh_list",
+            }
         if "无效" in msg:
-            return "INVALID_ID"
+            return {
+                "reason_code": "INVALID_ID",
+                "retryable": False,
+                "error_category": "validation",
+                "suggested_action": "fix_input",
+            }
         if "仅支持" in msg:
-            return "UNSUPPORTED_SOURCE"
-        return "USER_ERROR"
-    return "INTERNAL_ERROR"
+            return {
+                "reason_code": "UNSUPPORTED_SOURCE",
+                "retryable": False,
+                "error_category": "validation",
+                "suggested_action": "fix_input",
+            }
+        return {
+            "reason_code": "USER_ERROR",
+            "retryable": False,
+            "error_category": "validation",
+            "suggested_action": "fix_input",
+        }
+    return {
+        "reason_code": "INTERNAL_ERROR",
+        "retryable": True,
+        "error_category": "transient",
+        "suggested_action": "retry",
+    }
 
 
 def _reason_summary(counter_map):
     rows = [{"reason_code": key, "count": int(value)} for key, value in counter_map.items()]
     rows.sort(key=lambda row: row["count"], reverse=True)
     return rows
+
+
+def _retryable_summary(failed_items):
+    retryable = 0
+    non_retryable = 0
+    for item in failed_items or []:
+        if bool(item.get("retryable")):
+            retryable += 1
+        else:
+            non_retryable += 1
+    return {"retryable": retryable, "non_retryable": non_retryable}

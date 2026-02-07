@@ -18,6 +18,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         "mentions": "@我的",
         "following": "我关注的",
     }
+    SECTION_KEYS = ("todo", "owned", "mentions", "following")
 
     def _safe_count(self, model_name, domain, required_fields=None):
         Model = self.env.get(model_name)
@@ -52,6 +53,36 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             row["section"] = section_key
             row["section_label"] = self.SECTION_LABELS.get(section_key, section_key)
             target.append(row)
+
+    def _normalize_section(self, value):
+        section = str(value or "").strip().lower()
+        return section if section in self.SECTION_KEYS else "all"
+
+    def _normalize_text(self, value):
+        return str(value or "").strip().lower()
+
+    def _apply_filters(self, items, *, section, source, reason_code, search):
+        result = list(items or [])
+        if section and section != "all":
+            result = [item for item in result if str(item.get("section") or "") == section]
+        if source and source != "all":
+            result = [item for item in result if str(item.get("source") or "") == source]
+        if reason_code and reason_code != "all":
+            result = [item for item in result if str(item.get("reason_code") or "") == reason_code]
+        if search:
+            result = [
+                item
+                for item in result
+                if search in " ".join(
+                    [
+                        str(item.get("title") or ""),
+                        str(item.get("model") or ""),
+                        str(item.get("action_label") or ""),
+                        str(item.get("reason_code") or ""),
+                    ]
+                ).lower()
+            ]
+        return result
 
     def _load_todo_items(self, user, limit):
         Activity = self.env.get("mail.activity")
@@ -172,6 +203,11 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         partner = user.partner_id
         limit = self._normalize_limit(params.get("limit"), default=20, max_value=100)
         limit_each = self._normalize_limit(params.get("limit_each"), default=8, max_value=40)
+        filter_section = self._normalize_section(params.get("section"))
+        filter_source = self._normalize_text(params.get("source")) or "all"
+        filter_reason_code = str(params.get("reason_code") or "").strip()
+        filter_reason_code = filter_reason_code if filter_reason_code else "all"
+        filter_search = self._normalize_text(params.get("search"))
 
         todo_count = self._safe_count("mail.activity", [("user_id", "=", user.id)], ["user_id"])
         responsible_count = self._safe_count("project.project", [("user_id", "=", user.id)], ["user_id"])
@@ -183,6 +219,15 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         self._append_items(items, "owned", self._load_owned_items(user, limit_each))
         self._append_items(items, "mentions", self._load_mention_items(partner, limit_each))
         self._append_items(items, "following", self._load_following_items(partner, limit_each))
+        total_before_filter = len(items)
+        items = self._apply_filters(
+            items,
+            section=filter_section,
+            source=filter_source,
+            reason_code=filter_reason_code,
+            search=filter_search,
+        )
+        filtered_count = len(items)
         items = items[:limit]
 
         data = {
@@ -200,6 +245,14 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 {"key": "following", "label": "我关注的", "count": following_count, "scene_key": "projects.list"},
             ],
             "items": items,
+            "filters": {
+                "section": filter_section,
+                "source": filter_source,
+                "reason_code": filter_reason_code,
+                "search": filter_search,
+                "filtered_count": filtered_count,
+                "total_before_filter": total_before_filter,
+            },
         }
         meta = {"intent": self.INTENT_TYPE}
         return {"ok": True, "data": data, "meta": meta}
