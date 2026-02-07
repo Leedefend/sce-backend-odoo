@@ -183,6 +183,20 @@ class ExecuteButtonHandler(BaseIntentHandler):
             return
         summary = _build_activity_summary(method_name, record)
         note = _build_activity_note(method_name, payload, self.env.user)
+        deadline = fields.Date.context_today(self.env.user)
+        existing = Activity.sudo().search(
+            _followup_activity_domain(
+                model_rec_id=model_rec.id,
+                res_id=record.id,
+                assignee_id=assignee.id,
+                activity_type_id=todo_type.id,
+                summary=summary,
+                deadline=deadline,
+            ),
+            limit=1,
+        )
+        if existing:
+            return
         try:
             Activity.sudo().create(
                 {
@@ -192,7 +206,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     "activity_type_id": todo_type.id,
                     "summary": summary,
                     "note": note,
-                    "date_deadline": fields.Date.context_today(self.env.user),
+                    "date_deadline": deadline,
                 }
             )
         except Exception as exc:
@@ -274,3 +288,22 @@ def _semantic_action_label(method_name: str) -> str:
     if "done" in name or "complete" in name:
         return "完成"
     return "处理"
+
+
+def _followup_activity_domain(
+    *,
+    model_rec_id: int,
+    res_id: int,
+    assignee_id: int,
+    activity_type_id: int,
+    summary: str,
+    deadline,
+):
+    return [
+        ("res_model_id", "=", model_rec_id),
+        ("res_id", "=", res_id),
+        ("user_id", "=", assignee_id),
+        ("activity_type_id", "=", activity_type_id),
+        ("summary", "=", summary),
+        ("date_deadline", "=", deadline),
+    ]
