@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 
@@ -27,6 +28,8 @@ class UsageReportHandler(BaseIntentHandler):
         capability_total = 0
         scene_counts = defaultdict(int)
         capability_counts = defaultdict(int)
+        scene_daily = defaultdict(int)
+        capability_daily = defaultdict(int)
         latest_updated_at = ""
 
         for rec in counters:
@@ -38,12 +41,20 @@ class UsageReportHandler(BaseIntentHandler):
                 scene_key = key[len("usage.scene_open."):]
                 if scene_key and scene_key != "total":
                     scene_counts[scene_key] += value
+            elif key.startswith("usage.scene_open.daily."):
+                day = key[len("usage.scene_open.daily."):]
+                if _is_day(day):
+                    scene_daily[day] += value
             elif key == "usage.capability_open.total":
                 capability_total = value
             elif key.startswith("usage.capability_open."):
                 cap_key = key[len("usage.capability_open."):]
                 if cap_key and cap_key != "total":
                     capability_counts[cap_key] += value
+            elif key.startswith("usage.capability_open.daily."):
+                day = key[len("usage.capability_open.daily."):]
+                if _is_day(day):
+                    capability_daily[day] += value
             if rec.updated_at and str(rec.updated_at) > latest_updated_at:
                 latest_updated_at = str(rec.updated_at)
 
@@ -52,6 +63,10 @@ class UsageReportHandler(BaseIntentHandler):
             "totals": {
                 "scene_open_total": scene_total,
                 "capability_open_total": capability_total,
+            },
+            "daily": {
+                "scene_open": _daily_series(scene_daily, days=7),
+                "capability_open": _daily_series(capability_daily, days=7),
             },
             "scene_top": _top_items(scene_counts, top_n),
             "capability_top": _top_items(capability_counts, top_n),
@@ -69,6 +84,7 @@ class UsageReportHandler(BaseIntentHandler):
         return {
             "generated_at": "",
             "totals": {"scene_open_total": 0, "capability_open_total": 0},
+            "daily": {"scene_open": [], "capability_open": []},
             "scene_top": [],
             "capability_top": [],
         }
@@ -78,3 +94,20 @@ def _top_items(counter_map, top_n):
     items = [{"key": key, "count": int(value)} for key, value in counter_map.items()]
     items.sort(key=lambda item: item["count"], reverse=True)
     return items[:top_n]
+
+
+def _is_day(value):
+    try:
+        datetime.strptime(str(value), "%Y-%m-%d")
+        return True
+    except Exception:
+        return False
+
+
+def _daily_series(counter_map, days=7):
+    today = datetime.utcnow().date()
+    rows = []
+    for offset in range(days - 1, -1, -1):
+        day = (today - timedelta(days=offset)).strftime("%Y-%m-%d")
+        rows.append({"day": day, "count": int(counter_map.get(day, 0))})
+    return rows

@@ -101,6 +101,40 @@
 
       <section class="tables">
         <article class="table-card">
+          <h3>Scene Open (Last 7 Days)</h3>
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <tr v-if="!sceneDaily.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-for="item in sceneDaily" :key="item.day">
+                <td>{{ item.day }}</td>
+                <td>{{ item.count }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="table-card">
+          <h3>Capability Open (Last 7 Days)</h3>
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+              <tr v-if="!capabilityDaily.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-for="item in capabilityDaily" :key="item.day">
+                <td>{{ item.day }}</td>
+                <td>{{ item.count }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section class="tables">
+        <article class="table-card">
           <h3>Visibility Reason Counts</h3>
           <table>
             <thead>
@@ -151,6 +185,8 @@ const visibility = ref<CapabilityVisibilityReport | null>(null);
 
 const sceneTop = computed(() => report.value?.scene_top || []);
 const capabilityTop = computed(() => report.value?.capability_top || []);
+const sceneDaily = computed(() => report.value?.daily?.scene_open || []);
+const capabilityDaily = computed(() => report.value?.daily?.capability_open || []);
 const reasonCounts = computed(() => visibility.value?.reason_counts || []);
 const hiddenSamples = computed(() => visibility.value?.hidden_samples || []);
 

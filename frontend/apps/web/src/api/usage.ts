@@ -27,6 +27,10 @@ export type UsageReport = {
     scene_open_total: number;
     capability_open_total: number;
   };
+  daily: {
+    scene_open: Array<{ day: string; count: number }>;
+    capability_open: Array<{ day: string; count: number }>;
+  };
   scene_top: UsageTopItem[];
   capability_top: UsageTopItem[];
 };
