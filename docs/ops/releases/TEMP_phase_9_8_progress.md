@@ -58,6 +58,10 @@
   - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T052709`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_warnings_limit.container`: PASS
   - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T052724`
+- `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.act_url_missing_scene_report.container`: PASS
+  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T053445`
+- `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.phase_9_8.gate_summary`: PASS
+  - Artifacts: `artifacts/codex/phase-9-8/gate_summary.json`
 - No other tests executed in this step.
 
 ## Notes
