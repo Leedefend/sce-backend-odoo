@@ -30,6 +30,9 @@
 - Added gate summary extractor for menu scene resolve coverage.
   - File: scripts/verify/menu_scene_resolve_summary.js
   - Make target: verify.menu.scene_resolve.summary
+- Added warnings limit guard to cap ACT_URL_LEGACY count (baseline=3).
+  - File: scripts/verify/scene_warnings_guard_summary.js
+  - Make target: verify.portal.scene_warnings_limit.container
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS

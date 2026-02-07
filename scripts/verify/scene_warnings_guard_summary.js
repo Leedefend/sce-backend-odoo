@@ -23,6 +23,17 @@ const DENY_WARNING_CODES = (process.env.DENY_WARNING_CODES || '')
   .split(',')
   .map((code) => code.trim())
   .filter(Boolean);
+const MAX_WARNING_CODES = (process.env.MAX_WARNING_CODES || '')
+  .split(',')
+  .map((pair) => pair.trim())
+  .filter(Boolean)
+  .reduce((acc, pair) => {
+    const [code, rawLimit] = pair.split('=').map((part) => (part || '').trim());
+    if (!code) return acc;
+    const limit = Number(rawLimit);
+    if (!Number.isNaN(limit)) acc[code] = limit;
+    return acc;
+  }, {});
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -134,6 +145,17 @@ async function main() {
       writeJson(path.join(outDir, 'warnings_blocked.json'), blocked);
       throw new Error(`blocked warning codes (${blocked.length})`);
     }
+  }
+  const limitBreaches = [];
+  for (const [code, limit] of Object.entries(MAX_WARNING_CODES)) {
+    const count = summary[code] || 0;
+    if (count > limit) {
+      limitBreaches.push({ code, limit, count });
+    }
+  }
+  if (limitBreaches.length) {
+    writeJson(path.join(outDir, 'warnings_limits_exceeded.json'), limitBreaches);
+    throw new Error(`warning limits exceeded (${limitBreaches.length})`);
   }
 
   log('PASS warnings guard');
