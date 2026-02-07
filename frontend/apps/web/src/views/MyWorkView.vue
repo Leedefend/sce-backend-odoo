@@ -22,16 +22,36 @@
 
     <template v-else>
       <section class="summary-grid">
-        <article v-for="item in summary" :key="item.key" class="summary-card" @click="openScene(item.scene_key)">
+        <article
+          v-for="item in summary"
+          :key="item.key"
+          class="summary-card"
+          :class="{ active: activeSection === item.key }"
+          @click="selectSection(item.key)"
+        >
           <p class="label">{{ item.label }}</p>
           <p class="count">{{ item.count }}</p>
         </article>
+      </section>
+
+      <section class="tabs">
+        <button
+          v-for="sec in sections"
+          :key="sec.key"
+          type="button"
+          class="tab"
+          :class="{ active: activeSection === sec.key }"
+          @click="activeSection = sec.key"
+        >
+          {{ sec.label }}
+        </button>
       </section>
 
       <section class="table-wrap">
         <table>
           <thead>
             <tr>
+              <th>分区</th>
               <th>事项</th>
               <th>模型</th>
               <th>截止日</th>
@@ -39,15 +59,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!items.length">
-              <td colspan="4" class="empty">当前没有待处理事项</td>
+            <tr v-if="!filteredItems.length">
+              <td colspan="5" class="empty">当前分区没有待处理事项</td>
             </tr>
-            <tr v-for="item in items" :key="item.id">
+            <tr v-for="item in filteredItems" :key="`${item.section || 'all'}-${item.id}`">
+              <td>{{ item.section_label || '-' }}</td>
               <td>{{ item.title || '-' }}</td>
               <td>{{ item.model || '-' }}</td>
               <td>{{ item.deadline || '-' }}</td>
               <td>
-                <button class="link-btn" @click="openScene(item.scene_key)">进入场景</button>
+                <button class="link-btn" @click="openRecord(item)">打开记录</button>
+                <button class="link-btn secondary-btn" @click="openScene(item.scene_key)">进入场景</button>
               </td>
             </tr>
           </tbody>
@@ -58,10 +80,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
-import { fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSummaryItem } from '../api/myWork';
+import { fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import StatusPanel from '../components/StatusPanel.vue';
 
 const router = useRouter();
@@ -69,17 +91,30 @@ const router = useRouter();
 const loading = ref(false);
 const errorText = ref('');
 const errorTraceId = ref('');
+const sections = ref<MyWorkSection[]>([]);
 const summary = ref<MyWorkSummaryItem[]>([]);
 const items = ref<MyWorkRecordItem[]>([]);
+const activeSection = ref<string>('todo');
+
+const filteredItems = computed(() => {
+  if (!sections.value.length) return items.value;
+  const key = activeSection.value;
+  if (!key) return items.value;
+  return items.value.filter((item) => (item.section || '') === key);
+});
 
 async function load() {
   loading.value = true;
   errorText.value = '';
   errorTraceId.value = '';
   try {
-    const data = await fetchMyWorkSummary(20);
+    const data = await fetchMyWorkSummary(80, 16);
+    sections.value = Array.isArray(data.sections) ? data.sections : [];
     summary.value = Array.isArray(data.summary) ? data.summary : [];
     items.value = Array.isArray(data.items) ? data.items : [];
+    if (sections.value.length && !sections.value.find((sec) => sec.key === activeSection.value)) {
+      activeSection.value = sections.value[0].key;
+    }
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '请求失败';
     if (err instanceof ApiError) {
@@ -90,9 +125,22 @@ async function load() {
   }
 }
 
+function selectSection(key: string) {
+  if (!key) return;
+  activeSection.value = key;
+}
+
 function openScene(sceneKey: string) {
   if (!sceneKey) return;
   router.push({ path: `/s/${sceneKey}` }).catch(() => {});
+}
+
+function openRecord(item: MyWorkRecordItem) {
+  if (item.model && item.record_id) {
+    router.push({ path: `/r/${item.model}/${item.record_id}` }).catch(() => {});
+    return;
+  }
+  openScene(item.scene_key);
 }
 
 onMounted(load);
@@ -147,6 +195,11 @@ onMounted(load);
   cursor: pointer;
 }
 
+.summary-card.active {
+  border-color: #2563eb;
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+
 .summary-card .label {
   margin: 0;
   color: #475569;
@@ -158,6 +211,26 @@ onMounted(load);
   font-size: 24px;
   font-weight: 700;
   color: #0f172a;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
 }
 
 .table-wrap {
@@ -198,5 +271,9 @@ th {
   background: #fff;
   padding: 6px 10px;
   cursor: pointer;
+}
+
+.secondary-btn {
+  margin-left: 8px;
 }
 </style>
