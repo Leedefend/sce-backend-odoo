@@ -44,6 +44,9 @@ class ExecuteButtonHandler(BaseIntentHandler):
         if dry_run:
             payload = {
                 "type": "dry_run",
+                "status": "success",
+                "reason_code": "DRY_RUN",
+                "message": "Dry run completed",
                 "res_model": model,
                 "res_id": res_ids[0],
                 "method": method_name,
@@ -60,6 +63,9 @@ class ExecuteButtonHandler(BaseIntentHandler):
         # 5. 标准化返回（MVP 统一 refresh）
         payload = {
             "type": "refresh",
+            "status": "success",
+            "reason_code": "OK",
+            "message": "Action executed successfully",
             "res_model": model,
             "res_id": res_ids[0],
         }

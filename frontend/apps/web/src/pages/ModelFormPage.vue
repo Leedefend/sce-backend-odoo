@@ -4,6 +4,9 @@
       <div>
         <h1>{{ title }}</h1>
         <p class="meta">Model: {{ model }} · ID: {{ recordIdDisplay }}</p>
+        <p v-if="actionFeedback" class="action-feedback">
+          {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
+        </p>
       </div>
       <div class="actions">
         <button
@@ -96,6 +99,7 @@ import { isHudEnabled } from '../config/debug';
 import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
+import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 
 const route = useRoute();
 const router = useRouter();
@@ -104,6 +108,7 @@ const { error, clearError, setError } = useStatus();
 const loading = ref(false);
 const saving = ref(false);
 const executing = ref<string | null>(null);
+const actionFeedback = ref<{ message: string; reasonCode: string } | null>(null);
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -281,7 +286,7 @@ function normalizeButtons(raw: unknown): ViewButton[] {
 }
 
 function buttonLabel(btn: ViewButton) {
-  return btn.string || btn.name || 'Action';
+  return semanticButtonLabel(btn);
 }
 
 function buttonState(btn: ViewButton) {
@@ -321,6 +326,7 @@ function getQueryNumber(key: string) {
 }
 
 async function runButton(btn: ViewButton) {
+  actionFeedback.value = null;
   const state = buttonState(btn);
   if (state.state === 'disabled_capability') {
     await router.push({ name: 'workbench', query: { reason: ErrorCodes.CAPABILITY_MISSING } });
@@ -358,8 +364,10 @@ async function runButton(btn: ViewButton) {
     if (response?.result?.type === 'refresh') {
       await load();
     }
+    actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
     setError(err, 'failed to execute button');
+    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED' };
   } finally {
     executing.value = null;
   }
@@ -427,6 +435,16 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .meta {
   color: #64748b;
   font-size: 14px;
+}
+
+.action-feedback {
+  margin: 8px 0 0;
+  color: #166534;
+  font-size: 13px;
+}
+
+.action-feedback .code {
+  color: #64748b;
 }
 
 .card {

@@ -4,6 +4,9 @@
       <div>
         <h2>{{ title }}</h2>
         <p class="meta">{{ subtitle }}</p>
+        <p v-if="actionFeedback" class="meta action-feedback">
+          {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
+        </p>
       </div>
       <div class="actions">
         <button
@@ -166,6 +169,7 @@ import { useEditTx } from '../composables/useEditTx';
 import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
+import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 
 const route = useRoute();
 const router = useRouter();
@@ -183,6 +187,7 @@ const chatterDraft = ref('');
 const chatterPosting = ref(false);
 const chatterUploading = ref(false);
 const chatterUploadError = ref('');
+const actionFeedback = ref<{ message: string; reasonCode: string } | null>(null);
 const draftName = ref('');
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -510,7 +515,7 @@ function normalizeButtons(raw: unknown): ViewButton[] {
 }
 
 function buttonLabel(btn: ViewButton) {
-  return btn.string || btn.name || 'Action';
+  return semanticButtonLabel(btn);
 }
 
 function handleFieldUpdate(payload: { name: string; value: string }) {
@@ -520,6 +525,7 @@ function handleFieldUpdate(payload: { name: string; value: string }) {
 }
 
 async function runHeaderButton(btn: ViewButton) {
+  actionFeedback.value = null;
   const state = buttonState(btn);
   if (state.state === 'disabled_capability') {
     await router.push({ name: 'workbench', query: { reason: ErrorCodes.CAPABILITY_MISSING } });
@@ -554,10 +560,12 @@ async function runHeaderButton(btn: ViewButton) {
     } else if (response?.result?.action_id) {
       await router.push({ name: 'action', params: { actionId: response.result.action_id } });
     }
+    actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
     setError(err, 'failed to execute button');
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
+    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED' };
   } finally {
     executing.value = null;
   }
@@ -697,6 +705,15 @@ onMounted(load);
 .meta {
   color: #64748b;
   font-size: 14px;
+}
+
+.action-feedback {
+  margin-top: 6px;
+  color: #166534;
+}
+
+.action-feedback .code {
+  color: #64748b;
 }
 
 .pill {
