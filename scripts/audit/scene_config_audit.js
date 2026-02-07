@@ -104,6 +104,8 @@ async function main() {
       layout_source: classifySource(scene.layout),
       tiles_source: classifySource(scene.tiles),
       list_profile_source: classifySource(scene.list_profile),
+      portal_only: Boolean(scene.portal_only),
+      spa_ready: Boolean(scene.spa_ready),
     };
   });
 
