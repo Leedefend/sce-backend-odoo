@@ -707,6 +707,29 @@ def _index_nav_scene_targets(nodes):
     return targets
 
 
+def _append_act_url_deprecations(nodes, warnings):
+    if warnings is None:
+        return
+    def walk(items):
+        for node in items or []:
+            meta = node.get("meta") or {}
+            action_type = str(meta.get("action_type") or "").strip().lower()
+            scene_key = node.get("scene_key") or meta.get("scene_key")
+            if action_type == "ir.actions.act_url" and scene_key:
+                warnings.append({
+                    "code": "ACT_URL_LEGACY",
+                    "severity": "info",
+                    "scene_key": scene_key,
+                    "message": "act_url menu resolved via scene_key (legacy action type)",
+                    "field": "action_type",
+                    "reason": "legacy_act_url",
+                    "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
+                })
+            if node.get("children"):
+                walk(node.get("children"))
+    walk(nodes)
+
+
 def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
     for scene in scenes:
         scene_key = scene.get("code") or scene.get("key")
@@ -1067,6 +1090,7 @@ class SystemInitHandler(BaseIntentHandler):
             "auto_degrade": {"triggered": False, "reason_codes": [], "action_taken": "none"},
             "timings": {},
         }
+        _append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
         if preload_items:
