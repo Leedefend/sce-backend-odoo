@@ -48,10 +48,24 @@
         </button>
       </section>
 
+      <section v-if="todoSelectionIds.length" class="batch-bar">
+        <span>已选 {{ todoSelectionIds.length }} 条待办</span>
+        <button class="link-btn done-btn" :disabled="loading" @click="completeSelectedTodos">批量完成</button>
+        <button class="link-btn secondary-btn" :disabled="loading" @click="clearTodoSelection">清空</button>
+      </section>
+
       <section class="table-wrap">
         <table>
           <thead>
             <tr>
+              <th class="cell-select">
+                <input
+                  type="checkbox"
+                  :checked="allTodoSelected"
+                  :disabled="loading || !currentTodoRows.length"
+                  @change="toggleAllTodoSelection($event)"
+                />
+              </th>
               <th>分区</th>
               <th>事项</th>
               <th>模型</th>
@@ -63,9 +77,18 @@
           </thead>
           <tbody>
             <tr v-if="!filteredItems.length">
-              <td colspan="7" class="empty">{{ emptyCopy.message }}</td>
+              <td colspan="8" class="empty">{{ emptyCopy.message }}</td>
             </tr>
             <tr v-for="item in filteredItems" :key="`${item.section || 'all'}-${item.id}`">
+              <td class="cell-select">
+                <input
+                  v-if="isCompletableTodo(item)"
+                  type="checkbox"
+                  :checked="todoSelectionIdSet.has(item.id)"
+                  :disabled="loading"
+                  @change="toggleTodoSelection(item.id, $event)"
+                />
+              </td>
               <td>{{ item.section_label || '-' }}</td>
               <td>{{ item.title || '-' }}</td>
               <td>{{ item.model || '-' }}</td>
@@ -109,14 +132,23 @@ const sections = ref<MyWorkSection[]>([]);
 const summary = ref<MyWorkSummaryItem[]>([]);
 const items = ref<MyWorkRecordItem[]>([]);
 const activeSection = ref<string>('todo');
+const todoSelectionIds = ref<number[]>([]);
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
+const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
 
 const filteredItems = computed(() => {
   if (!sections.value.length) return items.value;
   const key = activeSection.value;
   if (!key) return items.value;
   return items.value.filter((item) => (item.section || '') === key);
+});
+const currentTodoRows = computed(() =>
+  filteredItems.value.filter((item) => isCompletableTodo(item)).map((item) => item.id),
+);
+const allTodoSelected = computed(() => {
+  if (!currentTodoRows.value.length) return false;
+  return currentTodoRows.value.every((id) => todoSelectionIdSet.value.has(id));
 });
 
 async function load() {
@@ -128,6 +160,7 @@ async function load() {
     sections.value = Array.isArray(data.sections) ? data.sections : [];
     summary.value = Array.isArray(data.summary) ? data.summary : [];
     items.value = Array.isArray(data.items) ? data.items : [];
+    todoSelectionIds.value = [];
     if (sections.value.length && !sections.value.find((sec) => sec.key === activeSection.value)) {
       activeSection.value = sections.value[0].key;
     }
@@ -168,6 +201,33 @@ function openRecord(item: MyWorkRecordItem) {
   openScene(item.scene_key);
 }
 
+function isCompletableTodo(item: MyWorkRecordItem) {
+  return item.section === 'todo' && item.source === 'mail.activity';
+}
+
+function toggleTodoSelection(id: number, event: Event) {
+  const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
+  const next = new Set(todoSelectionIds.value);
+  if (checked) next.add(id);
+  else next.delete(id);
+  todoSelectionIds.value = Array.from(next);
+}
+
+function toggleAllTodoSelection(event: Event) {
+  const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
+  if (!checked) {
+    todoSelectionIds.value = todoSelectionIds.value.filter((id) => !currentTodoRows.value.includes(id));
+    return;
+  }
+  const merged = new Set(todoSelectionIds.value);
+  currentTodoRows.value.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged);
+}
+
+function clearTodoSelection() {
+  todoSelectionIds.value = [];
+}
+
 async function completeItem(item: MyWorkRecordItem) {
   if (!item?.id || !item?.source) return;
   loading.value = true;
@@ -180,6 +240,40 @@ async function completeItem(item: MyWorkRecordItem) {
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '完成待办失败';
+    if (err instanceof ApiError) {
+      statusError.value = {
+        message: err.message,
+        traceId: err.traceId,
+        code: err.status,
+        hint: err.hint,
+        kind: err.kind,
+        reasonCode: err.reasonCode,
+      };
+    }
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function completeSelectedTodos() {
+  if (!todoSelectionIds.value.length) return;
+  if (!window.confirm(`确认批量完成 ${todoSelectionIds.value.length} 条待办？`)) return;
+  loading.value = true;
+  errorText.value = '';
+  statusError.value = null;
+  try {
+    await Promise.all(
+      todoSelectionIds.value.map((id) =>
+        completeMyWorkItem({
+          id,
+          source: 'mail.activity',
+          note: 'Completed from my-work batch action.',
+        }),
+      ),
+    );
+    await load();
+  } catch (err) {
+    errorText.value = err instanceof Error ? err.message : '批量完成待办失败';
     if (err instanceof ApiError) {
       statusError.value = {
         message: err.message,
@@ -292,6 +386,12 @@ onMounted(load);
   background: #fff;
 }
 
+.batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -302,6 +402,11 @@ td {
   text-align: left;
   padding: 10px 12px;
   border-bottom: 1px solid #f1f5f9;
+}
+
+.cell-select {
+  width: 36px;
+  text-align: center;
 }
 
 th {
