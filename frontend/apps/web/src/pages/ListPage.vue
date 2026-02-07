@@ -39,15 +39,24 @@
       :on-retry="onReload"
     />
 
-    <section v-else-if="showBatchBar" class="batch-bar">
+    <section v-if="status === 'ok' && showBatchBar" class="batch-bar">
       <span>{{ selectedCount }} selected</span>
-      <button type="button" :disabled="loading" @click="callBatchAction('archive')">批量归档</button>
-      <button type="button" :disabled="loading" @click="callBatchAction('activate')">批量激活</button>
+      <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('archive')">批量归档</button>
+      <button type="button" :disabled="loading || !selectedCount" @click="callBatchAction('activate')">批量激活</button>
+      <template v-if="showAssign">
+        <select :value="String(selectedAssigneeId || '')" :disabled="loading" @change="onAssigneeSelectChange">
+          <option value="">选择负责人</option>
+          <option v-for="opt in assigneeOptions || []" :key="opt.id" :value="String(opt.id)">{{ opt.name }}</option>
+        </select>
+        <button type="button" :disabled="loading || !selectedCount || !selectedAssigneeId" @click="callBatchAssign">批量指派</button>
+      </template>
+      <button type="button" :disabled="loading || !selectedCount" @click="callBatchExport('selected')">导出选中 CSV</button>
+      <button type="button" :disabled="loading || !records.length" @click="callBatchExport('all')">导出当前页 CSV</button>
       <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
       <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
     </section>
 
-    <section v-else class="table">
+    <section v-if="status === 'ok'" class="table">
       <table>
         <thead>
           <tr>
@@ -127,8 +136,14 @@ const props = defineProps<{
   onToggleSelection?: (id: number, selected: boolean) => void;
   onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
   onBatchAction?: (action: 'archive' | 'activate') => void;
+  onBatchAssign?: (assigneeId: number) => void;
+  onBatchExport?: (scope: 'selected' | 'all') => void;
+  onAssigneeChange?: (assigneeId: number | null) => void;
   onClearSelection?: () => void;
   batchMessage?: string;
+  showAssign?: boolean;
+  assigneeOptions?: Array<{ id: number; name: string }>;
+  selectedAssigneeId?: number | null;
 }>();
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
@@ -163,7 +178,7 @@ const selectedIdSet = computed(() => new Set((props.selectedIds || []).filter((i
 const selectedCount = computed(() => (props.selectedIds || []).length);
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
 const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll && !!props.onBatchAction);
-const showBatchBar = computed(() => showSelectionColumn.value && (props.selectedIds?.length || 0) > 0);
+const showBatchBar = computed(() => showSelectionColumn.value);
 const allSelected = computed(() => {
   const rows = selectableRows.value;
   if (!rows.length) return false;
@@ -195,6 +210,15 @@ function callBatchAction(action: 'archive' | 'activate') {
   props.onBatchAction?.(action);
 }
 
+function callBatchAssign() {
+  if (!props.selectedAssigneeId) return;
+  props.onBatchAssign?.(props.selectedAssigneeId);
+}
+
+function callBatchExport(scope: 'selected' | 'all') {
+  props.onBatchExport?.(scope);
+}
+
 function onSelectAllChange(event: Event) {
   const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
   onToggleAll(checked);
@@ -203,6 +227,17 @@ function onSelectAllChange(event: Event) {
 function onRowCheckboxChange(row: Record<string, unknown>, event: Event) {
   const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
   onToggleRow(row, checked);
+}
+
+function onAssigneeSelectChange(event: Event) {
+  const value = String((event.target as HTMLSelectElement | null)?.value || '').trim();
+  if (!props.onAssigneeChange) return;
+  if (!value) {
+    props.onAssigneeChange(null);
+    return;
+  }
+  const id = Number(value);
+  props.onAssigneeChange(Number.isNaN(id) ? null : id);
 }
 
 const rowPrimary = computed(() => props.listProfile?.row_primary || '');

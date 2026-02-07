@@ -36,6 +36,9 @@
       :status-label="statusLabel"
       :selected-ids="selectedIds"
       :batch-message="batchMessage"
+      :show-assign="hasAssigneeField"
+      :assignee-options="assigneeOptions"
+      :selected-assignee-id="selectedAssigneeId"
       :list-profile="listProfile"
       :on-reload="reload"
       :on-search="handleSearch"
@@ -44,6 +47,9 @@
       :on-toggle-selection="handleToggleSelection"
       :on-toggle-selection-all="handleToggleSelectionAll"
       :on-batch-action="handleBatchAction"
+      :on-batch-assign="handleBatchAssign"
+      :on-batch-export="handleBatchExport"
+      :on-assignee-change="handleAssigneeChange"
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
@@ -59,7 +65,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecordsRaw, writeRecord } from '../api/data';
+import { listRecords, listRecordsRaw, writeRecord } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { config } from '../config';
@@ -88,6 +94,9 @@ const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
 const kanbanFields = ref<string[]>([]);
 const hasActiveField = ref(false);
+const hasAssigneeField = ref(false);
+const assigneeOptions = ref<Array<{ id: number; name: string }>>([]);
+const selectedAssigneeId = ref<number | null>(null);
 const selectedIds = ref<number[]>([]);
 const batchMessage = ref('');
 const batchBusy = ref(false);
@@ -235,6 +244,38 @@ function pickColumns(rows: Array<Record<string, unknown>>) {
   const first = rows[0];
   const keys = Object.keys(first);
   return keys.slice(0, 6);
+}
+
+function toCsvValue(value: unknown) {
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) {
+    if (value.length === 2 && typeof value[1] === 'string') {
+      return value[1];
+    }
+    return value.join(',');
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+function escapeCsv(value: string) {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function downloadCsv(filename: string, rows: string[][]) {
+  const csv = rows.map((row) => row.map((cell) => escapeCsv(cell)).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
@@ -444,6 +485,38 @@ function isWindowAction(meta: unknown) {
   return actionType.includes('act_window') || actionType.includes('window') || actionType === '';
 }
 
+async function loadAssigneeOptions() {
+  if (!hasAssigneeField.value) {
+    assigneeOptions.value = [];
+    selectedAssigneeId.value = null;
+    return;
+  }
+  try {
+    const result = await listRecords({
+      model: 'res.users',
+      fields: ['id', 'name'],
+      domain: [['active', '=', true]],
+      order: 'name asc',
+      limit: 80,
+    });
+    const rows = Array.isArray(result.records) ? result.records : [];
+    assigneeOptions.value = rows
+      .map((row) => {
+        const id = typeof row.id === 'number' ? row.id : Number(row.id);
+        const name = String(row.name || '');
+        if (!id || Number.isNaN(id) || !name) return null;
+        return { id, name };
+      })
+      .filter((row): row is { id: number; name: string } => !!row);
+    if (selectedAssigneeId.value && !assigneeOptions.value.find((opt) => opt.id === selectedAssigneeId.value)) {
+      selectedAssigneeId.value = null;
+    }
+  } catch {
+    assigneeOptions.value = [];
+    selectedAssigneeId.value = null;
+  }
+}
+
 async function load() {
   status.value = 'loading';
   clearError();
@@ -538,6 +611,8 @@ async function load() {
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
     hasActiveField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.active);
+    hasAssigneeField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.user_id);
+    await loadAssigneeOptions();
     const requestedFields =
       viewMode.value === 'kanban'
         ? kanbanContractFields
@@ -628,6 +703,10 @@ function clearSelection() {
   selectedIds.value = [];
 }
 
+function handleAssigneeChange(assigneeId: number | null) {
+  selectedAssigneeId.value = assigneeId;
+}
+
 function handleToggleSelection(id: number, selected: boolean) {
   const set = new Set(selectedIds.value);
   if (selected) {
@@ -676,6 +755,58 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   } finally {
     batchBusy.value = false;
   }
+}
+
+async function handleBatchAssign(assigneeId: number) {
+  batchMessage.value = '';
+  if (!model.value || !selectedIds.value.length) return;
+  if (!hasAssigneeField.value) {
+    batchMessage.value = '当前模型不支持负责人字段，无法批量指派';
+    return;
+  }
+  if (!assigneeId) {
+    batchMessage.value = '请先选择负责人';
+    return;
+  }
+  batchBusy.value = true;
+  try {
+    const result = await writeRecord({
+      model: model.value,
+      ids: selectedIds.value,
+      vals: { user_id: assigneeId },
+      context: mergeContext(actionMeta.value?.context),
+    });
+    const affected = Array.isArray(result.ids) ? result.ids.length : selectedIds.value.length;
+    const assignee = assigneeOptions.value.find((opt) => opt.id === assigneeId)?.name || `#${assigneeId}`;
+    batchMessage.value = `已批量指派 ${affected} 条记录给 ${assignee}`;
+    clearSelection();
+    await load();
+  } catch (err) {
+    setError(err, 'batch assign failed');
+    batchMessage.value = '批量指派失败';
+  } finally {
+    batchBusy.value = false;
+  }
+}
+
+function handleBatchExport(scope: 'selected' | 'all') {
+  batchMessage.value = '';
+  const selected = new Set(selectedIds.value);
+  const rows = scope === 'selected' ? records.value.filter((row) => selected.has(Number(row.id))) : records.value;
+  if (!rows.length) {
+    batchMessage.value = scope === 'selected' ? '没有可导出的选中记录' : '当前页没有可导出记录';
+    return;
+  }
+  const fields = columns.value.length ? columns.value : Object.keys(rows[0] || {});
+  const header = ['id', ...fields.filter((col) => col !== 'id')];
+  const csvRows = [
+    header,
+    ...rows.map((row) => header.map((col) => toCsvValue((row as Record<string, unknown>)[col]))),
+  ];
+  const scopeName = scope === 'selected' ? 'selected' : 'page';
+  const file = `${model.value || 'records'}_${scopeName}_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+  downloadCsv(file, csvRows);
+  batchMessage.value = `已导出 ${rows.length} 条记录`;
 }
 
 onMounted(load);
