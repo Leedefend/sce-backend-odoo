@@ -25,6 +25,8 @@ Branch: `codex/phase-9-2-scene-data`
 
 - `make audit.scene.config`: PASS
   - artifacts: `/mnt/artifacts/audit/scene-config/20260207T040903`
+- `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_contract_smoke.container`: PASS
+  - artifacts: `/mnt/artifacts/codex/portal-shell-v0_8-6/20260207T041133`
 
 ## Notes
 
@@ -36,4 +38,4 @@ Branch: `codex/phase-9-2-scene-data`
 - [x] system_init no longer applies layout defaults
 - [x] scene config split into layout/tiles/list_profile data files
 - [x] scene config audit hook in Makefile
-- [ ] verify scene resolve/contract smokes (pending)
+- [x] verify scene resolve/contract smokes (contract smoke passed)
