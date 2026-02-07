@@ -4,7 +4,7 @@
       v-if="viewMode === 'kanban'"
       :title="pageTitle"
       :status="status"
-      :loading="status === 'loading'"
+      :loading="status === 'loading' || batchBusy"
       :error-message="errorMessage"
       :trace-id="traceId"
       :error="error"
@@ -21,7 +21,7 @@
       :title="pageTitle"
       :model="model"
       :status="status"
-      :loading="status === 'loading'"
+      :loading="status === 'loading' || batchBusy"
       :error-message="errorMessage"
       :trace-id="traceId"
       :error="error"
@@ -34,11 +34,17 @@
       :search-term="searchTerm"
       :subtitle="subtitle"
       :status-label="statusLabel"
+      :selected-ids="selectedIds"
+      :batch-message="batchMessage"
       :list-profile="listProfile"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
       :on-filter="handleFilter"
+      :on-toggle-selection="handleToggleSelection"
+      :on-toggle-selection-all="handleToggleSelectionAll"
+      :on-batch-action="handleBatchAction"
+      :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
 
@@ -53,7 +59,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecordsRaw } from '../api/data';
+import { listRecordsRaw, writeRecord } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { config } from '../config';
@@ -82,6 +88,9 @@ const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
 const kanbanFields = ref<string[]>([]);
 const hasActiveField = ref(false);
+const selectedIds = ref<number[]>([]);
+const batchMessage = ref('');
+const batchBusy = ref(false);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
@@ -544,6 +553,20 @@ async function load() {
       order: sortLabel.value,
     });
     records.value = result.data?.records ?? [];
+    const currentIds = new Set(
+      records.value
+        .map((row) => {
+          const id = row.id;
+          if (typeof id === 'number') return id;
+          if (typeof id === 'string' && id.trim()) {
+            const parsed = Number(id);
+            return Number.isNaN(parsed) ? null : parsed;
+          }
+          return null;
+        })
+        .filter((id): id is number => typeof id === 'number'),
+    );
+    selectedIds.value = selectedIds.value.filter((id) => currentIds.has(id));
     columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
     status.value = deriveListStatus({ error: '', recordsLength: records.value.length });
     if (result.meta?.trace_id) {
@@ -597,7 +620,62 @@ function handleSort(value: string) {
 
 function handleFilter(value: 'all' | 'active' | 'archived') {
   filterValue.value = value;
+  clearSelection();
   load();
+}
+
+function clearSelection() {
+  selectedIds.value = [];
+}
+
+function handleToggleSelection(id: number, selected: boolean) {
+  const set = new Set(selectedIds.value);
+  if (selected) {
+    set.add(id);
+  } else {
+    set.delete(id);
+  }
+  selectedIds.value = Array.from(set);
+}
+
+function handleToggleSelectionAll(ids: number[], selected: boolean) {
+  if (!ids.length) return;
+  const set = new Set(selectedIds.value);
+  ids.forEach((id) => {
+    if (selected) {
+      set.add(id);
+    } else {
+      set.delete(id);
+    }
+  });
+  selectedIds.value = Array.from(set);
+}
+
+async function handleBatchAction(action: 'archive' | 'activate') {
+  batchMessage.value = '';
+  if (!model.value || !selectedIds.value.length) return;
+  if (!hasActiveField.value) {
+    batchMessage.value = '当前模型不支持 active 字段，无法批量归档/激活';
+    return;
+  }
+  batchBusy.value = true;
+  try {
+    const result = await writeRecord({
+      model: model.value,
+      ids: selectedIds.value,
+      vals: { active: action === 'activate' },
+      context: mergeContext(actionMeta.value?.context),
+    });
+    const affected = Array.isArray(result.ids) ? result.ids.length : selectedIds.value.length;
+    batchMessage.value = action === 'activate' ? `已批量激活 ${affected} 条记录` : `已批量归档 ${affected} 条记录`;
+    clearSelection();
+    await load();
+  } catch (err) {
+    setError(err, 'batch operation failed');
+    batchMessage.value = action === 'activate' ? '批量激活失败' : '批量归档失败';
+  } finally {
+    batchBusy.value = false;
+  }
 }
 
 onMounted(load);

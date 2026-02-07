@@ -39,15 +39,41 @@
       :on-retry="onReload"
     />
 
+    <section v-else-if="showBatchBar" class="batch-bar">
+      <span>{{ selectedCount }} selected</span>
+      <button type="button" :disabled="loading" @click="callBatchAction('archive')">批量归档</button>
+      <button type="button" :disabled="loading" @click="callBatchAction('activate')">批量激活</button>
+      <button type="button" class="ghost" :disabled="loading" @click="clearSelection">清空</button>
+      <span v-if="batchMessage" class="batch-message">{{ batchMessage }}</span>
+    </section>
+
     <section v-else class="table">
       <table>
         <thead>
           <tr>
+            <th v-if="showSelectionColumn" class="cell-select">
+              <input
+                type="checkbox"
+                :checked="allSelected"
+                :disabled="loading || !selectableRows.length"
+                @click.stop
+                @change="onSelectAllChange"
+              />
+            </th>
             <th v-for="col in displayedColumns" :key="col">{{ columnLabel(col) }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRow(row)">
+            <td v-if="showSelectionColumn" class="cell-select" @click.stop>
+              <input
+                v-if="rowId(row)"
+                type="checkbox"
+                :checked="isSelected(row)"
+                :disabled="loading"
+                @change="onRowCheckboxChange(row, $event)"
+              />
+            </td>
             <td v-for="col in displayedColumns" :key="col">
               <div v-if="col === rowPrimary" class="cell-primary">
                 <div class="primary">{{ formatValue(row[col]) }}</div>
@@ -97,6 +123,12 @@ const props = defineProps<{
   statusLabel: string;
   listProfile?: SceneListProfile | null;
   onFilter: (value: 'all' | 'active' | 'archived') => void;
+  selectedIds?: number[];
+  onToggleSelection?: (id: number, selected: boolean) => void;
+  onToggleSelectionAll?: (ids: number[], selected: boolean) => void;
+  onBatchAction?: (action: 'archive' | 'activate') => void;
+  onClearSelection?: () => void;
+  batchMessage?: string;
 }>();
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
@@ -113,6 +145,64 @@ function formatValue(value: unknown) {
 
 function handleRow(row: Record<string, unknown>) {
   props.onRowClick(row);
+}
+
+function rowId(row: Record<string, unknown>) {
+  const value = row?.id;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  return null;
+}
+
+const selectedIdSet = computed(() => new Set((props.selectedIds || []).filter((id) => Number.isFinite(id))));
+const selectedCount = computed(() => (props.selectedIds || []).length);
+const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
+const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll && !!props.onBatchAction);
+const showBatchBar = computed(() => showSelectionColumn.value && (props.selectedIds?.length || 0) > 0);
+const allSelected = computed(() => {
+  const rows = selectableRows.value;
+  if (!rows.length) return false;
+  return rows.every((id) => selectedIdSet.value.has(id));
+});
+
+function isSelected(row: Record<string, unknown>) {
+  const id = rowId(row);
+  if (!id) return false;
+  return selectedIdSet.value.has(id);
+}
+
+function onToggleRow(row: Record<string, unknown>, selected: boolean) {
+  const id = rowId(row);
+  if (!id || !props.onToggleSelection) return;
+  props.onToggleSelection(id, selected);
+}
+
+function onToggleAll(selected: boolean) {
+  if (!props.onToggleSelectionAll) return;
+  props.onToggleSelectionAll(selectableRows.value, selected);
+}
+
+function clearSelection() {
+  props.onClearSelection?.();
+}
+
+function callBatchAction(action: 'archive' | 'activate') {
+  props.onBatchAction?.(action);
+}
+
+function onSelectAllChange(event: Event) {
+  const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
+  onToggleAll(checked);
+}
+
+function onRowCheckboxChange(row: Record<string, unknown>, event: Event) {
+  const checked = Boolean((event.target as HTMLInputElement | null)?.checked);
+  onToggleRow(row, checked);
 }
 
 const rowPrimary = computed(() => props.listProfile?.row_primary || '');
@@ -151,6 +241,34 @@ function columnLabel(col: string) {
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
 }
 
+.batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.batch-bar button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.batch-bar button.ghost {
+  color: #475569;
+}
+
+.batch-message {
+  margin-left: auto;
+  font-size: 13px;
+  color: #166534;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -162,6 +280,11 @@ td {
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   font-size: 14px;
+}
+
+.cell-select {
+  width: 44px;
+  padding-right: 4px;
 }
 
 thead th {
