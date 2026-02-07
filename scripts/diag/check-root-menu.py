@@ -9,9 +9,12 @@ B3: 菜单根xmlid存在性与安装状态自检脚本
 import sys
 import os
 import argparse
+from pathlib import Path
 
-# 添加odoo路径
-sys.path.append('/mnt/e/sc-backend-odoo/runtime/odoo')
+# 添加odoo路径（优先环境变量 ROOT_DIR，其次脚本相对路径）
+ROOT_DIR = Path(os.environ.get("ROOT_DIR", Path(__file__).resolve().parents[2]))
+ODOO_RUNTIME = ROOT_DIR / "runtime" / "odoo"
+sys.path.append(str(ODOO_RUNTIME))
 
 try:
     import odoo

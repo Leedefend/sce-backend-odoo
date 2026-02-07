@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const REPO_ROOT = path.resolve(__dirname, '../../..');
 
 function normalizeVersion(input, fallback) {
   if (!input) return fallback;
@@ -15,10 +16,12 @@ function normalizeVersion(input, fallback) {
 function findSchemaPath(relPath) {
   const roots = [
     process.env.SCENE_SCHEMA_ROOT,
+    process.env.REPO_ROOT,
+    REPO_ROOT,
+    process.cwd(),
     '/mnt/extra-addons',
     '/mnt/addons_external',
     '/mnt/odoo',
-    '/mnt/e/sc-backend-odoo',
   ].filter(Boolean);
   const stripped = relPath.startsWith('addons/') ? relPath.slice('addons/'.length) : relPath;
   const relPaths = [relPath, stripped];
