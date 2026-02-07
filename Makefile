@@ -445,6 +445,7 @@ verify.portal.fe_smoke.host: guard.prod.forbid check-compose-project check-compo
 verify.portal.fe_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) AUTH_TOKEN=$(AUTH_TOKEN) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) bash /mnt/scripts/diag/fe_smoke.sh"
 verify.portal.view_state: guard.prod.forbid check-compose-project check-compose-env
+	@# RC smoke user: demo_pm/demo. svc_* accounts are service-only and may 401 in UI smokes.
 	@$(RUN_ENV) node scripts/verify/fe_view_state_smoke.js
 verify.portal.guard_groups: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) node scripts/verify/fe_guard_groups_smoke.js

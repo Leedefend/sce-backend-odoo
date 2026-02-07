@@ -42,6 +42,11 @@ Branch: `codex/pre_release_final_control`
   - `scripts/verify/fe_scene_list_profile_smoke.js`
   - `scripts/verify/fe_scene_default_sort_smoke.js`
 
+10. Container Smoke Execution
+- `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_list_profile_smoke.container`: PASS
+- `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_default_sort_smoke.container`: PASS
+    - RC canonical smoke user is `demo_pm` (documented).
+
 ## Verification Results
 
 - `make verify.frontend.build`: PASS
@@ -66,6 +71,7 @@ Branch: `codex/pre_release_final_control`
 
 1. Provide valid `E2E_LOGIN` / `E2E_PASSWORD` for container smokes (current user `svc_project_ro` fails with 401).
 2. RC tag `r0.1.0-rc1` not created (git tag forbidden by allowlist).
+3. Decide whether to standardize on `demo_pm` for RC smokes or backfill `svc_e2e_smoke` in target DB.
 
 ## Files Changed (Uncommitted)
 
@@ -79,3 +85,8 @@ Branch: `codex/pre_release_final_control`
 - `frontend/apps/web/src/views/WorkbenchView.vue`
 - `scripts/verify/portal_bridge_e2e_smoke.js`
 - `docs/ops/releases/act_url_remaining_audit.md`
+
+## Commit Summary
+
+- `4581431` release(r0.1): pre-release final control hardening
+- `229b5f8` chore(release): archive temp release notes
