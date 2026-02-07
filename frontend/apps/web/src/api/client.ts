@@ -87,6 +87,11 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     console.groupEnd();
   }
 
+  const requestedCreds = options.credentials;
+  if (requestedCreds && requestedCreds !== 'omit' && import.meta.env.DEV) {
+    console.warn(`[SPA API] Forcing credentials=omit (requested: ${requestedCreds})`);
+  }
+
   const response = await fetch(`${config.apiBaseUrl}${path}`, {
     ...options,
     headers,

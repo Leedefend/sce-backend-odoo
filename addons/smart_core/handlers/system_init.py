@@ -261,11 +261,17 @@ def _apply_scene_keys(env, nodes):
         "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
         "smart_construction_core.menu_sc_project_initiation": "projects.intake",
         "smart_construction_core.menu_sc_project_project": "projects.ledger",
+        "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
+        "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
+        "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
     }
     action_xmlid_map = {
         "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
         "smart_construction_core.action_project_initiation": "projects.intake",
         "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
+        "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
+        "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
+        "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
     }
     action_id_map = _resolve_action_ids(env, action_xmlid_map)
     model_view_map = {

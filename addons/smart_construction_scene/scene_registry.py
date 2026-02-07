@@ -312,6 +312,27 @@ def load_scene_configs(env, drift=None):
             "default_sort": PROJECTS_DEFAULT_SORT,
             "tiles": [],
         },
+        {
+            "code": "portal.lifecycle",
+            "name": "生命周期驾驶舱",
+            "layout": {"kind": "workspace", "sidebar": "fixed", "header": "full"},
+            "target": {"route": "/portal/lifecycle"},
+            "tiles": [],
+        },
+        {
+            "code": "portal.capability_matrix",
+            "name": "能力矩阵",
+            "layout": {"kind": "workspace", "sidebar": "fixed", "header": "full"},
+            "target": {"route": "/portal/capability-matrix"},
+            "tiles": [],
+        },
+        {
+            "code": "portal.dashboard",
+            "name": "工作台",
+            "layout": {"kind": "workspace", "sidebar": "fixed", "header": "full"},
+            "target": {"route": "/portal/dashboard"},
+            "tiles": [],
+        },
     ]
     if not db_scenes:
         if not imported_scenes:
