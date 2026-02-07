@@ -25,3 +25,4 @@ from . import test_p0_finance_ui_gate
 from . import test_p0_finance_aggregate_gate
 from . import test_sidebar_menu_visibility_audit
 from . import test_capability_lint_gate
+from . import test_capability_contract_backend

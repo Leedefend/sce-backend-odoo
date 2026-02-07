@@ -69,7 +69,7 @@ def smart_core_extend_system_init(data, env, user):
             ("is_test", "=", False),
         ], order="sequence, id")
         data["capabilities"] = [
-            rec.to_public_dict(user) for rec in caps if rec._user_allowed(user)
+            rec.to_public_dict(user) for rec in caps if rec._user_visible(user)
         ]
         if not data.get("scenes"):
             data["scenes"] = [
