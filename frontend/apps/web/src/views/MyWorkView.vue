@@ -21,7 +21,10 @@
       variant="error"
       :on-retry="load"
     />
-    <template v-else>
+    <p v-if="!loading && !errorText && actionFeedback" class="action-feedback" :class="{ error: actionFeedbackError }">
+      {{ actionFeedback }}
+    </p>
+    <template v-if="!loading && !errorText">
       <section class="summary-grid">
         <article
           v-for="item in summary"
@@ -133,6 +136,8 @@ const summary = ref<MyWorkSummaryItem[]>([]);
 const items = ref<MyWorkRecordItem[]>([]);
 const activeSection = ref<string>('todo');
 const todoSelectionIds = ref<number[]>([]);
+const actionFeedback = ref('');
+const actionFeedbackError = ref(false);
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
@@ -231,12 +236,16 @@ function clearTodoSelection() {
 async function completeItem(item: MyWorkRecordItem) {
   if (!item?.id || !item?.source) return;
   loading.value = true;
+  actionFeedback.value = '';
+  actionFeedbackError.value = false;
   try {
-    await completeMyWorkItem({
+    const result = await completeMyWorkItem({
       id: item.id,
       source: item.source,
       note: 'Completed from my-work UI.',
     });
+    actionFeedback.value = result.message || '待办已完成';
+    actionFeedbackError.value = false;
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '完成待办失败';
@@ -261,6 +270,8 @@ async function completeSelectedTodos() {
   loading.value = true;
   errorText.value = '';
   statusError.value = null;
+  actionFeedback.value = '';
+  actionFeedbackError.value = false;
   try {
     const result = await completeMyWorkItemsBatch({
       ids: [...todoSelectionIds.value],
@@ -269,9 +280,13 @@ async function completeSelectedTodos() {
     });
     if (!result.success) {
       const first = result.failed_items?.[0];
-      errorText.value = `批量完成部分失败：${result.done_count} 成功，${result.failed_count} 失败${
+      actionFeedback.value = `批量完成部分失败：${result.done_count} 成功，${result.failed_count} 失败${
         first ? `（示例 #${first.id}: ${first.message}）` : ''
       }`;
+      actionFeedbackError.value = true;
+    } else {
+      actionFeedback.value = `批量完成成功：${result.done_count} 条`;
+      actionFeedbackError.value = false;
     }
     await load();
   } catch (err) {
@@ -441,5 +456,20 @@ th {
   background: #f0fdf4;
   color: #166534;
   margin-right: 8px;
+}
+
+.action-feedback {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.action-feedback.error {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
 }
 </style>
