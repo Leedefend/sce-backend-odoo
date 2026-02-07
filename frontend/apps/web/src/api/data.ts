@@ -154,6 +154,14 @@ export type ApiDataWriteContract = {
   values: Record<string, unknown>;
 };
 
+export type ApiDataExportCsvResult = {
+  file_name: string;
+  mime_type: string;
+  content_b64: string;
+  count: number;
+  fields: string[];
+};
+
 export async function writeRecordV6(params: {
   model: string;
   id: number;
@@ -186,6 +194,30 @@ export async function writeRecordV6Raw(params: {
       values: params.values,
       context: params.context ?? {},
       if_match: params.ifMatch,
+    },
+  });
+}
+
+export async function exportRecordsCsv(params: {
+  model: string;
+  fields?: string[] | '*';
+  domain?: unknown[];
+  ids?: number[];
+  order?: string;
+  limit?: number;
+  context?: Record<string, unknown>;
+}) {
+  return intentRequest<ApiDataExportCsvResult>({
+    intent: 'api.data',
+    params: {
+      op: 'export_csv',
+      model: params.model,
+      fields: params.fields ?? ['id', 'name'],
+      domain: params.domain ?? [],
+      ids: params.ids ?? [],
+      order: params.order ?? '',
+      limit: params.limit ?? 2000,
+      context: params.context ?? {},
     },
   });
 }

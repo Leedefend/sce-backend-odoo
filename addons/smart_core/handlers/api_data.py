@@ -8,6 +8,10 @@
 import logging
 from typing import Any, Dict, Tuple, List, Optional
 from ast import literal_eval
+import base64
+import csv
+import io
+from datetime import datetime
 
 from odoo.tools.safe_eval import safe_eval
 from odoo.exceptions import AccessError
@@ -234,6 +238,8 @@ class ApiDataHandler(BaseIntentHandler):
             return self._op_create(model, p, context, use_sudo)
         elif op in ("write",):
             return self._op_write(model, p, context, use_sudo)
+        elif op in ("export_csv",):
+            return self._op_export_csv(model, p, context, use_sudo)
         else:
             return self._err(400, f"不支持的操作: {op}")
 
@@ -388,4 +394,88 @@ class ApiDataHandler(BaseIntentHandler):
 
         data = {"ids": recs.ids}
         meta = {"op": "write", "model": model, "count": len(recs)}
+        return data, meta
+
+    def _format_csv_value(self, value: Any) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, bool):
+            return "1" if value else "0"
+        if isinstance(value, (int, float)):
+            return str(value)
+        if isinstance(value, str):
+            return value
+        if isinstance(value, list):
+            if len(value) == 2 and isinstance(value[1], str):
+                return value[1]
+            return ",".join(str(v) for v in value)
+        if isinstance(value, dict):
+            try:
+                return str(value)
+            except Exception:
+                return ""
+        return str(value)
+
+    def _op_export_csv(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
+        limit = self._get_int(p, "limit", 2000)
+        if limit <= 0:
+            limit = 2000
+        limit = min(limit, 10000)
+
+        order = self._get_str(p, "order", "")
+        domain = self._normalize_domain(self._dig(p, "domain"))
+        ids = self._get_list(p, "ids", [])
+        fields = self._get_list(p, "fields", [])
+
+        env_model = self.env[model].with_context(ctx)
+        if sudo:
+            env_model = env_model.sudo()
+
+        if fields == ["*"] or fields == "*":
+            fields = list(env_model._fields.keys())
+        if not fields:
+            fallback = ["id", "name"] if "name" in env_model._fields else ["id"]
+            fields = fallback
+        fields_safe = self._filter_readable_fields(env_model, fields)
+
+        if ids:
+            recs = env_model.browse(ids).exists()
+        else:
+            recs = env_model.search(domain or [], order=order or None, limit=limit)
+        if not recs:
+            data = {
+                "file_name": f"{model.replace('.', '_')}_empty.csv",
+                "mime_type": "text/csv",
+                "content_b64": "",
+                "count": 0,
+                "fields": fields_safe,
+            }
+            meta = {"op": "export_csv", "model": model, "count": 0}
+            return data, meta
+
+        try:
+            rows = recs.read(fields_safe)
+        except AccessError as ae:
+            _logger.warning("export_csv AccessError on %s, fallback fields. err=%s", model, ae)
+            safe_min = ["id", "name"] if "name" in env_model._fields else ["id"]
+            fields_safe = self._filter_readable_fields(env_model, safe_min)
+            rows = recs.read(fields_safe)
+
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(fields_safe)
+        for row in rows:
+            writer.writerow([self._format_csv_value(row.get(col)) for col in fields_safe])
+        raw = buf.getvalue().encode("utf-8-sig")
+        b64 = base64.b64encode(raw).decode("ascii")
+        stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
+        data = {
+            "file_name": f"{model.replace('.', '_')}_{stamp}.csv",
+            "mime_type": "text/csv",
+            "content_b64": b64,
+            "count": len(rows),
+            "fields": fields_safe,
+        }
+        meta = {"op": "export_csv", "model": model, "count": len(rows), "limit": limit}
         return data, meta

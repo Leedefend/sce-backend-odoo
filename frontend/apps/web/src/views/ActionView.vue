@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecords, listRecordsRaw, writeRecord } from '../api/data';
+import { exportRecordsCsv, listRecords, listRecordsRaw, writeRecord } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { config } from '../config';
@@ -246,34 +246,18 @@ function pickColumns(rows: Array<Record<string, unknown>>) {
   return keys.slice(0, 6);
 }
 
-function toCsvValue(value: unknown) {
-  if (value === null || value === undefined) return '';
-  if (Array.isArray(value)) {
-    if (value.length === 2 && typeof value[1] === 'string') {
-      return value[1];
-    }
-    return value.join(',');
+function downloadCsvBase64(filename: string, mimeType: string, contentB64: string) {
+  if (!contentB64) return;
+  const binary = atob(contentB64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
   }
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-  return String(value);
-}
-
-function escapeCsv(value: string) {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function downloadCsv(filename: string, rows: string[][]) {
-  const csv = rows.map((row) => row.map((cell) => escapeCsv(cell)).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([bytes], { type: mimeType || 'text/csv' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = filename;
+  link.download = filename || 'export.csv';
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -790,23 +774,42 @@ async function handleBatchAssign(assigneeId: number) {
 }
 
 function handleBatchExport(scope: 'selected' | 'all') {
+  void exportByBackend(scope);
+}
+
+async function exportByBackend(scope: 'selected' | 'all') {
   batchMessage.value = '';
-  const selected = new Set(selectedIds.value);
-  const rows = scope === 'selected' ? records.value.filter((row) => selected.has(Number(row.id))) : records.value;
-  if (!rows.length) {
-    batchMessage.value = scope === 'selected' ? '没有可导出的选中记录' : '当前页没有可导出记录';
+  if (!model.value) return;
+  if (scope === 'selected' && !selectedIds.value.length) {
+    batchMessage.value = '没有可导出的选中记录';
     return;
   }
-  const fields = columns.value.length ? columns.value : Object.keys(rows[0] || {});
-  const header = ['id', ...fields.filter((col) => col !== 'id')];
-  const csvRows = [
-    header,
-    ...rows.map((row) => header.map((col) => toCsvValue((row as Record<string, unknown>)[col]))),
-  ];
-  const scopeName = scope === 'selected' ? 'selected' : 'page';
-  const file = `${model.value || 'records'}_${scopeName}_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
-  downloadCsv(file, csvRows);
-  batchMessage.value = `已导出 ${rows.length} 条记录`;
+  batchBusy.value = true;
+  try {
+    const ids = scope === 'selected' ? selectedIds.value : [];
+    const domain = scope === 'all' ? mergeActiveFilter(mergeSceneDomain(actionMeta.value?.domain, scene.value?.filters)) : [];
+    const fields = columns.value.length ? ['id', ...columns.value.filter((col) => col !== 'id')] : ['id', 'name'];
+    const result = await exportRecordsCsv({
+      model: model.value,
+      fields,
+      ids,
+      domain,
+      order: sortLabel.value,
+      limit: scope === 'all' ? 10000 : 5000,
+      context: mergeContext(actionMeta.value?.context),
+    });
+    if (!result.content_b64) {
+      batchMessage.value = '没有可导出的记录';
+      return;
+    }
+    downloadCsvBase64(result.file_name, result.mime_type, result.content_b64);
+    batchMessage.value = `已导出 ${result.count} 条记录`;
+  } catch (err) {
+    setError(err, 'batch export failed');
+    batchMessage.value = '批量导出失败';
+  } finally {
+    batchBusy.value = false;
+  }
 }
 
 onMounted(load);
