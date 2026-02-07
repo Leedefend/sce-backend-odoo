@@ -19,6 +19,8 @@
 - Added warnings guard target to fail if ACT_URL_MISSING_SCENE is present (opt-in).
   - File: scripts/verify/fe_scene_diagnostics_smoke.js
   - Make target: verify.portal.scene_warnings_guard.container
+- Enforced warnings guard in gate.full (Phase 9.8).
+  - File: Makefile
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
