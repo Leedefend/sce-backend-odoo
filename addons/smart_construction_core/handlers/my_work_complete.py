@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from collections import defaultdict
+
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.exceptions import AccessError, UserError
@@ -50,6 +52,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
 
         completed = []
         failed = []
+        reason_counter = defaultdict(int)
         for raw_id in ids:
             try:
                 activity_id = _coerce_activity_id(raw_id)
@@ -57,6 +60,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 completed.append(activity_id)
             except Exception as exc:
                 reason_code = _reason_code_for_exception(exc)
+                reason_counter[reason_code] += 1
                 failed.append({
                     "id": _safe_int(raw_id),
                     "reason_code": reason_code,
@@ -73,6 +77,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             "failed_count": len(failed),
             "completed_ids": completed,
             "failed_items": failed,
+            "failed_reason_summary": _reason_summary(reason_counter),
             "done_at": fields.Datetime.now(),
         }
         return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE}}
@@ -120,3 +125,9 @@ def _reason_code_for_exception(exc):
             return "UNSUPPORTED_SOURCE"
         return "USER_ERROR"
     return "INTERNAL_ERROR"
+
+
+def _reason_summary(counter_map):
+    rows = [{"reason_code": key, "count": int(value)} for key, value in counter_map.items()]
+    rows.sort(key=lambda row: row["count"], reverse=True)
+    return rows
