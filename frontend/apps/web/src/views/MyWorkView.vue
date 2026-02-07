@@ -26,6 +26,7 @@
     </p>
     <div v-if="!loading && !errorText && retryFailedIds.length" class="retry-bar">
       <span>失败待办 {{ retryFailedIds.length }} 条</span>
+      <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
     </div>
@@ -42,6 +43,13 @@
           <span class="failed-id">#{{ item.id }}</span>
           <span class="failed-code">{{ item.reason_code || 'UNKNOWN' }}</span>
           <span class="failed-msg">{{ item.message || '-' }}</span>
+          <button
+            v-if="failedItemRecord(item.id)"
+            class="link-btn mini-btn"
+            @click="openRecord(failedItemRecord(item.id)!)"
+          >
+            打开记录
+          </button>
         </li>
       </ul>
     </section>
@@ -175,6 +183,15 @@ const filteredItems = computed(() => {
 const currentTodoRows = computed(() =>
   filteredItems.value.filter((item) => isCompletableTodo(item)).map((item) => item.id),
 );
+const todoItemMap = computed(() => {
+  const map = new Map<number, MyWorkRecordItem>();
+  for (const item of items.value) {
+    if (isCompletableTodo(item) && Number.isFinite(item.id)) {
+      map.set(item.id, item);
+    }
+  }
+  return map;
+});
 const allTodoSelected = computed(() => {
   if (!currentTodoRows.value.length) return false;
   return currentTodoRows.value.every((id) => todoSelectionIdSet.value.has(id));
@@ -261,6 +278,17 @@ function clearRetryFailed() {
   retryFailedIds.value = [];
   retryFailedItems.value = [];
   retryReasonSummary.value = [];
+}
+
+function selectRetryFailedItems() {
+  if (!retryFailedIds.value.length) return;
+  const merged = new Set(todoSelectionIds.value);
+  retryFailedIds.value.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged);
+}
+
+function failedItemRecord(id: number) {
+  return todoItemMap.value.get(id);
 }
 
 async function completeItem(item: MyWorkRecordItem) {
@@ -544,6 +572,11 @@ onMounted(load);
 .failed-msg {
   margin-left: 8px;
   color: #7f1d1d;
+}
+
+.mini-btn {
+  margin-left: 8px;
+  padding: 2px 8px;
 }
 
 table {
