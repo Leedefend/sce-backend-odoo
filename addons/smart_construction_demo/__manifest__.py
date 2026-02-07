@@ -17,6 +17,7 @@
         "data/demo/sc_demo_users.xml",
         "data/demo/role_matrix_demo_users.xml",
         "data/demo/sc_demo_showcase_actions.xml",
+        "data/demo/demo_company_currency.xml",
         "data/scenario/s00_min_path/10_project_boq.xml",
         "data/scenario/s00_min_path/20_project_links.xml",
         "data/scenario/s00_min_path/30_project_revenue.xml",
