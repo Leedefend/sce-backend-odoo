@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
+import json
 import logging
+from datetime import timedelta
 from typing import Any, Dict, List
 
+from odoo import fields
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
@@ -20,6 +24,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         "archive": {"active": False},
         "activate": {"active": True},
     }
+    IDEMPOTENCY_WINDOW_SECONDS = 30
 
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}
@@ -66,12 +71,99 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return action or "write", vals
         return action, {}
 
+    def _normalize_if_match_map(self, params: Dict[str, Any]) -> Dict[int, str]:
+        raw = params.get("if_match_map") or {}
+        if not isinstance(raw, dict):
+            return {}
+        normalized: Dict[int, str] = {}
+        for key, value in raw.items():
+            try:
+                rid = int(key)
+            except Exception:
+                continue
+            val = str(value or "").strip()
+            if rid > 0 and val:
+                normalized[rid] = val
+        return normalized
+
+    def _idempotency_fingerprint(self, *, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str) -> str:
+        payload = {
+            "model": model,
+            "action": action,
+            "ids": list(sorted(ids)),
+            "vals": vals,
+            "idempotency_key": idem_key,
+        }
+        raw = json.dumps(payload, ensure_ascii=True, sort_keys=True)
+        return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+
+    def _find_idempotent_replay(self, *, model: str, idem_key: str, fingerprint: str):
+        if not idem_key:
+            return None
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            return None
+        try:
+            now = fields.Datetime.now()
+            window_start = fields.Datetime.to_string(
+                fields.Datetime.from_string(now) - timedelta(seconds=self.IDEMPOTENCY_WINDOW_SECONDS)
+            )
+            logs = Audit.sudo().search([
+                ("event_code", "=", "API_DATA_BATCH"),
+                ("model", "=", model),
+                ("ts", ">=", window_start),
+            ], order="id desc", limit=20)
+            for log in logs:
+                after_raw = log.after_json or ""
+                if not after_raw:
+                    continue
+                try:
+                    after_payload = json.loads(after_raw)
+                except Exception:
+                    continue
+                if str(after_payload.get("idempotency_key") or "") != idem_key:
+                    continue
+                if str(after_payload.get("idempotency_fingerprint") or "") != fingerprint:
+                    continue
+                result = after_payload.get("result")
+                if isinstance(result, dict):
+                    return result
+            return None
+        except Exception:
+            return None
+
+    def _write_batch_audit(self, *, trace_id: str, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str, idem_fingerprint: str, result: Dict[str, Any]):
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            return
+        try:
+            Audit.sudo().write_event(
+                event_code="API_DATA_BATCH",
+                model=model,
+                res_id=0,
+                action=action or "write",
+                after={
+                    "ids": ids,
+                    "vals": vals,
+                    "idempotency_key": idem_key,
+                    "idempotency_fingerprint": idem_fingerprint,
+                    "result": result,
+                },
+                reason="batch update",
+                trace_id=trace_id or "",
+                company_id=self.env.user.company_id.id if self.env.user and self.env.user.company_id else None,
+            )
+        except Exception:
+            return
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
         model = str(params.get("model") or "").strip()
         ids = self._get_ids(params)
         action, vals = self._resolve_vals(params)
+        idempotency_key = str(params.get("idempotency_key") or "").strip()
+        if_match_map = self._normalize_if_match_map(params)
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
 
         if not model:
@@ -92,6 +184,25 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if not safe_vals:
             return self._err(400, "vals 中无可写字段")
 
+        idempotency_fingerprint = self._idempotency_fingerprint(
+            model=model,
+            action=action or "write",
+            ids=ids,
+            vals=safe_vals,
+            idem_key=idempotency_key,
+        )
+        replay = self._find_idempotent_replay(
+            model=model,
+            idem_key=idempotency_key,
+            fingerprint=idempotency_fingerprint,
+        )
+        if replay:
+            replay_data = dict(replay)
+            replay_data["idempotent_replay"] = True
+            replay_data["idempotency_key"] = idempotency_key
+            replay_data["idempotency_fingerprint"] = idempotency_fingerprint
+            return {"ok": True, "data": replay_data, "meta": {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell"}}
+
         try:
             env_model.check_access_rights("write")
         except AccessError:
@@ -111,6 +222,15 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 continue
             try:
                 rec.check_access_rule("write")
+                if rec_id in if_match_map:
+                    expected = if_match_map.get(rec_id, "")
+                    current = rec.write_date and rec.write_date.strftime("%Y-%m-%d %H:%M:%S") or ""
+                    if current and expected and current != expected:
+                        item["reason_code"] = "CONFLICT"
+                        item["message"] = "Record changed"
+                        failed += 1
+                        results.append(item)
+                        continue
                 rec.write(safe_vals)
                 item["ok"] = True
                 item["reason_code"] = "OK"
@@ -135,6 +255,19 @@ class ApiDataBatchHandler(BaseIntentHandler):
             "succeeded": success,
             "failed": failed,
             "results": results,
+            "idempotency_key": idempotency_key,
+            "idempotency_fingerprint": idempotency_fingerprint,
+            "idempotent_replay": False,
         }
+        self._write_batch_audit(
+            trace_id=trace_id,
+            model=model,
+            action=action or "write",
+            ids=ids,
+            vals=safe_vals,
+            idem_key=idempotency_key,
+            idem_fingerprint=idempotency_fingerprint,
+            result=data,
+        )
         meta = {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell"}
         return {"ok": True, "data": data, "meta": meta}

@@ -716,6 +716,36 @@ function handleToggleSelectionAll(ids: number[], selected: boolean) {
   selectedIds.value = Array.from(set);
 }
 
+function buildIfMatchMap(ids: number[]) {
+  const wanted = new Set(ids);
+  const map: Record<number, string> = {};
+  records.value.forEach((row) => {
+    const rawId = row.id;
+    const id =
+      typeof rawId === 'number'
+        ? rawId
+        : typeof rawId === 'string' && rawId.trim()
+          ? Number(rawId)
+          : NaN;
+    if (!Number.isFinite(id) || !wanted.has(id)) return;
+    const writeDate = String((row.write_date as string | undefined) || '').trim();
+    if (writeDate) {
+      map[id] = writeDate;
+    }
+  });
+  return map;
+}
+
+function buildIdempotencyKey(action: string, ids: number[], extra: Record<string, unknown> = {}) {
+  const payload = {
+    model: model.value || '',
+    action,
+    ids: [...ids].sort((a, b) => a - b),
+    extra,
+  };
+  return `batch:${JSON.stringify(payload)}`;
+}
+
 async function handleBatchAction(action: 'archive' | 'activate') {
   batchMessage.value = '';
   batchDetails.value = [];
@@ -726,16 +756,24 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   }
   batchBusy.value = true;
   try {
+    const ifMatchMap = buildIfMatchMap(selectedIds.value);
+    const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { active: action === 'activate' });
     const result = await batchUpdateRecords({
       model: model.value,
       ids: selectedIds.value,
       action,
+      ifMatchMap,
+      idempotencyKey,
       context: mergeContext(actionMeta.value?.context),
     });
+    if (result.idempotent_replay) {
+      batchMessage.value = '批量操作已幂等处理（重复请求被忽略）';
+    } else {
     batchMessage.value =
       action === 'activate'
         ? `批量激活完成：成功 ${result.succeeded}，失败 ${result.failed}`
         : `批量归档完成：成功 ${result.succeeded}，失败 ${result.failed}`;
+    }
     batchDetails.value = (result.results || [])
       .filter((item) => !item.ok)
       .slice(0, 10)
@@ -765,15 +803,23 @@ async function handleBatchAssign(assigneeId: number) {
   }
   batchBusy.value = true;
   try {
+    const ifMatchMap = buildIfMatchMap(selectedIds.value);
+    const idempotencyKey = buildIdempotencyKey('assign', selectedIds.value, { assignee_id: assigneeId });
     const result = await batchUpdateRecords({
       model: model.value,
       ids: selectedIds.value,
       action: 'assign',
       assigneeId,
+      ifMatchMap,
+      idempotencyKey,
       context: mergeContext(actionMeta.value?.context),
     });
     const assignee = assigneeOptions.value.find((opt) => opt.id === assigneeId)?.name || `#${assigneeId}`;
-    batchMessage.value = `批量指派给 ${assignee}：成功 ${result.succeeded}，失败 ${result.failed}`;
+    if (result.idempotent_replay) {
+      batchMessage.value = `批量指派给 ${assignee} 已幂等处理（重复请求被忽略）`;
+    } else {
+      batchMessage.value = `批量指派给 ${assignee}：成功 ${result.succeeded}，失败 ${result.failed}`;
+    }
     batchDetails.value = (result.results || [])
       .filter((item) => !item.ok)
       .slice(0, 10)

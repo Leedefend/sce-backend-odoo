@@ -177,6 +177,9 @@ export type ApiDataBatchResult = {
   succeeded: number;
   failed: number;
   results: ApiDataBatchItemResult[];
+  idempotency_key?: string;
+  idempotency_fingerprint?: string;
+  idempotent_replay?: boolean;
 };
 
 export async function writeRecordV6(params: {
@@ -245,6 +248,8 @@ export async function batchUpdateRecords(params: {
   action?: 'archive' | 'activate' | 'assign' | string;
   assigneeId?: number;
   vals?: Record<string, unknown>;
+  ifMatchMap?: Record<number, string> | Record<string, string>;
+  idempotencyKey?: string;
   context?: Record<string, unknown>;
 }) {
   return intentRequest<ApiDataBatchResult>({
@@ -255,6 +260,8 @@ export async function batchUpdateRecords(params: {
       action: params.action ?? '',
       assignee_id: params.assigneeId,
       vals: params.vals ?? {},
+      if_match_map: params.ifMatchMap ?? {},
+      idempotency_key: params.idempotencyKey ?? '',
       context: params.context ?? {},
     },
   });
