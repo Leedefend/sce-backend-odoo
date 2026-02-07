@@ -27,11 +27,11 @@
     <StatusPanel v-if="loading" title="Loading record..." variant="info" />
     <StatusPanel
       v-else-if="error"
-      title="Request failed"
-      :message="error?.message"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
       :trace-id="error?.traceId"
       :error-code="error?.code"
-      :hint="error?.hint"
+      :hint="errorCopy.hint"
       variant="error"
       :on-retry="reload"
     />
@@ -93,7 +93,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
 import type { ViewButton, ViewContract } from '@sc/schema';
 import { recordTrace, createTraceId } from '../services/trace';
-import { useStatus } from '../composables/useStatus';
+import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { useSessionStore } from '../stores/session';
@@ -114,6 +114,7 @@ const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
 const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new'));
 const title = computed(() => `Form: ${model.value}`);
+const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
 
 const viewContract = ref<ViewContract | null>(null);
 const fields = ref<

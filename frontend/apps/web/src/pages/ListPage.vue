@@ -23,18 +23,18 @@
     <StatusPanel v-if="loading" title="Loading list..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
-      title="Request failed"
-      :message="error?.message || errorMessage"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
       :trace-id="error?.traceId || traceId"
       :error-code="error?.code || errorCode"
-      :hint="error?.hint || errorHint"
+      :hint="errorCopy.hint || errorHint"
       variant="error"
       :on-retry="onReload"
     />
     <StatusPanel
       v-else-if="status === 'empty'"
-      title="No data"
-      message="No records returned for this action."
+      :title="emptyCopy.title"
+      :message="emptyCopy.message"
       variant="info"
       :on-retry="onReload"
     />
@@ -126,7 +126,7 @@ import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import PageToolbar from '../components/page/PageToolbar.vue';
-import type { StatusError } from '../composables/useStatus';
+import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 
 const props = defineProps<{
@@ -172,6 +172,13 @@ const props = defineProps<{
   assigneeOptions?: Array<{ id: number; name: string }>;
   selectedAssigneeId?: number | null;
 }>();
+const errorCopy = computed(() =>
+  resolveErrorCopy(
+    props.error || null,
+    props.errorMessage || 'List load failed',
+  ),
+);
+const emptyCopy = computed(() => resolveEmptyCopy('list'));
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
     if (value.length === 2 && typeof value[1] === 'string') {

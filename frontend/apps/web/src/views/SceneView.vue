@@ -3,11 +3,11 @@
     <StatusPanel v-if="status === 'loading'" title="Resolving scene..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
-      title="Scene resolve failed"
-      :message="error?.message"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
       :trace-id="error?.traceId"
       :error-code="error?.code"
-      :hint="error?.hint"
+      :hint="errorCopy.hint"
       variant="error"
     />
   </section>
@@ -23,7 +23,7 @@ import { config } from '../config';
 import { findActionNodeByModel } from '../app/menu';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
-import { useStatus } from '../composables/useStatus';
+import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
 
 const route = useRoute();
@@ -31,6 +31,7 @@ const router = useRouter();
 const session = useSessionStore();
 const status = ref<'loading' | 'error' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
+const errorCopy = ref(resolveErrorCopy(null, 'Scene resolve failed'));
 const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger', 'projects.intake']);
 
 function isPortalPath(url: string) {
@@ -80,6 +81,7 @@ async function resolveScene() {
   const scene = getSceneByKey(sceneKey);
   if (!scene) {
     setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
+    errorCopy.value = resolveErrorCopy(error.value, 'Scene resolve failed');
     status.value = 'error';
     return;
   }
@@ -199,6 +201,7 @@ async function resolveScene() {
   }
 
   setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
+  errorCopy.value = resolveErrorCopy(error.value, 'Scene resolve failed');
   status.value = 'error';
 }
 

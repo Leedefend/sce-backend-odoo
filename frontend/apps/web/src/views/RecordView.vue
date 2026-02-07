@@ -32,18 +32,18 @@
     <StatusPanel v-else-if="status === 'saving'" title="Saving record..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
-      title="Request failed"
-      :message="error?.code ? `code=${error.code} · ${error.message}` : error?.message"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
       :trace-id="error?.traceId || traceId"
       :error-code="error?.code"
-      :hint="error?.hint"
+      :hint="errorCopy.hint"
       variant="error"
       :on-retry="reload"
     />
     <StatusPanel
       v-else-if="status === 'empty'"
-      title="No data"
-      message="Record not found or not readable."
+      :title="emptyCopy.title"
+      :message="emptyCopy.message"
       variant="info"
       :on-retry="reload"
     />
@@ -159,7 +159,7 @@ import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { isHudEnabled } from '../config/debug';
-import { useStatus } from '../composables/useStatus';
+import { resolveEmptyCopy, resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { useEditTx } from '../composables/useEditTx';
 import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
@@ -214,6 +214,8 @@ const statusTone = computed(() => {
   if (status.value === 'editing' || status.value === 'saving') return 'warn';
   return 'ok';
 });
+const errorCopy = computed(() => resolveErrorCopy(error.value, 'Record load failed'));
+const emptyCopy = computed(() => resolveEmptyCopy('record'));
 const renderMode = computed(() => (viewContract.value?.layout ? 'layout_tree' : 'fallback_fields'));
 const headerButtons = computed(() => normalizeButtons(viewContract.value?.layout?.headerButtons ?? []));
 const statButtons = computed(() => normalizeButtons(viewContract.value?.layout?.statButtons ?? []));

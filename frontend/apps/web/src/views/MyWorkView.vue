@@ -13,13 +13,14 @@
     <StatusPanel v-if="loading" title="加载我的工作中..." variant="info" />
     <StatusPanel
       v-else-if="errorText"
-      title="我的工作加载失败"
-      :message="errorText"
-      :trace-id="errorTraceId || undefined"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
+      :trace-id="statusError?.traceId || undefined"
+      :error-code="statusError?.code"
+      :hint="errorCopy.hint"
       variant="error"
       :on-retry="load"
     />
-
     <template v-else>
       <section class="summary-grid">
         <article
@@ -60,7 +61,7 @@
           </thead>
           <tbody>
             <tr v-if="!filteredItems.length">
-              <td colspan="5" class="empty">当前分区没有待处理事项</td>
+              <td colspan="5" class="empty">{{ emptyCopy.message }}</td>
             </tr>
             <tr v-for="item in filteredItems" :key="`${item.section || 'all'}-${item.id}`">
               <td>{{ item.section_label || '-' }}</td>
@@ -85,16 +86,19 @@ import { useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
 import { fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import StatusPanel from '../components/StatusPanel.vue';
+import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 
 const router = useRouter();
 
 const loading = ref(false);
 const errorText = ref('');
-const errorTraceId = ref('');
+const statusError = ref<StatusError | null>(null);
 const sections = ref<MyWorkSection[]>([]);
 const summary = ref<MyWorkSummaryItem[]>([]);
 const items = ref<MyWorkRecordItem[]>([]);
 const activeSection = ref<string>('todo');
+const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
+const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 
 const filteredItems = computed(() => {
   if (!sections.value.length) return items.value;
@@ -106,7 +110,7 @@ const filteredItems = computed(() => {
 async function load() {
   loading.value = true;
   errorText.value = '';
-  errorTraceId.value = '';
+  statusError.value = null;
   try {
     const data = await fetchMyWorkSummary(80, 16);
     sections.value = Array.isArray(data.sections) ? data.sections : [];
@@ -118,7 +122,16 @@ async function load() {
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '请求失败';
     if (err instanceof ApiError) {
-      errorTraceId.value = err.traceId || '';
+      statusError.value = {
+        message: err.message,
+        traceId: err.traceId,
+        code: err.status,
+        hint: err.hint,
+        kind: err.kind,
+        reasonCode: err.reasonCode,
+      };
+    } else {
+      statusError.value = { message: errorText.value };
     }
   } finally {
     loading.value = false;

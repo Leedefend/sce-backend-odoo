@@ -12,18 +12,18 @@
     <StatusPanel v-if="loading" title="Loading cards..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
-      title="Request failed"
-      :message="error?.message || errorMessage"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
       :trace-id="error?.traceId || traceId"
       :error-code="error?.code || errorCode"
-      :hint="error?.hint || errorHint"
+      :hint="errorCopy.hint || errorHint"
       variant="error"
       :on-retry="onReload"
     />
     <StatusPanel
       v-else-if="status === 'empty'"
-      title="No data"
-      message="No cards returned for this action."
+      :title="emptyCopy.title"
+      :message="emptyCopy.message"
       variant="info"
       :on-retry="onReload"
     />
@@ -51,7 +51,7 @@
 import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
-import type { StatusError } from '../composables/useStatus';
+import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 
 const props = defineProps<{
   title: string;
@@ -70,6 +70,13 @@ const props = defineProps<{
   subtitle: string;
   statusLabel: string;
 }>();
+const errorCopy = computed(() =>
+  resolveErrorCopy(
+    props.error || null,
+    props.errorMessage || 'Card load failed',
+  ),
+);
+const emptyCopy = computed(() => resolveEmptyCopy('card'));
 
 const metaFields = computed(() => props.fields.filter((field) => field !== props.titleField).slice(0, 4));
 
