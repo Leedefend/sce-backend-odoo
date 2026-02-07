@@ -1,5 +1,8 @@
 # Release R0 Launch Package Baseline
 
+Status: Ready for GA
+RC Reference: r0.1.0-rc1
+
 ## Official launch package
 
 - Package key: `sc-project-execution-core`

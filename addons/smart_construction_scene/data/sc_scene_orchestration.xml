@@ -260,5 +260,92 @@
         <record id="sc_scene_projects_ledger" model="sc.scene">
             <field name="active_version_id" ref="sc_scene_version_projects_ledger_v2"/>
         </record>
+
+        <!-- Portal lifecycle scene -->
+        <record id="sc_scene_portal_lifecycle" model="sc.scene">
+            <field name="sequence">60</field>
+            <field name="name">生命周期驾驶舱</field>
+            <field name="code">portal.lifecycle</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+
+        <record id="sc_scene_version_portal_lifecycle_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_portal_lifecycle"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'portal.lifecycle',
+                'name': '生命周期驾驶舱',
+                'version': 'v2',
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/portal/lifecycle'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_portal_lifecycle" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_portal_lifecycle_v2"/>
+        </record>
+
+        <!-- Portal capability matrix scene -->
+        <record id="sc_scene_portal_capability_matrix" model="sc.scene">
+            <field name="sequence">61</field>
+            <field name="name">能力矩阵</field>
+            <field name="code">portal.capability_matrix</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+
+        <record id="sc_scene_version_portal_capability_matrix_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_portal_capability_matrix"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'portal.capability_matrix',
+                'name': '能力矩阵',
+                'version': 'v2',
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/portal/capability-matrix'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_portal_capability_matrix" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_portal_capability_matrix_v2"/>
+        </record>
+
+        <!-- Portal dashboard scene -->
+        <record id="sc_scene_portal_dashboard" model="sc.scene">
+            <field name="sequence">62</field>
+            <field name="name">工作台</field>
+            <field name="code">portal.dashboard</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+
+        <record id="sc_scene_version_portal_dashboard_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_portal_dashboard"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'portal.dashboard',
+                'name': '工作台',
+                'version': 'v2',
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/portal/dashboard'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_portal_dashboard" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_portal_dashboard_v2"/>
+        </record>
     </data>
 </odoo>

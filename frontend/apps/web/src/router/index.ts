@@ -19,6 +19,7 @@ const router = createRouter({
     { path: '/projects/:id', name: 'scene-project', component: SceneView, meta: { layout: 'shell', sceneKey: 'project-record' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
+    // Diagnostic-only surface; must not be used as product navigation.
     { path: '/workbench', name: 'workbench', component: WorkbenchView, meta: { layout: 'shell' } },
     { path: '/admin/scene-health', name: 'scene-health', component: SceneHealthView, meta: { layout: 'shell', adminOnly: true } },
     { path: '/admin/scene-packages', name: 'scene-packages', component: ScenePackagesView, meta: { layout: 'shell', adminOnly: true } },

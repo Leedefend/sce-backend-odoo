@@ -2,6 +2,7 @@
   <section class="workbench">
     <header class="header">
       <div>
+        <p class="diagnostic">Diagnostic surface only — not product UI.</p>
         <h2>Navigation unavailable</h2>
         <p class="meta">This page appears only when the requested target cannot be opened.</p>
       </div>
@@ -97,6 +98,7 @@ import { useSessionStore } from '../stores/session';
 import { isHudEnabled } from '../config/debug';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 
+// Workbench is a diagnostic-only surface and must not be used as product UI.
 const route = useRoute();
 const router = useRouter();
 
@@ -278,6 +280,15 @@ function findFirstReachableMenuId(nodes: any[]): number | null {
 .meta {
   color: #64748b;
   font-size: 14px;
+}
+
+.diagnostic {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b45309;
 }
 
 .details {
