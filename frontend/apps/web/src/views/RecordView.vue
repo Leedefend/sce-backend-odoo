@@ -100,43 +100,38 @@
         </div>
       </div>
       <section v-if="hasChatter" class="chatter">
-        <h3>Chatter</h3>
+        <h3>协作时间线</h3>
         <p v-if="chatterError" class="meta">{{ chatterError }}</p>
-        <div v-else class="chatter-grid">
-          <div class="chatter-block">
-            <h4>Messages</h4>
-            <p v-if="!chatterMessages.length" class="meta">No messages yet.</p>
-            <ul v-else class="chatter-list">
-              <li v-for="msg in chatterMessages" :key="String(msg.id)" class="chatter-item">
-                <div class="chatter-title">{{ msg.subject || 'Message' }}</div>
-                <div class="chatter-meta">{{ msg.author_id?.[1] || 'Unknown' }} · {{ msg.date || '-' }}</div>
-                <div class="chatter-body">{{ stripHtml(String(msg.body || '')) }}</div>
-              </li>
-            </ul>
-            <div class="chatter-compose">
-              <textarea v-model="chatterDraft" placeholder="Write a message..." />
-              <button :disabled="chatterPosting || !chatterDraft.trim()" @click="sendChatter">
-                {{ chatterPosting ? 'Posting...' : 'Post message' }}
-              </button>
-            </div>
-          </div>
-          <div class="chatter-block">
-            <h4>Attachments</h4>
-            <p v-if="!chatterAttachments.length" class="meta">No attachments yet.</p>
-            <div class="chatter-upload">
-              <input type="file" @change="onAttachmentSelected" />
-              <span v-if="chatterUploading" class="meta">Uploading…</span>
-              <span v-if="chatterUploadError" class="meta">{{ chatterUploadError }}</span>
-            </div>
-            <ul v-if="chatterAttachments.length" class="chatter-list">
-              <li v-for="att in chatterAttachments" :key="String(att.id)" class="chatter-item">
-                <div class="chatter-title">{{ att.name || 'Attachment' }}</div>
-                <div class="chatter-meta">{{ att.mimetype || 'unknown' }} · {{ att.file_size || '-' }}</div>
-                <button class="ghost" type="button" @click="downloadAttachment(att)">Download</button>
-              </li>
-            </ul>
+        <div class="chatter-compose">
+          <textarea v-model="chatterDraft" placeholder="输入评论，支持 @同事 ..." />
+          <div class="chatter-compose-actions">
+            <button :disabled="chatterPosting || !chatterDraft.trim()" @click="sendChatter">
+              {{ chatterPosting ? '发布中...' : '发布评论' }}
+            </button>
+            <input type="file" @change="onAttachmentSelected" />
+            <span v-if="chatterUploading" class="meta">上传中…</span>
+            <span v-if="chatterUploadError" class="meta">{{ chatterUploadError }}</span>
           </div>
         </div>
+        <p v-if="!timelineEntries.length" class="meta">暂无协作记录。</p>
+        <ul v-else class="timeline-list">
+          <li v-for="entry in timelineEntries" :key="entry.key" class="timeline-item">
+            <div class="timeline-type" :class="`type-${entry.type}`">{{ entry.typeLabel }}</div>
+            <div class="timeline-main">
+              <div class="chatter-title">{{ entry.title }}</div>
+              <div class="chatter-meta">{{ entry.meta }}</div>
+              <div v-if="entry.body" class="chatter-body">{{ entry.body }}</div>
+              <button
+                v-if="entry.type === 'attachment' && entry.attachment"
+                class="ghost"
+                type="button"
+                @click="downloadAttachment(entry.attachment)"
+              >
+                Download
+              </button>
+            </div>
+          </li>
+        </ul>
       </section>
     </section>
 
@@ -232,6 +227,50 @@ const ribbon = computed(() => {
   return value as { title?: string };
 });
 const hasChatter = computed(() => Boolean(viewContract.value?.layout?.chatter));
+type TimelineEntry = {
+  key: string;
+  type: 'message' | 'attachment';
+  typeLabel: string;
+  title: string;
+  meta: string;
+  body: string;
+  at: number;
+  attachment?: { id?: number; name?: string; mimetype?: string };
+};
+const timelineEntries = computed<TimelineEntry[]>(() => {
+  const messageItems: TimelineEntry[] = chatterMessages.value.map((msg) => {
+    const rawDate = String(msg.date || '');
+    const at = rawDate ? Date.parse(rawDate) : 0;
+    return {
+      key: `m-${String(msg.id || Math.random())}`,
+      type: 'message',
+      typeLabel: '评论',
+      title: String(msg.subject || '评论'),
+      meta: `${String((msg.author_id as any)?.[1] || 'Unknown')} · ${rawDate || '-'}`,
+      body: stripHtml(String(msg.body || '')),
+      at: Number.isNaN(at) ? 0 : at,
+    };
+  });
+  const attachmentItems: TimelineEntry[] = chatterAttachments.value.map((att) => {
+    const attId = Number(att.id || 0) || 0;
+    const at = 0 - attId;
+    return {
+      key: `a-${String(att.id || Math.random())}`,
+      type: 'attachment',
+      typeLabel: '附件',
+      title: String(att.name || 'Attachment'),
+      meta: `${String(att.mimetype || 'unknown')} · ${String(att.file_size || '-')}`,
+      body: '',
+      at,
+      attachment: {
+        id: typeof att.id === 'number' ? att.id : Number(att.id || 0),
+        name: String(att.name || ''),
+        mimetype: String(att.mimetype || ''),
+      },
+    };
+  });
+  return [...messageItems, ...attachmentItems].sort((a, b) => b.at - a.at);
+});
 const supportedNodes = ['field', 'group', 'notebook', 'page', 'headerButtons', 'statButtons', 'ribbon', 'chatter'];
 const missingNodes = computed(() => {
   const layout = viewContract.value?.layout;
@@ -885,6 +924,12 @@ onMounted(load);
   margin-top: 8px;
 }
 
+.chatter-compose-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .chatter-compose textarea {
   min-height: 80px;
   border-radius: 10px;
@@ -896,6 +941,50 @@ onMounted(load);
   display: grid;
   gap: 6px;
   margin-bottom: 10px;
+}
+
+.timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+}
+
+.timeline-type {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 6px;
+  align-self: start;
+}
+
+.timeline-type.type-message {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.timeline-type.type-attachment {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.timeline-main {
+  min-width: 0;
 }
 button {
   padding: 10px 14px;
