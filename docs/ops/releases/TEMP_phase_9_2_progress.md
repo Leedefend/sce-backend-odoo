@@ -27,6 +27,12 @@ Branch: `codex/phase-9-2-scene-data`
   - artifacts: `/mnt/artifacts/audit/scene-config/20260207T040903`
 - `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_contract_smoke.container`: PASS
   - artifacts: `/mnt/artifacts/codex/portal-shell-v0_8-6/20260207T041133`
+- `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_targets_resolve_smoke.container`: PASS
+  - artifacts: `/mnt/artifacts/codex/portal-shell-v0_9-7/20260207T041230`
+- `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_layout_contract_smoke.container`: PASS
+  - artifacts: `/mnt/artifacts/codex/portal-shell-v0_9-1-1/20260207T041245`
+- `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_semantic_smoke.container`: PASS
+  - artifacts: `/mnt/artifacts/codex/portal-shell-v0_9-6/20260207T041259`
 
 ## Notes
 
@@ -38,4 +44,4 @@ Branch: `codex/phase-9-2-scene-data`
 - [x] system_init no longer applies layout defaults
 - [x] scene config split into layout/tiles/list_profile data files
 - [x] scene config audit hook in Makefile
-- [x] verify scene resolve/contract smokes (contract smoke passed)
+- [x] verify scene resolve/contract smokes (contract/targets/layout/semantic passed)
