@@ -30,6 +30,26 @@
             </option>
           </select>
         </label>
+        <label>
+          角色切片
+          <select v-model="roleSlice" :disabled="loading">
+            <option value="">全部角色</option>
+            <option v-for="code in roleCodeOptions" :key="`role-${code}`" :value="code">
+              {{ code }}
+            </option>
+          </select>
+        </label>
+        <label>
+          用户切片
+          <input
+            v-model.number="userSlice"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="0=全部"
+            :disabled="loading"
+          />
+        </label>
         <label class="export-scope">
           <input v-model="exportFilteredOnly" type="checkbox" />
           仅导出当前筛选
@@ -188,6 +208,44 @@
           </table>
         </article>
       </section>
+
+      <section class="tables">
+        <article class="table-card">
+          <h3>Role Top</h3>
+          <table>
+            <thead>
+              <tr><th>Role Code</th><th>Scene</th><th>Capability</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              <tr v-if="!roleTop.length"><td colspan="4" class="empty">暂无数据</td></tr>
+              <tr v-for="item in roleTop" :key="`role-top-${item.role_code}`">
+                <td>{{ item.role_code }}</td>
+                <td>{{ item.scene_open_total }}</td>
+                <td>{{ item.capability_open_total }}</td>
+                <td>{{ item.combined_total }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="table-card">
+          <h3>User Top</h3>
+          <table>
+            <thead>
+              <tr><th>User ID</th><th>Scene</th><th>Capability</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              <tr v-if="!userTop.length"><td colspan="4" class="empty">暂无数据</td></tr>
+              <tr v-for="item in userTop" :key="`user-top-${item.user_id}`">
+                <td>{{ item.user_id }}</td>
+                <td>{{ item.scene_open_total }}</td>
+                <td>{{ item.capability_open_total }}</td>
+                <td>{{ item.combined_total }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
     </template>
   </section>
 </template>
@@ -204,15 +262,20 @@ const errorTraceId = ref('');
 const topN = ref(10);
 const dailyRange = ref(7);
 const hiddenReasonFilter = ref('ALL');
+const roleSlice = ref('');
+const userSlice = ref(0);
 const exportFilteredOnly = ref(true);
 const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
 
 const sceneTop = computed(() => report.value?.scene_top || []);
 const capabilityTop = computed(() => report.value?.capability_top || []);
+const roleTop = computed(() => report.value?.role_top || []);
+const userTop = computed(() => report.value?.user_top || []);
 const sceneDaily = computed(() => report.value?.daily?.scene_open || []);
 const capabilityDaily = computed(() => report.value?.daily?.capability_open || []);
 const reasonCounts = computed(() => visibility.value?.reason_counts || []);
+const roleCodeOptions = computed(() => visibility.value?.role_codes || []);
 const hiddenSamples = computed(() => visibility.value?.hidden_samples || []);
 const filteredHiddenSamples = computed(() => {
   if (hiddenReasonFilter.value === 'ALL') return hiddenSamples.value;
@@ -228,6 +291,8 @@ async function exportCsv() {
       days: dailyRange.value,
       hidden_reason: hiddenReasonFilter.value,
       export_filtered_only: exportFilteredOnly.value,
+      role_code: roleSlice.value || '',
+      user_id: Math.max(0, Number(userSlice.value || 0)),
     });
     const blob = new Blob([data.content || ''], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -249,6 +314,8 @@ async function exportCsv() {
 function resetFilters() {
   dailyRange.value = 7;
   hiddenReasonFilter.value = 'ALL';
+  roleSlice.value = '';
+  userSlice.value = 0;
   exportFilteredOnly.value = true;
   if (topN.value !== 10) {
     topN.value = 10;
@@ -263,7 +330,12 @@ async function load() {
   errorTraceId.value = '';
   try {
     const [usage, vis] = await Promise.all([
-      fetchUsageReport(topN.value, dailyRange.value),
+      fetchUsageReport(
+        topN.value,
+        dailyRange.value,
+        roleSlice.value || '',
+        Math.max(0, Number(userSlice.value || 0)),
+      ),
       fetchCapabilityVisibilityReport(),
     ]);
     report.value = usage;
@@ -278,7 +350,7 @@ async function load() {
   }
 }
 
-watch([topN, dailyRange], () => {
+watch([topN, dailyRange, roleSlice, userSlice], () => {
   load();
 });
 

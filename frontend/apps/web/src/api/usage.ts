@@ -57,10 +57,10 @@ export type UsageReport = {
   };
 };
 
-export async function fetchUsageReport(top = 10, days = 7) {
+export async function fetchUsageReport(top = 10, days = 7, roleCode = '', userId = 0) {
   return intentRequest<UsageReport>({
     intent: 'usage.report',
-    params: { top, days },
+    params: { top, days, role_code: roleCode, user_id: userId },
   });
 }
 
