@@ -23,6 +23,8 @@ const DENY_WARNING_CODES = (process.env.DENY_WARNING_CODES || '')
   .split(',')
   .map((code) => code.trim())
   .filter(Boolean);
+const DEFAULT_ACT_URL_MAX = Number(process.env.SC_WARN_ACT_URL_LEGACY_MAX || 3);
+const MAX_WARNING_CODES_RAW = process.env.MAX_WARNING_CODES || '';
 const MAX_WARNING_CODES = (process.env.MAX_WARNING_CODES || '')
   .split(',')
   .map((pair) => pair.trim())
@@ -34,6 +36,9 @@ const MAX_WARNING_CODES = (process.env.MAX_WARNING_CODES || '')
     if (!Number.isNaN(limit)) acc[code] = limit;
     return acc;
   }, {});
+if (!MAX_WARNING_CODES_RAW && !Number.isNaN(DEFAULT_ACT_URL_MAX)) {
+  MAX_WARNING_CODES.ACT_URL_LEGACY = DEFAULT_ACT_URL_MAX;
+}
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -136,7 +141,16 @@ async function main() {
     summary[code] = (summary[code] || 0) + 1;
   }
 
-  writeJson(path.join(outDir, 'warnings.json'), { total: warnings.length, by_code: summary, entries: warnings });
+  const limitsSnapshot = {};
+  for (const [code, limit] of Object.entries(MAX_WARNING_CODES)) {
+    limitsSnapshot[code] = { max: limit, actual: summary[code] || 0 };
+  }
+  writeJson(path.join(outDir, 'warnings.json'), {
+    total: warnings.length,
+    by_code: summary,
+    limits: limitsSnapshot,
+    entries: warnings,
+  });
   log(`warnings: ${warnings.length}`);
 
   if (DENY_WARNING_CODES.length) {

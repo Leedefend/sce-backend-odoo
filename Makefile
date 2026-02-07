@@ -71,6 +71,8 @@ COMPOSE_CI       = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_B
 
 # ------------------ DB / Module ------------------
 DB_NAME      ?= sc_odoo
+SC_GATE_STRICT ?= 1
+SC_WARN_ACT_URL_LEGACY_MAX ?= 3
 DB_CI        ?= sc_test
 DB_USER      ?= odoo
 DB_PASSWORD  ?= $(DB_USER)
@@ -557,7 +559,7 @@ verify.portal.scene_diagnostics_smoke.container: guard.prod.forbid check-compose
 verify.portal.scene_warnings_guard.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) DENY_WARNING_CODES=ACT_URL_MISSING_SCENE node /mnt/scripts/verify/scene_warnings_guard_summary.js"
 verify.portal.scene_warnings_limit.container: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) MAX_WARNING_CODES=ACT_URL_LEGACY=3 node /mnt/scripts/verify/scene_warnings_guard_summary.js"
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) SC_WARN_ACT_URL_LEGACY_MAX=$(SC_WARN_ACT_URL_LEGACY_MAX) node /mnt/scripts/verify/scene_warnings_guard_summary.js"
 verify.portal.scene_health_contract_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) AUTH_TOKEN=$(AUTH_TOKEN) BOOTSTRAP_SECRET=$(BOOTSTRAP_SECRET) BOOTSTRAP_LOGIN=$(BOOTSTRAP_LOGIN) node /mnt/scripts/verify/fe_scene_health_contract_smoke.js"
 verify.portal.scene_auto_degrade_smoke.container: guard.prod.forbid check-compose-project check-compose-env
@@ -762,12 +764,21 @@ audit.boundary:
 	@bash scripts/audit/boundary_lint.sh
 
 gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env
+	@if ! docker info >/dev/null 2>&1; then \
+	  echo "❌ docker is required for gate.full (containers not available)"; \
+	  echo "   Fix: start docker or run with SC_GATE_STRICT=0 for local-only checks."; \
+	  exit 2; \
+	fi
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
-	@$(MAKE) verify.menu.scene_resolve.container DB_NAME=$(DB_NAME)
-	@$(MAKE) verify.menu.scene_resolve.summary
-	@$(MAKE) verify.portal.scene_warnings_guard.container DB_NAME=$(DB_NAME)
-	@$(MAKE) verify.portal.scene_warnings_limit.container DB_NAME=$(DB_NAME)
+	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
+	  $(MAKE) verify.menu.scene_resolve.container DB_NAME=$(DB_NAME); \
+	  $(MAKE) verify.menu.scene_resolve.summary; \
+	  $(MAKE) verify.portal.scene_warnings_guard.container DB_NAME=$(DB_NAME); \
+	  $(MAKE) verify.portal.scene_warnings_limit.container DB_NAME=$(DB_NAME); \
+	else \
+	  echo "[gate.full] SC_GATE_STRICT=0: skip menu/act_url guard checks"; \
+	fi
 	@$(MAKE) audit.pull DB_NAME=$(DB_NAME)
 
 # ======================================================
