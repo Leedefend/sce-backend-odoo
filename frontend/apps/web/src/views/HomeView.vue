@@ -47,6 +47,7 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
+import { trackCapabilityOpen } from '../api/usage';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type CapabilityEntry = {
@@ -99,6 +100,7 @@ const entries = computed<CapabilityEntry[]>(() => {
 
 async function openScene(entry: CapabilityEntry) {
   if (entry.state === 'LOCKED') return;
+  void trackCapabilityOpen(entry.key).catch(() => {});
   await router.push({ path: `/s/${entry.sceneKey}` });
 }
 </script>

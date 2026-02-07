@@ -24,6 +24,7 @@ import { findActionNodeByModel } from '../app/menu';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { useStatus } from '../composables/useStatus';
+import { trackSceneOpen } from '../api/usage';
 
 const route = useRoute();
 const router = useRouter();
@@ -91,6 +92,7 @@ async function resolveScene() {
     });
     return;
   }
+  void trackSceneOpen(sceneKey).catch(() => {});
 
   const target = scene.target || {};
   const layout = resolveSceneLayout(scene);
