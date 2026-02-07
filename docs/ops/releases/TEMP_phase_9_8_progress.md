@@ -62,6 +62,8 @@
   - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T053445`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.phase_9_8.gate_summary`: PASS
   - Artifacts: `artifacts/codex/phase-9-8/gate_summary.json`
+- `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make gate.full`: FAIL
+  - Reason: existing test failures in smart_construction_core (actions missing groups_id) and menu/action bypass gate.
 - No other tests executed in this step.
 
 ## Notes
