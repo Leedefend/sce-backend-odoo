@@ -24,7 +24,8 @@ CN_TIMEOUT="${CN_TIMEOUT:-180}"
 # 4. 项目配置 (tools/continue/config/continue-deepseek.json)
 
 # 项目配置路径
-PROJECT_CONFIG="/mnt/e/sc-backend-odoo/tools/continue/config/continue-deepseek.json"
+ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+PROJECT_CONFIG="$ROOT_DIR/tools/continue/config/continue-deepseek.json"
 USER_CONFIG_JSON="$HOME/.continue/config.json"
 USER_CONFIG_YAML="$HOME/.continue/config.yaml"
 

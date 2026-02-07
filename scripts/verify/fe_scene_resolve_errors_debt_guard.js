@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const REPO_ROOT = path.resolve(__dirname, '../..');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -81,11 +82,12 @@ function requestJson(url, payload, headers = {}) {
 function resolveReadPath(relPath) {
   const roots = [
     process.env.DEBT_ROOT,
-    '/mnt',
+    process.env.REPO_ROOT,
+    REPO_ROOT,
+    process.cwd(),
     '/mnt/extra-addons',
     '/mnt/addons_external',
     '/mnt/odoo',
-    '/mnt/e/sc-backend-odoo',
   ].filter(Boolean);
   const stripped = relPath.startsWith('docs/') ? relPath : relPath;
   for (const root of roots) {
@@ -99,7 +101,7 @@ function resolveReadPath(relPath) {
 
 function resolveWritePath(relPath) {
   if (path.isAbsolute(relPath)) return relPath;
-  const root = process.env.DEBT_ROOT || '/mnt/extra-addons';
+  const root = process.env.DEBT_ROOT || process.env.REPO_ROOT || REPO_ROOT;
   return path.join(root, relPath);
 }
 
