@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
 import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
@@ -195,6 +195,7 @@ const actionFeedbackError = ref(false);
 const searchText = ref('');
 const sourceFilter = ref('ALL');
 const reasonFilter = ref('ALL');
+const myWorkFilterStorageKey = 'sc.mywork.filters.v1';
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
@@ -505,7 +506,45 @@ async function retryFailedTodos() {
   }
 }
 
-onMounted(load);
+function restoreFilters() {
+  try {
+    const raw = window.localStorage.getItem(myWorkFilterStorageKey);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as {
+      activeSection?: string;
+      searchText?: string;
+      sourceFilter?: string;
+      reasonFilter?: string;
+    };
+    if (parsed.activeSection) activeSection.value = parsed.activeSection;
+    if (typeof parsed.searchText === 'string') searchText.value = parsed.searchText;
+    if (typeof parsed.sourceFilter === 'string') sourceFilter.value = parsed.sourceFilter;
+    if (typeof parsed.reasonFilter === 'string') reasonFilter.value = parsed.reasonFilter;
+  } catch {
+    // Ignore broken local cache.
+  }
+}
+
+onMounted(() => {
+  restoreFilters();
+  void load();
+});
+
+watch([activeSection, searchText, sourceFilter, reasonFilter], () => {
+  try {
+    window.localStorage.setItem(
+      myWorkFilterStorageKey,
+      JSON.stringify({
+        activeSection: activeSection.value,
+        searchText: searchText.value,
+        sourceFilter: sourceFilter.value,
+        reasonFilter: reasonFilter.value,
+      }),
+    );
+  } catch {
+    // Ignore persist errors in private mode.
+  }
+});
 </script>
 
 <style scoped>

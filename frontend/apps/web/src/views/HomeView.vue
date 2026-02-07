@@ -44,6 +44,19 @@
           PREVIEW {{ stateCounts.PREVIEW }}
         </button>
       </div>
+      <div v-if="lockedReasonOptions.length" class="reason-filters">
+        <button :class="{ active: lockReasonFilter === 'ALL' }" @click="lockReasonFilter = 'ALL'">
+          锁定原因：全部
+        </button>
+        <button
+          v-for="item in lockedReasonOptions"
+          :key="`reason-${item.reasonCode}`"
+          :class="{ active: lockReasonFilter === item.reasonCode }"
+          @click="lockReasonFilter = item.reasonCode"
+        >
+          {{ lockReasonLabel(item.reasonCode) }} {{ item.count }}
+        </button>
+      </div>
     </section>
 
     <div v-if="!filteredEntries.length" class="empty">
@@ -106,6 +119,7 @@ const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
 const stateFilter = ref<'ALL' | EntryState>('ALL');
 const readyOnly = ref(false);
+const lockReasonFilter = ref('ALL');
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
@@ -153,6 +167,10 @@ const filteredEntries = computed<CapabilityEntry[]>(() => {
     if (readyOnly.value && entry.state !== 'READY') return false;
     const matchesState = stateFilter.value === 'ALL' ? true : entry.state === stateFilter.value;
     if (!matchesState) return false;
+    if (lockReasonFilter.value !== 'ALL') {
+      if (entry.state !== 'LOCKED') return false;
+      if (String(entry.reasonCode || '').toUpperCase() !== lockReasonFilter.value) return false;
+    }
     if (!query) return true;
     return [entry.title, entry.subtitle, entry.key].some((text) => String(text || '').toLowerCase().includes(query));
   });
@@ -164,6 +182,18 @@ const stateCounts = computed(() => {
     counts[entry.state] += 1;
   }
   return counts;
+});
+
+const lockedReasonOptions = computed(() => {
+  const map = new Map<string, number>();
+  entries.value.forEach((entry) => {
+    if (entry.state !== 'LOCKED') return;
+    const code = String(entry.reasonCode || 'UNKNOWN').toUpperCase();
+    map.set(code, (map.get(code) || 0) + 1);
+  });
+  return Array.from(map.entries())
+    .map(([reasonCode, count]) => ({ reasonCode, count }))
+    .sort((a, b) => b.count - a.count || a.reasonCode.localeCompare(b.reasonCode));
 });
 
 function lockReasonLabel(reasonCode: string) {
@@ -280,6 +310,27 @@ async function openScene(entry: CapabilityEntry) {
   border-color: #1d4ed8;
   background: #eff6ff;
   color: #1e40af;
+}
+
+.reason-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reason-filters button {
+  border: 1px dashed #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.reason-filters button.active {
+  border-color: #b91c1c;
+  color: #b91c1c;
+  background: #fff1f2;
 }
 
 .cards {

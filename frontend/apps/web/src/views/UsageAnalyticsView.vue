@@ -21,6 +21,15 @@
             <option :value="7">最近 7 天</option>
           </select>
         </label>
+        <label>
+          隐藏原因
+          <select v-model="hiddenReasonFilter" :disabled="loading">
+            <option value="ALL">全部</option>
+            <option v-for="item in reasonCounts" :key="`reason-filter-${item.reason_code}`" :value="item.reason_code">
+              {{ item.reason_code }} ({{ item.count }})
+            </option>
+          </select>
+        </label>
         <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">导出 CSV</button>
         <button class="secondary" :disabled="loading" @click="load">刷新</button>
       </div>
@@ -165,8 +174,8 @@
               <tr><th>Key</th><th>Reason</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!hiddenSamples.length"><td colspan="2" class="empty">暂无数据</td></tr>
-              <tr v-for="item in hiddenSamples" :key="item.key">
+              <tr v-if="!filteredHiddenSamples.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-for="item in filteredHiddenSamples" :key="item.key">
                 <td>{{ item.key }}</td>
                 <td>{{ item.reason_code || item.reason || '-' }}</td>
               </tr>
@@ -189,6 +198,7 @@ const errorText = ref('');
 const errorTraceId = ref('');
 const topN = ref(10);
 const dailyRange = ref(7);
+const hiddenReasonFilter = ref('ALL');
 const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
 
@@ -198,6 +208,10 @@ const sceneDaily = computed(() => (report.value?.daily?.scene_open || []).slice(
 const capabilityDaily = computed(() => (report.value?.daily?.capability_open || []).slice(0, dailyRange.value));
 const reasonCounts = computed(() => visibility.value?.reason_counts || []);
 const hiddenSamples = computed(() => visibility.value?.hidden_samples || []);
+const filteredHiddenSamples = computed(() => {
+  if (hiddenReasonFilter.value === 'ALL') return hiddenSamples.value;
+  return hiddenSamples.value.filter((item) => String(item.reason_code || '') === hiddenReasonFilter.value);
+});
 const canExport = computed(() => Boolean(report.value || visibility.value));
 
 function quoteCsv(value: string | number) {
