@@ -272,7 +272,13 @@ def _build_activity_summary(method_name: str, record) -> str:
 
 def _build_activity_note(method_name: str, payload: dict, actor) -> str:
     reason = payload.get("reason_code") or "OK"
-    return f"{actor.display_name or actor.login or 'System'} 执行了“{_semantic_action_label(method_name)}”操作。reason={reason}"
+    actor_name = actor.display_name or actor.login or "System"
+    action_key = str(method_name or "")
+    action_label = _semantic_action_label(method_name)
+    # 结构化首行，供 my.work.summary 解析并展示可解释字段
+    structured = f"SC_FOLLOWUP action_key={action_key} action_label={action_label} reason_code={reason}"
+    detail = f"{actor_name} 执行了“{action_label}”操作。reason={reason}"
+    return f"{structured}\n{detail}"
 
 
 def _semantic_action_label(method_name: str) -> str:

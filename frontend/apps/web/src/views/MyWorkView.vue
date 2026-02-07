@@ -55,18 +55,22 @@
               <th>分区</th>
               <th>事项</th>
               <th>模型</th>
+              <th>动作</th>
+              <th>原因码</th>
               <th>截止日</th>
               <th>入口</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="!filteredItems.length">
-              <td colspan="5" class="empty">{{ emptyCopy.message }}</td>
+              <td colspan="7" class="empty">{{ emptyCopy.message }}</td>
             </tr>
             <tr v-for="item in filteredItems" :key="`${item.section || 'all'}-${item.id}`">
               <td>{{ item.section_label || '-' }}</td>
               <td>{{ item.title || '-' }}</td>
               <td>{{ item.model || '-' }}</td>
+              <td>{{ item.action_label || '-' }}</td>
+              <td>{{ item.reason_code || '-' }}</td>
               <td>{{ item.deadline || '-' }}</td>
               <td>
                 <button class="link-btn" @click="openRecord(item)">打开记录</button>

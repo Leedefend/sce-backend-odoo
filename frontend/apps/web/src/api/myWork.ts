@@ -23,6 +23,9 @@ export type MyWorkRecordItem = {
   section?: string;
   section_label?: string;
   source?: string;
+  action_label?: string;
+  action_key?: string;
+  reason_code?: string;
 };
 
 export type MyWorkSummaryResponse = {

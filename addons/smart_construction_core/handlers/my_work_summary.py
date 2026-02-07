@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import re
+
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 
@@ -62,6 +64,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         try:
             records = Activity.search([("user_id", "=", user.id)], order="date_deadline asc, id desc", limit=limit)
             for rec in records:
+                followup = self._parse_followup_note(rec.note or "")
                 rows.append({
                     "id": rec.id,
                     "title": rec.summary or rec.activity_type_id.name or rec.res_model,
@@ -70,10 +73,26 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "deadline": fields.Date.to_string(rec.date_deadline) if rec.date_deadline else "",
                     "scene_key": self._scene_for_model(rec.res_model),
                     "source": "mail.activity",
+                    "action_label": followup.get("action_label") or "",
+                    "action_key": followup.get("action_key") or "",
+                    "reason_code": followup.get("reason_code") or "",
                 })
         except Exception:
             return []
         return rows
+
+    def _parse_followup_note(self, note_text):
+        first_line = str(note_text or "").splitlines()[0] if note_text else ""
+        if not first_line.startswith("SC_FOLLOWUP"):
+            # 兼容早期 note: "...reason=OK"
+            reason_match = re.search(r"reason=([A-Z0-9_]+)", str(note_text or ""))
+            return {"reason_code": reason_match.group(1) if reason_match else ""}
+        result = {}
+        for key in ("action_key", "action_label", "reason_code"):
+            match = re.search(rf"{key}=([^ ]+)", first_line)
+            if match:
+                result[key] = match.group(1)
+        return result
 
     def _load_owned_items(self, user, limit):
         Project = self.env.get("project.project")
