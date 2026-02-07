@@ -80,3 +80,7 @@
 
 ## Notes
 - Demo DB reset was required to apply currency seed changes before running gate.full.
+- PR 291 merged; main synchronized; branch cleaned.
+- Evidence doc updated: `docs/ops/releases/phase_9_8_gate_evidence.md`.
+- PR body finalized: `docs/ops/releases/phase_9_8_pr_body.md`.
+- Verification entrypoints indexed in `docs/ops/verify/README.md`.
