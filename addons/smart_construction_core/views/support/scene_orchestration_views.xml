@@ -50,6 +50,7 @@
             <field name="name">能力目录</field>
             <field name="res_model">sc.capability</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Scene -->
@@ -124,6 +125,7 @@
             <field name="name">场景编排</field>
             <field name="res_model">sc.scene</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <record id="view_sc_scene_version_tree" model="ir.ui.view">
@@ -161,6 +163,7 @@
             <field name="name">场景版本</field>
             <field name="res_model">sc.scene.version</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Pack Registry -->
@@ -217,6 +220,7 @@
             <field name="name">交付包注册表</field>
             <field name="res_model">sc.pack.registry</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Pack Installation -->
@@ -261,6 +265,7 @@
             <field name="name">交付包安装记录</field>
             <field name="res_model">sc.pack.installation</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Menu -->

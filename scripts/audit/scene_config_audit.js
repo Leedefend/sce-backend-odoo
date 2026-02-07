@@ -96,7 +96,8 @@ async function main() {
   );
   if (initResp.status >= 400 || !initResp.body.ok) throw new Error(`app.init failed: ${initResp.status}`);
 
-  const scenes = ((initResp.body || {}).data || {}).scenes || [];
+  const data = (initResp.body || {}).data || {};
+  const scenes = data.scenes || [];
   const report = scenes.map((scene) => {
     const code = scene.code || scene.key || '';
     return {
@@ -108,9 +109,22 @@ async function main() {
       spa_ready: Boolean(scene.spa_ready),
     };
   });
+  const diagnostics = data.scene_diagnostics || {};
+  const normalizeWarnings = Array.isArray(diagnostics.normalize_warnings) ? diagnostics.normalize_warnings : [];
+  const warningSummary = {};
+  for (const entry of normalizeWarnings) {
+    if (!entry || typeof entry !== 'object') continue;
+    const code = entry.code || 'UNKNOWN';
+    warningSummary[code] = (warningSummary[code] || 0) + 1;
+  }
 
   writeJson(path.join(outDir, 'scene_config_audit.json'), report);
+  writeJson(path.join(outDir, 'scene_config_warnings.json'), {
+    total: normalizeWarnings.length,
+    by_code: warningSummary,
+  });
   log(`scenes: ${report.length}`);
+  log(`warnings: ${normalizeWarnings.length}`);
   log(`artifacts: ${outDir}`);
 }
 

@@ -8,13 +8,13 @@ const https = require('https');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
-const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'svc_project_ro';
+const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'demo_pm';
 const PASSWORD =
   process.env.SCENE_PASSWORD ||
   process.env.SVC_PASSWORD ||
   process.env.E2E_PASSWORD ||
   process.env.ADMIN_PASSWD ||
-  'ChangeMe_123!';
+  'demo';
 const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
@@ -23,23 +23,34 @@ const DENY_WARNING_CODES = (process.env.DENY_WARNING_CODES || '')
   .split(',')
   .map((code) => code.trim())
   .filter(Boolean);
+const DEFAULT_ACT_URL_MAX = Number(process.env.SC_WARN_ACT_URL_LEGACY_MAX || 3);
+const MAX_WARNING_CODES_RAW = process.env.MAX_WARNING_CODES || '';
+const MAX_WARNING_CODES = (process.env.MAX_WARNING_CODES || '')
+  .split(',')
+  .map((pair) => pair.trim())
+  .filter(Boolean)
+  .reduce((acc, pair) => {
+    const [code, rawLimit] = pair.split('=').map((part) => (part || '').trim());
+    if (!code) return acc;
+    const limit = Number(rawLimit);
+    if (!Number.isNaN(limit)) acc[code] = limit;
+    return acc;
+  }, {});
+if (!MAX_WARNING_CODES_RAW && !Number.isNaN(DEFAULT_ACT_URL_MAX)) {
+  MAX_WARNING_CODES.ACT_URL_LEGACY = DEFAULT_ACT_URL_MAX;
+}
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
-const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-shell-v0_9-8', ts);
+const outDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-scene-warnings', ts);
 
 function log(msg) {
-  console.log(`[fe_scene_diagnostics_smoke] ${msg}`);
+  console.log(`[scene_warnings_guard] ${msg}`);
 }
 
 function writeJson(file, obj) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(obj, null, 2));
-}
-
-function writeSummary(lines) {
-  fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'summary.md'), lines.join('\n'));
 }
 
 function requestJson(url, payload, headers = {}) {
@@ -77,14 +88,8 @@ function requestJson(url, payload, headers = {}) {
   });
 }
 
-async function main() {
-  if (!DB_NAME) {
-    throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
-  }
-
+async function loginToken() {
   const intentUrl = `${BASE_URL}/api/v1/intent`;
-  const summary = [];
-
   let token = AUTH_TOKEN;
   if (!token && BOOTSTRAP_SECRET) {
     log('bootstrap: session.bootstrap');
@@ -108,15 +113,16 @@ async function main() {
       throw new Error(`login failed: status=${loginResp.status}`);
     }
     token = (loginResp.body.data || {}).token || '';
-    if (!token) {
-      throw new Error('login response missing token');
-    }
+    if (!token) throw new Error('login response missing token');
   }
+  return token;
+}
 
-  const authHeader = {
-    Authorization: `Bearer ${token}`,
-    'X-Odoo-DB': DB_NAME,
-  };
+async function main() {
+  if (!DB_NAME) throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
+  const token = await loginToken();
+  const intentUrl = `${BASE_URL}/api/v1/intent`;
+  const authHeader = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME };
 
   log('app.init');
   const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
@@ -126,61 +132,51 @@ async function main() {
     throw new Error(`app.init failed: status=${initResp.status}`);
   }
 
-  const data = initResp.body.data || {};
-  const diag = data.scene_diagnostics;
-  if (!diag || typeof diag !== 'object') {
-    throw new Error('scene_diagnostics missing');
-  }
-  if (!diag.schema_version) {
-    throw new Error('scene_diagnostics.schema_version missing');
-  }
-  if (!diag.scene_version) {
-    throw new Error('scene_diagnostics.scene_version missing');
-  }
-  if (!Array.isArray(diag.resolve_errors)) {
-    throw new Error('scene_diagnostics.resolve_errors not array');
-  }
-  if (!Array.isArray(diag.drift)) {
-    throw new Error('scene_diagnostics.drift not array');
-  }
-  const allowedSeverities = new Set(['critical', 'non_critical']);
-  const invalidErrors = diag.resolve_errors.filter(
-    (err) => !err || !err.scene_key || !err.code || !err.severity || !allowedSeverities.has(err.severity)
-  );
-  if (invalidErrors.length) {
-    throw new Error(`resolve_errors invalid entries (${invalidErrors.length})`);
-  }
-  const criticalErrors = diag.resolve_errors.filter((err) => err.severity === 'critical');
-  if (criticalErrors.length) {
-    throw new Error(`resolve_errors critical (${criticalErrors.length})`);
-  }
-  if (diag.normalize_warnings && Array.isArray(diag.normalize_warnings)) {
-    const bad = diag.normalize_warnings.filter((item) => !item || !item.code || !item.message);
-    if (bad.length) {
-      throw new Error('normalize_warnings contains invalid entries');
-    }
-    if (DENY_WARNING_CODES.length) {
-      const blocked = diag.normalize_warnings.filter((item) => DENY_WARNING_CODES.includes(item.code));
-      if (blocked.length) {
-        writeJson(path.join(outDir, 'normalize_warnings_blocked.json'), blocked);
-        throw new Error(`normalize_warnings blocked codes (${blocked.length})`);
-      }
-    }
+  const diag = (initResp.body.data || {}).scene_diagnostics || {};
+  const warnings = Array.isArray(diag.normalize_warnings) ? diag.normalize_warnings : [];
+  const summary = {};
+  for (const entry of warnings) {
+    if (!entry || typeof entry !== 'object') continue;
+    const code = entry.code || 'UNKNOWN';
+    summary[code] = (summary[code] || 0) + 1;
   }
 
-  summary.push(`schema_version: ${diag.schema_version}`);
-  summary.push(`scene_version: ${diag.scene_version}`);
-  summary.push(`loaded_from: ${diag.loaded_from || '-'}`);
-  summary.push(`resolve_errors: ${diag.resolve_errors.length}`);
-  summary.push(`drift: ${diag.drift.length}`);
-  summary.push(`normalize_warnings: ${(diag.normalize_warnings || []).length}`);
-  writeSummary(summary);
+  const limitsSnapshot = {};
+  for (const [code, limit] of Object.entries(MAX_WARNING_CODES)) {
+    limitsSnapshot[code] = { max: limit, actual: summary[code] || 0 };
+  }
+  writeJson(path.join(outDir, 'warnings.json'), {
+    total: warnings.length,
+    by_code: summary,
+    limits: limitsSnapshot,
+    entries: warnings,
+  });
+  log(`warnings: ${warnings.length}`);
 
-  log('PASS diagnostics');
+  if (DENY_WARNING_CODES.length) {
+    const blocked = warnings.filter((item) => DENY_WARNING_CODES.includes(item.code));
+    if (blocked.length) {
+      writeJson(path.join(outDir, 'warnings_blocked.json'), blocked);
+      throw new Error(`blocked warning codes (${blocked.length})`);
+    }
+  }
+  const limitBreaches = [];
+  for (const [code, limit] of Object.entries(MAX_WARNING_CODES)) {
+    const count = summary[code] || 0;
+    if (count > limit) {
+      limitBreaches.push({ code, limit, count });
+    }
+  }
+  if (limitBreaches.length) {
+    writeJson(path.join(outDir, 'warnings_limits_exceeded.json'), limitBreaches);
+    throw new Error(`warning limits exceeded (${limitBreaches.length})`);
+  }
+
+  log('PASS warnings guard');
   log(`artifacts: ${outDir}`);
 }
 
 main().catch((err) => {
-  console.error(`[fe_scene_diagnostics_smoke] FAIL: ${err.message}`);
+  console.error(`[scene_warnings_guard] FAIL: ${err.message}`);
   process.exit(1);
 });

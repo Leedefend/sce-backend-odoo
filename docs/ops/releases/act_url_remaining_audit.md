@@ -38,3 +38,4 @@ and no critical SPA menu depends on act_url at runtime.
 - act_url remains in Odoo menu definitions for legacy compatibility.
 - SPA menu navigation uses injected `scene_key` to resolve to scenes, which then route to portal via bridge.
 - Phase 9.3 policy: no new act_url entries; act_url is legacy only.
+- Phase 9.8 guard: ACT_URL_MISSING_SCENE warning is emitted if any act_url menu lacks scene mapping.
