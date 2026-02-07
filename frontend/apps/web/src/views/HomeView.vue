@@ -29,6 +29,9 @@
             <span class="state">{{ entry.state }}</span>
           </p>
           <p class="subtitle" :title="entry.reason || entry.subtitle">{{ entry.subtitle || '无说明' }}</p>
+          <p v-if="entry.state === 'LOCKED'" class="lock-reason">
+            {{ entry.reason || lockReasonLabel(entry.reasonCode) }}
+          </p>
         </div>
         <button
           class="open-btn"
@@ -59,6 +62,7 @@ type CapabilityEntry = {
   status: string;
   state: EntryState;
   reason: string;
+  reasonCode: string;
 };
 
 const router = useRouter();
@@ -82,6 +86,7 @@ const entries = computed<CapabilityEntry[]>(() => {
       if (!key) return;
       const status = String((tile as { status?: string }).status || 'alpha').toLowerCase();
       const reason = String((tile as { reason?: string }).reason || '');
+      const reasonCode = String((tile as { reason_code?: string }).reason_code || '');
       const state = mapState((tile as { state?: string }).state, status);
       list.push({
         id: `${scene.key}-${key}-${sceneIndex}-${tileIndex}`,
@@ -92,11 +97,22 @@ const entries = computed<CapabilityEntry[]>(() => {
         status,
         state,
         reason,
+        reasonCode,
       });
     });
   });
   return list;
 });
+
+function lockReasonLabel(reasonCode: string) {
+  const code = String(reasonCode || '').toUpperCase();
+  if (code === 'PERMISSION_DENIED') return '权限不足';
+  if (code === 'FEATURE_DISABLED') return '订阅未开通';
+  if (code === 'ROLE_SCOPE_MISMATCH') return '角色范围不匹配';
+  if (code === 'CAPABILITY_SCOPE_MISSING') return '缺少前置能力';
+  if (code === 'CAPABILITY_SCOPE_CYCLE') return '能力依赖异常';
+  return '当前不可用';
+}
 
 async function openScene(entry: CapabilityEntry) {
   if (entry.state === 'LOCKED') return;
@@ -212,6 +228,12 @@ async function openScene(entry: CapabilityEntry) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lock-reason {
+  margin: 6px 0 0;
+  color: #b91c1c;
+  font-size: 12px;
 }
 
 .open-btn {
