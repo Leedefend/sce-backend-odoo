@@ -49,15 +49,19 @@ function main() {
   const total = summary.total ?? 'n/a';
   const resolved = summary.resolved ?? 'n/a';
   const failures = summary.failures ?? 'n/a';
+  const exempt = summary.exempt ?? 0;
+  const effectiveTotal = summary.effective_total ?? (typeof total === 'number' ? total : 'n/a');
   const coverage = summary.coverage ?? 'n/a';
   log(`latest: ${jsonPath}`);
-  log(`total=${total} resolved=${resolved} failures=${failures} coverage=${coverage}%`);
+  log(`total=${total} resolved=${resolved} failures=${failures} exempt=${exempt} effective_total=${effectiveTotal} coverage=${coverage}%`);
 
   appendSummary([
     `menu_scene_resolve_json: ${jsonPath}`,
     `menu_scene_resolve_total: ${total}`,
     `menu_scene_resolve_resolved: ${resolved}`,
     `menu_scene_resolve_failures: ${failures}`,
+    `menu_scene_resolve_exempt: ${exempt}`,
+    `menu_scene_resolve_effective_total: ${effectiveTotal}`,
     `menu_scene_resolve_coverage: ${coverage}%`,
   ]);
 }

@@ -1,0 +1,8 @@
+# Menu → Scene Exemptions
+#
+# Use this list for menus that should not be enforced by menu→scene coverage.
+# Each entry requires a menu xmlid and a short reason.
+
+exemptions:
+  # - xmlid: base.menu_action
+  #   reason: system menu
