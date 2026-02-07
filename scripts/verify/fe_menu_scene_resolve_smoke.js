@@ -171,7 +171,10 @@ async function main() {
     }
   }
 
-  writeJson(path.join(outDir, 'menu_scene_resolve.json'), { total: all.length, failures });
+  const resolved = all.length - failures.length;
+  const coverage = all.length ? Number(((resolved / all.length) * 100).toFixed(2)) : 0;
+  const summary = { total: all.length, resolved, failures: failures.length, coverage };
+  writeJson(path.join(outDir, 'menu_scene_resolve.json'), { summary, failures });
 
   if (failures.length) {
     console.error('[fe_menu_scene_resolve_smoke] unresolved menus:');
@@ -181,7 +184,7 @@ async function main() {
     throw new Error(`menu scene resolve failures: ${failures.length}`);
   }
 
-  log('PASS menu scene resolve');
+  log(`PASS menu scene resolve (coverage ${coverage}%)`);
   log(`artifacts: ${outDir}`);
 }
 

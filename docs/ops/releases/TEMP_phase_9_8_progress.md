@@ -24,6 +24,9 @@
 - Added warnings guard summary artifact for gate audit.
   - File: scripts/verify/scene_warnings_guard_summary.js
   - Output: warnings.json / warnings_blocked.json
+- Extended menu scene resolve smoke output to include coverage summary.
+  - File: scripts/verify/fe_menu_scene_resolve_smoke.js
+  - Output: menu_scene_resolve.json (summary + failures)
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
