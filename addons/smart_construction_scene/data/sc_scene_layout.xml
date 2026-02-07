@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Smoke scene for system-bound tests -->
+        <record id="sc_scene_version_smoke_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_smoke_default"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'scene_smoke_default',
+                'name': 'Scene Smoke Default',
+                'version': 'v2',
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {'route': '/workbench?scene=scene_smoke_default'},
+                'tiles': []
+            }"/>
+        </record>
+
+        <record id="sc_scene_smoke_default" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_smoke_v2"/>
+        </record>
+
+        <!-- Projects intake scene -->
+        <record id="sc_scene_version_projects_intake_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_projects_intake"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'projects.intake',
+                'name': '项目立项',
+                'version': 'v2',
+                'layout': {'kind': 'record', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'menu_xmlid': 'smart_construction_core.menu_sc_project_initiation'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_projects_intake" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_projects_intake_v2"/>
+        </record>
+
+        <!-- Portal lifecycle scene -->
+        <record id="sc_scene_version_portal_lifecycle_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_portal_lifecycle"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'portal.lifecycle',
+                'name': '生命周期驾驶舱',
+                'version': 'v2',
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/portal/lifecycle'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_portal_lifecycle" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_portal_lifecycle_v2"/>
+        </record>
+
+        <!-- Portal capability matrix scene -->
+        <record id="sc_scene_version_portal_capability_matrix_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_portal_capability_matrix"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'portal.capability_matrix',
+                'name': '能力矩阵',
+                'version': 'v2',
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/portal/capability-matrix'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_portal_capability_matrix" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_portal_capability_matrix_v2"/>
+        </record>
+
+        <!-- Portal dashboard scene -->
+        <record id="sc_scene_version_portal_dashboard_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_portal_dashboard"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'portal.dashboard',
+                'name': '工作台',
+                'version': 'v2',
+                'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'route': '/portal/dashboard'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_portal_dashboard" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_portal_dashboard_v2"/>
+        </record>
+    </data>
+</odoo>

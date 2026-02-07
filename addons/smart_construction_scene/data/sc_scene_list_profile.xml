@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Projects list scene -->
+        <record id="sc_scene_version_projects_list_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_projects_list"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'projects.list',
+                'name': '项目列表',
+                'version': 'v2',
+                'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'menu_xmlid': 'smart_construction_demo.menu_sc_project_list_showcase',
+                    'action_xmlid': 'smart_construction_demo.action_sc_project_list_showcase'
+                },
+                'list_profile': {
+                    'columns': [
+                        'name',
+                        'project_code',
+                        'partner_id',
+                        'user_id',
+                        'stage_id',
+                        'write_date'
+                    ],
+                    'hidden_columns': [
+                        'message_needaction',
+                        'message_unread',
+                        'is_favorite',
+                        'display_name',
+                        '__last_update'
+                    ],
+                    'column_labels': {
+                        'name': '项目名称',
+                        'project_code': '项目编号',
+                        'partner_id': '客户',
+                        'user_id': '负责人',
+                        'stage_id': '状态',
+                        'write_date': '更新时间'
+                    },
+                    'row_primary': 'name',
+                    'row_secondary': 'partner_id'
+                },
+                'filters': [],
+                'default_sort': 'write_date desc',
+                'tiles': []
+            }"/>
+        </record>
+
+        <record id="sc_scene_projects_list" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_projects_list_v2"/>
+        </record>
+
+        <!-- Projects ledger scene -->
+        <record id="sc_scene_version_projects_ledger_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_projects_ledger"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'projects.ledger',
+                'name': '项目台账（试点）',
+                'version': 'v2',
+                'layout': {'kind': 'ledger', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'menu_xmlid': 'smart_construction_core.menu_sc_project_project',
+                    'action_xmlid': 'smart_construction_core.action_sc_project_kanban_lifecycle'
+                },
+                'list_profile': {
+                    'columns': [
+                        'name',
+                        'project_code',
+                        'partner_id',
+                        'user_id',
+                        'stage_id',
+                        'write_date'
+                    ],
+                    'hidden_columns': [
+                        'message_needaction',
+                        'message_unread',
+                        'is_favorite',
+                        'display_name',
+                        '__last_update'
+                    ],
+                    'column_labels': {
+                        'name': '项目名称',
+                        'project_code': '项目编号',
+                        'partner_id': '客户',
+                        'user_id': '负责人',
+                        'stage_id': '状态',
+                        'write_date': '更新时间'
+                    },
+                    'row_primary': 'name',
+                    'row_secondary': 'partner_id'
+                },
+                'filters': [],
+                'default_sort': 'write_date desc',
+                'tiles': []
+            }"/>
+        </record>
+
+        <record id="sc_scene_projects_ledger" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_projects_ledger_v2"/>
+        </record>
+    </data>
+</odoo>
