@@ -242,15 +242,30 @@ function clearSelection() {
 }
 
 function callBatchAction(action: 'archive' | 'activate') {
+  if (selectedCount.value <= 0) return;
+  const label = action === 'archive' ? '归档' : '激活';
+  if (!window.confirm(`确认批量${label} ${selectedCount.value} 条记录？`)) {
+    return;
+  }
   props.onBatchAction?.(action);
 }
 
 function callBatchAssign() {
   if (!props.selectedAssigneeId) return;
+  if (selectedCount.value <= 0) return;
+  if (!window.confirm(`确认将 ${selectedCount.value} 条记录批量指派给当前负责人？`)) {
+    return;
+  }
   props.onBatchAssign?.(props.selectedAssigneeId);
 }
 
 function callBatchExport(scope: 'selected' | 'all') {
+  const count = scope === 'selected' ? selectedCount.value : props.records.length;
+  if (count <= 0) return;
+  const label = scope === 'selected' ? '导出选中' : '导出当前页';
+  if (!window.confirm(`确认${label}（${count} 条）为 CSV？`)) {
+    return;
+  }
   props.onBatchExport?.(scope);
 }
 
