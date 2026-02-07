@@ -33,6 +33,8 @@
 - Added warnings limit guard to cap ACT_URL_LEGACY count (baseline=3).
   - File: scripts/verify/scene_warnings_guard_summary.js
   - Make target: verify.portal.scene_warnings_limit.container
+- Prepared PR body template for Phase 9.8 submission.
+  - File: docs/ops/releases/TEMP_phase_9_8_pr_body.md
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
