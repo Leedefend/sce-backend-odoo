@@ -195,7 +195,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { ApiError } from '../api/client';
-import { fetchCapabilityVisibilityReport, fetchUsageReport, type CapabilityVisibilityReport, type UsageReport } from '../api/usage';
+import { exportUsageCsv, fetchCapabilityVisibilityReport, fetchUsageReport, type CapabilityVisibilityReport, type UsageReport } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 
 const loading = ref(false);
@@ -210,8 +210,8 @@ const visibility = ref<CapabilityVisibilityReport | null>(null);
 
 const sceneTop = computed(() => report.value?.scene_top || []);
 const capabilityTop = computed(() => report.value?.capability_top || []);
-const sceneDaily = computed(() => (report.value?.daily?.scene_open || []).slice(0, dailyRange.value));
-const capabilityDaily = computed(() => (report.value?.daily?.capability_open || []).slice(0, dailyRange.value));
+const sceneDaily = computed(() => report.value?.daily?.scene_open || []);
+const capabilityDaily = computed(() => report.value?.daily?.capability_open || []);
 const reasonCounts = computed(() => visibility.value?.reason_counts || []);
 const hiddenSamples = computed(() => visibility.value?.hidden_samples || []);
 const filteredHiddenSamples = computed(() => {
@@ -220,51 +220,30 @@ const filteredHiddenSamples = computed(() => {
 });
 const canExport = computed(() => Boolean(report.value || visibility.value));
 
-function quoteCsv(value: string | number) {
-  const text = String(value ?? '');
-  if (!text.includes(',') && !text.includes('"') && !text.includes('\n')) {
-    return text;
-  }
-  return `"${text.replace(/"/g, '""')}"`;
-}
-
-function exportCsv() {
+async function exportCsv() {
   if (!canExport.value) return;
-  const lines: string[] = ['section,key,count,extra'];
-  lines.push(`meta,export_filtered_only,${exportFilteredOnly.value ? 1 : 0},`);
-  if (report.value) {
-    lines.push(`total,scene_open_total,${report.value.totals.scene_open_total},`);
-    lines.push(`total,capability_open_total,${report.value.totals.capability_open_total},`);
-    sceneTop.value.forEach((item) => lines.push(`scene_top,${quoteCsv(item.key)},${item.count},`));
-    capabilityTop.value.forEach((item) => lines.push(`capability_top,${quoteCsv(item.key)},${item.count},`));
-    const sceneDailyRows = exportFilteredOnly.value ? sceneDaily.value : report.value.daily.scene_open || [];
-    const capabilityDailyRows = exportFilteredOnly.value
-      ? capabilityDaily.value
-      : report.value.daily.capability_open || [];
-    sceneDailyRows.forEach((item) => lines.push(`scene_daily,${item.day},${item.count},`));
-    capabilityDailyRows.forEach((item) => lines.push(`capability_daily,${item.day},${item.count},`));
+  try {
+    const data = await exportUsageCsv({
+      top: topN.value,
+      days: dailyRange.value,
+      hidden_reason: hiddenReasonFilter.value,
+      export_filtered_only: exportFilteredOnly.value,
+    });
+    const blob = new Blob([data.content || ''], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = data.filename || `usage-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    errorText.value = err instanceof Error ? err.message : '导出失败';
+    if (err instanceof ApiError) {
+      errorTraceId.value = err.traceId || '';
+    }
   }
-  if (visibility.value) {
-    lines.push(`capability_visibility,total,${visibility.value.summary.total},`);
-    lines.push(`capability_visibility,visible,${visibility.value.summary.visible},`);
-    lines.push(`capability_visibility,hidden,${visibility.value.summary.hidden},`);
-    reasonCounts.value.forEach((item) => lines.push(`reason_count,${quoteCsv(item.reason_code)},${item.count},`));
-    const hiddenRows = exportFilteredOnly.value ? filteredHiddenSamples.value : hiddenSamples.value;
-    hiddenRows.forEach((item) =>
-      lines.push(
-        `hidden_sample,${quoteCsv(item.key)},0,${quoteCsv(item.reason_code || item.reason || '-')}`,
-      ),
-    );
-  }
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `usage-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
 function resetFilters() {
@@ -284,7 +263,7 @@ async function load() {
   errorTraceId.value = '';
   try {
     const [usage, vis] = await Promise.all([
-      fetchUsageReport(topN.value),
+      fetchUsageReport(topN.value, dailyRange.value),
       fetchCapabilityVisibilityReport(),
     ]);
     report.value = usage;
@@ -299,7 +278,7 @@ async function load() {
   }
 }
 
-watch(topN, () => {
+watch([topN, dailyRange], () => {
   load();
 });
 

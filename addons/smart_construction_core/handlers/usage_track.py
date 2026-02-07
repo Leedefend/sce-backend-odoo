@@ -12,7 +12,7 @@ class UsageTrackHandler(BaseIntentHandler):
     ETAG_ENABLED = False
 
     def _bump(self, usage_model, company, key):
-        if not usage_model or not company or not key:
+        if usage_model is None or not company or not key:
             return
         usage_model.sudo().bump(company, key, 1)
 

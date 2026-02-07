@@ -33,12 +33,20 @@ export type UsageReport = {
   };
   scene_top: UsageTopItem[];
   capability_top: UsageTopItem[];
+  filters?: {
+    top?: number;
+    days?: number;
+    day_from?: string;
+    day_to?: string;
+    scene_key_prefix?: string;
+    capability_key_prefix?: string;
+  };
 };
 
-export async function fetchUsageReport(top = 10) {
+export async function fetchUsageReport(top = 10, days = 7) {
   return intentRequest<UsageReport>({
     intent: 'usage.report',
-    params: { top },
+    params: { top, days },
   });
 }
 
@@ -61,5 +69,22 @@ export async function fetchCapabilityVisibilityReport() {
   return intentRequest<CapabilityVisibilityReport>({
     intent: 'capability.visibility.report',
     params: {},
+  });
+}
+
+export type UsageExportCsvResult = {
+  filename: string;
+  content: string;
+};
+
+export async function exportUsageCsv(params: {
+  top: number;
+  days: number;
+  hidden_reason?: string;
+  export_filtered_only?: boolean;
+}) {
+  return intentRequest<UsageExportCsvResult>({
+    intent: 'usage.export.csv',
+    params,
   });
 }
