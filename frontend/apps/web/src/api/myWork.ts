@@ -41,3 +41,17 @@ export async function fetchMyWorkSummary(limit = 20, limitEach = 8) {
     params: { limit, limit_each: limitEach },
   });
 }
+
+export async function completeMyWorkItem(params: { id: number; source: string; note?: string }) {
+  return intentRequest<{
+    id: number;
+    source: string;
+    success: boolean;
+    reason_code: string;
+    message: string;
+    done_at: string;
+  }>({
+    intent: 'my.work.complete',
+    params,
+  });
+}

@@ -18,6 +18,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.my_work_summary import (
             MyWorkSummaryHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.my_work_complete import (
+            MyWorkCompleteHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.usage_track import (
             UsageTrackHandler,
         )
@@ -28,10 +31,12 @@ def smart_core_register(registry):
     registry["system.ping.construction"] = SystemPingConstructionHandler
     registry["capability.describe"] = CapabilityDescribeHandler
     registry["my.work.summary"] = MyWorkSummaryHandler
+    registry["my.work.complete"] = MyWorkCompleteHandler
     registry["usage.track"] = UsageTrackHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
     _logger.info("[smart_core_register] registered my.work.summary")
+    _logger.info("[smart_core_register] registered my.work.complete")
     _logger.info("[smart_core_register] registered usage.track")
 
 

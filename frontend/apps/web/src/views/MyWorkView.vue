@@ -73,6 +73,14 @@
               <td>{{ item.reason_code || '-' }}</td>
               <td>{{ item.deadline || '-' }}</td>
               <td>
+                <button
+                  v-if="item.section === 'todo' && item.source === 'mail.activity'"
+                  class="link-btn done-btn"
+                  :disabled="loading"
+                  @click="completeItem(item)"
+                >
+                  完成待办
+                </button>
                 <button class="link-btn" @click="openRecord(item)">打开记录</button>
                 <button class="link-btn secondary-btn" @click="openScene(item.scene_key)">进入场景</button>
               </td>
@@ -88,7 +96,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
-import { fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
+import { completeMyWorkItem, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import StatusPanel from '../components/StatusPanel.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 
@@ -158,6 +166,33 @@ function openRecord(item: MyWorkRecordItem) {
     return;
   }
   openScene(item.scene_key);
+}
+
+async function completeItem(item: MyWorkRecordItem) {
+  if (!item?.id || !item?.source) return;
+  loading.value = true;
+  try {
+    await completeMyWorkItem({
+      id: item.id,
+      source: item.source,
+      note: 'Completed from my-work UI.',
+    });
+    await load();
+  } catch (err) {
+    errorText.value = err instanceof Error ? err.message : '完成待办失败';
+    if (err instanceof ApiError) {
+      statusError.value = {
+        message: err.message,
+        traceId: err.traceId,
+        code: err.status,
+        hint: err.hint,
+        kind: err.kind,
+        reasonCode: err.reasonCode,
+      };
+    }
+  } finally {
+    loading.value = false;
+  }
 }
 
 onMounted(load);
@@ -292,5 +327,12 @@ th {
 
 .secondary-btn {
   margin-left: 8px;
+}
+
+.done-btn {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #166534;
+  margin-right: 8px;
 }
 </style>
