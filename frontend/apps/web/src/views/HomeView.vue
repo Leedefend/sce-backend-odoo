@@ -7,6 +7,13 @@
       </div>
       <div class="view-toggle">
         <button class="my-work-btn" @click="router.push({ path: '/my-work' })">我的工作</button>
+        <button
+          v-if="isAdmin"
+          class="my-work-btn"
+          @click="router.push({ path: '/admin/usage-analytics' })"
+        >
+          使用分析
+        </button>
         <button :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'">卡片</button>
         <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">列表</button>
       </div>
@@ -68,6 +75,10 @@ type CapabilityEntry = {
 const router = useRouter();
 const session = useSessionStore();
 const viewMode = ref<'card' | 'list'>('card');
+const isAdmin = computed(() => {
+  const groups = session.user?.groups_xmlids || [];
+  return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
+});
 
 function mapState(rawState: string | undefined, status: string): EntryState {
   const state = String(rawState || '').toUpperCase();

@@ -24,6 +24,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.usage_track import (
             UsageTrackHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.usage_report import (
+            UsageReportHandler,
+        )
     except Exception as e:
         _logger.warning("[smart_core_register] import handler failed: %s", e)
         return
@@ -33,11 +36,13 @@ def smart_core_register(registry):
     registry["my.work.summary"] = MyWorkSummaryHandler
     registry["my.work.complete"] = MyWorkCompleteHandler
     registry["usage.track"] = UsageTrackHandler
+    registry["usage.report"] = UsageReportHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
     _logger.info("[smart_core_register] registered my.work.summary")
     _logger.info("[smart_core_register] registered my.work.complete")
     _logger.info("[smart_core_register] registered usage.track")
+    _logger.info("[smart_core_register] registered usage.report")
 
 
 def smart_core_extend_system_init(data, env, user):

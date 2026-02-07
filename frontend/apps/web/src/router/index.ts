@@ -9,6 +9,7 @@ import WorkbenchView from '../views/WorkbenchView.vue';
 import SceneView from '../views/SceneView.vue';
 import SceneHealthView from '../views/SceneHealthView.vue';
 import ScenePackagesView from '../views/ScenePackagesView.vue';
+import UsageAnalyticsView from '../views/UsageAnalyticsView.vue';
 import MyWorkView from '../views/MyWorkView.vue';
 import { ApiError } from '../api/client';
 
@@ -26,6 +27,7 @@ const router = createRouter({
     { path: '/workbench', name: 'workbench', component: WorkbenchView, meta: { layout: 'shell' } },
     { path: '/admin/scene-health', name: 'scene-health', component: SceneHealthView, meta: { layout: 'shell', adminOnly: true } },
     { path: '/admin/scene-packages', name: 'scene-packages', component: ScenePackagesView, meta: { layout: 'shell', adminOnly: true } },
+    { path: '/admin/usage-analytics', name: 'usage-analytics', component: UsageAnalyticsView, meta: { layout: 'shell', adminOnly: true } },
     { path: '/a/:actionId', name: 'action', component: ActionView, meta: { layout: 'shell' } },
     { path: '/r/:model/:id', name: 'record', component: RecordView, meta: { layout: 'shell' } },
   ],

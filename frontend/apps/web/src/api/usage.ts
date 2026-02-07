@@ -15,3 +15,25 @@ export async function trackCapabilityOpen(capabilityKey: string) {
     params: { event_type: 'capability_open', capability_key: capabilityKey },
   });
 }
+
+export type UsageTopItem = {
+  key: string;
+  count: number;
+};
+
+export type UsageReport = {
+  generated_at: string;
+  totals: {
+    scene_open_total: number;
+    capability_open_total: number;
+  };
+  scene_top: UsageTopItem[];
+  capability_top: UsageTopItem[];
+};
+
+export async function fetchUsageReport(top = 10) {
+  return intentRequest<UsageReport>({
+    intent: 'usage.report',
+    params: { top },
+  });
+}
