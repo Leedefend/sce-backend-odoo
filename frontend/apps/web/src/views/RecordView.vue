@@ -146,10 +146,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecords, readRecordRaw, writeRecordV6Raw } from '../api/data';
+import { readRecordRaw, writeRecordV6Raw } from '../api/data';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
-import { postChatterMessage } from '../api/chatter';
+import { fetchChatterTimeline, postChatterMessage, type ChatterTimelineEntry } from '../api/chatter';
 import { downloadFile, fileToBase64, uploadFile } from '../api/files';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import { deriveRecordStatus } from '../app/view_state';
@@ -175,8 +175,7 @@ const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error' | 'editing' | '
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
 const viewContract = ref<ViewContract | null>(null);
 const recordData = ref<Record<string, unknown> | null>(null);
-const chatterMessages = ref<Array<Record<string, unknown>>>([]);
-const chatterAttachments = ref<Array<Record<string, unknown>>>([]);
+const timelineEntries = ref<ChatterTimelineEntry[]>([]);
 const chatterError = ref('');
 const chatterDraft = ref('');
 const chatterPosting = ref(false);
@@ -229,50 +228,6 @@ const ribbon = computed(() => {
   return value as { title?: string };
 });
 const hasChatter = computed(() => Boolean(viewContract.value?.layout?.chatter));
-type TimelineEntry = {
-  key: string;
-  type: 'message' | 'attachment';
-  typeLabel: string;
-  title: string;
-  meta: string;
-  body: string;
-  at: number;
-  attachment?: { id?: number; name?: string; mimetype?: string };
-};
-const timelineEntries = computed<TimelineEntry[]>(() => {
-  const messageItems: TimelineEntry[] = chatterMessages.value.map((msg) => {
-    const rawDate = String(msg.date || '');
-    const at = rawDate ? Date.parse(rawDate) : 0;
-    return {
-      key: `m-${String(msg.id || Math.random())}`,
-      type: 'message',
-      typeLabel: '评论',
-      title: String(msg.subject || '评论'),
-      meta: `${String((msg.author_id as any)?.[1] || 'Unknown')} · ${rawDate || '-'}`,
-      body: stripHtml(String(msg.body || '')),
-      at: Number.isNaN(at) ? 0 : at,
-    };
-  });
-  const attachmentItems: TimelineEntry[] = chatterAttachments.value.map((att) => {
-    const attId = Number(att.id || 0) || 0;
-    const at = 0 - attId;
-    return {
-      key: `a-${String(att.id || Math.random())}`,
-      type: 'attachment',
-      typeLabel: '附件',
-      title: String(att.name || 'Attachment'),
-      meta: `${String(att.mimetype || 'unknown')} · ${String(att.file_size || '-')}`,
-      body: '',
-      at,
-      attachment: {
-        id: typeof att.id === 'number' ? att.id : Number(att.id || 0),
-        name: String(att.name || ''),
-        mimetype: String(att.mimetype || ''),
-      },
-    };
-  });
-  return [...messageItems, ...attachmentItems].sort((a, b) => b.at - a.at);
-});
 const supportedNodes = ['field', 'group', 'notebook', 'page', 'headerButtons', 'statButtons', 'ribbon', 'chatter'];
 const missingNodes = computed(() => {
   const layout = viewContract.value?.layout;
@@ -324,18 +279,13 @@ function buttonTooltip(btn: ViewButton) {
   return capabilityTooltip(buttonState(btn));
 }
 
-function stripHtml(input: string) {
-  return input.replace(/<[^>]*>/g, '').trim();
-}
-
 async function load() {
   clearError();
   traceId.value = '';
   fields.value = [];
   viewContract.value = null;
   recordData.value = null;
-  chatterMessages.value = [];
-  chatterAttachments.value = [];
+  timelineEntries.value = [];
   chatterError.value = '';
   chatterUploadError.value = '';
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
@@ -417,32 +367,16 @@ async function load() {
 async function loadChatter() {
   chatterError.value = '';
   try {
-    const [messages, attachments] = await Promise.all([
-      listRecords({
-        model: 'mail.message',
-        fields: ['id', 'author_id', 'date', 'body', 'subject'],
-        domain: [
-          ['res_id', '=', recordId.value],
-          ['model', '=', model.value],
-        ],
-        order: 'date desc',
-        limit: 20,
-      }),
-      listRecords({
-        model: 'ir.attachment',
-        fields: ['id', 'name', 'mimetype', 'file_size'],
-        domain: [
-          ['res_id', '=', recordId.value],
-          ['res_model', '=', model.value],
-        ],
-        order: 'id desc',
-        limit: 20,
-      }),
-    ]);
-    chatterMessages.value = messages.records ?? [];
-    chatterAttachments.value = attachments.records ?? [];
+    const timeline = await fetchChatterTimeline({
+      model: model.value,
+      res_id: recordId.value,
+      limit: 40,
+      include_audit: true,
+    });
+    timelineEntries.value = Array.isArray(timeline.items) ? timeline.items : [];
   } catch (err) {
     chatterError.value = err instanceof Error ? err.message : 'Failed to load chatter';
+    timelineEntries.value = [];
   }
 }
 
@@ -987,6 +921,12 @@ onMounted(load);
   color: #166534;
   background: #f0fdf4;
   border-color: #bbf7d0;
+}
+
+.timeline-type.type-audit {
+  color: #7c2d12;
+  background: #fff7ed;
+  border-color: #fdba74;
 }
 
 .timeline-main {
