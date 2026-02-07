@@ -13,6 +13,9 @@
 - Added diagnostic warning for act_url menus missing scene_key mapping.
   - File: addons/smart_core/handlers/system_init.py
   - Warning: ACT_URL_MISSING_SCENE
+- Extended scene config audit to include normalize warning summary (act_url guard visibility).
+  - File: scripts/audit/scene_config_audit.js
+  - Output: scene_config_warnings.json (counts by warning code)
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
