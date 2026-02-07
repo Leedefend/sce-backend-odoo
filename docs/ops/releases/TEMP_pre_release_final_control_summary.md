@@ -90,3 +90,9 @@ Branch: `codex/pre_release_final_control`
 
 - `4581431` release(r0.1): pre-release final control hardening
 - `229b5f8` chore(release): archive temp release notes
+- `d1b3ff7` docs(release): codify rc smoke user
+
+## RC Canonical Smoke User
+
+- RC smoke user: `demo_pm` / `demo`
+- Service accounts (`svc_*`) are non-blocking and may 401 in UI-level smokes.
