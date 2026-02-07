@@ -57,8 +57,24 @@ export function parseExecuteResult(response: ExecuteButtonResponse | null | unde
   const result = (response?.result || {}) as Record<string, unknown>;
   const effect = (response?.effect || {}) as Record<string, unknown>;
   const reasonCode = String(result.reason_code || 'OK');
+  const status = String(result.status || '').toLowerCase();
+  const success =
+    typeof result.success === 'boolean'
+      ? Boolean(result.success)
+      : status
+        ? status === 'success'
+        : reasonCode === 'OK' || reasonCode === 'DRY_RUN';
   const message =
     String(result.message || effect.message || '') ||
-    (reasonCode === 'OK' ? '操作成功' : '操作已处理');
-  return { message, reasonCode };
+    defaultMessage(reasonCode, success);
+  return { message, reasonCode, success };
+}
+
+function defaultMessage(reasonCode: string, success: boolean) {
+  if (success) return '操作成功';
+  if (reasonCode === 'PERMISSION_DENIED') return '无权限执行该操作';
+  if (reasonCode === 'NOT_FOUND') return '记录不存在或已删除';
+  if (reasonCode === 'BUSINESS_RULE_FAILED') return '当前状态不允许此操作';
+  if (reasonCode === 'MISSING_PARAMS') return '操作参数不完整';
+  return '操作失败';
 }

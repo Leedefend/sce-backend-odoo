@@ -4,7 +4,7 @@
       <div>
         <h1>{{ title }}</h1>
         <p class="meta">Model: {{ model }} · ID: {{ recordIdDisplay }}</p>
-        <p v-if="actionFeedback" class="action-feedback">
+        <p v-if="actionFeedback" class="action-feedback" :class="{ error: !actionFeedback.success }">
           {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
         </p>
       </div>
@@ -108,7 +108,7 @@ const { error, clearError, setError } = useStatus();
 const loading = ref(false);
 const saving = ref(false);
 const executing = ref<string | null>(null);
-const actionFeedback = ref<{ message: string; reasonCode: string } | null>(null);
+const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -368,7 +368,7 @@ async function runButton(btn: ViewButton) {
     actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
     setError(err, 'failed to execute button');
-    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED' };
+    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
   } finally {
     executing.value = null;
   }
@@ -442,6 +442,10 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin: 8px 0 0;
   color: #166534;
   font-size: 13px;
+}
+
+.action-feedback.error {
+  color: #b91c1c;
 }
 
 .action-feedback .code {

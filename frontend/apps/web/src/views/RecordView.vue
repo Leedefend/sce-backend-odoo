@@ -4,7 +4,7 @@
       <div>
         <h2>{{ title }}</h2>
         <p class="meta">{{ subtitle }}</p>
-        <p v-if="actionFeedback" class="meta action-feedback">
+        <p v-if="actionFeedback" class="meta action-feedback" :class="{ error: !actionFeedback.success }">
           {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
         </p>
       </div>
@@ -182,7 +182,7 @@ const chatterDraft = ref('');
 const chatterPosting = ref(false);
 const chatterUploading = ref(false);
 const chatterUploadError = ref('');
-const actionFeedback = ref<{ message: string; reasonCode: string } | null>(null);
+const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
 const draftName = ref('');
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -606,7 +606,7 @@ async function runHeaderButton(btn: ViewButton) {
     setError(err, 'failed to execute button');
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
-    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED' };
+    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
   } finally {
     executing.value = null;
   }
@@ -751,6 +751,10 @@ onMounted(load);
 .action-feedback {
   margin-top: 6px;
   color: #166534;
+}
+
+.action-feedback.error {
+  color: #b91c1c;
 }
 
 .action-feedback .code {
