@@ -11,9 +11,33 @@
       />
     </div>
     <div class="filters">
-      <span class="filter">All</span>
-      <span class="filter">Active</span>
-      <span class="filter">Archived</span>
+      <button
+        type="button"
+        class="filter"
+        :class="{ active: filterValue === 'all' }"
+        :disabled="loading"
+        @click="onFilter('all')"
+      >
+        All
+      </button>
+      <button
+        type="button"
+        class="filter"
+        :class="{ active: filterValue === 'active' }"
+        :disabled="loading"
+        @click="onFilter('active')"
+      >
+        Active
+      </button>
+      <button
+        type="button"
+        class="filter"
+        :class="{ active: filterValue === 'archived' }"
+        :disabled="loading"
+        @click="onFilter('archived')"
+      >
+        Archived
+      </button>
     </div>
     <div class="sort">
       <span class="label">Sort</span>
@@ -39,8 +63,10 @@ const props = defineProps<{
   searchTerm: string;
   sortOptions: Array<{ label: string; value: string }>;
   sortValue: string;
+  filterValue: 'all' | 'active' | 'archived';
   onSearch: (value: string) => void;
   onSort: (value: string) => void;
+  onFilter: (value: 'all' | 'active' | 'archived') => void;
 }>();
 
 function onSearchInput(event: Event) {
@@ -79,11 +105,19 @@ function submitSearch() {
 }
 
 .filter {
+  border: 1px solid transparent;
   padding: 6px 10px;
   border-radius: 999px;
   background: #f1f5f9;
   font-size: 12px;
   color: #475569;
+  cursor: pointer;
+}
+
+.filter.active {
+  border-color: #111827;
+  background: #111827;
+  color: #f8fafc;
 }
 
 .sort {
