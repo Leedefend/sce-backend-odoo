@@ -105,5 +105,68 @@
         <record id="sc_scene_portal_dashboard" model="sc.scene">
             <field name="active_version_id" ref="sc_scene_version_portal_dashboard_v2"/>
         </record>
+
+        <!-- Project dashboard scene -->
+        <record id="sc_scene_version_projects_dashboard_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_projects_dashboard"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'projects.dashboard',
+                'name': '项目驾驶舱',
+                'version': 'v2',
+                'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'action_xmlid': 'smart_construction_core.action_project_dashboard',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_project_dashboard'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_projects_dashboard" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_projects_dashboard_v2"/>
+        </record>
+
+        <!-- Project dashboard showcase scene -->
+        <record id="sc_scene_version_projects_dashboard_showcase_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_projects_dashboard_showcase"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'projects.dashboard_showcase',
+                'name': '项目驾驶舱（演示）',
+                'version': 'v2',
+                'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'action_xmlid': 'smart_construction_demo.action_project_dashboard_showcase',
+                    'menu_xmlid': 'smart_construction_demo.menu_sc_project_dashboard_showcase'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_projects_dashboard_showcase" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_projects_dashboard_showcase_v2"/>
+        </record>
+
+        <!-- Dictionary scene -->
+        <record id="sc_scene_version_data_dictionary_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_data_dictionary"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'data.dictionary',
+                'name': '业务字典',
+                'version': 'v2',
+                'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'action_xmlid': 'smart_construction_core.action_project_dictionary',
+                    'menu_xmlid': 'smart_construction_core.menu_sc_dictionary'
+                }
+            }"/>
+        </record>
+
+        <record id="sc_scene_data_dictionary" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_data_dictionary_v2"/>
+        </record>
     </data>
 </odoo>

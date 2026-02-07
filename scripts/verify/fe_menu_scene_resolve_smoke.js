@@ -6,7 +6,7 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
+const BASE_URL = process.env.API_BASE || process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
 const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'demo_pm';
 const PASSWORD =
@@ -84,8 +84,39 @@ function hasAction(meta) {
   return Boolean(meta.action_id || meta.action_xmlid || meta.action_type || meta.action_tag);
 }
 
+function preflightUrl(url) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const opts = {
+      method: 'GET',
+      hostname: u.hostname,
+      port: u.port || (u.protocol === 'https:' ? 443 : 80),
+      path: u.pathname || '/',
+    };
+    const client = u.protocol === 'https:' ? https : http;
+    const req = client.request(opts, (res) => {
+      res.resume();
+      resolve(res.statusCode || 0);
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 async function main() {
   if (!DB_NAME) throw new Error('DB_NAME is required');
+
+  log(`api_base: ${BASE_URL}`);
+  try {
+    const status = await preflightUrl(BASE_URL);
+    log(`preflight: ${status}`);
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    console.error(`[fe_menu_scene_resolve_smoke] PRECHECK FAIL: ${msg}`);
+    console.error('[fe_menu_scene_resolve_smoke] HINT: verify API base URL and service reachability.');
+    console.error('[fe_menu_scene_resolve_smoke] HINT: host mode uses http://localhost:8070; container mode should use http://localhost:8069 or service name.');
+    process.exit(1);
+  }
 
   const intentUrl = `${BASE_URL}/api/v1/intent`;
   log(`login: ${LOGIN} db=${DB_NAME}`);
@@ -118,6 +149,10 @@ async function main() {
         menu_id: node.menu_id || node.id,
         xmlid: node.xmlid || meta.menu_xmlid,
         action_type: meta.action_type || meta.actionType,
+        action_id: meta.action_id || null,
+        menu_xmlid: meta.menu_xmlid || null,
+        scene_key: node.scene_key || null,
+        meta_scene_key: meta.scene_key || null,
       });
     }
   }
@@ -125,6 +160,10 @@ async function main() {
   writeJson(path.join(outDir, 'menu_scene_resolve.json'), { total: all.length, failures });
 
   if (failures.length) {
+    console.error('[fe_menu_scene_resolve_smoke] unresolved menus:');
+    for (const item of failures) {
+      console.error(`- ${item.name || 'N/A'} menu_id=${item.menu_id || 'N/A'} xmlid=${item.xmlid || 'N/A'} action_type=${item.action_type || 'N/A'} action_id=${item.action_id || 'N/A'}`);
+    }
     throw new Error(`menu scene resolve failures: ${failures.length}`);
   }
 

@@ -261,6 +261,10 @@ def _apply_scene_keys(env, nodes):
         "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
         "smart_construction_core.menu_sc_project_initiation": "projects.intake",
         "smart_construction_core.menu_sc_project_project": "projects.ledger",
+        "smart_construction_core.menu_sc_root": "projects.list",
+        "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
+        "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
+        "smart_construction_core.menu_sc_dictionary": "data.dictionary",
         "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
         "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
         "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
@@ -269,6 +273,10 @@ def _apply_scene_keys(env, nodes):
         "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
         "smart_construction_core.action_project_initiation": "projects.intake",
         "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
+        "smart_construction_core.action_sc_project_list": "projects.list",
+        "smart_construction_core.action_project_dashboard": "projects.dashboard",
+        "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
+        "smart_construction_core.action_project_dictionary": "data.dictionary",
         "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
         "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
         "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
@@ -289,6 +297,8 @@ def _apply_scene_keys(env, nodes):
             scene_key = menu_map[menu_xmlid]
         if not scene_key:
             action_id = meta.get("action_id")
+            if isinstance(action_id, str) and action_id.isdigit():
+                action_id = int(action_id)
             if action_id in action_id_map:
                 scene_key = action_id_map[action_id]
         if not scene_key:
