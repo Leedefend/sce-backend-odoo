@@ -50,10 +50,29 @@
             :disabled="loading"
           />
         </label>
+        <label>
+          Scene 前缀
+          <input
+            v-model.trim="scenePrefix"
+            type="text"
+            placeholder="如 projects."
+            :disabled="loading"
+          />
+        </label>
+        <label>
+          Capability 前缀
+          <input
+            v-model.trim="capabilityPrefix"
+            type="text"
+            placeholder="如 contract."
+            :disabled="loading"
+          />
+        </label>
         <label class="export-scope">
           <input v-model="exportFilteredOnly" type="checkbox" />
           仅导出当前筛选
         </label>
+        <button class="secondary" :disabled="loading" @click="copyExportParams">复制导出参数</button>
         <button class="secondary" :disabled="loading" @click="resetFilters">重置筛选</button>
         <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">导出 CSV</button>
         <button class="secondary" :disabled="loading" @click="load">刷新</button>
@@ -71,6 +90,14 @@
     />
 
     <template v-else>
+      <section class="slice-bar">
+        <span>窗口：{{ report?.filters?.day_from || '-' }} ~ {{ report?.filters?.day_to || '-' }}</span>
+        <span>角色：{{ report?.filters?.role_code || '全部' }}</span>
+        <span>用户：{{ report?.filters?.user_id || 0 }}</span>
+        <span>Scene 前缀：{{ report?.filters?.scene_key_prefix || '-' }}</span>
+        <span>Capability 前缀：{{ report?.filters?.capability_key_prefix || '-' }}</span>
+      </section>
+
       <section class="summary-grid">
         <article class="summary-card">
           <p class="label">Scene Open Total</p>
@@ -264,6 +291,8 @@ const dailyRange = ref(7);
 const hiddenReasonFilter = ref('ALL');
 const roleSlice = ref('');
 const userSlice = ref(0);
+const scenePrefix = ref('');
+const capabilityPrefix = ref('');
 const exportFilteredOnly = ref(true);
 const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
@@ -293,6 +322,8 @@ async function exportCsv() {
       export_filtered_only: exportFilteredOnly.value,
       role_code: roleSlice.value || '',
       user_id: Math.max(0, Number(userSlice.value || 0)),
+      scene_key_prefix: scenePrefix.value || '',
+      capability_key_prefix: capabilityPrefix.value || '',
     });
     const blob = new Blob([data.content || ''], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -311,11 +342,31 @@ async function exportCsv() {
   }
 }
 
+async function copyExportParams() {
+  const payload = {
+    top: topN.value,
+    days: dailyRange.value,
+    hidden_reason: hiddenReasonFilter.value,
+    export_filtered_only: exportFilteredOnly.value,
+    role_code: roleSlice.value || '',
+    user_id: Math.max(0, Number(userSlice.value || 0)),
+    scene_key_prefix: scenePrefix.value || '',
+    capability_key_prefix: capabilityPrefix.value || '',
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+  } catch {
+    errorText.value = '复制导出参数失败';
+  }
+}
+
 function resetFilters() {
   dailyRange.value = 7;
   hiddenReasonFilter.value = 'ALL';
   roleSlice.value = '';
   userSlice.value = 0;
+  scenePrefix.value = '';
+  capabilityPrefix.value = '';
   exportFilteredOnly.value = true;
   if (topN.value !== 10) {
     topN.value = 10;
@@ -335,6 +386,8 @@ async function load() {
         dailyRange.value,
         roleSlice.value || '',
         Math.max(0, Number(userSlice.value || 0)),
+        scenePrefix.value || '',
+        capabilityPrefix.value || '',
       ),
       fetchCapabilityVisibilityReport(),
     ]);
@@ -350,7 +403,7 @@ async function load() {
   }
 }
 
-watch([topN, dailyRange, roleSlice, userSlice], () => {
+watch([topN, dailyRange, roleSlice, userSlice, scenePrefix, capabilityPrefix], () => {
   load();
 });
 
@@ -373,6 +426,22 @@ onMounted(load);
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.slice-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.slice-bar span {
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #fff;
 }
 
 .export-scope {

@@ -57,10 +57,24 @@ export type UsageReport = {
   };
 };
 
-export async function fetchUsageReport(top = 10, days = 7, roleCode = '', userId = 0) {
+export async function fetchUsageReport(
+  top = 10,
+  days = 7,
+  roleCode = '',
+  userId = 0,
+  sceneKeyPrefix = '',
+  capabilityKeyPrefix = '',
+) {
   return intentRequest<UsageReport>({
     intent: 'usage.report',
-    params: { top, days, role_code: roleCode, user_id: userId },
+    params: {
+      top,
+      days,
+      role_code: roleCode,
+      user_id: userId,
+      scene_key_prefix: sceneKeyPrefix,
+      capability_key_prefix: capabilityKeyPrefix,
+    },
   });
 }
 
@@ -98,6 +112,8 @@ export async function exportUsageCsv(params: {
   export_filtered_only?: boolean;
   role_code?: string;
   user_id?: number;
+  scene_key_prefix?: string;
+  capability_key_prefix?: string;
 }) {
   return intentRequest<UsageExportCsvResult>({
     intent: 'usage.export.csv',
