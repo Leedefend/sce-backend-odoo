@@ -21,6 +21,9 @@
   - Make target: verify.portal.scene_warnings_guard.container
 - Enforced warnings guard in gate.full (Phase 9.8).
   - File: Makefile
+- Added warnings guard summary artifact for gate audit.
+  - File: scripts/verify/scene_warnings_guard_summary.js
+  - Output: warnings.json / warnings_blocked.json
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
