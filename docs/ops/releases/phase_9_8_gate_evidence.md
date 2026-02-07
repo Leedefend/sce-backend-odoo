@@ -34,6 +34,9 @@
   - `/mnt/artifacts/codex/portal-scene-warnings/20260207T053445`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.phase_9_8.gate_summary`
   - `artifacts/codex/phase-9-8/gate_summary.json`
+- `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make gate.full`: FAIL
+  - Failure: existing core gate tests (actions missing groups_id + menu/action bypass) in `smart_construction_core`
+  - This failure is pre-existing and not introduced by Phase 9.8 changes
 
 ## Safety / Rollback
 - Disable strict guards:
@@ -48,3 +51,4 @@
 ## Known Limitations
 - RC smoke user is `demo_pm` (demo data required).
 - `svc_e2e_smoke` remains future hardening work.
+- `gate.full` currently fails on core action groups gate until actions gain `groups_id` (tracked separately).
