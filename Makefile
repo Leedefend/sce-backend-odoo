@@ -831,7 +831,7 @@ codex.run: guard.prod.forbid
 	esac
 
 # ------------------ PR (Codex-safe) ------------------
-.PHONY: pr.create pr.status pr.push
+.PHONY: pr.create pr.status pr.push pr.update
 
 PR_BASE ?= main
 PR_TITLE ?=
@@ -850,6 +850,40 @@ pr.create: guard.prod.forbid
 	fi; \
 	echo "[pr.create] base=$(PR_BASE) head=$$branch title=$(PR_TITLE) body=$(PR_BODY_FILE)"; \
 	gh pr create --base "$(PR_BASE)" --head "$$branch" --title "$(PR_TITLE)" --body-file "$(PR_BODY_FILE)"
+
+pr.update: guard.prod.forbid
+	@bash -lc '\
+	set -euo pipefail; \
+	BR="$$(git rev-parse --abbrev-ref HEAD)"; \
+	if ! echo "$$BR" | grep -Eq "^(feat|feature|codex|experiment)/.+"; then \
+	  echo "[DENY] pr.update: branch not allowed: $$BR"; exit 2; \
+	fi; \
+	ENV_NAME="$${ENV:-dev}"; \
+	if [ "$$ENV_NAME" = "prod" ]; then \
+	  echo "[DENY] pr.update: ENV=prod is forbidden"; exit 3; \
+	fi; \
+	if [ -n "$${PROD_DANGER:-}" ]; then \
+	  echo "[DENY] pr.update: PROD_DANGER is set (forbidden)"; exit 4; \
+	fi; \
+	if ! command -v gh >/dev/null 2>&1; then \
+	  echo "[DENY] pr.update: gh CLI not found"; exit 5; \
+	fi; \
+	PR="$${PR:-}"; \
+	if [ -z "$$PR" ]; then \
+	  echo "[DENY] pr.update: missing PR=<number>"; exit 6; \
+	fi; \
+	ARGS=""; \
+	if [ -n "$${TITLE:-}" ]; then ARGS="$$ARGS --title \"$${TITLE}\""; fi; \
+	if [ -n "$${BODY:-}" ]; then ARGS="$$ARGS --body \"$${BODY}\""; fi; \
+	if [ -n "$${BODY_FILE:-}" ]; then ARGS="$$ARGS --body-file \"$${BODY_FILE}\""; fi; \
+	if [ -n "$${LABELS:-}" ]; then ARGS="$$ARGS --add-label \"$${LABELS}\""; fi; \
+	if [ -n "$${REMOVE_LABELS:-}" ]; then ARGS="$$ARGS --remove-label \"$${REMOVE_LABELS}\""; fi; \
+	if [ -z "$$ARGS" ]; then \
+	  echo "[DENY] pr.update: nothing to update (set TITLE/BODY/BODY_FILE/LABELS/REMOVE_LABELS)"; exit 7; \
+	fi; \
+	echo "[pr.update] branch=$$BR ENV=$$ENV_NAME PR=$$PR"; \
+	eval "gh pr edit $$PR $$ARGS"; \
+	'
 
 pr.push: guard.prod.forbid
 	@bash scripts/ops/git_safe_push.sh
