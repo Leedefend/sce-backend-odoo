@@ -39,6 +39,10 @@
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
   - Artifacts: `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T051349`
+- `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_warnings_guard.container`: PASS
+  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T052709`
+- `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_warnings_limit.container`: PASS
+  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T052724`
 - No other tests executed in this step.
 
 ## Notes
