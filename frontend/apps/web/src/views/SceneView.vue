@@ -19,6 +19,7 @@ import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { useSessionStore } from '../stores/session';
+import { config } from '../config';
 import { findActionNodeByModel } from '../app/menu';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
@@ -30,6 +31,35 @@ const session = useSessionStore();
 const status = ref<'loading' | 'error' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
 const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger', 'projects.intake']);
+
+function isPortalPath(url: string) {
+  return url.startsWith('/portal/');
+}
+
+function resolvePortalBridgeBase() {
+  try {
+    const base = new URL(config.apiBaseUrl);
+    if (base.hostname === 'localhost') {
+      base.hostname = '127.0.0.1';
+    }
+    return base.toString();
+  } catch {
+    return config.apiBaseUrl;
+  }
+}
+
+function buildPortalBridgeUrl(url: string) {
+  const nextPath = url.startsWith('/') ? url : `/${url}`;
+  const bridge = new URL('/portal/bridge', resolvePortalBridgeBase());
+  bridge.searchParams.set('next', nextPath);
+  if (session.token) {
+    bridge.searchParams.set('token', session.token);
+  }
+  if (config.odooDb) {
+    bridge.searchParams.set('db', config.odooDb);
+  }
+  return bridge.toString();
+}
 
 function resolveRecordId(targetRecord: unknown) {
   if (typeof targetRecord === 'string' && targetRecord.startsWith(':')) {
@@ -136,6 +166,10 @@ async function resolveScene() {
   }
 
   if (target.route) {
+    if (isPortalPath(target.route)) {
+      window.location.assign(buildPortalBridgeUrl(target.route));
+      return;
+    }
     await router.replace(target.route);
     return;
   }
