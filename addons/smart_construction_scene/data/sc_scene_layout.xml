@@ -49,6 +49,8 @@
                 'code': 'portal.lifecycle',
                 'name': '生命周期驾驶舱',
                 'version': 'v2',
+                'portal_only': True,
+                'spa_ready': False,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
                     'route': '/portal/lifecycle'
@@ -69,6 +71,8 @@
                 'code': 'portal.capability_matrix',
                 'name': '能力矩阵',
                 'version': 'v2',
+                'portal_only': True,
+                'spa_ready': False,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
                     'route': '/portal/capability-matrix'
@@ -89,6 +93,8 @@
                 'code': 'portal.dashboard',
                 'name': '工作台',
                 'version': 'v2',
+                'portal_only': True,
+                'spa_ready': False,
                 'layout': {'kind': 'workspace', 'sidebar': 'fixed', 'header': 'full'},
                 'target': {
                     'route': '/portal/dashboard'
