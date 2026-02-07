@@ -7,6 +7,9 @@
 - Added action_xmlid fallback in menu scene key injection to avoid missing scene_key when action_id resolution is unavailable.
   - File: addons/smart_core/handlers/system_init.py
   - Logic: after action_id mapping, map meta.action_xmlid → scene_key via action_xmlid_map.
+- Added menu scene resolve smoke to gate.full for Phase 9.8 enforcement.
+  - File: Makefile
+  - Target: gate.full now runs verify.menu.scene_resolve.container
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS

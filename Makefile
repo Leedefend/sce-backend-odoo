@@ -758,6 +758,7 @@ audit.boundary:
 gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
+	@$(MAKE) verify.menu.scene_resolve.container DB_NAME=$(DB_NAME)
 	@$(MAKE) audit.pull DB_NAME=$(DB_NAME)
 
 # ======================================================
