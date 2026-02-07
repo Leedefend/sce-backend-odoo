@@ -19,6 +19,19 @@ class UsageTrackHandler(BaseIntentHandler):
     def _day_key(self):
         return fields.Date.context_today(self.env.user).strftime("%Y-%m-%d")
 
+    def _role_codes_for_user(self, user):
+        if not user:
+            return []
+        role_codes = set()
+        group_xmlids = user.groups_id.get_external_id().values()
+        prefix = "smart_construction_core.group_sc_role_"
+        for xmlid in group_xmlids:
+            if isinstance(xmlid, str) and xmlid.startswith(prefix):
+                role_codes.add(xmlid[len(prefix):])
+        if user.has_group("base.group_system"):
+            role_codes.add("admin")
+        return sorted(role_codes)
+
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
         event_type = str(params.get("event_type") or "").strip().lower()
@@ -28,6 +41,8 @@ class UsageTrackHandler(BaseIntentHandler):
         user = self.env.user
         company = user.company_id if user else None
         Usage = self.env.get("sc.usage.counter")
+        role_codes = self._role_codes_for_user(user)
+        uid = int(user.id or 0) if user else 0
 
         tracked = []
         day_key = self._day_key()
@@ -35,6 +50,24 @@ class UsageTrackHandler(BaseIntentHandler):
             self._bump(Usage, company, "usage.scene_open.total")
             self._bump(Usage, company, f"usage.scene_open.{scene_key}")
             self._bump(Usage, company, f"usage.scene_open.daily.{day_key}")
+            if uid:
+                self._bump(Usage, company, f"usage.scene_open.user.{uid}.total")
+                self._bump(Usage, company, f"usage.scene_open.user.{uid}.{scene_key}")
+                self._bump(Usage, company, f"usage.scene_open.user.{uid}.daily.{day_key}")
+                tracked.extend([
+                    f"usage.scene_open.user.{uid}.total",
+                    f"usage.scene_open.user.{uid}.{scene_key}",
+                    f"usage.scene_open.user.{uid}.daily.{day_key}",
+                ])
+            for role_code in role_codes:
+                self._bump(Usage, company, f"usage.scene_open.role.{role_code}.total")
+                self._bump(Usage, company, f"usage.scene_open.role.{role_code}.{scene_key}")
+                self._bump(Usage, company, f"usage.scene_open.role.{role_code}.daily.{day_key}")
+                tracked.extend([
+                    f"usage.scene_open.role.{role_code}.total",
+                    f"usage.scene_open.role.{role_code}.{scene_key}",
+                    f"usage.scene_open.role.{role_code}.daily.{day_key}",
+                ])
             tracked.extend([
                 "usage.scene_open.total",
                 f"usage.scene_open.{scene_key}",
@@ -44,6 +77,24 @@ class UsageTrackHandler(BaseIntentHandler):
             self._bump(Usage, company, "usage.capability_open.total")
             self._bump(Usage, company, f"usage.capability_open.{capability_key}")
             self._bump(Usage, company, f"usage.capability_open.daily.{day_key}")
+            if uid:
+                self._bump(Usage, company, f"usage.capability_open.user.{uid}.total")
+                self._bump(Usage, company, f"usage.capability_open.user.{uid}.{capability_key}")
+                self._bump(Usage, company, f"usage.capability_open.user.{uid}.daily.{day_key}")
+                tracked.extend([
+                    f"usage.capability_open.user.{uid}.total",
+                    f"usage.capability_open.user.{uid}.{capability_key}",
+                    f"usage.capability_open.user.{uid}.daily.{day_key}",
+                ])
+            for role_code in role_codes:
+                self._bump(Usage, company, f"usage.capability_open.role.{role_code}.total")
+                self._bump(Usage, company, f"usage.capability_open.role.{role_code}.{capability_key}")
+                self._bump(Usage, company, f"usage.capability_open.role.{role_code}.daily.{day_key}")
+                tracked.extend([
+                    f"usage.capability_open.role.{role_code}.total",
+                    f"usage.capability_open.role.{role_code}.{capability_key}",
+                    f"usage.capability_open.role.{role_code}.daily.{day_key}",
+                ])
             tracked.extend([
                 "usage.capability_open.total",
                 f"usage.capability_open.{capability_key}",

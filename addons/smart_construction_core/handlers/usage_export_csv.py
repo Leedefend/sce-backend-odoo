@@ -41,6 +41,8 @@ def build_usage_csv(*, report, visibility, export_filtered_only=True, hidden_rea
     filters = report.get("filters") or {}
     lines.append(f"meta,day_from,{_quote(filters.get('day_from') or '')},")
     lines.append(f"meta,day_to,{_quote(filters.get('day_to') or '')},")
+    lines.append(f"meta,role_code,{_quote(filters.get('role_code') or '')},")
+    lines.append(f"meta,user_id,{int(filters.get('user_id') or 0)},")
 
     totals = report.get("totals") or {}
     lines.append(f"total,scene_open_total,{int(totals.get('scene_open_total') or 0)},")
@@ -50,6 +52,16 @@ def build_usage_csv(*, report, visibility, export_filtered_only=True, hidden_rea
         lines.append(f"scene_top,{_quote(item.get('key') or '')},{int(item.get('count') or 0)},")
     for item in report.get("capability_top") or []:
         lines.append(f"capability_top,{_quote(item.get('key') or '')},{int(item.get('count') or 0)},")
+    for item in report.get("role_top") or []:
+        lines.append(
+            f"role_top,{_quote(item.get('role_code') or '')},{int(item.get('combined_total') or 0)},"
+            f"{int(item.get('scene_open_total') or 0)}/{int(item.get('capability_open_total') or 0)}"
+        )
+    for item in report.get("user_top") or []:
+        lines.append(
+            f"user_top,{int(item.get('user_id') or 0)},{int(item.get('combined_total') or 0)},"
+            f"{int(item.get('scene_open_total') or 0)}/{int(item.get('capability_open_total') or 0)}"
+        )
     for item in (report.get("daily") or {}).get("scene_open") or []:
         lines.append(f"scene_daily,{item.get('day') or ''},{int(item.get('count') or 0)},")
     for item in (report.get("daily") or {}).get("capability_open") or []:

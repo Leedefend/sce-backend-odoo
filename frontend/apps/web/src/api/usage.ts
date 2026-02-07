@@ -33,6 +33,18 @@ export type UsageReport = {
   };
   scene_top: UsageTopItem[];
   capability_top: UsageTopItem[];
+  role_top?: Array<{
+    role_code: string;
+    scene_open_total: number;
+    capability_open_total: number;
+    combined_total: number;
+  }>;
+  user_top?: Array<{
+    user_id: number;
+    scene_open_total: number;
+    capability_open_total: number;
+    combined_total: number;
+  }>;
   filters?: {
     top?: number;
     days?: number;
@@ -40,6 +52,8 @@ export type UsageReport = {
     day_to?: string;
     scene_key_prefix?: string;
     capability_key_prefix?: string;
+    role_code?: string;
+    user_id?: number;
   };
 };
 
@@ -82,6 +96,8 @@ export async function exportUsageCsv(params: {
   days: number;
   hidden_reason?: string;
   export_filtered_only?: boolean;
+  role_code?: string;
+  user_id?: number;
 }) {
   return intentRequest<UsageExportCsvResult>({
     intent: 'usage.export.csv',

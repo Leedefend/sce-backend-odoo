@@ -52,6 +52,35 @@ class TestUsageBackend(TransactionCase):
         self.assertTrue(_matches_prefix(f"{marker}.x", marker))
         self.assertFalse(_matches_prefix("other.x", marker))
 
+    def test_usage_report_role_and_user_slice(self):
+        Usage = self.env["sc.usage.counter"].sudo()
+        company = self.env.user.company_id
+        today = datetime.utcnow().date().strftime("%Y-%m-%d")
+        role_code = f"pm_{uuid4().hex[:4]}"
+        user_id = 999001
+        scene_key = f"slice.scene.{uuid4().hex[:4]}"
+        cap_key = f"slice.cap.{uuid4().hex[:4]}"
+
+        Usage.bump(company, f"usage.scene_open.role.{role_code}.total", 4)
+        Usage.bump(company, f"usage.scene_open.role.{role_code}.{scene_key}", 3)
+        Usage.bump(company, f"usage.scene_open.role.{role_code}.daily.{today}", 3)
+        Usage.bump(company, f"usage.capability_open.role.{role_code}.total", 2)
+        Usage.bump(company, f"usage.capability_open.role.{role_code}.{cap_key}", 2)
+        Usage.bump(company, f"usage.capability_open.role.{role_code}.daily.{today}", 2)
+        Usage.bump(company, f"usage.scene_open.user.{user_id}.total", 5)
+        Usage.bump(company, f"usage.capability_open.user.{user_id}.total", 1)
+
+        report = build_usage_report_data(
+            self.env,
+            params={"days": 1, "role_code": role_code, "user_id": user_id},
+        )
+        self.assertEqual(report["filters"]["role_code"], role_code)
+        self.assertEqual(report["filters"]["user_id"], user_id)
+        self.assertTrue(any(item["role_code"] == role_code for item in report.get("role_top") or []))
+        self.assertTrue(any(item["user_id"] == user_id for item in report.get("user_top") or []))
+        self.assertTrue(any(item["key"] == scene_key for item in report.get("scene_top") or []))
+        self.assertTrue(any(item["key"] == cap_key for item in report.get("capability_top") or []))
+
     def test_usage_csv_respects_hidden_reason_filter(self):
         report = {
             "filters": {"day_from": "2026-02-01", "day_to": "2026-02-07"},
@@ -79,3 +108,4 @@ class TestUsageBackend(TransactionCase):
         )
         self.assertIn("x.a", csv_text)
         self.assertNotIn("x.b", csv_text)
+        self.assertIn("meta,role_code,", csv_text)
