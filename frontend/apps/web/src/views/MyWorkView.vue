@@ -81,6 +81,27 @@
         </button>
       </section>
 
+      <section class="filters">
+        <input
+          v-model.trim="searchText"
+          class="search-input"
+          type="search"
+          placeholder="搜索事项 / 模型 / 动作"
+        />
+        <select v-model="sourceFilter" class="filter-select">
+          <option value="ALL">全部来源</option>
+          <option v-for="source in sourceOptions" :key="`src-${source}`" :value="source">
+            {{ source }}
+          </option>
+        </select>
+        <select v-model="reasonFilter" class="filter-select">
+          <option value="ALL">全部原因码</option>
+          <option v-for="reason in reasonOptions" :key="`reason-${reason}`" :value="reason">
+            {{ reason }}
+          </option>
+        </select>
+      </section>
+
       <section v-if="todoSelectionIds.length" class="batch-bar">
         <span>已选 {{ todoSelectionIds.length }} 条待办</span>
         <button class="link-btn done-btn" :disabled="loading" @click="completeSelectedTodos">批量完成</button>
@@ -171,15 +192,31 @@ const retryFailedItems = ref<Array<{ id: number; reason_code: string; message: s
 const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]);
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
+const searchText = ref('');
+const sourceFilter = ref('ALL');
+const reasonFilter = ref('ALL');
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
 
 const filteredItems = computed(() => {
-  if (!sections.value.length) return items.value;
   const key = activeSection.value;
-  if (!key) return items.value;
-  return items.value.filter((item) => (item.section || '') === key);
+  let result = !sections.value.length || !key ? items.value : items.value.filter((item) => (item.section || '') === key);
+  if (sourceFilter.value !== 'ALL') {
+    result = result.filter((item) => String(item.source || '') === sourceFilter.value);
+  }
+  if (reasonFilter.value !== 'ALL') {
+    result = result.filter((item) => String(item.reason_code || '') === reasonFilter.value);
+  }
+  const query = searchText.value.trim().toLowerCase();
+  if (!query) return result;
+  return result.filter((item) =>
+    [item.title, item.model, item.action_label].some((text) =>
+      String(text || '')
+        .toLowerCase()
+        .includes(query),
+    ),
+  );
 });
 const currentTodoRows = computed(() =>
   filteredItems.value.filter((item) => isCompletableTodo(item)).map((item) => item.id),
@@ -196,6 +233,22 @@ const todoItemMap = computed(() => {
 const allTodoSelected = computed(() => {
   if (!currentTodoRows.value.length) return false;
   return currentTodoRows.value.every((id) => todoSelectionIdSet.value.has(id));
+});
+const sourceOptions = computed(() => {
+  const set = new Set<string>();
+  items.value.forEach((item) => {
+    const source = String(item.source || '');
+    if (source) set.add(source);
+  });
+  return Array.from(set).sort();
+});
+const reasonOptions = computed(() => {
+  const set = new Set<string>();
+  items.value.forEach((item) => {
+    const reason = String(item.reason_code || '');
+    if (reason) set.add(reason);
+  });
+  return Array.from(set).sort();
 });
 
 async function load() {
@@ -525,6 +578,20 @@ onMounted(load);
 .tabs {
   display: flex;
   gap: 8px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  gap: 8px;
+}
+
+.search-input,
+.filter-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
 }
 
 .tab {

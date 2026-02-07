@@ -14,6 +14,13 @@
             <option :value="20">20</option>
           </select>
         </label>
+        <label>
+          趋势范围
+          <select v-model="dailyRange" :disabled="loading">
+            <option :value="3">最近 3 天</option>
+            <option :value="7">最近 7 天</option>
+          </select>
+        </label>
         <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">导出 CSV</button>
         <button class="secondary" :disabled="loading" @click="load">刷新</button>
       </div>
@@ -181,13 +188,14 @@ const loading = ref(false);
 const errorText = ref('');
 const errorTraceId = ref('');
 const topN = ref(10);
+const dailyRange = ref(7);
 const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
 
 const sceneTop = computed(() => report.value?.scene_top || []);
 const capabilityTop = computed(() => report.value?.capability_top || []);
-const sceneDaily = computed(() => report.value?.daily?.scene_open || []);
-const capabilityDaily = computed(() => report.value?.daily?.capability_open || []);
+const sceneDaily = computed(() => (report.value?.daily?.scene_open || []).slice(0, dailyRange.value));
+const capabilityDaily = computed(() => (report.value?.daily?.capability_open || []).slice(0, dailyRange.value));
 const reasonCounts = computed(() => visibility.value?.reason_counts || []);
 const hiddenSamples = computed(() => visibility.value?.hidden_samples || []);
 const canExport = computed(() => Boolean(report.value || visibility.value));

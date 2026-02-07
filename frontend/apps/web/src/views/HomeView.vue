@@ -26,6 +26,10 @@
         type="search"
         placeholder="搜索能力名称 / 说明 / key"
       />
+      <label class="ready-only">
+        <input v-model="readyOnly" type="checkbox" />
+        仅显示可用能力（READY）
+      </label>
       <div class="state-filters">
         <button :class="{ active: stateFilter === 'ALL' }" @click="stateFilter = 'ALL'">
           全部 {{ entries.length }}
@@ -101,6 +105,7 @@ const session = useSessionStore();
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
 const stateFilter = ref<'ALL' | EntryState>('ALL');
+const readyOnly = ref(false);
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
@@ -145,6 +150,7 @@ const entries = computed<CapabilityEntry[]>(() => {
 const filteredEntries = computed<CapabilityEntry[]>(() => {
   const query = searchText.value.trim().toLowerCase();
   return entries.value.filter((entry) => {
+    if (readyOnly.value && entry.state !== 'READY') return false;
     const matchesState = stateFilter.value === 'ALL' ? true : entry.state === stateFilter.value;
     if (!matchesState) return false;
     if (!query) return true;
@@ -251,6 +257,14 @@ async function openScene(entry: CapabilityEntry) {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.ready-only {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 13px;
 }
 
 .state-filters button {
