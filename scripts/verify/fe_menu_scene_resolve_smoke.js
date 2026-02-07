@@ -8,7 +8,7 @@ const https = require('https');
 
 const BASE_URL = process.env.API_BASE || process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
-const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'demo_pm';
+const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'svc_e2e_smoke';
 const PASSWORD =
   process.env.SCENE_PASSWORD ||
   process.env.SVC_PASSWORD ||
@@ -16,6 +16,8 @@ const PASSWORD =
   process.env.ADMIN_PASSWD ||
   'demo';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
+const EXEMPTIONS_FILE =
+  process.env.MENU_SCENE_EXEMPTIONS || path.resolve(__dirname, '../../docs/ops/verify/menu_scene_exemptions.yml');
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -28,6 +30,49 @@ function log(msg) {
 function writeJson(file, obj) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(obj, null, 2));
+}
+
+function loadExemptions(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) {
+    return { items: [], map: new Map() };
+  }
+  const lines = fs.readFileSync(filePath, 'utf-8').split(/\r?\n/);
+  const items = [];
+  let current = null;
+  const pushCurrent = () => {
+    if (current && current.xmlid) {
+      items.push(current);
+    }
+    current = null;
+  };
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    if (line.startsWith('- ')) {
+      pushCurrent();
+      current = {};
+      const rest = line.slice(2).trim();
+      if (rest.startsWith('xmlid:')) {
+        current.xmlid = rest.slice('xmlid:'.length).trim().replace(/^['"]|['"]$/g, '');
+      }
+      continue;
+    }
+    if (line.startsWith('xmlid:')) {
+      if (!current) current = {};
+      current.xmlid = line.slice('xmlid:'.length).trim().replace(/^['"]|['"]$/g, '');
+      continue;
+    }
+    if (line.startsWith('reason:')) {
+      if (!current) current = {};
+      current.reason = line.slice('reason:'.length).trim();
+    }
+  }
+  pushCurrent();
+  const map = new Map();
+  for (const item of items) {
+    map.set(item.xmlid, item.reason || '');
+  }
+  return { items, map };
 }
 
 function requestJson(url, payload, headers = {}) {
@@ -159,31 +204,58 @@ async function main() {
   const nav = ((appInitResp.body || {}).data || {}).nav || [];
   const all = flattenNav(nav);
   const failures = [];
+  const exempt = [];
+  const exemptions = loadExemptions(EXEMPTIONS_FILE);
+  if (exemptions.items.length) {
+    log(`exemptions: ${exemptions.items.length} from ${EXEMPTIONS_FILE}`);
+  }
+  let total = 0;
 
   for (const node of all) {
     const meta = node.meta || {};
     if (!hasAction(meta)) {
       continue;
     }
+    total += 1;
     const sceneKey = node.scene_key || meta.scene_key || meta.sceneKey || node.sceneKey;
     if (!sceneKey) {
-      failures.push({
-        name: node.name,
-        menu_id: node.menu_id || node.id,
-        xmlid: node.xmlid || meta.menu_xmlid,
-        action_type: meta.action_type || meta.actionType,
-        action_id: meta.action_id || null,
-        menu_xmlid: meta.menu_xmlid || null,
-        scene_key: node.scene_key || null,
-        meta_scene_key: meta.scene_key || null,
-      });
+      const xmlid = node.xmlid || meta.menu_xmlid;
+      if (xmlid && exemptions.map.has(xmlid)) {
+        exempt.push({
+          name: node.name,
+          menu_id: node.menu_id || node.id,
+          xmlid,
+          reason: exemptions.map.get(xmlid),
+          action_type: meta.action_type || meta.actionType,
+          action_id: meta.action_id || null,
+        });
+      } else {
+        failures.push({
+          name: node.name,
+          menu_id: node.menu_id || node.id,
+          xmlid,
+          action_type: meta.action_type || meta.actionType,
+          action_id: meta.action_id || null,
+          menu_xmlid: meta.menu_xmlid || null,
+          scene_key: node.scene_key || null,
+          meta_scene_key: meta.scene_key || null,
+        });
+      }
     }
   }
 
-  const resolved = all.length - failures.length;
-  const coverage = all.length ? Number(((resolved / all.length) * 100).toFixed(2)) : 0;
-  const summary = { total: all.length, resolved, failures: failures.length, coverage };
-  writeJson(path.join(outDir, 'menu_scene_resolve.json'), { summary, failures });
+  const resolved = total - failures.length - exempt.length;
+  const effectiveTotal = Math.max(total - exempt.length, 0);
+  const coverage = effectiveTotal ? Number(((resolved / effectiveTotal) * 100).toFixed(2)) : 100;
+  const summary = {
+    total,
+    resolved,
+    failures: failures.length,
+    exempt: exempt.length,
+    effective_total: effectiveTotal,
+    coverage,
+  };
+  writeJson(path.join(outDir, 'menu_scene_resolve.json'), { summary, failures, exempt });
 
   if (failures.length) {
     console.error('[fe_menu_scene_resolve_smoke] unresolved menus:');

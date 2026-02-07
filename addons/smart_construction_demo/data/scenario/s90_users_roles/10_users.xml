@@ -67,6 +67,20 @@
             <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_read')])]"/>
         </record>
 
+        <record id="sc_demo_user_e2e_smoke" model="res.users">
+            <field name="name">Svc-E2E Smoke</field>
+            <field name="login">svc_e2e_smoke</field>
+            <field name="password">demo</field>
+            <field name="lang">zh_CN</field>
+            <field name="tz">Asia/Shanghai</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_project_read'),
+                ref('smart_construction_core.group_sc_cap_data_read')
+            ])]"/>
+        </record>
+
         <record id="sc_demo_user_test_admin" model="res.users">
             <field name="name">测试-全能力</field>
             <field name="login">sc_test_admin</field>

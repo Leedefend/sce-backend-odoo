@@ -166,8 +166,8 @@ run_check "S50 settlement links payment request after fix" "s50_repairable_paths
   "select case when count(*) = 1 then 'ok' else 'S50 payment not linked' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_050_001');" \
   "select id, amount, settlement_id from payment_request where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_payment_050_001');"
 run_check "S90 users exist" "s90_users_roles" \
-  "select case when count(*) >= 5 then 'ok' else 'S90 users missing' end from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly');" \
-  "select id, login, active from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly') order by login;"
+  "select case when count(*) >= 6 then 'ok' else 'S90 users missing' end from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke');" \
+  "select id, login, active from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke') order by login;"
 run_check "S90 finance user lacks contract capability" "s90_users_roles" \
   "select case when count(*) = 0 then 'ok' else 'S90 finance has contract group' end from res_groups_users_rel r where r.uid = (select id from res_users where login='demo_finance') and r.gid in (select id from res_groups where coalesce(name->>'zh_CN', name->>'en_US') like 'SC 能力 - 合同中心%');" \
   "select u.login, coalesce(g.name->>'zh_CN', g.name->>'en_US') as group_name from res_groups_users_rel r join res_users u on u.id = r.uid join res_groups g on g.id = r.gid where u.login='demo_finance' order by group_name;"
