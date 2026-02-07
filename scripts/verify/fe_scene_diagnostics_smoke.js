@@ -19,6 +19,10 @@ const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
+const DENY_WARNING_CODES = (process.env.DENY_WARNING_CODES || '')
+  .split(',')
+  .map((code) => code.trim())
+  .filter(Boolean);
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -154,6 +158,13 @@ async function main() {
     const bad = diag.normalize_warnings.filter((item) => !item || !item.code || !item.message);
     if (bad.length) {
       throw new Error('normalize_warnings contains invalid entries');
+    }
+    if (DENY_WARNING_CODES.length) {
+      const blocked = diag.normalize_warnings.filter((item) => DENY_WARNING_CODES.includes(item.code));
+      if (blocked.length) {
+        writeJson(path.join(outDir, 'normalize_warnings_blocked.json'), blocked);
+        throw new Error(`normalize_warnings blocked codes (${blocked.length})`);
+      }
     }
   }
 
