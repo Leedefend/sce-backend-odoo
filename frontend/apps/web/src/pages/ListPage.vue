@@ -59,6 +59,15 @@
     <section v-if="status === 'ok' && batchDetails.length" class="batch-details">
       <p v-for="(line, idx) in batchDetails" :key="idx">{{ line }}</p>
       <button
+        v-if="hasMoreFailures"
+        type="button"
+        class="batch-load-more"
+        :disabled="loading"
+        @click="loadMoreFailures"
+      >
+        加载更多失败
+      </button>
+      <button
         v-if="failedCsvAvailable"
         type="button"
         class="batch-download"
@@ -157,6 +166,8 @@ const props = defineProps<{
   batchDetails?: string[];
   failedCsvAvailable?: boolean;
   onDownloadFailedCsv?: () => void;
+  hasMoreFailures?: boolean;
+  onLoadMoreFailures?: () => void;
   showAssign?: boolean;
   assigneeOptions?: Array<{ id: number; name: string }>;
   selectedAssigneeId?: number | null;
@@ -261,6 +272,10 @@ function downloadFailedCsv() {
   props.onDownloadFailedCsv?.();
 }
 
+function loadMoreFailures() {
+  props.onLoadMoreFailures?.();
+}
+
 const rowPrimary = computed(() => props.listProfile?.row_primary || '');
 const rowSecondary = computed(() => props.listProfile?.row_secondary || '');
 const hiddenColumns = computed(() => {
@@ -344,6 +359,17 @@ function columnLabel(col: string) {
   border-radius: 6px;
   background: #fff;
   color: #0f172a;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.batch-load-more {
+  margin-top: 8px;
+  margin-right: 8px;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
   padding: 6px 10px;
   cursor: pointer;
 }

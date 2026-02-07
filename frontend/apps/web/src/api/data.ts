@@ -178,7 +178,11 @@ export type ApiDataBatchResult = {
   failed: number;
   results: ApiDataBatchItemResult[];
   failed_preview?: ApiDataBatchItemResult[];
+  failed_total?: number;
+  failed_page_offset?: number;
+  failed_page_limit?: number;
   failed_truncated?: number;
+  failed_has_more?: boolean;
   failed_csv_file_name?: string;
   failed_csv_content_b64?: string;
   failed_csv_count?: number;
@@ -256,6 +260,8 @@ export async function batchUpdateRecords(params: {
   ifMatchMap?: Record<number, string> | Record<string, string>;
   idempotencyKey?: string;
   failedPreviewLimit?: number;
+  failedOffset?: number;
+  failedLimit?: number;
   exportFailedCsv?: boolean;
   context?: Record<string, unknown>;
 }) {
@@ -270,6 +276,8 @@ export async function batchUpdateRecords(params: {
       if_match_map: params.ifMatchMap ?? {},
       idempotency_key: params.idempotencyKey ?? '',
       failed_preview_limit: params.failedPreviewLimit ?? 10,
+      failed_offset: params.failedOffset ?? 0,
+      failed_limit: params.failedLimit ?? params.failedPreviewLimit ?? 10,
       export_failed_csv: params.exportFailedCsv ?? false,
       context: params.context ?? {},
     },

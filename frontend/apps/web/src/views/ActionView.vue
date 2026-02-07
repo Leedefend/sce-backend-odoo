@@ -38,6 +38,7 @@
       :batch-message="batchMessage"
       :batch-details="batchDetails"
       :failed-csv-available="Boolean(failedCsvContentB64)"
+      :has-more-failures="batchHasMoreFailures"
       :show-assign="hasAssigneeField"
       :assignee-options="assigneeOptions"
       :selected-assignee-id="selectedAssigneeId"
@@ -53,6 +54,7 @@
       :on-batch-export="handleBatchExport"
       :on-assignee-change="handleAssigneeChange"
       :on-download-failed-csv="handleDownloadFailedCsv"
+      :on-load-more-failures="handleLoadMoreFailures"
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
@@ -105,6 +107,18 @@ const batchMessage = ref('');
 const batchDetails = ref<string[]>([]);
 const failedCsvFileName = ref('');
 const failedCsvContentB64 = ref('');
+const batchFailedOffset = ref(0);
+const batchFailedLimit = ref(12);
+const batchHasMoreFailures = ref(false);
+const lastBatchRequest = ref<{
+  model: string;
+  ids: number[];
+  action: 'archive' | 'activate' | 'assign';
+  assigneeId?: number;
+  ifMatchMap: Record<number, string>;
+  idempotencyKey: string;
+  context: Record<string, unknown>;
+} | null>(null);
 const batchBusy = ref(false);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -270,18 +284,29 @@ function downloadCsvBase64(filename: string, mimeType: string, contentB64: strin
 
 function applyBatchFailureArtifacts(result: {
   failed_preview?: Array<{ id: number; reason_code: string; message: string }>;
+  failed_page_offset?: number;
+  failed_page_limit?: number;
+  failed_has_more?: boolean;
   failed_truncated?: number;
   failed_csv_file_name?: string;
   failed_csv_content_b64?: string;
-}) {
+}, options?: { append?: boolean }) {
   const preview = Array.isArray(result.failed_preview) ? result.failed_preview : [];
-  const truncated = Number(result.failed_truncated || 0);
-  batchDetails.value = preview.map((item) => `#${item.id} ${item.reason_code}: ${item.message}`);
-  if (truncated > 0) {
-    batchDetails.value.push(`... 其余 ${truncated} 条失败未展示`);
+  const lines = preview.map((item) => `#${item.id} ${item.reason_code}: ${item.message}`);
+  if (options?.append) {
+    batchDetails.value = [...batchDetails.value, ...lines];
+  } else {
+    batchDetails.value = lines;
   }
-  failedCsvFileName.value = String(result.failed_csv_file_name || '');
-  failedCsvContentB64.value = String(result.failed_csv_content_b64 || '');
+  batchFailedOffset.value = Number(result.failed_page_offset || 0) + preview.length;
+  batchFailedLimit.value = Number(result.failed_page_limit || 12) || 12;
+  batchHasMoreFailures.value = Boolean(result.failed_has_more);
+  if ('failed_csv_file_name' in result && result.failed_csv_file_name) {
+    failedCsvFileName.value = String(result.failed_csv_file_name || '');
+  }
+  if ('failed_csv_content_b64' in result && result.failed_csv_content_b64) {
+    failedCsvContentB64.value = String(result.failed_csv_content_b64 || '');
+  }
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
@@ -771,6 +796,9 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   batchDetails.value = [];
   failedCsvFileName.value = '';
   failedCsvContentB64.value = '';
+  batchFailedOffset.value = 0;
+  batchHasMoreFailures.value = false;
+  lastBatchRequest.value = null;
   if (!model.value || !selectedIds.value.length) return;
   if (!hasActiveField.value) {
     batchMessage.value = '当前模型不支持 active 字段，无法批量归档/激活';
@@ -780,6 +808,7 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   try {
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { active: action === 'activate' });
+    const requestContext = mergeContext(actionMeta.value?.context);
     const result = await batchUpdateRecords({
       model: model.value,
       ids: selectedIds.value,
@@ -787,9 +816,19 @@ async function handleBatchAction(action: 'archive' | 'activate') {
       ifMatchMap,
       idempotencyKey,
       failedPreviewLimit: 12,
+      failedOffset: 0,
+      failedLimit: 12,
       exportFailedCsv: true,
-      context: mergeContext(actionMeta.value?.context),
+      context: requestContext,
     });
+    lastBatchRequest.value = {
+      model: model.value,
+      ids: [...selectedIds.value],
+      action,
+      ifMatchMap,
+      idempotencyKey,
+      context: requestContext,
+    };
     if (result.idempotent_replay) {
       batchMessage.value = '批量操作已幂等处理（重复请求被忽略）';
     } else {
@@ -807,6 +846,9 @@ async function handleBatchAction(action: 'archive' | 'activate') {
     batchDetails.value = [];
     failedCsvFileName.value = '';
     failedCsvContentB64.value = '';
+    batchFailedOffset.value = 0;
+    batchHasMoreFailures.value = false;
+    lastBatchRequest.value = null;
   } finally {
     batchBusy.value = false;
   }
@@ -817,6 +859,9 @@ async function handleBatchAssign(assigneeId: number) {
   batchDetails.value = [];
   failedCsvFileName.value = '';
   failedCsvContentB64.value = '';
+  batchFailedOffset.value = 0;
+  batchHasMoreFailures.value = false;
+  lastBatchRequest.value = null;
   if (!model.value || !selectedIds.value.length) return;
   if (!hasAssigneeField.value) {
     batchMessage.value = '当前模型不支持负责人字段，无法批量指派';
@@ -830,6 +875,7 @@ async function handleBatchAssign(assigneeId: number) {
   try {
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey('assign', selectedIds.value, { assignee_id: assigneeId });
+    const requestContext = mergeContext(actionMeta.value?.context);
     const result = await batchUpdateRecords({
       model: model.value,
       ids: selectedIds.value,
@@ -838,9 +884,20 @@ async function handleBatchAssign(assigneeId: number) {
       ifMatchMap,
       idempotencyKey,
       failedPreviewLimit: 12,
+      failedOffset: 0,
+      failedLimit: 12,
       exportFailedCsv: true,
-      context: mergeContext(actionMeta.value?.context),
+      context: requestContext,
     });
+    lastBatchRequest.value = {
+      model: model.value,
+      ids: [...selectedIds.value],
+      action: 'assign',
+      assigneeId,
+      ifMatchMap,
+      idempotencyKey,
+      context: requestContext,
+    };
     const assignee = assigneeOptions.value.find((opt) => opt.id === assigneeId)?.name || `#${assigneeId}`;
     if (result.idempotent_replay) {
       batchMessage.value = `批量指派给 ${assignee} 已幂等处理（重复请求被忽略）`;
@@ -856,6 +913,9 @@ async function handleBatchAssign(assigneeId: number) {
     batchDetails.value = [];
     failedCsvFileName.value = '';
     failedCsvContentB64.value = '';
+    batchFailedOffset.value = 0;
+    batchHasMoreFailures.value = false;
+    lastBatchRequest.value = null;
   } finally {
     batchBusy.value = false;
   }
@@ -906,6 +966,32 @@ async function exportByBackend(scope: 'selected' | 'all') {
 function handleDownloadFailedCsv() {
   if (!failedCsvContentB64.value) return;
   downloadCsvBase64(failedCsvFileName.value || 'batch_failed.csv', 'text/csv', failedCsvContentB64.value);
+}
+
+async function handleLoadMoreFailures() {
+  if (!lastBatchRequest.value || !batchHasMoreFailures.value) return;
+  batchBusy.value = true;
+  try {
+    const req = lastBatchRequest.value;
+    const result = await batchUpdateRecords({
+      model: req.model,
+      ids: req.ids,
+      action: req.action,
+      assigneeId: req.assigneeId,
+      ifMatchMap: req.ifMatchMap,
+      idempotencyKey: req.idempotencyKey,
+      failedPreviewLimit: batchFailedLimit.value,
+      failedOffset: batchFailedOffset.value,
+      failedLimit: batchFailedLimit.value,
+      exportFailedCsv: false,
+      context: req.context,
+    });
+    applyBatchFailureArtifacts(result, { append: true });
+  } catch (err) {
+    setError(err, 'load more failures failed');
+  } finally {
+    batchBusy.value = false;
+  }
 }
 
 onMounted(load);

@@ -189,6 +189,20 @@ class ApiDataBatchHandler(BaseIntentHandler):
             "count": len(failed_rows),
         }
 
+    def _apply_failed_page(self, result: Dict[str, Any], *, offset: int, limit: int):
+        all_rows = [item for item in (result.get("results") or []) if not item.get("ok")]
+        total = len(all_rows)
+        start = max(0, min(offset, total))
+        page = all_rows[start:start + limit]
+        enriched = dict(result)
+        enriched["failed_total"] = total
+        enriched["failed_page_offset"] = start
+        enriched["failed_page_limit"] = limit
+        enriched["failed_preview"] = page
+        enriched["failed_truncated"] = max(0, total - (start + len(page)))
+        enriched["failed_has_more"] = (start + len(page)) < total
+        return enriched
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
@@ -198,7 +212,10 @@ class ApiDataBatchHandler(BaseIntentHandler):
         idempotency_key = str(params.get("idempotency_key") or "").strip()
         if_match_map = self._normalize_if_match_map(params)
         preview_limit = self._get_int(params, "failed_preview_limit", 10)
-        preview_limit = max(1, min(preview_limit, 200))
+        page_limit = self._get_int(params, "failed_limit", preview_limit)
+        page_limit = max(1, min(page_limit, 200))
+        page_offset = self._get_int(params, "failed_offset", 0)
+        page_offset = max(0, page_offset)
         export_failed_csv = bool(params.get("export_failed_csv"))
         context = params.get("context") if isinstance(params.get("context"), dict) else {}
 
@@ -233,10 +250,15 @@ class ApiDataBatchHandler(BaseIntentHandler):
             fingerprint=idempotency_fingerprint,
         )
         if replay:
-            replay_data = dict(replay)
+            replay_data = self._apply_failed_page(dict(replay), offset=page_offset, limit=page_limit)
             replay_data["idempotent_replay"] = True
             replay_data["idempotency_key"] = idempotency_key
             replay_data["idempotency_fingerprint"] = idempotency_fingerprint
+            if export_failed_csv and replay_data.get("failed_total", 0) > 0 and not replay_data.get("failed_csv_content_b64"):
+                failed_csv = self._build_failed_csv(model, action or "write", [item for item in replay_data.get("results") or [] if not item.get("ok")])
+                replay_data["failed_csv_file_name"] = failed_csv.get("file_name")
+                replay_data["failed_csv_content_b64"] = failed_csv.get("content_b64")
+                replay_data["failed_csv_count"] = failed_csv.get("count")
             return {"ok": True, "data": replay_data, "meta": {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell"}}
 
         try:
@@ -291,12 +313,11 @@ class ApiDataBatchHandler(BaseIntentHandler):
             "succeeded": success,
             "failed": failed,
             "results": results,
-            "failed_preview": [item for item in results if not item.get("ok")][:preview_limit],
-            "failed_truncated": max(0, failed - min(failed, preview_limit)),
             "idempotency_key": idempotency_key,
             "idempotency_fingerprint": idempotency_fingerprint,
             "idempotent_replay": False,
         }
+        data = self._apply_failed_page(data, offset=page_offset, limit=page_limit)
         if export_failed_csv and failed > 0:
             failed_csv = self._build_failed_csv(model, action or "write", [item for item in results if not item.get("ok")])
             data["failed_csv_file_name"] = failed_csv.get("file_name")
