@@ -100,6 +100,11 @@
             {{ reason }}
           </option>
         </select>
+        <div class="preset-actions">
+          <button class="link-btn mini-btn" @click="saveFilterPreset">保存常用筛选</button>
+          <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">应用常用筛选</button>
+          <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">清除预设</button>
+        </div>
       </section>
 
       <section v-if="todoSelectionIds.length" class="batch-bar">
@@ -196,6 +201,8 @@ const searchText = ref('');
 const sourceFilter = ref('ALL');
 const reasonFilter = ref('ALL');
 const myWorkFilterStorageKey = 'sc.mywork.filters.v1';
+const myWorkPresetStorageKey = 'sc.mywork.filter_preset.v1';
+const hasFilterPreset = ref(false);
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
@@ -287,6 +294,60 @@ async function load() {
 function selectSection(key: string) {
   if (!key) return;
   activeSection.value = key;
+}
+
+function saveFilterPreset() {
+  try {
+    window.localStorage.setItem(
+      myWorkPresetStorageKey,
+      JSON.stringify({
+        activeSection: activeSection.value,
+        searchText: searchText.value,
+        sourceFilter: sourceFilter.value,
+        reasonFilter: reasonFilter.value,
+      }),
+    );
+    hasFilterPreset.value = true;
+    actionFeedback.value = '常用筛选已保存';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '保存常用筛选失败';
+    actionFeedbackError.value = true;
+  }
+}
+
+function applyFilterPreset() {
+  try {
+    const raw = window.localStorage.getItem(myWorkPresetStorageKey);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as {
+      activeSection?: string;
+      searchText?: string;
+      sourceFilter?: string;
+      reasonFilter?: string;
+    };
+    if (parsed.activeSection) activeSection.value = parsed.activeSection;
+    if (typeof parsed.searchText === 'string') searchText.value = parsed.searchText;
+    if (typeof parsed.sourceFilter === 'string') sourceFilter.value = parsed.sourceFilter;
+    if (typeof parsed.reasonFilter === 'string') reasonFilter.value = parsed.reasonFilter;
+    actionFeedback.value = '已应用常用筛选';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '应用常用筛选失败';
+    actionFeedbackError.value = true;
+  }
+}
+
+function clearFilterPreset() {
+  try {
+    window.localStorage.removeItem(myWorkPresetStorageKey);
+    hasFilterPreset.value = false;
+    actionFeedback.value = '已清除常用筛选';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '清除常用筛选失败';
+    actionFeedbackError.value = true;
+  }
 }
 
 function openScene(sceneKey: string) {
@@ -527,6 +588,7 @@ function restoreFilters() {
 
 onMounted(() => {
   restoreFilters();
+  hasFilterPreset.value = Boolean(window.localStorage.getItem(myWorkPresetStorageKey));
   void load();
 });
 
@@ -631,6 +693,13 @@ watch([activeSection, searchText, sourceFilter, reasonFilter], () => {
   border-radius: 8px;
   padding: 8px 10px;
   background: #fff;
+}
+
+.preset-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  grid-column: 1 / -1;
 }
 
 .tab {

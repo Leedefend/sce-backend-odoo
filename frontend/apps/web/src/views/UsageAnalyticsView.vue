@@ -30,6 +30,10 @@
             </option>
           </select>
         </label>
+        <label class="export-scope">
+          <input v-model="exportFilteredOnly" type="checkbox" />
+          仅导出当前筛选
+        </label>
         <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">导出 CSV</button>
         <button class="secondary" :disabled="loading" @click="load">刷新</button>
       </div>
@@ -199,6 +203,7 @@ const errorTraceId = ref('');
 const topN = ref(10);
 const dailyRange = ref(7);
 const hiddenReasonFilter = ref('ALL');
+const exportFilteredOnly = ref(true);
 const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
 
@@ -225,20 +230,26 @@ function quoteCsv(value: string | number) {
 function exportCsv() {
   if (!canExport.value) return;
   const lines: string[] = ['section,key,count,extra'];
+  lines.push(`meta,export_filtered_only,${exportFilteredOnly.value ? 1 : 0},`);
   if (report.value) {
     lines.push(`total,scene_open_total,${report.value.totals.scene_open_total},`);
     lines.push(`total,capability_open_total,${report.value.totals.capability_open_total},`);
     sceneTop.value.forEach((item) => lines.push(`scene_top,${quoteCsv(item.key)},${item.count},`));
     capabilityTop.value.forEach((item) => lines.push(`capability_top,${quoteCsv(item.key)},${item.count},`));
-    sceneDaily.value.forEach((item) => lines.push(`scene_daily,${item.day},${item.count},`));
-    capabilityDaily.value.forEach((item) => lines.push(`capability_daily,${item.day},${item.count},`));
+    const sceneDailyRows = exportFilteredOnly.value ? sceneDaily.value : report.value.daily.scene_open || [];
+    const capabilityDailyRows = exportFilteredOnly.value
+      ? capabilityDaily.value
+      : report.value.daily.capability_open || [];
+    sceneDailyRows.forEach((item) => lines.push(`scene_daily,${item.day},${item.count},`));
+    capabilityDailyRows.forEach((item) => lines.push(`capability_daily,${item.day},${item.count},`));
   }
   if (visibility.value) {
     lines.push(`capability_visibility,total,${visibility.value.summary.total},`);
     lines.push(`capability_visibility,visible,${visibility.value.summary.visible},`);
     lines.push(`capability_visibility,hidden,${visibility.value.summary.hidden},`);
     reasonCounts.value.forEach((item) => lines.push(`reason_count,${quoteCsv(item.reason_code)},${item.count},`));
-    hiddenSamples.value.forEach((item) =>
+    const hiddenRows = exportFilteredOnly.value ? filteredHiddenSamples.value : hiddenSamples.value;
+    hiddenRows.forEach((item) =>
       lines.push(
         `hidden_sample,${quoteCsv(item.key)},0,${quoteCsv(item.reason_code || item.reason || '-')}`,
       ),
@@ -299,6 +310,13 @@ onMounted(load);
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.export-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
 }
 
 .secondary {

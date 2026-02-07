@@ -63,32 +63,46 @@
       <p>{{ entries.length ? '没有匹配的能力，请调整筛选条件。' : '当前账号暂无可用能力。' }}</p>
     </div>
 
-    <div v-else :class="viewMode === 'card' ? 'cards' : 'list'">
-      <article
-        v-for="entry in filteredEntries"
-        :key="entry.id"
-        class="entry"
-        :class="`state-${entry.state.toLowerCase()}`"
-      >
-        <div class="entry-main">
-          <p class="title-row">
-            <span class="title">{{ entry.title }}</span>
-            <span class="state">{{ entry.state }}</span>
-          </p>
-          <p class="subtitle" :title="entry.reason || entry.subtitle">{{ entry.subtitle || '无说明' }}</p>
-          <p v-if="entry.state === 'LOCKED'" class="lock-reason">
-            {{ entry.reason || lockReasonLabel(entry.reasonCode) }}
-          </p>
-        </div>
-        <button
-          class="open-btn"
-          :disabled="entry.state === 'LOCKED'"
-          :title="entry.reason || ''"
-          @click="openScene(entry)"
+    <div v-else class="scene-groups">
+      <section v-for="group in groupedEntries" :key="`scene-${group.sceneKey}`" class="scene-group">
+        <header class="scene-group-header">
+          <button class="scene-toggle" @click="toggleSceneGroup(group.sceneKey)">
+            <span>{{ collapsedSceneSet.has(group.sceneKey) ? '▶' : '▼' }}</span>
+            <span>{{ group.sceneTitle }}</span>
+            <span class="scene-count">{{ group.items.length }}</span>
+          </button>
+        </header>
+        <div
+          v-if="!collapsedSceneSet.has(group.sceneKey)"
+          :class="viewMode === 'card' ? 'cards' : 'list'"
         >
-          进入
-        </button>
-      </article>
+          <article
+            v-for="entry in group.items"
+            :key="entry.id"
+            class="entry"
+            :class="`state-${entry.state.toLowerCase()}`"
+          >
+            <div class="entry-main">
+              <p class="title-row">
+                <span class="title">{{ entry.title }}</span>
+                <span class="state">{{ entry.state }}</span>
+              </p>
+              <p class="subtitle" :title="entry.reason || entry.subtitle">{{ entry.subtitle || '无说明' }}</p>
+              <p v-if="entry.state === 'LOCKED'" class="lock-reason">
+                {{ entry.reason || lockReasonLabel(entry.reasonCode) }}
+              </p>
+            </div>
+            <button
+              class="open-btn"
+              :disabled="entry.state === 'LOCKED'"
+              :title="entry.reason || ''"
+              @click="openScene(entry)"
+            >
+              进入
+            </button>
+          </article>
+        </div>
+      </section>
     </div>
   </section>
 </template>
@@ -106,6 +120,7 @@ type CapabilityEntry = {
   title: string;
   subtitle: string;
   sceneKey: string;
+  sceneTitle: string;
   sequence: number;
   status: string;
   state: EntryState;
@@ -120,6 +135,8 @@ const searchText = ref('');
 const stateFilter = ref<'ALL' | EntryState>('ALL');
 const readyOnly = ref(false);
 const lockReasonFilter = ref('ALL');
+const collapsedSceneKeys = ref<string[]>([]);
+const collapsedSceneSet = computed(() => new Set(collapsedSceneKeys.value));
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
@@ -150,6 +167,7 @@ const entries = computed<CapabilityEntry[]>(() => {
         title: String(tile.title || key),
         subtitle: String(tile.subtitle || ''),
         sceneKey: scene.key,
+        sceneTitle: String((scene as { title?: string }).title || scene.key),
         sequence: Number((tile as { sequence?: number }).sequence ?? 9999),
         status,
         state,
@@ -184,6 +202,23 @@ const stateCounts = computed(() => {
   return counts;
 });
 
+const groupedEntries = computed(() => {
+  const map = new Map<string, { sceneKey: string; sceneTitle: string; items: CapabilityEntry[] }>();
+  filteredEntries.value.forEach((entry) => {
+    const current = map.get(entry.sceneKey);
+    if (current) {
+      current.items.push(entry);
+      return;
+    }
+    map.set(entry.sceneKey, {
+      sceneKey: entry.sceneKey,
+      sceneTitle: entry.sceneTitle,
+      items: [entry],
+    });
+  });
+  return Array.from(map.values()).sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
+});
+
 const lockedReasonOptions = computed(() => {
   const map = new Map<string, number>();
   entries.value.forEach((entry) => {
@@ -195,6 +230,13 @@ const lockedReasonOptions = computed(() => {
     .map(([reasonCode, count]) => ({ reasonCode, count }))
     .sort((a, b) => b.count - a.count || a.reasonCode.localeCompare(b.reasonCode));
 });
+
+function toggleSceneGroup(sceneKey: string) {
+  const next = new Set(collapsedSceneKeys.value);
+  if (next.has(sceneKey)) next.delete(sceneKey);
+  else next.add(sceneKey);
+  collapsedSceneKeys.value = Array.from(next);
+}
 
 function lockReasonLabel(reasonCode: string) {
   const code = String(reasonCode || '').toUpperCase();
@@ -331,6 +373,41 @@ async function openScene(entry: CapabilityEntry) {
   border-color: #b91c1c;
   color: #b91c1c;
   background: #fff1f2;
+}
+
+.scene-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.scene-group {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+}
+
+.scene-group-header {
+  margin-bottom: 10px;
+}
+
+.scene-toggle {
+  border: 0;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.scene-count {
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  font-size: 12px;
 }
 
 .cards {
