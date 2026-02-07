@@ -17,5 +17,6 @@
 - `make verify.demo`
 
 ## Notes
-- Typical env: `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`.
+- Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.
 - Phase 9.8 warnings baseline can be adjusted via `SC_WARN_ACT_URL_LEGACY_MAX`.
+- Menu exemptions file: `docs/ops/verify/menu_scene_exemptions.yml`.
