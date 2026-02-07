@@ -9,9 +9,8 @@
   - Logic: after action_id mapping, map meta.action_xmlid → scene_key via action_xmlid_map.
 
 ## Verification
-- `make verify.menu.scene_resolve.container`:
-  - Blocked in this environment: Docker socket permission denied.
-  - Notes: running without `E2E_LOGIN/E2E_PASSWORD` defaults to demo_pm/demo, but login cannot be validated due to container restriction.
+- `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
+  - Artifacts: `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T051349`
 - No other tests executed in this step.
 
 ## Notes
