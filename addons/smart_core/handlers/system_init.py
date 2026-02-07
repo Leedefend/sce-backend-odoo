@@ -302,6 +302,10 @@ def _apply_scene_keys(env, nodes):
             if action_id in action_id_map:
                 scene_key = action_id_map[action_id]
         if not scene_key:
+            action_xmlid = meta.get("action_xmlid")
+            if action_xmlid and action_xmlid in action_xmlid_map:
+                scene_key = action_xmlid_map[action_xmlid]
+        if not scene_key:
             model = meta.get("model")
             view_mode = meta.get("view_mode") or meta.get("view_type")
             if not view_mode:
