@@ -29,3 +29,11 @@ Branch: `codex/phase-9-2-scene-data`
 ## Notes
 
 - Behavior intended to remain consistent with r0.1; changes are data relocation and system_init reduction only.
+
+## Phase 9.2 Closure Checklist (Draft)
+
+- [x] scene_registry no longer provides layout/tiles/list_profile defaults
+- [x] system_init no longer applies layout defaults
+- [x] scene config split into layout/tiles/list_profile data files
+- [x] scene config audit hook in Makefile
+- [ ] verify scene resolve/contract smokes (pending)
