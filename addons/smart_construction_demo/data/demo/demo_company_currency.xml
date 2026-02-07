@@ -5,8 +5,6 @@
             <field name="active">True</field>
         </record>
 
-        <record id="base.main_company" model="res.company">
-            <field name="currency_id" ref="base.CNY"/>
-        </record>
+        <!-- Company currency is enforced by seed hook to avoid post-journal write errors -->
     </data>
 </odoo>

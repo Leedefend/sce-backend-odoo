@@ -50,25 +50,33 @@
 - Added report output for ACT_URL_MISSING_SCENE with repair hints.
   - File: scripts/verify/act_url_missing_scene_report.js
   - Make target: verify.portal.act_url_missing_scene_report.container
+- Ensured smart_construction_core demo/test loads admin config with valid groups.
+  - File: addons/smart_construction_core/__manifest__.py
+  - Change: load order adjusted to define groups before config data; added smart_core dependency.
+- Ensured intent routes load in container for menu scene resolve smoke.
+  - File: config/odoo.conf.template
+  - Change: server_wide_modules now includes smart_core.
+- Improved menu scene resolve smoke DB handling and error reporting.
+  - File: scripts/verify/fe_menu_scene_resolve_smoke.js
+  - Change: pass db via query + X-Odoo-DB header; log error bodies.
+- Removed demo company currency hard-set to avoid journal conflict; keep CNY active.
+  - File: addons/smart_construction_demo/data/demo/demo_company_currency.xml
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
-  - Artifacts: `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T051349`
+  - Artifacts: `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T061808`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_warnings_guard.container`: PASS
-  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T052709`
+  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T061815`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.scene_warnings_limit.container`: PASS
-  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T052724`
+  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T061818`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.portal.act_url_missing_scene_report.container`: PASS
-  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T053445`
-- `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.phase_9_8.gate_summary`: PASS
-  - Artifacts: `artifacts/codex/phase-9-8/gate_summary.json`
-- `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make gate.full`: FAIL
-  - Reason: existing test failures in smart_construction_core (actions missing groups_id) and menu/action bypass gate.
-- No other tests executed in this step.
+  - Artifacts: `/mnt/artifacts/codex/portal-scene-warnings/20260207T061821`
+- `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make gate.full`: PASS
+  - Includes: verify.demo, menu scene resolve, scene warnings guard/limit, act_url missing scene report.
+  - Artifacts:
+    - `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T061808`
+    - `/mnt/artifacts/codex/portal-scene-warnings/20260207T061815`
+    - `/mnt/artifacts/codex/portal-scene-warnings/20260207T061821`
 
 ## Notes
-- This change is safe and additive: it only enables scene_key inference from action_xmlid when action_id mapping is missing.
-- Recommended next step when Docker is available:
-  - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`
-- gate.full failure root cause remediation:
-  - add groups_id to config/admin actions in scene_orchestration_views.xml and subscription_views.xml
+- Demo DB reset was required to apply currency seed changes before running gate.full.

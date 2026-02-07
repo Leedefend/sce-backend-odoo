@@ -132,11 +132,17 @@ async function main() {
     process.exit(1);
   }
 
-  const intentUrl = `${BASE_URL}/api/v1/intent`;
+  const intentUrl = `${BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
   log(`login: ${LOGIN} db=${DB_NAME}`);
   const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
-  const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-  if (loginResp.status >= 400 || !loginResp.body.ok) throw new Error(`login failed: status=${loginResp.status}`);
+  const loginResp = await requestJson(intentUrl, loginPayload, {
+    'X-Anonymous-Intent': '1',
+    'X-Odoo-DB': DB_NAME,
+  });
+  if (loginResp.status >= 400 || !loginResp.body.ok) {
+    console.error('[fe_menu_scene_resolve_smoke] login error body:', JSON.stringify(loginResp.body));
+    throw new Error(`login failed: status=${loginResp.status}`);
+  }
   const token = (loginResp.body.data || {}).token || '';
   if (!token) throw new Error('login token missing');
 
@@ -145,7 +151,10 @@ async function main() {
     { intent: 'app.init', params: { scene: 'web', with_preload: false } },
     { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME }
   );
-  if (appInitResp.status >= 400 || !appInitResp.body.ok) throw new Error(`app.init failed: ${appInitResp.status}`);
+  if (appInitResp.status >= 400 || !appInitResp.body.ok) {
+    console.error('[fe_menu_scene_resolve_smoke] app.init error body:', JSON.stringify(appInitResp.body));
+    throw new Error(`app.init failed: ${appInitResp.status}`);
+  }
 
   const nav = ((appInitResp.body || {}).data || {}).nav || [];
   const all = flattenNav(nav);
