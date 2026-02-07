@@ -707,6 +707,8 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
         if not scene_key:
             continue
         target = scene.get("target") or {}
+        route = target.get("route")
+        route_is_missing_fallback = isinstance(route, str) and "TARGET_MISSING" in route
         action_xmlid = target.get("action_xmlid") or target.get("actionXmlid")
         menu_xmlid = target.get("menu_xmlid") or target.get("menuXmlid")
         if action_xmlid and not target.get("action_id"):
@@ -745,7 +747,7 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
             target.pop("menu_xmlid", None)
         if "menuXmlid" in target:
             target.pop("menuXmlid", None)
-        if target.get("action_id") or target.get("model") or target.get("route"):
+        if target.get("action_id") or target.get("model") or (target.get("route") and not route_is_missing_fallback):
             scene["target"] = target
             continue
         nav = nav_targets.get(scene_key) or {}
@@ -761,17 +763,21 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
         if resolved:
             scene["target"] = resolved
         else:
-            fallback_route = f"/workbench?scene={scene_key}&reason=TARGET_MISSING"
-            scene["target"] = {"route": fallback_route}
-            _append_resolve_error(
-                resolve_errors,
-                scene_key=scene_key,
-                kind="target",
-                code="MISSING_TARGET",
-                ref=fallback_route,
-                field="target",
-                message="target missing; fallback route applied",
-            )
+            if route_is_missing_fallback:
+                # Preserve existing fallback route from contract/db for traceability.
+                scene["target"] = target
+            else:
+                fallback_route = f"/workbench?scene={scene_key}&reason=TARGET_MISSING"
+                scene["target"] = {"route": fallback_route}
+                _append_resolve_error(
+                    resolve_errors,
+                    scene_key=scene_key,
+                    kind="target",
+                    code="MISSING_TARGET",
+                    ref=fallback_route,
+                    field="target",
+                    message="target missing; fallback route applied",
+                )
     return scenes
 
 

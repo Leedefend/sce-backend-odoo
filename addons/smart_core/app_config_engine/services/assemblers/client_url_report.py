@@ -38,8 +38,19 @@ class ClientUrlReportAssembler:
         """
         url = action.get('url', '') if action else ''
         target = action.get('target', 'new') if action else 'new'
+        name = action.get('name', 'URL动作') if action else 'URL动作'
+        # Runtime hardening: if resolver dropped url/target fields, recover from act_url record.
+        if action and (not url) and action.get('id'):
+            try:
+                rec = self.env['ir.actions.act_url'].sudo().browse(int(action.get('id')))
+                if rec and rec.exists():
+                    url = rec.url or url
+                    target = rec.target or target
+                    name = rec.name or name
+            except Exception:
+                pass
         return ({
-            "head": {"title": action.get('name', 'URL动作') if action else 'URL动作',
+            "head": {"title": name,
                      "view_type": "url_redirect"},
             "data": {"type": "url_redirect", "url": url, "target": target}
         }, {"url": "v1", "contract": "v2"})
