@@ -788,7 +788,6 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
 
 
 def _normalize_scene_layouts(scenes, warnings):
-    defaults = {"kind": "workspace", "sidebar": "fixed", "header": "full"}
     for scene in scenes:
         scene_key = scene.get("code") or scene.get("key") or ""
         layout = scene.get("layout")
@@ -797,16 +796,11 @@ def _normalize_scene_layouts(scenes, warnings):
                 "code": "LAYOUT_MISSING_OR_INVALID",
                 "severity": "non_critical",
                 "scene_key": scene_key,
-                "message": "layout missing or invalid; defaults applied",
+                "message": "layout missing or invalid; no defaults applied",
                 "field": "layout",
                 "reason": "missing_or_invalid",
             })
-            layout = {}
-        scene["layout"] = {
-            "kind": layout.get("kind", defaults["kind"]),
-            "sidebar": layout.get("sidebar", defaults["sidebar"]),
-            "header": layout.get("header", defaults["header"]),
-        }
+            continue
     return scenes
 
 
