@@ -15,10 +15,7 @@ function resolveRoot() {
   const candidates = [
     process.env.REPO_ROOT,
     path.resolve(__dirname, '../..'),
-    path.resolve(__dirname, '../../..'),
-    '/mnt',
-    '/mnt/sc-backend-odoo',
-    '/mnt/e/sc-backend-odoo',
+    process.cwd(),
   ].filter(Boolean);
   for (const root of candidates) {
     const probe = path.join(root, TARGETS[0]);
