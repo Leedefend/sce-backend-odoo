@@ -739,6 +739,16 @@ def _append_act_url_deprecations(nodes, warnings):
                     "reason": "legacy_act_url",
                     "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
                 })
+            if action_type == "ir.actions.act_url" and not scene_key:
+                warnings.append({
+                    "code": "ACT_URL_MISSING_SCENE",
+                    "severity": "warn",
+                    "scene_key": "",
+                    "message": "act_url menu missing scene_key mapping",
+                    "field": "scene_key",
+                    "reason": "legacy_act_url_missing_scene",
+                    "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
+                })
             if node.get("children"):
                 walk(node.get("children"))
     walk(nodes)

@@ -10,6 +10,9 @@
 - Added menu scene resolve smoke to gate.full for Phase 9.8 enforcement.
   - File: Makefile
   - Target: gate.full now runs verify.menu.scene_resolve.container
+- Added diagnostic warning for act_url menus missing scene_key mapping.
+  - File: addons/smart_core/handlers/system_init.py
+  - Warning: ACT_URL_MISSING_SCENE
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
