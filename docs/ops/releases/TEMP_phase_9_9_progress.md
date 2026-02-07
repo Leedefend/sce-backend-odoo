@@ -23,9 +23,11 @@
   - File: docs/ops/releases/TEMP_phase_9_9_pr_body.md
 
 ## Verification
-- Not run in this change set. Recommend:
-  - `make demo.reset DB=sc_demo`
-  - `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo make gate.full`
+- `CODEX_MODE=gate make demo.reset DB=sc_demo`: PASS
+- `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo make gate.full`: PASS
+  - Menu scene resolve: `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T064626`
+  - Warnings guard/limit: `/mnt/artifacts/codex/portal-scene-warnings/20260207T064632`
+  - act_url missing scene report: `/mnt/artifacts/codex/portal-scene-warnings/20260207T064637`
 
 ## Notes
 - `menu_scene_exemptions.yml` is empty by default; add exemptions as needed.

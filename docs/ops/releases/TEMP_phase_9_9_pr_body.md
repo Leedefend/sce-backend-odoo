@@ -9,10 +9,11 @@
 - Default smoke login for menu/scene diagnostics switched to `svc_e2e_smoke`.
 
 ## Verification
-- Not run in this change set (docs/data update).
-- Recommended:
-  - `make demo.reset DB=sc_demo`
-  - `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo make gate.full`
+- `CODEX_MODE=gate make demo.reset DB=sc_demo`: PASS
+- `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo make gate.full`: PASS
+  - `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T064626`
+  - `/mnt/artifacts/codex/portal-scene-warnings/20260207T064632`
+  - `/mnt/artifacts/codex/portal-scene-warnings/20260207T064637`
 
 ## Notes
 - Exemptions file is empty by default; add entries only for non-actionable menus.
