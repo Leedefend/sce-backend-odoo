@@ -34,6 +34,7 @@
           <input v-model="exportFilteredOnly" type="checkbox" />
           仅导出当前筛选
         </label>
+        <button class="secondary" :disabled="loading" @click="resetFilters">重置筛选</button>
         <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">导出 CSV</button>
         <button class="secondary" :disabled="loading" @click="load">刷新</button>
       </div>
@@ -264,6 +265,17 @@ function exportCsv() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+function resetFilters() {
+  dailyRange.value = 7;
+  hiddenReasonFilter.value = 'ALL';
+  exportFilteredOnly.value = true;
+  if (topN.value !== 10) {
+    topN.value = 10;
+    return;
+  }
+  void load();
 }
 
 async function load() {

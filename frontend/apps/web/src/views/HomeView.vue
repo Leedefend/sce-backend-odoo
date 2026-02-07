@@ -57,6 +57,10 @@
           {{ lockReasonLabel(item.reasonCode) }} {{ item.count }}
         </button>
       </div>
+      <div v-if="groupedEntries.length" class="group-actions">
+        <button @click="expandAllSceneGroups">展开全部分组</button>
+        <button @click="collapseAllSceneGroups">折叠全部分组</button>
+      </div>
     </section>
 
     <div v-if="!filteredEntries.length" class="empty">
@@ -108,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { trackCapabilityOpen } from '../api/usage';
@@ -137,6 +141,7 @@ const readyOnly = ref(false);
 const lockReasonFilter = ref('ALL');
 const collapsedSceneKeys = ref<string[]>([]);
 const collapsedSceneSet = computed(() => new Set(collapsedSceneKeys.value));
+const homeCollapseStorageKey = 'sc.home.scene_groups.collapsed.v1';
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
@@ -238,6 +243,14 @@ function toggleSceneGroup(sceneKey: string) {
   collapsedSceneKeys.value = Array.from(next);
 }
 
+function expandAllSceneGroups() {
+  collapsedSceneKeys.value = [];
+}
+
+function collapseAllSceneGroups() {
+  collapsedSceneKeys.value = groupedEntries.value.map((group) => group.sceneKey);
+}
+
 function lockReasonLabel(reasonCode: string) {
   const code = String(reasonCode || '').toUpperCase();
   if (code === 'PERMISSION_DENIED') return '权限不足';
@@ -253,6 +266,26 @@ async function openScene(entry: CapabilityEntry) {
   void trackCapabilityOpen(entry.key).catch(() => {});
   await router.push({ path: `/s/${entry.sceneKey}` });
 }
+
+onMounted(() => {
+  try {
+    const raw = window.localStorage.getItem(homeCollapseStorageKey);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as string[];
+    if (!Array.isArray(parsed)) return;
+    collapsedSceneKeys.value = parsed.filter((key) => typeof key === 'string' && key);
+  } catch {
+    // Ignore broken local cache.
+  }
+});
+
+watch(collapsedSceneKeys, () => {
+  try {
+    window.localStorage.setItem(homeCollapseStorageKey, JSON.stringify(collapsedSceneKeys.value));
+  } catch {
+    // Ignore local storage errors.
+  }
+});
 </script>
 
 <style scoped>
@@ -373,6 +406,20 @@ async function openScene(entry: CapabilityEntry) {
   border-color: #b91c1c;
   color: #b91c1c;
   background: #fff1f2;
+}
+
+.group-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.group-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 .scene-groups {

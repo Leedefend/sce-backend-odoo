@@ -101,6 +101,7 @@
           </option>
         </select>
         <div class="preset-actions">
+          <button class="link-btn mini-btn" @click="resetFilters">重置筛选</button>
           <button class="link-btn mini-btn" @click="saveFilterPreset">保存常用筛选</button>
           <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">应用常用筛选</button>
           <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">清除预设</button>
@@ -348,6 +349,16 @@ function clearFilterPreset() {
     actionFeedback.value = '清除常用筛选失败';
     actionFeedbackError.value = true;
   }
+}
+
+function resetFilters() {
+  searchText.value = '';
+  sourceFilter.value = 'ALL';
+  reasonFilter.value = 'ALL';
+  const todoSection = sections.value.find((item) => item.key === 'todo');
+  activeSection.value = todoSection?.key || sections.value[0]?.key || 'todo';
+  actionFeedback.value = '筛选条件已重置';
+  actionFeedbackError.value = false;
 }
 
 function openScene(sceneKey: string) {
