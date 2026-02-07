@@ -14,6 +14,7 @@
             <option :value="20">20</option>
           </select>
         </label>
+        <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">导出 CSV</button>
         <button class="secondary" :disabled="loading" @click="load">刷新</button>
       </div>
     </header>
@@ -189,6 +190,48 @@ const sceneDaily = computed(() => report.value?.daily?.scene_open || []);
 const capabilityDaily = computed(() => report.value?.daily?.capability_open || []);
 const reasonCounts = computed(() => visibility.value?.reason_counts || []);
 const hiddenSamples = computed(() => visibility.value?.hidden_samples || []);
+const canExport = computed(() => Boolean(report.value || visibility.value));
+
+function quoteCsv(value: string | number) {
+  const text = String(value ?? '');
+  if (!text.includes(',') && !text.includes('"') && !text.includes('\n')) {
+    return text;
+  }
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function exportCsv() {
+  if (!canExport.value) return;
+  const lines: string[] = ['section,key,count,extra'];
+  if (report.value) {
+    lines.push(`total,scene_open_total,${report.value.totals.scene_open_total},`);
+    lines.push(`total,capability_open_total,${report.value.totals.capability_open_total},`);
+    sceneTop.value.forEach((item) => lines.push(`scene_top,${quoteCsv(item.key)},${item.count},`));
+    capabilityTop.value.forEach((item) => lines.push(`capability_top,${quoteCsv(item.key)},${item.count},`));
+    sceneDaily.value.forEach((item) => lines.push(`scene_daily,${item.day},${item.count},`));
+    capabilityDaily.value.forEach((item) => lines.push(`capability_daily,${item.day},${item.count},`));
+  }
+  if (visibility.value) {
+    lines.push(`capability_visibility,total,${visibility.value.summary.total},`);
+    lines.push(`capability_visibility,visible,${visibility.value.summary.visible},`);
+    lines.push(`capability_visibility,hidden,${visibility.value.summary.hidden},`);
+    reasonCounts.value.forEach((item) => lines.push(`reason_count,${quoteCsv(item.reason_code)},${item.count},`));
+    hiddenSamples.value.forEach((item) =>
+      lines.push(
+        `hidden_sample,${quoteCsv(item.key)},0,${quoteCsv(item.reason_code || item.reason || '-')}`,
+      ),
+    );
+  }
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `usage-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
 
 async function load() {
   loading.value = true;

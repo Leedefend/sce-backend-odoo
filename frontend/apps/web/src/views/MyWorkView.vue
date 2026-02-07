@@ -28,6 +28,7 @@
       <span>失败待办 {{ retryFailedIds.length }} 条</span>
       <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
+      <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
     </div>
     <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
@@ -289,6 +290,32 @@ function selectRetryFailedItems() {
 
 function failedItemRecord(id: number) {
   return todoItemMap.value.get(id);
+}
+
+function buildRetrySummaryText() {
+  if (!retryFailedItems.value.length) return '';
+  const reasons = retryReasonSummary.value
+    .map((item) => `${item.reason_code} x ${item.count}`)
+    .join('; ');
+  const lines = retryFailedItems.value.map(
+    (item) => `#${item.id} ${item.reason_code || 'UNKNOWN'} ${item.message || '-'}`,
+  );
+  return [`失败待办 ${retryFailedIds.value.length} 条`, reasons ? `原因分布: ${reasons}` : '', ...lines]
+    .filter(Boolean)
+    .join('\n');
+}
+
+async function copyRetrySummary() {
+  const summaryText = buildRetrySummaryText();
+  if (!summaryText) return;
+  try {
+    await navigator.clipboard.writeText(summaryText);
+    actionFeedback.value = '失败摘要已复制';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '复制失败，请检查浏览器剪贴板权限';
+    actionFeedbackError.value = true;
+  }
 }
 
 async function completeItem(item: MyWorkRecordItem) {

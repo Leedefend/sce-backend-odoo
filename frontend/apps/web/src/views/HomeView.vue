@@ -19,13 +19,36 @@
       </div>
     </header>
 
-    <div v-if="!entries.length" class="empty">
-      <p>当前账号暂无可用能力。</p>
+    <section class="filters">
+      <input
+        v-model.trim="searchText"
+        class="search-input"
+        type="search"
+        placeholder="搜索能力名称 / 说明 / key"
+      />
+      <div class="state-filters">
+        <button :class="{ active: stateFilter === 'ALL' }" @click="stateFilter = 'ALL'">
+          全部 {{ entries.length }}
+        </button>
+        <button :class="{ active: stateFilter === 'READY' }" @click="stateFilter = 'READY'">
+          READY {{ stateCounts.READY }}
+        </button>
+        <button :class="{ active: stateFilter === 'LOCKED' }" @click="stateFilter = 'LOCKED'">
+          LOCKED {{ stateCounts.LOCKED }}
+        </button>
+        <button :class="{ active: stateFilter === 'PREVIEW' }" @click="stateFilter = 'PREVIEW'">
+          PREVIEW {{ stateCounts.PREVIEW }}
+        </button>
+      </div>
+    </section>
+
+    <div v-if="!filteredEntries.length" class="empty">
+      <p>{{ entries.length ? '没有匹配的能力，请调整筛选条件。' : '当前账号暂无可用能力。' }}</p>
     </div>
 
     <div v-else :class="viewMode === 'card' ? 'cards' : 'list'">
       <article
-        v-for="entry in entries"
+        v-for="entry in filteredEntries"
         :key="entry.id"
         class="entry"
         :class="`state-${entry.state.toLowerCase()}`"
@@ -66,6 +89,7 @@ type CapabilityEntry = {
   title: string;
   subtitle: string;
   sceneKey: string;
+  sequence: number;
   status: string;
   state: EntryState;
   reason: string;
@@ -75,6 +99,8 @@ type CapabilityEntry = {
 const router = useRouter();
 const session = useSessionStore();
 const viewMode = ref<'card' | 'list'>('card');
+const searchText = ref('');
+const stateFilter = ref<'ALL' | EntryState>('ALL');
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
@@ -105,6 +131,7 @@ const entries = computed<CapabilityEntry[]>(() => {
         title: String(tile.title || key),
         subtitle: String(tile.subtitle || ''),
         sceneKey: scene.key,
+        sequence: Number((tile as { sequence?: number }).sequence ?? 9999),
         status,
         state,
         reason,
@@ -112,7 +139,25 @@ const entries = computed<CapabilityEntry[]>(() => {
       });
     });
   });
-  return list;
+  return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
+});
+
+const filteredEntries = computed<CapabilityEntry[]>(() => {
+  const query = searchText.value.trim().toLowerCase();
+  return entries.value.filter((entry) => {
+    const matchesState = stateFilter.value === 'ALL' ? true : entry.state === stateFilter.value;
+    if (!matchesState) return false;
+    if (!query) return true;
+    return [entry.title, entry.subtitle, entry.key].some((text) => String(text || '').toLowerCase().includes(query));
+  });
+});
+
+const stateCounts = computed(() => {
+  const counts = { READY: 0, LOCKED: 0, PREVIEW: 0 };
+  for (const entry of entries.value) {
+    counts[entry.state] += 1;
+  }
+  return counts;
 });
 
 function lockReasonLabel(reasonCode: string) {
@@ -187,6 +232,40 @@ async function openScene(entry: CapabilityEntry) {
   border: 1px dashed #cbd5e1;
   border-radius: 12px;
   background: #f8fafc;
+}
+
+.filters {
+  display: grid;
+  gap: 10px;
+}
+
+.search-input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.state-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.state-filters button {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.state-filters button.active {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  color: #1e40af;
 }
 
 .cards {
