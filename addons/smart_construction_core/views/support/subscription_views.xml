@@ -39,6 +39,7 @@
             <field name="name">订阅套餐</field>
             <field name="res_model">sc.subscription.plan</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Subscription -->
@@ -79,6 +80,7 @@
             <field name="name">订阅实例</field>
             <field name="res_model">sc.subscription</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Entitlement -->
@@ -116,6 +118,7 @@
             <field name="name">授权快照</field>
             <field name="res_model">sc.entitlement</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Usage Counter -->
@@ -151,6 +154,7 @@
             <field name="name">用量统计</field>
             <field name="res_model">sc.usage.counter</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Ops Job -->
@@ -194,6 +198,7 @@
             <field name="name">运营任务</field>
             <field name="res_model">sc.ops.job</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
         </record>
 
         <!-- Menu -->

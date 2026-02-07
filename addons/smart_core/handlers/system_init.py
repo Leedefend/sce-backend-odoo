@@ -302,6 +302,11 @@ def _apply_scene_keys(env, nodes):
             if action_id in action_id_map:
                 scene_key = action_id_map[action_id]
         if not scene_key:
+            action_xmlid = meta.get("action_xmlid")
+            if action_xmlid and action_xmlid in action_xmlid_map:
+                scene_key = action_xmlid_map[action_xmlid]
+                meta["scene_key_inferred_from"] = "action_xmlid"
+        if not scene_key:
             model = meta.get("model")
             view_mode = meta.get("view_mode") or meta.get("view_type")
             if not view_mode:
@@ -317,6 +322,30 @@ def _apply_scene_keys(env, nodes):
             n["meta"] = meta
         if n.get("children"):
             _apply_scene_keys(env, n["children"])
+
+
+def _append_inferred_scene_warnings(nodes, scene_keys: set, warnings: list):
+    if warnings is None:
+        return
+    def walk(items):
+        for node in items or []:
+            meta = node.get("meta") or {}
+            if meta.get("scene_key_inferred_from") == "action_xmlid":
+                scene_key = node.get("scene_key") or meta.get("scene_key")
+                if scene_key and scene_key not in scene_keys:
+                    warnings.append({
+                        "code": "SCENEKEY_INFERRED_NOT_FOUND",
+                        "severity": "warn",
+                        "scene_key": scene_key,
+                        "message": "scene_key inferred from action_xmlid but not found in registry",
+                        "field": "scene_key",
+                        "reason": "inferred_scene_missing",
+                        "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
+                        "action_xmlid": meta.get("action_xmlid"),
+                    })
+            if node.get("children"):
+                walk(node.get("children"))
+    walk(nodes)
 
 
 def _resolve_action_id(env, xmlid: str | None) -> int | None:
@@ -735,6 +764,16 @@ def _append_act_url_deprecations(nodes, warnings):
                     "reason": "legacy_act_url",
                     "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
                 })
+            if action_type == "ir.actions.act_url" and not scene_key:
+                warnings.append({
+                    "code": "ACT_URL_MISSING_SCENE",
+                    "severity": "warn",
+                    "scene_key": "",
+                    "message": "act_url menu missing scene_key mapping",
+                    "field": "scene_key",
+                    "reason": "legacy_act_url_missing_scene",
+                    "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
+                })
             if node.get("children"):
                 walk(node.get("children"))
     walk(nodes)
@@ -1144,7 +1183,13 @@ class SystemInitHandler(BaseIntentHandler):
                 _logger.warning("system.init scene source load failed: %s", e)
 
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+        scene_keys = {
+            (s.get("code") or s.get("key"))
+            for s in scenes_payload
+            if isinstance(s, dict) and (s.get("code") or s.get("key"))
+        }
         t_norm_start = time.time()
+        _append_inferred_scene_warnings(nav_tree, scene_keys, scene_diagnostics["normalize_warnings"])
         _normalize_scene_layouts(scenes_payload, scene_diagnostics["normalize_warnings"])
         scene_diagnostics["timings"]["normalize_ms"] = int((time.time() - t_norm_start) * 1000)
         nav_targets = _index_nav_scene_targets(nav_tree)
