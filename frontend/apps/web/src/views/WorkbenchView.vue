@@ -53,6 +53,26 @@
         <span class="label">Route</span>
         <span class="value">{{ route.fullPath }}</span>
       </div>
+      <div v-if="diag" class="detail">
+        <span class="label">Diag</span>
+        <span class="value">{{ diag }}</span>
+      </div>
+      <div v-if="diagActionType" class="detail">
+        <span class="label">Action Type</span>
+        <span class="value">{{ diagActionType }}</span>
+      </div>
+      <div v-if="diagContractType" class="detail">
+        <span class="label">Contract Type</span>
+        <span class="value">{{ diagContractType }}</span>
+      </div>
+      <div v-if="diagContractUrl" class="detail">
+        <span class="label">Contract URL</span>
+        <span class="value">{{ diagContractUrl }}</span>
+      </div>
+      <div v-if="diagMetaUrl" class="detail">
+        <span class="label">Meta URL</span>
+        <span class="value">{{ diagMetaUrl }}</span>
+      </div>
       <div v-if="showHud" class="detail">
         <span class="label">Last Intent</span>
         <span class="value">{{ lastIntent || 'N/A' }}</span>
@@ -88,6 +108,11 @@ const session = useSessionStore();
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
 const lastIntent = computed(() => session.lastIntent || '');
+const diag = computed(() => String(route.query.diag || ''));
+const diagActionType = computed(() => String(route.query.diag_action_type || ''));
+const diagContractType = computed(() => String(route.query.diag_contract_type || ''));
+const diagContractUrl = computed(() => String(route.query.diag_contract_url || ''));
+const diagMetaUrl = computed(() => String(route.query.diag_meta_url || ''));
 const scene = computed(() => {
   if (!sceneKey.value) return null;
   return session.scenes.find((item: any) => item?.key === sceneKey.value || item?.code === sceneKey.value) || null;

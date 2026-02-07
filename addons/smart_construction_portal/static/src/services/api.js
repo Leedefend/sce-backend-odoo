@@ -3,8 +3,26 @@
 
   const root = (window.scPortal = window.scPortal || {});
 
+  function pageToken() {
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      return params.get("st") || "";
+    } catch (_e) {
+      return "";
+    }
+  }
+
+  function withToken(url) {
+    const token = pageToken();
+    if (!token) {
+      return url;
+    }
+    const sep = url.includes("?") ? "&" : "?";
+    return `${url}${sep}st=${encodeURIComponent(token)}`;
+  }
+
   function jsonRequest(url, payload) {
-    return fetch(url, {
+    return fetch(withToken(url), {
       method: "POST",
       credentials: "same-origin",
       headers: {"Content-Type": "application/json"},
@@ -13,7 +31,7 @@
   }
 
   function getJson(url) {
-    return fetch(url, {credentials: "same-origin"}).then((res) => res.json());
+    return fetch(withToken(url), {credentials: "same-origin"}).then((res) => res.json());
   }
 
   function intent(intentName, params) {

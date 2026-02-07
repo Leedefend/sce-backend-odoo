@@ -92,6 +92,9 @@ class ActionResolver:
             d = dict(act)
             d.setdefault('type', d.get('type') or d.get('_name'))
             d.setdefault('_name', d.get('_name') or d.get('type'))
+            d.setdefault('url', d.get('url'))
+            d.setdefault('target', d.get('target'))
+            d.setdefault('name', d.get('name'))
             d.setdefault('exists', True)
             return d
         # recordset → 提取关键属性/外部 xmlid
@@ -109,6 +112,8 @@ class ActionResolver:
                 'type': _type, '_name': _name, 'id': getattr(act, 'id', None),
                 'xml_id': xmlid, 'res_model': getattr(act, 'res_model', None),
                 'view_mode': getattr(act, 'view_mode', None), 'tag': getattr(act, 'tag', None),
+                'url': getattr(act, 'url', None), 'target': getattr(act, 'target', None),
+                'name': getattr(act, 'name', None),
                 'exists': True,
             }
         except Exception:
@@ -173,6 +178,13 @@ class ActionResolver:
             if not srv or not srv.exists(): return None
             action = srv.run()
             if not action: return None
+            if isinstance(action, dict):
+                # Common pattern: display_notification client action with params.next as act_window.
+                # For portal shell, unwrap to next action so the route remains openable.
+                params = action.get('params') if isinstance(action.get('params'), dict) else {}
+                next_action = params.get('next') if isinstance(params, dict) else None
+                if isinstance(next_action, dict) and next_action.get('type'):
+                    action = next_action
             kind = action.get('type') or action.get('_name')
             conv = {
                 'type': kind, '_name': kind, 'id': action.get('id'),
@@ -236,6 +248,7 @@ class ActionResolver:
                 "type": act.type, "id": act.id,
                 "res_model": getattr(act, 'res_model', None),
                 "view_mode": getattr(act, 'view_mode', None),
+                "url": getattr(act, 'url', None),
                 "domain": getattr(act, 'domain', None) or [],
                 "context": getattr(act, 'context', None) or {},
                 "target": getattr(act, 'target', None),
@@ -248,6 +261,7 @@ class ActionResolver:
                 pass
             return out
         out = dict(act or {})
+        out.setdefault("url", out.get("url"))
         out.setdefault("domain", []); out.setdefault("context", {})
         out.setdefault("view_mode", out.get("view_mode") or "tree,form")
         return out
@@ -257,4 +271,26 @@ class ActionResolver:
         可选：将某些 server 动作映射为固定 act_window，避免执行代码。
         - 如无定制映射，返回 None。
         """
-        return None
+        mapping = {
+            # 执行结构入口：原 server 动作会返回 display_notification + params.next，
+            # 对 portal shell 直接映射到生命周期看板以保证可打开。
+            "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_sc_project_kanban_lifecycle",
+        }
+        target_xmlid = None
+        if server_xmlid and server_xmlid in mapping:
+            target_xmlid = mapping[server_xmlid]
+        if not target_xmlid and server_id:
+            try:
+                rec = self.env["ir.actions.server"].sudo().browse(int(server_id))
+                if rec and rec.exists():
+                    xmlid = (rec.get_xml_id() or {}).get(rec.id)
+                    if xmlid in mapping:
+                        target_xmlid = mapping[xmlid]
+            except Exception:
+                target_xmlid = None
+        if not target_xmlid:
+            return None
+        target = self.env.ref(target_xmlid, raise_if_not_found=False)
+        if not target or not target.exists():
+            return None
+        return self.normalize_action_dict(target)

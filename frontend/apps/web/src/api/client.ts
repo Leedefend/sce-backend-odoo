@@ -90,7 +90,9 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   const response = await fetch(`${config.apiBaseUrl}${path}`, {
     ...options,
     headers,
-    credentials: 'include',
+    // Portal shell authentication is token-based; do not send Odoo session cookies
+    // to avoid cross-origin session/auth side effects.
+    credentials: 'omit',
   });
 
   // A2: 响应诊断 - 针对 app.init 请求

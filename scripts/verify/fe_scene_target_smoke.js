@@ -135,15 +135,23 @@ async function main() {
     }
   }
 
-  const ledger = scenes.find((item) => (item && (item.code === 'projects.ledger' || item.key === 'projects.ledger')));
+  const findScene = (key) => scenes.find((item) => item && (item.code === key || item.key === key));
+  const ledger = findScene('projects.ledger');
   if (!ledger) {
     throw new Error('scene projects.ledger missing');
   }
+  const intake = findScene('projects.intake');
+  if (!intake) {
+    throw new Error('scene projects.intake missing');
+  }
   const target = ledger.target || {};
+  const intakeTarget = intake.target || {};
 
   summary.push(`scene_count: ${scenes.length}`);
   summary.push(`unsupported: ${unsupported.join(',') || '-'}`);
   summary.push(`ledger_action_id: ${target.action_id || '-'}`);
+  summary.push(`intake_action_id: ${intakeTarget.action_id || '-'}`);
+  summary.push(`intake_route: ${intakeTarget.route || '-'}`);
   writeSummary(summary);
 
   if (unsupported.length) {
@@ -152,8 +160,14 @@ async function main() {
   if (!target.action_id) {
     throw new Error('projects.ledger target.action_id missing');
   }
+  if (typeof intakeTarget.route === 'string' && intakeTarget.route.includes('TARGET_MISSING')) {
+    throw new Error('projects.intake target still TARGET_MISSING fallback');
+  }
+  if (!(intakeTarget.action_id || intakeTarget.model || intakeTarget.route)) {
+    throw new Error('projects.intake target missing executable fields');
+  }
 
-  log('PASS target action_id');
+  log('PASS target action_id and intake fallback guard');
   log(`artifacts: ${outDir}`);
 }
 
