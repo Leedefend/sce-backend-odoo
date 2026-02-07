@@ -17,7 +17,7 @@ Verification:
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve`:
   - FAIL (connect EPERM 127.0.0.1:8070; service not reachable)
 - `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`:
-  - FAIL (unresolved menus: menu_sc_root, menu_sc_dictionary, menu_sc_project_dashboard, menu_sc_project_dashboard_showcase)
+  - PASS (after preflight retry; artifacts: `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T045708`)
 
 ## Phase 9.4 (validation + evolution infrastructure)
 
@@ -31,4 +31,4 @@ Completed:
 ## Notes
 - No new act_url entries introduced.
 - Diagnostics now record legacy act_url via `ACT_URL_LEGACY` warning when resolved through scene_key.
-- Verification failure is environment-related (API service not reachable), not a logic failure.
+- Host failure is environment-related (API service not reachable); container path is canonical and now PASS.

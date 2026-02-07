@@ -17,7 +17,7 @@ Branch: `codex/phase-9-3-4`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve`:
   - FAIL (connect EPERM 127.0.0.1:8070; service not reachable)
 - `E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`:
-  - FAIL (unresolved menus: menu_sc_root, menu_sc_dictionary, menu_sc_project_dashboard, menu_sc_project_dashboard_showcase)
+  - PASS (artifacts: `/mnt/artifacts/codex/portal-menu-scene-resolve/20260207T045708`)
 
 ## Phase 9.4 — validation + evolution infrastructure
 
@@ -34,4 +34,4 @@ Branch: `codex/phase-9-3-4`
 
 ## Notes
 - No new act_url entries introduced; legacy-only policy documented.
-- Host verification failure is environment-related; container failure indicates missing scene_key mappings pending env refresh.
+- Host verification failure is environment-related; container path is canonical and PASS after preflight retry.

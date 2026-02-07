@@ -103,12 +103,26 @@ function preflightUrl(url) {
   });
 }
 
+async function preflightWithRetry(url, retries = 8, delayMs = 2000) {
+  let lastErr = null;
+  for (let i = 0; i < retries; i += 1) {
+    try {
+      const status = await preflightUrl(url);
+      return status;
+    } catch (err) {
+      lastErr = err;
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  throw lastErr;
+}
+
 async function main() {
   if (!DB_NAME) throw new Error('DB_NAME is required');
 
   log(`api_base: ${BASE_URL}`);
   try {
-    const status = await preflightUrl(BASE_URL);
+    const status = await preflightWithRetry(BASE_URL);
     log(`preflight: ${status}`);
   } catch (err) {
     const msg = err && err.message ? err.message : String(err);
