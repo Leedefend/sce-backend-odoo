@@ -3,7 +3,6 @@ import json
 
 SCENE_VERSION = "v2"
 SCHEMA_VERSION = "v2"
-PROJECTS_DEFAULT_SORT = "write_date desc"
 IMPORTED_SCENES_PARAM = "sc.scene.package.imported_scenes"
 
 
@@ -17,36 +16,6 @@ def _append_drift(drift, *, scene_key, kind, fields, severity="info", source="db
         "severity": severity,
         "source": source,
     })
-
-
-def _projects_list_profile():
-    return {
-        "columns": [
-            "name",
-            "project_code",
-            "partner_id",
-            "user_id",
-            "stage_id",
-            "write_date",
-        ],
-        "hidden_columns": [
-            "message_needaction",
-            "message_unread",
-            "is_favorite",
-            "display_name",
-            "__last_update",
-        ],
-        "column_labels": {
-            "name": "项目名称",
-            "project_code": "项目编号",
-            "partner_id": "客户",
-            "user_id": "负责人",
-            "stage_id": "状态",
-            "write_date": "更新时间",
-        },
-        "row_primary": "name",
-        "row_secondary": "partner_id",
-    }
 
 
 def get_scene_version():
@@ -70,77 +39,17 @@ def has_db_scenes(env):
 
 
 
-def _tile(
-    key,
-    title,
-    subtitle,
-    icon,
-    *,
-    action_xmlid=None,
-    menu_xmlid=None,
-    required_caps=None,
-    scene_key=None,
-):
-    payload = {}
-    if action_xmlid:
-        payload["action_xmlid"] = action_xmlid
-    if menu_xmlid:
-        payload["menu_xmlid"] = menu_xmlid
-    if scene_key:
-        payload["scene_key"] = scene_key
-    return {
-        "key": key,
-        "title": title,
-        "subtitle": subtitle,
-        "icon": icon,
-        "payload": payload,
-        "scene_key": scene_key,
-        "required_capabilities": required_caps or [],
-    }
-
-
-def _normalize_layout(layout):
-    if isinstance(layout, dict):
-        return layout
-    return {"kind": "workspace", "sidebar": "fixed", "header": "full"}
-
-
 def _normalize_scene(scene, drift=None, source="registry"):
     if not isinstance(scene, dict):
         return None
     if not scene.get("code") and scene.get("key"):
         scene["code"] = scene.get("key")
-    scene["layout"] = _normalize_layout(scene.get("layout"))
-    if scene.get("code") == "default":
-        tiles = scene.get("tiles") if isinstance(scene.get("tiles"), list) else []
-        for tile in tiles:
-            if not isinstance(tile, dict):
-                continue
-            if tile.get("key") == "project.work":
-                if not tile.get("scene_key") and not (tile.get("payload") or {}).get("scene_key"):
-                    tile["scene_key"] = "projects.ledger"
-                    payload = tile.get("payload") if isinstance(tile.get("payload"), dict) else {}
-                    payload.setdefault("scene_key", "projects.ledger")
-                    tile["payload"] = payload
     scene = _apply_scene_defaults(scene, drift=drift, source=source)
     return scene
 
 
 def _apply_scene_defaults(scene, drift=None, source="registry"):
     code = scene.get("code") or scene.get("key") or ""
-    if code in ("projects.list", "projects.ledger"):
-        if not scene.get("list_profile"):
-            scene["list_profile"] = _projects_list_profile()
-            if source == "db":
-                _append_drift(drift, scene_key=code, kind="db_missing_field_filled", fields=["list_profile"])
-        if not scene.get("default_sort"):
-            scene["default_sort"] = PROJECTS_DEFAULT_SORT
-            if source == "db":
-                _append_drift(drift, scene_key=code, kind="db_missing_field_filled", fields=["default_sort"])
-        if scene.get("tiles") is None:
-            scene["tiles"] = []
-            if source == "db":
-                _append_drift(drift, scene_key=code, kind="db_missing_field_filled", fields=["tiles"])
     if code == "projects.intake":
         target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
         if not (
@@ -219,81 +128,24 @@ def load_scene_configs(env, drift=None):
         {
             "code": "default",
             "name": "默认场景",
-            "layout": {"kind": "workspace", "sidebar": "fixed", "header": "full"},
             "target": {"route": "/workbench?scene=default"},
-            "tiles": [
-                _tile(
-                    "project.work",
-                    "项目工作",
-                    "项目看板与概览入口",
-                    "P",
-                    action_xmlid="smart_construction_core.action_sc_project_kanban_lifecycle",
-                    menu_xmlid="smart_construction_core.menu_sc_project_project",
-                    required_caps=["project.work"],
-                    scene_key="projects.ledger",
-                ),
-                _tile(
-                    "capability.matrix",
-                    "能力矩阵",
-                    "查看角色可用能力",
-                    "M",
-                    action_xmlid="smart_construction_portal.action_sc_portal_capability_matrix",
-                    menu_xmlid="smart_construction_portal.menu_sc_portal_capability_matrix",
-                    required_caps=["capability.matrix"],
-                ),
-                _tile(
-                    "contract.work",
-                    "合同工作",
-                    "合同台账与合同清单",
-                    "C",
-                    action_xmlid="smart_construction_core.action_construction_contract_my",
-                    menu_xmlid="smart_construction_core.menu_sc_contract_income",
-                    required_caps=["contract.work"],
-                ),
-                _tile(
-                    "cost.work",
-                    "成本工作",
-                    "成本台账与预算入口",
-                    "K",
-                    action_xmlid="smart_construction_core.action_project_cost_ledger_my",
-                    menu_xmlid="smart_construction_core.menu_sc_project_cost_ledger",
-                    required_caps=["cost.work"],
-                ),
-                _tile(
-                    "finance.work",
-                    "财务工作",
-                    "付款申请与财务台账",
-                    "F",
-                    action_xmlid="smart_construction_core.action_payment_request_my",
-                    menu_xmlid="smart_construction_core.menu_payment_request",
-                    required_caps=["finance.work"],
-                ),
-            ],
         },
         {
             "code": "scene_smoke_default",
             "name": "Scene Smoke Default",
-            "layout": {"kind": "workspace", "sidebar": "fixed", "header": "full"},
             "target": {"route": "/workbench?scene=scene_smoke_default"},
-            "tiles": [],
         },
         {
             "code": "projects.list",
             "name": "项目列表",
-            "layout": {"kind": "list", "sidebar": "fixed", "header": "full"},
             "target": {
                 "menu_xmlid": "smart_construction_demo.menu_sc_project_list_showcase",
                 "action_xmlid": "smart_construction_demo.action_sc_project_list_showcase",
             },
-            "list_profile": _projects_list_profile(),
-            "filters": [],
-            "default_sort": PROJECTS_DEFAULT_SORT,
-            "tiles": [],
         },
         {
             "code": "projects.intake",
             "name": "项目立项",
-            "layout": {"kind": "record", "sidebar": "fixed", "header": "full"},
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_project_initiation",
                 "action_xmlid": "smart_construction_core.action_project_initiation",
@@ -302,36 +154,25 @@ def load_scene_configs(env, drift=None):
         {
             "code": "projects.ledger",
             "name": "项目台账（试点）",
-            "layout": {"kind": "ledger", "sidebar": "fixed", "header": "full"},
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
                 "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
             },
-            "list_profile": _projects_list_profile(),
-            "filters": [],
-            "default_sort": PROJECTS_DEFAULT_SORT,
-            "tiles": [],
         },
         {
             "code": "portal.lifecycle",
             "name": "生命周期驾驶舱",
-            "layout": {"kind": "workspace", "sidebar": "fixed", "header": "full"},
             "target": {"route": "/portal/lifecycle"},
-            "tiles": [],
         },
         {
             "code": "portal.capability_matrix",
             "name": "能力矩阵",
-            "layout": {"kind": "workspace", "sidebar": "fixed", "header": "full"},
             "target": {"route": "/portal/capability-matrix"},
-            "tiles": [],
         },
         {
             "code": "portal.dashboard",
             "name": "工作台",
-            "layout": {"kind": "workspace", "sidebar": "fixed", "header": "full"},
             "target": {"route": "/portal/dashboard"},
-            "tiles": [],
         },
     ]
     if not db_scenes:

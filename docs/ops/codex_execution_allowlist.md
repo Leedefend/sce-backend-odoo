@@ -1,13 +1,7 @@
-
-> **建议文件名**：
-> `docs/ops/codex_execution_allowlist.md`
-> **版本**：v4.2（Replace v4.1）
-
----
-
+````md
 # Codex Execution Allowlist (Autonomous Mode)
 
-**Codex 自治执行授权清单 · v4.2**
+**Codex 自治执行授权清单 · v4.3（Replace v4.2）**
 
 ---
 
@@ -56,7 +50,7 @@ Codex **只能** 在以下分支类型中执行自治操作：
 
 ```bash
 git branch --show-current
-```
+````
 
 允许的分支正则：
 
@@ -73,12 +67,14 @@ git branch --show-current
 * ❌ 禁止使用 `.env.prod`
 * ❌ 禁止设置或使用 `PROD_DANGER=1`
 
+> `.env.prod` 文件允许存在（作为模板/参考），但禁止在 Codex 自治执行中启用 `ENV=prod` 或设置 `PROD_DANGER=1`。
+
 ---
 
-### 1.3 执行方式约束（Makefile 优先 + Git 例外）
+### 1.3 执行方式约束（Makefile 优先）
 
 * **默认原则**：
-  所有 **运行态 / 容器 / 数据库 / 服务状态变更**
+  所有 **运行态 / 容器 / 数据库 / 服务状态变更 / 远端状态变更**
   **必须通过 Makefile target 执行**
 
 * **明确例外**：
@@ -89,13 +85,50 @@ git branch --show-current
 
 * `docker compose exec ... odoo -u`
 * `psql`
-* `curl` 修改系统状态（只允许只读 smoke）
+* `gh pr edit / comment / ready / close`
+* `curl` / `python` 直接写 GitHub API
+* 任何绕过 Makefile 的远端状态修改
+
+---
+
+### 1.3.1 PR 内容更新通道（PR Update Channel）
+
+Codex 被授权在 **合规分支内** 更新 PR 内容（包括代码与文本），但必须满足：
+
+* ✅ **只能通过 Makefile target 执行**
+* ❌ 禁止直接使用 `git push` / `gh` / GitHub API
+
+允许的 PR 相关 Makefile targets：
+
+* `make pr.open`
+
+  * 创建 PR（或输出创建指引 / URL）
+
+* `make pr.update`
+
+  * 更新 PR 标题 / 描述 / labels / assignees / reviewers
+  * 不允许修改 base 分支
+
+* `make pr.status`
+
+  * 查询 PR 状态（只读，允许任何分支）
+
+* `make pr.push`
+
+  * 将当前分支 push 到远端，用于 **更新 PR 的代码内容**
+  * 必须校验：
+
+    * 分支合法
+    * 非 prod 环境
+    * 非 main / release
+
+> 说明：
+> **PR 内容更新属于远端状态变更**，必须统一走 Makefile 封装流程，
+> 以保证分支校验、环境校验与审计能力。
 
 ---
 
 ## 1.4 Git 执行边界（Safe Git Rules）
-
-为支持 Codex 的工程自治，允许执行 **受限 Git 操作子集**。
 
 > ⚠️ 所有 Git 操作仍受 §1.1 分支约束
 > **分支不合规时，任何 Git 写操作都必须停止**
@@ -166,20 +199,26 @@ git branch --show-current
 
 以下命令 **任何情况下都禁止**：
 
-* ❌ `git push`（**除非** 通过 `make pr.push` / `make branch.cleanup.feature` 执行）
+* ❌ `git push`
+  （**除非** 通过 `make pr.push` / `make branch.cleanup.feature` 执行）
 * ❌ `git push --force / -f`
 * ❌ `git reset --hard`
 * ❌ `git rebase`
 * ❌ `git cherry-pick`
 * ❌ `git merge`
 * ❌ `git tag`
-* ❌ `git branch -d / -D`（**除非** 通过 `make branch.cleanup.feature` 执行）
+* ❌ `git branch -d / -D`
+  （**除非** 通过 `make branch.cleanup.feature` 执行）
 * ❌ `git worktree`
 * ❌ `git config`
 * ❌ `git clean -fdx`
 
 > ⚠️ 所有 **远端状态变更**
 > 必须通过 Makefile 封装流程完成。
+
+> 解释：
+> PR 的代码更新 **必须通过 `make pr.push`**，
+> 以便统一注入分支校验、远端保护与审计日志。
 
 ---
 
@@ -300,16 +339,23 @@ Codex 的责任是 **定位 → 修复 → 重试**。
 
 ---
 
-## 6.1 Branch-local autonomy（codex/* only）
+## 6.1 Branch-local autonomy（All allowed branches）
 
-仅允许通过 Makefile：
+在合规分支（`feat/*` `feature/*` `codex/*` `experiment/*`）内，
+仅允许通过 Makefile 执行以下自治闭环能力：
 
 * `make codex.preflight`
 * `make codex.run FLOW=fast|snapshot|gate|pr|merge|cleanup|rollback`
 * `make codex.pr`
-* `make codex.merge`
-* `make codex.cleanup`
+* `make pr.open`
+* `make pr.update`
+* `make pr.status`
+* `make pr.push`
 * `make codex.sync-main`
+* `make branch.cleanup.feature`
+
+> 若某 target 尚未实现，**必须先补 Makefile 封装**，
+> Codex 不得绕过直接调用底层命令。
 
 ---
 
@@ -320,7 +366,7 @@ Codex 的责任是 **定位 → 修复 → 重试**。
 * 日志摘要
 * Gate / Smoke 结果
 * Contract snapshot diff（如有）
-* System-bound verification 脚本与结果
+* System-bound verification 结果
 * 最终状态说明（通过 / 阻塞）
 
 推荐目录结构：
@@ -336,9 +382,13 @@ artifacts/codex/<branch>/<timestamp>/
 > **只在独立分支；
 > 默认 fast；
 > 升级需声明；
+> PR 更新走 Makefile；
 > 验证必须自证；
 > gate 可自治；
 > 失败可重试；
 > 越权即停。**
 
 ---
+
+```
+```
