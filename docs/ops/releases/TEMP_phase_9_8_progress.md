@@ -44,6 +44,12 @@
 - Added inferred scene_key guard when action_xmlid mapping is used.
   - File: addons/smart_core/handlers/system_init.py
   - Warning: SCENEKEY_INFERRED_NOT_FOUND
+- Added Phase 9.8 gate summary index for release evidence.
+  - File: scripts/verify/phase_9_8_gate_summary.js
+  - Make target: verify.phase_9_8.gate_summary
+- Added report output for ACT_URL_MISSING_SCENE with repair hints.
+  - File: scripts/verify/act_url_missing_scene_report.js
+  - Make target: verify.portal.act_url_missing_scene_report.container
 
 ## Verification
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.menu.scene_resolve.container`: PASS
