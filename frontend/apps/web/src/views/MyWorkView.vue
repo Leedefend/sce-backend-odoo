@@ -137,7 +137,7 @@
           </thead>
           <tbody>
             <tr v-if="!filteredItems.length">
-              <td colspan="8" class="empty">{{ emptyCopy.message }}</td>
+              <td colspan="8" class="empty">{{ summaryStatus?.message || emptyCopy.message }}</td>
             </tr>
             <tr v-for="item in filteredItems" :key="`${item.section || 'all'}-${item.id}`">
               <td class="cell-select">
@@ -203,6 +203,7 @@ const sourceFilter = ref('ALL');
 const reasonFilter = ref('ALL');
 const sourceFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const reasonFacetRows = ref<Array<{ key: string; count: number }>>([]);
+const summaryStatus = ref<{ state: string; reason_code: string; message: string; hint: string } | null>(null);
 const myWorkFilterStorageKey = 'sc.mywork.filters.v1';
 const myWorkPresetStorageKey = 'sc.mywork.filter_preset.v1';
 const hasFilterPreset = ref(false);
@@ -272,11 +273,13 @@ async function load() {
   loading.value = true;
   errorText.value = '';
   statusError.value = null;
+  summaryStatus.value = null;
   try {
     const data = await fetchMyWorkSummary(80, 16);
     sections.value = Array.isArray(data.sections) ? data.sections : [];
     summary.value = Array.isArray(data.summary) ? data.summary : [];
     items.value = Array.isArray(data.items) ? data.items : [];
+    summaryStatus.value = data.status || null;
     sourceFacetRows.value = Array.isArray(data.facets?.source_counts) ? data.facets?.source_counts || [] : [];
     reasonFacetRows.value = Array.isArray(data.facets?.reason_code_counts) ? data.facets?.reason_code_counts || [] : [];
     todoSelectionIds.value = [];

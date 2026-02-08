@@ -33,6 +33,12 @@ export type MyWorkSummaryResponse = {
   sections?: MyWorkSection[];
   summary: MyWorkSummaryItem[];
   items: MyWorkRecordItem[];
+  status?: {
+    state: 'READY' | 'EMPTY' | 'FILTER_EMPTY' | string;
+    reason_code: string;
+    message: string;
+    hint: string;
+  };
   facets?: {
     source_counts?: Array<{ key: string; count: number }>;
     reason_code_counts?: Array<{ key: string; count: number }>;

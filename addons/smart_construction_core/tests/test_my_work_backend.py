@@ -62,6 +62,20 @@ class TestMyWorkBackend(TransactionCase):
         self.assertEqual(data.get("error_category"), "validation")
         self.assertFalse(bool(data.get("retryable")))
 
+    def test_summary_status_contract(self):
+        handler = MyWorkSummaryHandler(self.env, payload={})
+        empty_status = handler._build_status(total_before_filter=0, filtered_count=0)
+        self.assertEqual(empty_status.get("state"), "EMPTY")
+        self.assertEqual(empty_status.get("reason_code"), "NO_WORK_ITEMS")
+
+        filter_empty_status = handler._build_status(total_before_filter=3, filtered_count=0)
+        self.assertEqual(filter_empty_status.get("state"), "FILTER_EMPTY")
+        self.assertEqual(filter_empty_status.get("reason_code"), "FILTER_NO_MATCH")
+
+        ready_status = handler._build_status(total_before_filter=3, filtered_count=2)
+        self.assertEqual(ready_status.get("state"), "READY")
+        self.assertEqual(ready_status.get("reason_code"), "OK")
+
     def test_retryable_summary_counts(self):
         summary = _retryable_summary(
             [

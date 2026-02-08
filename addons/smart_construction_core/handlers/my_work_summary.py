@@ -19,6 +19,9 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         "following": "我关注的",
     }
     SECTION_KEYS = ("todo", "owned", "mentions", "following")
+    STATUS_READY = "READY"
+    STATUS_EMPTY = "EMPTY"
+    STATUS_FILTER_EMPTY = "FILTER_EMPTY"
 
     def _safe_count(self, model_name, domain, required_fields=None):
         Model = self.env.get(model_name)
@@ -80,6 +83,28 @@ class MyWorkSummaryHandler(BaseIntentHandler):
 
     def _normalize_text(self, value):
         return str(value or "").strip().lower()
+
+    def _build_status(self, *, total_before_filter, filtered_count):
+        if total_before_filter <= 0:
+            return {
+                "state": self.STATUS_EMPTY,
+                "reason_code": "NO_WORK_ITEMS",
+                "message": "当前没有待处理事项",
+                "hint": "可稍后刷新，或切换到其他场景创建/关注事项。",
+            }
+        if filtered_count <= 0:
+            return {
+                "state": self.STATUS_FILTER_EMPTY,
+                "reason_code": "FILTER_NO_MATCH",
+                "message": "当前筛选条件没有匹配结果",
+                "hint": "请重置筛选条件后重试。",
+            }
+        return {
+            "state": self.STATUS_READY,
+            "reason_code": "OK",
+            "message": "",
+            "hint": "",
+        }
 
     def _apply_filters(self, items, *, section, source, reason_code, search):
         result = list(items or [])
@@ -275,6 +300,10 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 "filtered_count": filtered_count,
                 "total_before_filter": total_before_filter,
             },
+            "status": self._build_status(
+                total_before_filter=total_before_filter,
+                filtered_count=filtered_count,
+            ),
         }
         meta = {"intent": self.INTENT_TYPE}
         return {"ok": True, "data": data, "meta": meta}
