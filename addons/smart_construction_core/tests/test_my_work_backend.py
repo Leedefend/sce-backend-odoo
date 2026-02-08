@@ -76,6 +76,26 @@ class TestMyWorkBackend(TransactionCase):
         self.assertEqual(ready_status.get("state"), "READY")
         self.assertEqual(ready_status.get("reason_code"), "OK")
 
+    def test_summary_sort_and_pagination_helpers(self):
+        handler = MyWorkSummaryHandler(self.env, payload={})
+        rows = [
+            {"id": 3, "title": "Gamma", "deadline": "2026-02-03"},
+            {"id": 1, "title": "Alpha", "deadline": ""},
+            {"id": 2, "title": "Beta", "deadline": "2026-02-01"},
+            {"id": 4, "title": "Delta", "deadline": "2026-02-04"},
+            {"id": 5, "title": "Epsilon", "deadline": ""},
+        ]
+        sorted_rows = handler._apply_sort(rows, sort_by="title", sort_dir="asc")
+        self.assertEqual([item["id"] for item in sorted_rows], [1, 2, 4, 5, 3])
+
+        page_rows, total_pages, safe_page = handler._paginate_items(sorted_rows, page=2, page_size=2)
+        self.assertEqual(total_pages, 3)
+        self.assertEqual(safe_page, 2)
+        self.assertEqual([item["id"] for item in page_rows], [4, 5])
+
+        self.assertEqual(handler._normalize_sort_by("unknown"), "id")
+        self.assertEqual(handler._normalize_sort_dir("up"), "desc")
+
     def test_retryable_summary_counts(self):
         summary = _retryable_summary(
             [

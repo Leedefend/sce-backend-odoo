@@ -22,6 +22,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     STATUS_READY = "READY"
     STATUS_EMPTY = "EMPTY"
     STATUS_FILTER_EMPTY = "FILTER_EMPTY"
+    SORT_FIELDS = {"id", "title", "model", "deadline", "source", "reason_code", "section"}
 
     def _safe_count(self, model_name, domain, required_fields=None):
         Model = self.env.get(model_name)
@@ -50,6 +51,21 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         except Exception:
             parsed = default
         return max(1, min(parsed, max_value))
+
+    def _normalize_page(self, value, default=1, max_value=10000):
+        try:
+            parsed = int(value)
+        except Exception:
+            parsed = default
+        return max(1, min(parsed, max_value))
+
+    def _normalize_sort_by(self, value):
+        key = str(value or "").strip().lower()
+        return key if key in self.SORT_FIELDS else "id"
+
+    def _normalize_sort_dir(self, value):
+        direction = str(value or "").strip().lower()
+        return direction if direction in {"asc", "desc"} else "desc"
 
     def _append_items(self, target, section_key, rows):
         for row in rows:
@@ -128,6 +144,27 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 ).lower()
             ]
         return result
+
+    def _sort_value(self, item, sort_by):
+        if sort_by in {"id"}:
+            return int(item.get("id") or 0)
+        text = str(item.get(sort_by) or "").lower()
+        # Keep empty deadlines at the end for ASC and DESC.
+        if sort_by == "deadline":
+            return (text == "", text)
+        return text
+
+    def _apply_sort(self, items, *, sort_by, sort_dir):
+        reverse = sort_dir == "desc"
+        return sorted(list(items or []), key=lambda item: self._sort_value(item, sort_by), reverse=reverse)
+
+    def _paginate_items(self, items, *, page, page_size):
+        rows = list(items or [])
+        total = len(rows)
+        total_pages = max(1, (total + page_size - 1) // page_size)
+        safe_page = min(page, total_pages)
+        offset = (safe_page - 1) * page_size
+        return rows[offset : offset + page_size], total_pages, safe_page
 
     def _load_todo_items(self, user, limit):
         Activity = self.env.get("mail.activity")
@@ -248,6 +285,10 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         partner = user.partner_id
         limit = self._normalize_limit(params.get("limit"), default=20, max_value=100)
         limit_each = self._normalize_limit(params.get("limit_each"), default=8, max_value=40)
+        page = self._normalize_page(params.get("page"), default=1)
+        page_size = self._normalize_limit(params.get("page_size"), default=limit, max_value=100)
+        sort_by = self._normalize_sort_by(params.get("sort_by"))
+        sort_dir = self._normalize_sort_dir(params.get("sort_dir"))
         filter_section = self._normalize_section(params.get("section"))
         filter_source = self._normalize_text(params.get("source")) or "all"
         filter_reason_code = str(params.get("reason_code") or "").strip()
@@ -274,7 +315,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             search=filter_search,
         )
         filtered_count = len(items)
-        items = items[:limit]
+        items = self._apply_sort(items, sort_by=sort_by, sort_dir=sort_dir)
+        items, total_pages, page = self._paginate_items(items, page=page, page_size=page_size)
 
         data = {
             "generated_at": fields.Datetime.now(),
@@ -299,6 +341,11 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 "search": filter_search,
                 "filtered_count": filtered_count,
                 "total_before_filter": total_before_filter,
+                "sort_by": sort_by,
+                "sort_dir": sort_dir,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": total_pages,
             },
             "status": self._build_status(
                 total_before_filter=total_before_filter,

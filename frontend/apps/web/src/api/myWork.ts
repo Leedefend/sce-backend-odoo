@@ -33,6 +33,19 @@ export type MyWorkSummaryResponse = {
   sections?: MyWorkSection[];
   summary: MyWorkSummaryItem[];
   items: MyWorkRecordItem[];
+  filters?: {
+    section: string;
+    source: string;
+    reason_code: string;
+    search: string;
+    filtered_count: number;
+    total_before_filter: number;
+    sort_by?: string;
+    sort_dir?: 'asc' | 'desc' | string;
+    page?: number;
+    page_size?: number;
+    total_pages?: number;
+  };
   status?: {
     state: 'READY' | 'EMPTY' | 'FILTER_EMPTY' | string;
     reason_code: string;
@@ -46,10 +59,21 @@ export type MyWorkSummaryResponse = {
   };
 };
 
-export async function fetchMyWorkSummary(limit = 20, limitEach = 8) {
+export async function fetchMyWorkSummary(
+  limit = 20,
+  limitEach = 8,
+  options?: { page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc' },
+) {
   return intentRequest<MyWorkSummaryResponse>({
     intent: 'my.work.summary',
-    params: { limit, limit_each: limitEach },
+    params: {
+      limit,
+      limit_each: limitEach,
+      page: options?.page ?? 1,
+      page_size: options?.pageSize ?? limit,
+      sort_by: options?.sortBy ?? 'id',
+      sort_dir: options?.sortDir ?? 'desc',
+    },
   });
 }
 
