@@ -201,6 +201,8 @@ const actionFeedbackError = ref(false);
 const searchText = ref('');
 const sourceFilter = ref('ALL');
 const reasonFilter = ref('ALL');
+const sourceFacetRows = ref<Array<{ key: string; count: number }>>([]);
+const reasonFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const myWorkFilterStorageKey = 'sc.mywork.filters.v1';
 const myWorkPresetStorageKey = 'sc.mywork.filter_preset.v1';
 const hasFilterPreset = ref(false);
@@ -244,6 +246,9 @@ const allTodoSelected = computed(() => {
   return currentTodoRows.value.every((id) => todoSelectionIdSet.value.has(id));
 });
 const sourceOptions = computed(() => {
+  if (sourceFacetRows.value.length) {
+    return sourceFacetRows.value.map((item) => item.key).filter(Boolean);
+  }
   const set = new Set<string>();
   items.value.forEach((item) => {
     const source = String(item.source || '');
@@ -252,6 +257,9 @@ const sourceOptions = computed(() => {
   return Array.from(set).sort();
 });
 const reasonOptions = computed(() => {
+  if (reasonFacetRows.value.length) {
+    return reasonFacetRows.value.map((item) => item.key).filter(Boolean);
+  }
   const set = new Set<string>();
   items.value.forEach((item) => {
     const reason = String(item.reason_code || '');
@@ -269,6 +277,8 @@ async function load() {
     sections.value = Array.isArray(data.sections) ? data.sections : [];
     summary.value = Array.isArray(data.summary) ? data.summary : [];
     items.value = Array.isArray(data.items) ? data.items : [];
+    sourceFacetRows.value = Array.isArray(data.facets?.source_counts) ? data.facets?.source_counts || [] : [];
+    reasonFacetRows.value = Array.isArray(data.facets?.reason_code_counts) ? data.facets?.reason_code_counts || [] : [];
     todoSelectionIds.value = [];
     if (sections.value.length && !sections.value.find((sec) => sec.key === activeSection.value)) {
       activeSection.value = sections.value[0].key;
@@ -458,8 +468,8 @@ async function completeItem(item: MyWorkRecordItem) {
       source: item.source,
       note: 'Completed from my-work UI.',
     });
-    actionFeedback.value = result.message || '待办已完成';
-    actionFeedbackError.value = false;
+    actionFeedback.value = result.message || (result.success ? '待办已完成' : '完成待办失败');
+    actionFeedbackError.value = !result.success;
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '完成待办失败';

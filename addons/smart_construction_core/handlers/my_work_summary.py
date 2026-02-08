@@ -54,6 +54,26 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             row["section_label"] = self.SECTION_LABELS.get(section_key, section_key)
             target.append(row)
 
+    def _build_facets(self, items):
+        source_counts = {}
+        reason_counts = {}
+        section_counts = {}
+        for item in items or []:
+            source = str(item.get("source") or "").strip()
+            reason = str(item.get("reason_code") or "").strip()
+            section = str(item.get("section") or "").strip()
+            if source:
+                source_counts[source] = int(source_counts.get(source, 0)) + 1
+            if reason:
+                reason_counts[reason] = int(reason_counts.get(reason, 0)) + 1
+            if section:
+                section_counts[section] = int(section_counts.get(section, 0)) + 1
+        return {
+            "source_counts": _ranked_counts(source_counts),
+            "reason_code_counts": _ranked_counts(reason_counts),
+            "section_counts": _ranked_counts(section_counts),
+        }
+
     def _normalize_section(self, value):
         section = str(value or "").strip().lower()
         return section if section in self.SECTION_KEYS else "all"
@@ -220,6 +240,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         self._append_items(items, "mentions", self._load_mention_items(partner, limit_each))
         self._append_items(items, "following", self._load_following_items(partner, limit_each))
         total_before_filter = len(items)
+        facets = self._build_facets(items)
         items = self._apply_filters(
             items,
             section=filter_section,
@@ -245,6 +266,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 {"key": "following", "label": "我关注的", "count": following_count, "scene_key": "projects.list"},
             ],
             "items": items,
+            "facets": facets,
             "filters": {
                 "section": filter_section,
                 "source": filter_source,
@@ -256,3 +278,9 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         }
         meta = {"intent": self.INTENT_TYPE}
         return {"ok": True, "data": data, "meta": meta}
+
+
+def _ranked_counts(counter_map):
+    rows = [{"key": key, "count": int(value)} for key, value in (counter_map or {}).items()]
+    rows.sort(key=lambda row: row["count"], reverse=True)
+    return rows

@@ -33,6 +33,11 @@ export type MyWorkSummaryResponse = {
   sections?: MyWorkSection[];
   summary: MyWorkSummaryItem[];
   items: MyWorkRecordItem[];
+  facets?: {
+    source_counts?: Array<{ key: string; count: number }>;
+    reason_code_counts?: Array<{ key: string; count: number }>;
+    section_counts?: Array<{ key: string; count: number }>;
+  };
 };
 
 export async function fetchMyWorkSummary(limit = 20, limitEach = 8) {
@@ -49,6 +54,9 @@ export async function completeMyWorkItem(params: { id: number; source: string; n
     success: boolean;
     reason_code: string;
     message: string;
+    retryable?: boolean;
+    error_category?: string;
+    suggested_action?: string;
     done_at: string;
   }>({
     intent: 'my.work.complete',

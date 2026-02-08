@@ -19,19 +19,38 @@ class MyWorkCompleteHandler(BaseIntentHandler):
         source = str(params.get("source") or "").strip()
         item_id = params.get("id")
         note = str(params.get("note") or "").strip()
-        activity_id = _coerce_activity_id(item_id)
-        _complete_activity(self.env, source=source, activity_id=activity_id, note=note)
-
-        return {
-            "ok": True,
-            "data": {
+        try:
+            activity_id = _coerce_activity_id(item_id)
+            _complete_activity(self.env, source=source, activity_id=activity_id, note=note)
+            data = {
                 "id": activity_id,
                 "source": source,
                 "success": True,
                 "reason_code": "DONE",
                 "message": "待办已完成",
+                "retryable": False,
+                "error_category": "",
+                "suggested_action": "",
                 "done_at": fields.Datetime.now(),
-            },
+            }
+        except Exception as exc:
+            activity_id = _safe_int(item_id)
+            failed_meta = _failure_meta_for_exception(exc)
+            data = {
+                "id": activity_id,
+                "source": source,
+                "success": False,
+                "reason_code": failed_meta["reason_code"],
+                "message": str(exc) or "完成待办失败",
+                "retryable": bool(failed_meta["retryable"]),
+                "error_category": failed_meta["error_category"],
+                "suggested_action": failed_meta["suggested_action"],
+                "done_at": fields.Datetime.now(),
+            }
+
+        return {
+            "ok": True,
+            "data": data,
             "meta": {"intent": self.INTENT_TYPE},
         }
 
