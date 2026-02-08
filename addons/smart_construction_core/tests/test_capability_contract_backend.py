@@ -3,6 +3,11 @@ from uuid import uuid4
 
 from odoo.tests.common import TransactionCase, tagged
 
+from odoo.addons.smart_construction_core.handlers.capability_visibility_report import (
+    CapabilityVisibilityReportHandler,
+    _suggested_action_for_reason,
+)
+
 
 @tagged("sc_smoke", "capability_contract_backend")
 class TestCapabilityContractBackend(TransactionCase):
@@ -64,3 +69,47 @@ class TestCapabilityContractBackend(TransactionCase):
         self.assertTrue(locked._user_visible(self.env.user))
         self.assertFalse(locked._user_allowed(self.env.user))
         self.assertFalse(hidden._user_visible(self.env.user))
+
+    def test_visibility_report_exposes_locked_samples_and_state_counts(self):
+        Cap = self.env["sc.capability"]
+        project_group = self.env.ref("smart_construction_core.group_sc_cap_project_manager")
+        Cap.create(
+            {
+                "key": self._key("hidden_group"),
+                "name": "Hidden Group Capability",
+                "required_group_ids": [(6, 0, [project_group.id])],
+                "status": "ga",
+            }
+        )
+        locked = Cap.create(
+            {
+                "key": self._key("locked_flag"),
+                "name": "Locked Flag Capability",
+                "required_flag": self._key("feature"),
+                "status": "ga",
+            }
+        )
+
+        handler = CapabilityVisibilityReportHandler(self.env, payload={})
+        result = handler.handle()
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        state_rows = data.get("state_counts") or []
+        self.assertIsInstance(state_rows, list)
+        sample_rows = (data.get("locked_samples") or []) + (data.get("hidden_samples") or [])
+        if sample_rows:
+            self.assertTrue(any("suggested_action" in row for row in sample_rows))
+
+    def test_suggested_action_mapping(self):
+        self.assertEqual(
+            _suggested_action_for_reason(reason_code="PERMISSION_DENIED", state="LOCKED"),
+            "request_access",
+        )
+        self.assertEqual(
+            _suggested_action_for_reason(reason_code="FEATURE_DISABLED", state="LOCKED"),
+            "enable_feature_flag",
+        )
+        self.assertEqual(
+            _suggested_action_for_reason(reason_code="", state="PREVIEW"),
+            "wait_release",
+        )

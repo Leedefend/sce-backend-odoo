@@ -90,7 +90,9 @@ export type CapabilityVisibilityReport = {
     locked: number;
   };
   reason_counts: Array<{ reason_code: string; count: number }>;
-  hidden_samples: Array<{ key: string; name: string; reason_code: string; reason: string }>;
+  state_counts?: Array<{ state: string; count: number }>;
+  hidden_samples: Array<{ key: string; name: string; reason_code: string; reason: string; suggested_action?: string }>;
+  locked_samples?: Array<{ key: string; name: string; reason_code: string; reason: string; suggested_action?: string }>;
 };
 
 export async function fetchCapabilityVisibilityReport() {
