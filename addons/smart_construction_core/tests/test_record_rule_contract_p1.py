@@ -2,6 +2,7 @@
 import csv
 import os
 
+from odoo.exceptions import AccessError
 from odoo.tests.common import TransactionCase, tagged
 
 
@@ -109,7 +110,10 @@ class TestRecordRuleContractP1(TransactionCase):
 
     def _can_read(self, user, record):
         Model = self.env[record._name].with_user(user)
-        return bool(Model.search_count([("id", "=", record.id)]))
+        try:
+            return bool(Model.search_count([("id", "=", record.id)]))
+        except AccessError:
+            return False
 
     def _audit_path(self):
         repo_root = os.path.abspath(
