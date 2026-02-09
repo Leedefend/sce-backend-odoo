@@ -13,6 +13,7 @@ guard_prod_forbid
 : "${DB_NAME:?DB_NAME required}"
 : "${DB_USER:?DB_USER required}"
 : "${COMPOSE_FILES:?COMPOSE_FILES required}"
+TRACE_ID="extmods_$(date +%Y%m%d%H%M%S)_$RANDOM"
 
 psql_exec() {
   compose ${COMPOSE_FILES} exec -T db psql -U "${DB_USER}" -d "${DB_NAME}" -v ON_ERROR_STOP=1 -q -c "$1"
@@ -21,6 +22,8 @@ psql_exec() {
 psql_query() {
   compose ${COMPOSE_FILES} exec -T db psql -U "${DB_USER}" -d "${DB_NAME}" -At -c "$1"
 }
+
+before_value="$(psql_query "SELECT COALESCE(value, '') FROM ir_config_parameter WHERE key='sc.core.extension_modules' LIMIT 1;")"
 
 psql_exec "
 INSERT INTO ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date)
@@ -37,13 +40,12 @@ write_uid = 1,
 write_date = NOW();
 "
 
-value="$(psql_query "SELECT COALESCE(value, '') FROM ir_config_parameter WHERE key='sc.core.extension_modules' LIMIT 1;")"
-normalized="${value// /}"
+after_value="$(psql_query "SELECT COALESCE(value, '') FROM ir_config_parameter WHERE key='sc.core.extension_modules' LIMIT 1;")"
+normalized="${after_value// /}"
 if [[ ",${normalized}," != *",smart_construction_core,"* ]]; then
-  echo "[policy.apply.extension_modules] FAIL db=${DB_NAME} value=${value}" >&2
+  echo "[policy.apply.extension_modules] FAIL db=${DB_NAME} trace_id=${TRACE_ID} old=${before_value} new=${after_value}" >&2
   exit 1
 fi
 
-echo "[policy.apply.extension_modules] PASS db=${DB_NAME} value=${value}"
+echo "[policy.apply.extension_modules] PASS db=${DB_NAME} trace_id=${TRACE_ID} old=${before_value} new=${after_value}"
 echo "[policy.apply.extension_modules] NEXT restart odoo to reload extension loader cache: make restart"
-
