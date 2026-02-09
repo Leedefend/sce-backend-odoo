@@ -1,0 +1,75 @@
+{
+  "action": null,
+  "case": "api_data_batch_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "action": "archive",
+    "failed": 1,
+    "failed_has_more": false,
+    "failed_page_limit": 10,
+    "failed_page_offset": 0,
+    "failed_preview": [
+      {
+        "error_category": "not_found",
+        "id": 999999991,
+        "message": "记录不存在",
+        "ok": false,
+        "reason_code": "NOT_FOUND",
+        "retryable": false,
+        "suggested_action": "refresh_list"
+      }
+    ],
+    "failed_reason_summary": [
+      {
+        "count": 1,
+        "reason_code": "NOT_FOUND"
+      }
+    ],
+    "failed_retry_ids": [],
+    "failed_retryable_summary": {
+      "non_retryable": 1,
+      "retryable": 0
+    },
+    "failed_total": 1,
+    "failed_truncated": 0,
+    "idempotency_fingerprint": "a670c64b6c55824f39d8af8e232aa555f0e58972",
+    "idempotency_key": "snapshot_api_data_batch_1",
+    "idempotency_replay_reason_code": "",
+    "idempotent_replay": false,
+    "model": "res.partner",
+    "replay_age_ms": 0,
+    "replay_from_audit_id": 0,
+    "replay_original_trace_id": "",
+    "replay_window_expired": false,
+    "requested_ids": [
+      999999991
+    ],
+    "results": [
+      {
+        "error_category": "not_found",
+        "id": 999999991,
+        "message": "记录不存在",
+        "ok": false,
+        "reason_code": "NOT_FOUND",
+        "retryable": false,
+        "suggested_action": "refresh_list"
+      }
+    ],
+    "succeeded": 0,
+    "values": {
+      "active": false
+    }
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}

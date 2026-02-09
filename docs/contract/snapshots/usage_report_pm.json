@@ -1,0 +1,99 @@
+{
+  "action": null,
+  "case": "usage_report_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "capability_top": [],
+    "daily": {
+      "capability_open": [
+        {
+          "count": 0,
+          "day": "2026-02-03"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-04"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-05"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-06"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-07"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-08"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-09"
+        }
+      ],
+      "scene_open": [
+        {
+          "count": 0,
+          "day": "2026-02-03"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-04"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-05"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-06"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-07"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-08"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-09"
+        }
+      ]
+    },
+    "filters": {
+      "capability_key_prefix": "",
+      "day_from": "2026-02-03",
+      "day_to": "2026-02-09",
+      "days": 7,
+      "role_code": "",
+      "scene_key_prefix": "",
+      "top": 10,
+      "user_id": 0
+    },
+    "role_top": [],
+    "scene_top": [],
+    "totals": {
+      "capability_open_total": 0,
+      "scene_open_total": 0
+    },
+    "user_top": []
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}
