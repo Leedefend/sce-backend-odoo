@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import Any, Dict, List
 from uuid import uuid4
 
-from odoo import fields
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
@@ -23,11 +22,15 @@ from .reason_codes import (
     batch_failure_meta,
 )
 from ..utils.idempotency import (
+    apply_idempotency_identity,
+    build_idempotency_fingerprint,
+    build_idempotency_conflict_response,
+    enrich_replay_contract,
     find_latest_audit_entry,
     find_recent_audit_entry,
+    idempotency_replay_or_conflict,
     normalize_request_id,
     replay_window_seconds,
-    sha1_json,
 )
 
 _logger = logging.getLogger(__name__)
@@ -115,11 +118,11 @@ class ApiDataBatchHandler(BaseIntentHandler):
         payload = {
             "model": model,
             "action": action,
-            "ids": list(sorted(ids)),
+            "ids": ids,
             "vals": vals,
             "idempotency_key": idem_key,
         }
-        return sha1_json(payload)
+        return build_idempotency_fingerprint(payload, normalize_id_keys=["ids"])
 
     def _idempotency_window_seconds(self):
         return replay_window_seconds(
@@ -127,8 +130,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
             env_key="API_DATA_BATCH_REPLAY_WINDOW_SEC",
         )
 
-    def _find_idempotent_replay(self, *, model: str, idem_key: str, fingerprint: str):
-        entry = find_recent_audit_entry(
+    def _find_recent_idempotency_entry(self, *, model: str, idem_key: str):
+        return find_recent_audit_entry(
             self.env,
             event_code="API_DATA_BATCH",
             idempotency_key=idem_key,
@@ -136,30 +139,6 @@ class ApiDataBatchHandler(BaseIntentHandler):
             limit=20,
             extra_domain=[("model", "=", model)],
         )
-        if not entry:
-            return None
-        payload = entry.get("payload") or {}
-        if str(payload.get("idempotency_fingerprint") or "") != fingerprint:
-            return None
-        result = payload.get("result")
-        if isinstance(result, dict):
-            return {
-                "result": result,
-                "audit_id": int(entry.get("audit_id") or 0),
-                "trace_id": str(entry.get("trace_id") or ""),
-                "ts": entry.get("ts"),
-            }
-        return None
-
-    def _to_dt(self, value):
-        if not value:
-            return None
-        if isinstance(value, str):
-            try:
-                return fields.Datetime.from_string(value)
-            except Exception:
-                return None
-        return value
 
     def _has_expired_replay_candidate(self, *, model: str, idem_key: str, fingerprint: str):
         entry = find_latest_audit_entry(
@@ -174,6 +153,15 @@ class ApiDataBatchHandler(BaseIntentHandler):
         payload = entry.get("payload") or {}
         old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
         return bool(old_fingerprint and old_fingerprint == fingerprint)
+
+    def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
+        return build_idempotency_conflict_response(
+            intent_type=self.INTENT_TYPE,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            trace_id=trace_id,
+            include_replay_evidence=True,
+        )
 
     def _write_batch_audit(self, *, trace_id: str, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str, idem_fingerprint: str, result: Dict[str, Any]):
         Audit = self.env.get("sc.audit.log")
@@ -335,28 +323,38 @@ class ApiDataBatchHandler(BaseIntentHandler):
             vals=safe_vals,
             idem_key=idempotency_key,
         )
-        replay = self._find_idempotent_replay(
-            model=model,
-            idem_key=idempotency_key,
+        recent_entry = self._find_recent_idempotency_entry(model=model, idem_key=idempotency_key)
+        decision = idempotency_replay_or_conflict(
+            recent_entry,
             fingerprint=idempotency_fingerprint,
+            replay_payload_key="result",
         )
-        if replay:
-            replay_payload = replay.get("result") or {}
+        if decision.get("conflict"):
+            return self._idempotency_conflict_response(
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                trace_id=trace_id,
+            )
+        replay_payload = decision.get("replay_payload") or {}
+        replay_entry = decision.get("replay_entry") or {}
+        if replay_payload:
             replay_data = self._ensure_result_contract(dict(replay_payload), request_id=request_id, trace_id=trace_id)
             replay_data = self._apply_failed_page(replay_data, offset=page_offset, limit=page_limit)
-            replay_data["idempotent_replay"] = True
-            replay_data["replay_window_expired"] = False
-            replay_data["idempotency_replay_reason_code"] = ""
-            replay_data["idempotency_key"] = idempotency_key
-            replay_data["idempotency_fingerprint"] = idempotency_fingerprint
-            replay_data["replay_from_audit_id"] = int(replay.get("audit_id") or 0)
-            replay_data["replay_original_trace_id"] = str(replay.get("trace_id") or "")
-            ts = self._to_dt(replay.get("ts"))
-            now_dt = fields.Datetime.from_string(fields.Datetime.now())
-            replay_age_ms = 0
-            if ts:
-                replay_age_ms = max(0, int((now_dt - ts).total_seconds() * 1000))
-            replay_data["replay_age_ms"] = replay_age_ms
+            replay_data = apply_idempotency_identity(
+                replay_data,
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                idempotency_fingerprint=idempotency_fingerprint,
+                trace_id=trace_id,
+            )
+            replay_data = enrich_replay_contract(
+                replay_data,
+                idempotent_replay=True,
+                replay_window_expired=False,
+                replay_reason_code="",
+                replay_entry=replay_entry,
+                include_replay_evidence=True,
+            )
             if export_failed_csv and replay_data.get("failed_total", 0) > 0 and not replay_data.get("failed_csv_content_b64"):
                 failed_csv = self._build_failed_csv(model, action or "write", [item for item in replay_data.get("results") or [] if not item.get("ok")])
                 replay_data["failed_csv_file_name"] = failed_csv.get("file_name")
@@ -436,28 +434,30 @@ class ApiDataBatchHandler(BaseIntentHandler):
             results.append(item)
 
         failed_retry_ids = [int(item.get("id") or 0) for item in results if not item.get("ok") and bool(item.get("retryable")) and int(item.get("id") or 0) > 0]
-        data = {
-            "model": model,
-            "action": action or "write",
-            "request_id": request_id,
-            "trace_id": trace_id,
-            "values": safe_vals,
-            "requested_ids": ids,
-            "succeeded": success,
-            "failed": failed,
-            "results": results,
-            "failed_retry_ids": failed_retry_ids,
-            "failed_reason_summary": self._failed_reason_summary(results),
-            "failed_retryable_summary": self._failed_retryable_summary(results),
-            "idempotency_key": idempotency_key,
-            "idempotency_fingerprint": idempotency_fingerprint,
-            "idempotent_replay": False,
-            "replay_window_expired": bool(replay_window_expired),
-            "idempotency_replay_reason_code": REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",
-            "replay_from_audit_id": 0,
-            "replay_original_trace_id": "",
-            "replay_age_ms": 0,
-        }
+        data = apply_idempotency_identity(
+            {
+                "model": model,
+                "action": action or "write",
+                "values": safe_vals,
+                "requested_ids": ids,
+                "succeeded": success,
+                "failed": failed,
+                "results": results,
+                "failed_retry_ids": failed_retry_ids,
+                "failed_reason_summary": self._failed_reason_summary(results),
+                "failed_retryable_summary": self._failed_retryable_summary(results),
+            },
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            idempotency_fingerprint=idempotency_fingerprint,
+            trace_id=trace_id,
+        )
+        data = enrich_replay_contract(data,
+            idempotent_replay=False,
+            replay_window_expired=bool(replay_window_expired),
+            replay_reason_code=REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",
+            include_replay_evidence=True,
+        )
         data = self._apply_failed_page(data, offset=page_offset, limit=page_limit)
         if export_failed_csv and failed > 0:
             failed_csv = self._build_failed_csv(model, action or "write", [item for item in results if not item.get("ok")])

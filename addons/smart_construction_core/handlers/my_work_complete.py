@@ -10,20 +10,21 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.exceptions import AccessError, UserError
 from odoo.addons.smart_construction_core.handlers.reason_codes import (
     REASON_DONE,
-    REASON_IDEMPOTENCY_CONFLICT,
     REASON_PARTIAL_FAILED,
     REASON_REPLAY_WINDOW_EXPIRED,
-    failure_meta_for_reason,
     my_work_failure_meta_for_exception,
 )
 from odoo.addons.smart_core.utils.idempotency import (
+    apply_idempotency_identity,
+    build_idempotency_fingerprint,
+    build_idempotency_conflict_response,
+    enrich_replay_contract,
     find_latest_audit_entry,
     find_recent_audit_entry,
+    idempotency_replay_or_conflict,
     ids_summary,
-    normalize_ids_for_fingerprint,
     normalize_request_id,
     replay_window_seconds,
-    sha1_json,
 )
 
 
@@ -90,11 +91,11 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             "user_id": int(self.env.user.id or 0),
             "company_id": int(self.env.user.company_id.id or 0) if self.env.user and self.env.user.company_id else 0,
             "source": source,
-            "ids": normalize_ids_for_fingerprint(ids),
+            "ids": ids,
             "note": note or "",
             "idempotency_key": idem_key,
         }
-        return sha1_json(payload)
+        return build_idempotency_fingerprint(payload, normalize_id_keys=["ids"])
 
     def _idempotency_window_seconds(self):
         return replay_window_seconds(
@@ -125,38 +126,13 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         return bool(old_fingerprint and old_fingerprint == fingerprint)
 
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
-        failure_meta = failure_meta_for_reason(REASON_IDEMPOTENCY_CONFLICT)
-        return {
-            "ok": False,
-            "code": 409,
-            "error": {
-                "code": 409,
-                "message": "idempotency key payload mismatch",
-                "reason_code": REASON_IDEMPOTENCY_CONFLICT,
-                "retryable": bool(failure_meta.get("retryable")),
-                "error_category": str(failure_meta.get("error_category") or ""),
-                "suggested_action": str(failure_meta.get("suggested_action") or ""),
-            },
-            "data": {
-                "request_id": request_id,
-                "idempotency_key": idempotency_key,
-                "idempotent_replay": False,
-                "replay_window_expired": False,
-                "idempotency_replay_reason_code": "",
-                "trace_id": trace_id,
-            },
-            "meta": {"intent": self.INTENT_TYPE},
-        }
-
-    def _to_dt(self, value):
-        if not value:
-            return None
-        if isinstance(value, str):
-            try:
-                return fields.Datetime.from_string(value)
-            except Exception:
-                return None
-        return value
+        return build_idempotency_conflict_response(
+            intent_type=self.INTENT_TYPE,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            trace_id=trace_id,
+            include_replay_evidence=False,
+        )
 
     def _ids_summary(self, rows):
         return ids_summary(rows, sample_limit=self.AUDIT_IDS_SAMPLE_LIMIT)
@@ -238,32 +214,36 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         if not ids:
             raise UserError("缺少待办 ID 列表")
         entry = self._find_recent_idempotency_entry(idem_key=idempotency_key)
-        if entry:
-            payload = entry.get("payload") or {}
-            old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
-            if old_fingerprint and old_fingerprint != idempotency_fingerprint:
-                return self._idempotency_conflict_response(
-                    request_id=request_id,
-                    idempotency_key=idempotency_key,
-                    trace_id=trace_id,
-                )
-            replay = payload.get("replay_result") or {}
+        decision = idempotency_replay_or_conflict(
+            entry,
+            fingerprint=idempotency_fingerprint,
+            replay_payload_key="replay_result",
+        )
+        if decision.get("conflict"):
+            return self._idempotency_conflict_response(
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                trace_id=trace_id,
+            )
+        replay = decision.get("replay_payload") or {}
+        replay_entry = decision.get("replay_entry") or {}
+        if replay:
             replay_data = dict(replay or {})
-            replay_data["idempotent_replay"] = True
-            replay_data["request_id"] = str(replay_data.get("request_id") or request_id)
-            replay_data["idempotency_key"] = idempotency_key
-            replay_data["idempotency_fingerprint"] = idempotency_fingerprint
-            replay_data["trace_id"] = str(replay_data.get("trace_id") or trace_id)
-            ts = self._to_dt(entry.get("ts"))
-            now_dt = fields.Datetime.from_string(fields.Datetime.now())
-            replay_age_ms = 0
-            if ts:
-                replay_age_ms = max(0, int((now_dt - ts).total_seconds() * 1000))
-            replay_data["replay_from_audit_id"] = int(entry.get("audit_id") or 0)
-            replay_data["replay_original_trace_id"] = str(entry.get("trace_id") or "")
-            replay_data["replay_age_ms"] = replay_age_ms
-            replay_data["replay_window_expired"] = False
-            replay_data["idempotency_replay_reason_code"] = ""
+            replay_data = apply_idempotency_identity(
+                replay_data,
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                idempotency_fingerprint=idempotency_fingerprint,
+                trace_id=trace_id,
+            )
+            replay_data = enrich_replay_contract(
+                replay_data,
+                idempotent_replay=True,
+                replay_window_expired=False,
+                replay_reason_code="",
+                replay_entry=replay_entry,
+                include_replay_evidence=True,
+            )
             return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE}}
 
         replay_window_expired = self._has_expired_replay_candidate(
@@ -294,27 +274,33 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
 
         ok = len(failed) == 0
         failed_retry_ids = [int(item.get("id") or 0) for item in failed if bool(item.get("retryable")) and int(item.get("id") or 0) > 0]
-        data = {
-            "source": source,
-            "request_id": request_id,
-            "idempotency_key": idempotency_key,
-            "idempotency_fingerprint": idempotency_fingerprint,
-            "idempotent_replay": False,
-            "replay_window_expired": bool(replay_window_expired),
-            "idempotency_replay_reason_code": REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",
-            "trace_id": trace_id,
-            "success": ok,
-            "reason_code": REASON_DONE if ok else REASON_PARTIAL_FAILED,
-            "message": "批量完成成功" if ok else "部分待办完成失败",
-            "done_count": len(completed),
-            "failed_count": len(failed),
-            "completed_ids": completed,
-            "failed_items": failed,
-            "failed_retry_ids": failed_retry_ids,
-            "failed_reason_summary": _reason_summary(reason_counter),
-            "failed_retryable_summary": _retryable_summary(failed),
-            "done_at": fields.Datetime.now(),
-        }
+        data = apply_idempotency_identity(
+            {
+                "source": source,
+                "success": ok,
+                "reason_code": REASON_DONE if ok else REASON_PARTIAL_FAILED,
+                "message": "批量完成成功" if ok else "部分待办完成失败",
+                "done_count": len(completed),
+                "failed_count": len(failed),
+                "completed_ids": completed,
+                "failed_items": failed,
+                "failed_retry_ids": failed_retry_ids,
+                "failed_reason_summary": _reason_summary(reason_counter),
+                "failed_retryable_summary": _retryable_summary(failed),
+                "done_at": fields.Datetime.now(),
+            },
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            idempotency_fingerprint=idempotency_fingerprint,
+            trace_id=trace_id,
+        )
+        data = enrich_replay_contract(
+            data,
+            idempotent_replay=False,
+            replay_window_expired=bool(replay_window_expired),
+            replay_reason_code=REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",
+            include_replay_evidence=False,
+        )
         duration_ms = int(
             (
                 fields.Datetime.from_string(fields.Datetime.now())
