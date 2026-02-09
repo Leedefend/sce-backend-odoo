@@ -9,7 +9,10 @@ from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_REPLAY_WINDOW_EXPIRED,
 )
 from odoo.addons.smart_core.handlers.api_data_batch import ApiDataBatchHandler
-from odoo.addons.smart_core.utils.idempotency import find_latest_audit_entry
+from odoo.addons.smart_core.utils.idempotency import (
+    find_latest_audit_entry,
+    has_latest_fingerprint_match,
+)
 
 
 @tagged("sc_smoke", "api_data_batch_backend")
@@ -106,6 +109,32 @@ class TestApiDataBatchContractBackend(TransactionCase):
             idempotency_key=key,
         )
         self.assertFalse(bool(entry))
+
+    def test_has_latest_fingerprint_match_enforces_scope(self):
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            self.skipTest("sc.audit.log not available")
+        key = "req-fingerprint-scope-1"
+        other_user = self.env["res.users"].sudo().search([("id", "!=", self.env.user.id)], limit=1)
+        other_company = self.env["res.company"].sudo().search([("id", "!=", self.env.user.company_id.id)], limit=1)
+        if not other_user or not other_company:
+            self.skipTest("requires another user and company")
+        self._create_audit(
+            event_code="API_DATA_BATCH",
+            model="res.partner",
+            idem_key=key,
+            actor_uid=other_user.id,
+            company_id=other_company.id,
+        )
+        self.assertFalse(
+            has_latest_fingerprint_match(
+                self.env,
+                event_code="API_DATA_BATCH",
+                idempotency_key=key,
+                fingerprint="fp",
+                extra_domain=[("model", "=", "res.partner")],
+            )
+        )
 
     def test_not_found_failure_has_structured_contract(self):
         handler = ApiDataBatchHandler(self.env, payload={})
