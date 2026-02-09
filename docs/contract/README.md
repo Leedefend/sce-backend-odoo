@@ -17,6 +17,7 @@ make contract.catalog.export
 
 ```bash
 make verify.contract.catalog
+make verify.scene.contract.shape
 ```
 
 ## Intent Catalog
@@ -52,3 +53,17 @@ Each scene entry includes normalized sections:
 - `target`
 
 This keeps scene orchestration structure visible for review and drift detection.
+
+## Scene Shape Guard
+
+`verify.scene.contract.shape` enforces that each scene entry contains five normalized sections:
+
+- `identity`
+- `access`
+- `layout`
+- `components`
+- `target`
+
+It writes a machine-readable report to:
+
+- `artifacts/scene_contract_shape_guard.json`
