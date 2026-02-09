@@ -143,8 +143,23 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return None
         result = payload.get("result")
         if isinstance(result, dict):
-            return result
+            return {
+                "result": result,
+                "audit_id": int(entry.get("audit_id") or 0),
+                "trace_id": str(entry.get("trace_id") or ""),
+                "ts": entry.get("ts"),
+            }
         return None
+
+    def _to_dt(self, value):
+        if not value:
+            return None
+        if isinstance(value, str):
+            try:
+                return fields.Datetime.from_string(value)
+            except Exception:
+                return None
+        return value
 
     def _has_expired_replay_candidate(self, *, model: str, idem_key: str, fingerprint: str):
         entry = find_latest_audit_entry(
@@ -326,13 +341,22 @@ class ApiDataBatchHandler(BaseIntentHandler):
             fingerprint=idempotency_fingerprint,
         )
         if replay:
-            replay_data = self._ensure_result_contract(dict(replay), request_id=request_id, trace_id=trace_id)
+            replay_payload = replay.get("result") or {}
+            replay_data = self._ensure_result_contract(dict(replay_payload), request_id=request_id, trace_id=trace_id)
             replay_data = self._apply_failed_page(replay_data, offset=page_offset, limit=page_limit)
             replay_data["idempotent_replay"] = True
             replay_data["replay_window_expired"] = False
             replay_data["idempotency_replay_reason_code"] = ""
             replay_data["idempotency_key"] = idempotency_key
             replay_data["idempotency_fingerprint"] = idempotency_fingerprint
+            replay_data["replay_from_audit_id"] = int(replay.get("audit_id") or 0)
+            replay_data["replay_original_trace_id"] = str(replay.get("trace_id") or "")
+            ts = self._to_dt(replay.get("ts"))
+            now_dt = fields.Datetime.from_string(fields.Datetime.now())
+            replay_age_ms = 0
+            if ts:
+                replay_age_ms = max(0, int((now_dt - ts).total_seconds() * 1000))
+            replay_data["replay_age_ms"] = replay_age_ms
             if export_failed_csv and replay_data.get("failed_total", 0) > 0 and not replay_data.get("failed_csv_content_b64"):
                 failed_csv = self._build_failed_csv(model, action or "write", [item for item in replay_data.get("results") or [] if not item.get("ok")])
                 replay_data["failed_csv_file_name"] = failed_csv.get("file_name")
@@ -430,6 +454,9 @@ class ApiDataBatchHandler(BaseIntentHandler):
             "idempotent_replay": False,
             "replay_window_expired": bool(replay_window_expired),
             "idempotency_replay_reason_code": REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",
+            "replay_from_audit_id": 0,
+            "replay_original_trace_id": "",
+            "replay_age_ms": 0,
         }
         data = self._apply_failed_page(data, offset=page_offset, limit=page_limit)
         if export_failed_csv and failed > 0:

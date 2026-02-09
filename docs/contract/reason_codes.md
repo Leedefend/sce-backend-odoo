@@ -59,6 +59,9 @@ For generic batch write intent (`api.data.batch`), response includes:
 - `failed_retry_ids`
 - `replay_window_expired`
 - `idempotency_replay_reason_code`
+- `replay_from_audit_id` (replay source audit id; `0` when not replayed)
+- `replay_original_trace_id` (trace of original replay source; empty when not replayed)
+- `replay_age_ms` (age from replay source timestamp; `0` when not replayed)
 - `failed_reason_summary` (array of `{reason_code, count}`)
 - `failed_retryable_summary` (`{retryable, non_retryable}`)
 - per-row structured fields:

@@ -27,6 +27,9 @@ class TestApiDataBatchContractBackend(TransactionCase):
         self.assertEqual(data.get("idempotency_key"), "req-batch-001")
         self.assertFalse(bool(data.get("replay_window_expired")))
         self.assertEqual(data.get("idempotency_replay_reason_code"), "")
+        self.assertEqual(int(data.get("replay_from_audit_id") or 0), 0)
+        self.assertEqual(str(data.get("replay_original_trace_id") or ""), "")
+        self.assertEqual(int(data.get("replay_age_ms") or 0), 0)
         self.assertEqual(data.get("failed"), 1)
         self.assertEqual(data.get("failed_retry_ids"), [])
         self.assertEqual(data.get("failed_retryable_summary"), {"retryable": 0, "non_retryable": 1})
@@ -98,6 +101,29 @@ class TestApiDataBatchContractBackend(TransactionCase):
         self.assertFalse(bool(data.get("idempotent_replay")))
         self.assertTrue(bool(data.get("replay_window_expired")))
         self.assertEqual(data.get("idempotency_replay_reason_code"), REASON_REPLAY_WINDOW_EXPIRED)
+
+    def test_idempotent_replay_includes_replay_evidence(self):
+        if not self.env.get("sc.audit.log"):
+            self.skipTest("sc.audit.log not available")
+        partner = self.env["res.partner"].create({"name": "Batch Replay Evidence"})
+        handler = ApiDataBatchHandler(self.env, payload={})
+        payload = {
+            "params": {
+                "model": "res.partner",
+                "ids": [partner.id],
+                "action": "archive",
+                "request_id": "req-batch-replay-evidence-1",
+            }
+        }
+        first = handler.handle(payload)
+        self.assertTrue(first.get("ok"))
+        second = handler.handle(payload)
+        self.assertTrue(second.get("ok"))
+        data = second.get("data") or {}
+        self.assertTrue(bool(data.get("idempotent_replay")))
+        self.assertTrue(int(data.get("replay_from_audit_id") or 0) > 0)
+        self.assertTrue(bool(str(data.get("replay_original_trace_id") or "")))
+        self.assertTrue(int(data.get("replay_age_ms") or 0) >= 0)
 
     def test_legacy_replay_result_is_backfilled_to_new_contract(self):
         handler = ApiDataBatchHandler(self.env, payload={})
