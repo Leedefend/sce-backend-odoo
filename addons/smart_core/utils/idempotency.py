@@ -36,6 +36,13 @@ def sha1_json(payload):
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
 
+def build_idempotency_fingerprint(payload, *, normalize_id_keys=None):
+    data = dict(payload or {})
+    for key in normalize_id_keys or []:
+        data[key] = normalize_ids_for_fingerprint(data.get(key) or [])
+    return sha1_json(data)
+
+
 def replay_window_seconds(default_seconds, *, env_key):
     raw = str(os.getenv(env_key, "")).strip()
     if raw:

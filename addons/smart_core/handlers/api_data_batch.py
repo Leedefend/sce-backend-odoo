@@ -22,13 +22,13 @@ from .reason_codes import (
     batch_failure_meta,
 )
 from ..utils.idempotency import (
+    build_idempotency_fingerprint,
     build_idempotency_conflict_response,
     enrich_replay_contract,
     find_latest_audit_entry,
     find_recent_audit_entry,
     normalize_request_id,
     replay_window_seconds,
-    sha1_json,
 )
 
 _logger = logging.getLogger(__name__)
@@ -116,11 +116,11 @@ class ApiDataBatchHandler(BaseIntentHandler):
         payload = {
             "model": model,
             "action": action,
-            "ids": list(sorted(ids)),
+            "ids": ids,
             "vals": vals,
             "idempotency_key": idem_key,
         }
-        return sha1_json(payload)
+        return build_idempotency_fingerprint(payload, normalize_id_keys=["ids"])
 
     def _idempotency_window_seconds(self):
         return replay_window_seconds(
