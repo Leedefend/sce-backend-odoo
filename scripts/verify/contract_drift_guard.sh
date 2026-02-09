@@ -55,7 +55,19 @@ for f in addons/smart_core/handlers/api_data_*.py; do
     if ! rg -q 'IDEMPOTENCY_WINDOW_SECONDS' "$f"; then
       # Explicit waiver with non-empty reason string.
       if rg -q 'NON_IDEMPOTENT_ALLOWED\s*=\s*["'"'"'][^"'"'"']+["'"'"']' "$f"; then
-        echo "[verify.contract_drift.guard] WARN: $f uses NON_IDEMPOTENT_ALLOWED waiver"
+        waiver_reason="$(sed -nE 's/.*NON_IDEMPOTENT_ALLOWED\s*=\s*["'"'"'"'"'"'"'"'"']([^"'"'"'"'"'"'"'"'"']+)["'"'"'"'"'"'"'"'"'].*/\1/p' "$f" | head -n 1)"
+        if [ -z "$waiver_reason" ]; then
+          echo "[verify.contract_drift.guard] FAIL: $f waiver reason is empty"
+          missing=1
+        elif echo "$waiver_reason" | rg -qi '^(todo|tbd|n/?a|none|-)$'; then
+          echo "[verify.contract_drift.guard] FAIL: $f waiver reason is placeholder: '$waiver_reason'"
+          missing=1
+        elif [ "${#waiver_reason}" -lt 8 ]; then
+          echo "[verify.contract_drift.guard] FAIL: $f waiver reason is too short: '$waiver_reason'"
+          missing=1
+        else
+          echo "[verify.contract_drift.guard] WARN: $f uses NON_IDEMPOTENT_ALLOWED waiver: $waiver_reason"
+        fi
       else
         echo "[verify.contract_drift.guard] FAIL: $f missing IDEMPOTENCY_WINDOW_SECONDS (auto-scan)"
         echo "[verify.contract_drift.guard] HINT: add IDEMPOTENCY_WINDOW_SECONDS or NON_IDEMPOTENT_ALLOWED = \"<reason>\""
