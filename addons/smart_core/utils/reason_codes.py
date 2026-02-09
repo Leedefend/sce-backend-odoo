@@ -14,6 +14,7 @@ REASON_INTERNAL_ERROR = "INTERNAL_ERROR"
 REASON_ACCESS_RESTRICTED = "ACCESS_RESTRICTED"
 REASON_CONFLICT = "CONFLICT"
 REASON_WRITE_FAILED = "WRITE_FAILED"
+REASON_IDEMPOTENCY_CONFLICT = "IDEMPOTENCY_CONFLICT"
 
 
 def failure_meta_for_reason(reason_code: str):
@@ -28,6 +29,11 @@ def failure_meta_for_reason(reason_code: str):
             "retryable": True,
             "error_category": "conflict",
             "suggested_action": "reload_then_retry",
+        },
+        REASON_IDEMPOTENCY_CONFLICT: {
+            "retryable": False,
+            "error_category": "conflict",
+            "suggested_action": "use_new_request_id",
         },
         REASON_PERMISSION_DENIED: {
             "retryable": False,

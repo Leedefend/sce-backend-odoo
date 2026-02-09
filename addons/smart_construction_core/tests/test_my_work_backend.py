@@ -9,6 +9,7 @@ from odoo.addons.smart_construction_core.handlers.my_work_complete import (
     _failure_meta_for_exception,
     _retryable_summary,
 )
+from odoo.addons.smart_construction_core.handlers.reason_codes import REASON_IDEMPOTENCY_CONFLICT
 from odoo.addons.smart_construction_core.handlers.my_work_summary import MyWorkSummaryHandler
 
 
@@ -117,7 +118,7 @@ class TestMyWorkBackend(TransactionCase):
         self.assertFalse(conflict.get("ok"))
         self.assertEqual(int(conflict.get("code") or 0), 409)
         err = conflict.get("error") or {}
-        self.assertEqual(err.get("reason_code"), "IDEMPOTENCY_CONFLICT")
+        self.assertEqual(err.get("reason_code"), REASON_IDEMPOTENCY_CONFLICT)
 
     def test_batch_idempotent_window_expired_no_replay(self):
         if not self.env.get("sc.audit.log"):

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import json
 from uuid import uuid4
 
 from odoo import fields
@@ -9,7 +10,9 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.exceptions import AccessError, UserError
 from odoo.addons.smart_construction_core.handlers.reason_codes import (
     REASON_DONE,
+    REASON_IDEMPOTENCY_CONFLICT,
     REASON_PARTIAL_FAILED,
+    failure_meta_for_reason,
     my_work_failure_meta_for_exception,
 )
 from odoo.addons.smart_core.utils.idempotency import (
@@ -107,14 +110,17 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         )
 
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
+        failure_meta = failure_meta_for_reason(REASON_IDEMPOTENCY_CONFLICT)
         return {
             "ok": False,
             "code": 409,
             "error": {
                 "code": 409,
                 "message": "idempotency key payload mismatch",
-                "reason_code": "IDEMPOTENCY_CONFLICT",
-                "suggested_action": "use_new_request_id",
+                "reason_code": REASON_IDEMPOTENCY_CONFLICT,
+                "retryable": bool(failure_meta.get("retryable")),
+                "error_category": str(failure_meta.get("error_category") or ""),
+                "suggested_action": str(failure_meta.get("suggested_action") or ""),
             },
             "data": {
                 "request_id": request_id,

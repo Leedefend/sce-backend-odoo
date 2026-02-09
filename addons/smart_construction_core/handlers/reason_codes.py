@@ -8,6 +8,7 @@ from odoo.addons.smart_core.utils.reason_codes import (
     REASON_DONE,
     REASON_INTERNAL_ERROR,
     REASON_INVALID_ID,
+    REASON_IDEMPOTENCY_CONFLICT,
     REASON_NOT_FOUND,
     REASON_OK,
     REASON_PARTIAL_FAILED,

@@ -4,6 +4,7 @@ from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_construction_core.handlers.reason_codes import (
+    REASON_IDEMPOTENCY_CONFLICT,
     REASON_INTERNAL_ERROR,
     REASON_INVALID_ID,
     REASON_PERMISSION_DENIED,
@@ -12,6 +13,7 @@ from odoo.addons.smart_construction_core.handlers.reason_codes import (
     my_work_failure_meta_for_exception,
     suggested_action_for_capability_reason,
 )
+from odoo.addons.smart_core.utils.reason_codes import failure_meta_for_reason
 
 
 @tagged("sc_smoke", "reason_codes_backend")
@@ -50,3 +52,9 @@ class TestReasonCodesBackend(TransactionCase):
             suggested_action_for_capability_reason(reason_code="", state="PREVIEW"),
             "wait_release",
         )
+
+    def test_idempotency_conflict_meta_mapping(self):
+        meta = failure_meta_for_reason(REASON_IDEMPOTENCY_CONFLICT)
+        self.assertFalse(bool(meta.get("retryable")))
+        self.assertEqual(meta.get("error_category"), "conflict")
+        self.assertEqual(meta.get("suggested_action"), "use_new_request_id")

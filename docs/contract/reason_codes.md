@@ -29,6 +29,7 @@ Current shared consumers:
 - `ACCESS_RESTRICTED`
 - `CONFLICT`
 - `WRITE_FAILED`
+- `IDEMPOTENCY_CONFLICT`
 
 ## 3. My Work Failure Meta Contract
 
@@ -73,6 +74,7 @@ Idempotency semantics for `my.work.complete_batch`:
 - same key + same fingerprint -> replay (`idempotent_replay=true`)
 - same key + different fingerprint -> `IDEMPOTENCY_CONFLICT` (HTTP-like conflict)
 - suggested action for conflict: `use_new_request_id`
+- conflict meta: `retryable=false`, `error_category=conflict`
 
 ## 4. Capability Suggested Action Mapping
 
