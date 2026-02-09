@@ -12,6 +12,7 @@ from odoo.addons.smart_core.handlers.api_data_batch import ApiDataBatchHandler
 from odoo.addons.smart_core.utils.idempotency import (
     find_latest_audit_entry,
     has_latest_fingerprint_match,
+    resolve_idempotency_decision,
 )
 
 
@@ -134,6 +135,24 @@ class TestApiDataBatchContractBackend(TransactionCase):
                 fingerprint="fp",
                 extra_domain=[("model", "=", "res.partner")],
             )
+        )
+
+    def test_resolve_idempotency_decision_returns_stable_empty_shape(self):
+        decision = resolve_idempotency_decision(
+            self.env,
+            event_code="API_DATA_BATCH",
+            idempotency_key="",
+            fingerprint="fp",
+            window_seconds=30,
+        )
+        self.assertEqual(
+            decision,
+            {
+                "conflict": False,
+                "replay_entry": None,
+                "replay_payload": None,
+                "replay_window_expired": False,
+            },
         )
 
     def test_not_found_failure_has_structured_contract(self):
