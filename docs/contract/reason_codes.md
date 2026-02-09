@@ -39,6 +39,9 @@ For `my.work.complete` and `my.work.complete_batch`, failures return:
 For batch completion (`my.work.complete_batch`), response also includes:
 
 - `request_id` (caller-supplied or server-generated)
+- `idempotency_key` (defaults to `request_id`)
+- `idempotency_fingerprint`
+- `idempotent_replay` (`true` when served from recent replay window)
 - `trace_id` (server-generated batch trace)
 - `failed_retry_ids` (default retry target list where `retryable=true`)
 

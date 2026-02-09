@@ -69,12 +69,34 @@ class TestMyWorkBackend(TransactionCase):
         self.assertTrue(result.get("ok"))
         data = result.get("data") or {}
         self.assertEqual(data.get("request_id"), "req-demo-1")
+        self.assertEqual(data.get("idempotency_key"), "req-demo-1")
+        self.assertFalse(bool(data.get("idempotent_replay")))
+        self.assertTrue(bool(data.get("idempotency_fingerprint")))
         self.assertTrue(str(data.get("trace_id") or "").startswith("mw_batch_"))
         self.assertEqual(data.get("failed_count"), 1)
         self.assertEqual(data.get("failed_retry_ids"), [])
         failed_items = data.get("failed_items") or []
         self.assertEqual(len(failed_items), 1)
         self.assertTrue(str((failed_items[0] or {}).get("trace_id") or "").startswith("mw_batch_"))
+
+    def test_batch_idempotent_replay_returns_same_contract(self):
+        if not self.env.get("sc.audit.log"):
+            self.skipTest("sc.audit.log not available")
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        payload = {"ids": ["bad"], "source": "mail.activity", "request_id": "req-idem-1"}
+        first = handler.handle(payload)
+        second = handler.handle(payload)
+        self.assertTrue(first.get("ok"))
+        self.assertTrue(second.get("ok"))
+        first_data = first.get("data") or {}
+        second_data = second.get("data") or {}
+        self.assertFalse(bool(first_data.get("idempotent_replay")))
+        self.assertTrue(bool(second_data.get("idempotent_replay")))
+        self.assertEqual(second_data.get("idempotency_key"), "req-idem-1")
+        self.assertEqual(
+            second_data.get("idempotency_fingerprint"),
+            first_data.get("idempotency_fingerprint"),
+        )
 
     def test_summary_status_contract(self):
         handler = MyWorkSummaryHandler(self.env, payload={})

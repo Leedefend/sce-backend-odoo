@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import hashlib
+import json
+from datetime import timedelta
 from uuid import uuid4
 
 from odoo import fields
@@ -66,6 +69,89 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
     DESCRIPTION = "Complete multiple todo items from my-work list"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    IDEMPOTENCY_WINDOW_SECONDS = 30
+
+    def _idempotency_fingerprint(self, *, source, ids, note, idem_key):
+        normalized_ids = []
+        for raw_id in ids or []:
+            token = str(raw_id or "").strip()
+            if not token:
+                continue
+            try:
+                normalized_ids.append(int(token))
+            except Exception:
+                normalized_ids.append(f"raw:{token}")
+        payload = {
+            "source": source,
+            "ids": list(sorted(normalized_ids, key=lambda item: str(item))),
+            "note": note or "",
+            "idempotency_key": idem_key,
+        }
+        raw = json.dumps(payload, ensure_ascii=True, sort_keys=True)
+        return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+
+    def _find_idempotent_replay(self, *, idem_key, fingerprint):
+        if not idem_key:
+            return None
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            return None
+        try:
+            now = fields.Datetime.now()
+            window_start = fields.Datetime.to_string(
+                fields.Datetime.from_string(now) - timedelta(seconds=self.IDEMPOTENCY_WINDOW_SECONDS)
+            )
+            logs = Audit.sudo().search(
+                [
+                    ("event_code", "=", "MY_WORK_COMPLETE_BATCH"),
+                    ("ts", ">=", window_start),
+                ],
+                order="id desc",
+                limit=20,
+            )
+            for log in logs:
+                after_raw = log.after_json or ""
+                if not after_raw:
+                    continue
+                try:
+                    payload = json.loads(after_raw)
+                except Exception:
+                    continue
+                if str(payload.get("idempotency_key") or "") != idem_key:
+                    continue
+                if str(payload.get("idempotency_fingerprint") or "") != fingerprint:
+                    continue
+                result = payload.get("result")
+                if isinstance(result, dict):
+                    return result
+        except Exception:
+            return None
+        return None
+
+    def _write_batch_audit(self, *, trace_id, source, ids, note, idem_key, idem_fingerprint, result):
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            return
+        try:
+            Audit.sudo().write_event(
+                event_code="MY_WORK_COMPLETE_BATCH",
+                model="mail.activity",
+                res_id=0,
+                action="complete_batch",
+                after={
+                    "source": source,
+                    "ids": ids,
+                    "note": note,
+                    "idempotency_key": idem_key,
+                    "idempotency_fingerprint": idem_fingerprint,
+                    "result": result,
+                },
+                reason="my-work batch completion",
+                trace_id=trace_id or "",
+                company_id=self.env.user.company_id.id if self.env.user and self.env.user.company_id else None,
+            )
+        except Exception:
+            return
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
@@ -73,9 +159,25 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         ids = params.get("ids") if isinstance(params.get("ids"), list) else []
         note = str(params.get("note") or "").strip()
         request_id = _normalize_request_id(params.get("request_id"))
+        idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
+        idempotency_fingerprint = self._idempotency_fingerprint(
+            source=source, ids=ids, note=note, idem_key=idempotency_key
+        )
         trace_id = f"mw_batch_{uuid4().hex[:12]}"
         if not ids:
             raise UserError("缺少待办 ID 列表")
+        replay = self._find_idempotent_replay(
+            idem_key=idempotency_key,
+            fingerprint=idempotency_fingerprint,
+        )
+        if replay:
+            replay_data = dict(replay)
+            replay_data["idempotent_replay"] = True
+            replay_data["request_id"] = str(replay_data.get("request_id") or request_id)
+            replay_data["idempotency_key"] = idempotency_key
+            replay_data["idempotency_fingerprint"] = idempotency_fingerprint
+            replay_data["trace_id"] = str(replay_data.get("trace_id") or trace_id)
+            return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE}}
 
         completed = []
         failed = []
@@ -104,6 +206,9 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         data = {
             "source": source,
             "request_id": request_id,
+            "idempotency_key": idempotency_key,
+            "idempotency_fingerprint": idempotency_fingerprint,
+            "idempotent_replay": False,
             "trace_id": trace_id,
             "success": ok,
             "reason_code": REASON_DONE if ok else REASON_PARTIAL_FAILED,
@@ -117,6 +222,15 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             "failed_retryable_summary": _retryable_summary(failed),
             "done_at": fields.Datetime.now(),
         }
+        self._write_batch_audit(
+            trace_id=trace_id,
+            source=source,
+            ids=ids,
+            note=note,
+            idem_key=idempotency_key,
+            idem_fingerprint=idempotency_fingerprint,
+            result=data,
+        )
         return {"ok": True, "data": data, "meta": {"intent": self.INTENT_TYPE}}
 
 
