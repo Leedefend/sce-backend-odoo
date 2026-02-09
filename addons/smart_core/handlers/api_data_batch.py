@@ -15,6 +15,7 @@ from odoo.exceptions import AccessError
 from ..core.base_handler import BaseIntentHandler
 from .reason_codes import (
     REASON_CONFLICT,
+    REASON_IDEMPOTENCY_CONFLICT,
     REASON_REPLAY_WINDOW_EXPIRED,
     REASON_NOT_FOUND,
     REASON_OK,
@@ -128,14 +129,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         )
 
     def _find_idempotent_replay(self, *, model: str, idem_key: str, fingerprint: str):
-        entry = find_recent_audit_entry(
-            self.env,
-            event_code="API_DATA_BATCH",
-            idempotency_key=idem_key,
-            window_seconds=self._idempotency_window_seconds(),
-            limit=20,
-            extra_domain=[("model", "=", model)],
-        )
+        entry = self._find_recent_idempotency_entry(model=model, idem_key=idem_key)
         if not entry:
             return None
         payload = entry.get("payload") or {}
@@ -150,6 +144,16 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 "ts": entry.get("ts"),
             }
         return None
+
+    def _find_recent_idempotency_entry(self, *, model: str, idem_key: str):
+        return find_recent_audit_entry(
+            self.env,
+            event_code="API_DATA_BATCH",
+            idempotency_key=idem_key,
+            window_seconds=self._idempotency_window_seconds(),
+            limit=20,
+            extra_domain=[("model", "=", model)],
+        )
 
     def _to_dt(self, value):
         if not value:
@@ -174,6 +178,33 @@ class ApiDataBatchHandler(BaseIntentHandler):
         payload = entry.get("payload") or {}
         old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
         return bool(old_fingerprint and old_fingerprint == fingerprint)
+
+    def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
+        failure_meta = batch_failure_meta(REASON_IDEMPOTENCY_CONFLICT)
+        return {
+            "ok": False,
+            "code": 409,
+            "error": {
+                "code": 409,
+                "message": "idempotency key payload mismatch",
+                "reason_code": REASON_IDEMPOTENCY_CONFLICT,
+                "retryable": bool(failure_meta.get("retryable")),
+                "error_category": str(failure_meta.get("error_category") or ""),
+                "suggested_action": str(failure_meta.get("suggested_action") or ""),
+            },
+            "data": {
+                "request_id": request_id,
+                "idempotency_key": idempotency_key,
+                "idempotent_replay": False,
+                "replay_window_expired": False,
+                "idempotency_replay_reason_code": "",
+                "replay_from_audit_id": 0,
+                "replay_original_trace_id": "",
+                "replay_age_ms": 0,
+                "trace_id": trace_id,
+            },
+            "meta": {"intent": self.INTENT_TYPE},
+        }
 
     def _write_batch_audit(self, *, trace_id: str, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str, idem_fingerprint: str, result: Dict[str, Any]):
         Audit = self.env.get("sc.audit.log")
@@ -335,11 +366,16 @@ class ApiDataBatchHandler(BaseIntentHandler):
             vals=safe_vals,
             idem_key=idempotency_key,
         )
-        replay = self._find_idempotent_replay(
-            model=model,
-            idem_key=idempotency_key,
-            fingerprint=idempotency_fingerprint,
-        )
+        recent_entry = self._find_recent_idempotency_entry(model=model, idem_key=idempotency_key)
+        if recent_entry:
+            old_fingerprint = str((recent_entry.get("payload") or {}).get("idempotency_fingerprint") or "")
+            if old_fingerprint and old_fingerprint != idempotency_fingerprint:
+                return self._idempotency_conflict_response(
+                    request_id=request_id,
+                    idempotency_key=idempotency_key,
+                    trace_id=trace_id,
+                )
+        replay = self._find_idempotent_replay(model=model, idem_key=idempotency_key, fingerprint=idempotency_fingerprint)
         if replay:
             replay_payload = replay.get("result") or {}
             replay_data = self._ensure_result_contract(dict(replay_payload), request_id=request_id, trace_id=trace_id)

@@ -62,6 +62,12 @@ For generic batch write intent (`api.data.batch`), response includes:
 - `replay_from_audit_id` (replay source audit id; `0` when not replayed)
 - `replay_original_trace_id` (trace of original replay source; empty when not replayed)
 - `replay_age_ms` (age from replay source timestamp; `0` when not replayed)
+
+Idempotency semantics for `api.data.batch`:
+
+- same key + same fingerprint -> replay (`idempotent_replay=true`)
+- same key + different fingerprint -> `IDEMPOTENCY_CONFLICT` (409)
+- same key + same fingerprint but outside replay window -> execute as new request with `replay_window_expired=true` and `idempotency_replay_reason_code=REPLAY_WINDOW_EXPIRED`
 - `failed_reason_summary` (array of `{reason_code, count}`)
 - `failed_retryable_summary` (`{retryable, non_retryable}`)
 - per-row structured fields:

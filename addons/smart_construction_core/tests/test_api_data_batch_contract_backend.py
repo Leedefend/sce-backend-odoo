@@ -2,7 +2,10 @@
 
 from odoo.tests.common import TransactionCase, tagged
 
-from odoo.addons.smart_core.handlers.reason_codes import REASON_REPLAY_WINDOW_EXPIRED
+from odoo.addons.smart_core.handlers.reason_codes import (
+    REASON_IDEMPOTENCY_CONFLICT,
+    REASON_REPLAY_WINDOW_EXPIRED,
+)
 from odoo.addons.smart_core.handlers.api_data_batch import ApiDataBatchHandler
 
 
@@ -124,6 +127,39 @@ class TestApiDataBatchContractBackend(TransactionCase):
         self.assertTrue(int(data.get("replay_from_audit_id") or 0) > 0)
         self.assertTrue(bool(str(data.get("replay_original_trace_id") or "")))
         self.assertTrue(int(data.get("replay_age_ms") or 0) >= 0)
+
+    def test_idempotency_conflict_returns_409(self):
+        if not self.env.get("sc.audit.log"):
+            self.skipTest("sc.audit.log not available")
+        handler = ApiDataBatchHandler(self.env, payload={})
+        first = handler.handle(
+            {
+                "params": {
+                    "model": "res.partner",
+                    "ids": [999999991],
+                    "action": "archive",
+                    "request_id": "req-batch-idem-conflict-1",
+                }
+            }
+        )
+        self.assertTrue(first.get("ok"))
+        conflict = handler.handle(
+            {
+                "params": {
+                    "model": "res.partner",
+                    "ids": [999999992],
+                    "action": "archive",
+                    "request_id": "req-batch-idem-conflict-1",
+                }
+            }
+        )
+        self.assertFalse(conflict.get("ok"))
+        self.assertEqual(int(conflict.get("code") or 0), 409)
+        err = conflict.get("error") or {}
+        self.assertEqual(err.get("reason_code"), REASON_IDEMPOTENCY_CONFLICT)
+        self.assertFalse(bool(err.get("retryable")))
+        self.assertEqual(err.get("error_category"), "conflict")
+        self.assertEqual(err.get("suggested_action"), "use_new_request_id")
 
     def test_legacy_replay_result_is_backfilled_to_new_contract(self):
         handler = ApiDataBatchHandler(self.env, payload={})
