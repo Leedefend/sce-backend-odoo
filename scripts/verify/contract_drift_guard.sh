@@ -47,13 +47,20 @@ done
 
 # Guard 2b: auto-scan side-effect api.data.* handlers to prevent future drift.
 # Any api_data_*.py handler touching api.data.(batch|write|unlink|create|update|delete)
-# must declare IDEMPOTENCY_WINDOW_SECONDS.
+# must declare IDEMPOTENCY_WINDOW_SECONDS, unless explicitly waived with
+# NON_IDEMPOTENT_ALLOWED = "<reason>" (non-empty reason required).
 for f in addons/smart_core/handlers/api_data_*.py; do
   [ -f "$f" ] || continue
   if rg -q 'api\.data\.(batch|write|unlink|create|update|delete)' "$f"; then
     if ! rg -q 'IDEMPOTENCY_WINDOW_SECONDS' "$f"; then
-      echo "[verify.contract_drift.guard] FAIL: $f missing IDEMPOTENCY_WINDOW_SECONDS (auto-scan)"
-      missing=1
+      # Explicit waiver with non-empty reason string.
+      if rg -q 'NON_IDEMPOTENT_ALLOWED\s*=\s*["'"'"'][^"'"'"']+["'"'"']' "$f"; then
+        echo "[verify.contract_drift.guard] WARN: $f uses NON_IDEMPOTENT_ALLOWED waiver"
+      else
+        echo "[verify.contract_drift.guard] FAIL: $f missing IDEMPOTENCY_WINDOW_SECONDS (auto-scan)"
+        echo "[verify.contract_drift.guard] HINT: add IDEMPOTENCY_WINDOW_SECONDS or NON_IDEMPOTENT_ALLOWED = \"<reason>\""
+        missing=1
+      fi
     fi
   fi
 done
