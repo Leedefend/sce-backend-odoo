@@ -9,6 +9,10 @@ from odoo.addons.smart_construction_core.handlers.my_work_complete import (
     _failure_meta_for_exception,
     _retryable_summary,
 )
+from odoo.addons.smart_construction_core.handlers.reason_codes import (
+    REASON_IDEMPOTENCY_CONFLICT,
+    REASON_REPLAY_WINDOW_EXPIRED,
+)
 from odoo.addons.smart_construction_core.handlers.my_work_summary import MyWorkSummaryHandler
 
 
@@ -71,6 +75,8 @@ class TestMyWorkBackend(TransactionCase):
         self.assertEqual(data.get("request_id"), "req-demo-1")
         self.assertEqual(data.get("idempotency_key"), "req-demo-1")
         self.assertFalse(bool(data.get("idempotent_replay")))
+        self.assertFalse(bool(data.get("replay_window_expired")))
+        self.assertEqual(data.get("idempotency_replay_reason_code"), "")
         self.assertTrue(bool(data.get("idempotency_fingerprint")))
         self.assertTrue(str(data.get("trace_id") or "").startswith("mw_batch_"))
         self.assertEqual(data.get("failed_count"), 1)
@@ -91,7 +97,10 @@ class TestMyWorkBackend(TransactionCase):
         first_data = first.get("data") or {}
         second_data = second.get("data") or {}
         self.assertFalse(bool(first_data.get("idempotent_replay")))
+        self.assertFalse(bool(first_data.get("replay_window_expired")))
         self.assertTrue(bool(second_data.get("idempotent_replay")))
+        self.assertFalse(bool(second_data.get("replay_window_expired")))
+        self.assertEqual(second_data.get("idempotency_replay_reason_code"), "")
         self.assertEqual(second_data.get("idempotency_key"), "req-idem-1")
         self.assertEqual(
             second_data.get("idempotency_fingerprint"),
@@ -117,7 +126,7 @@ class TestMyWorkBackend(TransactionCase):
         self.assertFalse(conflict.get("ok"))
         self.assertEqual(int(conflict.get("code") or 0), 409)
         err = conflict.get("error") or {}
-        self.assertEqual(err.get("reason_code"), "IDEMPOTENCY_CONFLICT")
+        self.assertEqual(err.get("reason_code"), REASON_IDEMPOTENCY_CONFLICT)
 
     def test_batch_idempotent_window_expired_no_replay(self):
         if not self.env.get("sc.audit.log"):
@@ -135,6 +144,8 @@ class TestMyWorkBackend(TransactionCase):
         self.assertTrue(second.get("ok"))
         second_data = second.get("data") or {}
         self.assertFalse(bool(second_data.get("idempotent_replay")))
+        self.assertTrue(bool(second_data.get("replay_window_expired")))
+        self.assertEqual(second_data.get("idempotency_replay_reason_code"), REASON_REPLAY_WINDOW_EXPIRED)
 
     def test_summary_status_contract(self):
         handler = MyWorkSummaryHandler(self.env, payload={})
