@@ -5,6 +5,7 @@ import argparse
 import os
 import json
 import uuid
+import importlib
 from datetime import datetime
 
 import odoo
@@ -31,8 +32,10 @@ def parse_args():
     parser.add_argument(
         "--op",
         default="",
-        help="Operation (nav/menu/action_open/model/ui.contract/meta.describe_project_capabilities/contract.capability_matrix/contract.portal_dashboard/contract.portal_execute_button)",
+        help="Operation (nav/menu/action_open/model/ui.contract/meta.describe_project_capabilities/contract.capability_matrix/contract.portal_dashboard/contract.portal_execute_button/intent.invoke)",
     )
+    parser.add_argument("--intent", default="", help="Intent name for op=intent.invoke")
+    parser.add_argument("--intent_params", default="", help="JSON string params for op=intent.invoke")
     parser.add_argument("--route", default="", help="Route for ui.contract (required when op=ui.contract)")
     parser.add_argument("--trace_id", default="", help="Trace id override for ui.contract (optional)")
     parser.add_argument("--execute_method", default="", help="Execute object method (optional)")
@@ -370,6 +373,71 @@ def export_snapshot():
                     route=args.route, trace_id=args.trace_id or None
                 )
             }
+        elif op == "intent.invoke":
+            intent_name = str(args.intent or "").strip()
+            if not intent_name:
+                raise SystemExit("intent required for op=intent.invoke")
+            try:
+                params_payload = json.loads(args.intent_params) if args.intent_params else {}
+            except Exception as exc:
+                raise SystemExit(f"invalid intent_params JSON: {exc}")
+            if not isinstance(params_payload, dict):
+                raise SystemExit("intent_params must be JSON object")
+            from odoo.addons.smart_core.core.handler_registry import HANDLER_REGISTRY
+            from odoo.addons.smart_core.core.extension_loader import load_extensions
+            from odoo.addons.smart_core.core.intent_router import resolve_handler
+
+            load_extensions(env, HANDLER_REGISTRY)
+            handler_cls = resolve_handler(intent_name)
+            if not handler_cls:
+                raw_modules = env["ir.config_parameter"].sudo().get_param("sc.core.extension_modules") or ""
+                module_names = [m.strip() for m in raw_modules.split(",") if m.strip()]
+                if not module_names:
+                    preferred = "smart_construction_core"
+                    installed_modules = set(
+                        env["ir.module.module"].sudo().search([("state", "=", "installed")]).mapped("name")
+                    )
+                    if preferred in installed_modules:
+                        module_names = [preferred]
+                register_errors = []
+                for module_name in module_names:
+                    try:
+                        module = importlib.import_module(f"odoo.addons.{module_name}")
+                        register_hook = getattr(module, "smart_core_register", None)
+                        if callable(register_hook):
+                            register_hook(HANDLER_REGISTRY)
+                    except Exception as exc:
+                        register_errors.append(f"{module_name}: {exc}")
+                handler_cls = resolve_handler(intent_name)
+            if not handler_cls:
+                details = ""
+                if "module_names" in locals():
+                    details = f" modules={module_names}"
+                if "register_errors" in locals() and register_errors:
+                    details += f" register_errors={register_errors}"
+                raise SystemExit(f"intent handler not found: {intent_name}{details}")
+            intent_context = {"trace_id": args.trace_id} if args.trace_id else {}
+            intent_payload = {
+                "intent": intent_name,
+                "params": params_payload,
+                "context": intent_context,
+            }
+            handler = handler_cls(
+                env=env,
+                su_env=api.Environment(cr, SUPERUSER_ID, dict(env.context)),
+                request=None,
+                context=intent_context,
+                payload=intent_payload,
+            )
+            # For snapshot execution, pass params directly to avoid handler shape drift
+            # between payload and params conventions.
+            raw_res = handler.run(payload=params_payload, ctx=intent_context)
+            if isinstance(raw_res, dict) and raw_res.get("ok") is False:
+                raise SystemExit(raw_res.get("error"))
+            if isinstance(raw_res, dict):
+                res = raw_res
+            else:
+                res = {"data": {"raw": raw_res}}
         else:
             handler = UiContractHandler(env, request=None, payload=payload)
             try:
