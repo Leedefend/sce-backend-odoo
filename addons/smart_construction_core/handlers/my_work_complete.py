@@ -15,15 +15,14 @@ from odoo.addons.smart_construction_core.handlers.reason_codes import (
     my_work_failure_meta_for_exception,
 )
 from odoo.addons.smart_core.utils.idempotency import (
+    build_idempotency_fingerprint,
     build_idempotency_conflict_response,
     enrich_replay_contract,
     find_latest_audit_entry,
     find_recent_audit_entry,
     ids_summary,
-    normalize_ids_for_fingerprint,
     normalize_request_id,
     replay_window_seconds,
-    sha1_json,
 )
 
 
@@ -90,11 +89,11 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             "user_id": int(self.env.user.id or 0),
             "company_id": int(self.env.user.company_id.id or 0) if self.env.user and self.env.user.company_id else 0,
             "source": source,
-            "ids": normalize_ids_for_fingerprint(ids),
+            "ids": ids,
             "note": note or "",
             "idempotency_key": idem_key,
         }
-        return sha1_json(payload)
+        return build_idempotency_fingerprint(payload, normalize_id_keys=["ids"])
 
     def _idempotency_window_seconds(self):
         return replay_window_seconds(

@@ -11,6 +11,24 @@ from odoo.addons.smart_core.handlers.api_data_batch import ApiDataBatchHandler
 
 @tagged("sc_smoke", "api_data_batch_backend")
 class TestApiDataBatchContractBackend(TransactionCase):
+    def test_idempotency_fingerprint_normalizes_id_order(self):
+        handler = ApiDataBatchHandler(self.env, payload={})
+        first = handler._idempotency_fingerprint(
+            model="res.partner",
+            action="archive",
+            ids=[5, 3, 9],
+            vals={"active": False},
+            idem_key="req-fp-1",
+        )
+        second = handler._idempotency_fingerprint(
+            model="res.partner",
+            action="archive",
+            ids=[9, 5, 3],
+            vals={"active": False},
+            idem_key="req-fp-1",
+        )
+        self.assertEqual(first, second)
+
     def test_not_found_failure_has_structured_contract(self):
         handler = ApiDataBatchHandler(self.env, payload={})
         result = handler.handle(
