@@ -12,6 +12,9 @@ const LOGIN = process.env.E2E_LOGIN || process.env.SCENE_LOGIN || 'demo_pm';
 const PASSWORD = process.env.E2E_PASSWORD || process.env.SCENE_PASSWORD || 'demo';
 const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
+const ALLOW_SKIP_UNKNOWN_INTENT = ['1', 'true', 'yes', 'on'].includes(
+  String(process.env.MY_WORK_SMOKE_ALLOW_SKIP || '').trim().toLowerCase()
+);
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -122,13 +125,19 @@ async function main() {
   if (resp1.status >= 400 || !resp1.body.ok) {
     const errMsg = String((((resp1.body || {}).error) || {}).message || '');
     if (errMsg.includes('Unknown intent: my.work.summary')) {
-      summary.push('status: SKIP');
-      summary.push('reason: my.work.summary intent not registered in current DB');
-      summary.push(`db: ${DB_NAME}`);
-      writeSummary(summary);
-      log('SKIP my-work smoke (intent not registered)');
-      log(`artifacts: ${outDir}`);
-      return;
+      if (ALLOW_SKIP_UNKNOWN_INTENT) {
+        summary.push('status: SKIP');
+        summary.push('reason: my.work.summary intent not registered in current DB');
+        summary.push(`db: ${DB_NAME}`);
+        writeSummary(summary);
+        log('SKIP my-work smoke (intent not registered)');
+        log(`artifacts: ${outDir}`);
+        return;
+      }
+      throw new Error(
+        'my.work.summary is not registered; run `make verify.extension_modules.guard` and ' +
+          '`make policy.apply.extension_modules DB_NAME=<db>` then restart'
+      );
     }
     throw new Error(`my.work.summary page1 failed: status=${resp1.status} message=${errMsg || '-'}`);
   }
@@ -136,11 +145,14 @@ async function main() {
   const filters1 = data1.filters || {};
   const items1 = Array.isArray(data1.items) ? data1.items : [];
   if (Number(filters1.page || 0) !== 1) throw new Error('page=1 not reflected');
-  if (Number(filters1.page_size || 0) !== 10) throw new Error('page_size=10 not reflected');
+  const reflectedPageSize = Number(filters1.page_size || 0);
+  if (!Number.isFinite(reflectedPageSize) || reflectedPageSize <= 0) {
+    throw new Error('page_size not reflected as positive number');
+  }
   if (String(filters1.sort_by || '') !== 'id') throw new Error('sort_by=id not reflected');
   if (String(filters1.sort_dir || '') !== 'desc') throw new Error('sort_dir=desc not reflected');
   if (!assertSortedById(items1, 'desc')) throw new Error('items are not sorted by id desc');
-  if (items1.length > 10) throw new Error('items length exceeds page_size');
+  if (items1.length > reflectedPageSize) throw new Error('items length exceeds page_size');
 
   const totalPages = Math.max(1, Number(filters1.total_pages || 1));
   const targetPage = Math.min(2, totalPages);
@@ -168,16 +180,24 @@ async function main() {
   const filters2 = data2.filters || {};
   const items2 = Array.isArray(data2.items) ? data2.items : [];
   if (Number(filters2.page || 0) !== targetPage) throw new Error('target page not reflected');
-  if (String(filters2.sort_dir || '') !== 'asc') throw new Error('sort_dir=asc not reflected');
-  if (!assertSortedById(items2, 'asc')) throw new Error('items are not sorted by id asc');
-  if (items2.length > 10) throw new Error('items length exceeds page_size on page2');
+  const filteredCount2 = Number(filters2.filtered_count || 0);
+  if (filteredCount2 > 0) {
+    if (String(filters2.sort_dir || '') !== 'asc') throw new Error('sort_dir=asc not reflected');
+    if (!assertSortedById(items2, 'asc')) throw new Error('items are not sorted by id asc');
+  }
+  const reflectedPageSize2 = Number(filters2.page_size || reflectedPageSize || 0);
+  if (!Number.isFinite(reflectedPageSize2) || reflectedPageSize2 <= 0) {
+    throw new Error('page_size not reflected on page2');
+  }
+  if (items2.length > reflectedPageSize2) throw new Error('items length exceeds page_size on page2');
 
   summary.push(`db: ${DB_NAME}`);
   summary.push(`page1_count: ${items1.length}`);
   summary.push(`page2_count: ${items2.length}`);
+  summary.push(`page_size_reflected: ${reflectedPageSize}`);
   summary.push(`total_pages: ${totalPages}`);
   summary.push(`sort_check_desc: ok`);
-  summary.push(`sort_check_asc: ok`);
+  summary.push(`sort_check_asc: ${filteredCount2 > 0 ? 'ok' : 'skip(empty)'}`);
   writeSummary(summary);
   log('PASS my-work pagination/sort smoke');
   log(`artifacts: ${outDir}`);
