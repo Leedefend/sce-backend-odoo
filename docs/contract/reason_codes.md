@@ -7,6 +7,7 @@ This document defines the canonical reason-code taxonomy used by Phase 10 intera
 Backend registry module:
 
 - `addons/smart_construction_core/handlers/reason_codes.py`
+- `addons/smart_core/handlers/reason_codes.py` (batch interaction reason codes)
 
 Current shared consumers:
 
@@ -40,6 +41,19 @@ For batch completion (`my.work.complete_batch`), response also includes:
 - `request_id` (caller-supplied or server-generated)
 - `trace_id` (server-generated batch trace)
 - `failed_retry_ids` (default retry target list where `retryable=true`)
+
+For generic batch write intent (`api.data.batch`), response includes:
+
+- `request_id`
+- `trace_id`
+- `failed_retry_ids`
+- `failed_reason_summary` (array of `{reason_code, count}`)
+- `failed_retryable_summary` (`{retryable, non_retryable}`)
+- per-row structured fields:
+  - `reason_code`
+  - `retryable`
+  - `error_category`
+  - `suggested_action`
 
 Expected behavior:
 
