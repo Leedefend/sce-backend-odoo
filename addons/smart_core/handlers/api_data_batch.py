@@ -15,7 +15,6 @@ from odoo.exceptions import AccessError
 from ..core.base_handler import BaseIntentHandler
 from .reason_codes import (
     REASON_CONFLICT,
-    REASON_IDEMPOTENCY_CONFLICT,
     REASON_REPLAY_WINDOW_EXPIRED,
     REASON_NOT_FOUND,
     REASON_OK,
@@ -24,6 +23,7 @@ from .reason_codes import (
     batch_failure_meta,
 )
 from ..utils.idempotency import (
+    build_idempotency_conflict_response,
     find_latest_audit_entry,
     find_recent_audit_entry,
     normalize_request_id,
@@ -180,31 +180,13 @@ class ApiDataBatchHandler(BaseIntentHandler):
         return bool(old_fingerprint and old_fingerprint == fingerprint)
 
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
-        failure_meta = batch_failure_meta(REASON_IDEMPOTENCY_CONFLICT)
-        return {
-            "ok": False,
-            "code": 409,
-            "error": {
-                "code": 409,
-                "message": "idempotency key payload mismatch",
-                "reason_code": REASON_IDEMPOTENCY_CONFLICT,
-                "retryable": bool(failure_meta.get("retryable")),
-                "error_category": str(failure_meta.get("error_category") or ""),
-                "suggested_action": str(failure_meta.get("suggested_action") or ""),
-            },
-            "data": {
-                "request_id": request_id,
-                "idempotency_key": idempotency_key,
-                "idempotent_replay": False,
-                "replay_window_expired": False,
-                "idempotency_replay_reason_code": "",
-                "replay_from_audit_id": 0,
-                "replay_original_trace_id": "",
-                "replay_age_ms": 0,
-                "trace_id": trace_id,
-            },
-            "meta": {"intent": self.INTENT_TYPE},
-        }
+        return build_idempotency_conflict_response(
+            intent_type=self.INTENT_TYPE,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            trace_id=trace_id,
+            include_replay_evidence=True,
+        )
 
     def _write_batch_audit(self, *, trace_id: str, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str, idem_fingerprint: str, result: Dict[str, Any]):
         Audit = self.env.get("sc.audit.log")
