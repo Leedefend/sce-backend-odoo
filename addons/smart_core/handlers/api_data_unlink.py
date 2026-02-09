@@ -8,6 +8,14 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.idempotency import (
+    apply_idempotency_identity,
+    build_idempotency_conflict_response,
+    build_idempotency_fingerprint,
+    find_recent_audit_entry,
+    normalize_request_id,
+    replay_window_seconds,
+)
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
@@ -31,6 +39,8 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
     DESCRIPTION = "Portal Shell minimal unlink intent"
     VERSION = "0.1.0"
     ETAG_ENABLED = False
+    IDEMPOTENCY_WINDOW_SECONDS = 120
+    IDEMPOTENCY_EVENT_CODE = "API_DATA_UNLINK"
 
     ALLOWED_MODELS = {"project.task"}
 
@@ -45,6 +55,75 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             },
             "code": code,
         }
+
+    def _idempotency_window_seconds(self):
+        return replay_window_seconds(
+            self.IDEMPOTENCY_WINDOW_SECONDS,
+            env_key="API_DATA_UNLINK_REPLAY_WINDOW_SEC",
+        )
+
+    def _idempotency_fingerprint(self, *, model: str, ids: List[int], dry_run: bool, idem_key: str):
+        payload = {
+            "intent": self.INTENT_TYPE,
+            "model": str(model or ""),
+            "ids": list(ids or []),
+            "dry_run": bool(dry_run),
+            "idempotency_key": str(idem_key or ""),
+        }
+        return build_idempotency_fingerprint(payload, normalize_id_keys=["ids"])
+
+    def _write_idempotency_audit(self, *, trace_id: str, model: str, ids: List[int], idem_key: str, idem_fingerprint: str, result: Dict[str, Any]):
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            return
+        try:
+            Audit.sudo().write_event(
+                event_code=self.IDEMPOTENCY_EVENT_CODE,
+                model=model,
+                res_id=0,
+                action="unlink",
+                after={
+                    "idempotency_key": idem_key,
+                    "idempotency_fingerprint": idem_fingerprint,
+                    "result": result,
+                    "ids": list(ids or []),
+                },
+                reason="api.data.unlink idempotency",
+                trace_id=trace_id or "",
+                company_id=self.env.user.company_id.id if self.env.user and self.env.user.company_id else None,
+            )
+        except Exception:
+            return
+
+    def _idempotency_conflict_response(self, *, request_id: str, idempotency_key: str, idempotency_fingerprint: str, trace_id: str):
+        result = build_idempotency_conflict_response(
+            intent_type=self.INTENT_TYPE,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            trace_id=trace_id,
+            include_replay_evidence=False,
+        )
+        data = result.setdefault("data", {})
+        data["idempotency_fingerprint"] = str(idempotency_fingerprint or "")
+        data["replay_supported"] = False
+        meta = result.setdefault("meta", {})
+        meta["trace_id"] = str(trace_id or "")
+        return result
+
+    def _with_idempotency_contract(self, data: Dict[str, Any], *, request_id: str, idempotency_key: str, idempotency_fingerprint: str, trace_id: str, deduplicated: bool):
+        contract = apply_idempotency_identity(
+            data,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            idempotency_fingerprint=idempotency_fingerprint,
+            trace_id=trace_id,
+        )
+        contract["idempotent_replay"] = False
+        contract["replay_supported"] = False
+        contract["replay_window_expired"] = False
+        contract["idempotency_replay_reason_code"] = ""
+        contract["idempotency_deduplicated"] = bool(deduplicated)
+        return contract
 
     def _collect_params(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         params = {}
@@ -88,6 +167,49 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = self.context.get("trace_id") or ""
+        request_id = normalize_request_id(params.get("request_id"), prefix="adu_req")
+        idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
+        idempotency_fingerprint = self._idempotency_fingerprint(
+            model=model,
+            ids=ids,
+            dry_run=dry_run,
+            idem_key=idempotency_key,
+        )
+        recent_entry = find_recent_audit_entry(
+            self.env,
+            event_code=self.IDEMPOTENCY_EVENT_CODE,
+            idempotency_key=idempotency_key,
+            window_seconds=self._idempotency_window_seconds(),
+            limit=20,
+            extra_domain=[("model", "=", model)],
+        )
+        if recent_entry:
+            payload_after = recent_entry.get("payload") or {}
+            recent_fingerprint = str(payload_after.get("idempotency_fingerprint") or "")
+            if recent_fingerprint and recent_fingerprint != idempotency_fingerprint:
+                return self._idempotency_conflict_response(
+                    request_id=request_id,
+                    idempotency_key=idempotency_key,
+                    idempotency_fingerprint=idempotency_fingerprint,
+                    trace_id=trace_id,
+                )
+            if recent_fingerprint and recent_fingerprint == idempotency_fingerprint:
+                replay_result = payload_after.get("result")
+                base_data = replay_result if isinstance(replay_result, dict) else {
+                    "ids": ids,
+                    "model": model,
+                    "dry_run": dry_run,
+                }
+                data = self._with_idempotency_contract(
+                    base_data,
+                    request_id=request_id,
+                    idempotency_key=idempotency_key,
+                    idempotency_fingerprint=idempotency_fingerprint,
+                    trace_id=trace_id,
+                    deduplicated=True,
+                )
+                meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell"}
+                return {"ok": True, "data": data, "meta": meta}
 
         recs = env_model.browse(ids).exists()
         if not recs:
@@ -106,5 +228,21 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             return self._err(500, str(e), REASON_SYSTEM_ERROR)
 
         data = {"ids": ids, "model": model, "dry_run": dry_run}
+        data = self._with_idempotency_contract(
+            data,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            idempotency_fingerprint=idempotency_fingerprint,
+            trace_id=trace_id,
+            deduplicated=False,
+        )
+        self._write_idempotency_audit(
+            trace_id=trace_id,
+            model=model,
+            ids=ids,
+            idem_key=idempotency_key,
+            idem_fingerprint=idempotency_fingerprint,
+            result=data,
+        )
         meta = {"trace_id": trace_id, "write_mode": "unlink", "source": "portal-shell"}
         return {"ok": True, "data": data, "meta": meta}

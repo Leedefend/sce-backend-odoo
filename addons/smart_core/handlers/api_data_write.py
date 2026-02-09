@@ -8,6 +8,14 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.idempotency import (
+    apply_idempotency_identity,
+    build_idempotency_conflict_response,
+    build_idempotency_fingerprint,
+    find_recent_audit_entry,
+    normalize_request_id,
+    replay_window_seconds,
+)
 from ..utils.reason_codes import (
     REASON_CONFLICT,
     REASON_MISSING_PARAMS,
@@ -35,6 +43,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
     DESCRIPTION = "Portal Shell v0.6 minimal write intent (create/update)"
     VERSION = "0.6.0"
     ETAG_ENABLED = False
+    IDEMPOTENCY_WINDOW_SECONDS = 120
+    IDEMPOTENCY_EVENT_CODE = "API_DATA_WRITE"
 
     ALLOWED_MODELS = {
         "project.project": {"name", "description", "date_start"},
@@ -52,6 +62,75 @@ class ApiDataWriteHandler(BaseIntentHandler):
             },
             "code": code,
         }
+
+    def _idempotency_window_seconds(self):
+        return replay_window_seconds(
+            self.IDEMPOTENCY_WINDOW_SECONDS,
+            env_key="API_DATA_WRITE_REPLAY_WINDOW_SEC",
+        )
+
+    def _idempotency_fingerprint(self, *, intent: str, model: str, record_id: int, vals: Dict[str, Any], dry_run: bool, idem_key: str):
+        payload = {
+            "intent": str(intent or ""),
+            "model": str(model or ""),
+            "record_id": int(record_id or 0),
+            "vals": dict(vals or {}),
+            "dry_run": bool(dry_run),
+            "idempotency_key": str(idem_key or ""),
+        }
+        return build_idempotency_fingerprint(payload)
+
+    def _write_idempotency_audit(self, *, trace_id: str, model: str, res_id: int, action: str, idem_key: str, idem_fingerprint: str, result: Dict[str, Any]):
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            return
+        try:
+            Audit.sudo().write_event(
+                event_code=self.IDEMPOTENCY_EVENT_CODE,
+                model=model,
+                res_id=int(res_id or 0),
+                action=action or "write",
+                after={
+                    "idempotency_key": idem_key,
+                    "idempotency_fingerprint": idem_fingerprint,
+                    "result": result,
+                },
+                reason="api.data.write idempotency",
+                trace_id=trace_id or "",
+                company_id=self.env.user.company_id.id if self.env.user and self.env.user.company_id else None,
+            )
+        except Exception:
+            return
+
+    def _idempotency_conflict_response(self, *, request_id: str, idempotency_key: str, idempotency_fingerprint: str, trace_id: str):
+        result = build_idempotency_conflict_response(
+            intent_type=self.INTENT_TYPE,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            trace_id=trace_id,
+            include_replay_evidence=False,
+        )
+        data = result.setdefault("data", {})
+        data["idempotency_fingerprint"] = str(idempotency_fingerprint or "")
+        data["replay_supported"] = False
+        meta = result.setdefault("meta", {})
+        meta["trace_id"] = str(trace_id or "")
+        return result
+
+    def _with_idempotency_contract(self, data: Dict[str, Any], *, request_id: str, idempotency_key: str, idempotency_fingerprint: str, trace_id: str, deduplicated: bool):
+        contract = apply_idempotency_identity(
+            data,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            idempotency_fingerprint=idempotency_fingerprint,
+            trace_id=trace_id,
+        )
+        contract["idempotent_replay"] = False
+        contract["replay_supported"] = False
+        contract["replay_window_expired"] = False
+        contract["idempotency_replay_reason_code"] = ""
+        contract["idempotency_deduplicated"] = bool(deduplicated)
+        return contract
 
     def _collect_params(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         params = {}
@@ -128,6 +207,8 @@ class ApiDataWriteHandler(BaseIntentHandler):
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = self.context.get("trace_id") or ""
+        request_id = normalize_request_id(params.get("request_id"), prefix="adw_req")
+        idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
 
         if intent == "api.data.write":
             record_id = self._get_id(params)
@@ -137,6 +218,52 @@ class ApiDataWriteHandler(BaseIntentHandler):
             rec = env_model.browse(record_id).exists()
             if not rec:
                 return self._err(404, "记录不存在", REASON_NOT_FOUND)
+
+            idempotency_fingerprint = self._idempotency_fingerprint(
+                intent=intent,
+                model=model,
+                record_id=record_id,
+                vals=safe_vals,
+                dry_run=dry_run,
+                idem_key=idempotency_key,
+            )
+            recent_entry = find_recent_audit_entry(
+                self.env,
+                event_code=self.IDEMPOTENCY_EVENT_CODE,
+                idempotency_key=idempotency_key,
+                window_seconds=self._idempotency_window_seconds(),
+                limit=20,
+                extra_domain=[("model", "=", model)],
+            )
+            if recent_entry:
+                payload_after = recent_entry.get("payload") or {}
+                recent_fingerprint = str(payload_after.get("idempotency_fingerprint") or "")
+                if recent_fingerprint and recent_fingerprint != idempotency_fingerprint:
+                    return self._idempotency_conflict_response(
+                        request_id=request_id,
+                        idempotency_key=idempotency_key,
+                        idempotency_fingerprint=idempotency_fingerprint,
+                        trace_id=trace_id,
+                    )
+                if recent_fingerprint and recent_fingerprint == idempotency_fingerprint:
+                    replay_result = payload_after.get("result")
+                    base_data = replay_result if isinstance(replay_result, dict) else {
+                        "id": rec.id,
+                        "model": model,
+                        "written_fields": sorted(safe_vals.keys()),
+                        "values": safe_vals,
+                        "dry_run": dry_run,
+                    }
+                    data = self._with_idempotency_contract(
+                        base_data,
+                        request_id=request_id,
+                        idempotency_key=idempotency_key,
+                        idempotency_fingerprint=idempotency_fingerprint,
+                        trace_id=trace_id,
+                        deduplicated=True,
+                    )
+                    meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell"}
+                    return {"ok": True, "data": data, "meta": meta}
 
             try:
                 if_match = self._get_if_match(params)
@@ -162,10 +289,73 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 "values": safe_vals,
                 "dry_run": dry_run,
             }
+            data = self._with_idempotency_contract(
+                data,
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                idempotency_fingerprint=idempotency_fingerprint,
+                trace_id=trace_id,
+                deduplicated=False,
+            )
+            self._write_idempotency_audit(
+                trace_id=trace_id,
+                model=model,
+                res_id=rec.id,
+                action="write",
+                idem_key=idempotency_key,
+                idem_fingerprint=idempotency_fingerprint,
+                result=data,
+            )
             meta = {"trace_id": trace_id, "write_mode": "update", "source": "portal-shell"}
             return {"ok": True, "data": data, "meta": meta}
 
         if intent == "api.data.create":
+            idempotency_fingerprint = self._idempotency_fingerprint(
+                intent=intent,
+                model=model,
+                record_id=0,
+                vals=safe_vals,
+                dry_run=dry_run,
+                idem_key=idempotency_key,
+            )
+            recent_entry = find_recent_audit_entry(
+                self.env,
+                event_code=self.IDEMPOTENCY_EVENT_CODE,
+                idempotency_key=idempotency_key,
+                window_seconds=self._idempotency_window_seconds(),
+                limit=20,
+                extra_domain=[("model", "=", model)],
+            )
+            if recent_entry:
+                payload_after = recent_entry.get("payload") or {}
+                recent_fingerprint = str(payload_after.get("idempotency_fingerprint") or "")
+                if recent_fingerprint and recent_fingerprint != idempotency_fingerprint:
+                    return self._idempotency_conflict_response(
+                        request_id=request_id,
+                        idempotency_key=idempotency_key,
+                        idempotency_fingerprint=idempotency_fingerprint,
+                        trace_id=trace_id,
+                    )
+                if recent_fingerprint and recent_fingerprint == idempotency_fingerprint:
+                    replay_result = payload_after.get("result")
+                    base_data = replay_result if isinstance(replay_result, dict) else {
+                        "id": 0,
+                        "model": model,
+                        "written_fields": sorted(safe_vals.keys()),
+                        "values": safe_vals,
+                        "dry_run": dry_run,
+                    }
+                    data = self._with_idempotency_contract(
+                        base_data,
+                        request_id=request_id,
+                        idempotency_key=idempotency_key,
+                        idempotency_fingerprint=idempotency_fingerprint,
+                        trace_id=trace_id,
+                        deduplicated=True,
+                    )
+                    meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell"}
+                    return {"ok": True, "data": data, "meta": meta}
+
             try:
                 env_model.check_access_rights("create")
                 rec = env_model.create(safe_vals) if not dry_run else None
@@ -183,6 +373,23 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 "values": safe_vals,
                 "dry_run": dry_run,
             }
+            data = self._with_idempotency_contract(
+                data,
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                idempotency_fingerprint=idempotency_fingerprint,
+                trace_id=trace_id,
+                deduplicated=False,
+            )
+            self._write_idempotency_audit(
+                trace_id=trace_id,
+                model=model,
+                res_id=rec.id if rec else 0,
+                action="create",
+                idem_key=idempotency_key,
+                idem_fingerprint=idempotency_fingerprint,
+                result=data,
+            )
             meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell"}
             return {"ok": True, "data": data, "meta": meta}
 
