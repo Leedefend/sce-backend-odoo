@@ -15,6 +15,7 @@ from odoo.addons.smart_construction_core.handlers.reason_codes import (
     my_work_failure_meta_for_exception,
 )
 from odoo.addons.smart_core.utils.idempotency import (
+    apply_idempotency_identity,
     build_idempotency_fingerprint,
     build_idempotency_conflict_response,
     enrich_replay_contract,
@@ -223,10 +224,13 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 )
             replay = payload.get("replay_result") or {}
             replay_data = dict(replay or {})
-            replay_data["request_id"] = str(replay_data.get("request_id") or request_id)
-            replay_data["idempotency_key"] = idempotency_key
-            replay_data["idempotency_fingerprint"] = idempotency_fingerprint
-            replay_data["trace_id"] = str(replay_data.get("trace_id") or trace_id)
+            replay_data = apply_idempotency_identity(
+                replay_data,
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                idempotency_fingerprint=idempotency_fingerprint,
+                trace_id=trace_id,
+            )
             replay_data = enrich_replay_contract(
                 replay_data,
                 idempotent_replay=True,
@@ -265,13 +269,9 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
 
         ok = len(failed) == 0
         failed_retry_ids = [int(item.get("id") or 0) for item in failed if bool(item.get("retryable")) and int(item.get("id") or 0) > 0]
-        data = enrich_replay_contract(
+        data = apply_idempotency_identity(
             {
                 "source": source,
-                "request_id": request_id,
-                "idempotency_key": idempotency_key,
-                "idempotency_fingerprint": idempotency_fingerprint,
-                "trace_id": trace_id,
                 "success": ok,
                 "reason_code": REASON_DONE if ok else REASON_PARTIAL_FAILED,
                 "message": "批量完成成功" if ok else "部分待办完成失败",
@@ -284,6 +284,13 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 "failed_retryable_summary": _retryable_summary(failed),
                 "done_at": fields.Datetime.now(),
             },
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            idempotency_fingerprint=idempotency_fingerprint,
+            trace_id=trace_id,
+        )
+        data = enrich_replay_contract(
+            data,
             idempotent_replay=False,
             replay_window_expired=bool(replay_window_expired),
             replay_reason_code=REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",

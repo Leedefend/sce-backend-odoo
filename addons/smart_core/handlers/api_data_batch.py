@@ -22,6 +22,7 @@ from .reason_codes import (
     batch_failure_meta,
 )
 from ..utils.idempotency import (
+    apply_idempotency_identity,
     build_idempotency_fingerprint,
     build_idempotency_conflict_response,
     enrich_replay_contract,
@@ -352,8 +353,13 @@ class ApiDataBatchHandler(BaseIntentHandler):
             replay_payload = replay.get("result") or {}
             replay_data = self._ensure_result_contract(dict(replay_payload), request_id=request_id, trace_id=trace_id)
             replay_data = self._apply_failed_page(replay_data, offset=page_offset, limit=page_limit)
-            replay_data["idempotency_key"] = idempotency_key
-            replay_data["idempotency_fingerprint"] = idempotency_fingerprint
+            replay_data = apply_idempotency_identity(
+                replay_data,
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                idempotency_fingerprint=idempotency_fingerprint,
+                trace_id=trace_id,
+            )
             replay_data = enrich_replay_contract(
                 replay_data,
                 idempotent_replay=True,
@@ -441,22 +447,25 @@ class ApiDataBatchHandler(BaseIntentHandler):
             results.append(item)
 
         failed_retry_ids = [int(item.get("id") or 0) for item in results if not item.get("ok") and bool(item.get("retryable")) and int(item.get("id") or 0) > 0]
-        data = enrich_replay_contract({
-            "model": model,
-            "action": action or "write",
-            "request_id": request_id,
-            "trace_id": trace_id,
-            "values": safe_vals,
-            "requested_ids": ids,
-            "succeeded": success,
-            "failed": failed,
-            "results": results,
-            "failed_retry_ids": failed_retry_ids,
-            "failed_reason_summary": self._failed_reason_summary(results),
-            "failed_retryable_summary": self._failed_retryable_summary(results),
-            "idempotency_key": idempotency_key,
-            "idempotency_fingerprint": idempotency_fingerprint,
-        },
+        data = apply_idempotency_identity(
+            {
+                "model": model,
+                "action": action or "write",
+                "values": safe_vals,
+                "requested_ids": ids,
+                "succeeded": success,
+                "failed": failed,
+                "results": results,
+                "failed_retry_ids": failed_retry_ids,
+                "failed_reason_summary": self._failed_reason_summary(results),
+                "failed_retryable_summary": self._failed_retryable_summary(results),
+            },
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            idempotency_fingerprint=idempotency_fingerprint,
+            trace_id=trace_id,
+        )
+        data = enrich_replay_contract(data,
             idempotent_replay=False,
             replay_window_expired=bool(replay_window_expired),
             replay_reason_code=REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",

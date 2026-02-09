@@ -167,6 +167,22 @@ def build_idempotency_conflict_response(
     }
 
 
+def apply_idempotency_identity(
+    data,
+    *,
+    request_id,
+    idempotency_key,
+    idempotency_fingerprint,
+    trace_id,
+):
+    payload = dict(data or {})
+    payload["request_id"] = str(payload.get("request_id") or request_id or "")
+    payload["idempotency_key"] = str(idempotency_key or "")
+    payload["idempotency_fingerprint"] = str(idempotency_fingerprint or "")
+    payload["trace_id"] = str(payload.get("trace_id") or trace_id or "")
+    return payload
+
+
 def enrich_replay_contract(
     data,
     *,
