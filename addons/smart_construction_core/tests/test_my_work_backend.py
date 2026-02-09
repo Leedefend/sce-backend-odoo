@@ -69,12 +69,72 @@ class TestMyWorkBackend(TransactionCase):
         self.assertTrue(result.get("ok"))
         data = result.get("data") or {}
         self.assertEqual(data.get("request_id"), "req-demo-1")
+        self.assertEqual(data.get("idempotency_key"), "req-demo-1")
+        self.assertFalse(bool(data.get("idempotent_replay")))
+        self.assertTrue(bool(data.get("idempotency_fingerprint")))
         self.assertTrue(str(data.get("trace_id") or "").startswith("mw_batch_"))
         self.assertEqual(data.get("failed_count"), 1)
         self.assertEqual(data.get("failed_retry_ids"), [])
         failed_items = data.get("failed_items") or []
         self.assertEqual(len(failed_items), 1)
         self.assertTrue(str((failed_items[0] or {}).get("trace_id") or "").startswith("mw_batch_"))
+
+    def test_batch_idempotent_replay_returns_same_contract(self):
+        if not self.env.get("sc.audit.log"):
+            self.skipTest("sc.audit.log not available")
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        payload = {"ids": ["bad"], "source": "mail.activity", "request_id": "req-idem-1"}
+        first = handler.handle(payload)
+        second = handler.handle(payload)
+        self.assertTrue(first.get("ok"))
+        self.assertTrue(second.get("ok"))
+        first_data = first.get("data") or {}
+        second_data = second.get("data") or {}
+        self.assertFalse(bool(first_data.get("idempotent_replay")))
+        self.assertTrue(bool(second_data.get("idempotent_replay")))
+        self.assertEqual(second_data.get("idempotency_key"), "req-idem-1")
+        self.assertEqual(
+            second_data.get("idempotency_fingerprint"),
+            first_data.get("idempotency_fingerprint"),
+        )
+        self.assertTrue(int(second_data.get("replay_from_audit_id") or 0) > 0)
+        self.assertTrue(bool(second_data.get("replay_original_trace_id")))
+        self.assertTrue(int(second_data.get("replay_age_ms") or 0) >= 0)
+
+    def test_batch_idempotent_conflict_when_same_key_diff_payload(self):
+        if not self.env.get("sc.audit.log"):
+            self.skipTest("sc.audit.log not available")
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        first = handler.handle({"ids": ["bad"], "source": "mail.activity", "request_id": "req-idem-2"})
+        self.assertTrue(first.get("ok"))
+        conflict = handler.handle(
+            {
+                "ids": ["bad", "bad2"],
+                "source": "mail.activity",
+                "request_id": "req-idem-2",
+            }
+        )
+        self.assertFalse(conflict.get("ok"))
+        self.assertEqual(int(conflict.get("code") or 0), 409)
+        err = conflict.get("error") or {}
+        self.assertEqual(err.get("reason_code"), "IDEMPOTENCY_CONFLICT")
+
+    def test_batch_idempotent_window_expired_no_replay(self):
+        if not self.env.get("sc.audit.log"):
+            self.skipTest("sc.audit.log not available")
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        payload = {"ids": ["bad"], "source": "mail.activity", "request_id": "req-idem-3"}
+        first = handler.handle(payload)
+        self.assertTrue(first.get("ok"))
+        original_window = handler.IDEMPOTENCY_WINDOW_SECONDS
+        try:
+            handler.IDEMPOTENCY_WINDOW_SECONDS = 0
+            second = handler.handle(payload)
+        finally:
+            handler.IDEMPOTENCY_WINDOW_SECONDS = original_window
+        self.assertTrue(second.get("ok"))
+        second_data = second.get("data") or {}
+        self.assertFalse(bool(second_data.get("idempotent_replay")))
 
     def test_summary_status_contract(self):
         handler = MyWorkSummaryHandler(self.env, payload={})
