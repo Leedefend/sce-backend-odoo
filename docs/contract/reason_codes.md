@@ -39,6 +39,9 @@ For `my.work.complete` and `my.work.complete_batch`, failures return:
 For batch completion (`my.work.complete_batch`), response also includes:
 
 - `request_id` (caller-supplied or server-generated)
+- `idempotency_key` (defaults to `request_id`)
+- `idempotency_fingerprint`
+- `idempotent_replay` (`true` when served from recent replay window)
 - `trace_id` (server-generated batch trace)
 - `failed_retry_ids` (default retry target list where `retryable=true`)
 
@@ -61,6 +64,12 @@ Expected behavior:
 - Input/validation failures: `INVALID_ID` / `UNSUPPORTED_SOURCE` / `USER_ERROR`, non-retryable
 - Missing records: `NOT_FOUND`, non-retryable
 - Unknown/runtime failures: `INTERNAL_ERROR`, retryable
+
+Idempotency semantics for `my.work.complete_batch`:
+
+- same key + same fingerprint -> replay (`idempotent_replay=true`)
+- same key + different fingerprint -> `IDEMPOTENCY_CONFLICT` (HTTP-like conflict)
+- suggested action for conflict: `use_new_request_id`
 
 ## 4. Capability Suggested Action Mapping
 
