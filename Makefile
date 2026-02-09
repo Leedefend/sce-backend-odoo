@@ -775,6 +775,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	  echo "   Fix: start docker or run with SC_GATE_STRICT=0 for local-only checks."; \
 	  exit 2; \
 	fi
+	@$(MAKE) --no-print-directory verify.contract_drift.guard
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
 	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
