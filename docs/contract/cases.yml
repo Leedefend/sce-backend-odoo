@@ -138,5 +138,52 @@
     "model": "project.project",
     "id": 1,
     "execute_method": "action_sc_project_manage"
+  },
+  {
+    "case": "my_work_summary_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "my.work.summary",
+    "intent_params": {
+      "limit": 10,
+      "page": 1,
+      "section": "all",
+      "source": "all",
+      "reason_code": "all",
+      "search": ""
+    }
+  },
+  {
+    "case": "my_work_complete_batch_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "my.work.complete_batch",
+    "intent_params": {
+      "source": "mail.activity",
+      "ids": [999999991],
+      "request_id": "snapshot_my_work_batch_1"
+    }
+  },
+  {
+    "case": "api_data_batch_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "api.data.batch",
+    "intent_params": {
+      "model": "res.partner",
+      "ids": [999999991],
+      "action": "archive",
+      "request_id": "snapshot_api_data_batch_1"
+    }
+  },
+  {
+    "case": "usage_report_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "usage.report",
+    "intent_params": {
+      "top": 10,
+      "days": 7
+    }
   }
 ]
