@@ -1,5 +1,10 @@
 import { intentRequest, intentRequestRaw } from './intents';
 import type {
+  ContractFailureMeta,
+  ContractIdempotencyMeta,
+  ContractReasonedFailure,
+} from './contractTypes';
+import type {
   ApiDataListResult,
   ApiDataReadResult,
   ApiDataListRequest,
@@ -151,26 +156,8 @@ export async function unlinkRecord(params: {
   });
 }
 
-export type ApiIdempotencyContract = {
-  request_id?: string;
-  idempotency_key?: string;
-  idempotency_fingerprint?: string;
-  idempotent_replay?: boolean;
-  replay_window_expired?: boolean;
-  idempotency_replay_reason_code?: string;
-  replay_from_audit_id?: number;
-  replay_original_trace_id?: string;
-  replay_age_ms?: number;
-  replay_supported?: boolean;
-  idempotency_deduplicated?: boolean;
-  trace_id?: string;
-};
-
-export type ApiFailureMeta = {
-  retryable?: boolean;
-  error_category?: string;
-  suggested_action?: string;
-};
+export type ApiIdempotencyContract = ContractIdempotencyMeta;
+export type ApiFailureMeta = ContractFailureMeta;
 
 export type ApiDataWriteContract = {
   id: number;
@@ -197,10 +184,7 @@ export type ApiDataExportCsvResult = {
 export type ApiDataBatchItemResult = {
   id: number;
   ok: boolean;
-  reason_code: string;
-  message: string;
-  trace_id?: string;
-} & ApiFailureMeta;
+} & ContractReasonedFailure;
 
 export type ApiDataBatchResult = {
   model: string;
