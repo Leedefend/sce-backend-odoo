@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from __future__ import annotations
+
+import argparse
+import json
+from collections import Counter
+from pathlib import Path
+
+
+def load_json(path: Path) -> object:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def build_evidence(intent_catalog: dict, scene_catalog: dict, shape_report: dict, intent_surface: list[dict]) -> dict:
+    intents = intent_catalog.get("intents") or []
+    scenes = scene_catalog.get("scenes") or []
+
+    reason_counter: Counter[str] = Counter()
+    intents_with_examples = 0
+    intents_with_idempotency_window = 0
+    intents_with_aliases = 0
+    for item in intents:
+        if not isinstance(item, dict):
+            continue
+        aliases = item.get("aliases")
+        if isinstance(aliases, list) and aliases:
+            intents_with_aliases += 1
+        if item.get("has_idempotency_window") is True:
+            intents_with_idempotency_window += 1
+        examples = item.get("examples")
+        if isinstance(examples, list) and examples:
+            intents_with_examples += 1
+        codes = item.get("observed_reason_codes")
+        if isinstance(codes, list):
+            for code in codes:
+                if isinstance(code, str) and code.strip():
+                    reason_counter[code.strip()] += 1
+
+    evidence = {
+        "intent_catalog": {
+            "intent_count": len(intents),
+            "with_aliases": intents_with_aliases,
+            "with_idempotency_window": intents_with_idempotency_window,
+            "with_examples": intents_with_examples,
+            "top_observed_reason_codes": [{"reason_code": k, "count": v} for k, v in reason_counter.most_common(10)],
+        },
+        "scene_catalog": {
+            "scene_count": len(scenes),
+            "layout_kind_counts": scene_catalog.get("layout_kind_counts") or {},
+            "target_type_counts": scene_catalog.get("target_type_counts") or {},
+            "schema_version": scene_catalog.get("schema_version") or "",
+            "scene_version": scene_catalog.get("scene_version") or "",
+        },
+        "shape_guard": {
+            "ok": bool(shape_report.get("ok")),
+            "error_count": len(shape_report.get("errors") or []),
+            "report": "artifacts/scene_contract_shape_guard.json",
+        },
+        "intent_surface": {
+            "rows": len(intent_surface),
+        },
+    }
+    return evidence
+
+
+def to_markdown(evidence: dict) -> str:
+    i = evidence["intent_catalog"]
+    s = evidence["scene_catalog"]
+    g = evidence["shape_guard"]
+    t = evidence["intent_surface"]
+    lines = [
+        "# Phase 11.1 Contract Evidence",
+        "",
+        "## Contract Surface",
+        f"- intents: {i['intent_count']}",
+        f"- intents with aliases: {i['with_aliases']}",
+        f"- intents with idempotency window: {i['with_idempotency_window']}",
+        f"- intents with snapshot examples: {i['with_examples']}",
+        f"- intent surface rows: {t['rows']}",
+        "",
+        "## Scene Orchestration",
+        f"- scenes: {s['scene_count']}",
+        f"- schema_version: {s['schema_version']}",
+        f"- scene_version: {s['scene_version']}",
+        f"- layout kinds: {json.dumps(s['layout_kind_counts'], ensure_ascii=False)}",
+        f"- target types: {json.dumps(s['target_type_counts'], ensure_ascii=False)}",
+        "",
+        "## Shape Guard",
+        f"- ok: {g['ok']}",
+        f"- error_count: {g['error_count']}",
+        f"- report: `{g['report']}`",
+        "",
+        "## Top Observed reason_code",
+    ]
+    top_codes = i.get("top_observed_reason_codes") or []
+    if not top_codes:
+        lines.append("- (none)")
+    else:
+        for row in top_codes:
+            lines.append(f"- `{row['reason_code']}`: {row['count']}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Export phase 11.1 contract evidence summary.")
+    parser.add_argument("--intent-catalog", default="docs/contract/exports/intent_catalog.json")
+    parser.add_argument("--scene-catalog", default="docs/contract/exports/scene_catalog.json")
+    parser.add_argument("--shape-report", default="artifacts/scene_contract_shape_guard.json")
+    parser.add_argument("--intent-surface", default="artifacts/intent_surface_report.json")
+    parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
+    parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
+    args = parser.parse_args()
+
+    intent_catalog = load_json(Path(args.intent_catalog))
+    scene_catalog = load_json(Path(args.scene_catalog))
+    shape_report = load_json(Path(args.shape_report))
+    intent_surface = load_json(Path(args.intent_surface))
+
+    if not isinstance(intent_catalog, dict):
+        raise SystemExit("intent catalog must be object")
+    if not isinstance(scene_catalog, dict):
+        raise SystemExit("scene catalog must be object")
+    if not isinstance(shape_report, dict):
+        raise SystemExit("shape report must be object")
+    if not isinstance(intent_surface, list):
+        raise SystemExit("intent surface report must be list")
+
+    evidence = build_evidence(intent_catalog, scene_catalog, shape_report, intent_surface)
+    out_json = Path(args.output_json)
+    out_md = Path(args.output_md)
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_md.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out_md.write_text(to_markdown(evidence), encoding="utf-8")
+    print(str(out_json))
+    print(str(out_md))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
