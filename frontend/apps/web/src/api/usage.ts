@@ -1,4 +1,5 @@
 import { intentRequest } from './intents';
+import type { ContractReasonCode, ContractReasonCount } from './contractTypes';
 
 export async function trackSceneOpen(sceneKey: string) {
   if (!sceneKey) return;
@@ -89,10 +90,10 @@ export type CapabilityVisibilityReport = {
     preview: number;
     locked: number;
   };
-  reason_counts: Array<{ reason_code: string; count: number }>;
+  reason_counts: ContractReasonCount[];
   state_counts?: Array<{ state: string; count: number }>;
-  hidden_samples: Array<{ key: string; name: string; reason_code: string; reason: string; suggested_action?: string }>;
-  locked_samples?: Array<{ key: string; name: string; reason_code: string; reason: string; suggested_action?: string }>;
+  hidden_samples: Array<{ key: string; name: string; reason_code: ContractReasonCode; reason: string; suggested_action?: string }>;
+  locked_samples?: Array<{ key: string; name: string; reason_code: ContractReasonCode; reason: string; suggested_action?: string }>;
 };
 
 export async function fetchCapabilityVisibilityReport() {

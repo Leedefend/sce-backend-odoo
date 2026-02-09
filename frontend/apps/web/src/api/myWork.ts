@@ -1,4 +1,10 @@
 import { intentRequest } from './intents';
+import type {
+  ContractFailureMeta,
+  ContractIdempotencyMeta,
+  ContractReasonCount,
+  ContractReasonedFailure,
+} from './contractTypes';
 
 export type MyWorkSummaryItem = {
   key: 'todo' | 'owned' | 'mentions' | 'following' | string;
@@ -28,26 +34,8 @@ export type MyWorkRecordItem = {
   reason_code?: string;
 };
 
-export type FailureMeta = {
-  retryable?: boolean;
-  error_category?: string;
-  suggested_action?: string;
-};
-
-export type IdempotencyMeta = {
-  request_id?: string;
-  idempotency_key?: string;
-  idempotency_fingerprint?: string;
-  idempotent_replay?: boolean;
-  replay_window_expired?: boolean;
-  idempotency_replay_reason_code?: string;
-  replay_from_audit_id?: number;
-  replay_original_trace_id?: string;
-  replay_age_ms?: number;
-  replay_supported?: boolean;
-  idempotency_deduplicated?: boolean;
-  trace_id?: string;
-};
+export type FailureMeta = ContractFailureMeta;
+export type IdempotencyMeta = ContractIdempotencyMeta;
 
 export type MyWorkSummaryResponse = {
   generated_at: string;
@@ -136,10 +124,7 @@ export async function completeMyWorkItem(params: {
 
 export type MyWorkBatchFailedItem = {
   id: number;
-  reason_code: string;
-  message: string;
-  trace_id?: string;
-} & FailureMeta;
+} & ContractReasonedFailure;
 
 export type MyWorkCompleteBatchResult = {
   source: string;
@@ -151,7 +136,7 @@ export type MyWorkCompleteBatchResult = {
   completed_ids: number[];
   failed_items: MyWorkBatchFailedItem[];
   failed_retry_ids?: number[];
-  failed_reason_summary: Array<{ reason_code: string; count: number }>;
+  failed_reason_summary: ContractReasonCount[];
   failed_retryable_summary?: { retryable: number; non_retryable: number };
   done_at: string;
 } & IdempotencyMeta;
