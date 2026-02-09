@@ -21,6 +21,7 @@ from odoo.addons.smart_core.utils.idempotency import (
     enrich_replay_contract,
     find_latest_audit_entry,
     find_recent_audit_entry,
+    idempotency_replay_or_conflict,
     ids_summary,
     normalize_request_id,
     replay_window_seconds,
@@ -213,16 +214,20 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         if not ids:
             raise UserError("缺少待办 ID 列表")
         entry = self._find_recent_idempotency_entry(idem_key=idempotency_key)
-        if entry:
-            payload = entry.get("payload") or {}
-            old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
-            if old_fingerprint and old_fingerprint != idempotency_fingerprint:
-                return self._idempotency_conflict_response(
-                    request_id=request_id,
-                    idempotency_key=idempotency_key,
-                    trace_id=trace_id,
-                )
-            replay = payload.get("replay_result") or {}
+        decision = idempotency_replay_or_conflict(
+            entry,
+            fingerprint=idempotency_fingerprint,
+            replay_payload_key="replay_result",
+        )
+        if decision.get("conflict"):
+            return self._idempotency_conflict_response(
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                trace_id=trace_id,
+            )
+        replay = decision.get("replay_payload") or {}
+        replay_entry = decision.get("replay_entry") or {}
+        if replay:
             replay_data = dict(replay or {})
             replay_data = apply_idempotency_identity(
                 replay_data,
@@ -236,7 +241,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 idempotent_replay=True,
                 replay_window_expired=False,
                 replay_reason_code="",
-                replay_entry=entry,
+                replay_entry=replay_entry,
                 include_replay_evidence=True,
             )
             return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE}}
