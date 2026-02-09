@@ -235,6 +235,8 @@ guard.codex.fast.upgrade:
 
 INTENT_SURFACE_MD ?= docs/ops/audit/intent_surface_report.md
 INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
+CONTRACT_PREFLIGHT_INTENT_SURFACE_MD ?= artifacts/intent_surface_report.md
+CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
 
 contract.export:
 	@DB="$(DB_NAME)" scripts/contract/snapshot_export.sh \
@@ -251,18 +253,15 @@ contract.export_all:
 	@SC_CONTRACT_STABLE=1 DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" OUTDIR="$(CONTRACT_OUTDIR)" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/export_all.sh
 
 gate.contract:
-	@$(MAKE) --no-print-directory verify.contract_drift.guard
-	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD=artifacts/intent_surface_report.md INTENT_SURFACE_JSON=artifacts/intent_surface_report.json
+	@$(MAKE) --no-print-directory verify.contract.preflight
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh
 
 gate.contract.bootstrap:
-	@$(MAKE) --no-print-directory verify.contract_drift.guard
-	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD=artifacts/intent_surface_report.md INTENT_SURFACE_JSON=artifacts/intent_surface_report.json
+	@$(MAKE) --no-print-directory verify.contract.preflight
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh --bootstrap
 
 gate.contract.bootstrap-pass:
-	@$(MAKE) --no-print-directory verify.contract_drift.guard
-	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD=artifacts/intent_surface_report.md INTENT_SURFACE_JSON=artifacts/intent_surface_report.json
+	@$(MAKE) --no-print-directory verify.contract.preflight
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh --bootstrap --bootstrap-pass
 
 check.compose.project:
@@ -784,7 +783,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	  echo "   Fix: start docker or run with SC_GATE_STRICT=0 for local-only checks."; \
 	  exit 2; \
 	fi
-	@$(MAKE) --no-print-directory verify.contract_drift.guard
+	@$(MAKE) --no-print-directory verify.contract.preflight
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
 	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
@@ -1009,7 +1008,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.contract_drift.guard audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.contract_drift.guard verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1041,6 +1040,10 @@ verify.extension_modules.guard: guard.prod.forbid check-compose-project check-co
 verify.contract_drift.guard: guard.prod.forbid
 	@bash scripts/verify/contract_drift_guard.sh
 
+verify.contract.preflight: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.contract_drift.guard
+	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
+
 audit.intent.surface: guard.prod.forbid
 	@python3 scripts/audit/intent_surface_report.py --output-md "$(INTENT_SURFACE_MD)" --output-json "$(INTENT_SURFACE_JSON)"
 
@@ -1071,7 +1074,7 @@ policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-c
 
 # CI preflight: fail-fast on contract drift before heavier test suites.
 ci.preflight.contract: guard.prod.forbid
-	@$(MAKE) --no-print-directory verify.contract_drift.guard
+	@$(MAKE) --no-print-directory verify.contract.preflight
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid ci.preflight.contract
