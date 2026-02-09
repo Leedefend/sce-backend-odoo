@@ -10,6 +10,7 @@ from odoo.addons.smart_core.handlers.reason_codes import (
 )
 from odoo.addons.smart_core.handlers.api_data_batch import ApiDataBatchHandler
 from odoo.addons.smart_core.utils.idempotency import (
+    apply_replay_evidence,
     find_latest_audit_entry,
     has_latest_fingerprint_match,
     resolve_idempotency_decision,
@@ -154,6 +155,23 @@ class TestApiDataBatchContractBackend(TransactionCase):
                 "replay_window_expired": False,
             },
         )
+
+    def test_apply_replay_evidence_shape_and_defaults(self):
+        base = apply_replay_evidence({"x": 1}, enabled=False)
+        self.assertEqual(base, {"x": 1})
+        enabled = apply_replay_evidence({"x": 1}, enabled=True)
+        self.assertEqual(enabled.get("replay_from_audit_id"), 0)
+        self.assertEqual(enabled.get("replay_original_trace_id"), "")
+        self.assertEqual(enabled.get("replay_age_ms"), 0)
+        replay = apply_replay_evidence(
+            {"x": 1},
+            enabled=True,
+            idempotent_replay=True,
+            replay_entry={"audit_id": 9, "trace_id": "t1"},
+        )
+        self.assertEqual(replay.get("replay_from_audit_id"), 9)
+        self.assertEqual(replay.get("replay_original_trace_id"), "t1")
+        self.assertTrue(int(replay.get("replay_age_ms") or 0) >= 0)
 
     def test_not_found_failure_has_structured_contract(self):
         handler = ApiDataBatchHandler(self.env, payload={})

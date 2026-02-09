@@ -273,6 +273,35 @@ def ids_summary(rows, *, sample_limit=20):
     return {"count": len(normalized), "sample": sample, "hash": digest}
 
 
+def apply_replay_evidence(
+    data,
+    *,
+    enabled=False,
+    idempotent_replay=False,
+    replay_entry=None,
+):
+    payload = dict(data or {})
+    if not enabled:
+        return payload
+    payload["replay_from_audit_id"] = 0
+    payload["replay_original_trace_id"] = ""
+    payload["replay_age_ms"] = 0
+    if not idempotent_replay or not isinstance(replay_entry, dict):
+        return payload
+    payload["replay_from_audit_id"] = int(replay_entry.get("audit_id") or 0)
+    payload["replay_original_trace_id"] = str(replay_entry.get("trace_id") or "")
+    ts = replay_entry.get("ts")
+    if isinstance(ts, str):
+        try:
+            ts = fields.Datetime.from_string(ts)
+        except Exception:
+            ts = None
+    now_dt = fields.Datetime.from_string(fields.Datetime.now())
+    if ts:
+        payload["replay_age_ms"] = max(0, int((now_dt - ts).total_seconds() * 1000))
+    return payload
+
+
 def build_idempotency_conflict_response(
     *,
     intent_type,
@@ -290,12 +319,12 @@ def build_idempotency_conflict_response(
         "idempotency_replay_reason_code": "",
         "trace_id": trace_id,
     }
-    if include_replay_evidence:
-        data.update({
-            "replay_from_audit_id": 0,
-            "replay_original_trace_id": "",
-            "replay_age_ms": 0,
-        })
+    data = apply_replay_evidence(
+        data,
+        enabled=bool(include_replay_evidence),
+        idempotent_replay=False,
+        replay_entry=None,
+    )
     return {
         "ok": False,
         "code": 409,
@@ -341,20 +370,9 @@ def enrich_replay_contract(
     payload["idempotent_replay"] = bool(idempotent_replay)
     payload["replay_window_expired"] = bool(replay_window_expired)
     payload["idempotency_replay_reason_code"] = str(replay_reason_code or "")
-    if include_replay_evidence:
-        payload["replay_from_audit_id"] = 0
-        payload["replay_original_trace_id"] = ""
-        payload["replay_age_ms"] = 0
-        if idempotent_replay and isinstance(replay_entry, dict):
-            payload["replay_from_audit_id"] = int(replay_entry.get("audit_id") or 0)
-            payload["replay_original_trace_id"] = str(replay_entry.get("trace_id") or "")
-            ts = replay_entry.get("ts")
-            if isinstance(ts, str):
-                try:
-                    ts = fields.Datetime.from_string(ts)
-                except Exception:
-                    ts = None
-            now_dt = fields.Datetime.from_string(fields.Datetime.now())
-            if ts:
-                payload["replay_age_ms"] = max(0, int((now_dt - ts).total_seconds() * 1000))
-    return payload
+    return apply_replay_evidence(
+        payload,
+        enabled=bool(include_replay_evidence),
+        idempotent_replay=bool(idempotent_replay),
+        replay_entry=replay_entry,
+    )
