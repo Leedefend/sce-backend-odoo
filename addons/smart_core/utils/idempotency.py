@@ -43,6 +43,20 @@ def build_idempotency_fingerprint(payload, *, normalize_id_keys=None):
     return sha1_json(data)
 
 
+def idempotency_replay_or_conflict(recent_entry, *, fingerprint, replay_payload_key="result"):
+    entry = recent_entry if isinstance(recent_entry, dict) else None
+    if not entry:
+        return {"conflict": False, "replay_entry": None, "replay_payload": None}
+    payload = entry.get("payload") or {}
+    old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
+    if old_fingerprint and old_fingerprint != str(fingerprint or ""):
+        return {"conflict": True, "replay_entry": None, "replay_payload": None}
+    replay_payload = payload.get(replay_payload_key)
+    if old_fingerprint and isinstance(replay_payload, dict):
+        return {"conflict": False, "replay_entry": entry, "replay_payload": replay_payload}
+    return {"conflict": False, "replay_entry": None, "replay_payload": None}
+
+
 def replay_window_seconds(default_seconds, *, env_key):
     raw = str(os.getenv(env_key, "")).strip()
     if raw:
