@@ -1055,24 +1055,28 @@ policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-c
 # ======================================================
 # ==================== CI ==============================
 # ======================================================
-.PHONY: ci.gate ci.smoke ci.full ci.repro \
+.PHONY: ci.preflight.contract ci.gate ci.smoke ci.full ci.repro \
 	test-install-gate test-upgrade-gate \
 	ci.clean ci.ps ci.logs gate.boundary
 
+# CI preflight: fail-fast on contract drift before heavier test suites.
+ci.preflight.contract: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.contract_drift.guard
+
 # 只跑守门：权限/绕过（最快定位安全回归）
-ci.gate: guard.prod.forbid
+ci.gate: guard.prod.forbid ci.preflight.contract
 	@$(RUN_ENV) TEST_TAGS="sc_gate,sc_perm" bash scripts/ci/run_ci.sh
 
 # 冒烟：基础链路 + 守门
-ci.smoke: guard.prod.forbid
+ci.smoke: guard.prod.forbid ci.preflight.contract
 	@$(RUN_ENV) TEST_TAGS="sc_smoke,sc_gate" bash scripts/ci/run_ci.sh
 
 # 全量：用 TEST_TAGS（默认 sc_smoke,sc_gate，也可你自定义覆盖）
-ci.full: guard.prod.forbid
+ci.full: guard.prod.forbid ci.preflight.contract
 	@$(RUN_ENV) bash scripts/ci/run_ci.sh
 
 # 复现：不清理 artifacts，保留现场
-ci.repro: guard.prod.forbid
+ci.repro: guard.prod.forbid ci.preflight.contract
 	@$(RUN_ENV) CI_ARTIFACT_PURGE=0 bash scripts/ci/run_ci.sh
 
 test-install-gate:
