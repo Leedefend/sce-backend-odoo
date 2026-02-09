@@ -16,6 +16,14 @@ REASON_CONFLICT = "CONFLICT"
 REASON_WRITE_FAILED = "WRITE_FAILED"
 REASON_IDEMPOTENCY_CONFLICT = "IDEMPOTENCY_CONFLICT"
 REASON_REPLAY_WINDOW_EXPIRED = "REPLAY_WINDOW_EXPIRED"
+REASON_MISSING_PARAMS = "MISSING_PARAMS"
+REASON_UNSUPPORTED_BUTTON_TYPE = "UNSUPPORTED_BUTTON_TYPE"
+REASON_METHOD_NOT_CALLABLE = "METHOD_NOT_CALLABLE"
+REASON_DRY_RUN = "DRY_RUN"
+REASON_BUSINESS_RULE_FAILED = "BUSINESS_RULE_FAILED"
+REASON_SYSTEM_ERROR = "SYSTEM_ERROR"
+REASON_NO_WORK_ITEMS = "NO_WORK_ITEMS"
+REASON_FILTER_NO_MATCH = "FILTER_NO_MATCH"
 
 
 def failure_meta_for_reason(reason_code: str):
@@ -70,6 +78,46 @@ def failure_meta_for_reason(reason_code: str):
             "retryable": True,
             "error_category": "transient",
             "suggested_action": "retry",
+        },
+        REASON_MISSING_PARAMS: {
+            "retryable": False,
+            "error_category": "validation",
+            "suggested_action": "fix_input",
+        },
+        REASON_UNSUPPORTED_BUTTON_TYPE: {
+            "retryable": False,
+            "error_category": "validation",
+            "suggested_action": "fix_input",
+        },
+        REASON_METHOD_NOT_CALLABLE: {
+            "retryable": False,
+            "error_category": "validation",
+            "suggested_action": "contact_admin",
+        },
+        REASON_DRY_RUN: {
+            "retryable": True,
+            "error_category": "noop",
+            "suggested_action": "execute",
+        },
+        REASON_BUSINESS_RULE_FAILED: {
+            "retryable": False,
+            "error_category": "validation",
+            "suggested_action": "check_prerequisites",
+        },
+        REASON_SYSTEM_ERROR: {
+            "retryable": True,
+            "error_category": "transient",
+            "suggested_action": "retry",
+        },
+        REASON_NO_WORK_ITEMS: {
+            "retryable": False,
+            "error_category": "empty",
+            "suggested_action": "none",
+        },
+        REASON_FILTER_NO_MATCH: {
+            "retryable": False,
+            "error_category": "empty",
+            "suggested_action": "clear_filters",
         },
     }
     return dict(mapping.get(code) or {"retryable": False, "error_category": "", "suggested_action": ""})

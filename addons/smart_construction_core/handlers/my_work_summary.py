@@ -5,6 +5,11 @@ import re
 
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.utils.reason_codes import (
+    REASON_FILTER_NO_MATCH,
+    REASON_NO_WORK_ITEMS,
+    REASON_OK,
+)
 
 
 class MyWorkSummaryHandler(BaseIntentHandler):
@@ -104,20 +109,20 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         if total_before_filter <= 0:
             return {
                 "state": self.STATUS_EMPTY,
-                "reason_code": "NO_WORK_ITEMS",
+                "reason_code": REASON_NO_WORK_ITEMS,
                 "message": "当前没有待处理事项",
                 "hint": "可稍后刷新，或切换到其他场景创建/关注事项。",
             }
         if filtered_count <= 0:
             return {
                 "state": self.STATUS_FILTER_EMPTY,
-                "reason_code": "FILTER_NO_MATCH",
+                "reason_code": REASON_FILTER_NO_MATCH,
                 "message": "当前筛选条件没有匹配结果",
                 "hint": "请重置筛选条件后重试。",
             }
         return {
             "state": self.STATUS_READY,
-            "reason_code": "OK",
+            "reason_code": REASON_OK,
             "message": "",
             "hint": "",
         }
