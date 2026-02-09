@@ -1,700 +1,187 @@
 {
-  "action": null,
   "case": "menu_tree_pm",
+  "trace_id": "9ad2b98e-1be8-461d-b0d9-9179f269c187",
+  "exported_at": "2026-02-09T05:14:00Z",
   "contract_version": "v1",
-  "execute_error": null,
-  "execute_result": null,
-  "fallback": true,
-  "meta_fields": null,
   "model": null,
+  "view_type": null,
   "op": "nav",
-  "record": null,
-  "record_error": null,
-  "ui_contract": null,
-  "ui_contract_raw": {
-    "error": "'app.menu.config'",
-    "fallback": true,
-    "nav": [
-      {
-        "action": "ir.actions.client",
-        "action_id": 119,
-        "children": [],
-        "id": 76,
-        "name": "Discuss"
-      },
-      {
-        "action": "ir.actions.server",
-        "action_id": 421,
-        "children": [],
-        "id": 243,
-        "name": "To-do"
-      },
-      {
-        "action": "ir.actions.client",
-        "action_id": 329,
-        "children": [
-          {
-            "action": "ir.actions.client",
-            "action_id": 329,
-            "children": [],
-            "id": 191,
-            "name": "Dashboards"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 330,
-                "children": [],
-                "id": 193,
-                "name": "Dashboards"
-              }
-            ],
-            "id": 192,
-            "name": "Configuration"
-          }
-        ],
-        "id": 190,
-        "name": "Dashboards"
-      },
-      {
-        "action": null,
-        "action_id": null,
-        "children": [
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 248,
-                "children": [],
-                "id": 120,
-                "name": "Invoices"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 249,
-                "children": [],
-                "id": 121,
-                "name": "Credit Notes"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 224,
-                "children": [],
-                "id": 123,
-                "name": "Payments"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 271,
-                "children": [],
-                "id": 124,
-                "name": "Products"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 281,
-                "children": [],
-                "id": 125,
-                "name": "Customers"
-              }
-            ],
-            "id": 119,
-            "name": "Customers"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 250,
-                "children": [],
-                "id": 127,
-                "name": "Bills"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 251,
-                "children": [],
-                "id": 128,
-                "name": "Refunds"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 225,
-                "children": [],
-                "id": 130,
-                "name": "Payments"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 269,
-                "children": [],
-                "id": 131,
-                "name": "Bank Accounts"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 272,
-                "children": [],
-                "id": 132,
-                "name": "Products"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 282,
-                "children": [],
-                "id": 133,
-                "name": "Vendors"
-              }
-            ],
-            "id": 126,
-            "name": "Vendors"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 275,
-                    "children": [],
-                    "id": 144,
-                    "name": "Invoice Analysis"
-                  }
-                ],
-                "id": 143,
-                "name": "Management"
-              }
-            ],
-            "id": 142,
-            "name": "Reporting"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 278,
-                "children": [],
-                "id": 148,
-                "name": "Settings"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 267,
-                    "children": [],
-                    "id": 150,
-                    "name": "Payment Terms"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 286,
-                    "children": [],
-                    "id": 151,
-                    "name": "Incoterms"
-                  }
-                ],
-                "id": 149,
-                "name": "Invoicing"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.server",
-                    "action_id": 268,
-                    "children": [],
-                    "id": 153,
-                    "name": "Add a Bank Account"
-                  }
-                ],
-                "id": 152,
-                "name": "Banks"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 265,
-                    "children": [],
-                    "id": 157,
-                    "name": "Taxes"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 260,
-                    "children": [],
-                    "id": 158,
-                    "name": "Journals"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 66,
-                    "children": [],
-                    "id": 160,
-                    "name": "Currencies"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 280,
-                    "children": [],
-                    "id": 161,
-                    "name": "Fiscal Positions"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 261,
-                    "children": [],
-                    "id": 162,
-                    "name": "Journal Groups"
-                  }
-                ],
-                "id": 155,
-                "name": "Accounting"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 210,
-                    "children": [],
-                    "id": 239,
-                    "name": "Payment Providers"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 211,
-                    "children": [],
-                    "id": 240,
-                    "name": "Payment Methods"
-                  }
-                ],
-                "id": 164,
-                "name": "Online Payments"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 172,
-                    "children": [],
-                    "id": 166,
-                    "name": "Product Categories"
-                  }
-                ],
-                "id": 165,
-                "name": "Management"
-              }
-            ],
-            "id": 147,
-            "name": "Configuration"
-          }
-        ],
-        "id": 117,
-        "name": "Invoicing"
-      },
-      {
-        "action": null,
-        "action_id": null,
-        "children": [
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 429,
-                "children": [],
-                "id": 258,
-                "name": "Requests for Quotation"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 430,
-                "children": [],
-                "id": 259,
-                "name": "Purchase Orders"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 282,
-                "children": [],
-                "id": 246,
-                "name": "Vendors"
-              }
-            ],
-            "id": 245,
-            "name": "Orders"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 427,
-                "children": [],
-                "id": 256,
-                "name": "Products"
-              }
-            ],
-            "id": 255,
-            "name": "Products"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 439,
-                "children": [],
-                "id": 262,
-                "name": "Purchase"
-              }
-            ],
-            "id": 261,
-            "name": "Reporting"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 436,
-                "children": [],
-                "id": 260,
-                "name": "Settings"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 176,
-                "children": [],
-                "id": 248,
-                "name": "Vendor Pricelists"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 172,
-                    "children": [],
-                    "id": 251,
-                    "name": "Product Categories"
-                  }
-                ],
-                "id": 249,
-                "name": "Products"
-              }
-            ],
-            "id": 247,
-            "name": "Configuration"
-          }
-        ],
-        "id": 244,
-        "name": "Purchase"
-      },
-      {
-        "action": null,
-        "action_id": null,
-        "children": [
-          {
-            "action": "ir.actions.act_window",
-            "action_id": 396,
-            "children": [],
-            "id": 224,
-            "name": "Overview"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 379,
-                    "children": [],
-                    "id": 220,
-                    "name": "Receipts"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 380,
-                    "children": [],
-                    "id": 221,
-                    "name": "Deliveries"
-                  }
-                ],
-                "id": 196,
-                "name": "Transfers"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.server",
-                    "action_id": 368,
-                    "children": [],
-                    "id": 215,
-                    "name": "Physical Inventory"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 367,
-                    "children": [],
-                    "id": 214,
-                    "name": "Scrap"
-                  }
-                ],
-                "id": 197,
-                "name": "Adjustments"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.server",
-                    "action_id": 409,
-                    "children": [],
-                    "id": 232,
-                    "name": "Replenishment"
-                  }
-                ],
-                "id": 198,
-                "name": "Procurement"
-              }
-            ],
-            "id": 195,
-            "name": "Operations"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 400,
-                "children": [],
-                "id": 226,
-                "name": "Products"
-              }
-            ],
-            "id": 209,
-            "name": "Products"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 399,
-                "children": [],
-                "id": 229,
-                "name": "Stock"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 377,
-                "children": [],
-                "id": 219,
-                "name": "Moves History"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 397,
-                "children": [],
-                "id": 225,
-                "name": "Move Analysis"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 440,
-                "children": [],
-                "id": 263,
-                "name": "Valuation"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 442,
-                "children": [],
-                "id": 264,
-                "name": "Inventory Aging"
-              }
-            ],
-            "id": 210,
-            "name": "Reporting"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 412,
-                "children": [],
-                "id": 235,
-                "name": "Settings"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 375,
-                    "children": [],
-                    "id": 218,
-                    "name": "Warehouses"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 395,
-                    "children": [],
-                    "id": 223,
-                    "name": "Operations Types"
-                  }
-                ],
-                "id": 200,
-                "name": "Warehouse Management"
-              },
-              {
-                "action": null,
-                "action_id": null,
-                "children": [
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 172,
-                    "children": [],
-                    "id": 204,
-                    "name": "Product Categories"
-                  },
-                  {
-                    "action": "ir.actions.act_window",
-                    "action_id": 408,
-                    "children": [],
-                    "id": 233,
-                    "name": "Reordering Rules"
-                  }
-                ],
-                "id": 201,
-                "name": "Products"
-              }
-            ],
-            "id": 199,
-            "name": "Configuration"
-          }
-        ],
-        "id": 194,
-        "name": "Inventory"
-      },
-      {
-        "action": null,
-        "action_id": null,
-        "children": [
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 38,
-                "children": [],
-                "id": 48,
-                "name": "Main Apps"
-              },
-              {
-                "action": "ir.actions.act_url",
-                "action_id": 40,
-                "children": [],
-                "id": 51,
-                "name": "Theme Store"
-              },
-              {
-                "action": "ir.actions.act_url",
-                "action_id": 39,
-                "children": [],
-                "id": 50,
-                "name": "Third-Party Apps"
-              }
-            ],
-            "id": 47,
-            "name": "Apps"
-          }
-        ],
-        "id": 15,
-        "name": "Apps"
-      },
-      {
-        "action": null,
-        "action_id": null,
-        "children": [
-          {
-            "action": "ir.actions.act_window",
-            "action_id": 84,
-            "children": [],
-            "id": 66,
-            "name": "General Settings"
-          },
-          {
-            "action": null,
-            "action_id": null,
-            "children": [
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 69,
-                "children": [],
-                "id": 60,
-                "name": "Users"
-              },
-              {
-                "action": "ir.actions.act_window",
-                "action_id": 52,
-                "children": [],
-                "id": 57,
-                "name": "Companies"
-              }
-            ],
-            "id": 3,
-            "name": "Users & Companies"
-          }
-        ],
-        "id": 1,
-        "name": "Settings"
-      }
-    ]
-  },
   "user": "pm",
   "user_fallback": "admin",
-  "view_type": null
+  "fallback": false,
+  "action": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "nav": [
+      {
+        "key": "menu:265",
+        "label": "智能施工 2.0",
+        "icon": null,
+        "menu_id": 265,
+        "children": [
+          {
+            "key": "menu:307",
+            "label": "成本科目",
+            "icon": null,
+            "menu_id": 307,
+            "children": [],
+            "meta": {
+              "scene": "web",
+              "sequence": 40,
+              "menu_id": 307,
+              "menu_xmlid": "smart_construction_core.menu_sc_project_cost_code",
+              "action_id": 451,
+              "action_type": "ir.actions.act_window",
+              "model": "project.cost.code",
+              "groups_xmlids": [
+                91
+              ]
+            }
+          }
+        ],
+        "meta": {
+          "scene": "web",
+          "sequence": 30,
+          "menu_id": 265,
+          "menu_xmlid": "smart_construction_core.menu_sc_root",
+          "action_id": 449,
+          "action_type": "ir.actions.act_window",
+          "model": "project.project",
+          "groups_xmlids": [
+            81,
+            84,
+            90,
+            72,
+            78,
+            91,
+            75,
+            69
+          ]
+        }
+      },
+      {
+        "key": "menu:172",
+        "label": "Project",
+        "icon": "project,static/description/icon.png",
+        "menu_id": 172,
+        "children": [
+          {
+            "key": "menu:173",
+            "label": "Projects",
+            "icon": null,
+            "menu_id": 173,
+            "children": [],
+            "meta": {
+              "scene": "web",
+              "sequence": 1,
+              "menu_id": 173,
+              "menu_xmlid": "project.menu_projects",
+              "action_id": 302,
+              "action_type": "ir.actions.act_window",
+              "model": "project.project"
+            }
+          },
+          {
+            "key": "menu:177",
+            "label": "All Tasks",
+            "icon": null,
+            "menu_id": 177,
+            "children": [],
+            "meta": {
+              "scene": "web",
+              "sequence": 2,
+              "menu_id": 177,
+              "menu_xmlid": "project.menu_project_management_all_tasks",
+              "action_id": 312,
+              "action_type": "ir.actions.act_window",
+              "model": "project.task"
+            }
+          },
+          {
+            "key": "menu:181",
+            "label": "Configuration",
+            "icon": null,
+            "menu_id": 181,
+            "children": [
+              {
+                "key": "menu:184",
+                "label": "Projects",
+                "icon": null,
+                "menu_id": 184,
+                "children": [],
+                "meta": {
+                  "scene": "web",
+                  "sequence": 5,
+                  "menu_id": 184,
+                  "menu_xmlid": "project.menu_projects_config",
+                  "action_id": 304,
+                  "action_type": "ir.actions.act_window",
+                  "model": "project.project"
+                }
+              },
+              {
+                "key": "menu:187",
+                "label": "Tags",
+                "icon": null,
+                "menu_id": 187,
+                "children": [],
+                "meta": {
+                  "scene": "web",
+                  "sequence": 10,
+                  "menu_id": 187,
+                  "menu_xmlid": "project.menu_project_tags_act",
+                  "action_id": 320,
+                  "action_type": "ir.actions.act_window",
+                  "model": "project.tags"
+                }
+              },
+              {
+                "key": "menu:186",
+                "label": "Task Stages",
+                "icon": null,
+                "menu_id": 186,
+                "children": [],
+                "meta": {
+                  "scene": "web",
+                  "sequence": 10,
+                  "menu_id": 186,
+                  "menu_xmlid": "project.menu_project_config_project",
+                  "action_id": 297,
+                  "action_type": "ir.actions.act_window",
+                  "model": "project.task.type",
+                  "groups_xmlids": [
+                    7
+                  ]
+                }
+              }
+            ],
+            "meta": {
+              "scene": "web",
+              "sequence": 100,
+              "menu_id": 181,
+              "menu_xmlid": "project.menu_project_config",
+              "groups_xmlids": [
+                34
+              ]
+            }
+          }
+        ],
+        "meta": {
+          "scene": "web",
+          "sequence": 70,
+          "menu_id": 172,
+          "menu_xmlid": "project.menu_main_pm",
+          "groups_xmlids": [
+            91
+          ]
+        }
+      }
+    ],
+    "buttons": []
+  },
+  "record": null,
+  "record_error": null,
+  "meta_fields": null,
+  "execute_result": null,
+  "execute_error": null
 }

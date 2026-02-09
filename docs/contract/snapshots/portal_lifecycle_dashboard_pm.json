@@ -1,20 +1,30 @@
 {
-  "action": null,
   "case": "portal_lifecycle_dashboard_pm",
+  "trace_id": "efcf19eb-204d-4681-8725-ea6f8caa8bed",
+  "exported_at": "2026-02-09T05:15:30Z",
   "contract_version": "v1",
-  "execute_error": null,
-  "execute_result": null,
-  "fallback": false,
-  "meta_fields": null,
   "model": null,
+  "view_type": null,
   "op": "ui.contract",
-  "record": null,
-  "record_error": null,
+  "user": "pm",
+  "user_fallback": "admin",
+  "fallback": false,
+  "action": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "capability_codes": [],
     "contract_version": "v1",
+    "profile": {
+      "name": "portal.lifecycle_dashboard",
+      "company_id": 1,
+      "lang": null,
+      "tz": "Asia/Shanghai"
+    },
+    "trace_id": "portal_snapshot",
+    "subject": "ui.contract",
+    "route": "/portal/lifecycle",
+    "schema_version": "portal-lifecycle-v1",
     "layout": {
+      "title": "项目生命周期驾驶舱",
       "columns": [
         {
           "key": "lifecycle",
@@ -28,25 +38,38 @@
           "key": "capabilities",
           "title": "能力矩阵"
         }
-      ],
-      "title": "项目生命周期驾驶舱"
+      ]
     },
-    "lifecycle_states": [],
+    "lifecycle_states": [
+      "draft",
+      "in_progress",
+      "paused",
+      "done",
+      "closing",
+      "warranty",
+      "closed"
+    ],
+    "capability_codes": [
+      "boq.edit",
+      "contract.create",
+      "cost.entry",
+      "finance.payment.submit",
+      "finance.settlement.create",
+      "project.close",
+      "project.edit_basic",
+      "project.lifecycle.transition",
+      "task.complete",
+      "task.create",
+      "task.start"
+    ],
     "matrix_meta": {
-      "error": "matrix_not_found",
-      "path": "/mnt/docs/architecture/lifecycle_capability_matrix.yaml"
-    },
-    "profile": {
-      "company_id": 1,
-      "lang": null,
-      "name": "portal.lifecycle_dashboard",
-      "tz": "Asia/Shanghai"
-    },
-    "route": "/portal/lifecycle",
-    "schema_version": "portal-lifecycle-v1",
-    "subject": "ui.contract"
+      "path": "/mnt/docs/architecture/lifecycle_capability_matrix.yaml",
+      "error": null
+    }
   },
-  "user": "pm",
-  "user_fallback": "admin",
-  "view_type": null
+  "record": null,
+  "record_error": null,
+  "meta_fields": null,
+  "execute_result": null,
+  "execute_error": null
 }
