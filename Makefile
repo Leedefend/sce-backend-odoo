@@ -783,6 +783,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	  $(MAKE) verify.portal.scene_warnings_guard.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.scene_warnings_limit.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.act_url_missing_scene_report.container DB_NAME=$(DB_NAME); \
+	  $(MAKE) verify.portal.my_work_smoke.container DB_NAME=$(DB_NAME); \
 	else \
 	  echo "[gate.full] SC_GATE_STRICT=0: skip menu/act_url guard checks"; \
 	fi
@@ -998,7 +999,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard policy.apply.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1029,6 +1030,21 @@ verify.extension_modules.guard: guard.prod.forbid check-compose-project check-co
 
 policy.apply.extension_modules: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/apply_extension_modules.sh
+
+policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-compose-env
+	@set -e; \
+	if $(MAKE) --no-print-directory verify.extension_modules.guard DB_NAME=$(DB_NAME); then \
+	  echo "[policy.ensure.extension_modules] already satisfied"; \
+	elif [ "$${AUTO_FIX_EXTENSION_MODULES:-0}" = "1" ]; then \
+	  echo "[policy.ensure.extension_modules] applying auto-fix"; \
+	  $(MAKE) --no-print-directory policy.apply.extension_modules DB_NAME=$(DB_NAME); \
+	  $(MAKE) --no-print-directory restart; \
+	  $(MAKE) --no-print-directory verify.extension_modules.guard DB_NAME=$(DB_NAME); \
+	else \
+	  echo "[policy.ensure.extension_modules] FAIL: missing smart_construction_core in sc.core.extension_modules"; \
+	  echo "[policy.ensure.extension_modules] HINT: re-run with AUTO_FIX_EXTENSION_MODULES=1 to auto-fix + restart"; \
+	  exit 2; \
+	fi
 
 # ======================================================
 # ==================== CI ==============================

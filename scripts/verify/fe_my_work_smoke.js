@@ -135,8 +135,8 @@ async function main() {
         return;
       }
       throw new Error(
-        'my.work.summary is not registered; run `make verify.extension_modules.guard` and ' +
-          '`make policy.apply.extension_modules DB_NAME=<db>` then restart'
+        'my.work.summary is not registered; run `make policy.ensure.extension_modules DB_NAME=<db>` ' +
+          '(or set AUTO_FIX_EXTENSION_MODULES=1 for auto-fix + restart)'
       );
     }
     throw new Error(`my.work.summary page1 failed: status=${resp1.status} message=${errMsg || '-'}`);
