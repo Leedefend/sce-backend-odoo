@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from unittest.mock import patch
+
 from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import TransactionCase, tagged
 
@@ -155,6 +157,59 @@ class TestMyWorkBackend(TransactionCase):
         self.assertFalse(bool(second_data.get("idempotent_replay")))
         self.assertTrue(bool(second_data.get("replay_window_expired")))
         self.assertEqual(second_data.get("idempotency_replay_reason_code"), REASON_REPLAY_WINDOW_EXPIRED)
+
+    def test_batch_replay_contract_shape_without_audit_model(self):
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        replay_payload = {
+            "source": "mail.activity",
+            "success": False,
+            "reason_code": "PARTIAL_FAILED",
+            "message": "部分待办完成失败",
+            "done_count": 0,
+            "failed_count": 1,
+            "completed_ids": [],
+            "failed_items": [{"id": 0, "reason_code": "INVALID_ID", "message": "待办 ID 无效"}],
+            "failed_reason_summary": [{"reason_code": "INVALID_ID", "count": 1}],
+            "done_at": "mock",
+        }
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.my_work_complete.resolve_idempotency_decision",
+            return_value={
+                "conflict": False,
+                "replay_entry": {"audit_id": 9, "trace_id": "trace-replay"},
+                "replay_payload": replay_payload,
+                "replay_window_expired": False,
+            },
+        ):
+            result = handler.handle({"ids": ["bad"], "source": "mail.activity", "request_id": "req-mock-replay-1"})
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        self.assertTrue(bool(data.get("idempotent_replay")))
+        self.assertEqual(int(data.get("replay_from_audit_id") or 0), 9)
+        self.assertEqual(str(data.get("replay_original_trace_id") or ""), "trace-replay")
+        self.assertEqual(data.get("idempotency_key"), "req-mock-replay-1")
+        self.assertTrue(bool(data.get("idempotency_fingerprint")))
+
+    def test_batch_conflict_contract_shape_without_audit_model(self):
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.my_work_complete.resolve_idempotency_decision",
+            return_value={
+                "conflict": True,
+                "replay_entry": None,
+                "replay_payload": None,
+                "replay_window_expired": False,
+            },
+        ):
+            result = handler.handle({"ids": ["bad"], "source": "mail.activity", "request_id": "req-mock-conflict-1"})
+        self.assertFalse(result.get("ok"))
+        self.assertEqual(int(result.get("code") or 0), 409)
+        err = result.get("error") or {}
+        self.assertEqual(err.get("reason_code"), REASON_IDEMPOTENCY_CONFLICT)
+        data = result.get("data") or {}
+        self.assertEqual(data.get("request_id"), "req-mock-conflict-1")
+        self.assertEqual(data.get("idempotency_key"), "req-mock-conflict-1")
+        self.assertEqual(int(data.get("replay_from_audit_id") or 0), 0)
 
     def test_summary_status_contract(self):
         handler = MyWorkSummaryHandler(self.env, payload={})
