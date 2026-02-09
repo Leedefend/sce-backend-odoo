@@ -242,6 +242,36 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 non_retryable += 1
         return {"retryable": retryable, "non_retryable": non_retryable}
 
+    def _normalize_result_rows(self, rows: List[Dict[str, Any]], *, trace_id: str) -> List[Dict[str, Any]]:
+        normalized = []
+        for raw in rows or []:
+            row = dict(raw or {})
+            reason_code = str(row.get("reason_code") or "").strip()
+            ok = bool(row.get("ok"))
+            if not ok and reason_code:
+                row.update(batch_failure_meta(reason_code))
+            row.setdefault("retryable", False)
+            row.setdefault("error_category", "")
+            row.setdefault("suggested_action", "")
+            row["trace_id"] = str(row.get("trace_id") or trace_id)
+            normalized.append(row)
+        return normalized
+
+    def _ensure_result_contract(self, result: Dict[str, Any], *, request_id: str, trace_id: str) -> Dict[str, Any]:
+        data = dict(result or {})
+        rows = self._normalize_result_rows(data.get("results") or [], trace_id=trace_id)
+        data["results"] = rows
+        data["request_id"] = str(data.get("request_id") or request_id)
+        data["trace_id"] = str(data.get("trace_id") or trace_id)
+        data["failed_retry_ids"] = [
+            int(item.get("id") or 0)
+            for item in rows
+            if not item.get("ok") and bool(item.get("retryable")) and int(item.get("id") or 0) > 0
+        ]
+        data["failed_reason_summary"] = data.get("failed_reason_summary") or self._failed_reason_summary(rows)
+        data["failed_retryable_summary"] = data.get("failed_retryable_summary") or self._failed_retryable_summary(rows)
+        return data
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
@@ -292,22 +322,25 @@ class ApiDataBatchHandler(BaseIntentHandler):
             fingerprint=idempotency_fingerprint,
         )
         if replay:
-            replay_data = self._apply_failed_page(dict(replay), offset=page_offset, limit=page_limit)
+            replay_data = self._ensure_result_contract(dict(replay), request_id=request_id, trace_id=trace_id)
+            replay_data = self._apply_failed_page(replay_data, offset=page_offset, limit=page_limit)
             replay_data["idempotent_replay"] = True
             replay_data["idempotency_key"] = idempotency_key
             replay_data["idempotency_fingerprint"] = idempotency_fingerprint
-            replay_data["request_id"] = str(replay_data.get("request_id") or request_id)
-            replay_data["trace_id"] = str(replay_data.get("trace_id") or trace_id)
-            replay_data["failed_reason_summary"] = replay_data.get("failed_reason_summary") or self._failed_reason_summary(replay_data.get("results") or [])
-            replay_data["failed_retryable_summary"] = replay_data.get("failed_retryable_summary") or self._failed_retryable_summary(
-                replay_data.get("results") or []
-            )
             if export_failed_csv and replay_data.get("failed_total", 0) > 0 and not replay_data.get("failed_csv_content_b64"):
                 failed_csv = self._build_failed_csv(model, action or "write", [item for item in replay_data.get("results") or [] if not item.get("ok")])
                 replay_data["failed_csv_file_name"] = failed_csv.get("file_name")
                 replay_data["failed_csv_content_b64"] = failed_csv.get("content_b64")
                 replay_data["failed_csv_count"] = failed_csv.get("count")
-            return {"ok": True, "data": replay_data, "meta": {"trace_id": trace_id, "write_mode": "batch", "source": "portal-shell"}}
+            return {
+                "ok": True,
+                "data": replay_data,
+                "meta": {
+                    "trace_id": str(replay_data.get("trace_id") or trace_id),
+                    "write_mode": "batch",
+                    "source": "portal-shell",
+                },
+            }
 
         try:
             env_model.check_access_rights("write")

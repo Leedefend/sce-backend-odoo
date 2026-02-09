@@ -68,3 +68,25 @@ class TestApiDataBatchContractBackend(TransactionCase):
         self.assertTrue(bool(row.get("retryable")))
         self.assertEqual(row.get("error_category"), "conflict")
         self.assertEqual(row.get("suggested_action"), "reload_then_retry")
+
+    def test_legacy_replay_result_is_backfilled_to_new_contract(self):
+        handler = ApiDataBatchHandler(self.env, payload={})
+        legacy = {
+            "results": [
+                {"id": 11, "ok": False, "reason_code": "CONFLICT", "message": "legacy"},
+                {"id": 12, "ok": False, "reason_code": "NOT_FOUND", "message": "legacy"},
+            ]
+        }
+        enriched = handler._ensure_result_contract(legacy, request_id="req-legacy-1", trace_id="adb_legacy")
+        self.assertEqual(enriched.get("request_id"), "req-legacy-1")
+        self.assertEqual(enriched.get("trace_id"), "adb_legacy")
+        self.assertEqual(enriched.get("failed_retry_ids"), [11])
+        self.assertEqual(enriched.get("failed_retryable_summary"), {"retryable": 1, "non_retryable": 1})
+        reasons = enriched.get("failed_reason_summary") or []
+        reason_codes = sorted([row.get("reason_code") for row in reasons])
+        self.assertEqual(reason_codes, ["CONFLICT", "NOT_FOUND"])
+        rows = enriched.get("results") or []
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(bool(rows[0].get("trace_id")))
+        self.assertIn("error_category", rows[0])
+        self.assertIn("suggested_action", rows[0])
