@@ -1,25 +1,94 @@
 {
-  "action": null,
   "case": "project_capability_matrix_pm",
+  "trace_id": "feddb5d5-080d-47e7-a0d9-31aa7a76ea51",
+  "exported_at": "2026-02-09T05:15:17Z",
   "contract_version": "v1",
-  "execute_error": null,
-  "execute_result": null,
-  "fallback": false,
-  "meta_fields": null,
   "model": "project.project",
+  "view_type": null,
   "op": "meta.describe_project_capabilities",
-  "record": null,
-  "record_error": null,
-  "ui_contract": null,
-  "ui_contract_raw": {
-    "capabilities": {},
-    "lifecycle_state": "draft",
-    "matrix_meta": {
-      "error": "matrix_not_found",
-      "path": "/mnt/docs/architecture/lifecycle_capability_matrix.yaml"
-    }
-  },
   "user": "pm",
   "user_fallback": "admin",
-  "view_type": null
+  "fallback": false,
+  "action": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "lifecycle_state": "draft",
+    "capabilities": {
+      "boq.edit": {
+        "mode": "allow",
+        "allowed": true,
+        "ui_label": "编辑BOQ",
+        "ui_hint": "结构冻结后只读"
+      },
+      "contract.create": {
+        "mode": "allow",
+        "allowed": true,
+        "ui_label": "创建合同",
+        "ui_hint": "按项目阶段开放"
+      },
+      "cost.entry": {
+        "mode": "deny",
+        "allowed": false,
+        "ui_label": "录入成本/进度",
+        "ui_hint": "仅执行阶段允许"
+      },
+      "finance.payment.submit": {
+        "mode": "deny",
+        "allowed": false,
+        "ui_label": "提交付款申请",
+        "ui_hint": "需结算审批通过"
+      },
+      "finance.settlement.create": {
+        "mode": "deny",
+        "allowed": false,
+        "ui_label": "创建结算单",
+        "ui_hint": "执行阶段开放"
+      },
+      "project.close": {
+        "mode": "deny",
+        "allowed": false,
+        "ui_label": "项目关闭",
+        "ui_hint": "关闭后仅可查看"
+      },
+      "project.edit_basic": {
+        "mode": "allow",
+        "allowed": true,
+        "ui_label": "编辑项目基础信息",
+        "ui_hint": "项目关闭后不可修改"
+      },
+      "project.lifecycle.transition": {
+        "mode": "allow",
+        "allowed": true,
+        "ui_label": "变更生命周期状态",
+        "ui_hint": "受流程门禁约束"
+      },
+      "task.complete": {
+        "mode": "deny",
+        "allowed": false,
+        "ui_label": "完成任务",
+        "ui_hint": "完成度达到要求"
+      },
+      "task.create": {
+        "mode": "deny",
+        "allowed": false,
+        "ui_label": "创建任务",
+        "ui_hint": "暂停/关闭阶段不可创建"
+      },
+      "task.start": {
+        "mode": "deny",
+        "allowed": false,
+        "ui_label": "启动任务",
+        "ui_hint": "需满足就绪条件"
+      }
+    },
+    "matrix_meta": {
+      "path": "/mnt/docs/architecture/lifecycle_capability_matrix.yaml",
+      "error": null
+    }
+  },
+  "record": null,
+  "record_error": null,
+  "meta_fields": null,
+  "execute_result": null,
+  "execute_error": null
 }

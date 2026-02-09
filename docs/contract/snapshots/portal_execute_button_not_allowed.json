@@ -1,34 +1,36 @@
 {
-  "action": null,
   "case": "portal_execute_button_not_allowed",
+  "trace_id": "fc486444-84e5-446f-8875-33eb3ebb1af3",
+  "exported_at": "2026-02-09T05:15:55Z",
   "contract_version": "v1",
-  "execute_error": "method not callable",
-  "execute_result": null,
-  "fallback": false,
-  "meta_fields": null,
   "model": "project.project",
+  "view_type": null,
   "op": "contract.portal_execute_button",
-  "record": null,
-  "record_error": null,
+  "user": "pm",
+  "user_fallback": "admin",
+  "fallback": false,
+  "action": null,
   "ui_contract": null,
   "ui_contract_raw": {
     "action": {
-      "code": null,
+      "label": null,
       "desc": null,
-      "label": null
+      "code": null
+    },
+    "target": {
+      "model": "project.project",
+      "res_id": 1,
+      "method": "action_sc_project_manage"
     },
     "allowed": false,
     "error": {
       "code": "not_allowed",
       "message": "method not allowed"
-    },
-    "target": {
-      "method": "action_sc_project_manage",
-      "model": "project.project",
-      "res_id": 1
     }
   },
-  "user": "pm",
-  "user_fallback": "admin",
-  "view_type": null
+  "record": null,
+  "record_error": null,
+  "meta_fields": null,
+  "execute_result": null,
+  "execute_error": "method not callable"
 }

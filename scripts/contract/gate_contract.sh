@@ -5,7 +5,7 @@ CASES_FILE=${CASES_FILE:-docs/contract/cases.yml}
 DB_NAME=${DB:-${DB_NAME:-}}
 REF_DIR=${REF_DIR:-docs/contract/snapshots}
 TMP_DIR=${TMP_DIR:-tmp/contract_snapshots_run}
-IGNORE_KEYS=${IGNORE_KEYS:-trace_id,exported_at,server_time,create_date,write_date,__last_update,create_uid,write_uid}
+IGNORE_KEYS=${IGNORE_KEYS:-trace_id,exported_at,generated_at,done_at,server_time,create_date,write_date,__last_update,create_uid,write_uid,version}
 BOOTSTRAP=${BOOTSTRAP:-0}
 BOOTSTRAP_PASS=${BOOTSTRAP_PASS:-0}
 
@@ -69,7 +69,18 @@ def _strip_keys(obj, ignore_keys):
             if k not in ignore_keys
         }
     if isinstance(obj, list):
-        return [_strip_keys(v, ignore_keys) for v in obj]
+        normalized = [_strip_keys(v, ignore_keys) for v in obj]
+        # Normalize domain atoms like: [field, "in"|"not in", [values...]]
+        # where scalar value order is non-semantic.
+        if (
+            len(normalized) >= 3
+            and isinstance(normalized[1], str)
+            and normalized[1] in ("in", "not in")
+            and isinstance(normalized[2], list)
+            and all(isinstance(v, (str, int, float, bool)) for v in normalized[2])
+        ):
+            normalized[2] = sorted(normalized[2], key=lambda v: str(v))
+        return normalized
     return obj
 
 

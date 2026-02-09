@@ -1,56 +1,61 @@
 {
-  "action": null,
   "case": "my_work_complete_batch_pm",
+  "trace_id": "fe0107f4-f202-4ff1-850a-ae1926dad3ad",
+  "exported_at": "2026-02-09T05:16:09Z",
   "contract_version": "v1",
-  "execute_error": null,
-  "execute_result": null,
-  "fallback": false,
-  "meta_fields": null,
   "model": null,
+  "view_type": null,
   "op": "intent.invoke",
-  "record": null,
-  "record_error": null,
+  "user": "pm",
+  "user_fallback": "admin",
+  "fallback": false,
+  "action": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "completed_ids": [],
-    "done_at": "2026-02-09 05:05:33",
+    "source": "mail.activity",
+    "success": false,
+    "reason_code": "PARTIAL_FAILED",
+    "message": "部分待办完成失败",
     "done_count": 0,
     "failed_count": 1,
+    "completed_ids": [],
     "failed_items": [
       {
-        "error_category": "not_found",
         "id": 999999991,
-        "message": "待办不存在",
         "reason_code": "NOT_FOUND",
+        "message": "待办不存在",
         "retryable": false,
-        "suggested_action": "refresh_list"
-      }
-    ],
-    "failed_reason_summary": [
-      {
-        "count": 1,
-        "reason_code": "NOT_FOUND"
+        "error_category": "not_found",
+        "suggested_action": "refresh_list",
+        "trace_id": "mw_batch_f7912bba539c"
       }
     ],
     "failed_retry_ids": [],
+    "failed_reason_summary": [
+      {
+        "reason_code": "NOT_FOUND",
+        "count": 1
+      }
+    ],
     "failed_retryable_summary": {
-      "non_retryable": 1,
-      "retryable": 0
+      "retryable": 0,
+      "non_retryable": 1
     },
-    "idempotency_fingerprint": "f8f45f265ac535343ef0d0e9a992c74ae42af0bd",
+    "done_at": "2026-02-09 05:16:09",
+    "request_id": "snapshot_my_work_batch_1",
     "idempotency_key": "snapshot_my_work_batch_1",
-    "idempotency_replay_reason_code": "",
+    "idempotency_fingerprint": "f8f45f265ac535343ef0d0e9a992c74ae42af0bd",
+    "trace_id": "mw_batch_f7912bba539c",
     "idempotent_replay": false,
-    "message": "部分待办完成失败",
-    "reason_code": "PARTIAL_FAILED",
-    "replay_age_ms": 0,
+    "replay_window_expired": false,
+    "idempotency_replay_reason_code": "",
     "replay_from_audit_id": 0,
     "replay_original_trace_id": "",
-    "replay_window_expired": false,
-    "source": "mail.activity",
-    "success": false
+    "replay_age_ms": 0
   },
-  "user": "pm",
-  "user_fallback": "admin",
-  "view_type": null
+  "record": null,
+  "record_error": null,
+  "meta_fields": null,
+  "execute_result": null,
+  "execute_error": null
 }
