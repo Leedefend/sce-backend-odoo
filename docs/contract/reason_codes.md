@@ -6,8 +6,9 @@ This document defines the canonical reason-code taxonomy used by Phase 10 intera
 
 Backend registry module:
 
-- `addons/smart_construction_core/handlers/reason_codes.py`
-- `addons/smart_core/handlers/reason_codes.py` (batch interaction reason codes)
+- `addons/smart_core/utils/reason_codes.py` (canonical registry + mapping)
+- `addons/smart_construction_core/handlers/reason_codes.py` (compatibility export + scene-specific adapters)
+- `addons/smart_core/handlers/reason_codes.py` (compatibility export for batch handlers)
 
 Current shared consumers:
 
@@ -26,6 +27,8 @@ Current shared consumers:
 - `USER_ERROR`
 - `INTERNAL_ERROR`
 - `ACCESS_RESTRICTED`
+- `CONFLICT`
+- `WRITE_FAILED`
 
 ## 3. My Work Failure Meta Contract
 

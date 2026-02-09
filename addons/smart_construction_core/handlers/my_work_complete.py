@@ -2,10 +2,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-import hashlib
-import json
-import os
-from datetime import timedelta
 from uuid import uuid4
 
 from odoo import fields
@@ -15,6 +11,14 @@ from odoo.addons.smart_construction_core.handlers.reason_codes import (
     REASON_DONE,
     REASON_PARTIAL_FAILED,
     my_work_failure_meta_for_exception,
+)
+from odoo.addons.smart_core.utils.idempotency import (
+    find_recent_audit_entry,
+    ids_summary,
+    normalize_ids_for_fingerprint,
+    normalize_request_id,
+    replay_window_seconds,
+    sha1_json,
 )
 
 
@@ -75,75 +79,32 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
     AUDIT_IDS_SAMPLE_LIMIT = 20
 
     def _idempotency_fingerprint(self, *, source, ids, note, idem_key):
-        normalized_ids = []
-        for raw_id in ids or []:
-            token = str(raw_id or "").strip()
-            if not token:
-                continue
-            try:
-                normalized_ids.append(int(token))
-            except Exception:
-                normalized_ids.append(f"raw:{token}")
         payload = {
             "intent": self.INTENT_TYPE,
             "db": self.env.cr.dbname,
             "user_id": int(self.env.user.id or 0),
             "company_id": int(self.env.user.company_id.id or 0) if self.env.user and self.env.user.company_id else 0,
             "source": source,
-            "ids": list(sorted(normalized_ids, key=lambda item: str(item))),
+            "ids": normalize_ids_for_fingerprint(ids),
             "note": note or "",
             "idempotency_key": idem_key,
         }
-        raw = json.dumps(payload, ensure_ascii=True, sort_keys=True)
-        return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+        return sha1_json(payload)
 
     def _idempotency_window_seconds(self):
-        raw = str(os.getenv("MY_WORK_BATCH_REPLAY_WINDOW_SEC", "")).strip()
-        if raw:
-            try:
-                return max(0, int(raw))
-            except Exception:
-                pass
-        return max(0, int(self.IDEMPOTENCY_WINDOW_SECONDS))
+        return replay_window_seconds(
+            self.IDEMPOTENCY_WINDOW_SECONDS,
+            env_key="MY_WORK_BATCH_REPLAY_WINDOW_SEC",
+        )
 
     def _find_recent_idempotency_entry(self, *, idem_key):
-        if not idem_key:
-            return None
-        Audit = self.env.get("sc.audit.log")
-        if not Audit:
-            return None
-        try:
-            now = fields.Datetime.now()
-            window_start = fields.Datetime.to_string(
-                fields.Datetime.from_string(now) - timedelta(seconds=self._idempotency_window_seconds())
-            )
-            logs = Audit.sudo().search(
-                [
-                    ("event_code", "=", "MY_WORK_COMPLETE_BATCH"),
-                    ("ts", ">=", window_start),
-                ],
-                order="id desc",
-                limit=20,
-            )
-            for log in logs:
-                after_raw = log.after_json or ""
-                if not after_raw:
-                    continue
-                try:
-                    payload = json.loads(after_raw)
-                except Exception:
-                    continue
-                if str(payload.get("idempotency_key") or "") != idem_key:
-                    continue
-                return {
-                    "audit_id": int(log.id or 0),
-                    "trace_id": str(log.trace_id or ""),
-                    "ts": log.ts,
-                    "payload": payload,
-                }
-        except Exception:
-            return None
-        return None
+        return find_recent_audit_entry(
+            self.env,
+            event_code="MY_WORK_COMPLETE_BATCH",
+            idempotency_key=idem_key,
+            window_seconds=self._idempotency_window_seconds(),
+            limit=20,
+        )
 
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
         return {
@@ -174,27 +135,8 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 return None
         return value
 
-    def _id_hash(self, rows):
-        values = [str(int(x)) for x in rows if str(x).strip().isdigit()]
-        payload = "|".join(sorted(values))
-        return hashlib.sha1(payload.encode("utf-8")).hexdigest() if payload else ""
-
     def _ids_summary(self, rows):
-        normalized = []
-        for value in rows or []:
-            token = str(value or "").strip()
-            if not token:
-                continue
-            try:
-                normalized.append(int(token))
-            except Exception:
-                continue
-        sample = normalized[: self.AUDIT_IDS_SAMPLE_LIMIT]
-        return {
-            "count": len(normalized),
-            "sample": sample,
-            "hash": self._id_hash(normalized),
-        }
+        return ids_summary(rows, sample_limit=self.AUDIT_IDS_SAMPLE_LIMIT)
 
     def _build_audit_payload(self, *, source, ids, note, idem_key, idem_fingerprint, result, trace_id, duration_ms):
         payload = {
@@ -264,7 +206,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         ids = params.get("ids") if isinstance(params.get("ids"), list) else []
         note = str(params.get("note") or "").strip()
         started = fields.Datetime.now()
-        request_id = _normalize_request_id(params.get("request_id"))
+        request_id = normalize_request_id(params.get("request_id"), prefix="mw_req")
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
         idempotency_fingerprint = self._idempotency_fingerprint(
             source=source, ids=ids, note=note, idem_key=idempotency_key
@@ -393,11 +335,6 @@ def _safe_int(value):
 
 def _reason_code_for_exception(exc):
     return _failure_meta_for_exception(exc)["reason_code"]
-
-
-def _normalize_request_id(raw_value):
-    value = str(raw_value or "").strip()
-    return value if value else f"mw_req_{uuid4().hex[:12]}"
 
 
 def _failure_meta_for_exception(exc):
