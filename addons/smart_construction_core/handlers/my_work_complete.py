@@ -275,7 +275,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             idempotent_replay=False,
             replay_window_expired=bool(replay_window_expired),
             replay_reason_code=REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",
-            include_replay_evidence=False,
+            include_replay_evidence=True,
         )
         duration_ms = int(
             (
