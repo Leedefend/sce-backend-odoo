@@ -26,6 +26,10 @@ class TestApiDataBatchContractBackend(TransactionCase):
         self.assertEqual(data.get("idempotency_key"), "req-batch-001")
         self.assertEqual(data.get("failed"), 1)
         self.assertEqual(data.get("failed_retry_ids"), [])
+        self.assertEqual(data.get("failed_retryable_summary"), {"retryable": 0, "non_retryable": 1})
+        reason_rows = data.get("failed_reason_summary") or []
+        self.assertEqual(reason_rows[0].get("reason_code"), "NOT_FOUND")
+        self.assertEqual(reason_rows[0].get("count"), 1)
         rows = data.get("results") or []
         self.assertEqual(len(rows), 1)
         row = rows[0]
@@ -53,6 +57,10 @@ class TestApiDataBatchContractBackend(TransactionCase):
         data = result.get("data") or {}
         self.assertEqual(data.get("failed"), 1)
         self.assertEqual(data.get("failed_retry_ids"), [partner.id])
+        self.assertEqual(data.get("failed_retryable_summary"), {"retryable": 1, "non_retryable": 0})
+        reason_rows = data.get("failed_reason_summary") or []
+        self.assertEqual(reason_rows[0].get("reason_code"), "CONFLICT")
+        self.assertEqual(reason_rows[0].get("count"), 1)
         rows = data.get("results") or []
         self.assertEqual(len(rows), 1)
         row = rows[0]

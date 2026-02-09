@@ -6,6 +6,7 @@ import logging
 import base64
 import csv
 import io
+from collections import defaultdict
 from datetime import datetime
 from datetime import timedelta
 from typing import Any, Dict, List
@@ -210,6 +211,29 @@ class ApiDataBatchHandler(BaseIntentHandler):
         enriched["failed_has_more"] = (start + len(page)) < total
         return enriched
 
+    def _failed_reason_summary(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        counts = defaultdict(int)
+        for row in rows or []:
+            if row.get("ok"):
+                continue
+            code = str(row.get("reason_code") or "").strip() or "UNKNOWN"
+            counts[code] += 1
+        out = [{"reason_code": key, "count": int(value)} for key, value in counts.items()]
+        out.sort(key=lambda item: item["count"], reverse=True)
+        return out
+
+    def _failed_retryable_summary(self, rows: List[Dict[str, Any]]) -> Dict[str, int]:
+        retryable = 0
+        non_retryable = 0
+        for row in rows or []:
+            if row.get("ok"):
+                continue
+            if bool(row.get("retryable")):
+                retryable += 1
+            else:
+                non_retryable += 1
+        return {"retryable": retryable, "non_retryable": non_retryable}
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
@@ -266,6 +290,10 @@ class ApiDataBatchHandler(BaseIntentHandler):
             replay_data["idempotency_fingerprint"] = idempotency_fingerprint
             replay_data["request_id"] = str(replay_data.get("request_id") or request_id)
             replay_data["trace_id"] = str(replay_data.get("trace_id") or trace_id)
+            replay_data["failed_reason_summary"] = replay_data.get("failed_reason_summary") or self._failed_reason_summary(replay_data.get("results") or [])
+            replay_data["failed_retryable_summary"] = replay_data.get("failed_retryable_summary") or self._failed_retryable_summary(
+                replay_data.get("results") or []
+            )
             if export_failed_csv and replay_data.get("failed_total", 0) > 0 and not replay_data.get("failed_csv_content_b64"):
                 failed_csv = self._build_failed_csv(model, action or "write", [item for item in replay_data.get("results") or [] if not item.get("ok")])
                 replay_data["failed_csv_file_name"] = failed_csv.get("file_name")
@@ -353,6 +381,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
             "failed": failed,
             "results": results,
             "failed_retry_ids": failed_retry_ids,
+            "failed_reason_summary": self._failed_reason_summary(results),
+            "failed_retryable_summary": self._failed_retryable_summary(results),
             "idempotency_key": idempotency_key,
             "idempotency_fingerprint": idempotency_fingerprint,
             "idempotent_replay": False,

@@ -46,6 +46,8 @@ For generic batch write intent (`api.data.batch`), response includes:
 - `request_id`
 - `trace_id`
 - `failed_retry_ids`
+- `failed_reason_summary` (array of `{reason_code, count}`)
+- `failed_retryable_summary` (`{retryable, non_retryable}`)
 - per-row structured fields:
   - `reason_code`
   - `retryable`
