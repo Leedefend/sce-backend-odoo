@@ -2,10 +2,16 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from uuid import uuid4
 
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.exceptions import AccessError, UserError
+from odoo.addons.smart_construction_core.handlers.reason_codes import (
+    REASON_DONE,
+    REASON_PARTIAL_FAILED,
+    my_work_failure_meta_for_exception,
+)
 
 
 class MyWorkCompleteHandler(BaseIntentHandler):
@@ -26,7 +32,7 @@ class MyWorkCompleteHandler(BaseIntentHandler):
                 "id": activity_id,
                 "source": source,
                 "success": True,
-                "reason_code": "DONE",
+                "reason_code": REASON_DONE,
                 "message": "待办已完成",
                 "retryable": False,
                 "error_category": "",
@@ -35,7 +41,7 @@ class MyWorkCompleteHandler(BaseIntentHandler):
             }
         except Exception as exc:
             activity_id = _safe_int(item_id)
-            failed_meta = _failure_meta_for_exception(exc)
+            failed_meta = my_work_failure_meta_for_exception(exc)
             data = {
                 "id": activity_id,
                 "source": source,
@@ -66,6 +72,8 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         source = str(params.get("source") or "").strip()
         ids = params.get("ids") if isinstance(params.get("ids"), list) else []
         note = str(params.get("note") or "").strip()
+        request_id = _normalize_request_id(params.get("request_id"))
+        trace_id = f"mw_batch_{uuid4().hex[:12]}"
         if not ids:
             raise UserError("缺少待办 ID 列表")
 
@@ -78,7 +86,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 _complete_activity(self.env, source=source, activity_id=activity_id, note=note)
                 completed.append(activity_id)
             except Exception as exc:
-                failed_meta = _failure_meta_for_exception(exc)
+                failed_meta = my_work_failure_meta_for_exception(exc)
                 reason_code = failed_meta["reason_code"]
                 reason_counter[reason_code] += 1
                 failed.append({
@@ -88,18 +96,23 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                     "retryable": bool(failed_meta["retryable"]),
                     "error_category": failed_meta["error_category"],
                     "suggested_action": failed_meta["suggested_action"],
+                    "trace_id": trace_id,
                 })
 
         ok = len(failed) == 0
+        failed_retry_ids = [int(item.get("id") or 0) for item in failed if bool(item.get("retryable")) and int(item.get("id") or 0) > 0]
         data = {
             "source": source,
+            "request_id": request_id,
+            "trace_id": trace_id,
             "success": ok,
-            "reason_code": "DONE" if ok else "PARTIAL_FAILED",
+            "reason_code": REASON_DONE if ok else REASON_PARTIAL_FAILED,
             "message": "批量完成成功" if ok else "部分待办完成失败",
             "done_count": len(completed),
             "failed_count": len(failed),
             "completed_ids": completed,
             "failed_items": failed,
+            "failed_retry_ids": failed_retry_ids,
             "failed_reason_summary": _reason_summary(reason_counter),
             "failed_retryable_summary": _retryable_summary(failed),
             "done_at": fields.Datetime.now(),
@@ -140,49 +153,14 @@ def _reason_code_for_exception(exc):
     return _failure_meta_for_exception(exc)["reason_code"]
 
 
+def _normalize_request_id(raw_value):
+    value = str(raw_value or "").strip()
+    return value if value else f"mw_req_{uuid4().hex[:12]}"
+
+
 def _failure_meta_for_exception(exc):
-    if isinstance(exc, AccessError):
-        return {
-            "reason_code": "PERMISSION_DENIED",
-            "retryable": False,
-            "error_category": "permission",
-            "suggested_action": "request_access",
-        }
-    if isinstance(exc, UserError):
-        msg = str(exc) or ""
-        if "不存在" in msg:
-            return {
-                "reason_code": "NOT_FOUND",
-                "retryable": False,
-                "error_category": "not_found",
-                "suggested_action": "refresh_list",
-            }
-        if "无效" in msg:
-            return {
-                "reason_code": "INVALID_ID",
-                "retryable": False,
-                "error_category": "validation",
-                "suggested_action": "fix_input",
-            }
-        if "仅支持" in msg:
-            return {
-                "reason_code": "UNSUPPORTED_SOURCE",
-                "retryable": False,
-                "error_category": "validation",
-                "suggested_action": "fix_input",
-            }
-        return {
-            "reason_code": "USER_ERROR",
-            "retryable": False,
-            "error_category": "validation",
-            "suggested_action": "fix_input",
-        }
-    return {
-        "reason_code": "INTERNAL_ERROR",
-        "retryable": True,
-        "error_category": "transient",
-        "suggested_action": "retry",
-    }
+    # Keep this compatibility wrapper for existing imports in tests and handlers.
+    return my_work_failure_meta_for_exception(exc)
 
 
 def _reason_summary(counter_map):

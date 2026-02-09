@@ -4,6 +4,10 @@ from __future__ import annotations
 from collections import defaultdict
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_construction_core.handlers.reason_codes import (
+    REASON_ACCESS_RESTRICTED,
+    suggested_action_for_capability_reason,
+)
 
 
 class CapabilityVisibilityReportHandler(BaseIntentHandler):
@@ -53,7 +57,7 @@ class CapabilityVisibilityReportHandler(BaseIntentHandler):
                             {
                                 "key": cap.key,
                                 "name": cap.name,
-                                "reason_code": reason_code or "ACCESS_RESTRICTED",
+                                "reason_code": reason_code or REASON_ACCESS_RESTRICTED,
                                 "reason": reason,
                                 "suggested_action": _suggested_action_for_reason(
                                     reason_code=reason_code,
@@ -117,16 +121,5 @@ def _to_ranked_state_list(counter_map):
 
 
 def _suggested_action_for_reason(*, reason_code, state):
-    code = str(reason_code or "").strip().upper()
-    current_state = str(state or "").strip().upper()
-    if current_state == "PREVIEW":
-        return "wait_release"
-    mapping = {
-        "PERMISSION_DENIED": "request_access",
-        "FEATURE_DISABLED": "enable_feature_flag",
-        "ENTITLEMENT_UNAVAILABLE": "upgrade_subscription",
-        "ROLE_SCOPE_MISMATCH": "switch_role_or_scope",
-        "CAPABILITY_SCOPE_MISMATCH": "switch_role_or_scope",
-        "ACCESS_RESTRICTED": "check_prerequisites",
-    }
-    return mapping.get(code, "contact_admin")
+    # Keep this wrapper for backward compatibility in tests/imports.
+    return suggested_action_for_capability_reason(reason_code=reason_code, state=state)

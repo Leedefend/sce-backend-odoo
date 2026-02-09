@@ -28,3 +28,4 @@ from . import test_capability_lint_gate
 from . import test_capability_contract_backend
 from . import test_my_work_backend
 from . import test_usage_backend
+from . import test_reason_codes_backend
