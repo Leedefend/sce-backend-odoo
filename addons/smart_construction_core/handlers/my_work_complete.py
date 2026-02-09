@@ -107,7 +107,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             request_id=request_id,
             idempotency_key=idempotency_key,
             trace_id=trace_id,
-            include_replay_evidence=False,
+            include_replay_evidence=True,
         )
 
     def _ids_summary(self, rows):

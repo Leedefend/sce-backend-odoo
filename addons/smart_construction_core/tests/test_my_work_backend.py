@@ -127,6 +127,12 @@ class TestMyWorkBackend(TransactionCase):
         self.assertEqual(int(conflict.get("code") or 0), 409)
         err = conflict.get("error") or {}
         self.assertEqual(err.get("reason_code"), REASON_IDEMPOTENCY_CONFLICT)
+        data = conflict.get("data") or {}
+        self.assertEqual(data.get("request_id"), "req-idem-2")
+        self.assertEqual(data.get("idempotency_key"), "req-idem-2")
+        self.assertEqual(int(data.get("replay_from_audit_id") or 0), 0)
+        self.assertEqual(str(data.get("replay_original_trace_id") or ""), "")
+        self.assertEqual(int(data.get("replay_age_ms") or 0), 0)
 
     def test_batch_idempotent_window_expired_no_replay(self):
         if not self.env.get("sc.audit.log"):
