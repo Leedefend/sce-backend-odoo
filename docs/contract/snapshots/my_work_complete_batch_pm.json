@@ -1,0 +1,56 @@
+{
+  "action": null,
+  "case": "my_work_complete_batch_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "completed_ids": [],
+    "done_at": "2026-02-09 05:05:33",
+    "done_count": 0,
+    "failed_count": 1,
+    "failed_items": [
+      {
+        "error_category": "not_found",
+        "id": 999999991,
+        "message": "待办不存在",
+        "reason_code": "NOT_FOUND",
+        "retryable": false,
+        "suggested_action": "refresh_list"
+      }
+    ],
+    "failed_reason_summary": [
+      {
+        "count": 1,
+        "reason_code": "NOT_FOUND"
+      }
+    ],
+    "failed_retry_ids": [],
+    "failed_retryable_summary": {
+      "non_retryable": 1,
+      "retryable": 0
+    },
+    "idempotency_fingerprint": "f8f45f265ac535343ef0d0e9a992c74ae42af0bd",
+    "idempotency_key": "snapshot_my_work_batch_1",
+    "idempotency_replay_reason_code": "",
+    "idempotent_replay": false,
+    "message": "部分待办完成失败",
+    "reason_code": "PARTIAL_FAILED",
+    "replay_age_ms": 0,
+    "replay_from_audit_id": 0,
+    "replay_original_trace_id": "",
+    "replay_window_expired": false,
+    "source": "mail.activity",
+    "success": false
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}

@@ -59,6 +59,10 @@ for case in cases:
         cmd += ["--op", case["op"]]
     if case.get("execute_method"):
         cmd += ["--execute_method", case["execute_method"]]
+    if case.get("intent"):
+        cmd += ["--intent", case["intent"]]
+    if "intent_params" in case:
+        cmd += ["--intent_params", json.dumps(case.get("intent_params") or {}, ensure_ascii=False, sort_keys=True)]
     outdir = case.get("outdir") or os.environ.get("OUTDIR")
     if outdir:
         cmd += ["--outdir", outdir]
