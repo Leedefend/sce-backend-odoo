@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import json
+
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_core.handlers.reason_codes import (
@@ -7,10 +9,34 @@ from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_REPLAY_WINDOW_EXPIRED,
 )
 from odoo.addons.smart_core.handlers.api_data_batch import ApiDataBatchHandler
+from odoo.addons.smart_core.utils.idempotency import find_latest_audit_entry
 
 
 @tagged("sc_smoke", "api_data_batch_backend")
 class TestApiDataBatchContractBackend(TransactionCase):
+    def _create_audit(self, *, event_code, model, idem_key, actor_uid, company_id):
+        Audit = self.env.get("sc.audit.log")
+        return Audit.sudo().create(
+            {
+                "event_code": event_code,
+                "action": "test",
+                "model": model,
+                "res_id": 0,
+                "actor_uid": int(actor_uid),
+                "actor_login": "tester",
+                "after_json": json.dumps(
+                    {
+                        "idempotency_key": idem_key,
+                        "idempotency_fingerprint": "fp",
+                        "result": {"ok": True},
+                    },
+                    ensure_ascii=True,
+                ),
+                "trace_id": "trace_test",
+                "company_id": int(company_id) if company_id else False,
+            }
+        )
+
     def test_idempotency_fingerprint_normalizes_id_order(self):
         handler = ApiDataBatchHandler(self.env, payload={})
         first = handler._idempotency_fingerprint(
@@ -28,6 +54,58 @@ class TestApiDataBatchContractBackend(TransactionCase):
             idem_key="req-fp-1",
         )
         self.assertEqual(first, second)
+
+    def test_find_latest_audit_entry_extra_domain_applies(self):
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            self.skipTest("sc.audit.log not available")
+        key = "req-audit-domain-1"
+        self._create_audit(
+            event_code="API_DATA_BATCH",
+            model="res.partner",
+            idem_key=key,
+            actor_uid=self.env.user.id,
+            company_id=self.env.user.company_id.id,
+        )
+        self._create_audit(
+            event_code="API_DATA_BATCH",
+            model="project.project",
+            idem_key=key,
+            actor_uid=self.env.user.id,
+            company_id=self.env.user.company_id.id,
+        )
+        entry = find_latest_audit_entry(
+            self.env,
+            event_code="API_DATA_BATCH",
+            idempotency_key=key,
+            extra_domain=[("model", "=", "res.partner")],
+        )
+        self.assertTrue(bool(entry))
+        payload = entry.get("payload") or {}
+        self.assertEqual(str(payload.get("idempotency_key") or ""), key)
+
+    def test_find_latest_audit_entry_enforces_actor_and_company(self):
+        Audit = self.env.get("sc.audit.log")
+        if not Audit:
+            self.skipTest("sc.audit.log not available")
+        key = "req-audit-scope-1"
+        other_user = self.env["res.users"].sudo().search([("id", "!=", self.env.user.id)], limit=1)
+        other_company = self.env["res.company"].sudo().search([("id", "!=", self.env.user.company_id.id)], limit=1)
+        if not other_user or not other_company:
+            self.skipTest("requires another user and company")
+        self._create_audit(
+            event_code="API_DATA_BATCH",
+            model="res.partner",
+            idem_key=key,
+            actor_uid=other_user.id,
+            company_id=other_company.id,
+        )
+        entry = find_latest_audit_entry(
+            self.env,
+            event_code="API_DATA_BATCH",
+            idempotency_key=key,
+        )
+        self.assertFalse(bool(entry))
 
     def test_not_found_failure_has_structured_contract(self):
         handler = ApiDataBatchHandler(self.env, payload={})

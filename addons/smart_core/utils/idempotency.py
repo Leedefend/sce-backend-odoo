@@ -67,7 +67,30 @@ def replay_window_seconds(default_seconds, *, env_key):
     return max(0, int(default_seconds))
 
 
-def _find_audit_entry(env, *, event_code, idempotency_key, limit=20, extra_domain=None):
+def _idempotency_security_domain(env, *, enforce_company=True, enforce_actor=True):
+    domain = []
+    user = getattr(env, "user", None)
+    if enforce_actor and user:
+        uid = int(getattr(user, "id", 0) or 0)
+        if uid > 0:
+            domain.append(("actor_uid", "=", uid))
+    if enforce_company and user and getattr(user, "company_id", None):
+        cid = int(getattr(user.company_id, "id", 0) or 0)
+        if cid > 0:
+            domain.append(("company_id", "=", cid))
+    return domain
+
+
+def _find_audit_entry(
+    env,
+    *,
+    event_code,
+    idempotency_key,
+    limit=20,
+    extra_domain=None,
+    enforce_company=True,
+    enforce_actor=True,
+):
     if not idempotency_key:
         return None
     Audit = env.get("sc.audit.log")
@@ -75,6 +98,7 @@ def _find_audit_entry(env, *, event_code, idempotency_key, limit=20, extra_domai
         return None
     try:
         domain = [("event_code", "=", event_code)]
+        domain.extend(_idempotency_security_domain(env, enforce_company=enforce_company, enforce_actor=enforce_actor))
         if extra_domain:
             domain.extend(list(extra_domain))
         logs = Audit.sudo().search(domain, order="id desc", limit=max(1, int(limit)))
@@ -99,7 +123,17 @@ def _find_audit_entry(env, *, event_code, idempotency_key, limit=20, extra_domai
     return None
 
 
-def find_recent_audit_entry(env, *, event_code, idempotency_key, window_seconds, limit=20, extra_domain=None):
+def find_recent_audit_entry(
+    env,
+    *,
+    event_code,
+    idempotency_key,
+    window_seconds,
+    limit=20,
+    extra_domain=None,
+    enforce_company=True,
+    enforce_actor=True,
+):
     now = fields.Datetime.now()
     window_start = fields.Datetime.to_string(
         fields.Datetime.from_string(now) - timedelta(seconds=max(0, int(window_seconds)))
@@ -113,16 +147,29 @@ def find_recent_audit_entry(env, *, event_code, idempotency_key, window_seconds,
         idempotency_key=idempotency_key,
         limit=limit,
         extra_domain=domain,
+        enforce_company=enforce_company,
+        enforce_actor=enforce_actor,
     )
 
 
-def find_latest_audit_entry(env, *, event_code, idempotency_key, limit=20, extra_domain=None):
+def find_latest_audit_entry(
+    env,
+    *,
+    event_code,
+    idempotency_key,
+    limit=20,
+    extra_domain=None,
+    enforce_company=True,
+    enforce_actor=True,
+):
     return _find_audit_entry(
         env,
         event_code=event_code,
         idempotency_key=idempotency_key,
         limit=limit,
         extra_domain=extra_domain,
+        enforce_company=enforce_company,
+        enforce_actor=enforce_actor,
     )
 
 
