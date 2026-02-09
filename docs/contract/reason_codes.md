@@ -7,6 +7,7 @@ This document defines the canonical reason-code taxonomy used by Phase 10 intera
 Backend registry module:
 
 - `addons/smart_construction_core/handlers/reason_codes.py`
+- `addons/smart_core/handlers/reason_codes.py` (batch interaction reason codes)
 
 Current shared consumers:
 

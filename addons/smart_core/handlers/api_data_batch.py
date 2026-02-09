@@ -16,6 +16,14 @@ from odoo import fields
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from .reason_codes import (
+    REASON_CONFLICT,
+    REASON_NOT_FOUND,
+    REASON_OK,
+    REASON_PERMISSION_DENIED,
+    REASON_WRITE_FAILED,
+    batch_failure_meta,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -322,11 +330,9 @@ class ApiDataBatchHandler(BaseIntentHandler):
             }
             rec = env_model.browse(rec_id).exists()
             if not rec:
-                item["reason_code"] = "NOT_FOUND"
+                item["reason_code"] = REASON_NOT_FOUND
                 item["message"] = "记录不存在"
-                item["retryable"] = False
-                item["error_category"] = "not_found"
-                item["suggested_action"] = "refresh_list"
+                item.update(batch_failure_meta(REASON_NOT_FOUND))
                 failed += 1
                 results.append(item)
                 continue
@@ -336,36 +342,28 @@ class ApiDataBatchHandler(BaseIntentHandler):
                     expected = if_match_map.get(rec_id, "")
                     current = rec.write_date and rec.write_date.strftime("%Y-%m-%d %H:%M:%S") or ""
                     if current and expected and current != expected:
-                        item["reason_code"] = "CONFLICT"
+                        item["reason_code"] = REASON_CONFLICT
                         item["message"] = "Record changed"
-                        item["retryable"] = True
-                        item["error_category"] = "conflict"
-                        item["suggested_action"] = "reload_then_retry"
+                        item.update(batch_failure_meta(REASON_CONFLICT))
                         failed += 1
                         results.append(item)
                         continue
                 rec.write(safe_vals)
                 item["ok"] = True
-                item["reason_code"] = "OK"
+                item["reason_code"] = REASON_OK
                 item["message"] = "updated"
-                item["retryable"] = False
-                item["error_category"] = ""
-                item["suggested_action"] = ""
+                item.update(batch_failure_meta(REASON_OK))
                 success += 1
             except AccessError:
-                item["reason_code"] = "PERMISSION_DENIED"
+                item["reason_code"] = REASON_PERMISSION_DENIED
                 item["message"] = "无写入权限"
-                item["retryable"] = False
-                item["error_category"] = "permission"
-                item["suggested_action"] = "request_access"
+                item.update(batch_failure_meta(REASON_PERMISSION_DENIED))
                 failed += 1
             except Exception as exc:
                 _logger.warning("api.data.batch failed model=%s id=%s err=%s", model, rec_id, exc)
-                item["reason_code"] = "WRITE_FAILED"
+                item["reason_code"] = REASON_WRITE_FAILED
                 item["message"] = str(exc)
-                item["retryable"] = True
-                item["error_category"] = "transient"
-                item["suggested_action"] = "retry"
+                item.update(batch_failure_meta(REASON_WRITE_FAILED))
                 failed += 1
             results.append(item)
 
