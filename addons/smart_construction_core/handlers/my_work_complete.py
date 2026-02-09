@@ -19,11 +19,9 @@ from odoo.addons.smart_core.utils.idempotency import (
     build_idempotency_fingerprint,
     build_idempotency_conflict_response,
     enrich_replay_contract,
-    find_recent_audit_entry,
-    has_latest_fingerprint_match,
-    idempotency_replay_or_conflict,
     ids_summary,
     normalize_request_id,
+    resolve_idempotency_decision,
     replay_window_seconds,
 )
 
@@ -191,17 +189,14 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         trace_id = f"mw_batch_{uuid4().hex[:12]}"
         if not ids:
             raise UserError("缺少待办 ID 列表")
-        entry = find_recent_audit_entry(
+        decision = resolve_idempotency_decision(
             self.env,
             event_code="MY_WORK_COMPLETE_BATCH",
             idempotency_key=idempotency_key,
-            window_seconds=self._idempotency_window_seconds(),
-            limit=20,
-        )
-        decision = idempotency_replay_or_conflict(
-            entry,
             fingerprint=idempotency_fingerprint,
+            window_seconds=self._idempotency_window_seconds(),
             replay_payload_key="replay_result",
+            limit=20,
         )
         if decision.get("conflict"):
             return self._idempotency_conflict_response(
@@ -230,13 +225,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             )
             return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE}}
 
-        replay_window_expired = has_latest_fingerprint_match(
-            self.env,
-            event_code="MY_WORK_COMPLETE_BATCH",
-            idempotency_key=idempotency_key,
-            fingerprint=idempotency_fingerprint,
-            limit=20,
-        )
+        replay_window_expired = bool(decision.get("replay_window_expired"))
         completed = []
         failed = []
         reason_counter = defaultdict(int)

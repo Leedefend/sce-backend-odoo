@@ -200,6 +200,63 @@ def has_latest_fingerprint_match(
     return bool(old_fingerprint and old_fingerprint == str(fingerprint or ""))
 
 
+def resolve_idempotency_decision(
+    env,
+    *,
+    event_code,
+    idempotency_key,
+    fingerprint,
+    window_seconds,
+    replay_payload_key="result",
+    limit=20,
+    recent_extra_domain=None,
+    latest_extra_domain=None,
+    enforce_company=True,
+    enforce_actor=True,
+):
+    recent_entry = find_recent_audit_entry(
+        env,
+        event_code=event_code,
+        idempotency_key=idempotency_key,
+        window_seconds=window_seconds,
+        limit=limit,
+        extra_domain=recent_extra_domain,
+        enforce_company=enforce_company,
+        enforce_actor=enforce_actor,
+    )
+    decision = idempotency_replay_or_conflict(
+        recent_entry,
+        fingerprint=fingerprint,
+        replay_payload_key=replay_payload_key,
+    )
+    conflict = bool(decision.get("conflict"))
+    replay_entry = decision.get("replay_entry")
+    replay_payload = decision.get("replay_payload")
+    if conflict or replay_payload:
+        return {
+            "conflict": conflict,
+            "replay_entry": replay_entry,
+            "replay_payload": replay_payload,
+            "replay_window_expired": False,
+        }
+    replay_window_expired = has_latest_fingerprint_match(
+        env,
+        event_code=event_code,
+        idempotency_key=idempotency_key,
+        fingerprint=fingerprint,
+        limit=limit,
+        extra_domain=latest_extra_domain if latest_extra_domain is not None else recent_extra_domain,
+        enforce_company=enforce_company,
+        enforce_actor=enforce_actor,
+    )
+    return {
+        "conflict": False,
+        "replay_entry": None,
+        "replay_payload": None,
+        "replay_window_expired": bool(replay_window_expired),
+    }
+
+
 def ids_summary(rows, *, sample_limit=20):
     normalized = []
     for value in rows or []:

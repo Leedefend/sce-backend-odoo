@@ -26,10 +26,8 @@ from ..utils.idempotency import (
     build_idempotency_fingerprint,
     build_idempotency_conflict_response,
     enrich_replay_contract,
-    has_latest_fingerprint_match,
-    find_recent_audit_entry,
-    idempotency_replay_or_conflict,
     normalize_request_id,
+    resolve_idempotency_decision,
     replay_window_seconds,
 )
 
@@ -299,18 +297,15 @@ class ApiDataBatchHandler(BaseIntentHandler):
             vals=safe_vals,
             idem_key=idempotency_key,
         )
-        recent_entry = find_recent_audit_entry(
+        decision = resolve_idempotency_decision(
             self.env,
             event_code="API_DATA_BATCH",
             idempotency_key=idempotency_key,
-            window_seconds=self._idempotency_window_seconds(),
-            limit=20,
-            extra_domain=[("model", "=", model)],
-        )
-        decision = idempotency_replay_or_conflict(
-            recent_entry,
             fingerprint=idempotency_fingerprint,
+            window_seconds=self._idempotency_window_seconds(),
             replay_payload_key="result",
+            limit=20,
+            recent_extra_domain=[("model", "=", model)],
         )
         if decision.get("conflict"):
             return self._idempotency_conflict_response(
@@ -353,14 +348,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 },
             }
 
-        replay_window_expired = has_latest_fingerprint_match(
-            self.env,
-            event_code="API_DATA_BATCH",
-            idempotency_key=idempotency_key,
-            fingerprint=idempotency_fingerprint,
-            limit=20,
-            extra_domain=[("model", "=", model)],
-        )
+        replay_window_expired = bool(decision.get("replay_window_expired"))
         try:
             env_model.check_access_rights("write")
         except AccessError:
