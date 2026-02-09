@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import hashlib
-import json
 import logging
 import base64
 import csv
 import io
 from collections import defaultdict
 from datetime import datetime
-from datetime import timedelta
 from typing import Any, Dict, List
 from uuid import uuid4
 
@@ -23,6 +20,12 @@ from .reason_codes import (
     REASON_PERMISSION_DENIED,
     REASON_WRITE_FAILED,
     batch_failure_meta,
+)
+from ..utils.idempotency import (
+    find_recent_audit_entry,
+    normalize_request_id,
+    replay_window_seconds,
+    sha1_json,
 )
 
 _logger = logging.getLogger(__name__)
@@ -85,10 +88,6 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return action or "write", vals
         return action, {}
 
-    def _normalize_request_id(self, raw_value: Any) -> str:
-        value = str(raw_value or "").strip()
-        return value if value else f"adb_req_{uuid4().hex[:12]}"
-
     def _get_int(self, params: Dict[str, Any], key: str, default: int):
         try:
             return int(params.get(key))
@@ -118,43 +117,32 @@ class ApiDataBatchHandler(BaseIntentHandler):
             "vals": vals,
             "idempotency_key": idem_key,
         }
-        raw = json.dumps(payload, ensure_ascii=True, sort_keys=True)
-        return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+        return sha1_json(payload)
+
+    def _idempotency_window_seconds(self):
+        return replay_window_seconds(
+            self.IDEMPOTENCY_WINDOW_SECONDS,
+            env_key="API_DATA_BATCH_REPLAY_WINDOW_SEC",
+        )
 
     def _find_idempotent_replay(self, *, model: str, idem_key: str, fingerprint: str):
-        if not idem_key:
+        entry = find_recent_audit_entry(
+            self.env,
+            event_code="API_DATA_BATCH",
+            idempotency_key=idem_key,
+            window_seconds=self._idempotency_window_seconds(),
+            limit=20,
+            extra_domain=[("model", "=", model)],
+        )
+        if not entry:
             return None
-        Audit = self.env.get("sc.audit.log")
-        if not Audit:
+        payload = entry.get("payload") or {}
+        if str(payload.get("idempotency_fingerprint") or "") != fingerprint:
             return None
-        try:
-            now = fields.Datetime.now()
-            window_start = fields.Datetime.to_string(
-                fields.Datetime.from_string(now) - timedelta(seconds=self.IDEMPOTENCY_WINDOW_SECONDS)
-            )
-            logs = Audit.sudo().search([
-                ("event_code", "=", "API_DATA_BATCH"),
-                ("model", "=", model),
-                ("ts", ">=", window_start),
-            ], order="id desc", limit=20)
-            for log in logs:
-                after_raw = log.after_json or ""
-                if not after_raw:
-                    continue
-                try:
-                    after_payload = json.loads(after_raw)
-                except Exception:
-                    continue
-                if str(after_payload.get("idempotency_key") or "") != idem_key:
-                    continue
-                if str(after_payload.get("idempotency_fingerprint") or "") != fingerprint:
-                    continue
-                result = after_payload.get("result")
-                if isinstance(result, dict):
-                    return result
-            return None
-        except Exception:
-            return None
+        result = payload.get("result")
+        if isinstance(result, dict):
+            return result
+        return None
 
     def _write_batch_audit(self, *, trace_id: str, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str, idem_fingerprint: str, result: Dict[str, Any]):
         Audit = self.env.get("sc.audit.log")
@@ -278,7 +266,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         model = str(params.get("model") or "").strip()
         ids = self._get_ids(params)
         action, vals = self._resolve_vals(params)
-        request_id = self._normalize_request_id(params.get("request_id"))
+        request_id = normalize_request_id(params.get("request_id"), prefix="adb_req")
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
         if_match_map = self._normalize_if_match_map(params)
         preview_limit = self._get_int(params, "failed_preview_limit", 10)
