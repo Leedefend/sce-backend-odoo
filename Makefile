@@ -231,7 +231,7 @@ guard.codex.fast.upgrade:
 # ======================================================
 # ================== Contract ==========================
 # ======================================================
-.PHONY: contract.export contract.export_all contract.catalog.export verify.contract.catalog gate.contract gate.contract.bootstrap gate.contract.bootstrap-pass
+.PHONY: contract.export contract.export_all contract.catalog.export verify.contract.catalog verify.scene.contract.shape gate.contract gate.contract.bootstrap gate.contract.bootstrap-pass
 
 INTENT_SURFACE_MD ?= docs/ops/audit/intent_surface_report.md
 INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
@@ -260,6 +260,10 @@ verify.contract.catalog: guard.prod.forbid
 	@test -s docs/contract/exports/intent_catalog.json || (echo "❌ intent_catalog.json missing" && exit 2)
 	@test -s docs/contract/exports/scene_catalog.json || (echo "❌ scene_catalog.json missing" && exit 2)
 	@python3 -c 'import json; from pathlib import Path; i=json.loads(Path("docs/contract/exports/intent_catalog.json").read_text(encoding="utf-8")); s=json.loads(Path("docs/contract/exports/scene_catalog.json").read_text(encoding="utf-8")); assert isinstance(i.get("intents"), list) and i["intents"]; assert isinstance(s.get("scenes"), list) and s["scenes"]; print("[verify.contract.catalog] PASS")'
+
+verify.scene.contract.shape: guard.prod.forbid
+	@$(MAKE) --no-print-directory contract.catalog.export
+	@python3 scripts/verify/scene_contract_shape_guard.py --catalog docs/contract/exports/scene_catalog.json --report artifacts/scene_contract_shape_guard.json
 
 gate.contract:
 	@$(MAKE) --no-print-directory verify.contract.preflight
@@ -1056,6 +1060,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.test_seed_dependency.guard
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
+	@$(MAKE) --no-print-directory verify.scene.contract.shape
 
 audit.intent.surface: guard.prod.forbid
 	@python3 scripts/audit/intent_surface_report.py --output-md "$(INTENT_SURFACE_MD)" --output-json "$(INTENT_SURFACE_JSON)"
