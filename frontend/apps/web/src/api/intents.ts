@@ -1,12 +1,22 @@
 import { apiRequestRaw, ApiError } from './client';
 import type { IntentEnvelope } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
+import { parseIntentEnvelope, type IntentEnvelopeError } from './envelope';
 
 export interface IntentPayload {
   intent: string;
   params?: unknown;
   context?: Record<string, unknown>;
   meta?: Record<string, unknown>;
+}
+
+export interface IntentRawResult<T> {
+  data: T;
+  meta: Record<string, unknown>;
+  traceId: string;
+  ok: boolean;
+  error?: IntentEnvelopeError;
+  hasEnvelope: boolean;
 }
 
 function buildHeaders(intent: string, traceId: string) {
@@ -47,11 +57,7 @@ export async function intentRequest<T>(payload: IntentPayload) {
     // eslint-disable-next-line no-console
     console.info(`[trace] intent=${payload.intent} status=ok trace=${resolvedTrace}`);
 
-    if (response.body && typeof response.body === 'object' && 'data' in response.body) {
-      return response.body.data as T;
-    }
-
-    return response.body as T;
+    return parseIntentEnvelope<T>(response.body).data;
   } catch (err) {
     const errorTrace = err instanceof ApiError ? err.traceId || traceId : traceId;
     session.recordIntentTrace({
@@ -83,9 +89,14 @@ export async function intentRequestRaw<T>(payload: IntentPayload) {
     writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
   });
 
-  if (response.body && typeof response.body === 'object' && 'data' in response.body) {
-    return { data: response.body.data as T, meta: response.body.meta || {}, traceId: resolvedTrace };
-  }
-
-  return { data: response.body as T, meta: {}, traceId: resolvedTrace };
+  const parsed = parseIntentEnvelope<T>(response.body);
+  const result: IntentRawResult<T> = {
+    data: parsed.data,
+    meta: parsed.meta,
+    traceId: resolvedTrace,
+    ok: parsed.ok,
+    error: parsed.error,
+    hasEnvelope: parsed.hasEnvelope,
+  };
+  return result;
 }
