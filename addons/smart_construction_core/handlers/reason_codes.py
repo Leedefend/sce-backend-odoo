@@ -13,6 +13,7 @@ from odoo.addons.smart_core.utils.reason_codes import (
     REASON_OK,
     REASON_PARTIAL_FAILED,
     REASON_PERMISSION_DENIED,
+    REASON_REPLAY_WINDOW_EXPIRED,
     REASON_UNSUPPORTED_SOURCE,
     REASON_USER_ERROR,
     capability_suggested_action,

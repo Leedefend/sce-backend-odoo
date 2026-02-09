@@ -8,6 +8,7 @@ from odoo.addons.smart_construction_core.handlers.reason_codes import (
     REASON_INTERNAL_ERROR,
     REASON_INVALID_ID,
     REASON_PERMISSION_DENIED,
+    REASON_REPLAY_WINDOW_EXPIRED,
     REASON_UNSUPPORTED_SOURCE,
     REASON_USER_ERROR,
     my_work_failure_meta_for_exception,
@@ -58,3 +59,9 @@ class TestReasonCodesBackend(TransactionCase):
         self.assertFalse(bool(meta.get("retryable")))
         self.assertEqual(meta.get("error_category"), "conflict")
         self.assertEqual(meta.get("suggested_action"), "use_new_request_id")
+
+    def test_replay_window_expired_meta_mapping(self):
+        meta = failure_meta_for_reason(REASON_REPLAY_WINDOW_EXPIRED)
+        self.assertTrue(bool(meta.get("retryable")))
+        self.assertEqual(meta.get("error_category"), "conflict")
+        self.assertEqual(meta.get("suggested_action"), "retry")

@@ -30,6 +30,7 @@ Current shared consumers:
 - `CONFLICT`
 - `WRITE_FAILED`
 - `IDEMPOTENCY_CONFLICT`
+- `REPLAY_WINDOW_EXPIRED`
 
 ## 3. My Work Failure Meta Contract
 
@@ -46,6 +47,8 @@ For batch completion (`my.work.complete_batch`), response also includes:
 - `idempotency_key` (defaults to `request_id`)
 - `idempotency_fingerprint`
 - `idempotent_replay` (`true` when served from recent replay window)
+- `replay_window_expired` (`true` when same key+fingerprint exists but outside replay window)
+- `idempotency_replay_reason_code` (`REPLAY_WINDOW_EXPIRED` when expired)
 - `trace_id` (server-generated batch trace)
 - `failed_retry_ids` (default retry target list where `retryable=true`)
 
@@ -54,6 +57,8 @@ For generic batch write intent (`api.data.batch`), response includes:
 - `request_id`
 - `trace_id`
 - `failed_retry_ids`
+- `replay_window_expired`
+- `idempotency_replay_reason_code`
 - `failed_reason_summary` (array of `{reason_code, count}`)
 - `failed_retryable_summary` (`{retryable, non_retryable}`)
 - per-row structured fields:
@@ -75,6 +80,7 @@ Idempotency semantics for `my.work.complete_batch`:
 - same key + different fingerprint -> `IDEMPOTENCY_CONFLICT` (HTTP-like conflict)
 - suggested action for conflict: `use_new_request_id`
 - conflict meta: `retryable=false`, `error_category=conflict`
+- same key + same fingerprint but outside replay window -> execute as new request with `replay_window_expired=true` and `idempotency_replay_reason_code=REPLAY_WINDOW_EXPIRED`
 
 ## 4. Capability Suggested Action Mapping
 

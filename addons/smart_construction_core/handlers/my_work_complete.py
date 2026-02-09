@@ -12,10 +12,12 @@ from odoo.addons.smart_construction_core.handlers.reason_codes import (
     REASON_DONE,
     REASON_IDEMPOTENCY_CONFLICT,
     REASON_PARTIAL_FAILED,
+    REASON_REPLAY_WINDOW_EXPIRED,
     failure_meta_for_reason,
     my_work_failure_meta_for_exception,
 )
 from odoo.addons.smart_core.utils.idempotency import (
+    find_latest_audit_entry,
     find_recent_audit_entry,
     ids_summary,
     normalize_ids_for_fingerprint,
@@ -109,6 +111,19 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             limit=20,
         )
 
+    def _has_expired_replay_candidate(self, *, idem_key, fingerprint):
+        entry = find_latest_audit_entry(
+            self.env,
+            event_code="MY_WORK_COMPLETE_BATCH",
+            idempotency_key=idem_key,
+            limit=20,
+        )
+        if not entry:
+            return False
+        payload = entry.get("payload") or {}
+        old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
+        return bool(old_fingerprint and old_fingerprint == fingerprint)
+
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
         failure_meta = failure_meta_for_reason(REASON_IDEMPOTENCY_CONFLICT)
         return {
@@ -126,6 +141,8 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 "request_id": request_id,
                 "idempotency_key": idempotency_key,
                 "idempotent_replay": False,
+                "replay_window_expired": False,
+                "idempotency_replay_reason_code": "",
                 "trace_id": trace_id,
             },
             "meta": {"intent": self.INTENT_TYPE},
@@ -245,8 +262,14 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             replay_data["replay_from_audit_id"] = int(entry.get("audit_id") or 0)
             replay_data["replay_original_trace_id"] = str(entry.get("trace_id") or "")
             replay_data["replay_age_ms"] = replay_age_ms
+            replay_data["replay_window_expired"] = False
+            replay_data["idempotency_replay_reason_code"] = ""
             return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE}}
 
+        replay_window_expired = self._has_expired_replay_candidate(
+            idem_key=idempotency_key,
+            fingerprint=idempotency_fingerprint,
+        )
         completed = []
         failed = []
         reason_counter = defaultdict(int)
@@ -277,6 +300,8 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             "idempotency_key": idempotency_key,
             "idempotency_fingerprint": idempotency_fingerprint,
             "idempotent_replay": False,
+            "replay_window_expired": bool(replay_window_expired),
+            "idempotency_replay_reason_code": REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",
             "trace_id": trace_id,
             "success": ok,
             "reason_code": REASON_DONE if ok else REASON_PARTIAL_FAILED,

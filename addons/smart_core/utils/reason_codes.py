@@ -15,6 +15,7 @@ REASON_ACCESS_RESTRICTED = "ACCESS_RESTRICTED"
 REASON_CONFLICT = "CONFLICT"
 REASON_WRITE_FAILED = "WRITE_FAILED"
 REASON_IDEMPOTENCY_CONFLICT = "IDEMPOTENCY_CONFLICT"
+REASON_REPLAY_WINDOW_EXPIRED = "REPLAY_WINDOW_EXPIRED"
 
 
 def failure_meta_for_reason(reason_code: str):
@@ -34,6 +35,11 @@ def failure_meta_for_reason(reason_code: str):
             "retryable": False,
             "error_category": "conflict",
             "suggested_action": "use_new_request_id",
+        },
+        REASON_REPLAY_WINDOW_EXPIRED: {
+            "retryable": True,
+            "error_category": "conflict",
+            "suggested_action": "retry",
         },
         REASON_PERMISSION_DENIED: {
             "retryable": False,
