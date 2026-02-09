@@ -28,6 +28,27 @@ export type MyWorkRecordItem = {
   reason_code?: string;
 };
 
+export type FailureMeta = {
+  retryable?: boolean;
+  error_category?: string;
+  suggested_action?: string;
+};
+
+export type IdempotencyMeta = {
+  request_id?: string;
+  idempotency_key?: string;
+  idempotency_fingerprint?: string;
+  idempotent_replay?: boolean;
+  replay_window_expired?: boolean;
+  idempotency_replay_reason_code?: string;
+  replay_from_audit_id?: number;
+  replay_original_trace_id?: string;
+  replay_age_ms?: number;
+  replay_supported?: boolean;
+  idempotency_deduplicated?: boolean;
+  trace_id?: string;
+};
+
 export type MyWorkSummaryResponse = {
   generated_at: string;
   sections?: MyWorkSection[];
@@ -90,36 +111,59 @@ export async function fetchMyWorkSummary(
   });
 }
 
-export async function completeMyWorkItem(params: { id: number; source: string; note?: string }) {
-  return intentRequest<{
-    id: number;
-    source: string;
-    success: boolean;
-    reason_code: string;
-    message: string;
-    retryable?: boolean;
-    error_category?: string;
-    suggested_action?: string;
-    done_at: string;
-  }>({
+export type MyWorkCompleteResult = {
+  id: number;
+  source: string;
+  success: boolean;
+  reason_code: string;
+  message: string;
+  done_at: string;
+} & FailureMeta &
+  IdempotencyMeta;
+
+export async function completeMyWorkItem(params: {
+  id: number;
+  source: string;
+  note?: string;
+  request_id?: string;
+  idempotency_key?: string;
+}) {
+  return intentRequest<MyWorkCompleteResult>({
     intent: 'my.work.complete',
     params,
   });
 }
 
-export async function completeMyWorkItemsBatch(params: { ids: number[]; source: string; note?: string }) {
-  return intentRequest<{
-    source: string;
-    success: boolean;
-    reason_code: string;
-    message: string;
-    done_count: number;
-    failed_count: number;
-    completed_ids: number[];
-    failed_items: Array<{ id: number; reason_code: string; message: string }>;
-    failed_reason_summary: Array<{ reason_code: string; count: number }>;
-    done_at: string;
-  }>({
+export type MyWorkBatchFailedItem = {
+  id: number;
+  reason_code: string;
+  message: string;
+  trace_id?: string;
+} & FailureMeta;
+
+export type MyWorkCompleteBatchResult = {
+  source: string;
+  success: boolean;
+  reason_code: string;
+  message: string;
+  done_count: number;
+  failed_count: number;
+  completed_ids: number[];
+  failed_items: MyWorkBatchFailedItem[];
+  failed_retry_ids?: number[];
+  failed_reason_summary: Array<{ reason_code: string; count: number }>;
+  failed_retryable_summary?: { retryable: number; non_retryable: number };
+  done_at: string;
+} & IdempotencyMeta;
+
+export async function completeMyWorkItemsBatch(params: {
+  ids: number[];
+  source: string;
+  note?: string;
+  request_id?: string;
+  idempotency_key?: string;
+}) {
+  return intentRequest<MyWorkCompleteBatchResult>({
     intent: 'my.work.complete_batch',
     params,
   });
