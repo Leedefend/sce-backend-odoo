@@ -2,6 +2,7 @@
 import csv
 import os
 
+from odoo.exceptions import AccessError
 from odoo.tests.common import TransactionCase, tagged
 
 
@@ -63,14 +64,22 @@ class TestRecordRuleLedgerP1(TransactionCase):
 
         cls.partner = _ctx("res.partner").create({"name": "RR Ledger Partner"})
 
-        tax = cls.env["account.tax"].search([], limit=1)
+        tax = cls.env["account.tax"].search(
+            [
+                ("type_tax_use", "=", "purchase"),
+                ("amount_type", "=", "percent"),
+                ("price_include", "=", False),
+            ],
+            limit=1,
+        )
         if not tax:
             tax = _ctx("account.tax").create(
                 {
                     "name": "RR Ledger Tax",
                     "amount": 0.0,
                     "amount_type": "percent",
-                    "type_tax_use": "sale",
+                    "type_tax_use": "purchase",
+                    "price_include": False,
                 }
             )
 
@@ -78,7 +87,7 @@ class TestRecordRuleLedgerP1(TransactionCase):
             return _ctx("construction.contract").create(
                 {
                     "subject": name,
-                    "type": "out",
+                    "type": "in",
                     "project_id": project.id,
                     "partner_id": cls.partner.id,
                     "tax_id": tax.id,
@@ -113,6 +122,8 @@ class TestRecordRuleLedgerP1(TransactionCase):
             {
                 "project_id": cls.project_same.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_same.id,
+                "settlement_id": cls.settlement_same.id,
                 "amount": 10.0,
                 "type": "pay",
             }
@@ -121,6 +132,8 @@ class TestRecordRuleLedgerP1(TransactionCase):
             {
                 "project_id": cls.project_other.id,
                 "partner_id": cls.partner.id,
+                "contract_id": cls.contract_other.id,
+                "settlement_id": cls.settlement_other.id,
                 "amount": 20.0,
                 "type": "pay",
             }
@@ -154,18 +167,33 @@ class TestRecordRuleLedgerP1(TransactionCase):
         ]
         cls.project_other.message_unsubscribe(partner_ids=partners)
 
+        cls.settlement_same.sudo().write({"state": "approve"})
+        cls.settlement_other.sudo().write({"state": "approve"})
+        cls.env.cr.execute(
+            "UPDATE payment_request SET state=%s, validation_status=%s WHERE id in %s",
+            ("approved", "validated", (cls.payment_req_same.id, cls.payment_req_other.id)),
+        )
+        cls.env.invalidate_all()
+
         cls.demo_payment_ledger = cls.env["payment.ledger"].sudo().search(
             [("ref", "=like", "RR-LEDGER-P1%")],
             limit=1,
         )
         if not cls.demo_payment_ledger:
-            raise AssertionError("Missing demo payment.ledger ref=RR-LEDGER-P1*. Run seed step payment_ledger_p1.")
+            cls.demo_payment_ledger = (
+                cls.payment_req_same.sudo()
+                .with_context(allow_payment_ledger_create=True)
+                ._ensure_payment_ledger(ref="RR-LEDGER-P1-AUTO")
+            )
         if cls.demo_payment_ledger.payment_request_id.state != "approved":
-            raise AssertionError("Demo payment.request must be approved for ledger P1 audit.")
+            raise AssertionError("P1 ledger sample payment.request must be approved.")
 
     def _can_read(self, user, record):
         Model = self.env[record._name].with_user(user)
-        return bool(Model.search_count([("id", "=", record.id)]))
+        try:
+            return bool(Model.search_count([("id", "=", record.id)]))
+        except AccessError:
+            return False
 
     def _rule_xmlids(self, model_name):
         rules = self.env["ir.rule"].sudo().search([("model_id.model", "=", model_name)])
