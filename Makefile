@@ -231,7 +231,7 @@ guard.codex.fast.upgrade:
 # ======================================================
 # ================== Contract ==========================
 # ======================================================
-.PHONY: contract.export contract.export_all gate.contract gate.contract.bootstrap gate.contract.bootstrap-pass
+.PHONY: contract.export contract.export_all contract.catalog.export verify.contract.catalog gate.contract gate.contract.bootstrap gate.contract.bootstrap-pass
 
 INTENT_SURFACE_MD ?= docs/ops/audit/intent_surface_report.md
 INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
@@ -251,6 +251,15 @@ contract.export:
 
 contract.export_all:
 	@SC_CONTRACT_STABLE=1 DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" OUTDIR="$(CONTRACT_OUTDIR)" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/export_all.sh
+
+contract.catalog.export:
+	@python3 scripts/contract/export_catalogs.py
+
+verify.contract.catalog: guard.prod.forbid
+	@$(MAKE) --no-print-directory contract.catalog.export
+	@test -s docs/contract/exports/intent_catalog.json || (echo "❌ intent_catalog.json missing" && exit 2)
+	@test -s docs/contract/exports/scene_catalog.json || (echo "❌ scene_catalog.json missing" && exit 2)
+	@python3 -c 'import json; from pathlib import Path; i=json.loads(Path("docs/contract/exports/intent_catalog.json").read_text(encoding="utf-8")); s=json.loads(Path("docs/contract/exports/scene_catalog.json").read_text(encoding="utf-8")); assert isinstance(i.get("intents"), list) and i["intents"]; assert isinstance(s.get("scenes"), list) and s["scenes"]; print("[verify.contract.catalog] PASS")'
 
 gate.contract:
 	@$(MAKE) --no-print-directory verify.contract.preflight
