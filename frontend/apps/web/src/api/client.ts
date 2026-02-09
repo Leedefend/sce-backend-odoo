@@ -4,12 +4,23 @@ import { useSessionStore } from '../stores/session';
 export class ApiError extends Error {
   status: number;
   traceId?: string;
+  reasonCode?: string;
+  hint?: string;
+  kind?: string;
 
-  constructor(message: string, status: number, traceId?: string) {
+  constructor(
+    message: string,
+    status: number,
+    traceId?: string,
+    options?: { reasonCode?: string; hint?: string; kind?: string },
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.traceId = traceId;
+    this.reasonCode = options?.reasonCode;
+    this.hint = options?.hint;
+    this.kind = options?.kind;
   }
 }
 
@@ -92,13 +103,23 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     console.warn(`[SPA API] Forcing credentials=omit (requested: ${requestedCreds})`);
   }
 
-  const response = await fetch(`${config.apiBaseUrl}${path}`, {
-    ...options,
-    headers,
-    // Portal shell authentication is token-based; do not send Odoo session cookies
-    // to avoid cross-origin session/auth side effects.
-    credentials: 'omit',
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${config.apiBaseUrl}${path}`, {
+      ...options,
+      headers,
+      // Portal shell authentication is token-based; do not send Odoo session cookies
+      // to avoid cross-origin session/auth side effects.
+      credentials: 'omit',
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Network request failed';
+    throw new ApiError(message, 0, traceId, {
+      reasonCode: 'NETWORK_ERROR',
+      hint: 'Check network connectivity and API service status.',
+      kind: 'network',
+    });
+  }
 
   // A2: 响应诊断 - 针对 app.init 请求
   if (isAppInitRequest && debugIntent) {
@@ -140,17 +161,34 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     if (!window.location.pathname.startsWith('/login')) {
       window.location.href = `/login?redirect=${redirect}`;
     }
-    throw new ApiError('unauthorized', 401);
+    throw new ApiError('unauthorized', 401, traceId, {
+      reasonCode: 'AUTH_401',
+      hint: 'Login session expired. Please sign in again.',
+      kind: 'auth',
+    });
   }
 
   if (!response.ok) {
     let message = `request failed: ${response.status}`;
     let traceIdFromBody: string | undefined;
     let body: unknown;
+    let reasonCode: string | undefined;
+    let hint: string | undefined;
+    let kind: string | undefined;
     try {
       body = await response.json();
-      const payload = body as { error?: { message?: string }; message?: string };
+      const payload = body as {
+        error?: { message?: string; code?: string; reason_code?: string; hint?: string; kind?: string };
+        message?: string;
+        code?: string;
+        reason_code?: string;
+        hint?: string;
+        kind?: string;
+      };
       message = payload?.error?.message || payload?.message || message;
+      reasonCode = payload?.error?.reason_code || payload?.reason_code || payload?.error?.code || payload?.code;
+      hint = payload?.error?.hint || payload?.hint;
+      kind = payload?.error?.kind || payload?.kind;
       traceIdFromBody = extractTraceIdFromBody(body);
     } catch {
       const text = await response.text();
@@ -159,7 +197,11 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
       }
     }
     const resolvedTrace = resolveTraceId(response, body, traceId);
-    throw new ApiError(message, response.status, traceIdFromBody || resolvedTrace);
+    throw new ApiError(message, response.status, traceIdFromBody || resolvedTrace, {
+      reasonCode,
+      hint,
+      kind: kind || 'http',
+    });
   }
 
   if (response.status === 204) {

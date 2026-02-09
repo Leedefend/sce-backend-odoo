@@ -4,7 +4,7 @@
       v-if="viewMode === 'kanban'"
       :title="pageTitle"
       :status="status"
-      :loading="status === 'loading'"
+      :loading="status === 'loading' || batchBusy"
       :error-message="errorMessage"
       :trace-id="traceId"
       :error="error"
@@ -21,7 +21,7 @@
       :title="pageTitle"
       :model="model"
       :status="status"
-      :loading="status === 'loading'"
+      :loading="status === 'loading' || batchBusy"
       :error-message="errorMessage"
       :trace-id="traceId"
       :error="error"
@@ -34,11 +34,28 @@
       :search-term="searchTerm"
       :subtitle="subtitle"
       :status-label="statusLabel"
+      :selected-ids="selectedIds"
+      :batch-message="batchMessage"
+      :batch-details="batchDetails"
+      :failed-csv-available="Boolean(failedCsvContentB64)"
+      :has-more-failures="batchHasMoreFailures"
+      :show-assign="hasAssigneeField"
+      :assignee-options="assigneeOptions"
+      :selected-assignee-id="selectedAssigneeId"
       :list-profile="listProfile"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
       :on-filter="handleFilter"
+      :on-toggle-selection="handleToggleSelection"
+      :on-toggle-selection-all="handleToggleSelectionAll"
+      :on-batch-action="handleBatchAction"
+      :on-batch-assign="handleBatchAssign"
+      :on-batch-export="handleBatchExport"
+      :on-assignee-change="handleAssigneeChange"
+      :on-download-failed-csv="handleDownloadFailedCsv"
+      :on-load-more-failures="handleLoadMoreFailures"
+      :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
 
@@ -53,7 +70,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecordsRaw } from '../api/data';
+import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { config } from '../config';
@@ -82,6 +99,27 @@ const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
 const kanbanFields = ref<string[]>([]);
 const hasActiveField = ref(false);
+const hasAssigneeField = ref(false);
+const assigneeOptions = ref<Array<{ id: number; name: string }>>([]);
+const selectedAssigneeId = ref<number | null>(null);
+const selectedIds = ref<number[]>([]);
+const batchMessage = ref('');
+const batchDetails = ref<string[]>([]);
+const failedCsvFileName = ref('');
+const failedCsvContentB64 = ref('');
+const batchFailedOffset = ref(0);
+const batchFailedLimit = ref(12);
+const batchHasMoreFailures = ref(false);
+const lastBatchRequest = ref<{
+  model: string;
+  ids: number[];
+  action: 'archive' | 'activate' | 'assign';
+  assigneeId?: number;
+  ifMatchMap: Record<number, string>;
+  idempotencyKey: string;
+  context: Record<string, unknown>;
+} | null>(null);
+const batchBusy = ref(false);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
@@ -226,6 +264,49 @@ function pickColumns(rows: Array<Record<string, unknown>>) {
   const first = rows[0];
   const keys = Object.keys(first);
   return keys.slice(0, 6);
+}
+
+function downloadCsvBase64(filename: string, mimeType: string, contentB64: string) {
+  if (!contentB64) return;
+  const binary = atob(contentB64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: mimeType || 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || 'export.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function applyBatchFailureArtifacts(result: {
+  failed_preview?: Array<{ id: number; reason_code: string; message: string }>;
+  failed_page_offset?: number;
+  failed_page_limit?: number;
+  failed_has_more?: boolean;
+  failed_truncated?: number;
+  failed_csv_file_name?: string;
+  failed_csv_content_b64?: string;
+}, options?: { append?: boolean }) {
+  const preview = Array.isArray(result.failed_preview) ? result.failed_preview : [];
+  const lines = preview.map((item) => `#${item.id} ${item.reason_code}: ${item.message}`);
+  if (options?.append) {
+    batchDetails.value = [...batchDetails.value, ...lines];
+  } else {
+    batchDetails.value = lines;
+  }
+  batchFailedOffset.value = Number(result.failed_page_offset || 0) + preview.length;
+  batchFailedLimit.value = Number(result.failed_page_limit || 12) || 12;
+  batchHasMoreFailures.value = Boolean(result.failed_has_more);
+  if ('failed_csv_file_name' in result && result.failed_csv_file_name) {
+    failedCsvFileName.value = String(result.failed_csv_file_name || '');
+  }
+  if ('failed_csv_content_b64' in result && result.failed_csv_content_b64) {
+    failedCsvContentB64.value = String(result.failed_csv_content_b64 || '');
+  }
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
@@ -435,6 +516,38 @@ function isWindowAction(meta: unknown) {
   return actionType.includes('act_window') || actionType.includes('window') || actionType === '';
 }
 
+async function loadAssigneeOptions() {
+  if (!hasAssigneeField.value) {
+    assigneeOptions.value = [];
+    selectedAssigneeId.value = null;
+    return;
+  }
+  try {
+    const result = await listRecords({
+      model: 'res.users',
+      fields: ['id', 'name'],
+      domain: [['active', '=', true]],
+      order: 'name asc',
+      limit: 80,
+    });
+    const rows = Array.isArray(result.records) ? result.records : [];
+    assigneeOptions.value = rows
+      .map((row) => {
+        const id = typeof row.id === 'number' ? row.id : Number(row.id);
+        const name = String(row.name || '');
+        if (!id || Number.isNaN(id) || !name) return null;
+        return { id, name };
+      })
+      .filter((row): row is { id: number; name: string } => !!row);
+    if (selectedAssigneeId.value && !assigneeOptions.value.find((opt) => opt.id === selectedAssigneeId.value)) {
+      selectedAssigneeId.value = null;
+    }
+  } catch {
+    assigneeOptions.value = [];
+    selectedAssigneeId.value = null;
+  }
+}
+
 async function load() {
   status.value = 'loading';
   clearError();
@@ -529,6 +642,8 @@ async function load() {
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
     hasActiveField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.active);
+    hasAssigneeField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.user_id);
+    await loadAssigneeOptions();
     const requestedFields =
       viewMode.value === 'kanban'
         ? kanbanContractFields
@@ -544,6 +659,20 @@ async function load() {
       order: sortLabel.value,
     });
     records.value = result.data?.records ?? [];
+    const currentIds = new Set(
+      records.value
+        .map((row) => {
+          const id = row.id;
+          if (typeof id === 'number') return id;
+          if (typeof id === 'string' && id.trim()) {
+            const parsed = Number(id);
+            return Number.isNaN(parsed) ? null : parsed;
+          }
+          return null;
+        })
+        .filter((id): id is number => typeof id === 'number'),
+    );
+    selectedIds.value = selectedIds.value.filter((id) => currentIds.has(id));
     columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
     status.value = deriveListStatus({ error: '', recordsLength: records.value.length });
     if (result.meta?.trace_id) {
@@ -597,7 +726,272 @@ function handleSort(value: string) {
 
 function handleFilter(value: 'all' | 'active' | 'archived') {
   filterValue.value = value;
+  clearSelection();
   load();
+}
+
+function clearSelection() {
+  selectedIds.value = [];
+}
+
+function handleAssigneeChange(assigneeId: number | null) {
+  selectedAssigneeId.value = assigneeId;
+}
+
+function handleToggleSelection(id: number, selected: boolean) {
+  const set = new Set(selectedIds.value);
+  if (selected) {
+    set.add(id);
+  } else {
+    set.delete(id);
+  }
+  selectedIds.value = Array.from(set);
+}
+
+function handleToggleSelectionAll(ids: number[], selected: boolean) {
+  if (!ids.length) return;
+  const set = new Set(selectedIds.value);
+  ids.forEach((id) => {
+    if (selected) {
+      set.add(id);
+    } else {
+      set.delete(id);
+    }
+  });
+  selectedIds.value = Array.from(set);
+}
+
+function buildIfMatchMap(ids: number[]) {
+  const wanted = new Set(ids);
+  const map: Record<number, string> = {};
+  records.value.forEach((row) => {
+    const rawId = row.id;
+    const id =
+      typeof rawId === 'number'
+        ? rawId
+        : typeof rawId === 'string' && rawId.trim()
+          ? Number(rawId)
+          : NaN;
+    if (!Number.isFinite(id) || !wanted.has(id)) return;
+    const writeDate = String((row.write_date as string | undefined) || '').trim();
+    if (writeDate) {
+      map[id] = writeDate;
+    }
+  });
+  return map;
+}
+
+function buildIdempotencyKey(action: string, ids: number[], extra: Record<string, unknown> = {}) {
+  const payload = {
+    model: model.value || '',
+    action,
+    ids: [...ids].sort((a, b) => a - b),
+    extra,
+  };
+  return `batch:${JSON.stringify(payload)}`;
+}
+
+async function handleBatchAction(action: 'archive' | 'activate') {
+  batchMessage.value = '';
+  batchDetails.value = [];
+  failedCsvFileName.value = '';
+  failedCsvContentB64.value = '';
+  batchFailedOffset.value = 0;
+  batchHasMoreFailures.value = false;
+  lastBatchRequest.value = null;
+  if (!model.value || !selectedIds.value.length) return;
+  if (!hasActiveField.value) {
+    batchMessage.value = '当前模型不支持 active 字段，无法批量归档/激活';
+    return;
+  }
+  batchBusy.value = true;
+  try {
+    const ifMatchMap = buildIfMatchMap(selectedIds.value);
+    const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { active: action === 'activate' });
+    const requestContext = mergeContext(actionMeta.value?.context);
+    const result = await batchUpdateRecords({
+      model: model.value,
+      ids: selectedIds.value,
+      action,
+      ifMatchMap,
+      idempotencyKey,
+      failedPreviewLimit: 12,
+      failedOffset: 0,
+      failedLimit: 12,
+      exportFailedCsv: true,
+      context: requestContext,
+    });
+    lastBatchRequest.value = {
+      model: model.value,
+      ids: [...selectedIds.value],
+      action,
+      ifMatchMap,
+      idempotencyKey,
+      context: requestContext,
+    };
+    if (result.idempotent_replay) {
+      batchMessage.value = '批量操作已幂等处理（重复请求被忽略）';
+    } else {
+    batchMessage.value =
+      action === 'activate'
+        ? `批量激活完成：成功 ${result.succeeded}，失败 ${result.failed}`
+        : `批量归档完成：成功 ${result.succeeded}，失败 ${result.failed}`;
+    }
+    applyBatchFailureArtifacts(result);
+    clearSelection();
+    await load();
+  } catch (err) {
+    setError(err, 'batch operation failed');
+    batchMessage.value = action === 'activate' ? '批量激活失败' : '批量归档失败';
+    batchDetails.value = [];
+    failedCsvFileName.value = '';
+    failedCsvContentB64.value = '';
+    batchFailedOffset.value = 0;
+    batchHasMoreFailures.value = false;
+    lastBatchRequest.value = null;
+  } finally {
+    batchBusy.value = false;
+  }
+}
+
+async function handleBatchAssign(assigneeId: number) {
+  batchMessage.value = '';
+  batchDetails.value = [];
+  failedCsvFileName.value = '';
+  failedCsvContentB64.value = '';
+  batchFailedOffset.value = 0;
+  batchHasMoreFailures.value = false;
+  lastBatchRequest.value = null;
+  if (!model.value || !selectedIds.value.length) return;
+  if (!hasAssigneeField.value) {
+    batchMessage.value = '当前模型不支持负责人字段，无法批量指派';
+    return;
+  }
+  if (!assigneeId) {
+    batchMessage.value = '请先选择负责人';
+    return;
+  }
+  batchBusy.value = true;
+  try {
+    const ifMatchMap = buildIfMatchMap(selectedIds.value);
+    const idempotencyKey = buildIdempotencyKey('assign', selectedIds.value, { assignee_id: assigneeId });
+    const requestContext = mergeContext(actionMeta.value?.context);
+    const result = await batchUpdateRecords({
+      model: model.value,
+      ids: selectedIds.value,
+      action: 'assign',
+      assigneeId,
+      ifMatchMap,
+      idempotencyKey,
+      failedPreviewLimit: 12,
+      failedOffset: 0,
+      failedLimit: 12,
+      exportFailedCsv: true,
+      context: requestContext,
+    });
+    lastBatchRequest.value = {
+      model: model.value,
+      ids: [...selectedIds.value],
+      action: 'assign',
+      assigneeId,
+      ifMatchMap,
+      idempotencyKey,
+      context: requestContext,
+    };
+    const assignee = assigneeOptions.value.find((opt) => opt.id === assigneeId)?.name || `#${assigneeId}`;
+    if (result.idempotent_replay) {
+      batchMessage.value = `批量指派给 ${assignee} 已幂等处理（重复请求被忽略）`;
+    } else {
+      batchMessage.value = `批量指派给 ${assignee}：成功 ${result.succeeded}，失败 ${result.failed}`;
+    }
+    applyBatchFailureArtifacts(result);
+    clearSelection();
+    await load();
+  } catch (err) {
+    setError(err, 'batch assign failed');
+    batchMessage.value = '批量指派失败';
+    batchDetails.value = [];
+    failedCsvFileName.value = '';
+    failedCsvContentB64.value = '';
+    batchFailedOffset.value = 0;
+    batchHasMoreFailures.value = false;
+    lastBatchRequest.value = null;
+  } finally {
+    batchBusy.value = false;
+  }
+}
+
+function handleBatchExport(scope: 'selected' | 'all') {
+  void exportByBackend(scope);
+}
+
+async function exportByBackend(scope: 'selected' | 'all') {
+  batchMessage.value = '';
+  batchDetails.value = [];
+  failedCsvFileName.value = '';
+  failedCsvContentB64.value = '';
+  if (!model.value) return;
+  if (scope === 'selected' && !selectedIds.value.length) {
+    batchMessage.value = '没有可导出的选中记录';
+    return;
+  }
+  batchBusy.value = true;
+  try {
+    const ids = scope === 'selected' ? selectedIds.value : [];
+    const domain = scope === 'all' ? mergeActiveFilter(mergeSceneDomain(actionMeta.value?.domain, scene.value?.filters)) : [];
+    const fields = columns.value.length ? ['id', ...columns.value.filter((col) => col !== 'id')] : ['id', 'name'];
+    const result = await exportRecordsCsv({
+      model: model.value,
+      fields,
+      ids,
+      domain,
+      order: sortLabel.value,
+      limit: scope === 'all' ? 10000 : 5000,
+      context: mergeContext(actionMeta.value?.context),
+    });
+    if (!result.content_b64) {
+      batchMessage.value = '没有可导出的记录';
+      return;
+    }
+    downloadCsvBase64(result.file_name, result.mime_type, result.content_b64);
+    batchMessage.value = `已导出 ${result.count} 条记录`;
+  } catch (err) {
+    setError(err, 'batch export failed');
+    batchMessage.value = '批量导出失败';
+  } finally {
+    batchBusy.value = false;
+  }
+}
+
+function handleDownloadFailedCsv() {
+  if (!failedCsvContentB64.value) return;
+  downloadCsvBase64(failedCsvFileName.value || 'batch_failed.csv', 'text/csv', failedCsvContentB64.value);
+}
+
+async function handleLoadMoreFailures() {
+  if (!lastBatchRequest.value || !batchHasMoreFailures.value) return;
+  batchBusy.value = true;
+  try {
+    const req = lastBatchRequest.value;
+    const result = await batchUpdateRecords({
+      model: req.model,
+      ids: req.ids,
+      action: req.action,
+      assigneeId: req.assigneeId,
+      ifMatchMap: req.ifMatchMap,
+      idempotencyKey: req.idempotencyKey,
+      failedPreviewLimit: batchFailedLimit.value,
+      failedOffset: batchFailedOffset.value,
+      failedLimit: batchFailedLimit.value,
+      exportFailedCsv: false,
+      context: req.context,
+    });
+    applyBatchFailureArtifacts(result, { append: true });
+  } catch (err) {
+    setError(err, 'load more failures failed');
+  } finally {
+    batchBusy.value = false;
+  }
 }
 
 onMounted(load);

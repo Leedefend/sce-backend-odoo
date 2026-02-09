@@ -14,11 +14,11 @@
     <StatusPanel v-if="loading" title="Loading list..." variant="info" />
     <StatusPanel
       v-else-if="error"
-      title="Request failed"
-      :message="error?.message"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
       :trace-id="error?.traceId"
       :error-code="error?.code"
-      :hint="error?.hint"
+      :hint="errorCopy.hint"
       variant="error"
       :on-retry="reload"
     />
@@ -40,7 +40,13 @@
       </table>
     </section>
 
-    <p v-else class="empty">No data loaded.</p>
+    <StatusPanel
+      v-else
+      :title="emptyCopy.title"
+      :message="emptyCopy.message"
+      variant="info"
+      :on-retry="reload"
+    />
 
     <footer class="pager">
       <button :disabled="offset === 0" @click="prevPage">Prev</button>
@@ -60,7 +66,7 @@ import { recordTrace, createTraceId } from '../services/trace';
 import { useSessionStore } from '../stores/session';
 import StatusPanel from '../components/StatusPanel.vue';
 import FieldValue from '../components/FieldValue.vue';
-import { useStatus } from '../composables/useStatus';
+import { resolveEmptyCopy, resolveErrorCopy, useStatus } from '../composables/useStatus';
 
 const route = useRoute();
 const router = useRouter();
@@ -80,6 +86,8 @@ const order = ref('id asc');
 
 const title = computed(() => `List: ${model.value}`);
 const orderLabel = computed(() => (order.value.includes('desc') ? 'id desc' : 'id asc'));
+const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load list'));
+const emptyCopy = computed(() => resolveEmptyCopy('list'));
 
 function pickColumns(rows: Array<Record<string, unknown>>) {
   if (!rows.length) {

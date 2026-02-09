@@ -151,6 +151,9 @@ export interface ExecuteButtonRequest {
 
 export interface ExecuteButtonResult {
   type: 'refresh' | 'action' | 'noop' | 'dry_run';
+  status?: 'success' | 'failure' | string;
+  success?: boolean;
+  reason_code?: string;
   res_model?: string;
   res_id?: number;
   raw_action?: Record<string, unknown>;

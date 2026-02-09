@@ -15,14 +15,47 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.capability_describe import (
             CapabilityDescribeHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.my_work_summary import (
+            MyWorkSummaryHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.my_work_complete import (
+            MyWorkCompleteHandler,
+            MyWorkCompleteBatchHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.usage_track import (
+            UsageTrackHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.usage_report import (
+            UsageReportHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.usage_export_csv import (
+            UsageExportCsvHandler,
+        )
+        from odoo.addons.smart_construction_core.handlers.capability_visibility_report import (
+            CapabilityVisibilityReportHandler,
+        )
     except Exception as e:
         _logger.warning("[smart_core_register] import handler failed: %s", e)
         return
 
     registry["system.ping.construction"] = SystemPingConstructionHandler
     registry["capability.describe"] = CapabilityDescribeHandler
+    registry["my.work.summary"] = MyWorkSummaryHandler
+    registry["my.work.complete"] = MyWorkCompleteHandler
+    registry["my.work.complete_batch"] = MyWorkCompleteBatchHandler
+    registry["usage.track"] = UsageTrackHandler
+    registry["usage.report"] = UsageReportHandler
+    registry["usage.export.csv"] = UsageExportCsvHandler
+    registry["capability.visibility.report"] = CapabilityVisibilityReportHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
+    _logger.info("[smart_core_register] registered my.work.summary")
+    _logger.info("[smart_core_register] registered my.work.complete")
+    _logger.info("[smart_core_register] registered my.work.complete_batch")
+    _logger.info("[smart_core_register] registered usage.track")
+    _logger.info("[smart_core_register] registered usage.report")
+    _logger.info("[smart_core_register] registered usage.export.csv")
+    _logger.info("[smart_core_register] registered capability.visibility.report")
 
 
 def smart_core_extend_system_init(data, env, user):
@@ -41,7 +74,7 @@ def smart_core_extend_system_init(data, env, user):
             ("is_test", "=", False),
         ], order="sequence, id")
         data["capabilities"] = [
-            rec.to_public_dict(user) for rec in caps if rec._user_allowed(user)
+            rec.to_public_dict(user) for rec in caps if rec._user_visible(user)
         ]
         if not data.get("scenes"):
             data["scenes"] = [

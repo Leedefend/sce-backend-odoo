@@ -4,6 +4,9 @@
       <div>
         <h1>{{ title }}</h1>
         <p class="meta">Model: {{ model }} · ID: {{ recordIdDisplay }}</p>
+        <p v-if="actionFeedback" class="action-feedback" :class="{ error: !actionFeedback.success }">
+          {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
+        </p>
       </div>
       <div class="actions">
         <button
@@ -24,11 +27,11 @@
     <StatusPanel v-if="loading" title="Loading record..." variant="info" />
     <StatusPanel
       v-else-if="error"
-      title="Request failed"
-      :message="error?.message"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
       :trace-id="error?.traceId"
       :error-code="error?.code"
-      :hint="error?.hint"
+      :hint="errorCopy.hint"
       variant="error"
       :on-retry="reload"
     />
@@ -90,12 +93,13 @@ import StatusPanel from '../components/StatusPanel.vue';
 import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
 import type { ViewButton, ViewContract } from '@sc/schema';
 import { recordTrace, createTraceId } from '../services/trace';
-import { useStatus } from '../composables/useStatus';
+import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
+import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 
 const route = useRoute();
 const router = useRouter();
@@ -104,11 +108,13 @@ const { error, clearError, setError } = useStatus();
 const loading = ref(false);
 const saving = ref(false);
 const executing = ref<string | null>(null);
+const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
 const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new'));
 const title = computed(() => `Form: ${model.value}`);
+const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
 
 const viewContract = ref<ViewContract | null>(null);
 const fields = ref<
@@ -281,7 +287,7 @@ function normalizeButtons(raw: unknown): ViewButton[] {
 }
 
 function buttonLabel(btn: ViewButton) {
-  return btn.string || btn.name || 'Action';
+  return semanticButtonLabel(btn);
 }
 
 function buttonState(btn: ViewButton) {
@@ -321,6 +327,7 @@ function getQueryNumber(key: string) {
 }
 
 async function runButton(btn: ViewButton) {
+  actionFeedback.value = null;
   const state = buttonState(btn);
   if (state.state === 'disabled_capability') {
     await router.push({ name: 'workbench', query: { reason: ErrorCodes.CAPABILITY_MISSING } });
@@ -358,8 +365,10 @@ async function runButton(btn: ViewButton) {
     if (response?.result?.type === 'refresh') {
       await load();
     }
+    actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
     setError(err, 'failed to execute button');
+    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
   } finally {
     executing.value = null;
   }
@@ -427,6 +436,20 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .meta {
   color: #64748b;
   font-size: 14px;
+}
+
+.action-feedback {
+  margin: 8px 0 0;
+  color: #166534;
+  font-size: 13px;
+}
+
+.action-feedback.error {
+  color: #b91c1c;
+}
+
+.action-feedback .code {
+  color: #64748b;
 }
 
 .card {
