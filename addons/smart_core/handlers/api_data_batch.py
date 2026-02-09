@@ -9,6 +9,7 @@ import io
 from datetime import datetime
 from datetime import timedelta
 from typing import Any, Dict, List
+from uuid import uuid4
 
 from odoo import fields
 from odoo.exceptions import AccessError
@@ -74,6 +75,10 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if isinstance(vals, dict) and vals:
             return action or "write", vals
         return action, {}
+
+    def _normalize_request_id(self, raw_value: Any) -> str:
+        value = str(raw_value or "").strip()
+        return value if value else f"adb_req_{uuid4().hex[:12]}"
 
     def _get_int(self, params: Dict[str, Any], key: str, default: int):
         try:
@@ -171,13 +176,15 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return {"file_name": "", "content_b64": "", "count": 0}
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow(["model", "action", "id", "reason_code", "message"])
+        writer.writerow(["model", "action", "id", "reason_code", "retryable", "error_category", "message"])
         for row in failed_rows:
             writer.writerow([
                 model,
                 action,
                 row.get("id") or "",
                 row.get("reason_code") or "",
+                bool(row.get("retryable")),
+                row.get("error_category") or "",
                 row.get("message") or "",
             ])
         raw = buf.getvalue().encode("utf-8-sig")
@@ -209,7 +216,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
         model = str(params.get("model") or "").strip()
         ids = self._get_ids(params)
         action, vals = self._resolve_vals(params)
-        idempotency_key = str(params.get("idempotency_key") or "").strip()
+        request_id = self._normalize_request_id(params.get("request_id"))
+        idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
         if_match_map = self._normalize_if_match_map(params)
         preview_limit = self._get_int(params, "failed_preview_limit", 10)
         page_limit = self._get_int(params, "failed_limit", preview_limit)
@@ -232,6 +240,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
         trace_id = ""
         if isinstance(self.context, dict):
             trace_id = str(self.context.get("trace_id") or "")
+        if not trace_id:
+            trace_id = f"adb_{uuid4().hex[:12]}"
 
         safe_vals = {k: v for k, v in vals.items() if k in env_model._fields}
         if not safe_vals:
@@ -254,6 +264,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
             replay_data["idempotent_replay"] = True
             replay_data["idempotency_key"] = idempotency_key
             replay_data["idempotency_fingerprint"] = idempotency_fingerprint
+            replay_data["request_id"] = str(replay_data.get("request_id") or request_id)
+            replay_data["trace_id"] = str(replay_data.get("trace_id") or trace_id)
             if export_failed_csv and replay_data.get("failed_total", 0) > 0 and not replay_data.get("failed_csv_content_b64"):
                 failed_csv = self._build_failed_csv(model, action or "write", [item for item in replay_data.get("results") or [] if not item.get("ok")])
                 replay_data["failed_csv_file_name"] = failed_csv.get("file_name")
@@ -270,11 +282,23 @@ class ApiDataBatchHandler(BaseIntentHandler):
         success = 0
         failed = 0
         for rec_id in ids:
-            item = {"id": rec_id, "ok": False, "reason_code": "", "message": ""}
+            item = {
+                "id": rec_id,
+                "ok": False,
+                "reason_code": "",
+                "message": "",
+                "retryable": False,
+                "error_category": "",
+                "suggested_action": "",
+                "trace_id": trace_id,
+            }
             rec = env_model.browse(rec_id).exists()
             if not rec:
                 item["reason_code"] = "NOT_FOUND"
                 item["message"] = "记录不存在"
+                item["retryable"] = False
+                item["error_category"] = "not_found"
+                item["suggested_action"] = "refresh_list"
                 failed += 1
                 results.append(item)
                 continue
@@ -286,6 +310,9 @@ class ApiDataBatchHandler(BaseIntentHandler):
                     if current and expected and current != expected:
                         item["reason_code"] = "CONFLICT"
                         item["message"] = "Record changed"
+                        item["retryable"] = True
+                        item["error_category"] = "conflict"
+                        item["suggested_action"] = "reload_then_retry"
                         failed += 1
                         results.append(item)
                         continue
@@ -293,26 +320,39 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 item["ok"] = True
                 item["reason_code"] = "OK"
                 item["message"] = "updated"
+                item["retryable"] = False
+                item["error_category"] = ""
+                item["suggested_action"] = ""
                 success += 1
             except AccessError:
                 item["reason_code"] = "PERMISSION_DENIED"
                 item["message"] = "无写入权限"
+                item["retryable"] = False
+                item["error_category"] = "permission"
+                item["suggested_action"] = "request_access"
                 failed += 1
             except Exception as exc:
                 _logger.warning("api.data.batch failed model=%s id=%s err=%s", model, rec_id, exc)
                 item["reason_code"] = "WRITE_FAILED"
                 item["message"] = str(exc)
+                item["retryable"] = True
+                item["error_category"] = "transient"
+                item["suggested_action"] = "retry"
                 failed += 1
             results.append(item)
 
+        failed_retry_ids = [int(item.get("id") or 0) for item in results if not item.get("ok") and bool(item.get("retryable")) and int(item.get("id") or 0) > 0]
         data = {
             "model": model,
             "action": action or "write",
+            "request_id": request_id,
+            "trace_id": trace_id,
             "values": safe_vals,
             "requested_ids": ids,
             "succeeded": success,
             "failed": failed,
             "results": results,
+            "failed_retry_ids": failed_retry_ids,
             "idempotency_key": idempotency_key,
             "idempotency_fingerprint": idempotency_fingerprint,
             "idempotent_replay": False,

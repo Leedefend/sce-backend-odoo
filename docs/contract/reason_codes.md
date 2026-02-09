@@ -41,6 +41,17 @@ For batch completion (`my.work.complete_batch`), response also includes:
 - `trace_id` (server-generated batch trace)
 - `failed_retry_ids` (default retry target list where `retryable=true`)
 
+For generic batch write intent (`api.data.batch`), response includes:
+
+- `request_id`
+- `trace_id`
+- `failed_retry_ids`
+- per-row structured fields:
+  - `reason_code`
+  - `retryable`
+  - `error_category`
+  - `suggested_action`
+
 Expected behavior:
 
 - Access failures: `PERMISSION_DENIED`, non-retryable
