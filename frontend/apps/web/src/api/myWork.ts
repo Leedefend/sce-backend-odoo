@@ -62,7 +62,16 @@ export type MyWorkSummaryResponse = {
 export async function fetchMyWorkSummary(
   limit = 20,
   limitEach = 8,
-  options?: { page?: number; pageSize?: number; sortBy?: string; sortDir?: 'asc' | 'desc' },
+  options?: {
+    page?: number;
+    pageSize?: number;
+    sortBy?: string;
+    sortDir?: 'asc' | 'desc';
+    section?: string;
+    source?: string;
+    reasonCode?: string;
+    search?: string;
+  },
 ) {
   return intentRequest<MyWorkSummaryResponse>({
     intent: 'my.work.summary',
@@ -73,6 +82,10 @@ export async function fetchMyWorkSummary(
       page_size: options?.pageSize ?? limit,
       sort_by: options?.sortBy ?? 'id',
       sort_dir: options?.sortDir ?? 'desc',
+      section: options?.section ?? 'all',
+      source: options?.source ?? 'all',
+      reason_code: options?.reasonCode ?? 'all',
+      search: options?.search ?? '',
     },
   });
 }

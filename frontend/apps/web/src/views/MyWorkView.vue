@@ -75,7 +75,7 @@
           type="button"
           class="tab"
           :class="{ active: activeSection === sec.key }"
-          @click="activeSection = sec.key"
+          @click="selectSection(sec.key)"
         >
           {{ sec.label }}
         </button>
@@ -87,6 +87,7 @@
           class="search-input"
           type="search"
           placeholder="搜索事项 / 模型 / 动作"
+          @keydown.enter="applyFilters"
         />
         <select v-model="sourceFilter" class="filter-select">
           <option value="ALL">全部来源</option>
@@ -100,13 +101,31 @@
             {{ reason }}
           </option>
         </select>
+        <select v-model="sortBy" class="filter-select">
+          <option value="id">排序：ID</option>
+          <option value="deadline">排序：截止日</option>
+          <option value="title">排序：事项标题</option>
+          <option value="reason_code">排序：原因码</option>
+          <option value="source">排序：来源</option>
+        </select>
+        <select v-model="sortDir" class="filter-select">
+          <option value="desc">降序</option>
+          <option value="asc">升序</option>
+        </select>
+        <select v-model.number="pageSize" class="filter-select">
+          <option :value="10">每页 10</option>
+          <option :value="20">每页 20</option>
+          <option :value="40">每页 40</option>
+        </select>
         <div class="preset-actions">
+          <button class="link-btn mini-btn" @click="applyFilters">应用筛选</button>
           <button class="link-btn mini-btn" @click="resetFilters">重置筛选</button>
           <button class="link-btn mini-btn" @click="saveFilterPreset">保存常用筛选</button>
           <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">应用常用筛选</button>
           <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">清除预设</button>
         </div>
       </section>
+      <p v-if="summaryStatus?.hint" class="status-hint">{{ summaryStatus.hint }}</p>
 
       <section v-if="todoSelectionIds.length" class="batch-bar">
         <span>已选 {{ todoSelectionIds.length }} 条待办</span>
@@ -171,6 +190,12 @@
           </tbody>
         </table>
       </section>
+
+      <section class="pager">
+        <button class="link-btn" :disabled="loading || page <= 1" @click="goToPage(page - 1)">上一页</button>
+        <span>第 {{ page }} / {{ totalPages }} 页</span>
+        <button class="link-btn" :disabled="loading || page >= totalPages" @click="goToPage(page + 1)">下一页</button>
+      </section>
     </template>
   </section>
 </template>
@@ -201,6 +226,11 @@ const actionFeedbackError = ref(false);
 const searchText = ref('');
 const sourceFilter = ref('ALL');
 const reasonFilter = ref('ALL');
+const sortBy = ref('id');
+const sortDir = ref<'asc' | 'desc'>('desc');
+const page = ref(1);
+const pageSize = ref(20);
+const totalPages = ref(1);
 const sourceFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const reasonFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const summaryStatus = ref<{ state: string; reason_code: string; message: string; hint: string } | null>(null);
@@ -211,25 +241,7 @@ const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.v
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
 
-const filteredItems = computed(() => {
-  const key = activeSection.value;
-  let result = !sections.value.length || !key ? items.value : items.value.filter((item) => (item.section || '') === key);
-  if (sourceFilter.value !== 'ALL') {
-    result = result.filter((item) => String(item.source || '') === sourceFilter.value);
-  }
-  if (reasonFilter.value !== 'ALL') {
-    result = result.filter((item) => String(item.reason_code || '') === reasonFilter.value);
-  }
-  const query = searchText.value.trim().toLowerCase();
-  if (!query) return result;
-  return result.filter((item) =>
-    [item.title, item.model, item.action_label].some((text) =>
-      String(text || '')
-        .toLowerCase()
-        .includes(query),
-    ),
-  );
-});
+const filteredItems = computed(() => items.value);
 const currentTodoRows = computed(() =>
   filteredItems.value.filter((item) => isCompletableTodo(item)).map((item) => item.id),
 );
@@ -275,11 +287,25 @@ async function load() {
   statusError.value = null;
   summaryStatus.value = null;
   try {
-    const data = await fetchMyWorkSummary(80, 16);
+    const data = await fetchMyWorkSummary(80, 16, {
+      page: page.value,
+      pageSize: pageSize.value,
+      sortBy: sortBy.value,
+      sortDir: sortDir.value,
+      section: activeSection.value || 'all',
+      source: sourceFilter.value,
+      reasonCode: reasonFilter.value,
+      search: searchText.value.trim(),
+    });
     sections.value = Array.isArray(data.sections) ? data.sections : [];
     summary.value = Array.isArray(data.summary) ? data.summary : [];
     items.value = Array.isArray(data.items) ? data.items : [];
     summaryStatus.value = data.status || null;
+    page.value = Math.max(1, Number(data.filters?.page || page.value || 1));
+    pageSize.value = Math.max(1, Number(data.filters?.page_size || pageSize.value || 20));
+    totalPages.value = Math.max(1, Number(data.filters?.total_pages || 1));
+    sortBy.value = String(data.filters?.sort_by || sortBy.value || 'id');
+    sortDir.value = (String(data.filters?.sort_dir || sortDir.value || 'desc') === 'asc' ? 'asc' : 'desc');
     sourceFacetRows.value = Array.isArray(data.facets?.source_counts) ? data.facets?.source_counts || [] : [];
     reasonFacetRows.value = Array.isArray(data.facets?.reason_code_counts) ? data.facets?.reason_code_counts || [] : [];
     todoSelectionIds.value = [];
@@ -308,6 +334,18 @@ async function load() {
 function selectSection(key: string) {
   if (!key) return;
   activeSection.value = key;
+  page.value = 1;
+  void load();
+}
+
+function applyFilters() {
+  page.value = 1;
+  void load();
+}
+
+function goToPage(nextPage: number) {
+  page.value = Math.max(1, Math.min(totalPages.value || 1, Number(nextPage || 1)));
+  void load();
 }
 
 function saveFilterPreset() {
@@ -319,6 +357,9 @@ function saveFilterPreset() {
         searchText: searchText.value,
         sourceFilter: sourceFilter.value,
         reasonFilter: reasonFilter.value,
+        sortBy: sortBy.value,
+        sortDir: sortDir.value,
+        pageSize: pageSize.value,
       }),
     );
     hasFilterPreset.value = true;
@@ -339,13 +380,21 @@ function applyFilterPreset() {
       searchText?: string;
       sourceFilter?: string;
       reasonFilter?: string;
+      sortBy?: string;
+      sortDir?: 'asc' | 'desc';
+      pageSize?: number;
     };
     if (parsed.activeSection) activeSection.value = parsed.activeSection;
     if (typeof parsed.searchText === 'string') searchText.value = parsed.searchText;
     if (typeof parsed.sourceFilter === 'string') sourceFilter.value = parsed.sourceFilter;
     if (typeof parsed.reasonFilter === 'string') reasonFilter.value = parsed.reasonFilter;
+    if (typeof parsed.sortBy === 'string') sortBy.value = parsed.sortBy;
+    if (parsed.sortDir === 'asc' || parsed.sortDir === 'desc') sortDir.value = parsed.sortDir;
+    if (typeof parsed.pageSize === 'number' && Number.isFinite(parsed.pageSize) && parsed.pageSize > 0) pageSize.value = parsed.pageSize;
     actionFeedback.value = '已应用常用筛选';
     actionFeedbackError.value = false;
+    page.value = 1;
+    void load();
   } catch {
     actionFeedback.value = '应用常用筛选失败';
     actionFeedbackError.value = true;
@@ -368,10 +417,15 @@ function resetFilters() {
   searchText.value = '';
   sourceFilter.value = 'ALL';
   reasonFilter.value = 'ALL';
+  sortBy.value = 'id';
+  sortDir.value = 'desc';
+  pageSize.value = 20;
+  page.value = 1;
   const todoSection = sections.value.find((item) => item.key === 'todo');
   activeSection.value = todoSection?.key || sections.value[0]?.key || 'todo';
   actionFeedback.value = '筛选条件已重置';
   actionFeedbackError.value = false;
+  void load();
 }
 
 function openScene(sceneKey: string) {
@@ -600,11 +654,17 @@ function restoreFilters() {
       searchText?: string;
       sourceFilter?: string;
       reasonFilter?: string;
+      sortBy?: string;
+      sortDir?: 'asc' | 'desc';
+      pageSize?: number;
     };
     if (parsed.activeSection) activeSection.value = parsed.activeSection;
     if (typeof parsed.searchText === 'string') searchText.value = parsed.searchText;
     if (typeof parsed.sourceFilter === 'string') sourceFilter.value = parsed.sourceFilter;
     if (typeof parsed.reasonFilter === 'string') reasonFilter.value = parsed.reasonFilter;
+    if (typeof parsed.sortBy === 'string') sortBy.value = parsed.sortBy;
+    if (parsed.sortDir === 'asc' || parsed.sortDir === 'desc') sortDir.value = parsed.sortDir;
+    if (typeof parsed.pageSize === 'number' && Number.isFinite(parsed.pageSize) && parsed.pageSize > 0) pageSize.value = parsed.pageSize;
   } catch {
     // Ignore broken local cache.
   }
@@ -616,7 +676,7 @@ onMounted(() => {
   void load();
 });
 
-watch([activeSection, searchText, sourceFilter, reasonFilter], () => {
+watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, pageSize], () => {
   try {
     window.localStorage.setItem(
       myWorkFilterStorageKey,
@@ -625,6 +685,9 @@ watch([activeSection, searchText, sourceFilter, reasonFilter], () => {
         searchText: searchText.value,
         sourceFilter: sourceFilter.value,
         reasonFilter: reasonFilter.value,
+        sortBy: sortBy.value,
+        sortDir: sortDir.value,
+        pageSize: pageSize.value,
       }),
     );
   } catch {
@@ -707,7 +770,7 @@ watch([activeSection, searchText, sourceFilter, reasonFilter], () => {
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
+  grid-template-columns: minmax(220px, 1fr) repeat(5, auto);
   gap: 8px;
 }
 
@@ -752,6 +815,17 @@ watch([activeSection, searchText, sourceFilter, reasonFilter], () => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.status-hint {
+  margin: 0;
+  color: #475569;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .retry-bar {
