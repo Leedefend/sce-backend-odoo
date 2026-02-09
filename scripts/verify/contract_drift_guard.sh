@@ -43,6 +43,19 @@ do
   fi
 done
 
+# Guard 2b: auto-scan side-effect api.data.* handlers to prevent future drift.
+# Any api_data_*.py handler touching api.data.(batch|write|unlink|create|update|delete)
+# must declare IDEMPOTENCY_WINDOW_SECONDS.
+for f in addons/smart_core/handlers/api_data_*.py; do
+  [ -f "$f" ] || continue
+  if rg -q 'api\.data\.(batch|write|unlink|create|update|delete)' "$f"; then
+    if ! rg -q 'IDEMPOTENCY_WINDOW_SECONDS' "$f"; then
+      echo "[verify.contract_drift.guard] FAIL: $f missing IDEMPOTENCY_WINDOW_SECONDS (auto-scan)"
+      missing=1
+    fi
+  fi
+done
+
 if [ "$missing" -ne 0 ]; then
   exit 2
 fi
