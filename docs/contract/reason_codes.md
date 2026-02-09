@@ -35,6 +35,12 @@ For `my.work.complete` and `my.work.complete_batch`, failures return:
 - `error_category`
 - `suggested_action`
 
+For batch completion (`my.work.complete_batch`), response also includes:
+
+- `request_id` (caller-supplied or server-generated)
+- `trace_id` (server-generated batch trace)
+- `failed_retry_ids` (default retry target list where `retryable=true`)
+
 Expected behavior:
 
 - Access failures: `PERMISSION_DENIED`, non-retryable

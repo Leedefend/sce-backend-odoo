@@ -4,6 +4,7 @@ from odoo.exceptions import AccessError, UserError
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_construction_core.handlers.my_work_complete import (
+    MyWorkCompleteBatchHandler,
     MyWorkCompleteHandler,
     _failure_meta_for_exception,
     _retryable_summary,
@@ -61,6 +62,19 @@ class TestMyWorkBackend(TransactionCase):
         self.assertEqual(data.get("reason_code"), "INVALID_ID")
         self.assertEqual(data.get("error_category"), "validation")
         self.assertFalse(bool(data.get("retryable")))
+
+    def test_batch_contract_contains_request_and_retry_fields(self):
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        result = handler.handle({"ids": ["bad"], "source": "mail.activity", "request_id": "req-demo-1"})
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        self.assertEqual(data.get("request_id"), "req-demo-1")
+        self.assertTrue(str(data.get("trace_id") or "").startswith("mw_batch_"))
+        self.assertEqual(data.get("failed_count"), 1)
+        self.assertEqual(data.get("failed_retry_ids"), [])
+        failed_items = data.get("failed_items") or []
+        self.assertEqual(len(failed_items), 1)
+        self.assertTrue(str((failed_items[0] or {}).get("trace_id") or "").startswith("mw_batch_"))
 
     def test_summary_status_contract(self):
         handler = MyWorkSummaryHandler(self.env, payload={})

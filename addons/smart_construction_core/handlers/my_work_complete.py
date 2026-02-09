@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from uuid import uuid4
 
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
@@ -71,6 +72,8 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         source = str(params.get("source") or "").strip()
         ids = params.get("ids") if isinstance(params.get("ids"), list) else []
         note = str(params.get("note") or "").strip()
+        request_id = _normalize_request_id(params.get("request_id"))
+        trace_id = f"mw_batch_{uuid4().hex[:12]}"
         if not ids:
             raise UserError("缺少待办 ID 列表")
 
@@ -93,11 +96,15 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                     "retryable": bool(failed_meta["retryable"]),
                     "error_category": failed_meta["error_category"],
                     "suggested_action": failed_meta["suggested_action"],
+                    "trace_id": trace_id,
                 })
 
         ok = len(failed) == 0
+        failed_retry_ids = [int(item.get("id") or 0) for item in failed if bool(item.get("retryable")) and int(item.get("id") or 0) > 0]
         data = {
             "source": source,
+            "request_id": request_id,
+            "trace_id": trace_id,
             "success": ok,
             "reason_code": REASON_DONE if ok else REASON_PARTIAL_FAILED,
             "message": "批量完成成功" if ok else "部分待办完成失败",
@@ -105,6 +112,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             "failed_count": len(failed),
             "completed_ids": completed,
             "failed_items": failed,
+            "failed_retry_ids": failed_retry_ids,
             "failed_reason_summary": _reason_summary(reason_counter),
             "failed_retryable_summary": _retryable_summary(failed),
             "done_at": fields.Datetime.now(),
@@ -143,6 +151,11 @@ def _safe_int(value):
 
 def _reason_code_for_exception(exc):
     return _failure_meta_for_exception(exc)["reason_code"]
+
+
+def _normalize_request_id(raw_value):
+    value = str(raw_value or "").strip()
+    return value if value else f"mw_req_{uuid4().hex[:12]}"
 
 
 def _failure_meta_for_exception(exc):
