@@ -233,6 +233,9 @@ guard.codex.fast.upgrade:
 # ======================================================
 .PHONY: contract.export contract.export_all gate.contract gate.contract.bootstrap gate.contract.bootstrap-pass
 
+INTENT_SURFACE_MD ?= docs/ops/audit/intent_surface_report.md
+INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
+
 contract.export:
 	@DB="$(DB_NAME)" scripts/contract/snapshot_export.sh \
 	  --db "$(DB_NAME)" \
@@ -249,14 +252,17 @@ contract.export_all:
 
 gate.contract:
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
+	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD=artifacts/intent_surface_report.md INTENT_SURFACE_JSON=artifacts/intent_surface_report.json
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh
 
 gate.contract.bootstrap:
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
+	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD=artifacts/intent_surface_report.md INTENT_SURFACE_JSON=artifacts/intent_surface_report.json
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh --bootstrap
 
 gate.contract.bootstrap-pass:
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
+	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD=artifacts/intent_surface_report.md INTENT_SURFACE_JSON=artifacts/intent_surface_report.json
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh --bootstrap --bootstrap-pass
 
 check.compose.project:
@@ -1036,7 +1042,7 @@ verify.contract_drift.guard: guard.prod.forbid
 	@bash scripts/verify/contract_drift_guard.sh
 
 audit.intent.surface: guard.prod.forbid
-	@python3 scripts/audit/intent_surface_report.py
+	@python3 scripts/audit/intent_surface_report.py --output-md "$(INTENT_SURFACE_MD)" --output-json "$(INTENT_SURFACE_JSON)"
 
 policy.apply.extension_modules: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/apply_extension_modules.sh
