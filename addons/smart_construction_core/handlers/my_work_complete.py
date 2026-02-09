@@ -19,8 +19,8 @@ from odoo.addons.smart_core.utils.idempotency import (
     build_idempotency_fingerprint,
     build_idempotency_conflict_response,
     enrich_replay_contract,
-    find_latest_audit_entry,
     find_recent_audit_entry,
+    has_latest_fingerprint_match,
     idempotency_replay_or_conflict,
     ids_summary,
     normalize_request_id,
@@ -102,28 +102,6 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             self.IDEMPOTENCY_WINDOW_SECONDS,
             env_key="MY_WORK_BATCH_REPLAY_WINDOW_SEC",
         )
-
-    def _find_recent_idempotency_entry(self, *, idem_key):
-        return find_recent_audit_entry(
-            self.env,
-            event_code="MY_WORK_COMPLETE_BATCH",
-            idempotency_key=idem_key,
-            window_seconds=self._idempotency_window_seconds(),
-            limit=20,
-        )
-
-    def _has_expired_replay_candidate(self, *, idem_key, fingerprint):
-        entry = find_latest_audit_entry(
-            self.env,
-            event_code="MY_WORK_COMPLETE_BATCH",
-            idempotency_key=idem_key,
-            limit=20,
-        )
-        if not entry:
-            return False
-        payload = entry.get("payload") or {}
-        old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
-        return bool(old_fingerprint and old_fingerprint == fingerprint)
 
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
         return build_idempotency_conflict_response(
@@ -213,7 +191,13 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         trace_id = f"mw_batch_{uuid4().hex[:12]}"
         if not ids:
             raise UserError("缺少待办 ID 列表")
-        entry = self._find_recent_idempotency_entry(idem_key=idempotency_key)
+        entry = find_recent_audit_entry(
+            self.env,
+            event_code="MY_WORK_COMPLETE_BATCH",
+            idempotency_key=idempotency_key,
+            window_seconds=self._idempotency_window_seconds(),
+            limit=20,
+        )
         decision = idempotency_replay_or_conflict(
             entry,
             fingerprint=idempotency_fingerprint,
@@ -246,9 +230,12 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
             )
             return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE}}
 
-        replay_window_expired = self._has_expired_replay_candidate(
-            idem_key=idempotency_key,
+        replay_window_expired = has_latest_fingerprint_match(
+            self.env,
+            event_code="MY_WORK_COMPLETE_BATCH",
+            idempotency_key=idempotency_key,
             fingerprint=idempotency_fingerprint,
+            limit=20,
         )
         completed = []
         failed = []

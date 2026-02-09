@@ -26,7 +26,7 @@ from ..utils.idempotency import (
     build_idempotency_fingerprint,
     build_idempotency_conflict_response,
     enrich_replay_contract,
-    find_latest_audit_entry,
+    has_latest_fingerprint_match,
     find_recent_audit_entry,
     idempotency_replay_or_conflict,
     normalize_request_id,
@@ -129,30 +129,6 @@ class ApiDataBatchHandler(BaseIntentHandler):
             self.IDEMPOTENCY_WINDOW_SECONDS,
             env_key="API_DATA_BATCH_REPLAY_WINDOW_SEC",
         )
-
-    def _find_recent_idempotency_entry(self, *, model: str, idem_key: str):
-        return find_recent_audit_entry(
-            self.env,
-            event_code="API_DATA_BATCH",
-            idempotency_key=idem_key,
-            window_seconds=self._idempotency_window_seconds(),
-            limit=20,
-            extra_domain=[("model", "=", model)],
-        )
-
-    def _has_expired_replay_candidate(self, *, model: str, idem_key: str, fingerprint: str):
-        entry = find_latest_audit_entry(
-            self.env,
-            event_code="API_DATA_BATCH",
-            idempotency_key=idem_key,
-            limit=20,
-            extra_domain=[("model", "=", model)],
-        )
-        if not entry:
-            return False
-        payload = entry.get("payload") or {}
-        old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
-        return bool(old_fingerprint and old_fingerprint == fingerprint)
 
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
         return build_idempotency_conflict_response(
@@ -323,7 +299,14 @@ class ApiDataBatchHandler(BaseIntentHandler):
             vals=safe_vals,
             idem_key=idempotency_key,
         )
-        recent_entry = self._find_recent_idempotency_entry(model=model, idem_key=idempotency_key)
+        recent_entry = find_recent_audit_entry(
+            self.env,
+            event_code="API_DATA_BATCH",
+            idempotency_key=idempotency_key,
+            window_seconds=self._idempotency_window_seconds(),
+            limit=20,
+            extra_domain=[("model", "=", model)],
+        )
         decision = idempotency_replay_or_conflict(
             recent_entry,
             fingerprint=idempotency_fingerprint,
@@ -370,10 +353,13 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 },
             }
 
-        replay_window_expired = self._has_expired_replay_candidate(
-            model=model,
-            idem_key=idempotency_key,
+        replay_window_expired = has_latest_fingerprint_match(
+            self.env,
+            event_code="API_DATA_BATCH",
+            idempotency_key=idempotency_key,
             fingerprint=idempotency_fingerprint,
+            limit=20,
+            extra_domain=[("model", "=", model)],
         )
         try:
             env_model.check_access_rights("write")
