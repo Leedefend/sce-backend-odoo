@@ -201,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
 import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
@@ -240,6 +240,9 @@ const hasFilterPreset = ref(false);
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
+const autoQueryDelayMs = 300;
+let autoQueryTimer: ReturnType<typeof setTimeout> | null = null;
+const suspendAutoLoad = ref(false);
 
 const filteredItems = computed(() => items.value);
 const currentTodoRows = computed(() =>
@@ -286,6 +289,7 @@ async function load() {
   errorText.value = '';
   statusError.value = null;
   summaryStatus.value = null;
+  suspendAutoLoad.value = true;
   try {
     const data = await fetchMyWorkSummary(80, 16, {
       page: page.value,
@@ -327,6 +331,7 @@ async function load() {
       statusError.value = { message: errorText.value };
     }
   } finally {
+    suspendAutoLoad.value = false;
     loading.value = false;
   }
 }
@@ -335,7 +340,6 @@ function selectSection(key: string) {
   if (!key) return;
   activeSection.value = key;
   page.value = 1;
-  void load();
 }
 
 function applyFilters() {
@@ -346,6 +350,16 @@ function applyFilters() {
 function goToPage(nextPage: number) {
   page.value = Math.max(1, Math.min(totalPages.value || 1, Number(nextPage || 1)));
   void load();
+}
+
+function scheduleAutoLoad() {
+  if (autoQueryTimer) {
+    clearTimeout(autoQueryTimer);
+  }
+  autoQueryTimer = setTimeout(() => {
+    autoQueryTimer = null;
+    void load();
+  }, autoQueryDelayMs);
 }
 
 function saveFilterPreset() {
@@ -676,6 +690,13 @@ onMounted(() => {
   void load();
 });
 
+onUnmounted(() => {
+  if (autoQueryTimer) {
+    clearTimeout(autoQueryTimer);
+    autoQueryTimer = null;
+  }
+});
+
 watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, pageSize], () => {
   try {
     window.localStorage.setItem(
@@ -693,6 +714,12 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   } catch {
     // Ignore persist errors in private mode.
   }
+});
+
+watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, pageSize], () => {
+  if (suspendAutoLoad.value) return;
+  page.value = 1;
+  scheduleAutoLoad();
 });
 </script>
 
