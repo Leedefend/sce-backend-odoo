@@ -5,6 +5,18 @@ from ..core.base_handler import BaseIntentHandler
 from odoo.exceptions import AccessError, UserError
 from odoo import fields
 import logging
+from ..utils.reason_codes import (
+    REASON_BUSINESS_RULE_FAILED,
+    REASON_DRY_RUN,
+    REASON_METHOD_NOT_CALLABLE,
+    REASON_MISSING_PARAMS,
+    REASON_NOT_FOUND,
+    REASON_OK,
+    REASON_PERMISSION_DENIED,
+    REASON_SYSTEM_ERROR,
+    REASON_UNSUPPORTED_BUTTON_TYPE,
+    failure_meta_for_reason,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -29,16 +41,20 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0] if res_ids else None,
-                    reason_code="MISSING_PARAMS",
+                    reason_code=REASON_MISSING_PARAMS,
                     message="缺少参数 model/button.name/res_id",
+                    trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                    status_code=400,
                 )
 
             if button_type not in ("object", "action"):
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0],
-                    reason_code="UNSUPPORTED_BUTTON_TYPE",
+                    reason_code=REASON_UNSUPPORTED_BUTTON_TYPE,
                     message=f"不支持的按钮类型: {button_type}",
+                    trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                    status_code=400,
                 )
 
             self.env[model].check_access_rights("write")
@@ -48,8 +64,10 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0],
-                    reason_code="NOT_FOUND",
+                    reason_code=REASON_NOT_FOUND,
                     message="记录不存在",
+                    trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                    status_code=404,
                 )
 
             recordset.check_access_rule("write")
@@ -59,8 +77,10 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 return _failure_result(
                     model=model,
                     res_id=res_ids[0],
-                    reason_code="METHOD_NOT_CALLABLE",
+                    reason_code=REASON_METHOD_NOT_CALLABLE,
                     message=f"方法不可调用: {method_name}",
+                    trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                    status_code=400,
                 )
 
             if dry_run:
@@ -68,7 +88,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     "type": "dry_run",
                     "status": "success",
                     "success": True,
-                    "reason_code": "DRY_RUN",
+                    "reason_code": REASON_DRY_RUN,
                     "message": "Dry run completed",
                     "res_model": model,
                     "res_id": res_ids[0],
@@ -79,7 +99,11 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     "type": "toast",
                     "message": "dry_run",
                 }
-                return {"result": payload, "effect": effect}, {}
+                return {
+                    "ok": True,
+                    "data": {"result": payload, "effect": effect},
+                    "meta": {"trace_id": self.context.get("trace_id") if isinstance(self.context, dict) else ""},
+                }
 
             result = method()
 
@@ -87,7 +111,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 "type": "refresh",
                 "status": "success",
                 "success": True,
-                "reason_code": "OK",
+                "reason_code": REASON_OK,
                 "message": "Action executed successfully",
                 "res_model": model,
                 "res_id": res_ids[0],
@@ -134,28 +158,38 @@ class ExecuteButtonHandler(BaseIntentHandler):
                         },
                     }
 
-            return {"result": payload, "effect": effect}, {}
+            return {
+                "ok": True,
+                "data": {"result": payload, "effect": effect},
+                "meta": {"trace_id": self.context.get("trace_id") if isinstance(self.context, dict) else ""},
+            }
         except AccessError as exc:
             return _failure_result(
                 model=model,
                 res_id=res_ids[0] if res_ids else None,
-                reason_code="PERMISSION_DENIED",
+                reason_code=REASON_PERMISSION_DENIED,
                 message=str(exc) or "Permission denied",
+                trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                status_code=403,
             )
         except UserError as exc:
             return _failure_result(
                 model=model,
                 res_id=res_ids[0] if res_ids else None,
-                reason_code="BUSINESS_RULE_FAILED",
+                reason_code=REASON_BUSINESS_RULE_FAILED,
                 message=str(exc) or "Business rule failed",
+                trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                status_code=400,
             )
         except Exception as exc:
             _logger.exception("execute_button failed: %s", exc)
             return _failure_result(
                 model=model,
                 res_id=res_ids[0] if res_ids else None,
-                reason_code="SYSTEM_ERROR",
+                reason_code=REASON_SYSTEM_ERROR,
                 message="Action execution failed",
+                trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
+                status_code=500,
             )
 
     # 兼容旧调用
@@ -235,7 +269,14 @@ def _coerce_ids(value: Any) -> List[int]:
         return []
 
 
-def _failure_result(model: Optional[str], res_id: Optional[int], reason_code: str, message: str):
+def _failure_result(
+    model: Optional[str],
+    res_id: Optional[int],
+    reason_code: str,
+    message: str,
+    trace_id: str = "",
+    status_code: int = 400,
+):
     payload = {
         "type": "noop",
         "status": "failure",
@@ -246,7 +287,18 @@ def _failure_result(model: Optional[str], res_id: Optional[int], reason_code: st
         "res_id": res_id,
     }
     effect = {"type": "toast", "message": payload["message"]}
-    return {"result": payload, "effect": effect}, {}
+    return {
+        "ok": False,
+        "error": {
+            "code": reason_code,
+            "message": payload["message"],
+            "reason_code": reason_code,
+            **failure_meta_for_reason(reason_code),
+        },
+        "data": {"result": payload, "effect": effect},
+        "code": int(status_code),
+        "meta": {"trace_id": trace_id},
+    }
 
 
 def _should_generate_todo(method_name: str) -> bool:

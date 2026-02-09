@@ -8,6 +8,16 @@ from typing import Any, Dict, List
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
+from ..utils.reason_codes import (
+    REASON_CONFLICT,
+    REASON_MISSING_PARAMS,
+    REASON_NOT_FOUND,
+    REASON_PERMISSION_DENIED,
+    REASON_SYSTEM_ERROR,
+    REASON_UNSUPPORTED_SOURCE,
+    REASON_USER_ERROR,
+    failure_meta_for_reason,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -31,8 +41,17 @@ class ApiDataWriteHandler(BaseIntentHandler):
         "project.task": {"name", "description", "date_deadline", "project_id"},
     }
 
-    def _err(self, code: int, message: str):
-        return {"ok": False, "error": {"code": code, "message": message}, "code": code}
+    def _err(self, code: int, message: str, reason_code: str):
+        return {
+            "ok": False,
+            "error": {
+                "code": reason_code,
+                "message": message,
+                "reason_code": reason_code,
+                **failure_meta_for_reason(reason_code),
+            },
+            "code": code,
+        }
 
     def _collect_params(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         params = {}
@@ -83,25 +102,25 @@ class ApiDataWriteHandler(BaseIntentHandler):
         model = self._get_model(params)
 
         if not model:
-            return self._err(400, "缺少参数 model")
+            return self._err(400, "缺少参数 model", REASON_MISSING_PARAMS)
         allowed_fields = self.ALLOWED_MODELS.get(model)
         if not allowed_fields:
-            return self._err(403, f"模型不允许写入: {model}")
+            return self._err(403, f"模型不允许写入: {model}", REASON_UNSUPPORTED_SOURCE)
         if model not in self.env:
-            return self._err(404, f"未知模型: {model}")
+            return self._err(404, f"未知模型: {model}", REASON_NOT_FOUND)
 
         vals = self._get_vals(params)
         dry_run = bool(params.get("dry_run"))
         if not vals:
-            return self._err(400, "缺少参数 vals")
+            return self._err(400, "缺少参数 vals", REASON_MISSING_PARAMS)
 
         illegal_fields = sorted(set(vals.keys()) - allowed_fields)
         if illegal_fields:
-            return self._err(400, f"字段不允许写入: {', '.join(illegal_fields)}")
+            return self._err(400, f"字段不允许写入: {', '.join(illegal_fields)}", REASON_USER_ERROR)
 
         safe_vals = {k: v for k, v in vals.items() if k in allowed_fields}
         if not safe_vals:
-            return self._err(400, "vals 中无可写字段")
+            return self._err(400, "vals 中无可写字段", REASON_USER_ERROR)
 
         context = self._get_context(params)
         env_model = self.env[model].with_context(context)
@@ -113,28 +132,28 @@ class ApiDataWriteHandler(BaseIntentHandler):
         if intent == "api.data.write":
             record_id = self._get_id(params)
             if not record_id:
-                return self._err(400, "缺少参数 id")
+                return self._err(400, "缺少参数 id", REASON_MISSING_PARAMS)
 
             rec = env_model.browse(record_id).exists()
             if not rec:
-                return self._err(404, "记录不存在")
+                return self._err(404, "记录不存在", REASON_NOT_FOUND)
 
             try:
                 if_match = self._get_if_match(params)
                 if if_match:
                     current = rec.write_date and rec.write_date.strftime("%Y-%m-%d %H:%M:%S") or ""
                     if current and current != if_match:
-                        return {"ok": False, "error": {"code": "CONFLICT", "message": "Record changed"}, "code": 409}
+                        return self._err(409, "Record changed", REASON_CONFLICT)
                 env_model.check_access_rights("write")
                 rec.check_access_rule("write")
                 if not dry_run:
                     rec.write(safe_vals)
             except AccessError as ae:
                 _logger.warning("api.data.write AccessError on %s: %s", model, ae)
-                return self._err(403, "无写入权限")
+                return self._err(403, "无写入权限", REASON_PERMISSION_DENIED)
             except Exception as e:
                 _logger.exception("api.data.write failed on %s", model)
-                return self._err(500, str(e))
+                return self._err(500, str(e), REASON_SYSTEM_ERROR)
 
             data = {
                 "id": rec.id,
@@ -152,10 +171,10 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 rec = env_model.create(safe_vals) if not dry_run else None
             except AccessError as ae:
                 _logger.warning("api.data.create AccessError on %s: %s", model, ae)
-                return self._err(403, "无创建权限")
+                return self._err(403, "无创建权限", REASON_PERMISSION_DENIED)
             except Exception as e:
                 _logger.exception("api.data.create failed on %s", model)
-                return self._err(500, str(e))
+                return self._err(500, str(e), REASON_SYSTEM_ERROR)
 
             data = {
                 "id": rec.id if rec else 0,
@@ -167,4 +186,4 @@ class ApiDataWriteHandler(BaseIntentHandler):
             meta = {"trace_id": trace_id, "write_mode": "create", "source": "portal-shell"}
             return {"ok": True, "data": data, "meta": meta}
 
-        return self._err(400, f"未知写入意图: {intent}")
+        return self._err(400, f"未知写入意图: {intent}", REASON_UNSUPPORTED_SOURCE)
