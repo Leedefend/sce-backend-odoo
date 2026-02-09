@@ -173,6 +173,33 @@ def find_latest_audit_entry(
     )
 
 
+def has_latest_fingerprint_match(
+    env,
+    *,
+    event_code,
+    idempotency_key,
+    fingerprint,
+    limit=20,
+    extra_domain=None,
+    enforce_company=True,
+    enforce_actor=True,
+):
+    entry = find_latest_audit_entry(
+        env,
+        event_code=event_code,
+        idempotency_key=idempotency_key,
+        limit=limit,
+        extra_domain=extra_domain,
+        enforce_company=enforce_company,
+        enforce_actor=enforce_actor,
+    )
+    if not entry:
+        return False
+    payload = entry.get("payload") or {}
+    old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
+    return bool(old_fingerprint and old_fingerprint == str(fingerprint or ""))
+
+
 def ids_summary(rows, *, sample_limit=20):
     normalized = []
     for value in rows or []:
