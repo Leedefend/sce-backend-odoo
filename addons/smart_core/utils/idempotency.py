@@ -8,6 +8,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 from odoo import fields
+from .reason_codes import REASON_IDEMPOTENCY_CONFLICT, failure_meta_for_reason
 
 
 def normalize_request_id(raw_value, *, prefix="req"):
@@ -127,3 +128,42 @@ def ids_summary(rows, *, sample_limit=20):
     payload = "|".join(sorted([str(x) for x in normalized]))
     digest = hashlib.sha1(payload.encode("utf-8")).hexdigest() if payload else ""
     return {"count": len(normalized), "sample": sample, "hash": digest}
+
+
+def build_idempotency_conflict_response(
+    *,
+    intent_type,
+    request_id,
+    idempotency_key,
+    trace_id,
+    include_replay_evidence=False,
+):
+    failure_meta = failure_meta_for_reason(REASON_IDEMPOTENCY_CONFLICT)
+    data = {
+        "request_id": request_id,
+        "idempotency_key": idempotency_key,
+        "idempotent_replay": False,
+        "replay_window_expired": False,
+        "idempotency_replay_reason_code": "",
+        "trace_id": trace_id,
+    }
+    if include_replay_evidence:
+        data.update({
+            "replay_from_audit_id": 0,
+            "replay_original_trace_id": "",
+            "replay_age_ms": 0,
+        })
+    return {
+        "ok": False,
+        "code": 409,
+        "error": {
+            "code": 409,
+            "message": "idempotency key payload mismatch",
+            "reason_code": REASON_IDEMPOTENCY_CONFLICT,
+            "retryable": bool(failure_meta.get("retryable")),
+            "error_category": str(failure_meta.get("error_category") or ""),
+            "suggested_action": str(failure_meta.get("suggested_action") or ""),
+        },
+        "data": data,
+        "meta": {"intent": str(intent_type or "")},
+    }

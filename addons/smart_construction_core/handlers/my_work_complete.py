@@ -10,13 +10,12 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.exceptions import AccessError, UserError
 from odoo.addons.smart_construction_core.handlers.reason_codes import (
     REASON_DONE,
-    REASON_IDEMPOTENCY_CONFLICT,
     REASON_PARTIAL_FAILED,
     REASON_REPLAY_WINDOW_EXPIRED,
-    failure_meta_for_reason,
     my_work_failure_meta_for_exception,
 )
 from odoo.addons.smart_core.utils.idempotency import (
+    build_idempotency_conflict_response,
     find_latest_audit_entry,
     find_recent_audit_entry,
     ids_summary,
@@ -125,28 +124,13 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         return bool(old_fingerprint and old_fingerprint == fingerprint)
 
     def _idempotency_conflict_response(self, *, request_id, idempotency_key, trace_id):
-        failure_meta = failure_meta_for_reason(REASON_IDEMPOTENCY_CONFLICT)
-        return {
-            "ok": False,
-            "code": 409,
-            "error": {
-                "code": 409,
-                "message": "idempotency key payload mismatch",
-                "reason_code": REASON_IDEMPOTENCY_CONFLICT,
-                "retryable": bool(failure_meta.get("retryable")),
-                "error_category": str(failure_meta.get("error_category") or ""),
-                "suggested_action": str(failure_meta.get("suggested_action") or ""),
-            },
-            "data": {
-                "request_id": request_id,
-                "idempotency_key": idempotency_key,
-                "idempotent_replay": False,
-                "replay_window_expired": False,
-                "idempotency_replay_reason_code": "",
-                "trace_id": trace_id,
-            },
-            "meta": {"intent": self.INTENT_TYPE},
-        }
+        return build_idempotency_conflict_response(
+            intent_type=self.INTENT_TYPE,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            trace_id=trace_id,
+            include_replay_evidence=False,
+        )
 
     def _to_dt(self, value):
         if not value:
