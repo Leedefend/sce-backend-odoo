@@ -15,6 +15,7 @@ from odoo.exceptions import AccessError
 from ..core.base_handler import BaseIntentHandler
 from .reason_codes import (
     REASON_CONFLICT,
+    REASON_REPLAY_WINDOW_EXPIRED,
     REASON_NOT_FOUND,
     REASON_OK,
     REASON_PERMISSION_DENIED,
@@ -22,6 +23,7 @@ from .reason_codes import (
     batch_failure_meta,
 )
 from ..utils.idempotency import (
+    find_latest_audit_entry,
     find_recent_audit_entry,
     normalize_request_id,
     replay_window_seconds,
@@ -143,6 +145,20 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if isinstance(result, dict):
             return result
         return None
+
+    def _has_expired_replay_candidate(self, *, model: str, idem_key: str, fingerprint: str):
+        entry = find_latest_audit_entry(
+            self.env,
+            event_code="API_DATA_BATCH",
+            idempotency_key=idem_key,
+            limit=20,
+            extra_domain=[("model", "=", model)],
+        )
+        if not entry:
+            return False
+        payload = entry.get("payload") or {}
+        old_fingerprint = str(payload.get("idempotency_fingerprint") or "")
+        return bool(old_fingerprint and old_fingerprint == fingerprint)
 
     def _write_batch_audit(self, *, trace_id: str, model: str, action: str, ids: List[int], vals: Dict[str, Any], idem_key: str, idem_fingerprint: str, result: Dict[str, Any]):
         Audit = self.env.get("sc.audit.log")
@@ -313,6 +329,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
             replay_data = self._ensure_result_contract(dict(replay), request_id=request_id, trace_id=trace_id)
             replay_data = self._apply_failed_page(replay_data, offset=page_offset, limit=page_limit)
             replay_data["idempotent_replay"] = True
+            replay_data["replay_window_expired"] = False
+            replay_data["idempotency_replay_reason_code"] = ""
             replay_data["idempotency_key"] = idempotency_key
             replay_data["idempotency_fingerprint"] = idempotency_fingerprint
             if export_failed_csv and replay_data.get("failed_total", 0) > 0 and not replay_data.get("failed_csv_content_b64"):
@@ -330,6 +348,11 @@ class ApiDataBatchHandler(BaseIntentHandler):
                 },
             }
 
+        replay_window_expired = self._has_expired_replay_candidate(
+            model=model,
+            idem_key=idempotency_key,
+            fingerprint=idempotency_fingerprint,
+        )
         try:
             env_model.check_access_rights("write")
         except AccessError:
@@ -405,6 +428,8 @@ class ApiDataBatchHandler(BaseIntentHandler):
             "idempotency_key": idempotency_key,
             "idempotency_fingerprint": idempotency_fingerprint,
             "idempotent_replay": False,
+            "replay_window_expired": bool(replay_window_expired),
+            "idempotency_replay_reason_code": REASON_REPLAY_WINDOW_EXPIRED if replay_window_expired else "",
         }
         data = self._apply_failed_page(data, offset=page_offset, limit=page_limit)
         if export_failed_csv and failed > 0:

@@ -2,6 +2,7 @@
 
 from odoo.tests.common import TransactionCase, tagged
 
+from odoo.addons.smart_core.handlers.reason_codes import REASON_REPLAY_WINDOW_EXPIRED
 from odoo.addons.smart_core.handlers.api_data_batch import ApiDataBatchHandler
 
 
@@ -24,6 +25,8 @@ class TestApiDataBatchContractBackend(TransactionCase):
         self.assertEqual(data.get("request_id"), "req-batch-001")
         self.assertTrue(str(data.get("trace_id") or "").startswith("adb_"))
         self.assertEqual(data.get("idempotency_key"), "req-batch-001")
+        self.assertFalse(bool(data.get("replay_window_expired")))
+        self.assertEqual(data.get("idempotency_replay_reason_code"), "")
         self.assertEqual(data.get("failed"), 1)
         self.assertEqual(data.get("failed_retry_ids"), [])
         self.assertEqual(data.get("failed_retryable_summary"), {"retryable": 0, "non_retryable": 1})
@@ -68,6 +71,33 @@ class TestApiDataBatchContractBackend(TransactionCase):
         self.assertTrue(bool(row.get("retryable")))
         self.assertEqual(row.get("error_category"), "conflict")
         self.assertEqual(row.get("suggested_action"), "reload_then_retry")
+
+    def test_replay_window_expired_is_exposed_in_contract(self):
+        if not self.env.get("sc.audit.log"):
+            self.skipTest("sc.audit.log not available")
+        partner = self.env["res.partner"].create({"name": "Batch Replay Window"})
+        handler = ApiDataBatchHandler(self.env, payload={})
+        payload = {
+            "params": {
+                "model": "res.partner",
+                "ids": [partner.id],
+                "action": "archive",
+                "request_id": "req-batch-replay-expired-1",
+            }
+        }
+        first = handler.handle(payload)
+        self.assertTrue(first.get("ok"))
+        original_window = handler.IDEMPOTENCY_WINDOW_SECONDS
+        try:
+            handler.IDEMPOTENCY_WINDOW_SECONDS = 0
+            second = handler.handle(payload)
+        finally:
+            handler.IDEMPOTENCY_WINDOW_SECONDS = original_window
+        self.assertTrue(second.get("ok"))
+        data = second.get("data") or {}
+        self.assertFalse(bool(data.get("idempotent_replay")))
+        self.assertTrue(bool(data.get("replay_window_expired")))
+        self.assertEqual(data.get("idempotency_replay_reason_code"), REASON_REPLAY_WINDOW_EXPIRED)
 
     def test_legacy_replay_result_is_backfilled_to_new_contract(self):
         handler = ApiDataBatchHandler(self.env, payload={})

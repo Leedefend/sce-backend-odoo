@@ -6,6 +6,7 @@ from ..utils.reason_codes import (
     REASON_NOT_FOUND,
     REASON_OK,
     REASON_PERMISSION_DENIED,
+    REASON_REPLAY_WINDOW_EXPIRED,
     REASON_WRITE_FAILED,
     failure_meta_for_reason,
 )

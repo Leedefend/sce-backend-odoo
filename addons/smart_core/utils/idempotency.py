@@ -81,6 +81,38 @@ def find_recent_audit_entry(env, *, event_code, idempotency_key, window_seconds,
     return None
 
 
+def find_latest_audit_entry(env, *, event_code, idempotency_key, limit=20, extra_domain=None):
+    if not idempotency_key:
+        return None
+    Audit = env.get("sc.audit.log")
+    if not Audit:
+        return None
+    try:
+        domain = [("event_code", "=", event_code)]
+        if extra_domain:
+            domain.extend(list(extra_domain))
+        logs = Audit.sudo().search(domain, order="id desc", limit=max(1, int(limit)))
+        for log in logs:
+            after_raw = log.after_json or ""
+            if not after_raw:
+                continue
+            try:
+                payload = json.loads(after_raw)
+            except Exception:
+                continue
+            if str(payload.get("idempotency_key") or "") != str(idempotency_key):
+                continue
+            return {
+                "audit_id": int(log.id or 0),
+                "trace_id": str(log.trace_id or ""),
+                "ts": log.ts,
+                "payload": payload,
+            }
+    except Exception:
+        return None
+    return None
+
+
 def ids_summary(rows, *, sample_limit=20):
     normalized = []
     for value in rows or []:
