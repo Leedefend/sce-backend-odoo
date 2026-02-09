@@ -1,0 +1,1081 @@
+{
+  "source": {
+    "handlers": [
+      "addons/smart_core/handlers",
+      "addons/smart_construction_core/handlers"
+    ],
+    "tests": [
+      "addons/smart_core/tests",
+      "addons/smart_construction_core/tests"
+    ],
+    "cases_file": "docs/contract/cases.yml",
+    "snapshots_dir": "docs/contract/snapshots"
+  },
+  "intents": [
+    {
+      "intent": "api.data",
+      "owner": {
+        "module": "addons/smart_core/handlers/api_data.py",
+        "class": "ApiDataHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 19,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "api.data.batch",
+      "owner": {
+        "module": "addons/smart_core/handlers/api_data_batch.py",
+        "class": "ApiDataBatchHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": true,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "action",
+        "ids",
+        "ids[]",
+        "model",
+        "request_id"
+      ],
+      "response_data_schema_hint": [
+        "action",
+        "failed",
+        "failed_has_more",
+        "failed_page_limit",
+        "failed_page_offset",
+        "failed_preview",
+        "failed_preview[]",
+        "failed_preview[].error_category",
+        "failed_preview[].id",
+        "failed_preview[].message",
+        "failed_preview[].ok",
+        "failed_preview[].reason_code",
+        "failed_preview[].retryable",
+        "failed_preview[].suggested_action",
+        "failed_preview[].trace_id",
+        "failed_reason_summary",
+        "failed_reason_summary[]",
+        "failed_reason_summary[].count",
+        "failed_reason_summary[].reason_code",
+        "failed_retry_ids",
+        "failed_retry_ids[]",
+        "failed_retryable_summary",
+        "failed_retryable_summary.non_retryable",
+        "failed_retryable_summary.retryable",
+        "failed_total",
+        "failed_truncated",
+        "idempotency_fingerprint",
+        "idempotency_key",
+        "idempotency_replay_reason_code",
+        "idempotent_replay",
+        "model",
+        "replay_age_ms",
+        "replay_from_audit_id",
+        "replay_original_trace_id",
+        "replay_window_expired",
+        "request_id",
+        "requested_ids",
+        "requested_ids[]",
+        "results",
+        "results[]",
+        "results[].error_category",
+        "results[].id",
+        "results[].message",
+        "results[].ok",
+        "results[].reason_code",
+        "results[].retryable",
+        "results[].suggested_action",
+        "results[].trace_id",
+        "succeeded",
+        "trace_id",
+        "values",
+        "values.active"
+      ],
+      "observed_reason_codes": [
+        "NOT_FOUND"
+      ],
+      "examples": [
+        {
+          "case": "api_data_batch_pm",
+          "snapshot_file": "docs/contract/snapshots/api_data_batch_pm.json",
+          "request_keys": [
+            "action",
+            "ids",
+            "ids[]",
+            "model",
+            "request_id"
+          ],
+          "response_data_keys": [
+            "action",
+            "failed",
+            "failed_has_more",
+            "failed_page_limit",
+            "failed_page_offset",
+            "failed_preview",
+            "failed_preview[]",
+            "failed_preview[].error_category",
+            "failed_preview[].id",
+            "failed_preview[].message",
+            "failed_preview[].ok",
+            "failed_preview[].reason_code",
+            "failed_preview[].retryable",
+            "failed_preview[].suggested_action",
+            "failed_preview[].trace_id",
+            "failed_reason_summary",
+            "failed_reason_summary[]",
+            "failed_reason_summary[].count",
+            "failed_reason_summary[].reason_code",
+            "failed_retry_ids",
+            "failed_retry_ids[]",
+            "failed_retryable_summary",
+            "failed_retryable_summary.non_retryable",
+            "failed_retryable_summary.retryable",
+            "failed_total",
+            "failed_truncated",
+            "idempotency_fingerprint",
+            "idempotency_key",
+            "idempotency_replay_reason_code",
+            "idempotent_replay",
+            "model",
+            "replay_age_ms",
+            "replay_from_audit_id",
+            "replay_original_trace_id",
+            "replay_window_expired",
+            "request_id",
+            "requested_ids",
+            "requested_ids[]",
+            "results",
+            "results[]",
+            "results[].error_category",
+            "results[].id",
+            "results[].message",
+            "results[].ok",
+            "results[].reason_code",
+            "results[].retryable",
+            "results[].suggested_action",
+            "results[].trace_id",
+            "succeeded",
+            "trace_id",
+            "values",
+            "values.active"
+          ]
+        }
+      ]
+    },
+    {
+      "intent": "api.data.create",
+      "owner": {
+        "module": "addons/smart_core/handlers/api_data_write.py",
+        "class": "ApiDataWriteHandler"
+      },
+      "aliases": [
+        "api.data.write"
+      ],
+      "stability": "stable",
+      "has_idempotency_window": true,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "api.data.unlink",
+      "owner": {
+        "module": "addons/smart_core/handlers/api_data_unlink.py",
+        "class": "ApiDataUnlinkHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": true,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "app.catalog",
+      "owner": {
+        "module": "addons/smart_core/handlers/app_catalog.py",
+        "class": "AppCatalogHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "app.nav",
+      "owner": {
+        "module": "addons/smart_core/handlers/app_nav.py",
+        "class": "AppNavHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "app.open",
+      "owner": {
+        "module": "addons/smart_core/handlers/app_open.py",
+        "class": "AppOpenHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "auth.logout",
+      "owner": {
+        "module": "addons/smart_core/handlers/login.py",
+        "class": "LogoutHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "capability.describe",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/capability_describe.py",
+        "class": "CapabilityDescribeHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "capability.visibility.report",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/capability_visibility_report.py",
+        "class": "CapabilityVisibilityReportHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "chatter.post",
+      "owner": {
+        "module": "addons/smart_core/handlers/chatter_post.py",
+        "class": "ChatterPostHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "chatter.timeline",
+      "owner": {
+        "module": "addons/smart_core/handlers/chatter_timeline.py",
+        "class": "ChatterTimelineHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "execute_button",
+      "owner": {
+        "module": "addons/smart_core/handlers/execute_button.py",
+        "class": "ExecuteButtonHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "file.download",
+      "owner": {
+        "module": "addons/smart_core/handlers/file_download.py",
+        "class": "FileDownloadHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "file.upload",
+      "owner": {
+        "module": "addons/smart_core/handlers/file_upload.py",
+        "class": "FileUploadHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "load_contract",
+      "owner": {
+        "module": "addons/smart_core/handlers/load_contract.py",
+        "class": "LoadContractHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "load_metadata",
+      "owner": {
+        "module": "addons/smart_core/handlers/load_metadata.py",
+        "class": "LoadMetadataHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "load_view",
+      "owner": {
+        "module": "addons/smart_core/handlers/load_view.py",
+        "class": "LoadModelViewHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "login",
+      "owner": {
+        "module": "addons/smart_core/handlers/login.py",
+        "class": "LoginHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 79,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "meta.describe_model",
+      "owner": {
+        "module": "addons/smart_core/handlers/meta_describe.py",
+        "class": "MetaDescribeHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "my.work.complete",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/my_work_complete.py",
+        "class": "MyWorkCompleteHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "my.work.complete_batch",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/my_work_complete.py",
+        "class": "MyWorkCompleteBatchHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": true,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "ids",
+        "ids[]",
+        "request_id",
+        "source"
+      ],
+      "response_data_schema_hint": [
+        "completed_ids",
+        "completed_ids[]",
+        "done_at",
+        "done_count",
+        "failed_count",
+        "failed_items",
+        "failed_items[]",
+        "failed_items[].error_category",
+        "failed_items[].id",
+        "failed_items[].message",
+        "failed_items[].reason_code",
+        "failed_items[].retryable",
+        "failed_items[].suggested_action",
+        "failed_items[].trace_id",
+        "failed_reason_summary",
+        "failed_reason_summary[]",
+        "failed_reason_summary[].count",
+        "failed_reason_summary[].reason_code",
+        "failed_retry_ids",
+        "failed_retry_ids[]",
+        "failed_retryable_summary",
+        "failed_retryable_summary.non_retryable",
+        "failed_retryable_summary.retryable",
+        "idempotency_fingerprint",
+        "idempotency_key",
+        "idempotency_replay_reason_code",
+        "idempotent_replay",
+        "message",
+        "reason_code",
+        "replay_age_ms",
+        "replay_from_audit_id",
+        "replay_original_trace_id",
+        "replay_window_expired",
+        "request_id",
+        "source",
+        "success",
+        "trace_id"
+      ],
+      "observed_reason_codes": [
+        "NOT_FOUND",
+        "PARTIAL_FAILED"
+      ],
+      "examples": [
+        {
+          "case": "my_work_complete_batch_pm",
+          "snapshot_file": "docs/contract/snapshots/my_work_complete_batch_pm.json",
+          "request_keys": [
+            "ids",
+            "ids[]",
+            "request_id",
+            "source"
+          ],
+          "response_data_keys": [
+            "completed_ids",
+            "completed_ids[]",
+            "done_at",
+            "done_count",
+            "failed_count",
+            "failed_items",
+            "failed_items[]",
+            "failed_items[].error_category",
+            "failed_items[].id",
+            "failed_items[].message",
+            "failed_items[].reason_code",
+            "failed_items[].retryable",
+            "failed_items[].suggested_action",
+            "failed_items[].trace_id",
+            "failed_reason_summary",
+            "failed_reason_summary[]",
+            "failed_reason_summary[].count",
+            "failed_reason_summary[].reason_code",
+            "failed_retry_ids",
+            "failed_retry_ids[]",
+            "failed_retryable_summary",
+            "failed_retryable_summary.non_retryable",
+            "failed_retryable_summary.retryable",
+            "idempotency_fingerprint",
+            "idempotency_key",
+            "idempotency_replay_reason_code",
+            "idempotent_replay",
+            "message",
+            "reason_code",
+            "replay_age_ms",
+            "replay_from_audit_id",
+            "replay_original_trace_id",
+            "replay_window_expired",
+            "request_id",
+            "source",
+            "success",
+            "trace_id"
+          ]
+        }
+      ]
+    },
+    {
+      "intent": "my.work.summary",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/my_work_summary.py",
+        "class": "MyWorkSummaryHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "limit",
+        "page",
+        "reason_code",
+        "search",
+        "section",
+        "source"
+      ],
+      "response_data_schema_hint": [
+        "facets",
+        "facets.reason_code_counts",
+        "facets.reason_code_counts[]",
+        "facets.section_counts",
+        "facets.section_counts[]",
+        "facets.source_counts",
+        "facets.source_counts[]",
+        "filters",
+        "filters.filtered_count",
+        "filters.page",
+        "filters.page_size",
+        "filters.reason_code",
+        "filters.search",
+        "filters.section",
+        "filters.sort_by",
+        "filters.sort_dir",
+        "filters.source",
+        "filters.total_before_filter",
+        "filters.total_pages",
+        "generated_at",
+        "items",
+        "items[]",
+        "sections",
+        "sections[]",
+        "sections[].key",
+        "sections[].label",
+        "sections[].scene_key",
+        "status",
+        "status.hint",
+        "status.message",
+        "status.reason_code",
+        "status.state",
+        "summary",
+        "summary[]",
+        "summary[].count",
+        "summary[].key",
+        "summary[].label",
+        "summary[].scene_key"
+      ],
+      "observed_reason_codes": [
+        "NO_WORK_ITEMS",
+        "all"
+      ],
+      "examples": [
+        {
+          "case": "my_work_summary_pm",
+          "snapshot_file": "docs/contract/snapshots/my_work_summary_pm.json",
+          "request_keys": [
+            "limit",
+            "page",
+            "reason_code",
+            "search",
+            "section",
+            "source"
+          ],
+          "response_data_keys": [
+            "facets",
+            "facets.reason_code_counts",
+            "facets.reason_code_counts[]",
+            "facets.section_counts",
+            "facets.section_counts[]",
+            "facets.source_counts",
+            "facets.source_counts[]",
+            "filters",
+            "filters.filtered_count",
+            "filters.page",
+            "filters.page_size",
+            "filters.reason_code",
+            "filters.search",
+            "filters.section",
+            "filters.sort_by",
+            "filters.sort_dir",
+            "filters.source",
+            "filters.total_before_filter",
+            "filters.total_pages",
+            "generated_at",
+            "items",
+            "items[]",
+            "sections",
+            "sections[]",
+            "sections[].key",
+            "sections[].label",
+            "sections[].scene_key",
+            "status",
+            "status.hint",
+            "status.message",
+            "status.reason_code",
+            "status.state",
+            "summary",
+            "summary[]",
+            "summary[].count",
+            "summary[].key",
+            "summary[].label",
+            "summary[].scene_key"
+          ]
+        }
+      ]
+    },
+    {
+      "intent": "permission.check",
+      "owner": {
+        "module": "addons/smart_core/handlers/permission_check.py",
+        "class": "PermissionCheckHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "sample.enhanced",
+      "owner": {
+        "module": "addons/smart_core/handlers/enhanced_sample_handler.py",
+        "class": "EnhancedSampleHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.governance.export_contract",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_governance.py",
+        "class": "SceneGovernanceExportContractHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.governance.pin_stable",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_governance.py",
+        "class": "SceneGovernancePinStableHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.governance.rollback",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_governance.py",
+        "class": "SceneGovernanceRollbackHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.governance.set_channel",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_governance.py",
+        "class": "SceneGovernanceSetChannelHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.health",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_health.py",
+        "class": "SceneHealthHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.package.dry_run_import",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_package.py",
+        "class": "ScenePackageDryRunImportHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.package.export",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_package.py",
+        "class": "ScenePackageExportHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.package.import",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_package.py",
+        "class": "ScenePackageImportHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.package.list",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_package.py",
+        "class": "ScenePackageListHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "scene.packages.installed",
+      "owner": {
+        "module": "addons/smart_core/handlers/scene_packages_installed.py",
+        "class": "ScenePackagesInstalledHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "session.bootstrap",
+      "owner": {
+        "module": "addons/smart_core/handlers/session_bootstrap.py",
+        "class": "SessionBootstrapHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "system.init",
+      "owner": {
+        "module": "addons/smart_core/handlers/system_init.py",
+        "class": "SystemInitHandler"
+      },
+      "aliases": [
+        "app.init",
+        "bootstrap"
+      ],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "system.ping.construction",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/system_ping_construction.py",
+        "class": "SystemPingConstructionHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "ui.contract",
+      "owner": {
+        "module": "addons/smart_core/handlers/ui_contract.py",
+        "class": "UiContractHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "ui.contract.enhanced",
+      "owner": {
+        "module": "addons/smart_core/handlers/enhanced_ui_contract.py",
+        "class": "EnhancedUIContractHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "ui.contract.model.view",
+      "owner": {
+        "module": "addons/smart_core/handlers/enhanced_ui_contract.py",
+        "class": "EnhancedModelViewHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "usage.export.csv",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/usage_export_csv.py",
+        "class": "UsageExportCsvHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    },
+    {
+      "intent": "usage.report",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/usage_report.py",
+        "class": "UsageReportHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "days",
+        "top"
+      ],
+      "response_data_schema_hint": [
+        "capability_top",
+        "capability_top[]",
+        "daily",
+        "daily.capability_open",
+        "daily.capability_open[]",
+        "daily.capability_open[].count",
+        "daily.capability_open[].day",
+        "daily.scene_open",
+        "daily.scene_open[]",
+        "daily.scene_open[].count",
+        "daily.scene_open[].day",
+        "filters",
+        "filters.capability_key_prefix",
+        "filters.day_from",
+        "filters.day_to",
+        "filters.days",
+        "filters.role_code",
+        "filters.scene_key_prefix",
+        "filters.top",
+        "filters.user_id",
+        "generated_at",
+        "role_top",
+        "role_top[]",
+        "scene_top",
+        "scene_top[]",
+        "totals",
+        "totals.capability_open_total",
+        "totals.scene_open_total",
+        "user_top",
+        "user_top[]"
+      ],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "usage_report_pm",
+          "snapshot_file": "docs/contract/snapshots/usage_report_pm.json",
+          "request_keys": [
+            "days",
+            "top"
+          ],
+          "response_data_keys": [
+            "capability_top",
+            "capability_top[]",
+            "daily",
+            "daily.capability_open",
+            "daily.capability_open[]",
+            "daily.capability_open[].count",
+            "daily.capability_open[].day",
+            "daily.scene_open",
+            "daily.scene_open[]",
+            "daily.scene_open[].count",
+            "daily.scene_open[].day",
+            "filters",
+            "filters.capability_key_prefix",
+            "filters.day_from",
+            "filters.day_to",
+            "filters.days",
+            "filters.role_code",
+            "filters.scene_key_prefix",
+            "filters.top",
+            "filters.user_id",
+            "generated_at",
+            "role_top",
+            "role_top[]",
+            "scene_top",
+            "scene_top[]",
+            "totals",
+            "totals.capability_open_total",
+            "totals.scene_open_total",
+            "user_top",
+            "user_top[]"
+          ]
+        }
+      ]
+    },
+    {
+      "intent": "usage.track",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/usage_track.py",
+        "class": "UsageTrackHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": []
+    }
+  ]
+}
