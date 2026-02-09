@@ -18,6 +18,7 @@ make contract.catalog.export
 ```bash
 make verify.contract.catalog
 make verify.scene.contract.shape
+make verify.contract.evidence
 ```
 
 ## Intent Catalog
@@ -67,3 +68,16 @@ This keeps scene orchestration structure visible for review and drift detection.
 It writes a machine-readable report to:
 
 - `artifacts/scene_contract_shape_guard.json`
+
+## Phase 11.1 Evidence
+
+`verify.contract.preflight` now emits a merged evidence summary:
+
+- `artifacts/contract/phase11_1_contract_evidence.json`
+- `artifacts/contract/phase11_1_contract_evidence.md`
+
+Standalone export:
+
+```bash
+make contract.evidence.export
+```
