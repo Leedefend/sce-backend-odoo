@@ -65,6 +65,12 @@ Expected behavior:
 - Missing records: `NOT_FOUND`, non-retryable
 - Unknown/runtime failures: `INTERNAL_ERROR`, retryable
 
+Idempotency semantics for `my.work.complete_batch`:
+
+- same key + same fingerprint -> replay (`idempotent_replay=true`)
+- same key + different fingerprint -> `IDEMPOTENCY_CONFLICT` (HTTP-like conflict)
+- suggested action for conflict: `use_new_request_id`
+
 ## 4. Capability Suggested Action Mapping
 
 Capability visibility report maps reason codes into `suggested_action`.
