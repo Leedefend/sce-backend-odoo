@@ -1,0 +1,218 @@
+{
+  "source": {
+    "scene_contract_file": "docs/contract/exports/scenes/stable/LATEST.json"
+  },
+  "schema_version": "v2",
+  "scene_version": "v2",
+  "profiles_version": "v2",
+  "scene_count": 5,
+  "layout_kind_counts": {
+    "ledger": 1,
+    "list": 1,
+    "record": 1,
+    "workspace": 2
+  },
+  "target_type_counts": {
+    "odoo_action": 2,
+    "spa_route": 3
+  },
+  "scenes": [
+    {
+      "scene_key": "default",
+      "name": "默认场景",
+      "identity": {
+        "scene_key": "default",
+        "label": "默认场景"
+      },
+      "access": {
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "layout": {
+        "kind": "workspace",
+        "keys": [
+          "header",
+          "kind",
+          "sidebar"
+        ]
+      },
+      "components": {
+        "tiles_count": 2,
+        "has_tiles": true,
+        "has_list_profile": true,
+        "list_profile_keys": [
+          "column_labels",
+          "columns",
+          "hidden_columns",
+          "row_primary",
+          "row_secondary"
+        ],
+        "filters_count": 0
+      },
+      "target": {
+        "type": "spa_route",
+        "keys": [
+          "route"
+        ]
+      }
+    },
+    {
+      "scene_key": "projects.intake",
+      "name": "项目立项",
+      "identity": {
+        "scene_key": "projects.intake",
+        "label": "项目立项"
+      },
+      "access": {
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "layout": {
+        "kind": "record",
+        "keys": [
+          "header",
+          "kind",
+          "sidebar"
+        ]
+      },
+      "components": {
+        "tiles_count": 0,
+        "has_tiles": false,
+        "has_list_profile": true,
+        "list_profile_keys": [
+          "column_labels",
+          "columns",
+          "hidden_columns",
+          "row_primary",
+          "row_secondary"
+        ],
+        "filters_count": 0
+      },
+      "target": {
+        "type": "spa_route",
+        "keys": [
+          "route"
+        ]
+      }
+    },
+    {
+      "scene_key": "projects.ledger",
+      "name": "项目台账（试点）",
+      "identity": {
+        "scene_key": "projects.ledger",
+        "label": "项目台账（试点）"
+      },
+      "access": {
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "layout": {
+        "kind": "ledger",
+        "keys": [
+          "header",
+          "kind",
+          "sidebar"
+        ]
+      },
+      "components": {
+        "tiles_count": 0,
+        "has_tiles": false,
+        "has_list_profile": true,
+        "list_profile_keys": [
+          "column_labels",
+          "columns",
+          "hidden_columns",
+          "row_primary",
+          "row_secondary"
+        ],
+        "filters_count": 0
+      },
+      "target": {
+        "type": "odoo_action",
+        "keys": [
+          "action_id",
+          "menu_id"
+        ]
+      }
+    },
+    {
+      "scene_key": "projects.list",
+      "name": "项目列表",
+      "identity": {
+        "scene_key": "projects.list",
+        "label": "项目列表"
+      },
+      "access": {
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "layout": {
+        "kind": "list",
+        "keys": [
+          "header",
+          "kind",
+          "sidebar"
+        ]
+      },
+      "components": {
+        "tiles_count": 0,
+        "has_tiles": false,
+        "has_list_profile": true,
+        "list_profile_keys": [
+          "column_labels",
+          "columns",
+          "hidden_columns",
+          "row_primary",
+          "row_secondary"
+        ],
+        "filters_count": 0
+      },
+      "target": {
+        "type": "odoo_action",
+        "keys": [
+          "action_id",
+          "menu_id"
+        ]
+      }
+    },
+    {
+      "scene_key": "scene_smoke_default",
+      "name": "Scene Smoke Default",
+      "identity": {
+        "scene_key": "scene_smoke_default",
+        "label": "Scene Smoke Default"
+      },
+      "access": {
+        "required_capabilities_count": 0,
+        "has_access_clause": false
+      },
+      "layout": {
+        "kind": "workspace",
+        "keys": [
+          "header",
+          "kind",
+          "sidebar"
+        ]
+      },
+      "components": {
+        "tiles_count": 1,
+        "has_tiles": true,
+        "has_list_profile": true,
+        "list_profile_keys": [
+          "column_labels",
+          "columns",
+          "hidden_columns",
+          "row_primary",
+          "row_secondary"
+        ],
+        "filters_count": 0
+      },
+      "target": {
+        "type": "spa_route",
+        "keys": [
+          "route"
+        ]
+      }
+    }
+  ]
+}
