@@ -999,7 +999,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard policy.apply.extension_modules policy.ensure.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.contract_drift.guard audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1027,6 +1027,12 @@ verify.frontend_api: guard.prod.forbid check-compose-project check-compose-env
 
 verify.extension_modules.guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/extension_modules_guard.sh
+
+verify.contract_drift.guard: guard.prod.forbid
+	@bash scripts/verify/contract_drift_guard.sh
+
+audit.intent.surface: guard.prod.forbid
+	@python3 scripts/audit/intent_surface_report.py
 
 policy.apply.extension_modules: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/apply_extension_modules.sh
