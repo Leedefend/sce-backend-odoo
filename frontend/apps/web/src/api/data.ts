@@ -136,23 +136,55 @@ export async function unlinkRecord(params: {
   model: string;
   ids: number[];
   context?: Record<string, unknown>;
+  requestId?: string;
+  idempotencyKey?: string;
 }) {
-  return intentRequest<{ ids: number[] }>({
+  return intentRequest<ApiDataUnlinkContract>({
     intent: 'api.data.unlink',
     params: {
       model: params.model,
       ids: params.ids,
       context: params.context ?? {},
+      request_id: params.requestId,
+      idempotency_key: params.idempotencyKey,
     },
   });
 }
+
+export type ApiIdempotencyContract = {
+  request_id?: string;
+  idempotency_key?: string;
+  idempotency_fingerprint?: string;
+  idempotent_replay?: boolean;
+  replay_window_expired?: boolean;
+  idempotency_replay_reason_code?: string;
+  replay_from_audit_id?: number;
+  replay_original_trace_id?: string;
+  replay_age_ms?: number;
+  replay_supported?: boolean;
+  idempotency_deduplicated?: boolean;
+  trace_id?: string;
+};
+
+export type ApiFailureMeta = {
+  retryable?: boolean;
+  error_category?: string;
+  suggested_action?: string;
+};
 
 export type ApiDataWriteContract = {
   id: number;
   model: string;
   written_fields: string[];
   values: Record<string, unknown>;
-};
+  dry_run?: boolean;
+} & ApiIdempotencyContract;
+
+export type ApiDataUnlinkContract = {
+  ids: number[];
+  model?: string;
+  dry_run?: boolean;
+} & ApiIdempotencyContract;
 
 export type ApiDataExportCsvResult = {
   file_name: string;
@@ -167,7 +199,8 @@ export type ApiDataBatchItemResult = {
   ok: boolean;
   reason_code: string;
   message: string;
-};
+  trace_id?: string;
+} & ApiFailureMeta;
 
 export type ApiDataBatchResult = {
   model: string;
@@ -186,16 +219,15 @@ export type ApiDataBatchResult = {
   failed_csv_file_name?: string;
   failed_csv_content_b64?: string;
   failed_csv_count?: number;
-  idempotency_key?: string;
-  idempotency_fingerprint?: string;
-  idempotent_replay?: boolean;
-};
+} & ApiIdempotencyContract;
 
 export async function writeRecordV6(params: {
   model: string;
   id: number;
   values: Record<string, unknown>;
   context?: Record<string, unknown>;
+  requestId?: string;
+  idempotencyKey?: string;
 }) {
   return intentRequest<ApiDataWriteContract>({
     intent: 'api.data.write',
@@ -204,6 +236,8 @@ export async function writeRecordV6(params: {
       id: params.id,
       values: params.values,
       context: params.context ?? {},
+      request_id: params.requestId,
+      idempotency_key: params.idempotencyKey,
     },
   });
 }
@@ -214,6 +248,8 @@ export async function writeRecordV6Raw(params: {
   values: Record<string, unknown>;
   context?: Record<string, unknown>;
   ifMatch?: string;
+  requestId?: string;
+  idempotencyKey?: string;
 }) {
   return intentRequestRaw<ApiDataWriteContract>({
     intent: 'api.data.write',
@@ -223,6 +259,8 @@ export async function writeRecordV6Raw(params: {
       values: params.values,
       context: params.context ?? {},
       if_match: params.ifMatch,
+      request_id: params.requestId,
+      idempotency_key: params.idempotencyKey,
     },
   });
 }
