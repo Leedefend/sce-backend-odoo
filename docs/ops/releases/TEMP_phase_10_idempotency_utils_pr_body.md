@@ -7,7 +7,7 @@ This PR extracts reusable idempotency helpers for Phase 10 backend contracts and
 ## Scope
 
 - Added reusable utility module:
-  - `addons/smart_construction_core/utils/idempotency.py`
+  - `addons/smart_core/utils/idempotency.py`
   - helpers:
     - request id normalization
     - fingerprint payload normalization

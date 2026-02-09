@@ -12,7 +12,7 @@ from odoo.addons.smart_construction_core.handlers.reason_codes import (
     REASON_PARTIAL_FAILED,
     my_work_failure_meta_for_exception,
 )
-from odoo.addons.smart_construction_core.utils.idempotency import (
+from odoo.addons.smart_core.utils.idempotency import (
     find_recent_audit_entry,
     ids_summary,
     normalize_ids_for_fingerprint,

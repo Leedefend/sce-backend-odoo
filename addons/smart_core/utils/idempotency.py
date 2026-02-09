@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from datetime import timedelta
+from uuid import uuid4
 
 from odoo import fields
 
@@ -13,8 +14,7 @@ def normalize_request_id(raw_value, *, prefix="req"):
     value = str(raw_value or "").strip()
     if value:
         return value
-    seed = str(fields.Datetime.now())
-    return f"{prefix}_{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:12]}"
+    return f"{prefix}_{uuid4().hex[:12]}"
 
 
 def normalize_ids_for_fingerprint(values):
@@ -45,7 +45,7 @@ def replay_window_seconds(default_seconds, *, env_key):
     return max(0, int(default_seconds))
 
 
-def find_recent_audit_entry(env, *, event_code, idempotency_key, window_seconds, limit=20):
+def find_recent_audit_entry(env, *, event_code, idempotency_key, window_seconds, limit=20, extra_domain=None):
     if not idempotency_key:
         return None
     Audit = env.get("sc.audit.log")
@@ -56,11 +56,10 @@ def find_recent_audit_entry(env, *, event_code, idempotency_key, window_seconds,
         window_start = fields.Datetime.to_string(
             fields.Datetime.from_string(now) - timedelta(seconds=max(0, int(window_seconds)))
         )
-        logs = Audit.sudo().search(
-            [("event_code", "=", event_code), ("ts", ">=", window_start)],
-            order="id desc",
-            limit=max(1, int(limit)),
-        )
+        domain = [("event_code", "=", event_code), ("ts", ">=", window_start)]
+        if extra_domain:
+            domain.extend(list(extra_domain))
+        logs = Audit.sudo().search(domain, order="id desc", limit=max(1, int(limit)))
         for log in logs:
             after_raw = log.after_json or ""
             if not after_raw:
