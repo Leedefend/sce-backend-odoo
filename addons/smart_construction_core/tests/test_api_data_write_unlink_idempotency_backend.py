@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from unittest.mock import patch
+
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_core.handlers.api_data_unlink import ApiDataUnlinkHandler
@@ -192,3 +194,67 @@ class TestApiDataWriteUnlinkIdempotencyBackend(TransactionCase):
         self.assertEqual(data.get("request_id"), "req-unlink-idem-conflict-1")
         self.assertEqual(data.get("idempotency_key"), "req-unlink-idem-conflict-1")
         self.assertFalse(bool(data.get("replay_supported")))
+
+    def test_api_data_write_conflict_contract_without_audit_model(self):
+        project = self.env["project.project"].create({"name": "Write Mock Conflict"})
+        handler = ApiDataWriteHandler(self.env, payload={})
+        with patch(
+            "odoo.addons.smart_core.handlers.api_data_write.find_recent_audit_entry",
+            return_value={"payload": {"idempotency_fingerprint": "mismatch-fingerprint"}},
+        ):
+            conflict = handler.handle(
+                {
+                    "intent": "api.data.write",
+                    "params": {
+                        "model": "project.project",
+                        "id": project.id,
+                        "values": {"name": "Write Mock Conflict Changed"},
+                        "request_id": "req-write-mock-conflict-1",
+                    },
+                }
+            )
+        self.assertFalse(conflict.get("ok"))
+        self.assertEqual(int(conflict.get("code") or 0), 409)
+        err = conflict.get("error") or {}
+        self.assertEqual(err.get("reason_code"), REASON_IDEMPOTENCY_CONFLICT)
+        data = conflict.get("data") or {}
+        self.assertEqual(data.get("request_id"), "req-write-mock-conflict-1")
+        self.assertEqual(data.get("idempotency_key"), "req-write-mock-conflict-1")
+        self.assertFalse(bool(data.get("replay_supported")))
+
+    def test_api_data_unlink_deduplicated_contract_without_audit_model(self):
+        project = self.env["project.project"].create({"name": "Unlink Mock Dedupe Project"})
+        task = self.env["project.task"].create({"name": "Unlink Mock Dedupe Task", "project_id": project.id})
+        handler = ApiDataUnlinkHandler(self.env, payload={})
+        payload = {
+            "params": {
+                "model": "project.task",
+                "ids": [task.id],
+                "request_id": "req-unlink-mock-dedupe-1",
+            }
+        }
+        with patch(
+            "odoo.addons.smart_core.handlers.api_data_unlink.find_recent_audit_entry",
+            return_value={
+                "payload": {
+                    "idempotency_fingerprint": handler._idempotency_fingerprint(
+                        model="project.task",
+                        ids=[task.id],
+                        dry_run=False,
+                        idem_key="req-unlink-mock-dedupe-1",
+                    ),
+                    "result": {
+                        "ids": [task.id],
+                        "model": "project.task",
+                        "dry_run": False,
+                    },
+                }
+            },
+        ):
+            result = handler.handle(payload)
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        self.assertTrue(bool(data.get("idempotency_deduplicated")))
+        self.assertEqual(data.get("request_id"), "req-unlink-mock-dedupe-1")
+        self.assertEqual(data.get("idempotency_key"), "req-unlink-mock-dedupe-1")
+        self.assertFalse(bool(data.get("idempotent_replay")))
