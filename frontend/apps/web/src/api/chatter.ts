@@ -1,4 +1,5 @@
 import { intentRequest } from './intents';
+import type { ContractReasonCode } from './contractTypes';
 
 export interface ChatterTimelineEntry {
   key: string;
@@ -9,7 +10,7 @@ export interface ChatterTimelineEntry {
   body: string;
   at?: string;
   id?: number;
-  reason_code?: string;
+  reason_code?: ContractReasonCode;
   attachment?: {
     id?: number;
     name?: string;
