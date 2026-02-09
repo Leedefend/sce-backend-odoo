@@ -167,3 +167,35 @@ def build_idempotency_conflict_response(
         "data": data,
         "meta": {"intent": str(intent_type or "")},
     }
+
+
+def enrich_replay_contract(
+    data,
+    *,
+    idempotent_replay=False,
+    replay_window_expired=False,
+    replay_reason_code="",
+    replay_entry=None,
+    include_replay_evidence=False,
+):
+    payload = dict(data or {})
+    payload["idempotent_replay"] = bool(idempotent_replay)
+    payload["replay_window_expired"] = bool(replay_window_expired)
+    payload["idempotency_replay_reason_code"] = str(replay_reason_code or "")
+    if include_replay_evidence:
+        payload["replay_from_audit_id"] = 0
+        payload["replay_original_trace_id"] = ""
+        payload["replay_age_ms"] = 0
+        if idempotent_replay and isinstance(replay_entry, dict):
+            payload["replay_from_audit_id"] = int(replay_entry.get("audit_id") or 0)
+            payload["replay_original_trace_id"] = str(replay_entry.get("trace_id") or "")
+            ts = replay_entry.get("ts")
+            if isinstance(ts, str):
+                try:
+                    ts = fields.Datetime.from_string(ts)
+                except Exception:
+                    ts = None
+            now_dt = fields.Datetime.from_string(fields.Datetime.now())
+            if ts:
+                payload["replay_age_ms"] = max(0, int((now_dt - ts).total_seconds() * 1000))
+    return payload
