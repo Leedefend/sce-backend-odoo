@@ -75,21 +75,50 @@ class ScCapability(models.Model):
             return val.strip().lower() in {"1", "true", "yes", "y", "on"}
         return False
 
+    @api.model
+    def _reason_message(self, reason_code):
+        code = str(reason_code or "").upper()
+        reason_map = {
+            "CAPABILITY_SCOPE_CYCLE": _("能力依赖存在循环"),
+            "ROLE_SCOPE_MISMATCH": _("角色范围不匹配"),
+            "PERMISSION_DENIED": _("权限不足"),
+            "FEATURE_DISABLED": _("订阅未开通"),
+            "CAPABILITY_SCOPE_MISSING": _("缺少前置能力"),
+            "ACCESS_RESTRICTED": _("当前能力不可用"),
+        }
+        return reason_map.get(code) or _("当前能力不可用")
+
+    @api.model
+    def _normalize_access_result(self, access):
+        data = dict(access or {})
+        state = str(data.get("state") or "").upper()
+        reason_code = str(data.get("reason_code") or "").upper()
+        reason = str(data.get("reason") or "")
+        if state == "LOCKED":
+            if not reason_code:
+                reason_code = "ACCESS_RESTRICTED"
+            if not reason:
+                reason = self._reason_message(reason_code)
+        data["state"] = state
+        data["reason_code"] = reason_code
+        data["reason"] = reason
+        return data
+
     def _access_context(self, user):
-        return self._access_context_inner(user, seen=set())
+        return self._normalize_access_result(self._access_context_inner(user, seen=set()))
 
     def _access_context_inner(self, user, seen):
         self.ensure_one()
         seen = set(seen or set())
         cap_key = str(self.key or f"id:{self.id}")
         if cap_key in seen:
-            return {
+            return self._normalize_access_result({
                 "visible": True,
                 "allowed": False,
                 "state": "LOCKED",
                 "reason_code": "CAPABILITY_SCOPE_CYCLE",
-                "reason": _("能力依赖存在循环"),
-            }
+                "reason": self._reason_message("CAPABILITY_SCOPE_CYCLE"),
+            })
         seen.add(cap_key)
 
         # Role/group mismatch: hide from directory.
@@ -97,21 +126,21 @@ class ScCapability(models.Model):
         if role_scope_items:
             role_codes = self._role_codes_for_user(user)
             if not (set(role_scope_items) & role_codes):
-                return {
+                return self._normalize_access_result({
                     "visible": False,
                     "allowed": False,
                     "state": "LOCKED",
                     "reason_code": "ROLE_SCOPE_MISMATCH",
-                    "reason": _("角色范围不匹配"),
-                }
+                    "reason": self._reason_message("ROLE_SCOPE_MISMATCH"),
+                })
         if self.required_group_ids and not bool(self.required_group_ids & user.groups_id):
-            return {
+            return self._normalize_access_result({
                 "visible": False,
                 "allowed": False,
                 "state": "LOCKED",
                 "reason_code": "PERMISSION_DENIED",
-                "reason": _("权限不足"),
-            }
+                "reason": self._reason_message("PERMISSION_DENIED"),
+            })
 
         reason_code = ""
         reason = ""
@@ -130,7 +159,7 @@ class ScCapability(models.Model):
             if not self._flag_enabled(flags, self.required_flag):
                 allowed = False
                 reason_code = "FEATURE_DISABLED"
-                reason = _("订阅未开通")
+                reason = self._reason_message("FEATURE_DISABLED")
 
         # Capability dependency mismatch: visible but locked.
         dep_keys = self._csv_items(self.capability_scope)
@@ -154,13 +183,13 @@ class ScCapability(models.Model):
         state = "READY" if self.status == "ga" else "PREVIEW"
         if not allowed:
             state = "LOCKED"
-        return {
+        return self._normalize_access_result({
             "visible": True,
             "allowed": allowed,
             "state": state,
             "reason_code": reason_code,
             "reason": reason,
-        }
+        })
 
     def _resolve_payload(self, payload):
         resolved = dict(payload or {})
@@ -417,6 +446,10 @@ class ScScene(models.Model):
             access = cap._access_context(user)
             item = dict(tile)
             item["status"] = cap.status
+            item["role_scope"] = cap._csv_items(cap.role_scope)
+            item["capability_scope"] = cap._csv_items(cap.capability_scope)
+            item["allowed"] = bool(access.get("allowed"))
+            item["user_visible"] = bool(access.get("visible"))
             item["state"] = access.get("state")
             item["reason_code"] = access.get("reason_code")
             item["reason"] = access.get("reason")
@@ -638,6 +671,7 @@ class ScSceneTile(models.Model):
             "subtitle": self.subtitle or cap.ui_hint or "",
             "icon": self.icon or "",
             "badge": self.badge or "",
+            "sequence": self.sequence,
             "visible": bool(self.visible),
             "span": self.span,
             "min_width": self.min_width,
@@ -645,6 +679,10 @@ class ScSceneTile(models.Model):
             "payload": payload,
             "status": cap.status,
             "version": cap.version,
+            "role_scope": cap._csv_items(cap.role_scope),
+            "capability_scope": cap._csv_items(cap.capability_scope),
+            "allowed": bool(access.get("allowed")),
+            "user_visible": bool(access.get("visible")),
             "state": access.get("state"),
             "reason_code": access.get("reason_code"),
             "reason": access.get("reason"),

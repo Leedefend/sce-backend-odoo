@@ -4,6 +4,9 @@
       <div>
         <h2>{{ title }}</h2>
         <p class="meta">{{ subtitle }}</p>
+        <p v-if="actionFeedback" class="meta action-feedback" :class="{ error: !actionFeedback.success }">
+          {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
+        </p>
       </div>
       <div class="actions">
         <button
@@ -29,18 +32,18 @@
     <StatusPanel v-else-if="status === 'saving'" title="Saving record..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
-      title="Request failed"
-      :message="error?.code ? `code=${error.code} · ${error.message}` : error?.message"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
       :trace-id="error?.traceId || traceId"
       :error-code="error?.code"
-      :hint="error?.hint"
+      :hint="errorCopy.hint"
       variant="error"
       :on-retry="reload"
     />
     <StatusPanel
       v-else-if="status === 'empty'"
-      title="No data"
-      message="Record not found or not readable."
+      :title="emptyCopy.title"
+      :message="emptyCopy.message"
       variant="info"
       :on-retry="reload"
     />
@@ -97,43 +100,38 @@
         </div>
       </div>
       <section v-if="hasChatter" class="chatter">
-        <h3>Chatter</h3>
+        <h3>协作时间线</h3>
         <p v-if="chatterError" class="meta">{{ chatterError }}</p>
-        <div v-else class="chatter-grid">
-          <div class="chatter-block">
-            <h4>Messages</h4>
-            <p v-if="!chatterMessages.length" class="meta">No messages yet.</p>
-            <ul v-else class="chatter-list">
-              <li v-for="msg in chatterMessages" :key="String(msg.id)" class="chatter-item">
-                <div class="chatter-title">{{ msg.subject || 'Message' }}</div>
-                <div class="chatter-meta">{{ msg.author_id?.[1] || 'Unknown' }} · {{ msg.date || '-' }}</div>
-                <div class="chatter-body">{{ stripHtml(String(msg.body || '')) }}</div>
-              </li>
-            </ul>
-            <div class="chatter-compose">
-              <textarea v-model="chatterDraft" placeholder="Write a message..." />
-              <button :disabled="chatterPosting || !chatterDraft.trim()" @click="sendChatter">
-                {{ chatterPosting ? 'Posting...' : 'Post message' }}
-              </button>
-            </div>
-          </div>
-          <div class="chatter-block">
-            <h4>Attachments</h4>
-            <p v-if="!chatterAttachments.length" class="meta">No attachments yet.</p>
-            <div class="chatter-upload">
-              <input type="file" @change="onAttachmentSelected" />
-              <span v-if="chatterUploading" class="meta">Uploading…</span>
-              <span v-if="chatterUploadError" class="meta">{{ chatterUploadError }}</span>
-            </div>
-            <ul v-if="chatterAttachments.length" class="chatter-list">
-              <li v-for="att in chatterAttachments" :key="String(att.id)" class="chatter-item">
-                <div class="chatter-title">{{ att.name || 'Attachment' }}</div>
-                <div class="chatter-meta">{{ att.mimetype || 'unknown' }} · {{ att.file_size || '-' }}</div>
-                <button class="ghost" type="button" @click="downloadAttachment(att)">Download</button>
-              </li>
-            </ul>
+        <div class="chatter-compose">
+          <textarea v-model="chatterDraft" placeholder="输入评论，支持 @同事 ..." />
+          <div class="chatter-compose-actions">
+            <button :disabled="chatterPosting || !chatterDraft.trim()" @click="sendChatter">
+              {{ chatterPosting ? '发布中...' : '发布评论' }}
+            </button>
+            <input type="file" @change="onAttachmentSelected" />
+            <span v-if="chatterUploading" class="meta">上传中…</span>
+            <span v-if="chatterUploadError" class="meta">{{ chatterUploadError }}</span>
           </div>
         </div>
+        <p v-if="!timelineEntries.length" class="meta">暂无协作记录。</p>
+        <ul v-else class="timeline-list">
+          <li v-for="entry in timelineEntries" :key="entry.key" class="timeline-item">
+            <div class="timeline-type" :class="`type-${entry.type}`">{{ entry.typeLabel }}</div>
+            <div class="timeline-main">
+              <div class="chatter-title">{{ entry.title }}</div>
+              <div class="chatter-meta">{{ entry.meta }}</div>
+              <div v-if="entry.body" class="chatter-body">{{ entry.body }}</div>
+              <button
+                v-if="entry.type === 'attachment' && entry.attachment"
+                class="ghost"
+                type="button"
+                @click="downloadAttachment(entry.attachment)"
+              >
+                Download
+              </button>
+            </div>
+          </li>
+        </ul>
       </section>
     </section>
 
@@ -148,10 +146,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { listRecords, readRecordRaw, writeRecordV6Raw } from '../api/data';
+import { readRecordRaw, writeRecordV6Raw } from '../api/data';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
-import { postChatterMessage } from '../api/chatter';
+import { fetchChatterTimeline, postChatterMessage, type ChatterTimelineEntry } from '../api/chatter';
 import { downloadFile, fileToBase64, uploadFile } from '../api/files';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import { deriveRecordStatus } from '../app/view_state';
@@ -161,11 +159,12 @@ import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { isHudEnabled } from '../config/debug';
-import { useStatus } from '../composables/useStatus';
+import { resolveEmptyCopy, resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { useEditTx } from '../composables/useEditTx';
 import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
+import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 
 const route = useRoute();
 const router = useRouter();
@@ -176,13 +175,13 @@ const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error' | 'editing' | '
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
 const viewContract = ref<ViewContract | null>(null);
 const recordData = ref<Record<string, unknown> | null>(null);
-const chatterMessages = ref<Array<Record<string, unknown>>>([]);
-const chatterAttachments = ref<Array<Record<string, unknown>>>([]);
+const timelineEntries = ref<ChatterTimelineEntry[]>([]);
 const chatterError = ref('');
 const chatterDraft = ref('');
 const chatterPosting = ref(false);
 const chatterUploading = ref(false);
 const chatterUploadError = ref('');
+const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
 const draftName = ref('');
 const lastIntent = ref('');
 const lastWriteMode = ref('');
@@ -214,6 +213,8 @@ const statusTone = computed(() => {
   if (status.value === 'editing' || status.value === 'saving') return 'warn';
   return 'ok';
 });
+const errorCopy = computed(() => resolveErrorCopy(error.value, 'Record load failed'));
+const emptyCopy = computed(() => resolveEmptyCopy('record'));
 const renderMode = computed(() => (viewContract.value?.layout ? 'layout_tree' : 'fallback_fields'));
 const headerButtons = computed(() => normalizeButtons(viewContract.value?.layout?.headerButtons ?? []));
 const statButtons = computed(() => normalizeButtons(viewContract.value?.layout?.statButtons ?? []));
@@ -278,18 +279,13 @@ function buttonTooltip(btn: ViewButton) {
   return capabilityTooltip(buttonState(btn));
 }
 
-function stripHtml(input: string) {
-  return input.replace(/<[^>]*>/g, '').trim();
-}
-
 async function load() {
   clearError();
   traceId.value = '';
   fields.value = [];
   viewContract.value = null;
   recordData.value = null;
-  chatterMessages.value = [];
-  chatterAttachments.value = [];
+  timelineEntries.value = [];
   chatterError.value = '';
   chatterUploadError.value = '';
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
@@ -371,32 +367,16 @@ async function load() {
 async function loadChatter() {
   chatterError.value = '';
   try {
-    const [messages, attachments] = await Promise.all([
-      listRecords({
-        model: 'mail.message',
-        fields: ['id', 'author_id', 'date', 'body', 'subject'],
-        domain: [
-          ['res_id', '=', recordId.value],
-          ['model', '=', model.value],
-        ],
-        order: 'date desc',
-        limit: 20,
-      }),
-      listRecords({
-        model: 'ir.attachment',
-        fields: ['id', 'name', 'mimetype', 'file_size'],
-        domain: [
-          ['res_id', '=', recordId.value],
-          ['res_model', '=', model.value],
-        ],
-        order: 'id desc',
-        limit: 20,
-      }),
-    ]);
-    chatterMessages.value = messages.records ?? [];
-    chatterAttachments.value = attachments.records ?? [];
+    const timeline = await fetchChatterTimeline({
+      model: model.value,
+      res_id: recordId.value,
+      limit: 40,
+      include_audit: true,
+    });
+    timelineEntries.value = Array.isArray(timeline.items) ? timeline.items : [];
   } catch (err) {
     chatterError.value = err instanceof Error ? err.message : 'Failed to load chatter';
+    timelineEntries.value = [];
   }
 }
 
@@ -510,7 +490,7 @@ function normalizeButtons(raw: unknown): ViewButton[] {
 }
 
 function buttonLabel(btn: ViewButton) {
-  return btn.string || btn.name || 'Action';
+  return semanticButtonLabel(btn);
 }
 
 function handleFieldUpdate(payload: { name: string; value: string }) {
@@ -520,6 +500,7 @@ function handleFieldUpdate(payload: { name: string; value: string }) {
 }
 
 async function runHeaderButton(btn: ViewButton) {
+  actionFeedback.value = null;
   const state = buttonState(btn);
   if (state.state === 'disabled_capability') {
     await router.push({ name: 'workbench', query: { reason: ErrorCodes.CAPABILITY_MISSING } });
@@ -554,10 +535,12 @@ async function runHeaderButton(btn: ViewButton) {
     } else if (response?.result?.action_id) {
       await router.push({ name: 'action', params: { actionId: response.result.action_id } });
     }
+    actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
     setError(err, 'failed to execute button');
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
+    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
   } finally {
     executing.value = null;
   }
@@ -697,6 +680,19 @@ onMounted(load);
 .meta {
   color: #64748b;
   font-size: 14px;
+}
+
+.action-feedback {
+  margin-top: 6px;
+  color: #166534;
+}
+
+.action-feedback.error {
+  color: #b91c1c;
+}
+
+.action-feedback .code {
+  color: #64748b;
 }
 
 .pill {
@@ -868,6 +864,12 @@ onMounted(load);
   margin-top: 8px;
 }
 
+.chatter-compose-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .chatter-compose textarea {
   min-height: 80px;
   border-radius: 10px;
@@ -879,6 +881,56 @@ onMounted(load);
   display: grid;
   gap: 6px;
   margin-bottom: 10px;
+}
+
+.timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+}
+
+.timeline-type {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 6px;
+  align-self: start;
+}
+
+.timeline-type.type-message {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.timeline-type.type-attachment {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.timeline-type.type-audit {
+  color: #7c2d12;
+  background: #fff7ed;
+  border-color: #fdba74;
+}
+
+.timeline-main {
+  min-width: 0;
 }
 button {
   padding: 10px 14px;
