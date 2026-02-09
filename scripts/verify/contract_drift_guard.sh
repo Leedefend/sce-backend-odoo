@@ -7,11 +7,13 @@ cd "$ROOT_DIR"
 echo "[verify.contract_drift.guard] checking hard-coded reason_code literals..."
 
 # Guard 1: reason_code must not be assigned a hard-coded uppercase literal in handler code.
+# Cover both dict/json style ("reason_code": "XXX") and python assignment style (reason_code="XXX").
 # Allowlist:
 # - tests
 # - canonical reason code modules
 # - docs
-hardcoded_reason_codes="$(rg -n 'reason_code\s*[:=]\s*"([A-Z0-9_]+)"' addons/*/handlers \
+reason_code_pattern="[\"']?reason_code[\"']?\\s*[:=]\\s*[\"']([A-Z0-9_]+)[\"']"
+hardcoded_reason_codes="$(rg -n "$reason_code_pattern" addons/*/handlers \
   -g'*.py' \
   -g'!**/tests/**' \
   -g'!**/reason_codes.py' || true)"
