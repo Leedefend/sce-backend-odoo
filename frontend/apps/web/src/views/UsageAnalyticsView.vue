@@ -82,9 +82,11 @@
     <StatusPanel v-if="loading" title="Loading usage report..." variant="info" />
     <StatusPanel
       v-else-if="errorText"
-      title="Usage report failed"
-      :message="errorText"
-      :trace-id="errorTraceId || undefined"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
+      :trace-id="statusError?.traceId || errorTraceId || undefined"
+      :error-code="statusError?.code"
+      :hint="errorCopy.hint"
       variant="error"
       :on-retry="load"
     />
@@ -279,13 +281,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { ApiError } from '../api/client';
 import { exportUsageCsv, fetchCapabilityVisibilityReport, fetchUsageReport, type CapabilityVisibilityReport, type UsageReport } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
+import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 
 const loading = ref(false);
 const errorText = ref('');
 const errorTraceId = ref('');
+const statusError = ref<StatusError | null>(null);
 const topN = ref(10);
 const dailyRange = ref(7);
 const hiddenReasonFilter = ref('ALL');
@@ -311,6 +314,7 @@ const filteredHiddenSamples = computed(() => {
   return hiddenSamples.value.filter((item) => String(item.reason_code || '') === hiddenReasonFilter.value);
 });
 const canExport = computed(() => Boolean(report.value || visibility.value));
+const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load usage report'));
 
 async function exportCsv() {
   if (!canExport.value) return;
@@ -336,9 +340,8 @@ async function exportCsv() {
     URL.revokeObjectURL(url);
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '导出失败';
-    if (err instanceof ApiError) {
-      errorTraceId.value = err.traceId || '';
-    }
+    statusError.value = buildStatusError(err, errorText.value);
+    errorTraceId.value = statusError.value.traceId || '';
   }
 }
 
@@ -379,6 +382,7 @@ async function load() {
   loading.value = true;
   errorText.value = '';
   errorTraceId.value = '';
+  statusError.value = null;
   try {
     const [usage, vis] = await Promise.all([
       fetchUsageReport(
@@ -395,9 +399,8 @@ async function load() {
     visibility.value = vis;
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : 'Failed to load usage report';
-    if (err instanceof ApiError) {
-      errorTraceId.value = err.traceId || '';
-    }
+    statusError.value = buildStatusError(err, errorText.value);
+    errorTraceId.value = statusError.value.traceId || '';
   } finally {
     loading.value = false;
   }
