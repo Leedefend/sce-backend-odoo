@@ -1,0 +1,25 @@
+{
+  "action": null,
+  "case": "file_download_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "datas": "b'aGVsbG8='",
+    "id": 1086,
+    "mimetype": "text/plain",
+    "name": "snapshot-upload.txt",
+    "res_id": 1,
+    "res_model": "project.project"
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}

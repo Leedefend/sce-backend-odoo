@@ -527,34 +527,69 @@
         "capability_key",
         "key"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "api_version",
+        "contract_version",
+        "default_payload",
+        "default_payload.action_id",
+        "default_payload.action_xmlid",
+        "default_payload.menu_id",
+        "default_payload.menu_xmlid",
+        "intent",
+        "key",
+        "name",
+        "payload_schema",
+        "payload_schema.action_id",
+        "payload_schema.action_xmlid",
+        "payload_schema.menu_id",
+        "payload_schema.menu_xmlid",
+        "required_groups",
+        "required_groups[]",
+        "smoke_test",
+        "status",
+        "tags",
+        "tags[]",
+        "ui_hint",
+        "ui_label",
+        "version"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "capability_describe_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/capability_describe_intent_admin.json",
           "request_keys": [
-            "capability_id",
-            "capability_key",
-            "key"
+            "capability_key"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "api_version",
+            "contract_version",
+            "default_payload",
+            "default_payload.action_id",
+            "default_payload.action_xmlid",
+            "default_payload.menu_id",
+            "default_payload.menu_xmlid",
+            "intent",
+            "key",
+            "name",
+            "payload_schema",
+            "payload_schema.action_id",
+            "payload_schema.action_xmlid",
+            "payload_schema.menu_id",
+            "payload_schema.menu_xmlid",
+            "required_groups",
+            "required_groups[]",
+            "smoke_test",
+            "status",
+            "tags",
+            "tags[]",
+            "ui_hint",
+            "ui_label",
+            "version"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "capability_id",
-          "capability_key",
-          "key"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "capability.visibility.report",
@@ -806,34 +841,42 @@
       "test_refs": 0,
       "request_schema_hint": [
         "attachment_id",
-        "id"
+        "id",
+        "model",
+        "name",
+        "record_id",
+        "res_id",
+        "res_model"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "datas",
+        "id",
+        "mimetype",
+        "name",
+        "res_id",
+        "res_model"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "file_download_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/file_download_intent_admin.json",
           "request_keys": [
-            "attachment_id",
-            "id"
+            "model",
+            "name",
+            "res_id"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "datas",
+            "id",
+            "mimetype",
+            "name",
+            "res_id",
+            "res_model"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "attachment_id",
-          "id"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "file.upload",
@@ -854,42 +897,33 @@
         "res_id",
         "res_model"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "id",
+        "model",
+        "name",
+        "res_id"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "file_upload_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/file_upload_intent_admin.json",
           "request_keys": [
             "data",
             "mimetype",
             "model",
             "name",
-            "record_id",
-            "res_id",
-            "res_model"
+            "res_id"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "id",
+            "model",
+            "name",
+            "res_id"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "data",
-          "mimetype",
-          "model",
-          "name",
-          "record_id",
-          "res_id",
-          "res_model"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "load_contract",
@@ -1798,34 +1832,16 @@
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "login_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/login_intent_admin.json",
           "request_keys": [
-            "company_id",
-            "database",
-            "db",
             "login",
             "password"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "company_id",
-          "database",
-          "db",
-          "login",
-          "password"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "meta.describe_model",
@@ -5559,34 +5575,43 @@
         "note",
         "source"
       ],
-      "response_data_schema_hint": [],
-      "observed_reason_codes": [],
+      "response_data_schema_hint": [
+        "done_at",
+        "error_category",
+        "id",
+        "message",
+        "reason_code",
+        "retryable",
+        "source",
+        "success",
+        "suggested_action"
+      ],
+      "observed_reason_codes": [
+        "NOT_FOUND"
+      ],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "my_work_complete_pm",
+          "snapshot_file": "docs/contract/snapshots/my_work_complete_pm.json",
           "request_keys": [
             "id",
             "note",
             "source"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "done_at",
+            "error_category",
+            "id",
+            "message",
+            "reason_code",
+            "retryable",
+            "source",
+            "success",
+            "suggested_action"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "id",
-          "note",
-          "source"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "my.work.complete_batch",
@@ -5888,27 +5913,26 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "flag_param",
+        "number_param",
+        "sample_param"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "sample_enhanced_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/sample_enhanced_intent_admin.json",
+          "request_keys": [
+            "flag_param",
+            "number_param",
+            "sample_param"
+          ],
+          "response_data_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "scene.governance.export_contract",
@@ -5957,27 +5981,22 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "reason"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "scene_governance_pin_stable_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/scene_governance_pin_stable_intent_admin.json",
+          "request_keys": [
+            "reason"
+          ],
+          "response_data_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "scene.governance.rollback",
@@ -6744,28 +6763,16 @@
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "session_bootstrap_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/session_bootstrap_intent_admin.json",
           "request_keys": [
             "login",
             "secret"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "login",
-          "secret"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "system.init",
@@ -7651,27 +7658,22 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "op"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "ui_contract_enhanced_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/ui_contract_enhanced_intent_admin.json",
+          "request_keys": [
+            "op"
+          ],
+          "response_data_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "ui.contract.model.view",
@@ -7683,27 +7685,26 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "id",
+        "model_name",
+        "view_type"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "ui_contract_model_view_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/ui_contract_model_view_intent_admin.json",
+          "request_keys": [
+            "id",
+            "model_name",
+            "view_type"
+          ],
+          "response_data_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "usage.export.csv",
