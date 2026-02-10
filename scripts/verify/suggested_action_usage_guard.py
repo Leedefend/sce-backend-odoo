@@ -4,7 +4,6 @@
 Rule:
 - Direct imports from `app/suggestedAction` are only allowed in:
   - `frontend/apps/web/src/composables/useSuggestedAction.ts`
-  - `frontend/apps/web/src/composables/useStatus.ts`
 - Views/components/pages should consume suggested action APIs via composables.
 """
 
@@ -21,7 +20,6 @@ TARGET = "app/suggestedAction"
 
 ALLOWED = {
     SRC_ROOT / "composables/useSuggestedAction.ts",
-    SRC_ROOT / "composables/useStatus.ts",
 }
 
 
