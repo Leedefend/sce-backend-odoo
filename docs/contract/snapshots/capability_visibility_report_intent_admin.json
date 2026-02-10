@@ -1,0 +1,33 @@
+{
+  "action": null,
+  "case": "capability_visibility_report_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "hidden_samples": [],
+    "locked_samples": [],
+    "reason_counts": [],
+    "role_codes": [],
+    "state_counts": [],
+    "summary": {
+      "hidden": 0,
+      "locked": 0,
+      "preview": 0,
+      "ready": 0,
+      "total": 0,
+      "visible": 0
+    },
+    "user": {}
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}
