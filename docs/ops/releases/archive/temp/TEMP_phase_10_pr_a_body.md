@@ -62,8 +62,8 @@ make verify.extension_modules.guard DB_NAME=sc_demo
 
 ## Evidence
 
-- `docs/ops/releases/phase_10_my_work_v1_evidence.md`
-- `docs/ops/releases/TEMP_phase_10_branch_full_summary.md`
+- `docs/ops/releases/current/phase_10_my_work_v1_evidence.md`
+- `docs/ops/releases/archive/temp/TEMP_phase_10_branch_full_summary.md`
 
 ## Rollback / Safety
 

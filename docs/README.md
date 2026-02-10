@@ -12,8 +12,8 @@
 - Scene Catalog: `docs/contract/exports/scene_catalog.json`
 
 ## 当前阶段 Release 证据（暂不迁移）
-- Phase 11 Backend Closure: `docs/ops/releases/phase_11_backend_closure.md`
-- Phase 11.1 Contract Visibility: `docs/ops/releases/phase_11_1_contract_visibility.md`
+- Phase 11 Backend Closure: `docs/ops/releases/current/phase_11_backend_closure.md`
+- Phase 11.1 Contract Visibility: `docs/ops/releases/current/phase_11_1_contract_visibility.md`
 
 ## 快速生成/导出（现有 Make 目标）
 ```bash

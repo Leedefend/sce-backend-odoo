@@ -4,8 +4,8 @@
 
 ## 主要入口
 - Release 证据目录: `docs/ops/releases/`
-- Phase 11 Backend Closure: `docs/ops/releases/phase_11_backend_closure.md`
-- Phase 11.1 Contract Visibility: `docs/ops/releases/phase_11_1_contract_visibility.md`
+- Phase 11 Backend Closure: `docs/ops/releases/current/phase_11_backend_closure.md`
+- Phase 11.1 Contract Visibility: `docs/ops/releases/current/phase_11_1_contract_visibility.md`
 
 ## 与契约/审计的关系
 - Contract 总览: `docs/contract/README.md`
