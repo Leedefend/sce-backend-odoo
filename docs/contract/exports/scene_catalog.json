@@ -16,6 +16,12 @@
     "odoo_action": 2,
     "spa_route": 3
   },
+  "renderability": {
+    "renderable_scene_count": 5,
+    "interaction_ready_scene_count": 5,
+    "renderable_ratio": 1.0,
+    "interaction_ready_ratio": 1.0
+  },
   "scenes": [
     {
       "scene_key": "default",
@@ -59,6 +65,10 @@
         "keys": [
           "route"
         ]
+      },
+      "renderability": {
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -103,6 +113,10 @@
         "keys": [
           "route"
         ]
+      },
+      "renderability": {
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -148,6 +162,10 @@
           "action_id",
           "menu_id"
         ]
+      },
+      "renderability": {
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -193,6 +211,10 @@
           "action_id",
           "menu_id"
         ]
+      },
+      "renderability": {
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -237,6 +259,10 @@
         "keys": [
           "route"
         ]
+      },
+      "renderability": {
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     }
   ]
