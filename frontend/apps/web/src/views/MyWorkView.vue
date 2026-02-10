@@ -17,7 +17,9 @@
       :message="errorCopy.message"
       :trace-id="statusError?.traceId || undefined"
       :error-code="statusError?.code"
+      :reason-code="statusError?.reasonCode"
       :hint="errorCopy.hint"
+      :suggested-action="statusError?.suggestedAction"
       variant="error"
       :on-retry="load"
     />

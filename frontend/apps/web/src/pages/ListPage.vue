@@ -27,7 +27,9 @@
       :message="errorCopy.message"
       :trace-id="error?.traceId || traceId"
       :error-code="error?.code || errorCode"
+      :reason-code="error?.reasonCode"
       :hint="errorCopy.hint || errorHint"
+      :suggested-action="error?.suggestedAction"
       variant="error"
       :on-retry="onReload"
     />

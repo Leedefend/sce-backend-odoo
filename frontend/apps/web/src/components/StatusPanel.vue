@@ -5,7 +5,9 @@
     <div v-if="variant === 'error'" class="error-meta">
       <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
       <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
+      <p v-if="reasonCode" class="trace">Reason: {{ reasonCode }}</p>
       <p v-if="hint" class="trace">Hint: {{ hint }}</p>
+      <p v-if="suggestedAction" class="trace">Suggested: {{ suggestedAction }}</p>
       <button v-if="traceId" class="trace-copy" @click="copyTrace">Copy trace</button>
     </div>
     <button v-if="onRetry" @click="onRetry">Retry</button>
@@ -18,7 +20,9 @@ const props = defineProps<{
   message?: string;
   traceId?: string;
   errorCode?: number | string | null;
+  reasonCode?: string;
   hint?: string;
+  suggestedAction?: string;
   variant?: 'error' | 'info' | 'forbidden_capability';
   onRetry?: () => void;
 }>();

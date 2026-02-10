@@ -7,12 +7,13 @@ export class ApiError extends Error {
   reasonCode?: string;
   hint?: string;
   kind?: string;
+  suggestedAction?: string;
 
   constructor(
     message: string,
     status: number,
     traceId?: string,
-    options?: { reasonCode?: string; hint?: string; kind?: string },
+    options?: { reasonCode?: string; hint?: string; kind?: string; suggestedAction?: string },
   ) {
     super(message);
     this.name = 'ApiError';
@@ -21,6 +22,7 @@ export class ApiError extends Error {
     this.reasonCode = options?.reasonCode;
     this.hint = options?.hint;
     this.kind = options?.kind;
+    this.suggestedAction = options?.suggestedAction;
   }
 }
 
@@ -175,20 +177,23 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     let reasonCode: string | undefined;
     let hint: string | undefined;
     let kind: string | undefined;
+    let suggestedAction: string | undefined;
     try {
       body = await response.json();
       const payload = body as {
-        error?: { message?: string; code?: string; reason_code?: string; hint?: string; kind?: string };
+        error?: { message?: string; code?: string; reason_code?: string; hint?: string; kind?: string; suggested_action?: string };
         message?: string;
         code?: string;
         reason_code?: string;
         hint?: string;
         kind?: string;
+        suggested_action?: string;
       };
       message = payload?.error?.message || payload?.message || message;
       reasonCode = payload?.error?.reason_code || payload?.reason_code || payload?.error?.code || payload?.code;
       hint = payload?.error?.hint || payload?.hint;
       kind = payload?.error?.kind || payload?.kind;
+      suggestedAction = payload?.error?.suggested_action || payload?.suggested_action;
       traceIdFromBody = extractTraceIdFromBody(body);
     } catch {
       const text = await response.text();
@@ -201,6 +206,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
       reasonCode,
       hint,
       kind: kind || 'http',
+      suggestedAction,
     });
   }
 
