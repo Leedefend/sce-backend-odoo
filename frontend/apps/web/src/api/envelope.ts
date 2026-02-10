@@ -6,6 +6,10 @@ export type IntentEnvelopeError = {
   message?: string;
   hint?: string;
   kind?: string;
+  error_category?: string;
+  suggested_action?: string;
+  retryable?: boolean;
+  trace_id?: string;
   details?: Record<string, unknown>;
 };
 
@@ -33,6 +37,10 @@ function parseError(raw: unknown): IntentEnvelopeError | undefined {
     message: typeof raw.message === 'string' ? raw.message : undefined,
     hint: typeof raw.hint === 'string' ? raw.hint : undefined,
     kind: typeof raw.kind === 'string' ? raw.kind : undefined,
+    error_category: typeof raw.error_category === 'string' ? raw.error_category : undefined,
+    suggested_action: typeof raw.suggested_action === 'string' ? raw.suggested_action : undefined,
+    retryable: typeof raw.retryable === 'boolean' ? raw.retryable : undefined,
+    trace_id: typeof raw.trace_id === 'string' ? raw.trace_id : undefined,
     details: isObject(raw.details) ? raw.details : undefined,
   };
 }
