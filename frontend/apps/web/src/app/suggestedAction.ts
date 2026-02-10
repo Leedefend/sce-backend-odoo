@@ -149,8 +149,9 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
       return { kind: 'open_record', raw, model, recordId, query, hash };
     }
   }
-  if (raw.startsWith('open_scene:')) {
-    const payload = rawInput.slice('open_scene:'.length).trim();
+  if (raw.startsWith('open_scene:') || raw.startsWith('goto_scene:')) {
+    const prefix = raw.startsWith('goto_scene:') ? 'goto_scene:' : 'open_scene:';
+    const payload = rawInput.slice(prefix.length).trim();
     const [payloadWithQuery, hashRaw] = payload.split('#');
     const [sceneKey, queryRaw] = String(payloadWithQuery || '').split('?');
     const hash = String(hashRaw || '').trim();
