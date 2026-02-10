@@ -12,12 +12,13 @@ DEV_CONTEXT_PANEL = ROOT / "frontend/apps/web/src/components/DevContextPanel.vue
 
 REQUIRED_SHELL_SNIPPETS = [
     "exportSuggestedActionTraces",
+    "rankSuggestedActionKinds",
     ":actions=\"hudActions\"",
     "exportSuggestedActionJson({ success: true }, 'ok')",
     "exportSuggestedActionJson({ success: false }, 'fail')",
-    "exportSuggestedActionJson({ kind: 'open_record' }, 'kind-open_record')",
-    "exportSuggestedActionJson({ kind: 'copy_trace' }, 'kind-copy_trace')",
-    "exportSuggestedActionJson({ kind: 'refresh' }, 'kind-refresh')",
+    "resolveKindExportActions()",
+    "const defaultKindActions = ['open_record', 'copy_trace', 'refresh'];",
+    "const rankedKinds = rankSuggestedActionKinds(3).map((item) => item.kind);",
 ]
 
 REQUIRED_PANEL_SNIPPETS = [
