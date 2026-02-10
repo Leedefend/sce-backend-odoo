@@ -187,6 +187,16 @@
     }
   },
   {
+    "case": "usage_track_intent_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "usage.track",
+    "intent_params": {
+      "event_type": "scene_open",
+      "scene_key": "my.work"
+    }
+  },
+  {
     "case": "api_data_intent_pm",
     "user": "pm",
     "op": "intent.invoke",
@@ -198,6 +208,43 @@
       "offset": 0,
       "order": "id desc",
       "fields": ["id", "name"]
+    }
+  },
+  {
+    "case": "api_data_create_intent_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "api.data.create",
+    "intent_params": {
+      "model": "project.task",
+      "values": {
+        "name": "Snapshot Dry Run Task"
+      },
+      "dry_run": true,
+      "request_id": "snapshot_api_data_create_1"
+    }
+  },
+  {
+    "case": "api_data_unlink_intent_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "api.data.unlink",
+    "intent_params": {
+      "model": "project.task",
+      "ids": [1],
+      "dry_run": true,
+      "request_id": "snapshot_api_data_unlink_1"
+    }
+  },
+  {
+    "case": "chatter_post_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "chatter.post",
+    "intent_params": {
+      "model": "project.project",
+      "res_id": 1,
+      "body": "Contract snapshot message"
     }
   },
   {
