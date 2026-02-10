@@ -53,6 +53,10 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'retry' || raw === 'retry_later') return { kind: 'retry', raw };
   if (raw === 'go_back' || raw === 'back') return { kind: 'go_back', raw };
   if (raw === 'open_login' || raw === 'go_login') return { kind: 'open_login', raw };
+  if (raw.startsWith('open_login?')) {
+    const query = rawInput.slice('open_login?'.length).trim();
+    if (query) return { kind: 'open_login', raw, query };
+  }
   if (raw === 'relogin' || raw === 'login_again') return { kind: 'relogin', raw };
   if (raw === 'check_permission' || raw === 'request_permission') return { kind: 'check_permission', raw };
   if (raw === 'open_home' || raw === 'go_home') return { kind: 'open_home', raw };
@@ -364,7 +368,7 @@ export function executeSuggestedAction(
     return finish(safeNavigate(`/login?redirect=${redirect}`));
   }
   if (parsed.kind === 'open_login') {
-    return finish(safeNavigate('/login'));
+    return finish(safeNavigate(appendQuery('/login', parsed.query)));
   }
   if (parsed.kind === 'check_permission') {
     return finish(safeNavigate('/admin/usage-analytics'));
