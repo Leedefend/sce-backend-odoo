@@ -230,6 +230,8 @@ const hudActions = computed(() => [
   { key: 'export-sa-all', label: 'Export SA all', onClick: () => exportSuggestedActionJson() },
   { key: 'export-sa-ok', label: 'Export SA ok', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
   { key: 'export-sa-fail', label: 'Export SA fail', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
+  { key: 'export-sa-1h', label: 'Export SA 1h', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(1) }, '1h') },
+  { key: 'export-sa-24h', label: 'Export SA 24h', onClick: () => exportSuggestedActionJson({ since_ts: sinceTsFromHours(24) }, '24h') },
   ...resolveKindExportActions(),
 ]);
 
@@ -265,7 +267,12 @@ function sanitizeExportSuffix(value: string) {
     .replace(/^_+|_+$/g, '') || 'all';
 }
 
-function exportSuggestedActionJson(filter: { success?: boolean; kind?: string } = {}, suffix = 'all') {
+function sinceTsFromHours(hours: number) {
+  const safeHours = Math.max(1, Number(hours || 1));
+  return Date.now() - safeHours * 60 * 60 * 1000;
+}
+
+function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; since_ts?: number } = {}, suffix = 'all') {
   try {
     const content = exportSuggestedActionTraces({ ...filter, limit: 200 });
     const now = new Date().toISOString().replace(/[:.]/g, '-');
