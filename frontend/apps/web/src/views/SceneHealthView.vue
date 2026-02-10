@@ -22,9 +22,11 @@
     <StatusPanel v-if="loading" title="Loading scene health..." variant="info" />
     <StatusPanel
       v-else-if="errorText"
-      title="Health contract invalid"
-      :message="errorText"
-      :trace-id="errorTraceId || undefined"
+      :title="errorCopy.title"
+      :message="errorCopy.message"
+      :trace-id="statusError?.traceId || errorTraceId || undefined"
+      :error-code="statusError?.code"
+      :hint="errorCopy.hint"
       variant="error"
       :on-retry="loadHealth"
     />
@@ -106,6 +108,7 @@
 import { computed, onMounted, ref } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
+import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import {
   fetchSceneHealth,
   governanceExportContract,
@@ -120,11 +123,13 @@ const governanceBusy = ref(false);
 const health = ref<SceneHealthContract | null>(null);
 const errorText = ref('');
 const errorTraceId = ref('');
+const statusError = ref<StatusError | null>(null);
 const companyIdText = ref('');
 const companies = ref<Array<{ id: number; name: string }>>([]);
 const targetChannel = ref<SceneChannel>('stable');
 const governanceReason = ref('');
 const governanceTraceId = ref('');
+const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'health request failed'));
 
 const autoDegradeLabel = computed(() => {
   const value = health.value?.auto_degrade;
@@ -180,6 +185,7 @@ async function loadHealth() {
   loading.value = true;
   errorText.value = '';
   errorTraceId.value = '';
+  statusError.value = null;
   try {
     const companyId = companyIdText.value ? Number(companyIdText.value) : undefined;
     const response = await fetchSceneHealth({
@@ -194,9 +200,8 @@ async function loadHealth() {
   } catch (err) {
     health.value = null;
     errorText.value = err instanceof Error ? err.message : 'health request failed';
-    if (err && typeof err === 'object' && 'traceId' in err) {
-      errorTraceId.value = String((err as { traceId?: string }).traceId || '');
-    }
+    statusError.value = buildStatusError(err, errorText.value);
+    errorTraceId.value = statusError.value.traceId || '';
   } finally {
     loading.value = false;
   }
@@ -206,10 +211,12 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
   const reason = governanceReason.value.trim();
   if (!reason) {
     errorText.value = 'reason is required for governance action';
+    statusError.value = { message: errorText.value };
     return;
   }
   governanceBusy.value = true;
   errorText.value = '';
+  statusError.value = null;
   try {
     if (action === 'rollback') {
       const ok = window.confirm('Confirm rollback to stable pinned mode?');
@@ -237,9 +244,8 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
     await loadHealth();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : 'governance action failed';
-    if (err && typeof err === 'object' && 'traceId' in err) {
-      errorTraceId.value = String((err as { traceId?: string }).traceId || '');
-    }
+    statusError.value = buildStatusError(err, errorText.value);
+    errorTraceId.value = statusError.value.traceId || '';
   } finally {
     governanceBusy.value = false;
   }
