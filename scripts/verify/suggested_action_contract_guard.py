@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Guard suggested action contract coverage between type union and UI presentation maps."""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+TYPES_PATH = ROOT / "frontend/apps/web/src/app/suggested_action/types.ts"
+PRESENTATION_PATH = ROOT / "frontend/apps/web/src/app/suggested_action/presentation.ts"
+
+UNION_RE = re.compile(r"\|\s*'([^']*)'")
+MAP_RE = re.compile(r"^\s{2}([a-z0-9_]+):\s*'", re.MULTILINE)
+
+
+def _read(path: Path) -> str:
+    if not path.exists():
+        raise FileNotFoundError(str(path))
+    return path.read_text(encoding="utf-8")
+
+
+def _parse_kinds(types_text: str) -> set[str]:
+    values = set(UNION_RE.findall(types_text))
+    values.discard("")
+    return values
+
+
+def _parse_map_keys(presentation_text: str, const_name: str) -> set[str]:
+    marker = f"const {const_name}:"
+    start = presentation_text.find(marker)
+    if start < 0:
+        raise ValueError(f"missing constant: {const_name}")
+    tail = presentation_text[start:]
+    open_brace = tail.find("{")
+    close_brace = tail.find("};")
+    if open_brace < 0 or close_brace < 0 or close_brace <= open_brace:
+        raise ValueError(f"invalid object shape: {const_name}")
+    body = tail[open_brace:close_brace]
+    return set(MAP_RE.findall(body))
+
+
+def _fail(lines: list[str]) -> int:
+    print("[FAIL] suggested_action contract guard")
+    for line in lines:
+        print(f"- {line}")
+    return 1
+
+
+def main() -> int:
+    try:
+        kinds = _parse_kinds(_read(TYPES_PATH))
+        presentation_text = _read(PRESENTATION_PATH)
+        labels = _parse_map_keys(presentation_text, "LABELS")
+        hints = _parse_map_keys(presentation_text, "HINTS")
+    except (FileNotFoundError, ValueError) as exc:
+        return _fail([str(exc)])
+
+    errors: list[str] = []
+    missing_labels = sorted(kinds - labels)
+    missing_hints = sorted(kinds - hints)
+    unknown_labels = sorted(labels - kinds)
+    unknown_hints = sorted(hints - kinds)
+
+    if missing_labels:
+        errors.append(f"missing labels for: {', '.join(missing_labels)}")
+    if missing_hints:
+        errors.append(f"missing hints for: {', '.join(missing_hints)}")
+    if unknown_labels:
+        errors.append(f"labels contain unknown kinds: {', '.join(unknown_labels)}")
+    if unknown_hints:
+        errors.append(f"hints contain unknown kinds: {', '.join(unknown_hints)}")
+
+    if errors:
+        return _fail(errors)
+
+    print("[OK] suggested_action contract guard")
+    print(f"- kinds: {len(kinds)}")
+    print(f"- labels: {len(labels)}")
+    print(f"- hints: {len(hints)}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
