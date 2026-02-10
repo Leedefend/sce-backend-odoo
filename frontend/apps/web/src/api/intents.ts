@@ -36,6 +36,31 @@ function generateTraceId() {
   return `trace_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+function resolveEnvelopeTraceId(meta: Record<string, unknown>, fallback: string): string {
+  const trace = meta.trace_id;
+  if (typeof trace === 'string' && trace.trim()) return trace.trim();
+  const traceAlias = meta.traceId;
+  if (typeof traceAlias === 'string' && traceAlias.trim()) return traceAlias.trim();
+  return fallback;
+}
+
+function throwEnvelopeError(
+  payload: IntentPayload,
+  traceId: string,
+  parsedError?: IntentEnvelopeError,
+): never {
+  const message = parsedError?.message || `intent failed: ${payload.intent}`;
+  const reasonCode = parsedError?.reason_code || parsedError?.code || 'INTENT_FAILED';
+  const hint = parsedError?.hint;
+  const kind = parsedError?.kind || parsedError?.error_category || 'contract';
+  throw new ApiError(message, 400, parsedError?.trace_id || traceId, {
+    reasonCode,
+    hint,
+    kind,
+    suggestedAction: parsedError?.suggested_action,
+  });
+}
+
 export async function intentRequest<T>(payload: IntentPayload) {
   const traceId = generateTraceId();
   const session = useSessionStore();
@@ -57,7 +82,12 @@ export async function intentRequest<T>(payload: IntentPayload) {
     // eslint-disable-next-line no-console
     console.info(`[trace] intent=${payload.intent} status=ok trace=${resolvedTrace}`);
 
-    return parseIntentEnvelope<T>(response.body).data;
+    const parsed = parseIntentEnvelope<T>(response.body);
+    const envelopeTrace = resolveEnvelopeTraceId(parsed.meta, resolvedTrace);
+    if (!parsed.ok) {
+      throwEnvelopeError(payload, envelopeTrace, parsed.error);
+    }
+    return parsed.data;
   } catch (err) {
     const errorTrace = err instanceof ApiError ? err.traceId || traceId : traceId;
     session.recordIntentTrace({
