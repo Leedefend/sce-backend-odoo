@@ -11,6 +11,7 @@ export type SuggestedActionKind =
   | 'open_scene_packages'
   | 'open_projects_list'
   | 'open_projects_board'
+  | 'open_project'
   | 'open_dashboard'
   | 'open_record'
   | 'open_scene'
@@ -33,6 +34,7 @@ export type SuggestedActionParsed = {
   url?: string;
   menuId?: number;
   actionId?: number;
+  projectId?: number;
   query?: string;
 };
 
@@ -57,6 +59,13 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'open_scene_packages') return { kind: 'open_scene_packages', raw };
   if (raw === 'open_projects_list') return { kind: 'open_projects_list', raw };
   if (raw === 'open_projects_board') return { kind: 'open_projects_board', raw };
+  const projectMatch = raw.match(/^open_project:([0-9]+)(?:\?(.+))?$/);
+  if (projectMatch) {
+    const projectId = Number(projectMatch[1]);
+    const query = String(projectMatch[2] || '').trim();
+    if (Number.isFinite(projectId) && projectId > 0 && query) return { kind: 'open_project', raw, projectId, query };
+    if (Number.isFinite(projectId) && projectId > 0) return { kind: 'open_project', raw, projectId };
+  }
   if (raw === 'open_dashboard') return { kind: 'open_dashboard', raw };
   if (raw === 'copy_trace' || raw === 'copy_trace_id') return { kind: 'copy_trace', raw };
   if (raw === 'copy_reason' || raw === 'copy_reason_code') return { kind: 'copy_reason', raw };
@@ -116,6 +125,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages';
   if (parsed.kind === 'open_projects_list') return 'Open projects list';
   if (parsed.kind === 'open_projects_board') return 'Open projects board';
+  if (parsed.kind === 'open_project') return 'Open project';
   if (parsed.kind === 'open_dashboard') return 'Open dashboard';
   if (parsed.kind === 'open_record') return 'Open record';
   if (parsed.kind === 'open_scene') return 'Open scene';
@@ -143,6 +153,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages for governance actions.';
   if (parsed.kind === 'open_projects_list') return 'Open projects list scene.';
   if (parsed.kind === 'open_projects_board') return 'Open projects board scene.';
+  if (parsed.kind === 'open_project') return 'Open the target project page.';
   if (parsed.kind === 'open_dashboard') return 'Open system dashboard.';
   if (parsed.kind === 'open_record') return 'Open the related record and resolve blockers first.';
   if (parsed.kind === 'open_scene') return 'Open the related scene and continue.';
@@ -183,6 +194,7 @@ export function canRunSuggestedAction(
   if (parsed.kind === 'open_scene') return Boolean(parsed.sceneKey);
   if (parsed.kind === 'open_menu') return Boolean(parsed.menuId);
   if (parsed.kind === 'open_action') return Boolean(parsed.actionId);
+  if (parsed.kind === 'open_project') return Boolean(parsed.projectId);
   if (parsed.kind === 'open_route') return Boolean(parsed.url);
   if (parsed.kind === 'open_url') return Boolean(parsed.url);
   if (
@@ -301,6 +313,9 @@ export function executeSuggestedAction(
   }
   if (parsed.kind === 'open_projects_board') {
     return safeNavigate('/projects');
+  }
+  if (parsed.kind === 'open_project' && parsed.projectId) {
+    return safeNavigate(appendQuery(`/projects/${parsed.projectId}`, parsed.query));
   }
   if (parsed.kind === 'open_scene' && parsed.sceneKey) {
     return safeNavigate(appendQuery(`/s/${encodeURIComponent(parsed.sceneKey)}`, parsed.query));
