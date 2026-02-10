@@ -7,6 +7,7 @@ export type SuggestedActionKind =
   | 'check_permission'
   | 'open_home'
   | 'open_my_work_todo'
+  | 'open_my_work_done'
   | 'open_my_work'
   | 'open_usage_analytics'
   | 'open_scene_health'
@@ -72,6 +73,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw === 'open_my_work') return { kind: 'open_my_work', raw };
   if (raw === 'open_todo') return { kind: 'open_my_work_todo', raw };
+  if (raw === 'open_done') return { kind: 'open_my_work_done', raw };
   if (raw.startsWith('open_my_work?')) {
     const query = rawInput.slice('open_my_work?'.length).trim();
     if (query) return { kind: 'open_my_work', raw, query };
@@ -195,6 +197,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'check_permission') return 'View permissions';
   if (parsed.kind === 'open_home') return 'Go home';
   if (parsed.kind === 'open_my_work_todo') return 'Open todo items';
+  if (parsed.kind === 'open_my_work_done') return 'Open done items';
   if (parsed.kind === 'open_my_work') return 'Open my work';
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics';
   if (parsed.kind === 'open_scene_health') return 'Open scene health';
@@ -226,6 +229,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'check_permission') return 'Check role permissions, then retry.';
   if (parsed.kind === 'open_home') return 'Go back to home and continue.';
   if (parsed.kind === 'open_my_work_todo') return 'Open My Work todo section directly.';
+  if (parsed.kind === 'open_my_work_done') return 'Open My Work done section directly.';
   if (parsed.kind === 'open_my_work') return 'Open My Work and continue processing pending items.';
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics to inspect capability visibility.';
   if (parsed.kind === 'open_scene_health') return 'Open scene health to inspect diagnostics.';
@@ -291,6 +295,7 @@ export function canRunSuggestedAction(
     parsed.kind === 'relogin' ||
     parsed.kind === 'open_home' ||
     parsed.kind === 'open_my_work_todo' ||
+    parsed.kind === 'open_my_work_done' ||
     parsed.kind === 'open_my_work' ||
     parsed.kind === 'open_usage_analytics' ||
     parsed.kind === 'open_scene_health' ||
@@ -414,6 +419,9 @@ export function executeSuggestedAction(
   }
   if (parsed.kind === 'open_my_work_todo') {
     return finish(safeNavigate('/my-work?section=todo'));
+  }
+  if (parsed.kind === 'open_my_work_done') {
+    return finish(safeNavigate('/my-work?section=done'));
   }
   if (parsed.kind === 'open_usage_analytics') {
     return finish(safeNavigate(appendQuery('/admin/usage-analytics', parsed.query)));
