@@ -45,8 +45,8 @@
 docker compose up -d
 ```
 
-* Reverse proxy: http://localhost:18080/web
-* Direct Odoo: http://localhost:8069/web
+* Reverse proxy: http://localhost:18081/web
+* Direct Odoo: http://localhost:8070/web
 
 Demo bootstrap:
 
@@ -99,7 +99,7 @@ make demo.full DB=sc_demo
 - 按钮行为与 server action
 - 视图布局结构（form/tree/kanban）
 - 权限与上下文控制
-- API 统一入口：`/api/contract/get` + `/api/intent/execute`
+- API 统一入口：`POST /api/v1/intent`
 
 前端不再写页面，只需解析 Contract。
 
@@ -172,7 +172,7 @@ Contract 响应自动加 ETag，提升前端加载性能约 50%~90%。
 - smart_construction_core（工程业务）
 - smart_contract（契约系统）
 - project_extend（扩展模块）
-- frontend_vue（独立前端）
+- frontend（独立前端，`frontend/apps/web`）
 
 ---
 
@@ -214,8 +214,8 @@ Contract 响应自动加 ETag，提升前端加载性能约 50%~90%。
 ```
 
 e:\odoo17\addons
-├── frontend_vue/
-│   └── vue_app/                     # 完整 Vue 3 前端框架
+├── frontend/
+│   └── apps/web/                    # Vue 3 前端应用
 │
 ├── smart_core/                      # Contract 2.0 + Intent 等核心底座
 ├── smart_construction_core/         # 建筑工程业务核心模块
@@ -259,7 +259,7 @@ e:\odoo17\addons
 
 ```bash
 git clone <repository-url>
-cd addons
+cd sc-backend-odoo
 ````
 
 ---
@@ -275,39 +275,17 @@ pip install -r requirements.txt
 ### 4. 安装前端依赖
 
 ```bash
-cd frontend_vue/vue_app
-npm install
-# 或
-pnpm install
+pnpm -C frontend/apps/web install
 ```
 
 ---
 
-### 5. 配置 Odoo
-
-在 odoo.conf 中加入：
-
-```
-addons_path = /path/to/addons
-```
-
-登录 Odoo 后安装 smart_core、smart_construction_core 等模块。
-
----
-
-### 6. 启动服务
-
-#### 启动 Odoo
+### 5. 启动服务（推荐 Make 流程）
 
 ```bash
-odoo -c /path/to/odoo.conf
-```
-
-#### 启动前端
-
-```bash
-cd frontend_vue/vue_app
-npm run dev
+make up
+make demo.full DB=sc_demo
+pnpm -C frontend/apps/web dev
 ```
 
 ---
@@ -355,7 +333,7 @@ npm run dev
 
 ---
 
-### 🎨 frontend_vue
+### 🎨 frontend（Vue 3）
 
 * Vue 3 + TypeScript
 * Pinia
@@ -367,11 +345,9 @@ npm run dev
 
 ## 📖 API 文档（Contract API）
 
-| 方法   | 地址                    | 功能        |
-| ---- | --------------------- | --------- |
-| GET  | `/api/contract/get`   | 获取页面契约    |
-| POST | `/api/intent/execute` | 执行按钮/业务动作 |
-| GET  | `/api/metadata`       | 获取模型元数据   |
+| 方法   | 地址              | 功能 |
+| ---- | ----------------- | ---- |
+| POST | `/api/v1/intent`  | 统一意图入口（如 `ui.contract`、`api.data.*`、`my.work.*`） |
 
 详情见：`docs/contract/README.md`
 
@@ -380,14 +356,13 @@ npm run dev
 ## 🧪 测试
 
 ```bash
-python -m pytest tests/
+make test MODULE=smart_construction_core TEST_TAGS=my_work_backend DB_NAME=sc_demo
 ```
 
 前端：
 
 ```bash
-cd frontend_vue/vue_app
-npm run test
+make fe.gate
 ```
 
 ---
