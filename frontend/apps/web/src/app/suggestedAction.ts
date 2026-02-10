@@ -89,6 +89,10 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (query) return { kind: 'open_my_work_done', raw, query };
   }
   if (raw === 'open_failed') return { kind: 'open_my_work_failed', raw };
+  if (raw.startsWith('open_failed?')) {
+    const query = rawInput.slice('open_failed?'.length).trim();
+    if (query) return { kind: 'open_my_work_failed', raw, query };
+  }
   const myWorkSectionMatch = rawInput.match(/^open_my_work_section:([a-z0-9_]+)$/i);
   if (myWorkSectionMatch) {
     const section = String(myWorkSectionMatch[1] || '').trim();
@@ -471,7 +475,7 @@ export function executeSuggestedAction(
     return finish(safeNavigate(appendQuery('/my-work?section=done', parsed.query)));
   }
   if (parsed.kind === 'open_my_work_failed') {
-    return finish(safeNavigate('/my-work?section=failed'));
+    return finish(safeNavigate(appendQuery('/my-work?section=failed', parsed.query)));
   }
   if (parsed.kind === 'open_my_work_section' && parsed.section) {
     return finish(safeNavigate(`/my-work?section=${encodeURIComponent(parsed.section)}`));
