@@ -1,0 +1,46 @@
+{
+  "action": null,
+  "case": "capability_describe_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "api_version": "v1",
+    "contract_version": "v0.1",
+    "default_payload": {
+      "action_id": 527,
+      "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
+      "menu_id": 338,
+      "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix"
+    },
+    "intent": "ui.contract",
+    "key": "capability.matrix",
+    "name": "能力矩阵",
+    "payload_schema": {
+      "action_id": "integer",
+      "action_xmlid": "string",
+      "menu_id": "integer",
+      "menu_xmlid": "string"
+    },
+    "required_groups": [],
+    "smoke_test": false,
+    "status": "ga",
+    "tags": [
+      "portal",
+      "capability"
+    ],
+    "ui_hint": "查看角色可用能力",
+    "ui_label": "能力矩阵",
+    "version": "v0.1"
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}
