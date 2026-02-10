@@ -31,6 +31,7 @@ class IntentRow:
     cls: str
     aliases: list[str]
     has_idempotency_window: bool
+    inferred_request_keys: list[str]
     test_refs: int
 
 
@@ -81,10 +82,26 @@ def collect_intent_rows(repo_root: Path) -> list[IntentRow]:
                         cls=node.name,
                         aliases=_literal_list(assigns.get("ALIASES", ast.List(elts=[]))),
                         has_idempotency_window="IDEMPOTENCY_WINDOW_SECONDS" in assigns,
+                        inferred_request_keys=collect_inferred_request_keys(src, node),
                         test_refs=0,
                     )
                 )
     return rows
+
+
+def collect_inferred_request_keys(src: str, node: ast.ClassDef) -> list[str]:
+    segment = ast.get_source_segment(src, node) or ""
+    keys: set[str] = set()
+    patterns = (
+        r'params\.get\(\s*["\']([A-Za-z0-9_.-]+)["\']',
+        r'params\[\s*["\']([A-Za-z0-9_.-]+)["\']\s*\]',
+    )
+    for pattern in patterns:
+        for match in re.finditer(pattern, segment):
+            key = str(match.group(1) or "").strip()
+            if key:
+                keys.add(key)
+    return sorted(keys)
 
 
 def count_test_refs(repo_root: Path, rows: list[IntentRow]) -> None:
@@ -183,12 +200,17 @@ def build_intent_catalog(repo_root: Path, rows: list[IntentRow], cases_file: Pat
                 "response_data_schema_hint": [],
                 "observed_reason_codes": [],
                 "examples": [],
+                "inferred_example": None,
             }
         else:
             by_intent[row.intent]["aliases"] = sorted(set(by_intent[row.intent]["aliases"] + row.aliases))
             by_intent[row.intent]["test_refs"] += row.test_refs
             if row.has_idempotency_window:
                 by_intent[row.intent]["has_idempotency_window"] = True
+        if row.inferred_request_keys:
+            req_hint = set(by_intent[row.intent]["request_schema_hint"])
+            req_hint.update(row.inferred_request_keys)
+            by_intent[row.intent]["request_schema_hint"] = sorted(req_hint)
 
     for intent, cases_for_intent in sorted(intent_case_map.items(), key=lambda kv: kv[0]):
         entry = by_intent.setdefault(
@@ -204,6 +226,7 @@ def build_intent_catalog(repo_root: Path, rows: list[IntentRow], cases_file: Pat
                 "response_data_schema_hint": [],
                 "observed_reason_codes": [],
                 "examples": [],
+                "inferred_example": None,
             },
         )
         request_paths: set[str] = set()
@@ -229,6 +252,22 @@ def build_intent_catalog(repo_root: Path, rows: list[IntentRow], cases_file: Pat
         entry["request_schema_hint"] = sorted(set(entry["request_schema_hint"]) | request_paths)
         entry["response_data_schema_hint"] = sorted(set(entry["response_data_schema_hint"]) | response_paths)
         entry["observed_reason_codes"] = sorted(set(entry["observed_reason_codes"]) | reason_codes)
+
+    for intent, entry in sorted(by_intent.items(), key=lambda kv: kv[0]):
+        examples = entry.get("examples") or []
+        if examples:
+            continue
+        request_keys = sorted(set(entry.get("request_schema_hint") or []))
+        inferred_example = {
+            "case": "__inferred__",
+            "snapshot_file": "",
+            "request_keys": request_keys,
+            "response_data_keys": [],
+            "inferred": True,
+            "source": "handler_params_scan",
+        }
+        entry["examples"] = [inferred_example]
+        entry["inferred_example"] = inferred_example
 
     return {
         "source": {
