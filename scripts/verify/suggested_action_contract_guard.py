@@ -10,9 +10,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TYPES_PATH = ROOT / "frontend/apps/web/src/app/suggested_action/types.ts"
 PRESENTATION_PATH = ROOT / "frontend/apps/web/src/app/suggested_action/presentation.ts"
+PARSER_PATH = ROOT / "frontend/apps/web/src/app/suggested_action/parser.ts"
 
 UNION_RE = re.compile(r"\|\s*'([^']*)'")
 MAP_RE = re.compile(r"^\s{2}([a-z0-9_]+):\s*'", re.MULTILINE)
+ALIAS_VALUE_RE = re.compile(r"^\s{2}[a-z0-9_]+:\s*'([a-z0-9_]+)',?$", re.MULTILINE)
 
 
 def _read(path: Path) -> str:
@@ -41,6 +43,20 @@ def _parse_map_keys(presentation_text: str, const_name: str) -> set[str]:
     return set(MAP_RE.findall(body))
 
 
+def _parse_alias_values(parser_text: str) -> set[str]:
+    marker = "const SIMPLE_ALIASES:"
+    start = parser_text.find(marker)
+    if start < 0:
+        raise ValueError("missing constant: SIMPLE_ALIASES")
+    tail = parser_text[start:]
+    open_brace = tail.find("{")
+    close_brace = tail.find("};")
+    if open_brace < 0 or close_brace < 0 or close_brace <= open_brace:
+        raise ValueError("invalid object shape: SIMPLE_ALIASES")
+    body = tail[open_brace:close_brace]
+    return set(ALIAS_VALUE_RE.findall(body))
+
+
 def _fail(lines: list[str]) -> int:
     print("[FAIL] suggested_action contract guard")
     for line in lines:
@@ -52,8 +68,10 @@ def main() -> int:
     try:
         kinds = _parse_kinds(_read(TYPES_PATH))
         presentation_text = _read(PRESENTATION_PATH)
+        parser_text = _read(PARSER_PATH)
         labels = _parse_map_keys(presentation_text, "LABELS")
         hints = _parse_map_keys(presentation_text, "HINTS")
+        alias_values = _parse_alias_values(parser_text)
     except (FileNotFoundError, ValueError) as exc:
         return _fail([str(exc)])
 
@@ -62,6 +80,7 @@ def main() -> int:
     missing_hints = sorted(kinds - hints)
     unknown_labels = sorted(labels - kinds)
     unknown_hints = sorted(hints - kinds)
+    unknown_alias_values = sorted(alias_values - kinds)
 
     if missing_labels:
         errors.append(f"missing labels for: {', '.join(missing_labels)}")
@@ -71,6 +90,8 @@ def main() -> int:
         errors.append(f"labels contain unknown kinds: {', '.join(unknown_labels)}")
     if unknown_hints:
         errors.append(f"hints contain unknown kinds: {', '.join(unknown_hints)}")
+    if unknown_alias_values:
+        errors.append(f"alias map contains unknown kinds: {', '.join(unknown_alias_values)}")
 
     if errors:
         return _fail(errors)
@@ -79,6 +100,7 @@ def main() -> int:
     print(f"- kinds: {len(kinds)}")
     print(f"- labels: {len(labels)}")
     print(f"- hints: {len(hints)}")
+    print(f"- alias_values: {len(alias_values)}")
     return 0
 
 
