@@ -29,6 +29,7 @@ export type SuggestedActionKind =
   | 'copy_reason'
   | 'copy_message'
   | 'copy_error_line'
+  | 'copy_action'
   | 'copy_full_error'
   | '';
 
@@ -135,6 +136,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'copy_reason' || raw === 'copy_reason_code') return { kind: 'copy_reason', raw };
   if (raw === 'copy_message' || raw === 'copy_error_message') return { kind: 'copy_message', raw };
   if (raw === 'copy_error_line' || raw === 'copy_compact_error') return { kind: 'copy_error_line', raw };
+  if (raw === 'copy_action' || raw === 'copy_suggested_action') return { kind: 'copy_action', raw };
   if (raw === 'copy_full_error' || raw === 'copy_error_bundle') return { kind: 'copy_full_error', raw };
   if (raw === 'open_record') return { kind: 'open_record', raw };
   const recordMatch = rawInput.match(/^open_record:([^:]+):([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
@@ -225,6 +227,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_reason') return 'Copy reason';
   if (parsed.kind === 'copy_message') return 'Copy message';
   if (parsed.kind === 'copy_error_line') return 'Copy error line';
+  if (parsed.kind === 'copy_action') return 'Copy action';
   if (parsed.kind === 'copy_full_error') return 'Copy full error';
   return '';
 }
@@ -260,6 +263,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_reason') return 'Copy reason code for troubleshooting.';
   if (parsed.kind === 'copy_message') return 'Copy error message for troubleshooting.';
   if (parsed.kind === 'copy_error_line') return 'Copy a compact error line for quick sharing.';
+  if (parsed.kind === 'copy_action') return 'Copy raw suggested action for troubleshooting.';
   if (parsed.kind === 'copy_full_error') return 'Copy full error bundle for troubleshooting.';
   return '';
 }
@@ -331,6 +335,7 @@ export function canRunSuggestedAction(
         String(options.message || '').trim(),
     );
   }
+  if (parsed.kind === 'copy_action') return Boolean(String(parsed.raw || '').trim());
   if (parsed.kind === 'copy_full_error') {
     return Boolean(
       String(options.traceId || '').trim() ||
@@ -510,6 +515,10 @@ export function executeSuggestedAction(
       String(options.traceId || '').trim() ? `trace=${String(options.traceId || '').trim()}` : '',
     ].filter(Boolean);
     void copyText(pieces.join(' | '));
+    return finish(true);
+  }
+  if (parsed.kind === 'copy_action') {
+    void copyText(parsed.raw || '');
     return finish(true);
   }
   if (parsed.kind === 'copy_full_error') {
