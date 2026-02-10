@@ -1,6 +1,7 @@
 export type SuggestedActionKind =
   | 'refresh'
   | 'retry'
+  | 'go_back'
   | 'relogin'
   | 'check_permission'
   | 'open_home'
@@ -44,6 +45,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (!raw) return { kind: '', raw: '' };
   if (raw === 'refresh' || raw === 'refresh_list') return { kind: 'refresh', raw };
   if (raw === 'retry' || raw === 'retry_later') return { kind: 'retry', raw };
+  if (raw === 'go_back' || raw === 'back') return { kind: 'go_back', raw };
   if (raw === 'relogin' || raw === 'login_again') return { kind: 'relogin', raw };
   if (raw === 'check_permission' || raw === 'request_permission') return { kind: 'check_permission', raw };
   if (raw === 'open_home' || raw === 'go_home') return { kind: 'open_home', raw };
@@ -104,6 +106,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
 export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'refresh') return 'Refresh now';
   if (parsed.kind === 'retry') return 'Retry now';
+  if (parsed.kind === 'go_back') return 'Go back';
   if (parsed.kind === 'relogin') return 'Go to login';
   if (parsed.kind === 'check_permission') return 'View permissions';
   if (parsed.kind === 'open_home') return 'Go home';
@@ -130,6 +133,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
 export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'refresh') return 'Refresh the latest data and retry.';
   if (parsed.kind === 'retry') return 'Retry this action after a short delay.';
+  if (parsed.kind === 'go_back') return 'Go back to the previous page.';
   if (parsed.kind === 'relogin') return 'Login again and retry.';
   if (parsed.kind === 'check_permission') return 'Check role permissions, then retry.';
   if (parsed.kind === 'open_home') return 'Go back to home and continue.';
@@ -171,6 +175,7 @@ export function canRunSuggestedAction(
 ) {
   if (!parsed.kind) return false;
   if (parsed.kind === 'refresh' || parsed.kind === 'retry') return Boolean(options.hasRetryHandler);
+  if (parsed.kind === 'go_back') return window.history.length > 1;
   if (parsed.kind === 'open_record') {
     if (parsed.model && parsed.recordId) return true;
     return Boolean(options.hasActionHandler);
@@ -259,6 +264,11 @@ export function executeSuggestedAction(
   }
   if ((parsed.kind === 'refresh' || parsed.kind === 'retry') && options.onRetry) {
     options.onRetry();
+    return true;
+  }
+  if (parsed.kind === 'go_back') {
+    if (window.history.length <= 1) return false;
+    window.history.back();
     return true;
   }
   if (parsed.kind === 'relogin') {
