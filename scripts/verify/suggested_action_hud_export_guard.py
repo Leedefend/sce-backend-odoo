@@ -15,6 +15,9 @@ REQUIRED_SHELL_SNIPPETS = [
     ":actions=\"hudActions\"",
     "exportSuggestedActionJson({ success: true }, 'ok')",
     "exportSuggestedActionJson({ success: false }, 'fail')",
+    "exportSuggestedActionJson({ kind: 'open_record' }, 'kind-open_record')",
+    "exportSuggestedActionJson({ kind: 'copy_trace' }, 'kind-copy_trace')",
+    "exportSuggestedActionJson({ kind: 'refresh' }, 'kind-refresh')",
 ]
 
 REQUIRED_PANEL_SNIPPETS = [
