@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
   canRunSuggestedAction as canRunSuggestedActionByConfig,
   executeSuggestedAction,
@@ -47,6 +47,13 @@ const emit = defineEmits<{
   (event: 'action-executed', payload: { action: string; success: boolean }): void;
 }>();
 const actionRunFeedback = ref('');
+
+watch(
+  () => [props.suggestedAction, props.message, props.reasonCode, props.traceId],
+  () => {
+    actionRunFeedback.value = '';
+  },
+);
 
 const canRunSuggestedAction = computed(() => {
   const parsed = parseSuggestedAction(props.suggestedAction);
