@@ -36,8 +36,8 @@ Compatibility entrypoint:
   - `suggested_action_raw`
   - `suggested_action_success`
 - Filter/export APIs (`frontend/apps/web/src/services/trace.ts`):
-  - `listSuggestedActionTraces({ kind?, success?, limit? })`
-  - `exportSuggestedActionTraces({ kind?, success?, limit? })`
+  - `listSuggestedActionTraces({ kind?, success?, limit?, since_ts? })`
+  - `exportSuggestedActionTraces({ kind?, success?, limit?, since_ts? })`
   - export payload includes:
     - `summary.total`
     - `summary.success_count`
@@ -47,6 +47,8 @@ Compatibility entrypoint:
   - `Export SA all`
   - `Export SA ok`
   - `Export SA fail`
+  - `Export SA 1h`
+  - `Export SA 24h`
   - top-k dynamic kind buttons (fallback defaults: `open_record`, `copy_trace`, `refresh`)
 - HUD fields in `AppShell`:
   - `sa_kind`
@@ -95,6 +97,12 @@ Top-k guard:
 
 ```bash
 make verify.frontend.suggested_action.topk_guard
+```
+
+Since filter guard:
+
+```bash
+make verify.frontend.suggested_action.since_filter_guard
 ```
 
 HUD export guard:
