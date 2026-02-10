@@ -64,6 +64,10 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (query) return { kind: 'open_usage_analytics', raw, query };
   }
   if (raw === 'open_scene_health') return { kind: 'open_scene_health', raw };
+  if (raw.startsWith('open_scene_health?')) {
+    const query = raw.slice('open_scene_health?'.length).trim();
+    if (query) return { kind: 'open_scene_health', raw, query };
+  }
   if (raw === 'open_scene_packages') return { kind: 'open_scene_packages', raw };
   if (raw === 'open_projects_list') return { kind: 'open_projects_list', raw };
   if (raw === 'open_projects_board') return { kind: 'open_projects_board', raw };
@@ -311,7 +315,7 @@ export function executeSuggestedAction(
     return safeNavigate(appendQuery('/admin/usage-analytics', parsed.query));
   }
   if (parsed.kind === 'open_scene_health') {
-    return safeNavigate('/admin/scene-health');
+    return safeNavigate(appendQuery('/admin/scene-health', parsed.query));
   }
   if (parsed.kind === 'open_scene_packages') {
     return safeNavigate('/admin/scene-packages');
