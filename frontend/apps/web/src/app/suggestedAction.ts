@@ -127,13 +127,14 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'copy_error_line' || raw === 'copy_compact_error') return { kind: 'copy_error_line', raw };
   if (raw === 'copy_full_error' || raw === 'copy_error_bundle') return { kind: 'copy_full_error', raw };
   if (raw === 'open_record') return { kind: 'open_record', raw };
-  const recordMatch = rawInput.match(/^open_record:([^:]+):([0-9]+)(?:\?(.+))?$/i);
+  const recordMatch = rawInput.match(/^open_record:([^:]+):([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
   if (recordMatch) {
     const model = String(recordMatch[1] || '').trim();
     const recordId = Number(recordMatch[2]);
     const query = String(recordMatch[3] || '').trim();
+    const hash = String(recordMatch[4] || '').trim();
     if (model && Number.isFinite(recordId) && recordId > 0) {
-      return { kind: 'open_record', raw, model, recordId, query };
+      return { kind: 'open_record', raw, model, recordId, query, hash };
     }
   }
   if (raw.startsWith('open_scene:')) {
@@ -438,7 +439,11 @@ export function executeSuggestedAction(
     return finish(safeNavigate(appendHash(appendQuery(`/a/${parsed.actionId}`, parsed.query), parsed.hash)));
   }
   if (parsed.kind === 'open_record' && parsed.model && parsed.recordId) {
-    return finish(safeNavigate(appendQuery(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`, parsed.query)));
+    return finish(
+      safeNavigate(
+        appendHash(appendQuery(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`, parsed.query), parsed.hash),
+      ),
+    );
   }
   if (parsed.kind === 'open_route' && parsed.url) {
     return finish(safeNavigate(appendHash(parsed.url, parsed.hash)));
