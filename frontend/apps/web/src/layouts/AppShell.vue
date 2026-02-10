@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue';
+import { computed, onMounted, onUnmounted, provide, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -103,6 +103,7 @@ import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { isHudEnabled } from '../config/debug';
 import type { NavNode } from '@sc/schema';
+import { getLatestSuggestedActionTrace, getTraceUpdateEventName } from '../services/trace';
 
 const session = useSessionStore();
 const route = useRoute();
@@ -124,6 +125,7 @@ const navVersion = computed(() => {
   const meta = session.initMeta as any;
   return meta?.nav_version ?? meta?.nav_meta?.menu ?? meta?.parts?.nav ?? 'N/A';
 });
+const suggestedActionStamp = ref(0);
 
 const initStatus = computed(() => session.initStatus);
 const initError = computed(() => session.initError);
@@ -189,6 +191,20 @@ const pageTitle = computed(() => {
 
 provide('pageTitle', pageTitle);
 const showHud = computed(() => isHudEnabled(route));
+const latestSuggestedAction = computed(() => {
+  const stamp = suggestedActionStamp.value;
+  void stamp;
+  return getLatestSuggestedActionTrace();
+});
+const latestSuggestedActionTs = computed(() => {
+  const ts = latestSuggestedAction.value?.ts;
+  if (!ts) return '-';
+  try {
+    return new Date(ts).toISOString();
+  } catch {
+    return String(ts);
+  }
+});
 const hudEntries = computed(() => [
   { label: 'scene_key', value: (route.meta?.sceneKey as string | undefined) || '-' },
   { label: 'menu_id', value: activeMenuId.value || '-' },
@@ -197,7 +213,25 @@ const hudEntries = computed(() => [
   { label: 'user', value: userName.value || '-' },
   { label: 'db', value: effectiveDb.value || '-' },
   { label: 'nav_version', value: navVersion.value || '-' },
+  { label: 'sa_kind', value: latestSuggestedAction.value?.suggested_action_kind || '-' },
+  { label: 'sa_success', value: String(latestSuggestedAction.value?.suggested_action_success ?? '-') },
+  { label: 'sa_ts', value: latestSuggestedActionTs.value },
 ]);
+
+function handleTraceUpdate() {
+  suggestedActionStamp.value = Date.now();
+}
+
+onMounted(() => {
+  if (typeof window === 'undefined') return;
+  window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as EventListener);
+  handleTraceUpdate();
+});
+
+onUnmounted(() => {
+  if (typeof window === 'undefined') return;
+  window.removeEventListener(getTraceUpdateEventName(), handleTraceUpdate as EventListener);
+});
 
 function findMenuPath(nodes: NavNode[], menuId?: number): NavNode[] {
   if (!menuId) {
