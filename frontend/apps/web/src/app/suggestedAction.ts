@@ -246,8 +246,8 @@ export function canRunSuggestedAction(
   if (parsed.kind === 'open_menu') return Boolean(parsed.menuId);
   if (parsed.kind === 'open_action') return Boolean(parsed.actionId);
   if (parsed.kind === 'open_project') return Boolean(parsed.projectId);
-  if (parsed.kind === 'open_route') return Boolean(parsed.url);
-  if (parsed.kind === 'open_url') return Boolean(parsed.url);
+  if (parsed.kind === 'open_route') return Boolean(parsed.url && isSafeRelativePath(parsed.url));
+  if (parsed.kind === 'open_url') return Boolean(parsed.url && isSafeRelativePath(parsed.url));
   if (
     parsed.kind === 'check_permission' ||
     parsed.kind === 'relogin' ||
