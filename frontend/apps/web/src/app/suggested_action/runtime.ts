@@ -1,8 +1,49 @@
 import type {
+  SuggestedActionKind,
   SuggestedActionCapabilityOptions,
   SuggestedActionExecuteOptions,
   SuggestedActionParsed,
 } from './types';
+
+const ROUTE_ACTIONS = new Set<SuggestedActionKind>(['open_route', 'open_url']);
+const RETRY_ACTIONS = new Set<SuggestedActionKind>(['refresh', 'retry']);
+const COPY_ACTIONS = new Set<SuggestedActionKind>([
+  'copy_trace',
+  'copy_reason',
+  'copy_message',
+  'copy_error_line',
+  'copy_action',
+  'copy_json_error',
+  'copy_full_error',
+]);
+const DIRECT_ACTIONS = new Set<SuggestedActionKind>([
+  'check_permission',
+  'relogin',
+  'open_home',
+  'open_my_work_todo',
+  'open_my_work_done',
+  'open_my_work_failed',
+  'open_my_work_section',
+  'open_my_work',
+  'open_usage_analytics',
+  'open_locked',
+  'open_preview',
+  'open_ready',
+  'open_hidden',
+  'open_scene_health',
+  'open_scene_packages',
+  'open_projects_list',
+  'open_projects_board',
+  'open_dashboard',
+]);
+
+function hasAnyErrorInfo(options: SuggestedActionCapabilityOptions) {
+  return Boolean(
+    String(options.traceId || '').trim() ||
+      String(options.reasonCode || '').trim() ||
+      String(options.message || '').trim(),
+  );
+}
 
 function isSafeRelativePath(path: string) {
   if (!path.startsWith('/')) return false;
@@ -67,12 +108,45 @@ function appendHash(path: string, hash?: string) {
   return `${path}#${h}`;
 }
 
+function compactErrorLine(options: SuggestedActionExecuteOptions) {
+  const pieces = [
+    String(options.reasonCode || '').trim(),
+    String(options.message || '').trim(),
+    String(options.traceId || '').trim() ? `trace=${String(options.traceId || '').trim()}` : '',
+  ].filter(Boolean);
+  return pieces.join(' | ');
+}
+
+function compactErrorPayload(options: SuggestedActionExecuteOptions) {
+  return {
+    trace_id: String(options.traceId || '').trim() || undefined,
+    reason_code: String(options.reasonCode || '').trim() || undefined,
+    message: String(options.message || '').trim() || undefined,
+  };
+}
+
+function tryHandleCopyAction(
+  parsed: SuggestedActionParsed,
+  options: SuggestedActionExecuteOptions,
+  finish: (success: boolean) => boolean,
+) {
+  if (!COPY_ACTIONS.has(parsed.kind)) return null;
+  if (parsed.kind === 'copy_trace') void copyText(options.traceId || '');
+  if (parsed.kind === 'copy_reason') void copyText(options.reasonCode || '');
+  if (parsed.kind === 'copy_message') void copyText(options.message || '');
+  if (parsed.kind === 'copy_error_line') void copyText(compactErrorLine(options));
+  if (parsed.kind === 'copy_action') void copyText(parsed.raw || '');
+  if (parsed.kind === 'copy_json_error') void copyText(JSON.stringify(compactErrorPayload(options)));
+  if (parsed.kind === 'copy_full_error') void copyText(JSON.stringify(compactErrorPayload(options), null, 2));
+  return finish(true);
+}
+
 export function canRunSuggestedAction(
   parsed: SuggestedActionParsed,
   options: SuggestedActionCapabilityOptions = {},
 ) {
   if (!parsed.kind) return false;
-  if (parsed.kind === 'refresh' || parsed.kind === 'retry') return Boolean(options.hasRetryHandler);
+  if (RETRY_ACTIONS.has(parsed.kind)) return Boolean(options.hasRetryHandler);
   if (parsed.kind === 'go_back') return window.history.length > 1;
   if (parsed.kind === 'open_login') return true;
   if (parsed.kind === 'open_record') {
@@ -83,55 +157,15 @@ export function canRunSuggestedAction(
   if (parsed.kind === 'open_menu') return Boolean(parsed.menuId);
   if (parsed.kind === 'open_action') return Boolean(parsed.actionId);
   if (parsed.kind === 'open_project') return Boolean(parsed.projectId);
-  if (parsed.kind === 'open_route') return Boolean(parsed.url && isSafeRelativePath(parsed.url));
-  if (parsed.kind === 'open_url') return Boolean(parsed.url && isSafeRelativePath(parsed.url));
-  if (
-    parsed.kind === 'check_permission' ||
-    parsed.kind === 'relogin' ||
-    parsed.kind === 'open_home' ||
-    parsed.kind === 'open_my_work_todo' ||
-    parsed.kind === 'open_my_work_done' ||
-    parsed.kind === 'open_my_work_failed' ||
-    parsed.kind === 'open_my_work_section' ||
-    parsed.kind === 'open_my_work' ||
-    parsed.kind === 'open_usage_analytics' ||
-    parsed.kind === 'open_locked' ||
-    parsed.kind === 'open_preview' ||
-    parsed.kind === 'open_ready' ||
-    parsed.kind === 'open_hidden' ||
-    parsed.kind === 'open_scene_health' ||
-    parsed.kind === 'open_scene_packages' ||
-    parsed.kind === 'open_projects_list' ||
-    parsed.kind === 'open_projects_board' ||
-    parsed.kind === 'open_dashboard'
-  ) {
-    return true;
-  }
+  if (ROUTE_ACTIONS.has(parsed.kind)) return Boolean(parsed.url && isSafeRelativePath(parsed.url));
+  if (DIRECT_ACTIONS.has(parsed.kind)) return true;
   if (parsed.kind === 'copy_trace') return Boolean(String(options.traceId || '').trim());
   if (parsed.kind === 'copy_reason') return Boolean(String(options.reasonCode || '').trim());
   if (parsed.kind === 'copy_message') return Boolean(String(options.message || '').trim());
-  if (parsed.kind === 'copy_error_line') {
-    return Boolean(
-      String(options.traceId || '').trim() ||
-        String(options.reasonCode || '').trim() ||
-        String(options.message || '').trim(),
-    );
-  }
+  if (parsed.kind === 'copy_error_line') return hasAnyErrorInfo(options);
   if (parsed.kind === 'copy_action') return Boolean(String(parsed.raw || '').trim());
-  if (parsed.kind === 'copy_json_error') {
-    return Boolean(
-      String(options.traceId || '').trim() ||
-        String(options.reasonCode || '').trim() ||
-        String(options.message || '').trim(),
-    );
-  }
-  if (parsed.kind === 'copy_full_error') {
-    return Boolean(
-      String(options.traceId || '').trim() ||
-        String(options.reasonCode || '').trim() ||
-        String(options.message || '').trim(),
-    );
-  }
+  if (parsed.kind === 'copy_json_error') return hasAnyErrorInfo(options);
+  if (parsed.kind === 'copy_full_error') return hasAnyErrorInfo(options);
   return false;
 }
 
@@ -150,7 +184,7 @@ export function executeSuggestedAction(
     const handled = options.onSuggestedAction(parsed.raw);
     if (handled) return finish(true);
   }
-  if ((parsed.kind === 'refresh' || parsed.kind === 'retry') && options.onRetry) {
+  if (RETRY_ACTIONS.has(parsed.kind) && options.onRetry) {
     options.onRetry();
     return finish(true);
   }
@@ -236,58 +270,10 @@ export function executeSuggestedAction(
       ),
     );
   }
-  if (parsed.kind === 'open_route' && parsed.url) {
+  if (ROUTE_ACTIONS.has(parsed.kind) && parsed.url) {
     return finish(safeNavigate(appendHash(parsed.url, parsed.hash)));
   }
-  if (parsed.kind === 'open_url' && parsed.url) {
-    return finish(safeNavigate(appendHash(parsed.url, parsed.hash)));
-  }
-  if (parsed.kind === 'copy_trace') {
-    void copyText(options.traceId || '');
-    return finish(true);
-  }
-  if (parsed.kind === 'copy_reason') {
-    void copyText(options.reasonCode || '');
-    return finish(true);
-  }
-  if (parsed.kind === 'copy_message') {
-    void copyText(options.message || '');
-    return finish(true);
-  }
-  if (parsed.kind === 'copy_error_line') {
-    const pieces = [
-      String(options.reasonCode || '').trim(),
-      String(options.message || '').trim(),
-      String(options.traceId || '').trim() ? `trace=${String(options.traceId || '').trim()}` : '',
-    ].filter(Boolean);
-    void copyText(pieces.join(' | '));
-    return finish(true);
-  }
-  if (parsed.kind === 'copy_action') {
-    void copyText(parsed.raw || '');
-    return finish(true);
-  }
-  if (parsed.kind === 'copy_json_error') {
-    const payload = {
-      trace_id: String(options.traceId || '').trim() || undefined,
-      reason_code: String(options.reasonCode || '').trim() || undefined,
-      message: String(options.message || '').trim() || undefined,
-    };
-    void copyText(JSON.stringify(payload));
-    return finish(true);
-  }
-  if (parsed.kind === 'copy_full_error') {
-    const bundle = JSON.stringify(
-      {
-        trace_id: String(options.traceId || '').trim() || undefined,
-        reason_code: String(options.reasonCode || '').trim() || undefined,
-        message: String(options.message || '').trim() || undefined,
-      },
-      null,
-      2,
-    );
-    void copyText(bundle);
-    return finish(true);
-  }
+  const copyResult = tryHandleCopyAction(parsed, options, finish);
+  if (copyResult !== null) return copyResult;
   return finish(false);
 }
