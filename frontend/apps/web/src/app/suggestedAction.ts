@@ -203,10 +203,12 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (Number.isFinite(menuId) && menuId > 0) return { kind: 'open_menu', raw, menuId };
   }
   const actionMatch = rawInput.match(/^open_action:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
-  if (actionMatch) {
-    const actionId = Number(actionMatch[1]);
-    const query = String(actionMatch[2] || '').trim();
-    const hash = String(actionMatch[3] || '').trim();
+  const actionAliasMatch = rawInput.match(/^goto_action:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
+  const parsedActionMatch = actionMatch || actionAliasMatch;
+  if (parsedActionMatch) {
+    const actionId = Number(parsedActionMatch[1]);
+    const query = String(parsedActionMatch[2] || '').trim();
+    const hash = String(parsedActionMatch[3] || '').trim();
     if (Number.isFinite(actionId) && actionId > 0 && query && hash) return { kind: 'open_action', raw, actionId, query, hash };
     if (Number.isFinite(actionId) && actionId > 0 && hash) return { kind: 'open_action', raw, actionId, hash };
     if (Number.isFinite(actionId) && actionId > 0 && query) return { kind: 'open_action', raw, actionId, query };
