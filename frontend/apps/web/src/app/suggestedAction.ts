@@ -33,6 +33,7 @@ export type SuggestedActionKind =
   | 'copy_message'
   | 'copy_error_line'
   | 'copy_action'
+  | 'copy_json_error'
   | 'copy_full_error'
   | '';
 
@@ -167,6 +168,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'copy_message' || raw === 'copy_error_message') return { kind: 'copy_message', raw };
   if (raw === 'copy_error_line' || raw === 'copy_compact_error') return { kind: 'copy_error_line', raw };
   if (raw === 'copy_action' || raw === 'copy_suggested_action') return { kind: 'copy_action', raw };
+  if (raw === 'copy_json_error' || raw === 'copy_error_json') return { kind: 'copy_json_error', raw };
   if (raw === 'copy_full_error' || raw === 'copy_error_bundle') return { kind: 'copy_full_error', raw };
   if (raw === 'open_record') return { kind: 'open_record', raw };
   const recordMatch = rawInput.match(/^open_record:([^:]+):([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
@@ -268,6 +270,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_message') return 'Copy message';
   if (parsed.kind === 'copy_error_line') return 'Copy error line';
   if (parsed.kind === 'copy_action') return 'Copy action';
+  if (parsed.kind === 'copy_json_error') return 'Copy error JSON';
   if (parsed.kind === 'copy_full_error') return 'Copy full error';
   return '';
 }
@@ -307,6 +310,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_message') return 'Copy error message for troubleshooting.';
   if (parsed.kind === 'copy_error_line') return 'Copy a compact error line for quick sharing.';
   if (parsed.kind === 'copy_action') return 'Copy raw suggested action for troubleshooting.';
+  if (parsed.kind === 'copy_json_error') return 'Copy compact error JSON for troubleshooting.';
   if (parsed.kind === 'copy_full_error') return 'Copy full error bundle for troubleshooting.';
   return '';
 }
@@ -382,6 +386,13 @@ export function canRunSuggestedAction(
     );
   }
   if (parsed.kind === 'copy_action') return Boolean(String(parsed.raw || '').trim());
+  if (parsed.kind === 'copy_json_error') {
+    return Boolean(
+      String(options.traceId || '').trim() ||
+        String(options.reasonCode || '').trim() ||
+        String(options.message || '').trim(),
+    );
+  }
   if (parsed.kind === 'copy_full_error') {
     return Boolean(
       String(options.traceId || '').trim() ||
@@ -575,6 +586,15 @@ export function executeSuggestedAction(
   }
   if (parsed.kind === 'copy_action') {
     void copyText(parsed.raw || '');
+    return finish(true);
+  }
+  if (parsed.kind === 'copy_json_error') {
+    const payload = {
+      trace_id: String(options.traceId || '').trim() || undefined,
+      reason_code: String(options.reasonCode || '').trim() || undefined,
+      message: String(options.message || '').trim() || undefined,
+    };
+    void copyText(JSON.stringify(payload));
     return finish(true);
   }
   if (parsed.kind === 'copy_full_error') {
