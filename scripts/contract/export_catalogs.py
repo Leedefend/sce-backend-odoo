@@ -198,6 +198,7 @@ def build_intent_catalog(repo_root: Path, rows: list[IntentRow], cases_file: Pat
                 "test_refs": row.test_refs,
                 "request_schema_hint": [],
                 "response_data_schema_hint": [],
+                "error_schema_hint": [],
                 "observed_reason_codes": [],
                 "examples": [],
                 "inferred_example": None,
@@ -224,6 +225,7 @@ def build_intent_catalog(repo_root: Path, rows: list[IntentRow], cases_file: Pat
                 "test_refs": 0,
                 "request_schema_hint": [],
                 "response_data_schema_hint": [],
+                "error_schema_hint": [],
                 "observed_reason_codes": [],
                 "examples": [],
                 "inferred_example": None,
@@ -231,6 +233,7 @@ def build_intent_catalog(repo_root: Path, rows: list[IntentRow], cases_file: Pat
         )
         request_paths: set[str] = set()
         response_paths: set[str] = set()
+        error_paths: set[str] = set()
         reason_codes: set[str] = set()
         for case in cases_for_intent:
             case_name = str(case.get("case", "")).strip()
@@ -238,19 +241,25 @@ def build_intent_catalog(repo_root: Path, rows: list[IntentRow], cases_file: Pat
             request_paths.update(dotted_paths(intent_params))
             snapshot = snapshot_payloads.get(case_name) or {}
             response_data = snapshot.get("ui_contract_raw")
+            response_error = snapshot.get("error")
             if response_data is not None:
                 response_paths.update(dotted_paths(response_data))
                 reason_codes.update(collect_reason_codes(response_data))
+            if response_error is not None:
+                error_paths.update(dotted_paths(response_error))
+                reason_codes.update(collect_reason_codes(response_error))
             entry["examples"].append(
                 {
                     "case": case_name,
                     "snapshot_file": f"docs/contract/snapshots/{case_name}.json" if case_name else "",
                     "request_keys": sorted(dotted_paths(intent_params)),
                     "response_data_keys": sorted(dotted_paths(response_data if response_data is not None else {})),
+                    "response_error_keys": sorted(dotted_paths(response_error if response_error is not None else {})),
                 }
             )
         entry["request_schema_hint"] = sorted(set(entry["request_schema_hint"]) | request_paths)
         entry["response_data_schema_hint"] = sorted(set(entry["response_data_schema_hint"]) | response_paths)
+        entry["error_schema_hint"] = sorted(set(entry["error_schema_hint"]) | error_paths)
         entry["observed_reason_codes"] = sorted(set(entry["observed_reason_codes"]) | reason_codes)
 
     for intent, entry in sorted(by_intent.items(), key=lambda kv: kv[0]):
@@ -263,6 +272,7 @@ def build_intent_catalog(repo_root: Path, rows: list[IntentRow], cases_file: Pat
             "snapshot_file": "",
             "request_keys": request_keys,
             "response_data_keys": [],
+            "response_error_keys": [],
             "inferred": True,
             "source": "handler_params_scan",
         }

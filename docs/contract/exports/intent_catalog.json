@@ -48,6 +48,7 @@
         "raw[].records[].id",
         "raw[].records[].name"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -78,7 +79,8 @@
             "raw[].records[]",
             "raw[].records[].id",
             "raw[].records[].name"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -161,6 +163,7 @@
         "values",
         "values.active"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [
         "NOT_FOUND"
       ],
@@ -228,7 +231,8 @@
             "trace_id",
             "values",
             "values.active"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -276,6 +280,7 @@
         "written_fields",
         "written_fields[]"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -303,7 +308,8 @@
             "values.name",
             "written_fields",
             "written_fields[]"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -341,6 +347,7 @@
         "replay_supported",
         "replay_window_expired"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -365,7 +372,8 @@
             "model",
             "replay_supported",
             "replay_window_expired"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -390,6 +398,7 @@
         "meta.fingerprint",
         "meta.scene"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -404,7 +413,8 @@
             "meta",
             "meta.fingerprint",
             "meta.scene"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -428,6 +438,7 @@
         "sections",
         "sections[]"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -441,7 +452,8 @@
             "meta.fingerprint",
             "sections",
             "sections[]"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -464,6 +476,7 @@
         "id",
         "subject"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -476,7 +489,8 @@
           "response_data_keys": [
             "id",
             "subject"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -497,6 +511,7 @@
         "raw[]",
         "raw[].message"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -507,7 +522,8 @@
             "raw",
             "raw[]",
             "raw[].message"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -553,6 +569,7 @@
         "ui_label",
         "version"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -586,7 +603,8 @@
             "ui_hint",
             "ui_label",
             "version"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -622,6 +640,7 @@
         "summary.visible",
         "user"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -647,7 +666,8 @@
             "summary.total",
             "summary.visible",
             "user"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -678,6 +698,7 @@
         "result.reason_code",
         "result.success"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [
         "OK"
       ],
@@ -698,7 +719,8 @@
             "result.message_id",
             "result.reason_code",
             "result.success"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -731,6 +753,7 @@
         "raw[].items",
         "raw[].items[]"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -752,7 +775,8 @@
             "raw[].counts.total",
             "raw[].items",
             "raw[].items[]"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -795,6 +819,7 @@
         "result.success",
         "result.type"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [
         "DRY_RUN"
       ],
@@ -824,7 +849,8 @@
             "result.status",
             "result.success",
             "result.type"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -856,6 +882,7 @@
         "res_id",
         "res_model"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -873,7 +900,8 @@
             "name",
             "res_id",
             "res_model"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -903,6 +931,7 @@
         "name",
         "res_id"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -920,7 +949,8 @@
             "model",
             "name",
             "res_id"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -941,6 +971,7 @@
         "view_type"
       ],
       "response_data_schema_hint": [],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -951,7 +982,8 @@
             "model",
             "view_type"
           ],
-          "response_data_keys": []
+          "response_data_keys": [],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -970,6 +1002,7 @@
         "model"
       ],
       "response_data_schema_hint": [],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -978,7 +1011,8 @@
           "request_keys": [
             "model"
           ],
-          "response_data_keys": []
+          "response_data_keys": [],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -1398,6 +1432,7 @@
         "view_id",
         "view_type"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -1806,7 +1841,8 @@
             "permissions.write",
             "view_id",
             "view_type"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -1829,6 +1865,10 @@
         "password"
       ],
       "response_data_schema_hint": [],
+      "error_schema_hint": [
+        "code",
+        "message"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -1838,7 +1878,11 @@
             "login",
             "password"
           ],
-          "response_data_keys": []
+          "response_data_keys": [],
+          "response_error_keys": [
+            "code",
+            "message"
+          ]
         }
       ],
       "inferred_example": null
@@ -3702,6 +3746,7 @@
         "model",
         "schema_version"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -5555,7 +5600,8 @@
             "fields.write_uid.type",
             "model",
             "schema_version"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -5586,6 +5632,7 @@
         "success",
         "suggested_action"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [
         "NOT_FOUND"
       ],
@@ -5608,7 +5655,8 @@
             "source",
             "success",
             "suggested_action"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -5670,6 +5718,7 @@
         "success",
         "trace_id"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [
         "NOT_FOUND",
         "PARTIAL_FAILED"
@@ -5722,7 +5771,8 @@
             "source",
             "success",
             "trace_id"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -5789,6 +5839,7 @@
         "summary[].label",
         "summary[].scene_key"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [
         "NO_WORK_ITEMS",
         "all"
@@ -5844,7 +5895,8 @@
             "summary[].key",
             "summary[].label",
             "summary[].scene_key"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -5878,6 +5930,7 @@
         "details.required_flag",
         "reason"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -5898,7 +5951,8 @@
             "details.capability_key",
             "details.required_flag",
             "reason"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -5919,6 +5973,11 @@
         "sample_param"
       ],
       "response_data_schema_hint": [],
+      "error_schema_hint": [
+        "code",
+        "message",
+        "type"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -5929,7 +5988,12 @@
             "number_param",
             "sample_param"
           ],
-          "response_data_keys": []
+          "response_data_keys": [],
+          "response_error_keys": [
+            "code",
+            "message",
+            "type"
+          ]
         }
       ],
       "inferred_example": null
@@ -5953,6 +6017,7 @@
         "from_channel",
         "to_channel"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -5966,7 +6031,8 @@
             "action",
             "from_channel",
             "to_channel"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -5985,6 +6051,11 @@
         "reason"
       ],
       "response_data_schema_hint": [],
+      "error_schema_hint": [
+        "code",
+        "message",
+        "type"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -5993,7 +6064,12 @@
           "request_keys": [
             "reason"
           ],
-          "response_data_keys": []
+          "response_data_keys": [],
+          "response_error_keys": [
+            "code",
+            "message",
+            "type"
+          ]
         }
       ],
       "inferred_example": null
@@ -6016,6 +6092,7 @@
         "from_channel",
         "to_channel"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -6028,7 +6105,8 @@
             "action",
             "from_channel",
             "to_channel"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -6054,6 +6132,7 @@
         "from_channel",
         "to_channel"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -6068,7 +6147,8 @@
             "company_id",
             "from_channel",
             "to_channel"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -6126,6 +6206,7 @@
         "summary.critical_resolve_errors_count",
         "summary.non_critical_debt_count"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -6169,7 +6250,8 @@
             "summary.critical_drift_warn_count",
             "summary.critical_resolve_errors_count",
             "summary.non_critical_debt_count"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -6238,6 +6320,7 @@
         "summary.conflicts_count",
         "summary.scene_count"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -6295,7 +6378,8 @@
             "summary.additions_count",
             "summary.conflicts_count",
             "summary.scene_count"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -6423,6 +6507,7 @@
         "scene_channel",
         "scene_count"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [
         "OK"
       ],
@@ -6542,7 +6627,8 @@
             "package_version",
             "scene_channel",
             "scene_count"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -6617,6 +6703,7 @@
         "summary.renamed_count",
         "summary.skipped_count"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -6680,7 +6767,8 @@
             "summary.imported_count",
             "summary.renamed_count",
             "summary.skipped_count"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -6701,6 +6789,7 @@
         "items",
         "items[]"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -6711,7 +6800,8 @@
             "count",
             "items",
             "items[]"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -6731,6 +6821,7 @@
         "packages",
         "packages[]"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -6740,7 +6831,8 @@
           "response_data_keys": [
             "packages",
             "packages[]"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -6760,6 +6852,10 @@
         "secret"
       ],
       "response_data_schema_hint": [],
+      "error_schema_hint": [
+        "code",
+        "message"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -6769,7 +6865,11 @@
             "login",
             "secret"
           ],
-          "response_data_keys": []
+          "response_data_keys": [],
+          "response_error_keys": [
+            "code",
+            "message"
+          ]
         }
       ],
       "inferred_example": null
@@ -7133,6 +7233,7 @@
         "user.name",
         "user.tz"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [
         "OK"
       ],
@@ -7477,7 +7578,8 @@
             "user.lang",
             "user.name",
             "user.tz"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -7499,6 +7601,7 @@
         "raw[].module",
         "raw[].version"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -7510,7 +7613,8 @@
             "raw[]",
             "raw[].module",
             "raw[].version"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -7582,6 +7686,7 @@
         "nav[].meta.scene",
         "nav[].meta.sequence"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -7643,7 +7748,8 @@
             "nav[].meta.model",
             "nav[].meta.scene",
             "nav[].meta.sequence"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -7662,6 +7768,11 @@
         "op"
       ],
       "response_data_schema_hint": [],
+      "error_schema_hint": [
+        "code",
+        "message",
+        "type"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -7670,7 +7781,12 @@
           "request_keys": [
             "op"
           ],
-          "response_data_keys": []
+          "response_data_keys": [],
+          "response_error_keys": [
+            "code",
+            "message",
+            "type"
+          ]
         }
       ],
       "inferred_example": null
@@ -7691,6 +7807,11 @@
         "view_type"
       ],
       "response_data_schema_hint": [],
+      "error_schema_hint": [
+        "code",
+        "message",
+        "type"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -7701,7 +7822,12 @@
             "model_name",
             "view_type"
           ],
-          "response_data_keys": []
+          "response_data_keys": [],
+          "response_error_keys": [
+            "code",
+            "message",
+            "type"
+          ]
         }
       ],
       "inferred_example": null
@@ -7726,6 +7852,7 @@
         "content",
         "filename"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -7740,7 +7867,8 @@
           "response_data_keys": [
             "content",
             "filename"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -7791,6 +7919,7 @@
         "user_top",
         "user_top[]"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -7831,7 +7960,8 @@
             "totals.scene_open_total",
             "user_top",
             "user_top[]"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
@@ -7856,6 +7986,7 @@
         "tracked",
         "tracked[]"
       ],
+      "error_schema_hint": [],
       "observed_reason_codes": [],
       "examples": [
         {
@@ -7869,7 +8000,8 @@
             "event_type",
             "tracked",
             "tracked[]"
-          ]
+          ],
+          "response_error_keys": []
         }
       ],
       "inferred_example": null
