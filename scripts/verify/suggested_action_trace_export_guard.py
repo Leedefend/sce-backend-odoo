@@ -19,7 +19,7 @@ REQUIRED_SNIPPETS = [
     "success_count:",
     "failure_count:",
     "top_k:",
-    "items:",
+    "items,",
 ]
 
 
