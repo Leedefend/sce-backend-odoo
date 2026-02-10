@@ -6,8 +6,13 @@ export type SuggestedActionKind =
   | 'relogin'
   | 'check_permission'
   | 'open_home'
+  | 'open_my_work_todo'
+  | 'open_my_work_done'
+  | 'open_my_work_failed'
   | 'open_my_work'
   | 'open_usage_analytics'
+  | 'open_locked'
+  | 'open_preview'
   | 'open_scene_health'
   | 'open_scene_packages'
   | 'open_projects_list'
@@ -24,6 +29,7 @@ export type SuggestedActionKind =
   | 'copy_reason'
   | 'copy_message'
   | 'copy_error_line'
+  | 'copy_action'
   | 'copy_full_error'
   | '';
 
@@ -69,26 +75,31 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (query) return { kind: 'open_home', raw, query };
     if (hash) return { kind: 'open_home', raw, hash };
   }
-  if (raw === 'open_my_work' || raw === 'open_todo') return { kind: 'open_my_work', raw };
+  if (raw === 'open_my_work') return { kind: 'open_my_work', raw };
+  if (raw === 'open_todo') return { kind: 'open_my_work_todo', raw };
+  if (raw === 'open_done') return { kind: 'open_my_work_done', raw };
+  if (raw === 'open_failed') return { kind: 'open_my_work_failed', raw };
   if (raw.startsWith('open_my_work?')) {
-    const query = raw.slice('open_my_work?'.length).trim();
+    const query = rawInput.slice('open_my_work?'.length).trim();
     if (query) return { kind: 'open_my_work', raw, query };
   }
   if (raw === 'open_usage_analytics' || raw === 'open_capability_visibility') {
     return { kind: 'open_usage_analytics', raw };
   }
+  if (raw === 'open_locked') return { kind: 'open_locked', raw };
+  if (raw === 'open_preview') return { kind: 'open_preview', raw };
   if (raw.startsWith('open_usage_analytics?')) {
-    const query = raw.slice('open_usage_analytics?'.length).trim();
+    const query = rawInput.slice('open_usage_analytics?'.length).trim();
     if (query) return { kind: 'open_usage_analytics', raw, query };
   }
   if (raw === 'open_scene_health') return { kind: 'open_scene_health', raw };
   if (raw.startsWith('open_scene_health?')) {
-    const query = raw.slice('open_scene_health?'.length).trim();
+    const query = rawInput.slice('open_scene_health?'.length).trim();
     if (query) return { kind: 'open_scene_health', raw, query };
   }
   if (raw === 'open_scene_packages') return { kind: 'open_scene_packages', raw };
   if (raw.startsWith('open_scene_packages?')) {
-    const query = raw.slice('open_scene_packages?'.length).trim();
+    const query = rawInput.slice('open_scene_packages?'.length).trim();
     if (query) return { kind: 'open_scene_packages', raw, query };
   }
   if (raw === 'open_projects_list') return { kind: 'open_projects_list', raw };
@@ -125,20 +136,24 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'copy_reason' || raw === 'copy_reason_code') return { kind: 'copy_reason', raw };
   if (raw === 'copy_message' || raw === 'copy_error_message') return { kind: 'copy_message', raw };
   if (raw === 'copy_error_line' || raw === 'copy_compact_error') return { kind: 'copy_error_line', raw };
+  if (raw === 'copy_action' || raw === 'copy_suggested_action') return { kind: 'copy_action', raw };
   if (raw === 'copy_full_error' || raw === 'copy_error_bundle') return { kind: 'copy_full_error', raw };
   if (raw === 'open_record') return { kind: 'open_record', raw };
   const recordMatch = rawInput.match(/^open_record:([^:]+):([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
-  if (recordMatch) {
-    const model = String(recordMatch[1] || '').trim();
-    const recordId = Number(recordMatch[2]);
-    const query = String(recordMatch[3] || '').trim();
-    const hash = String(recordMatch[4] || '').trim();
+  const recordAliasMatch = rawInput.match(/^go_record:([^:]+):([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
+  const parsedRecordMatch = recordMatch || recordAliasMatch;
+  if (parsedRecordMatch) {
+    const model = String(parsedRecordMatch[1] || '').trim();
+    const recordId = Number(parsedRecordMatch[2]);
+    const query = String(parsedRecordMatch[3] || '').trim();
+    const hash = String(parsedRecordMatch[4] || '').trim();
     if (model && Number.isFinite(recordId) && recordId > 0) {
       return { kind: 'open_record', raw, model, recordId, query, hash };
     }
   }
-  if (raw.startsWith('open_scene:')) {
-    const payload = rawInput.slice('open_scene:'.length).trim();
+  if (raw.startsWith('open_scene:') || raw.startsWith('goto_scene:')) {
+    const prefix = raw.startsWith('goto_scene:') ? 'goto_scene:' : 'open_scene:';
+    const payload = rawInput.slice(prefix.length).trim();
     const [payloadWithQuery, hashRaw] = payload.split('#');
     const [sceneKey, queryRaw] = String(payloadWithQuery || '').split('?');
     const hash = String(hashRaw || '').trim();
@@ -192,8 +207,13 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'relogin') return 'Go to login';
   if (parsed.kind === 'check_permission') return 'View permissions';
   if (parsed.kind === 'open_home') return 'Go home';
+  if (parsed.kind === 'open_my_work_todo') return 'Open todo items';
+  if (parsed.kind === 'open_my_work_done') return 'Open done items';
+  if (parsed.kind === 'open_my_work_failed') return 'Open failed items';
   if (parsed.kind === 'open_my_work') return 'Open my work';
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics';
+  if (parsed.kind === 'open_locked') return 'Open locked capabilities';
+  if (parsed.kind === 'open_preview') return 'Open preview capabilities';
   if (parsed.kind === 'open_scene_health') return 'Open scene health';
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages';
   if (parsed.kind === 'open_projects_list') return 'Open projects list';
@@ -210,6 +230,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_reason') return 'Copy reason';
   if (parsed.kind === 'copy_message') return 'Copy message';
   if (parsed.kind === 'copy_error_line') return 'Copy error line';
+  if (parsed.kind === 'copy_action') return 'Copy action';
   if (parsed.kind === 'copy_full_error') return 'Copy full error';
   return '';
 }
@@ -222,8 +243,13 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'relogin') return 'Login again and retry.';
   if (parsed.kind === 'check_permission') return 'Check role permissions, then retry.';
   if (parsed.kind === 'open_home') return 'Go back to home and continue.';
+  if (parsed.kind === 'open_my_work_todo') return 'Open My Work todo section directly.';
+  if (parsed.kind === 'open_my_work_done') return 'Open My Work done section directly.';
+  if (parsed.kind === 'open_my_work_failed') return 'Open My Work failed section directly.';
   if (parsed.kind === 'open_my_work') return 'Open My Work and continue processing pending items.';
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics to inspect capability visibility.';
+  if (parsed.kind === 'open_locked') return 'Open usage analytics filtered to locked capabilities.';
+  if (parsed.kind === 'open_preview') return 'Open usage analytics filtered to preview capabilities.';
   if (parsed.kind === 'open_scene_health') return 'Open scene health to inspect diagnostics.';
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages for governance actions.';
   if (parsed.kind === 'open_projects_list') return 'Open projects list scene.';
@@ -240,6 +266,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_reason') return 'Copy reason code for troubleshooting.';
   if (parsed.kind === 'copy_message') return 'Copy error message for troubleshooting.';
   if (parsed.kind === 'copy_error_line') return 'Copy a compact error line for quick sharing.';
+  if (parsed.kind === 'copy_action') return 'Copy raw suggested action for troubleshooting.';
   if (parsed.kind === 'copy_full_error') return 'Copy full error bundle for troubleshooting.';
   return '';
 }
@@ -286,8 +313,13 @@ export function canRunSuggestedAction(
     parsed.kind === 'check_permission' ||
     parsed.kind === 'relogin' ||
     parsed.kind === 'open_home' ||
+    parsed.kind === 'open_my_work_todo' ||
+    parsed.kind === 'open_my_work_done' ||
+    parsed.kind === 'open_my_work_failed' ||
     parsed.kind === 'open_my_work' ||
     parsed.kind === 'open_usage_analytics' ||
+    parsed.kind === 'open_locked' ||
+    parsed.kind === 'open_preview' ||
     parsed.kind === 'open_scene_health' ||
     parsed.kind === 'open_scene_packages' ||
     parsed.kind === 'open_projects_list' ||
@@ -306,6 +338,7 @@ export function canRunSuggestedAction(
         String(options.message || '').trim(),
     );
   }
+  if (parsed.kind === 'copy_action') return Boolean(String(parsed.raw || '').trim());
   if (parsed.kind === 'copy_full_error') {
     return Boolean(
       String(options.traceId || '').trim() ||
@@ -348,6 +381,7 @@ function appendQuery(path: string, query?: string) {
   if (!q) return path;
   const cleaned = q.replace(/^\?+/, '');
   if (!cleaned) return path;
+  if (path.includes('?')) return `${path}&${cleaned}`;
   return `${path}?${cleaned}`;
 }
 
@@ -407,8 +441,23 @@ export function executeSuggestedAction(
   if (parsed.kind === 'open_my_work') {
     return finish(safeNavigate(appendQuery('/my-work', parsed.query)));
   }
+  if (parsed.kind === 'open_my_work_todo') {
+    return finish(safeNavigate('/my-work?section=todo'));
+  }
+  if (parsed.kind === 'open_my_work_done') {
+    return finish(safeNavigate('/my-work?section=done'));
+  }
+  if (parsed.kind === 'open_my_work_failed') {
+    return finish(safeNavigate('/my-work?section=failed'));
+  }
   if (parsed.kind === 'open_usage_analytics') {
     return finish(safeNavigate(appendQuery('/admin/usage-analytics', parsed.query)));
+  }
+  if (parsed.kind === 'open_locked') {
+    return finish(safeNavigate('/admin/usage-analytics?state=locked'));
+  }
+  if (parsed.kind === 'open_preview') {
+    return finish(safeNavigate('/admin/usage-analytics?state=preview'));
   }
   if (parsed.kind === 'open_scene_health') {
     return finish(safeNavigate(appendQuery('/admin/scene-health', parsed.query)));
@@ -470,6 +519,10 @@ export function executeSuggestedAction(
       String(options.traceId || '').trim() ? `trace=${String(options.traceId || '').trim()}` : '',
     ].filter(Boolean);
     void copyText(pieces.join(' | '));
+    return finish(true);
+  }
+  if (parsed.kind === 'copy_action') {
+    void copyText(parsed.raw || '');
     return finish(true);
   }
   if (parsed.kind === 'copy_full_error') {
