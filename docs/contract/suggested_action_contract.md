@@ -35,14 +35,36 @@ Contract guard:
 make verify.frontend.suggested_action.contract_guard
 ```
 
+Parser guard:
+
+```bash
+make verify.frontend.suggested_action.parser_guard
+```
+
+Runtime guard:
+
+```bash
+make verify.frontend.suggested_action.runtime_guard
+```
+
 Catalog export:
 
 ```bash
 make verify.frontend.suggested_action.catalog
 ```
 
+Catalog artifact:
+
+- `artifacts/codex/suggested_action_catalog.json`
+
 Frontend type safety:
 
 ```bash
 make verify.frontend.typecheck.strict
+```
+
+One-command gate:
+
+```bash
+make verify.frontend.suggested_action.all
 ```
