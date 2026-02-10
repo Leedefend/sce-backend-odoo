@@ -378,6 +378,7 @@ function appendQuery(path: string, query?: string) {
   if (!q) return path;
   const cleaned = q.replace(/^\?+/, '');
   if (!cleaned) return path;
+  if (path.includes('?')) return `${path}&${cleaned}`;
   return `${path}?${cleaned}`;
 }
 
