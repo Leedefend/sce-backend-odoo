@@ -25,6 +25,11 @@
         "label": "默认场景"
       },
       "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
         "required_capabilities_count": 0,
         "has_access_clause": false
       },
@@ -64,6 +69,11 @@
         "label": "项目立项"
       },
       "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
         "required_capabilities_count": 0,
         "has_access_clause": false
       },
@@ -103,6 +113,11 @@
         "label": "项目台账（试点）"
       },
       "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
         "required_capabilities_count": 0,
         "has_access_clause": false
       },
@@ -143,6 +158,11 @@
         "label": "项目列表"
       },
       "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
         "required_capabilities_count": 0,
         "has_access_clause": false
       },
@@ -183,6 +203,11 @@
         "label": "Scene Smoke Default"
       },
       "access": {
+        "visible": true,
+        "allowed": true,
+        "reason_code": "OK",
+        "suggested_action": "",
+        "required_capabilities": [],
         "required_capabilities_count": 0,
         "has_access_clause": false
       },

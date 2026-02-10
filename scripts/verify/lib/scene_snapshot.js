@@ -15,6 +15,33 @@ function normalizeLabels(labels) {
   return out;
 }
 
+function toStringList(items) {
+  if (!Array.isArray(items)) return [];
+  return sortStrings(items.map((item) => String(item || '').trim()).filter(Boolean));
+}
+
+function toBool(value, defaultValue) {
+  if (value === undefined || value === null) return defaultValue;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const text = value.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'y', 'on'].includes(text)) return true;
+    if (['0', 'false', 'no', 'n', 'off'].includes(text)) return false;
+    return defaultValue;
+  }
+  return !!value;
+}
+
+function collectTileRequiredCapabilities(tiles) {
+  if (!Array.isArray(tiles)) return [];
+  const out = [];
+  tiles.forEach((tile) => {
+    if (!tile || typeof tile !== 'object') return;
+    out.push(...toStringList(tile.required_capabilities));
+  });
+  return sortStrings([...new Set(out)]);
+}
+
 function normalizeTarget(target) {
   if (!target || typeof target !== 'object') return target;
   const out = {};
@@ -22,6 +49,26 @@ function normalizeTarget(target) {
     if (target[key] !== undefined) out[key] = target[key];
   });
   return out;
+}
+
+function normalizeAccess(access, scene) {
+  const source = access && typeof access === 'object' ? access : {};
+  const sceneCaps = toStringList(scene.required_capabilities);
+  const accessCaps = toStringList(source.required_capabilities);
+  const tileCaps = collectTileRequiredCapabilities(scene.tiles);
+  const requiredCaps = sortStrings([...new Set([...sceneCaps, ...accessCaps, ...tileCaps])]);
+  const visible = toBool(source.visible, true);
+  const allowed = toBool(source.allowed, visible);
+  const reasonCode = String(source.reason_code || (allowed ? 'OK' : 'PERMISSION_DENIED'));
+  return {
+    visible,
+    allowed,
+    reason_code: reasonCode,
+    suggested_action: String(source.suggested_action || ''),
+    required_capabilities: requiredCaps,
+    required_capabilities_count: requiredCaps.length,
+    has_access_clause: requiredCaps.length > 0,
+  };
 }
 
 function normalizeListProfile(profile) {
@@ -67,6 +114,7 @@ function canonicalizeScene(scene) {
     code: scene.code || scene.key || '',
     name: scene.name || '',
     layout: scene.layout || {},
+    access: normalizeAccess(scene.access || {}, scene),
     target: normalizeTarget(scene.target || {}),
     list_profile: normalizeListProfile(scene.list_profile || {}),
     default_sort: scene.default_sort || '',
