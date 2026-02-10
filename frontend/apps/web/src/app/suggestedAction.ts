@@ -60,6 +60,15 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'relogin' || raw === 'login_again') return { kind: 'relogin', raw };
   if (raw === 'check_permission' || raw === 'request_permission') return { kind: 'check_permission', raw };
   if (raw === 'open_home' || raw === 'go_home') return { kind: 'open_home', raw };
+  if (raw.startsWith('open_home?')) {
+    const payload = rawInput.slice('open_home?'.length).trim();
+    const [queryRaw, hashRaw] = payload.split('#');
+    const query = String(queryRaw || '').trim();
+    const hash = String(hashRaw || '').trim();
+    if (query && hash) return { kind: 'open_home', raw, query, hash };
+    if (query) return { kind: 'open_home', raw, query };
+    if (hash) return { kind: 'open_home', raw, hash };
+  }
   if (raw === 'open_my_work' || raw === 'open_todo') return { kind: 'open_my_work', raw };
   if (raw.startsWith('open_my_work?')) {
     const query = raw.slice('open_my_work?'.length).trim();
@@ -103,6 +112,15 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (Number.isFinite(projectId) && projectId > 0) return { kind: 'open_project', raw, projectId };
   }
   if (raw === 'open_dashboard') return { kind: 'open_dashboard', raw };
+  if (raw.startsWith('open_dashboard?')) {
+    const payload = rawInput.slice('open_dashboard?'.length).trim();
+    const [queryRaw, hashRaw] = payload.split('#');
+    const query = String(queryRaw || '').trim();
+    const hash = String(hashRaw || '').trim();
+    if (query && hash) return { kind: 'open_dashboard', raw, query, hash };
+    if (query) return { kind: 'open_dashboard', raw, query };
+    if (hash) return { kind: 'open_dashboard', raw, hash };
+  }
   if (raw === 'copy_trace' || raw === 'copy_trace_id') return { kind: 'copy_trace', raw };
   if (raw === 'copy_reason' || raw === 'copy_reason_code') return { kind: 'copy_reason', raw };
   if (raw === 'copy_message' || raw === 'copy_error_message') return { kind: 'copy_message', raw };
@@ -374,10 +392,10 @@ export function executeSuggestedAction(
     return finish(safeNavigate('/admin/usage-analytics'));
   }
   if (parsed.kind === 'open_home') {
-    return finish(safeNavigate('/'));
+    return finish(safeNavigate(appendHash(appendQuery('/', parsed.query), parsed.hash)));
   }
   if (parsed.kind === 'open_dashboard') {
-    return finish(safeNavigate('/'));
+    return finish(safeNavigate(appendHash(appendQuery('/', parsed.query), parsed.hash)));
   }
   if (parsed.kind === 'open_my_work') {
     return finish(safeNavigate(appendQuery('/my-work', parsed.query)));
