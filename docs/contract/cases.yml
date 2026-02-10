@@ -262,7 +262,7 @@
     "intent": "app.open",
     "intent_params": {
       "app": "project_management",
-      "feature": "project_overview"
+      "feature": "config_stage"
     }
   },
   {
@@ -273,5 +273,43 @@
     "intent_params": {
       "model": "project.project"
     }
+  },
+  {
+    "case": "permission_check_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "permission.check",
+    "intent_params": {
+      "capability_key": "project.view_all",
+      "required_flag": "project_enabled",
+      "debug": true
+    }
+  },
+  {
+    "case": "load_contract_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "load_contract",
+    "intent_params": {
+      "model": "project.project",
+      "view_type": "form",
+      "include": "all"
+    }
+  },
+  {
+    "case": "meta_describe_model_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "meta.describe_model",
+    "intent_params": {
+      "model": "project.project"
+    }
+  },
+  {
+    "case": "auth_logout_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "auth.logout",
+    "intent_params": {}
   }
 ]
