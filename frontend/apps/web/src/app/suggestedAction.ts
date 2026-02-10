@@ -86,10 +86,13 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     const query = rawInput.slice('open_projects_board?'.length).trim();
     if (query) return { kind: 'open_projects_board', raw, query };
   }
-  const projectMatch = rawInput.match(/^open_project:([0-9]+)(?:\?(.+))?$/i);
+  const projectMatch = rawInput.match(/^open_project:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
   if (projectMatch) {
     const projectId = Number(projectMatch[1]);
     const query = String(projectMatch[2] || '').trim();
+    const hash = String(projectMatch[3] || '').trim();
+    if (Number.isFinite(projectId) && projectId > 0 && query && hash) return { kind: 'open_project', raw, projectId, query, hash };
+    if (Number.isFinite(projectId) && projectId > 0 && hash) return { kind: 'open_project', raw, projectId, hash };
     if (Number.isFinite(projectId) && projectId > 0 && query) return { kind: 'open_project', raw, projectId, query };
     if (Number.isFinite(projectId) && projectId > 0) return { kind: 'open_project', raw, projectId };
   }
@@ -383,7 +386,7 @@ export function executeSuggestedAction(
     return finish(safeNavigate(appendQuery('/projects', parsed.query)));
   }
   if (parsed.kind === 'open_project' && parsed.projectId) {
-    return finish(safeNavigate(appendQuery(`/projects/${parsed.projectId}`, parsed.query)));
+    return finish(safeNavigate(appendHash(appendQuery(`/projects/${parsed.projectId}`, parsed.query), parsed.hash)));
   }
   if (parsed.kind === 'open_scene' && parsed.sceneKey) {
     return finish(
