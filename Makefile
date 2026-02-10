@@ -1005,7 +1005,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.suggested_action.contract_guard
+.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog
 
 fe.install:
 	@pnpm -C frontend install
@@ -1024,6 +1024,9 @@ verify.frontend.typecheck.strict: guard.prod.forbid
 
 verify.frontend.suggested_action.contract_guard: guard.prod.forbid
 	@python3 scripts/verify/suggested_action_contract_guard.py
+
+verify.frontend.suggested_action.catalog: guard.prod.forbid
+	@python3 scripts/verify/suggested_action_catalog_export.py
 
 main.sync: guard.prod.forbid
 	@echo "[main.sync] checkout main + fast-forward pull"
