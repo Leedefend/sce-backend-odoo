@@ -124,6 +124,7 @@ export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter =
       kind: String(filter.kind || '').trim() || undefined,
       success: typeof filter.success === 'boolean' ? filter.success : undefined,
       limit: Math.max(1, Number(filter.limit || 50)),
+      since_ts: Number(filter.since_ts || 0) > 0 ? Number(filter.since_ts) : undefined,
     },
     summary: {
       total: items.length,
