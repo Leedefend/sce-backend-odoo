@@ -50,7 +50,7 @@ export function buildStatusError(err: unknown, fallbackMessage: string, kind?: s
       message: err.message,
       code,
       traceId: err.traceId,
-      hint: err.hint || getHint(code, err.kind),
+      hint: err.hint || getHint(code, err.kind, err.errorCategory, err.retryable),
       kind: kind || err.kind,
       errorCategory: err.errorCategory,
       retryable: err.retryable,
@@ -71,8 +71,23 @@ function normalizeCode(code?: number | string) {
   return undefined;
 }
 
-function getHint(code?: number | string, kind?: string): string {
+function normalizeCategory(category?: string): string {
+  return String(category || '')
+    .trim()
+    .toLowerCase();
+}
+
+function getHint(code?: number | string, kind?: string, errorCategory?: string, retryable?: boolean): string {
   const numericCode = normalizeCode(code);
+  const category = normalizeCategory(errorCategory);
+  if (category === 'auth') return 'Login session may be invalid or expired. Please login again.';
+  if (category === 'permission') return 'Access is restricted. Verify your role/capabilities and retry.';
+  if (category === 'validation') return 'Submitted parameters are invalid. Fix input and retry.';
+  if (category === 'conflict') return 'Data changed on server. Reload latest data and retry.';
+  if (category === 'business') return 'Business rules blocked this action. Resolve the blocker and retry.';
+  if (category === 'system') return 'Backend service exception occurred. Retry later or contact support.';
+  if (retryable === true) return 'This failure is retryable. Try again now or after a short delay.';
+  if (retryable === false) return 'This failure is non-retryable. Resolve data/permission issues first.';
   if (kind === 'network' || numericCode === 0) return 'Check network connectivity and API availability.';
   if (numericCode === 401) return 'Session expired. Please login again.';
   if (numericCode === 403) return 'Check access rights for current role.';
@@ -84,7 +99,50 @@ function getHint(code?: number | string, kind?: string): string {
 
 export function resolveErrorCopy(err: StatusError | null, fallbackMessage = 'Request failed'): StatusCopy {
   const code = normalizeCode(err?.code);
-  const hint = err?.hint || getHint(err?.code, err?.kind);
+  const category = normalizeCategory(err?.errorCategory);
+  const hint = err?.hint || getHint(err?.code, err?.kind, err?.errorCategory, err?.retryable);
+  if (category === 'auth') {
+    return {
+      title: 'Authentication required',
+      message: 'Login state is invalid for this action.',
+      hint: hint || undefined,
+    };
+  }
+  if (category === 'permission') {
+    return {
+      title: 'Permission denied',
+      message: 'Current role cannot perform this operation.',
+      hint: hint || undefined,
+    };
+  }
+  if (category === 'validation') {
+    return {
+      title: 'Invalid request',
+      message: 'Request parameters failed backend validation.',
+      hint: hint || undefined,
+    };
+  }
+  if (category === 'conflict') {
+    return {
+      title: 'Write conflict',
+      message: 'Backend rejected stale data. Reload and retry.',
+      hint: hint || undefined,
+    };
+  }
+  if (category === 'business') {
+    return {
+      title: 'Business rule blocked',
+      message: 'Operation violates current business constraints.',
+      hint: hint || undefined,
+    };
+  }
+  if (category === 'system') {
+    return {
+      title: 'System exception',
+      message: 'Backend failed to process this request.',
+      hint: hint || undefined,
+    };
+  }
   if (err?.kind === 'network' || code === 0) {
     return {
       title: 'Network error',
