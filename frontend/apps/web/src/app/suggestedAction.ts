@@ -86,6 +86,11 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     const section = String(myWorkSectionMatch[1] || '').trim();
     if (section) return { kind: 'open_my_work_section', raw, section };
   }
+  const myWorkSectionAlias = rawInput.match(/^open_my_work:([a-z0-9_]+)$/i);
+  if (myWorkSectionAlias) {
+    const section = String(myWorkSectionAlias[1] || '').trim();
+    if (section) return { kind: 'open_my_work_section', raw, section };
+  }
   if (raw.startsWith('open_my_work?')) {
     const query = rawInput.slice('open_my_work?'.length).trim();
     if (query) return { kind: 'open_my_work', raw, query };
