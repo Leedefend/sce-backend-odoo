@@ -2,6 +2,10 @@
   "action": null,
   "case": "login_intent_admin",
   "contract_version": "v1",
+  "error": {
+    "code": 401,
+    "message": "用户名或密码错误"
+  },
   "execute_error": null,
   "execute_result": null,
   "fallback": false,

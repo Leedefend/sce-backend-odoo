@@ -592,6 +592,7 @@ def export_snapshot():
             "action": action_data,
             "ui_contract": ui_contract,
             "ui_contract_raw": data,
+            "error": res.get("error") if isinstance(res, dict) else None,
             "record": _strip_runtime_record_fields(record_data),
             "record_error": record_error,
             "meta_fields": meta_fields,

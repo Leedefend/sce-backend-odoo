@@ -2,6 +2,11 @@
   "action": null,
   "case": "scene_governance_pin_stable_intent_admin",
   "contract_version": "v1",
+  "error": {
+    "code": 500,
+    "message": "[Errno 2] No such file or directory: '/mnt/extra-addons/docs/contract/exports/scenes/stable/LATEST.json'",
+    "type": "FileNotFoundError"
+  },
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
