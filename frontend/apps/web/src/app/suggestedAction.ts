@@ -71,24 +71,24 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw === 'open_my_work' || raw === 'open_todo') return { kind: 'open_my_work', raw };
   if (raw.startsWith('open_my_work?')) {
-    const query = raw.slice('open_my_work?'.length).trim();
+    const query = rawInput.slice('open_my_work?'.length).trim();
     if (query) return { kind: 'open_my_work', raw, query };
   }
   if (raw === 'open_usage_analytics' || raw === 'open_capability_visibility') {
     return { kind: 'open_usage_analytics', raw };
   }
   if (raw.startsWith('open_usage_analytics?')) {
-    const query = raw.slice('open_usage_analytics?'.length).trim();
+    const query = rawInput.slice('open_usage_analytics?'.length).trim();
     if (query) return { kind: 'open_usage_analytics', raw, query };
   }
   if (raw === 'open_scene_health') return { kind: 'open_scene_health', raw };
   if (raw.startsWith('open_scene_health?')) {
-    const query = raw.slice('open_scene_health?'.length).trim();
+    const query = rawInput.slice('open_scene_health?'.length).trim();
     if (query) return { kind: 'open_scene_health', raw, query };
   }
   if (raw === 'open_scene_packages') return { kind: 'open_scene_packages', raw };
   if (raw.startsWith('open_scene_packages?')) {
-    const query = raw.slice('open_scene_packages?'.length).trim();
+    const query = rawInput.slice('open_scene_packages?'.length).trim();
     if (query) return { kind: 'open_scene_packages', raw, query };
   }
   if (raw === 'open_projects_list') return { kind: 'open_projects_list', raw };
