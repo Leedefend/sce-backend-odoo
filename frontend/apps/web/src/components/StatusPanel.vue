@@ -14,13 +14,14 @@
       <button v-if="suggestedActionLabel" class="trace-copy" @click="runSuggestedAction">
         {{ suggestedActionLabel }}
       </button>
+      <p v-if="actionRunFeedback" class="trace action-feedback">{{ actionRunFeedback }}</p>
     </div>
     <button v-if="onRetry" @click="onRetry">Retry</button>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import {
   canRunSuggestedAction as canRunSuggestedActionByConfig,
   executeSuggestedAction,
@@ -42,6 +43,10 @@ const props = defineProps<{
   onRetry?: () => void;
   onSuggestedAction?: (action: string) => boolean | void;
 }>();
+const emit = defineEmits<{
+  (event: 'action-executed', payload: { action: string; success: boolean }): void;
+}>();
+const actionRunFeedback = ref('');
 
 const canRunSuggestedAction = computed(() => {
   const parsed = parseSuggestedAction(props.suggestedAction);
@@ -62,13 +67,20 @@ const suggestedActionLabel = computed(() => {
 
 function runSuggestedAction() {
   const parsed = parseSuggestedAction(props.suggestedAction);
-  executeSuggestedAction(parsed, {
+  const ran = executeSuggestedAction(parsed, {
     onRetry: props.onRetry,
     onSuggestedAction: props.onSuggestedAction,
     traceId: props.traceId,
     reasonCode: props.reasonCode,
     message: props.message,
+    onExecuted: (result) => {
+      actionRunFeedback.value = result.success ? 'Suggested action executed.' : 'Suggested action could not run.';
+      emit('action-executed', { action: result.raw || result.kind, success: result.success });
+    },
   });
+  if (!ran && !actionRunFeedback.value) {
+    actionRunFeedback.value = 'Suggested action is not executable in current context.';
+  }
 }
 
 function copyTrace() {
@@ -130,5 +142,9 @@ button {
   background: transparent;
   color: #111827;
   font-size: 12px;
+}
+
+.action-feedback {
+  color: #334155;
 }
 </style>
