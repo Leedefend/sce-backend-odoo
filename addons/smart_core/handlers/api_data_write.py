@@ -177,7 +177,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
-        intent = (payload.get("intent") or "").strip().lower()
+        intent = (payload.get("intent") or self.INTENT_TYPE or "").strip().lower()
         model = self._get_model(params)
 
         if not model:

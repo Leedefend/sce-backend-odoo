@@ -257,54 +257,56 @@
         "res_model",
         "vals",
         "values",
+        "values.name",
         "write_date"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "dry_run",
+        "id",
+        "idempotency_deduplicated",
+        "idempotency_fingerprint",
+        "idempotency_key",
+        "idempotency_replay_reason_code",
+        "idempotent_replay",
+        "model",
+        "replay_supported",
+        "replay_window_expired",
+        "values",
+        "values.name",
+        "written_fields",
+        "written_fields[]"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "api_data_create_intent_pm",
+          "snapshot_file": "docs/contract/snapshots/api_data_create_intent_pm.json",
           "request_keys": [
-            "context",
             "dry_run",
-            "idempotency_key",
-            "ids",
-            "ifMatch",
-            "if_match",
             "model",
             "request_id",
-            "res_model",
-            "vals",
             "values",
-            "write_date"
+            "values.name"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "dry_run",
+            "id",
+            "idempotency_deduplicated",
+            "idempotency_fingerprint",
+            "idempotency_key",
+            "idempotency_replay_reason_code",
+            "idempotent_replay",
+            "model",
+            "replay_supported",
+            "replay_window_expired",
+            "values",
+            "values.name",
+            "written_fields",
+            "written_fields[]"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "context",
-          "dry_run",
-          "idempotency_key",
-          "ids",
-          "ifMatch",
-          "if_match",
-          "model",
-          "request_id",
-          "res_model",
-          "vals",
-          "values",
-          "write_date"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "api.data.unlink",
@@ -320,47 +322,53 @@
         "dry_run",
         "idempotency_key",
         "ids",
+        "ids[]",
         "model",
         "record_ids",
         "request_id",
         "res_model"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "dry_run",
+        "idempotency_deduplicated",
+        "idempotency_fingerprint",
+        "idempotency_key",
+        "idempotency_replay_reason_code",
+        "idempotent_replay",
+        "ids",
+        "ids[]",
+        "model",
+        "replay_supported",
+        "replay_window_expired"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "api_data_unlink_intent_pm",
+          "snapshot_file": "docs/contract/snapshots/api_data_unlink_intent_pm.json",
           "request_keys": [
             "dry_run",
-            "idempotency_key",
             "ids",
+            "ids[]",
             "model",
-            "record_ids",
-            "request_id",
-            "res_model"
+            "request_id"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "dry_run",
+            "idempotency_deduplicated",
+            "idempotency_fingerprint",
+            "idempotency_key",
+            "idempotency_replay_reason_code",
+            "idempotent_replay",
+            "ids",
+            "ids[]",
+            "model",
+            "replay_supported",
+            "replay_window_expired"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "dry_run",
-          "idempotency_key",
-          "ids",
-          "model",
-          "record_ids",
-          "request_id",
-          "res_model"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "app.catalog",
@@ -597,38 +605,39 @@
         "res_id",
         "subject"
       ],
-      "response_data_schema_hint": [],
-      "observed_reason_codes": [],
+      "response_data_schema_hint": [
+        "result",
+        "result.mentioned_partner_ids",
+        "result.mentioned_partner_ids[]",
+        "result.message",
+        "result.message_id",
+        "result.reason_code",
+        "result.success"
+      ],
+      "observed_reason_codes": [
+        "OK"
+      ],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "chatter_post_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/chatter_post_intent_admin.json",
           "request_keys": [
             "body",
             "model",
-            "record_id",
-            "res_id",
-            "subject"
+            "res_id"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "result",
+            "result.mentioned_partner_ids",
+            "result.mentioned_partner_ids[]",
+            "result.message",
+            "result.message_id",
+            "result.reason_code",
+            "result.success"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "body",
-          "model",
-          "record_id",
-          "res_id",
-          "subject"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "chatter.timeline",
@@ -6651,34 +6660,28 @@
         "event_type",
         "scene_key"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "event_type",
+        "tracked",
+        "tracked[]"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "usage_track_intent_pm",
+          "snapshot_file": "docs/contract/snapshots/usage_track_intent_pm.json",
           "request_keys": [
-            "capability_key",
             "event_type",
             "scene_key"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "event_type",
+            "tracked",
+            "tracked[]"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "capability_key",
-          "event_type",
-          "scene_key"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     }
   ]
 }
