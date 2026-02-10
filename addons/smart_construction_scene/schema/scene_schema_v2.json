@@ -15,6 +15,19 @@
         "header": {"type": "string", "required": true}
       }
     },
+    "access": {
+      "type": "object",
+      "required": false,
+      "fields": {
+        "visible": {"type": "boolean"},
+        "allowed": {"type": "boolean"},
+        "reason_code": {"type": "string"},
+        "suggested_action": {"type": "string"},
+        "required_capabilities": {"type": "array"},
+        "required_capabilities_count": {"type": "number"},
+        "has_access_clause": {"type": "boolean"}
+      }
+    },
     "target": {
       "type": "object",
       "required": false,

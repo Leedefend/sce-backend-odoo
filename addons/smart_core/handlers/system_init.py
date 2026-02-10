@@ -17,6 +17,11 @@ from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispat
 from odoo.addons.smart_core.app_config_engine.utils.misc import stable_etag, format_versions
 from odoo.addons.smart_core.core.handler_registry import HANDLER_REGISTRY
 from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
+from odoo.addons.smart_core.utils.reason_codes import (
+    REASON_OK,
+    REASON_PERMISSION_DENIED,
+    failure_meta_for_reason,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -876,6 +881,92 @@ def _normalize_scene_layouts(scenes, warnings):
     return scenes
 
 
+def _to_string_list(value) -> List[str]:
+    if not isinstance(value, list):
+        return []
+    out = []
+    for item in value:
+        text = str(item or "").strip()
+        if text:
+            out.append(text)
+    return sorted(set(out))
+
+
+def _to_bool(value, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"1", "true", "yes", "y", "on"}:
+            return True
+        if text in {"0", "false", "no", "n", "off"}:
+            return False
+        return default
+    return bool(value)
+
+
+def _normalize_scene_accesses(scenes, warnings):
+    for scene in scenes:
+        if not isinstance(scene, dict):
+            continue
+        scene_key = scene.get("code") or scene.get("key") or ""
+        raw_access = scene.get("access")
+        if raw_access is None:
+            access = {}
+        elif isinstance(raw_access, dict):
+            access = dict(raw_access)
+        else:
+            warnings.append({
+                "code": "ACCESS_INVALID",
+                "severity": "non_critical",
+                "scene_key": scene_key,
+                "message": "access should be object; fallback access defaults applied",
+                "field": "access",
+                "reason": "invalid_type",
+            })
+            access = {}
+
+        tile_caps = []
+        for tile in scene.get("tiles") or []:
+            if not isinstance(tile, dict):
+                continue
+            tile_caps.extend(_to_string_list(tile.get("required_capabilities")))
+
+        caps = sorted(set(
+            _to_string_list(scene.get("required_capabilities"))
+            + _to_string_list(access.get("required_capabilities"))
+            + tile_caps
+        ))
+
+        visible = _to_bool(access.get("visible"), True)
+        if "allowed" in access:
+            allowed = _to_bool(access.get("allowed"), visible)
+        else:
+            # access clause exists but no explicit allow/deny => keep visible default
+            allowed = visible
+        has_access_clause = bool(caps)
+        reason_code = str(access.get("reason_code") or "").strip().upper()
+        if not reason_code:
+            reason_code = REASON_OK if allowed else REASON_PERMISSION_DENIED
+        suggested_action = str(access.get("suggested_action") or "").strip()
+        if not suggested_action and reason_code != REASON_OK:
+            suggested_action = str(failure_meta_for_reason(reason_code).get("suggested_action") or "")
+
+        scene["access"] = {
+            "visible": visible,
+            "allowed": allowed,
+            "reason_code": reason_code,
+            "suggested_action": suggested_action,
+            "required_capabilities": caps,
+            "required_capabilities_count": len(caps),
+            "has_access_clause": has_access_clause,
+        }
+
+    return scenes
+
+
 
 def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
     """
@@ -1191,6 +1282,7 @@ class SystemInitHandler(BaseIntentHandler):
         t_norm_start = time.time()
         _append_inferred_scene_warnings(nav_tree, scene_keys, scene_diagnostics["normalize_warnings"])
         _normalize_scene_layouts(scenes_payload, scene_diagnostics["normalize_warnings"])
+        _normalize_scene_accesses(scenes_payload, scene_diagnostics["normalize_warnings"])
         scene_diagnostics["timings"]["normalize_ms"] = int((time.time() - t_norm_start) * 1000)
         nav_targets = _index_nav_scene_targets(nav_tree)
         t_resolve_start = time.time()
@@ -1242,6 +1334,7 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["normalize_warnings"] = []
                 t_norm2 = time.time()
                 _normalize_scene_layouts(data["scenes"], scene_diagnostics["normalize_warnings"])
+                _normalize_scene_accesses(data["scenes"], scene_diagnostics["normalize_warnings"])
                 scene_diagnostics["timings"]["normalize_after_degrade_ms"] = int((time.time() - t_norm2) * 1000)
                 t_resolve2 = time.time()
                 _normalize_scene_targets(env, data["scenes"], nav_targets, scene_diagnostics["resolve_errors"])
