@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 
@@ -38,6 +39,8 @@ ALLOWED_CASE_KEYS = {
     "user",
     "view_type",
 }
+CASE_NAME_PATTERN = re.compile(r"^[a-z0-9_]+$")
+MAX_CASE_NAME_LEN = 80
 
 
 def _as_str(value) -> str:
@@ -90,6 +93,16 @@ def main() -> int:
         if not case_name:
             invalid.append(f"#{idx}: missing case")
             continue
+        if case_name == "__inferred__":
+            invalid.append(f"{case_name}: reserved case name")
+        if len(case_name) > MAX_CASE_NAME_LEN:
+            invalid.append(
+                f"{case_name}: case name too long (max {MAX_CASE_NAME_LEN} characters)"
+            )
+        if not CASE_NAME_PATTERN.match(case_name):
+            invalid.append(
+                f"{case_name}: invalid case name format (use lowercase snake_case only)"
+            )
         if case_name in seen:
             duplicated.add(case_name)
         seen.add(case_name)
