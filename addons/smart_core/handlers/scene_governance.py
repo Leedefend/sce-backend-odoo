@@ -19,6 +19,14 @@ def _service(env, user):
 class _BaseSceneGovernanceHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_config_admin"]
 
+    def _params(self, payload):
+        params = (payload or {}).get("params") if isinstance(payload, dict) else payload
+        if isinstance(params, dict):
+            return params
+        if isinstance(payload, dict):
+            return payload
+        return {}
+
     def _require_reason(self, params: dict) -> str:
         reason = str((params or {}).get("reason") or "").strip()
         if not reason:
@@ -44,8 +52,7 @@ class SceneGovernanceSetChannelHandler(_BaseSceneGovernanceHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        params = (payload or {}).get("params") if isinstance(payload, dict) else payload
-        params = params if isinstance(params, dict) else {}
+        params = self._params(payload)
         reason = self._require_reason(params)
         channel = (params.get("channel") or "").strip().lower()
         company_id = params.get("company_id") or self.env.user.company_id.id
@@ -63,8 +70,7 @@ class SceneGovernanceRollbackHandler(_BaseSceneGovernanceHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        params = (payload or {}).get("params") if isinstance(payload, dict) else payload
-        params = params if isinstance(params, dict) else {}
+        params = self._params(payload)
         reason = self._require_reason(params)
         result = _service(self.env, self.env.user).rollback_stable(
             reason, trace_id=_trace_id_from_context(self.context)
@@ -79,8 +85,7 @@ class SceneGovernancePinStableHandler(_BaseSceneGovernanceHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        params = (payload or {}).get("params") if isinstance(payload, dict) else payload
-        params = params if isinstance(params, dict) else {}
+        params = self._params(payload)
         reason = self._require_reason(params)
         result = _service(self.env, self.env.user).pin_stable(
             reason, trace_id=_trace_id_from_context(self.context)
@@ -95,8 +100,7 @@ class SceneGovernanceExportContractHandler(_BaseSceneGovernanceHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        params = (payload or {}).get("params") if isinstance(payload, dict) else payload
-        params = params if isinstance(params, dict) else {}
+        params = self._params(payload)
         reason = self._require_reason(params)
         channel = (params.get("channel") or "stable").strip().lower()
         result = _service(self.env, self.env.user).export_contract(
