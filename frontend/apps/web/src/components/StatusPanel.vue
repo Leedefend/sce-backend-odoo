@@ -22,12 +22,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import {
-  canRunSuggestedAction as canRunSuggestedActionByConfig,
-  executeSuggestedAction,
-  parseSuggestedAction,
-  suggestedActionLabel as resolveSuggestedActionLabel,
-} from '../app/suggestedAction';
+import { useSuggestedAction } from '../composables/useSuggestedAction';
 
 const props = defineProps<{
   title: string;
@@ -55,26 +50,22 @@ watch(
   },
 );
 
-const canRunSuggestedAction = computed(() => {
-  const parsed = parseSuggestedAction(props.suggestedAction);
-  return canRunSuggestedActionByConfig(parsed, {
+const suggestedActionRuntime = useSuggestedAction(
+  () => props.suggestedAction,
+  computed(() => ({
     hasRetryHandler: typeof props.onRetry === 'function',
     hasActionHandler: typeof props.onSuggestedAction === 'function',
     traceId: props.traceId,
     reasonCode: props.reasonCode,
     message: props.message,
-  });
-});
+  })),
+);
 
-const suggestedActionLabel = computed(() => {
-  const parsed = parseSuggestedAction(props.suggestedAction);
-  if (!canRunSuggestedAction.value) return '';
-  return resolveSuggestedActionLabel(parsed);
-});
+const canRunSuggestedAction = computed(() => suggestedActionRuntime.canRun.value);
+const suggestedActionLabel = computed(() => suggestedActionRuntime.label.value);
 
 function runSuggestedAction() {
-  const parsed = parseSuggestedAction(props.suggestedAction);
-  const ran = executeSuggestedAction(parsed, {
+  const ran = suggestedActionRuntime.run({
     onRetry: props.onRetry,
     onSuggestedAction: props.onSuggestedAction,
     traceId: props.traceId,

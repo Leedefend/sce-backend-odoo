@@ -53,6 +53,12 @@ Import boundary guard:
 make verify.frontend.suggested_action.import_boundary_guard
 ```
 
+Usage guard:
+
+```bash
+make verify.frontend.suggested_action.usage_guard
+```
+
 Catalog export:
 
 ```bash

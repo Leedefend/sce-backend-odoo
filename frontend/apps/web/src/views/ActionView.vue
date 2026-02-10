@@ -84,12 +84,7 @@ import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
-import {
-  canRunSuggestedAction,
-  executeSuggestedAction,
-  parseSuggestedAction,
-  suggestedActionLabel,
-} from '../app/suggestedAction';
+import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
@@ -304,15 +299,14 @@ function applyBatchFailureArtifacts(result: {
     const hint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
     const retryTag = item.retryable === true ? 'retryable' : item.retryable === false ? 'non-retryable' : '';
     const text = [`#${item.id} ${item.reason_code}: ${item.message}`, retryTag, hint].filter(Boolean).join(' | ');
-    const parsed = parseSuggestedAction(item.suggested_action);
-    const canRun = canRunSuggestedAction(parsed, {
+    const action = describeSuggestedAction(item.suggested_action, {
       hasRetryHandler: true,
       hasActionHandler: false,
     });
     return {
       text,
-      actionRaw: canRun ? parsed.raw : '',
-      actionLabel: canRun ? suggestedActionLabel(parsed) : '',
+      actionRaw: action.canRun ? action.parsed.raw : '',
+      actionLabel: action.label,
     };
   });
   if (options?.append) {
@@ -332,8 +326,7 @@ function applyBatchFailureArtifacts(result: {
 }
 
 function handleBatchDetailAction(actionRaw: string) {
-  const parsed = parseSuggestedAction(actionRaw);
-  executeSuggestedAction(parsed, { onRetry: reload });
+  runSuggestedAction(actionRaw, { onRetry: reload });
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {

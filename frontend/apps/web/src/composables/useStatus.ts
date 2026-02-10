@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { ApiError } from '../api/client';
-import { parseSuggestedAction, suggestedActionHint } from '../app/suggestedAction';
+import { describeSuggestedAction } from './useSuggestedAction';
 
 export interface StatusError {
   message: string;
@@ -25,7 +25,7 @@ export function resolveSuggestedAction(
   reasonCode?: string,
   retryable?: boolean,
 ): string {
-  const hintByAction = suggestedActionHint(parseSuggestedAction(suggestedAction));
+  const hintByAction = describeSuggestedAction(suggestedAction).hint;
   if (hintByAction) return hintByAction;
 
   const code = String(reasonCode || '').toUpperCase();

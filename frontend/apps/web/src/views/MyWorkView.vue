@@ -221,12 +221,7 @@ import { useRouter } from 'vue-router';
 import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
-import {
-  canRunSuggestedAction,
-  executeSuggestedAction,
-  parseSuggestedAction,
-  suggestedActionLabel,
-} from '../app/suggestedAction';
+import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 
 const router = useRouter();
 
@@ -516,18 +511,15 @@ function failedItemRecord(id: number) {
 }
 
 function failedSuggestedActionLabel(item: { suggested_action?: string }) {
-  const parsed = parseSuggestedAction(item.suggested_action);
-  const canRun = canRunSuggestedAction(parsed, {
+  const action = describeSuggestedAction(item.suggested_action, {
     hasRetryHandler: true,
     hasActionHandler: true,
   });
-  if (!canRun) return '';
-  return suggestedActionLabel(parsed);
+  return action.label;
 }
 
 function runFailedSuggestedAction(item: { id: number; suggested_action?: string }) {
-  const parsed = parseSuggestedAction(item.suggested_action);
-  executeSuggestedAction(parsed, {
+  runSuggestedAction(item.suggested_action, {
     onRetry: load,
     onSuggestedAction: (actionRaw: string) => {
       if (actionRaw !== 'open_record') return false;
