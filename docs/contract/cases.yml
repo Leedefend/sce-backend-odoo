@@ -506,6 +506,72 @@
     }
   },
   {
+    "case": "login_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "login",
+    "allow_error_response": true,
+    "intent_params": {
+      "login": "admin",
+      "password": "wrong_password"
+    }
+  },
+  {
+    "case": "session_bootstrap_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "session.bootstrap",
+    "allow_error_response": true,
+    "intent_params": {
+      "secret": "invalid_secret",
+      "login": "admin"
+    }
+  },
+  {
+    "case": "scene_governance_pin_stable_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "scene.governance.pin_stable",
+    "allow_error_response": true,
+    "intent_params": {
+      "reason": "contract snapshot"
+    }
+  },
+  {
+    "case": "sample_enhanced_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "sample.enhanced",
+    "allow_error_response": true,
+    "intent_params": {
+      "sample_param": "snapshot",
+      "number_param": 1,
+      "flag_param": true
+    }
+  },
+  {
+    "case": "ui_contract_enhanced_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "ui.contract.enhanced",
+    "allow_error_response": true,
+    "intent_params": {
+      "op": "nav"
+    }
+  },
+  {
+    "case": "ui_contract_model_view_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "ui.contract.model.view",
+    "allow_error_response": true,
+    "intent_params": {
+      "model_name": "res.partner",
+      "view_type": "list",
+      "id": 1
+    }
+  },
+  {
     "case": "chatter_timeline_intent_pm",
     "user": "admin",
     "op": "intent.invoke",

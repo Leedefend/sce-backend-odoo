@@ -48,6 +48,11 @@ def parse_args():
         help="Enable stable snapshot output (strip volatile metadata and sort keys)",
     )
     parser.add_argument("--stdout", action="store_true", help="Print snapshot JSON to stdout")
+    parser.add_argument(
+        "--allow_error_response",
+        action="store_true",
+        help="Do not fail export when intent returns {'ok': false}; snapshot raw error payload instead.",
+    )
     return parser.parse_args()
 
 
@@ -415,7 +420,62 @@ def export_snapshot():
                     details = f" modules={module_names}"
                 if "register_errors" in locals() and register_errors:
                     details += f" register_errors={register_errors}"
-                raise SystemExit(f"intent handler not found: {intent_name}{details}")
+                if args.allow_error_response:
+                    res = {
+                        "ok": False,
+                        "error": {
+                            "code": 404,
+                            "message": f"intent handler not found: {intent_name}{details}",
+                            "type": "HandlerNotFound",
+                        },
+                        "data": {},
+                    }
+                else:
+                    raise SystemExit(f"intent handler not found: {intent_name}{details}")
+            if not handler_cls and args.allow_error_response:
+                data = res.get("data") if isinstance(res, dict) else {}
+                action_data = None
+                ui_contract = None
+                record_data = None
+                record_error = None
+                meta_fields = None
+                execute_result = None
+                execute_error = None
+                snapshot = {
+                    "case": args.case,
+                    "trace_id": str(uuid.uuid4()),
+                    "exported_at": datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+                    "contract_version": "v1",
+                    "model": args.model or None,
+                    "view_type": view_type if payload.get("op") == "model" else None,
+                    "op": payload.get("op"),
+                    "user": args.user,
+                    "user_fallback": user_fallback,
+                    "fallback": fallback_used,
+                    "action": action_data,
+                    "ui_contract": ui_contract,
+                    "ui_contract_raw": data,
+                    "record": _strip_runtime_record_fields(record_data),
+                    "record_error": record_error,
+                    "meta_fields": meta_fields,
+                    "execute_result": execute_result,
+                    "execute_error": execute_error,
+                    "error": res.get("error"),
+                }
+                snapshot["meta_fields"] = _normalize_meta_fields(snapshot.get("meta_fields"))
+                if stable:
+                    snapshot = _stable_normalize(_strip_volatile(snapshot))
+                    snapshot = _strip_denylist(snapshot)
+                if args.stdout:
+                    print(json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=stable, default=str))
+                else:
+                    outdir = args.outdir
+                    os.makedirs(outdir, exist_ok=True)
+                    outpath = os.path.join(outdir, f"{args.case}.json")
+                    with open(outpath, "w", encoding="utf-8") as f:
+                        json.dump(snapshot, f, ensure_ascii=False, indent=2, sort_keys=stable, default=str)
+                    print(outpath)
+                return
             intent_context = {"trace_id": args.trace_id} if args.trace_id else {}
             intent_payload = {
                 "intent": intent_name,
@@ -431,8 +491,21 @@ def export_snapshot():
             )
             # For snapshot execution, pass params directly to avoid handler shape drift
             # between payload and params conventions.
-            raw_res = handler.run(payload=params_payload, ctx=intent_context)
-            if isinstance(raw_res, dict) and raw_res.get("ok") is False:
+            try:
+                raw_res = handler.run(payload=params_payload, ctx=intent_context)
+            except Exception as exc:
+                if args.allow_error_response:
+                    raw_res = {
+                        "ok": False,
+                        "error": {
+                            "code": 500,
+                            "message": str(exc),
+                            "type": exc.__class__.__name__,
+                        },
+                    }
+                else:
+                    raise
+            if isinstance(raw_res, dict) and raw_res.get("ok") is False and not args.allow_error_response:
                 raise SystemExit(raw_res.get("error"))
             if isinstance(raw_res, dict):
                 res = raw_res
@@ -442,7 +515,7 @@ def export_snapshot():
             handler = UiContractHandler(env, request=None, payload=payload)
             try:
                 res = handler.handle(payload=payload)
-                if isinstance(res, dict) and res.get("ok") is False:
+                if isinstance(res, dict) and res.get("ok") is False and not args.allow_error_response:
                     raise SystemExit(res.get("error"))
             except Exception as exc:
                 if payload.get("op") == "nav":
