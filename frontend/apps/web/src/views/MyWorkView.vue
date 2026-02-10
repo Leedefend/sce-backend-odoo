@@ -44,6 +44,9 @@
           <span class="failed-id">#{{ item.id }}</span>
           <span class="failed-code">{{ item.reason_code || 'UNKNOWN' }}</span>
           <span class="failed-msg">{{ item.message || '-' }}</span>
+          <span v-if="resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable)" class="failed-hint">
+            {{ resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable) }}
+          </span>
           <button
             v-if="failedItemRecord(item.id)"
             class="link-btn mini-btn"
@@ -203,10 +206,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { ApiError } from '../api/client';
 import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import StatusPanel from '../components/StatusPanel.vue';
-import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
+import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
 
 const router = useRouter();
 
@@ -219,7 +221,7 @@ const items = ref<MyWorkRecordItem[]>([]);
 const activeSection = ref<string>('todo');
 const todoSelectionIds = ref<number[]>([]);
 const retryFailedIds = ref<number[]>([]);
-const retryFailedItems = ref<Array<{ id: number; reason_code: string; message: string }>>([]);
+const retryFailedItems = ref<Array<{ id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }>>([]);
 const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]);
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
@@ -318,18 +320,7 @@ async function load() {
     }
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '请求失败';
-    if (err instanceof ApiError) {
-      statusError.value = {
-        message: err.message,
-        traceId: err.traceId,
-        code: err.status,
-        hint: err.hint,
-        kind: err.kind,
-        reasonCode: err.reasonCode,
-      };
-    } else {
-      statusError.value = { message: errorText.value };
-    }
+    statusError.value = buildStatusError(err, errorText.value);
   } finally {
     suspendAutoLoad.value = false;
     loading.value = false;
@@ -499,14 +490,20 @@ function failedItemRecord(id: number) {
   return todoItemMap.value.get(id);
 }
 
+function formatFailedItemText(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
+  const actionHint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
+  const retryTag = item.retryable === true ? 'retryable' : item.retryable === false ? 'non-retryable' : '';
+  return [`#${item.id} ${item.reason_code || 'UNKNOWN'} ${item.message || '-'}`, retryTag, actionHint]
+    .filter(Boolean)
+    .join(' | ');
+}
+
 function buildRetrySummaryText() {
   if (!retryFailedItems.value.length) return '';
   const reasons = retryReasonSummary.value
     .map((item) => `${item.reason_code} x ${item.count}`)
     .join('; ');
-  const lines = retryFailedItems.value.map(
-    (item) => `#${item.id} ${item.reason_code || 'UNKNOWN'} ${item.message || '-'}`,
-  );
+  const lines = retryFailedItems.value.map((item) => formatFailedItemText(item));
   return [`失败待办 ${retryFailedIds.value.length} 条`, reasons ? `原因分布: ${reasons}` : '', ...lines]
     .filter(Boolean)
     .join('\n');
@@ -539,21 +536,15 @@ async function completeItem(item: MyWorkRecordItem) {
       source: item.source,
       note: 'Completed from my-work UI.',
     });
-    actionFeedback.value = result.message || (result.success ? '待办已完成' : '完成待办失败');
+    const actionHint = resolveSuggestedAction(result.suggested_action, result.reason_code, result.retryable);
+    actionFeedback.value = [result.message || (result.success ? '待办已完成' : '完成待办失败'), actionHint]
+      .filter(Boolean)
+      .join(' | ');
     actionFeedbackError.value = !result.success;
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '完成待办失败';
-    if (err instanceof ApiError) {
-      statusError.value = {
-        message: err.message,
-        traceId: err.traceId,
-        code: err.status,
-        hint: err.hint,
-        kind: err.kind,
-        reasonCode: err.reasonCode,
-      };
-    }
+    statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
   }
@@ -580,7 +571,7 @@ async function completeSelectedTodos() {
       const first = result.failed_items?.[0];
       const failedPreview = (result.failed_items || [])
         .slice(0, 3)
-        .map((item) => `#${item.id} ${item.reason_code}: ${item.message}`)
+        .map((item) => formatFailedItemText(item))
         .join('；');
       retryFailedIds.value = (result.failed_items || []).map((item) => item.id).filter((id) => Number.isFinite(id) && id > 0);
       retryFailedItems.value = (result.failed_items || []).slice(0, 10);
@@ -598,16 +589,7 @@ async function completeSelectedTodos() {
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '批量完成待办失败';
-    if (err instanceof ApiError) {
-      statusError.value = {
-        message: err.message,
-        traceId: err.traceId,
-        code: err.status,
-        hint: err.hint,
-        kind: err.kind,
-        reasonCode: err.reasonCode,
-      };
-    }
+    statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
   }
@@ -627,7 +609,7 @@ async function retryFailedTodos() {
     if (!result.success) {
       const failedPreview = (result.failed_items || [])
         .slice(0, 3)
-        .map((item) => `#${item.id} ${item.reason_code}: ${item.message}`)
+        .map((item) => formatFailedItemText(item))
         .join('；');
       retryFailedIds.value = (result.failed_items || []).map((item) => item.id).filter((id) => Number.isFinite(id) && id > 0);
       retryFailedItems.value = (result.failed_items || []).slice(0, 10);
@@ -644,16 +626,7 @@ async function retryFailedTodos() {
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '重试失败项失败';
-    if (err instanceof ApiError) {
-      statusError.value = {
-        message: err.message,
-        traceId: err.traceId,
-        code: err.status,
-        hint: err.hint,
-        kind: err.kind,
-        reasonCode: err.reasonCode,
-      };
-    }
+    statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
   }
@@ -899,6 +872,12 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
 .failed-msg {
   margin-left: 8px;
   color: #7f1d1d;
+}
+
+.failed-hint {
+  margin-left: 8px;
+  color: #64748b;
+  font-size: 12px;
 }
 
 .mini-btn {
