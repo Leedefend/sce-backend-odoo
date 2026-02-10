@@ -120,11 +120,15 @@ export async function intentRequestRaw<T>(payload: IntentPayload) {
   });
 
   const parsed = parseIntentEnvelope<T>(response.body);
+  const envelopeTrace = resolveEnvelopeTraceId(parsed.meta, resolvedTrace);
+  if (!parsed.ok) {
+    throwEnvelopeError(payload, envelopeTrace, parsed.error);
+  }
   const result: IntentRawResult<T> = {
     data: parsed.data,
     meta: parsed.meta,
     traceId: resolvedTrace,
-    ok: parsed.ok,
+    ok: true,
     error: parsed.error,
     hasEnvelope: parsed.hasEnvelope,
   };
