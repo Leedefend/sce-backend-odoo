@@ -140,11 +140,13 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'copy_full_error' || raw === 'copy_error_bundle') return { kind: 'copy_full_error', raw };
   if (raw === 'open_record') return { kind: 'open_record', raw };
   const recordMatch = rawInput.match(/^open_record:([^:]+):([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
-  if (recordMatch) {
-    const model = String(recordMatch[1] || '').trim();
-    const recordId = Number(recordMatch[2]);
-    const query = String(recordMatch[3] || '').trim();
-    const hash = String(recordMatch[4] || '').trim();
+  const recordAliasMatch = rawInput.match(/^go_record:([^:]+):([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
+  const parsedRecordMatch = recordMatch || recordAliasMatch;
+  if (parsedRecordMatch) {
+    const model = String(parsedRecordMatch[1] || '').trim();
+    const recordId = Number(parsedRecordMatch[2]);
+    const query = String(parsedRecordMatch[3] || '').trim();
+    const hash = String(parsedRecordMatch[4] || '').trim();
     if (model && Number.isFinite(recordId) && recordId > 0) {
       return { kind: 'open_record', raw, model, recordId, query, hash };
     }
