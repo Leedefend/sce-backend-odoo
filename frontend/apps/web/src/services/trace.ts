@@ -14,6 +14,20 @@ export interface TraceEvent {
   suggested_action_success?: boolean;
 }
 
+export interface SuggestedActionTraceFilter {
+  kind?: string;
+  success?: boolean;
+  limit?: number;
+}
+
+export interface SuggestedActionTraceRow {
+  ts: number;
+  trace_id: string;
+  kind: string;
+  raw: string;
+  success: boolean;
+}
+
 const STORAGE_KEY = 'sc_frontend_traces_v0_3';
 const MAX_ENTRIES = 200;
 const TRACE_UPDATE_EVENT = 'sc:trace-updated';
@@ -58,6 +72,51 @@ export function getLatestSuggestedActionTrace(): TraceEvent | null {
     }
   }
   return null;
+}
+
+function normalizeSuggestedActionTrace(event: TraceEvent): SuggestedActionTraceRow | null {
+  if (event.event_type !== 'suggested_action') return null;
+  const kind = String(event.suggested_action_kind || '').trim();
+  const raw = String(event.suggested_action_raw || '').trim();
+  const success = event.suggested_action_success === true;
+  if (!kind) return null;
+  return {
+    ts: Number(event.ts || 0),
+    trace_id: String(event.trace_id || '').trim(),
+    kind,
+    raw,
+    success,
+  };
+}
+
+export function listSuggestedActionTraces(filter: SuggestedActionTraceFilter = {}): SuggestedActionTraceRow[] {
+  const limit = Math.max(1, Number(filter.limit || 50));
+  const targetKind = String(filter.kind || '').trim().toLowerCase();
+  const expectedSuccess = typeof filter.success === 'boolean' ? filter.success : null;
+  const rows: SuggestedActionTraceRow[] = [];
+
+  for (const event of getTraceLog()) {
+    const row = normalizeSuggestedActionTrace(event);
+    if (!row) continue;
+    if (targetKind && row.kind.toLowerCase() !== targetKind) continue;
+    if (expectedSuccess !== null && row.success !== expectedSuccess) continue;
+    rows.push(row);
+    if (rows.length >= limit) break;
+  }
+
+  return rows;
+}
+
+export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter = {}): string {
+  const payload = {
+    filter: {
+      kind: String(filter.kind || '').trim() || undefined,
+      success: typeof filter.success === 'boolean' ? filter.success : undefined,
+      limit: Math.max(1, Number(filter.limit || 50)),
+    },
+    items: listSuggestedActionTraces(filter),
+  };
+  return JSON.stringify(payload, null, 2);
 }
 
 export function createTraceId() {
