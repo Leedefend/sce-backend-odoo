@@ -15,7 +15,11 @@ REQUIRED_SNIPPETS = [
     "export function listSuggestedActionTraces(filter: SuggestedActionTraceFilter = {})",
     "export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter = {})",
     "filter:",
-    "items:",
+    "summary:",
+    "success_count:",
+    "failure_count:",
+    "top_k:",
+    "items,",
 ]
 
 

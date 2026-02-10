@@ -28,6 +28,11 @@ export interface SuggestedActionTraceRow {
   success: boolean;
 }
 
+export interface SuggestedActionKindStat {
+  kind: string;
+  count: number;
+}
+
 const STORAGE_KEY = 'sc_frontend_traces_v0_3';
 const MAX_ENTRIES = 200;
 const TRACE_UPDATE_EVENT = 'sc:trace-updated';
@@ -108,15 +113,36 @@ export function listSuggestedActionTraces(filter: SuggestedActionTraceFilter = {
 }
 
 export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter = {}): string {
+  const items = listSuggestedActionTraces(filter);
+  const successCount = items.filter((item) => item.success).length;
+  const failureCount = items.length - successCount;
   const payload = {
     filter: {
       kind: String(filter.kind || '').trim() || undefined,
       success: typeof filter.success === 'boolean' ? filter.success : undefined,
       limit: Math.max(1, Number(filter.limit || 50)),
     },
-    items: listSuggestedActionTraces(filter),
+    summary: {
+      total: items.length,
+      success_count: successCount,
+      failure_count: failureCount,
+      top_k: rankSuggestedActionKinds(5),
+    },
+    items,
   };
   return JSON.stringify(payload, null, 2);
+}
+
+export function rankSuggestedActionKinds(limit = 5): SuggestedActionKindStat[] {
+  const stats = new Map<string, number>();
+  for (const row of listSuggestedActionTraces({ limit: MAX_ENTRIES })) {
+    const key = row.kind;
+    stats.set(key, (stats.get(key) || 0) + 1);
+  }
+  return [...stats.entries()]
+    .map(([kind, count]) => ({ kind, count }))
+    .sort((a, b) => b.count - a.count || a.kind.localeCompare(b.kind))
+    .slice(0, Math.max(1, Number(limit || 5)));
 }
 
 export function createTraceId() {
