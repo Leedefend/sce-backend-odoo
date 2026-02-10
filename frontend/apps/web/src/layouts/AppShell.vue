@@ -88,6 +88,8 @@
         :visible="showHud"
         title="Page Context"
         :entries="hudEntries"
+        :actions="hudActions"
+        :message="hudMessage"
       />
     </section>
   </div>
@@ -103,7 +105,7 @@ import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { isHudEnabled } from '../config/debug';
 import type { NavNode } from '@sc/schema';
-import { getLatestSuggestedActionTrace, getTraceUpdateEventName } from '../services/trace';
+import { exportSuggestedActionTraces, getLatestSuggestedActionTrace, getTraceUpdateEventName } from '../services/trace';
 
 const session = useSessionStore();
 const route = useRoute();
@@ -126,6 +128,7 @@ const navVersion = computed(() => {
   return meta?.nav_version ?? meta?.nav_meta?.menu ?? meta?.parts?.nav ?? 'N/A';
 });
 const suggestedActionStamp = ref(0);
+const hudMessage = ref('');
 
 const initStatus = computed(() => session.initStatus);
 const initError = computed(() => session.initError);
@@ -217,9 +220,35 @@ const hudEntries = computed(() => [
   { label: 'sa_success', value: String(latestSuggestedAction.value?.suggested_action_success ?? '-') },
   { label: 'sa_ts', value: latestSuggestedActionTs.value },
 ]);
+const hudActions = computed(() => [
+  { key: 'export-sa-all', label: 'Export SA all', onClick: () => exportSuggestedActionJson() },
+  { key: 'export-sa-ok', label: 'Export SA ok', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
+  { key: 'export-sa-fail', label: 'Export SA fail', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
+]);
 
 function handleTraceUpdate() {
   suggestedActionStamp.value = Date.now();
+}
+
+function downloadTextAsFile(filename: string, content: string, mimeType = 'application/json') {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportSuggestedActionJson(filter: { success?: boolean } = {}, suffix = 'all') {
+  try {
+    const content = exportSuggestedActionTraces({ ...filter, limit: 200 });
+    const now = new Date().toISOString().replace(/[:.]/g, '-');
+    downloadTextAsFile(`suggested-action-traces-${suffix}-${now}.json`, content);
+    hudMessage.value = `Exported suggested_action traces (${suffix}).`;
+  } catch {
+    hudMessage.value = 'Failed to export suggested_action traces.';
+  }
 }
 
 onMounted(() => {

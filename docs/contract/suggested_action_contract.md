@@ -38,6 +38,10 @@ Compatibility entrypoint:
 - Filter/export APIs (`frontend/apps/web/src/services/trace.ts`):
   - `listSuggestedActionTraces({ kind?, success?, limit? })`
   - `exportSuggestedActionTraces({ kind?, success?, limit? })`
+- HUD export actions:
+  - `Export SA all`
+  - `Export SA ok`
+  - `Export SA fail`
 - HUD fields in `AppShell`:
   - `sa_kind`
   - `sa_success`
@@ -79,6 +83,12 @@ Trace export guard:
 
 ```bash
 make verify.frontend.suggested_action.trace_export_guard
+```
+
+HUD export guard:
+
+```bash
+make verify.frontend.suggested_action.hud_export_guard
 ```
 
 Catalog export:
