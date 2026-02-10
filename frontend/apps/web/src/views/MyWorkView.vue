@@ -24,6 +24,7 @@
       :suggested-action="statusError?.suggestedAction"
       variant="error"
       :on-retry="load"
+      @action-executed="onErrorSuggestedActionExecuted"
     />
     <p v-if="!loading && !errorText && actionFeedback" class="action-feedback" :class="{ error: actionFeedbackError }">
       {{ actionFeedback }}
@@ -448,6 +449,13 @@ function resetFilters() {
   actionFeedback.value = '筛选条件已重置';
   actionFeedbackError.value = false;
   void load();
+}
+
+function onErrorSuggestedActionExecuted(payload: { action: string; success: boolean }) {
+  actionFeedback.value = payload.success
+    ? `已执行建议动作：${payload.action || 'unknown'}`
+    : `建议动作执行失败：${payload.action || 'unknown'}`;
+  actionFeedbackError.value = !payload.success;
 }
 
 function openScene(sceneKey: string) {
