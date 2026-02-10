@@ -40,12 +40,13 @@ function normalizeSuggestedAction(value?: string) {
   return String(value || '').trim().toLowerCase();
 }
 
-function suggestedActionKind(): 'refresh' | 'retry' | 'relogin' | '' {
+function suggestedActionKind(): 'refresh' | 'retry' | 'relogin' | 'check_permission' | '' {
   const value = normalizeSuggestedAction(props.suggestedAction);
   if (!value) return '';
   if (value === 'refresh' || value === 'refresh_list') return 'refresh';
   if (value === 'retry' || value === 'retry_later') return 'retry';
   if (value === 'relogin' || value === 'login_again') return 'relogin';
+  if (value === 'check_permission' || value === 'request_permission') return 'check_permission';
   return '';
 }
 
@@ -54,6 +55,7 @@ const suggestedActionLabel = computed(() => {
   if (kind === 'refresh') return 'Refresh now';
   if (kind === 'retry') return 'Retry now';
   if (kind === 'relogin') return 'Go to login';
+  if (kind === 'check_permission') return 'View permissions';
   return '';
 });
 
@@ -68,6 +70,9 @@ function runSuggestedAction() {
     const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
     window.location.href = `/login?redirect=${redirect}`;
     return;
+  }
+  if (kind === 'check_permission') {
+    window.location.href = '/usage-analytics';
   }
 }
 
