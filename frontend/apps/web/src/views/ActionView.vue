@@ -82,7 +82,7 @@ import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
-import { useStatus } from '../composables/useStatus';
+import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
@@ -283,7 +283,7 @@ function downloadCsvBase64(filename: string, mimeType: string, contentB64: strin
 }
 
 function applyBatchFailureArtifacts(result: {
-  failed_preview?: Array<{ id: number; reason_code: string; message: string }>;
+  failed_preview?: Array<{ id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }>;
   failed_page_offset?: number;
   failed_page_limit?: number;
   failed_has_more?: boolean;
@@ -292,7 +292,11 @@ function applyBatchFailureArtifacts(result: {
   failed_csv_content_b64?: string;
 }, options?: { append?: boolean }) {
   const preview = Array.isArray(result.failed_preview) ? result.failed_preview : [];
-  const lines = preview.map((item) => `#${item.id} ${item.reason_code}: ${item.message}`);
+  const lines = preview.map((item) => {
+    const hint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
+    const retryTag = item.retryable === true ? 'retryable' : item.retryable === false ? 'non-retryable' : '';
+    return [`#${item.id} ${item.reason_code}: ${item.message}`, retryTag, hint].filter(Boolean).join(' | ');
+  });
   if (options?.append) {
     batchDetails.value = [...batchDetails.value, ...lines];
   } else {
