@@ -52,6 +52,13 @@
             {{ resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable) }}
           </span>
           <button
+            v-if="failedSuggestedActionLabel(item)"
+            class="link-btn mini-btn"
+            @click="runFailedSuggestedAction(item)"
+          >
+            {{ failedSuggestedActionLabel(item) }}
+          </button>
+          <button
             v-if="failedItemRecord(item.id)"
             class="link-btn mini-btn"
             @click="openRecord(failedItemRecord(item.id)!)"
@@ -213,6 +220,12 @@ import { useRouter } from 'vue-router';
 import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
+import {
+  canRunSuggestedAction,
+  executeSuggestedAction,
+  parseSuggestedAction,
+  suggestedActionLabel,
+} from '../app/suggestedAction';
 
 const router = useRouter();
 
@@ -492,6 +505,30 @@ function selectRetryFailedItems() {
 
 function failedItemRecord(id: number) {
   return todoItemMap.value.get(id);
+}
+
+function failedSuggestedActionLabel(item: { suggested_action?: string }) {
+  const parsed = parseSuggestedAction(item.suggested_action);
+  const canRun = canRunSuggestedAction(parsed, {
+    hasRetryHandler: true,
+    hasActionHandler: true,
+  });
+  if (!canRun) return '';
+  return suggestedActionLabel(parsed);
+}
+
+function runFailedSuggestedAction(item: { id: number; suggested_action?: string }) {
+  const parsed = parseSuggestedAction(item.suggested_action);
+  executeSuggestedAction(parsed, {
+    onRetry: load,
+    onSuggestedAction: (actionRaw: string) => {
+      if (actionRaw !== 'open_record') return false;
+      const record = failedItemRecord(item.id);
+      if (!record) return false;
+      openRecord(record);
+      return true;
+    },
+  });
 }
 
 function formatFailedItemText(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
