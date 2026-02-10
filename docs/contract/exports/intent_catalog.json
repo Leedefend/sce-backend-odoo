@@ -567,26 +567,55 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "hidden_samples",
+        "hidden_samples[]",
+        "locked_samples",
+        "locked_samples[]",
+        "reason_counts",
+        "reason_counts[]",
+        "role_codes",
+        "role_codes[]",
+        "state_counts",
+        "state_counts[]",
+        "summary",
+        "summary.hidden",
+        "summary.locked",
+        "summary.preview",
+        "summary.ready",
+        "summary.total",
+        "summary.visible",
+        "user"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "capability_visibility_report_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/capability_visibility_report_intent_admin.json",
           "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "hidden_samples",
+            "hidden_samples[]",
+            "locked_samples",
+            "locked_samples[]",
+            "reason_counts",
+            "reason_counts[]",
+            "role_codes",
+            "role_codes[]",
+            "state_counts",
+            "state_counts[]",
+            "summary",
+            "summary.hidden",
+            "summary.locked",
+            "summary.preview",
+            "summary.ready",
+            "summary.total",
+            "summary.visible",
+            "user"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "chatter.post",
@@ -6271,26 +6300,25 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "count",
+        "items",
+        "items[]"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "scene_package_list_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/scene_package_list_intent_admin.json",
           "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "count",
+            "items",
+            "items[]"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "scene.packages.installed",
@@ -6303,26 +6331,23 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "packages",
+        "packages[]"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "scene_packages_installed_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/scene_packages_installed_intent_admin.json",
           "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "packages",
+            "packages[]"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "session.bootstrap",

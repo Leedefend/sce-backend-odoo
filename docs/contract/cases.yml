@@ -245,6 +245,27 @@
     }
   },
   {
+    "case": "capability_visibility_report_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "capability.visibility.report",
+    "intent_params": {}
+  },
+  {
+    "case": "scene_package_list_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "scene.package.list",
+    "intent_params": {}
+  },
+  {
+    "case": "scene_packages_installed_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "scene.packages.installed",
+    "intent_params": {}
+  },
+  {
     "case": "api_data_intent_pm",
     "user": "pm",
     "op": "intent.invoke",
