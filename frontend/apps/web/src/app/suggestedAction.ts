@@ -9,10 +9,13 @@ export type SuggestedActionKind =
   | 'open_my_work_todo'
   | 'open_my_work_done'
   | 'open_my_work_failed'
+  | 'open_my_work_section'
   | 'open_my_work'
   | 'open_usage_analytics'
   | 'open_locked'
   | 'open_preview'
+  | 'open_ready'
+  | 'open_hidden'
   | 'open_scene_health'
   | 'open_scene_packages'
   | 'open_projects_list'
@@ -30,6 +33,7 @@ export type SuggestedActionKind =
   | 'copy_message'
   | 'copy_error_line'
   | 'copy_action'
+  | 'copy_json_error'
   | 'copy_full_error'
   | '';
 
@@ -45,6 +49,7 @@ export type SuggestedActionParsed = {
   projectId?: number;
   query?: string;
   hash?: string;
+  section?: string;
 };
 
 export function normalizeSuggestedAction(value?: string) {
@@ -77,8 +82,30 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw === 'open_my_work') return { kind: 'open_my_work', raw };
   if (raw === 'open_todo') return { kind: 'open_my_work_todo', raw };
+  if (raw.startsWith('open_todo?')) {
+    const query = rawInput.slice('open_todo?'.length).trim();
+    if (query) return { kind: 'open_my_work_todo', raw, query };
+  }
   if (raw === 'open_done') return { kind: 'open_my_work_done', raw };
+  if (raw.startsWith('open_done?')) {
+    const query = rawInput.slice('open_done?'.length).trim();
+    if (query) return { kind: 'open_my_work_done', raw, query };
+  }
   if (raw === 'open_failed') return { kind: 'open_my_work_failed', raw };
+  if (raw.startsWith('open_failed?')) {
+    const query = rawInput.slice('open_failed?'.length).trim();
+    if (query) return { kind: 'open_my_work_failed', raw, query };
+  }
+  const myWorkSectionMatch = rawInput.match(/^open_my_work_section:([a-z0-9_]+)$/i);
+  if (myWorkSectionMatch) {
+    const section = String(myWorkSectionMatch[1] || '').trim();
+    if (section) return { kind: 'open_my_work_section', raw, section };
+  }
+  const myWorkSectionAlias = rawInput.match(/^open_my_work:([a-z0-9_]+)$/i);
+  if (myWorkSectionAlias) {
+    const section = String(myWorkSectionAlias[1] || '').trim();
+    if (section) return { kind: 'open_my_work_section', raw, section };
+  }
   if (raw.startsWith('open_my_work?')) {
     const query = rawInput.slice('open_my_work?'.length).trim();
     if (query) return { kind: 'open_my_work', raw, query };
@@ -88,6 +115,8 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw === 'open_locked') return { kind: 'open_locked', raw };
   if (raw === 'open_preview') return { kind: 'open_preview', raw };
+  if (raw === 'open_ready') return { kind: 'open_ready', raw };
+  if (raw === 'open_hidden') return { kind: 'open_hidden', raw };
   if (raw.startsWith('open_usage_analytics?')) {
     const query = rawInput.slice('open_usage_analytics?'.length).trim();
     if (query) return { kind: 'open_usage_analytics', raw, query };
@@ -113,10 +142,12 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (query) return { kind: 'open_projects_board', raw, query };
   }
   const projectMatch = rawInput.match(/^open_project:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
-  if (projectMatch) {
-    const projectId = Number(projectMatch[1]);
-    const query = String(projectMatch[2] || '').trim();
-    const hash = String(projectMatch[3] || '').trim();
+  const projectAliasMatch = rawInput.match(/^goto_project:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
+  const parsedProjectMatch = projectMatch || projectAliasMatch;
+  if (parsedProjectMatch) {
+    const projectId = Number(parsedProjectMatch[1]);
+    const query = String(parsedProjectMatch[2] || '').trim();
+    const hash = String(parsedProjectMatch[3] || '').trim();
     if (Number.isFinite(projectId) && projectId > 0 && query && hash) return { kind: 'open_project', raw, projectId, query, hash };
     if (Number.isFinite(projectId) && projectId > 0 && hash) return { kind: 'open_project', raw, projectId, hash };
     if (Number.isFinite(projectId) && projectId > 0 && query) return { kind: 'open_project', raw, projectId, query };
@@ -137,6 +168,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'copy_message' || raw === 'copy_error_message') return { kind: 'copy_message', raw };
   if (raw === 'copy_error_line' || raw === 'copy_compact_error') return { kind: 'copy_error_line', raw };
   if (raw === 'copy_action' || raw === 'copy_suggested_action') return { kind: 'copy_action', raw };
+  if (raw === 'copy_json_error' || raw === 'copy_error_json') return { kind: 'copy_json_error', raw };
   if (raw === 'copy_full_error' || raw === 'copy_error_bundle') return { kind: 'copy_full_error', raw };
   if (raw === 'open_record') return { kind: 'open_record', raw };
   const recordMatch = rawInput.match(/^open_record:([^:]+):([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
@@ -163,20 +195,24 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (sceneKey) return { kind: 'open_scene', raw, sceneKey };
   }
   const menuMatch = rawInput.match(/^open_menu:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
-  if (menuMatch) {
-    const menuId = Number(menuMatch[1]);
-    const query = String(menuMatch[2] || '').trim();
-    const hash = String(menuMatch[3] || '').trim();
+  const menuAliasMatch = rawInput.match(/^goto_menu:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
+  const parsedMenuMatch = menuMatch || menuAliasMatch;
+  if (parsedMenuMatch) {
+    const menuId = Number(parsedMenuMatch[1]);
+    const query = String(parsedMenuMatch[2] || '').trim();
+    const hash = String(parsedMenuMatch[3] || '').trim();
     if (Number.isFinite(menuId) && menuId > 0 && query && hash) return { kind: 'open_menu', raw, menuId, query, hash };
     if (Number.isFinite(menuId) && menuId > 0 && hash) return { kind: 'open_menu', raw, menuId, hash };
     if (Number.isFinite(menuId) && menuId > 0 && query) return { kind: 'open_menu', raw, menuId, query };
     if (Number.isFinite(menuId) && menuId > 0) return { kind: 'open_menu', raw, menuId };
   }
   const actionMatch = rawInput.match(/^open_action:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
-  if (actionMatch) {
-    const actionId = Number(actionMatch[1]);
-    const query = String(actionMatch[2] || '').trim();
-    const hash = String(actionMatch[3] || '').trim();
+  const actionAliasMatch = rawInput.match(/^goto_action:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
+  const parsedActionMatch = actionMatch || actionAliasMatch;
+  if (parsedActionMatch) {
+    const actionId = Number(parsedActionMatch[1]);
+    const query = String(parsedActionMatch[2] || '').trim();
+    const hash = String(parsedActionMatch[3] || '').trim();
     if (Number.isFinite(actionId) && actionId > 0 && query && hash) return { kind: 'open_action', raw, actionId, query, hash };
     if (Number.isFinite(actionId) && actionId > 0 && hash) return { kind: 'open_action', raw, actionId, hash };
     if (Number.isFinite(actionId) && actionId > 0 && query) return { kind: 'open_action', raw, actionId, query };
@@ -210,10 +246,13 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_my_work_todo') return 'Open todo items';
   if (parsed.kind === 'open_my_work_done') return 'Open done items';
   if (parsed.kind === 'open_my_work_failed') return 'Open failed items';
+  if (parsed.kind === 'open_my_work_section') return 'Open work section';
   if (parsed.kind === 'open_my_work') return 'Open my work';
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics';
   if (parsed.kind === 'open_locked') return 'Open locked capabilities';
   if (parsed.kind === 'open_preview') return 'Open preview capabilities';
+  if (parsed.kind === 'open_ready') return 'Open ready capabilities';
+  if (parsed.kind === 'open_hidden') return 'Open hidden capabilities';
   if (parsed.kind === 'open_scene_health') return 'Open scene health';
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages';
   if (parsed.kind === 'open_projects_list') return 'Open projects list';
@@ -231,6 +270,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_message') return 'Copy message';
   if (parsed.kind === 'copy_error_line') return 'Copy error line';
   if (parsed.kind === 'copy_action') return 'Copy action';
+  if (parsed.kind === 'copy_json_error') return 'Copy error JSON';
   if (parsed.kind === 'copy_full_error') return 'Copy full error';
   return '';
 }
@@ -246,10 +286,13 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_my_work_todo') return 'Open My Work todo section directly.';
   if (parsed.kind === 'open_my_work_done') return 'Open My Work done section directly.';
   if (parsed.kind === 'open_my_work_failed') return 'Open My Work failed section directly.';
+  if (parsed.kind === 'open_my_work_section') return 'Open a specific My Work section.';
   if (parsed.kind === 'open_my_work') return 'Open My Work and continue processing pending items.';
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics to inspect capability visibility.';
   if (parsed.kind === 'open_locked') return 'Open usage analytics filtered to locked capabilities.';
   if (parsed.kind === 'open_preview') return 'Open usage analytics filtered to preview capabilities.';
+  if (parsed.kind === 'open_ready') return 'Open usage analytics filtered to ready capabilities.';
+  if (parsed.kind === 'open_hidden') return 'Open usage analytics filtered to hidden capabilities.';
   if (parsed.kind === 'open_scene_health') return 'Open scene health to inspect diagnostics.';
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages for governance actions.';
   if (parsed.kind === 'open_projects_list') return 'Open projects list scene.';
@@ -267,6 +310,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_message') return 'Copy error message for troubleshooting.';
   if (parsed.kind === 'copy_error_line') return 'Copy a compact error line for quick sharing.';
   if (parsed.kind === 'copy_action') return 'Copy raw suggested action for troubleshooting.';
+  if (parsed.kind === 'copy_json_error') return 'Copy compact error JSON for troubleshooting.';
   if (parsed.kind === 'copy_full_error') return 'Copy full error bundle for troubleshooting.';
   return '';
 }
@@ -276,6 +320,13 @@ function isSafeRelativePath(path: string) {
   if (path.startsWith('//')) return false;
   const lowered = path.toLowerCase();
   if (lowered.includes('javascript:')) return false;
+  if (lowered.includes('%2f%2f')) return false;
+  try {
+    const decoded = decodeURIComponent(path).toLowerCase();
+    if (decoded.startsWith('//') || decoded.includes('javascript:')) return false;
+  } catch {
+    // Ignore decode error and keep original checks.
+  }
   return true;
 }
 
@@ -316,10 +367,13 @@ export function canRunSuggestedAction(
     parsed.kind === 'open_my_work_todo' ||
     parsed.kind === 'open_my_work_done' ||
     parsed.kind === 'open_my_work_failed' ||
+    parsed.kind === 'open_my_work_section' ||
     parsed.kind === 'open_my_work' ||
     parsed.kind === 'open_usage_analytics' ||
     parsed.kind === 'open_locked' ||
     parsed.kind === 'open_preview' ||
+    parsed.kind === 'open_ready' ||
+    parsed.kind === 'open_hidden' ||
     parsed.kind === 'open_scene_health' ||
     parsed.kind === 'open_scene_packages' ||
     parsed.kind === 'open_projects_list' ||
@@ -339,6 +393,13 @@ export function canRunSuggestedAction(
     );
   }
   if (parsed.kind === 'copy_action') return Boolean(String(parsed.raw || '').trim());
+  if (parsed.kind === 'copy_json_error') {
+    return Boolean(
+      String(options.traceId || '').trim() ||
+        String(options.reasonCode || '').trim() ||
+        String(options.message || '').trim(),
+    );
+  }
   if (parsed.kind === 'copy_full_error') {
     return Boolean(
       String(options.traceId || '').trim() ||
@@ -442,13 +503,16 @@ export function executeSuggestedAction(
     return finish(safeNavigate(appendQuery('/my-work', parsed.query)));
   }
   if (parsed.kind === 'open_my_work_todo') {
-    return finish(safeNavigate('/my-work?section=todo'));
+    return finish(safeNavigate(appendQuery('/my-work?section=todo', parsed.query)));
   }
   if (parsed.kind === 'open_my_work_done') {
-    return finish(safeNavigate('/my-work?section=done'));
+    return finish(safeNavigate(appendQuery('/my-work?section=done', parsed.query)));
   }
   if (parsed.kind === 'open_my_work_failed') {
-    return finish(safeNavigate('/my-work?section=failed'));
+    return finish(safeNavigate(appendQuery('/my-work?section=failed', parsed.query)));
+  }
+  if (parsed.kind === 'open_my_work_section' && parsed.section) {
+    return finish(safeNavigate(`/my-work?section=${encodeURIComponent(parsed.section)}`));
   }
   if (parsed.kind === 'open_usage_analytics') {
     return finish(safeNavigate(appendQuery('/admin/usage-analytics', parsed.query)));
@@ -458,6 +522,12 @@ export function executeSuggestedAction(
   }
   if (parsed.kind === 'open_preview') {
     return finish(safeNavigate('/admin/usage-analytics?state=preview'));
+  }
+  if (parsed.kind === 'open_ready') {
+    return finish(safeNavigate('/admin/usage-analytics?state=ready'));
+  }
+  if (parsed.kind === 'open_hidden') {
+    return finish(safeNavigate('/admin/usage-analytics?visibility=hidden'));
   }
   if (parsed.kind === 'open_scene_health') {
     return finish(safeNavigate(appendQuery('/admin/scene-health', parsed.query)));
@@ -523,6 +593,15 @@ export function executeSuggestedAction(
   }
   if (parsed.kind === 'copy_action') {
     void copyText(parsed.raw || '');
+    return finish(true);
+  }
+  if (parsed.kind === 'copy_json_error') {
+    const payload = {
+      trace_id: String(options.traceId || '').trim() || undefined,
+      reason_code: String(options.reasonCode || '').trim() || undefined,
+      message: String(options.message || '').trim() || undefined,
+    };
+    void copyText(JSON.stringify(payload));
     return finish(true);
   }
   if (parsed.kind === 'copy_full_error') {
