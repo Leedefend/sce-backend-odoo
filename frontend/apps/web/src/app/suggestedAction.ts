@@ -59,6 +59,10 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'open_usage_analytics' || raw === 'open_capability_visibility') {
     return { kind: 'open_usage_analytics', raw };
   }
+  if (raw.startsWith('open_usage_analytics?')) {
+    const query = raw.slice('open_usage_analytics?'.length).trim();
+    if (query) return { kind: 'open_usage_analytics', raw, query };
+  }
   if (raw === 'open_scene_health') return { kind: 'open_scene_health', raw };
   if (raw === 'open_scene_packages') return { kind: 'open_scene_packages', raw };
   if (raw === 'open_projects_list') return { kind: 'open_projects_list', raw };
@@ -304,7 +308,7 @@ export function executeSuggestedAction(
     return safeNavigate(appendQuery('/my-work', parsed.query));
   }
   if (parsed.kind === 'open_usage_analytics') {
-    return safeNavigate('/admin/usage-analytics');
+    return safeNavigate(appendQuery('/admin/usage-analytics', parsed.query));
   }
   if (parsed.kind === 'open_scene_health') {
     return safeNavigate('/admin/scene-health');
