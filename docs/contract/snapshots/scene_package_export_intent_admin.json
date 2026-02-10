@@ -1,0 +1,330 @@
+{
+  "action": null,
+  "case": "scene_package_export_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "action": "package_export",
+    "checksum": "5f70345f1f0e76fb8673ae183355ad5509f5b885fc922cdd186bc02d724c8075",
+    "package": {
+      "checksum": "5f70345f1f0e76fb8673ae183355ad5509f5b885fc922cdd186bc02d724c8075",
+      "compatibility": {
+        "min_core_version": "10.6.0",
+        "supported_schema_versions": [
+          "v2"
+        ]
+      },
+      "defaults": {
+        "rollback_active": true,
+        "scene_channel": "stable",
+        "use_pinned": true
+      },
+      "package_name": "snapshot.pkg",
+      "package_version": "0.0.1",
+      "policies": {
+        "auto_degrade": {
+          "action": "rollback_pinned",
+          "critical_threshold": {
+            "drift_warn": 1,
+            "resolve_errors": 1
+          },
+          "enabled": true
+        },
+        "channel_defaults": {
+          "default": "stable"
+        }
+      },
+      "previous_versions": [],
+      "profiles": {
+        "scenes": {
+          "projects.ledger": {
+            "list_profile": {
+              "hidden_columns_must_include": [
+                "message_needaction"
+              ],
+              "required": [
+                "columns",
+                "hidden_columns"
+              ]
+            },
+            "required": [
+              "list_profile",
+              "default_sort"
+            ]
+          },
+          "projects.list": {
+            "list_profile": {
+              "hidden_columns_must_include": [
+                "message_needaction"
+              ],
+              "required": [
+                "columns",
+                "hidden_columns"
+              ]
+            },
+            "required": [
+              "list_profile",
+              "default_sort"
+            ]
+          }
+        },
+        "version": "v2"
+      },
+      "scene_version": "v2",
+      "scenes": [
+        {
+          "access": {
+            "allowed": true,
+            "has_access_clause": false,
+            "reason_code": "OK",
+            "required_capabilities": [],
+            "required_capabilities_count": 0,
+            "suggested_action": "",
+            "visible": true
+          },
+          "code": "default",
+          "default_sort": "",
+          "filters": [],
+          "layout": {
+            "header": "full",
+            "kind": "workspace",
+            "sidebar": "fixed"
+          },
+          "list_profile": {
+            "column_labels": {},
+            "columns": [],
+            "hidden_columns": [],
+            "row_primary": "",
+            "row_secondary": ""
+          },
+          "name": "默认场景",
+          "target": {
+            "route": "/workbench?scene=default"
+          },
+          "tiles": [
+            {
+              "icon": "M",
+              "key": "capability.matrix",
+              "payload": {
+                "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
+                "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix"
+              },
+              "required_capabilities": [],
+              "scene_key": "",
+              "subtitle": "查看角色可用能力",
+              "title": "能力矩阵"
+            },
+            {
+              "icon": "P",
+              "key": "project.work",
+              "payload": {
+                "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_project",
+                "scene_key": "projects.ledger"
+              },
+              "required_capabilities": [],
+              "scene_key": "projects.ledger",
+              "subtitle": "项目看板与概览入口",
+              "title": "项目工作"
+            }
+          ]
+        },
+        {
+          "access": {
+            "allowed": true,
+            "has_access_clause": false,
+            "reason_code": "OK",
+            "required_capabilities": [],
+            "required_capabilities_count": 0,
+            "suggested_action": "",
+            "visible": true
+          },
+          "code": "projects.intake",
+          "default_sort": "",
+          "filters": [],
+          "layout": {
+            "header": "full",
+            "kind": "record",
+            "sidebar": "fixed"
+          },
+          "list_profile": {
+            "column_labels": {},
+            "columns": [],
+            "hidden_columns": [],
+            "row_primary": "",
+            "row_secondary": ""
+          },
+          "name": "项目立项",
+          "target": {
+            "route": "/workbench?scene=projects.intake&reason=TARGET_MISSING"
+          },
+          "tiles": []
+        },
+        {
+          "access": {
+            "allowed": true,
+            "has_access_clause": false,
+            "reason_code": "OK",
+            "required_capabilities": [],
+            "required_capabilities_count": 0,
+            "suggested_action": "",
+            "visible": true
+          },
+          "code": "projects.ledger",
+          "default_sort": "write_date desc",
+          "filters": [],
+          "layout": {
+            "header": "full",
+            "kind": "ledger",
+            "sidebar": "fixed"
+          },
+          "list_profile": {
+            "column_labels": {
+              "name": "项目名称",
+              "partner_id": "客户",
+              "project_code": "项目编号",
+              "stage_id": "状态",
+              "user_id": "负责人"
+            },
+            "columns": [
+              "name",
+              "partner_id",
+              "project_code",
+              "stage_id",
+              "user_id",
+              "write_date"
+            ],
+            "hidden_columns": [
+              "__last_update",
+              "display_name",
+              "is_favorite",
+              "message_needaction",
+              "message_unread"
+            ],
+            "row_primary": "name",
+            "row_secondary": "partner_id"
+          },
+          "name": "项目台账（试点）",
+          "target": {
+            "action_id": 495,
+            "menu_id": 280
+          },
+          "tiles": []
+        },
+        {
+          "access": {
+            "allowed": true,
+            "has_access_clause": false,
+            "reason_code": "OK",
+            "required_capabilities": [],
+            "required_capabilities_count": 0,
+            "suggested_action": "",
+            "visible": true
+          },
+          "code": "projects.list",
+          "default_sort": "write_date desc",
+          "filters": [],
+          "layout": {
+            "header": "full",
+            "kind": "list",
+            "sidebar": "fixed"
+          },
+          "list_profile": {
+            "column_labels": {
+              "name": "项目名称",
+              "partner_id": "客户",
+              "project_code": "项目编号",
+              "stage_id": "状态",
+              "user_id": "负责人"
+            },
+            "columns": [
+              "name",
+              "partner_id",
+              "project_code",
+              "stage_id",
+              "user_id",
+              "write_date"
+            ],
+            "hidden_columns": [
+              "__last_update",
+              "display_name",
+              "is_favorite",
+              "message_needaction",
+              "message_unread"
+            ],
+            "row_primary": "name",
+            "row_secondary": "partner_id"
+          },
+          "name": "项目列表",
+          "target": {
+            "action_id": 519,
+            "menu_id": 329
+          },
+          "tiles": []
+        },
+        {
+          "access": {
+            "allowed": true,
+            "has_access_clause": false,
+            "reason_code": "OK",
+            "required_capabilities": [],
+            "required_capabilities_count": 0,
+            "suggested_action": "",
+            "visible": true
+          },
+          "code": "scene_smoke_default",
+          "default_sort": "",
+          "filters": [],
+          "layout": {
+            "header": "full",
+            "kind": "workspace",
+            "sidebar": "fixed"
+          },
+          "list_profile": {
+            "column_labels": {},
+            "columns": [],
+            "hidden_columns": [],
+            "row_primary": "",
+            "row_secondary": ""
+          },
+          "name": "Scene Smoke Default",
+          "target": {
+            "route": "/workbench?scene=scene_smoke_default"
+          },
+          "tiles": [
+            {
+              "icon": "",
+              "key": "scene.smoke.default",
+              "payload": {},
+              "required_capabilities": [],
+              "scene_key": "",
+              "subtitle": "",
+              "title": "Scene Smoke Default"
+            }
+          ]
+        }
+      ],
+      "schema_version": "v2",
+      "upgrade": {
+        "breaking": false,
+        "supported_from": [],
+        "type": "inplace"
+      }
+    },
+    "package_name": "snapshot.pkg",
+    "package_version": "0.0.1",
+    "scene_channel": "stable",
+    "scene_count": 5
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}
