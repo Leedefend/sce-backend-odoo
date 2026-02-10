@@ -236,5 +236,42 @@
         "name": "write"
       }
     }
+  },
+  {
+    "case": "app_catalog_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "app.catalog",
+    "intent_params": {
+      "scene": "web"
+    }
+  },
+  {
+    "case": "app_nav_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "app.nav",
+    "intent_params": {
+      "app": "project_management"
+    }
+  },
+  {
+    "case": "app_open_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "app.open",
+    "intent_params": {
+      "app": "project_management",
+      "feature": "project_overview"
+    }
+  },
+  {
+    "case": "load_metadata_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "load_metadata",
+    "intent_params": {
+      "model": "project.project"
+    }
   }
 ]
