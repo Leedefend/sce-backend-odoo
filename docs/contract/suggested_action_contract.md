@@ -27,6 +27,19 @@ Compatibility entrypoint:
 - Add runtime executability and execution path (`runtime.ts`).
 - Keep `suggestedAction.ts` exports backward-compatible.
 
+## Observability
+
+- `useSuggestedAction.run()` records execution events into frontend trace storage.
+- Trace event type: `suggested_action`
+- Captured fields:
+  - `suggested_action_kind`
+  - `suggested_action_raw`
+  - `suggested_action_success`
+- HUD fields in `AppShell`:
+  - `sa_kind`
+  - `sa_success`
+  - `sa_ts`
+
 ## Verification
 
 Contract guard:
