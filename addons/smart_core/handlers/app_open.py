@@ -51,7 +51,12 @@ class AppOpenHandler(BaseIntentHandler):
         # 权限二次校验
         need = set(f.get("required_permissions") or [])
         have = _current_perms(env)
-        if need and not need.issubset(have):
+        is_system_admin = False
+        try:
+            is_system_admin = bool(env.user.has_group("base.group_system"))
+        except Exception:
+            is_system_admin = False
+        if need and not need.issubset(have) and not is_system_admin:
             raise PermissionError(f"permission denied for {app_id}:{feature_key}")
 
         o = f.get("open") or {}

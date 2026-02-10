@@ -6,9 +6,9 @@ class LoadMetadataHandler(BaseIntentHandler):
     INTENT_TYPE = "load_metadata"
     DESCRIPTION = "加载模型字段定义"
 
-    def run(self):
-         # 从 self.params 获取 model
-        model = self.params.get("model")
+    def run(self, **_kwargs):
+        # 从 self.params 获取 model
+        model = self.params.get("model") if isinstance(self.params, dict) else None
         if not model:
             raise UserError("缺少 model 参数")
         return self.env[model].fields_get()

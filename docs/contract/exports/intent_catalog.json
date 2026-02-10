@@ -372,27 +372,34 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "scene"
+      ],
+      "response_data_schema_hint": [
+        "apps",
+        "apps[]",
+        "meta",
+        "meta.fingerprint",
+        "meta.scene"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "app_catalog_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/app_catalog_intent_admin.json",
+          "request_keys": [
+            "scene"
+          ],
+          "response_data_keys": [
+            "apps",
+            "apps[]",
+            "meta",
+            "meta.fingerprint",
+            "meta.scene"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "app.nav",
@@ -404,27 +411,32 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "app"
+      ],
+      "response_data_schema_hint": [
+        "meta",
+        "meta.fingerprint",
+        "sections",
+        "sections[]"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "app_nav_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/app_nav_intent_admin.json",
+          "request_keys": [
+            "app"
+          ],
+          "response_data_keys": [
+            "meta",
+            "meta.fingerprint",
+            "sections",
+            "sections[]"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "app.open",
@@ -436,27 +448,30 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "app",
+        "feature"
+      ],
+      "response_data_schema_hint": [
+        "id",
+        "subject"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "app_open_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/app_open_intent_admin.json",
+          "request_keys": [
+            "app",
+            "feature"
+          ],
+          "response_data_keys": [
+            "id",
+            "subject"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "auth.logout",
@@ -888,26 +903,15 @@
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "load_metadata_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/load_metadata_intent_admin.json",
           "request_keys": [
             "model"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": []
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "model"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "load_view",
