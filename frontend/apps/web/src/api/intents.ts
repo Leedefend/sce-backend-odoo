@@ -57,6 +57,8 @@ function throwEnvelopeError(
     reasonCode,
     hint,
     kind,
+    errorCategory: parsedError?.error_category,
+    retryable: parsedError?.retryable,
     suggestedAction: parsedError?.suggested_action,
   });
 }

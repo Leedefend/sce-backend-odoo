@@ -6,6 +6,8 @@
       <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
       <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
       <p v-if="reasonCode" class="trace">Reason: {{ reasonCode }}</p>
+      <p v-if="errorCategory" class="trace">Category: {{ errorCategory }}</p>
+      <p v-if="retryable !== undefined" class="trace">Retryable: {{ retryable ? 'yes' : 'no' }}</p>
       <p v-if="hint" class="trace">Hint: {{ hint }}</p>
       <p v-if="suggestedAction" class="trace">Suggested: {{ suggestedAction }}</p>
       <button v-if="traceId" class="trace-copy" @click="copyTrace">Copy trace</button>
@@ -21,6 +23,8 @@ const props = defineProps<{
   traceId?: string;
   errorCode?: number | string | null;
   reasonCode?: string;
+  errorCategory?: string;
+  retryable?: boolean;
   hint?: string;
   suggestedAction?: string;
   variant?: 'error' | 'info' | 'forbidden_capability';

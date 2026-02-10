@@ -7,13 +7,22 @@ export class ApiError extends Error {
   reasonCode?: string;
   hint?: string;
   kind?: string;
+  errorCategory?: string;
+  retryable?: boolean;
   suggestedAction?: string;
 
   constructor(
     message: string,
     status: number,
     traceId?: string,
-    options?: { reasonCode?: string; hint?: string; kind?: string; suggestedAction?: string },
+    options?: {
+      reasonCode?: string;
+      hint?: string;
+      kind?: string;
+      errorCategory?: string;
+      retryable?: boolean;
+      suggestedAction?: string;
+    },
   ) {
     super(message);
     this.name = 'ApiError';
@@ -22,6 +31,8 @@ export class ApiError extends Error {
     this.reasonCode = options?.reasonCode;
     this.hint = options?.hint;
     this.kind = options?.kind;
+    this.errorCategory = options?.errorCategory;
+    this.retryable = options?.retryable;
     this.suggestedAction = options?.suggestedAction;
   }
 }
@@ -177,22 +188,42 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     let reasonCode: string | undefined;
     let hint: string | undefined;
     let kind: string | undefined;
+    let errorCategory: string | undefined;
+    let retryable: boolean | undefined;
     let suggestedAction: string | undefined;
     try {
       body = await response.json();
       const payload = body as {
-        error?: { message?: string; code?: string; reason_code?: string; hint?: string; kind?: string; suggested_action?: string };
+        error?: {
+          message?: string;
+          code?: string;
+          reason_code?: string;
+          hint?: string;
+          kind?: string;
+          error_category?: string;
+          retryable?: boolean;
+          suggested_action?: string;
+        };
         message?: string;
         code?: string;
         reason_code?: string;
         hint?: string;
         kind?: string;
+        error_category?: string;
+        retryable?: boolean;
         suggested_action?: string;
       };
       message = payload?.error?.message || payload?.message || message;
       reasonCode = payload?.error?.reason_code || payload?.reason_code || payload?.error?.code || payload?.code;
       hint = payload?.error?.hint || payload?.hint;
       kind = payload?.error?.kind || payload?.kind;
+      errorCategory = payload?.error?.error_category || payload?.error_category;
+      retryable =
+        typeof payload?.error?.retryable === 'boolean'
+          ? payload.error.retryable
+          : typeof payload?.retryable === 'boolean'
+          ? payload.retryable
+          : undefined;
       suggestedAction = payload?.error?.suggested_action || payload?.suggested_action;
       traceIdFromBody = extractTraceIdFromBody(body);
     } catch {
@@ -206,6 +237,8 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
       reasonCode,
       hint,
       kind: kind || 'http',
+      errorCategory,
+      retryable,
       suggestedAction,
     });
   }
