@@ -111,6 +111,18 @@ HUD export guard:
 make verify.frontend.suggested_action.hud_export_guard
 ```
 
+Cross-stack proof smoke:
+
+```bash
+make verify.frontend.cross_stack_smoke
+```
+
+No-new-any guard:
+
+```bash
+make verify.frontend.no_new_any_guard
+```
+
 Catalog export:
 
 ```bash
@@ -132,3 +144,5 @@ One-command gate:
 ```bash
 make verify.frontend.suggested_action.all
 ```
+
+`verify.frontend.suggested_action.all` now includes cross-stack and no-new-any guards.

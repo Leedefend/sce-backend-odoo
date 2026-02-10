@@ -1,0 +1,48 @@
+{
+  "intents": [
+    {
+      "intent": "api.data.batch",
+      "requirement": "idempotency_window"
+    },
+    {
+      "intent": "api.data.create",
+      "requirement": "idempotency_window"
+    },
+    {
+      "intent": "api.data.unlink",
+      "requirement": "idempotency_window"
+    },
+    {
+      "intent": "my.work.complete_batch",
+      "requirement": "idempotency_window"
+    },
+    {
+      "intent": "execute_button",
+      "requirement": "explicit_waiver"
+    },
+    {
+      "intent": "chatter.post",
+      "requirement": "explicit_waiver"
+    },
+    {
+      "intent": "my.work.complete",
+      "requirement": "explicit_waiver"
+    },
+    {
+      "intent": "usage.track",
+      "requirement": "explicit_waiver"
+    },
+    {
+      "intent": "scene.governance.set_channel",
+      "requirement": "explicit_waiver"
+    },
+    {
+      "intent": "scene.governance.rollback",
+      "requirement": "explicit_waiver"
+    },
+    {
+      "intent": "scene.governance.pin_stable",
+      "requirement": "explicit_waiver"
+    }
+  ]
+}

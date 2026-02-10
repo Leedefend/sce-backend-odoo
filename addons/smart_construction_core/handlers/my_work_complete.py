@@ -31,6 +31,7 @@ class MyWorkCompleteHandler(BaseIntentHandler):
     DESCRIPTION = "Complete a todo item from my-work list"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    NON_IDEMPOTENT_ALLOWED = "single complete keeps lightweight behavior while batch intent owns replay contract"
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}

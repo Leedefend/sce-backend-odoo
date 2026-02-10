@@ -10,6 +10,7 @@ class UsageTrackHandler(BaseIntentHandler):
     DESCRIPTION = "Track scene/capability usage counters"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    NON_IDEMPOTENT_ALLOWED = "analytics counters are append-only metrics and intentionally non-replayable"
 
     def _bump(self, usage_model, company, key):
         if usage_model is None or not company or not key:

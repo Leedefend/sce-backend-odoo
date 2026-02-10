@@ -49,6 +49,7 @@ class SceneGovernanceSetChannelHandler(_BaseSceneGovernanceHandler):
     INTENT_TYPE = "scene.governance.set_channel"
     DESCRIPTION = "Set scene channel for company"
     VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "admin policy change mutates governance state and needs operator intent per request"
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -67,6 +68,7 @@ class SceneGovernanceRollbackHandler(_BaseSceneGovernanceHandler):
     INTENT_TYPE = "scene.governance.rollback"
     DESCRIPTION = "Rollback scene to stable pinned"
     VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "rollback is an operator action and should not be auto-replayed"
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
@@ -82,6 +84,7 @@ class SceneGovernancePinStableHandler(_BaseSceneGovernanceHandler):
     INTENT_TYPE = "scene.governance.pin_stable"
     DESCRIPTION = "Pin stable contract and enable rollback mode"
     VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "pin stable writes governance baseline and must remain explicit"
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
