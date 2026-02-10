@@ -1,0 +1,33 @@
+{
+  "action": null,
+  "case": "scene_package_dry_run_import_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+    "dry_run": true,
+    "package_name": "snapshot.pkg",
+    "package_version": "0.0.1",
+    "report": {
+      "additions": [],
+      "conflicts": [],
+      "overwrite_fields": []
+    },
+    "summary": {
+      "additions_count": 0,
+      "conflicts_count": 0,
+      "scene_count": 0
+    }
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}

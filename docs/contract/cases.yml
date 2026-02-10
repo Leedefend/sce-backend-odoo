@@ -295,6 +295,112 @@
     }
   },
   {
+    "case": "scene_package_export_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "scene.package.export",
+    "intent_params": {
+      "package_name": "snapshot.pkg",
+      "package_version": "0.0.1",
+      "scene_channel": "stable",
+      "reason": "contract snapshot"
+    }
+  },
+  {
+    "case": "scene_package_dry_run_import_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "scene.package.dry_run_import",
+    "intent_params": {
+      "package": {
+        "package_name": "snapshot.pkg",
+        "package_version": "0.0.1",
+        "schema_version": "v2",
+        "scene_version": "1",
+        "previous_versions": [],
+        "upgrade": {
+          "type": "inplace",
+          "supported_from": [],
+          "breaking": false
+        },
+        "scenes": [],
+        "profiles": {},
+        "defaults": {
+          "scene_channel": "stable",
+          "rollback_active": false,
+          "use_pinned": false
+        },
+        "policies": {
+          "auto_degrade": {
+            "enabled": true,
+            "critical_threshold": {
+              "resolve_errors": 1,
+              "drift_warn": 1
+            },
+            "action": "rollback_pinned"
+          },
+          "channel_defaults": {
+            "default": "stable"
+          }
+        },
+        "compatibility": {
+          "min_core_version": "10.6.0",
+          "supported_schema_versions": ["v2"]
+        },
+        "generated_at": "2026-02-10T00:00:00Z",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870"
+      }
+    }
+  },
+  {
+    "case": "scene_package_import_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "scene.package.import",
+    "intent_params": {
+      "strategy": "skip_existing",
+      "reason": "contract snapshot",
+      "package": {
+        "package_name": "snapshot.pkg",
+        "package_version": "0.0.1",
+        "schema_version": "v2",
+        "scene_version": "1",
+        "previous_versions": [],
+        "upgrade": {
+          "type": "inplace",
+          "supported_from": [],
+          "breaking": false
+        },
+        "scenes": [],
+        "profiles": {},
+        "defaults": {
+          "scene_channel": "stable",
+          "rollback_active": false,
+          "use_pinned": false
+        },
+        "policies": {
+          "auto_degrade": {
+            "enabled": true,
+            "critical_threshold": {
+              "resolve_errors": 1,
+              "drift_warn": 1
+            },
+            "action": "rollback_pinned"
+          },
+          "channel_defaults": {
+            "default": "stable"
+          }
+        },
+        "compatibility": {
+          "min_core_version": "10.6.0",
+          "supported_schema_versions": ["v2"]
+        },
+        "generated_at": "2026-02-10T00:00:00Z",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870"
+      }
+    }
+  },
+  {
     "case": "api_data_intent_pm",
     "user": "pm",
     "op": "intent.invoke",
