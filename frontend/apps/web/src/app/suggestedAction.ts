@@ -1,6 +1,7 @@
 export type SuggestedActionKind =
   | 'refresh'
   | 'retry'
+  | 'go_back'
   | 'relogin'
   | 'check_permission'
   | 'open_home'
@@ -10,6 +11,7 @@ export type SuggestedActionKind =
   | 'open_scene_packages'
   | 'open_projects_list'
   | 'open_projects_board'
+  | 'open_project'
   | 'open_dashboard'
   | 'open_record'
   | 'open_scene'
@@ -20,6 +22,7 @@ export type SuggestedActionKind =
   | 'copy_trace'
   | 'copy_reason'
   | 'copy_message'
+  | 'copy_error_line'
   | 'copy_full_error'
   | '';
 
@@ -32,7 +35,9 @@ export type SuggestedActionParsed = {
   url?: string;
   menuId?: number;
   actionId?: number;
+  projectId?: number;
   query?: string;
+  hash?: string;
 };
 
 export function normalizeSuggestedAction(value?: string) {
@@ -44,21 +49,46 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (!raw) return { kind: '', raw: '' };
   if (raw === 'refresh' || raw === 'refresh_list') return { kind: 'refresh', raw };
   if (raw === 'retry' || raw === 'retry_later') return { kind: 'retry', raw };
+  if (raw === 'go_back' || raw === 'back') return { kind: 'go_back', raw };
   if (raw === 'relogin' || raw === 'login_again') return { kind: 'relogin', raw };
   if (raw === 'check_permission' || raw === 'request_permission') return { kind: 'check_permission', raw };
   if (raw === 'open_home' || raw === 'go_home') return { kind: 'open_home', raw };
   if (raw === 'open_my_work' || raw === 'open_todo') return { kind: 'open_my_work', raw };
+  if (raw.startsWith('open_my_work?')) {
+    const query = raw.slice('open_my_work?'.length).trim();
+    if (query) return { kind: 'open_my_work', raw, query };
+  }
   if (raw === 'open_usage_analytics' || raw === 'open_capability_visibility') {
     return { kind: 'open_usage_analytics', raw };
   }
+  if (raw.startsWith('open_usage_analytics?')) {
+    const query = raw.slice('open_usage_analytics?'.length).trim();
+    if (query) return { kind: 'open_usage_analytics', raw, query };
+  }
   if (raw === 'open_scene_health') return { kind: 'open_scene_health', raw };
+  if (raw.startsWith('open_scene_health?')) {
+    const query = raw.slice('open_scene_health?'.length).trim();
+    if (query) return { kind: 'open_scene_health', raw, query };
+  }
   if (raw === 'open_scene_packages') return { kind: 'open_scene_packages', raw };
+  if (raw.startsWith('open_scene_packages?')) {
+    const query = raw.slice('open_scene_packages?'.length).trim();
+    if (query) return { kind: 'open_scene_packages', raw, query };
+  }
   if (raw === 'open_projects_list') return { kind: 'open_projects_list', raw };
   if (raw === 'open_projects_board') return { kind: 'open_projects_board', raw };
+  const projectMatch = raw.match(/^open_project:([0-9]+)(?:\?(.+))?$/);
+  if (projectMatch) {
+    const projectId = Number(projectMatch[1]);
+    const query = String(projectMatch[2] || '').trim();
+    if (Number.isFinite(projectId) && projectId > 0 && query) return { kind: 'open_project', raw, projectId, query };
+    if (Number.isFinite(projectId) && projectId > 0) return { kind: 'open_project', raw, projectId };
+  }
   if (raw === 'open_dashboard') return { kind: 'open_dashboard', raw };
   if (raw === 'copy_trace' || raw === 'copy_trace_id') return { kind: 'copy_trace', raw };
   if (raw === 'copy_reason' || raw === 'copy_reason_code') return { kind: 'copy_reason', raw };
   if (raw === 'copy_message' || raw === 'copy_error_message') return { kind: 'copy_message', raw };
+  if (raw === 'copy_error_line' || raw === 'copy_compact_error') return { kind: 'copy_error_line', raw };
   if (raw === 'copy_full_error' || raw === 'copy_error_bundle') return { kind: 'copy_full_error', raw };
   if (raw === 'open_record') return { kind: 'open_record', raw };
   const recordMatch = raw.match(/^open_record:([^:]+):([0-9]+)(?:\?(.+))?$/);
@@ -72,8 +102,12 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw.startsWith('open_scene:')) {
     const payload = raw.slice('open_scene:'.length).trim();
-    const [sceneKey, queryRaw] = payload.split('?');
+    const [payloadWithQuery, hashRaw] = payload.split('#');
+    const [sceneKey, queryRaw] = String(payloadWithQuery || '').split('?');
+    const hash = String(hashRaw || '').trim();
+    if (sceneKey && queryRaw && hash) return { kind: 'open_scene', raw, sceneKey, query: queryRaw, hash };
     if (sceneKey && queryRaw) return { kind: 'open_scene', raw, sceneKey, query: queryRaw };
+    if (sceneKey && hash) return { kind: 'open_scene', raw, sceneKey, hash };
     if (sceneKey) return { kind: 'open_scene', raw, sceneKey };
   }
   const menuMatch = raw.match(/^open_menu:([0-9]+)(?:\?(.+))?$/);
@@ -91,11 +125,17 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (Number.isFinite(actionId) && actionId > 0) return { kind: 'open_action', raw, actionId };
   }
   if (raw.startsWith('open_route:')) {
-    const url = raw.slice('open_route:'.length).trim();
+    const payload = raw.slice('open_route:'.length).trim();
+    const [url, hashRaw] = payload.split('#');
+    const hash = String(hashRaw || '').trim();
+    if (url.startsWith('/') && hash) return { kind: 'open_route', raw, url, hash };
     if (url.startsWith('/')) return { kind: 'open_route', raw, url };
   }
   if (raw.startsWith('open_url:')) {
-    const url = raw.slice('open_url:'.length).trim();
+    const payload = raw.slice('open_url:'.length).trim();
+    const [url, hashRaw] = payload.split('#');
+    const hash = String(hashRaw || '').trim();
+    if (url.startsWith('/') && hash) return { kind: 'open_url', raw, url, hash };
     if (url.startsWith('/')) return { kind: 'open_url', raw, url };
   }
   return { kind: '', raw };
@@ -104,6 +144,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
 export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'refresh') return 'Refresh now';
   if (parsed.kind === 'retry') return 'Retry now';
+  if (parsed.kind === 'go_back') return 'Go back';
   if (parsed.kind === 'relogin') return 'Go to login';
   if (parsed.kind === 'check_permission') return 'View permissions';
   if (parsed.kind === 'open_home') return 'Go home';
@@ -113,6 +154,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages';
   if (parsed.kind === 'open_projects_list') return 'Open projects list';
   if (parsed.kind === 'open_projects_board') return 'Open projects board';
+  if (parsed.kind === 'open_project') return 'Open project';
   if (parsed.kind === 'open_dashboard') return 'Open dashboard';
   if (parsed.kind === 'open_record') return 'Open record';
   if (parsed.kind === 'open_scene') return 'Open scene';
@@ -123,6 +165,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_trace') return 'Copy trace';
   if (parsed.kind === 'copy_reason') return 'Copy reason';
   if (parsed.kind === 'copy_message') return 'Copy message';
+  if (parsed.kind === 'copy_error_line') return 'Copy error line';
   if (parsed.kind === 'copy_full_error') return 'Copy full error';
   return '';
 }
@@ -130,6 +173,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
 export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'refresh') return 'Refresh the latest data and retry.';
   if (parsed.kind === 'retry') return 'Retry this action after a short delay.';
+  if (parsed.kind === 'go_back') return 'Go back to the previous page.';
   if (parsed.kind === 'relogin') return 'Login again and retry.';
   if (parsed.kind === 'check_permission') return 'Check role permissions, then retry.';
   if (parsed.kind === 'open_home') return 'Go back to home and continue.';
@@ -139,6 +183,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages for governance actions.';
   if (parsed.kind === 'open_projects_list') return 'Open projects list scene.';
   if (parsed.kind === 'open_projects_board') return 'Open projects board scene.';
+  if (parsed.kind === 'open_project') return 'Open the target project page.';
   if (parsed.kind === 'open_dashboard') return 'Open system dashboard.';
   if (parsed.kind === 'open_record') return 'Open the related record and resolve blockers first.';
   if (parsed.kind === 'open_scene') return 'Open the related scene and continue.';
@@ -149,12 +194,21 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'copy_trace') return 'Copy trace id for troubleshooting.';
   if (parsed.kind === 'copy_reason') return 'Copy reason code for troubleshooting.';
   if (parsed.kind === 'copy_message') return 'Copy error message for troubleshooting.';
+  if (parsed.kind === 'copy_error_line') return 'Copy a compact error line for quick sharing.';
   if (parsed.kind === 'copy_full_error') return 'Copy full error bundle for troubleshooting.';
   return '';
 }
 
-function safeNavigate(path: string) {
+function isSafeRelativePath(path: string) {
   if (!path.startsWith('/')) return false;
+  if (path.startsWith('//')) return false;
+  const lowered = path.toLowerCase();
+  if (lowered.includes('javascript:')) return false;
+  return true;
+}
+
+function safeNavigate(path: string) {
+  if (!isSafeRelativePath(path)) return false;
   window.location.href = path;
   return true;
 }
@@ -171,6 +225,7 @@ export function canRunSuggestedAction(
 ) {
   if (!parsed.kind) return false;
   if (parsed.kind === 'refresh' || parsed.kind === 'retry') return Boolean(options.hasRetryHandler);
+  if (parsed.kind === 'go_back') return window.history.length > 1;
   if (parsed.kind === 'open_record') {
     if (parsed.model && parsed.recordId) return true;
     return Boolean(options.hasActionHandler);
@@ -178,6 +233,7 @@ export function canRunSuggestedAction(
   if (parsed.kind === 'open_scene') return Boolean(parsed.sceneKey);
   if (parsed.kind === 'open_menu') return Boolean(parsed.menuId);
   if (parsed.kind === 'open_action') return Boolean(parsed.actionId);
+  if (parsed.kind === 'open_project') return Boolean(parsed.projectId);
   if (parsed.kind === 'open_route') return Boolean(parsed.url);
   if (parsed.kind === 'open_url') return Boolean(parsed.url);
   if (
@@ -197,6 +253,13 @@ export function canRunSuggestedAction(
   if (parsed.kind === 'copy_trace') return Boolean(String(options.traceId || '').trim());
   if (parsed.kind === 'copy_reason') return Boolean(String(options.reasonCode || '').trim());
   if (parsed.kind === 'copy_message') return Boolean(String(options.message || '').trim());
+  if (parsed.kind === 'copy_error_line') {
+    return Boolean(
+      String(options.traceId || '').trim() ||
+        String(options.reasonCode || '').trim() ||
+        String(options.message || '').trim(),
+    );
+  }
   if (parsed.kind === 'copy_full_error') {
     return Boolean(
       String(options.traceId || '').trim() ||
@@ -242,87 +305,119 @@ function appendQuery(path: string, query?: string) {
   return `${path}?${cleaned}`;
 }
 
+function appendHash(path: string, hash?: string) {
+  const h = String(hash || '').trim().replace(/^#+/, '');
+  if (!h) return path;
+  return `${path}#${h}`;
+}
+
 export function executeSuggestedAction(
   parsed: SuggestedActionParsed,
   options: {
     onRetry?: () => void;
     onSuggestedAction?: (action: string) => boolean | void;
+    onExecuted?: (result: { kind: SuggestedActionKind; raw: string; success: boolean }) => void;
     traceId?: string;
     reasonCode?: string;
     message?: string;
   } = {},
 ) {
+  const finish = (success: boolean) => {
+    if (options.onExecuted) {
+      options.onExecuted({ kind: parsed.kind, raw: parsed.raw, success });
+    }
+    return success;
+  };
   if (!parsed.kind) return false;
   if (options.onSuggestedAction && parsed.raw) {
     const handled = options.onSuggestedAction(parsed.raw);
-    if (handled) return true;
+    if (handled) return finish(true);
   }
   if ((parsed.kind === 'refresh' || parsed.kind === 'retry') && options.onRetry) {
     options.onRetry();
-    return true;
+    return finish(true);
+  }
+  if (parsed.kind === 'go_back') {
+    if (window.history.length <= 1) return finish(false);
+    window.history.back();
+    return finish(true);
   }
   if (parsed.kind === 'relogin') {
     const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-    return safeNavigate(`/login?redirect=${redirect}`);
+    return finish(safeNavigate(`/login?redirect=${redirect}`));
   }
   if (parsed.kind === 'check_permission') {
-    return safeNavigate('/admin/usage-analytics');
+    return finish(safeNavigate('/admin/usage-analytics'));
   }
   if (parsed.kind === 'open_home') {
-    return safeNavigate('/');
+    return finish(safeNavigate('/'));
   }
   if (parsed.kind === 'open_dashboard') {
-    return safeNavigate('/');
+    return finish(safeNavigate('/'));
   }
   if (parsed.kind === 'open_my_work') {
-    return safeNavigate('/my-work');
+    return finish(safeNavigate(appendQuery('/my-work', parsed.query)));
   }
   if (parsed.kind === 'open_usage_analytics') {
-    return safeNavigate('/admin/usage-analytics');
+    return finish(safeNavigate(appendQuery('/admin/usage-analytics', parsed.query)));
   }
   if (parsed.kind === 'open_scene_health') {
-    return safeNavigate('/admin/scene-health');
+    return finish(safeNavigate(appendQuery('/admin/scene-health', parsed.query)));
   }
   if (parsed.kind === 'open_scene_packages') {
-    return safeNavigate('/admin/scene-packages');
+    return finish(safeNavigate(appendQuery('/admin/scene-packages', parsed.query)));
   }
   if (parsed.kind === 'open_projects_list') {
-    return safeNavigate('/s/projects.list');
+    return finish(safeNavigate('/s/projects.list'));
   }
   if (parsed.kind === 'open_projects_board') {
-    return safeNavigate('/projects');
+    return finish(safeNavigate('/projects'));
+  }
+  if (parsed.kind === 'open_project' && parsed.projectId) {
+    return finish(safeNavigate(appendQuery(`/projects/${parsed.projectId}`, parsed.query)));
   }
   if (parsed.kind === 'open_scene' && parsed.sceneKey) {
-    return safeNavigate(appendQuery(`/s/${encodeURIComponent(parsed.sceneKey)}`, parsed.query));
-  }
-  if (parsed.kind === 'open_menu' && parsed.menuId) {
-    return safeNavigate(appendQuery(`/m/${parsed.menuId}`, parsed.query));
-  }
-  if (parsed.kind === 'open_action' && parsed.actionId) {
-    return safeNavigate(appendQuery(`/a/${parsed.actionId}`, parsed.query));
-  }
-  if (parsed.kind === 'open_record' && parsed.model && parsed.recordId) {
-    return safeNavigate(
-      appendQuery(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`, parsed.query),
+    return finish(
+      safeNavigate(
+      appendHash(appendQuery(`/s/${encodeURIComponent(parsed.sceneKey)}`, parsed.query), parsed.hash),
+      ),
     );
   }
+  if (parsed.kind === 'open_menu' && parsed.menuId) {
+    return finish(safeNavigate(appendQuery(`/m/${parsed.menuId}`, parsed.query)));
+  }
+  if (parsed.kind === 'open_action' && parsed.actionId) {
+    return finish(safeNavigate(appendQuery(`/a/${parsed.actionId}`, parsed.query)));
+  }
+  if (parsed.kind === 'open_record' && parsed.model && parsed.recordId) {
+    return finish(safeNavigate(appendQuery(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`, parsed.query)));
+  }
   if (parsed.kind === 'open_route' && parsed.url) {
-    return safeNavigate(parsed.url);
+    return finish(safeNavigate(appendHash(parsed.url, parsed.hash)));
   }
   if (parsed.kind === 'open_url' && parsed.url) {
-    return safeNavigate(parsed.url);
+    return finish(safeNavigate(appendHash(parsed.url, parsed.hash)));
   }
   if (parsed.kind === 'copy_trace') {
     void copyText(options.traceId || '');
-    return true;
+    return finish(true);
   }
   if (parsed.kind === 'copy_reason') {
     void copyText(options.reasonCode || '');
-    return true;
+    return finish(true);
   }
   if (parsed.kind === 'copy_message') {
     void copyText(options.message || '');
-    return true;
+    return finish(true);
+  }
+  if (parsed.kind === 'copy_error_line') {
+    const pieces = [
+      String(options.reasonCode || '').trim(),
+      String(options.message || '').trim(),
+      String(options.traceId || '').trim() ? `trace=${String(options.traceId || '').trim()}` : '',
+    ].filter(Boolean);
+    void copyText(pieces.join(' | '));
+    return finish(true);
   }
   if (parsed.kind === 'copy_full_error') {
     const bundle = JSON.stringify(
@@ -335,7 +430,7 @@ export function executeSuggestedAction(
       2,
     );
     void copyText(bundle);
-    return true;
+    return finish(true);
   }
-  return false;
+  return finish(false);
 }
