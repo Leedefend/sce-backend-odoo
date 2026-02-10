@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 
-REQUIRED_ROOT_KEYS = ("scene_count", "scenes", "layout_kind_counts", "target_type_counts")
-REQUIRED_SCENE_SECTIONS = ("identity", "access", "layout", "components", "target")
+REQUIRED_ROOT_KEYS = ("scene_count", "scenes", "layout_kind_counts", "target_type_counts", "renderability")
+REQUIRED_SCENE_SECTIONS = ("identity", "access", "layout", "components", "target", "renderability")
 
 
 def _fail(errors: list[str], message: str) -> None:
@@ -34,6 +34,17 @@ def validate_catalog(payload: dict) -> list[str]:
     scene_count = payload.get("scene_count")
     if isinstance(scene_count, int) and scene_count != len(scenes):
         _fail(errors, f"scene_count mismatch: declared={scene_count} actual={len(scenes)}")
+
+    renderability = payload.get("renderability")
+    if isinstance(renderability, dict):
+        for field in ("renderable_scene_count", "interaction_ready_scene_count"):
+            if not isinstance(renderability.get(field), int):
+                _fail(errors, f"renderability.{field} must be int")
+        for field in ("renderable_ratio", "interaction_ready_ratio"):
+            if not isinstance(renderability.get(field), (int, float)):
+                _fail(errors, f"renderability.{field} must be number")
+    else:
+        _fail(errors, "renderability must be object")
 
     keys_seen: set[str] = set()
     for idx, scene in enumerate(scenes):
@@ -102,6 +113,13 @@ def validate_catalog(payload: dict) -> list[str]:
             keys = target.get("keys")
             if not isinstance(keys, list) or not keys:
                 _fail(errors, f"{prefix}.target.keys must be non-empty list")
+
+        renderability = scene.get("renderability")
+        if isinstance(renderability, dict):
+            if not isinstance(renderability.get("is_renderable"), bool):
+                _fail(errors, f"{prefix}.renderability.is_renderable must be bool")
+            if not isinstance(renderability.get("is_interaction_ready"), bool):
+                _fail(errors, f"{prefix}.renderability.is_interaction_ready must be bool")
 
     return errors
 
