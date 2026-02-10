@@ -113,13 +113,22 @@ export function listSuggestedActionTraces(filter: SuggestedActionTraceFilter = {
 }
 
 export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter = {}): string {
+  const items = listSuggestedActionTraces(filter);
+  const successCount = items.filter((item) => item.success).length;
+  const failureCount = items.length - successCount;
   const payload = {
     filter: {
       kind: String(filter.kind || '').trim() || undefined,
       success: typeof filter.success === 'boolean' ? filter.success : undefined,
       limit: Math.max(1, Number(filter.limit || 50)),
     },
-    items: listSuggestedActionTraces(filter),
+    summary: {
+      total: items.length,
+      success_count: successCount,
+      failure_count: failureCount,
+      top_k: rankSuggestedActionKinds(5),
+    },
+    items,
   };
   return JSON.stringify(payload, null, 2);
 }
