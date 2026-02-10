@@ -7,7 +7,9 @@
       :message="errorCopy.message"
       :trace-id="error?.traceId"
       :error-code="error?.code"
+      :reason-code="error?.reasonCode"
       :hint="errorCopy.hint"
+      :suggested-action="error?.suggestedAction"
       variant="error"
     />
   </section>
