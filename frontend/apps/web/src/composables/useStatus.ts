@@ -7,6 +7,8 @@ export interface StatusError {
   traceId?: string;
   hint?: string;
   kind?: string;
+  errorCategory?: string;
+  retryable?: boolean;
   reasonCode?: string;
   suggestedAction?: string;
 }
@@ -43,13 +45,15 @@ export function resolveSuggestedAction(
 export function buildStatusError(err: unknown, fallbackMessage: string, kind?: string): StatusError {
   if (err instanceof ApiError) {
     const code = err.status;
-    const suggestedAction = err.suggestedAction || resolveSuggestedAction(undefined, err.reasonCode);
+    const suggestedAction = err.suggestedAction || resolveSuggestedAction(undefined, err.reasonCode, err.retryable);
     return {
       message: err.message,
       code,
       traceId: err.traceId,
       hint: err.hint || getHint(code, err.kind),
       kind: kind || err.kind,
+      errorCategory: err.errorCategory,
+      retryable: err.retryable,
       reasonCode: err.reasonCode,
       suggestedAction: suggestedAction || undefined,
     };

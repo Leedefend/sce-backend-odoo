@@ -18,6 +18,8 @@
       :trace-id="statusError?.traceId || undefined"
       :error-code="statusError?.code"
       :reason-code="statusError?.reasonCode"
+      :error-category="statusError?.errorCategory"
+      :retryable="statusError?.retryable"
       :hint="errorCopy.hint"
       :suggested-action="statusError?.suggestedAction"
       variant="error"
