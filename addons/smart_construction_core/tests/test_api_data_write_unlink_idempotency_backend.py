@@ -76,6 +76,24 @@ class TestApiDataWriteUnlinkIdempotencyBackend(TransactionCase):
         self.assertEqual(data.get("idempotency_replay_reason_code"), "")
         self.assertFalse(bool(data.get("idempotency_deduplicated")))
 
+    def test_api_data_create_defaults_intent_when_missing(self):
+        handler = ApiDataWriteHandler(self.env, payload={})
+        result = handler.handle(
+            {
+                "params": {
+                    "model": "project.task",
+                    "values": {"name": "Create Default Intent Dry Run"},
+                    "request_id": "req-create-default-intent-1",
+                    "dry_run": True,
+                }
+            }
+        )
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        self.assertEqual(data.get("model"), "project.task")
+        self.assertEqual(data.get("id"), 0)
+        self.assertTrue(bool(data.get("dry_run")))
+
     def test_api_data_write_same_key_diff_payload_returns_conflict(self):
         self._ensure_audit_model()
         project = self.env["project.project"].create({"name": "Write Conflict Original"})

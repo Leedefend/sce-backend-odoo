@@ -1,0 +1,35 @@
+{
+  "action": null,
+  "case": "api_data_create_intent_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "dry_run": true,
+    "id": 0,
+    "idempotency_deduplicated": false,
+    "idempotency_fingerprint": "e4ac78a5922459bf47566bd2385ccddb6f51401c",
+    "idempotency_key": "snapshot_api_data_create_1",
+    "idempotency_replay_reason_code": "",
+    "idempotent_replay": false,
+    "model": "project.task",
+    "replay_supported": false,
+    "replay_window_expired": false,
+    "values": {
+      "name": "Snapshot Dry Run Task"
+    },
+    "written_fields": [
+      "name"
+    ]
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}
