@@ -52,8 +52,16 @@ Each scene entry includes normalized sections:
 - `layout`
 - `components`
 - `target`
+- `renderability`
 
 This keeps scene orchestration structure visible for review and drift detection.
+
+Catalog root now also includes renderability summary:
+
+- `renderability.renderable_scene_count`
+- `renderability.interaction_ready_scene_count`
+- `renderability.renderable_ratio`
+- `renderability.interaction_ready_ratio`
 
 ## Scene Shape Guard
 

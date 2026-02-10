@@ -284,6 +284,10 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
         scenes = []
     layout_counts: dict[str, int] = defaultdict(int)
     target_counts: dict[str, int] = defaultdict(int)
+    renderability = {
+        "renderable_scene_count": 0,
+        "interaction_ready_scene_count": 0,
+    }
     out_scenes: list[dict] = []
 
     for scene in scenes:
@@ -318,6 +322,13 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
 
         layout_kind = str(layout.get("kind") or "")
         target_type = infer_target_type(target)
+        is_renderable = bool(layout_kind) and target_type != "unknown" and len(target.keys()) > 0
+        # interaction-ready means scene can be rendered and access does not explicitly deny.
+        is_interaction_ready = is_renderable and bool(allowed)
+        if is_renderable:
+            renderability["renderable_scene_count"] += 1
+        if is_interaction_ready:
+            renderability["interaction_ready_scene_count"] += 1
         layout_counts[layout_kind or "unknown"] += 1
         target_counts[target_type] += 1
         out_scenes.append(
@@ -352,8 +363,20 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
                     "type": target_type,
                     "keys": sorted(target.keys()),
                 },
+                "renderability": {
+                    "is_renderable": is_renderable,
+                    "is_interaction_ready": is_interaction_ready,
+                },
             }
         )
+
+    total = len(out_scenes)
+    if total <= 0:
+        renderability["renderable_ratio"] = 0.0
+        renderability["interaction_ready_ratio"] = 0.0
+    else:
+        renderability["renderable_ratio"] = round(renderability["renderable_scene_count"] / total, 4)
+        renderability["interaction_ready_ratio"] = round(renderability["interaction_ready_scene_count"] / total, 4)
 
     return {
         "source": {
@@ -365,6 +388,7 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
         "scene_count": len(out_scenes),
         "layout_kind_counts": dict(sorted(layout_counts.items())),
         "target_type_counts": dict(sorted(target_counts.items())),
+        "renderability": renderability,
         "scenes": sorted(out_scenes, key=lambda x: x["scene_key"]),
     }
 
