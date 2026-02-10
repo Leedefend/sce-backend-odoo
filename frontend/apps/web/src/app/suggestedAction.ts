@@ -141,10 +141,12 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (query) return { kind: 'open_projects_board', raw, query };
   }
   const projectMatch = rawInput.match(/^open_project:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
-  if (projectMatch) {
-    const projectId = Number(projectMatch[1]);
-    const query = String(projectMatch[2] || '').trim();
-    const hash = String(projectMatch[3] || '').trim();
+  const projectAliasMatch = rawInput.match(/^goto_project:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
+  const parsedProjectMatch = projectMatch || projectAliasMatch;
+  if (parsedProjectMatch) {
+    const projectId = Number(parsedProjectMatch[1]);
+    const query = String(parsedProjectMatch[2] || '').trim();
+    const hash = String(parsedProjectMatch[3] || '').trim();
     if (Number.isFinite(projectId) && projectId > 0 && query && hash) return { kind: 'open_project', raw, projectId, query, hash };
     if (Number.isFinite(projectId) && projectId > 0 && hash) return { kind: 'open_project', raw, projectId, hash };
     if (Number.isFinite(projectId) && projectId > 0 && query) return { kind: 'open_project', raw, projectId, query };
