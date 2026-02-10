@@ -224,6 +224,21 @@ const hudActions = computed(() => [
   { key: 'export-sa-all', label: 'Export SA all', onClick: () => exportSuggestedActionJson() },
   { key: 'export-sa-ok', label: 'Export SA ok', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
   { key: 'export-sa-fail', label: 'Export SA fail', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
+  {
+    key: 'export-sa-kind-open-record',
+    label: 'Export SA open_record',
+    onClick: () => exportSuggestedActionJson({ kind: 'open_record' }, 'kind-open_record'),
+  },
+  {
+    key: 'export-sa-kind-copy-trace',
+    label: 'Export SA copy_trace',
+    onClick: () => exportSuggestedActionJson({ kind: 'copy_trace' }, 'kind-copy_trace'),
+  },
+  {
+    key: 'export-sa-kind-refresh',
+    label: 'Export SA refresh',
+    onClick: () => exportSuggestedActionJson({ kind: 'refresh' }, 'kind-refresh'),
+  },
 ]);
 
 function handleTraceUpdate() {
@@ -240,12 +255,15 @@ function downloadTextAsFile(filename: string, content: string, mimeType = 'appli
   URL.revokeObjectURL(url);
 }
 
-function exportSuggestedActionJson(filter: { success?: boolean } = {}, suffix = 'all') {
+function exportSuggestedActionJson(filter: { success?: boolean; kind?: string } = {}, suffix = 'all') {
   try {
     const content = exportSuggestedActionTraces({ ...filter, limit: 200 });
     const now = new Date().toISOString().replace(/[:.]/g, '-');
     downloadTextAsFile(`suggested-action-traces-${suffix}-${now}.json`, content);
-    hudMessage.value = `Exported suggested_action traces (${suffix}).`;
+    const details = [suffix, filter.kind ? `kind=${filter.kind}` : '', filter.success === true ? 'success=true' : '']
+      .filter(Boolean)
+      .join(', ');
+    hudMessage.value = `Exported suggested_action traces (${details}).`;
   } catch {
     hudMessage.value = 'Failed to export suggested_action traces.';
   }

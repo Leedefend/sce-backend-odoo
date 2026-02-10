@@ -42,6 +42,9 @@ Compatibility entrypoint:
   - `Export SA all`
   - `Export SA ok`
   - `Export SA fail`
+  - `Export SA open_record`
+  - `Export SA copy_trace`
+  - `Export SA refresh`
 - HUD fields in `AppShell`:
   - `sa_kind`
   - `sa_success`
