@@ -1,6 +1,18 @@
 <template>
   <aside v-if="visible" class="hud">
     <h3>{{ title }}</h3>
+    <div v-if="actions?.length" class="actions">
+      <button
+        v-for="action in actions"
+        :key="action.key"
+        type="button"
+        class="action-btn"
+        @click="action.onClick()"
+      >
+        {{ action.label }}
+      </button>
+    </div>
+    <p v-if="message" class="message">{{ message }}</p>
     <div class="grid">
       <div v-for="entry in entries" :key="entry.label" class="row">
         <span class="label">{{ entry.label }}</span>
@@ -14,6 +26,8 @@
 defineProps<{
   title?: string;
   entries: Array<{ label: string; value?: string | number | null }>;
+  actions?: Array<{ key: string; label: string; onClick: () => void }>;
+  message?: string;
   visible: boolean;
 }>();
 </script>
@@ -44,6 +58,29 @@ defineProps<{
 .grid {
   display: grid;
   gap: 6px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.action-btn {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.45);
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.message {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: #cbd5e1;
 }
 
 .row {
