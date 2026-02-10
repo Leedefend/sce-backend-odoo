@@ -47,6 +47,12 @@ Runtime guard:
 make verify.frontend.suggested_action.runtime_guard
 ```
 
+Import boundary guard:
+
+```bash
+make verify.frontend.suggested_action.import_boundary_guard
+```
+
 Catalog export:
 
 ```bash
