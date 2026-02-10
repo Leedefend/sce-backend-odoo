@@ -197,6 +197,25 @@
     }
   },
   {
+    "case": "usage_export_csv_intent_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "usage.export.csv",
+    "intent_params": {
+      "days": 7,
+      "top": 10,
+      "export_filtered_only": true,
+      "hidden_reason": "ALL"
+    }
+  },
+  {
+    "case": "system_ping_construction_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "system.ping.construction",
+    "intent_params": {}
+  },
+  {
     "case": "api_data_intent_pm",
     "user": "pm",
     "op": "intent.invoke",
