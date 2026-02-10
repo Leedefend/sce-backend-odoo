@@ -25,7 +25,7 @@ Include:
 - extension prerequisite guard/apply/ensure flow
 - service-user baseline for my-work smoke (`svc_e2e_smoke`)
 - evidence docs:
-- `docs/ops/releases/phase_10_my_work_v1_evidence.md`
+- `docs/ops/releases/current/phase_10_my_work_v1_evidence.md`
 
 Do not include:
 
@@ -85,7 +85,7 @@ PR-A reviewer entry points:
 - `scripts/verify/extension_modules_guard.sh`
 - `scripts/ops/apply_extension_modules.sh`
 - `Makefile`
-- `docs/ops/releases/phase_10_my_work_v1_evidence.md`
+- `docs/ops/releases/current/phase_10_my_work_v1_evidence.md`
 
 PR-B reviewer entry points:
 

@@ -22,7 +22,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - Tag: `portal-shell-ui-v0.7.1` (planned)
    - Type: frontend
    - Status: draft
-   - Docs: `docs/ops/releases/frontend_v0_7_1_ui_notes.md`
+   - Docs: `docs/ops/releases/archive/frontend_history/frontend_v0_7_1_ui_notes.md`
    - Verify: `make verify.portal.ui.v0_7.container`, `make verify.portal.guard_groups`, `make verify.portal.recordview_hud_smoke.container`
    - GitHub Release: (not published)
 
@@ -107,5 +107,5 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
    - GitHub Release: (not published)
 
 ## Templates
-- Notes template: `docs/ops/releases/_templates/release_notes_TEMPLATE.md`
-- Checklist template: `docs/ops/releases/_templates/release_checklist_TEMPLATE.md`
+- Notes template: `docs/ops/releases/templates/release_notes_TEMPLATE.md`
+- Checklist template: `docs/ops/releases/templates/release_checklist_TEMPLATE.md`

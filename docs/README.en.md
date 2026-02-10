@@ -12,8 +12,8 @@ This directory is the top-level documentation entry aligned with current impleme
 - Scene Catalog: `docs/contract/exports/scene_catalog.json`
 
 ## Current-Phase Release Evidence (no migration in this phase)
-- Phase 11 Backend Closure: `docs/ops/releases/phase_11_backend_closure.md`
-- Phase 11.1 Contract Visibility: `docs/ops/releases/phase_11_1_contract_visibility.md`
+- Phase 11 Backend Closure: `docs/ops/releases/current/phase_11_backend_closure.md`
+- Phase 11.1 Contract Visibility: `docs/ops/releases/current/phase_11_1_contract_visibility.md`
 
 ## Quick Generation/Export (existing Make targets)
 ```bash

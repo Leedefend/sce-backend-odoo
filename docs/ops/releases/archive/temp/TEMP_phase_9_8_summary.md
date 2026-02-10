@@ -36,8 +36,8 @@
 - `config/odoo.conf.template`
 - `addons/smart_construction_demo/data/demo/demo_company_currency.xml`
 - `docs/ops/releases/act_url_remaining_audit.md`
-- `docs/ops/releases/TEMP_phase_9_8_progress.md`
-- `docs/ops/releases/TEMP_phase_9_8_pr_body.md`
+- `docs/ops/releases/archive/temp/TEMP_phase_9_8_progress.md`
+- `docs/ops/releases/archive/temp/TEMP_phase_9_8_pr_body.md`
 
 ## Notes
 - Gate enforcement now includes menu scene resolve, warnings guard, and legacy count cap.
