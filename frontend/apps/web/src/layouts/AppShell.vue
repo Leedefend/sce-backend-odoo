@@ -277,7 +277,11 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
     const content = exportSuggestedActionTraces({ ...filter, limit: 200 });
     const now = new Date().toISOString().replace(/[:.]/g, '-');
     downloadTextAsFile(`suggested-action-traces-${sanitizeExportSuffix(suffix)}-${now}.json`, content);
-    const details = [suffix, filter.kind ? `kind=${filter.kind}` : '', filter.success === true ? 'success=true' : '']
+    const sinceLabel =
+      typeof filter.since_ts === 'number' && Number.isFinite(filter.since_ts) && filter.since_ts > 0
+        ? `since_ts=${Math.floor(filter.since_ts)}`
+        : '';
+    const details = [suffix, filter.kind ? `kind=${filter.kind}` : '', filter.success === true ? 'success=true' : '', sinceLabel]
       .filter(Boolean)
       .join(', ');
     hudMessage.value = `Exported suggested_action traces (${details}).`;
