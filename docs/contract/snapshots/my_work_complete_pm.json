@@ -1,0 +1,28 @@
+{
+  "action": null,
+  "case": "my_work_complete_pm",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "done_at": "2026-02-10 03:20:14",
+    "error_category": "not_found",
+    "id": 999999991,
+    "message": "待办不存在",
+    "reason_code": "NOT_FOUND",
+    "retryable": false,
+    "source": "mail.activity",
+    "success": false,
+    "suggested_action": "refresh_list"
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
+}
