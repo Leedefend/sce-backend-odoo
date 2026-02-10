@@ -320,6 +320,13 @@ function isSafeRelativePath(path: string) {
   if (path.startsWith('//')) return false;
   const lowered = path.toLowerCase();
   if (lowered.includes('javascript:')) return false;
+  if (lowered.includes('%2f%2f')) return false;
+  try {
+    const decoded = decodeURIComponent(path).toLowerCase();
+    if (decoded.startsWith('//') || decoded.includes('javascript:')) return false;
+  } catch {
+    // Ignore decode error and keep original checks.
+  }
   return true;
 }
 
