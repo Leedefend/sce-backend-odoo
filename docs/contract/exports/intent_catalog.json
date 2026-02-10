@@ -6396,26 +6396,27 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "raw",
+        "raw[]",
+        "raw[].module",
+        "raw[].version"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "system_ping_construction_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/system_ping_construction_intent_admin.json",
           "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "raw",
+            "raw[]",
+            "raw[].module",
+            "raw[].version"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "ui.contract",
@@ -6524,35 +6525,33 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [
+        "days",
         "export_filtered_only",
-        "hidden_reason"
+        "hidden_reason",
+        "top"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "content",
+        "filename"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "usage_export_csv_intent_pm",
+          "snapshot_file": "docs/contract/snapshots/usage_export_csv_intent_pm.json",
           "request_keys": [
+            "days",
             "export_filtered_only",
-            "hidden_reason"
+            "hidden_reason",
+            "top"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "content",
+            "filename"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "export_filtered_only",
-          "hidden_reason"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "usage.report",

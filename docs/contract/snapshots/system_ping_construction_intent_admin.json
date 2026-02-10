@@ -1,0 +1,26 @@
+{
+  "action": null,
+  "case": "system_ping_construction_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "raw": [
+      {
+        "module": "smart_construction_core",
+        "version": "1.0.0"
+      },
+      {}
+    ]
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}
