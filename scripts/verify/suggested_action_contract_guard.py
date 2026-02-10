@@ -13,7 +13,7 @@ PRESENTATION_PATH = ROOT / "frontend/apps/web/src/app/suggested_action/presentat
 PARSER_PATH = ROOT / "frontend/apps/web/src/app/suggested_action/parser.ts"
 
 UNION_RE = re.compile(r"\|\s*'([^']*)'")
-MAP_RE = re.compile(r"^\s{2}([a-z0-9_]+):\s*'", re.MULTILINE)
+MAP_RE = re.compile(r"^\s{2}([a-z0-9_]+):\s*'([^']*)',?$", re.MULTILINE)
 ALIAS_VALUE_RE = re.compile(r"^\s{2}[a-z0-9_]+:\s*'([a-z0-9_]+)',?$", re.MULTILINE)
 
 
@@ -40,7 +40,21 @@ def _parse_map_keys(presentation_text: str, const_name: str) -> set[str]:
     if open_brace < 0 or close_brace < 0 or close_brace <= open_brace:
         raise ValueError(f"invalid object shape: {const_name}")
     body = tail[open_brace:close_brace]
-    return set(MAP_RE.findall(body))
+    return {match[0] for match in MAP_RE.findall(body)}
+
+
+def _parse_map_values(presentation_text: str, const_name: str) -> dict[str, str]:
+    marker = f"const {const_name}:"
+    start = presentation_text.find(marker)
+    if start < 0:
+        raise ValueError(f"missing constant: {const_name}")
+    tail = presentation_text[start:]
+    open_brace = tail.find("{")
+    close_brace = tail.find("};")
+    if open_brace < 0 or close_brace < 0 or close_brace <= open_brace:
+        raise ValueError(f"invalid object shape: {const_name}")
+    body = tail[open_brace:close_brace]
+    return {key: value for key, value in MAP_RE.findall(body)}
 
 
 def _parse_alias_values(parser_text: str) -> set[str]:
@@ -71,6 +85,8 @@ def main() -> int:
         parser_text = _read(PARSER_PATH)
         labels = _parse_map_keys(presentation_text, "LABELS")
         hints = _parse_map_keys(presentation_text, "HINTS")
+        label_values = _parse_map_values(presentation_text, "LABELS")
+        hint_values = _parse_map_values(presentation_text, "HINTS")
         alias_values = _parse_alias_values(parser_text)
     except (FileNotFoundError, ValueError) as exc:
         return _fail([str(exc)])
@@ -81,6 +97,8 @@ def main() -> int:
     unknown_labels = sorted(labels - kinds)
     unknown_hints = sorted(hints - kinds)
     unknown_alias_values = sorted(alias_values - kinds)
+    blank_labels = sorted([key for key, value in label_values.items() if not value.strip()])
+    blank_hints = sorted([key for key, value in hint_values.items() if not value.strip()])
 
     if missing_labels:
         errors.append(f"missing labels for: {', '.join(missing_labels)}")
@@ -92,6 +110,10 @@ def main() -> int:
         errors.append(f"hints contain unknown kinds: {', '.join(unknown_hints)}")
     if unknown_alias_values:
         errors.append(f"alias map contains unknown kinds: {', '.join(unknown_alias_values)}")
+    if blank_labels:
+        errors.append(f"labels must not be blank: {', '.join(blank_labels)}")
+    if blank_hints:
+        errors.append(f"hints must not be blank: {', '.join(blank_hints)}")
 
     if errors:
         return _fail(errors)
