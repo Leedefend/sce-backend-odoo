@@ -18,6 +18,7 @@ export interface SuggestedActionTraceFilter {
   kind?: string;
   success?: boolean;
   limit?: number;
+  since_ts?: number;
 }
 
 export interface SuggestedActionTraceRow {
@@ -98,11 +99,13 @@ export function listSuggestedActionTraces(filter: SuggestedActionTraceFilter = {
   const limit = Math.max(1, Number(filter.limit || 50));
   const targetKind = String(filter.kind || '').trim().toLowerCase();
   const expectedSuccess = typeof filter.success === 'boolean' ? filter.success : null;
+  const sinceTs = Number(filter.since_ts || 0);
   const rows: SuggestedActionTraceRow[] = [];
 
   for (const event of getTraceLog()) {
     const row = normalizeSuggestedActionTrace(event);
     if (!row) continue;
+    if (sinceTs > 0 && row.ts < sinceTs) continue;
     if (targetKind && row.kind.toLowerCase() !== targetKind) continue;
     if (expectedSuccess !== null && row.success !== expectedSuccess) continue;
     rows.push(row);
