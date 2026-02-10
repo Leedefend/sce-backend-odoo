@@ -9,6 +9,7 @@ export type SuggestedActionKind =
   | 'open_my_work_todo'
   | 'open_my_work_done'
   | 'open_my_work_failed'
+  | 'open_my_work_section'
   | 'open_my_work'
   | 'open_usage_analytics'
   | 'open_locked'
@@ -45,6 +46,7 @@ export type SuggestedActionParsed = {
   projectId?: number;
   query?: string;
   hash?: string;
+  section?: string;
 };
 
 export function normalizeSuggestedAction(value?: string) {
@@ -79,6 +81,11 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'open_todo') return { kind: 'open_my_work_todo', raw };
   if (raw === 'open_done') return { kind: 'open_my_work_done', raw };
   if (raw === 'open_failed') return { kind: 'open_my_work_failed', raw };
+  const myWorkSectionMatch = rawInput.match(/^open_my_work_section:([a-z0-9_]+)$/i);
+  if (myWorkSectionMatch) {
+    const section = String(myWorkSectionMatch[1] || '').trim();
+    if (section) return { kind: 'open_my_work_section', raw, section };
+  }
   if (raw.startsWith('open_my_work?')) {
     const query = rawInput.slice('open_my_work?'.length).trim();
     if (query) return { kind: 'open_my_work', raw, query };
@@ -210,6 +217,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_my_work_todo') return 'Open todo items';
   if (parsed.kind === 'open_my_work_done') return 'Open done items';
   if (parsed.kind === 'open_my_work_failed') return 'Open failed items';
+  if (parsed.kind === 'open_my_work_section') return 'Open work section';
   if (parsed.kind === 'open_my_work') return 'Open my work';
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics';
   if (parsed.kind === 'open_locked') return 'Open locked capabilities';
@@ -246,6 +254,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_my_work_todo') return 'Open My Work todo section directly.';
   if (parsed.kind === 'open_my_work_done') return 'Open My Work done section directly.';
   if (parsed.kind === 'open_my_work_failed') return 'Open My Work failed section directly.';
+  if (parsed.kind === 'open_my_work_section') return 'Open a specific My Work section.';
   if (parsed.kind === 'open_my_work') return 'Open My Work and continue processing pending items.';
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics to inspect capability visibility.';
   if (parsed.kind === 'open_locked') return 'Open usage analytics filtered to locked capabilities.';
@@ -316,6 +325,7 @@ export function canRunSuggestedAction(
     parsed.kind === 'open_my_work_todo' ||
     parsed.kind === 'open_my_work_done' ||
     parsed.kind === 'open_my_work_failed' ||
+    parsed.kind === 'open_my_work_section' ||
     parsed.kind === 'open_my_work' ||
     parsed.kind === 'open_usage_analytics' ||
     parsed.kind === 'open_locked' ||
@@ -449,6 +459,9 @@ export function executeSuggestedAction(
   }
   if (parsed.kind === 'open_my_work_failed') {
     return finish(safeNavigate('/my-work?section=failed'));
+  }
+  if (parsed.kind === 'open_my_work_section' && parsed.section) {
+    return finish(safeNavigate(`/my-work?section=${encodeURIComponent(parsed.section)}`));
   }
   if (parsed.kind === 'open_usage_analytics') {
     return finish(safeNavigate(appendQuery('/admin/usage-analytics', parsed.query)));
