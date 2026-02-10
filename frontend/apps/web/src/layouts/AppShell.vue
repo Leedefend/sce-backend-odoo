@@ -105,7 +105,12 @@ import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { isHudEnabled } from '../config/debug';
 import type { NavNode } from '@sc/schema';
-import { exportSuggestedActionTraces, getLatestSuggestedActionTrace, getTraceUpdateEventName } from '../services/trace';
+import {
+  exportSuggestedActionTraces,
+  getLatestSuggestedActionTrace,
+  getTraceUpdateEventName,
+  rankSuggestedActionKinds,
+} from '../services/trace';
 
 const session = useSessionStore();
 const route = useRoute();
@@ -220,26 +225,23 @@ const hudEntries = computed(() => [
   { label: 'sa_success', value: String(latestSuggestedAction.value?.suggested_action_success ?? '-') },
   { label: 'sa_ts', value: latestSuggestedActionTs.value },
 ]);
+const defaultKindActions = ['open_record', 'copy_trace', 'refresh'];
 const hudActions = computed(() => [
   { key: 'export-sa-all', label: 'Export SA all', onClick: () => exportSuggestedActionJson() },
   { key: 'export-sa-ok', label: 'Export SA ok', onClick: () => exportSuggestedActionJson({ success: true }, 'ok') },
   { key: 'export-sa-fail', label: 'Export SA fail', onClick: () => exportSuggestedActionJson({ success: false }, 'fail') },
-  {
-    key: 'export-sa-kind-open-record',
-    label: 'Export SA open_record',
-    onClick: () => exportSuggestedActionJson({ kind: 'open_record' }, 'kind-open_record'),
-  },
-  {
-    key: 'export-sa-kind-copy-trace',
-    label: 'Export SA copy_trace',
-    onClick: () => exportSuggestedActionJson({ kind: 'copy_trace' }, 'kind-copy_trace'),
-  },
-  {
-    key: 'export-sa-kind-refresh',
-    label: 'Export SA refresh',
-    onClick: () => exportSuggestedActionJson({ kind: 'refresh' }, 'kind-refresh'),
-  },
+  ...resolveKindExportActions(),
 ]);
+
+function resolveKindExportActions() {
+  const rankedKinds = rankSuggestedActionKinds(3).map((item) => item.kind);
+  const chosenKinds = [...new Set([...rankedKinds, ...defaultKindActions])].slice(0, 3);
+  return chosenKinds.map((kind) => ({
+    key: `export-sa-kind-${kind}`,
+    label: `Export SA ${kind}`,
+    onClick: () => exportSuggestedActionJson({ kind }, `kind-${kind}`),
+  }));
+}
 
 function handleTraceUpdate() {
   suggestedActionStamp.value = Date.now();
