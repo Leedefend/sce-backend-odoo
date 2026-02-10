@@ -16,6 +16,45 @@ export interface StatusCopy {
   hint?: string;
 }
 
+export function resolveSuggestedAction(
+  suggestedAction?: string,
+  reasonCode?: string,
+  retryable?: boolean,
+): string {
+  const action = String(suggestedAction || '').trim().toLowerCase();
+  if (action === 'refresh_list' || action === 'refresh') return 'Refresh the latest data and retry.';
+  if (action === 'retry' || action === 'retry_later') return 'Retry this action after a short delay.';
+  if (action === 'relogin' || action === 'login_again') return 'Login again and retry.';
+  if (action === 'check_permission' || action === 'request_permission') return 'Check role permissions, then retry.';
+  if (action === 'open_record') return 'Open the related record and resolve blockers first.';
+
+  const code = String(reasonCode || '').toUpperCase();
+  if (code.includes('PERMISSION') || code.includes('FORBIDDEN')) return 'Check role permissions or contact an administrator.';
+  if (code.includes('NOT_FOUND')) return 'Refresh the list because the record may be removed or hidden.';
+  if (code.includes('CONFLICT')) return 'Reload current data and retry with latest version.';
+  if (code.includes('NETWORK')) return 'Check network connectivity and retry.';
+
+  if (retryable === true) return 'This failure is retryable. Try again now or after a short delay.';
+  if (retryable === false) return 'This failure is non-retryable. Resolve data/permission issues first.';
+  return '';
+}
+
+export function buildStatusError(err: unknown, fallbackMessage: string, kind?: string): StatusError {
+  if (err instanceof ApiError) {
+    const code = err.status;
+    return {
+      message: err.message,
+      code,
+      traceId: err.traceId,
+      hint: err.hint || getHint(code, err.kind),
+      kind: kind || err.kind,
+      reasonCode: err.reasonCode,
+    };
+  }
+  const message = err instanceof Error ? err.message : fallbackMessage;
+  return { message, kind };
+}
+
 function normalizeCode(code?: number | string) {
   if (typeof code === 'number') return code;
   if (typeof code === 'string') {
@@ -109,20 +148,7 @@ export function useStatus() {
   }
 
   function setError(err: unknown, fallbackMessage: string, kind?: string) {
-    if (err instanceof ApiError) {
-      const code = err.status;
-      error.value = {
-        message: err.message,
-        code,
-        traceId: err.traceId,
-        hint: err.hint || getHint(code, err.kind),
-        kind: kind || err.kind,
-        reasonCode: err.reasonCode,
-      };
-      return;
-    }
-    const message = err instanceof Error ? err.message : fallbackMessage;
-    error.value = { message, kind };
+    error.value = buildStatusError(err, fallbackMessage, kind);
   }
 
   return { error, clearError, setError };
