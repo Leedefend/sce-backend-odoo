@@ -374,7 +374,12 @@ Codex 的责任是 **定位 → 修复 → 重试**。
 ```
 artifacts/codex/<branch>/<timestamp>/
 ```
+文档形成规则
+目录结构一致：同名文件 .md + .en.md 成对出现（或 README.zh.md/README.en.md 成对出现，但全仓统一一种）
 
+链接一致：中文文档里链接到英文同位置的英文文档；英文文档同理
+
+术语表一致：建立 docs/TERMS.zh.md 与 docs/TERMS.en.md（可放 Phase A 或 C），约束 intent/scene/reason_code 的翻译固定用词（避免“contract”一会叫契约一会叫合约）
 ---
 
 ## 8. 一句话执行准则（给 Codex 用）

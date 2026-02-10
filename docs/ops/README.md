@@ -6,6 +6,7 @@
 - Release 证据目录: `docs/ops/releases/`
 - Phase 11 Backend Closure: `docs/ops/releases/current/phase_11_backend_closure.md`
 - Phase 11.1 Contract Visibility: `docs/ops/releases/current/phase_11_1_contract_visibility.md`
+- 临时归档（非正式、仅追溯）: `docs/ops/releases/archive/temp/`
 
 ## 与契约/审计的关系
 - Contract 总览: `docs/contract/README.md`
