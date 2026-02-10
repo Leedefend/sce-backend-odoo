@@ -1005,7 +1005,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.suggested_action.all
+.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.suggested_action.all
 
 fe.install:
 	@pnpm -C frontend install
@@ -1046,10 +1046,13 @@ verify.frontend.suggested_action.trace_export_guard: guard.prod.forbid
 verify.frontend.suggested_action.topk_guard: guard.prod.forbid
 	@python3 scripts/verify/suggested_action_topk_guard.py
 
+verify.frontend.suggested_action.since_filter_guard: guard.prod.forbid
+	@python3 scripts/verify/suggested_action_since_filter_guard.py
+
 verify.frontend.suggested_action.hud_export_guard: guard.prod.forbid
 	@python3 scripts/verify/suggested_action_hud_export_guard.py
 
-verify.frontend.suggested_action.all: guard.prod.forbid verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.suggested_action.catalog verify.frontend.typecheck.strict verify.frontend.build
+verify.frontend.suggested_action.all: guard.prod.forbid verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.suggested_action.catalog verify.frontend.typecheck.strict verify.frontend.build
 	@echo "[OK] verify.frontend.suggested_action.all done"
 
 main.sync: guard.prod.forbid
