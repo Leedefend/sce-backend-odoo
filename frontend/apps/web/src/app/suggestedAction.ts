@@ -37,6 +37,7 @@ export type SuggestedActionParsed = {
   actionId?: number;
   projectId?: number;
   query?: string;
+  hash?: string;
 };
 
 export function normalizeSuggestedAction(value?: string) {
@@ -101,8 +102,12 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw.startsWith('open_scene:')) {
     const payload = raw.slice('open_scene:'.length).trim();
-    const [sceneKey, queryRaw] = payload.split('?');
+    const [payloadWithQuery, hashRaw] = payload.split('#');
+    const [sceneKey, queryRaw] = String(payloadWithQuery || '').split('?');
+    const hash = String(hashRaw || '').trim();
+    if (sceneKey && queryRaw && hash) return { kind: 'open_scene', raw, sceneKey, query: queryRaw, hash };
     if (sceneKey && queryRaw) return { kind: 'open_scene', raw, sceneKey, query: queryRaw };
+    if (sceneKey && hash) return { kind: 'open_scene', raw, sceneKey, hash };
     if (sceneKey) return { kind: 'open_scene', raw, sceneKey };
   }
   const menuMatch = raw.match(/^open_menu:([0-9]+)(?:\?(.+))?$/);
@@ -120,11 +125,17 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (Number.isFinite(actionId) && actionId > 0) return { kind: 'open_action', raw, actionId };
   }
   if (raw.startsWith('open_route:')) {
-    const url = raw.slice('open_route:'.length).trim();
+    const payload = raw.slice('open_route:'.length).trim();
+    const [url, hashRaw] = payload.split('#');
+    const hash = String(hashRaw || '').trim();
+    if (url.startsWith('/') && hash) return { kind: 'open_route', raw, url, hash };
     if (url.startsWith('/')) return { kind: 'open_route', raw, url };
   }
   if (raw.startsWith('open_url:')) {
-    const url = raw.slice('open_url:'.length).trim();
+    const payload = raw.slice('open_url:'.length).trim();
+    const [url, hashRaw] = payload.split('#');
+    const hash = String(hashRaw || '').trim();
+    if (url.startsWith('/') && hash) return { kind: 'open_url', raw, url, hash };
     if (url.startsWith('/')) return { kind: 'open_url', raw, url };
   }
   return { kind: '', raw };
@@ -286,6 +297,12 @@ function appendQuery(path: string, query?: string) {
   return `${path}?${cleaned}`;
 }
 
+function appendHash(path: string, hash?: string) {
+  const h = String(hash || '').trim().replace(/^#+/, '');
+  if (!h) return path;
+  return `${path}#${h}`;
+}
+
 export function executeSuggestedAction(
   parsed: SuggestedActionParsed,
   options: {
@@ -345,7 +362,9 @@ export function executeSuggestedAction(
     return safeNavigate(appendQuery(`/projects/${parsed.projectId}`, parsed.query));
   }
   if (parsed.kind === 'open_scene' && parsed.sceneKey) {
-    return safeNavigate(appendQuery(`/s/${encodeURIComponent(parsed.sceneKey)}`, parsed.query));
+    return safeNavigate(
+      appendHash(appendQuery(`/s/${encodeURIComponent(parsed.sceneKey)}`, parsed.query), parsed.hash),
+    );
   }
   if (parsed.kind === 'open_menu' && parsed.menuId) {
     return safeNavigate(appendQuery(`/m/${parsed.menuId}`, parsed.query));
@@ -359,10 +378,10 @@ export function executeSuggestedAction(
     );
   }
   if (parsed.kind === 'open_route' && parsed.url) {
-    return safeNavigate(parsed.url);
+    return safeNavigate(appendHash(parsed.url, parsed.hash));
   }
   if (parsed.kind === 'open_url' && parsed.url) {
-    return safeNavigate(parsed.url);
+    return safeNavigate(appendHash(parsed.url, parsed.hash));
   }
   if (parsed.kind === 'copy_trace') {
     void copyText(options.traceId || '');
