@@ -38,6 +38,7 @@
       :suggested-action="error?.suggestedAction"
       variant="error"
       :on-retry="reload"
+      :on-suggested-action="handleSuggestedAction"
     />
     <StatusPanel
       v-else-if="renderBlocked"
@@ -380,6 +381,13 @@ async function runButton(btn: ViewButton) {
 
 function reload() {
   load();
+}
+
+function handleSuggestedAction(action: string): boolean {
+  if (action !== 'open_record') return false;
+  if (!model.value || !recordId.value) return false;
+  router.push(`/r/${model.value}/${recordId.value}?view_mode=form`).catch(() => {});
+  return true;
 }
 
 onMounted(load);

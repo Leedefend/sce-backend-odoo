@@ -34,34 +34,57 @@ const props = defineProps<{
   suggestedAction?: string;
   variant?: 'error' | 'info' | 'forbidden_capability';
   onRetry?: () => void;
+  onSuggestedAction?: (action: string) => boolean | void;
 }>();
 
 function normalizeSuggestedAction(value?: string) {
   return String(value || '').trim().toLowerCase();
 }
 
-function suggestedActionKind(): 'refresh' | 'retry' | 'relogin' | 'check_permission' | '' {
+function suggestedActionKind():
+  | 'refresh'
+  | 'retry'
+  | 'relogin'
+  | 'check_permission'
+  | 'open_record'
+  | '' {
   const value = normalizeSuggestedAction(props.suggestedAction);
   if (!value) return '';
   if (value === 'refresh' || value === 'refresh_list') return 'refresh';
   if (value === 'retry' || value === 'retry_later') return 'retry';
   if (value === 'relogin' || value === 'login_again') return 'relogin';
   if (value === 'check_permission' || value === 'request_permission') return 'check_permission';
+  if (value === 'open_record') return 'open_record';
   return '';
 }
 
+const canRunSuggestedAction = computed(() => {
+  const kind = suggestedActionKind();
+  if (!kind) return false;
+  if (kind === 'refresh' || kind === 'retry') return typeof props.onRetry === 'function';
+  if (kind === 'open_record') return typeof props.onSuggestedAction === 'function';
+  return true;
+});
+
 const suggestedActionLabel = computed(() => {
   const kind = suggestedActionKind();
+  if (!canRunSuggestedAction.value) return '';
   if (kind === 'refresh') return 'Refresh now';
   if (kind === 'retry') return 'Retry now';
   if (kind === 'relogin') return 'Go to login';
   if (kind === 'check_permission') return 'View permissions';
+  if (kind === 'open_record') return 'Open record';
   return '';
 });
 
 function runSuggestedAction() {
   const kind = suggestedActionKind();
   if (!kind) return;
+  const rawAction = normalizeSuggestedAction(props.suggestedAction);
+  if (props.onSuggestedAction && rawAction) {
+    const handled = props.onSuggestedAction(rawAction);
+    if (handled) return;
+  }
   if ((kind === 'refresh' || kind === 'retry') && props.onRetry) {
     props.onRetry();
     return;
@@ -73,6 +96,7 @@ function runSuggestedAction() {
   }
   if (kind === 'check_permission') {
     window.location.href = '/usage-analytics';
+    return;
   }
 }
 

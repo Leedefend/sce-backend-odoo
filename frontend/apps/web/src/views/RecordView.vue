@@ -43,6 +43,7 @@
       :suggested-action="error?.suggestedAction"
       variant="error"
       :on-retry="reload"
+      :on-suggested-action="handleSuggestedAction"
     />
     <StatusPanel
       v-else-if="status === 'empty'"
@@ -484,6 +485,13 @@ function analyzeLayout(layout: ViewContract['layout']) {
 
 function reload() {
   load();
+}
+
+function handleSuggestedAction(action: string): boolean {
+  if (action !== 'open_record') return false;
+  if (!model.value || !recordId.value) return false;
+  router.push({ name: 'record', params: { model: model.value, id: recordId.value } }).catch(() => {});
+  return true;
 }
 
 function normalizeButtons(raw: unknown): ViewButton[] {
