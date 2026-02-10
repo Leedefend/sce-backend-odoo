@@ -22,7 +22,11 @@ class _BaseScenePackageHandler(BaseIntentHandler):
 
     def _params(self, payload):
         params = (payload or {}).get("params") if isinstance(payload, dict) else payload
-        return params if isinstance(params, dict) else {}
+        if isinstance(params, dict):
+            return params
+        if isinstance(payload, dict):
+            return payload
+        return {}
 
     def _response(self, ts0, data):
         return {
