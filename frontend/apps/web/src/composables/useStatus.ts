@@ -30,6 +30,9 @@ export function resolveSuggestedAction(
   if (action === 'relogin' || action === 'login_again') return 'Login again and retry.';
   if (action === 'check_permission' || action === 'request_permission') return 'Check role permissions, then retry.';
   if (action === 'open_record') return 'Open the related record and resolve blockers first.';
+  if (action.startsWith('open_record:')) return 'Open the related record and resolve blockers first.';
+  if (action.startsWith('open_scene:')) return 'Open the related scene and continue.';
+  if (action.startsWith('open_url:')) return 'Open the provided link and continue.';
 
   const code = String(reasonCode || '').toUpperCase();
   if (code.includes('PERMISSION') || code.includes('FORBIDDEN')) return 'Check role permissions or contact an administrator.';

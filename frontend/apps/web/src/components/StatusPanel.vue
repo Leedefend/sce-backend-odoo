@@ -41,61 +41,116 @@ function normalizeSuggestedAction(value?: string) {
   return String(value || '').trim().toLowerCase();
 }
 
-function suggestedActionKind():
+type SuggestedActionKind =
   | 'refresh'
   | 'retry'
   | 'relogin'
   | 'check_permission'
   | 'open_record'
-  | '' {
-  const value = normalizeSuggestedAction(props.suggestedAction);
-  if (!value) return '';
-  if (value === 'refresh' || value === 'refresh_list') return 'refresh';
-  if (value === 'retry' || value === 'retry_later') return 'retry';
-  if (value === 'relogin' || value === 'login_again') return 'relogin';
-  if (value === 'check_permission' || value === 'request_permission') return 'check_permission';
-  if (value === 'open_record') return 'open_record';
-  return '';
+  | 'open_scene'
+  | 'open_url'
+  | '';
+
+type SuggestedActionParsed = {
+  kind: SuggestedActionKind;
+  raw: string;
+  model?: string;
+  recordId?: number;
+  sceneKey?: string;
+  url?: string;
+};
+
+function parseSuggestedAction(value?: string): SuggestedActionParsed {
+  const raw = normalizeSuggestedAction(value);
+  if (!raw) return { kind: '', raw: '' };
+  if (raw === 'refresh' || raw === 'refresh_list') return { kind: 'refresh', raw };
+  if (raw === 'retry' || raw === 'retry_later') return { kind: 'retry', raw };
+  if (raw === 'relogin' || raw === 'login_again') return { kind: 'relogin', raw };
+  if (raw === 'check_permission' || raw === 'request_permission') return { kind: 'check_permission', raw };
+  if (raw === 'open_record') return { kind: 'open_record', raw };
+  if (raw.startsWith('open_record:')) {
+    const parts = raw.split(':');
+    if (parts.length >= 3) {
+      const recordId = Number(parts[2]);
+      if (parts[1] && Number.isFinite(recordId) && recordId > 0) {
+        return { kind: 'open_record', raw, model: parts[1], recordId };
+      }
+    }
+  }
+  if (raw.startsWith('open_scene:')) {
+    const sceneKey = raw.slice('open_scene:'.length).trim();
+    if (sceneKey) return { kind: 'open_scene', raw, sceneKey };
+  }
+  if (raw.startsWith('open_url:')) {
+    const url = raw.slice('open_url:'.length).trim();
+    if (url.startsWith('/')) return { kind: 'open_url', raw, url };
+  }
+  return { kind: '', raw };
+}
+
+function safeNavigate(path: string) {
+  if (!path.startsWith('/')) return;
+  window.location.href = path;
 }
 
 const canRunSuggestedAction = computed(() => {
-  const kind = suggestedActionKind();
-  if (!kind) return false;
-  if (kind === 'refresh' || kind === 'retry') return typeof props.onRetry === 'function';
-  if (kind === 'open_record') return typeof props.onSuggestedAction === 'function';
-  return true;
+  const parsed = parseSuggestedAction(props.suggestedAction);
+  if (!parsed.kind) return false;
+  if (parsed.kind === 'refresh' || parsed.kind === 'retry') return typeof props.onRetry === 'function';
+  if (parsed.kind === 'open_record') {
+    if (parsed.model && parsed.recordId) return true;
+    return typeof props.onSuggestedAction === 'function';
+  }
+  if (parsed.kind === 'open_scene') return Boolean(parsed.sceneKey);
+  if (parsed.kind === 'open_url') return Boolean(parsed.url);
+  if (parsed.kind === 'check_permission' || parsed.kind === 'relogin') return true;
+  return false;
 });
 
 const suggestedActionLabel = computed(() => {
-  const kind = suggestedActionKind();
+  const kind = parseSuggestedAction(props.suggestedAction).kind;
   if (!canRunSuggestedAction.value) return '';
   if (kind === 'refresh') return 'Refresh now';
   if (kind === 'retry') return 'Retry now';
   if (kind === 'relogin') return 'Go to login';
   if (kind === 'check_permission') return 'View permissions';
   if (kind === 'open_record') return 'Open record';
+  if (kind === 'open_scene') return 'Open scene';
+  if (kind === 'open_url') return 'Open link';
   return '';
 });
 
 function runSuggestedAction() {
-  const kind = suggestedActionKind();
-  if (!kind) return;
-  const rawAction = normalizeSuggestedAction(props.suggestedAction);
+  const parsed = parseSuggestedAction(props.suggestedAction);
+  if (!parsed.kind) return;
+  const rawAction = parsed.raw;
   if (props.onSuggestedAction && rawAction) {
     const handled = props.onSuggestedAction(rawAction);
     if (handled) return;
   }
-  if ((kind === 'refresh' || kind === 'retry') && props.onRetry) {
+  if ((parsed.kind === 'refresh' || parsed.kind === 'retry') && props.onRetry) {
     props.onRetry();
     return;
   }
-  if (kind === 'relogin') {
+  if (parsed.kind === 'relogin') {
     const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-    window.location.href = `/login?redirect=${redirect}`;
+    safeNavigate(`/login?redirect=${redirect}`);
     return;
   }
-  if (kind === 'check_permission') {
-    window.location.href = '/usage-analytics';
+  if (parsed.kind === 'check_permission') {
+    safeNavigate('/usage-analytics');
+    return;
+  }
+  if (parsed.kind === 'open_scene' && parsed.sceneKey) {
+    safeNavigate(`/s/${encodeURIComponent(parsed.sceneKey)}`);
+    return;
+  }
+  if (parsed.kind === 'open_record' && parsed.model && parsed.recordId) {
+    safeNavigate(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`);
+    return;
+  }
+  if (parsed.kind === 'open_url' && parsed.url) {
+    safeNavigate(parsed.url);
     return;
   }
 }
