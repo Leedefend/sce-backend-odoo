@@ -79,6 +79,10 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw === 'open_my_work') return { kind: 'open_my_work', raw };
   if (raw === 'open_todo') return { kind: 'open_my_work_todo', raw };
+  if (raw.startsWith('open_todo?')) {
+    const query = rawInput.slice('open_todo?'.length).trim();
+    if (query) return { kind: 'open_my_work_todo', raw, query };
+  }
   if (raw === 'open_done') return { kind: 'open_my_work_done', raw };
   if (raw === 'open_failed') return { kind: 'open_my_work_failed', raw };
   const myWorkSectionMatch = rawInput.match(/^open_my_work_section:([a-z0-9_]+)$/i);
@@ -457,7 +461,7 @@ export function executeSuggestedAction(
     return finish(safeNavigate(appendQuery('/my-work', parsed.query)));
   }
   if (parsed.kind === 'open_my_work_todo') {
-    return finish(safeNavigate('/my-work?section=todo'));
+    return finish(safeNavigate(appendQuery('/my-work?section=todo', parsed.query)));
   }
   if (parsed.kind === 'open_my_work_done') {
     return finish(safeNavigate('/my-work?section=done'));
