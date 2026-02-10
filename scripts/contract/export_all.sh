@@ -68,6 +68,8 @@ for case in cases:
         cmd += ["--outdir", outdir]
     if case.get("include_meta"):
         cmd += ["--include_meta"]
+    if case.get("allow_error_response"):
+        cmd += ["--allow_error_response"]
 
     subprocess.run(cmd, check=True)
 PY

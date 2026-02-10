@@ -1,0 +1,23 @@
+{
+  "action": null,
+  "case": "sample_enhanced_intent_admin",
+  "contract_version": "v1",
+  "error": {
+    "code": 404,
+    "message": "intent handler not found: sample.enhanced modules=['smart_construction_core']",
+    "type": "HandlerNotFound"
+  },
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {},
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}
