@@ -61,7 +61,18 @@
     </section>
 
     <section v-if="status === 'ok' && batchDetails.length" class="batch-details">
-      <p v-for="(line, idx) in batchDetails" :key="idx">{{ line }}</p>
+      <p v-for="(line, idx) in batchDetails" :key="idx">
+        <span>{{ batchDetailText(line) }}</span>
+        <button
+          v-if="batchDetailActionLabel(line) && onBatchDetailAction"
+          type="button"
+          class="batch-detail-action"
+          :disabled="loading"
+          @click="runBatchDetailAction(line)"
+        >
+          {{ batchDetailActionLabel(line) }}
+        </button>
+      </p>
       <button
         v-if="hasMoreFailures"
         type="button"
@@ -133,6 +144,12 @@ import PageToolbar from '../components/page/PageToolbar.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 
+type BatchDetailLine = {
+  text: string;
+  actionRaw?: string;
+  actionLabel?: string;
+};
+
 const props = defineProps<{
   title: string;
   model: string;
@@ -167,11 +184,12 @@ const props = defineProps<{
   onAssigneeChange?: (assigneeId: number | null) => void;
   onClearSelection?: () => void;
   batchMessage?: string;
-  batchDetails?: string[];
+  batchDetails?: Array<string | BatchDetailLine>;
   failedCsvAvailable?: boolean;
   onDownloadFailedCsv?: () => void;
   hasMoreFailures?: boolean;
   onLoadMoreFailures?: () => void;
+  onBatchDetailAction?: (actionRaw: string) => void;
   showAssign?: boolean;
   assigneeOptions?: Array<{ id: number; name: string }>;
   selectedAssigneeId?: number | null;
@@ -214,7 +232,9 @@ function rowId(row: Record<string, unknown>) {
 
 const selectedIdSet = computed(() => new Set((props.selectedIds || []).filter((id) => Number.isFinite(id))));
 const selectedCount = computed(() => (props.selectedIds || []).length);
-const batchDetails = computed(() => (Array.isArray(props.batchDetails) ? props.batchDetails : []));
+const batchDetails = computed<Array<string | BatchDetailLine>>(() =>
+  Array.isArray(props.batchDetails) ? props.batchDetails : [],
+);
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
 const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll && !!props.onBatchAction);
 const showBatchBar = computed(() => showSelectionColumn.value);
@@ -302,6 +322,24 @@ function loadMoreFailures() {
   props.onLoadMoreFailures?.();
 }
 
+function batchDetailText(line: string | BatchDetailLine) {
+  if (typeof line === 'string') return line;
+  return String(line?.text || '');
+}
+
+function batchDetailActionLabel(line: string | BatchDetailLine) {
+  if (!line || typeof line === 'string') return '';
+  return String(line.actionLabel || '');
+}
+
+function runBatchDetailAction(line: string | BatchDetailLine) {
+  if (!props.onBatchDetailAction) return;
+  if (!line || typeof line === 'string') return;
+  const raw = String(line.actionRaw || '').trim();
+  if (!raw) return;
+  props.onBatchDetailAction(raw);
+}
+
 const rowPrimary = computed(() => props.listProfile?.row_primary || '');
 const rowSecondary = computed(() => props.listProfile?.row_secondary || '');
 const hiddenColumns = computed(() => {
@@ -377,6 +415,17 @@ function columnLabel(col: string) {
 
 .batch-details p {
   margin: 3px 0;
+}
+
+.batch-detail-action {
+  margin-left: 8px;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .batch-download {

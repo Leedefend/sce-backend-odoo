@@ -55,6 +55,7 @@
       :on-assignee-change="handleAssigneeChange"
       :on-download-failed-csv="handleDownloadFailedCsv"
       :on-load-more-failures="handleLoadMoreFailures"
+      :on-batch-detail-action="handleBatchDetailAction"
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
@@ -83,6 +84,12 @@ import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
+import {
+  canRunSuggestedAction,
+  executeSuggestedAction,
+  parseSuggestedAction,
+  suggestedActionLabel,
+} from '../app/suggestedAction';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
@@ -104,7 +111,8 @@ const assigneeOptions = ref<Array<{ id: number; name: string }>>([]);
 const selectedAssigneeId = ref<number | null>(null);
 const selectedIds = ref<number[]>([]);
 const batchMessage = ref('');
-const batchDetails = ref<string[]>([]);
+type BatchDetailLine = { text: string; actionRaw?: string; actionLabel?: string };
+const batchDetails = ref<BatchDetailLine[]>([]);
 const failedCsvFileName = ref('');
 const failedCsvContentB64 = ref('');
 const batchFailedOffset = ref(0);
@@ -292,10 +300,20 @@ function applyBatchFailureArtifacts(result: {
   failed_csv_content_b64?: string;
 }, options?: { append?: boolean }) {
   const preview = Array.isArray(result.failed_preview) ? result.failed_preview : [];
-  const lines = preview.map((item) => {
+  const lines: BatchDetailLine[] = preview.map((item) => {
     const hint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
     const retryTag = item.retryable === true ? 'retryable' : item.retryable === false ? 'non-retryable' : '';
-    return [`#${item.id} ${item.reason_code}: ${item.message}`, retryTag, hint].filter(Boolean).join(' | ');
+    const text = [`#${item.id} ${item.reason_code}: ${item.message}`, retryTag, hint].filter(Boolean).join(' | ');
+    const parsed = parseSuggestedAction(item.suggested_action);
+    const canRun = canRunSuggestedAction(parsed, {
+      hasRetryHandler: true,
+      hasActionHandler: false,
+    });
+    return {
+      text,
+      actionRaw: canRun ? parsed.raw : '',
+      actionLabel: canRun ? suggestedActionLabel(parsed) : '',
+    };
   });
   if (options?.append) {
     batchDetails.value = [...batchDetails.value, ...lines];
@@ -311,6 +329,11 @@ function applyBatchFailureArtifacts(result: {
   if ('failed_csv_content_b64' in result && result.failed_csv_content_b64) {
     failedCsvContentB64.value = String(result.failed_csv_content_b64 || '');
   }
+}
+
+function handleBatchDetailAction(actionRaw: string) {
+  const parsed = parseSuggestedAction(actionRaw);
+  executeSuggestedAction(parsed, { onRetry: reload });
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
