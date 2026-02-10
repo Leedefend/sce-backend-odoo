@@ -1075,7 +1075,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1114,9 +1114,26 @@ verify.contract_drift.guard: guard.prod.forbid
 verify.intent.side_effect_policy_guard: guard.prod.forbid
 	@python3 scripts/verify/side_effect_intent_policy_guard.py
 
+verify.docs.inventory: guard.prod.forbid
+	@python3 scripts/verify/docs_inventory.py
+
+verify.docs.links: guard.prod.forbid
+	@python3 scripts/verify/docs_links.py
+
+verify.docs.temp_guard: guard.prod.forbid
+	@python3 scripts/verify/docs_temp_guard.py
+
+verify.docs.contract_sync: guard.prod.forbid
+	@python3 scripts/verify/docs_contract_sync.py
+
+verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync
+	@echo "[OK] verify.docs.all done"
+
 verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.test_seed_dependency.guard
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
+	@$(MAKE) --no-print-directory verify.docs.links
+	@$(MAKE) --no-print-directory verify.docs.temp_guard
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
 	@$(MAKE) --no-print-directory verify.scene.contract.shape
 	@$(MAKE) --no-print-directory contract.evidence.export
