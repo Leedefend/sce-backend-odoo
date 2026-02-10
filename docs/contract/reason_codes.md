@@ -1,5 +1,7 @@
 # Reason Codes Contract (Phase 10)
 
+返回总览: `docs/contract/README.md`
+
 This document defines the canonical reason-code taxonomy used by Phase 10 interaction contracts.
 
 ## 1. Registry Source

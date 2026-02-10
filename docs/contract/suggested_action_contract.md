@@ -1,5 +1,7 @@
 # Suggested Action Contract
 
+Back to contract hub: `docs/contract/README.md`
+
 ## Purpose
 
 This document defines the frontend contract for `suggested_action` parsing and execution.
