@@ -11,12 +11,17 @@
       <p v-if="hint" class="trace">Hint: {{ hint }}</p>
       <p v-if="suggestedAction" class="trace">Suggested: {{ suggestedAction }}</p>
       <button v-if="traceId" class="trace-copy" @click="copyTrace">Copy trace</button>
+      <button v-if="suggestedActionLabel" class="trace-copy" @click="runSuggestedAction">
+        {{ suggestedActionLabel }}
+      </button>
     </div>
     <button v-if="onRetry" @click="onRetry">Retry</button>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
 const props = defineProps<{
   title: string;
   message?: string;
@@ -30,6 +35,41 @@ const props = defineProps<{
   variant?: 'error' | 'info' | 'forbidden_capability';
   onRetry?: () => void;
 }>();
+
+function normalizeSuggestedAction(value?: string) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function suggestedActionKind(): 'refresh' | 'retry' | 'relogin' | '' {
+  const value = normalizeSuggestedAction(props.suggestedAction);
+  if (!value) return '';
+  if (value === 'refresh' || value === 'refresh_list') return 'refresh';
+  if (value === 'retry' || value === 'retry_later') return 'retry';
+  if (value === 'relogin' || value === 'login_again') return 'relogin';
+  return '';
+}
+
+const suggestedActionLabel = computed(() => {
+  const kind = suggestedActionKind();
+  if (kind === 'refresh') return 'Refresh now';
+  if (kind === 'retry') return 'Retry now';
+  if (kind === 'relogin') return 'Go to login';
+  return '';
+});
+
+function runSuggestedAction() {
+  const kind = suggestedActionKind();
+  if (!kind) return;
+  if ((kind === 'refresh' || kind === 'retry') && props.onRetry) {
+    props.onRetry();
+    return;
+  }
+  if (kind === 'relogin') {
+    const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+    window.location.href = `/login?redirect=${redirect}`;
+    return;
+  }
+}
 
 function copyTrace() {
   if (!props.traceId) {
