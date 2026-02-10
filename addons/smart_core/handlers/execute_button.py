@@ -23,6 +23,7 @@ _logger = logging.getLogger(__name__)
 class ExecuteButtonHandler(BaseIntentHandler):
     INTENT_TYPE = "execute_button"
     DESCRIPTION = "执行模型按钮方法"
+    NON_IDEMPOTENT_ALLOWED = "button methods can trigger business side effects beyond replay-safe scope"
 
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}

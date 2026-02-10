@@ -1005,7 +1005,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.suggested_action.all
+.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all
 
 fe.install:
 	@pnpm -C frontend install
@@ -1052,7 +1052,13 @@ verify.frontend.suggested_action.since_filter_guard: guard.prod.forbid
 verify.frontend.suggested_action.hud_export_guard: guard.prod.forbid
 	@python3 scripts/verify/suggested_action_hud_export_guard.py
 
-verify.frontend.suggested_action.all: guard.prod.forbid verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.suggested_action.catalog verify.frontend.typecheck.strict verify.frontend.build
+verify.frontend.cross_stack_smoke: guard.prod.forbid
+	@python3 scripts/verify/cross_stack_suggested_action_smoke.py
+
+verify.frontend.no_new_any_guard: guard.prod.forbid
+	@python3 scripts/verify/no_new_any_guard.py
+
+verify.frontend.suggested_action.all: guard.prod.forbid verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.catalog verify.frontend.typecheck.strict verify.frontend.build
 	@echo "[OK] verify.frontend.suggested_action.all done"
 
 main.sync: guard.prod.forbid
@@ -1069,7 +1075,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1103,6 +1109,10 @@ verify.test_seed_dependency.guard: guard.prod.forbid
 
 verify.contract_drift.guard: guard.prod.forbid
 	@bash scripts/verify/contract_drift_guard.sh
+	@$(MAKE) --no-print-directory verify.intent.side_effect_policy_guard
+
+verify.intent.side_effect_policy_guard: guard.prod.forbid
+	@python3 scripts/verify/side_effect_intent_policy_guard.py
 
 verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.test_seed_dependency.guard

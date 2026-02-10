@@ -32,3 +32,12 @@ Baseline snapshots define the expected contract output for critical cases. They 
 
 ## Ownership
 - Baseline updates must be reviewed by a code owner for contract schema changes.
+
+## Side-effect intent governance
+- Side-effect intents must declare one governance mode:
+  - `IDEMPOTENCY_WINDOW_SECONDS` (preferred, replay/conflict managed), or
+  - `NON_IDEMPOTENT_ALLOWED = "<explicit reason>"` (waiver path for non-replayable operations).
+- Policy source: `scripts/verify/baselines/side_effect_intents_policy.json`.
+- Verification:
+  - `make verify.intent.side_effect_policy_guard`
+  - `make verify.contract_drift.guard`
