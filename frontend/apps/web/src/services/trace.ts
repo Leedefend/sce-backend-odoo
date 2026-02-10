@@ -137,6 +137,15 @@ export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter =
   return JSON.stringify(payload, null, 2);
 }
 
+export function summarizeSuggestedActionTraceFilter(filter: SuggestedActionTraceFilter = {}): string {
+  const parts: string[] = [];
+  const kind = String(filter.kind || '').trim();
+  if (kind) parts.push(`kind=${kind}`);
+  if (typeof filter.success === 'boolean') parts.push(`success=${filter.success ? 'true' : 'false'}`);
+  if (Number(filter.since_ts || 0) > 0) parts.push(`since_ts=${Math.floor(Number(filter.since_ts))}`);
+  return parts.join(', ');
+}
+
 export function rankSuggestedActionKinds(limit = 5): SuggestedActionKindStat[] {
   const stats = new Map<string, number>();
   for (const row of listSuggestedActionTraces({ limit: MAX_ENTRIES })) {
