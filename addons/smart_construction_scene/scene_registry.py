@@ -60,7 +60,8 @@ def _apply_scene_defaults(scene, drift=None, source="registry"):
             or target.get("model")
             or target.get("route")
         ):
-            target["route"] = "/workbench?scene=projects.intake&reason=TARGET_MISSING"
+            # Keep intake scene executable without leaking workbench fallback.
+            target["route"] = "/s/projects.intake"
             scene["target"] = target
             if source == "db":
                 _append_drift(

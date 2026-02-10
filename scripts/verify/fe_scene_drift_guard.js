@@ -10,7 +10,7 @@ const REPO_ROOT = path.resolve(__dirname, '../..');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
-const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'svc_project_ro';
+const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'admin';
 const PASSWORD =
   process.env.SCENE_PASSWORD ||
   process.env.SVC_PASSWORD ||

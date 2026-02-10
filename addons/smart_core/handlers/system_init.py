@@ -846,20 +846,29 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
         if resolved:
             scene["target"] = resolved
         else:
+            semantic_fallback = f"/s/{scene_key}"
             if route_is_missing_fallback:
-                # Preserve existing fallback route from contract/db for traceability.
-                scene["target"] = target
-            else:
-                fallback_route = f"/workbench?scene={scene_key}&reason=TARGET_MISSING"
-                scene["target"] = {"route": fallback_route}
+                # Replace legacy workbench fallback with semantic scene route.
+                scene["target"] = {"route": semantic_fallback}
                 _append_resolve_error(
                     resolve_errors,
                     scene_key=scene_key,
                     kind="target",
                     code="MISSING_TARGET",
-                    ref=fallback_route,
+                    ref=semantic_fallback,
                     field="target",
-                    message="target missing; fallback route applied",
+                    message="target missing; semantic fallback route applied",
+                )
+            else:
+                scene["target"] = {"route": semantic_fallback}
+                _append_resolve_error(
+                    resolve_errors,
+                    scene_key=scene_key,
+                    kind="target",
+                    code="MISSING_TARGET",
+                    ref=semantic_fallback,
+                    field="target",
+                    message="target missing; semantic fallback route applied",
                 )
     return scenes
 
