@@ -52,6 +52,10 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'check_permission' || raw === 'request_permission') return { kind: 'check_permission', raw };
   if (raw === 'open_home' || raw === 'go_home') return { kind: 'open_home', raw };
   if (raw === 'open_my_work' || raw === 'open_todo') return { kind: 'open_my_work', raw };
+  if (raw.startsWith('open_my_work?')) {
+    const query = raw.slice('open_my_work?'.length).trim();
+    if (query) return { kind: 'open_my_work', raw, query };
+  }
   if (raw === 'open_usage_analytics' || raw === 'open_capability_visibility') {
     return { kind: 'open_usage_analytics', raw };
   }
@@ -297,7 +301,7 @@ export function executeSuggestedAction(
     return safeNavigate('/');
   }
   if (parsed.kind === 'open_my_work') {
-    return safeNavigate('/my-work');
+    return safeNavigate(appendQuery('/my-work', parsed.query));
   }
   if (parsed.kind === 'open_usage_analytics') {
     return safeNavigate('/admin/usage-analytics');
