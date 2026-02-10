@@ -77,7 +77,15 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (query) return { kind: 'open_scene_packages', raw, query };
   }
   if (raw === 'open_projects_list') return { kind: 'open_projects_list', raw };
+  if (raw.startsWith('open_projects_list?')) {
+    const query = rawInput.slice('open_projects_list?'.length).trim();
+    if (query) return { kind: 'open_projects_list', raw, query };
+  }
   if (raw === 'open_projects_board') return { kind: 'open_projects_board', raw };
+  if (raw.startsWith('open_projects_board?')) {
+    const query = rawInput.slice('open_projects_board?'.length).trim();
+    if (query) return { kind: 'open_projects_board', raw, query };
+  }
   const projectMatch = rawInput.match(/^open_project:([0-9]+)(?:\?(.+))?$/i);
   if (projectMatch) {
     const projectId = Number(projectMatch[1]);
@@ -369,10 +377,10 @@ export function executeSuggestedAction(
     return finish(safeNavigate(appendQuery('/admin/scene-packages', parsed.query)));
   }
   if (parsed.kind === 'open_projects_list') {
-    return finish(safeNavigate('/s/projects.list'));
+    return finish(safeNavigate(appendQuery('/s/projects.list', parsed.query)));
   }
   if (parsed.kind === 'open_projects_board') {
-    return finish(safeNavigate('/projects'));
+    return finish(safeNavigate(appendQuery('/projects', parsed.query)));
   }
   if (parsed.kind === 'open_project' && parsed.projectId) {
     return finish(safeNavigate(appendQuery(`/projects/${parsed.projectId}`, parsed.query)));
