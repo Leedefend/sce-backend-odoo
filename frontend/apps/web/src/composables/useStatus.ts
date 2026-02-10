@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { ApiError } from '../api/client';
+import { parseSuggestedAction, suggestedActionHint } from '../app/suggestedAction';
 
 export interface StatusError {
   message: string;
@@ -24,15 +25,8 @@ export function resolveSuggestedAction(
   reasonCode?: string,
   retryable?: boolean,
 ): string {
-  const action = String(suggestedAction || '').trim().toLowerCase();
-  if (action === 'refresh_list' || action === 'refresh') return 'Refresh the latest data and retry.';
-  if (action === 'retry' || action === 'retry_later') return 'Retry this action after a short delay.';
-  if (action === 'relogin' || action === 'login_again') return 'Login again and retry.';
-  if (action === 'check_permission' || action === 'request_permission') return 'Check role permissions, then retry.';
-  if (action === 'open_record') return 'Open the related record and resolve blockers first.';
-  if (action.startsWith('open_record:')) return 'Open the related record and resolve blockers first.';
-  if (action.startsWith('open_scene:')) return 'Open the related scene and continue.';
-  if (action.startsWith('open_url:')) return 'Open the provided link and continue.';
+  const hintByAction = suggestedActionHint(parseSuggestedAction(suggestedAction));
+  if (hintByAction) return hintByAction;
 
   const code = String(reasonCode || '').toUpperCase();
   if (code.includes('PERMISSION') || code.includes('FORBIDDEN')) return 'Check role permissions or contact an administrator.';
