@@ -185,5 +185,56 @@
       "top": 10,
       "days": 7
     }
+  },
+  {
+    "case": "api_data_intent_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "api.data",
+    "intent_params": {
+      "op": "list",
+      "model": "project.project",
+      "limit": 5,
+      "offset": 0,
+      "order": "id desc",
+      "fields": ["id", "name"]
+    }
+  },
+  {
+    "case": "load_view_intent_pm",
+    "user": "pm",
+    "op": "intent.invoke",
+    "intent": "load_view",
+    "intent_params": {
+      "model": "project.project",
+      "view_type": "form"
+    }
+  },
+  {
+    "case": "chatter_timeline_intent_pm",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "chatter.timeline",
+    "intent_params": {
+      "model": "res.partner",
+      "res_id": 1,
+      "limit": 10,
+      "include_audit": false
+    }
+  },
+  {
+    "case": "execute_button_intent_dry_run_pm",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "execute_button",
+    "intent_params": {
+      "model": "res.partner",
+      "res_id": 1,
+      "dry_run": true,
+      "button": {
+        "type": "object",
+        "name": "write"
+      }
+    }
   }
 ]
