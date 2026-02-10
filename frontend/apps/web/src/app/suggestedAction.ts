@@ -14,6 +14,7 @@ export type SuggestedActionKind =
   | 'open_usage_analytics'
   | 'open_locked'
   | 'open_preview'
+  | 'open_ready'
   | 'open_scene_health'
   | 'open_scene_packages'
   | 'open_projects_list'
@@ -112,6 +113,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw === 'open_locked') return { kind: 'open_locked', raw };
   if (raw === 'open_preview') return { kind: 'open_preview', raw };
+  if (raw === 'open_ready') return { kind: 'open_ready', raw };
   if (raw.startsWith('open_usage_analytics?')) {
     const query = rawInput.slice('open_usage_analytics?'.length).trim();
     if (query) return { kind: 'open_usage_analytics', raw, query };
@@ -239,6 +241,7 @@ export function suggestedActionLabel(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics';
   if (parsed.kind === 'open_locked') return 'Open locked capabilities';
   if (parsed.kind === 'open_preview') return 'Open preview capabilities';
+  if (parsed.kind === 'open_ready') return 'Open ready capabilities';
   if (parsed.kind === 'open_scene_health') return 'Open scene health';
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages';
   if (parsed.kind === 'open_projects_list') return 'Open projects list';
@@ -276,6 +279,7 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   if (parsed.kind === 'open_usage_analytics') return 'Open usage analytics to inspect capability visibility.';
   if (parsed.kind === 'open_locked') return 'Open usage analytics filtered to locked capabilities.';
   if (parsed.kind === 'open_preview') return 'Open usage analytics filtered to preview capabilities.';
+  if (parsed.kind === 'open_ready') return 'Open usage analytics filtered to ready capabilities.';
   if (parsed.kind === 'open_scene_health') return 'Open scene health to inspect diagnostics.';
   if (parsed.kind === 'open_scene_packages') return 'Open scene packages for governance actions.';
   if (parsed.kind === 'open_projects_list') return 'Open projects list scene.';
@@ -347,6 +351,7 @@ export function canRunSuggestedAction(
     parsed.kind === 'open_usage_analytics' ||
     parsed.kind === 'open_locked' ||
     parsed.kind === 'open_preview' ||
+    parsed.kind === 'open_ready' ||
     parsed.kind === 'open_scene_health' ||
     parsed.kind === 'open_scene_packages' ||
     parsed.kind === 'open_projects_list' ||
@@ -488,6 +493,9 @@ export function executeSuggestedAction(
   }
   if (parsed.kind === 'open_preview') {
     return finish(safeNavigate('/admin/usage-analytics?state=preview'));
+  }
+  if (parsed.kind === 'open_ready') {
+    return finish(safeNavigate('/admin/usage-analytics?state=ready'));
   }
   if (parsed.kind === 'open_scene_health') {
     return finish(safeNavigate(appendQuery('/admin/scene-health', parsed.query)));
