@@ -28,6 +28,11 @@ export interface SuggestedActionTraceRow {
   success: boolean;
 }
 
+export interface SuggestedActionKindStat {
+  kind: string;
+  count: number;
+}
+
 const STORAGE_KEY = 'sc_frontend_traces_v0_3';
 const MAX_ENTRIES = 200;
 const TRACE_UPDATE_EVENT = 'sc:trace-updated';
@@ -117,6 +122,18 @@ export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter =
     items: listSuggestedActionTraces(filter),
   };
   return JSON.stringify(payload, null, 2);
+}
+
+export function rankSuggestedActionKinds(limit = 5): SuggestedActionKindStat[] {
+  const stats = new Map<string, number>();
+  for (const row of listSuggestedActionTraces({ limit: MAX_ENTRIES })) {
+    const key = row.kind;
+    stats.set(key, (stats.get(key) || 0) + 1);
+  }
+  return [...stats.entries()]
+    .map(([kind, count]) => ({ kind, count }))
+    .sort((a, b) => b.count - a.count || a.kind.localeCompare(b.kind))
+    .slice(0, Math.max(1, Number(limit || 5)));
 }
 
 export function createTraceId() {
