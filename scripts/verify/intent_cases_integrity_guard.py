@@ -19,6 +19,25 @@ ALLOWED_OPS = {
     "intent.invoke",
 }
 ALLOWED_VIEW_TYPES = {"form", "list", "kanban"}
+ALLOWED_CASE_KEYS = {
+    "action_xmlid",
+    "allow_error_response",
+    "case",
+    "execute_method",
+    "id",
+    "include_meta",
+    "intent",
+    "intent_params",
+    "menu_id",
+    "model",
+    "op",
+    "outdir",
+    "project_id",
+    "route",
+    "trace_id",
+    "user",
+    "view_type",
+}
 
 
 def _as_str(value) -> str:
@@ -63,6 +82,10 @@ def main() -> int:
         case_name = _as_str(item.get("case"))
         user = _as_str(item.get("user"))
         op = _as_str(item.get("op"))
+
+        unknown_keys = sorted(set(item.keys()) - ALLOWED_CASE_KEYS)
+        if unknown_keys:
+            invalid.append(f"{case_name or f'#{idx}'}: unknown keys: {', '.join(unknown_keys)}")
 
         if not case_name:
             invalid.append(f"#{idx}: missing case")
