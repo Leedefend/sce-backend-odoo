@@ -1,0 +1,23 @@
+{
+  "action": null,
+  "case": "scene_governance_set_channel_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "action": "set_channel",
+    "company_id": 1,
+    "from_channel": "stable",
+    "to_channel": "dev"
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}

@@ -5921,32 +5921,31 @@
       "has_idempotency_window": false,
       "test_refs": 0,
       "request_schema_hint": [
-        "channel"
+        "channel",
+        "reason"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "action",
+        "from_channel",
+        "to_channel"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "scene_governance_export_contract_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/scene_governance_export_contract_intent_admin.json",
           "request_keys": [
-            "channel"
+            "channel",
+            "reason"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "action",
+            "from_channel",
+            "to_channel"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "channel"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "scene.governance.pin_stable",
@@ -5990,27 +5989,30 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
-      "response_data_schema_hint": [],
+      "request_schema_hint": [
+        "reason"
+      ],
+      "response_data_schema_hint": [
+        "action",
+        "from_channel",
+        "to_channel"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
-          "request_keys": [],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "case": "scene_governance_rollback_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/scene_governance_rollback_intent_admin.json",
+          "request_keys": [
+            "reason"
+          ],
+          "response_data_keys": [
+            "action",
+            "from_channel",
+            "to_channel"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "scene.governance.set_channel",
@@ -6024,34 +6026,33 @@
       "test_refs": 0,
       "request_schema_hint": [
         "channel",
-        "company_id"
+        "company_id",
+        "reason"
       ],
-      "response_data_schema_hint": [],
+      "response_data_schema_hint": [
+        "action",
+        "company_id",
+        "from_channel",
+        "to_channel"
+      ],
       "observed_reason_codes": [],
       "examples": [
         {
-          "case": "__inferred__",
-          "snapshot_file": "",
+          "case": "scene_governance_set_channel_intent_admin",
+          "snapshot_file": "docs/contract/snapshots/scene_governance_set_channel_intent_admin.json",
           "request_keys": [
             "channel",
-            "company_id"
+            "reason"
           ],
-          "response_data_keys": [],
-          "inferred": true,
-          "source": "handler_params_scan"
+          "response_data_keys": [
+            "action",
+            "company_id",
+            "from_channel",
+            "to_channel"
+          ]
         }
       ],
-      "inferred_example": {
-        "case": "__inferred__",
-        "snapshot_file": "",
-        "request_keys": [
-          "channel",
-          "company_id"
-        ],
-        "response_data_keys": [],
-        "inferred": true,
-        "source": "handler_params_scan"
-      }
+      "inferred_example": null
     },
     {
       "intent": "scene.health",
