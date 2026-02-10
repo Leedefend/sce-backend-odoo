@@ -45,6 +45,7 @@ export function normalizeSuggestedAction(value?: string) {
 }
 
 export function parseSuggestedAction(value?: string): SuggestedActionParsed {
+  const rawInput = String(value || '').trim();
   const raw = normalizeSuggestedAction(value);
   if (!raw) return { kind: '', raw: '' };
   if (raw === 'refresh' || raw === 'refresh_list') return { kind: 'refresh', raw };
@@ -77,7 +78,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   }
   if (raw === 'open_projects_list') return { kind: 'open_projects_list', raw };
   if (raw === 'open_projects_board') return { kind: 'open_projects_board', raw };
-  const projectMatch = raw.match(/^open_project:([0-9]+)(?:\?(.+))?$/);
+  const projectMatch = rawInput.match(/^open_project:([0-9]+)(?:\?(.+))?$/i);
   if (projectMatch) {
     const projectId = Number(projectMatch[1]);
     const query = String(projectMatch[2] || '').trim();
@@ -91,7 +92,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
   if (raw === 'copy_error_line' || raw === 'copy_compact_error') return { kind: 'copy_error_line', raw };
   if (raw === 'copy_full_error' || raw === 'copy_error_bundle') return { kind: 'copy_full_error', raw };
   if (raw === 'open_record') return { kind: 'open_record', raw };
-  const recordMatch = raw.match(/^open_record:([^:]+):([0-9]+)(?:\?(.+))?$/);
+  const recordMatch = rawInput.match(/^open_record:([^:]+):([0-9]+)(?:\?(.+))?$/i);
   if (recordMatch) {
     const model = String(recordMatch[1] || '').trim();
     const recordId = Number(recordMatch[2]);
@@ -101,7 +102,7 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     }
   }
   if (raw.startsWith('open_scene:')) {
-    const payload = raw.slice('open_scene:'.length).trim();
+    const payload = rawInput.slice('open_scene:'.length).trim();
     const [payloadWithQuery, hashRaw] = payload.split('#');
     const [sceneKey, queryRaw] = String(payloadWithQuery || '').split('?');
     const hash = String(hashRaw || '').trim();
@@ -110,14 +111,14 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (sceneKey && hash) return { kind: 'open_scene', raw, sceneKey, hash };
     if (sceneKey) return { kind: 'open_scene', raw, sceneKey };
   }
-  const menuMatch = raw.match(/^open_menu:([0-9]+)(?:\?(.+))?$/);
+  const menuMatch = rawInput.match(/^open_menu:([0-9]+)(?:\?(.+))?$/i);
   if (menuMatch) {
     const menuId = Number(menuMatch[1]);
     const query = String(menuMatch[2] || '').trim();
     if (Number.isFinite(menuId) && menuId > 0 && query) return { kind: 'open_menu', raw, menuId, query };
     if (Number.isFinite(menuId) && menuId > 0) return { kind: 'open_menu', raw, menuId };
   }
-  const actionMatch = raw.match(/^open_action:([0-9]+)(?:\?(.+))?$/);
+  const actionMatch = rawInput.match(/^open_action:([0-9]+)(?:\?(.+))?$/i);
   if (actionMatch) {
     const actionId = Number(actionMatch[1]);
     const query = String(actionMatch[2] || '').trim();
@@ -125,14 +126,14 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (Number.isFinite(actionId) && actionId > 0) return { kind: 'open_action', raw, actionId };
   }
   if (raw.startsWith('open_route:')) {
-    const payload = raw.slice('open_route:'.length).trim();
+    const payload = rawInput.slice('open_route:'.length).trim();
     const [url, hashRaw] = payload.split('#');
     const hash = String(hashRaw || '').trim();
     if (url.startsWith('/') && hash) return { kind: 'open_route', raw, url, hash };
     if (url.startsWith('/')) return { kind: 'open_route', raw, url };
   }
   if (raw.startsWith('open_url:')) {
-    const payload = raw.slice('open_url:'.length).trim();
+    const payload = rawInput.slice('open_url:'.length).trim();
     const [url, hashRaw] = payload.split('#');
     const hash = String(hashRaw || '').trim();
     if (url.startsWith('/') && hash) return { kind: 'open_url', raw, url, hash };
