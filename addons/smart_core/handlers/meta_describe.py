@@ -10,7 +10,7 @@ class MetaDescribeHandler(BaseIntentHandler):
     INTENT_TYPE = "meta.describe_model"
     DESCRIPTION = "加载模型字段定义（可展开 selection/关系/约束），支持 ETag/304"
 
-    def run(self):
+    def run(self, **_kwargs):
         p = self.params or {}
         model = p.get("model")
         if not model:
@@ -25,7 +25,10 @@ class MetaDescribeHandler(BaseIntentHandler):
             except: pass
         t0 = time.time()
 
-        hdr_if_none_match = (request.httprequest.headers.get("If-None-Match") or "").strip().strip('"')
+        try:
+            hdr_if_none_match = (request.httprequest.headers.get("If-None-Match") or "").strip().strip('"')
+        except Exception:
+            hdr_if_none_match = ""
         if_none_match = (p.get("if_none_match") or "").strip().strip('"') or hdr_if_none_match
 
         env = self.env[model].with_context(ctx)
