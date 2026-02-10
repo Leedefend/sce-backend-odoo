@@ -19,6 +19,7 @@ def build_evidence(intent_catalog: dict, scene_catalog: dict, shape_report: dict
 
     reason_counter: Counter[str] = Counter()
     intents_with_examples = 0
+    intents_with_inferred_examples = 0
     intents_with_idempotency_window = 0
     intents_with_aliases = 0
     for item in intents:
@@ -32,6 +33,9 @@ def build_evidence(intent_catalog: dict, scene_catalog: dict, shape_report: dict
         examples = item.get("examples")
         if isinstance(examples, list) and examples:
             intents_with_examples += 1
+        inferred_example = item.get("inferred_example")
+        if isinstance(inferred_example, dict) and inferred_example:
+            intents_with_inferred_examples += 1
         codes = item.get("observed_reason_codes")
         if isinstance(codes, list):
             for code in codes:
@@ -44,6 +48,7 @@ def build_evidence(intent_catalog: dict, scene_catalog: dict, shape_report: dict
             "with_aliases": intents_with_aliases,
             "with_idempotency_window": intents_with_idempotency_window,
             "with_examples": intents_with_examples,
+            "with_inferred_examples": intents_with_inferred_examples,
             "top_observed_reason_codes": [{"reason_code": k, "count": v} for k, v in reason_counter.most_common(10)],
         },
         "scene_catalog": {
@@ -79,6 +84,7 @@ def to_markdown(evidence: dict) -> str:
         f"- intents with aliases: {i['with_aliases']}",
         f"- intents with idempotency window: {i['with_idempotency_window']}",
         f"- intents with snapshot examples: {i['with_examples']}",
+        f"- intents with inferred examples: {i['with_inferred_examples']}",
         f"- intent surface rows: {t['rows']}",
         "",
         "## Scene Orchestration",
