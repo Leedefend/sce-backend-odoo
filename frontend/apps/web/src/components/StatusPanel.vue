@@ -48,6 +48,9 @@ const canRunSuggestedAction = computed(() => {
   return canRunSuggestedActionByConfig(parsed, {
     hasRetryHandler: typeof props.onRetry === 'function',
     hasActionHandler: typeof props.onSuggestedAction === 'function',
+    traceId: props.traceId,
+    reasonCode: props.reasonCode,
+    message: props.message,
   });
 });
 
@@ -59,7 +62,13 @@ const suggestedActionLabel = computed(() => {
 
 function runSuggestedAction() {
   const parsed = parseSuggestedAction(props.suggestedAction);
-  executeSuggestedAction(parsed, { onRetry: props.onRetry, onSuggestedAction: props.onSuggestedAction });
+  executeSuggestedAction(parsed, {
+    onRetry: props.onRetry,
+    onSuggestedAction: props.onSuggestedAction,
+    traceId: props.traceId,
+    reasonCode: props.reasonCode,
+    message: props.message,
+  });
 }
 
 function copyTrace() {
