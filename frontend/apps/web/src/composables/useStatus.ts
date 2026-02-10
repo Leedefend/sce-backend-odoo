@@ -8,6 +8,7 @@ export interface StatusError {
   hint?: string;
   kind?: string;
   reasonCode?: string;
+  suggestedAction?: string;
 }
 
 export interface StatusCopy {
@@ -42,6 +43,7 @@ export function resolveSuggestedAction(
 export function buildStatusError(err: unknown, fallbackMessage: string, kind?: string): StatusError {
   if (err instanceof ApiError) {
     const code = err.status;
+    const suggestedAction = err.suggestedAction || resolveSuggestedAction(undefined, err.reasonCode);
     return {
       message: err.message,
       code,
@@ -49,6 +51,7 @@ export function buildStatusError(err: unknown, fallbackMessage: string, kind?: s
       hint: err.hint || getHint(code, err.kind),
       kind: kind || err.kind,
       reasonCode: err.reasonCode,
+      suggestedAction: suggestedAction || undefined,
     };
   }
   const message = err instanceof Error ? err.message : fallbackMessage;
