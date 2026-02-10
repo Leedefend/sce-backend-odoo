@@ -199,8 +199,16 @@ export function suggestedActionHint(parsed: SuggestedActionParsed): string {
   return '';
 }
 
-function safeNavigate(path: string) {
+function isSafeRelativePath(path: string) {
   if (!path.startsWith('/')) return false;
+  if (path.startsWith('//')) return false;
+  const lowered = path.toLowerCase();
+  if (lowered.includes('javascript:')) return false;
+  return true;
+}
+
+function safeNavigate(path: string) {
+  if (!isSafeRelativePath(path)) return false;
   window.location.href = path;
   return true;
 }
