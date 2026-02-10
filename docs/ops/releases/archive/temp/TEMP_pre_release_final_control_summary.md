@@ -30,7 +30,7 @@ Branch: `codex/pre_release_final_control`
 - Enforced `credentials: 'omit'` with dev warning in `api/client.ts`
 
 7. TEMP Docs Archived
-- Moved `docs/ops/releases/TEMP_*` to `docs/ops/releases/archive/`
+- Moved `docs/ops/releases/TEMP_*` to `docs/ops/releases/archive/temp/`
 
 8. Smoke User Fixture
 - Added demo user: `svc_e2e_smoke` (project read + project manager capability)

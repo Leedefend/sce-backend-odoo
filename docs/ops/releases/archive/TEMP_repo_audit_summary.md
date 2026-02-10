@@ -96,9 +96,9 @@ PR #269 (`Leedefend/sce-backend-odoo`):
   - `scripts/verify/fe_scene_list_profile_smoke.js`
 
 ## Temporary Docs Generated During Release Work
-- `docs/ops/releases/TEMP_ui_validation_guide_after_scene_fixes.md`
-- `docs/ops/releases/TEMP_systematic_scene_target_audit_summary.md`
-- `docs/ops/releases/TEMP_release_r0_execution_summary.md`
+- `docs/ops/releases/archive/TEMP_ui_validation_guide_after_scene_fixes.md`
+- `docs/ops/releases/archive/TEMP_systematic_scene_target_audit_summary.md`
+- `docs/ops/releases/archive/TEMP_release_r0_execution_summary.md`
 - `docs/ops/releases/release_r0_launch_package.md`
 
 ---

@@ -24,7 +24,7 @@ This branch turns Phase 10 from isolated UI behavior into a full-stack interacti
 
 For merge/readiness review, use:
 
-- `docs/ops/releases/phase_10_my_work_v1_evidence.md`
+- `docs/ops/releases/current/phase_10_my_work_v1_evidence.md`
 
 This TEMP file remains a full branch summary and commit inventory.
 

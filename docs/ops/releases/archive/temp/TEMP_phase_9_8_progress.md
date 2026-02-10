@@ -34,7 +34,7 @@
   - File: scripts/verify/scene_warnings_guard_summary.js
   - Make target: verify.portal.scene_warnings_limit.container
 - Prepared PR body template for Phase 9.8 submission.
-  - File: docs/ops/releases/TEMP_phase_9_8_pr_body.md
+  - File: docs/ops/releases/archive/temp/TEMP_phase_9_8_pr_body.md
 - Added strict mode toggle for gate.full and explicit docker requirement message.
   - File: Makefile
   - Env: SC_GATE_STRICT=0 to skip 9.8 guards
