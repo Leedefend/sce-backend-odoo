@@ -251,6 +251,32 @@ def infer_target_type(target: dict) -> str:
     return "unknown"
 
 
+def to_string_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    out = []
+    for item in value:
+        text = str(item or "").strip()
+        if text:
+            out.append(text)
+    return sorted(set(out))
+
+
+def to_bool(value: object, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"1", "true", "yes", "y", "on"}:
+            return True
+        if text in {"0", "false", "no", "n", "off"}:
+            return False
+        return default
+    return bool(value)
+
+
 def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
     payload = json.loads(scene_contract_file.read_text(encoding="utf-8"))
     scenes = payload.get("scenes") if isinstance(payload, dict) else []
@@ -270,13 +296,25 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
         tiles = scene.get("tiles") if isinstance(scene.get("tiles"), list) else []
         filters = scene.get("filters") if isinstance(scene.get("filters"), list) else []
         target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
-        required_caps = 0
+        access = scene.get("access") if isinstance(scene.get("access"), dict) else {}
+        tile_caps = []
         for tile in tiles:
             if not isinstance(tile, dict):
                 continue
             caps = tile.get("required_capabilities")
-            if isinstance(caps, list):
-                required_caps += len(caps)
+            tile_caps.extend(to_string_list(caps))
+
+        required_capabilities = sorted(set(
+            to_string_list(scene.get("required_capabilities"))
+            + to_string_list(access.get("required_capabilities"))
+            + tile_caps
+        ))
+        required_caps = len(required_capabilities)
+        visible = to_bool(access.get("visible"), True)
+        allowed = to_bool(access.get("allowed"), visible)
+        reason_code = str(access.get("reason_code") or ("OK" if allowed else "PERMISSION_DENIED"))
+        suggested_action = str(access.get("suggested_action") or "")
+        has_access_clause = bool(access.get("has_access_clause")) or required_caps > 0
 
         layout_kind = str(layout.get("kind") or "")
         target_type = infer_target_type(target)
@@ -291,8 +329,13 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
                     "label": name,
                 },
                 "access": {
+                    "visible": visible,
+                    "allowed": allowed,
+                    "reason_code": reason_code,
+                    "suggested_action": suggested_action,
+                    "required_capabilities": required_capabilities,
                     "required_capabilities_count": required_caps,
-                    "has_access_clause": required_caps > 0,
+                    "has_access_clause": has_access_clause,
                 },
                 "layout": {
                     "kind": layout_kind,

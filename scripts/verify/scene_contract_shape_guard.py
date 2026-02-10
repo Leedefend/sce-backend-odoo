@@ -77,6 +77,19 @@ def validate_catalog(payload: dict) -> list[str]:
 
         access = scene.get("access")
         if isinstance(access, dict):
+            if not isinstance(access.get("visible"), bool):
+                _fail(errors, f"{prefix}.access.visible must be bool")
+            if not isinstance(access.get("allowed"), bool):
+                _fail(errors, f"{prefix}.access.allowed must be bool")
+            if not _is_non_empty_str(access.get("reason_code")):
+                _fail(errors, f"{prefix}.access.reason_code must be non-empty")
+            if not isinstance(access.get("suggested_action"), str):
+                _fail(errors, f"{prefix}.access.suggested_action must be str")
+            req_caps = access.get("required_capabilities")
+            if not isinstance(req_caps, list):
+                _fail(errors, f"{prefix}.access.required_capabilities must be list")
+            elif not all(isinstance(item, str) for item in req_caps):
+                _fail(errors, f"{prefix}.access.required_capabilities items must be str")
             if not isinstance(access.get("required_capabilities_count"), int):
                 _fail(errors, f"{prefix}.access.required_capabilities_count must be int")
             if not isinstance(access.get("has_access_clause"), bool):
