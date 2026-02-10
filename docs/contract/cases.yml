@@ -632,7 +632,7 @@
     "op": "intent.invoke",
     "intent": "load_metadata",
     "intent_params": {
-      "model": "project.project"
+      "model": "res.country"
     }
   },
   {

@@ -277,6 +277,26 @@ def _strip_denylist(value):
     return value
 
 
+def _coerce_error_payload(res):
+    if not isinstance(res, dict):
+        return None
+    err = res.get("error")
+    if isinstance(err, dict):
+        return err
+    if isinstance(err, str) and err.strip():
+        return {"message": err.strip()}
+    status = str(res.get("status") or "").strip().lower()
+    if status == "error":
+        payload = {}
+        if res.get("code") is not None:
+            payload["code"] = res.get("code")
+        message = res.get("message") or res.get("msg") or res.get("detail")
+        if isinstance(message, str) and message.strip():
+            payload["message"] = message.strip()
+        return payload or {"message": "legacy error response"}
+    return None
+
+
 def export_snapshot():
     args = parse_args()
     stable = args.stable or os.environ.get("SC_CONTRACT_STABLE") in ("1", "true", "yes")
@@ -529,6 +549,14 @@ def export_snapshot():
                     raise
 
         data = res.get("data") if isinstance(res, dict) else {}
+        if (
+            payload.get("op") == "intent.invoke"
+            and data is None
+            and isinstance(res, dict)
+        ):
+            # Intent handlers may return either envelope dicts or raw dict payloads.
+            # If explicit `data` is absent/None, keep the full dict for catalog extraction.
+            data = res
         if payload.get("op") in ("menu", "action_open"):
             action_data = data.get("action") or data.get("entry")
 
@@ -592,7 +620,7 @@ def export_snapshot():
             "action": action_data,
             "ui_contract": ui_contract,
             "ui_contract_raw": data,
-            "error": res.get("error") if isinstance(res, dict) else None,
+            "error": _coerce_error_payload(res),
             "record": _strip_runtime_record_fields(record_data),
             "record_error": record_error,
             "meta_fields": meta_fields,
