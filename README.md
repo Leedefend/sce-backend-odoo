@@ -57,8 +57,11 @@ make demo.full DB=sc_demo
 `docs/ops/dev_bootstrap.md`
 `docs/README.md`
 `docs/README.zh.md`
+`docs/README.en.md`
 `docs/ops/README.md`
-`docs/ops/README.zh.md`
+`docs/ops/README.en.md`
+`docs/audit/README.md`
+`docs/audit/README.en.md`
 `docs/dev/README.md`
 `docs/dev/README.zh.md`
 `docs/architecture/README.md`
@@ -71,11 +74,20 @@ make demo.full DB=sc_demo
 `docs/ops/prod_command_policy.md`
 `docs/ops/release_notes_v0.3.0-stable.md`
 `docs/ops/release_checklist_v0.3.0-stable.md`
+`docs/ops/releases/current/phase_11_backend_closure.md`
+`docs/ops/releases/current/phase_11_1_contract_visibility.md`
 
 
 补充约束：所有 Makefile 中调用 Odoo 的 target 必须经由 `$(ODOO_EXEC)`，任何直接调用 `odoo` 的行为一律视为缺陷。
 
 补充约束：所有新页面/提示必须遵守 `docs/architecture/page_attention_contract.md`。
+
+文档门禁（Phase C）：
+- `make verify.docs.inventory`
+- `make verify.docs.links`
+- `make verify.docs.temp_guard`
+- `make verify.docs.contract_sync`
+- `make verify.docs.all`
 
 ---
 
@@ -361,7 +373,7 @@ npm run dev
 | POST | `/api/intent/execute` | 执行按钮/业务动作 |
 | GET  | `/api/metadata`       | 获取模型元数据   |
 
-详情见：`docs/api-reference.md`
+详情见：`docs/contract/README.md`
 
 ---
 
@@ -409,11 +421,11 @@ npm run test
 
 * [Odoo 官方文档](https://www.odoo.com/documentation/17.0/)
 * [Vue 3 官方文档](https://vuejs.org/)
-* [项目 Wiki](docs/wiki.md)
-* [API 文档](docs/api-reference.md)
+* [文档总入口](docs/README.md)
+* [Contract 文档](docs/contract/README.md)
 * [Git 分支规范](docs/git/SmartConstruction-Git-Guide.md)
 * [P0 Ledger Gate 规范](docs/spec/p0_ledger_gate.md)
-* [FAQ](docs/faq.md)
+* [Ops 文档入口](docs/ops/README.md)
 
 ---
 
