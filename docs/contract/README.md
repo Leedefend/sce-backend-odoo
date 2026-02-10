@@ -39,6 +39,11 @@ Each intent entry includes:
 - response data schema hints from snapshot payloads
 - observed `reason_code` set
 
+When an intent has no explicit snapshot case, catalog export now provides one inferred example:
+
+- `examples[0].inferred = true`
+- source: `handler_params_scan` (from `params.get(...)`/`params[...]` usage)
+
 ## Scene Catalog
 
 `scene_catalog.json` is built from:

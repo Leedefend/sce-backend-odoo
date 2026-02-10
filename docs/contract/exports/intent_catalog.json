@@ -25,7 +25,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "api.data.batch",
@@ -39,10 +56,17 @@
       "test_refs": 0,
       "request_schema_hint": [
         "action",
+        "assignee_id",
+        "context",
+        "export_failed_csv",
+        "idempotency_key",
         "ids",
         "ids[]",
+        "if_match_map",
         "model",
-        "request_id"
+        "request_id",
+        "vals",
+        "values"
       ],
       "response_data_schema_hint": [
         "action",
@@ -167,7 +191,8 @@
             "values.active"
           ]
         }
-      ]
+      ],
+      "inferred_example": null
     },
     {
       "intent": "api.data.create",
@@ -181,10 +206,66 @@
       "stability": "stable",
       "has_idempotency_window": true,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "context",
+        "dry_run",
+        "idempotency_key",
+        "ids",
+        "ifMatch",
+        "if_match",
+        "model",
+        "request_id",
+        "res_model",
+        "vals",
+        "values",
+        "write_date"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "context",
+            "dry_run",
+            "idempotency_key",
+            "ids",
+            "ifMatch",
+            "if_match",
+            "model",
+            "request_id",
+            "res_model",
+            "vals",
+            "values",
+            "write_date"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "context",
+          "dry_run",
+          "idempotency_key",
+          "ids",
+          "ifMatch",
+          "if_match",
+          "model",
+          "request_id",
+          "res_model",
+          "vals",
+          "values",
+          "write_date"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "api.data.unlink",
@@ -196,10 +277,51 @@
       "stability": "stable",
       "has_idempotency_window": true,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "dry_run",
+        "idempotency_key",
+        "ids",
+        "model",
+        "record_ids",
+        "request_id",
+        "res_model"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "dry_run",
+            "idempotency_key",
+            "ids",
+            "model",
+            "record_ids",
+            "request_id",
+            "res_model"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "dry_run",
+          "idempotency_key",
+          "ids",
+          "model",
+          "record_ids",
+          "request_id",
+          "res_model"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "app.catalog",
@@ -214,7 +336,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "app.nav",
@@ -229,7 +368,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "app.open",
@@ -244,7 +400,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "auth.logout",
@@ -259,7 +432,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "capability.describe",
@@ -271,10 +461,39 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "capability_id",
+        "capability_key",
+        "key"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "capability_id",
+            "capability_key",
+            "key"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "capability_id",
+          "capability_key",
+          "key"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "capability.visibility.report",
@@ -289,7 +508,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "chatter.post",
@@ -301,10 +537,45 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "body",
+        "model",
+        "record_id",
+        "res_id",
+        "subject"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "body",
+            "model",
+            "record_id",
+            "res_id",
+            "subject"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "body",
+          "model",
+          "record_id",
+          "res_id",
+          "subject"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "chatter.timeline",
@@ -316,10 +587,45 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "include_audit",
+        "limit",
+        "model",
+        "record_id",
+        "res_id"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "include_audit",
+            "limit",
+            "model",
+            "record_id",
+            "res_id"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "include_audit",
+          "limit",
+          "model",
+          "record_id",
+          "res_id"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "execute_button",
@@ -331,10 +637,57 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "button",
+        "button_name",
+        "button_type",
+        "dry_run",
+        "method_name",
+        "model",
+        "record_id",
+        "res_id",
+        "res_model"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "button",
+            "button_name",
+            "button_type",
+            "dry_run",
+            "method_name",
+            "model",
+            "record_id",
+            "res_id",
+            "res_model"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "button",
+          "button_name",
+          "button_type",
+          "dry_run",
+          "method_name",
+          "model",
+          "record_id",
+          "res_id",
+          "res_model"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "file.download",
@@ -346,10 +699,36 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "attachment_id",
+        "id"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "attachment_id",
+            "id"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "attachment_id",
+          "id"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "file.upload",
@@ -361,10 +740,51 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "data",
+        "mimetype",
+        "model",
+        "name",
+        "record_id",
+        "res_id",
+        "res_model"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "data",
+            "mimetype",
+            "model",
+            "name",
+            "record_id",
+            "res_id",
+            "res_model"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "data",
+          "mimetype",
+          "model",
+          "name",
+          "record_id",
+          "res_id",
+          "res_model"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "load_contract",
@@ -379,7 +799,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "load_metadata",
@@ -391,10 +828,33 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "model"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "model"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "model"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "load_view",
@@ -406,10 +866,39 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "model",
+        "view_id",
+        "view_type"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "model",
+            "view_id",
+            "view_type"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "model",
+          "view_id",
+          "view_type"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "login",
@@ -421,10 +910,45 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 79,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "company_id",
+        "database",
+        "db",
+        "login",
+        "password"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "company_id",
+            "database",
+            "db",
+            "login",
+            "password"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "company_id",
+          "database",
+          "db",
+          "login",
+          "password"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "meta.describe_model",
@@ -439,7 +963,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "my.work.complete",
@@ -451,10 +992,39 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "id",
+        "note",
+        "source"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "id",
+            "note",
+            "source"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "id",
+          "note",
+          "source"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "my.work.complete_batch",
@@ -467,8 +1037,10 @@
       "has_idempotency_window": true,
       "test_refs": 0,
       "request_schema_hint": [
+        "idempotency_key",
         "ids",
         "ids[]",
+        "note",
         "request_id",
         "source"
       ],
@@ -565,7 +1137,8 @@
             "trace_id"
           ]
         }
-      ]
+      ],
+      "inferred_example": null
     },
     {
       "intent": "my.work.summary",
@@ -579,10 +1152,14 @@
       "test_refs": 0,
       "request_schema_hint": [
         "limit",
+        "limit_each",
         "page",
+        "page_size",
         "reason_code",
         "search",
         "section",
+        "sort_by",
+        "sort_dir",
         "source"
       ],
       "response_data_schema_hint": [
@@ -682,7 +1259,8 @@
             "summary[].scene_key"
           ]
         }
-      ]
+      ],
+      "inferred_example": null
     },
     {
       "intent": "permission.check",
@@ -694,10 +1272,48 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "_debug",
+        "capability",
+        "capability_key",
+        "debug",
+        "key",
+        "required_flag"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "_debug",
+            "capability",
+            "capability_key",
+            "debug",
+            "key",
+            "required_flag"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "_debug",
+          "capability",
+          "capability_key",
+          "debug",
+          "key",
+          "required_flag"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "sample.enhanced",
@@ -712,7 +1328,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.governance.export_contract",
@@ -724,10 +1357,33 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "channel"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "channel"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "channel"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.governance.pin_stable",
@@ -742,7 +1398,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.governance.rollback",
@@ -757,7 +1430,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.governance.set_channel",
@@ -769,10 +1459,36 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "channel",
+        "company_id"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "channel",
+            "company_id"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "channel",
+          "company_id"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.health",
@@ -784,10 +1500,48 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "company_id",
+        "limit",
+        "mode",
+        "offset",
+        "since",
+        "with_details"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "company_id",
+            "limit",
+            "mode",
+            "offset",
+            "since",
+            "with_details"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "company_id",
+          "limit",
+          "mode",
+          "offset",
+          "since",
+          "with_details"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.package.dry_run_import",
@@ -799,10 +1553,36 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "package",
+        "package_json"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "package",
+            "package_json"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "package",
+          "package_json"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.package.export",
@@ -814,10 +1594,42 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "package_name",
+        "package_version",
+        "reason",
+        "scene_channel"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "package_name",
+            "package_version",
+            "reason",
+            "scene_channel"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "package_name",
+          "package_version",
+          "reason",
+          "scene_channel"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.package.import",
@@ -829,10 +1641,42 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "package",
+        "package_json",
+        "reason",
+        "strategy"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "package",
+            "package_json",
+            "reason",
+            "strategy"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "package",
+          "package_json",
+          "reason",
+          "strategy"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.package.list",
@@ -847,7 +1691,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "scene.packages.installed",
@@ -862,7 +1723,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "session.bootstrap",
@@ -874,10 +1752,36 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "login",
+        "secret"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "login",
+            "secret"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "login",
+          "secret"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "system.init",
@@ -892,10 +1796,60 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 1,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "home_action_id",
+        "preload_actions",
+        "root_menu_id",
+        "root_xmlid",
+        "scene",
+        "scene_channel",
+        "scene_inject_critical_error",
+        "scene_rollback",
+        "scene_use_pinned",
+        "with_preload"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "home_action_id",
+            "preload_actions",
+            "root_menu_id",
+            "root_xmlid",
+            "scene",
+            "scene_channel",
+            "scene_inject_critical_error",
+            "scene_rollback",
+            "scene_use_pinned",
+            "with_preload"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "home_action_id",
+          "preload_actions",
+          "root_menu_id",
+          "root_xmlid",
+          "scene",
+          "scene_channel",
+          "scene_inject_critical_error",
+          "scene_rollback",
+          "scene_use_pinned",
+          "with_preload"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "system.ping.construction",
@@ -910,7 +1864,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "ui.contract",
@@ -925,7 +1896,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "ui.contract.enhanced",
@@ -940,7 +1928,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "ui.contract.model.view",
@@ -955,7 +1960,24 @@
       "request_schema_hint": [],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "usage.export.csv",
@@ -967,10 +1989,36 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "export_filtered_only",
+        "hidden_reason"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "export_filtered_only",
+            "hidden_reason"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "export_filtered_only",
+          "hidden_reason"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "usage.report",
@@ -1060,7 +2108,8 @@
             "user_top[]"
           ]
         }
-      ]
+      ],
+      "inferred_example": null
     },
     {
       "intent": "usage.track",
@@ -1072,10 +2121,39 @@
       "stability": "stable",
       "has_idempotency_window": false,
       "test_refs": 0,
-      "request_schema_hint": [],
+      "request_schema_hint": [
+        "capability_key",
+        "event_type",
+        "scene_key"
+      ],
       "response_data_schema_hint": [],
       "observed_reason_codes": [],
-      "examples": []
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "capability_key",
+            "event_type",
+            "scene_key"
+          ],
+          "response_data_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "capability_key",
+          "event_type",
+          "scene_key"
+        ],
+        "response_data_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     }
   ]
 }
