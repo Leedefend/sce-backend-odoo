@@ -146,17 +146,23 @@ export function parseSuggestedAction(value?: string): SuggestedActionParsed {
     if (sceneKey && hash) return { kind: 'open_scene', raw, sceneKey, hash };
     if (sceneKey) return { kind: 'open_scene', raw, sceneKey };
   }
-  const menuMatch = rawInput.match(/^open_menu:([0-9]+)(?:\?(.+))?$/i);
+  const menuMatch = rawInput.match(/^open_menu:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
   if (menuMatch) {
     const menuId = Number(menuMatch[1]);
     const query = String(menuMatch[2] || '').trim();
+    const hash = String(menuMatch[3] || '').trim();
+    if (Number.isFinite(menuId) && menuId > 0 && query && hash) return { kind: 'open_menu', raw, menuId, query, hash };
+    if (Number.isFinite(menuId) && menuId > 0 && hash) return { kind: 'open_menu', raw, menuId, hash };
     if (Number.isFinite(menuId) && menuId > 0 && query) return { kind: 'open_menu', raw, menuId, query };
     if (Number.isFinite(menuId) && menuId > 0) return { kind: 'open_menu', raw, menuId };
   }
-  const actionMatch = rawInput.match(/^open_action:([0-9]+)(?:\?(.+))?$/i);
+  const actionMatch = rawInput.match(/^open_action:([0-9]+)(?:\?([^#]+))?(?:#(.+))?$/i);
   if (actionMatch) {
     const actionId = Number(actionMatch[1]);
     const query = String(actionMatch[2] || '').trim();
+    const hash = String(actionMatch[3] || '').trim();
+    if (Number.isFinite(actionId) && actionId > 0 && query && hash) return { kind: 'open_action', raw, actionId, query, hash };
+    if (Number.isFinite(actionId) && actionId > 0 && hash) return { kind: 'open_action', raw, actionId, hash };
     if (Number.isFinite(actionId) && actionId > 0 && query) return { kind: 'open_action', raw, actionId, query };
     if (Number.isFinite(actionId) && actionId > 0) return { kind: 'open_action', raw, actionId };
   }
@@ -426,10 +432,10 @@ export function executeSuggestedAction(
     );
   }
   if (parsed.kind === 'open_menu' && parsed.menuId) {
-    return finish(safeNavigate(appendQuery(`/m/${parsed.menuId}`, parsed.query)));
+    return finish(safeNavigate(appendHash(appendQuery(`/m/${parsed.menuId}`, parsed.query), parsed.hash)));
   }
   if (parsed.kind === 'open_action' && parsed.actionId) {
-    return finish(safeNavigate(appendQuery(`/a/${parsed.actionId}`, parsed.query)));
+    return finish(safeNavigate(appendHash(appendQuery(`/a/${parsed.actionId}`, parsed.query), parsed.hash)));
   }
   if (parsed.kind === 'open_record' && parsed.model && parsed.recordId) {
     return finish(safeNavigate(appendQuery(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`, parsed.query)));
