@@ -53,11 +53,13 @@ export function parseIntentEnvelope<T>(body: IntentEnvelope<T> | T): ParsedInten
   const hasEnvelope = ['ok', 'data', 'meta', 'error', 'status', 'code'].some((key) => key in body);
   const hasData = 'data' in body;
   const payload = body as IntentEnvelope<T> & { error?: unknown; meta?: unknown; ok?: boolean };
+  const parsedError = parseError(payload.error);
+  const fallbackError = payload.ok === false && !parsedError ? parseError(body) : undefined;
   return {
     data: hasData ? (payload.data as T) : (body as T),
     meta: parseMeta(payload.meta),
     ok: payload.ok !== false,
-    error: parseError(payload.error),
+    error: parsedError || fallbackError,
     hasEnvelope,
   };
 }
