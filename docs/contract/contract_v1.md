@@ -1,5 +1,7 @@
 # Contract v1
 
+Back to contract hub: `docs/contract/README.md`
+
 ## Success response
 
 All API responses use a uniform envelope.

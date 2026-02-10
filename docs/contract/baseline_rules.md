@@ -1,5 +1,7 @@
 # Contract Baseline Rules
 
+Back to contract hub: `docs/contract/README.md`
+
 ## Purpose
 Baseline snapshots define the expected contract output for critical cases. They are reviewed artifacts, not runtime logs.
 
