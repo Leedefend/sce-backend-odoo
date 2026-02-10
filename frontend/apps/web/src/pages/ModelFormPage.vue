@@ -32,6 +32,8 @@
       :trace-id="error?.traceId"
       :error-code="error?.code"
       :reason-code="error?.reasonCode"
+      :error-category="error?.errorCategory"
+      :retryable="error?.retryable"
       :hint="errorCopy.hint"
       :suggested-action="error?.suggestedAction"
       variant="error"
