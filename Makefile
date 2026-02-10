@@ -259,6 +259,7 @@ contract.evidence.export:
 	@python3 scripts/contract/export_evidence.py
 
 verify.contract.catalog: guard.prod.forbid
+	@python3 scripts/verify/intent_cases_integrity_guard.py --cases-file docs/contract/cases.yml
 	@$(MAKE) --no-print-directory contract.catalog.export
 	@test -s docs/contract/exports/intent_catalog.json || (echo "❌ intent_catalog.json missing" && exit 2)
 	@test -s docs/contract/exports/scene_catalog.json || (echo "❌ scene_catalog.json missing" && exit 2)
