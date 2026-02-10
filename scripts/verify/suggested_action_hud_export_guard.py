@@ -16,9 +16,12 @@ REQUIRED_SHELL_SNIPPETS = [
     ":actions=\"hudActions\"",
     "exportSuggestedActionJson({ success: true }, 'ok')",
     "exportSuggestedActionJson({ success: false }, 'fail')",
+    "exportSuggestedActionJson({ since_ts: sinceTsFromHours(1) }, '1h')",
+    "exportSuggestedActionJson({ since_ts: sinceTsFromHours(24) }, '24h')",
     "resolveKindExportActions()",
     "const defaultKindActions = ['open_record', 'copy_trace', 'refresh'];",
     "const rankedKinds = rankSuggestedActionKinds(3).map((item) => item.kind);",
+    "function sinceTsFromHours(hours: number)",
 ]
 
 REQUIRED_PANEL_SNIPPETS = [

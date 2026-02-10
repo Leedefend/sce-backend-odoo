@@ -18,6 +18,7 @@ export interface SuggestedActionTraceFilter {
   kind?: string;
   success?: boolean;
   limit?: number;
+  since_ts?: number;
 }
 
 export interface SuggestedActionTraceRow {
@@ -98,11 +99,13 @@ export function listSuggestedActionTraces(filter: SuggestedActionTraceFilter = {
   const limit = Math.max(1, Number(filter.limit || 50));
   const targetKind = String(filter.kind || '').trim().toLowerCase();
   const expectedSuccess = typeof filter.success === 'boolean' ? filter.success : null;
+  const sinceTs = Number(filter.since_ts || 0);
   const rows: SuggestedActionTraceRow[] = [];
 
   for (const event of getTraceLog()) {
     const row = normalizeSuggestedActionTrace(event);
     if (!row) continue;
+    if (sinceTs > 0 && row.ts < sinceTs) continue;
     if (targetKind && row.kind.toLowerCase() !== targetKind) continue;
     if (expectedSuccess !== null && row.success !== expectedSuccess) continue;
     rows.push(row);
@@ -121,6 +124,7 @@ export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter =
       kind: String(filter.kind || '').trim() || undefined,
       success: typeof filter.success === 'boolean' ? filter.success : undefined,
       limit: Math.max(1, Number(filter.limit || 50)),
+      since_ts: Number(filter.since_ts || 0) > 0 ? Number(filter.since_ts) : undefined,
     },
     summary: {
       total: items.length,
@@ -131,6 +135,15 @@ export function exportSuggestedActionTraces(filter: SuggestedActionTraceFilter =
     items,
   };
   return JSON.stringify(payload, null, 2);
+}
+
+export function summarizeSuggestedActionTraceFilter(filter: SuggestedActionTraceFilter = {}): string {
+  const parts: string[] = [];
+  const kind = String(filter.kind || '').trim();
+  if (kind) parts.push(`kind=${kind}`);
+  if (typeof filter.success === 'boolean') parts.push(`success=${filter.success ? 'true' : 'false'}`);
+  if (Number(filter.since_ts || 0) > 0) parts.push(`since_ts=${Math.floor(Number(filter.since_ts))}`);
+  return parts.join(', ');
 }
 
 export function rankSuggestedActionKinds(limit = 5): SuggestedActionKindStat[] {
