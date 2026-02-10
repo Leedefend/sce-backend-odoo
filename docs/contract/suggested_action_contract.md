@@ -38,6 +38,11 @@ Compatibility entrypoint:
 - Filter/export APIs (`frontend/apps/web/src/services/trace.ts`):
   - `listSuggestedActionTraces({ kind?, success?, limit? })`
   - `exportSuggestedActionTraces({ kind?, success?, limit? })`
+  - export payload includes:
+    - `summary.total`
+    - `summary.success_count`
+    - `summary.failure_count`
+    - `summary.top_k`
 - HUD export actions:
   - `Export SA all`
   - `Export SA ok`
