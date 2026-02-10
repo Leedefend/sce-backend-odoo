@@ -216,6 +216,35 @@
     "intent_params": {}
   },
   {
+    "case": "system_init_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "system.init",
+    "intent_params": {
+      "scene": "web",
+      "with_preload": false
+    }
+  },
+  {
+    "case": "scene_health_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "scene.health",
+    "intent_params": {
+      "mode": "summary",
+      "with_details": false
+    }
+  },
+  {
+    "case": "ui_contract_intent_admin",
+    "user": "admin",
+    "op": "intent.invoke",
+    "intent": "ui.contract",
+    "intent_params": {
+      "op": "nav"
+    }
+  },
+  {
     "case": "api_data_intent_pm",
     "user": "pm",
     "op": "intent.invoke",

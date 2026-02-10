@@ -1,0 +1,185 @@
+{
+  "action": null,
+  "case": "ui_contract_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "buttons": [],
+    "nav": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:307",
+            "label": "成本科目",
+            "menu_id": 307,
+            "meta": {
+              "action_id": 451,
+              "action_type": "ir.actions.act_window",
+              "groups_xmlids": [
+                91
+              ],
+              "menu_id": 307,
+              "menu_xmlid": "smart_construction_core.menu_sc_project_cost_code",
+              "model": "project.cost.code",
+              "scene": "web",
+              "sequence": 40
+            }
+          }
+        ],
+        "icon": null,
+        "key": "menu:265",
+        "label": "智能施工 2.0",
+        "menu_id": 265,
+        "meta": {
+          "action_id": 449,
+          "action_type": "ir.actions.act_window",
+          "groups_xmlids": [
+            81,
+            84,
+            90,
+            72,
+            78,
+            91,
+            75,
+            69
+          ],
+          "menu_id": 265,
+          "menu_xmlid": "smart_construction_core.menu_sc_root",
+          "model": "project.project",
+          "scene": "web",
+          "sequence": 30
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:173",
+            "label": "Projects",
+            "menu_id": 173,
+            "meta": {
+              "action_id": 302,
+              "action_type": "ir.actions.act_window",
+              "menu_id": 173,
+              "menu_xmlid": "project.menu_projects",
+              "model": "project.project",
+              "scene": "web",
+              "sequence": 1
+            }
+          },
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:177",
+            "label": "All Tasks",
+            "menu_id": 177,
+            "meta": {
+              "action_id": 312,
+              "action_type": "ir.actions.act_window",
+              "menu_id": 177,
+              "menu_xmlid": "project.menu_project_management_all_tasks",
+              "model": "project.task",
+              "scene": "web",
+              "sequence": 2
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:184",
+                "label": "Projects",
+                "menu_id": 184,
+                "meta": {
+                  "action_id": 304,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 184,
+                  "menu_xmlid": "project.menu_projects_config",
+                  "model": "project.project",
+                  "scene": "web",
+                  "sequence": 5
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:187",
+                "label": "Tags",
+                "menu_id": 187,
+                "meta": {
+                  "action_id": 320,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 187,
+                  "menu_xmlid": "project.menu_project_tags_act",
+                  "model": "project.tags",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:186",
+                "label": "Task Stages",
+                "menu_id": 186,
+                "meta": {
+                  "action_id": 297,
+                  "action_type": "ir.actions.act_window",
+                  "groups_xmlids": [
+                    7
+                  ],
+                  "menu_id": 186,
+                  "menu_xmlid": "project.menu_project_config_project",
+                  "model": "project.task.type",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              }
+            ],
+            "icon": null,
+            "key": "menu:181",
+            "label": "Configuration",
+            "menu_id": 181,
+            "meta": {
+              "groups_xmlids": [
+                34
+              ],
+              "menu_id": 181,
+              "menu_xmlid": "project.menu_project_config",
+              "scene": "web",
+              "sequence": 100
+            }
+          }
+        ],
+        "icon": "project,static/description/icon.png",
+        "key": "menu:172",
+        "label": "Project",
+        "menu_id": 172,
+        "meta": {
+          "groups_xmlids": [
+            91
+          ],
+          "menu_id": 172,
+          "menu_xmlid": "project.menu_main_pm",
+          "scene": "web",
+          "sequence": 70
+        }
+      }
+    ]
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}

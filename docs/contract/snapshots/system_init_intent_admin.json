@@ -1,0 +1,780 @@
+{
+  "action": null,
+  "case": "system_init_intent_admin",
+  "contract_version": "v1",
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "capabilities": [
+      {
+        "capability_scope": [],
+        "default_payload": {
+          "action_id": 527,
+          "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
+          "menu_id": 338,
+          "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix"
+        },
+        "intent": "ui.contract",
+        "key": "capability.matrix",
+        "name": "能力矩阵",
+        "reason": "",
+        "reason_code": "",
+        "required_flag": "",
+        "required_groups": [],
+        "role_scope": [],
+        "smoke_test": false,
+        "state": "READY",
+        "status": "ga",
+        "tags": [
+          "portal",
+          "capability"
+        ],
+        "ui_hint": "查看角色可用能力",
+        "ui_label": "能力矩阵",
+        "version": "v0.1"
+      }
+    ],
+    "default_route": {
+      "menu_id": 307
+    },
+    "diagnostic": {
+      "db_source": "env_cr",
+      "effective_db": "sc_demo",
+      "effective_root_xmlid": null,
+      "has_authorization": false,
+      "header_x_db": null,
+      "header_x_odoo_db": null,
+      "login": "admin",
+      "params_keys": [
+        "scene",
+        "with_preload"
+      ],
+      "root_source": "default",
+      "scene_channel_param": null,
+      "scene_rollback_param": null,
+      "scene_use_pinned_param": null,
+      "uid": 2
+    },
+    "feature_flags": {
+      "ai_enabled": true
+    },
+    "intents": [
+      "api.data",
+      "api.data.batch",
+      "api.data.create",
+      "api.data.unlink",
+      "app.catalog",
+      "app.nav",
+      "app.open",
+      "auth.logout",
+      "base.intent",
+      "capability.describe",
+      "capability.visibility.report",
+      "chatter.post",
+      "chatter.timeline",
+      "execute_button",
+      "file.download",
+      "file.upload",
+      "load_contract",
+      "load_metadata",
+      "load_view",
+      "login",
+      "meta.describe_model",
+      "my.work.complete",
+      "my.work.complete_batch",
+      "my.work.summary",
+      "permission.check",
+      "scene.governance.export_contract",
+      "scene.governance.pin_stable",
+      "scene.governance.rollback",
+      "scene.governance.set_channel",
+      "scene.health",
+      "scene.package.dry_run_import",
+      "scene.package.export",
+      "scene.package.import",
+      "scene.package.list",
+      "scene.packages.installed",
+      "session.bootstrap",
+      "system.init",
+      "system.ping.construction",
+      "ui.contract",
+      "usage.export.csv",
+      "usage.report",
+      "usage.track"
+    ],
+    "intents_meta": {
+      "api.data": {
+        "version": "2.1.1"
+      },
+      "api.data.batch": {
+        "version": "0.1.0"
+      },
+      "api.data.create": {
+        "aliases": [
+          "api.data.write"
+        ],
+        "version": "0.6.0"
+      },
+      "api.data.unlink": {
+        "version": "0.1.0"
+      },
+      "app.catalog": {
+        "version": "1.0.0"
+      },
+      "app.nav": {
+        "version": "1.0.0"
+      },
+      "app.open": {
+        "version": "1.0.0"
+      },
+      "auth.logout": {
+        "version": "1.0.0"
+      },
+      "base.intent": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "capability.describe": {
+        "version": "1.0.0"
+      },
+      "capability.visibility.report": {
+        "version": "1.0.0"
+      },
+      "chatter.post": {
+        "version": "1.0.0"
+      },
+      "chatter.timeline": {
+        "version": "1.0.0"
+      },
+      "execute_button": {
+        "version": "1.0.0"
+      },
+      "file.download": {
+        "version": "0.1.0"
+      },
+      "file.upload": {
+        "version": "0.1.0"
+      },
+      "load_contract": {
+        "version": "1.0.0"
+      },
+      "load_metadata": {
+        "version": "1.0.0"
+      },
+      "load_view": {
+        "version": "1.0.0"
+      },
+      "login": {
+        "aliases": [],
+        "version": "2.2.0"
+      },
+      "meta.describe_model": {
+        "version": "1.0.0"
+      },
+      "my.work.complete": {
+        "version": "1.0.0"
+      },
+      "my.work.complete_batch": {
+        "version": "1.0.0"
+      },
+      "my.work.summary": {
+        "version": "1.0.0"
+      },
+      "permission.check": {
+        "version": "1.0.0"
+      },
+      "scene.governance.export_contract": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "scene.governance.pin_stable": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "scene.governance.rollback": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "scene.governance.set_channel": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "scene.health": {
+        "version": "1.0.0"
+      },
+      "scene.package.dry_run_import": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "scene.package.export": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "scene.package.import": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "scene.package.list": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "scene.packages.installed": {
+        "required_groups": [
+          "smart_construction_core.group_sc_cap_config_admin"
+        ],
+        "version": "1.0.0"
+      },
+      "session.bootstrap": {
+        "version": "1.0.0"
+      },
+      "system.init": {
+        "aliases": [
+          "app.init",
+          "bootstrap"
+        ],
+        "version": "1.0.0"
+      },
+      "system.ping.construction": {
+        "version": "1.0.0"
+      },
+      "ui.contract": {
+        "version": "1.0.0"
+      },
+      "usage.export.csv": {
+        "version": "1.0.0"
+      },
+      "usage.report": {
+        "version": "1.0.0"
+      },
+      "usage.track": {
+        "version": "1.0.0"
+      }
+    },
+    "nav": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:307",
+            "label": "成本科目",
+            "menu_id": 307,
+            "meta": {
+              "action_id": 451,
+              "action_type": "ir.actions.act_window",
+              "groups_xmlids": [
+                "smart_construction_core.group_sc_cap_config_admin"
+              ],
+              "menu_id": 307,
+              "menu_xmlid": "smart_construction_core.menu_sc_project_cost_code",
+              "model": "project.cost.code",
+              "scene": "web",
+              "sequence": 40
+            },
+            "xmlid": "smart_construction_core.menu_sc_project_cost_code"
+          }
+        ],
+        "icon": null,
+        "key": "menu:265",
+        "label": "智能施工 2.0",
+        "menu_id": 265,
+        "meta": {
+          "action_id": 449,
+          "action_type": "ir.actions.act_window",
+          "groups_xmlids": [
+            "smart_construction_core.group_sc_cap_config_admin",
+            "smart_construction_core.group_sc_cap_contract_read",
+            "smart_construction_core.group_sc_cap_cost_read",
+            "smart_construction_core.group_sc_cap_data_read",
+            "smart_construction_core.group_sc_cap_finance_read",
+            "smart_construction_core.group_sc_cap_material_read",
+            "smart_construction_core.group_sc_cap_project_read",
+            "smart_construction_core.group_sc_cap_purchase_read"
+          ],
+          "menu_id": 265,
+          "menu_xmlid": "smart_construction_core.menu_sc_root",
+          "model": "project.project",
+          "scene": "web",
+          "scene_key": "projects.list",
+          "sequence": 30
+        },
+        "scene_key": "projects.list",
+        "xmlid": "smart_construction_core.menu_sc_root"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:173",
+            "label": "Projects",
+            "menu_id": 173,
+            "meta": {
+              "action_id": 302,
+              "action_type": "ir.actions.act_window",
+              "menu_id": 173,
+              "menu_xmlid": "project.menu_projects",
+              "model": "project.project",
+              "scene": "web",
+              "sequence": 1
+            },
+            "xmlid": "project.menu_projects"
+          },
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:177",
+            "label": "All Tasks",
+            "menu_id": 177,
+            "meta": {
+              "action_id": 312,
+              "action_type": "ir.actions.act_window",
+              "menu_id": 177,
+              "menu_xmlid": "project.menu_project_management_all_tasks",
+              "model": "project.task",
+              "scene": "web",
+              "sequence": 2
+            },
+            "xmlid": "project.menu_project_management_all_tasks"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:184",
+                "label": "Projects",
+                "menu_id": 184,
+                "meta": {
+                  "action_id": 304,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 184,
+                  "menu_xmlid": "project.menu_projects_config",
+                  "model": "project.project",
+                  "scene": "web",
+                  "sequence": 5
+                },
+                "xmlid": "project.menu_projects_config"
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:187",
+                "label": "Tags",
+                "menu_id": 187,
+                "meta": {
+                  "action_id": 320,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 187,
+                  "menu_xmlid": "project.menu_project_tags_act",
+                  "model": "project.tags",
+                  "scene": "web",
+                  "sequence": 10
+                },
+                "xmlid": "project.menu_project_tags_act"
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:186",
+                "label": "Task Stages",
+                "menu_id": 186,
+                "meta": {
+                  "action_id": 297,
+                  "action_type": "ir.actions.act_window",
+                  "groups_xmlids": [
+                    "base.group_no_one"
+                  ],
+                  "menu_id": 186,
+                  "menu_xmlid": "project.menu_project_config_project",
+                  "model": "project.task.type",
+                  "scene": "web",
+                  "sequence": 10
+                },
+                "xmlid": "project.menu_project_config_project"
+              }
+            ],
+            "icon": null,
+            "key": "menu:181",
+            "label": "Configuration",
+            "menu_id": 181,
+            "meta": {
+              "groups_xmlids": [
+                "project.group_project_manager"
+              ],
+              "menu_id": 181,
+              "menu_xmlid": "project.menu_project_config",
+              "scene": "web",
+              "sequence": 100
+            },
+            "xmlid": "project.menu_project_config"
+          }
+        ],
+        "icon": "project,static/description/icon.png",
+        "key": "menu:172",
+        "label": "Project",
+        "menu_id": 172,
+        "meta": {
+          "groups_xmlids": [
+            "smart_construction_core.group_sc_cap_config_admin"
+          ],
+          "menu_id": 172,
+          "menu_xmlid": "project.menu_main_pm",
+          "scene": "web",
+          "sequence": 70
+        },
+        "xmlid": "project.menu_main_pm"
+      }
+    ],
+    "nav_meta": {
+      "debug_params_keys": [
+        "scene",
+        "with_preload"
+      ],
+      "debug_root_xmlid": null,
+      "diagnostic": {
+        "db_source": "env_cr",
+        "effective_db": "sc_demo",
+        "effective_root_xmlid": null,
+        "login": "admin",
+        "root_source": "default",
+        "uid": 2
+      },
+      "fingerprint": "8832cbf7e65f653e715f68697a3e228d",
+      "menu": 3,
+      "root_filtered_fallback": false,
+      "root_found": null,
+      "root_menu_id": null,
+      "root_resolved_id": null,
+      "root_xmlid": null
+    },
+    "preload": [],
+    "scene_channel": "stable",
+    "scene_channel_selector": "env",
+    "scene_channel_source_ref": "SCENE_CHANNEL",
+    "scene_contract_ref": "stable/LATEST.json",
+    "scene_diagnostics": {
+      "auto_degrade": {
+        "action_taken": "none",
+        "notifications": {
+          "channels": [],
+          "sent": false
+        },
+        "policy": {
+          "action": "rollback_pinned",
+          "critical_threshold_drift_warn": 1,
+          "critical_threshold_resolve_errors": 1,
+          "enabled": false
+        },
+        "pre_counts": {
+          "critical_drift_warn_count": 0,
+          "critical_resolve_errors_count": 0
+        },
+        "reason_codes": [],
+        "triggered": false
+      },
+      "channel_selector": "env",
+      "channel_source_ref": "SCENE_CHANNEL",
+      "drift": [],
+      "loaded_from": "contract",
+      "normalize_warnings": [],
+      "resolve_errors": [],
+      "rollback_active": false,
+      "rollback_ref": null,
+      "scene_version": "v2",
+      "schema_version": "v2",
+      "timings": {
+        "normalize_ms": 0,
+        "resolve_ms": 0
+      }
+    },
+    "scene_version": "v2",
+    "scenes": [
+      {
+        "access": {
+          "allowed": true,
+          "has_access_clause": false,
+          "reason_code": "OK",
+          "required_capabilities": [],
+          "required_capabilities_count": 0,
+          "suggested_action": "",
+          "visible": true
+        },
+        "code": "default",
+        "default_sort": "",
+        "filters": [],
+        "layout": {
+          "header": "full",
+          "kind": "workspace",
+          "sidebar": "fixed"
+        },
+        "list_profile": {
+          "column_labels": {},
+          "columns": [],
+          "hidden_columns": [],
+          "row_primary": "",
+          "row_secondary": ""
+        },
+        "name": "默认场景",
+        "target": {
+          "route": "/workbench?scene=default"
+        },
+        "tiles": [
+          {
+            "icon": "M",
+            "key": "capability.matrix",
+            "payload": {
+              "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
+              "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix"
+            },
+            "required_capabilities": [],
+            "scene_key": "",
+            "subtitle": "查看角色可用能力",
+            "title": "能力矩阵"
+          },
+          {
+            "icon": "P",
+            "key": "project.work",
+            "payload": {
+              "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+              "menu_xmlid": "smart_construction_core.menu_sc_project_project",
+              "scene_key": "projects.ledger"
+            },
+            "required_capabilities": [],
+            "scene_key": "projects.ledger",
+            "subtitle": "项目看板与概览入口",
+            "title": "项目工作"
+          }
+        ]
+      },
+      {
+        "access": {
+          "allowed": true,
+          "has_access_clause": false,
+          "reason_code": "OK",
+          "required_capabilities": [],
+          "required_capabilities_count": 0,
+          "suggested_action": "",
+          "visible": true
+        },
+        "code": "projects.intake",
+        "default_sort": "",
+        "filters": [],
+        "layout": {
+          "header": "full",
+          "kind": "record",
+          "sidebar": "fixed"
+        },
+        "list_profile": {
+          "column_labels": {},
+          "columns": [],
+          "hidden_columns": [],
+          "row_primary": "",
+          "row_secondary": ""
+        },
+        "name": "项目立项",
+        "target": {
+          "route": "/workbench?scene=projects.intake&reason=TARGET_MISSING"
+        },
+        "tiles": []
+      },
+      {
+        "access": {
+          "allowed": true,
+          "has_access_clause": false,
+          "reason_code": "OK",
+          "required_capabilities": [],
+          "required_capabilities_count": 0,
+          "suggested_action": "",
+          "visible": true
+        },
+        "code": "projects.ledger",
+        "default_sort": "write_date desc",
+        "filters": [],
+        "layout": {
+          "header": "full",
+          "kind": "ledger",
+          "sidebar": "fixed"
+        },
+        "list_profile": {
+          "column_labels": {
+            "name": "项目名称",
+            "partner_id": "客户",
+            "project_code": "项目编号",
+            "stage_id": "状态",
+            "user_id": "负责人"
+          },
+          "columns": [
+            "name",
+            "partner_id",
+            "project_code",
+            "stage_id",
+            "user_id",
+            "write_date"
+          ],
+          "hidden_columns": [
+            "__last_update",
+            "display_name",
+            "is_favorite",
+            "message_needaction",
+            "message_unread"
+          ],
+          "row_primary": "name",
+          "row_secondary": "partner_id"
+        },
+        "name": "项目台账（试点）",
+        "target": {
+          "action_id": 495,
+          "menu_id": 280
+        },
+        "tiles": []
+      },
+      {
+        "access": {
+          "allowed": true,
+          "has_access_clause": false,
+          "reason_code": "OK",
+          "required_capabilities": [],
+          "required_capabilities_count": 0,
+          "suggested_action": "",
+          "visible": true
+        },
+        "code": "projects.list",
+        "default_sort": "write_date desc",
+        "filters": [],
+        "layout": {
+          "header": "full",
+          "kind": "list",
+          "sidebar": "fixed"
+        },
+        "list_profile": {
+          "column_labels": {
+            "name": "项目名称",
+            "partner_id": "客户",
+            "project_code": "项目编号",
+            "stage_id": "状态",
+            "user_id": "负责人"
+          },
+          "columns": [
+            "name",
+            "partner_id",
+            "project_code",
+            "stage_id",
+            "user_id",
+            "write_date"
+          ],
+          "hidden_columns": [
+            "__last_update",
+            "display_name",
+            "is_favorite",
+            "message_needaction",
+            "message_unread"
+          ],
+          "row_primary": "name",
+          "row_secondary": "partner_id"
+        },
+        "name": "项目列表",
+        "target": {
+          "action_id": 519,
+          "menu_id": 329
+        },
+        "tiles": []
+      },
+      {
+        "access": {
+          "allowed": true,
+          "has_access_clause": false,
+          "reason_code": "OK",
+          "required_capabilities": [],
+          "required_capabilities_count": 0,
+          "suggested_action": "",
+          "visible": true
+        },
+        "code": "scene_smoke_default",
+        "default_sort": "",
+        "filters": [],
+        "layout": {
+          "header": "full",
+          "kind": "workspace",
+          "sidebar": "fixed"
+        },
+        "list_profile": {
+          "column_labels": {},
+          "columns": [],
+          "hidden_columns": [],
+          "row_primary": "",
+          "row_secondary": ""
+        },
+        "name": "Scene Smoke Default",
+        "target": {
+          "route": "/workbench?scene=scene_smoke_default"
+        },
+        "tiles": [
+          {
+            "icon": "",
+            "key": "scene.smoke.default",
+            "payload": {},
+            "required_capabilities": [],
+            "scene_key": "",
+            "subtitle": "",
+            "title": "Scene Smoke Default"
+          }
+        ]
+      }
+    ],
+    "schema_version": "v2",
+    "user": {
+      "company_id": 1,
+      "groups_xmlids": [
+        "project.group_project_manager",
+        "smart_construction_core.group_sc_cap_config_admin",
+        "base.group_user",
+        "mail.group_mail_template_editor",
+        "purchase.group_send_reminder",
+        "base.group_sanitize_override",
+        "base.group_multi_currency",
+        "base.group_no_one",
+        "product.group_product_pricelist",
+        "base.group_partner_manager",
+        "smart_construction_core.group_sc_task_entry_access",
+        "project.group_project_user",
+        "smart_construction_core.group_sc_internal_user",
+        "base.group_allow_export",
+        "base.group_erp_manager",
+        "base.group_system"
+      ],
+      "id": 2,
+      "lang": "zh_CN",
+      "name": "Administrator",
+      "tz": "Asia/Shanghai"
+    }
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
+}
