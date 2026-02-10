@@ -316,92 +316,99 @@ export function executeSuggestedAction(
   options: {
     onRetry?: () => void;
     onSuggestedAction?: (action: string) => boolean | void;
+    onExecuted?: (result: { kind: SuggestedActionKind; raw: string; success: boolean }) => void;
     traceId?: string;
     reasonCode?: string;
     message?: string;
   } = {},
 ) {
+  const finish = (success: boolean) => {
+    if (options.onExecuted) {
+      options.onExecuted({ kind: parsed.kind, raw: parsed.raw, success });
+    }
+    return success;
+  };
   if (!parsed.kind) return false;
   if (options.onSuggestedAction && parsed.raw) {
     const handled = options.onSuggestedAction(parsed.raw);
-    if (handled) return true;
+    if (handled) return finish(true);
   }
   if ((parsed.kind === 'refresh' || parsed.kind === 'retry') && options.onRetry) {
     options.onRetry();
-    return true;
+    return finish(true);
   }
   if (parsed.kind === 'go_back') {
-    if (window.history.length <= 1) return false;
+    if (window.history.length <= 1) return finish(false);
     window.history.back();
-    return true;
+    return finish(true);
   }
   if (parsed.kind === 'relogin') {
     const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-    return safeNavigate(`/login?redirect=${redirect}`);
+    return finish(safeNavigate(`/login?redirect=${redirect}`));
   }
   if (parsed.kind === 'check_permission') {
-    return safeNavigate('/admin/usage-analytics');
+    return finish(safeNavigate('/admin/usage-analytics'));
   }
   if (parsed.kind === 'open_home') {
-    return safeNavigate('/');
+    return finish(safeNavigate('/'));
   }
   if (parsed.kind === 'open_dashboard') {
-    return safeNavigate('/');
+    return finish(safeNavigate('/'));
   }
   if (parsed.kind === 'open_my_work') {
-    return safeNavigate(appendQuery('/my-work', parsed.query));
+    return finish(safeNavigate(appendQuery('/my-work', parsed.query)));
   }
   if (parsed.kind === 'open_usage_analytics') {
-    return safeNavigate(appendQuery('/admin/usage-analytics', parsed.query));
+    return finish(safeNavigate(appendQuery('/admin/usage-analytics', parsed.query)));
   }
   if (parsed.kind === 'open_scene_health') {
-    return safeNavigate(appendQuery('/admin/scene-health', parsed.query));
+    return finish(safeNavigate(appendQuery('/admin/scene-health', parsed.query)));
   }
   if (parsed.kind === 'open_scene_packages') {
-    return safeNavigate(appendQuery('/admin/scene-packages', parsed.query));
+    return finish(safeNavigate(appendQuery('/admin/scene-packages', parsed.query)));
   }
   if (parsed.kind === 'open_projects_list') {
-    return safeNavigate('/s/projects.list');
+    return finish(safeNavigate('/s/projects.list'));
   }
   if (parsed.kind === 'open_projects_board') {
-    return safeNavigate('/projects');
+    return finish(safeNavigate('/projects'));
   }
   if (parsed.kind === 'open_project' && parsed.projectId) {
-    return safeNavigate(appendQuery(`/projects/${parsed.projectId}`, parsed.query));
+    return finish(safeNavigate(appendQuery(`/projects/${parsed.projectId}`, parsed.query)));
   }
   if (parsed.kind === 'open_scene' && parsed.sceneKey) {
-    return safeNavigate(
+    return finish(
+      safeNavigate(
       appendHash(appendQuery(`/s/${encodeURIComponent(parsed.sceneKey)}`, parsed.query), parsed.hash),
+      ),
     );
   }
   if (parsed.kind === 'open_menu' && parsed.menuId) {
-    return safeNavigate(appendQuery(`/m/${parsed.menuId}`, parsed.query));
+    return finish(safeNavigate(appendQuery(`/m/${parsed.menuId}`, parsed.query)));
   }
   if (parsed.kind === 'open_action' && parsed.actionId) {
-    return safeNavigate(appendQuery(`/a/${parsed.actionId}`, parsed.query));
+    return finish(safeNavigate(appendQuery(`/a/${parsed.actionId}`, parsed.query)));
   }
   if (parsed.kind === 'open_record' && parsed.model && parsed.recordId) {
-    return safeNavigate(
-      appendQuery(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`, parsed.query),
-    );
+    return finish(safeNavigate(appendQuery(`/r/${encodeURIComponent(parsed.model)}/${parsed.recordId}`, parsed.query)));
   }
   if (parsed.kind === 'open_route' && parsed.url) {
-    return safeNavigate(appendHash(parsed.url, parsed.hash));
+    return finish(safeNavigate(appendHash(parsed.url, parsed.hash)));
   }
   if (parsed.kind === 'open_url' && parsed.url) {
-    return safeNavigate(appendHash(parsed.url, parsed.hash));
+    return finish(safeNavigate(appendHash(parsed.url, parsed.hash)));
   }
   if (parsed.kind === 'copy_trace') {
     void copyText(options.traceId || '');
-    return true;
+    return finish(true);
   }
   if (parsed.kind === 'copy_reason') {
     void copyText(options.reasonCode || '');
-    return true;
+    return finish(true);
   }
   if (parsed.kind === 'copy_message') {
     void copyText(options.message || '');
-    return true;
+    return finish(true);
   }
   if (parsed.kind === 'copy_error_line') {
     const pieces = [
@@ -410,7 +417,7 @@ export function executeSuggestedAction(
       String(options.traceId || '').trim() ? `trace=${String(options.traceId || '').trim()}` : '',
     ].filter(Boolean);
     void copyText(pieces.join(' | '));
-    return true;
+    return finish(true);
   }
   if (parsed.kind === 'copy_full_error') {
     const bundle = JSON.stringify(
@@ -423,7 +430,7 @@ export function executeSuggestedAction(
       2,
     );
     void copyText(bundle);
-    return true;
+    return finish(true);
   }
-  return false;
+  return finish(false);
 }
