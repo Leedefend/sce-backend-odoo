@@ -257,11 +257,19 @@ function downloadTextAsFile(filename: string, content: string, mimeType = 'appli
   URL.revokeObjectURL(url);
 }
 
+function sanitizeExportSuffix(value: string) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'all';
+}
+
 function exportSuggestedActionJson(filter: { success?: boolean; kind?: string } = {}, suffix = 'all') {
   try {
     const content = exportSuggestedActionTraces({ ...filter, limit: 200 });
     const now = new Date().toISOString().replace(/[:.]/g, '-');
-    downloadTextAsFile(`suggested-action-traces-${suffix}-${now}.json`, content);
+    downloadTextAsFile(`suggested-action-traces-${sanitizeExportSuffix(suffix)}-${now}.json`, content);
     const details = [suffix, filter.kind ? `kind=${filter.kind}` : '', filter.success === true ? 'success=true' : '']
       .filter(Boolean)
       .join(', ');
