@@ -86,6 +86,22 @@ import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
+import type { NavNode } from '@sc/schema';
+
+type NavNodeWithScene = NavNode & {
+  scene_key?: string;
+  sceneKey?: string;
+};
+
+function resolveSceneCode(scene: Scene): string {
+  const raw = scene as Scene & { code?: string };
+  return typeof raw.code === 'string' ? raw.code : '';
+}
+
+function resolveNodeSceneKey(node: NavNode): string {
+  const raw = node as NavNodeWithScene;
+  return raw.scene_key || raw.sceneKey || node.meta?.scene_key || '';
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -163,11 +179,11 @@ const sceneKey = computed(() => {
   const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
   if (queryKey) return String(queryKey);
   const node = findMenuNode(session.menuTree, menuId.value);
-  return (node?.scene_key || node?.meta?.scene_key || '') as string;
+  return node ? resolveNodeSceneKey(node) : '';
 });
 const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
-  return session.scenes.find((item: Scene) => item.key === sceneKey.value || (item as any)?.code === sceneKey.value) || null;
+  return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
 const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
 const hudEntries = computed(() => [
@@ -241,11 +257,11 @@ function resolveRequestedFields(contractFields: string[], profile: SceneListProf
   return uniqueFields([...profileColumns, ...secondary, ...contractFields]);
 }
 
-function findMenuNode(nodes: Array<Record<string, any>>, menuId?: number) {
+function findMenuNode(nodes: NavNode[], menuId?: number): NavNode | null {
   if (!menuId) {
     return null;
   }
-  const walk = (items: Array<Record<string, any>>): Record<string, any> | null => {
+  const walk = (items: NavNode[]): NavNode | null => {
     for (const node of items) {
       if (node.menu_id === menuId || node.id === menuId) {
         return node;
