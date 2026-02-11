@@ -489,7 +489,7 @@ function toggleTodoSelection(id: number, event: Event) {
   const next = new Set(todoSelectionIds.value);
   if (checked) next.add(id);
   else next.delete(id);
-  todoSelectionIds.value = Array.from(next);
+  todoSelectionIds.value = Array.from(next).sort((a, b) => a - b);
 }
 
 function toggleAllTodoSelection(event: Event) {
@@ -500,7 +500,7 @@ function toggleAllTodoSelection(event: Event) {
   }
   const merged = new Set(todoSelectionIds.value);
   currentTodoRows.value.forEach((id) => merged.add(id));
-  todoSelectionIds.value = Array.from(merged);
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
 }
 
 function clearTodoSelection() {
@@ -520,10 +520,14 @@ function clearRetryFailed() {
 
 function selectRetryFailedItems() {
   const candidateIds = retryRequestParams.value?.retry_ids?.length ? retryRequestParams.value.retry_ids : retryFailedIds.value;
-  if (!candidateIds.length) return;
+  if (!candidateIds.length) {
+    actionFeedback.value = '当前没有可重试失败项';
+    actionFeedbackError.value = true;
+    return;
+  }
   const merged = new Set(todoSelectionIds.value);
   candidateIds.forEach((id) => merged.add(id));
-  todoSelectionIds.value = Array.from(merged);
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
 }
 
 function failedItemRecord(id: number) {
