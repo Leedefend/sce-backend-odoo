@@ -41,6 +41,32 @@
     </div>
     <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
       <p class="retry-title">失败明细</p>
+      <div class="retry-toggle">
+        <button
+          type="button"
+          class="reason-chip"
+          :class="{ active: retryFilterMode === 'all' }"
+          @click="setRetryFilterMode('all')"
+        >
+          全部
+        </button>
+        <button
+          type="button"
+          class="reason-chip"
+          :class="{ active: retryFilterMode === 'retryable' }"
+          @click="setRetryFilterMode('retryable')"
+        >
+          仅可重试
+        </button>
+        <button
+          type="button"
+          class="reason-chip"
+          :class="{ active: retryFilterMode === 'non_retryable' }"
+          @click="setRetryFilterMode('non_retryable')"
+        >
+          仅不可重试
+        </button>
+      </div>
       <p v-if="retryReasonSummary.length" class="retry-summary">
         失败原因分布：
         <button
@@ -66,7 +92,7 @@
         </button>
       </p>
       <ul>
-        <li v-for="item in retryFailedItems" :key="`failed-${item.id}`">
+        <li v-for="item in visibleRetryFailedItems" :key="`failed-${item.id}`">
           <span class="failed-id">#{{ item.id }}</span>
           <span class="failed-code">{{ item.reason_code || 'UNKNOWN' }}</span>
           <span class="failed-msg">{{ item.message || '-' }}</span>
@@ -262,6 +288,7 @@ const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: s
 const todoRemaining = ref<number | null>(null);
 const lastBatchExecutionMode = ref<string>('');
 const lastBatchReplay = ref(false);
+const retryFilterMode = ref<'all' | 'retryable' | 'non_retryable'>('all');
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const searchText = ref('');
@@ -323,6 +350,13 @@ const reasonOptions = computed(() => {
     if (reason) set.add(reason);
   });
   return Array.from(set).sort();
+});
+const visibleRetryFailedItems = computed(() => {
+  if (retryFilterMode.value === 'all') return retryFailedItems.value;
+  if (retryFilterMode.value === 'retryable') {
+    return retryFailedItems.value.filter((item) => Boolean(item.retryable));
+  }
+  return retryFailedItems.value.filter((item) => item.retryable === false);
 });
 
 async function load() {
@@ -528,6 +562,11 @@ function clearRetryFailed() {
   todoRemaining.value = null;
   lastBatchExecutionMode.value = '';
   lastBatchReplay.value = false;
+  retryFilterMode.value = 'all';
+}
+
+function setRetryFilterMode(mode: 'all' | 'retryable' | 'non_retryable') {
+  retryFilterMode.value = mode;
 }
 
 function selectRetryFailedItems() {
@@ -875,6 +914,12 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   cursor: pointer;
 }
 
+.reason-chip.active {
+  border-color: #3b82f6;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 .hero p {
   margin: 0;
   color: #334155;
@@ -1008,6 +1053,12 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   margin: 0;
   color: #b91c1c;
   font-weight: 600;
+}
+
+.retry-toggle {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
 }
 
 .retry-summary {
