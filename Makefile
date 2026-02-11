@@ -652,7 +652,7 @@ verify.portal.scene_observability_smoke.container: verify.portal.scene_governanc
 	@echo \"[OK] verify.portal.scene_observability_smoke.container done\"
 verify.portal.scene_package_import_strict.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "REQUIRE_GOVERNANCE_LOG=1 BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) node /mnt/scripts/verify/fe_scene_package_import_smoke.js"
-verify.portal.scene_observability_strict.container: verify.portal.scene_observability_preflight.container verify.portal.scene_governance_action_strict.container verify.portal.scene_auto_degrade_strict.container verify.portal.scene_auto_degrade_notify_strict.container verify.portal.scene_package_import_strict.container
+verify.portal.scene_observability_strict.container: verify.portal.scene_observability.structure_guard verify.portal.scene_observability_preflight.container verify.portal.scene_governance_action_strict.container verify.portal.scene_auto_degrade_strict.container verify.portal.scene_auto_degrade_notify_strict.container verify.portal.scene_package_import_strict.container
 	@echo \"[OK] verify.portal.scene_observability_strict.container done\"
 verify.portal.scene_package_ui_smoke.container: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) node /mnt/scripts/verify/fe_portal_scene_package_ui_smoke.js"
