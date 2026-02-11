@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -77,7 +78,7 @@ async function main() {
     { intent: 'login', params: { db: DB_NAME, login: 'admin', password: ADMIN_PASSWD } },
     { 'X-Anonymous-Intent': '1', 'X-Trace-Id': traceId }
   );
-  if (loginResp.status >= 400 || !loginResp.body.ok) throw new Error(`login failed: ${loginResp.status}`);
+  assertIntentEnvelope(loginResp, 'login');
   const token = (((loginResp.body || {}).data) || {}).token || '';
   if (!token) throw new Error('login token missing');
   const auth = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME, 'X-Trace-Id': traceId };
@@ -88,7 +89,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'full_limit_1_offset_0.log'), full1);
-  if (full1.status >= 400 || !full1.body.ok) throw new Error(`full1 failed: ${full1.status}`);
+  assertIntentEnvelope(full1, 'scene.health');
   const fullData1 = (full1.body || {}).data || {};
   if (!('details' in fullData1)) throw new Error('full mode missing details');
 
@@ -105,7 +106,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'full_limit_1_offset_1.log'), full2);
-  if (full2.status >= 400 || !full2.body.ok) throw new Error(`full2 failed: ${full2.status}`);
+  assertIntentEnvelope(full2, 'scene.health');
   const fullData2 = (full2.body || {}).data || {};
   const query2 = fullData2.query || {};
   if (String(query2.offset || '') !== '1') throw new Error('offset not reflected in query');
@@ -116,7 +117,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'summary_mode.log'), summaryMode);
-  if (summaryMode.status >= 400 || !summaryMode.body.ok) throw new Error(`summary mode failed: ${summaryMode.status}`);
+  assertIntentEnvelope(summaryMode, 'scene.health');
   const summaryData = (summaryMode.body || {}).data || {};
   if ('details' in summaryData) throw new Error('summary mode should not return details');
 

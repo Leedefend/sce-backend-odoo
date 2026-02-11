@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -77,7 +78,7 @@ async function main() {
     { intent: 'login', params: { db: DB_NAME, login: 'admin', password: ADMIN_PASSWD } },
     { 'X-Anonymous-Intent': '1', 'X-Trace-Id': traceId }
   );
-  if (loginResp.status >= 400 || !loginResp.body.ok) throw new Error(`login failed: ${loginResp.status}`);
+  assertIntentEnvelope(loginResp, 'login');
   const token = (((loginResp.body || {}).data) || {}).token || '';
   if (!token) throw new Error('login token missing');
   const auth = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME, 'X-Trace-Id': traceId };
@@ -95,7 +96,7 @@ async function main() {
     },
     auth
   );
-  if (exportResp.status >= 400 || !exportResp.body.ok) throw new Error(`scene.package.export failed: ${exportResp.status}`);
+  assertIntentEnvelope(exportResp, 'scene.package.export');
   const pkg = (((exportResp.body || {}).data) || {}).package;
   if (!pkg || typeof pkg !== 'object') throw new Error('export package missing');
 
@@ -112,9 +113,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'scene_package_import.log'), importResp);
-  if (importResp.status >= 400 || !importResp.body.ok) {
-    throw new Error(`scene.package.import failed: ${importResp.status}`);
-  }
+  assertIntentEnvelope(importResp, 'scene.package.import');
   const importData = (importResp.body || {}).data || {};
   if (!Array.isArray(importData.imported_scene_keys) || !importData.summary) {
     throw new Error('scene.package.import contract invalid');
@@ -122,9 +121,7 @@ async function main() {
 
   const healthResp = await requestJson(intentUrl, { intent: 'scene.health', params: { mode: 'summary' } }, auth);
   writeJson(path.join(outDir, 'scene_health.log'), healthResp);
-  if (healthResp.status >= 400 || !healthResp.body.ok) {
-    throw new Error(`scene.health failed after import: ${healthResp.status}`);
-  }
+  assertIntentEnvelope(healthResp, 'scene.health');
   const healthData = (healthResp.body || {}).data || {};
   const summaryObj = healthData.summary || {};
   if (Number(summaryObj.critical_resolve_errors_count || 0) > 0) {
