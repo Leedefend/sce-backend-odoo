@@ -32,7 +32,41 @@ def _load_targets() -> dict[str, dict[str, list[str]]]:
     return out
 
 
+def _collect_default_targets() -> dict[str, dict[str, list[str]]]:
+    tokens_contain = [
+        "require('./scene_observability_utils')",
+        "probeModels(",
+        "assertRequiredModels(",
+    ]
+    tokens_forbid = ["function isModelMissing("]
+    keys = [
+        "fe_portal_scene_governance_action_smoke.js",
+        "fe_scene_auto_degrade_smoke.js",
+        "fe_scene_auto_degrade_notify_smoke.js",
+        "fe_scene_package_import_smoke.js",
+    ]
+    return {
+        key: {
+            "must_contain": list(tokens_contain),
+            "must_not_contain": list(tokens_forbid),
+        }
+        for key in keys
+    }
+
+
+def _write_default_baseline() -> None:
+    payload = {"targets": _collect_default_targets()}
+    BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    BASELINE_PATH.write_text(json.dumps(payload, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> int:
+    update_mode = str(sys.argv[1] if len(sys.argv) > 1 else "").strip().lower() in {"--update", "update"}
+    if update_mode:
+        _write_default_baseline()
+        print("[OK] scene observability structure baseline updated")
+        print(f"- file: {BASELINE_PATH.relative_to(ROOT)}")
+        return 0
     try:
         targets = _load_targets()
     except Exception as exc:
