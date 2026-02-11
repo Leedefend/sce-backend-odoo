@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -86,9 +87,11 @@ async function main() {
       'X-Bootstrap-Secret': BOOTSTRAP_SECRET,
       'X-Anonymous-Intent': '1',
     });
-    if (bootstrapResp.status >= 400 || !bootstrapResp.body.ok) {
+    try {
+      assertIntentEnvelope(bootstrapResp, 'bootstrap', { allowMetaIntentAliases: ['session.bootstrap'] });
+    } catch (_err) {
       writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
-      throw new Error(`bootstrap failed: status=${bootstrapResp.status}`);
+      throw new Error(`bootstrap failed: status=${bootstrapResp.status || 0}`);
     }
     token = (bootstrapResp.body.data || {}).token || '';
   }
@@ -96,9 +99,11 @@ async function main() {
     log(`login: ${LOGIN} db=${DB_NAME}`);
     const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
     const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-    if (loginResp.status >= 400 || !loginResp.body.ok) {
+    try {
+      assertIntentEnvelope(loginResp, 'login');
+    } catch (_err) {
       writeJson(path.join(outDir, 'login.log'), loginResp);
-      throw new Error(`login failed: status=${loginResp.status}`);
+      throw new Error(`login failed: status=${loginResp.status || 0}`);
     }
     token = (loginResp.body.data || {}).token || '';
     if (!token) {
@@ -120,9 +125,7 @@ async function main() {
     };
     const listResp = await requestJson(intentUrl, listPayload, authHeader);
     writeJson(path.join(outDir, 'list.log'), listResp);
-    if (listResp.status >= 400 || !listResp.body.ok) {
-      throw new Error(`list failed: status=${listResp.status}`);
-    }
+    assertIntentEnvelope(listResp, 'api.data');
     const listRecords = (listResp.body.data || {}).records || [];
     if (!listRecords.length) {
       throw new Error('no records found for model');
@@ -143,9 +146,7 @@ async function main() {
   };
   const uploadResp = await requestJson(intentUrl, payload, authHeader);
   writeJson(path.join(outDir, 'upload.log'), uploadResp);
-  if (uploadResp.status >= 400 || !uploadResp.body.ok) {
-    throw new Error(`upload failed: status=${uploadResp.status}`);
-  }
+  assertIntentEnvelope(uploadResp, 'file.upload');
 
   const attachmentId = (uploadResp.body.data || {}).id;
   if (!attachmentId) {
@@ -156,9 +157,7 @@ async function main() {
   const downloadPayload = { intent: 'file.download', params: { id: attachmentId } };
   const downloadResp = await requestJson(intentUrl, downloadPayload, authHeader);
   writeJson(path.join(outDir, 'download.log'), downloadResp);
-  if (downloadResp.status >= 400 || !downloadResp.body.ok) {
-    throw new Error(`download failed: status=${downloadResp.status}`);
-  }
+  assertIntentEnvelope(downloadResp, 'file.download');
 
   const downloadData = downloadResp.body.data || {};
   if (!downloadData.datas) {
