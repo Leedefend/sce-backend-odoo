@@ -51,6 +51,14 @@
       <p class="retry-title">失败明细</p>
       <details v-if="retryRequestParams" class="retry-request-preview">
         <summary>重试请求预览</summary>
+        <label class="retry-note-editor">
+          重试备注
+          <textarea
+            v-model="retryNoteDraft"
+            rows="2"
+            placeholder="可选：补充本次重试说明"
+          />
+        </label>
         <pre>{{ retryRequestJson }}</pre>
       </details>
       <p v-if="retryRetryableSummary" class="retry-summary">
@@ -375,6 +383,7 @@ const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]
 const retryFailedGroups = ref<Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>>([]);
 const retryRetryableSummary = ref<{ retryable: number; non_retryable: number } | null>(null);
 const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: string; request_id?: string } | null>(null);
+const retryNoteDraft = ref('');
 const todoRemaining = ref<number | null>(null);
 const lastBatchExecutionMode = ref<string>('');
 const lastBatchReplay = ref(false);
@@ -461,7 +470,14 @@ const visibleRetryFailedItems = computed(() => {
 const retryRequestJson = computed(() => {
   if (!retryRequestParams.value) return '';
   try {
-    return JSON.stringify(retryRequestParams.value, null, 2);
+    return JSON.stringify(
+      {
+        ...retryRequestParams.value,
+        note: retryNoteDraft.value || retryRequestParams.value.note || '',
+      },
+      null,
+      2,
+    );
   } catch {
     return '';
   }
@@ -686,6 +702,7 @@ function clearRetryFailed() {
   retryFailedGroups.value = [];
   retryRetryableSummary.value = null;
   retryRequestParams.value = null;
+  retryNoteDraft.value = '';
   todoRemaining.value = null;
   lastBatchExecutionMode.value = '';
   lastBatchReplay.value = false;
@@ -997,7 +1014,7 @@ async function retryFailedTodos() {
   if (!candidateRetryIds.length) return;
   await runRetryBatch(
     candidateRetryIds,
-    retryRequestParams.value?.note || 'Retry failed items from my-work.',
+    resolveRetryNote('Retry failed items from my-work.'),
     retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
     retryRequestParams.value?.source || 'mail.activity',
     '重试',
@@ -1016,11 +1033,19 @@ async function retryByReasonGroup(reasonCode: string) {
   }
   await runRetryBatch(
     ids,
-    `Retry failed group ${reasonCode} from my-work.`,
+    resolveRetryNote(`Retry failed group ${reasonCode} from my-work.`),
     buildBatchRequestId('mw_retry_group'),
     retryRequestParams.value?.source || 'mail.activity',
     `重试(${reasonCode})`,
   );
+}
+
+function resolveRetryNote(defaultNote: string) {
+  const draft = retryNoteDraft.value.trim();
+  if (draft) return draft;
+  const templateNote = String(retryRequestParams.value?.note || '').trim();
+  if (templateNote) return templateNote;
+  return defaultNote;
 }
 
 function selectRetryableByReasonGroup(reasonCode: string) {
@@ -1129,6 +1154,7 @@ function applyBatchFeedback(
   retryFailedGroups.value = (result.failed_groups || []).slice(0, 5);
   retryRetryableSummary.value = result.failed_retryable_summary || null;
   retryRequestParams.value = result.retry_request?.params || null;
+  retryNoteDraft.value = String(result.retry_request?.params?.note || '');
 
   if (!result.success) {
     const failedPreview = retryFailedItems.value
@@ -1404,6 +1430,23 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   color: #334155;
   font-size: 12px;
   overflow-x: auto;
+}
+
+.retry-note-editor {
+  margin-top: 6px;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.retry-note-editor textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  background: #fff;
 }
 
 .retry-details ul {
