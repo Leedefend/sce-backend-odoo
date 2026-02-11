@@ -47,6 +47,9 @@
     </div>
     <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
       <p class="retry-title">失败明细</p>
+      <p v-if="retryRetryableSummary" class="retry-summary">
+        重试能力：可重试 {{ retryRetryableSummary.retryable }} / 不可重试 {{ retryRetryableSummary.non_retryable }}
+      </p>
       <p class="retry-summary">
         当前展示 {{ visibleRetryFailedItems.length }} / {{ retryFilteredItems.length }} 条
         <button
@@ -327,6 +330,7 @@ const retryFailedItems = ref<
 >([]);
 const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]);
 const retryFailedGroups = ref<Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>>([]);
+const retryRetryableSummary = ref<{ retryable: number; non_retryable: number } | null>(null);
 const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: string; request_id?: string } | null>(null);
 const todoRemaining = ref<number | null>(null);
 const lastBatchExecutionMode = ref<string>('');
@@ -618,6 +622,7 @@ function clearRetryFailed() {
   retryFailedItems.value = [];
   retryReasonSummary.value = [];
   retryFailedGroups.value = [];
+  retryRetryableSummary.value = null;
   retryRequestParams.value = null;
   todoRemaining.value = null;
   lastBatchExecutionMode.value = '';
@@ -961,6 +966,7 @@ function applyBatchFeedback(
     failed_retry_ids?: number[];
     failed_reason_summary?: Array<{ reason_code: string; count: number }>;
     failed_groups?: Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>;
+    failed_retryable_summary?: { retryable: number; non_retryable: number };
     retry_request?: { params?: { source?: string; retry_ids?: number[]; note?: string; request_id?: string } } | null;
     todo_remaining?: number;
     execution_mode?: string;
@@ -1001,6 +1007,7 @@ function applyBatchFeedback(
   retryFailedItems.value = result.failed_items || [];
   retryReasonSummary.value = (result.failed_reason_summary || []).slice(0, 5);
   retryFailedGroups.value = (result.failed_groups || []).slice(0, 5);
+  retryRetryableSummary.value = result.failed_retryable_summary || null;
   retryRequestParams.value = result.retry_request?.params || null;
 
   if (!result.success) {
