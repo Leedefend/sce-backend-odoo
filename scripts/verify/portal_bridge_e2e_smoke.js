@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
-const { assertIntentEnvelope } = require('./intent_smoke_utils');
+const { assertHttpStatusOk, assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -134,7 +134,7 @@ async function main() {
   const portalUrl = new URL(location, BASE_URL).toString();
   const portalResp = await requestGet(portalUrl, { 'X-Trace-Id': traceId });
   writeJson(path.join(outDir, 'portal_page.log'), { status: portalResp.status });
-  if (portalResp.status >= 400) throw new Error(`portal page failed: ${portalResp.status}`);
+  assertHttpStatusOk(portalResp, 'portal page');
   summary.push(`portal page: ${portalResp.status}`);
 
   const portalApiUrl = new URL('/api/portal/contract', BASE_URL);
@@ -142,7 +142,7 @@ async function main() {
   portalApiUrl.searchParams.set('st', token);
   const portalApiResp = await requestGet(portalApiUrl.toString(), { 'X-Odoo-DB': DB_NAME, 'X-Trace-Id': traceId });
   writeJson(path.join(outDir, 'portal_api.log'), portalApiResp);
-  if (portalApiResp.status >= 400) throw new Error(`portal api failed: ${portalApiResp.status}`);
+  assertHttpStatusOk(portalApiResp, 'portal api');
   summary.push(`portal api: ${portalApiResp.status}`);
 
   summary.push(`trace_id: ${traceId}`);

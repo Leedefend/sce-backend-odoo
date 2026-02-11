@@ -4,6 +4,7 @@ import json
 import os
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+from intent_smoke_utils import require_ok
 
 
 def _load_env_value_from_file(env_path: str, key: str) -> str | None:
@@ -74,10 +75,6 @@ def _http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
         raise RuntimeError(f"HTTP request failed: {e}") from e
 
 
-def _require_ok(status: int, payload: dict, label: str):
-    if status >= 400 or not payload.get("ok"):
-        raise RuntimeError(f"{label} failed: status={status} payload={payload}")
-
 def _cleanup_test_pack(import_url: str, auth_header: dict, payload: dict) -> None:
     _http_post_json(
         import_url,
@@ -112,7 +109,7 @@ def main():
     status, login_resp = _http_post_json(
         intent_url, login_payload, headers={"X-Anonymous-Intent": "1"}
     )
-    _require_ok(status, login_resp, "login")
+    require_ok(status, login_resp, "login")
     token = (login_resp.get("data") or {}).get("token")
     if not token:
         raise RuntimeError("login response missing token")
@@ -175,15 +172,15 @@ def main():
     try:
         # scenes.my should be OK and non-empty
         status, scenes_resp = _http_get_json(scenes_url, headers=auth_header)
-        _require_ok(status, scenes_resp, "scenes.my")
+        require_ok(status, scenes_resp, "scenes.my")
         scenes_data = scenes_resp.get("data") or {}
         scenes = scenes_data.get("scenes") or []
         if not scenes:
             status, seed_resp = _http_post_json(import_url, seed_payload, headers=auth_header)
-            _require_ok(status, seed_resp, "scenes.import seed")
+            require_ok(status, seed_resp, "scenes.import seed")
             created_test = True
             status, scenes_resp = _http_get_json(scenes_url_tests, headers=auth_header)
-            _require_ok(status, scenes_resp, "scenes.my (after seed)")
+            require_ok(status, scenes_resp, "scenes.my (after seed)")
             scenes_data = scenes_resp.get("data") or {}
             scenes = scenes_data.get("scenes") or []
             if not scenes:
@@ -196,16 +193,16 @@ def main():
         status, pref_set = _http_post_json(
             pref_set_url, {"default_scene": default_scene}, headers=auth_header
         )
-        _require_ok(status, pref_set, "preferences.set")
+        require_ok(status, pref_set, "preferences.set")
         status, pref_get = _http_get_json(pref_get_url, headers=auth_header)
-        _require_ok(status, pref_get, "preferences.get")
+        require_ok(status, pref_get, "preferences.get")
         pref_default = (pref_get.get("data") or {}).get("default_scene")
         if pref_default != default_scene:
             raise RuntimeError("preferences default_scene mismatch")
 
         # scenes.my should reflect default_scene
         status, scenes_resp2 = _http_get_json(scenes_url, headers=auth_header)
-        _require_ok(status, scenes_resp2, "scenes.my (after pref)")
+        require_ok(status, scenes_resp2, "scenes.my (after pref)")
         if (scenes_resp2.get("data") or {}).get("default_scene") != default_scene:
             raise RuntimeError("scenes.my default_scene did not update")
 
@@ -216,7 +213,7 @@ def main():
 
         # export with auth should succeed
         status, export_resp = _http_get_json(export_url, headers=auth_header)
-        _require_ok(status, export_resp, "scenes.export")
+        require_ok(status, export_resp, "scenes.export")
         export_data = export_resp.get("data") or {}
         export_scenes = export_data.get("scenes") or []
         if not export_scenes:
@@ -231,7 +228,7 @@ def main():
             {"mode": "merge", "dry_run": True, "capabilities": export_data.get("capabilities"), "scenes": export_scenes},
             headers=auth_header,
         )
-        _require_ok(status, dry_run_resp, "scenes.import dry_run")
+        require_ok(status, dry_run_resp, "scenes.import dry_run")
         data = dry_run_resp.get("data") or {}
         diff = data.get("diff") or {}
         diff_v2 = data.get("diff_v2") or {}

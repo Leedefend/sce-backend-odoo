@@ -4,6 +4,7 @@ import json
 import os
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+from intent_smoke_utils import require_ok
 
 
 def _load_env_value_from_file(env_path: str, key: str) -> str | None:
@@ -74,11 +75,6 @@ def _http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
         raise RuntimeError(f"HTTP request failed: {e}") from e
 
 
-def _require_ok(status: int, payload: dict, label: str):
-    if status >= 400 or not payload.get("ok"):
-        raise RuntimeError(f"{label} failed: status={status} payload={payload}")
-
-
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
@@ -101,14 +97,14 @@ def main():
         status, login_resp = _http_post_json(
             intent_url, login_payload, headers={"X-Anonymous-Intent": "1"}
         )
-        _require_ok(status, login_resp, "login")
+        require_ok(status, login_resp, "login")
         token = (login_resp.get("data") or {}).get("token")
         if not token:
             raise RuntimeError("login response missing token")
         auth_header = {"Authorization": f"Bearer {token}"}
 
         status, catalog_resp = _http_get_json(catalog_url, headers=auth_header)
-        _require_ok(status, catalog_resp, "packs.catalog")
+        require_ok(status, catalog_resp, "packs.catalog")
         packs = (catalog_resp.get("data") or {}).get("packs") or []
         if not packs:
             raise RuntimeError("packs.catalog returned empty")
@@ -121,13 +117,13 @@ def main():
             {"pack_id": pack_id, "dry_run": True, "confirm": False, "mode": "merge"},
             headers=auth_header,
         )
-        _require_ok(status, batch_resp, "ops.batch_upgrade")
+        require_ok(status, batch_resp, "ops.batch_upgrade")
         job_id = (batch_resp.get("data") or {}).get("job_id")
         if not job_id:
             raise RuntimeError("job_id missing")
 
         status, job_resp = _http_get_json(f"{job_url}?job_id={job_id}", headers=auth_header)
-        _require_ok(status, job_resp, "ops.job.status")
+        require_ok(status, job_resp, "ops.job.status")
         if (job_resp.get("data") or {}).get("status") not in ("done", "running"):
             raise RuntimeError("job status unexpected")
 

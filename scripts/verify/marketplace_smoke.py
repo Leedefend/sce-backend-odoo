@@ -4,6 +4,7 @@ import json
 import os
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+from intent_smoke_utils import require_ok
 
 
 def _load_env_value_from_file(env_path: str, key: str) -> str | None:
@@ -74,11 +75,6 @@ def _http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
         raise RuntimeError(f"HTTP request failed: {e}") from e
 
 
-def _require_ok(status: int, payload: dict, label: str):
-    if status >= 400 or not payload.get("ok"):
-        raise RuntimeError(f"{label} failed: status={status} payload={payload}")
-
-
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
@@ -99,14 +95,14 @@ def main():
     status, login_resp = _http_post_json(
         intent_url, login_payload, headers={"X-Anonymous-Intent": "1"}
     )
-    _require_ok(status, login_resp, "login")
+    require_ok(status, login_resp, "login")
     token = (login_resp.get("data") or {}).get("token")
     if not token:
         raise RuntimeError("login response missing token")
     auth_header = {"Authorization": f"Bearer {token}"}
 
     status, export_resp = _http_get_json(export_url, headers=auth_header)
-    _require_ok(status, export_resp, "scenes.export")
+    require_ok(status, export_resp, "scenes.export")
     pack = export_resp.get("data") or {}
     pack_meta = pack.get("pack_meta") or {}
     pack_id = pack_meta.get("pack_id")
@@ -114,10 +110,10 @@ def main():
         raise RuntimeError("export missing pack_id")
 
     status, publish_resp = _http_post_json(publish_url, pack, headers=auth_header)
-    _require_ok(status, publish_resp, "packs.publish")
+    require_ok(status, publish_resp, "packs.publish")
 
     status, catalog_resp = _http_get_json(catalog_url, headers=auth_header)
-    _require_ok(status, catalog_resp, "packs.catalog")
+    require_ok(status, catalog_resp, "packs.catalog")
     packs = (catalog_resp.get("data") or {}).get("packs") or []
     if pack_id not in [p.get("pack_id") for p in packs]:
         raise RuntimeError("catalog missing published pack_id")
@@ -128,7 +124,7 @@ def main():
         {"pack_id": pack_id, "mode": "merge", "dry_run": True, "strict": True},
         headers=auth_header,
     )
-    _require_ok(status, install_dry, "packs.install dry_run")
+    require_ok(status, install_dry, "packs.install dry_run")
     diff_v2 = (install_dry.get("data") or {}).get("diff_v2") or {}
     if not (diff_v2.get("creates") is not None and diff_v2.get("updates") is not None):
         raise RuntimeError("install dry_run missing diff_v2")
@@ -139,10 +135,10 @@ def main():
         {"pack_id": pack_id, "mode": "merge", "confirm": True, "strict": True},
         headers=auth_header,
     )
-    _require_ok(status, install_ok, "packs.install confirm")
+    require_ok(status, install_ok, "packs.install confirm")
 
     status, scenes_resp = _http_get_json(scenes_url, headers=auth_header)
-    _require_ok(status, scenes_resp, "scenes.my")
+    require_ok(status, scenes_resp, "scenes.my")
 
     print("[marketplace_smoke] PASS")
 
