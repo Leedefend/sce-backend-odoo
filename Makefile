@@ -348,6 +348,7 @@ help:
 	@echo "  make verify.platform_baseline|verify.business_baseline|verify.baseline.all DB_NAME=<name>"
 	@echo "  make gate.platform_baseline|gate.business_baseline|gate.baseline.all DB_NAME=<name>"
 	@echo "  make verify.portal.scene_observability_preflight_smoke.container DB_NAME=<name>"
+	@echo "  make verify.portal.scene_observability.structure_guard"
 	@echo "  make verify.portal.scene_observability_smoke.container DB_NAME=<name>"
 	@echo "  make verify.portal.scene_observability_strict.container DB_NAME=<name>"
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
