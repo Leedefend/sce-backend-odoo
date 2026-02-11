@@ -143,6 +143,35 @@ const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
 const { error, clearError, setError } = useStatus();
+type ContractColumnSchema = { name?: string };
+type ContractViewBlock = {
+  columns?: string[];
+  columnsSchema?: ContractColumnSchema[];
+  columns_schema?: ContractColumnSchema[];
+  fields?: string[];
+  model?: string;
+  order?: string;
+};
+type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
+  views?: {
+    tree?: ContractViewBlock;
+    list?: ContractViewBlock;
+    kanban?: ContractViewBlock;
+    form?: ContractViewBlock;
+  };
+  ui_contract?: {
+    views?: {
+      tree?: ContractViewBlock;
+      list?: ContractViewBlock;
+      kanban?: ContractViewBlock;
+    };
+    columns?: string[];
+    columnsSchema?: ContractColumnSchema[];
+  };
+  fields?: Record<string, unknown>;
+  model?: string;
+  head?: { model?: string };
+};
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
@@ -346,7 +375,8 @@ function handleBatchDetailAction(actionRaw: string) {
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
-  const directViews = (contract as any)?.views || (contract as any)?.ui_contract?.views;
+  const typed = contract as ActionContractLoose;
+  const directViews = typed.views || typed.ui_contract?.views;
   if (directViews) {
     const treeBlock = directViews.tree || directViews.list;
     const treeColumns = treeBlock?.columns;
@@ -355,17 +385,17 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
     }
     const treeSchema = treeBlock?.columnsSchema || treeBlock?.columns_schema;
     if (Array.isArray(treeSchema) && treeSchema.length) {
-      return treeSchema.map((col: { name?: string }) => col.name).filter(Boolean);
+      return treeSchema.map((col) => col.name).filter(Boolean) as string[];
     }
   }
 
-  const columns = (contract as any)?.ui_contract?.columns;
+  const columns = typed.ui_contract?.columns;
   if (Array.isArray(columns) && columns.length) {
     return columns;
   }
-  const schema = (contract as any)?.ui_contract?.columnsSchema;
+  const schema = typed.ui_contract?.columnsSchema;
   if (Array.isArray(schema) && schema.length) {
-    return schema.map((col: { name?: string }) => col.name).filter(Boolean);
+    return schema.map((col) => col.name).filter(Boolean) as string[];
   }
   const rawFields = contract?.ui_contract_raw?.fields;
   if (rawFields && typeof rawFields === 'object') {
@@ -375,14 +405,15 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
 }
 
 function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContract>>) {
-  const directViews = (contract as any)?.views || (contract as any)?.ui_contract?.views;
+  const typed = contract as ActionContractLoose;
+  const directViews = typed.views || typed.ui_contract?.views;
   if (directViews) {
     const kanbanBlock = directViews.kanban;
     if (Array.isArray(kanbanBlock?.fields) && kanbanBlock.fields.length) {
       return kanbanBlock.fields;
     }
   }
-  const fieldsMap = (contract as any)?.fields || (contract as any)?.ui_contract_raw?.fields;
+  const fieldsMap = typed.fields || typed.ui_contract_raw?.fields;
   if (fieldsMap && typeof fieldsMap === 'object') {
     const preferred = ['display_name', 'name', 'stage_id', 'user_id', 'partner_id', 'write_date', 'create_date'];
     const available = Object.keys(fieldsMap);
@@ -396,15 +427,16 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
 }
 
 function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
-  const direct = (contract as any)?.model;
+  const typed = contract as ActionContractLoose;
+  const direct = typed.model;
   if (typeof direct === 'string' && direct.trim()) {
     return direct.trim();
   }
-  const headModel = (contract as any)?.head?.model;
+  const headModel = typed.head?.model;
   if (typeof headModel === 'string' && headModel.trim()) {
     return headModel.trim();
   }
-  const viewModel = (contract as any)?.views?.tree?.model || (contract as any)?.views?.form?.model || (contract as any)?.views?.kanban?.model;
+  const viewModel = typed.views?.tree?.model || typed.views?.form?.model || typed.views?.kanban?.model;
   if (typeof viewModel === 'string' && viewModel.trim()) {
     return viewModel.trim();
   }
