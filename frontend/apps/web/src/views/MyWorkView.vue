@@ -29,6 +29,9 @@
     <p v-if="!loading && !errorText && actionFeedback" class="action-feedback" :class="{ error: actionFeedbackError }">
       {{ actionFeedback }}
     </p>
+    <p v-if="!loading && !errorText && batchEvidenceText" class="batch-evidence">
+      {{ batchEvidenceText }}
+    </p>
     <div v-if="!loading && !errorText && retryFailedIds.length" class="retry-bar">
       <span>失败待办 {{ retryFailedIds.length }} 条</span>
       <span v-if="lastBatchExecutionMode" class="meta-chip">模式: {{ lastBatchExecutionMode }}</span>
@@ -320,6 +323,9 @@ const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: s
 const todoRemaining = ref<number | null>(null);
 const lastBatchExecutionMode = ref<string>('');
 const lastBatchReplay = ref(false);
+const lastBatchTraceId = ref('');
+const lastReplayAuditId = ref<number>(0);
+const lastReplayAgeMs = ref<number>(0);
 const retryFilterMode = ref<'all' | 'retryable' | 'non_retryable'>('all');
 const retryFailedExpanded = ref(false);
 const retryPreviewLimit = 10;
@@ -395,6 +401,14 @@ const retryFilteredItems = computed(() => {
 const visibleRetryFailedItems = computed(() => {
   if (retryFailedExpanded.value) return retryFilteredItems.value;
   return retryFilteredItems.value.slice(0, retryPreviewLimit);
+});
+const batchEvidenceText = computed(() => {
+  if (!lastBatchTraceId.value && !lastReplayAuditId.value) return '';
+  const rows = [];
+  if (lastBatchTraceId.value) rows.push(`trace_id: ${lastBatchTraceId.value}`);
+  if (lastReplayAuditId.value > 0) rows.push(`replay_audit_id: ${lastReplayAuditId.value}`);
+  if (lastReplayAgeMs.value > 0) rows.push(`replay_age_ms: ${lastReplayAgeMs.value}`);
+  return rows.join(' | ');
 });
 
 async function load() {
@@ -600,6 +614,9 @@ function clearRetryFailed() {
   todoRemaining.value = null;
   lastBatchExecutionMode.value = '';
   lastBatchReplay.value = false;
+  lastBatchTraceId.value = '';
+  lastReplayAuditId.value = 0;
+  lastReplayAgeMs.value = 0;
   retryFilterMode.value = 'all';
   retryFailedExpanded.value = false;
 }
@@ -932,6 +949,9 @@ function applyBatchFeedback(
     todo_remaining?: number;
     execution_mode?: string;
     idempotent_replay?: boolean;
+    trace_id?: string;
+    replay_from_audit_id?: number;
+    replay_age_ms?: number;
   },
   actionLabel: string,
 ) {
@@ -946,6 +966,9 @@ function applyBatchFeedback(
   todoRemaining.value = typeof result.todo_remaining === 'number' ? result.todo_remaining : null;
   lastBatchExecutionMode.value = String(result.execution_mode || '');
   lastBatchReplay.value = Boolean(result.idempotent_replay);
+  lastBatchTraceId.value = String(result.trace_id || '');
+  lastReplayAuditId.value = Math.max(0, Number(result.replay_from_audit_id || 0));
+  lastReplayAgeMs.value = Math.max(0, Number(result.replay_age_ms || 0));
   const retryIdsFromResponse = Array.isArray(result.failed_retry_ids) ? result.failed_retry_ids : [];
   const retryIdsFromTemplate = Array.isArray(result.retry_request?.params?.retry_ids)
     ? result.retry_request?.params?.retry_ids || []
@@ -1343,5 +1366,11 @@ th {
   border-color: #fecaca;
   background: #fff1f2;
   color: #b91c1c;
+}
+
+.batch-evidence {
+  margin: -6px 0 0;
+  color: #64748b;
+  font-size: 12px;
 }
 </style>
