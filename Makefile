@@ -872,6 +872,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	  $(MAKE) verify.portal.act_url_missing_scene_report.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.cross_stack_contract_smoke.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.my_work_smoke.container DB_NAME=$(DB_NAME); \
+	  $(MAKE) verify.portal.scene_observability_gate_smoke.container DB_NAME=$(DB_NAME); \
 	  if [ "$(SC_SCENE_OBS_STRICT)" = "1" ]; then \
 	    $(MAKE) verify.portal.scene_observability_strict.container DB_NAME=$(DB_NAME); \
 	  else \
