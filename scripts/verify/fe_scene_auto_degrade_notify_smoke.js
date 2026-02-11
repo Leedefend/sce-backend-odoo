@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -81,9 +82,7 @@ async function upsertConfig(intentUrl, auth, key, value) {
     },
     auth
   );
-  if (listResp.status >= 400 || !listResp.body.ok) {
-    throw new Error(`read config failed: ${key}`);
-  }
+  assertIntentEnvelope(listResp, 'api.data');
   const rows = (((listResp.body || {}).data) || {}).records || [];
   if (Array.isArray(rows) && rows.length) {
     const writeResp = await requestJson(
@@ -99,7 +98,7 @@ async function upsertConfig(intentUrl, auth, key, value) {
       },
       auth
     );
-    if (writeResp.status >= 400 || !writeResp.body.ok) throw new Error(`write config failed: ${key}`);
+    assertIntentEnvelope(writeResp, 'api.data.write', { allowMetaIntentAliases: ['api.data', 'api.data.create'] });
   } else {
     const createResp = await requestJson(
       intentUrl,
@@ -113,7 +112,7 @@ async function upsertConfig(intentUrl, auth, key, value) {
       },
       auth
     );
-    if (createResp.status >= 400 || !createResp.body.ok) throw new Error(`create config failed: ${key}`);
+    assertIntentEnvelope(createResp, 'api.data.create', { allowMetaIntentAliases: ['api.data'] });
   }
 }
 
@@ -128,7 +127,7 @@ async function main() {
     { intent: 'login', params: { db: DB_NAME, login: 'admin', password: ADMIN_PASSWD } },
     { 'X-Anonymous-Intent': '1', 'X-Trace-Id': traceId }
   );
-  if (loginResp.status >= 400 || !loginResp.body.ok) throw new Error(`login failed: ${loginResp.status}`);
+  assertIntentEnvelope(loginResp, 'login');
   const token = (((loginResp.body || {}).data) || {}).token || '';
   if (!token) throw new Error('login token missing');
   const auth = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME, 'X-Trace-Id': traceId };
@@ -154,9 +153,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'scene_health_trigger.log'), triggerResp);
-  if (triggerResp.status >= 400 || !triggerResp.body.ok) {
-    throw new Error(`scene.health trigger failed: ${triggerResp.status}`);
-  }
+  assertIntentEnvelope(triggerResp, 'scene.health');
   const data = (triggerResp.body || {}).data || {};
   const auto = data.auto_degrade || {};
   if (!auto.triggered) throw new Error('auto_degrade.triggered=false');
@@ -179,9 +176,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'notify_audit.log'), notifyLog);
-  if (notifyLog.status >= 400 || !notifyLog.body.ok) {
-    throw new Error(`notify audit query failed: ${notifyLog.status}`);
-  }
+  assertIntentEnvelope(notifyLog, 'api.data');
   const rows = (((notifyLog.body || {}).data) || {}).records || [];
   if (!Array.isArray(rows) || rows.length < 1) {
     throw new Error('notify audit rows missing');
