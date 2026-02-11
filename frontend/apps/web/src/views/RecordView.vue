@@ -467,23 +467,25 @@ async function downloadAttachment(att: { id?: number; name?: string; mimetype?: 
 
 function analyzeLayout(layout: ViewContract['layout']) {
   const stats = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
-  const countGroup = (group: any) => {
+  type LayoutPageLike = { groups?: LayoutGroupLike[] };
+  const countGroup = (group: LayoutGroupLike) => {
     stats.group += 1;
     const fields = Array.isArray(group.fields) ? group.fields : [];
     stats.field += fields.length;
-    const subGroups = Array.isArray(group.sub_groups) ? group.sub_groups : [];
+    const subGroups = Array.isArray(group.sub_groups) ? group.sub_groups : ([] as LayoutGroupLike[]);
     subGroups.forEach((sub) => countGroup(sub));
   };
   const groups = Array.isArray(layout.groups) ? layout.groups : [];
-  groups.forEach((group) => countGroup(group));
+  groups.forEach((group) => countGroup(group as LayoutGroupLike));
   const notebooks = Array.isArray(layout.notebooks) ? layout.notebooks : [];
   stats.notebook += notebooks.length;
   notebooks.forEach((notebook) => {
-    const pages = Array.isArray(notebook.pages) ? notebook.pages : [];
+    const nb = notebook as LayoutNotebookLike;
+    const pages = Array.isArray(nb.pages) ? (nb.pages as LayoutPageLike[]) : [];
     stats.page += pages.length;
     pages.forEach((page) => {
       const pageGroups = Array.isArray(page.groups) ? page.groups : [];
-      pageGroups.forEach((group) => countGroup(group));
+      pageGroups.forEach((group) => countGroup(group as LayoutGroupLike));
     });
   });
   const unsupported = [
