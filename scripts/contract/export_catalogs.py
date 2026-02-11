@@ -426,6 +426,10 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
     else:
         renderability["renderable_ratio"] = round(renderability["renderable_scene_count"] / total, 4)
         renderability["interaction_ready_ratio"] = round(renderability["interaction_ready_scene_count"] / total, 4)
+    renderability["fully_renderable"] = bool(total > 0 and renderability["renderable_scene_count"] == total)
+    renderability["fully_interaction_ready"] = bool(
+        total > 0 and renderability["interaction_ready_scene_count"] == total
+    )
 
     return {
         "source": {

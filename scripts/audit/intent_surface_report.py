@@ -18,6 +18,7 @@ class IntentRow:
     cls: str
     aliases: list[str]
     has_idempotency_window: bool
+    test_literal_refs: int
     test_refs: int
 
 
@@ -79,6 +80,7 @@ def collect_intents(repo_root: Path) -> list[IntentRow]:
                         cls=node.name,
                         aliases=aliases,
                         has_idempotency_window=has_idempotency_window,
+                        test_literal_refs=0,
                         test_refs=0,
                     )
                 )
@@ -91,31 +93,43 @@ def count_test_refs(repo_root: Path, intents: list[IntentRow]) -> None:
         abs_dir = repo_root / rel_dir
         if abs_dir.exists():
             test_files.extend(sorted(abs_dir.rglob("test_*.py")))
-    blobs = []
+    blobs: list[tuple[Path, str]] = []
     for tf in test_files:
         try:
-            blobs.append(tf.read_text(encoding="utf-8"))
+            blobs.append((tf, tf.read_text(encoding="utf-8")))
         except Exception:
             continue
-    combined = "\n".join(blobs)
+    combined = "\n".join(text for _, text in blobs)
     for row in intents:
-        # Count literal references to the intent key in tests.
-        row.test_refs = len(re.findall(re.escape(row.intent), combined))
+        row.test_literal_refs = len(re.findall(re.escape(row.intent), combined))
+
+        module_stem = Path(row.module).stem
+        signals = [row.intent, row.cls, module_stem, *row.aliases]
+        seen_files: set[str] = set()
+        for path, text in blobs:
+            for signal in signals:
+                signal_text = str(signal or "").strip()
+                if not signal_text:
+                    continue
+                if re.search(re.escape(signal_text), text):
+                    seen_files.add(str(path))
+                    break
+        row.test_refs = len(seen_files)
 
 
 def render_markdown(rows: list[IntentRow]) -> str:
     lines = [
         "# Intent Surface Report",
         "",
-        "| intent | module | class | aliases | idempotency_window | test_refs |",
-        "|---|---|---|---|---:|---:|",
+        "| intent | module | class | aliases | idempotency_window | test_literal_refs | test_refs |",
+        "|---|---|---|---|---:|---:|---:|",
     ]
     for row in sorted(rows, key=lambda r: (r.intent, r.module, r.cls)):
-        aliases = ", ".join(row.aliases) if row.aliases else "-"
-        lines.append(
-            f"| `{row.intent}` | `{row.module}` | `{row.cls}` | {aliases} | "
-            f"{'yes' if row.has_idempotency_window else 'no'} | {row.test_refs} |"
-        )
+            aliases = ", ".join(row.aliases) if row.aliases else "-"
+            lines.append(
+                f"| `{row.intent}` | `{row.module}` | `{row.cls}` | {aliases} | "
+                f"{'yes' if row.has_idempotency_window else 'no'} | {row.test_literal_refs} | {row.test_refs} |"
+            )
     return "\n".join(lines) + "\n"
 
 
@@ -152,6 +166,7 @@ def main() -> int:
                     "class": r.cls,
                     "aliases": r.aliases,
                     "has_idempotency_window": r.has_idempotency_window,
+                    "test_literal_refs": r.test_literal_refs,
                     "test_refs": r.test_refs,
                 }
                 for r in sorted(rows, key=lambda x: (x.intent, x.module, x.cls))
@@ -169,4 +184,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

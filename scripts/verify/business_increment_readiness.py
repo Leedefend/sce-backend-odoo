@@ -35,6 +35,53 @@ def _load_policy(profile: str) -> dict[str, Any]:
     return policy
 
 
+def _resolve_renderability_ok(scene_payload: dict[str, Any], declared_scene_count: int) -> tuple[bool, dict[str, Any]]:
+    renderability = scene_payload.get("renderability", {}) if isinstance(scene_payload, dict) else {}
+    if not isinstance(renderability, dict):
+        return False, {"source": "missing"}
+
+    if isinstance(renderability.get("fully_renderable"), bool):
+        return bool(renderability.get("fully_renderable")), {"source": "fully_renderable"}
+
+    # Backward-compatible fallback for older catalogs that only expose counts/ratios.
+    renderable_count = renderability.get("renderable_scene_count")
+    interaction_ready_count = renderability.get("interaction_ready_scene_count")
+    renderable_ratio = renderability.get("renderable_ratio")
+    interaction_ready_ratio = renderability.get("interaction_ready_ratio")
+
+    if isinstance(interaction_ready_count, int) and declared_scene_count > 0:
+        return interaction_ready_count >= declared_scene_count, {
+            "source": "interaction_ready_scene_count",
+            "interaction_ready_scene_count": interaction_ready_count,
+        }
+    if isinstance(renderable_count, int) and declared_scene_count > 0:
+        return renderable_count >= declared_scene_count, {
+            "source": "renderable_scene_count",
+            "renderable_scene_count": renderable_count,
+        }
+    if isinstance(interaction_ready_ratio, (int, float)):
+        return float(interaction_ready_ratio) >= 1.0, {
+            "source": "interaction_ready_ratio",
+            "interaction_ready_ratio": interaction_ready_ratio,
+        }
+    if isinstance(renderable_ratio, (int, float)):
+        return float(renderable_ratio) >= 1.0, {
+            "source": "renderable_ratio",
+            "renderable_ratio": renderable_ratio,
+        }
+    return False, {"source": "unknown"}
+
+
+def _normalize_string_list(value: object) -> list[str]:
+    out: set[str] = set()
+    if isinstance(value, list):
+        for item in value:
+            text = str(item or "").strip()
+            if text:
+                out.add(text)
+    return sorted(out)
+
+
 def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     result: dict[str, Any] = {"files": {}, "summary": {}}
     ok = True
@@ -42,6 +89,9 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     warnings: list[str] = []
     intent_count = 0
     scene_count = 0
+    intent_keys: set[str] = set()
+    scene_keys: set[str] = set()
+    intent_test_refs: dict[str, int] = {}
     renderability_ok = False
 
     for key, path in REQUIRED_FILES.items():
@@ -62,14 +112,41 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
                 intents = payload.get("intents") if isinstance(payload, dict) else []
                 entry["intent_count"] = len(intents) if isinstance(intents, list) else 0
                 intent_count = int(entry["intent_count"])
+                if isinstance(intents, list):
+                    intent_keys = {
+                        str(item.get("intent") or "").strip()
+                        for item in intents
+                        if isinstance(item, dict) and str(item.get("intent") or "").strip()
+                    }
             elif key == "scene_catalog":
                 entry["scene_count"] = int(payload.get("scene_count", 0)) if isinstance(payload, dict) else 0
                 scene_count = int(entry["scene_count"])
-                renderability = payload.get("renderability", {}) if isinstance(payload, dict) else {}
-                renderability_ok = bool(renderability.get("fully_renderable") is True)
+                scenes = payload.get("scenes") if isinstance(payload, dict) else []
+                if isinstance(scenes, list):
+                    scene_keys = {
+                        str(item.get("scene_key") or "").strip()
+                        for item in scenes
+                        if isinstance(item, dict) and str(item.get("scene_key") or "").strip()
+                    }
+                renderability_ok, renderability_meta = _resolve_renderability_ok(payload, scene_count)
                 entry["fully_renderable"] = renderability_ok
+                entry["renderability_resolved_by"] = renderability_meta
             elif key == "scene_contract_shape_guard":
                 entry["shape_guard_ok"] = bool(payload.get("ok", True)) if isinstance(payload, dict) else True
+            elif key == "intent_surface_json":
+                rows = payload if isinstance(payload, list) else []
+                if isinstance(rows, list):
+                    for row in rows:
+                        if not isinstance(row, dict):
+                            continue
+                        intent_name = str(row.get("intent") or "").strip()
+                        if not intent_name:
+                            continue
+                        refs = row.get("test_refs", 0)
+                        try:
+                            intent_test_refs[intent_name] = int(refs)
+                        except Exception:
+                            intent_test_refs[intent_name] = 0
         except Exception as exc:
             entry["json_ok"] = False
             entry["error"] = str(exc)
@@ -81,6 +158,9 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     min_scene_count = int(policy.get("min_scene_count", 1))
     require_renderability = bool(policy.get("require_renderability_fully_renderable", False))
     require_shape_guard_ok = bool(policy.get("require_scene_shape_guard_ok", True))
+    required_intents = _normalize_string_list(policy.get("required_intents"))
+    required_scene_keys = _normalize_string_list(policy.get("required_scene_keys"))
+    required_test_ref_intents = _normalize_string_list(policy.get("required_test_ref_intents"))
 
     shape_guard_ok = bool(
         ((result.get("files", {}).get("scene_contract_shape_guard", {}) or {}).get("shape_guard_ok", True))
@@ -99,17 +179,50 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
         ok = False
         blockers.append("scene_contract_shape_guard_not_ok")
 
+    missing_intents = sorted(set(required_intents) - intent_keys)
+    missing_scene_keys = sorted(set(required_scene_keys) - scene_keys)
+    if missing_intents:
+        ok = False
+        blockers.append(f"missing_required_intents:{','.join(missing_intents)}")
+    if missing_scene_keys:
+        ok = False
+        blockers.append(f"missing_required_scene_keys:{','.join(missing_scene_keys)}")
+
+    missing_test_ref_intents = sorted(
+        intent for intent in required_test_ref_intents if int(intent_test_refs.get(intent, 0)) <= 0
+    )
+    if missing_test_ref_intents:
+        ok = False
+        blockers.append(f"missing_required_test_refs:{','.join(missing_test_ref_intents)}")
+
+    untested_intents = sorted(intent for intent in intent_keys if int(intent_test_refs.get(intent, 0)) <= 0)
+    warning_untested_limit = int(policy.get("warning_untested_limit", 0))
+    if warning_untested_limit > 0 and len(untested_intents) > warning_untested_limit:
+        warnings.append(f"untested_intents_over_limit:{len(untested_intents)}/{warning_untested_limit}")
+
     result["summary"] = {
         "profile": profile,
         "ready": ok,
         "intent_count": intent_count,
         "scene_count": scene_count,
+        "required_intent_count": len(required_intents),
+        "required_scene_key_count": len(required_scene_keys),
+        "missing_required_intents": missing_intents,
+        "missing_required_scene_keys": missing_scene_keys,
+        "required_test_ref_intent_count": len(required_test_ref_intents),
+        "missing_required_test_ref_intents": missing_test_ref_intents,
+        "untested_intent_count": len(untested_intents),
+        "untested_intents_sample": untested_intents[:20],
         "renderability_fully_renderable": renderability_ok,
         "policy": {
             "min_intent_count": min_intent_count,
             "min_scene_count": min_scene_count,
             "require_renderability_fully_renderable": require_renderability,
             "require_scene_shape_guard_ok": require_shape_guard_ok,
+            "required_intents": required_intents,
+            "required_scene_keys": required_scene_keys,
+            "required_test_ref_intents": required_test_ref_intents,
+            "warning_untested_limit": warning_untested_limit,
         },
         "blockers": blockers,
         "warnings": warnings,
@@ -126,7 +239,14 @@ def _write(result: dict[str, Any]) -> None:
         f"- ready: {result['summary']['ready']}",
         f"- intent_count: {result['summary']['intent_count']}",
         f"- scene_count: {result['summary']['scene_count']}",
+        f"- required_intent_count: {result['summary']['required_intent_count']}",
+        f"- required_scene_key_count: {result['summary']['required_scene_key_count']}",
+        f"- required_test_ref_intent_count: {result['summary']['required_test_ref_intent_count']}",
         f"- renderability_fully_renderable: {result['summary']['renderability_fully_renderable']}",
+        f"- missing_required_intents: {', '.join(result['summary'].get('missing_required_intents', [])) or '-'}",
+        f"- missing_required_scene_keys: {', '.join(result['summary'].get('missing_required_scene_keys', [])) or '-'}",
+        f"- missing_required_test_ref_intents: {', '.join(result['summary'].get('missing_required_test_ref_intents', [])) or '-'}",
+        f"- untested_intent_count: {result['summary'].get('untested_intent_count', 0)}",
         f"- blockers: {', '.join(result['summary'].get('blockers', [])) or '-'}",
         f"- warnings: {', '.join(result['summary'].get('warnings', [])) or '-'}",
         "",

@@ -86,9 +86,10 @@
   - `make verify.business.increment.preflight`
 - Strict preflight:
   - `make verify.business.increment.preflight.strict`
-  - strict profile enforces `renderability_fully_renderable=true` by policy.
+  - strict profile enforces `renderability_fully_renderable=true`, required core `intents` / `scene_keys`, and required `test_refs` coverage for selected intents by policy.
 - Policy source:
   - `scripts/verify/baselines/business_increment_readiness_policy.json`
+  - strict profile also emits warning when untested intents exceed `warning_untested_limit`.
 
 ## Notes
 - Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.

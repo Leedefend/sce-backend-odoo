@@ -20,7 +20,9 @@
     "renderable_scene_count": 5,
     "interaction_ready_scene_count": 5,
     "renderable_ratio": 1.0,
-    "interaction_ready_ratio": 1.0
+    "interaction_ready_ratio": 1.0,
+    "fully_renderable": true,
+    "fully_interaction_ready": true
   },
   "scenes": [
     {
