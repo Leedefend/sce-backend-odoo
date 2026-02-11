@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -104,10 +105,8 @@ async function main() {
       'X-Anonymous-Intent': '1',
       'X-Trace-Id': traceId,
     });
-    if (bootstrapResp.status >= 400 || !bootstrapResp.body.ok) {
-      writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
-      throw new Error(`bootstrap failed: status=${bootstrapResp.status}`);
-    }
+    writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
+    assertIntentEnvelope(bootstrapResp, 'bootstrap', { requireTrace: false });
     token = (bootstrapResp.body.data || {}).token || '';
   }
   if (!token) {
@@ -131,6 +130,7 @@ async function main() {
       });
       lastLoginResp = loginResp;
       if (loginResp.status < 400 && loginResp.body.ok) {
+        assertIntentEnvelope(loginResp, 'login');
         token = (loginResp.body.data || {}).token || '';
         if (token) break;
       }
@@ -154,9 +154,7 @@ async function main() {
     authHeader
   );
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  if (initResp.status >= 400 || !initResp.body.ok) {
-    throw new Error(`app.init failed: status=${initResp.status}`);
-  }
+  assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
   const initDiag = (initResp.body && initResp.body.data && initResp.body.data.scene_diagnostics) || {};
   const initCriticalResolve = countCriticalResolveErrors(initDiag);
   const initCriticalDrift = countCriticalDriftWarn(initDiag);
@@ -164,9 +162,7 @@ async function main() {
   log('scene.health');
   const healthResp = await requestJson(intentUrl, { intent: 'scene.health', params: { mode: 'full' } }, authHeader);
   writeJson(path.join(outDir, 'scene_health.log'), healthResp);
-  if (healthResp.status >= 400 || !healthResp.body.ok) {
-    throw new Error(`scene.health failed: status=${healthResp.status}`);
-  }
+  assertIntentEnvelope(healthResp, 'scene.health');
   const health = (healthResp.body && healthResp.body.data) || {};
   const summaryObj = health.summary || {};
   const details = health.details || {};

@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -90,10 +91,8 @@ async function main() {
       'X-Anonymous-Intent': '1',
       'X-Trace-Id': traceId,
     });
-    if (bootstrapResp.status >= 400 || !bootstrapResp.body.ok) {
-      writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
-      throw new Error(`bootstrap failed: status=${bootstrapResp.status}`);
-    }
+    writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
+    assertIntentEnvelope(bootstrapResp, 'bootstrap', { requireTrace: false });
     token = (bootstrapResp.body.data || {}).token || '';
   }
   if (!token) {
@@ -117,6 +116,7 @@ async function main() {
       });
       lastLoginResp = loginResp;
       if (loginResp.status < 400 && loginResp.body.ok) {
+        assertIntentEnvelope(loginResp, 'login');
         token = (loginResp.body.data || {}).token || '';
         if (token) break;
       }
@@ -155,9 +155,7 @@ async function main() {
       },
       authHeader
     );
-    if (listResp.status >= 400 || !listResp.body.ok) {
-      throw new Error(`read config failed: ${key}`);
-    }
+    assertIntentEnvelope(listResp, 'api.data');
     const records = (listResp.body && listResp.body.data && listResp.body.data.records) || [];
     if (Array.isArray(records) && records.length) {
       const writeResp = await requestJson(
@@ -173,9 +171,7 @@ async function main() {
         },
         authHeader
       );
-      if (writeResp.status >= 400 || !writeResp.body.ok) {
-        throw new Error(`write config failed: ${key}`);
-      }
+      assertIntentEnvelope(writeResp, 'api.data');
     } else {
       const createResp = await requestJson(
         intentUrl,
@@ -189,9 +185,7 @@ async function main() {
         },
         authHeader
       );
-      if (createResp.status >= 400 || !createResp.body.ok) {
-        throw new Error(`create config failed: ${key}`);
-      }
+      assertIntentEnvelope(createResp, 'api.data');
     }
   }
 
@@ -207,9 +201,7 @@ async function main() {
     authHeader
   );
   writeJson(path.join(outDir, 'scene_health_auto_degrade.log'), healthResp);
-  if (healthResp.status >= 400 || !healthResp.body.ok) {
-    throw new Error(`scene.health failed: status=${healthResp.status}`);
-  }
+  assertIntentEnvelope(healthResp, 'scene.health');
   const health = (healthResp.body && healthResp.body.data) || {};
   const autoDegrade = health.auto_degrade || {};
   if (!autoDegrade.triggered) {
@@ -267,9 +259,7 @@ async function main() {
     }
   }
   writeJson(path.join(outDir, 'governance_log.log'), logsResp);
-  if (logsResp.status >= 400 || !logsResp.body.ok) {
-    throw new Error(`api.data log query failed: status=${logsResp.status}`);
-  }
+  assertIntentEnvelope(logsResp, 'api.data');
   if (!Array.isArray(records) || records.length < 1) {
     throw new Error('governance log missing auto_degrade_triggered entry');
   }

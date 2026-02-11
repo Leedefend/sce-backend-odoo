@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -72,9 +73,7 @@ async function login(intentUrl, traceId) {
     { intent: 'login', params: { db: DB_NAME, login: 'admin', password: ADMIN_PASSWD } },
     { 'X-Anonymous-Intent': '1', 'X-Trace-Id': traceId }
   );
-  if (resp.status >= 400 || !resp.body.ok) {
-    throw new Error(`login failed: status=${resp.status}`);
-  }
+  assertIntentEnvelope(resp, 'login');
   const token = (resp.body.data || {}).token || '';
   if (!token) throw new Error('login token missing');
   return token;
@@ -134,9 +133,7 @@ async function main() {
   }
 
   const healthBefore = await requestJson(intentUrl, { intent: 'scene.health', params: { mode: 'summary' } }, auth);
-  if (healthBefore.status >= 400 || !healthBefore.body.ok) {
-    throw new Error(`scene.health before failed: ${healthBefore.status}`);
-  }
+  assertIntentEnvelope(healthBefore, 'scene.health');
   const beforeData = healthBefore.body.data || {};
   const companyId = beforeData.company_id;
   const beforeChannel = beforeData.scene_channel || 'stable';
@@ -151,9 +148,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'set_channel.log'), setResp);
-  if (setResp.status >= 400 || !setResp.body.ok) {
-    throw new Error(`set_channel failed: ${setResp.status}`);
-  }
+  assertIntentEnvelope(setResp, 'scene.governance.set_channel');
   const setData = setResp.body.data || {};
   if (setData.action !== 'set_channel') throw new Error('set_channel action mismatch');
   if (String(setData.to_channel || '') !== targetChannel) throw new Error('set_channel to_channel mismatch');
@@ -164,9 +159,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'health_after_set.log'), healthAfterSet);
-  if (healthAfterSet.status >= 400 || !healthAfterSet.body.ok) {
-    throw new Error(`scene.health after set failed: ${healthAfterSet.status}`);
-  }
+  assertIntentEnvelope(healthAfterSet, 'scene.health');
   if (String((healthAfterSet.body.data || {}).scene_channel || '') !== targetChannel) {
     throw new Error('scene_channel not updated after set_channel');
   }
@@ -177,9 +170,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'rollback.log'), rollbackResp);
-  if (rollbackResp.status >= 400 || !rollbackResp.body.ok) {
-    throw new Error(`rollback failed: ${rollbackResp.status}`);
-  }
+  assertIntentEnvelope(rollbackResp, 'scene.governance.rollback');
 
   const healthAfterRollback = await requestJson(
     intentUrl,
@@ -187,9 +178,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'health_after_rollback.log'), healthAfterRollback);
-  if (healthAfterRollback.status >= 400 || !healthAfterRollback.body.ok) {
-    throw new Error(`scene.health after rollback failed: ${healthAfterRollback.status}`);
-  }
+  assertIntentEnvelope(healthAfterRollback, 'scene.health');
   const afterRollbackData = healthAfterRollback.body.data || {};
   if (!afterRollbackData.rollback_active) {
     throw new Error('rollback_active=false after rollback action');
@@ -216,9 +205,7 @@ async function main() {
     }
   }
   writeJson(path.join(outDir, 'governance_logs.log'), logsResp);
-  if (logsResp.status >= 400 || !logsResp.body.ok) {
-    throw new Error(`governance log query failed: ${logsResp.status}`);
-  }
+  assertIntentEnvelope(logsResp, 'api.data');
   const records = (((logsResp.body || {}).data || {}).records) || [];
   if (!Array.isArray(records)) throw new Error('governance records invalid');
 
