@@ -1191,14 +1191,16 @@ function applyBatchFeedback(
       .join('；');
     actionFeedback.value = `${actionLabel}部分失败：${result.done_count} 成功，${result.failed_count} 失败${
       failedPreview ? `（${failedPreview}）` : ''
-    }${typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''}`;
+    }${typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''}${
+      lastBatchReplay.value ? `，命中重放#${lastReplayAuditId.value || 0}` : ''
+    }`;
     actionFeedbackError.value = true;
     return;
   }
 
   actionFeedback.value = `${actionLabel}成功：${result.done_count} 条${
     typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''
-  }`;
+  }${lastBatchReplay.value ? `，命中重放#${lastReplayAuditId.value || 0}` : ''}`;
   actionFeedbackError.value = false;
 }
 
