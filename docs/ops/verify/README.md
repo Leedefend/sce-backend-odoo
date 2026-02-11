@@ -75,6 +75,7 @@
 ## Business Increment Preflight
 - Readiness report (non-blocking):
   - `make verify.business.increment.readiness`
+  - optional profile: `BUSINESS_INCREMENT_PROFILE=base|strict`
 - Readiness brief (non-blocking):
   - `make verify.business.increment.readiness.brief`
 - Readiness report (blocking):
@@ -85,6 +86,7 @@
   - `make verify.business.increment.preflight`
 - Strict preflight:
   - `make verify.business.increment.preflight.strict`
+  - strict profile enforces `renderability_fully_renderable=true` by policy.
 
 ## Notes
 - Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.
