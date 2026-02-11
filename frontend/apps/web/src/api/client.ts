@@ -1,6 +1,21 @@
 import { config } from '../config';
 import { useSessionStore } from '../stores/session';
 
+type UnknownObject = Record<string, unknown>;
+
+interface AppInitIntentPayload {
+  intent?: string;
+  params?: {
+    root_xmlid?: string;
+  };
+}
+
+interface AppInitDiagnosticResponse {
+  nav?: unknown;
+  meta?: unknown;
+  user?: unknown;
+}
+
 export class ApiError extends Error {
   status: number;
   traceId?: string;
@@ -64,6 +79,13 @@ function resolveTraceId(response: Response, body: unknown, fallback: string) {
   return headerTrace || extractTraceIdFromBody(body) || fallback;
 }
 
+function asObject(value: unknown): UnknownObject | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as UnknownObject;
+}
+
 export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) {
   const session = useSessionStore();
   const headers = new Headers(options.headers ?? {});
@@ -88,11 +110,11 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     new URLSearchParams(window.location.search).get('debug') === '1';
 
   // A2: 网络级别校验 - 针对 app.init 请求
-  let appInitPayload: any | null = null;
+  let appInitPayload: AppInitIntentPayload | null = null;
   let isAppInitRequest = false;
   if (path === '/api/v1/intent' && options.body && typeof options.body === 'string') {
     try {
-      appInitPayload = JSON.parse(options.body);
+      appInitPayload = JSON.parse(options.body) as AppInitIntentPayload;
       isAppInitRequest = appInitPayload?.intent === 'app.init';
     } catch {
       isAppInitRequest = false;
@@ -138,28 +160,36 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   if (isAppInitRequest && debugIntent) {
     const responseClone = response.clone();
     try {
-      const responseBody = await responseClone.json();
+      const responseBody = (await responseClone.json()) as AppInitDiagnosticResponse;
       console.group('[A2] app.init 响应诊断快照');
       console.log('Response Status:', response.status);
       console.log('Response Headers:');
       console.log('  Content-Type:', response.headers.get('Content-Type'));
       console.log('Response Body (精简):');
-      
+
       // 提取关键信息
+      const navList = Array.isArray(responseBody.nav) ? responseBody.nav : null;
       const diagnosticSnapshot = {
         nav: {
-          root_xmlid: responseBody.nav?.root_xmlid || 'N/A',
-          items_count: Array.isArray(responseBody.nav) ? responseBody.nav.length : 'N/A',
-          first_8_items: Array.isArray(responseBody.nav) ? 
-            responseBody.nav.slice(0, 8).map((item: any, index: number) => ({
-              index,
-              name: item.name,
-              xmlid: item.xmlid || 'N/A',
-              id: item.id || 'N/A'
-            })) : 'N/A'
+          root_xmlid: asObject(responseBody.nav)?.root_xmlid || 'N/A',
+          items_count: navList ? navList.length : 'N/A',
+          first_8_items: navList
+            ? navList.slice(0, 8).map((item, index: number) => {
+                const node = asObject(item);
+                return {
+                  index,
+                  name: node?.name ?? 'N/A',
+                  xmlid: node?.xmlid ?? 'N/A',
+                  id: node?.id ?? 'N/A',
+                };
+              })
+            : 'N/A',
         },
         meta: responseBody.meta || 'N/A',
-        user: responseBody.user ? { id: responseBody.user.id, name: responseBody.user.name } : 'N/A'
+        user: (() => {
+          const user = asObject(responseBody.user);
+          return user ? { id: user.id, name: user.name } : 'N/A';
+        })(),
       };
       console.log(JSON.stringify(diagnosticSnapshot, null, 2));
       console.groupEnd();
