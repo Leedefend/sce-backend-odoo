@@ -45,6 +45,7 @@
       <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
       <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
       <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
+      <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">导出重试 JSON</button>
       <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">主列表定位失败</button>
       <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
@@ -961,6 +962,30 @@ async function copyRetryRequest() {
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = '复制重试请求失败，请检查浏览器剪贴板权限';
+    actionFeedbackError.value = true;
+  }
+}
+
+function exportRetryRequestJson() {
+  if (!retryRequestParams.value) return;
+  try {
+    const payload = {
+      ...retryRequestParams.value,
+      note: retryNoteDraft.value || retryRequestParams.value.note || '',
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = `my-work-retry-request-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(href);
+    actionFeedback.value = '重试请求 JSON 已导出';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '导出重试请求 JSON 失败';
     actionFeedbackError.value = true;
   }
 }
