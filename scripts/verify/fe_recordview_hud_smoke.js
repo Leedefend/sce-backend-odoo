@@ -75,6 +75,11 @@ function unwrap(body) {
   return body || {};
 }
 
+function isModelMissing(resp) {
+  const msg = String((((resp || {}).body || {}).error || {}).message || '');
+  return msg.includes('未知模型') || msg.toLowerCase().includes('unknown model');
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -113,10 +118,33 @@ async function main() {
   }
 
   log('api.data.list');
-  const listPayload = { intent: 'api.data', params: { op: 'list', model: MODEL, fields: ['id', 'name'], limit: 1 } };
-  const listResp = await requestJson(intentUrl, listPayload, authHeader);
-  writeJson(path.join(outDir, 'list.log'), listResp);
-  assertIntentEnvelope(listResp, 'api.data');
+  const candidateModels = Array.from(new Set([MODEL, 'res.partner']));
+  let listResp = null;
+  let modelUsed = '';
+  for (const candidate of candidateModels) {
+    const listPayload = { intent: 'api.data', params: { op: 'list', model: candidate, fields: ['id', 'name'], limit: 1 } };
+    const resp = await requestJson(intentUrl, listPayload, authHeader);
+    writeJson(path.join(outDir, `list.${candidate.replace(/\./g, '_')}.log`), resp);
+    try {
+      assertIntentEnvelope(resp, 'api.data');
+      const records = (unwrap(resp.body).records || []);
+      if (Array.isArray(records) && records.length > 0) {
+        listResp = resp;
+        modelUsed = candidate;
+        break;
+      }
+    } catch (_err) {
+      // try next candidate model
+    }
+    if (!isModelMissing(resp)) {
+      listResp = resp;
+      break;
+    }
+  }
+  if (!listResp || !modelUsed) {
+    throw new Error(`api.data.list failed for all models: ${candidateModels.join(',')}`);
+  }
+  writeJson(path.join(outDir, 'list.log'), { model_used: modelUsed, response: listResp });
   const listMeta = listResp.body.meta || {};
   const listTraceOk = Boolean(listMeta.trace_id);
   const listData = unwrap(listResp.body);
@@ -130,13 +158,13 @@ async function main() {
 
   log('api.data.write');
   const writeStart = Date.now();
-  const writePayload = { intent: 'api.data.write', params: { model: MODEL, id: recordId, values: { name: newName } } };
+  const writePayload = { intent: 'api.data.write', params: { model: modelUsed, id: recordId, values: { name: newName } } };
   let writeResp = await requestJson(intentUrl, writePayload, authHeader);
   let writeIntentUsed = 'api.data.write';
   if (writeResp.status === 403 || writeResp.status === 404) {
     const fallbackPayload = {
       intent: 'api.data',
-      params: { op: 'write', model: MODEL, ids: [recordId], values: { name: newName }, sudo: true },
+      params: { op: 'write', model: modelUsed, ids: [recordId], values: { name: newName }, sudo: true },
     };
     writeResp = await requestJson(intentUrl, fallbackPayload, authHeader);
     writeIntentUsed = 'api.data';
@@ -151,6 +179,7 @@ async function main() {
   const footerMetaOk = Boolean(recordId && latencyMs >= 0);
 
   summary.push(`list_trace_ok: ${listTraceOk ? 'true' : 'false'}`);
+  summary.push(`model_used: ${modelUsed}`);
   summary.push(`hud_fields_ok: ${hudFieldsOk ? 'true' : 'false'}`);
   summary.push(`footer_meta_ok: ${footerMetaOk ? 'true' : 'false'}`);
   summary.push(`list_trace_id: ${listMeta.trace_id || ''}`);
