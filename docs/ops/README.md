@@ -5,6 +5,7 @@
 ## 主要入口
 - Release 证据目录: `docs/ops/releases/`
 - 验证入口（含 strict/兼容模式说明）: `docs/ops/verify/README.md`
+- 基线冻结策略: `docs/ops/baseline_freeze_policy.md`
 - 场景观测命令分层:
   - preflight refresh: `make verify.portal.scene_observability_preflight.refresh.container DB_NAME=<name>`
   - preflight smoke: `make verify.portal.scene_observability_preflight_smoke.container`
