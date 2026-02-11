@@ -41,6 +41,7 @@
       <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
       <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
+      <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
       <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
       <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
       <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
@@ -829,6 +830,18 @@ function buildRetrySummaryText() {
     .join('\n');
 }
 
+function buildVisibleRetrySummaryText() {
+  const lines = visibleRetryFailedItems.value.map((item) => formatFailedItemText(item));
+  return [
+    `筛选模式: ${retryFilterMode.value}`,
+    `显示模式: ${retryGroupByReason.value ? 'grouped' : 'flat'}`,
+    `当前视图条目: ${visibleRetryFailedItems.value.length}`,
+    ...lines,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 async function copyRetrySummary() {
   const summaryText = buildRetrySummaryText();
   if (!summaryText) return;
@@ -838,6 +851,19 @@ async function copyRetrySummary() {
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = '复制失败，请检查浏览器剪贴板权限';
+    actionFeedbackError.value = true;
+  }
+}
+
+async function copyVisibleRetrySummary() {
+  const summaryText = buildVisibleRetrySummaryText();
+  if (!summaryText) return;
+  try {
+    await navigator.clipboard.writeText(summaryText);
+    actionFeedback.value = '当前视图摘要已复制';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '复制当前视图摘要失败，请检查浏览器剪贴板权限';
     actionFeedbackError.value = true;
   }
 }
