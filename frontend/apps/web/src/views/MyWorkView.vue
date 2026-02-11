@@ -48,6 +48,10 @@
     </div>
     <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
       <p class="retry-title">失败明细</p>
+      <details v-if="retryRequestParams" class="retry-request-preview">
+        <summary>重试请求预览</summary>
+        <pre>{{ retryRequestJson }}</pre>
+      </details>
       <p v-if="retryRetryableSummary" class="retry-summary">
         重试能力：可重试 {{ retryRetryableSummary.retryable }} / 不可重试 {{ retryRetryableSummary.non_retryable }}
       </p>
@@ -414,6 +418,14 @@ const retryFilteredItems = computed(() => {
 const visibleRetryFailedItems = computed(() => {
   if (retryFailedExpanded.value) return retryFilteredItems.value;
   return retryFilteredItems.value.slice(0, retryPreviewLimit);
+});
+const retryRequestJson = computed(() => {
+  if (!retryRequestParams.value) return '';
+  try {
+    return JSON.stringify(retryRequestParams.value, null, 2);
+  } catch {
+    return '';
+  }
 });
 const batchEvidenceText = computed(() => {
   if (!lastBatchTraceId.value && !lastReplayAuditId.value) return '';
@@ -1282,6 +1294,21 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   border-radius: 8px;
   background: #fff1f2;
   padding: 10px 12px;
+}
+
+.retry-request-preview {
+  margin-top: 8px;
+}
+
+.retry-request-preview pre {
+  margin: 6px 0 0;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  overflow-x: auto;
 }
 
 .retry-details ul {
