@@ -194,6 +194,13 @@ const lastLatencyMs = ref<number | null>(null);
 const lastAction = ref<'save' | 'load' | 'execute' | ''>('');
 const executing = ref<string | null>(null);
 const layoutStats = ref({ field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 });
+type LayoutGroupLike = {
+  fields?: unknown[];
+  sub_groups?: LayoutGroupLike[];
+};
+type LayoutNotebookLike = {
+  pages?: unknown[];
+};
 const editTx = useEditTx();
 
 const model = computed(() => String(route.params.model || ''));
@@ -240,12 +247,18 @@ const missingNodes = computed(() => {
   const present = new Set<string>();
   if (Array.isArray(layout.groups) && layout.groups.length) present.add('group');
   const groupFields = Array.isArray(layout.groups)
-    ? layout.groups.some((group: any) => (Array.isArray(group.fields) && group.fields.length) || (Array.isArray(group.sub_groups) && group.sub_groups.length))
+    ? layout.groups.some((group) => {
+        const g = group as LayoutGroupLike;
+        return (Array.isArray(g.fields) && g.fields.length > 0) || (Array.isArray(g.sub_groups) && g.sub_groups.length > 0);
+      })
     : false;
   if (groupFields) present.add('field');
   if (Array.isArray(layout.notebooks) && layout.notebooks.length) present.add('notebook');
   const hasPages = Array.isArray(layout.notebooks)
-    ? layout.notebooks.some((notebook: any) => Array.isArray(notebook.pages) && notebook.pages.length)
+    ? layout.notebooks.some((notebook) => {
+        const n = notebook as LayoutNotebookLike;
+        return Array.isArray(n.pages) && n.pages.length > 0;
+      })
     : false;
   if (hasPages) present.add('page');
   if (Array.isArray(layout.headerButtons) && layout.headerButtons.length) present.add('headerButtons');
