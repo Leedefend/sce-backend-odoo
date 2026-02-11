@@ -100,6 +100,7 @@
         'views/support/subscription_views.xml',
         'views/web_login_views.xml',
         'views/login_templates.xml',
+        'views/support/portal_language_selector_fix.xml',
         'views/signup_templates.xml',
         # Patch 文件移到最后加载
         'security/action_groups_patch.xml',
