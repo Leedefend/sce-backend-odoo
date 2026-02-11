@@ -6,6 +6,13 @@ function extractTraceId(body) {
   return String(meta.trace_id || meta.traceId || body.trace_id || body.traceId || '');
 }
 
+function assertHttpStatusOk(resp, label) {
+  if (!resp || resp.status >= 400) {
+    const status = resp && typeof resp.status !== 'undefined' ? resp.status : 0;
+    throw new Error(label + ' failed: status=' + status);
+  }
+}
+
 function assertIntentEnvelope(resp, intentName, options) {
   const opts = options || {};
   const requireTrace = opts.requireTrace !== false;
@@ -42,6 +49,7 @@ function assertIntentEnvelope(resp, intentName, options) {
 }
 
 module.exports = {
+  assertHttpStatusOk,
   extractTraceId,
   assertIntentEnvelope,
 };
