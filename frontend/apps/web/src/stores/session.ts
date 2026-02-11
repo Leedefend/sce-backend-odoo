@@ -5,6 +5,24 @@ import { ApiError } from '../api/client';
 import { setSceneRegistry } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 
+export interface RoleSurface {
+  role_code: string;
+  role_label: string;
+  landing_scene_key: string;
+  landing_menu_id?: number | null;
+  landing_menu_xmlid?: string;
+  landing_path?: string;
+  scene_candidates: string[];
+  menu_xmlids: string[];
+}
+
+export type RoleSurfaceMap = Record<string, {
+  role_code?: string;
+  role_label?: string;
+  scene_candidates?: string[];
+  menu_xmlids?: string[];
+}>;
+
 export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
@@ -14,6 +32,8 @@ export interface SessionState {
   capabilities: string[];
   scenes: Scene[];
   sceneVersion: string | null;
+  roleSurface: RoleSurface | null;
+  roleSurfaceMap: RoleSurfaceMap;
   lastTraceId: string;
   lastIntent: string;
   lastLatencyMs: number | null;
@@ -37,6 +57,8 @@ export const useSessionStore = defineStore('session', {
     capabilities: [],
     scenes: [],
     sceneVersion: null,
+    roleSurface: null,
+    roleSurfaceMap: {},
     lastTraceId: '',
     lastIntent: '',
     lastLatencyMs: null,
@@ -64,6 +86,8 @@ export const useSessionStore = defineStore('session', {
           this.capabilities = parsed.capabilities ?? [];
           this.scenes = parsed.scenes ?? [];
           this.sceneVersion = parsed.sceneVersion ?? null;
+          this.roleSurface = parsed.roleSurface ?? null;
+          this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
           if (this.scenes.length) {
             setSceneRegistry(this.scenes);
           }
@@ -94,6 +118,8 @@ export const useSessionStore = defineStore('session', {
       this.capabilities = [];
       this.scenes = [];
       this.sceneVersion = null;
+      this.roleSurface = null;
+      this.roleSurfaceMap = {};
       setSceneRegistry([]);
       this.lastTraceId = '';
       this.lastIntent = '';
@@ -140,6 +166,8 @@ export const useSessionStore = defineStore('session', {
         capabilities: this.capabilities,
         scenes: this.scenes,
         sceneVersion: this.sceneVersion,
+        roleSurface: this.roleSurface,
+        roleSurfaceMap: this.roleSurfaceMap,
         lastTraceId: this.lastTraceId,
         lastIntent: this.lastIntent,
         lastLatencyMs: this.lastLatencyMs,
@@ -260,6 +288,18 @@ export const useSessionStore = defineStore('session', {
         .filter((cap) => typeof cap === 'string' && cap.length > 0);
       this.scenes = ((result as AppInitResponse & { scenes?: Scene[] }).scenes ?? []).filter(Boolean);
       this.sceneVersion = (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).scene_version ?? (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).sceneVersion ?? null;
+      const roleSurfaceRaw = (result as AppInitResponse & { role_surface?: Partial<RoleSurface> }).role_surface ?? {};
+      this.roleSurface = {
+        role_code: String(roleSurfaceRaw.role_code || 'owner'),
+        role_label: String(roleSurfaceRaw.role_label || roleSurfaceRaw.role_code || 'Owner'),
+        landing_scene_key: String(roleSurfaceRaw.landing_scene_key || 'projects.list'),
+        landing_menu_id: typeof roleSurfaceRaw.landing_menu_id === 'number' ? roleSurfaceRaw.landing_menu_id : null,
+        landing_menu_xmlid: String(roleSurfaceRaw.landing_menu_xmlid || ''),
+        landing_path: String(roleSurfaceRaw.landing_path || ''),
+        scene_candidates: Array.isArray(roleSurfaceRaw.scene_candidates) ? roleSurfaceRaw.scene_candidates.map((item) => String(item || '')).filter(Boolean) : [],
+        menu_xmlids: Array.isArray(roleSurfaceRaw.menu_xmlids) ? roleSurfaceRaw.menu_xmlids.map((item) => String(item || '')).filter(Boolean) : [],
+      };
+      this.roleSurfaceMap = ((result as AppInitResponse & { role_surface_map?: RoleSurfaceMap }).role_surface_map ?? {});
       setSceneRegistry(this.scenes);
       this.initMeta = {
         ...(result.meta ?? {}),
@@ -331,6 +371,17 @@ export const useSessionStore = defineStore('session', {
         return;
       }
       await this.loadAppInit();
+    },
+    resolveLandingPath(fallback = '/s/projects.list') {
+      const candidate = String(this.roleSurface?.landing_path || '').trim();
+      if (candidate.startsWith('/')) {
+        return candidate;
+      }
+      const sceneKey = String(this.roleSurface?.landing_scene_key || '').trim();
+      if (sceneKey) {
+        return `/s/${sceneKey}`;
+      }
+      return fallback;
     },
   },
 });
