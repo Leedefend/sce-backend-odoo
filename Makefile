@@ -75,6 +75,7 @@ SC_GATE_STRICT ?= 1
 SC_SCENE_OBS_STRICT ?= 0
 SCENE_OBSERVABILITY_PREFLIGHT_STRICT ?= 1
 BASELINE_FREEZE_ENFORCE ?= 1
+BUSINESS_INCREMENT_PROFILE ?= base
 SC_WARN_ACT_URL_LEGACY_MAX ?= 3
 DB_CI        ?= sc_test
 DB_USER      ?= odoo
@@ -1203,16 +1204,18 @@ verify.baseline.freeze_guard: guard.prod.forbid
 	@python3 scripts/verify/baseline_freeze_guard.py
 
 verify.business.increment.readiness: guard.prod.forbid
-	@python3 scripts/verify/business_increment_readiness.py
+	@python3 scripts/verify/business_increment_readiness.py --profile $(BUSINESS_INCREMENT_PROFILE)
 
 verify.business.increment.readiness.strict: guard.prod.forbid
-	@python3 scripts/verify/business_increment_readiness.py --strict
+	@python3 scripts/verify/business_increment_readiness.py --profile strict --strict
 
 verify.business.increment.readiness.brief: guard.prod.forbid
-	@python3 scripts/verify/business_increment_readiness_brief.py
+	@$(MAKE) --no-print-directory verify.business.increment.readiness
+	@python3 scripts/verify/business_increment_readiness_brief.py --profile $(BUSINESS_INCREMENT_PROFILE)
 
 verify.business.increment.readiness.brief.strict: guard.prod.forbid
-	@python3 scripts/verify/business_increment_readiness_brief.py --strict
+	@$(MAKE) --no-print-directory verify.business.increment.readiness.strict
+	@python3 scripts/verify/business_increment_readiness_brief.py --profile strict --strict
 
 verify.business.increment.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory contract.catalog.export
