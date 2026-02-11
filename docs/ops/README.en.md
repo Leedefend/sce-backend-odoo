@@ -16,6 +16,7 @@ This directory hosts release, verification, and operational governance documenta
 - Business increment preflight:
   - `make verify.business.increment.preflight`
   - `make verify.business.increment.preflight.strict`
+  - optional profile: `BUSINESS_INCREMENT_PROFILE=base|strict`
 - Phase 11 Backend Closure: `docs/ops/releases/current/phase_11_backend_closure.md`
 - Phase 11.1 Contract Visibility: `docs/ops/releases/current/phase_11_1_contract_visibility.md`
 - Temporary archive (non-official, traceability only): `docs/ops/releases/archive/temp/`
