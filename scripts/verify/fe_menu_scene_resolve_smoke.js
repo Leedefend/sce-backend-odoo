@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.API_BASE || process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -184,9 +185,11 @@ async function main() {
     'X-Anonymous-Intent': '1',
     'X-Odoo-DB': DB_NAME,
   });
-  if (loginResp.status >= 400 || !loginResp.body.ok) {
+  try {
+    assertIntentEnvelope(loginResp, 'login');
+  } catch (_err) {
     console.error('[fe_menu_scene_resolve_smoke] login error body:', JSON.stringify(loginResp.body));
-    throw new Error(`login failed: status=${loginResp.status}`);
+    throw new Error(`login failed: status=${loginResp.status || 0}`);
   }
   const token = (loginResp.body.data || {}).token || '';
   if (!token) throw new Error('login token missing');
@@ -196,9 +199,11 @@ async function main() {
     { intent: 'app.init', params: { scene: 'web', with_preload: false } },
     { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME }
   );
-  if (appInitResp.status >= 400 || !appInitResp.body.ok) {
+  try {
+    assertIntentEnvelope(appInitResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
+  } catch (_err) {
     console.error('[fe_menu_scene_resolve_smoke] app.init error body:', JSON.stringify(appInitResp.body));
-    throw new Error(`app.init failed: ${appInitResp.status}`);
+    throw new Error(`app.init failed: ${appInitResp.status || 0}`);
   }
 
   const nav = ((appInitResp.body || {}).data || {}).nav || [];
