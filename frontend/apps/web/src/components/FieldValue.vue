@@ -14,6 +14,10 @@ const display = computed(() => {
 
   const fieldType = field?.ttype || field?.type;
 
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
+
   if (fieldType === 'boolean') {
     return value ? 'Yes' : 'No';
   }

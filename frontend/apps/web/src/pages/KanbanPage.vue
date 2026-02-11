@@ -85,6 +85,9 @@ const emptyCopy = computed(() => resolveEmptyCopy('card'));
 const metaFields = computed(() => props.fields.filter((field) => field !== props.titleField).slice(0, 4));
 
 function formatValue(value: unknown) {
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
   if (Array.isArray(value)) {
     return value.join(', ');
   }
