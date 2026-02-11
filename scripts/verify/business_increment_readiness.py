@@ -221,6 +221,20 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
         ok = False
         blockers.append(f"missing_required_test_refs:{','.join(missing_test_ref_intents)}")
 
+    missing_behavioral_intents: list[str] = []
+    for intent in required_behavioral_intents:
+        meta = intent_catalog_meta.get(intent) or {}
+        if (
+            int(meta.get("test_refs", 0)) <= 0
+            or int(meta.get("examples_count", 0)) <= 0
+            or int(meta.get("request_hint_count", 0)) <= 0
+            or int(meta.get("response_hint_count", 0)) <= 0
+        ):
+            missing_behavioral_intents.append(intent)
+    if missing_behavioral_intents:
+        ok = False
+        blockers.append(f"missing_behavioral_coverage:{','.join(sorted(missing_behavioral_intents))}")
+
     untested_intents = sorted(intent for intent in intent_keys if int(intent_test_refs.get(intent, 0)) <= 0)
     warning_untested_limit = int(policy.get("warning_untested_limit", 0))
     if require_zero_untested and len(untested_intents) > 0:
