@@ -52,6 +52,11 @@
       <p class="retry-title">失败明细</p>
       <details v-if="retryRequestParams" class="retry-request-preview">
         <summary>重试请求预览</summary>
+        <div class="retry-note-presets">
+          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：网络抖动后重放')">网络抖动</button>
+          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：并发冲突后重放')">并发冲突</button>
+          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：依赖状态已满足')">依赖满足</button>
+        </div>
         <label class="retry-note-editor">
           重试备注
           <textarea
@@ -1077,6 +1082,10 @@ function resolveRetryNote(defaultNote: string) {
   return defaultNote;
 }
 
+function applyRetryNotePreset(note: string) {
+  retryNoteDraft.value = note;
+}
+
 function selectRetryableByReasonGroup(reasonCode: string) {
   const ids = retryFailedItems.value
     .filter((item) => item.reason_code === reasonCode && item.retryable)
@@ -1508,6 +1517,13 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   gap: 4px;
   font-size: 12px;
   color: #475569;
+}
+
+.retry-note-presets {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .retry-note-editor textarea {
