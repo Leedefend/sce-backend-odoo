@@ -27,11 +27,17 @@
         "system.init",
         "api.data",
         "api.data.batch",
+        "execute_button",
+        "ui.contract",
+        "chatter.post",
+        "chatter.timeline",
+        "load_contract",
+        "load_view",
         "my.work.summary",
         "my.work.complete_batch",
         "usage.report"
       ],
-      "warning_untested_limit": 25
+      "warning_untested_limit": 20
     }
   }
 }
