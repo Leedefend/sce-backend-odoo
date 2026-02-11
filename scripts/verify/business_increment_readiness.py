@@ -72,6 +72,16 @@ def _resolve_renderability_ok(scene_payload: dict[str, Any], declared_scene_coun
     return False, {"source": "unknown"}
 
 
+def _normalize_string_list(value: object) -> list[str]:
+    out: set[str] = set()
+    if isinstance(value, list):
+        for item in value:
+            text = str(item or "").strip()
+            if text:
+                out.add(text)
+    return sorted(out)
+
+
 def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     result: dict[str, Any] = {"files": {}, "summary": {}}
     ok = True
@@ -148,11 +158,9 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     min_scene_count = int(policy.get("min_scene_count", 1))
     require_renderability = bool(policy.get("require_renderability_fully_renderable", False))
     require_shape_guard_ok = bool(policy.get("require_scene_shape_guard_ok", True))
-    required_intents = [str(x).strip() for x in (policy.get("required_intents") or []) if str(x).strip()]
-    required_scene_keys = [str(x).strip() for x in (policy.get("required_scene_keys") or []) if str(x).strip()]
-    required_test_ref_intents = [
-        str(x).strip() for x in (policy.get("required_test_ref_intents") or []) if str(x).strip()
-    ]
+    required_intents = _normalize_string_list(policy.get("required_intents"))
+    required_scene_keys = _normalize_string_list(policy.get("required_scene_keys"))
+    required_test_ref_intents = _normalize_string_list(policy.get("required_test_ref_intents"))
 
     shape_guard_ok = bool(
         ((result.get("files", {}).get("scene_contract_shape_guard", {}) or {}).get("shape_guard_ok", True))
