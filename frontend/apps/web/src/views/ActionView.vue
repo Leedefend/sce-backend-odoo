@@ -171,6 +171,11 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
   fields?: Record<string, unknown>;
   model?: string;
   head?: { model?: string };
+  data?: {
+    type?: string;
+    url?: string;
+    target?: string;
+  };
 };
 
 const actionId = computed(() => Number(route.params.actionId));
@@ -460,7 +465,8 @@ function isUrlAction(meta: unknown, contract: unknown) {
   if (actionType.includes('act_url') || actionType.includes('url')) {
     return true;
   }
-  const contractType = String((contract as any)?.data?.type || '').toLowerCase();
+  const typed = contract as ActionContractLoose;
+  const contractType = String(typed.data?.type || '').toLowerCase();
   return contractType === 'url_redirect';
 }
 
@@ -532,11 +538,13 @@ function buildPortalBridgeUrl(url: string) {
 }
 
 function resolveActionUrl(meta: unknown, contract: unknown) {
-  const metaUrl = String((meta as any)?.url || '').trim();
+  const metaTyped = (meta as { url?: string }) || {};
+  const metaUrl = String(metaTyped.url || '').trim();
   if (metaUrl) {
     return metaUrl;
   }
-  const contractUrl = String((contract as any)?.data?.url || '').trim();
+  const typed = contract as ActionContractLoose;
+  const contractUrl = String(typed.data?.url || '').trim();
   if (contractUrl) {
     return contractUrl;
   }
@@ -547,7 +555,8 @@ async function redirectUrlAction(meta: unknown, contract: unknown) {
   const url = resolveActionUrl(meta, contract);
   if (!url) {
     const actionType = getActionType(meta);
-    const contractType = String((contract as any)?.data?.type || '').toLowerCase();
+    const typed = contract as ActionContractLoose;
+    const contractType = String(typed.data?.type || '').toLowerCase();
     await router.replace({
       name: 'workbench',
       query: {
@@ -561,7 +570,9 @@ async function redirectUrlAction(meta: unknown, contract: unknown) {
     });
     return true;
   }
-  const target = normalizeUrlTarget((meta as any)?.target || (contract as any)?.data?.target);
+  const metaTyped = (meta as { target?: string }) || {};
+  const typed = contract as ActionContractLoose;
+  const target = normalizeUrlTarget(metaTyped.target || typed.data?.target);
   if (target === 'self' && url.startsWith('/')) {
     if (isShellRoute(url)) {
       await router.replace(url);
