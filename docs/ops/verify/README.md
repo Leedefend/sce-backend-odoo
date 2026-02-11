@@ -29,6 +29,8 @@
   - `make verify.portal.scene_auto_degrade_smoke.container`
   - `make verify.portal.scene_auto_degrade_notify_smoke.container`
   - `make verify.portal.scene_package_import_smoke.container`
+  - Aggregate:
+    - `make verify.portal.scene_observability_smoke.container`
 - Strict variants enforce governance/audit artifacts and fail fast when evidence is missing:
   - `make verify.portal.scene_governance_action_strict.container`
   - `make verify.portal.scene_auto_degrade_strict.container`
