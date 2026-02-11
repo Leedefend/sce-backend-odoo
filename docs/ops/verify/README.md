@@ -22,6 +22,20 @@
     - `make verify.portal.cross_stack_contract_smoke.container`
   - Enforces intent envelope checks (`ok=true`) and `meta.trace_id` presence.
 
+## Scene Observability Strict Mode
+- Default smoke targets remain compatibility-friendly and may skip when governance/audit models are unavailable:
+  - `make verify.portal.scene_governance_action_smoke.container`
+  - `make verify.portal.scene_auto_degrade_smoke.container`
+  - `make verify.portal.scene_auto_degrade_notify_smoke.container`
+  - `make verify.portal.scene_package_import_smoke.container`
+- Strict variants enforce governance/audit artifacts and fail fast when evidence is missing:
+  - `make verify.portal.scene_governance_action_strict.container`
+  - `make verify.portal.scene_auto_degrade_strict.container`
+  - `make verify.portal.scene_auto_degrade_notify_strict.container`
+  - `make verify.portal.scene_package_import_strict.container`
+- One-command strict aggregate:
+  - `make verify.portal.scene_observability_strict.container`
+
 ## Demo Baseline
 - `make verify.demo`
 
