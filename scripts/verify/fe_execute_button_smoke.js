@@ -35,6 +35,28 @@ function writeSummary(lines) {
   fs.writeFileSync(path.join(outDir, 'summary.md'), lines.join('\n'));
 }
 
+function extractTraceId(body) {
+  if (!body || typeof body !== 'object') return '';
+  const meta = body.meta && typeof body.meta === 'object' ? body.meta : {};
+  return String(meta.trace_id || meta.traceId || body.trace_id || body.traceId || '');
+}
+
+function assertIntentEnvelope(resp, intentName) {
+  if (!resp || resp.status >= 400) {
+    const status = resp && typeof resp.status !== 'undefined' ? resp.status : 0;
+    throw new Error(`${intentName} failed: status=${status}`);
+  }
+  if (!resp.body || typeof resp.body !== 'object') {
+    throw new Error(`${intentName} missing response body`);
+  }
+  if (resp.body.ok !== true) {
+    throw new Error(`${intentName} missing ok=true envelope`);
+  }
+  if (!extractTraceId(resp.body)) {
+    throw new Error(`${intentName} missing meta.trace_id`);
+  }
+}
+
 function requestJson(url, payload, headers = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -99,10 +121,8 @@ async function main() {
     log(`login: ${LOGIN} db=${DB_NAME}`);
     const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
     const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-    if (loginResp.status >= 400 || !loginResp.body.ok) {
-      writeJson(path.join(outDir, 'login.log'), loginResp);
-      throw new Error(`login failed: status=${loginResp.status}`);
-    }
+    writeJson(path.join(outDir, 'login.log'), loginResp);
+    assertIntentEnvelope(loginResp, 'login');
     token = (loginResp.body.data || {}).token || '';
     if (!token) {
       throw new Error('login response missing token');
@@ -118,9 +138,7 @@ async function main() {
   const viewPayload = { intent: 'load_view', params: { model: MODEL, view_type: VIEW_TYPE } };
   const viewResp = await requestJson(intentUrl, viewPayload, authHeader);
   writeJson(path.join(outDir, 'load_view.log'), viewResp);
-  if (viewResp.status >= 400 || !viewResp.body.ok) {
-    throw new Error(`load_view failed: status=${viewResp.status}`);
-  }
+  assertIntentEnvelope(viewResp, 'load_view');
   const viewData = viewResp.body.data || {};
   const layout = (viewData && viewData.layout) || {};
   const buttons = [...(layout.headerButtons || []), ...(layout.statButtons || [])];
@@ -136,9 +154,7 @@ async function main() {
   const listPayload = { intent: 'api.data', params: { op: 'list', model: MODEL, fields: ['id', 'name'], limit: 1 } };
   const listResp = await requestJson(intentUrl, listPayload, authHeader);
   writeJson(path.join(outDir, 'list.log'), listResp);
-  if (listResp.status >= 400 || !listResp.body.ok) {
-    throw new Error(`list failed: status=${listResp.status}`);
-  }
+  assertIntentEnvelope(listResp, 'api.data');
   const listData = (listResp.body && listResp.body.data) || {};
   const records = Array.isArray(listData.records) ? listData.records : [];
   const record = records[0];
@@ -158,9 +174,7 @@ async function main() {
   };
   const execResp = await requestJson(intentUrl, execPayload, authHeader);
   writeJson(path.join(outDir, 'execute_button.log'), execResp);
-  if (execResp.status >= 400 || !execResp.body.ok) {
-    throw new Error(`execute_button failed: status=${execResp.status}`);
-  }
+  assertIntentEnvelope(execResp, 'execute_button');
   const execData = (execResp.body && execResp.body.data) || {};
   const resultType = (execData.result && execData.result.type) || '';
   const effectType = (execData.effect && execData.effect.type) || '';

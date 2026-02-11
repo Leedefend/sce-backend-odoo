@@ -13,6 +13,15 @@
 - `make verify.portal.act_url_missing_scene_report.container`
 - `make verify.phase_9_8.gate_summary`
 
+## Phase D/E Cross-Stack Envelope Coverage
+- `make verify.portal.envelope_smoke.container`
+  - Aggregates:
+    - `make verify.portal.scene_contract_smoke.container`
+    - `make verify.portal.my_work_smoke.container`
+    - `make verify.portal.execute_button_smoke.container`
+    - `make verify.portal.cross_stack_contract_smoke.container`
+  - Enforces intent envelope checks (`ok=true`) and `meta.trace_id` presence.
+
 ## Demo Baseline
 - `make verify.demo`
 

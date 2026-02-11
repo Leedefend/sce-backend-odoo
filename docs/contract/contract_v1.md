@@ -51,6 +51,17 @@ Fields:
 - `error.details`: optional object for debugging.
 - `error.trace_id`: same as top-level `trace_id`.
 
+## Contract verification entry points
+
+- `make verify.portal.envelope_smoke.container`
+  - validates runtime envelope expectations (`ok=true`, `meta.trace_id`) for core intents:
+    - `app.init`/scene contract path
+    - `my.work.summary`
+    - `execute_button`
+    - cross-stack contract probe
+- `make verify.portal.ui.v0_8.semantic.container`
+  - includes `verify.portal.envelope_smoke.container` in semantic portal gate aggregation.
+
 ## Snapshot baseline migration
 
 2026-01-25:
