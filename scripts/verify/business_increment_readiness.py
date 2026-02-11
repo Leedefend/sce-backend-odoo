@@ -38,6 +38,8 @@ def _load_policy(profile: str) -> dict[str, Any]:
 def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     result: dict[str, Any] = {"files": {}, "summary": {}}
     ok = True
+    blockers: list[str] = []
+    warnings: list[str] = []
     intent_count = 0
     scene_count = 0
     renderability_ok = False
@@ -50,6 +52,7 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
         }
         if not path.exists():
             ok = False
+            blockers.append(f"missing_file:{key}")
             result["files"][key] = entry
             continue
         try:
@@ -71,6 +74,7 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
             entry["json_ok"] = False
             entry["error"] = str(exc)
             ok = False
+            blockers.append(f"invalid_json:{key}")
         result["files"][key] = entry
 
     min_intent_count = int(policy.get("min_intent_count", 1))
@@ -83,10 +87,17 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     )
     if intent_count < min_intent_count or scene_count < min_scene_count:
         ok = False
+        blockers.append(
+            f"catalog_count_below_min:intents={intent_count}/{min_intent_count},scenes={scene_count}/{min_scene_count}"
+        )
     if require_renderability and not renderability_ok:
         ok = False
+        blockers.append("renderability_not_fully_renderable")
+    elif not renderability_ok:
+        warnings.append("renderability_not_fully_renderable")
     if require_shape_guard_ok and not shape_guard_ok:
         ok = False
+        blockers.append("scene_contract_shape_guard_not_ok")
 
     result["summary"] = {
         "profile": profile,
@@ -100,6 +111,8 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
             "require_renderability_fully_renderable": require_renderability,
             "require_scene_shape_guard_ok": require_shape_guard_ok,
         },
+        "blockers": blockers,
+        "warnings": warnings,
     }
     return result
 
@@ -114,6 +127,8 @@ def _write(result: dict[str, Any]) -> None:
         f"- intent_count: {result['summary']['intent_count']}",
         f"- scene_count: {result['summary']['scene_count']}",
         f"- renderability_fully_renderable: {result['summary']['renderability_fully_renderable']}",
+        f"- blockers: {', '.join(result['summary'].get('blockers', [])) or '-'}",
+        f"- warnings: {', '.join(result['summary'].get('warnings', [])) or '-'}",
         "",
         "## Files",
     ]
