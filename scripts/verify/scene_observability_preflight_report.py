@@ -61,6 +61,13 @@ def main() -> int:
     governance_ready = _has_any(governance_required, governance_available)
     notify_ready = _has_any(notify_required, notify_available)
     strict_ready = governance_ready and notify_ready
+    strict_failure_reasons: list[str] = []
+    if not governance_ready:
+        strict_failure_reasons.append(
+            "governance_missing_any:" + "|".join(governance_required)
+        )
+    if not notify_ready:
+        strict_failure_reasons.append("notify_missing_any:" + "|".join(notify_required))
 
     out_payload = {
         "run_dir": str(run_dir.relative_to(ROOT)),
@@ -74,10 +81,15 @@ def main() -> int:
             "governance": governance_available,
             "notify": notify_available,
         },
+        "missing": {
+            "governance": [str(x) for x in (governance.get("missing") or [])],
+            "notify": [str(x) for x in (notify.get("missing") or [])],
+        },
         "readiness": {
             "governance_ready": governance_ready,
             "notify_ready": notify_ready,
             "strict_ready": strict_ready,
+            "strict_failure_reasons": strict_failure_reasons,
         },
     }
 
@@ -90,6 +102,8 @@ def main() -> int:
     print(f"- governance_ready: {governance_ready}")
     print(f"- notify_ready: {notify_ready}")
     print(f"- strict_ready: {strict_ready}")
+    if strict_failure_reasons:
+        print(f"- strict_failure_reasons: {', '.join(strict_failure_reasons)}")
     print(f"- out: {out_path.relative_to(ROOT)}")
 
     if args.strict and not strict_ready:
