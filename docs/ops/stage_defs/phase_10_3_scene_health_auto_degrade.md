@@ -50,9 +50,11 @@ Behavior:
 
 ## Verify Commands
 - `make verify.portal.scene_health_contract_smoke.container`
+- `make verify.portal.scene_observability_preflight_smoke.container`
 - `make verify.portal.scene_auto_degrade_smoke.container`
 - `make verify.portal.scene_observability_smoke.container`
 - Strict evidence mode:
+  - `make verify.portal.scene_observability_preflight.container`
   - `make verify.portal.scene_auto_degrade_strict.container`
   - `make verify.portal.scene_observability_strict.container`
 - `make verify.portal.ui.v0_8.semantic.container`
@@ -65,3 +67,6 @@ Behavior:
   - `artifacts/codex/portal-scene-auto-degrade-v10_3/<timestamp>/scene_health_auto_degrade.log`
   - `artifacts/codex/portal-scene-auto-degrade-v10_3/<timestamp>/governance_log.log`
   - `artifacts/codex/portal-scene-auto-degrade-v10_3/<timestamp>/summary.md`
+
+## Troubleshooting
+- Strict observability failures: `docs/ops/verify/scene_observability_troubleshooting.md`
