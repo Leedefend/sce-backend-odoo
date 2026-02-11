@@ -97,6 +97,62 @@ import { ErrorCodes } from '../app/error_codes';
 import { useSessionStore } from '../stores/session';
 import { isHudEnabled } from '../config/debug';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
+import type { Scene } from '../app/resolvers/sceneRegistry';
+import type { NavNode } from '@sc/schema';
+
+type UnknownDict = Record<string, unknown>;
+
+interface WorkbenchTile {
+  key?: string;
+  title?: string;
+  subtitle?: string;
+  icon?: string;
+  scene_key?: string;
+  sceneKey?: string;
+  route?: string;
+  payload?: {
+    scene_key?: string;
+    sceneKey?: string;
+    action_id?: number;
+    menu_id?: number;
+    model?: string;
+    record_id?: number;
+  };
+}
+
+interface TilePolicy {
+  state?: string;
+  missing?: string[];
+}
+
+interface EnrichedWorkbenchTile extends WorkbenchTile {
+  policy: TilePolicy;
+  tooltip: string;
+}
+
+function asObject(value: unknown): UnknownDict | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as UnknownDict;
+}
+
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function resolveSceneCode(scene: Scene): string {
+  return asText(asObject(scene)?.code);
+}
+
+function resolveTileScene(tile: WorkbenchTile): string {
+  return (
+    asText(tile.scene_key) ||
+    asText(tile.sceneKey) ||
+    asText(tile.payload?.scene_key) ||
+    asText(tile.payload?.sceneKey)
+  );
+}
 
 // Workbench is a diagnostic-only surface and must not be used as product UI.
 const route = useRoute();
@@ -115,15 +171,17 @@ const diagActionType = computed(() => String(route.query.diag_action_type || '')
 const diagContractType = computed(() => String(route.query.diag_contract_type || ''));
 const diagContractUrl = computed(() => String(route.query.diag_contract_url || ''));
 const diagMetaUrl = computed(() => String(route.query.diag_meta_url || ''));
-const scene = computed(() => {
+const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
-  return session.scenes.find((item: any) => item?.key === sceneKey.value || item?.code === sceneKey.value) || null;
+  return (
+    session.scenes.find((item) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null
+  );
 });
 const showTiles = computed(() => reason.value === ErrorCodes.CAPABILITY_MISSING && tiles.value.length > 0);
-const tiles = computed(() => {
-  const rawTiles = (scene.value as any)?.tiles ?? [];
+const tiles = computed<EnrichedWorkbenchTile[]>(() => {
+  const rawTiles = Array.isArray(scene.value?.tiles) ? (scene.value?.tiles as WorkbenchTile[]) : [];
   if (!Array.isArray(rawTiles)) return [];
-  return rawTiles.map((tile: any) => {
+  return rawTiles.map((tile) => {
     const policy = evaluateCapabilityPolicy({ source: tile, available: session.capabilities });
     return {
       ...tile,
@@ -188,8 +246,8 @@ async function openFirstReachableMenu() {
   await goToProjects();
 }
 
-async function handleTileClick(tile: any) {
-  const explicitScene = tile.scene_key || tile.sceneKey || tile?.payload?.scene_key || tile?.payload?.sceneKey;
+async function handleTileClick(tile: EnrichedWorkbenchTile) {
+  const explicitScene = resolveTileScene(tile);
   if (explicitScene) {
     await router.push({ path: `/s/${explicitScene}` });
     return;
@@ -234,7 +292,13 @@ async function copyTrace() {
   }
 }
 
-function findFirstReachableMenuId(nodes: any[]): number | null {
+function resolveNodeSceneKey(node: NavNode): string {
+  return asText((node as NavNode & { scene_key?: string; sceneKey?: string }).scene_key)
+    || asText((node as NavNode & { scene_key?: string; sceneKey?: string }).sceneKey)
+    || asText(node.meta?.scene_key);
+}
+
+function findFirstReachableMenuId(nodes: NavNode[]): number | null {
   if (!Array.isArray(nodes)) {
     return null;
   }
@@ -244,14 +308,14 @@ function findFirstReachableMenuId(nodes: any[]): number | null {
     }
     const menuId = Number(node.menu_id || node.id || 0) || 0;
     if (menuId) {
-      if (node?.meta?.action_id) {
+      if (node.meta?.action_id) {
         return menuId;
       }
-      if (node?.scene_key || node?.sceneKey || node?.meta?.scene_key) {
+      if (resolveNodeSceneKey(node)) {
         return menuId;
       }
     }
-    const nested = findFirstReachableMenuId(node?.children || []);
+    const nested = findFirstReachableMenuId(node.children || []);
     if (nested) {
       return nested;
     }
