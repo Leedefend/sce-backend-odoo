@@ -417,6 +417,7 @@ const reasonFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const summaryStatus = ref<{ state: string; reason_code: string; message: string; hint: string } | null>(null);
 const myWorkFilterStorageKey = 'sc.mywork.filters.v1';
 const myWorkPresetStorageKey = 'sc.mywork.filter_preset.v1';
+const myWorkRetryPanelStorageKey = 'sc.mywork.retry_panel.v1';
 const hasFilterPreset = ref(false);
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
@@ -1229,8 +1230,32 @@ function restoreFilters() {
   }
 }
 
+function restoreRetryPanelState() {
+  try {
+    const raw = window.localStorage.getItem(myWorkRetryPanelStorageKey);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as {
+      retryFilterMode?: 'all' | 'retryable' | 'non_retryable';
+      retryGroupByReason?: boolean;
+      retrySearchText?: string;
+    };
+    if (parsed.retryFilterMode === 'all' || parsed.retryFilterMode === 'retryable' || parsed.retryFilterMode === 'non_retryable') {
+      retryFilterMode.value = parsed.retryFilterMode;
+    }
+    if (typeof parsed.retryGroupByReason === 'boolean') {
+      retryGroupByReason.value = parsed.retryGroupByReason;
+    }
+    if (typeof parsed.retrySearchText === 'string') {
+      retrySearchText.value = parsed.retrySearchText;
+    }
+  } catch {
+    // Ignore broken local cache.
+  }
+}
+
 onMounted(() => {
   restoreFilters();
+  restoreRetryPanelState();
   hasFilterPreset.value = Boolean(window.localStorage.getItem(myWorkPresetStorageKey));
   void load();
 });
@@ -1254,6 +1279,21 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
         sortBy: sortBy.value,
         sortDir: sortDir.value,
         pageSize: pageSize.value,
+      }),
+    );
+  } catch {
+    // Ignore persist errors in private mode.
+  }
+});
+
+watch([retryFilterMode, retryGroupByReason, retrySearchText], () => {
+  try {
+    window.localStorage.setItem(
+      myWorkRetryPanelStorageKey,
+      JSON.stringify({
+        retryFilterMode: retryFilterMode.value,
+        retryGroupByReason: retryGroupByReason.value,
+        retrySearchText: retrySearchText.value,
       }),
     );
   } catch {
