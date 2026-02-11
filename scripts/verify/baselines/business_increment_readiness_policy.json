@@ -66,6 +66,13 @@
         "file.download",
         "load_view"
       ],
+      "required_reason_code_intents": [
+        "api.data.batch",
+        "execute_button",
+        "chatter.post",
+        "my.work.summary",
+        "my.work.complete_batch"
+      ],
       "require_zero_untested": true,
       "warning_untested_limit": 6
     }
