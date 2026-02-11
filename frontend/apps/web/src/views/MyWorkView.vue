@@ -91,6 +91,14 @@
         >
           仅不可重试
         </button>
+        <button
+          type="button"
+          class="reason-chip"
+          :class="{ active: retryGroupByReason }"
+          @click="toggleRetryGroupByReason"
+        >
+          {{ retryGroupByReason ? '平铺显示' : '按原因分组' }}
+        </button>
       </div>
       <p v-if="retryReasonSummary.length" class="retry-summary">
         失败原因分布：
@@ -140,7 +148,7 @@
           </button>
         </span>
       </p>
-      <ul>
+      <ul v-if="!retryGroupByReason">
         <li v-for="item in visibleRetryFailedItems" :key="`failed-${item.id}`">
           <span class="failed-id">#{{ item.id }}</span>
           <span class="failed-code">{{ item.reason_code || 'UNKNOWN' }}</span>
@@ -164,6 +172,27 @@
           </button>
         </li>
       </ul>
+      <div v-else class="retry-grouped-list">
+        <div v-for="group in groupedVisibleRetryItems" :key="`visible-group-${group.reasonCode}`" class="retry-group-block">
+          <p class="retry-group-title">{{ group.reasonCode }} ({{ group.items.length }})</p>
+          <ul>
+            <li v-for="item in group.items" :key="`failed-grouped-${item.id}`">
+              <span class="failed-id">#{{ item.id }}</span>
+              <span class="failed-msg">{{ item.message || '-' }}</span>
+              <span v-if="resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable)" class="failed-hint">
+                {{ resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable) }}
+              </span>
+              <button
+                v-if="failedSuggestedActionLabel(item)"
+                class="link-btn mini-btn"
+                @click="runFailedSuggestedAction(item)"
+              >
+                {{ failedSuggestedActionLabel(item) }}
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
     </section>
     <template v-if="!loading && !errorText">
       <section class="summary-grid">
@@ -354,6 +383,7 @@ const lastReplayAgeMs = ref<number>(0);
 const retryFilterMode = ref<'all' | 'retryable' | 'non_retryable'>('all');
 const retryFailedExpanded = ref(false);
 const retryPreviewLimit = 10;
+const retryGroupByReason = ref(false);
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const searchText = ref('');
@@ -442,6 +472,16 @@ const batchEvidenceText = computed(() => {
   if (lastReplayAuditId.value > 0) rows.push(`replay_audit_id: ${lastReplayAuditId.value}`);
   if (lastReplayAgeMs.value > 0) rows.push(`replay_age_ms: ${lastReplayAgeMs.value}`);
   return rows.join(' | ');
+});
+const groupedVisibleRetryItems = computed(() => {
+  const map = new Map<string, typeof visibleRetryFailedItems.value>();
+  for (const item of visibleRetryFailedItems.value) {
+    const code = item.reason_code || 'UNKNOWN';
+    const rows = map.get(code) || [];
+    rows.push(item);
+    map.set(code, rows);
+  }
+  return Array.from(map.entries()).map(([reasonCode, rows]) => ({ reasonCode, items: rows }));
 });
 
 async function load() {
@@ -664,6 +704,10 @@ function buildBatchRequestId(prefix: string) {
 function setRetryFilterMode(mode: 'all' | 'retryable' | 'non_retryable') {
   retryFilterMode.value = mode;
   retryFailedExpanded.value = false;
+}
+
+function toggleRetryGroupByReason() {
+  retryGroupByReason.value = !retryGroupByReason.value;
 }
 
 function toggleRetryFailedExpanded() {
@@ -1339,6 +1383,25 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
 .retry-details ul {
   margin: 8px 0 0;
   padding-left: 20px;
+}
+
+.retry-grouped-list {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.retry-group-block {
+  border: 1px dashed #fecaca;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.retry-group-title {
+  margin: 0;
+  color: #9f1239;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .retry-title {
