@@ -180,15 +180,18 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         params = payload or self.params or {}
         source = str(params.get("source") or "").strip()
         ids = params.get("ids") if isinstance(params.get("ids"), list) else []
+        retry_ids = params.get("retry_ids") if isinstance(params.get("retry_ids"), list) else []
         note = str(params.get("note") or "").strip()
+        execution_mode = "retry" if retry_ids else "full"
+        execute_ids = retry_ids if retry_ids else ids
         started = fields.Datetime.now()
         request_id = normalize_request_id(params.get("request_id"), prefix="mw_req")
         idempotency_key = str(params.get("idempotency_key") or "").strip() or request_id
         idempotency_fingerprint = self._idempotency_fingerprint(
-            source=source, ids=ids, note=note, idem_key=idempotency_key
+            source=source, ids=execute_ids, note=note, idem_key=idempotency_key
         )
         trace_id = f"mw_batch_{uuid4().hex[:12]}"
-        if not ids:
+        if not execute_ids:
             raise UserError("缺少待办 ID 列表")
         decision = resolve_idempotency_decision(
             self.env,
@@ -230,7 +233,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         completed = []
         failed = []
         reason_counter = defaultdict(int)
-        for raw_id in ids:
+        for raw_id in execute_ids:
             try:
                 activity_id = _coerce_activity_id(raw_id)
                 _complete_activity(self.env, source=source, activity_id=activity_id, note=note)
@@ -251,8 +254,16 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
 
         ok = len(failed) == 0
         failed_retry_ids = [int(item.get("id") or 0) for item in failed if bool(item.get("retryable")) and int(item.get("id") or 0) > 0]
+        failed_groups = _failed_groups(failed)
+        retry_request = _build_retry_request(
+            source=source,
+            retry_ids=failed_retry_ids,
+            note=note,
+        )
+        todo_remaining = self.env["mail.activity"].search_count([("user_id", "=", self.env.user.id)]) if self.env.get("mail.activity") else 0
         data = apply_idempotency_identity(
             {
+                "execution_mode": execution_mode,
                 "source": source,
                 "success": ok,
                 "reason_code": REASON_DONE if ok else REASON_PARTIAL_FAILED,
@@ -262,8 +273,11 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 "completed_ids": completed,
                 "failed_items": failed,
                 "failed_retry_ids": failed_retry_ids,
+                "failed_groups": failed_groups,
+                "retry_request": retry_request,
                 "failed_reason_summary": _reason_summary(reason_counter),
                 "failed_retryable_summary": _retryable_summary(failed),
+                "todo_remaining": int(todo_remaining or 0),
                 "done_at": fields.Datetime.now(),
             },
             request_id=request_id,
@@ -288,7 +302,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
         self._write_batch_audit(
             trace_id=trace_id,
             source=source,
-            ids=ids,
+            ids=execute_ids,
             note=note,
             idem_key=idempotency_key,
             idem_fingerprint=idempotency_fingerprint,
@@ -351,3 +365,43 @@ def _retryable_summary(failed_items):
         else:
             non_retryable += 1
     return {"retryable": retryable, "non_retryable": non_retryable}
+
+
+def _failed_groups(failed_items):
+    grouped = {}
+    for item in failed_items or []:
+        reason_code = str(item.get("reason_code") or "UNKNOWN")
+        row = grouped.setdefault(
+            reason_code,
+            {
+                "reason_code": reason_code,
+                "count": 0,
+                "retryable_count": 0,
+                "suggested_action": str(item.get("suggested_action") or ""),
+                "sample_ids": [],
+            },
+        )
+        row["count"] += 1
+        if bool(item.get("retryable")):
+            row["retryable_count"] += 1
+        item_id = _safe_int(item.get("id"))
+        if item_id > 0 and len(row["sample_ids"]) < 20:
+            row["sample_ids"].append(item_id)
+    rows = list(grouped.values())
+    rows.sort(key=lambda x: x["count"], reverse=True)
+    return rows
+
+
+def _build_retry_request(*, source, retry_ids, note):
+    ids = [int(x) for x in (retry_ids or []) if _safe_int(x) > 0]
+    if not ids:
+        return None
+    return {
+        "intent": "my.work.complete_batch",
+        "params": {
+            "source": source,
+            "retry_ids": ids,
+            "note": note,
+            "request_id": f"mw_retry_{uuid4().hex[:12]}",
+        },
+    }

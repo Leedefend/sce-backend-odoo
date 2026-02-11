@@ -74,6 +74,7 @@ class TestMyWorkBackend(TransactionCase):
         result = handler.handle({"ids": ["bad"], "source": "mail.activity", "request_id": "req-demo-1"})
         self.assertTrue(result.get("ok"))
         data = result.get("data") or {}
+        self.assertEqual(data.get("execution_mode"), "full")
         self.assertEqual(data.get("request_id"), "req-demo-1")
         self.assertEqual(data.get("idempotency_key"), "req-demo-1")
         self.assertFalse(bool(data.get("idempotent_replay")))
@@ -86,6 +87,11 @@ class TestMyWorkBackend(TransactionCase):
         self.assertTrue(str(data.get("trace_id") or "").startswith("mw_batch_"))
         self.assertEqual(data.get("failed_count"), 1)
         self.assertEqual(data.get("failed_retry_ids"), [])
+        self.assertEqual(data.get("retry_request"), None)
+        groups = data.get("failed_groups") or []
+        self.assertEqual(len(groups), 1)
+        self.assertEqual((groups[0] or {}).get("reason_code"), "INVALID_ID")
+        self.assertEqual((groups[0] or {}).get("count"), 1)
         failed_items = data.get("failed_items") or []
         self.assertEqual(len(failed_items), 1)
         self.assertTrue(str((failed_items[0] or {}).get("trace_id") or "").startswith("mw_batch_"))
@@ -255,3 +261,44 @@ class TestMyWorkBackend(TransactionCase):
         )
         self.assertEqual(summary.get("retryable"), 2)
         self.assertEqual(summary.get("non_retryable"), 1)
+
+    def test_batch_retry_mode_uses_retry_ids(self):
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.my_work_complete._complete_activity",
+            return_value=None,
+        ) as mocked_complete:
+            result = handler.handle(
+                {
+                    "ids": [111, 222],
+                    "retry_ids": [222],
+                    "source": "mail.activity",
+                    "request_id": "req-retry-mode-1",
+                }
+            )
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        self.assertEqual(data.get("execution_mode"), "retry")
+        self.assertEqual(data.get("done_count"), 1)
+        self.assertEqual(data.get("completed_ids"), [222])
+        mocked_complete.assert_called_once()
+
+    def test_batch_failure_generates_retry_request_for_retryable_ids(self):
+        handler = MyWorkCompleteBatchHandler(self.env, payload={})
+        with patch(
+            "odoo.addons.smart_construction_core.handlers.my_work_complete._complete_activity",
+            side_effect=Exception("transient failure"),
+        ):
+            result = handler.handle(
+                {"ids": [901], "source": "mail.activity", "request_id": "req-retry-template-1"}
+            )
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        retry_ids = data.get("failed_retry_ids") or []
+        self.assertEqual(retry_ids, [901])
+        retry_request = data.get("retry_request") or {}
+        self.assertEqual(retry_request.get("intent"), "my.work.complete_batch")
+        params = retry_request.get("params") or {}
+        self.assertEqual(params.get("retry_ids"), [901])
+        self.assertEqual(params.get("source"), "mail.activity")
+        self.assertTrue(str(params.get("request_id") or "").startswith("mw_retry_"))
