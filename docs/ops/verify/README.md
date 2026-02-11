@@ -5,6 +5,7 @@
   - Default strict mode includes Phase 9.8 guards.
   - Use `SC_GATE_STRICT=0` to skip Phase 9.8 enforcement.
   - Use `SC_SCENE_OBS_STRICT=1` to additionally enforce strict scene observability evidence during gate runs.
+  - Default gate path includes `verify.portal.scene_observability_gate_smoke.container` (structure + preflight smoke + smoke chain).
 
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
@@ -33,6 +34,7 @@
   - Aggregate:
     - `make verify.portal.scene_observability_smoke.container`
 - Strict variants enforce governance/audit artifacts and fail fast when evidence is missing:
+  - `make verify.portal.scene_observability.structure_guard`
   - `make verify.portal.scene_observability_preflight.container` (`SCENE_OBSERVABILITY_PREFLIGHT_STRICT=1`)
   - `make verify.portal.scene_governance_action_strict.container`
   - `make verify.portal.scene_auto_degrade_strict.container`
@@ -40,6 +42,8 @@
   - `make verify.portal.scene_package_import_strict.container`
 - One-command strict aggregate:
   - `make verify.portal.scene_observability_strict.container`
+- Gate-friendly smoke aggregate (structure guard + preflight smoke + smoke chain):
+  - `make verify.portal.scene_observability_gate_smoke.container`
 - UI semantic suite strict variant:
   - `make verify.portal.ui.v0_8.semantic.strict.container`
 
