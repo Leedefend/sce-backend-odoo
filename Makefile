@@ -461,6 +461,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 .PHONY: verify.portal.scene_governance_action_strict.container verify.portal.scene_auto_degrade_strict.container verify.portal.scene_auto_degrade_notify_strict.container verify.portal.scene_package_import_strict.container verify.portal.scene_observability_preflight.container verify.portal.scene_observability_smoke.container verify.portal.scene_observability_strict.container
 .PHONY: verify.portal.scene_package_dry_run_smoke.container verify.portal.scene_package_import_smoke.container verify.portal.scene_package_ui_smoke.container
 .PHONY: verify.portal.scene_package_installed_smoke.container
+.PHONY: verify.portal.ui.v0_8.semantic.strict.container
 .PHONY: verify.platform_baseline verify.business_baseline verify.baseline.all gate.platform_baseline gate.business_baseline gate.baseline.all
 verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
@@ -689,6 +690,8 @@ verify.portal.ui.v0_7.container: verify.portal.view_state verify.portal.guard_gr
 	@echo \"[OK] verify.portal.ui.v0_7.container done\"
 verify.portal.ui.v0_8.semantic.container: verify.frontend.suggested_action.all verify.portal.view_contract_shape.container verify.portal.view_render_mode_smoke.container verify.portal.view_contract_coverage_smoke.container verify.portal.envelope_smoke.container verify.portal.scene_layout_contract_smoke.container verify.portal.layout_stability_smoke.container verify.portal.workbench_tiles_smoke.container verify.portal.workspace_tiles_smoke.container verify.portal.workspace_tile_navigate_smoke.container verify.portal.menu_scene_key_smoke.container verify.portal.list_shell_title_smoke.container verify.portal.list_shell_no_meta_smoke.container verify.portal.scene_list_profile_smoke.container verify.portal.scene_default_sort_smoke.container verify.portal.scene_schema_smoke.container verify.portal.scene_semantic_smoke.container verify.portal.scene_tiles_semantic_smoke.container verify.portal.scene_targets_resolve_smoke.container verify.portal.scene_versioning_smoke.container verify.portal.scene_diagnostics_smoke.container verify.portal.scene_health_contract_smoke.container verify.portal.scene_health_pagination_smoke.container verify.portal.scene_governance_action_smoke.container verify.portal.scene_auto_degrade_smoke.container verify.portal.scene_auto_degrade_notify_smoke.container verify.portal.scene_package_dry_run_smoke.container verify.portal.scene_package_import_smoke.container verify.portal.scene_resolve_errors_debt_guard.container verify.portal.scene_contract_export_smoke.container verify.portal.scene_drift_guard.container verify.portal.scene_channel_smoke.container verify.portal.scene_rollback_smoke.container verify.portal.scene_snapshot_guard.container verify.portal.scene_target_smoke.container
 	@echo \"[OK] verify.portal.ui.v0_8.semantic.container done\"
+verify.portal.ui.v0_8.semantic.strict.container: verify.portal.ui.v0_8.semantic.container verify.portal.scene_observability_strict.container
+	@echo \"[OK] verify.portal.ui.v0_8.semantic.strict.container done\"
 verify.smart_core: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/smart_core.sh
 verify.prod.guard: check-compose-env

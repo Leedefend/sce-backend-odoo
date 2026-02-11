@@ -39,6 +39,8 @@
   - `make verify.portal.scene_package_import_strict.container`
 - One-command strict aggregate:
   - `make verify.portal.scene_observability_strict.container`
+- UI semantic suite strict variant:
+  - `make verify.portal.ui.v0_8.semantic.strict.container`
 
 ## Demo Baseline
 - `make verify.demo`
