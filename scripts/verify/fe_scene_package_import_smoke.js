@@ -11,6 +11,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const ADMIN_PASSWD = process.env.ADMIN_PASSWD || 'admin';
+const REQUIRE_GOVERNANCE_LOG = process.env.REQUIRE_GOVERNANCE_LOG === '1';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -173,6 +174,9 @@ async function main() {
   writeJson(path.join(outDir, 'governance_log.log'), govResp);
   let rows = [];
   if (isModelMissing(govResp)) {
+    if (REQUIRE_GOVERNANCE_LOG) {
+      throw new Error('governance log model unavailable');
+    }
     govSkipped = true;
   } else {
     assertIntentEnvelope(govResp, 'api.data');
@@ -188,6 +192,7 @@ async function main() {
   summary.push(`critical_resolve_errors_count: ${summaryObj.critical_resolve_errors_count}`);
   summary.push(`governance_log_source: ${govSource}`);
   summary.push(`governance_log_skipped: ${govSkipped ? 'true' : 'false'}`);
+  summary.push(`require_governance_log: ${REQUIRE_GOVERNANCE_LOG ? 'true' : 'false'}`);
   summary.push(`governance_log_rows: ${rows.length}`);
   writeSummary(summary);
 

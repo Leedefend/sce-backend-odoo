@@ -20,6 +20,7 @@ const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
+const REQUIRE_GOVERNANCE_LOG = process.env.REQUIRE_GOVERNANCE_LOG === '1';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -269,6 +270,9 @@ async function main() {
   }
   writeJson(path.join(outDir, 'governance_log.log'), logsResp);
   if (isModelMissing(logsResp)) {
+    if (REQUIRE_GOVERNANCE_LOG) {
+      throw new Error('governance log model unavailable');
+    }
     logSkipped = true;
     records = [];
   } else {
@@ -285,6 +289,7 @@ async function main() {
   summary.push(`trace_id: ${health.trace_id || traceId}`);
   summary.push(`governance_log_source: ${logSource}`);
   summary.push(`governance_log_skipped: ${logSkipped ? 'true' : 'false'}`);
+  summary.push(`require_governance_log: ${REQUIRE_GOVERNANCE_LOG ? 'true' : 'false'}`);
   summary.push(`governance_log_records: ${records.length}`);
   writeSummary(summary);
 

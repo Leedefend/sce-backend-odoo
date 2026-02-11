@@ -11,6 +11,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const ADMIN_PASSWD = process.env.ADMIN_PASSWD || 'admin';
+const REQUIRE_GOVERNANCE_LOG = process.env.REQUIRE_GOVERNANCE_LOG === '1';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -216,6 +217,9 @@ async function main() {
   writeJson(path.join(outDir, 'governance_logs.log'), logsResp);
   let records = [];
   if (isModelMissing(logsResp)) {
+    if (REQUIRE_GOVERNANCE_LOG) {
+      throw new Error('governance log model unavailable');
+    }
     logsSkipped = true;
   } else {
     assertIntentEnvelope(logsResp, 'api.data');
@@ -230,6 +234,7 @@ async function main() {
   summary.push(`rollback_active_after: ${Boolean(afterRollbackData.rollback_active)}`);
   summary.push(`governance_log_source: ${logsSource}`);
   summary.push(`governance_log_skipped: ${logsSkipped ? 'true' : 'false'}`);
+  summary.push(`require_governance_log: ${REQUIRE_GOVERNANCE_LOG ? 'true' : 'false'}`);
   summary.push(`governance_log_records: ${records.length}`);
   writeSummary(summary);
 
