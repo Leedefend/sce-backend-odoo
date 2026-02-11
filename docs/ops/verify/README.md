@@ -6,6 +6,7 @@
   - Use `SC_GATE_STRICT=0` to skip Phase 9.8 enforcement.
   - Use `SC_SCENE_OBS_STRICT=1` to additionally enforce strict scene observability evidence during gate runs.
   - Default gate path includes `verify.portal.scene_observability_gate_smoke.container` (structure + preflight smoke + smoke chain).
+  - Contract preflight now runs baseline freeze guard by default (`BASELINE_FREEZE_ENFORCE=1`).
 
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
@@ -76,3 +77,7 @@
 - Phase 9.8 warnings baseline can be adjusted via `SC_WARN_ACT_URL_LEGACY_MAX`.
 - Menu exemptions file: `docs/ops/verify/menu_scene_exemptions.yml`.
 - Strict failure guide: `docs/ops/verify/scene_observability_troubleshooting.md`.
+- Baseline freeze guard:
+  - `make verify.baseline.freeze_guard`
+  - Temporary bypass in approved exception PR only:
+    - `BASELINE_FREEZE_ALLOW=1 make verify.baseline.freeze_guard`

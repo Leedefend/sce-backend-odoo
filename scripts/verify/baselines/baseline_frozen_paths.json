@@ -1,0 +1,22 @@
+{
+  "protected_paths": [
+    "scripts/verify/fe_portal_scene_governance_action_smoke.js",
+    "scripts/verify/fe_scene_auto_degrade_smoke.js",
+    "scripts/verify/fe_scene_auto_degrade_notify_smoke.js",
+    "scripts/verify/fe_scene_package_import_smoke.js",
+    "scripts/verify/fe_scene_observability_preflight_smoke.js",
+    "scripts/verify/scene_observability_utils.js",
+    "scripts/verify/scene_observability_preflight_report.py",
+    "scripts/verify/scene_observability_preflight_brief.py",
+    "scripts/verify/scene_observability_structure_guard.py",
+    "scripts/verify/baselines/scene_observability_structure.json",
+    "docs/ops/verify/scene_observability_troubleshooting.md"
+  ],
+  "exempt_paths": [
+    "docs/ops/baseline_freeze_policy.md",
+    "docs/ops/baseline_freeze_policy.en.md",
+    ".github/pull_request_template.md",
+    "scripts/verify/baselines/baseline_frozen_paths.json",
+    "scripts/verify/baseline_freeze_guard.py"
+  ]
+}

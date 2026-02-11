@@ -5,6 +5,7 @@ This directory hosts release, verification, and operational governance documenta
 ## Primary Entry Points
 - Release evidence directory: `docs/ops/releases/`
 - Verification entry (including strict/compat modes): `docs/ops/verify/README.md`
+- Baseline freeze policy: `docs/ops/baseline_freeze_policy.en.md`
 - Scene observability command tiers:
   - preflight refresh: `make verify.portal.scene_observability_preflight.refresh.container DB_NAME=<name>`
   - preflight smoke: `make verify.portal.scene_observability_preflight_smoke.container`

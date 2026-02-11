@@ -10,6 +10,7 @@
 - Contract（契约与目录）: `docs/contract/README.md`
 - Ops（发布与运行证据）: `docs/ops/README.md`
 - Audit（审计方法与产物入口）: `docs/audit/README.md`
+- Baseline Freeze（基线冻结策略）: `docs/ops/baseline_freeze_policy.md`
 
 ## 当前权威 Contract Exports
 - Intent Catalog: `docs/contract/exports/intent_catalog.json`
