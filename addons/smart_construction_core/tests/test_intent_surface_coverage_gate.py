@@ -13,8 +13,17 @@ REQUIRED_HIGH_VALUE_INTENTS = [
     "system.init",
     "api.data",
     "api.data.batch",
+    "app.catalog",
+    "app.nav",
+    "app.open",
     "execute_button",
     "ui.contract",
+    "meta.describe_model",
+    "load_metadata",
+    "permission.check",
+    "session.bootstrap",
+    "file.upload",
+    "file.download",
     "chatter.post",
     "chatter.timeline",
     "load_contract",
@@ -22,6 +31,7 @@ REQUIRED_HIGH_VALUE_INTENTS = [
     "my.work.summary",
     "my.work.complete_batch",
     "usage.report",
+    "usage.track",
 ]
 
 
