@@ -76,6 +76,7 @@ Capabilities:
 - `make verify.portal.scene_package_import_smoke.container`
 - `make verify.portal.scene_observability_smoke.container`
 - Strict evidence mode:
+  - `make verify.portal.scene_observability_preflight.container`
   - `make verify.portal.scene_package_import_strict.container`
   - `make verify.portal.scene_observability_strict.container`
 - `make verify.portal.scene_package_ui_smoke.container`
