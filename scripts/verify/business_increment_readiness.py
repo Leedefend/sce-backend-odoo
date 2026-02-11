@@ -82,6 +82,27 @@ def _normalize_string_list(value: object) -> list[str]:
     return sorted(out)
 
 
+def _collect_intent_catalog_meta(payload: dict[str, Any]) -> dict[str, dict[str, int]]:
+    rows = payload.get("intents") if isinstance(payload, dict) else []
+    if not isinstance(rows, list):
+        return {}
+    out: dict[str, dict[str, int]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        intent_name = str(row.get("intent") or "").strip()
+        if not intent_name:
+            continue
+        out[intent_name] = {
+            "test_refs": int(row.get("test_refs") or 0),
+            "examples_count": len(row.get("examples") or []),
+            "request_hint_count": len(row.get("request_schema_hint") or []),
+            "response_hint_count": len(row.get("response_data_schema_hint") or []),
+            "reason_code_count": len(row.get("observed_reason_codes") or []),
+        }
+    return out
+
+
 def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     result: dict[str, Any] = {"files": {}, "summary": {}}
     ok = True
@@ -91,6 +112,7 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     scene_count = 0
     intent_keys: set[str] = set()
     scene_keys: set[str] = set()
+    intent_catalog_meta: dict[str, dict[str, int]] = {}
     intent_test_refs: dict[str, int] = {}
     renderability_ok = False
 
@@ -118,6 +140,7 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
                         for item in intents
                         if isinstance(item, dict) and str(item.get("intent") or "").strip()
                     }
+                intent_catalog_meta = _collect_intent_catalog_meta(payload)
             elif key == "scene_catalog":
                 entry["scene_count"] = int(payload.get("scene_count", 0)) if isinstance(payload, dict) else 0
                 scene_count = int(entry["scene_count"])
@@ -162,6 +185,8 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     required_intents = _normalize_string_list(policy.get("required_intents"))
     required_scene_keys = _normalize_string_list(policy.get("required_scene_keys"))
     required_test_ref_intents = _normalize_string_list(policy.get("required_test_ref_intents"))
+    required_behavioral_intents = _normalize_string_list(policy.get("required_behavioral_intents"))
+    required_reason_code_intents = _normalize_string_list(policy.get("required_reason_code_intents"))
 
     shape_guard_ok = bool(
         ((result.get("files", {}).get("scene_contract_shape_guard", {}) or {}).get("shape_guard_ok", True))
@@ -196,6 +221,29 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
         ok = False
         blockers.append(f"missing_required_test_refs:{','.join(missing_test_ref_intents)}")
 
+    missing_behavioral_intents: list[str] = []
+    for intent in required_behavioral_intents:
+        meta = intent_catalog_meta.get(intent) or {}
+        if (
+            int(meta.get("test_refs", 0)) <= 0
+            or int(meta.get("examples_count", 0)) <= 0
+            or int(meta.get("request_hint_count", 0)) <= 0
+            or int(meta.get("response_hint_count", 0)) <= 0
+        ):
+            missing_behavioral_intents.append(intent)
+    if missing_behavioral_intents:
+        ok = False
+        blockers.append(f"missing_behavioral_coverage:{','.join(sorted(missing_behavioral_intents))}")
+
+    missing_reason_code_intents = sorted(
+        intent
+        for intent in required_reason_code_intents
+        if int((intent_catalog_meta.get(intent) or {}).get("reason_code_count", 0)) <= 0
+    )
+    if missing_reason_code_intents:
+        ok = False
+        blockers.append(f"missing_reason_code_coverage:{','.join(missing_reason_code_intents)}")
+
     untested_intents = sorted(intent for intent in intent_keys if int(intent_test_refs.get(intent, 0)) <= 0)
     warning_untested_limit = int(policy.get("warning_untested_limit", 0))
     if require_zero_untested and len(untested_intents) > 0:
@@ -215,6 +263,10 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
         "missing_required_scene_keys": missing_scene_keys,
         "required_test_ref_intent_count": len(required_test_ref_intents),
         "missing_required_test_ref_intents": missing_test_ref_intents,
+        "required_behavioral_intent_count": len(required_behavioral_intents),
+        "missing_behavioral_intents": sorted(missing_behavioral_intents),
+        "required_reason_code_intent_count": len(required_reason_code_intents),
+        "missing_reason_code_intents": missing_reason_code_intents,
         "untested_intent_count": len(untested_intents),
         "untested_intents_sample": untested_intents[:20],
         "renderability_fully_renderable": renderability_ok,
@@ -226,6 +278,8 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
             "required_intents": required_intents,
             "required_scene_keys": required_scene_keys,
             "required_test_ref_intents": required_test_ref_intents,
+            "required_behavioral_intents": required_behavioral_intents,
+            "required_reason_code_intents": required_reason_code_intents,
             "require_zero_untested": require_zero_untested,
             "warning_untested_limit": warning_untested_limit,
         },
@@ -247,10 +301,14 @@ def _write(result: dict[str, Any]) -> None:
         f"- required_intent_count: {result['summary']['required_intent_count']}",
         f"- required_scene_key_count: {result['summary']['required_scene_key_count']}",
         f"- required_test_ref_intent_count: {result['summary']['required_test_ref_intent_count']}",
+        f"- required_behavioral_intent_count: {result['summary']['required_behavioral_intent_count']}",
+        f"- required_reason_code_intent_count: {result['summary']['required_reason_code_intent_count']}",
         f"- renderability_fully_renderable: {result['summary']['renderability_fully_renderable']}",
         f"- missing_required_intents: {', '.join(result['summary'].get('missing_required_intents', [])) or '-'}",
         f"- missing_required_scene_keys: {', '.join(result['summary'].get('missing_required_scene_keys', [])) or '-'}",
         f"- missing_required_test_ref_intents: {', '.join(result['summary'].get('missing_required_test_ref_intents', [])) or '-'}",
+        f"- missing_behavioral_intents: {', '.join(result['summary'].get('missing_behavioral_intents', [])) or '-'}",
+        f"- missing_reason_code_intents: {', '.join(result['summary'].get('missing_reason_code_intents', [])) or '-'}",
         f"- untested_intent_count: {result['summary'].get('untested_intent_count', 0)}",
         f"- blockers: {', '.join(result['summary'].get('blockers', [])) or '-'}",
         f"- warnings: {', '.join(result['summary'].get('warnings', [])) or '-'}",

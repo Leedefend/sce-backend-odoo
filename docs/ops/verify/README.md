@@ -86,7 +86,7 @@
   - `make verify.business.increment.preflight`
 - Strict preflight:
   - `make verify.business.increment.preflight.strict`
-  - strict profile enforces `renderability_fully_renderable=true`, required core `intents` / `scene_keys`, and required `test_refs` coverage for selected intents by policy.
+  - strict profile enforces `renderability_fully_renderable=true`, required core `intents` / `scene_keys`, required `test_refs` coverage, behavioral coverage completeness (`examples + request/response hints`), and reason-code coverage for selected side-effect intents.
 - Policy source:
   - `scripts/verify/baselines/business_increment_readiness_policy.json`
   - strict profile also emits warning when untested intents exceed `warning_untested_limit`.
