@@ -41,6 +41,8 @@
   - `make verify.portal.scene_package_import_strict.container`
 - One-command strict aggregate:
   - `make verify.portal.scene_observability_strict.container`
+- Gate-friendly smoke aggregate (structure guard + preflight smoke + smoke chain):
+  - `make verify.portal.scene_observability_gate_smoke.container`
 - UI semantic suite strict variant:
   - `make verify.portal.ui.v0_8.semantic.strict.container`
 
