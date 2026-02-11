@@ -6,6 +6,7 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 const { assertIntentEnvelope } = require('./intent_smoke_utils');
+const { isModelMissing, probeModels, assertRequiredModels } = require('./scene_observability_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -80,15 +81,6 @@ async function login(intentUrl, traceId) {
   return token;
 }
 
-function isModelMissing(resp) {
-  const msg = String((((resp || {}).body || {}).error || {}).message || '');
-  return (
-    msg.includes('未知模型') ||
-    msg.toLowerCase().includes('unknown model') ||
-    /^'[a-z0-9_.]+'$/i.test(msg.trim())
-  );
-}
-
 function logQueryPayload(traceId) {
   return {
     intent: 'api.data',
@@ -110,6 +102,12 @@ async function main() {
   const summary = [];
   const token = await login(intentUrl, traceId);
   const auth = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME, 'X-Trace-Id': traceId };
+  if (REQUIRE_GOVERNANCE_LOG) {
+    const preflight = await probeModels(requestJson, intentUrl, auth, ['sc.scene.governance.log', 'sc.audit.log']);
+    writeJson(path.join(outDir, 'model_preflight.log'), preflight);
+    assertRequiredModels(REQUIRE_GOVERNANCE_LOG, ['sc.scene.governance.log', 'sc.audit.log'], preflight.available, 'governance log');
+    summary.push(`preflight_available_models: ${(preflight.available || []).join(',') || '-'}`);
+  }
 
   // ensure rollback flags do not force stable channel before set_channel assertion
   const resetConfigPayload = {

@@ -25,6 +25,7 @@
 
 ## Scene Observability Strict Mode
 - Default smoke targets remain compatibility-friendly and may skip when governance/audit models are unavailable:
+  - `make verify.portal.scene_observability_preflight_smoke.container`
   - `make verify.portal.scene_governance_action_smoke.container`
   - `make verify.portal.scene_auto_degrade_smoke.container`
   - `make verify.portal.scene_auto_degrade_notify_smoke.container`
@@ -32,12 +33,15 @@
   - Aggregate:
     - `make verify.portal.scene_observability_smoke.container`
 - Strict variants enforce governance/audit artifacts and fail fast when evidence is missing:
+  - `make verify.portal.scene_observability_preflight.container` (`SCENE_OBSERVABILITY_PREFLIGHT_STRICT=1`)
   - `make verify.portal.scene_governance_action_strict.container`
   - `make verify.portal.scene_auto_degrade_strict.container`
   - `make verify.portal.scene_auto_degrade_notify_strict.container`
   - `make verify.portal.scene_package_import_strict.container`
 - One-command strict aggregate:
   - `make verify.portal.scene_observability_strict.container`
+- UI semantic suite strict variant:
+  - `make verify.portal.ui.v0_8.semantic.strict.container`
 
 ## Demo Baseline
 - `make verify.demo`
@@ -62,3 +66,4 @@
 - Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.
 - Phase 9.8 warnings baseline can be adjusted via `SC_WARN_ACT_URL_LEGACY_MAX`.
 - Menu exemptions file: `docs/ops/verify/menu_scene_exemptions.yml`.
+- Strict failure guide: `docs/ops/verify/scene_observability_troubleshooting.md`.

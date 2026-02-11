@@ -72,10 +72,12 @@ Capabilities:
 
 ## Verify Commands
 - `make scene.package.export PACKAGE_NAME=<name> PACKAGE_VERSION=<version> SCENE_CHANNEL=stable`
+- `make verify.portal.scene_observability_preflight_smoke.container`
 - `make verify.portal.scene_package_dry_run_smoke.container`
 - `make verify.portal.scene_package_import_smoke.container`
 - `make verify.portal.scene_observability_smoke.container`
 - Strict evidence mode:
+  - `make verify.portal.scene_observability_preflight.container`
   - `make verify.portal.scene_package_import_strict.container`
   - `make verify.portal.scene_observability_strict.container`
 - `make verify.portal.scene_package_ui_smoke.container`
@@ -100,3 +102,6 @@ Optional (non-gate by default):
   - `artifacts/codex/portal-scene-package-import-v10_6/<timestamp>/`
 - Portal UI smoke:
   - `artifacts/codex/portal-scene-package-ui-v10_6/<timestamp>/`
+
+## Troubleshooting
+- Strict observability failures: `docs/ops/verify/scene_observability_troubleshooting.md`

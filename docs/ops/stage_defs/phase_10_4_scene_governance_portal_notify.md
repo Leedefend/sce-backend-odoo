@@ -49,10 +49,12 @@ Notification payload fields include:
 - `suggestion`
 
 ## Verify Commands
+- `make verify.portal.scene_observability_preflight_smoke.container`
 - `make verify.portal.scene_governance_action_smoke.container`
 - `make verify.portal.scene_health_pagination_smoke.container`
 - `make verify.portal.scene_auto_degrade_notify_smoke.container`
 - Strict evidence mode:
+  - `make verify.portal.scene_observability_preflight.container`
   - `make verify.portal.scene_governance_action_strict.container`
   - `make verify.portal.scene_auto_degrade_notify_strict.container`
   - `make verify.portal.scene_observability_strict.container`
@@ -68,3 +70,6 @@ Included in:
   - `artifacts/codex/portal-scene-health-pagination-v10_4/<timestamp>/`
 - Auto-degrade notify:
   - `artifacts/codex/portal-scene-auto-degrade-notify-v10_4/<timestamp>/`
+
+## Troubleshooting
+- Strict observability failures: `docs/ops/verify/scene_observability_troubleshooting.md`
