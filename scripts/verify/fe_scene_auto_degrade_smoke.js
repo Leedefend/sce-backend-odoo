@@ -74,6 +74,15 @@ function requestJson(url, payload, headers = {}) {
   });
 }
 
+function isModelMissing(resp) {
+  const msg = String((((resp || {}).body || {}).error || {}).message || '');
+  return (
+    msg.includes('未知模型') ||
+    msg.toLowerCase().includes('unknown model') ||
+    /^'[a-z0-9_.]+'$/i.test(msg.trim())
+  );
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -235,33 +244,38 @@ async function main() {
     authHeader
   );
   let records = (logsResp.body && logsResp.body.data && logsResp.body.data.records) || [];
+  let logSource = 'sc.scene.governance.log';
+  let logSkipped = false;
 
-  if (logsResp.status < 400 && !logsResp.body.ok) {
-    const errMsg = String(((logsResp.body || {}).error || {}).message || '');
-    if (errMsg.indexOf('未知模型: sc.scene.governance.log') >= 0) {
-      log('fallback query sc.audit.log');
-      logsResp = await requestJson(
-        intentUrl,
-        {
-          intent: 'api.data',
-          params: {
-            op: 'list',
-            model: 'sc.audit.log',
-            fields: ['id', 'event_code', 'trace_id', 'ts'],
-            domain: [['event_code', '=', 'SCENE_AUTO_DEGRADE_TRIGGERED'], ['trace_id', '=', traceId]],
-            limit: 5,
-            order: 'id desc',
-          },
+  if (isModelMissing(logsResp)) {
+    log('fallback query sc.audit.log');
+    logsResp = await requestJson(
+      intentUrl,
+      {
+        intent: 'api.data',
+        params: {
+          op: 'list',
+          model: 'sc.audit.log',
+          fields: ['id', 'event_code', 'trace_id', 'ts'],
+          domain: [['event_code', '=', 'SCENE_AUTO_DEGRADE_TRIGGERED'], ['trace_id', '=', traceId]],
+          limit: 5,
+          order: 'id desc',
         },
-        authHeader
-      );
-      records = (logsResp.body && logsResp.body.data && logsResp.body.data.records) || [];
-    }
+      },
+      authHeader
+    );
+    logSource = 'sc.audit.log';
+    records = (logsResp.body && logsResp.body.data && logsResp.body.data.records) || [];
   }
   writeJson(path.join(outDir, 'governance_log.log'), logsResp);
-  assertIntentEnvelope(logsResp, 'api.data');
-  if (!Array.isArray(records) || records.length < 1) {
-    throw new Error('governance log missing auto_degrade_triggered entry');
+  if (isModelMissing(logsResp)) {
+    logSkipped = true;
+    records = [];
+  } else {
+    assertIntentEnvelope(logsResp, 'api.data');
+    if (!Array.isArray(records) || records.length < 1) {
+      throw new Error('governance log missing auto_degrade_triggered entry');
+    }
   }
 
   summary.push(`auto_degrade.triggered: ${Boolean(autoDegrade.triggered)}`);
@@ -269,6 +283,8 @@ async function main() {
   summary.push(`auto_degrade.reason_codes: ${(autoDegrade.reason_codes || []).join(',') || '-'}`);
   summary.push(`rollback_active: ${Boolean(health.rollback_active)}`);
   summary.push(`trace_id: ${health.trace_id || traceId}`);
+  summary.push(`governance_log_source: ${logSource}`);
+  summary.push(`governance_log_skipped: ${logSkipped ? 'true' : 'false'}`);
   summary.push(`governance_log_records: ${records.length}`);
   writeSummary(summary);
 

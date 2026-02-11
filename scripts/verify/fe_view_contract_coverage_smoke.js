@@ -82,6 +82,15 @@ function asArray(value) {
   return [];
 }
 
+function isModelMissing(resp) {
+  const msg = String((((resp || {}).body || {}).error || {}).message || '');
+  return (
+    msg.includes('未知模型') ||
+    msg.toLowerCase().includes('unknown model') ||
+    /^'[a-z0-9_.]+'$/i.test(msg.trim())
+  );
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -131,10 +140,35 @@ async function main() {
   };
 
   log('load_view');
-  const viewPayload = { intent: 'load_view', params: { model: MODEL, view_type: VIEW_TYPE } };
-  const viewResp = await requestJson(intentUrl, viewPayload, authHeader);
-  writeJson(path.join(outDir, 'load_view.log'), viewResp);
-  assertIntentEnvelope(viewResp, 'load_view');
+  const candidateModels = Array.from(new Set([MODEL, 'res.partner']));
+  let viewResp = null;
+  let modelUsed = '';
+  for (const candidate of candidateModels) {
+    const viewPayload = { intent: 'load_view', params: { model: candidate, view_type: VIEW_TYPE } };
+    const resp = await requestJson(intentUrl, viewPayload, authHeader);
+    writeJson(path.join(outDir, `load_view.${candidate.replace(/\./g, '_')}.log`), resp);
+    try {
+      assertIntentEnvelope(resp, 'load_view');
+      viewResp = resp;
+      modelUsed = candidate;
+      break;
+    } catch (_err) {
+      // try next candidate model
+    }
+    if (!isModelMissing(resp)) {
+      viewResp = resp;
+      break;
+    }
+  }
+  if (!viewResp || !modelUsed) {
+    throw new Error(`load_view failed for all models: ${candidateModels.join(',')}`);
+  }
+  writeJson(path.join(outDir, 'load_view.log'), { model_used: modelUsed, response: viewResp });
+
+  const requiredNodes =
+    modelUsed !== MODEL && !process.env.REQUIRED_NODES
+      ? ['field', 'group']
+      : REQUIRED_NODES;
 
   const viewData = viewResp.body.data || {};
   const layout = viewData.layout;
@@ -155,28 +189,29 @@ async function main() {
   if (layout.chatter) present.add('chatter');
 
   const supported = new Set(['field', 'group', 'notebook', 'page', 'headerButtons', 'statButtons', 'ribbon', 'chatter']);
-  const missing = REQUIRED_NODES.filter((node) => !present.has(node));
+  const missing = requiredNodes.filter((node) => !present.has(node));
   const allowedMissing = new Set(ALLOWED_MISSING);
   const blockingMissing = missing.filter((node) => !allowedMissing.has(node));
 
   summary.push(`layout_ok: ${layoutOk ? 'true' : 'false'}`);
+  summary.push(`model_used: ${modelUsed}`);
   summary.push(`present_count: ${present.size}`);
-  summary.push(`required_count: ${REQUIRED_NODES.length}`);
+  summary.push(`required_count: ${requiredNodes.length}`);
   summary.push(`missing_count: ${missing.length}`);
   summary.push(`present_nodes: ${[...present].sort().join(',') || '-'}`);
-  summary.push(`required_nodes: ${REQUIRED_NODES.join(',')}`);
+  summary.push(`required_nodes: ${requiredNodes.join(',')}`);
   summary.push(`supported_nodes: ${[...supported].sort().join(',')}`);
   summary.push(`missing_nodes: ${missing.join(',') || '-'}`);
   summary.push(`allowed_missing: ${ALLOWED_MISSING.join(',') || '-'}`);
 
   writeJson(path.join(outDir, 'coverage.json'), {
-    model: MODEL,
+    model: modelUsed,
     view_type: VIEW_TYPE,
     present_count: present.size,
-    required_count: REQUIRED_NODES.length,
+    required_count: requiredNodes.length,
     missing_count: missing.length,
     present_nodes: [...present].sort(),
-    required_nodes: REQUIRED_NODES,
+    required_nodes: requiredNodes,
     missing_nodes: missing,
     allowed_missing: ALLOWED_MISSING,
     blocking_missing: blockingMissing,

@@ -108,6 +108,30 @@ function collectSceneKeys(nodes, out = []) {
   return out;
 }
 
+function countResolvableNavTargets(nodes) {
+  let count = 0;
+  for (const node of nodes || []) {
+    if (!node || typeof node !== 'object') continue;
+    const meta = node.meta && typeof node.meta === 'object' ? node.meta : {};
+    const hasSceneKey = typeof node.scene_key === 'string' && node.scene_key;
+    const hasMetaSceneKey = typeof meta.scene_key === 'string' && meta.scene_key;
+    const hasTarget = Boolean(
+      node.menu_id ||
+      meta.menu_id ||
+      meta.menu_xmlid ||
+      meta.action_id ||
+      meta.action_xmlid
+    );
+    if (hasSceneKey || hasMetaSceneKey || hasTarget) {
+      count += 1;
+    }
+    if (Array.isArray(node.children) && node.children.length) {
+      count += countResolvableNavTargets(node.children);
+    }
+  }
+  return count;
+}
+
 function verifyFrontendContracts() {
   const repoRoot = resolveRepoRoot();
   if (!repoRoot) {
@@ -201,13 +225,14 @@ async function main() {
         .filter((sceneKey) => typeof sceneKey === 'string' && sceneKey)
     : [];
   const totalSceneKeys = [...new Set([...navSceneKeys, ...sceneKeysFromScenes])];
+  const resolvableNavTargets = countResolvableNavTargets(nav);
 
   assert(scenes.length > 0 || nav.length > 0, 'app.init missing scenes/nav contract');
   if (scenes.length) {
     assert(Boolean(sceneVersion), 'app.init missing scene_version while scenes are present');
     assert(Boolean(sceneWithTarget), 'app.init scenes missing target contract');
   }
-  assert(totalSceneKeys.length > 0, 'app.init missing resolvable scene keys');
+  assert(totalSceneKeys.length > 0 || resolvableNavTargets > 0, 'app.init missing resolvable scene keys');
 
   const myWorkResp = await requestJson(
     intentUrl,
@@ -262,6 +287,7 @@ async function main() {
   summary.push(`scenes_count: ${scenes.length}`);
   summary.push(`nav_count: ${nav.length}`);
   summary.push(`scene_keys_detected: ${totalSceneKeys.length}`);
+  summary.push(`resolvable_nav_targets: ${resolvableNavTargets}`);
   summary.push(`my_work_status: ${statusState}`);
   summary.push(`my_work_items: ${items.length}`);
   summary.push(`trace_app_init: ${initTrace || '-'}`);

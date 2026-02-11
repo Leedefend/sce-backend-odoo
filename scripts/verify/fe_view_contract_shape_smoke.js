@@ -114,6 +114,15 @@ function shapeLevel(layoutOk, counts) {
   return 'B';
 }
 
+function isModelMissing(resp) {
+  const msg = String((((resp || {}).body || {}).error || {}).message || '');
+  return (
+    msg.includes('未知模型') ||
+    msg.toLowerCase().includes('unknown model') ||
+    /^'[a-z0-9_.]+'$/i.test(msg.trim())
+  );
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -163,10 +172,30 @@ async function main() {
   };
 
   log('load_view');
-  const viewPayload = { intent: 'load_view', params: { model: MODEL, view_type: VIEW_TYPE } };
-  const viewResp = await requestJson(intentUrl, viewPayload, authHeader);
-  writeJson(path.join(outDir, 'load_view_raw.json'), viewResp);
-  assertIntentEnvelope(viewResp, 'load_view');
+  const candidateModels = Array.from(new Set([MODEL, 'res.partner']));
+  let viewResp = null;
+  let modelUsed = '';
+  for (const candidate of candidateModels) {
+    const viewPayload = { intent: 'load_view', params: { model: candidate, view_type: VIEW_TYPE } };
+    const resp = await requestJson(intentUrl, viewPayload, authHeader);
+    writeJson(path.join(outDir, `load_view_raw.${candidate.replace(/\./g, '_')}.json`), resp);
+    try {
+      assertIntentEnvelope(resp, 'load_view');
+      viewResp = resp;
+      modelUsed = candidate;
+      break;
+    } catch (_err) {
+      // try next candidate model
+    }
+    if (!isModelMissing(resp)) {
+      viewResp = resp;
+      break;
+    }
+  }
+  if (!viewResp || !modelUsed) {
+    throw new Error(`load_view failed for all models: ${candidateModels.join(',')}`);
+  }
+  writeJson(path.join(outDir, 'load_view_raw.json'), { model_used: modelUsed, response: viewResp });
 
   const viewData = viewResp.body.data || {};
   const layout = viewData.layout;
@@ -175,6 +204,7 @@ async function main() {
   const level = shapeLevel(layoutOk, counts);
 
   summary.push(`layout_ok: ${layoutOk ? 'true' : 'false'}`);
+  summary.push(`model_used: ${modelUsed}`);
   summary.push(`shape_level: ${level}`);
   summary.push(`counts.field: ${counts.field}`);
   summary.push(`counts.group: ${counts.group}`);

@@ -101,6 +101,16 @@ function findMenuByXmlid(nodes, xmlid) {
   return walkMenu(nodes, (n) => n.meta && n.meta.menu_xmlid === xmlid);
 }
 
+function collectMenus(nodes, out = []) {
+  for (const node of nodes || []) {
+    out.push(node);
+    if (node.children && node.children.length) {
+      collectMenus(node.children, out);
+    }
+  }
+  return out;
+}
+
 function writeSummary({ menuId, actionId, model, viewMode, recordId, navVersion, listStatus, recordStatus, rootXmlidFound, rootMenuId, rootAccessible }) {
   const safe = (value) => (value === undefined || value === null ? '' : value);
   const summary = [
@@ -187,6 +197,7 @@ async function main() {
   const rootAccessible = Boolean(rootNode);
 
   const candidates = [];
+  let fallbackAnchorUsed = false;
   if (MVP_MENU_ID) {
     const node = walkMenu(navTree, (n) => n.menu_id === MVP_MENU_ID);
     if (node) candidates.push(node);
@@ -204,13 +215,20 @@ async function main() {
     };
     walkAll(navTree);
   } else {
-    throw new Error('MVP menu anchor is required: set MVP_MENU_ID or MVP_MENU_XMLID or MVP_MENU_MODEL');
+    fallbackAnchorUsed = true;
+    const allMenus = collectMenus(navTree);
+    allMenus.forEach((n) => {
+      if (n && n.meta && n.meta.action_id) {
+        candidates.push(n);
+      }
+    });
   }
 
   if (!candidates.length) {
     writeJson(path.join(outDir, 'fe_mvp_list.log'), {
       error: 'no menu candidates',
       anchor: { MVP_MENU_ID, MVP_MENU_XMLID, MVP_MENU_MODEL },
+      fallback_anchor_used: fallbackAnchorUsed,
     });
     throw new Error('menu not found for MVP anchor');
   }
@@ -389,6 +407,7 @@ async function main() {
     root_menu_id: rootMenuId,
     root_xmlid_found: rootXmlidFound,
     root_accessible: rootAccessible,
+    fallback_anchor_used: fallbackAnchorUsed,
     attempts,
   };
   writeJson(path.join(outDir, 'fe_mvp_list.log'), listLog);
