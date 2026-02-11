@@ -4,6 +4,7 @@ import json
 import os
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+from intent_smoke_utils import require_ok
 
 NOISE_KEYS = {
     "trace_id",
@@ -84,11 +85,6 @@ def _http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
         raise RuntimeError(f"HTTP request failed: {e}") from e
 
 
-def _require_ok(status: int, payload: dict, label: str):
-    if status >= 400 or not payload.get("ok"):
-        raise RuntimeError(f"{label} failed: status={status} payload={payload}")
-
-
 def _normalize(obj):
     if isinstance(obj, dict):
         return {
@@ -119,14 +115,14 @@ def main():
     status, login_resp = _http_post_json(
         intent_url, login_payload, headers={"X-Anonymous-Intent": "1"}
     )
-    _require_ok(status, login_resp, "login")
+    require_ok(status, login_resp, "login")
     token = (login_resp.get("data") or {}).get("token")
     if not token:
         raise RuntimeError("login response missing token")
     auth_header = {"Authorization": f"Bearer {token}"}
 
     status, search_resp = _http_get_json(search_url, headers=auth_header)
-    _require_ok(status, search_resp, "capabilities.search")
+    require_ok(status, search_resp, "capabilities.search")
     data = search_resp.get("data") or {}
     capabilities = data.get("capabilities") or []
     if not capabilities:
@@ -146,7 +142,7 @@ def main():
             {"intent": intent, "params": params},
             headers=auth_header,
         )
-        _require_ok(status, resp, f"capability {key} ({intent})")
+        require_ok(status, resp, f"capability {key} ({intent})")
 
         raw_path = os.path.join(outdir, f"{key}.raw.json")
         norm_path = os.path.join(outdir, f"{key}.normalized.json")
