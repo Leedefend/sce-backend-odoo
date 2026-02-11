@@ -87,6 +87,8 @@
 - Strict preflight:
   - `make verify.business.increment.preflight.strict`
   - strict profile enforces `renderability_fully_renderable=true` by policy.
+- Policy source:
+  - `scripts/verify/baselines/business_increment_readiness_policy.json`
 
 ## Notes
 - Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.
