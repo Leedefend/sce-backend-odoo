@@ -457,6 +457,7 @@ db.reset.manual: guard.prod.forbid check-compose-env
 .PHONY: verify.portal.scene_health_pagination_smoke.container verify.portal.scene_governance_action_smoke.container verify.portal.scene_auto_degrade_notify_smoke.container
 .PHONY: verify.portal.scene_package_dry_run_smoke.container verify.portal.scene_package_import_smoke.container verify.portal.scene_package_ui_smoke.container
 .PHONY: verify.portal.scene_package_installed_smoke.container
+.PHONY: verify.platform_baseline verify.business_baseline gate.platform_baseline gate.business_baseline
 verify.baseline: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
 verify.demo: guard.prod.forbid check-compose-project check-compose-env
@@ -465,6 +466,10 @@ verify.p0: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/p0_base.sh
 verify.p0.flow: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/p0_flow.sh
+verify.platform_baseline: verify.baseline
+	@echo "[OK] verify.platform_baseline done (env/platform baseline)"
+verify.business_baseline: verify.p0.flow
+	@echo "[OK] verify.business_baseline done (core+seed business baseline)"
 verify.overview: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/overview_rules.sh
 verify.overview.entry: guard.prod.forbid check-compose-project check-compose-env
@@ -679,6 +684,11 @@ prod.fix.mail_from: guard.prod.danger check-compose-project check-compose-env
 gate.baseline: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/db/reset.sh
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/baseline.sh
+gate.platform_baseline: gate.baseline
+	@echo "[OK] gate.platform_baseline done"
+gate.business_baseline: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/p0_flow.sh
+	@echo "[OK] gate.business_baseline done"
 
 gate.demo: guard.codex.fast.noheavy guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=sc_demo bash scripts/demo/reset.sh

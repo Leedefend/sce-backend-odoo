@@ -28,7 +28,8 @@ ls -al runtime
 
 ```bash
 make db.reset DB=sc_odoo
-make verify.baseline DB=sc_odoo
+make verify.platform_baseline DB=sc_odoo
+# 兼容旧命令：make verify.baseline DB=sc_odoo
 ```
 
 验收点：
@@ -40,6 +41,9 @@ make verify.baseline DB=sc_odoo
 ```bash
 make db.demo.reset
 make verify.demo DB=sc_demo
+# 业务可用基线（core+seed + P0）
+make verify.business_baseline DB=sc_demo
+# 兼容旧命令：make verify.p0.flow DB=sc_demo
 ```
 
 验收点：

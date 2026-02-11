@@ -15,14 +15,21 @@ since: v0.3.0-stable
 ```bash
 # 开发库（干净基线）
 make db.reset DB=sc_odoo
-make verify.baseline DB=sc_odoo
+make verify.platform_baseline DB=sc_odoo
+# 兼容旧命令：make verify.baseline DB=sc_odoo
 
 # 演示库（包含 seed + demo，内部启用 SC_SEED_ENABLED=1）
 make db.demo.reset   # 默认 DB=sc_demo
 make verify.demo DB=sc_demo
 
+# 业务可用基线（core+seed 安装 + P0 验收）
+make verify.business_baseline DB=sc_demo
+# 兼容旧命令：make verify.p0.flow DB=sc_demo
+
 # 聚合门禁（重置 + 验收）
-make gate.baseline   # 等同 db.reset + verify.baseline，默认 DB=sc_odoo
+make gate.platform_baseline   # 等同 db.reset + verify.platform_baseline，默认 DB=sc_odoo
+# 兼容旧命令：make gate.baseline
+make gate.business_baseline   # 等同 verify.business_baseline（含 reset/install/verify）
 make gate.demo       # 等同 db.demo.reset + verify.demo，默认 DB=sc_demo
 ```
 
