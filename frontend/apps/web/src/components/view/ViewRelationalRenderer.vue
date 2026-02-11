@@ -73,6 +73,7 @@ const headerLabel = computed(() => (props.model ? props.model : 'Related'));
 const countLabel = computed(() => `${props.ids.length} items`);
 const canEdit = computed(() => Boolean(props.editable && props.parentId && props.relationField && props.model));
 const editorTitle = computed(() => (editorMode.value === 'create' ? 'Add related record' : 'Edit related record'));
+type RelationRecordRaw = { id?: number | string; name?: unknown };
 
 async function load() {
   rows.value = [];
@@ -96,10 +97,13 @@ async function load() {
       limit: ids.length,
       order: 'id asc',
     });
-    rows.value = (response.records || []).map((record: any) => ({
-      id: Number(record.id),
-      name: record.name ? String(record.name) : undefined,
-    }));
+    rows.value = (response.records || []).map((record) => {
+      const raw = record as RelationRecordRaw;
+      return {
+      id: Number(raw.id),
+      name: raw.name ? String(raw.name) : undefined,
+      };
+    });
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load relation records';
   } finally {
