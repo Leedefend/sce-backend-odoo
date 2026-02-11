@@ -585,6 +585,12 @@ function clearRetryFailed() {
   retryFailedExpanded.value = false;
 }
 
+function buildBatchRequestId(prefix: string) {
+  const stamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 8);
+  return `${prefix}_${stamp}_${random}`;
+}
+
 function setRetryFilterMode(mode: 'all' | 'retryable' | 'non_retryable') {
   retryFilterMode.value = mode;
   retryFailedExpanded.value = false;
@@ -769,6 +775,7 @@ async function completeSelectedTodos() {
       ids: [...todoSelectionIds.value],
       source: 'mail.activity',
       note: 'Completed from my-work batch action.',
+      request_id: buildBatchRequestId('mw_batch_ui'),
     });
     applyBatchFeedback(result, '批量完成');
     await load();
@@ -792,7 +799,7 @@ async function retryFailedTodos() {
       retry_ids: [...candidateRetryIds],
       source: retryRequestParams.value?.source || 'mail.activity',
       note: retryRequestParams.value?.note || 'Retry failed items from my-work.',
-      request_id: retryRequestParams.value?.request_id,
+      request_id: retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
     });
     applyBatchFeedback(result, '重试');
     await load();
