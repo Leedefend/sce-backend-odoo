@@ -95,15 +95,23 @@
       </p>
       <p v-if="retryFailedGroups.length" class="retry-summary">
         分组摘要：
-        <button
-          v-for="group in retryFailedGroups"
-          :key="`group-${group.reason_code}`"
-          type="button"
-          class="reason-chip"
-          @click="applyReasonFilterFromFailure(group.reason_code)"
-        >
-          {{ group.reason_code }} ({{ group.count }} / 可重试 {{ group.retryable_count }})
-        </button>
+        <span v-for="group in retryFailedGroups" :key="`group-${group.reason_code}`" class="group-actions">
+          <button
+            type="button"
+            class="reason-chip"
+            @click="applyReasonFilterFromFailure(group.reason_code)"
+          >
+            {{ group.reason_code }} ({{ group.count }} / 可重试 {{ group.retryable_count }})
+          </button>
+          <button
+            type="button"
+            class="link-btn mini-btn"
+            :disabled="!group.retryable_count"
+            @click="retryByReasonGroup(group.reason_code)"
+          >
+            重试此组
+          </button>
+        </span>
       </p>
       <ul>
         <li v-for="item in visibleRetryFailedItems" :key="`failed-${item.id}`">
@@ -846,18 +854,53 @@ async function completeSelectedTodos() {
 async function retryFailedTodos() {
   const candidateRetryIds = retryRequestParams.value?.retry_ids?.length ? retryRequestParams.value.retry_ids : retryFailedIds.value;
   if (!candidateRetryIds.length) return;
+  await runRetryBatch(
+    candidateRetryIds,
+    retryRequestParams.value?.note || 'Retry failed items from my-work.',
+    retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
+    retryRequestParams.value?.source || 'mail.activity',
+    '重试',
+  );
+}
+
+async function retryByReasonGroup(reasonCode: string) {
+  const ids = retryFailedItems.value
+    .filter((item) => item.reason_code === reasonCode && item.retryable)
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (!ids.length) {
+    actionFeedback.value = `原因组 ${reasonCode} 没有可重试项`;
+    actionFeedbackError.value = true;
+    return;
+  }
+  await runRetryBatch(
+    ids,
+    `Retry failed group ${reasonCode} from my-work.`,
+    buildBatchRequestId('mw_retry_group'),
+    retryRequestParams.value?.source || 'mail.activity',
+    `重试(${reasonCode})`,
+  );
+}
+
+async function runRetryBatch(
+  ids: number[],
+  note: string,
+  requestId: string,
+  source: string,
+  actionLabel: string,
+) {
   loading.value = true;
   errorText.value = '';
   statusError.value = null;
   try {
     const result = await completeMyWorkItemsBatch({
-      ids: [...candidateRetryIds],
-      retry_ids: [...candidateRetryIds],
-      source: retryRequestParams.value?.source || 'mail.activity',
-      note: retryRequestParams.value?.note || 'Retry failed items from my-work.',
-      request_id: retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
+      ids: [...ids],
+      retry_ids: [...ids],
+      source,
+      note,
+      request_id: requestId,
     });
-    applyBatchFeedback(result, '重试');
+    applyBatchFeedback(result, actionLabel);
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '重试失败项失败';
@@ -1205,6 +1248,12 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.group-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .failed-id {
