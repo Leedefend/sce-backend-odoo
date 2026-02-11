@@ -45,6 +45,7 @@ This guide explains common failures when running strict scene observability chec
 ## Readiness Report
 - Generate:
   - `make verify.portal.scene_observability_preflight.report`
+  - `make verify.portal.scene_observability_preflight.brief`
 - Output:
   - `artifacts/scene_observability_preflight_readiness.latest.json`
 - Key fields:
