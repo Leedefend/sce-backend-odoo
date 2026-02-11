@@ -43,15 +43,27 @@
       <p class="retry-title">失败明细</p>
       <p v-if="retryReasonSummary.length" class="retry-summary">
         失败原因分布：
-        <span v-for="item in retryReasonSummary" :key="`reason-${item.reason_code}`">
+        <button
+          v-for="item in retryReasonSummary"
+          :key="`reason-${item.reason_code}`"
+          type="button"
+          class="reason-chip"
+          @click="applyReasonFilterFromFailure(item.reason_code)"
+        >
           {{ item.reason_code }} x {{ item.count }}
-        </span>
+        </button>
       </p>
       <p v-if="retryFailedGroups.length" class="retry-summary">
         分组摘要：
-        <span v-for="group in retryFailedGroups" :key="`group-${group.reason_code}`">
+        <button
+          v-for="group in retryFailedGroups"
+          :key="`group-${group.reason_code}`"
+          type="button"
+          class="reason-chip"
+          @click="applyReasonFilterFromFailure(group.reason_code)"
+        >
           {{ group.reason_code }} ({{ group.count }} / 可重试 {{ group.retryable_count }})
-        </span>
+        </button>
       </p>
       <ul>
         <li v-for="item in retryFailedItems" :key="`failed-${item.id}`">
@@ -555,6 +567,15 @@ function runFailedSuggestedAction(item: { id: number; suggested_action?: string 
   });
 }
 
+function applyReasonFilterFromFailure(reasonCode: string) {
+  if (!reasonCode) return;
+  reasonFilter.value = reasonCode;
+  page.value = 1;
+  actionFeedback.value = `已按失败原因筛选：${reasonCode}`;
+  actionFeedbackError.value = false;
+  void load();
+}
+
 function formatFailedItemText(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
   const actionHint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
   const retryTag = item.retryable === true ? 'retryable' : item.retryable === false ? 'non-retryable' : '';
@@ -841,6 +862,17 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   border-color: #93c5fd;
   background: #eff6ff;
   color: #1d4ed8;
+}
+
+.reason-chip {
+  margin: 0 6px 6px 0;
+  padding: 2px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .hero p {
