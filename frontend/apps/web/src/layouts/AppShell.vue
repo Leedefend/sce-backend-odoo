@@ -14,6 +14,24 @@
         </div>
       </div>
 
+      <div class="role-surface">
+        <p class="role-label">Role: {{ roleLabel }}</p>
+        <div class="role-actions">
+          <button class="ghost mini" @click="openRoleLanding">进入角色首页</button>
+          <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
+        </div>
+        <div v-if="roleMenus.length" class="role-menus">
+          <button
+            v-for="menu in roleMenus"
+            :key="`role-menu-${menu.id}`"
+            class="role-menu-item"
+            @click="openRoleMenu(menu.id)"
+          >
+            {{ menu.label }}
+          </button>
+        </div>
+      </div>
+
       <div class="search">
         <input v-model="query" type="search" placeholder="Search menu..." />
       </div>
@@ -141,6 +159,7 @@ const router = useRouter();
 const query = ref('');
 
 const menuTree = computed(() => session.menuTree);
+const roleSurface = computed(() => session.roleSurface);
 const rootNode = computed(() => (menuTree.value.length === 1 ? menuTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
 const menuCount = computed(() => menuNodes.value.length);
@@ -149,6 +168,13 @@ const rootTitle = computed(() => {
   return root?.title || root?.name || root?.label || 'Smart Construction';
 });
 const userName = computed(() => session.user?.name ?? 'Guest');
+const roleLabel = computed(() => {
+  const label = roleSurface.value?.role_label;
+  if (label) return label;
+  const code = roleSurface.value?.role_code || '';
+  return code ? code.toUpperCase() : 'Owner';
+});
+const roleLandingPath = computed(() => session.resolveLandingPath('/s/projects.list'));
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
 const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? 'N/A');
@@ -406,6 +432,27 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
 }
 
 const filteredMenu = computed(() => filterNodes(menuNodes.value, query.value));
+const roleMenus = computed(() => {
+  const allow = new Set(roleSurface.value?.menu_xmlids || []);
+  if (!allow.size) return [];
+  const found: Array<{ id: number; label: string }> = [];
+  const seen = new Set<number>();
+  const walk = (nodes: NavNode[]) => {
+    for (const node of nodes) {
+      const xmlid = (node as NavNode & { xmlid?: string }).xmlid || node.meta?.menu_xmlid;
+      const id = Number(node.menu_id || node.id || 0);
+      if (xmlid && allow.has(xmlid) && id && !seen.has(id)) {
+        seen.add(id);
+        found.push({ id, label: node.title || node.name || node.label || `Menu ${id}` });
+      }
+      if (node.children?.length) {
+        walk(node.children);
+      }
+    }
+  };
+  walk(menuTree.value);
+  return found.slice(0, 6);
+});
 
 function handleSelect(node: NavNode) {
   if (!node.menu_id && node.id) {
@@ -419,6 +466,14 @@ function handleSelect(node: NavNode) {
   if (node.menu_id) {
     router.push(`/m/${node.menu_id}`).catch(() => {});
   }
+}
+
+function openRoleLanding() {
+  router.push(roleLandingPath.value).catch(() => {});
+}
+
+function openRoleMenu(menuId: number) {
+  router.push(`/m/${menuId}`).catch(() => {});
 }
 
 async function refreshInit() {
@@ -499,6 +554,41 @@ async function logout() {
   border-radius: 10px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   background: white;
+}
+
+.role-surface {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  display: grid;
+  gap: 8px;
+}
+
+.role-label {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.role-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.role-menus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.role-menu-item {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: white;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #334155;
 }
 
 .menu {
