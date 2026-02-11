@@ -13,6 +13,9 @@
   - gate smoke aggregate: `make verify.portal.scene_observability_gate_smoke.container`
   - smoke aggregate: `make verify.portal.scene_observability_smoke.container`
   - strict aggregate: `make verify.portal.scene_observability_strict.container`
+- 业务增量前置检查:
+  - `make verify.business.increment.preflight`
+  - `make verify.business.increment.preflight.strict`
 - Phase 11 Backend Closure: `docs/ops/releases/current/phase_11_backend_closure.md`
 - Phase 11.1 Contract Visibility: `docs/ops/releases/current/phase_11_1_contract_visibility.md`
 - 临时归档（非正式、仅追溯）: `docs/ops/releases/archive/temp/`
