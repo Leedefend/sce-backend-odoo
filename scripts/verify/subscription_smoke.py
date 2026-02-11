@@ -154,7 +154,7 @@ def main():
             raise RuntimeError(f"permission.check expected allow=false for default plan, resp={deny_resp}")
 
     # calling system.ping should be blocked when flag disabled
-    status, ping_resp = _http_post_json(
+    status, ping_resp = http_post_json(
         intent_url,
         {"intent": "system.ping", "params": {"db": db_name, "capability_key": cap_key}},
         headers=auth_header,
