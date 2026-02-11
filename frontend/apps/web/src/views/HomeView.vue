@@ -4,6 +4,10 @@
       <div>
         <h2>能力目录</h2>
         <p class="lead">选择你要完成的工作，直接进入场景。</p>
+        <p class="role-line">
+          当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingScene }}
+          <button class="inline-link" @click="openRoleLanding">进入角色首页</button>
+        </p>
       </div>
       <div class="view-toggle">
         <button class="my-work-btn" @click="router.push({ path: '/my-work' })">我的工作</button>
@@ -146,6 +150,9 @@ const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
 });
+const roleSurface = computed(() => session.roleSurface);
+const roleLabel = computed(() => roleSurface.value?.role_label || roleSurface.value?.role_code?.toUpperCase() || 'Owner');
+const roleLandingScene = computed(() => roleSurface.value?.landing_scene_key || 'projects.list');
 
 function mapState(rawState: string | undefined, status: string): EntryState {
   const state = String(rawState || '').toUpperCase();
@@ -267,6 +274,10 @@ async function openScene(entry: CapabilityEntry) {
   await router.push({ path: `/s/${entry.sceneKey}` });
 }
 
+function openRoleLanding() {
+  router.push(session.resolveLandingPath('/s/projects.list')).catch(() => {});
+}
+
 onMounted(() => {
   try {
     const raw = window.localStorage.getItem(homeCollapseStorageKey);
@@ -312,6 +323,24 @@ watch(collapsedSceneKeys, () => {
 .lead {
   margin: 0;
   color: #4b5563;
+}
+
+.role-line {
+  margin: 8px 0 0;
+  color: #334155;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inline-link {
+  border: 0;
+  background: transparent;
+  color: #1d4ed8;
+  text-decoration: underline;
+  padding: 0;
+  cursor: pointer;
 }
 
 .view-toggle {
