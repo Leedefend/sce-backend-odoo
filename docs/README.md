@@ -2,6 +2,10 @@
 
 本目录为系统文档导航入口，围绕当前已落地能力组织：`contract` / `ops` / `audit`。
 
+## 方向锚点
+- 项目方向锚定文: `docs/00_overview/project_direction.md`
+- English mirror: `docs/00_overview/project_direction.en.md`
+
 ## 能力域导航
 - Contract（契约与目录）: `docs/contract/README.md`
 - Ops（发布与运行证据）: `docs/ops/README.md`
