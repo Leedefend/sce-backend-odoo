@@ -72,5 +72,43 @@
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
+
+        <record id="group_sc_role_owner" model="res.groups">
+            <field name="name">角色-业主</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[
+                (4, ref('smart_construction_custom.group_sc_role_project_read')),
+                (4, ref('smart_construction_custom.group_sc_role_contract_read'))
+            ]"/>
+        </record>
+
+        <record id="group_sc_role_pm" model="res.groups">
+            <field name="name">角色-项目经理</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[
+                (4, ref('smart_construction_custom.group_sc_role_project_manager')),
+                (4, ref('smart_construction_custom.group_sc_role_contract_manager')),
+                (4, ref('smart_construction_custom.group_sc_role_settlement_user'))
+            ]"/>
+        </record>
+
+        <record id="group_sc_role_finance" model="res.groups">
+            <field name="name">角色-财务</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[
+                (4, ref('smart_construction_custom.group_sc_role_payment_manager')),
+                (4, ref('smart_construction_custom.group_sc_role_settlement_manager'))
+            ]"/>
+        </record>
+
+        <record id="group_sc_role_executive" model="res.groups">
+            <field name="name">角色-管理层</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[
+                (4, ref('smart_construction_custom.group_sc_role_pm')),
+                (4, ref('smart_construction_custom.group_sc_role_finance')),
+                (4, ref('smart_construction_core.group_sc_cap_config_admin'))
+            ]"/>
+        </record>
     </data>
 </odoo>
