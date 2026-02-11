@@ -92,6 +92,11 @@ function assertIntentEnvelope(resp, intentName) {
   assert(resp.body.ok === true, `${intentName} missing ok=true envelope`);
   const traceId = extractTraceId(resp.body);
   assert(Boolean(traceId), `${intentName} missing meta.trace_id`);
+  const meta = resp.body.meta && typeof resp.body.meta === 'object' ? resp.body.meta : {};
+  const metaIntent = String(meta.intent || '');
+  if (metaIntent) {
+    assert(metaIntent === intentName, `${intentName} meta.intent mismatch: ${metaIntent}`);
+  }
 }
 
 function resolveRepoRoot() {
