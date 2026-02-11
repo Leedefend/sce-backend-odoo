@@ -185,6 +185,8 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     required_intents = _normalize_string_list(policy.get("required_intents"))
     required_scene_keys = _normalize_string_list(policy.get("required_scene_keys"))
     required_test_ref_intents = _normalize_string_list(policy.get("required_test_ref_intents"))
+    required_behavioral_intents = _normalize_string_list(policy.get("required_behavioral_intents"))
+    required_reason_code_intents = _normalize_string_list(policy.get("required_reason_code_intents"))
 
     shape_guard_ok = bool(
         ((result.get("files", {}).get("scene_contract_shape_guard", {}) or {}).get("shape_guard_ok", True))
