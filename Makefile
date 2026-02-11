@@ -74,6 +74,7 @@ DB_NAME      ?= sc_odoo
 SC_GATE_STRICT ?= 1
 SC_SCENE_OBS_STRICT ?= 0
 SCENE_OBSERVABILITY_PREFLIGHT_STRICT ?= 1
+BASELINE_FREEZE_ENFORCE ?= 1
 SC_WARN_ACT_URL_LEGACY_MAX ?= 3
 DB_CI        ?= sc_test
 DB_USER      ?= odoo
@@ -352,6 +353,7 @@ help:
 	@echo "  make verify.portal.scene_observability_preflight.latest"
 	@echo "  make verify.portal.scene_observability_preflight.report"
 	@echo "  make verify.portal.scene_observability.structure_guard"
+	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.portal.scene_observability_smoke.container DB_NAME=<name>"
 	@echo "  make verify.portal.scene_observability_strict.container DB_NAME=<name>"
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
@@ -911,6 +913,7 @@ codex.print:
 	@echo "== Codex SOP =="
 	@echo "CODEX_MODE=$(CODEX_MODE) CODEX_DB=$(CODEX_DB) CODEX_MODULES=$(CODEX_MODULES) CODEX_NEED_UPGRADE=$(CODEX_NEED_UPGRADE)"
 	@echo "SC_GATE_STRICT=$(SC_GATE_STRICT) SC_SCENE_OBS_STRICT=$(SC_SCENE_OBS_STRICT) SCENE_OBSERVABILITY_PREFLIGHT_STRICT=$(SCENE_OBSERVABILITY_PREFLIGHT_STRICT)"
+	@echo "BASELINE_FREEZE_ENFORCE=$(BASELINE_FREEZE_ENFORCE)"
 	@echo "fast: restart (optional upgrade only if CODEX_NEED_UPGRADE=1) ; forbid demo.reset/gate.full"
 	@echo "gate: optional upgrade + demo.reset + contract.export_all + gate.full"
 
@@ -1157,7 +1160,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.baseline.freeze_guard verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1196,6 +1199,9 @@ verify.contract_drift.guard: guard.prod.forbid
 verify.intent.side_effect_policy_guard: guard.prod.forbid
 	@python3 scripts/verify/side_effect_intent_policy_guard.py
 
+verify.baseline.freeze_guard: guard.prod.forbid
+	@python3 scripts/verify/baseline_freeze_guard.py
+
 verify.docs.inventory: guard.prod.forbid
 	@python3 scripts/verify/docs_inventory.py
 
@@ -1212,6 +1218,11 @@ verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verif
 	@echo "[OK] verify.docs.all done"
 
 verify.contract.preflight: guard.prod.forbid
+	@if [ "$(BASELINE_FREEZE_ENFORCE)" = "1" ]; then \
+	  $(MAKE) --no-print-directory verify.baseline.freeze_guard; \
+	else \
+	  echo "[verify.contract.preflight] BASELINE_FREEZE_ENFORCE=0: skip baseline freeze guard"; \
+	fi
 	@$(MAKE) --no-print-directory verify.test_seed_dependency.guard
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
 	@$(MAKE) --no-print-directory verify.docs.all
