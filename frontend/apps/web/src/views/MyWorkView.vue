@@ -809,6 +809,7 @@ function applyBatchFeedback(
     success: boolean;
     done_count: number;
     failed_count: number;
+    completed_ids?: number[];
     failed_items?: Array<{ id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }>;
     failed_retry_ids?: number[];
     failed_reason_summary?: Array<{ reason_code: string; count: number }>;
@@ -820,6 +821,14 @@ function applyBatchFeedback(
   },
   actionLabel: string,
 ) {
+  const completedIdSet = new Set(
+    (result.completed_ids || [])
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id) && id > 0),
+  );
+  if (completedIdSet.size) {
+    todoSelectionIds.value = todoSelectionIds.value.filter((id) => !completedIdSet.has(id));
+  }
   todoRemaining.value = typeof result.todo_remaining === 'number' ? result.todo_remaining : null;
   lastBatchExecutionMode.value = String(result.execution_mode || '');
   lastBatchReplay.value = Boolean(result.idempotent_replay);
