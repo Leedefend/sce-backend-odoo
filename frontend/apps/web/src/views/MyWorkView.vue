@@ -95,6 +95,14 @@
         >
           {{ item.reason_code }} x {{ item.count }}
         </button>
+        <button
+          v-if="reasonFilter !== 'ALL'"
+          type="button"
+          class="link-btn mini-btn"
+          @click="clearReasonFilterFromFailure"
+        >
+          清除失败筛选
+        </button>
       </p>
       <p v-if="retryFailedGroups.length" class="retry-summary">
         分组摘要：
@@ -711,6 +719,14 @@ function applyReasonFilterFromFailure(reasonCode: string) {
   reasonFilter.value = reasonCode;
   page.value = 1;
   actionFeedback.value = `已按失败原因筛选：${reasonCode}`;
+  actionFeedbackError.value = false;
+  void load();
+}
+
+function clearReasonFilterFromFailure() {
+  reasonFilter.value = 'ALL';
+  page.value = 1;
+  actionFeedback.value = '已清除失败原因筛选';
   actionFeedbackError.value = false;
   void load();
 }
