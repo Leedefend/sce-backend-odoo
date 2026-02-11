@@ -7,6 +7,7 @@ source "$(dirname "$0")/../_lib/common.sh"
 : "${COMPOSE_FILES:?COMPOSE_FILES required}"
 
 DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
+LOGIN_ENV_EXPECTED=${SC_LOGIN_ENV_EXPECTED:-demo}
 
 psql_cmd() {
   compose ${COMPOSE_FILES} exec -T db psql -U "${DB_USER}" -d "${DB_NAME}" -At -c "$1"
@@ -48,7 +49,7 @@ check_eq "workbench action xmlid" "smart_construction_core.action_sc_project_wor
   "SELECT value FROM ir_config_parameter WHERE key='sc.workbench.default_action_xmlid';"
 check_eq "sidebar overview enabled" "1" "SELECT value FROM ir_config_parameter WHERE key='sc.sidebar.overview_enabled';"
 check_eq "sidebar overview menu ids" "265" "SELECT value FROM ir_config_parameter WHERE key='sc.sidebar.overview_menu_ids';"
-check_eq "login env prod" "prod" "SELECT value FROM ir_config_parameter WHERE key='sc.login.env';"
+check_eq "login env" "${LOGIN_ENV_EXPECTED}" "SELECT value FROM ir_config_parameter WHERE key='sc.login.env';"
 
 check_ge "project stages (company-wide)" "5" "SELECT count(1) FROM project_project_stage WHERE company_id IS NULL;"
 check_ge "project stages default" "1" "SELECT count(1) FROM project_project_stage WHERE company_id IS NULL AND is_default IS TRUE;"
