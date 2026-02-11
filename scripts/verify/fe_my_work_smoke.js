@@ -38,6 +38,27 @@ function writeSummary(lines) {
   fs.writeFileSync(path.join(outDir, 'summary.md'), lines.join('\n'));
 }
 
+function extractTraceId(body) {
+  if (!body || typeof body !== 'object') return '';
+  const meta = body.meta && typeof body.meta === 'object' ? body.meta : {};
+  return String(meta.trace_id || meta.traceId || body.trace_id || body.traceId || '');
+}
+
+function assertIntentEnvelope(resp, intentName) {
+  if (!resp || resp.status >= 400) {
+    throw new Error(`${intentName} failed: status=${resp?.status || 0}`);
+  }
+  if (!resp.body || typeof resp.body !== 'object') {
+    throw new Error(`${intentName} missing response body`);
+  }
+  if (resp.body.ok !== true) {
+    throw new Error(`${intentName} missing ok=true envelope`);
+  }
+  if (!extractTraceId(resp.body)) {
+    throw new Error(`${intentName} missing meta.trace_id`);
+  }
+}
+
 function requestJson(url, payload, headers = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -100,9 +121,7 @@ async function main() {
       { 'X-Anonymous-Intent': '1' }
     );
     writeJson(path.join(outDir, 'login.log'), loginResp);
-    if (loginResp.status >= 400 || !loginResp.body.ok) {
-      throw new Error(`login failed: status=${loginResp.status}`);
-    }
+    assertIntentEnvelope(loginResp, 'login');
     token = (((loginResp.body || {}).data) || {}).token || '';
     if (!token) throw new Error('login response missing token');
   }
@@ -145,6 +164,7 @@ async function main() {
     }
     throw new Error(`my.work.summary page1 failed: status=${resp1.status} message=${errMsg || '-'}`);
   }
+  assertIntentEnvelope(resp1, 'my.work.summary');
   const data1 = (resp1.body || {}).data || {};
   const filters1 = data1.filters || {};
   const items1 = Array.isArray(data1.items) ? data1.items : [];
@@ -177,9 +197,7 @@ async function main() {
   };
   const resp2 = await requestJson(intentUrl, req2, authHeader);
   writeJson(path.join(outDir, 'my_work_page2_asc.log'), resp2);
-  if (resp2.status >= 400 || !resp2.body.ok) {
-    throw new Error(`my.work.summary page2 failed: status=${resp2.status}`);
-  }
+  assertIntentEnvelope(resp2, 'my.work.summary');
   const data2 = (resp2.body || {}).data || {};
   const filters2 = data2.filters || {};
   const items2 = Array.isArray(data2.items) ? data2.items : [];
