@@ -54,6 +54,7 @@
         "sample.enhanced",
         "system.ping.construction"
       ],
+      "require_zero_untested": true,
       "warning_untested_limit": 6
     }
   }
