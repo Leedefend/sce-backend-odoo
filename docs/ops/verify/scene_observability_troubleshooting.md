@@ -41,3 +41,12 @@ This guide explains common failures when running strict scene observability chec
   - `required_any.notify`: acceptable notify evidence models
   - `governance.available` / `notify.available`: models available in current env
   - `governance.missing` / `notify.missing`: missing models in current env
+
+## Readiness Report
+- Generate:
+  - `make verify.portal.scene_observability_preflight.report`
+- Output:
+  - `artifacts/scene_observability_preflight_readiness.latest.json`
+- Key fields:
+  - `readiness.strict_ready`
+  - `readiness.strict_failure_reasons`
