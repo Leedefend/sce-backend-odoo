@@ -43,6 +43,17 @@
     </div>
     <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
       <p class="retry-title">失败明细</p>
+      <p class="retry-summary">
+        当前展示 {{ visibleRetryFailedItems.length }} / {{ retryFilteredItems.length }} 条
+        <button
+          v-if="retryFilteredItems.length > retryPreviewLimit"
+          type="button"
+          class="link-btn mini-btn"
+          @click="toggleRetryFailedExpanded"
+        >
+          {{ retryFailedExpanded ? '收起' : '展开全部' }}
+        </button>
+      </p>
       <div class="retry-toggle">
         <button
           type="button"
@@ -291,6 +302,8 @@ const todoRemaining = ref<number | null>(null);
 const lastBatchExecutionMode = ref<string>('');
 const lastBatchReplay = ref(false);
 const retryFilterMode = ref<'all' | 'retryable' | 'non_retryable'>('all');
+const retryFailedExpanded = ref(false);
+const retryPreviewLimit = 10;
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const searchText = ref('');
@@ -353,12 +366,16 @@ const reasonOptions = computed(() => {
   });
   return Array.from(set).sort();
 });
-const visibleRetryFailedItems = computed(() => {
+const retryFilteredItems = computed(() => {
   if (retryFilterMode.value === 'all') return retryFailedItems.value;
   if (retryFilterMode.value === 'retryable') {
     return retryFailedItems.value.filter((item) => Boolean(item.retryable));
   }
   return retryFailedItems.value.filter((item) => item.retryable === false);
+});
+const visibleRetryFailedItems = computed(() => {
+  if (retryFailedExpanded.value) return retryFilteredItems.value;
+  return retryFilteredItems.value.slice(0, retryPreviewLimit);
 });
 
 async function load() {
@@ -565,10 +582,16 @@ function clearRetryFailed() {
   lastBatchExecutionMode.value = '';
   lastBatchReplay.value = false;
   retryFilterMode.value = 'all';
+  retryFailedExpanded.value = false;
 }
 
 function setRetryFilterMode(mode: 'all' | 'retryable' | 'non_retryable') {
   retryFilterMode.value = mode;
+  retryFailedExpanded.value = false;
+}
+
+function toggleRetryFailedExpanded() {
+  retryFailedExpanded.value = !retryFailedExpanded.value;
 }
 
 function selectRetryFailedItems() {
@@ -813,7 +836,7 @@ function applyBatchFeedback(
       ? retryIdsFromTemplate
       : fallbackRetryIds;
   retryFailedIds.value = mergedRetryIds.filter((id) => Number.isFinite(id) && id > 0);
-  retryFailedItems.value = (result.failed_items || []).slice(0, 10);
+  retryFailedItems.value = result.failed_items || [];
   retryReasonSummary.value = (result.failed_reason_summary || []).slice(0, 5);
   retryFailedGroups.value = (result.failed_groups || []).slice(0, 5);
   retryRequestParams.value = result.retry_request?.params || null;
