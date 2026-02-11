@@ -12,6 +12,7 @@ const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const ADMIN_PASSWD = process.env.ADMIN_PASSWD || 'admin';
 const REQUIRE_NOTIFY_SENT = process.env.REQUIRE_NOTIFY_SENT === '1';
+const REQUIRE_NOTIFY_AUDIT = process.env.REQUIRE_NOTIFY_AUDIT === '1';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -195,6 +196,9 @@ async function main() {
   let rows = [];
   let notifyAuditSkipped = false;
   if (isModelMissing(notifyLog)) {
+    if (REQUIRE_NOTIFY_AUDIT) {
+      throw new Error('notify audit model unavailable');
+    }
     notifyAuditSkipped = true;
   } else {
     assertIntentEnvelope(notifyLog, 'api.data');
@@ -212,6 +216,7 @@ async function main() {
   summary.push(`notifications_sent: ${Boolean(notify.sent)}`);
   summary.push(`notifications_sent_skipped: ${notifySentSkipped ? 'true' : 'false'}`);
   summary.push(`require_notify_sent: ${REQUIRE_NOTIFY_SENT ? 'true' : 'false'}`);
+  summary.push(`require_notify_audit: ${REQUIRE_NOTIFY_AUDIT ? 'true' : 'false'}`);
   summary.push(`notify_channels: ${(notify.channels || []).join(',') || '-'}`);
   summary.push(`notify_audit_skipped: ${notifyAuditSkipped ? 'true' : 'false'}`);
   summary.push(`notify_rows: ${rows.length}`);

@@ -52,6 +52,10 @@ Notification payload fields include:
 - `make verify.portal.scene_governance_action_smoke.container`
 - `make verify.portal.scene_health_pagination_smoke.container`
 - `make verify.portal.scene_auto_degrade_notify_smoke.container`
+- Strict evidence mode:
+  - `make verify.portal.scene_governance_action_strict.container`
+  - `make verify.portal.scene_auto_degrade_notify_strict.container`
+  - `make verify.portal.scene_observability_strict.container`
 
 ## Gate Integration
 Included in:
