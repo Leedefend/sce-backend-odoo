@@ -54,6 +54,18 @@
         "sample.enhanced",
         "system.ping.construction"
       ],
+      "required_behavioral_intents": [
+        "api.data.batch",
+        "execute_button",
+        "chatter.post",
+        "my.work.summary",
+        "my.work.complete_batch",
+        "ui.contract",
+        "usage.report",
+        "file.upload",
+        "file.download",
+        "load_view"
+      ],
       "require_zero_untested": true,
       "warning_untested_limit": 6
     }
