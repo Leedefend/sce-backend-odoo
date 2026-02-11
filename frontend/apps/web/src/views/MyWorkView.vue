@@ -38,6 +38,7 @@
       <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
       <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
+      <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
       <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
     </div>
@@ -294,7 +295,17 @@ const items = ref<MyWorkRecordItem[]>([]);
 const activeSection = ref<string>('todo');
 const todoSelectionIds = ref<number[]>([]);
 const retryFailedIds = ref<number[]>([]);
-const retryFailedItems = ref<Array<{ id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }>>([]);
+const retryFailedItems = ref<
+  Array<{
+    id: number;
+    reason_code: string;
+    message: string;
+    retryable?: boolean;
+    suggested_action?: string;
+    error_category?: string;
+    trace_id?: string;
+  }>
+>([]);
 const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]);
 const retryFailedGroups = ref<Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>>([]);
 const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: string; request_id?: string } | null>(null);
@@ -733,6 +744,51 @@ async function copyRetryRequest() {
   }
 }
 
+function escapeCsvCell(raw: unknown) {
+  const text = String(raw ?? '');
+  if (/[",\n]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
+function buildRetryFailedCsv() {
+  const header = ['id', 'reason_code', 'retryable', 'error_category', 'suggested_action', 'message', 'trace_id'];
+  const rows = retryFailedItems.value.map((item) => [
+    item.id,
+    item.reason_code || '',
+    item.retryable === true ? 'true' : item.retryable === false ? 'false' : '',
+    item.error_category || '',
+    item.suggested_action || '',
+    item.message || '',
+    item.trace_id || '',
+  ]);
+  return [header, ...rows]
+    .map((row) => row.map((cell) => escapeCsvCell(cell)).join(','))
+    .join('\n');
+}
+
+function exportRetryFailedCsv() {
+  if (!retryFailedItems.value.length) return;
+  try {
+    const csv = buildRetryFailedCsv();
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = `my-work-failed-items-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(href);
+    actionFeedback.value = `失败明细 CSV 已导出（${retryFailedItems.value.length} 条）`;
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '导出失败明细 CSV 失败';
+    actionFeedbackError.value = true;
+  }
+}
+
 async function completeItem(item: MyWorkRecordItem) {
   if (!item?.id || !item?.source) return;
   loading.value = true;
@@ -817,7 +873,15 @@ function applyBatchFeedback(
     done_count: number;
     failed_count: number;
     completed_ids?: number[];
-    failed_items?: Array<{ id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }>;
+    failed_items?: Array<{
+      id: number;
+      reason_code: string;
+      message: string;
+      retryable?: boolean;
+      suggested_action?: string;
+      error_category?: string;
+      trace_id?: string;
+    }>;
     failed_retry_ids?: number[];
     failed_reason_summary?: Array<{ reason_code: string; count: number }>;
     failed_groups?: Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>;
