@@ -46,7 +46,7 @@
         <span class="label">Menu</span>
         <span class="value">{{ menuId || 'N/A' }}</span>
       </div>
-      <div class="detail">
+      <div v-if="showHud" class="detail">
         <span class="label">Action</span>
         <span class="value">{{ actionId || 'N/A' }}</span>
       </div>
@@ -58,19 +58,19 @@
         <span class="label">Diag</span>
         <span class="value">{{ diag }}</span>
       </div>
-      <div v-if="diagActionType" class="detail">
+      <div v-if="showHud && diagActionType" class="detail">
         <span class="label">Action Type</span>
         <span class="value">{{ diagActionType }}</span>
       </div>
-      <div v-if="diagContractType" class="detail">
+      <div v-if="showHud && diagContractType" class="detail">
         <span class="label">Contract Type</span>
         <span class="value">{{ diagContractType }}</span>
       </div>
-      <div v-if="diagContractUrl" class="detail">
+      <div v-if="showHud && diagContractUrl" class="detail">
         <span class="label">Contract URL</span>
         <span class="value">{{ diagContractUrl }}</span>
       </div>
-      <div v-if="diagMetaUrl" class="detail">
+      <div v-if="showHud && diagMetaUrl" class="detail">
         <span class="label">Meta URL</span>
         <span class="value">{{ diagMetaUrl }}</span>
       </div>

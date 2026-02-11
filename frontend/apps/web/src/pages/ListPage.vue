@@ -202,6 +202,9 @@ const errorCopy = computed(() =>
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));
 function formatValue(value: unknown) {
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
   if (Array.isArray(value)) {
     if (value.length === 2 && typeof value[1] === 'string') {
       return value[1];
