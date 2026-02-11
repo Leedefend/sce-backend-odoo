@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="sc_portal_language_selector_safe_guard" inherit_id="portal.language_selector" priority="1200">
+        <xpath expr="//t[@t-set='language_selector_visible']" position="attributes">
+            <attribute name="t-value">len(languages or []) &gt; 1</attribute>
+        </xpath>
+    </template>
+</odoo>

@@ -31,27 +31,81 @@
     </p>
     <div v-if="!loading && !errorText && retryFailedIds.length" class="retry-bar">
       <span>失败待办 {{ retryFailedIds.length }} 条</span>
+      <span v-if="lastBatchExecutionMode" class="meta-chip">模式: {{ lastBatchExecutionMode }}</span>
+      <span v-if="lastBatchReplay" class="meta-chip replay">重放结果</span>
       <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
+      <button class="link-btn" @click="selectAllFailedItems">选中全部失败项</button>
+      <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
       <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
+      <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
     </div>
     <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
       <p class="retry-title">失败明细</p>
+      <p class="retry-summary">
+        当前展示 {{ visibleRetryFailedItems.length }} / {{ retryFilteredItems.length }} 条
+        <button
+          v-if="retryFilteredItems.length > retryPreviewLimit"
+          type="button"
+          class="link-btn mini-btn"
+          @click="toggleRetryFailedExpanded"
+        >
+          {{ retryFailedExpanded ? '收起' : '展开全部' }}
+        </button>
+      </p>
+      <div class="retry-toggle">
+        <button
+          type="button"
+          class="reason-chip"
+          :class="{ active: retryFilterMode === 'all' }"
+          @click="setRetryFilterMode('all')"
+        >
+          全部
+        </button>
+        <button
+          type="button"
+          class="reason-chip"
+          :class="{ active: retryFilterMode === 'retryable' }"
+          @click="setRetryFilterMode('retryable')"
+        >
+          仅可重试
+        </button>
+        <button
+          type="button"
+          class="reason-chip"
+          :class="{ active: retryFilterMode === 'non_retryable' }"
+          @click="setRetryFilterMode('non_retryable')"
+        >
+          仅不可重试
+        </button>
+      </div>
       <p v-if="retryReasonSummary.length" class="retry-summary">
         失败原因分布：
-        <span v-for="item in retryReasonSummary" :key="`reason-${item.reason_code}`">
+        <button
+          v-for="item in retryReasonSummary"
+          :key="`reason-${item.reason_code}`"
+          type="button"
+          class="reason-chip"
+          @click="applyReasonFilterFromFailure(item.reason_code)"
+        >
           {{ item.reason_code }} x {{ item.count }}
-        </span>
+        </button>
       </p>
       <p v-if="retryFailedGroups.length" class="retry-summary">
         分组摘要：
-        <span v-for="group in retryFailedGroups" :key="`group-${group.reason_code}`">
+        <button
+          v-for="group in retryFailedGroups"
+          :key="`group-${group.reason_code}`"
+          type="button"
+          class="reason-chip"
+          @click="applyReasonFilterFromFailure(group.reason_code)"
+        >
           {{ group.reason_code }} ({{ group.count }} / 可重试 {{ group.retryable_count }})
-        </span>
+        </button>
       </p>
       <ul>
-        <li v-for="item in retryFailedItems" :key="`failed-${item.id}`">
+        <li v-for="item in visibleRetryFailedItems" :key="`failed-${item.id}`">
           <span class="failed-id">#{{ item.id }}</span>
           <span class="failed-code">{{ item.reason_code || 'UNKNOWN' }}</span>
           <span class="failed-msg">{{ item.message || '-' }}</span>
@@ -245,6 +299,11 @@ const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]
 const retryFailedGroups = ref<Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>>([]);
 const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: string; request_id?: string } | null>(null);
 const todoRemaining = ref<number | null>(null);
+const lastBatchExecutionMode = ref<string>('');
+const lastBatchReplay = ref(false);
+const retryFilterMode = ref<'all' | 'retryable' | 'non_retryable'>('all');
+const retryFailedExpanded = ref(false);
+const retryPreviewLimit = 10;
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const searchText = ref('');
@@ -306,6 +365,17 @@ const reasonOptions = computed(() => {
     if (reason) set.add(reason);
   });
   return Array.from(set).sort();
+});
+const retryFilteredItems = computed(() => {
+  if (retryFilterMode.value === 'all') return retryFailedItems.value;
+  if (retryFilterMode.value === 'retryable') {
+    return retryFailedItems.value.filter((item) => Boolean(item.retryable));
+  }
+  return retryFailedItems.value.filter((item) => item.retryable === false);
+});
+const visibleRetryFailedItems = computed(() => {
+  if (retryFailedExpanded.value) return retryFilteredItems.value;
+  return retryFilteredItems.value.slice(0, retryPreviewLimit);
 });
 
 async function load() {
@@ -484,7 +554,7 @@ function toggleTodoSelection(id: number, event: Event) {
   const next = new Set(todoSelectionIds.value);
   if (checked) next.add(id);
   else next.delete(id);
-  todoSelectionIds.value = Array.from(next);
+  todoSelectionIds.value = Array.from(next).sort((a, b) => a - b);
 }
 
 function toggleAllTodoSelection(event: Event) {
@@ -495,7 +565,7 @@ function toggleAllTodoSelection(event: Event) {
   }
   const merged = new Set(todoSelectionIds.value);
   currentTodoRows.value.forEach((id) => merged.add(id));
-  todoSelectionIds.value = Array.from(merged);
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
 }
 
 function clearTodoSelection() {
@@ -509,14 +579,70 @@ function clearRetryFailed() {
   retryFailedGroups.value = [];
   retryRequestParams.value = null;
   todoRemaining.value = null;
+  lastBatchExecutionMode.value = '';
+  lastBatchReplay.value = false;
+  retryFilterMode.value = 'all';
+  retryFailedExpanded.value = false;
+}
+
+function buildBatchRequestId(prefix: string) {
+  const stamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 8);
+  return `${prefix}_${stamp}_${random}`;
+}
+
+function setRetryFilterMode(mode: 'all' | 'retryable' | 'non_retryable') {
+  retryFilterMode.value = mode;
+  retryFailedExpanded.value = false;
+}
+
+function toggleRetryFailedExpanded() {
+  retryFailedExpanded.value = !retryFailedExpanded.value;
 }
 
 function selectRetryFailedItems() {
   const candidateIds = retryRequestParams.value?.retry_ids?.length ? retryRequestParams.value.retry_ids : retryFailedIds.value;
-  if (!candidateIds.length) return;
+  if (!candidateIds.length) {
+    actionFeedback.value = '当前没有可重试失败项';
+    actionFeedbackError.value = true;
+    return;
+  }
   const merged = new Set(todoSelectionIds.value);
   candidateIds.forEach((id) => merged.add(id));
-  todoSelectionIds.value = Array.from(merged);
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+}
+
+function selectAllFailedItems() {
+  const failedIds = retryFailedItems.value
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (!failedIds.length) {
+    actionFeedback.value = '当前没有失败项可选择';
+    actionFeedbackError.value = true;
+    return;
+  }
+  const merged = new Set(todoSelectionIds.value);
+  failedIds.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+  actionFeedback.value = `已选中 ${failedIds.length} 条失败项`;
+  actionFeedbackError.value = false;
+}
+
+function selectRetryableFailedItems() {
+  const retryableIds = retryFailedItems.value
+    .filter((item) => Boolean(item.retryable))
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (!retryableIds.length) {
+    actionFeedback.value = '当前没有可重试失败项';
+    actionFeedbackError.value = true;
+    return;
+  }
+  const merged = new Set(todoSelectionIds.value);
+  retryableIds.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+  actionFeedback.value = `已选中 ${retryableIds.length} 条可重试失败项`;
+  actionFeedbackError.value = false;
 }
 
 function failedItemRecord(id: number) {
@@ -542,6 +668,15 @@ function runFailedSuggestedAction(item: { id: number; suggested_action?: string 
       return true;
     },
   });
+}
+
+function applyReasonFilterFromFailure(reasonCode: string) {
+  if (!reasonCode) return;
+  reasonFilter.value = reasonCode;
+  page.value = 1;
+  actionFeedback.value = `已按失败原因筛选：${reasonCode}`;
+  actionFeedbackError.value = false;
+  void load();
 }
 
 function formatFailedItemText(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
@@ -581,6 +716,19 @@ async function copyRetrySummary() {
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = '复制失败，请检查浏览器剪贴板权限';
+    actionFeedbackError.value = true;
+  }
+}
+
+async function copyRetryRequest() {
+  const payload = retryRequestParams.value;
+  if (!payload) return;
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    actionFeedback.value = '重试请求已复制';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '复制重试请求失败，请检查浏览器剪贴板权限';
     actionFeedbackError.value = true;
   }
 }
@@ -627,6 +775,7 @@ async function completeSelectedTodos() {
       ids: [...todoSelectionIds.value],
       source: 'mail.activity',
       note: 'Completed from my-work batch action.',
+      request_id: buildBatchRequestId('mw_batch_ui'),
     });
     applyBatchFeedback(result, '批量完成');
     await load();
@@ -650,7 +799,7 @@ async function retryFailedTodos() {
       retry_ids: [...candidateRetryIds],
       source: retryRequestParams.value?.source || 'mail.activity',
       note: retryRequestParams.value?.note || 'Retry failed items from my-work.',
-      request_id: retryRequestParams.value?.request_id,
+      request_id: retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
     });
     applyBatchFeedback(result, '重试');
     await load();
@@ -667,16 +816,29 @@ function applyBatchFeedback(
     success: boolean;
     done_count: number;
     failed_count: number;
+    completed_ids?: number[];
     failed_items?: Array<{ id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }>;
     failed_retry_ids?: number[];
     failed_reason_summary?: Array<{ reason_code: string; count: number }>;
     failed_groups?: Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>;
     retry_request?: { params?: { source?: string; retry_ids?: number[]; note?: string; request_id?: string } } | null;
     todo_remaining?: number;
+    execution_mode?: string;
+    idempotent_replay?: boolean;
   },
   actionLabel: string,
 ) {
+  const completedIdSet = new Set(
+    (result.completed_ids || [])
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id) && id > 0),
+  );
+  if (completedIdSet.size) {
+    todoSelectionIds.value = todoSelectionIds.value.filter((id) => !completedIdSet.has(id));
+  }
   todoRemaining.value = typeof result.todo_remaining === 'number' ? result.todo_remaining : null;
+  lastBatchExecutionMode.value = String(result.execution_mode || '');
+  lastBatchReplay.value = Boolean(result.idempotent_replay);
   const retryIdsFromResponse = Array.isArray(result.failed_retry_ids) ? result.failed_retry_ids : [];
   const retryIdsFromTemplate = Array.isArray(result.retry_request?.params?.retry_ids)
     ? result.retry_request?.params?.retry_ids || []
@@ -690,7 +852,7 @@ function applyBatchFeedback(
       ? retryIdsFromTemplate
       : fallbackRetryIds;
   retryFailedIds.value = mergedRetryIds.filter((id) => Number.isFinite(id) && id > 0);
-  retryFailedItems.value = (result.failed_items || []).slice(0, 10);
+  retryFailedItems.value = result.failed_items || [];
   retryReasonSummary.value = (result.failed_reason_summary || []).slice(0, 5);
   retryFailedGroups.value = (result.failed_groups || []).slice(0, 5);
   retryRequestParams.value = result.retry_request?.params || null;
@@ -796,6 +958,40 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
 
 .hero h2 {
   margin: 0 0 4px;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+}
+
+.meta-chip.replay {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.reason-chip {
+  margin: 0 6px 6px 0;
+  padding: 2px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.reason-chip.active {
+  border-color: #3b82f6;
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .hero p {
@@ -931,6 +1127,12 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   margin: 0;
   color: #b91c1c;
   font-weight: 600;
+}
+
+.retry-toggle {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
 }
 
 .retry-summary {
