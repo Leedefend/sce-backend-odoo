@@ -46,7 +46,8 @@ function extractTraceId(body) {
 
 function assertIntentEnvelope(resp, intentName) {
   if (!resp || resp.status >= 400) {
-    throw new Error(`${intentName} failed: status=${resp?.status || 0}`);
+    const status = resp && typeof resp.status !== 'undefined' ? resp.status : 0;
+    throw new Error(`${intentName} failed: status=${status}`);
   }
   if (!resp.body || typeof resp.body !== 'object') {
     throw new Error(`${intentName} missing response body`);
