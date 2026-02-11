@@ -372,6 +372,17 @@ export const useSessionStore = defineStore('session', {
       }
       await this.loadAppInit();
     },
+    resolveLandingPath(fallback = '/s/projects.list') {
+      const candidate = String(this.roleSurface?.landing_path || '').trim();
+      if (candidate.startsWith('/')) {
+        return candidate;
+      }
+      const sceneKey = String(this.roleSurface?.landing_scene_key || '').trim();
+      if (sceneKey) {
+        return `/s/${sceneKey}`;
+      }
+      return fallback;
+    },
   },
 });
 
