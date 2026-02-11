@@ -25,6 +25,19 @@
 ## Demo Baseline
 - `make verify.demo`
 
+## Baseline Semantics
+- Platform baseline (environment/bootstrap consistency)
+  - `make verify.platform_baseline`
+  - `make gate.platform_baseline`
+  - Legacy compatibility:
+    - `make verify.baseline` (same as platform baseline)
+    - `make gate.baseline` (same as platform baseline gate)
+- Business baseline (core+seed install + business usable checks)
+  - `make verify.business_baseline`
+  - `make gate.business_baseline`
+  - Legacy compatibility:
+    - `make verify.p0.flow` (same as business baseline verification)
+
 ## Notes
 - Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.
 - Phase 9.8 warnings baseline can be adjusted via `SC_WARN_ACT_URL_LEGACY_MAX`.
