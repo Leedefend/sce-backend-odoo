@@ -74,6 +74,7 @@ DB_NAME      ?= sc_odoo
 SC_GATE_STRICT ?= 1
 SC_SCENE_OBS_STRICT ?= 0
 SCENE_OBSERVABILITY_PREFLIGHT_STRICT ?= 1
+BASELINE_FREEZE_ENFORCE ?= 1
 SC_WARN_ACT_URL_LEGACY_MAX ?= 3
 DB_CI        ?= sc_test
 DB_USER      ?= odoo
@@ -1215,6 +1216,11 @@ verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verif
 	@echo "[OK] verify.docs.all done"
 
 verify.contract.preflight: guard.prod.forbid
+	@if [ "$(BASELINE_FREEZE_ENFORCE)" = "1" ]; then \
+	  $(MAKE) --no-print-directory verify.baseline.freeze_guard; \
+	else \
+	  echo "[verify.contract.preflight] BASELINE_FREEZE_ENFORCE=0: skip baseline freeze guard"; \
+	fi
 	@$(MAKE) --no-print-directory verify.test_seed_dependency.guard
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
 	@$(MAKE) --no-print-directory verify.docs.all
