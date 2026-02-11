@@ -32,6 +32,8 @@
         "app.open",
         "execute_button",
         "ui.contract",
+        "ui.contract.enhanced",
+        "ui.contract.model.view",
         "meta.describe_model",
         "load_metadata",
         "permission.check",
@@ -42,12 +44,18 @@
         "chatter.timeline",
         "load_contract",
         "load_view",
+        "capability.describe",
+        "scene.health",
+        "scene.packages.installed",
         "my.work.summary",
         "my.work.complete_batch",
         "usage.report",
-        "usage.track"
+        "usage.track",
+        "sample.enhanced",
+        "system.ping.construction"
       ],
-      "warning_untested_limit": 12
+      "require_zero_untested": true,
+      "warning_untested_limit": 6
     }
   }
 }

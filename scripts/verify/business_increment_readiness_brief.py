@@ -27,6 +27,8 @@ def main() -> int:
     payload = json.loads(path.read_text(encoding="utf-8"))
     summary = payload.get("summary") if isinstance(payload, dict) else {}
     profile = str((summary or {}).get("profile") or "")
+    policy = (summary or {}).get("policy") if isinstance(summary, dict) else {}
+    require_zero_untested = bool((policy or {}).get("require_zero_untested"))
     expected_profile = str(args.profile or "").strip()
     if expected_profile and expected_profile != profile:
         print("[FAIL] business increment readiness brief")
@@ -50,6 +52,7 @@ def main() -> int:
     tested_ratio = (tested_intent_count / intent_count) if intent_count > 0 else 0.0
     blockers = [str(x) for x in ((summary or {}).get("blockers") or [])]
     warnings = [str(x) for x in ((summary or {}).get("warnings") or [])]
+    untested_sample = [str(x) for x in ((summary or {}).get("untested_intents_sample") or [])]
 
     print("[OK] business increment readiness brief")
     print(f"- profile: {profile or '-'}")
@@ -69,6 +72,8 @@ def main() -> int:
     print(f"- untested_intent_count: {untested_intent_count}")
     print(f"- tested_intent_count: {tested_intent_count}")
     print(f"- tested_intent_ratio: {tested_ratio:.4f}")
+    print(f"- require_zero_untested: {require_zero_untested}")
+    print(f"- untested_intents_sample: {', '.join(untested_sample) if untested_sample else '-'}")
     print(f"- blockers: {', '.join(blockers) if blockers else '-'}")
     print(f"- warnings: {', '.join(warnings) if warnings else '-'}")
 
