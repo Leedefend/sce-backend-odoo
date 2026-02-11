@@ -46,6 +46,8 @@ def main() -> int:
         str(x) for x in ((summary or {}).get("missing_required_test_ref_intents") or [])
     ]
     untested_intent_count = int((summary or {}).get("untested_intent_count", 0))
+    tested_intent_count = max(intent_count - untested_intent_count, 0)
+    tested_ratio = (tested_intent_count / intent_count) if intent_count > 0 else 0.0
     blockers = [str(x) for x in ((summary or {}).get("blockers") or [])]
     warnings = [str(x) for x in ((summary or {}).get("warnings") or [])]
 
@@ -65,6 +67,8 @@ def main() -> int:
         f"{', '.join(missing_required_test_ref_intents) if missing_required_test_ref_intents else '-'}"
     )
     print(f"- untested_intent_count: {untested_intent_count}")
+    print(f"- tested_intent_count: {tested_intent_count}")
+    print(f"- tested_intent_ratio: {tested_ratio:.4f}")
     print(f"- blockers: {', '.join(blockers) if blockers else '-'}")
     print(f"- warnings: {', '.join(warnings) if warnings else '-'}")
 
