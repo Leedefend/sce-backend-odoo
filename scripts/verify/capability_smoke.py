@@ -63,11 +63,17 @@ def main():
         if not capabilities:
             seed_payload = {
                 "mode": "merge",
+                "upgrade_policy": {
+                    "merge_fields": {
+                        "capability": ["name", "intent", "smoke_test", "is_test", "status", "version"]
+                    }
+                },
                 "capabilities": [
                     {
                         "key": seeded_key,
                         "name": "Capability Smoke Seed",
-                        "intent": "system.ping",
+                        "intent": "system.init",
+                        "smoke_test": True,
                         "is_test": True,
                     }
                 ],
