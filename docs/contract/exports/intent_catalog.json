@@ -387,7 +387,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "scene"
       ],
@@ -428,7 +428,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "app"
       ],
@@ -467,7 +467,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "app",
         "feature"
@@ -864,7 +864,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "attachment_id",
         "id",
@@ -915,7 +915,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "data",
         "mimetype",
@@ -1003,7 +1003,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "model"
       ],
@@ -2576,7 +2576,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "model"
       ],
@@ -6590,7 +6590,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "_debug",
         "capability",
@@ -7526,7 +7526,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "login",
         "secret"
@@ -8655,7 +8655,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "capability_key",
         "event_type",
