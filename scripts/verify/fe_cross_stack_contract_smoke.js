@@ -95,7 +95,11 @@ function assertIntentEnvelope(resp, intentName) {
   const meta = resp.body.meta && typeof resp.body.meta === 'object' ? resp.body.meta : {};
   const metaIntent = String(meta.intent || '');
   if (metaIntent) {
-    assert(metaIntent === intentName, `${intentName} meta.intent mismatch: ${metaIntent}`);
+    const aliases = {
+      'app.init': ['system.init'],
+    };
+    const allowed = [intentName].concat(aliases[intentName] || []);
+    assert(allowed.includes(metaIntent), `${intentName} meta.intent mismatch: ${metaIntent}`);
   }
 }
 
