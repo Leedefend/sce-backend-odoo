@@ -43,6 +43,7 @@
       <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
       <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
       <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
+      <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
     </div>
     <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
@@ -786,6 +787,18 @@ async function copyRetryRequest() {
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = '复制重试请求失败，请检查浏览器剪贴板权限';
+    actionFeedbackError.value = true;
+  }
+}
+
+async function copyBatchTraceId() {
+  if (!lastBatchTraceId.value) return;
+  try {
+    await navigator.clipboard.writeText(lastBatchTraceId.value);
+    actionFeedback.value = 'trace_id 已复制';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '复制 trace_id 失败，请检查浏览器剪贴板权限';
     actionFeedbackError.value = true;
   }
 }
