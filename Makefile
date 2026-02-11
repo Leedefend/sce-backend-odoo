@@ -1160,7 +1160,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.baseline.freeze_guard verify.business.increment.readiness verify.business.increment.readiness.strict verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.baseline.freeze_guard verify.business.increment.preflight verify.business.increment.preflight.strict verify.business.increment.readiness verify.business.increment.readiness.strict verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1207,6 +1207,18 @@ verify.business.increment.readiness: guard.prod.forbid
 
 verify.business.increment.readiness.strict: guard.prod.forbid
 	@python3 scripts/verify/business_increment_readiness.py --strict
+
+verify.business.increment.preflight: guard.prod.forbid
+	@$(MAKE) --no-print-directory contract.catalog.export
+	@$(MAKE) --no-print-directory verify.scene.contract.shape
+	@$(MAKE) --no-print-directory audit.intent.surface
+	@$(MAKE) --no-print-directory verify.business.increment.readiness
+	@echo "[OK] verify.business.increment.preflight done"
+
+verify.business.increment.preflight.strict: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.business.increment.preflight
+	@$(MAKE) --no-print-directory verify.business.increment.readiness.strict
+	@echo "[OK] verify.business.increment.preflight.strict done"
 
 verify.docs.inventory: guard.prod.forbid
 	@python3 scripts/verify/docs_inventory.py
