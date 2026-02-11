@@ -26,6 +26,7 @@
 
 ## Scene Observability Strict Mode
 - Default smoke targets remain compatibility-friendly and may skip when governance/audit models are unavailable:
+  - `make verify.portal.scene_observability_preflight.refresh.container DB_NAME=<name>`
   - `make verify.portal.scene_observability_preflight_smoke.container`
   - `make verify.portal.scene_observability_preflight.latest`
   - `make verify.portal.scene_governance_action_smoke.container`
