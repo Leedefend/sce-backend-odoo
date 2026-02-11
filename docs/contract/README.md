@@ -67,6 +67,8 @@ Catalog root now also includes renderability summary:
 - `renderability.interaction_ready_scene_count`
 - `renderability.renderable_ratio`
 - `renderability.interaction_ready_ratio`
+- `renderability.fully_renderable`
+- `renderability.fully_interaction_ready`
 
 ## Scene Shape Guard
 
