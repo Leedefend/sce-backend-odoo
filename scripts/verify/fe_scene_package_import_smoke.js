@@ -162,9 +162,7 @@ async function main() {
     }
   }
   writeJson(path.join(outDir, 'governance_log.log'), govResp);
-  if (govResp.status >= 400 || !govResp.body.ok) {
-    throw new Error(`governance log query failed: ${govResp.status}`);
-  }
+  assertIntentEnvelope(govResp, 'api.data');
   const rows = ((((govResp.body || {}).data) || {}).records) || [];
   if (!Array.isArray(rows) || rows.length < 1) {
     throw new Error('missing package import governance log');

@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -85,9 +86,11 @@ async function main() {
       'X-Bootstrap-Secret': BOOTSTRAP_SECRET,
       'X-Anonymous-Intent': '1',
     });
-    if (bootstrapResp.status >= 400 || !bootstrapResp.body.ok) {
+    try {
+      assertIntentEnvelope(bootstrapResp, 'bootstrap', { allowMetaIntentAliases: ['session.bootstrap'] });
+    } catch (_err) {
       writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
-      throw new Error(`bootstrap failed: status=${bootstrapResp.status}`);
+      throw new Error(`bootstrap failed: status=${bootstrapResp.status || 0}`);
     }
     token = (bootstrapResp.body.data || {}).token || '';
   }
@@ -95,9 +98,11 @@ async function main() {
     log(`login: ${LOGIN} db=${DB_NAME}`);
     const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
     const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-    if (loginResp.status >= 400 || !loginResp.body.ok) {
+    try {
+      assertIntentEnvelope(loginResp, 'login');
+    } catch (_err) {
       writeJson(path.join(outDir, 'login.log'), loginResp);
-      throw new Error(`login failed: status=${loginResp.status}`);
+      throw new Error(`login failed: status=${loginResp.status || 0}`);
     }
     token = (loginResp.body.data || {}).token || '';
     if (!token) {
@@ -117,9 +122,7 @@ async function main() {
   };
   const baseResp = await requestJson(intentUrl, basePayload, authHeader);
   writeJson(path.join(outDir, 'base.log'), baseResp);
-  if (baseResp.status >= 400 || !baseResp.body.ok) {
-    throw new Error(`base list failed: status=${baseResp.status}`);
-  }
+  assertIntentEnvelope(baseResp, 'api.data');
   const baseRecords = (baseResp.body.data || {}).records || [];
   if (!baseRecords.length || !baseRecords[0].name) {
     throw new Error('base list missing records');
@@ -134,9 +137,7 @@ async function main() {
   };
   const searchResp = await requestJson(intentUrl, searchPayload, authHeader);
   writeJson(path.join(outDir, 'search.log'), searchResp);
-  if (searchResp.status >= 400 || !searchResp.body.ok) {
-    throw new Error(`search list failed: status=${searchResp.status}`);
-  }
+  assertIntentEnvelope(searchResp, 'api.data');
   const searchRecords = (searchResp.body.data || {}).records || [];
 
   summary.push(`term: ${term}`);
