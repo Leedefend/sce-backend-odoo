@@ -15,6 +15,12 @@ USER_USER=${USER_USER:-demo_role_project_user}
 USER_PWD=${USER_PWD:-demo}
 MANAGER_USER=${MANAGER_USER:-demo_role_project_manager}
 MANAGER_PWD=${MANAGER_PWD:-demo}
+OWNER_USER=${OWNER_USER:-demo_role_owner}
+OWNER_PWD=${OWNER_PWD:-demo}
+FINANCE_USER=${FINANCE_USER:-demo_role_finance}
+FINANCE_PWD=${FINANCE_PWD:-demo}
+EXECUTIVE_USER=${EXECUTIVE_USER:-demo_role_executive}
+EXECUTIVE_PWD=${EXECUTIVE_PWD:-demo}
 ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PWD=${ADMIN_PWD:-admin}
 
@@ -114,6 +120,12 @@ USER_USER = os.environ.get("USER_USER", "demo_role_project_user")
 USER_PWD = os.environ.get("USER_PWD", "demo")
 MANAGER_USER = os.environ.get("MANAGER_USER", "demo_role_project_manager")
 MANAGER_PWD = os.environ.get("MANAGER_PWD", "demo")
+OWNER_USER = os.environ.get("OWNER_USER", "demo_role_owner")
+OWNER_PWD = os.environ.get("OWNER_PWD", "demo")
+FINANCE_USER = os.environ.get("FINANCE_USER", "demo_role_finance")
+FINANCE_PWD = os.environ.get("FINANCE_PWD", "demo")
+EXECUTIVE_USER = os.environ.get("EXECUTIVE_USER", "demo_role_executive")
+EXECUTIVE_PWD = os.environ.get("EXECUTIVE_PWD", "demo")
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PWD = os.environ.get("ADMIN_PWD", "admin")
 
@@ -149,6 +161,9 @@ jsonrpc("common", "version", [])
 uid_read = login(READ_USER, READ_PWD)
 uid_user = login(USER_USER, USER_PWD)
 uid_manager = login(MANAGER_USER, MANAGER_PWD)
+uid_owner = login(OWNER_USER, OWNER_PWD)
+uid_finance = login(FINANCE_USER, FINANCE_PWD)
+uid_executive = login(EXECUTIVE_USER, EXECUTIVE_PWD)
 admin_uid = login(ADMIN_USER, ADMIN_PWD)
 if not uid_read:
     raise RuntimeError("login failed for %s" % READ_USER)
@@ -156,8 +171,19 @@ if not uid_user:
     raise RuntimeError("login failed for %s" % USER_USER)
 if not uid_manager:
     raise RuntimeError("login failed for %s" % MANAGER_USER)
+if not uid_owner:
+    raise RuntimeError("login failed for %s" % OWNER_USER)
+if not uid_finance:
+    raise RuntimeError("login failed for %s" % FINANCE_USER)
+if not uid_executive:
+    raise RuntimeError("login failed for %s" % EXECUTIVE_USER)
 if not admin_uid:
     raise RuntimeError("login failed for %s" % ADMIN_USER)
+
+step("role surface users: baseline reads")
+exec_kw(uid_owner, OWNER_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
+exec_kw(uid_finance, FINANCE_PWD, "payment.request", "search_read", [[]], {"limit": 1, "fields": ["id", "name", "state"]})
+exec_kw(uid_executive, EXECUTIVE_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
 
 step("read role: search_read project")
 exec_kw(uid_read, READ_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
