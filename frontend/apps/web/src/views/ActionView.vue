@@ -86,6 +86,22 @@ import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
+import type { NavNode } from '@sc/schema';
+
+type NavNodeWithScene = NavNode & {
+  scene_key?: string;
+  sceneKey?: string;
+};
+
+function resolveSceneCode(scene: Scene): string {
+  const raw = scene as Scene & { code?: string };
+  return typeof raw.code === 'string' ? raw.code : '';
+}
+
+function resolveNodeSceneKey(node: NavNode): string {
+  const raw = node as NavNodeWithScene;
+  return raw.scene_key || raw.sceneKey || node.meta?.scene_key || '';
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -127,6 +143,44 @@ const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
 const { error, clearError, setError } = useStatus();
+type ContractColumnSchema = { name?: string };
+type ContractViewBlock = {
+  columns?: string[];
+  columnsSchema?: ContractColumnSchema[];
+  columns_schema?: ContractColumnSchema[];
+  fields?: string[];
+  model?: string;
+  order?: string;
+};
+type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
+  views?: {
+    tree?: ContractViewBlock;
+    list?: ContractViewBlock;
+    kanban?: ContractViewBlock;
+    form?: ContractViewBlock;
+  };
+  ui_contract?: {
+    views?: {
+      tree?: ContractViewBlock;
+      list?: ContractViewBlock;
+      kanban?: ContractViewBlock;
+    };
+    columns?: string[];
+    columnsSchema?: ContractColumnSchema[];
+  };
+  fields?: Record<string, unknown>;
+  model?: string;
+  head?: { model?: string };
+  data?: {
+    type?: string;
+    url?: string;
+    target?: string;
+  };
+};
+type ActionMetaLoose = {
+  order?: string;
+  url?: string;
+};
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
@@ -163,11 +217,11 @@ const sceneKey = computed(() => {
   const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
   if (queryKey) return String(queryKey);
   const node = findMenuNode(session.menuTree, menuId.value);
-  return (node?.scene_key || node?.meta?.scene_key || '') as string;
+  return node ? resolveNodeSceneKey(node) : '';
 });
 const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
-  return session.scenes.find((item: Scene) => item.key === sceneKey.value || (item as any)?.code === sceneKey.value) || null;
+  return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
 });
 const listProfile = computed<SceneListProfile | null>(() => (scene.value?.list_profile as SceneListProfile) || null);
 const hudEntries = computed(() => [
@@ -241,11 +295,11 @@ function resolveRequestedFields(contractFields: string[], profile: SceneListProf
   return uniqueFields([...profileColumns, ...secondary, ...contractFields]);
 }
 
-function findMenuNode(nodes: Array<Record<string, any>>, menuId?: number) {
+function findMenuNode(nodes: NavNode[], menuId?: number): NavNode | null {
   if (!menuId) {
     return null;
   }
-  const walk = (items: Array<Record<string, any>>): Record<string, any> | null => {
+  const walk = (items: NavNode[]): NavNode | null => {
     for (const node of items) {
       if (node.menu_id === menuId || node.id === menuId) {
         return node;
@@ -330,7 +384,8 @@ function handleBatchDetailAction(actionRaw: string) {
 }
 
 function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
-  const directViews = (contract as any)?.views || (contract as any)?.ui_contract?.views;
+  const typed = contract as ActionContractLoose;
+  const directViews = typed.views || typed.ui_contract?.views;
   if (directViews) {
     const treeBlock = directViews.tree || directViews.list;
     const treeColumns = treeBlock?.columns;
@@ -339,17 +394,17 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
     }
     const treeSchema = treeBlock?.columnsSchema || treeBlock?.columns_schema;
     if (Array.isArray(treeSchema) && treeSchema.length) {
-      return treeSchema.map((col: { name?: string }) => col.name).filter(Boolean);
+      return treeSchema.map((col) => col.name).filter(Boolean) as string[];
     }
   }
 
-  const columns = (contract as any)?.ui_contract?.columns;
+  const columns = typed.ui_contract?.columns;
   if (Array.isArray(columns) && columns.length) {
     return columns;
   }
-  const schema = (contract as any)?.ui_contract?.columnsSchema;
+  const schema = typed.ui_contract?.columnsSchema;
   if (Array.isArray(schema) && schema.length) {
-    return schema.map((col: { name?: string }) => col.name).filter(Boolean);
+    return schema.map((col) => col.name).filter(Boolean) as string[];
   }
   const rawFields = contract?.ui_contract_raw?.fields;
   if (rawFields && typeof rawFields === 'object') {
@@ -359,14 +414,15 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
 }
 
 function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContract>>) {
-  const directViews = (contract as any)?.views || (contract as any)?.ui_contract?.views;
+  const typed = contract as ActionContractLoose;
+  const directViews = typed.views || typed.ui_contract?.views;
   if (directViews) {
     const kanbanBlock = directViews.kanban;
     if (Array.isArray(kanbanBlock?.fields) && kanbanBlock.fields.length) {
       return kanbanBlock.fields;
     }
   }
-  const fieldsMap = (contract as any)?.fields || (contract as any)?.ui_contract_raw?.fields;
+  const fieldsMap = typed.fields || typed.ui_contract_raw?.fields;
   if (fieldsMap && typeof fieldsMap === 'object') {
     const preferred = ['display_name', 'name', 'stage_id', 'user_id', 'partner_id', 'write_date', 'create_date'];
     const available = Object.keys(fieldsMap);
@@ -380,15 +436,16 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
 }
 
 function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
-  const direct = (contract as any)?.model;
+  const typed = contract as ActionContractLoose;
+  const direct = typed.model;
   if (typeof direct === 'string' && direct.trim()) {
     return direct.trim();
   }
-  const headModel = (contract as any)?.head?.model;
+  const headModel = typed.head?.model;
   if (typeof headModel === 'string' && headModel.trim()) {
     return headModel.trim();
   }
-  const viewModel = (contract as any)?.views?.tree?.model || (contract as any)?.views?.form?.model || (contract as any)?.views?.kanban?.model;
+  const viewModel = typed.views?.tree?.model || typed.views?.form?.model || typed.views?.kanban?.model;
   if (typeof viewModel === 'string' && viewModel.trim()) {
     return viewModel.trim();
   }
@@ -412,7 +469,8 @@ function isUrlAction(meta: unknown, contract: unknown) {
   if (actionType.includes('act_url') || actionType.includes('url')) {
     return true;
   }
-  const contractType = String((contract as any)?.data?.type || '').toLowerCase();
+  const typed = contract as ActionContractLoose;
+  const contractType = String(typed.data?.type || '').toLowerCase();
   return contractType === 'url_redirect';
 }
 
@@ -484,11 +542,13 @@ function buildPortalBridgeUrl(url: string) {
 }
 
 function resolveActionUrl(meta: unknown, contract: unknown) {
-  const metaUrl = String((meta as any)?.url || '').trim();
+  const metaTyped = (meta as { url?: string }) || {};
+  const metaUrl = String(metaTyped.url || '').trim();
   if (metaUrl) {
     return metaUrl;
   }
-  const contractUrl = String((contract as any)?.data?.url || '').trim();
+  const typed = contract as ActionContractLoose;
+  const contractUrl = String(typed.data?.url || '').trim();
   if (contractUrl) {
     return contractUrl;
   }
@@ -499,7 +559,8 @@ async function redirectUrlAction(meta: unknown, contract: unknown) {
   const url = resolveActionUrl(meta, contract);
   if (!url) {
     const actionType = getActionType(meta);
-    const contractType = String((contract as any)?.data?.type || '').toLowerCase();
+    const typed = contract as ActionContractLoose;
+    const contractType = String(typed.data?.type || '').toLowerCase();
     await router.replace({
       name: 'workbench',
       query: {
@@ -513,7 +574,9 @@ async function redirectUrlAction(meta: unknown, contract: unknown) {
     });
     return true;
   }
-  const target = normalizeUrlTarget((meta as any)?.target || (contract as any)?.data?.target);
+  const metaTyped = (meta as { target?: string }) || {};
+  const typed = contract as ActionContractLoose;
+  const target = normalizeUrlTarget(metaTyped.target || typed.data?.target);
   if (target === 'self' && url.startsWith('/')) {
     if (isShellRoute(url)) {
       await router.replace(url);
@@ -596,8 +659,10 @@ async function load() {
       return;
     }
     if (!sortValue.value) {
-      const viewOrder = (contract as any)?.views?.tree?.order || (contract as any)?.ui_contract?.views?.tree?.order;
-      const order = scene.value?.default_sort || viewOrder || (meta as any)?.order;
+      const typedContract = contract as ActionContractLoose;
+      const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
+      const metaOrder = (meta as ActionMetaLoose | undefined)?.order;
+      const order = scene.value?.default_sort || viewOrder || metaOrder;
       if (typeof order === 'string' && order.trim()) {
         sortValue.value = order;
       } else {
@@ -620,7 +685,7 @@ async function load() {
     const contractModel = resolveModelFromContract(contract);
     const resolvedModel = meta?.model ?? model.value ?? contractModel;
     if (meta && !meta.model && resolvedModel) {
-      session.setActionMeta({ ...(meta as any), model: resolvedModel });
+      session.setActionMeta({ ...meta, model: resolvedModel });
     }
     if (!resolvedModel) {
       if (isClientAction(meta)) {
@@ -636,9 +701,10 @@ async function load() {
       }
       if (!isWindowAction(meta)) {
         const actionType = getActionType(meta);
-        const contractType = String((contract as any)?.data?.type || '').toLowerCase();
-        const contractUrl = String((contract as any)?.data?.url || '');
-        const metaUrl = String((meta as any)?.url || '');
+        const typedContract = contract as ActionContractLoose;
+        const contractType = String(typedContract.data?.type || '').toLowerCase();
+        const contractUrl = String(typedContract.data?.url || '');
+        const metaUrl = String((meta as ActionMetaLoose | undefined)?.url || '');
         await router.replace({
           name: 'workbench',
           query: {
@@ -661,8 +727,8 @@ async function load() {
     const contractColumns = extractColumnsFromContract(contract);
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
-    hasActiveField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.active);
-    hasAssigneeField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.user_id);
+    hasActiveField.value = Boolean(contract.ui_contract_raw?.fields?.active);
+    hasAssigneeField.value = Boolean(contract.ui_contract_raw?.fields?.user_id);
     await loadAssigneeOptions();
     const requestedFields =
       viewMode.value === 'kanban'
