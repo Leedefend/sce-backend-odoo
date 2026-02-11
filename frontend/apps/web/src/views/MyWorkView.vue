@@ -39,11 +39,14 @@
       <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
       <button class="link-btn" @click="selectAllFailedItems">选中全部失败项</button>
       <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
+      <button class="link-btn" @click="selectNonRetryableFailedItems">仅选不可重试项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
       <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
       <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
       <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
       <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
+      <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">导出重试 JSON</button>
+      <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">主列表定位失败</button>
       <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
     </div>
@@ -51,6 +54,19 @@
       <p class="retry-title">失败明细</p>
       <details v-if="retryRequestParams" class="retry-request-preview">
         <summary>重试请求预览</summary>
+        <div class="retry-note-presets">
+          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：网络抖动后重放')">网络抖动</button>
+          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：并发冲突后重放')">并发冲突</button>
+          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：依赖状态已满足')">依赖满足</button>
+        </div>
+        <label class="retry-note-editor">
+          重试备注
+          <textarea
+            v-model="retryNoteDraft"
+            rows="2"
+            placeholder="可选：补充本次重试说明"
+          />
+        </label>
         <pre>{{ retryRequestJson }}</pre>
       </details>
       <p v-if="retryRetryableSummary" class="retry-summary">
@@ -67,6 +83,12 @@
           {{ retryFailedExpanded ? '收起' : '展开全部' }}
         </button>
       </p>
+      <input
+        v-model.trim="retrySearchText"
+        class="search-input retry-search"
+        type="search"
+        placeholder="筛选失败明细：ID / 原因码 / 消息"
+      />
       <div class="retry-toggle">
         <button
           type="button"
@@ -99,6 +121,13 @@
           @click="toggleRetryGroupByReason"
         >
           {{ retryGroupByReason ? '平铺显示' : '按原因分组' }}
+        </button>
+        <button
+          type="button"
+          class="reason-chip"
+          @click="resetRetryPanelState"
+        >
+          重置面板
         </button>
       </div>
       <p v-if="retryReasonSummary.length" class="retry-summary">
@@ -164,6 +193,7 @@
           >
             {{ failedSuggestedActionLabel(item) }}
           </button>
+          <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">复制单条</button>
           <button
             v-if="failedItemRecord(item.id)"
             class="link-btn mini-btn"
@@ -190,6 +220,7 @@
               >
                 {{ failedSuggestedActionLabel(item) }}
               </button>
+              <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">复制单条</button>
             </li>
           </ul>
         </div>
@@ -375,6 +406,7 @@ const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]
 const retryFailedGroups = ref<Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>>([]);
 const retryRetryableSummary = ref<{ retryable: number; non_retryable: number } | null>(null);
 const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: string; request_id?: string } | null>(null);
+const retryNoteDraft = ref('');
 const todoRemaining = ref<number | null>(null);
 const lastBatchExecutionMode = ref<string>('');
 const lastBatchReplay = ref(false);
@@ -385,6 +417,7 @@ const retryFilterMode = ref<'all' | 'retryable' | 'non_retryable'>('all');
 const retryFailedExpanded = ref(false);
 const retryPreviewLimit = 10;
 const retryGroupByReason = ref(false);
+const retrySearchText = ref('');
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const searchText = ref('');
@@ -400,6 +433,7 @@ const reasonFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const summaryStatus = ref<{ state: string; reason_code: string; message: string; hint: string } | null>(null);
 const myWorkFilterStorageKey = 'sc.mywork.filters.v1';
 const myWorkPresetStorageKey = 'sc.mywork.filter_preset.v1';
+const myWorkRetryPanelStorageKey = 'sc.mywork.retry_panel.v1';
 const hasFilterPreset = ref(false);
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
@@ -448,11 +482,19 @@ const reasonOptions = computed(() => {
   return Array.from(set).sort();
 });
 const retryFilteredItems = computed(() => {
-  if (retryFilterMode.value === 'all') return retryFailedItems.value;
-  if (retryFilterMode.value === 'retryable') {
-    return retryFailedItems.value.filter((item) => Boolean(item.retryable));
-  }
-  return retryFailedItems.value.filter((item) => item.retryable === false);
+  const byRetryable = (() => {
+    if (retryFilterMode.value === 'all') return retryFailedItems.value;
+    if (retryFilterMode.value === 'retryable') {
+      return retryFailedItems.value.filter((item) => Boolean(item.retryable));
+    }
+    return retryFailedItems.value.filter((item) => item.retryable === false);
+  })();
+  const keyword = retrySearchText.value.trim().toLowerCase();
+  if (!keyword) return byRetryable;
+  return byRetryable.filter((item) => {
+    const hay = `${item.id} ${item.reason_code || ''} ${item.message || ''}`.toLowerCase();
+    return hay.includes(keyword);
+  });
 });
 const visibleRetryFailedItems = computed(() => {
   if (retryFailedExpanded.value) return retryFilteredItems.value;
@@ -461,7 +503,14 @@ const visibleRetryFailedItems = computed(() => {
 const retryRequestJson = computed(() => {
   if (!retryRequestParams.value) return '';
   try {
-    return JSON.stringify(retryRequestParams.value, null, 2);
+    return JSON.stringify(
+      {
+        ...retryRequestParams.value,
+        note: retryNoteDraft.value || retryRequestParams.value.note || '',
+      },
+      null,
+      2,
+    );
   } catch {
     return '';
   }
@@ -686,6 +735,7 @@ function clearRetryFailed() {
   retryFailedGroups.value = [];
   retryRetryableSummary.value = null;
   retryRequestParams.value = null;
+  retryNoteDraft.value = '';
   todoRemaining.value = null;
   lastBatchExecutionMode.value = '';
   lastBatchReplay.value = false;
@@ -694,6 +744,7 @@ function clearRetryFailed() {
   lastReplayAgeMs.value = 0;
   retryFilterMode.value = 'all';
   retryFailedExpanded.value = false;
+  retrySearchText.value = '';
 }
 
 function buildBatchRequestId(prefix: string) {
@@ -709,6 +760,18 @@ function setRetryFilterMode(mode: 'all' | 'retryable' | 'non_retryable') {
 
 function toggleRetryGroupByReason() {
   retryGroupByReason.value = !retryGroupByReason.value;
+}
+
+function resetRetryPanelState() {
+  retryFilterMode.value = 'all';
+  retryGroupByReason.value = false;
+  retrySearchText.value = '';
+  retryFailedExpanded.value = false;
+  try {
+    window.localStorage.removeItem(myWorkRetryPanelStorageKey);
+  } catch {
+    // Ignore remove errors in private mode.
+  }
 }
 
 function toggleRetryFailedExpanded() {
@@ -757,6 +820,23 @@ function selectRetryableFailedItems() {
   retryableIds.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
   actionFeedback.value = `已选中 ${retryableIds.length} 条可重试失败项`;
+  actionFeedbackError.value = false;
+}
+
+function selectNonRetryableFailedItems() {
+  const ids = retryFailedItems.value
+    .filter((item) => item.retryable === false)
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (!ids.length) {
+    actionFeedback.value = '当前没有不可重试失败项';
+    actionFeedbackError.value = true;
+    return;
+  }
+  const merged = new Set(todoSelectionIds.value);
+  ids.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+  actionFeedback.value = `已选中 ${ids.length} 条不可重试失败项`;
   actionFeedbackError.value = false;
 }
 
@@ -855,6 +935,19 @@ async function copyRetrySummary() {
   }
 }
 
+async function copyFailedItemLine(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
+  const line = formatFailedItemText(item);
+  if (!line) return;
+  try {
+    await navigator.clipboard.writeText(line);
+    actionFeedback.value = `失败项 #${item.id} 已复制`;
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = `复制失败项 #${item.id} 失败`;
+    actionFeedbackError.value = true;
+  }
+}
+
 async function copyVisibleRetrySummary() {
   const summaryText = buildVisibleRetrySummaryText();
   if (!summaryText) return;
@@ -868,6 +961,17 @@ async function copyVisibleRetrySummary() {
   }
 }
 
+function focusFailedInMainList() {
+  if (!retryFailedItems.value.length) return;
+  activeSection.value = 'todo';
+  sourceFilter.value = 'mail.activity';
+  reasonFilter.value = retryReasonSummary.value[0]?.reason_code || 'ALL';
+  page.value = 1;
+  actionFeedback.value = '已定位到主列表失败待办视图';
+  actionFeedbackError.value = false;
+  void load();
+}
+
 async function copyRetryRequest() {
   const payload = retryRequestParams.value;
   if (!payload) return;
@@ -877,6 +981,30 @@ async function copyRetryRequest() {
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = '复制重试请求失败，请检查浏览器剪贴板权限';
+    actionFeedbackError.value = true;
+  }
+}
+
+function exportRetryRequestJson() {
+  if (!retryRequestParams.value) return;
+  try {
+    const payload = {
+      ...retryRequestParams.value,
+      note: retryNoteDraft.value || retryRequestParams.value.note || '',
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = `my-work-retry-request-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(href);
+    actionFeedback.value = '重试请求 JSON 已导出';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '导出重试请求 JSON 失败';
     actionFeedbackError.value = true;
   }
 }
@@ -997,7 +1125,7 @@ async function retryFailedTodos() {
   if (!candidateRetryIds.length) return;
   await runRetryBatch(
     candidateRetryIds,
-    retryRequestParams.value?.note || 'Retry failed items from my-work.',
+    resolveRetryNote('Retry failed items from my-work.'),
     retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
     retryRequestParams.value?.source || 'mail.activity',
     '重试',
@@ -1016,11 +1144,23 @@ async function retryByReasonGroup(reasonCode: string) {
   }
   await runRetryBatch(
     ids,
-    `Retry failed group ${reasonCode} from my-work.`,
+    resolveRetryNote(`Retry failed group ${reasonCode} from my-work.`),
     buildBatchRequestId('mw_retry_group'),
     retryRequestParams.value?.source || 'mail.activity',
     `重试(${reasonCode})`,
   );
+}
+
+function resolveRetryNote(defaultNote: string) {
+  const draft = retryNoteDraft.value.trim();
+  if (draft) return draft;
+  const templateNote = String(retryRequestParams.value?.note || '').trim();
+  if (templateNote) return templateNote;
+  return defaultNote;
+}
+
+function applyRetryNotePreset(note: string) {
+  retryNoteDraft.value = note;
 }
 
 function selectRetryableByReasonGroup(reasonCode: string) {
@@ -1129,6 +1269,7 @@ function applyBatchFeedback(
   retryFailedGroups.value = (result.failed_groups || []).slice(0, 5);
   retryRetryableSummary.value = result.failed_retryable_summary || null;
   retryRequestParams.value = result.retry_request?.params || null;
+  retryNoteDraft.value = String(result.retry_request?.params?.note || '');
 
   if (!result.success) {
     const failedPreview = retryFailedItems.value
@@ -1137,14 +1278,16 @@ function applyBatchFeedback(
       .join('；');
     actionFeedback.value = `${actionLabel}部分失败：${result.done_count} 成功，${result.failed_count} 失败${
       failedPreview ? `（${failedPreview}）` : ''
-    }${typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''}`;
+    }${typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''}${
+      lastBatchReplay.value ? `，命中重放#${lastReplayAuditId.value || 0}` : ''
+    }`;
     actionFeedbackError.value = true;
     return;
   }
 
   actionFeedback.value = `${actionLabel}成功：${result.done_count} 条${
     typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''
-  }`;
+  }${lastBatchReplay.value ? `，命中重放#${lastReplayAuditId.value || 0}` : ''}`;
   actionFeedbackError.value = false;
 }
 
@@ -1173,8 +1316,32 @@ function restoreFilters() {
   }
 }
 
+function restoreRetryPanelState() {
+  try {
+    const raw = window.localStorage.getItem(myWorkRetryPanelStorageKey);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as {
+      retryFilterMode?: 'all' | 'retryable' | 'non_retryable';
+      retryGroupByReason?: boolean;
+      retrySearchText?: string;
+    };
+    if (parsed.retryFilterMode === 'all' || parsed.retryFilterMode === 'retryable' || parsed.retryFilterMode === 'non_retryable') {
+      retryFilterMode.value = parsed.retryFilterMode;
+    }
+    if (typeof parsed.retryGroupByReason === 'boolean') {
+      retryGroupByReason.value = parsed.retryGroupByReason;
+    }
+    if (typeof parsed.retrySearchText === 'string') {
+      retrySearchText.value = parsed.retrySearchText;
+    }
+  } catch {
+    // Ignore broken local cache.
+  }
+}
+
 onMounted(() => {
   restoreFilters();
+  restoreRetryPanelState();
   hasFilterPreset.value = Boolean(window.localStorage.getItem(myWorkPresetStorageKey));
   void load();
 });
@@ -1198,6 +1365,21 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
         sortBy: sortBy.value,
         sortDir: sortDir.value,
         pageSize: pageSize.value,
+      }),
+    );
+  } catch {
+    // Ignore persist errors in private mode.
+  }
+});
+
+watch([retryFilterMode, retryGroupByReason, retrySearchText], () => {
+  try {
+    window.localStorage.setItem(
+      myWorkRetryPanelStorageKey,
+      JSON.stringify({
+        retryFilterMode: retryFilterMode.value,
+        retryGroupByReason: retryGroupByReason.value,
+        retrySearchText: retrySearchText.value,
       }),
     );
   } catch {
@@ -1406,6 +1588,30 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   overflow-x: auto;
 }
 
+.retry-note-editor {
+  margin-top: 6px;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.retry-note-presets {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.retry-note-editor textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  background: #fff;
+}
+
 .retry-details ul {
   margin: 8px 0 0;
   padding-left: 20px;
@@ -1440,6 +1646,11 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   margin-top: 8px;
   display: flex;
   gap: 8px;
+}
+
+.retry-search {
+  margin-top: 8px;
+  width: 100%;
 }
 
 .retry-summary {
