@@ -75,6 +75,12 @@
           {{ retryFailedExpanded ? '收起' : '展开全部' }}
         </button>
       </p>
+      <input
+        v-model.trim="retrySearchText"
+        class="search-input retry-search"
+        type="search"
+        placeholder="筛选失败明细：ID / 原因码 / 消息"
+      />
       <div class="retry-toggle">
         <button
           type="button"
@@ -394,6 +400,7 @@ const retryFilterMode = ref<'all' | 'retryable' | 'non_retryable'>('all');
 const retryFailedExpanded = ref(false);
 const retryPreviewLimit = 10;
 const retryGroupByReason = ref(false);
+const retrySearchText = ref('');
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const searchText = ref('');
@@ -457,11 +464,19 @@ const reasonOptions = computed(() => {
   return Array.from(set).sort();
 });
 const retryFilteredItems = computed(() => {
-  if (retryFilterMode.value === 'all') return retryFailedItems.value;
-  if (retryFilterMode.value === 'retryable') {
-    return retryFailedItems.value.filter((item) => Boolean(item.retryable));
-  }
-  return retryFailedItems.value.filter((item) => item.retryable === false);
+  const byRetryable = (() => {
+    if (retryFilterMode.value === 'all') return retryFailedItems.value;
+    if (retryFilterMode.value === 'retryable') {
+      return retryFailedItems.value.filter((item) => Boolean(item.retryable));
+    }
+    return retryFailedItems.value.filter((item) => item.retryable === false);
+  })();
+  const keyword = retrySearchText.value.trim().toLowerCase();
+  if (!keyword) return byRetryable;
+  return byRetryable.filter((item) => {
+    const hay = `${item.id} ${item.reason_code || ''} ${item.message || ''}`.toLowerCase();
+    return hay.includes(keyword);
+  });
 });
 const visibleRetryFailedItems = computed(() => {
   if (retryFailedExpanded.value) return retryFilteredItems.value;
@@ -711,6 +726,7 @@ function clearRetryFailed() {
   lastReplayAgeMs.value = 0;
   retryFilterMode.value = 'all';
   retryFailedExpanded.value = false;
+  retrySearchText.value = '';
 }
 
 function buildBatchRequestId(prefix: string) {
@@ -1483,6 +1499,11 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   margin-top: 8px;
   display: flex;
   gap: 8px;
+}
+
+.retry-search {
+  margin-top: 8px;
+  width: 100%;
 }
 
 .retry-summary {
