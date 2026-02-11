@@ -18,6 +18,13 @@ REQUIRED_HIGH_VALUE_INTENTS = [
     "app.open",
     "execute_button",
     "ui.contract",
+    "ui.contract.enhanced",
+    "ui.contract.model.view",
+    "capability.describe",
+    "scene.health",
+    "scene.packages.installed",
+    "sample.enhanced",
+    "system.ping.construction",
     "meta.describe_model",
     "load_metadata",
     "permission.check",
@@ -72,6 +79,11 @@ def _required_test_ref_intents() -> list[str]:
 
 @tagged("post_install", "-at_install", "sc_gate", "intent_surface_coverage_gate")
 class TestIntentSurfaceCoverageGate(TransactionCase):
+    def test_required_intent_list_is_unique(self):
+        required = _required_test_ref_intents()
+        self.assertTrue(required, "required intent list must not be empty")
+        self.assertEqual(len(required), len(set(required)), "required intent list contains duplicates")
+
     def test_high_value_intents_are_declared(self):
         addons_root = _addons_root()
         declared = _collect_declared_intents(addons_root)

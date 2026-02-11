@@ -1207,9 +1207,15 @@ verify.baseline.freeze_guard: guard.prod.forbid
 	@python3 scripts/verify/baseline_freeze_guard.py
 
 verify.business.increment.readiness: guard.prod.forbid
+	@$(MAKE) --no-print-directory contract.catalog.export
+	@$(MAKE) --no-print-directory verify.scene.contract.shape
+	@$(MAKE) --no-print-directory audit.intent.surface
 	@python3 scripts/verify/business_increment_readiness.py --profile $(BUSINESS_INCREMENT_PROFILE)
 
 verify.business.increment.readiness.strict: guard.prod.forbid
+	@$(MAKE) --no-print-directory contract.catalog.export
+	@$(MAKE) --no-print-directory verify.scene.contract.shape
+	@$(MAKE) --no-print-directory audit.intent.surface
 	@python3 scripts/verify/business_increment_readiness.py --profile strict --strict
 
 verify.business.increment.readiness.brief: guard.prod.forbid
