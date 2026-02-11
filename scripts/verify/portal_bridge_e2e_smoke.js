@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -102,7 +103,7 @@ async function main() {
     { 'X-Anonymous-Intent': '1', 'X-Trace-Id': traceId }
   );
   writeJson(path.join(outDir, 'login.log'), loginResp);
-  if (loginResp.status >= 400 || !loginResp.body.ok) throw new Error(`login failed: ${loginResp.status}`);
+  assertIntentEnvelope(loginResp, 'login');
   const token = (((loginResp.body || {}).data) || {}).token || '';
   if (!token) throw new Error('login token missing');
   summary.push(`jwt: ok`);
@@ -114,7 +115,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  if (initResp.status >= 400 || !initResp.body.ok) throw new Error(`app.init failed: ${initResp.status}`);
+  assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
   summary.push(`app.init: ok`);
 
   const bridge = new URL('/portal/bridge', BASE_URL);

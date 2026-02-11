@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -71,14 +72,14 @@ async function main() {
 
   const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
   const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-  if (loginResp.status >= 400 || !loginResp.body.ok) throw new Error(`login failed: ${loginResp.status}`);
+  assertIntentEnvelope(loginResp, 'login');
   const token = (loginResp.body.data || {}).token || '';
   if (!token) throw new Error('login token missing');
 
   const authHeader = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME };
   const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
-  if (initResp.status >= 400 || !initResp.body.ok) throw new Error(`app.init failed: ${initResp.status}`);
+  assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
 
   const diag = (initResp.body.data || {}).scene_diagnostics || {};
   const warnings = Array.isArray(diag.normalize_warnings) ? diag.normalize_warnings : [];
