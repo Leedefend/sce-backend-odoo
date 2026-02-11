@@ -75,6 +75,7 @@ SC_GATE_STRICT ?= 1
 SC_SCENE_OBS_STRICT ?= 0
 SCENE_OBSERVABILITY_PREFLIGHT_STRICT ?= 1
 BASELINE_FREEZE_ENFORCE ?= 1
+BUSINESS_INCREMENT_PROFILE ?= base
 SC_WARN_ACT_URL_LEGACY_MAX ?= 3
 DB_CI        ?= sc_test
 DB_USER      ?= odoo
@@ -354,6 +355,8 @@ help:
 	@echo "  make verify.portal.scene_observability_preflight.report"
 	@echo "  make verify.portal.scene_observability.structure_guard"
 	@echo "  make verify.baseline.freeze_guard"
+	@echo "  make verify.business.increment.preflight [BUSINESS_INCREMENT_PROFILE=base|strict]"
+	@echo "  make verify.business.increment.readiness.brief [BUSINESS_INCREMENT_PROFILE=base|strict]"
 	@echo "  make verify.portal.scene_observability_smoke.container DB_NAME=<name>"
 	@echo "  make verify.portal.scene_observability_strict.container DB_NAME=<name>"
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
@@ -914,6 +917,7 @@ codex.print:
 	@echo "CODEX_MODE=$(CODEX_MODE) CODEX_DB=$(CODEX_DB) CODEX_MODULES=$(CODEX_MODULES) CODEX_NEED_UPGRADE=$(CODEX_NEED_UPGRADE)"
 	@echo "SC_GATE_STRICT=$(SC_GATE_STRICT) SC_SCENE_OBS_STRICT=$(SC_SCENE_OBS_STRICT) SCENE_OBSERVABILITY_PREFLIGHT_STRICT=$(SCENE_OBSERVABILITY_PREFLIGHT_STRICT)"
 	@echo "BASELINE_FREEZE_ENFORCE=$(BASELINE_FREEZE_ENFORCE)"
+	@echo "BUSINESS_INCREMENT_PROFILE=$(BUSINESS_INCREMENT_PROFILE)"
 	@echo "fast: restart (optional upgrade only if CODEX_NEED_UPGRADE=1) ; forbid demo.reset/gate.full"
 	@echo "gate: optional upgrade + demo.reset + contract.export_all + gate.full"
 
@@ -1203,16 +1207,18 @@ verify.baseline.freeze_guard: guard.prod.forbid
 	@python3 scripts/verify/baseline_freeze_guard.py
 
 verify.business.increment.readiness: guard.prod.forbid
-	@python3 scripts/verify/business_increment_readiness.py
+	@python3 scripts/verify/business_increment_readiness.py --profile $(BUSINESS_INCREMENT_PROFILE)
 
 verify.business.increment.readiness.strict: guard.prod.forbid
-	@python3 scripts/verify/business_increment_readiness.py --strict
+	@python3 scripts/verify/business_increment_readiness.py --profile strict --strict
 
 verify.business.increment.readiness.brief: guard.prod.forbid
-	@python3 scripts/verify/business_increment_readiness_brief.py
+	@$(MAKE) --no-print-directory verify.business.increment.readiness
+	@python3 scripts/verify/business_increment_readiness_brief.py --profile $(BUSINESS_INCREMENT_PROFILE)
 
 verify.business.increment.readiness.brief.strict: guard.prod.forbid
-	@python3 scripts/verify/business_increment_readiness_brief.py --strict
+	@$(MAKE) --no-print-directory verify.business.increment.readiness.strict
+	@python3 scripts/verify/business_increment_readiness_brief.py --profile strict --strict
 
 verify.business.increment.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory contract.catalog.export

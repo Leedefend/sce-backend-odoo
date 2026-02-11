@@ -38,6 +38,7 @@ Closes #ISSUE_ID
  [ ] 若触及基线冻结区，已在 PR 描述说明例外原因并附回滚方案
 
  [ ] 若为业务增量迭代，已附 preflight 证据（`verify.business.increment.preflight`）
+ [ ] 若使用业务增量 profile，已在 PR 描述注明（`BUSINESS_INCREMENT_PROFILE=...`）
 
  权限（ir.model.access）设置正确
 
