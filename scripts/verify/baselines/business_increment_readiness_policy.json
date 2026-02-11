@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "base": {
+      "min_intent_count": 1,
+      "min_scene_count": 1,
+      "require_renderability_fully_renderable": false,
+      "require_scene_shape_guard_ok": true
+    },
+    "strict": {
+      "min_intent_count": 1,
+      "min_scene_count": 1,
+      "require_renderability_fully_renderable": true,
+      "require_scene_shape_guard_ok": true
+    }
+  }
+}
