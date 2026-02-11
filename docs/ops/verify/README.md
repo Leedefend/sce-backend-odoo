@@ -75,8 +75,12 @@
 ## Business Increment Preflight
 - Readiness report (non-blocking):
   - `make verify.business.increment.readiness`
+- Readiness brief (non-blocking):
+  - `make verify.business.increment.readiness.brief`
 - Readiness report (blocking):
   - `make verify.business.increment.readiness.strict`
+- Readiness brief (blocking):
+  - `make verify.business.increment.readiness.brief.strict`
 - One-command preflight (refresh catalogs + scene shape + intent surface + readiness):
   - `make verify.business.increment.preflight`
 - Strict preflight:
