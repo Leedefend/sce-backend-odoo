@@ -25,6 +25,7 @@ This directory is the top-level documentation entry aligned with current impleme
 make contract.catalog.export
 make contract.evidence.export
 make audit.intent.surface
+make verify.business.increment.preflight
 ```
 
 ## 双语
