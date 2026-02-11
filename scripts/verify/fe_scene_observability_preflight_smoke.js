@@ -113,6 +113,10 @@ async function main() {
   const report = {
     trace_id: traceId,
     strict: STRICT,
+    required_any: {
+      governance: ['sc.scene.governance.log', 'sc.audit.log'],
+      notify: ['sc.audit.log'],
+    },
     governance: governance,
     notify: notify,
   };
@@ -130,6 +134,8 @@ async function main() {
   const summary = [
     `trace_id: ${traceId}`,
     `strict: ${STRICT ? 'true' : 'false'}`,
+    `required_governance_any: sc.scene.governance.log|sc.audit.log`,
+    `required_notify_any: sc.audit.log`,
     `governance_available: ${(governance.available || []).join(',') || '-'}`,
     `governance_missing: ${(governance.missing || []).join(',') || '-'}`,
     `notify_available: ${(notify.available || []).join(',') || '-'}`,
