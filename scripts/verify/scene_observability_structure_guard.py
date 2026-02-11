@@ -3,59 +3,44 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 VERIFY_ROOT = ROOT / "scripts" / "verify"
+BASELINE_PATH = VERIFY_ROOT / "baselines" / "scene_observability_structure.json"
 
-TARGETS = {
-    "fe_portal_scene_governance_action_smoke.js": {
-        "must_contain": [
-            "require('./scene_observability_utils')",
-            "probeModels(",
-            "assertRequiredModels(",
-        ],
-        "must_not_contain": [
-            "function isModelMissing(",
-        ],
-    },
-    "fe_scene_auto_degrade_smoke.js": {
-        "must_contain": [
-            "require('./scene_observability_utils')",
-            "probeModels(",
-            "assertRequiredModels(",
-        ],
-        "must_not_contain": [
-            "function isModelMissing(",
-        ],
-    },
-    "fe_scene_auto_degrade_notify_smoke.js": {
-        "must_contain": [
-            "require('./scene_observability_utils')",
-            "probeModels(",
-            "assertRequiredModels(",
-        ],
-        "must_not_contain": [
-            "function isModelMissing(",
-        ],
-    },
-    "fe_scene_package_import_smoke.js": {
-        "must_contain": [
-            "require('./scene_observability_utils')",
-            "probeModels(",
-            "assertRequiredModels(",
-        ],
-        "must_not_contain": [
-            "function isModelMissing(",
-        ],
-    },
-}
+
+def _load_targets() -> dict[str, dict[str, list[str]]]:
+    if not BASELINE_PATH.exists():
+        raise FileNotFoundError(f"missing baseline: {BASELINE_PATH.relative_to(ROOT)}")
+    payload = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
+    targets = payload.get("targets") if isinstance(payload, dict) else None
+    if not isinstance(targets, dict) or not targets:
+        raise ValueError("invalid baseline: `targets` must be a non-empty object")
+    out: dict[str, dict[str, list[str]]] = {}
+    for rel, rules in targets.items():
+        if not isinstance(rel, str) or not isinstance(rules, dict):
+            continue
+        out[rel] = {
+            "must_contain": [str(x) for x in (rules.get("must_contain") or [])],
+            "must_not_contain": [str(x) for x in (rules.get("must_not_contain") or [])],
+        }
+    if not out:
+        raise ValueError("invalid baseline: no usable targets")
+    return out
 
 
 def main() -> int:
+    try:
+        targets = _load_targets()
+    except Exception as exc:
+        print("[FAIL] scene observability structure guard")
+        print(f"- {exc}")
+        return 1
     errors: list[str] = []
-    for rel, rules in TARGETS.items():
+    for rel, rules in targets.items():
         path = VERIFY_ROOT / rel
         if not path.exists():
             errors.append(f"missing file: scripts/verify/{rel}")
@@ -75,7 +60,7 @@ def main() -> int:
         return 1
 
     print("[OK] scene observability structure guard")
-    print(f"- files_checked: {len(TARGETS)}")
+    print(f"- files_checked: {len(targets)}")
     return 0
 
 
