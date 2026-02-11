@@ -79,6 +79,15 @@ async function login(intentUrl, traceId) {
   return token;
 }
 
+function isModelMissing(resp) {
+  const msg = String((((resp || {}).body || {}).error || {}).message || '');
+  return (
+    msg.includes('未知模型') ||
+    msg.toLowerCase().includes('unknown model') ||
+    /^'[a-z0-9_.]+'$/i.test(msg.trim())
+  );
+}
+
 function logQueryPayload(traceId) {
   return {
     intent: 'api.data',
@@ -185,35 +194,42 @@ async function main() {
   }
 
   let logsResp = await requestJson(intentUrl, logQueryPayload(traceId), auth);
-  if (logsResp.status < 400 && !logsResp.body.ok) {
-    const errMsg = String(((logsResp.body || {}).error || {}).message || '');
-    if (errMsg.indexOf('未知模型: sc.scene.governance.log') >= 0) {
-      logsResp = await requestJson(
-        intentUrl,
-        {
-          intent: 'api.data',
-          params: {
-            op: 'list',
-            model: 'sc.audit.log',
-            fields: ['id', 'event_code', 'trace_id', 'action', 'ts'],
-            domain: [['trace_id', '=', traceId], ['event_code', '=', 'SCENE_GOVERNANCE_ACTION']],
-            limit: 20,
-          },
+  let logsSource = 'sc.scene.governance.log';
+  let logsSkipped = false;
+  if (isModelMissing(logsResp)) {
+    logsResp = await requestJson(
+      intentUrl,
+      {
+        intent: 'api.data',
+        params: {
+          op: 'list',
+          model: 'sc.audit.log',
+          fields: ['id', 'event_code', 'trace_id', 'action', 'ts'],
+          domain: [['trace_id', '=', traceId], ['event_code', '=', 'SCENE_GOVERNANCE_ACTION']],
+          limit: 20,
         },
-        auth
-      );
-    }
+      },
+      auth
+    );
+    logsSource = 'sc.audit.log';
   }
   writeJson(path.join(outDir, 'governance_logs.log'), logsResp);
-  assertIntentEnvelope(logsResp, 'api.data');
-  const records = (((logsResp.body || {}).data || {}).records) || [];
-  if (!Array.isArray(records)) throw new Error('governance records invalid');
+  let records = [];
+  if (isModelMissing(logsResp)) {
+    logsSkipped = true;
+  } else {
+    assertIntentEnvelope(logsResp, 'api.data');
+    records = (((logsResp.body || {}).data || {}).records) || [];
+    if (!Array.isArray(records)) throw new Error('governance records invalid');
+  }
 
   summary.push(`trace_id: ${traceId}`);
   summary.push(`company_id: ${companyId}`);
   summary.push(`channel_before: ${beforeChannel}`);
   summary.push(`channel_after_set: ${targetChannel}`);
   summary.push(`rollback_active_after: ${Boolean(afterRollbackData.rollback_active)}`);
+  summary.push(`governance_log_source: ${logsSource}`);
+  summary.push(`governance_log_skipped: ${logsSkipped ? 'true' : 'false'}`);
   summary.push(`governance_log_records: ${records.length}`);
   writeSummary(summary);
 

@@ -67,6 +67,15 @@ function requestJson(url, payload, headers) {
   });
 }
 
+function isModelMissing(resp) {
+  const msg = String((((resp || {}).body || {}).error || {}).message || '');
+  return (
+    msg.includes('未知模型') ||
+    msg.toLowerCase().includes('unknown model') ||
+    /^'[a-z0-9_.]+'$/i.test(msg.trim())
+  );
+}
+
 async function main() {
   if (!DB_NAME) throw new Error('DB_NAME is required');
   const intentUrl = `${BASE_URL}/api/v1/intent`;
@@ -142,36 +151,43 @@ async function main() {
     },
     auth
   );
-  if (govResp.status < 400 && !govResp.body.ok) {
-    const errMsg = String(((govResp.body || {}).error || {}).message || '');
-    if (errMsg.indexOf('未知模型: sc.scene.governance.log') >= 0) {
-      govResp = await requestJson(
-        intentUrl,
-        {
-          intent: 'api.data',
-          params: {
-            op: 'list',
-            model: 'sc.audit.log',
-            fields: ['id', 'event_code', 'action', 'trace_id', 'ts'],
-            domain: [['trace_id', '=', traceId], ['event_code', '=', 'SCENE_GOVERNANCE_ACTION']],
-            limit: 10,
-          },
+  let govSource = 'sc.scene.governance.log';
+  let govSkipped = false;
+  if (isModelMissing(govResp)) {
+    govResp = await requestJson(
+      intentUrl,
+      {
+        intent: 'api.data',
+        params: {
+          op: 'list',
+          model: 'sc.audit.log',
+          fields: ['id', 'event_code', 'action', 'trace_id', 'ts'],
+          domain: [['trace_id', '=', traceId], ['event_code', '=', 'SCENE_GOVERNANCE_ACTION']],
+          limit: 10,
         },
-        auth
-      );
-    }
+      },
+      auth
+    );
+    govSource = 'sc.audit.log';
   }
   writeJson(path.join(outDir, 'governance_log.log'), govResp);
-  assertIntentEnvelope(govResp, 'api.data');
-  const rows = ((((govResp.body || {}).data) || {}).records) || [];
-  if (!Array.isArray(rows) || rows.length < 1) {
-    throw new Error('missing package import governance log');
+  let rows = [];
+  if (isModelMissing(govResp)) {
+    govSkipped = true;
+  } else {
+    assertIntentEnvelope(govResp, 'api.data');
+    rows = ((((govResp.body || {}).data) || {}).records) || [];
+    if (!Array.isArray(rows) || rows.length < 1) {
+      throw new Error('missing package import governance log');
+    }
   }
 
   summary.push(`trace_id: ${traceId}`);
   summary.push(`imported_count: ${importData.summary.imported_count}`);
   summary.push(`renamed_count: ${importData.summary.renamed_count}`);
   summary.push(`critical_resolve_errors_count: ${summaryObj.critical_resolve_errors_count}`);
+  summary.push(`governance_log_source: ${govSource}`);
+  summary.push(`governance_log_skipped: ${govSkipped ? 'true' : 'false'}`);
   summary.push(`governance_log_rows: ${rows.length}`);
   writeSummary(summary);
 

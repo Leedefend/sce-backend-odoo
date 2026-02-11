@@ -79,7 +79,11 @@ function unwrap(body) {
 
 function isModelMissing(resp) {
   const msg = String((((resp || {}).body || {}).error || {}).message || '');
-  return msg.includes('未知模型') || msg.toLowerCase().includes('unknown model');
+  return (
+    msg.includes('未知模型') ||
+    msg.toLowerCase().includes('unknown model') ||
+    /^'[a-z0-9_.]+'$/i.test(msg.trim())
+  );
 }
 
 async function main() {
