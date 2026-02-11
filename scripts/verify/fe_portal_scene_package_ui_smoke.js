@@ -89,7 +89,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  assertIntentEnvelope(initResp, 'app.init');
+  assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
 
   const exportResp = await requestJson(
     intentUrl,

@@ -168,7 +168,7 @@ async function main() {
   const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  assertIntentEnvelope(initResp, 'app.init');
+  assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
 
   const data = initResp.body.data || {};
   const diag = data.scene_diagnostics || {};

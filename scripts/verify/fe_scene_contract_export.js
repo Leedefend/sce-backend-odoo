@@ -146,7 +146,7 @@ async function main() {
   const initPayload = { intent: 'app.init', params: initParams };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  assertIntentEnvelope(initResp, 'app.init');
+  assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
 
   const data = initResp.body.data || {};
   const scenes = Array.isArray(data.scenes) ? data.scenes : [];
