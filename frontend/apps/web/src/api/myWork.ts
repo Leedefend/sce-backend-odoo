@@ -127,6 +127,7 @@ export type MyWorkBatchFailedItem = {
 } & ContractReasonedFailure;
 
 export type MyWorkCompleteBatchResult = {
+  execution_mode?: 'full' | 'retry' | string;
   source: string;
   success: boolean;
   reason_code: string;
@@ -136,13 +137,31 @@ export type MyWorkCompleteBatchResult = {
   completed_ids: number[];
   failed_items: MyWorkBatchFailedItem[];
   failed_retry_ids?: number[];
+  failed_groups?: Array<{
+    reason_code: string;
+    count: number;
+    retryable_count: number;
+    suggested_action?: string;
+    sample_ids?: number[];
+  }>;
+  retry_request?: {
+    intent: 'my.work.complete_batch' | string;
+    params?: {
+      source?: string;
+      retry_ids?: number[];
+      note?: string;
+      request_id?: string;
+    };
+  } | null;
   failed_reason_summary: ContractReasonCount[];
   failed_retryable_summary?: { retryable: number; non_retryable: number };
+  todo_remaining?: number;
   done_at: string;
 } & IdempotencyMeta;
 
 export async function completeMyWorkItemsBatch(params: {
   ids: number[];
+  retry_ids?: number[];
   source: string;
   note?: string;
   request_id?: string;

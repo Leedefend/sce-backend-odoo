@@ -44,6 +44,12 @@
           {{ item.reason_code }} x {{ item.count }}
         </span>
       </p>
+      <p v-if="retryFailedGroups.length" class="retry-summary">
+        分组摘要：
+        <span v-for="group in retryFailedGroups" :key="`group-${group.reason_code}`">
+          {{ group.reason_code }} ({{ group.count }} / 可重试 {{ group.retryable_count }})
+        </span>
+      </p>
       <ul>
         <li v-for="item in retryFailedItems" :key="`failed-${item.id}`">
           <span class="failed-id">#{{ item.id }}</span>
@@ -236,6 +242,9 @@ const todoSelectionIds = ref<number[]>([]);
 const retryFailedIds = ref<number[]>([]);
 const retryFailedItems = ref<Array<{ id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }>>([]);
 const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]);
+const retryFailedGroups = ref<Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>>([]);
+const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: string; request_id?: string } | null>(null);
+const todoRemaining = ref<number | null>(null);
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const searchText = ref('');
@@ -497,12 +506,16 @@ function clearRetryFailed() {
   retryFailedIds.value = [];
   retryFailedItems.value = [];
   retryReasonSummary.value = [];
+  retryFailedGroups.value = [];
+  retryRequestParams.value = null;
+  todoRemaining.value = null;
 }
 
 function selectRetryFailedItems() {
-  if (!retryFailedIds.value.length) return;
+  const candidateIds = retryRequestParams.value?.retry_ids?.length ? retryRequestParams.value.retry_ids : retryFailedIds.value;
+  if (!candidateIds.length) return;
   const merged = new Set(todoSelectionIds.value);
-  retryFailedIds.value.forEach((id) => merged.add(id));
+  candidateIds.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged);
 }
 
@@ -541,11 +554,20 @@ function formatFailedItemText(item: { id: number; reason_code: string; message: 
 
 function buildRetrySummaryText() {
   if (!retryFailedItems.value.length) return '';
-  const reasons = retryReasonSummary.value
+  const reasons = retryFailedGroups.value.length
+    ? retryFailedGroups.value
+        .map((item) => `${item.reason_code} x ${item.count} (retryable ${item.retryable_count})`)
+        .join('; ')
+    : retryReasonSummary.value
     .map((item) => `${item.reason_code} x ${item.count}`)
     .join('; ');
   const lines = retryFailedItems.value.map((item) => formatFailedItemText(item));
-  return [`失败待办 ${retryFailedIds.value.length} 条`, reasons ? `原因分布: ${reasons}` : '', ...lines]
+  return [
+    `失败待办 ${retryFailedIds.value.length} 条`,
+    reasons ? `原因分布: ${reasons}` : '',
+    typeof todoRemaining.value === 'number' ? `剩余待办: ${todoRemaining.value}` : '',
+    ...lines,
+  ]
     .filter(Boolean)
     .join('\n');
 }
@@ -599,34 +621,14 @@ async function completeSelectedTodos() {
   statusError.value = null;
   actionFeedback.value = '';
   actionFeedbackError.value = false;
-  retryFailedIds.value = [];
-  retryFailedItems.value = [];
-  retryReasonSummary.value = [];
+  clearRetryFailed();
   try {
     const result = await completeMyWorkItemsBatch({
       ids: [...todoSelectionIds.value],
       source: 'mail.activity',
       note: 'Completed from my-work batch action.',
     });
-    if (!result.success) {
-      const first = result.failed_items?.[0];
-      const failedPreview = (result.failed_items || [])
-        .slice(0, 3)
-        .map((item) => formatFailedItemText(item))
-        .join('；');
-      retryFailedIds.value = (result.failed_items || []).map((item) => item.id).filter((id) => Number.isFinite(id) && id > 0);
-      retryFailedItems.value = (result.failed_items || []).slice(0, 10);
-      retryReasonSummary.value = (result.failed_reason_summary || []).slice(0, 5);
-      actionFeedback.value = `批量完成部分失败：${result.done_count} 成功，${result.failed_count} 失败${
-        first ? `（${failedPreview}）` : ''
-      }`;
-      actionFeedbackError.value = true;
-    } else {
-      actionFeedback.value = `批量完成成功：${result.done_count} 条`;
-      actionFeedbackError.value = false;
-      retryFailedItems.value = [];
-      retryReasonSummary.value = [];
-    }
+    applyBatchFeedback(result, '批量完成');
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '批量完成待办失败';
@@ -637,33 +639,20 @@ async function completeSelectedTodos() {
 }
 
 async function retryFailedTodos() {
-  if (!retryFailedIds.value.length) return;
+  const candidateRetryIds = retryRequestParams.value?.retry_ids?.length ? retryRequestParams.value.retry_ids : retryFailedIds.value;
+  if (!candidateRetryIds.length) return;
   loading.value = true;
   errorText.value = '';
   statusError.value = null;
   try {
     const result = await completeMyWorkItemsBatch({
-      ids: [...retryFailedIds.value],
-      source: 'mail.activity',
-      note: 'Retry failed items from my-work.',
+      ids: [...candidateRetryIds],
+      retry_ids: [...candidateRetryIds],
+      source: retryRequestParams.value?.source || 'mail.activity',
+      note: retryRequestParams.value?.note || 'Retry failed items from my-work.',
+      request_id: retryRequestParams.value?.request_id,
     });
-    if (!result.success) {
-      const failedPreview = (result.failed_items || [])
-        .slice(0, 3)
-        .map((item) => formatFailedItemText(item))
-        .join('；');
-      retryFailedIds.value = (result.failed_items || []).map((item) => item.id).filter((id) => Number.isFinite(id) && id > 0);
-      retryFailedItems.value = (result.failed_items || []).slice(0, 10);
-      retryReasonSummary.value = (result.failed_reason_summary || []).slice(0, 5);
-      actionFeedback.value = `重试后仍有失败：${result.done_count} 成功，${result.failed_count} 失败（${failedPreview}）`;
-      actionFeedbackError.value = true;
-    } else {
-      retryFailedIds.value = [];
-      retryFailedItems.value = [];
-      retryReasonSummary.value = [];
-      actionFeedback.value = `重试成功：${result.done_count} 条`;
-      actionFeedbackError.value = false;
-    }
+    applyBatchFeedback(result, '重试');
     await load();
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '重试失败项失败';
@@ -671,6 +660,57 @@ async function retryFailedTodos() {
   } finally {
     loading.value = false;
   }
+}
+
+function applyBatchFeedback(
+  result: {
+    success: boolean;
+    done_count: number;
+    failed_count: number;
+    failed_items?: Array<{ id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }>;
+    failed_retry_ids?: number[];
+    failed_reason_summary?: Array<{ reason_code: string; count: number }>;
+    failed_groups?: Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>;
+    retry_request?: { params?: { source?: string; retry_ids?: number[]; note?: string; request_id?: string } } | null;
+    todo_remaining?: number;
+  },
+  actionLabel: string,
+) {
+  todoRemaining.value = typeof result.todo_remaining === 'number' ? result.todo_remaining : null;
+  const retryIdsFromResponse = Array.isArray(result.failed_retry_ids) ? result.failed_retry_ids : [];
+  const retryIdsFromTemplate = Array.isArray(result.retry_request?.params?.retry_ids)
+    ? result.retry_request?.params?.retry_ids || []
+    : [];
+  const fallbackRetryIds = (result.failed_items || [])
+    .filter((item) => item.retryable)
+    .map((item) => item.id);
+  const mergedRetryIds = retryIdsFromResponse.length
+    ? retryIdsFromResponse
+    : retryIdsFromTemplate.length
+      ? retryIdsFromTemplate
+      : fallbackRetryIds;
+  retryFailedIds.value = mergedRetryIds.filter((id) => Number.isFinite(id) && id > 0);
+  retryFailedItems.value = (result.failed_items || []).slice(0, 10);
+  retryReasonSummary.value = (result.failed_reason_summary || []).slice(0, 5);
+  retryFailedGroups.value = (result.failed_groups || []).slice(0, 5);
+  retryRequestParams.value = result.retry_request?.params || null;
+
+  if (!result.success) {
+    const failedPreview = retryFailedItems.value
+      .slice(0, 3)
+      .map((item) => formatFailedItemText(item))
+      .join('；');
+    actionFeedback.value = `${actionLabel}部分失败：${result.done_count} 成功，${result.failed_count} 失败${
+      failedPreview ? `（${failedPreview}）` : ''
+    }${typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''}`;
+    actionFeedbackError.value = true;
+    return;
+  }
+
+  actionFeedback.value = `${actionLabel}成功：${result.done_count} 条${
+    typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''
+  }`;
+  actionFeedbackError.value = false;
 }
 
 function restoreFilters() {
