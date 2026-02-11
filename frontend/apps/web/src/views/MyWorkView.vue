@@ -122,6 +122,13 @@
         >
           {{ retryGroupByReason ? '平铺显示' : '按原因分组' }}
         </button>
+        <button
+          type="button"
+          class="reason-chip"
+          @click="resetRetryPanelState"
+        >
+          重置面板
+        </button>
       </div>
       <p v-if="retryReasonSummary.length" class="retry-summary">
         失败原因分布：
@@ -753,6 +760,18 @@ function setRetryFilterMode(mode: 'all' | 'retryable' | 'non_retryable') {
 
 function toggleRetryGroupByReason() {
   retryGroupByReason.value = !retryGroupByReason.value;
+}
+
+function resetRetryPanelState() {
+  retryFilterMode.value = 'all';
+  retryGroupByReason.value = false;
+  retrySearchText.value = '';
+  retryFailedExpanded.value = false;
+  try {
+    window.localStorage.removeItem(myWorkRetryPanelStorageKey);
+  } catch {
+    // Ignore remove errors in private mode.
+  }
 }
 
 function toggleRetryFailedExpanded() {
