@@ -177,6 +177,10 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     target?: string;
   };
 };
+type ActionMetaLoose = {
+  order?: string;
+  url?: string;
+};
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
@@ -655,8 +659,10 @@ async function load() {
       return;
     }
     if (!sortValue.value) {
-      const viewOrder = (contract as any)?.views?.tree?.order || (contract as any)?.ui_contract?.views?.tree?.order;
-      const order = scene.value?.default_sort || viewOrder || (meta as any)?.order;
+      const typedContract = contract as ActionContractLoose;
+      const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
+      const metaOrder = (meta as ActionMetaLoose | undefined)?.order;
+      const order = scene.value?.default_sort || viewOrder || metaOrder;
       if (typeof order === 'string' && order.trim()) {
         sortValue.value = order;
       } else {
@@ -679,7 +685,7 @@ async function load() {
     const contractModel = resolveModelFromContract(contract);
     const resolvedModel = meta?.model ?? model.value ?? contractModel;
     if (meta && !meta.model && resolvedModel) {
-      session.setActionMeta({ ...(meta as any), model: resolvedModel });
+      session.setActionMeta({ ...meta, model: resolvedModel });
     }
     if (!resolvedModel) {
       if (isClientAction(meta)) {
@@ -695,9 +701,10 @@ async function load() {
       }
       if (!isWindowAction(meta)) {
         const actionType = getActionType(meta);
-        const contractType = String((contract as any)?.data?.type || '').toLowerCase();
-        const contractUrl = String((contract as any)?.data?.url || '');
-        const metaUrl = String((meta as any)?.url || '');
+        const typedContract = contract as ActionContractLoose;
+        const contractType = String(typedContract.data?.type || '').toLowerCase();
+        const contractUrl = String(typedContract.data?.url || '');
+        const metaUrl = String((meta as ActionMetaLoose | undefined)?.url || '');
         await router.replace({
           name: 'workbench',
           query: {
@@ -720,8 +727,8 @@ async function load() {
     const contractColumns = extractColumnsFromContract(contract);
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
-    hasActiveField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.active);
-    hasAssigneeField.value = Boolean((contract as any)?.ui_contract_raw?.fields?.user_id);
+    hasActiveField.value = Boolean(contract.ui_contract_raw?.fields?.active);
+    hasAssigneeField.value = Boolean(contract.ui_contract_raw?.fields?.user_id);
     await loadAssigneeOptions();
     const requestedFields =
       viewMode.value === 'kanban'
