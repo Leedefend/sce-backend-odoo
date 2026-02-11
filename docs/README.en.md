@@ -10,6 +10,7 @@ This directory is the top-level documentation entry aligned with current impleme
 - Contract (contracts and catalogs): `docs/contract/README.md`
 - Ops (release and operational evidence): `docs/ops/README.md`
 - Audit (audit method and artifact entry): `docs/audit/README.md`
+- Baseline Freeze policy: `docs/ops/baseline_freeze_policy.en.md`
 
 ## Current Authoritative Contract Exports
 - Intent Catalog: `docs/contract/exports/intent_catalog.json`
