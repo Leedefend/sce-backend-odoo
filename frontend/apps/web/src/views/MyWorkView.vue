@@ -31,9 +31,12 @@
     </p>
     <div v-if="!loading && !errorText && retryFailedIds.length" class="retry-bar">
       <span>失败待办 {{ retryFailedIds.length }} 条</span>
+      <span v-if="lastBatchExecutionMode" class="meta-chip">模式: {{ lastBatchExecutionMode }}</span>
+      <span v-if="lastBatchReplay" class="meta-chip replay">重放结果</span>
       <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
       <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
+      <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
     </div>
     <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
@@ -245,6 +248,8 @@ const retryReasonSummary = ref<Array<{ reason_code: string; count: number }>>([]
 const retryFailedGroups = ref<Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>>([]);
 const retryRequestParams = ref<{ source?: string; retry_ids?: number[]; note?: string; request_id?: string } | null>(null);
 const todoRemaining = ref<number | null>(null);
+const lastBatchExecutionMode = ref<string>('');
+const lastBatchReplay = ref(false);
 const actionFeedback = ref('');
 const actionFeedbackError = ref(false);
 const searchText = ref('');
@@ -509,6 +514,8 @@ function clearRetryFailed() {
   retryFailedGroups.value = [];
   retryRequestParams.value = null;
   todoRemaining.value = null;
+  lastBatchExecutionMode.value = '';
+  lastBatchReplay.value = false;
 }
 
 function selectRetryFailedItems() {
@@ -581,6 +588,19 @@ async function copyRetrySummary() {
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = '复制失败，请检查浏览器剪贴板权限';
+    actionFeedbackError.value = true;
+  }
+}
+
+async function copyRetryRequest() {
+  const payload = retryRequestParams.value;
+  if (!payload) return;
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    actionFeedback.value = '重试请求已复制';
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = '复制重试请求失败，请检查浏览器剪贴板权限';
     actionFeedbackError.value = true;
   }
 }
@@ -673,10 +693,14 @@ function applyBatchFeedback(
     failed_groups?: Array<{ reason_code: string; count: number; retryable_count: number; suggested_action?: string; sample_ids?: number[] }>;
     retry_request?: { params?: { source?: string; retry_ids?: number[]; note?: string; request_id?: string } } | null;
     todo_remaining?: number;
+    execution_mode?: string;
+    idempotent_replay?: boolean;
   },
   actionLabel: string,
 ) {
   todoRemaining.value = typeof result.todo_remaining === 'number' ? result.todo_remaining : null;
+  lastBatchExecutionMode.value = String(result.execution_mode || '');
+  lastBatchReplay.value = Boolean(result.idempotent_replay);
   const retryIdsFromResponse = Array.isArray(result.failed_retry_ids) ? result.failed_retry_ids : [];
   const retryIdsFromTemplate = Array.isArray(result.retry_request?.params?.retry_ids)
     ? result.retry_request?.params?.retry_ids || []
@@ -796,6 +820,23 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
 
 .hero h2 {
   margin: 0 0 4px;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+}
+
+.meta-chip.replay {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .hero p {
