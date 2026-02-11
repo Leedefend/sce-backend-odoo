@@ -4,8 +4,8 @@ set -euo pipefail
 BASE_URL="${BASE_URL:-http://localhost:8070}"
 DB_NAME="${DB_NAME:-sc_demo}"
 AUTH_TOKEN="${AUTH_TOKEN:-}"
-E2E_LOGIN="${E2E_LOGIN:-}"
-E2E_PASSWORD="${E2E_PASSWORD:-}"
+E2E_LOGIN="${E2E_LOGIN:-admin}"
+E2E_PASSWORD="${E2E_PASSWORD:-admin}"
 
 ts() {
   date +"%H:%M:%S"

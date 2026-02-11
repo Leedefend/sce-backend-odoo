@@ -27,6 +27,9 @@ def register_all_handlers():
         module = importlib.import_module(modinfo.name)
 
         for attr_name in dir(module):
+            # 跳过模块私有类（通常为抽象/基类）
+            if attr_name.startswith("_"):
+                continue
             attr = getattr(module, attr_name)
             if not (isinstance(attr, type) and issubclass(attr, BaseIntentHandler) and attr is not BaseIntentHandler):
                 continue
@@ -34,11 +37,22 @@ def register_all_handlers():
             intent_type = getattr(attr, "INTENT_TYPE", None)
             if not intent_type:
                 continue
+            # 跳过未覆写 INTENT_TYPE 的占位基类，避免 base.intent 污染注册表
+            if intent_type == BaseIntentHandler.INTENT_TYPE:
+                continue
 
             # 唯一性检查
             if intent_type in HANDLER_REGISTRY:
-                _logger.warning("Duplicate INTENT_TYPE '%s' in %s; overwritten by %s",
-                                intent_type, HANDLER_REGISTRY[intent_type].__module__, module.__name__)
+                prev = HANDLER_REGISTRY[intent_type]
+                # 重复扫描同一 handler 时静默处理，避免噪音日志
+                if prev is attr:
+                    continue
+                _logger.warning(
+                    "Duplicate INTENT_TYPE '%s' in %s; overwritten by %s",
+                    intent_type,
+                    prev.__module__,
+                    module.__name__,
+                )
             HANDLER_REGISTRY[intent_type] = attr
 
             # 别名支持（可选）
@@ -56,6 +70,9 @@ def register_all_handlers():
 
             for al in aliases:
                 if al in HANDLER_REGISTRY:
+                    prev = HANDLER_REGISTRY[al]
+                    if prev is attr:
+                        continue
                     _logger.warning("Alias '%s' conflicts; overwritten by %s", al, module.__name__)
                 HANDLER_REGISTRY[al] = attr
 

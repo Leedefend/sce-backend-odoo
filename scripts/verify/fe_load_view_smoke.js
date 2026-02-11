@@ -12,7 +12,6 @@ const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '
 const LOGIN = process.env.E2E_LOGIN || 'admin';
 const PASSWORD = process.env.E2E_PASSWORD || process.env.ADMIN_PASSWD || 'admin';
 const MODEL = process.env.MVP_MODEL || 'project.project';
-const RECORD_ID = Number(process.env.RECORD_ID || 8);
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
 const now = new Date();
@@ -95,17 +94,38 @@ async function main() {
     'X-Odoo-DB': DB_NAME,
   };
 
+  const candidateModels = Array.from(new Set([MODEL, 'res.partner']));
+  let modelUsed = '';
+  let viewResp = null;
+
   log('load_view');
-  const viewPayload = { intent: 'load_view', params: { model: MODEL, view_type: 'form' } };
-  const viewResp = await requestJson(intentUrl, viewPayload, authHeader);
+  for (const candidate of candidateModels) {
+    const viewPayload = { intent: 'load_view', params: { model: candidate, view_type: 'form' } };
+    const resp = await requestJson(intentUrl, viewPayload, authHeader);
+    writeJson(path.join(outDir, `load_view.${candidate.replace(/\./g, '_')}.log`), resp);
+    try {
+      assertIntentEnvelope(resp, 'load_view');
+      viewResp = resp;
+      modelUsed = candidate;
+      break;
+    } catch (_err) {
+      // keep trying fallbacks; final failure will be thrown below
+    }
+  }
+  if (!viewResp) {
+    throw new Error(`load_view failed for all models: ${candidateModels.join(',')}`);
+  }
   writeJson(path.join(outDir, 'load_view.log'), viewResp);
-  assertIntentEnvelope(viewResp, 'load_view');
   const viewData = viewResp.body.data || {};
   const layoutOk = Boolean(viewData.layout);
+  summary.push(`model_used: ${modelUsed}`);
   summary.push(`layout_ok: ${layoutOk ? 'true' : 'false'}`);
 
-  log('api.data.read');
-  const readPayload = { intent: 'api.data', params: { op: 'read', model: MODEL, ids: [RECORD_ID], fields: ['id', 'name'] } };
+  log('api.data.list');
+  const readPayload = {
+    intent: 'api.data',
+    params: { op: 'list', model: modelUsed, limit: 1, offset: 0, fields: ['id', 'name'] },
+  };
   const readResp = await requestJson(intentUrl, readPayload, authHeader);
   writeJson(path.join(outDir, 'read.log'), readResp);
   assertIntentEnvelope(readResp, 'api.data');

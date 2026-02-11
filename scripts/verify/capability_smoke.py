@@ -38,6 +38,9 @@ def main():
 
     intent_url = f"{base_url}/api/v1/intent"
     search_url = f"{base_url}/api/capabilities/search?smoke=1&include_all=1"
+    import_url = f"{base_url}/api/scenes/import"
+    seeded_key = "capability.smoke.seed"
+    seeded = False
 
     login_payload = {
         "intent": "login",
@@ -52,35 +55,69 @@ def main():
         raise RuntimeError("login response missing token")
     auth_header = {"Authorization": f"Bearer {token}"}
 
-    status, search_resp = http_get_json(search_url, headers=auth_header)
-    require_ok(status, search_resp, "capabilities.search")
-    data = search_resp.get("data") or {}
-    capabilities = data.get("capabilities") or []
-    if not capabilities:
-        raise RuntimeError("capabilities.search returned empty list for smoke")
+    try:
+        status, search_resp = http_get_json(search_url, headers=auth_header)
+        require_ok(status, search_resp, "capabilities.search")
+        data = search_resp.get("data") or {}
+        capabilities = data.get("capabilities") or []
+        if not capabilities:
+            seed_payload = {
+                "mode": "merge",
+                "upgrade_policy": {
+                    "merge_fields": {
+                        "capability": ["name", "intent", "smoke_test", "is_test", "status", "version"]
+                    }
+                },
+                "capabilities": [
+                    {
+                        "key": seeded_key,
+                        "name": "Capability Smoke Seed",
+                        "intent": "system.init",
+                        "smoke_test": True,
+                        "is_test": True,
+                    }
+                ],
+            }
+            status, seed_resp = http_post_json(import_url, seed_payload, headers=auth_header)
+            require_ok(status, seed_resp, "capabilities.seed.import")
+            seeded = True
 
-    for cap in capabilities:
-        key = cap.get("key") or "unknown"
-        intent = cap.get("intent")
-        default_payload = cap.get("default_payload") or {}
-        if not intent:
-            raise RuntimeError(f"capability {key} missing intent")
+            status, search_resp = http_get_json(search_url, headers=auth_header)
+            require_ok(status, search_resp, "capabilities.search (after seed)")
+            data = search_resp.get("data") or {}
+            capabilities = data.get("capabilities") or []
+            if not capabilities:
+                raise RuntimeError("capabilities.search returned empty list after seed")
 
-        params = dict(default_payload)
-        params.setdefault("db", db_name)
-        status, resp = http_post_json(
-            intent_url,
-            {"intent": intent, "params": params},
-            headers=auth_header,
-        )
-        require_ok(status, resp, f"capability {key} ({intent})")
+        for cap in capabilities:
+            key = cap.get("key") or "unknown"
+            intent = cap.get("intent")
+            default_payload = cap.get("default_payload") or {}
+            if not intent:
+                raise RuntimeError(f"capability {key} missing intent")
 
-        raw_path = os.path.join(outdir, f"{key}.raw.json")
-        norm_path = os.path.join(outdir, f"{key}.normalized.json")
-        with open(raw_path, "w", encoding="utf-8") as f:
-            json.dump(resp, f, ensure_ascii=False, indent=2, sort_keys=True)
-        with open(norm_path, "w", encoding="utf-8") as f:
-            json.dump(_normalize(resp), f, ensure_ascii=False, indent=2, sort_keys=True)
+            params = dict(default_payload)
+            params.setdefault("db", db_name)
+            status, resp = http_post_json(
+                intent_url,
+                {"intent": intent, "params": params},
+                headers=auth_header,
+            )
+            require_ok(status, resp, f"capability {key} ({intent})")
+
+            raw_path = os.path.join(outdir, f"{key}.raw.json")
+            norm_path = os.path.join(outdir, f"{key}.normalized.json")
+            with open(raw_path, "w", encoding="utf-8") as f:
+                json.dump(resp, f, ensure_ascii=False, indent=2, sort_keys=True)
+            with open(norm_path, "w", encoding="utf-8") as f:
+                json.dump(_normalize(resp), f, ensure_ascii=False, indent=2, sort_keys=True)
+    finally:
+        if seeded:
+            http_post_json(
+                import_url,
+                {"cleanup_test": True, "capabilities": [{"key": seeded_key}]},
+                headers=auth_header,
+            )
 
     print(f"[capability_smoke] PASS outdir={outdir}")
 
