@@ -184,6 +184,7 @@
           >
             {{ failedSuggestedActionLabel(item) }}
           </button>
+          <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">复制单条</button>
           <button
             v-if="failedItemRecord(item.id)"
             class="link-btn mini-btn"
@@ -210,6 +211,7 @@
               >
                 {{ failedSuggestedActionLabel(item) }}
               </button>
+              <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">复制单条</button>
             </li>
           </ul>
         </div>
@@ -891,6 +893,19 @@ async function copyRetrySummary() {
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = '复制失败，请检查浏览器剪贴板权限';
+    actionFeedbackError.value = true;
+  }
+}
+
+async function copyFailedItemLine(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
+  const line = formatFailedItemText(item);
+  if (!line) return;
+  try {
+    await navigator.clipboard.writeText(line);
+    actionFeedback.value = `失败项 #${item.id} 已复制`;
+    actionFeedbackError.value = false;
+  } catch {
+    actionFeedback.value = `复制失败项 #${item.id} 失败`;
     actionFeedbackError.value = true;
   }
 }
