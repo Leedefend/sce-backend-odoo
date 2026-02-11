@@ -10,7 +10,28 @@
       "min_intent_count": 1,
       "min_scene_count": 1,
       "require_renderability_fully_renderable": true,
-      "require_scene_shape_guard_ok": true
+      "require_scene_shape_guard_ok": true,
+      "required_intents": [
+        "system.init",
+        "ui.contract",
+        "api.data",
+        "api.data.batch",
+        "my.work.summary",
+        "execute_button"
+      ],
+      "required_scene_keys": [
+        "default",
+        "projects.list"
+      ],
+      "required_test_ref_intents": [
+        "system.init",
+        "api.data",
+        "api.data.batch",
+        "my.work.summary",
+        "my.work.complete_batch",
+        "usage.report"
+      ],
+      "warning_untested_limit": 25
     }
   }
 }

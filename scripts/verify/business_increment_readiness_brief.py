@@ -36,7 +36,18 @@ def main() -> int:
     ready = bool((summary or {}).get("ready"))
     intent_count = int((summary or {}).get("intent_count", 0))
     scene_count = int((summary or {}).get("scene_count", 0))
+    required_intent_count = int((summary or {}).get("required_intent_count", 0))
+    required_scene_key_count = int((summary or {}).get("required_scene_key_count", 0))
+    required_test_ref_intent_count = int((summary or {}).get("required_test_ref_intent_count", 0))
     renderable = bool((summary or {}).get("renderability_fully_renderable"))
+    missing_required_intents = [str(x) for x in ((summary or {}).get("missing_required_intents") or [])]
+    missing_required_scene_keys = [str(x) for x in ((summary or {}).get("missing_required_scene_keys") or [])]
+    missing_required_test_ref_intents = [
+        str(x) for x in ((summary or {}).get("missing_required_test_ref_intents") or [])
+    ]
+    untested_intent_count = int((summary or {}).get("untested_intent_count", 0))
+    tested_intent_count = max(intent_count - untested_intent_count, 0)
+    tested_ratio = (tested_intent_count / intent_count) if intent_count > 0 else 0.0
     blockers = [str(x) for x in ((summary or {}).get("blockers") or [])]
     warnings = [str(x) for x in ((summary or {}).get("warnings") or [])]
 
@@ -45,7 +56,19 @@ def main() -> int:
     print(f"- ready: {ready}")
     print(f"- intent_count: {intent_count}")
     print(f"- scene_count: {scene_count}")
+    print(f"- required_intent_count: {required_intent_count}")
+    print(f"- required_scene_key_count: {required_scene_key_count}")
+    print(f"- required_test_ref_intent_count: {required_test_ref_intent_count}")
     print(f"- renderability_fully_renderable: {renderable}")
+    print(f"- missing_required_intents: {', '.join(missing_required_intents) if missing_required_intents else '-'}")
+    print(f"- missing_required_scene_keys: {', '.join(missing_required_scene_keys) if missing_required_scene_keys else '-'}")
+    print(
+        f"- missing_required_test_ref_intents: "
+        f"{', '.join(missing_required_test_ref_intents) if missing_required_test_ref_intents else '-'}"
+    )
+    print(f"- untested_intent_count: {untested_intent_count}")
+    print(f"- tested_intent_count: {tested_intent_count}")
+    print(f"- tested_intent_ratio: {tested_ratio:.4f}")
     print(f"- blockers: {', '.join(blockers) if blockers else '-'}")
     print(f"- warnings: {', '.join(warnings) if warnings else '-'}")
 
