@@ -823,6 +823,7 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	  $(MAKE) verify.portal.scene_warnings_guard.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.scene_warnings_limit.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.act_url_missing_scene_report.container DB_NAME=$(DB_NAME); \
+	  $(MAKE) verify.portal.cross_stack_contract_smoke.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.my_work_smoke.container DB_NAME=$(DB_NAME); \
 	else \
 	  echo "[gate.full] SC_GATE_STRICT=0: skip menu/act_url guard checks"; \
@@ -1135,8 +1136,7 @@ verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verif
 verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.test_seed_dependency.guard
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
-	@$(MAKE) --no-print-directory verify.docs.links
-	@$(MAKE) --no-print-directory verify.docs.temp_guard
+	@$(MAKE) --no-print-directory verify.docs.all
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
 	@$(MAKE) --no-print-directory verify.scene.contract.shape
 	@$(MAKE) --no-print-directory contract.evidence.export
