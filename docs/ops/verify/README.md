@@ -25,6 +25,7 @@
 
 ## Scene Observability Strict Mode
 - Default smoke targets remain compatibility-friendly and may skip when governance/audit models are unavailable:
+  - `make verify.portal.scene_observability_preflight_smoke.container`
   - `make verify.portal.scene_governance_action_smoke.container`
   - `make verify.portal.scene_auto_degrade_smoke.container`
   - `make verify.portal.scene_auto_degrade_notify_smoke.container`
@@ -32,7 +33,7 @@
   - Aggregate:
     - `make verify.portal.scene_observability_smoke.container`
 - Strict variants enforce governance/audit artifacts and fail fast when evidence is missing:
-  - `make verify.portal.scene_observability_preflight.container`
+  - `make verify.portal.scene_observability_preflight.container` (`SCENE_OBSERVABILITY_PREFLIGHT_STRICT=1`)
   - `make verify.portal.scene_governance_action_strict.container`
   - `make verify.portal.scene_auto_degrade_strict.container`
   - `make verify.portal.scene_auto_degrade_notify_strict.container`
