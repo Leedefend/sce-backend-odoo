@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { extractTraceId, assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -77,29 +78,6 @@ function requestJson(url, payload, headers = {}) {
 function assert(cond, message) {
   if (!cond) {
     throw new Error(message);
-  }
-}
-
-function extractTraceId(body) {
-  if (!body || typeof body !== 'object') return '';
-  const meta = body.meta && typeof body.meta === 'object' ? body.meta : {};
-  return String(meta.trace_id || meta.traceId || body.trace_id || body.traceId || '');
-}
-
-function assertIntentEnvelope(resp, intentName) {
-  assert(resp.status < 400, `${intentName} failed: status=${resp.status}`);
-  assert(resp.body && typeof resp.body === 'object', `${intentName} missing response body`);
-  assert(resp.body.ok === true, `${intentName} missing ok=true envelope`);
-  const traceId = extractTraceId(resp.body);
-  assert(Boolean(traceId), `${intentName} missing meta.trace_id`);
-  const meta = resp.body.meta && typeof resp.body.meta === 'object' ? resp.body.meta : {};
-  const metaIntent = String(meta.intent || '');
-  if (metaIntent) {
-    const aliases = {
-      'app.init': ['system.init'],
-    };
-    const allowed = [intentName].concat(aliases[intentName] || []);
-    assert(allowed.includes(metaIntent), `${intentName} meta.intent mismatch: ${metaIntent}`);
   }
 }
 
@@ -201,7 +179,7 @@ async function main() {
 
   const initResp = await requestJson(intentUrl, { intent: 'app.init', params: { scene: 'web', with_preload: false } }, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  assertIntentEnvelope(initResp, 'app.init');
+  assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
   const initTrace = extractTraceId(initResp.body);
 
   const initData = (initResp.body || {}).data || {};
