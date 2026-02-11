@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -36,28 +37,6 @@ function writeJson(file, obj) {
 function writeSummary(lines) {
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, 'summary.md'), lines.join('\n'));
-}
-
-function extractTraceId(body) {
-  if (!body || typeof body !== 'object') return '';
-  const meta = body.meta && typeof body.meta === 'object' ? body.meta : {};
-  return String(meta.trace_id || meta.traceId || body.trace_id || body.traceId || '');
-}
-
-function assertIntentEnvelope(resp, intentName) {
-  if (!resp || resp.status >= 400) {
-    const status = resp && typeof resp.status !== 'undefined' ? resp.status : 0;
-    throw new Error(`${intentName} failed: status=${status}`);
-  }
-  if (!resp.body || typeof resp.body !== 'object') {
-    throw new Error(`${intentName} missing response body`);
-  }
-  if (resp.body.ok !== true) {
-    throw new Error(`${intentName} missing ok=true envelope`);
-  }
-  if (!extractTraceId(resp.body)) {
-    throw new Error(`${intentName} missing meta.trace_id`);
-  }
 }
 
 function requestJson(url, payload, headers = {}) {
@@ -111,9 +90,11 @@ async function main() {
       'X-Bootstrap-Secret': BOOTSTRAP_SECRET,
       'X-Anonymous-Intent': '1',
     });
-    if (bootstrapResp.status >= 400 || !bootstrapResp.body.ok) {
+    try {
+      assertIntentEnvelope(bootstrapResp, 'bootstrap', { allowMetaIntentAliases: ['session.bootstrap'] });
+    } catch (_err) {
       writeJson(path.join(outDir, 'bootstrap.log'), bootstrapResp);
-      throw new Error(`bootstrap failed: status=${bootstrapResp.status}`);
+      throw new Error(`bootstrap failed: status=${bootstrapResp.status || 0}`);
     }
     token = (bootstrapResp.body.data || {}).token || '';
   }
@@ -138,7 +119,7 @@ async function main() {
   const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  assertIntentEnvelope(initResp, 'app.init');
+  assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
 
   const data = initResp.body.data || {};
   const scenes = data.scenes;
