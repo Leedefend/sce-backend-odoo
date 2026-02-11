@@ -80,6 +80,20 @@ function assert(cond, message) {
   }
 }
 
+function extractTraceId(body) {
+  if (!body || typeof body !== 'object') return '';
+  const meta = body.meta && typeof body.meta === 'object' ? body.meta : {};
+  return String(meta.trace_id || meta.traceId || body.trace_id || body.traceId || '');
+}
+
+function assertIntentEnvelope(resp, intentName) {
+  assert(resp.status < 400, `${intentName} failed: status=${resp.status}`);
+  assert(resp.body && typeof resp.body === 'object', `${intentName} missing response body`);
+  assert(resp.body.ok === true, `${intentName} missing ok=true envelope`);
+  const traceId = extractTraceId(resp.body);
+  assert(Boolean(traceId), `${intentName} missing meta.trace_id`);
+}
+
 function resolveRepoRoot() {
   const candidates = [REPO_ROOT, '/mnt/extra-addons', '/mnt', process.cwd()];
   for (const candidate of candidates) {
@@ -169,9 +183,7 @@ async function main() {
       { 'X-Anonymous-Intent': '1' }
     );
     writeJson(path.join(outDir, 'login.log'), loginResp);
-    if (loginResp.status >= 400 || !loginResp.body.ok) {
-      throw new Error(`login failed: status=${loginResp.status}`);
-    }
+    assertIntentEnvelope(loginResp, 'login');
     token = (((loginResp.body || {}).data) || {}).token || '';
     assert(Boolean(token), 'login response missing token');
   }
@@ -180,7 +192,7 @@ async function main() {
 
   const initResp = await requestJson(intentUrl, { intent: 'app.init', params: { scene: 'web', with_preload: false } }, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  assert(initResp.status < 400 && initResp.body.ok, `app.init failed: status=${initResp.status}`);
+  assertIntentEnvelope(initResp, 'app.init');
 
   const initData = (initResp.body || {}).data || {};
   const scenes = Array.isArray(initData.scenes) ? initData.scenes : [];
@@ -241,6 +253,7 @@ async function main() {
     }
     throw new Error(`my.work.summary failed: status=${myWorkResp.status} message=${errMsg || '-'}`);
   }
+  assertIntentEnvelope(myWorkResp, 'my.work.summary');
 
   const summaryData = (myWorkResp.body || {}).data || {};
   const statusState = (((summaryData || {}).status) || {}).state;
