@@ -235,6 +235,15 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
         ok = False
         blockers.append(f"missing_behavioral_coverage:{','.join(sorted(missing_behavioral_intents))}")
 
+    missing_reason_code_intents = sorted(
+        intent
+        for intent in required_reason_code_intents
+        if int((intent_catalog_meta.get(intent) or {}).get("reason_code_count", 0)) <= 0
+    )
+    if missing_reason_code_intents:
+        ok = False
+        blockers.append(f"missing_reason_code_coverage:{','.join(missing_reason_code_intents)}")
+
     untested_intents = sorted(intent for intent in intent_keys if int(intent_test_refs.get(intent, 0)) <= 0)
     warning_untested_limit = int(policy.get("warning_untested_limit", 0))
     if require_zero_untested and len(untested_intents) > 0:
