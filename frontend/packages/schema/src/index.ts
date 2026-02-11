@@ -78,6 +78,22 @@ export interface NavMeta {
 }
 
 export interface AppInitResponse {
+  role_surface?: {
+    role_code?: string;
+    role_label?: string;
+    landing_scene_key?: string;
+    landing_menu_id?: number | null;
+    landing_menu_xmlid?: string;
+    landing_path?: string;
+    scene_candidates?: string[];
+    menu_xmlids?: string[];
+  };
+  role_surface_map?: Record<string, {
+    role_code?: string;
+    role_label?: string;
+    scene_candidates?: string[];
+    menu_xmlids?: string[];
+  }>;
   user: {
     id: number;
     name: string;

@@ -66,5 +66,61 @@
                 (4, ref('smart_construction_core.group_sc_cap_project_manager'))
             ]"/>
         </record>
+
+        <record id="user_demo_role_owner" model="res.users">
+            <field name="name">Demo Role Owner</field>
+            <field name="login">demo_role_owner</field>
+            <field name="password">demo</field>
+            <field name="email">demo_role_owner@example.com</field>
+            <field name="active">True</field>
+            <field name="share">False</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="groups_id" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_custom.group_sc_role_owner'))
+            ]"/>
+        </record>
+
+        <record id="user_demo_role_pm" model="res.users">
+            <field name="name">Demo Role PM</field>
+            <field name="login">demo_role_pm</field>
+            <field name="password">demo</field>
+            <field name="email">demo_role_pm@example.com</field>
+            <field name="active">True</field>
+            <field name="share">False</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="groups_id" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_custom.group_sc_role_pm'))
+            ]"/>
+        </record>
+
+        <record id="user_demo_role_finance" model="res.users">
+            <field name="name">Demo Role Finance</field>
+            <field name="login">demo_role_finance</field>
+            <field name="password">demo</field>
+            <field name="email">demo_role_finance@example.com</field>
+            <field name="active">True</field>
+            <field name="share">False</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="groups_id" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_custom.group_sc_role_finance'))
+            ]"/>
+        </record>
+
+        <record id="user_demo_role_executive" model="res.users">
+            <field name="name">Demo Role Executive</field>
+            <field name="login">demo_role_executive</field>
+            <field name="password">demo</field>
+            <field name="email">demo_role_executive@example.com</field>
+            <field name="active">True</field>
+            <field name="share">False</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="groups_id" eval="[
+                (4, ref('base.group_user')),
+                (4, ref('smart_construction_custom.group_sc_role_executive'))
+            ]"/>
+        </record>
     </data>
 </odoo>

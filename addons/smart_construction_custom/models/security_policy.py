@@ -89,6 +89,18 @@ class ScSecurityPolicy(models.TransientModel):
                 "smart_construction_custom.group_sc_role_payment_manager",
                 "smart_construction_core.group_sc_cap_finance_manager",
             ],
+            "demo_role_owner": [
+                "smart_construction_custom.group_sc_role_owner",
+            ],
+            "demo_role_pm": [
+                "smart_construction_custom.group_sc_role_pm",
+            ],
+            "demo_role_finance": [
+                "smart_construction_custom.group_sc_role_finance",
+            ],
+            "demo_role_executive": [
+                "smart_construction_custom.group_sc_role_executive",
+            ],
         }
         Users = self.env["res.users"].sudo()
         for login, groups in user_map.items():
