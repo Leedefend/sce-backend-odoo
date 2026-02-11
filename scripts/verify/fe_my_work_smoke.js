@@ -125,7 +125,9 @@ async function main() {
   };
   const resp1 = await requestJson(intentUrl, req1, authHeader);
   writeJson(path.join(outDir, 'my_work_page1_desc.log'), resp1);
-  if (resp1.status >= 400 || !resp1.body.ok) {
+  try {
+    assertIntentEnvelope(resp1, 'my.work.summary');
+  } catch (_err) {
     const errMsg = String((((resp1.body || {}).error) || {}).message || '');
     if (errMsg.includes('Unknown intent: my.work.summary')) {
       if (ALLOW_SKIP_UNKNOWN_INTENT) {
@@ -144,7 +146,6 @@ async function main() {
     }
     throw new Error(`my.work.summary page1 failed: status=${resp1.status} message=${errMsg || '-'}`);
   }
-  assertIntentEnvelope(resp1, 'my.work.summary');
   const data1 = (resp1.body || {}).data || {};
   const filters1 = data1.filters || {};
   const items1 = Array.isArray(data1.items) ? data1.items : [];
