@@ -70,3 +70,6 @@ Included in:
   - `artifacts/codex/portal-scene-health-pagination-v10_4/<timestamp>/`
 - Auto-degrade notify:
   - `artifacts/codex/portal-scene-auto-degrade-notify-v10_4/<timestamp>/`
+
+## Troubleshooting
+- Strict observability failures: `docs/ops/verify/scene_observability_troubleshooting.md`

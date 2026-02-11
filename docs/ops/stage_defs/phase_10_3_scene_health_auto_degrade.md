@@ -67,3 +67,6 @@ Behavior:
   - `artifacts/codex/portal-scene-auto-degrade-v10_3/<timestamp>/scene_health_auto_degrade.log`
   - `artifacts/codex/portal-scene-auto-degrade-v10_3/<timestamp>/governance_log.log`
   - `artifacts/codex/portal-scene-auto-degrade-v10_3/<timestamp>/summary.md`
+
+## Troubleshooting
+- Strict observability failures: `docs/ops/verify/scene_observability_troubleshooting.md`

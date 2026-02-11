@@ -102,3 +102,6 @@ Optional (non-gate by default):
   - `artifacts/codex/portal-scene-package-import-v10_6/<timestamp>/`
 - Portal UI smoke:
   - `artifacts/codex/portal-scene-package-ui-v10_6/<timestamp>/`
+
+## Troubleshooting
+- Strict observability failures: `docs/ops/verify/scene_observability_troubleshooting.md`
