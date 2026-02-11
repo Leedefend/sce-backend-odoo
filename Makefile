@@ -72,6 +72,7 @@ COMPOSE_CI       = $(COMPOSE_BIN) -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE_B
 # ------------------ DB / Module ------------------
 DB_NAME      ?= sc_odoo
 SC_GATE_STRICT ?= 1
+SC_SCENE_OBS_STRICT ?= 0
 SC_WARN_ACT_URL_LEGACY_MAX ?= 3
 DB_CI        ?= sc_test
 DB_USER      ?= odoo
@@ -855,6 +856,11 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	  $(MAKE) verify.portal.act_url_missing_scene_report.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.cross_stack_contract_smoke.container DB_NAME=$(DB_NAME); \
 	  $(MAKE) verify.portal.my_work_smoke.container DB_NAME=$(DB_NAME); \
+	  if [ "$(SC_SCENE_OBS_STRICT)" = "1" ]; then \
+	    $(MAKE) verify.portal.scene_observability_strict.container DB_NAME=$(DB_NAME); \
+	  else \
+	    echo "[gate.full] SC_SCENE_OBS_STRICT=0: skip strict scene observability checks"; \
+	  fi; \
 	else \
 	  echo "[gate.full] SC_GATE_STRICT=0: skip menu/act_url guard checks"; \
 	fi
