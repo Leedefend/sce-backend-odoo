@@ -82,6 +82,27 @@ def _normalize_string_list(value: object) -> list[str]:
     return sorted(out)
 
 
+def _collect_intent_catalog_meta(payload: dict[str, Any]) -> dict[str, dict[str, int]]:
+    rows = payload.get("intents") if isinstance(payload, dict) else []
+    if not isinstance(rows, list):
+        return {}
+    out: dict[str, dict[str, int]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        intent_name = str(row.get("intent") or "").strip()
+        if not intent_name:
+            continue
+        out[intent_name] = {
+            "test_refs": int(row.get("test_refs") or 0),
+            "examples_count": len(row.get("examples") or []),
+            "request_hint_count": len(row.get("request_schema_hint") or []),
+            "response_hint_count": len(row.get("response_data_schema_hint") or []),
+            "reason_code_count": len(row.get("observed_reason_codes") or []),
+        }
+    return out
+
+
 def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     result: dict[str, Any] = {"files": {}, "summary": {}}
     ok = True
@@ -91,6 +112,7 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     scene_count = 0
     intent_keys: set[str] = set()
     scene_keys: set[str] = set()
+    intent_catalog_meta: dict[str, dict[str, int]] = {}
     intent_test_refs: dict[str, int] = {}
     renderability_ok = False
 
@@ -118,6 +140,7 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
                         for item in intents
                         if isinstance(item, dict) and str(item.get("intent") or "").strip()
                     }
+                intent_catalog_meta = _collect_intent_catalog_meta(payload)
             elif key == "scene_catalog":
                 entry["scene_count"] = int(payload.get("scene_count", 0)) if isinstance(payload, dict) else 0
                 scene_count = int(entry["scene_count"])
