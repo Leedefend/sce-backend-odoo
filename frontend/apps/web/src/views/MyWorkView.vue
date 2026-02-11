@@ -39,6 +39,7 @@
       <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
       <button class="link-btn" @click="selectAllFailedItems">选中全部失败项</button>
       <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
+      <button class="link-btn" @click="selectNonRetryableFailedItems">仅选不可重试项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
       <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
       <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
@@ -799,6 +800,23 @@ function selectRetryableFailedItems() {
   retryableIds.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
   actionFeedback.value = `已选中 ${retryableIds.length} 条可重试失败项`;
+  actionFeedbackError.value = false;
+}
+
+function selectNonRetryableFailedItems() {
+  const ids = retryFailedItems.value
+    .filter((item) => item.retryable === false)
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (!ids.length) {
+    actionFeedback.value = '当前没有不可重试失败项';
+    actionFeedbackError.value = true;
+    return;
+  }
+  const merged = new Set(todoSelectionIds.value);
+  ids.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+  actionFeedback.value = `已选中 ${ids.length} 条不可重试失败项`;
   actionFeedbackError.value = false;
 }
 
