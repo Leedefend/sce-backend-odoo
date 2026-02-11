@@ -353,6 +353,7 @@ help:
 	@echo "  make verify.portal.scene_observability_preflight.latest"
 	@echo "  make verify.portal.scene_observability_preflight.report"
 	@echo "  make verify.portal.scene_observability.structure_guard"
+	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.portal.scene_observability_smoke.container DB_NAME=<name>"
 	@echo "  make verify.portal.scene_observability_strict.container DB_NAME=<name>"
 	@echo "  make mod.install MODULE=... [DB=...] | mod.upgrade MODULE=... [DB=...]"
@@ -912,6 +913,7 @@ codex.print:
 	@echo "== Codex SOP =="
 	@echo "CODEX_MODE=$(CODEX_MODE) CODEX_DB=$(CODEX_DB) CODEX_MODULES=$(CODEX_MODULES) CODEX_NEED_UPGRADE=$(CODEX_NEED_UPGRADE)"
 	@echo "SC_GATE_STRICT=$(SC_GATE_STRICT) SC_SCENE_OBS_STRICT=$(SC_SCENE_OBS_STRICT) SCENE_OBSERVABILITY_PREFLIGHT_STRICT=$(SCENE_OBSERVABILITY_PREFLIGHT_STRICT)"
+	@echo "BASELINE_FREEZE_ENFORCE=$(BASELINE_FREEZE_ENFORCE)"
 	@echo "fast: restart (optional upgrade only if CODEX_NEED_UPGRADE=1) ; forbid demo.reset/gate.full"
 	@echo "gate: optional upgrade + demo.reset + contract.export_all + gate.full"
 
