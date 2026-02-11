@@ -35,6 +35,8 @@ Closes #ISSUE_ID
 
  无无用代码 / 注释
 
+ [ ] 若触及基线冻结区，已在 PR 描述说明例外原因并附回滚方案
+
  权限（ir.model.access）设置正确
 
  XML 通过 Odoo 解析
