@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -77,7 +78,7 @@ async function main() {
     { intent: 'login', params: { db: DB_NAME, login: 'admin', password: ADMIN_PASSWD } },
     { 'X-Anonymous-Intent': '1', 'X-Trace-Id': traceId }
   );
-  if (loginResp.status >= 400 || !loginResp.body.ok) throw new Error(`login failed: ${loginResp.status}`);
+  assertIntentEnvelope(loginResp, 'login');
   const token = (((loginResp.body || {}).data) || {}).token || '';
   if (!token) throw new Error('login token missing');
   const auth = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME, 'X-Trace-Id': traceId };
@@ -88,7 +89,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  if (initResp.status >= 400 || !initResp.body.ok) throw new Error(`app.init failed: ${initResp.status}`);
+  assertIntentEnvelope(initResp, 'app.init');
 
   const exportResp = await requestJson(
     intentUrl,
@@ -103,7 +104,7 @@ async function main() {
     },
     auth
   );
-  if (exportResp.status >= 400 || !exportResp.body.ok) throw new Error(`scene.package.export failed: ${exportResp.status}`);
+  assertIntentEnvelope(exportResp, 'scene.package.export');
   const pkg = (((exportResp.body || {}).data) || {}).package;
   if (!pkg || typeof pkg !== 'object') throw new Error('export package missing');
 
@@ -113,7 +114,7 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'dry_run.log'), dryRunResp);
-  if (dryRunResp.status >= 400 || !dryRunResp.body.ok) throw new Error(`dry_run failed: ${dryRunResp.status}`);
+  assertIntentEnvelope(dryRunResp, 'scene.package.dry_run_import');
 
   const importResp = await requestJson(
     intentUrl,
@@ -124,11 +125,11 @@ async function main() {
     auth
   );
   writeJson(path.join(outDir, 'import.log'), importResp);
-  if (importResp.status >= 400 || !importResp.body.ok) throw new Error(`import failed: ${importResp.status}`);
+  assertIntentEnvelope(importResp, 'scene.package.import');
 
   const listResp = await requestJson(intentUrl, { intent: 'scene.package.list', params: {} }, auth);
   writeJson(path.join(outDir, 'list_after_import.log'), listResp);
-  if (listResp.status >= 400 || !listResp.body.ok) throw new Error(`scene.package.list failed: ${listResp.status}`);
+  assertIntentEnvelope(listResp, 'scene.package.list');
 
   const items = ((((listResp.body || {}).data) || {}).items) || [];
   if (!Array.isArray(items) || !items.length) {
