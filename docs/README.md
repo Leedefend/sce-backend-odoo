@@ -25,6 +25,7 @@
 make contract.catalog.export
 make contract.evidence.export
 make audit.intent.surface
+make verify.business.increment.preflight
 ```
 
 ## Bilingual

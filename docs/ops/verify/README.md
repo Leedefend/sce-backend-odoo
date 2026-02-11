@@ -72,6 +72,20 @@
   - `make verify.baseline.all` (platform + business)
   - `make gate.baseline.all` (platform gate + business gate)
 
+## Business Increment Preflight
+- Readiness report (non-blocking):
+  - `make verify.business.increment.readiness`
+- Readiness brief (non-blocking):
+  - `make verify.business.increment.readiness.brief`
+- Readiness report (blocking):
+  - `make verify.business.increment.readiness.strict`
+- Readiness brief (blocking):
+  - `make verify.business.increment.readiness.brief.strict`
+- One-command preflight (refresh catalogs + scene shape + intent surface + readiness):
+  - `make verify.business.increment.preflight`
+- Strict preflight:
+  - `make verify.business.increment.preflight.strict`
+
 ## Notes
 - Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.
 - Phase 9.8 warnings baseline can be adjusted via `SC_WARN_ACT_URL_LEGACY_MAX`.
