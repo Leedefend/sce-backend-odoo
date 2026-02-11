@@ -32,6 +32,8 @@
         "app.open",
         "execute_button",
         "ui.contract",
+        "ui.contract.enhanced",
+        "ui.contract.model.view",
         "meta.describe_model",
         "load_metadata",
         "permission.check",
