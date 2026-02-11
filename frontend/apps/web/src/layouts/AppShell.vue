@@ -113,6 +113,28 @@ import {
   summarizeSuggestedActionTraceFilter,
 } from '../services/trace';
 
+type UnknownDict = Record<string, unknown>;
+type SceneAwareNavNode = NavNode & {
+  scene_key?: string;
+  sceneKey?: string;
+};
+
+function asDict(value: unknown): UnknownDict | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as UnknownDict;
+}
+
+function asText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function resolveSceneKeyFromNode(node: NavNode): string | undefined {
+  const sceneNode = node as SceneAwareNavNode;
+  return asText(sceneNode.scene_key) || asText(sceneNode.sceneKey) || asText(node.meta?.scene_key);
+}
+
 const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
@@ -128,10 +150,13 @@ const rootTitle = computed(() => {
 });
 const userName = computed(() => session.user?.name ?? 'Guest');
 const capabilities = computed(() => session.capabilities);
-const effectiveDb = computed(() => (session.initMeta as any)?.effective_db ?? 'N/A');
+const initMeta = computed(() => asDict(session.initMeta));
+const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? 'N/A');
 const navVersion = computed(() => {
-  const meta = session.initMeta as any;
-  return meta?.nav_version ?? meta?.nav_meta?.menu ?? meta?.parts?.nav ?? 'N/A';
+  const meta = initMeta.value;
+  const navMeta = asDict(meta?.nav_meta);
+  const parts = asDict(meta?.parts);
+  return asText(meta?.nav_version) || asText(navMeta?.menu) || asText(parts?.nav) || 'N/A';
 });
 const suggestedActionStamp = ref(0);
 const hudMessage = ref('');
@@ -185,7 +210,8 @@ const pageTitle = computed(() => {
   if (session.currentAction?.name) {
     return session.currentAction.name;
   }
-  const modelLabel = (session.currentAction as any)?.model_label || (session.currentAction as any)?.model;
+  const currentAction = asDict(session.currentAction);
+  const modelLabel = asText(currentAction?.model_label) || asText(currentAction?.model);
   if (modelLabel) {
     return modelLabel;
   }
@@ -385,7 +411,7 @@ function handleSelect(node: NavNode) {
   if (!node.menu_id && node.id) {
     node.menu_id = node.id as number;
   }
-  const sceneKey = (node as any).scene_key || (node as any).sceneKey || node.meta?.scene_key;
+  const sceneKey = resolveSceneKeyFromNode(node);
   if (sceneKey) {
     router.push({ path: `/s/${sceneKey}`, query: { menu_id: node.menu_id || undefined } }).catch(() => {});
     return;
