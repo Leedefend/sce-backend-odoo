@@ -2,6 +2,10 @@
 
 This directory is the top-level documentation entry aligned with current implemented capabilities: `contract` / `ops` / `audit`.
 
+## Direction Anchor
+- Project Direction Anchor: `docs/00_overview/project_direction.en.md`
+- 中文版: `docs/00_overview/project_direction.md`
+
 ## Capability Navigation
 - Contract (contracts and catalogs): `docs/contract/README.md`
 - Ops (release and operational evidence): `docs/ops/README.md`
