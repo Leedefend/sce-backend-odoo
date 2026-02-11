@@ -280,17 +280,17 @@ export const useSessionStore = defineStore('session', {
           length: Array.isArray(c) ? c.length : 'N/A'
         })));
       }
-      const nav = candidates.find((entry) => Array.isArray(entry)) ?? [];
+      const nav = (candidates.find((entry) => Array.isArray(entry)) ?? []) as NavNode[];
       if (debugIntent) {
         // eslint-disable-next-line no-console
-        console.info('[debug] app.init nav length', (nav as NavNode[]).length);
+        console.info('[debug] app.init nav length', nav.length);
         // 调试：打印第一个导航项的结构
         if (nav.length > 0) {
           console.info('[debug] First nav item:', JSON.stringify(nav[0], null, 2));
         }
       }
       // 为导航项添加 key 属性
-      const menuTreeWithKeys = (nav as any[]).map((item, index) => addKeys(item, index)) as NavNode[];
+      const menuTreeWithKeys = nav.map((item, index) => addKeys(item, index));
       this.menuTree = menuTreeWithKeys;
       this.menuExpandedKeys = filterExpandedKeys(this.menuTree, this.menuExpandedKeys);
       if (!this.menuTree.length) {
