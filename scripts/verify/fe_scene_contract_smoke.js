@@ -38,6 +38,27 @@ function writeSummary(lines) {
   fs.writeFileSync(path.join(outDir, 'summary.md'), lines.join('\n'));
 }
 
+function extractTraceId(body) {
+  if (!body || typeof body !== 'object') return '';
+  const meta = body.meta && typeof body.meta === 'object' ? body.meta : {};
+  return String(meta.trace_id || meta.traceId || body.trace_id || body.traceId || '');
+}
+
+function assertIntentEnvelope(resp, intentName) {
+  if (!resp || resp.status >= 400) {
+    throw new Error(`${intentName} failed: status=${resp?.status || 0}`);
+  }
+  if (!resp.body || typeof resp.body !== 'object') {
+    throw new Error(`${intentName} missing response body`);
+  }
+  if (resp.body.ok !== true) {
+    throw new Error(`${intentName} missing ok=true envelope`);
+  }
+  if (!extractTraceId(resp.body)) {
+    throw new Error(`${intentName} missing meta.trace_id`);
+  }
+}
+
 function requestJson(url, payload, headers = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -99,10 +120,8 @@ async function main() {
     log(`login: ${LOGIN} db=${DB_NAME}`);
     const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
     const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-    if (loginResp.status >= 400 || !loginResp.body.ok) {
-      writeJson(path.join(outDir, 'login.log'), loginResp);
-      throw new Error(`login failed: status=${loginResp.status}`);
-    }
+    writeJson(path.join(outDir, 'login.log'), loginResp);
+    assertIntentEnvelope(loginResp, 'login');
     token = (loginResp.body.data || {}).token || '';
     if (!token) {
       throw new Error('login response missing token');
@@ -118,9 +137,7 @@ async function main() {
   const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
-  if (initResp.status >= 400 || !initResp.body.ok) {
-    throw new Error(`app.init failed: status=${initResp.status}`);
-  }
+  assertIntentEnvelope(initResp, 'app.init');
 
   const data = initResp.body.data || {};
   const scenes = data.scenes;
