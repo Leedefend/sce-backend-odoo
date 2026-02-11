@@ -30,7 +30,8 @@
         "my.work.summary",
         "my.work.complete_batch",
         "usage.report"
-      ]
+      ],
+      "warning_untested_limit": 25
     }
   }
 }
