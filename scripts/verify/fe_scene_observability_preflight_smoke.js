@@ -11,7 +11,13 @@ const { probeModels, assertRequiredModels } = require('./scene_observability_uti
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
-const ADMIN_PASSWD = process.env.ADMIN_PASSWD || 'admin';
+const LOGIN = process.env.SCENE_LOGIN || process.env.SVC_LOGIN || process.env.E2E_LOGIN || 'admin';
+const PASSWORD =
+  process.env.SCENE_PASSWORD ||
+  process.env.SVC_PASSWORD ||
+  process.env.E2E_PASSWORD ||
+  process.env.ADMIN_PASSWD ||
+  'admin';
 const STRICT = process.env.SCENE_OBSERVABILITY_PREFLIGHT_STRICT === '1';
 
 const now = new Date();
@@ -74,13 +80,31 @@ async function main() {
   const traceId = `scene_observability_preflight_${Date.now()}`;
   const intentUrl = `${BASE_URL}/api/v1/intent`;
 
-  const loginResp = await requestJson(
-    intentUrl,
-    { intent: 'login', params: { db: DB_NAME, login: 'admin', password: ADMIN_PASSWD } },
-    { 'X-Anonymous-Intent': '1', 'X-Trace-Id': traceId }
-  );
-  assertIntentEnvelope(loginResp, 'login');
-  const token = (((loginResp.body || {}).data) || {}).token || '';
+  const candidates = [
+    { login: process.env.SCENE_LOGIN || '', password: process.env.SCENE_PASSWORD || '' },
+    { login: process.env.E2E_LOGIN || '', password: process.env.E2E_PASSWORD || '' },
+    { login: LOGIN, password: PASSWORD },
+    { login: 'admin', password: process.env.ADMIN_PASSWD || 'admin' },
+  ].filter((c) => c.login && c.password);
+  let token = '';
+  let usedLogin = '';
+  let lastLoginResp = null;
+  for (const candidate of candidates) {
+    const loginResp = await requestJson(
+      intentUrl,
+      { intent: 'login', params: { db: DB_NAME, login: candidate.login, password: candidate.password } },
+      { 'X-Anonymous-Intent': '1', 'X-Trace-Id': traceId }
+    );
+    lastLoginResp = loginResp;
+    if (loginResp.status < 400 && loginResp.body.ok) {
+      assertIntentEnvelope(loginResp, 'login');
+      token = (((loginResp.body || {}).data) || {}).token || '';
+      if (token) {
+        usedLogin = candidate.login;
+        break;
+      }
+    }
+  }
   if (!token) throw new Error('login token missing');
   const auth = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME, 'X-Trace-Id': traceId };
 
@@ -92,6 +116,12 @@ async function main() {
     governance: governance,
     notify: notify,
   };
+  if (lastLoginResp) {
+    report.login = {
+      used_login: usedLogin || null,
+      final_status: lastLoginResp.status || 0,
+    };
+  }
   writeJson(path.join(outDir, 'preflight.log'), report);
 
   assertRequiredModels(STRICT, ['sc.scene.governance.log', 'sc.audit.log'], governance.available, 'governance log');
