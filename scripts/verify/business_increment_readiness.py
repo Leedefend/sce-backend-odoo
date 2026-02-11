@@ -158,6 +158,7 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
     min_scene_count = int(policy.get("min_scene_count", 1))
     require_renderability = bool(policy.get("require_renderability_fully_renderable", False))
     require_shape_guard_ok = bool(policy.get("require_scene_shape_guard_ok", True))
+    require_zero_untested = bool(policy.get("require_zero_untested", False))
     required_intents = _normalize_string_list(policy.get("required_intents"))
     required_scene_keys = _normalize_string_list(policy.get("required_scene_keys"))
     required_test_ref_intents = _normalize_string_list(policy.get("required_test_ref_intents"))
@@ -197,6 +198,9 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
 
     untested_intents = sorted(intent for intent in intent_keys if int(intent_test_refs.get(intent, 0)) <= 0)
     warning_untested_limit = int(policy.get("warning_untested_limit", 0))
+    if require_zero_untested and len(untested_intents) > 0:
+        ok = False
+        blockers.append(f"untested_intents_present:{len(untested_intents)}")
     if warning_untested_limit > 0 and len(untested_intents) > warning_untested_limit:
         warnings.append(f"untested_intents_over_limit:{len(untested_intents)}/{warning_untested_limit}")
 
@@ -222,6 +226,7 @@ def _status(policy: dict[str, Any], profile: str) -> dict[str, Any]:
             "required_intents": required_intents,
             "required_scene_keys": required_scene_keys,
             "required_test_ref_intents": required_test_ref_intents,
+            "require_zero_untested": require_zero_untested,
             "warning_untested_limit": warning_untested_limit,
         },
         "blockers": blockers,
