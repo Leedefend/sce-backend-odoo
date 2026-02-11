@@ -29,6 +29,7 @@ import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
+import type { NavNode } from '@sc/schema';
 
 const route = useRoute();
 const router = useRouter();
@@ -209,11 +210,12 @@ async function resolveScene() {
   status.value = 'error';
 }
 
-function findActionNodeBySceneKey(nodes: Array<Record<string, any>>, sceneKey: string) {
+function findActionNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode | null {
   if (!sceneKey) return null;
-  const walk = (items: Array<Record<string, any>>): Record<string, any> | null => {
+  const walk = (items: NavNode[]): NavNode | null => {
     for (const node of items) {
-      if (node?.scene_key === sceneKey || node?.meta?.scene_key === sceneKey) {
+      const sceneNode = node as NavNode & { scene_key?: string };
+      if (sceneNode.scene_key === sceneKey || node.meta?.scene_key === sceneKey) {
         return node;
       }
       if (node.children?.length) {
