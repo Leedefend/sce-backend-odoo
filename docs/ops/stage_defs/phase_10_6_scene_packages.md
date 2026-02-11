@@ -72,6 +72,7 @@ Capabilities:
 
 ## Verify Commands
 - `make scene.package.export PACKAGE_NAME=<name> PACKAGE_VERSION=<version> SCENE_CHANNEL=stable`
+- `make verify.portal.scene_observability_preflight_smoke.container`
 - `make verify.portal.scene_package_dry_run_smoke.container`
 - `make verify.portal.scene_package_import_smoke.container`
 - `make verify.portal.scene_observability_smoke.container`

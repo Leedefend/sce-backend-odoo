@@ -49,6 +49,7 @@ Notification payload fields include:
 - `suggestion`
 
 ## Verify Commands
+- `make verify.portal.scene_observability_preflight_smoke.container`
 - `make verify.portal.scene_governance_action_smoke.container`
 - `make verify.portal.scene_health_pagination_smoke.container`
 - `make verify.portal.scene_auto_degrade_notify_smoke.container`
