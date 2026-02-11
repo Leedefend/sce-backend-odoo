@@ -33,3 +33,11 @@ This guide explains common failures when running strict scene observability chec
   `artifacts/codex/portal-scene-governance-action-v10_4/<timestamp>/`
 - Auto-degrade notify:  
   `artifacts/codex/portal-scene-auto-degrade-notify-v10_4/<timestamp>/`
+
+## Reading Preflight Report
+- File: `preflight.log`
+- Key fields:
+  - `required_any.governance`: acceptable governance evidence models
+  - `required_any.notify`: acceptable notify evidence models
+  - `governance.available` / `notify.available`: models available in current env
+  - `governance.missing` / `notify.missing`: missing models in current env
