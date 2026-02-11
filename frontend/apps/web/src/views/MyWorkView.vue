@@ -44,6 +44,7 @@
       <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
       <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
       <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
+      <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">主列表定位失败</button>
       <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
       <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
     </div>
@@ -899,6 +900,17 @@ async function copyVisibleRetrySummary() {
     actionFeedback.value = '复制当前视图摘要失败，请检查浏览器剪贴板权限';
     actionFeedbackError.value = true;
   }
+}
+
+function focusFailedInMainList() {
+  if (!retryFailedItems.value.length) return;
+  activeSection.value = 'todo';
+  sourceFilter.value = 'mail.activity';
+  reasonFilter.value = retryReasonSummary.value[0]?.reason_code || 'ALL';
+  page.value = 1;
+  actionFeedback.value = '已定位到主列表失败待办视图';
+  actionFeedbackError.value = false;
+  void load();
 }
 
 async function copyRetryRequest() {
