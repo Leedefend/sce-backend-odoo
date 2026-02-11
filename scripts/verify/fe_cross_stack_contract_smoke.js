@@ -198,6 +198,7 @@ async function main() {
   const initResp = await requestJson(intentUrl, { intent: 'app.init', params: { scene: 'web', with_preload: false } }, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
   assertIntentEnvelope(initResp, 'app.init');
+  const initTrace = extractTraceId(initResp.body);
 
   const initData = (initResp.body || {}).data || {};
   const scenes = Array.isArray(initData.scenes) ? initData.scenes : [];
@@ -259,6 +260,7 @@ async function main() {
     throw new Error(`my.work.summary failed: status=${myWorkResp.status} message=${errMsg || '-'}`);
   }
   assertIntentEnvelope(myWorkResp, 'my.work.summary');
+  const myWorkTrace = extractTraceId(myWorkResp.body);
 
   const summaryData = (myWorkResp.body || {}).data || {};
   const statusState = (((summaryData || {}).status) || {}).state;
@@ -279,6 +281,8 @@ async function main() {
   summary.push(`scene_keys_detected: ${totalSceneKeys.length}`);
   summary.push(`my_work_status: ${statusState}`);
   summary.push(`my_work_items: ${items.length}`);
+  summary.push(`trace_app_init: ${initTrace || '-'}`);
+  summary.push(`trace_my_work: ${myWorkTrace || '-'}`);
   summary.push(`frontend_contract_files: ${frontendContract.checked_files}`);
   summary.push(`frontend_contract_skipped: ${frontendContract.skipped ? 'yes' : 'no'}`);
   writeSummary(summary);
