@@ -34,6 +34,8 @@
       <span v-if="lastBatchExecutionMode" class="meta-chip">模式: {{ lastBatchExecutionMode }}</span>
       <span v-if="lastBatchReplay" class="meta-chip replay">重放结果</span>
       <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
+      <button class="link-btn" @click="selectAllFailedItems">选中全部失败项</button>
+      <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
       <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
       <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
       <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
@@ -579,6 +581,39 @@ function selectRetryFailedItems() {
   const merged = new Set(todoSelectionIds.value);
   candidateIds.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+}
+
+function selectAllFailedItems() {
+  const failedIds = retryFailedItems.value
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (!failedIds.length) {
+    actionFeedback.value = '当前没有失败项可选择';
+    actionFeedbackError.value = true;
+    return;
+  }
+  const merged = new Set(todoSelectionIds.value);
+  failedIds.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+  actionFeedback.value = `已选中 ${failedIds.length} 条失败项`;
+  actionFeedbackError.value = false;
+}
+
+function selectRetryableFailedItems() {
+  const retryableIds = retryFailedItems.value
+    .filter((item) => Boolean(item.retryable))
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (!retryableIds.length) {
+    actionFeedback.value = '当前没有可重试失败项';
+    actionFeedbackError.value = true;
+    return;
+  }
+  const merged = new Set(todoSelectionIds.value);
+  retryableIds.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+  actionFeedback.value = `已选中 ${retryableIds.length} 条可重试失败项`;
+  actionFeedbackError.value = false;
 }
 
 function failedItemRecord(id: number) {
