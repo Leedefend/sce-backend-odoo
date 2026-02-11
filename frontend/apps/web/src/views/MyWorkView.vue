@@ -126,6 +126,14 @@
             type="button"
             class="link-btn mini-btn"
             :disabled="!group.retryable_count"
+            @click="selectRetryableByReasonGroup(group.reason_code)"
+          >
+            选中此组
+          </button>
+          <button
+            type="button"
+            class="link-btn mini-btn"
+            :disabled="!group.retryable_count"
             @click="retryByReasonGroup(group.reason_code)"
           >
             重试此组
@@ -943,6 +951,23 @@ async function retryByReasonGroup(reasonCode: string) {
     retryRequestParams.value?.source || 'mail.activity',
     `重试(${reasonCode})`,
   );
+}
+
+function selectRetryableByReasonGroup(reasonCode: string) {
+  const ids = retryFailedItems.value
+    .filter((item) => item.reason_code === reasonCode && item.retryable)
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (!ids.length) {
+    actionFeedback.value = `原因组 ${reasonCode} 没有可重试项`;
+    actionFeedbackError.value = true;
+    return;
+  }
+  const merged = new Set(todoSelectionIds.value);
+  ids.forEach((id) => merged.add(id));
+  todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
+  actionFeedback.value = `已选中 ${ids.length} 条 ${reasonCode} 可重试项`;
+  actionFeedbackError.value = false;
 }
 
 async function runRetryBatch(
