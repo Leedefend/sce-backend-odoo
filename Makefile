@@ -763,7 +763,7 @@ mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project ch
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: policy.apply.business_full policy.apply.role_matrix smoke.business_full smoke.role_matrix verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+.PHONY: policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
 policy.apply.role_matrix: guard.prod.danger check-compose-project check-compose-env
@@ -775,7 +775,30 @@ smoke.business_full: check-compose-project check-compose-env
 smoke.role_matrix: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/audit/smoke_role_matrix.sh
 
+policy.ensure.role_surface_demo: guard.prod.forbid check-compose-project check-compose-env
+	@set -e; \
+	if $(MAKE) --no-print-directory verify.portal.role_surface_preflight.container DB_NAME=$(DB_NAME); then \
+	  echo "[policy.ensure.role_surface_demo] already satisfied"; \
+	elif [ "$${AUTO_FIX_ROLE_SURFACE_DEMO:-0}" = "1" ]; then \
+	  echo "[policy.ensure.role_surface_demo] applying auto-fix for role surface demo baseline"; \
+	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_custom DB_NAME=$(DB_NAME); \
+	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_seed DB_NAME=$(DB_NAME); \
+	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_demo DB_NAME=$(DB_NAME); \
+	  $(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_SMOKE_PASSWORD="$${ROLE_SMOKE_PASSWORD:-demo}" bash scripts/ops/ensure_role_surface_demo.sh; \
+	  $(MAKE) --no-print-directory restart; \
+	  $(MAKE) --no-print-directory verify.portal.role_surface_preflight.container DB_NAME=$(DB_NAME); \
+	else \
+	  echo "[policy.ensure.role_surface_demo] FAIL: role surface demo baseline not satisfied"; \
+	  echo "[policy.ensure.role_surface_demo] HINT: re-run with AUTO_FIX_ROLE_SURFACE_DEMO=1"; \
+	  echo "[policy.ensure.role_surface_demo] HINT: optional ROLE_SMOKE_PASSWORD=<pwd> to set smoke login password"; \
+	  exit 2; \
+	fi
+
+verify.portal.role_surface_preflight.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/role_surface_preflight.sh
+
 verify.portal.role_surface_smoke.container: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) --no-print-directory verify.portal.role_surface_preflight.container DB_NAME=$(DB_NAME)
 	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) python3 /mnt/scripts/verify/role_surface_smoke.py"
 
 p2.smoke: guard.prod.forbid check-compose-project check-compose-env
