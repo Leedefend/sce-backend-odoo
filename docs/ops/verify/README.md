@@ -4,6 +4,7 @@
 - `make gate.full`
   - Default strict mode includes Phase 9.8 guards.
   - Use `SC_GATE_STRICT=0` to skip Phase 9.8 enforcement.
+  - Use `SC_SCENE_OBS_STRICT=1` to additionally enforce strict scene observability evidence during gate runs.
 
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
