@@ -4,6 +4,7 @@ import json
 import os
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+from intent_smoke_utils import require_ok
 
 
 def _load_env_value_from_file(env_path: str, key: str) -> str | None:
@@ -74,11 +75,6 @@ def _http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
         raise RuntimeError(f"HTTP request failed: {e}") from e
 
 
-def _require_ok(status: int, payload: dict, label: str):
-    if status >= 400 or not payload.get("ok"):
-        raise RuntimeError(f"{label} failed: status={status} payload={payload}")
-
-
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
@@ -98,14 +94,14 @@ def main():
     status, login_resp = _http_post_json(
         intent_url, login_payload, headers={"X-Anonymous-Intent": "1"}
     )
-    _require_ok(status, login_resp, "login")
+    require_ok(status, login_resp, "login")
     token = (login_resp.get("data") or {}).get("token")
     if not token:
         raise RuntimeError("login response missing token")
     auth_header = {"Authorization": f"Bearer {token}"}
 
     status, lint_resp = _http_get_json(lint_url, headers=auth_header)
-    _require_ok(status, lint_resp, "capabilities.lint")
+    require_ok(status, lint_resp, "capabilities.lint")
     data = lint_resp.get("data") or {}
     if data.get("status") != "pass":
         raise RuntimeError(f"capability lint failed: {data}")

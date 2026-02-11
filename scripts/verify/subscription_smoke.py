@@ -4,6 +4,7 @@ import json
 import os
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+from intent_smoke_utils import require_ok
 
 
 def _load_env_value_from_file(env_path: str, key: str) -> str | None:
@@ -74,11 +75,6 @@ def _http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
         raise RuntimeError(f"HTTP request failed: {e}") from e
 
 
-def _require_ok(status: int, payload: dict, label: str):
-    if status >= 400 or not payload.get("ok"):
-        raise RuntimeError(f"{label} failed: status={status} payload={payload}")
-
-
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
@@ -102,7 +98,7 @@ def main():
     status, login_resp = _http_post_json(
         intent_url, login_payload, headers={"X-Anonymous-Intent": "1"}
     )
-    _require_ok(status, login_resp, "login")
+    require_ok(status, login_resp, "login")
     token = (login_resp.get("data") or {}).get("token")
     if not token:
         raise RuntimeError("login response missing token")
@@ -111,7 +107,7 @@ def main():
     # get company id (prefer current user company)
     company_id = ((login_resp.get("data") or {}).get("user") or {}).get("company_id")
     status, tenants_resp = _http_get_json(ops_tenants_url, headers=auth_header)
-    _require_ok(status, tenants_resp, "ops.tenants")
+    require_ok(status, tenants_resp, "ops.tenants")
     tenants = (tenants_resp.get("data") or {}).get("tenants") or []
     if not tenants:
         raise RuntimeError("ops.tenants returned empty list")
@@ -126,7 +122,7 @@ def main():
         {"intent": "system.init", "params": {"db": db_name}},
         headers=auth_header,
     )
-    _require_ok(status, init_resp, "system.init")
+    require_ok(status, init_resp, "system.init")
     intents = (init_resp.get("data") or {}).get("intents") or []
     if "permission.check" not in intents:
         raise RuntimeError("permission.check not registered in system.init intents")
@@ -137,7 +133,7 @@ def main():
         {"company_id": company_id, "plan_code": "pro", "state": "active"},
         headers=auth_header,
     )
-    _require_ok(status, set_resp, "subscription.set")
+    require_ok(status, set_resp, "subscription.set")
 
     # create test capability with required_flag
     cap_key = "entitlement.flag.test"
@@ -164,9 +160,9 @@ def main():
         headers=auth_header,
     )
     status, cap_resp = _http_post_json(import_url, cap_payload, headers=auth_header)
-    _require_ok(status, cap_resp, "scenes.import capability")
+    require_ok(status, cap_resp, "scenes.import capability")
     status, export_resp = _http_get_json(export_url, headers=auth_header)
-    _require_ok(status, export_resp, "capabilities.export")
+    require_ok(status, export_resp, "capabilities.export")
     export_caps = (export_resp.get("data") or {}).get("capabilities") or []
     cap_found = next((c for c in export_caps if c.get("key") == cap_key), None)
     if not cap_found or cap_found.get("required_flag") != "feature.test":
@@ -181,7 +177,7 @@ def main():
         },
         headers=auth_header,
     )
-    _require_ok(status, allow_resp, "permission.check allow")
+    require_ok(status, allow_resp, "permission.check allow")
     allow_data = allow_resp.get("data") or {}
     allow = allow_data.get("allow")
     skip_entitlement_checks = False
@@ -197,9 +193,9 @@ def main():
         {"company_id": company_id, "plan_code": "default", "state": "active"},
         headers=auth_header,
     )
-    _require_ok(status, set_resp, "subscription.set default")
+    require_ok(status, set_resp, "subscription.set default")
     status, tenants_resp = _http_get_json(ops_tenants_url, headers=auth_header)
-    _require_ok(status, tenants_resp, "ops.tenants (after default)")
+    require_ok(status, tenants_resp, "ops.tenants (after default)")
     tenants = (tenants_resp.get("data") or {}).get("tenants") or []
     tenant = next((t for t in tenants if t.get("company_id") == company_id), None)
     if not tenant:
@@ -215,7 +211,7 @@ def main():
         },
         headers=auth_header,
     )
-    _require_ok(status, deny_resp, "permission.check deny")
+    require_ok(status, deny_resp, "permission.check deny")
     if not skip_entitlement_checks:
         allow = ((deny_resp.get("data") or {}).get("allow"))
         if allow is not False:
