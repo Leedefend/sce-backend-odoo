@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -85,9 +86,11 @@ async function main() {
   log(`login: ${LOGIN} db=${DB_NAME}`);
   const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
   const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-  if (loginResp.status >= 400 || !loginResp.body.ok) {
+  try {
+    assertIntentEnvelope(loginResp, 'login');
+  } catch (_err) {
     writeJson(path.join(outDir, 'login.log'), loginResp);
-    throw new Error(`login failed: status=${loginResp.status}`);
+    throw new Error(`login failed: status=${loginResp.status || 0}`);
   }
   const token = (loginResp.body.data || {}).token;
   if (!token) {
@@ -102,18 +105,18 @@ async function main() {
   log('app.init');
   const initPayload = { intent: 'app.init', params: { db: DB_NAME, scene: 'web', with_preload: false, root_xmlid: ROOT_XMLID } };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
-  if (initResp.status >= 400 || !initResp.body.ok) {
+  try {
+    assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
+  } catch (_err) {
     writeJson(path.join(outDir, 'init.log'), initResp);
-    throw new Error(`app.init failed: status=${initResp.status}`);
+    throw new Error(`app.init failed: status=${initResp.status || 0}`);
   }
 
   log('api.data.list');
   const listPayload = { intent: 'api.data', params: { op: 'list', model: MODEL, fields: ['id', 'name'], limit: 1 } };
   const listResp = await requestJson(intentUrl, listPayload, authHeader);
   writeJson(path.join(outDir, 'list.log'), listResp);
-  if (listResp.status >= 400 || !listResp.body.ok) {
-    throw new Error(`list failed: status=${listResp.status}`);
-  }
+  assertIntentEnvelope(listResp, 'api.data');
   const listMeta = listResp.body.meta || {};
   const listTraceOk = Boolean(listMeta.trace_id);
   const listData = unwrap(listResp.body);
@@ -130,9 +133,7 @@ async function main() {
   const writePayload = { intent: 'api.data.write', params: { model: MODEL, id: recordId, values: { name: newName } } };
   const writeResp = await requestJson(intentUrl, writePayload, authHeader);
   writeJson(path.join(outDir, 'write.log'), writeResp);
-  if (writeResp.status >= 400 || !writeResp.body.ok) {
-    throw new Error(`write failed: status=${writeResp.status}`);
-  }
+  assertIntentEnvelope(writeResp, 'api.data.write', { allowMetaIntentAliases: ['api.data'] });
   const latencyMs = Date.now() - writeStart;
   const writeMeta = writeResp.body.meta || {};
 
