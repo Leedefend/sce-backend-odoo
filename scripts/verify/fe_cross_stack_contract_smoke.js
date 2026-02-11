@@ -227,7 +227,9 @@ async function main() {
     authHeader
   );
   writeJson(path.join(outDir, 'my_work_summary.log'), myWorkResp);
-  if (myWorkResp.status >= 400 || !myWorkResp.body.ok) {
+  try {
+    assertIntentEnvelope(myWorkResp, 'my.work.summary');
+  } catch (_err) {
     const errMsg = String((((myWorkResp.body || {}).error) || {}).message || '');
     if (errMsg.includes('Unknown intent: my.work.summary') && ALLOW_SKIP_UNKNOWN_INTENT) {
       summary.push('status: SKIP');
@@ -241,7 +243,6 @@ async function main() {
     }
     throw new Error(`my.work.summary failed: status=${myWorkResp.status} message=${errMsg || '-'}`);
   }
-  assertIntentEnvelope(myWorkResp, 'my.work.summary');
   const myWorkTrace = extractTraceId(myWorkResp.body);
 
   const summaryData = (myWorkResp.body || {}).data || {};

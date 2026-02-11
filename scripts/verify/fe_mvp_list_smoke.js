@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -129,9 +130,11 @@ async function main() {
   log(`login: ${LOGIN} db=${DB_NAME}`);
   const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
   const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-  if (loginResp.status >= 400 || !loginResp.body.ok) {
+  try {
+    assertIntentEnvelope(loginResp, 'login');
+  } catch (_err) {
     writeJson(path.join(outDir, 'fe_mvp_list.log'), loginResp);
-    throw new Error(`login failed: status=${loginResp.status}`);
+    throw new Error(`login failed: status=${loginResp.status || 0}`);
   }
   const token = (loginResp.body.data || {}).token;
   if (!token) {
@@ -153,7 +156,9 @@ async function main() {
   }
   const initPayload = { intent: 'app.init', params: initParams };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
-  if (initResp.status >= 400 || !initResp.body.ok) {
+  try {
+    assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
+  } catch (_err) {
     writeJson(path.join(outDir, 'fe_mvp_list.log'), initResp);
     writeSummary({
       menuId: '',
@@ -168,7 +173,7 @@ async function main() {
       rootMenuId: ROOT_MENU_ID || '',
       rootAccessible: false,
     });
-    throw new Error(`app.init failed: status=${initResp.status}`);
+    throw new Error(`app.init failed: status=${initResp.status || 0}`);
   }
   const initData = unwrap(initResp.body);
   const navTree = initData.nav || [];
@@ -245,7 +250,9 @@ async function main() {
       log(`ui.contract action_open action_id=${actionId}`);
       const contractPayload = { intent: 'ui.contract', params: { db: DB_NAME, op: 'action_open', action_id: actionId } };
       const contractResp = await requestJson(intentUrl, contractPayload, authHeader);
-      if (contractResp.status >= 400 || !contractResp.body.ok) {
+      try {
+        assertIntentEnvelope(contractResp, 'ui.contract');
+      } catch (_err) {
         attempts.push({ menu_id: menuId, error: 'ui.contract failed', status: contractResp.status, body: contractResp.body });
         continue;
       }
@@ -277,7 +284,9 @@ async function main() {
         },
       };
       const listResp = await requestJson(intentUrl, listPayload, authHeader);
-      if (listResp.status >= 400 || !listResp.body.ok) {
+      try {
+        assertIntentEnvelope(listResp, 'api.data');
+      } catch (_err) {
         attempts.push({ menu_id: menuId, error: 'api.data list failed', status: listResp.status, body: listResp.body });
         continue;
       }
@@ -296,7 +305,9 @@ async function main() {
       log(`load_view + api.data read model=${model} id=${recordId}`);
       const viewPayload = { intent: 'load_view', params: { model, view_type: 'form' } };
       const viewResp = await requestJson(intentUrl, viewPayload, authHeader);
-      if (viewResp.status >= 400 || !viewResp.body.ok) {
+      try {
+        assertIntentEnvelope(viewResp, 'load_view');
+      } catch (_err) {
         attempts.push({ menu_id: menuId, error: 'load_view failed', status: viewResp.status, body: viewResp.body });
         continue;
       }
@@ -336,7 +347,9 @@ async function main() {
         },
       };
       const readResp = await requestJson(intentUrl, readPayload, authHeader);
-      if (readResp.status >= 400 || !readResp.body.ok) {
+      try {
+        assertIntentEnvelope(readResp, 'api.data');
+      } catch (_err) {
         attempts.push({ menu_id: menuId, error: 'api.data read failed', status: readResp.status, body: readResp.body });
         continue;
       }

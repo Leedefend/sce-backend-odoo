@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const { assertIntentEnvelope } = require('./intent_smoke_utils');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8070';
 const DB_NAME = process.env.E2E_DB || process.env.DB_NAME || process.env.DB || '';
@@ -87,9 +88,11 @@ async function main() {
   log(`login: ${LOGIN} db=${DB_NAME}`);
   const loginPayload = { intent: 'login', params: { db: DB_NAME, login: LOGIN, password: PASSWORD } };
   const loginResp = await requestJson(intentUrl, loginPayload, { 'X-Anonymous-Intent': '1' });
-  if (loginResp.status >= 400 || !loginResp.body.ok) {
+  try {
+    assertIntentEnvelope(loginResp, 'login');
+  } catch (_err) {
     writeJson(path.join(outDir, 'login.log'), loginResp);
-    throw new Error(`login failed: status=${loginResp.status}`);
+    throw new Error(`login failed: status=${loginResp.status || 0}`);
   }
   const token = (loginResp.body.data || {}).token;
   if (!token) {
@@ -104,18 +107,18 @@ async function main() {
   log('app.init');
   const initPayload = { intent: 'app.init', params: { db: DB_NAME, scene: 'web', with_preload: false, root_xmlid: ROOT_XMLID } };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
-  if (initResp.status >= 400 || !initResp.body.ok) {
+  try {
+    assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
+  } catch (_err) {
     writeJson(path.join(outDir, 'init.log'), initResp);
-    throw new Error(`app.init failed: status=${initResp.status}`);
+    throw new Error(`app.init failed: status=${initResp.status || 0}`);
   }
 
   log('api.data.create');
   const createPayload = { intent: 'api.data.create', params: { model: MODEL, values: { name: CREATE_NAME } } };
   const createResp = await requestJson(intentUrl, createPayload, authHeader);
   writeJson(path.join(outDir, 'write_create.log'), createResp);
-  if (createResp.status >= 400 || !createResp.body.ok) {
-    throw new Error(`create failed: status=${createResp.status}`);
-  }
+  assertIntentEnvelope(createResp, 'api.data.create', { allowMetaIntentAliases: ['api.data'] });
   const createData = unwrap(createResp.body);
   const recordId = createData.id;
   if (!recordId) {
@@ -133,9 +136,7 @@ async function main() {
   const writePayload = { intent: 'api.data.write', params: { model: MODEL, id: recordId, values: { name: UPDATE_NAME } } };
   const writeResp = await requestJson(intentUrl, writePayload, authHeader);
   writeJson(path.join(outDir, 'write_update.log'), writeResp);
-  if (writeResp.status >= 400 || !writeResp.body.ok) {
-    throw new Error(`write failed: status=${writeResp.status}`);
-  }
+  assertIntentEnvelope(writeResp, 'api.data.write', { allowMetaIntentAliases: ['api.data'] });
   const writeMeta = writeResp.body.meta || {};
   const writeTraceId = writeMeta.trace_id || '';
 
@@ -143,9 +144,7 @@ async function main() {
   const readPayload = { intent: 'api.data', params: { op: 'read', model: MODEL, ids: [recordId], fields: ['id', 'name'] } };
   const readResp = await requestJson(intentUrl, readPayload, authHeader);
   writeJson(path.join(outDir, 'read_back.log'), readResp);
-  if (readResp.status >= 400 || !readResp.body.ok) {
-    throw new Error(`read failed: status=${readResp.status}`);
-  }
+  assertIntentEnvelope(readResp, 'api.data');
   const readData = unwrap(readResp.body);
   const record = (readData.records || [])[0] || {};
   const readBackMatch = record.name === UPDATE_NAME;
