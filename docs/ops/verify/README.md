@@ -37,6 +37,9 @@
   - `make gate.business_baseline`
   - Legacy compatibility:
     - `make verify.p0.flow` (same as business baseline verification)
+- One-command aggregate
+  - `make verify.baseline.all` (platform + business)
+  - `make gate.baseline.all` (platform gate + business gate)
 
 ## Notes
 - Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.
