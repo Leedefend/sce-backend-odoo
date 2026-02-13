@@ -495,10 +495,17 @@ async function runSemanticAction(action: SemanticActionButton) {
   if (!model.value || !recordId.value || !action.allowed) {
     return;
   }
+  if (action.key === 'approve' || action.key === 'done') {
+    const confirmed = window.confirm(`确认执行「${action.label}」？`);
+    if (!confirmed) {
+      actionFeedback.value = { message: '已取消操作', reasonCode: 'CANCELLED', success: false };
+      return;
+    }
+  }
   let reason = '';
   if (action.requiresReason) {
-    reason = String(window.prompt('请输入驳回原因', '') || '').trim();
-    if (!reason) {
+    reason = String(window.prompt('请输入驳回原因（至少 4 个字符）', '') || '').trim();
+    if (!reason || reason.length < 4) {
       actionFeedback.value = { message: '已取消：缺少原因', reasonCode: 'MISSING_PARAMS', success: false };
       return;
     }
