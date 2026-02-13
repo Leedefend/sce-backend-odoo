@@ -442,6 +442,19 @@ def main() -> int:
         "reason_code": execute_submit_reason,
     })
 
+    post_actions_resp, _post_actions_data = fetch_available_actions(token, payment_request_id)
+    write_artifacts(out_dir, "payment_request_available_actions_after_execute.log", post_actions_resp)
+    ensure_envelope(post_actions_resp, "payment.request.available_actions.after_execute")
+    ensure_reason(post_actions_resp, "payment.request.available_actions.after_execute")
+    if post_actions_resp.get("ok"):
+        post_actions = ((_post_actions_data or {}).get("actions") or [])
+        allowed_actions = [
+            str(item.get("key") or "")
+            for item in post_actions
+            if isinstance(item, dict) and bool(item.get("allowed"))
+        ]
+        summary["allowed_actions_after_execute"] = allowed_actions
+
     approve_reason = run_or_skip_direct(
         "approve",
         "payment.request.approve",
