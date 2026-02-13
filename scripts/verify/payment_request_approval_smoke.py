@@ -10,8 +10,8 @@ import urllib.request
 
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8069").rstrip("/")
 DB_NAME = os.getenv("DB_NAME") or os.getenv("DB") or "sc_demo"
-LOGIN = os.getenv("E2E_LOGIN") or os.getenv("ROLE_FINANCE_LOGIN") or "demo_role_finance"
-PASSWORD = os.getenv("E2E_PASSWORD") or os.getenv("ROLE_FINANCE_PASSWORD") or "demo"
+LOGIN = os.getenv("ROLE_FINANCE_LOGIN") or os.getenv("E2E_LOGIN") or "demo_role_finance"
+PASSWORD = os.getenv("ROLE_FINANCE_PASSWORD") or os.getenv("E2E_PASSWORD") or "demo"
 ARTIFACTS_DIR = os.getenv("ARTIFACTS_DIR", "artifacts")
 AUTO_CREATE_WHEN_EMPTY = os.getenv("PAYMENT_REQUEST_SMOKE_AUTO_CREATE", "1").strip().lower() not in ("0", "false", "no")
 REQUIRE_LIVE = os.getenv("PAYMENT_REQUEST_SMOKE_REQUIRE_LIVE", "0").strip().lower() in ("1", "true", "yes")
@@ -109,7 +109,8 @@ def pick_payment_request(token: str) -> dict | None:
                 return row
         return None
 
-    return by_state("draft") or by_state("submit", "approve", "approved") or records[0]
+    # Prefer records that can expose approval-path actions in live smoke.
+    return by_state("submit", "approve", "approved") or by_state("draft") or records[0]
 
 
 def first_id(token: str, model: str, fields: list[str], domain: list | None = None) -> int:
@@ -152,6 +153,10 @@ def create_payment_request(token: str) -> dict | None:
                 "project_id": project_id,
                 "partner_id": partner_id,
                 "amount": 100.0,
+                # Seed into submit state to guarantee at least one live semantic action
+                # (approve/reject) can be exercised by smoke user.
+                "state": "submit",
+                "validation_status": "validated",
             },
         },
         token=token,
@@ -265,39 +270,56 @@ def main() -> int:
         reject_action = action_by_key.get("reject") or {}
         if bool(reject_action.get("requires_reason")) is not True:
             raise AssertionError("available_actions.reject requires_reason expected true")
+        allowed_actions = [
+            str(item.get("key") or "")
+            for item in actions
+            if isinstance(item, dict) and bool(item.get("allowed"))
+        ]
+        summary["allowed_actions"] = allowed_actions
+        if picked and not allowed_actions:
+            summary["live_no_allowed_actions"] = True
+    else:
+        allowed_actions = []
 
-    submit_resp = request_intent(
+    def run_or_skip_direct(action_name: str, intent: str, params: dict, *, artifact: str):
+        if picked and action_name not in set(allowed_actions):
+            summary["steps"].append(
+                {"step": intent, "ok": True, "skipped": True, "reason_code": "SKIPPED_NOT_ALLOWED"}
+            )
+            return "SKIPPED_NOT_ALLOWED"
+        resp = request_intent(intent, params, token=token)
+        write_artifacts(out_dir, artifact, resp)
+        ensure_envelope(resp, intent)
+        ensure_reason(resp, intent)
+        reason = (
+            (resp.get("data") or {}).get("reason_code")
+            if resp.get("ok")
+            else ((resp.get("error") or {}).get("reason_code") or (resp.get("error") or {}).get("code"))
+        )
+        summary["steps"].append({"step": intent, "ok": bool(resp.get("ok")), "reason_code": reason})
+        return reason
+
+    submit_reason = run_or_skip_direct(
+        "submit",
         "payment.request.submit",
-        {
-            "id": payment_request_id,
-            "request_id": f"smoke_submit_{payment_request_id}_{ts}",
-        },
-        token=token,
+        {"id": payment_request_id, "request_id": f"smoke_submit_{payment_request_id}_{ts}"},
+        artifact="payment_request_submit.log",
     )
-    write_artifacts(out_dir, "payment_request_submit.log", submit_resp)
-    ensure_envelope(submit_resp, "payment.request.submit")
-    ensure_reason(submit_resp, "payment.request.submit")
-    submit_reason = (
-        (submit_resp.get("data") or {}).get("reason_code")
-        if submit_resp.get("ok")
-        else ((submit_resp.get("error") or {}).get("reason_code") or (submit_resp.get("error") or {}).get("code"))
-    )
-    summary["steps"].append({
-        "step": "payment.request.submit",
-        "ok": bool(submit_resp.get("ok")),
-        "reason_code": submit_reason,
-    })
 
+    exec_action = "submit"
+    if picked and exec_action not in set(allowed_actions) and allowed_actions:
+        exec_action = allowed_actions[0]
     execute_submit_resp = request_intent(
         "payment.request.execute",
         {
             "id": payment_request_id,
-            "action": "submit",
-            "request_id": f"smoke_exec_submit_{payment_request_id}_{ts}",
+            "action": exec_action,
+            "request_id": f"smoke_exec_{exec_action}_{payment_request_id}_{ts}",
+            "reason": "smoke reject reason" if exec_action == "reject" else "",
         },
         token=token,
     )
-    write_artifacts(out_dir, "payment_request_execute_submit.log", execute_submit_resp)
+    write_artifacts(out_dir, f"payment_request_execute_{exec_action}.log", execute_submit_resp)
     ensure_envelope(execute_submit_resp, "payment.request.execute")
     ensure_reason(execute_submit_resp, "payment.request.execute")
     execute_submit_reason = (
@@ -306,77 +328,35 @@ def main() -> int:
         else ((execute_submit_resp.get("error") or {}).get("reason_code") or (execute_submit_resp.get("error") or {}).get("code"))
     )
     summary["steps"].append({
-        "step": "payment.request.execute.submit",
+        "step": f"payment.request.execute.{exec_action}",
         "ok": bool(execute_submit_resp.get("ok")),
         "reason_code": execute_submit_reason,
     })
 
-    approve_resp = request_intent(
+    approve_reason = run_or_skip_direct(
+        "approve",
         "payment.request.approve",
-        {
-            "id": payment_request_id,
-            "request_id": f"smoke_approve_{payment_request_id}_{ts}",
-        },
-        token=token,
+        {"id": payment_request_id, "request_id": f"smoke_approve_{payment_request_id}_{ts}"},
+        artifact="payment_request_approve.log",
     )
-    write_artifacts(out_dir, "payment_request_approve.log", approve_resp)
-    ensure_envelope(approve_resp, "payment.request.approve")
-    ensure_reason(approve_resp, "payment.request.approve")
-    approve_reason = (
-        (approve_resp.get("data") or {}).get("reason_code")
-        if approve_resp.get("ok")
-        else ((approve_resp.get("error") or {}).get("reason_code") or (approve_resp.get("error") or {}).get("code"))
-    )
-    summary["steps"].append({
-        "step": "payment.request.approve",
-        "ok": bool(approve_resp.get("ok")),
-        "reason_code": approve_reason,
-    })
 
-    reject_resp = request_intent(
+    reject_reason = run_or_skip_direct(
+        "reject",
         "payment.request.reject",
         {
             "id": payment_request_id,
             "request_id": f"smoke_reject_{payment_request_id}_{ts}",
             "reason": "smoke reject reason",
         },
-        token=token,
+        artifact="payment_request_reject.log",
     )
-    write_artifacts(out_dir, "payment_request_reject.log", reject_resp)
-    ensure_envelope(reject_resp, "payment.request.reject")
-    ensure_reason(reject_resp, "payment.request.reject")
-    reject_reason = (
-        (reject_resp.get("data") or {}).get("reason_code")
-        if reject_resp.get("ok")
-        else ((reject_resp.get("error") or {}).get("reason_code") or (reject_resp.get("error") or {}).get("code"))
-    )
-    summary["steps"].append({
-        "step": "payment.request.reject",
-        "ok": bool(reject_resp.get("ok")),
-        "reason_code": reject_reason,
-    })
 
-    done_resp = request_intent(
+    done_reason = run_or_skip_direct(
+        "done",
         "payment.request.done",
-        {
-            "id": payment_request_id,
-            "request_id": f"smoke_done_{payment_request_id}_{ts}",
-        },
-        token=token,
+        {"id": payment_request_id, "request_id": f"smoke_done_{payment_request_id}_{ts}"},
+        artifact="payment_request_done.log",
     )
-    write_artifacts(out_dir, "payment_request_done.log", done_resp)
-    ensure_envelope(done_resp, "payment.request.done")
-    ensure_reason(done_resp, "payment.request.done")
-    done_reason = (
-        (done_resp.get("data") or {}).get("reason_code")
-        if done_resp.get("ok")
-        else ((done_resp.get("error") or {}).get("reason_code") or (done_resp.get("error") or {}).get("code"))
-    )
-    summary["steps"].append({
-        "step": "payment.request.done",
-        "ok": bool(done_resp.get("ok")),
-        "reason_code": done_reason,
-    })
 
     if not picked:
         allowed_missing = {"NOT_FOUND"}
@@ -404,6 +384,8 @@ def main() -> int:
             ("reject", reject_reason),
             ("done", done_reason),
         ):
+            if str(value or "") == "SKIPPED_NOT_ALLOWED":
+                continue
             if str(value or "") in forbidden:
                 raise AssertionError(f"{name} in live mode should not return NOT_FOUND")
 

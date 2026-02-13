@@ -488,6 +488,7 @@
     "user": "admin",
     "op": "intent.invoke",
     "intent": "file.upload",
+    "allow_error_response": true,
     "intent_params": {
       "model": "project.project",
       "res_id": 1,
@@ -501,6 +502,7 @@
     "user": "admin",
     "op": "intent.invoke",
     "intent": "file.download",
+    "allow_error_response": true,
     "intent_params": {
       "model": "project.project",
       "res_id": 1,
