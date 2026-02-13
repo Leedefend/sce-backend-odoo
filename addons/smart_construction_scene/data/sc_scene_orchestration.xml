@@ -48,6 +48,16 @@
             <field name="version">v2</field>
         </record>
 
+        <!-- Finance payment requests scene -->
+        <record id="sc_scene_finance_payment_requests" model="sc.scene">
+            <field name="sequence">55</field>
+            <field name="name">付款申请审批</field>
+            <field name="code">finance.payment_requests</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+
         <!-- Portal lifecycle scene -->
         <record id="sc_scene_portal_lifecycle" model="sc.scene">
             <field name="sequence">60</field>
