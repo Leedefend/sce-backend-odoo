@@ -198,12 +198,37 @@ def main() -> int:
         "reason_code": approve_reason,
     })
 
+    reject_resp = request_intent(
+        "payment.request.reject",
+        {
+            "id": payment_request_id,
+            "request_id": f"smoke_reject_{payment_request_id}_{ts}",
+            "reason": "smoke reject reason",
+        },
+        token=token,
+    )
+    write_artifacts(out_dir, "payment_request_reject.log", reject_resp)
+    ensure_envelope(reject_resp, "payment.request.reject")
+    ensure_reason(reject_resp, "payment.request.reject")
+    reject_reason = (
+        (reject_resp.get("data") or {}).get("reason_code")
+        if reject_resp.get("ok")
+        else ((reject_resp.get("error") or {}).get("reason_code") or (reject_resp.get("error") or {}).get("code"))
+    )
+    summary["steps"].append({
+        "step": "payment.request.reject",
+        "ok": bool(reject_resp.get("ok")),
+        "reason_code": reject_reason,
+    })
+
     if not picked:
         allowed_missing = {"NOT_FOUND"}
         if str(submit_reason or "") not in allowed_missing:
             raise AssertionError(f"submit in contract-only mode expected NOT_FOUND, got {submit_reason}")
         if str(approve_reason or "") not in allowed_missing:
             raise AssertionError(f"approve in contract-only mode expected NOT_FOUND, got {approve_reason}")
+        if str(reject_reason or "") not in allowed_missing:
+            raise AssertionError(f"reject in contract-only mode expected NOT_FOUND, got {reject_reason}")
 
     write_artifacts(out_dir, "summary.json", summary)
     print("[payment_request_approval_smoke] PASS")

@@ -6,6 +6,7 @@ from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_construction_core.handlers.payment_request_approval import (
     PaymentRequestApproveHandler,
+    PaymentRequestRejectHandler,
     PaymentRequestSubmitHandler,
 )
 from odoo.addons.smart_core.handlers.reason_codes import (
@@ -21,6 +22,7 @@ class TestPaymentRequestApprovalIntentBackend(TransactionCase):
     # Test corpus references for intent surface gates:
     # payment.request.submit
     # payment.request.approve
+    # payment.request.reject
     def _create_payment_request_minimal(self):
         project = self.env["project.project"].create({"name": "Intent PR Project"})
         partner = self.env["res.partner"].create({"name": "Intent PR Partner"})
@@ -141,3 +143,34 @@ class TestPaymentRequestApprovalIntentBackend(TransactionCase):
         self.assertEqual(int(result.get("code") or 0), 409)
         err = result.get("error") or {}
         self.assertEqual(err.get("reason_code"), REASON_IDEMPOTENCY_CONFLICT)
+
+    def test_payment_request_reject_missing_reason(self):
+        payment_request = self._create_payment_request_minimal()
+        handler = PaymentRequestRejectHandler(self.env, payload={})
+        result = handler.handle({"id": payment_request.id, "request_id": "req-pr-reject-missing-reason"})
+        self.assertFalse(result.get("ok"))
+        self.assertEqual(int(result.get("code") or 0), 400)
+        err = result.get("error") or {}
+        self.assertEqual(err.get("reason_code"), REASON_MISSING_PARAMS)
+
+    def test_payment_request_reject_success_contract_with_mocked_method(self):
+        payment_request = self._create_payment_request_minimal()
+        payment_request.sudo().with_context(allow_transition=True).write({"state": "submit"})
+        handler = PaymentRequestRejectHandler(self.env, payload={})
+        with patch(
+            "odoo.addons.smart_construction_core.models.core.payment_request.PaymentRequest.action_on_tier_rejected",
+            autospec=True,
+            return_value=None,
+        ):
+            result = handler.handle(
+                {
+                    "id": payment_request.id,
+                    "request_id": "req-pr-reject-success",
+                    "reason": "smoke reject",
+                }
+            )
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        self.assertEqual(data.get("reason_code"), REASON_OK)
+        self.assertEqual(data.get("intent_action"), "reject")
+        self.assertEqual(((data.get("payment_request") or {}).get("id")), payment_request.id)
