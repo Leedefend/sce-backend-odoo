@@ -34,6 +34,10 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.capability_visibility_report import (
             CapabilityVisibilityReportHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.payment_request_approval import (
+            PaymentRequestApproveHandler,
+            PaymentRequestSubmitHandler,
+        )
     except Exception as e:
         _logger.warning("[smart_core_register] import handler failed: %s", e)
         return
@@ -47,6 +51,8 @@ def smart_core_register(registry):
     registry["usage.report"] = UsageReportHandler
     registry["usage.export.csv"] = UsageExportCsvHandler
     registry["capability.visibility.report"] = CapabilityVisibilityReportHandler
+    registry["payment.request.submit"] = PaymentRequestSubmitHandler
+    registry["payment.request.approve"] = PaymentRequestApproveHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
     _logger.info("[smart_core_register] registered my.work.summary")
@@ -56,6 +62,8 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered usage.report")
     _logger.info("[smart_core_register] registered usage.export.csv")
     _logger.info("[smart_core_register] registered capability.visibility.report")
+    _logger.info("[smart_core_register] registered payment.request.submit")
+    _logger.info("[smart_core_register] registered payment.request.approve")
 
 
 def smart_core_extend_system_init(data, env, user):
