@@ -6,6 +6,7 @@ from odoo.addons.smart_construction_core.handlers.payment_request_available_acti
     PaymentRequestAvailableActionsHandler,
 )
 from odoo.addons.smart_core.handlers.reason_codes import (
+    REASON_BUSINESS_RULE_FAILED,
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
     REASON_OK,
@@ -52,8 +53,17 @@ class TestPaymentRequestAvailableActionsBackend(TransactionCase):
         actions = data.get("actions") or []
         keys = {str(item.get("key") or "") for item in actions if isinstance(item, dict)}
         self.assertEqual(keys, {"submit", "approve", "reject", "done"})
+        by_key = {str(item.get("key") or ""): item for item in actions if isinstance(item, dict)}
+        submit = by_key.get("submit") or {}
+        self.assertEqual(submit.get("execute_intent"), "payment.request.execute")
+        self.assertEqual((submit.get("execute_params") or {}).get("id"), payment.id)
+        self.assertEqual((submit.get("execute_params") or {}).get("action"), "submit")
+        self.assertTrue(bool(submit.get("idempotency_required")))
+        self.assertEqual(submit.get("reason_code"), REASON_OK)
+        reject = by_key.get("reject") or {}
+        self.assertEqual(reject.get("reason_code"), REASON_BUSINESS_RULE_FAILED)
+        self.assertTrue(bool(reject.get("requires_reason")))
         submit = next(item for item in actions if item.get("key") == "submit")
         self.assertTrue(bool(submit.get("allowed")))
         reject = next(item for item in actions if item.get("key") == "reject")
         self.assertIn("reason", list(reject.get("required_params") or []))
-
