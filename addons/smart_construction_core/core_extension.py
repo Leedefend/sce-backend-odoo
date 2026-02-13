@@ -40,6 +40,9 @@ def smart_core_register(registry):
             PaymentRequestRejectHandler,
             PaymentRequestSubmitHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.payment_request_available_actions import (
+            PaymentRequestAvailableActionsHandler,
+        )
     except Exception as e:
         _logger.warning("[smart_core_register] import handler failed: %s", e)
         return
@@ -57,6 +60,7 @@ def smart_core_register(registry):
     registry["payment.request.approve"] = PaymentRequestApproveHandler
     registry["payment.request.reject"] = PaymentRequestRejectHandler
     registry["payment.request.done"] = PaymentRequestDoneHandler
+    registry["payment.request.available_actions"] = PaymentRequestAvailableActionsHandler
     _logger.info("[smart_core_register] registered system.ping.construction")
     _logger.info("[smart_core_register] registered capability.describe")
     _logger.info("[smart_core_register] registered my.work.summary")
@@ -70,6 +74,7 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered payment.request.approve")
     _logger.info("[smart_core_register] registered payment.request.reject")
     _logger.info("[smart_core_register] registered payment.request.done")
+    _logger.info("[smart_core_register] registered payment.request.available_actions")
 
 
 def smart_core_extend_system_init(data, env, user):
