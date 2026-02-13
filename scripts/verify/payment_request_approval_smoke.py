@@ -154,6 +154,30 @@ def main() -> int:
             "payment_request_id": payment_request_id,
         })
 
+    actions_resp = request_intent(
+        "payment.request.available_actions",
+        {
+            "id": payment_request_id,
+        },
+        token=token,
+    )
+    write_artifacts(out_dir, "payment_request_available_actions.log", actions_resp)
+    ensure_envelope(actions_resp, "payment.request.available_actions")
+    ensure_reason(actions_resp, "payment.request.available_actions")
+    actions_reason = (
+        (actions_resp.get("data") or {}).get("reason_code")
+        if actions_resp.get("ok")
+        else ((actions_resp.get("error") or {}).get("reason_code") or (actions_resp.get("error") or {}).get("code"))
+    )
+    summary["steps"].append({
+        "step": "payment.request.available_actions",
+        "ok": bool(actions_resp.get("ok")),
+        "reason_code": actions_reason,
+    })
+    if actions_resp.get("ok"):
+        actions = ((actions_resp.get("data") or {}).get("actions") or [])
+        summary["actions_count"] = len(actions)
+
     submit_resp = request_intent(
         "payment.request.submit",
         {
@@ -245,6 +269,8 @@ def main() -> int:
 
     if not picked:
         allowed_missing = {"NOT_FOUND"}
+        if str(actions_reason or "") not in allowed_missing:
+            raise AssertionError(f"available_actions in contract-only mode expected NOT_FOUND, got {actions_reason}")
         if str(submit_reason or "") not in allowed_missing:
             raise AssertionError(f"submit in contract-only mode expected NOT_FOUND, got {submit_reason}")
         if str(approve_reason or "") not in allowed_missing:
