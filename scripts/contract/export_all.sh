@@ -71,5 +71,27 @@ for case in cases:
     if case.get("allow_error_response"):
         cmd += ["--allow_error_response"]
 
-    subprocess.run(cmd, check=True)
+    timeout_sec = int(os.environ.get("SC_SNAPSHOT_CASE_TIMEOUT_SEC", "90"))
+    try:
+        subprocess.run(cmd, check=True, timeout=timeout_sec)
+    except subprocess.TimeoutExpired as exc:
+        case_name = case.get("case", "<unknown>")
+        intent_name = case.get("intent") or ""
+        op_name = case.get("op") or ""
+        detail = f"intent={intent_name}" if intent_name else f"op={op_name}"
+        print(
+            f"[export_all] timeout case={case_name} {detail} timeout_sec={timeout_sec}",
+            file=sys.stderr,
+        )
+        raise SystemExit(124) from exc
+    except subprocess.CalledProcessError as exc:
+        case_name = case.get("case", "<unknown>")
+        intent_name = case.get("intent") or ""
+        op_name = case.get("op") or ""
+        detail = f"intent={intent_name}" if intent_name else f"op={op_name}"
+        print(
+            f"[export_all] failed case={case_name} {detail} exit={exc.returncode}",
+            file=sys.stderr,
+        )
+        raise
 PY
