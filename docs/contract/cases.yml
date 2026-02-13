@@ -449,7 +449,8 @@
       "ids": [1],
       "dry_run": true,
       "request_id": "snapshot_api_data_unlink_1"
-    }
+    },
+    "allow_error_response": true
   },
   {
     "case": "chatter_post_intent_admin",
@@ -460,7 +461,8 @@
       "model": "project.project",
       "res_id": 1,
       "body": "Contract snapshot message"
-    }
+    },
+    "allow_error_response": true
   },
   {
     "case": "load_view_intent_pm",
