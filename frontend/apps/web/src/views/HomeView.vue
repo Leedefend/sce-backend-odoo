@@ -28,24 +28,24 @@
         v-model.trim="searchText"
         class="search-input"
         type="search"
-        placeholder="搜索能力名称 / 说明 / key"
+        placeholder="搜索能力名称或说明"
       />
       <label class="ready-only">
         <input v-model="readyOnly" type="checkbox" />
-        仅显示可用能力（READY）
+        仅显示可进入能力
       </label>
       <div class="state-filters">
         <button :class="{ active: stateFilter === 'ALL' }" @click="stateFilter = 'ALL'">
           全部 {{ entries.length }}
         </button>
         <button :class="{ active: stateFilter === 'READY' }" @click="stateFilter = 'READY'">
-          READY {{ stateCounts.READY }}
+          可进入 {{ stateCounts.READY }}
         </button>
         <button :class="{ active: stateFilter === 'LOCKED' }" @click="stateFilter = 'LOCKED'">
-          LOCKED {{ stateCounts.LOCKED }}
+          暂不可用 {{ stateCounts.LOCKED }}
         </button>
         <button :class="{ active: stateFilter === 'PREVIEW' }" @click="stateFilter = 'PREVIEW'">
-          PREVIEW {{ stateCounts.PREVIEW }}
+          预览中 {{ stateCounts.PREVIEW }}
         </button>
       </div>
       <div v-if="lockedReasonOptions.length" class="reason-filters">
@@ -93,7 +93,7 @@
             <div class="entry-main">
               <p class="title-row">
                 <span class="title">{{ entry.title }}</span>
-                <span class="state">{{ entry.state }}</span>
+                <span class="state">{{ stateLabel(entry.state) }}</span>
               </p>
               <p class="subtitle" :title="entry.reason || entry.subtitle">{{ entry.subtitle || '无说明' }}</p>
               <p v-if="entry.state === 'LOCKED'" class="lock-reason">
@@ -266,6 +266,12 @@ function lockReasonLabel(reasonCode: string) {
   if (code === 'CAPABILITY_SCOPE_MISSING') return '缺少前置能力';
   if (code === 'CAPABILITY_SCOPE_CYCLE') return '能力依赖异常';
   return '当前不可用';
+}
+
+function stateLabel(state: EntryState) {
+  if (state === 'READY') return '可进入';
+  if (state === 'LOCKED') return '暂不可用';
+  return '预览中';
 }
 
 async function openScene(entry: CapabilityEntry) {
