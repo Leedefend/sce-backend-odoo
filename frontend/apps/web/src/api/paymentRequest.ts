@@ -24,6 +24,7 @@ export interface PaymentRequestActionSurfaceItem {
 
 export interface PaymentRequestActionSurfaceData {
   reason_code?: string;
+  primary_action_key?: string;
   payment_request?: {
     id: number;
     name?: string;
