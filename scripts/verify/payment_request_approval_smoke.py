@@ -335,6 +335,13 @@ def main() -> int:
             for item in actions
             if isinstance(item, dict) and bool(item.get("allowed"))
         ]
+        blocked_reason_summary = {}
+        for item in actions:
+            if not isinstance(item, dict) or bool(item.get("allowed")):
+                continue
+            reason_key = str(item.get("reason_code") or "UNKNOWN")
+            blocked_reason_summary[reason_key] = int(blocked_reason_summary.get(reason_key, 0)) + 1
+        summary["blocked_reason_summary"] = blocked_reason_summary
         summary["allowed_actions"] = allowed_actions
         if picked and not allowed_actions:
             summary["live_no_allowed_actions"] = True
