@@ -60,6 +60,9 @@
 - Cross-stack payment request approval smoke:
   - `make verify.portal.payment_request_approval_smoke.container`
   - Covers login -> `api.data` payment request discovery -> `payment.request.submit` -> `payment.request.approve`.
+  - Default credential source for this smoke is finance-role-first:
+    - `ROLE_FINANCE_LOGIN` / `ROLE_FINANCE_PASSWORD` (defaults: `demo_role_finance` / `demo`)
+    - falls back to `E2E_LOGIN` / `E2E_PASSWORD` only when role vars are unset.
   - Optional env knobs:
     - `PAYMENT_REQUEST_SMOKE_AUTO_CREATE=1` (default): auto-create minimal payment request when none is visible.
     - `PAYMENT_REQUEST_SMOKE_REQUIRE_LIVE=1`: fail if smoke cannot enter live-record path.
