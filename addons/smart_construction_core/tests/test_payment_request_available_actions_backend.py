@@ -61,6 +61,10 @@ class TestPaymentRequestAvailableActionsBackend(TransactionCase):
         self.assertTrue(bool(submit.get("idempotency_required")))
         self.assertEqual(submit.get("reason_code"), "PAYMENT_ATTACHMENTS_REQUIRED")
         self.assertFalse(bool(submit.get("allowed")))
+        self.assertEqual(submit.get("current_state"), "draft")
+        self.assertEqual(submit.get("next_state_hint"), "submit")
+        self.assertTrue(str(submit.get("blocked_message") or "").strip())
+        self.assertTrue(str(submit.get("suggested_action") or "").strip())
         reject = by_key.get("reject") or {}
         self.assertEqual(reject.get("reason_code"), REASON_BUSINESS_RULE_FAILED)
         self.assertTrue(bool(reject.get("requires_reason")))
