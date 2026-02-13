@@ -51,6 +51,12 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         },
     ]
     _EXECUTE_INTENT = "payment.request.execute"
+    _NEXT_STATE_HINT = {
+        "submit": "submit",
+        "approve": "approved",
+        "reject": "draft",
+        "done": "done",
+    }
 
     def _evaluate_prerequisites(self, record, action_key: str) -> tuple[bool, str]:
         key = str(action_key or "").strip()
@@ -117,6 +123,12 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             reason_code = REASON_BUSINESS_RULE_FAILED
         else:
             reason_code = precheck_reason or REASON_BUSINESS_RULE_FAILED
+        reason_meta = failure_meta_for_reason(reason_code)
+        blocked_message = ""
+        suggested_action = ""
+        if not allowed:
+            blocked_message = str(reason_meta.get("message") or reason_code)
+            suggested_action = str(reason_meta.get("suggested_action") or "")
         execute_payload = {
             "id": int(record.id or 0),
             "action": str(spec.get("key") or ""),
@@ -131,10 +143,14 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "allowed": allowed,
             "reason_code": reason_code,
             "state_required": sorted(list(spec.get("allowed_states") or [])),
+            "current_state": state,
+            "next_state_hint": self._NEXT_STATE_HINT.get(str(spec.get("key") or ""), ""),
             "execute_intent": self._EXECUTE_INTENT,
             "execute_params": execute_payload,
             "idempotency_required": True,
             "requires_reason": "reason" in required_params,
+            "blocked_message": blocked_message,
+            "suggested_action": suggested_action,
         }
 
     def handle(self, payload=None, ctx=None):
