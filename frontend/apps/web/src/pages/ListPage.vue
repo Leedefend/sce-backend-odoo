@@ -143,6 +143,7 @@ import PageHeader from '../components/page/PageHeader.vue';
 import PageToolbar from '../components/page/PageToolbar.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
+import { formatDisplayValue } from '../utils/display';
 
 type BatchDetailLine = {
   text: string;
@@ -202,19 +203,7 @@ const errorCopy = computed(() =>
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));
 function formatValue(value: unknown) {
-  if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No';
-  }
-  if (Array.isArray(value)) {
-    if (value.length === 2 && typeof value[1] === 'string') {
-      return value[1];
-    }
-    return value.join(', ');
-  }
-  if (value && typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-  return value ?? '';
+  return formatDisplayValue(value);
 }
 
 function handleRow(row: Record<string, unknown>) {
