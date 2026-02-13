@@ -56,6 +56,7 @@ import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
+import { formatDisplayValue } from '../utils/display';
 
 const props = defineProps<{
   title: string;
@@ -85,16 +86,7 @@ const emptyCopy = computed(() => resolveEmptyCopy('card'));
 const metaFields = computed(() => props.fields.filter((field) => field !== props.titleField).slice(0, 4));
 
 function formatValue(value: unknown) {
-  if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No';
-  }
-  if (Array.isArray(value)) {
-    return value.join(', ');
-  }
-  if (value && typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-  return value ?? '';
+  return formatDisplayValue(value);
 }
 
 function handleCard(row: Record<string, unknown>) {
