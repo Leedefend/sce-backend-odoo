@@ -6,6 +6,7 @@ from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_construction_core.handlers.payment_request_approval import (
     PaymentRequestApproveHandler,
+    PaymentRequestDoneHandler,
     PaymentRequestRejectHandler,
     PaymentRequestSubmitHandler,
 )
@@ -23,6 +24,7 @@ class TestPaymentRequestApprovalIntentBackend(TransactionCase):
     # payment.request.submit
     # payment.request.approve
     # payment.request.reject
+    # payment.request.done
     def _create_payment_request_minimal(self):
         project = self.env["project.project"].create({"name": "Intent PR Project"})
         partner = self.env["res.partner"].create({"name": "Intent PR Partner"})
@@ -173,4 +175,20 @@ class TestPaymentRequestApprovalIntentBackend(TransactionCase):
         data = result.get("data") or {}
         self.assertEqual(data.get("reason_code"), REASON_OK)
         self.assertEqual(data.get("intent_action"), "reject")
+        self.assertEqual(((data.get("payment_request") or {}).get("id")), payment_request.id)
+
+    def test_payment_request_done_success_contract_with_mocked_method(self):
+        payment_request = self._create_payment_request_minimal()
+        payment_request.sudo().with_context(allow_transition=True).write({"state": "approved"})
+        handler = PaymentRequestDoneHandler(self.env, payload={})
+        with patch(
+            "odoo.addons.smart_construction_core.models.core.payment_request.PaymentRequest.action_done",
+            autospec=True,
+            return_value=None,
+        ):
+            result = handler.handle({"id": payment_request.id, "request_id": "req-pr-done-success"})
+        self.assertTrue(result.get("ok"))
+        data = result.get("data") or {}
+        self.assertEqual(data.get("reason_code"), REASON_OK)
+        self.assertEqual(data.get("intent_action"), "done")
         self.assertEqual(((data.get("payment_request") or {}).get("id")), payment_request.id)
