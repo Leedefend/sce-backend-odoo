@@ -182,6 +182,11 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             )
 
         actions = [self._action_entry(record, spec) for spec in self._ACTION_SPECS]
+        primary_action_key = ""
+        for item in actions:
+            if bool(item.get("allowed")):
+                primary_action_key = str(item.get("key") or "")
+                break
         return {
             "ok": True,
             "data": {
@@ -194,6 +199,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                     "type": str(record.type or ""),
                 },
                 "actions": actions,
+                "primary_action_key": primary_action_key,
             },
             "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id},
         }

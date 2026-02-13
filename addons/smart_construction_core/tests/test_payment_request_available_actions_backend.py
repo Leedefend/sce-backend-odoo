@@ -50,6 +50,7 @@ class TestPaymentRequestAvailableActionsBackend(TransactionCase):
         self.assertTrue(result.get("ok"))
         data = result.get("data") or {}
         self.assertEqual(data.get("reason_code"), REASON_OK)
+        self.assertEqual(data.get("primary_action_key"), "reject")
         actions = data.get("actions") or []
         keys = {str(item.get("key") or "") for item in actions if isinstance(item, dict)}
         self.assertEqual(keys, {"submit", "approve", "reject", "done"})
