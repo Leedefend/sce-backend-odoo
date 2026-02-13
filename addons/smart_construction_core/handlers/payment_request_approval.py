@@ -33,6 +33,19 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
     ACTION_METHOD = ""
     ACTION_NAME = ""
 
+    def _extract_reason(self, params: dict) -> str:
+        for key in ("reason", "reject_reason", "note", "comment"):
+            value = str((params or {}).get(key) or "").strip()
+            if value:
+                return value
+        return ""
+
+    def _validate_action_params(self, params: dict) -> str:
+        return ""
+
+    def _build_action_kwargs(self, params: dict) -> dict:
+        return {}
+
     def _trace_id(self) -> str:
         if isinstance(self.context, dict):
             return str(self.context.get("trace_id") or "")
@@ -195,6 +208,18 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
                 status_code=400,
             )
 
+        validate_msg = self._validate_action_params(params)
+        if validate_msg:
+            return self._error_response(
+                reason_code=REASON_MISSING_PARAMS,
+                message=validate_msg,
+                request_id=request_id,
+                idempotency_key=idempotency_key,
+                idempotency_fingerprint=idempotency_fingerprint,
+                trace_id=trace_id,
+                status_code=400,
+            )
+
         payment_request = self.env["payment.request"].browse(payment_request_id).exists()
         if not payment_request:
             return self._error_response(
@@ -252,10 +277,11 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
             return {"ok": True, "data": replay_data, "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id}}
 
         replay_window_expired = bool(decision.get("replay_window_expired"))
+        action_kwargs = self._build_action_kwargs(params)
 
         try:
             method = getattr(payment_request, self.ACTION_METHOD)
-            action_result = method()
+            action_result = method(**action_kwargs)
             data = self._build_success_data(
                 payment_request,
                 action_result,
@@ -331,3 +357,29 @@ class PaymentRequestApproveHandler(_BasePaymentApprovalHandler):
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_APPROVE_INTENT"
     ACTION_METHOD = "action_approve"
     ACTION_NAME = "approve"
+
+
+class PaymentRequestRejectHandler(_BasePaymentApprovalHandler):
+    INTENT_TYPE = "payment.request.reject"
+    DESCRIPTION = "Reject payment request via canonical intent contract"
+    VERSION = "1.0.0"
+    AUDIT_EVENT_CODE = "PAYMENT_REQUEST_REJECT_INTENT"
+    ACTION_METHOD = "action_on_tier_rejected"
+    ACTION_NAME = "reject"
+
+    def _validate_action_params(self, params: dict) -> str:
+        if not self._extract_reason(params):
+            return "missing reason/reject_reason for reject"
+        return ""
+
+    def _build_action_kwargs(self, params: dict) -> dict:
+        return {"reason": self._extract_reason(params)}
+
+
+class PaymentRequestDoneHandler(_BasePaymentApprovalHandler):
+    INTENT_TYPE = "payment.request.done"
+    DESCRIPTION = "Complete payment request via canonical intent contract"
+    VERSION = "1.0.0"
+    AUDIT_EVENT_CODE = "PAYMENT_REQUEST_DONE_INTENT"
+    ACTION_METHOD = "action_done"
+    ACTION_NAME = "done"
