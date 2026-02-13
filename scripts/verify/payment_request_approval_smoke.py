@@ -174,6 +174,9 @@ def main() -> int:
         "ok": bool(actions_resp.get("ok")),
         "reason_code": actions_reason,
     })
+    if actions_resp.get("ok"):
+        actions = ((actions_resp.get("data") or {}).get("actions") or [])
+        summary["actions_count"] = len(actions)
 
     submit_resp = request_intent(
         "payment.request.submit",
@@ -290,9 +293,7 @@ def main() -> int:
     if not picked:
         allowed_missing = {"NOT_FOUND"}
         if str(actions_reason or "") not in allowed_missing:
-            raise AssertionError(
-                f"available_actions in contract-only mode expected NOT_FOUND, got {actions_reason}"
-            )
+            raise AssertionError(f"available_actions in contract-only mode expected NOT_FOUND, got {actions_reason}")
         if str(submit_reason or "") not in allowed_missing:
             raise AssertionError(f"submit in contract-only mode expected NOT_FOUND, got {submit_reason}")
         if str(execute_submit_reason or "") not in allowed_missing:
