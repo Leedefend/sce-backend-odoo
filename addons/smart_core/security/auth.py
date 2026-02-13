@@ -8,6 +8,7 @@ from odoo.http import request
 from odoo import http, SUPERUSER_ID, api
 from odoo.exceptions import AccessDenied
 from odoo.modules.registry import Registry
+from odoo.tools import config
 
 _logger = logging.getLogger(__name__)
 
@@ -113,19 +114,21 @@ def authenticate_user(login, password, db: str | None = None):
     """
     基于用户名和密码校验用户身份，并返回登录用户对象
     """
-    import logging
-    _logger = logging.getLogger(__name__)
-    
-    # 调试：打印传入的db参数
-    _logger.info("[auth][debug] authenticate_user called with db param: %s", db)
-    _logger.info("[auth][debug] request.session.db: %s", getattr(request, 'session', {}).get('db'))
-    _logger.info("[auth][debug] request.httprequest.args.get('db'): %s", request.httprequest.args.get('db'))
-    
-    db = db or request.session.db or request.httprequest.args.get("db") or "odoo17-dev01"
-    
-    # 调试：打印最终选择的db
-    _logger.info("[auth][debug] Final db selected: %s", db)
-    
+    session_db = getattr(getattr(request, "session", None), "db", None)
+    query_db = None
+    if getattr(request, "httprequest", None) is not None:
+        try:
+            query_db = request.httprequest.args.get("db")
+        except Exception:
+            query_db = None
+    env_db = getattr(getattr(getattr(request, "env", None), "cr", None), "dbname", None)
+    config_db = config.get("db_name")
+    if isinstance(config_db, str) and "," in config_db:
+        config_db = next((item.strip() for item in config_db.split(",") if item.strip()), None)
+    elif isinstance(config_db, (list, tuple)):
+        config_db = next((str(item).strip() for item in config_db if str(item).strip()), None)
+
+    db = db or session_db or query_db or env_db or config_db
     if not db:
         raise AccessDenied("未指定数据库")
     registry = Registry(db)
