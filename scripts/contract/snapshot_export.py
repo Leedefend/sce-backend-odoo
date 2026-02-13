@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import os
 import json
+import sys
 import uuid
 import importlib
 from datetime import datetime
@@ -351,7 +352,13 @@ def export_snapshot():
                 raise SystemExit("project_id required for meta.describe_project_capabilities")
             project = env["project.project"].browse(args.project_id).exists()
             if not project:
-                raise SystemExit("project not found")
+                project = env["project.project"].search([], order="id", limit=1)
+                if not project:
+                    raise SystemExit("project not found")
+                print(
+                    f"[snapshot_export] project_id={args.project_id} not found, fallback to project_id={project.id}",
+                    file=sys.stderr,
+                )
             from odoo.addons.smart_construction_core.services.lifecycle_capability_service import (
                 LifecycleCapabilityService,
             )
