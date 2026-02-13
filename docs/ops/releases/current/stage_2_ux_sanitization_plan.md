@@ -21,3 +21,16 @@
 8. `fix(frontend): keep workbench diagnostics behind hud only`
 9. `fix(frontend): sanitize capability home copy for user delivery`
 10. `docs(stage2): record ux sanitization verification results`
+
+## Verification Results
+- `make verify.frontend.typecheck.strict`: PASS
+  - command: `vue-tsc --noEmit -p tsconfig.strict.json`
+- `make verify.frontend.build`: PASS
+  - output bundle:
+    - `dist/assets/index-CbSCV1LC.css` 33.71 kB (gzip 6.25 kB)
+    - `dist/assets/index-DPS4-eVo.js` 302.46 kB (gzip 98.81 kB)
+- `make verify.frontend.suggested_action.all`: PASS
+  - guards:
+    - contract/parser/runtime/import-boundary/usage/trace-export/top-k/since-filter/hud-export
+    - cross-stack smoke
+    - no-new-any guard (`total_any: 0`)
