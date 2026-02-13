@@ -60,6 +60,20 @@
     />
 
     <section v-else class="card">
+      <section v-if="semanticActionButtons.length" class="semantic-action-hints">
+        <div
+          v-for="action in semanticActionButtons"
+          :key="`semantic-hint-${action.key}`"
+          class="semantic-action-hint"
+          :class="{ blocked: !action.allowed }"
+        >
+          <strong>{{ action.label }}</strong>
+          <span>
+            {{ action.currentState || '-' }} → {{ action.nextStateHint || '-' }}
+          </span>
+          <span v-if="!action.allowed">{{ action.blockedMessage || action.reasonCode || '当前状态不可执行' }}</span>
+        </div>
+      </section>
       <ViewLayoutRenderer
         v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
@@ -164,6 +178,9 @@ type SemanticActionButton = {
   label: string;
   allowed: boolean;
   reasonCode: string;
+  blockedMessage: string;
+  currentState: string;
+  nextStateHint: string;
   requiresReason: boolean;
   executeIntent: string;
 };
@@ -176,6 +193,9 @@ const semanticActionButtons = computed<SemanticActionButton[]>(() => {
     label: String(item.label || item.key || '操作').trim(),
     allowed: Boolean(item.allowed),
     reasonCode: String(item.reason_code || ''),
+    blockedMessage: String(item.blocked_message || ''),
+    currentState: String(item.current_state || ''),
+    nextStateHint: String(item.next_state_hint || ''),
     requiresReason: Boolean(item.requires_reason),
     executeIntent: String(item.execute_intent || 'payment.request.execute'),
   }));
@@ -455,6 +475,7 @@ async function runButton(btn: ViewButton) {
 
 function semanticActionTooltip(action: SemanticActionButton) {
   if (action.allowed) return '';
+  if (action.blockedMessage) return `不可执行：${action.blockedMessage}`;
   if (action.reasonCode) return `不可执行：${action.reasonCode}`;
   return '当前状态不可执行';
 }
@@ -603,6 +624,27 @@ function analyzeLayout(layout: ViewContract['layout']) {
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
   display: grid;
   gap: 12px;
+}
+
+.semantic-action-hints {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.semantic-action-hint {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  color: #334155;
+}
+
+.semantic-action-hint.blocked {
+  color: #b91c1c;
 }
 
 .field {
