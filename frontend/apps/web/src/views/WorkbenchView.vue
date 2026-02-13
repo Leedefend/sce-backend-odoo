@@ -2,9 +2,9 @@
   <section class="workbench">
     <header class="header">
       <div>
-        <p class="diagnostic">Diagnostic surface only — not product UI.</p>
-        <h2>Navigation unavailable</h2>
-        <p class="meta">This page appears only when the requested target cannot be opened.</p>
+        <p v-if="showHud" class="diagnostic">Diagnostic surface only — not product UI.</p>
+        <h2>页面暂时无法打开</h2>
+        <p class="meta">我们已为你保留可继续操作的入口。</p>
       </div>
       <div class="actions">
         <button class="ghost" @click="goToProjects">Back to home</button>
@@ -37,7 +37,7 @@
       </button>
     </section>
 
-    <div class="details">
+    <div v-if="showHud" class="details">
       <div class="detail">
         <span class="label">Reason</span>
         <span class="value">{{ reasonLabel }}</span>

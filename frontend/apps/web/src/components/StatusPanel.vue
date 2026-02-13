@@ -2,27 +2,36 @@
   <section class="panel" :class="variant">
     <h2>{{ title }}</h2>
     <p v-if="message">{{ message }}</p>
-    <div v-if="variant === 'error'" class="error-meta">
+    <p v-if="variant === 'error' && userHint" class="error-help">{{ userHint }}</p>
+    <div v-if="variant === 'error' && showHudMeta" class="error-meta">
       <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
       <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
       <p v-if="reasonCode" class="trace">Reason: {{ reasonCode }}</p>
       <p v-if="errorCategory" class="trace">Category: {{ errorCategory }}</p>
       <p v-if="retryable !== undefined" class="trace">Retryable: {{ retryable ? 'yes' : 'no' }}</p>
       <p v-if="hint" class="trace">Hint: {{ hint }}</p>
-      <p v-if="suggestedAction" class="trace">Suggested: {{ suggestedAction }}</p>
       <button v-if="traceId" class="trace-copy" @click="copyTrace">Copy trace</button>
-      <button v-if="suggestedActionLabel" class="trace-copy" @click="runSuggestedAction">
+      <button v-if="canRunSuggestedAction && suggestedActionLabel" class="trace-copy" @click="runSuggestedAction">
         {{ suggestedActionLabel }}
       </button>
       <p v-if="actionRunFeedback" class="trace action-feedback">{{ actionRunFeedback }}</p>
     </div>
+    <button
+      v-else-if="variant === 'error' && canRunSuggestedAction && suggestedActionLabel"
+      class="trace-copy"
+      @click="runSuggestedAction"
+    >
+      {{ suggestedActionLabel }}
+    </button>
     <button v-if="onRetry" @click="onRetry">Retry</button>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useSuggestedAction } from '../composables/useSuggestedAction';
+import { isHudEnabled } from '../config/debug';
 
 const props = defineProps<{
   title: string;
@@ -42,6 +51,7 @@ const emit = defineEmits<{
   (event: 'action-executed', payload: { action: string; success: boolean }): void;
 }>();
 const actionRunFeedback = ref('');
+const route = useRoute();
 
 watch(
   () => [props.suggestedAction, props.message, props.reasonCode, props.traceId],
@@ -63,6 +73,11 @@ const suggestedActionRuntime = useSuggestedAction(
 
 const canRunSuggestedAction = computed(() => suggestedActionRuntime.canRun.value);
 const suggestedActionLabel = computed(() => suggestedActionRuntime.label.value);
+const showHudMeta = computed(() => isHudEnabled(route));
+const userHint = computed(() => {
+  if (showHudMeta.value) return '';
+  return props.hint || '';
+});
 
 function runSuggestedAction() {
   const ran = suggestedActionRuntime.run({
