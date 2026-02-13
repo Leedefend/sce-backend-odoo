@@ -298,6 +298,7 @@ def main() -> int:
         "ok": bool(actions_resp.get("ok")),
         "reason_code": actions_reason,
     })
+    primary_action_key = ""
     if actions_resp.get("ok"):
         actions = ((actions_resp.get("data") or {}).get("actions") or [])
         primary_action_key = str(((actions_resp.get("data") or {}).get("primary_action_key") or "")).strip()
@@ -366,7 +367,10 @@ def main() -> int:
     )
 
     exec_action = "submit"
-    if picked and exec_action not in set(allowed_actions) and allowed_actions:
+    allowed_set = set(allowed_actions)
+    if primary_action_key and primary_action_key in allowed_set:
+        exec_action = primary_action_key
+    elif picked and exec_action not in allowed_set and allowed_actions:
         exec_action = allowed_actions[0]
     execute_submit_resp = request_intent(
         "payment.request.execute",
