@@ -347,9 +347,11 @@ def export_snapshot():
 
         fallback_used = False
         if op == "meta.describe_project_capabilities":
-            if not args.project_id:
-                raise SystemExit("project_id required for meta.describe_project_capabilities")
-            project = env["project.project"].browse(args.project_id).exists()
+            project = None
+            if args.project_id:
+                project = env["project.project"].browse(args.project_id).exists()
+            if not project:
+                project = env["project.project"].search([], order="id asc", limit=1)
             if not project:
                 raise SystemExit("project not found")
             from odoo.addons.smart_construction_core.services.lifecycle_capability_service import (
@@ -596,7 +598,7 @@ def export_snapshot():
 
         execute_result = None
         execute_error = None
-        if args.execute_method:
+        if args.execute_method and payload.get("op") == "model":
             if not args.model or not args.record_id:
                 raise SystemExit("execute_method requires --model and --id")
             try:
