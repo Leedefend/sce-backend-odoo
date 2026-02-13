@@ -71,6 +71,9 @@ class TestPaymentRequestActionSurfaceBackend(TransactionCase):
         self.assertFalse(bool(submit.get("requires_reason")))
         self.assertEqual(submit.get("current_state"), "draft")
         self.assertEqual(submit.get("next_state_hint"), "submit")
+        self.assertTrue(bool(submit.get("allowed_by_state")))
+        self.assertTrue(bool(submit.get("allowed_by_method")))
+        self.assertFalse(bool(submit.get("allowed_by_precheck")))
         self.assertTrue(str(submit.get("blocked_message") or "").strip())
         self.assertTrue(str(submit.get("suggested_action") or "").strip())
         reject = by_key.get("reject") or {}
