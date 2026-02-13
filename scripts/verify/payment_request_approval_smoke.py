@@ -13,6 +13,10 @@ DB_NAME = os.getenv("DB_NAME") or os.getenv("DB") or "sc_demo"
 LOGIN = os.getenv("E2E_LOGIN") or os.getenv("ROLE_FINANCE_LOGIN") or "demo_role_finance"
 PASSWORD = os.getenv("E2E_PASSWORD") or os.getenv("ROLE_FINANCE_PASSWORD") or "demo"
 ARTIFACTS_DIR = os.getenv("ARTIFACTS_DIR", "artifacts")
+AUTO_CREATE_WHEN_EMPTY = os.getenv("PAYMENT_REQUEST_SMOKE_AUTO_CREATE", "1").strip().lower() not in ("0", "false", "no")
+REQUIRE_LIVE = os.getenv("PAYMENT_REQUEST_SMOKE_REQUIRE_LIVE", "0").strip().lower() in ("1", "true", "yes")
+REQUEST_RETRY_MAX = max(5, int(os.getenv("PAYMENT_REQUEST_SMOKE_REQUEST_RETRY_MAX", "60")))
+REQUEST_RETRY_SLEEP_SEC = max(1, int(os.getenv("PAYMENT_REQUEST_SMOKE_REQUEST_RETRY_SLEEP_SEC", "2")))
 
 
 def request_intent(intent: str, params: dict, *, token: str | None = None, anonymous: bool = False) -> dict:
@@ -26,7 +30,7 @@ def request_intent(intent: str, params: dict, *, token: str | None = None, anony
     req = urllib.request.Request(f"{BASE_URL}/api/v1/intent", data=payload, headers=headers, method="POST")
     body = None
     last_err = None
-    for _ in range(20):
+    for _ in range(REQUEST_RETRY_MAX):
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 body = resp.read().decode("utf-8")
@@ -37,7 +41,7 @@ def request_intent(intent: str, params: dict, *, token: str | None = None, anony
             raw = exc.read().decode("utf-8", errors="replace")
             if exc.code in (502, 503, 504):
                 last_err = exc
-                time.sleep(1)
+                time.sleep(REQUEST_RETRY_SLEEP_SEC)
                 continue
             try:
                 payload_obj = json.loads(raw or "{}")
@@ -48,7 +52,7 @@ def request_intent(intent: str, params: dict, *, token: str | None = None, anony
             raise AssertionError(f"{intent}: HTTP {exc.code} non-JSON response: {raw[:300]}")
         except urllib.error.URLError as exc:
             last_err = exc
-            time.sleep(1)
+            time.sleep(REQUEST_RETRY_SLEEP_SEC)
     if body is None:
         raise last_err if last_err else RuntimeError("intent request failed")
     return json.loads(body or "{}")
@@ -108,6 +112,67 @@ def pick_payment_request(token: str) -> dict | None:
     return by_state("draft") or by_state("submit", "approve", "approved") or records[0]
 
 
+def first_id(token: str, model: str, fields: list[str], domain: list | None = None) -> int:
+    resp = request_intent(
+        "api.data",
+        {
+            "op": "list",
+            "model": model,
+            "fields": fields,
+            "limit": 1,
+            "order": "id desc",
+            "domain": domain or [],
+        },
+        token=token,
+    )
+    ensure_envelope(resp, f"api.data[{model}]")
+    if not resp.get("ok"):
+        return 0
+    rows = ((resp.get("data") or {}).get("records") or [])
+    if not rows:
+        return 0
+    try:
+        return int((rows[0] or {}).get("id") or 0)
+    except Exception:
+        return 0
+
+
+def create_payment_request(token: str) -> dict | None:
+    project_id = first_id(token, "project.project", ["id", "name"])
+    partner_id = first_id(token, "res.partner", ["id", "name"])
+    if project_id <= 0 or partner_id <= 0:
+        return None
+    create_resp = request_intent(
+        "api.data",
+        {
+            "op": "create",
+            "model": "payment.request",
+            "vals": {
+                "type": "receive",
+                "project_id": project_id,
+                "partner_id": partner_id,
+                "amount": 100.0,
+            },
+        },
+        token=token,
+    )
+    ensure_envelope(create_resp, "api.data.create[payment.request]")
+    if not create_resp.get("ok"):
+        return None
+    try:
+        created_id = int(((create_resp.get("data") or {}).get("id") or 0))
+    except Exception:
+        created_id = 0
+    if created_id <= 0:
+        return None
+    return {
+        "id": created_id,
+        "name": "AUTO_CREATED",
+        "state": "draft",
+        "source": "api.data.create",
+    }
+
+
 def main() -> int:
     ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
     out_dir = Path(ARTIFACTS_DIR) / "codex" / "payment-request-approval-smoke" / ts
@@ -133,6 +198,10 @@ def main() -> int:
     summary["steps"].append({"step": "login", "ok": True})
 
     picked = pick_payment_request(token)
+    created = False
+    if not picked and AUTO_CREATE_WHEN_EMPTY:
+        picked = create_payment_request(token)
+        created = bool(picked)
     if picked:
         payment_request_id = int((picked or {}).get("id") or 0)
         if payment_request_id <= 0:
@@ -143,6 +212,7 @@ def main() -> int:
             "ok": True,
             "payment_request_id": payment_request_id,
             "state_before": str((picked or {}).get("state") or ""),
+            "auto_created": created,
         })
     else:
         # Compatibility mode for lean demo DB: verify intent contracts with NOT_FOUND.
@@ -153,6 +223,8 @@ def main() -> int:
             "mode": "contract_only_no_seed_data",
             "payment_request_id": payment_request_id,
         })
+        if REQUIRE_LIVE:
+            raise AssertionError("live payment request path required but no record available and auto-create failed")
 
     actions_resp = request_intent(
         "payment.request.available_actions",
@@ -322,6 +394,18 @@ def main() -> int:
             raise AssertionError(f"reject in contract-only mode expected NOT_FOUND, got {reject_reason}")
         if str(done_reason or "") not in allowed_missing:
             raise AssertionError(f"done in contract-only mode expected NOT_FOUND, got {done_reason}")
+    else:
+        forbidden = {"NOT_FOUND"}
+        for name, value in (
+            ("available_actions", actions_reason),
+            ("submit", submit_reason),
+            ("execute.submit", execute_submit_reason),
+            ("approve", approve_reason),
+            ("reject", reject_reason),
+            ("done", done_reason),
+        ):
+            if str(value or "") in forbidden:
+                raise AssertionError(f"{name} in live mode should not return NOT_FOUND")
 
     write_artifacts(out_dir, "summary.json", summary)
     print("[payment_request_approval_smoke] PASS")
