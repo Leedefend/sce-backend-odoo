@@ -486,7 +486,11 @@ function parseIntentActionResult(data: Record<string, unknown> | null | undefine
     typeof data?.success === 'boolean'
       ? Boolean(data.success)
       : reasonCode === 'OK' || reasonCode === 'DRY_RUN';
-  const message = String(data?.message || (success ? '操作成功' : '操作失败'));
+  const replayed = Boolean(data?.idempotent_replay);
+  let message = String(data?.message || (success ? '操作成功' : '操作失败'));
+  if (replayed && success) {
+    message = `${message}（复用先前执行结果）`;
+  }
   return { message, reasonCode, success };
 }
 
