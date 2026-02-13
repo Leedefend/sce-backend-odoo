@@ -374,3 +374,12 @@ class PaymentRequestRejectHandler(_BasePaymentApprovalHandler):
 
     def _build_action_kwargs(self, params: dict) -> dict:
         return {"reason": self._extract_reason(params)}
+
+
+class PaymentRequestDoneHandler(_BasePaymentApprovalHandler):
+    INTENT_TYPE = "payment.request.done"
+    DESCRIPTION = "Complete payment request via canonical intent contract"
+    VERSION = "1.0.0"
+    AUDIT_EVENT_CODE = "PAYMENT_REQUEST_DONE_INTENT"
+    ACTION_METHOD = "action_done"
+    ACTION_NAME = "done"
