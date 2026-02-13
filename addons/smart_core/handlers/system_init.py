@@ -50,7 +50,7 @@ ROLE_SURFACE_MAP = {
     },
     "finance": {
         "label": "Finance",
-        "landing_scene_candidates": ["projects.ledger", "projects.list"],
+        "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_finance_center",
             "smart_construction_core.menu_sc_settlement_center",
@@ -404,6 +404,7 @@ def _apply_scene_keys(env, nodes):
         "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
         "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
         "smart_construction_core.menu_sc_dictionary": "data.dictionary",
+        "smart_construction_core.menu_payment_request": "finance.payment_requests",
         "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
         "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
         "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
@@ -416,6 +417,8 @@ def _apply_scene_keys(env, nodes):
         "smart_construction_core.action_project_dashboard": "projects.dashboard",
         "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
         "smart_construction_core.action_project_dictionary": "data.dictionary",
+        "smart_construction_core.action_payment_request": "finance.payment_requests",
+        "smart_construction_core.action_payment_request_my": "finance.payment_requests",
         "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
         "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
         "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
@@ -424,6 +427,8 @@ def _apply_scene_keys(env, nodes):
     model_view_map = {
         ("project.project", "list"): "projects.list",
         ("project.project", "form"): "projects.intake",
+        ("payment.request", "list"): "finance.payment_requests",
+        ("payment.request", "form"): "finance.payment_requests",
     }
 
     for n in nodes or []:

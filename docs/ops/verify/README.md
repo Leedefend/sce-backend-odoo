@@ -56,6 +56,11 @@
 ## Demo Baseline
 - `make verify.demo`
 
+## Stage 3 Approval MVP
+- Cross-stack payment request approval smoke:
+  - `make verify.portal.payment_request_approval_smoke.container`
+  - Covers login -> `api.data` payment request discovery -> `payment.request.submit` -> `payment.request.approve`.
+
 ## Baseline Semantics
 - Platform baseline (environment/bootstrap consistency)
   - `make verify.platform_baseline`
