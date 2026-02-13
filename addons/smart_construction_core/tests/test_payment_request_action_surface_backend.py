@@ -65,6 +65,8 @@ class TestPaymentRequestActionSurfaceBackend(TransactionCase):
         self.assertEqual((submit.get("execute_params") or {}).get("id"), payment.id)
         self.assertEqual((submit.get("execute_params") or {}).get("action"), "submit")
         self.assertTrue(bool(submit.get("idempotency_required")))
+        self.assertEqual(submit.get("reason_code"), "PAYMENT_ATTACHMENTS_REQUIRED")
+        self.assertFalse(bool(submit.get("allowed")))
         self.assertFalse(bool(submit.get("requires_reason")))
         reject = by_key.get("reject") or {}
         self.assertEqual(reject.get("reason_code"), REASON_BUSINESS_RULE_FAILED)

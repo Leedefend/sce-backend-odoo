@@ -52,6 +52,32 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
     ]
     _EXECUTE_INTENT = "payment.request.execute"
 
+    def _evaluate_prerequisites(self, record, action_key: str) -> tuple[bool, str]:
+        key = str(action_key or "").strip()
+        if key == "submit":
+            if int(record._get_attachment_count() or 0) <= 0:
+                return False, "PAYMENT_ATTACHMENTS_REQUIRED"
+            if not record.contract_id:
+                return False, REASON_MISSING_PARAMS
+            if record.contract_id and str(record.contract_id.state or "") == "cancel":
+                return False, REASON_BUSINESS_RULE_FAILED
+            return True, REASON_OK
+        if key == "approve":
+            if str(record.validation_status or "") != "validated":
+                return False, REASON_BUSINESS_RULE_FAILED
+            return True, REASON_OK
+        if key == "reject":
+            return True, REASON_OK
+        if key == "done":
+            if str(record.validation_status or "") != "validated":
+                return False, REASON_BUSINESS_RULE_FAILED
+            if str(record.state or "") != "approved":
+                return False, REASON_BUSINESS_RULE_FAILED
+            if not bool(record.is_fully_paid):
+                return False, REASON_BUSINESS_RULE_FAILED
+            return True, REASON_OK
+        return False, REASON_BUSINESS_RULE_FAILED
+
     def _trace_id(self) -> str:
         if isinstance(self.context, dict):
             value = str(self.context.get("trace_id") or "").strip()
@@ -83,8 +109,14 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         fn = getattr(record, method_name, None)
         method_ok = callable(fn)
         state_ok = state in set(spec.get("allowed_states") or [])
-        allowed = bool(method_ok and state_ok)
-        reason_code = REASON_OK if allowed else REASON_BUSINESS_RULE_FAILED
+        precheck_ok, precheck_reason = self._evaluate_prerequisites(record, str(spec.get("key") or ""))
+        allowed = bool(method_ok and state_ok and precheck_ok)
+        if allowed:
+            reason_code = REASON_OK
+        elif not method_ok or not state_ok:
+            reason_code = REASON_BUSINESS_RULE_FAILED
+        else:
+            reason_code = precheck_reason or REASON_BUSINESS_RULE_FAILED
         execute_payload = {
             "id": int(record.id or 0),
             "action": str(spec.get("key") or ""),
