@@ -60,6 +60,9 @@
 - Cross-stack payment request approval smoke:
   - `make verify.portal.payment_request_approval_smoke.container`
   - Covers login -> `api.data` payment request discovery -> `payment.request.submit` -> `payment.request.approve`.
+  - Optional env knobs:
+    - `PAYMENT_REQUEST_SMOKE_AUTO_CREATE=1` (default): auto-create minimal payment request when none is visible.
+    - `PAYMENT_REQUEST_SMOKE_REQUIRE_LIVE=1`: fail if smoke cannot enter live-record path.
 
 ## Baseline Semantics
 - Platform baseline (environment/bootstrap consistency)
