@@ -73,6 +73,9 @@
             {{ action.currentState || '-' }} → {{ action.nextStateHint || '-' }}
           </span>
           <span v-if="!action.allowed">{{ action.blockedMessage || action.reasonCode || '当前状态不可执行' }}</span>
+          <span v-if="!action.allowed && action.suggestedAction" class="suggestion">
+            建议：{{ action.suggestedAction }}
+          </span>
         </div>
       </section>
       <ViewLayoutRenderer
@@ -180,6 +183,7 @@ type SemanticActionButton = {
   allowed: boolean;
   reasonCode: string;
   blockedMessage: string;
+  suggestedAction: string;
   currentState: string;
   nextStateHint: string;
   requiresReason: boolean;
@@ -196,6 +200,7 @@ const semanticActionButtons = computed<SemanticActionButton[]>(() => {
     allowed: Boolean(item.allowed),
     reasonCode: String(item.reason_code || ''),
     blockedMessage: String(item.blocked_message || ''),
+    suggestedAction: String(item.suggested_action || ''),
     currentState: String(item.current_state || ''),
     nextStateHint: String(item.next_state_hint || ''),
     requiresReason: Boolean(item.requires_reason),
@@ -479,6 +484,7 @@ async function runButton(btn: ViewButton) {
 
 function semanticActionTooltip(action: SemanticActionButton) {
   if (action.allowed) return '';
+  if (action.suggestedAction) return `不可执行：${action.blockedMessage || action.reasonCode}；建议：${action.suggestedAction}`;
   if (action.blockedMessage) return `不可执行：${action.blockedMessage}`;
   if (action.reasonCode) return `不可执行：${action.reasonCode}`;
   return '当前状态不可执行';
@@ -665,6 +671,10 @@ function analyzeLayout(layout: ViewContract['layout']) {
 
 .semantic-action-hint.blocked {
   color: #b91c1c;
+}
+
+.semantic-action-hint .suggestion {
+  color: #475569;
 }
 
 .field {

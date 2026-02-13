@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import time
+import base64
 from datetime import datetime
 from pathlib import Path
 import urllib.error
@@ -83,14 +84,14 @@ def write_artifacts(out_dir: Path, name: str, payload: dict):
     (out_dir / name).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def pick_payment_request(token: str) -> dict | None:
+def list_payment_requests(token: str, *, limit: int = 20) -> list[dict]:
     resp = request_intent(
         "api.data",
         {
             "op": "list",
             "model": "payment.request",
             "fields": ["id", "name", "state", "validation_status"],
-            "limit": 20,
+            "limit": int(limit),
             "order": "id desc",
         },
         token=token,
@@ -98,19 +99,49 @@ def pick_payment_request(token: str) -> dict | None:
     ensure_envelope(resp, "api.data")
     if not resp.get("ok"):
         raise AssertionError(f"api.data failed: {resp.get('error')}")
-    records = ((resp.get("data") or {}).get("records") or [])
+    rows = ((resp.get("data") or {}).get("records") or [])
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def fetch_available_actions(token: str, payment_request_id: int) -> tuple[dict, dict]:
+    resp = request_intent(
+        "payment.request.available_actions",
+        {"id": int(payment_request_id)},
+        token=token,
+    )
+    ensure_envelope(resp, "payment.request.available_actions")
+    ensure_reason(resp, "payment.request.available_actions")
+    data = (resp.get("data") or {}) if isinstance(resp.get("data"), dict) else {}
+    return resp, data
+
+
+def pick_payment_request(token: str) -> tuple[dict | None, dict | None]:
+    records = list_payment_requests(token, limit=30)
     if not records:
-        return None
+        return None, None
 
-    def by_state(*states):
-        wanted = set(states)
-        for row in records:
-            if str((row or {}).get("state") or "") in wanted:
-                return row
-        return None
-
-    # Prefer records that can expose approval-path actions in live smoke.
-    return by_state("submit", "approve", "approved") or by_state("draft") or records[0]
+    fallback_record = records[0]
+    fallback_actions = None
+    for row in records:
+        rec_id = int((row or {}).get("id") or 0)
+        if rec_id <= 0:
+            continue
+        action_resp, action_data = fetch_available_actions(token, rec_id)
+        if not action_resp.get("ok"):
+            continue
+        actions = action_data.get("actions") or []
+        allowed = [
+            str(item.get("key") or "")
+            for item in actions
+            if isinstance(item, dict) and bool(item.get("allowed"))
+        ]
+        if fallback_actions is None:
+            fallback_actions = action_data
+        if allowed:
+            row = dict(row)
+            row["allowed_actions"] = allowed
+            return row, action_data
+    return fallback_record, fallback_actions
 
 
 def first_id(token: str, model: str, fields: list[str], domain: list | None = None) -> int:
@@ -153,10 +184,7 @@ def create_payment_request(token: str) -> dict | None:
                 "project_id": project_id,
                 "partner_id": partner_id,
                 "amount": 100.0,
-                # Seed into submit state to guarantee at least one live semantic action
-                # (approve/reject) can be exercised by smoke user.
-                "state": "submit",
-                "validation_status": "validated",
+                "state": "draft",
             },
         },
         token=token,
@@ -170,6 +198,23 @@ def create_payment_request(token: str) -> dict | None:
         created_id = 0
     if created_id <= 0:
         return None
+    payload_b64 = base64.b64encode(b"payment-request-smoke").decode("ascii")
+    _ = request_intent(
+        "api.data",
+        {
+            "op": "create",
+            "model": "ir.attachment",
+            "vals": {
+                "name": f"payment_request_smoke_{created_id}.txt",
+                "type": "binary",
+                "datas": payload_b64,
+                "res_model": "payment.request",
+                "res_id": created_id,
+                "mimetype": "text/plain",
+            },
+        },
+        token=token,
+    )
     return {
         "id": created_id,
         "name": "AUTO_CREATED",
@@ -202,11 +247,12 @@ def main() -> int:
         raise AssertionError("login token missing")
     summary["steps"].append({"step": "login", "ok": True})
 
-    picked = pick_payment_request(token)
+    picked, preloaded_actions_data = pick_payment_request(token)
     created = False
     if not picked and AUTO_CREATE_WHEN_EMPTY:
         picked = create_payment_request(token)
         created = bool(picked)
+        preloaded_actions_data = None
     if picked:
         payment_request_id = int((picked or {}).get("id") or 0)
         if payment_request_id <= 0:
@@ -231,13 +277,14 @@ def main() -> int:
         if REQUIRE_LIVE:
             raise AssertionError("live payment request path required but no record available and auto-create failed")
 
-    actions_resp = request_intent(
-        "payment.request.available_actions",
-        {
-            "id": payment_request_id,
-        },
-        token=token,
-    )
+    if preloaded_actions_data is not None and picked:
+        actions_resp = {
+            "ok": True,
+            "data": preloaded_actions_data,
+            "meta": {"intent": "payment.request.available_actions", "trace_id": "preloaded"},
+        }
+    else:
+        actions_resp, _ = fetch_available_actions(token, payment_request_id)
     write_artifacts(out_dir, "payment_request_available_actions.log", actions_resp)
     ensure_envelope(actions_resp, "payment.request.available_actions")
     ensure_reason(actions_resp, "payment.request.available_actions")
@@ -251,6 +298,7 @@ def main() -> int:
         "ok": bool(actions_resp.get("ok")),
         "reason_code": actions_reason,
     })
+    primary_action_key = ""
     if actions_resp.get("ok"):
         actions = ((actions_resp.get("data") or {}).get("actions") or [])
         primary_action_key = str(((actions_resp.get("data") or {}).get("primary_action_key") or "")).strip()
@@ -287,6 +335,13 @@ def main() -> int:
             for item in actions
             if isinstance(item, dict) and bool(item.get("allowed"))
         ]
+        blocked_reason_summary = {}
+        for item in actions:
+            if not isinstance(item, dict) or bool(item.get("allowed")):
+                continue
+            reason_key = str(item.get("reason_code") or "UNKNOWN")
+            blocked_reason_summary[reason_key] = int(blocked_reason_summary.get(reason_key, 0)) + 1
+        summary["blocked_reason_summary"] = blocked_reason_summary
         summary["allowed_actions"] = allowed_actions
         if picked and not allowed_actions:
             summary["live_no_allowed_actions"] = True
@@ -319,7 +374,10 @@ def main() -> int:
     )
 
     exec_action = "submit"
-    if picked and exec_action not in set(allowed_actions) and allowed_actions:
+    allowed_set = set(allowed_actions)
+    if primary_action_key and primary_action_key in allowed_set:
+        exec_action = primary_action_key
+    elif picked and exec_action not in allowed_set and allowed_actions:
         exec_action = allowed_actions[0]
     execute_submit_resp = request_intent(
         "payment.request.execute",
