@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import time
+import base64
 from datetime import datetime
 from pathlib import Path
 import urllib.error
@@ -183,10 +184,7 @@ def create_payment_request(token: str) -> dict | None:
                 "project_id": project_id,
                 "partner_id": partner_id,
                 "amount": 100.0,
-                # Seed into submit state to guarantee at least one live semantic action
-                # (approve/reject) can be exercised by smoke user.
-                "state": "submit",
-                "validation_status": "validated",
+                "state": "draft",
             },
         },
         token=token,
@@ -200,6 +198,23 @@ def create_payment_request(token: str) -> dict | None:
         created_id = 0
     if created_id <= 0:
         return None
+    payload_b64 = base64.b64encode(b"payment-request-smoke").decode("ascii")
+    _ = request_intent(
+        "api.data",
+        {
+            "op": "create",
+            "model": "ir.attachment",
+            "vals": {
+                "name": f"payment_request_smoke_{created_id}.txt",
+                "type": "binary",
+                "datas": payload_b64,
+                "res_model": "payment.request",
+                "res_id": created_id,
+                "mimetype": "text/plain",
+            },
+        },
+        token=token,
+    )
     return {
         "id": created_id,
         "name": "AUTO_CREATED",
