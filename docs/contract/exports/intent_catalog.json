@@ -6703,6 +6703,53 @@
       }
     },
     {
+      "intent": "payment.request.execute",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/payment_request_execute.py",
+        "class": "PaymentRequestExecuteHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "intent_action",
+        "params",
+        "request_id"
+      ],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "intent_action",
+            "params",
+            "request_id"
+          ],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "intent_action",
+          "params",
+          "request_id"
+        ],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
+    },
+    {
       "intent": "payment.request.reject",
       "owner": {
         "module": "addons/smart_construction_core/handlers/payment_request_approval.py",
