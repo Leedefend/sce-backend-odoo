@@ -154,6 +154,27 @@ def main() -> int:
             "payment_request_id": payment_request_id,
         })
 
+    actions_resp = request_intent(
+        "payment.request.available_actions",
+        {
+            "id": payment_request_id,
+        },
+        token=token,
+    )
+    write_artifacts(out_dir, "payment_request_available_actions.log", actions_resp)
+    ensure_envelope(actions_resp, "payment.request.available_actions")
+    ensure_reason(actions_resp, "payment.request.available_actions")
+    actions_reason = (
+        (actions_resp.get("data") or {}).get("reason_code")
+        if actions_resp.get("ok")
+        else ((actions_resp.get("error") or {}).get("reason_code") or (actions_resp.get("error") or {}).get("code"))
+    )
+    summary["steps"].append({
+        "step": "payment.request.available_actions",
+        "ok": bool(actions_resp.get("ok")),
+        "reason_code": actions_reason,
+    })
+
     submit_resp = request_intent(
         "payment.request.submit",
         {
@@ -174,6 +195,29 @@ def main() -> int:
         "step": "payment.request.submit",
         "ok": bool(submit_resp.get("ok")),
         "reason_code": submit_reason,
+    })
+
+    execute_submit_resp = request_intent(
+        "payment.request.execute",
+        {
+            "id": payment_request_id,
+            "action": "submit",
+            "request_id": f"smoke_exec_submit_{payment_request_id}_{ts}",
+        },
+        token=token,
+    )
+    write_artifacts(out_dir, "payment_request_execute_submit.log", execute_submit_resp)
+    ensure_envelope(execute_submit_resp, "payment.request.execute")
+    ensure_reason(execute_submit_resp, "payment.request.execute")
+    execute_submit_reason = (
+        (execute_submit_resp.get("data") or {}).get("reason_code")
+        if execute_submit_resp.get("ok")
+        else ((execute_submit_resp.get("error") or {}).get("reason_code") or (execute_submit_resp.get("error") or {}).get("code"))
+    )
+    summary["steps"].append({
+        "step": "payment.request.execute.submit",
+        "ok": bool(execute_submit_resp.get("ok")),
+        "reason_code": execute_submit_reason,
     })
 
     approve_resp = request_intent(
@@ -245,8 +289,16 @@ def main() -> int:
 
     if not picked:
         allowed_missing = {"NOT_FOUND"}
+        if str(actions_reason or "") not in allowed_missing:
+            raise AssertionError(
+                f"available_actions in contract-only mode expected NOT_FOUND, got {actions_reason}"
+            )
         if str(submit_reason or "") not in allowed_missing:
             raise AssertionError(f"submit in contract-only mode expected NOT_FOUND, got {submit_reason}")
+        if str(execute_submit_reason or "") not in allowed_missing:
+            raise AssertionError(
+                f"execute.submit in contract-only mode expected NOT_FOUND, got {execute_submit_reason}"
+            )
         if str(approve_reason or "") not in allowed_missing:
             raise AssertionError(f"approve in contract-only mode expected NOT_FOUND, got {approve_reason}")
         if str(reject_reason or "") not in allowed_missing:
