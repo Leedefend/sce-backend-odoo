@@ -169,6 +169,9 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
+        if isinstance(params, dict) and isinstance(params.get("params"), dict):
+            # Intent router passes payload envelope: {intent, params, context}
+            params = params.get("params") or {}
         raw_id = params.get("id") or params.get("payment_request_id") or params.get("res_id")
         try:
             payment_request_id = int(raw_id)

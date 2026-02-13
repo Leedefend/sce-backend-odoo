@@ -2,8 +2,10 @@
 import json
 import os
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
+import urllib.error
 import urllib.request
 
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8069").rstrip("/")
@@ -22,8 +24,33 @@ def request_intent(intent: str, params: dict, *, token: str | None = None, anony
     if anonymous:
         headers["X-Anonymous-Intent"] = "1"
     req = urllib.request.Request(f"{BASE_URL}/api/v1/intent", data=payload, headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        body = resp.read().decode("utf-8")
+    body = None
+    last_err = None
+    for _ in range(20):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = resp.read().decode("utf-8")
+            last_err = None
+            break
+        except urllib.error.HTTPError as exc:
+            # API may return structured non-2xx JSON for business errors; keep contract flow.
+            raw = exc.read().decode("utf-8", errors="replace")
+            if exc.code in (502, 503, 504):
+                last_err = exc
+                time.sleep(1)
+                continue
+            try:
+                payload_obj = json.loads(raw or "{}")
+                if isinstance(payload_obj, dict):
+                    return payload_obj
+            except Exception:
+                pass
+            raise AssertionError(f"{intent}: HTTP {exc.code} non-JSON response: {raw[:300]}")
+        except urllib.error.URLError as exc:
+            last_err = exc
+            time.sleep(1)
+    if body is None:
+        raise last_err if last_err else RuntimeError("intent request failed")
     return json.loads(body or "{}")
 
 
@@ -138,7 +165,11 @@ def main() -> int:
     write_artifacts(out_dir, "payment_request_submit.log", submit_resp)
     ensure_envelope(submit_resp, "payment.request.submit")
     ensure_reason(submit_resp, "payment.request.submit")
-    submit_reason = (submit_resp.get("data") or {}).get("reason_code") if submit_resp.get("ok") else (submit_resp.get("error") or {}).get("reason_code")
+    submit_reason = (
+        (submit_resp.get("data") or {}).get("reason_code")
+        if submit_resp.get("ok")
+        else ((submit_resp.get("error") or {}).get("reason_code") or (submit_resp.get("error") or {}).get("code"))
+    )
     summary["steps"].append({
         "step": "payment.request.submit",
         "ok": bool(submit_resp.get("ok")),
@@ -156,7 +187,11 @@ def main() -> int:
     write_artifacts(out_dir, "payment_request_approve.log", approve_resp)
     ensure_envelope(approve_resp, "payment.request.approve")
     ensure_reason(approve_resp, "payment.request.approve")
-    approve_reason = (approve_resp.get("data") or {}).get("reason_code") if approve_resp.get("ok") else (approve_resp.get("error") or {}).get("reason_code")
+    approve_reason = (
+        (approve_resp.get("data") or {}).get("reason_code")
+        if approve_resp.get("ok")
+        else ((approve_resp.get("error") or {}).get("reason_code") or (approve_resp.get("error") or {}).get("code"))
+    )
     summary["steps"].append({
         "step": "payment.request.approve",
         "ok": bool(approve_resp.get("ok")),

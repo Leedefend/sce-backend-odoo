@@ -537,7 +537,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "capability_id",
         "capability_key",
@@ -6295,7 +6295,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 1,
+      "test_refs": 2,
       "request_schema_hint": [
         "id",
         "note",
@@ -6350,13 +6350,14 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": true,
-      "test_refs": 1,
+      "test_refs": 2,
       "request_schema_hint": [
         "idempotency_key",
         "ids",
         "ids[]",
         "note",
         "request_id",
+        "retry_ids",
         "source"
       ],
       "response_data_schema_hint": [
@@ -6582,6 +6583,76 @@
       "inferred_example": null
     },
     {
+      "intent": "payment.request.approve",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/payment_request_approval.py",
+        "class": "PaymentRequestApproveHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
+    },
+    {
+      "intent": "payment.request.submit",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/payment_request_approval.py",
+        "class": "PaymentRequestSubmitHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 1,
+      "request_schema_hint": [],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
+    },
+    {
       "intent": "permission.check",
       "owner": {
         "module": "addons/smart_core/handlers/permission_check.py",
@@ -6646,7 +6717,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "flag_param",
         "number_param",
@@ -6842,7 +6913,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "company_id",
         "limit",
@@ -7495,7 +7566,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [],
       "response_data_schema_hint": [
         "packages",
@@ -8273,7 +8344,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [],
       "response_data_schema_hint": [
         "raw",
@@ -8308,7 +8379,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 1,
+      "test_refs": 3,
       "request_schema_hint": [
         "op"
       ],
@@ -8443,7 +8514,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "op"
       ],
@@ -8480,7 +8551,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 0,
+      "test_refs": 1,
       "request_schema_hint": [
         "id",
         "model_name",
