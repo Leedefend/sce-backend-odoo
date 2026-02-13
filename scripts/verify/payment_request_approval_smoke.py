@@ -115,10 +115,10 @@ def fetch_available_actions(token: str, payment_request_id: int) -> tuple[dict, 
     return resp, data
 
 
-def pick_payment_request(token: str) -> tuple[dict | None, dict | None]:
+def pick_payment_request(token: str) -> tuple[dict | None, dict | None, bool]:
     records = list_payment_requests(token, limit=30)
     if not records:
-        return None, None
+        return None, None, False
 
     fallback_record = records[0]
     fallback_actions = None
@@ -140,8 +140,19 @@ def pick_payment_request(token: str) -> tuple[dict | None, dict | None]:
         if allowed:
             row = dict(row)
             row["allowed_actions"] = allowed
-            return row, action_data
-    return fallback_record, fallback_actions
+            return row, action_data, True
+    return fallback_record, fallback_actions, False
+
+
+def as_id(value) -> int:
+    if isinstance(value, (list, tuple)) and value:
+        value = value[0]
+    if isinstance(value, dict):
+        value = value.get("id")
+    try:
+        return int(value or 0)
+    except Exception:
+        return 0
 
 
 def first_id(token: str, model: str, fields: list[str], domain: list | None = None) -> int:
@@ -170,21 +181,46 @@ def first_id(token: str, model: str, fields: list[str], domain: list | None = No
 
 
 def create_payment_request(token: str) -> dict | None:
-    project_id = first_id(token, "project.project", ["id", "name"])
+    contract_resp = request_intent(
+        "api.data",
+        {
+            "op": "list",
+            "model": "construction.contract",
+            "fields": ["id", "project_id", "type", "state"],
+            "limit": 20,
+            "order": "id desc",
+            "domain": [["state", "!=", "cancel"]],
+        },
+        token=token,
+    )
+    ensure_envelope(contract_resp, "api.data[construction.contract]")
+    contract_rows = ((contract_resp.get("data") or {}).get("records") or []) if contract_resp.get("ok") else []
+    contract = {}
+    for row in contract_rows:
+        if str((row or {}).get("type") or "").strip() == "in":
+            contract = row
+            break
+    if not contract and contract_rows:
+        contract = contract_rows[0]
+    contract_id = as_id((contract or {}).get("id"))
+    contract_type = str((contract or {}).get("type") or "").strip()
+    project_id = as_id((contract or {}).get("project_id")) or first_id(token, "project.project", ["id", "name"])
     partner_id = first_id(token, "res.partner", ["id", "name"])
     if project_id <= 0 or partner_id <= 0:
         return None
+    req_type = "pay" if contract_type != "out" else "receive"
     create_resp = request_intent(
         "api.data",
         {
             "op": "create",
             "model": "payment.request",
             "vals": {
-                "type": "receive",
+                "type": req_type,
                 "project_id": project_id,
                 "partner_id": partner_id,
                 "amount": 100.0,
                 "state": "draft",
+                "contract_id": contract_id or False,
             },
         },
         token=token,
@@ -219,6 +255,9 @@ def create_payment_request(token: str) -> dict | None:
         "id": created_id,
         "name": "AUTO_CREATED",
         "state": "draft",
+        "type": req_type,
+        "contract_bound": bool(contract_id),
+        "contract_id": contract_id,
         "source": "api.data.create",
     }
 
@@ -247,9 +286,9 @@ def main() -> int:
         raise AssertionError("login token missing")
     summary["steps"].append({"step": "login", "ok": True})
 
-    picked, preloaded_actions_data = pick_payment_request(token)
+    picked, preloaded_actions_data, picked_has_allowed = pick_payment_request(token)
     created = False
-    if not picked and AUTO_CREATE_WHEN_EMPTY:
+    if (not picked or not picked_has_allowed) and AUTO_CREATE_WHEN_EMPTY:
         picked = create_payment_request(token)
         created = bool(picked)
         preloaded_actions_data = None
