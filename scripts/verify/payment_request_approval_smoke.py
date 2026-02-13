@@ -18,6 +18,11 @@ AUTO_CREATE_WHEN_EMPTY = os.getenv("PAYMENT_REQUEST_SMOKE_AUTO_CREATE", "1").str
 REQUIRE_LIVE = os.getenv("PAYMENT_REQUEST_SMOKE_REQUIRE_LIVE", "0").strip().lower() in ("1", "true", "yes")
 REQUEST_RETRY_MAX = max(5, int(os.getenv("PAYMENT_REQUEST_SMOKE_REQUEST_RETRY_MAX", "60")))
 REQUEST_RETRY_SLEEP_SEC = max(1, int(os.getenv("PAYMENT_REQUEST_SMOKE_REQUEST_RETRY_SLEEP_SEC", "2")))
+FOLLOWUP_ACTION_ORDER = tuple(
+    item.strip().lower()
+    for item in os.getenv("PAYMENT_REQUEST_SMOKE_FOLLOWUP_ORDER", "approve,reject,done,submit").split(",")
+    if item.strip()
+)
 
 
 def request_intent(intent: str, params: dict, *, token: str | None = None, anonymous: bool = False) -> dict:
@@ -443,6 +448,8 @@ def main() -> int:
     })
 
     followup_execute_reason = "SKIPPED_NOT_ALLOWED"
+    followup_skip_reason = "no_post_actions"
+    followup_selected_action = ""
 
     post_actions_resp, _post_actions_data = fetch_available_actions(token, payment_request_id)
     write_artifacts(out_dir, "payment_request_available_actions_after_execute.log", post_actions_resp)
@@ -456,9 +463,10 @@ def main() -> int:
             if isinstance(item, dict) and bool(item.get("allowed"))
         ]
         summary["allowed_actions_after_execute"] = allowed_actions
-        preferred = ("approve", "reject", "done", "submit")
-        followup_action = next((name for name in preferred if name in set(allowed_actions)), "")
+        followup_action = next((name for name in FOLLOWUP_ACTION_ORDER if name in set(allowed_actions)), "")
         if followup_action:
+            followup_selected_action = followup_action
+            followup_skip_reason = ""
             followup_resp = request_intent(
                 "payment.request.execute",
                 {
@@ -482,6 +490,10 @@ def main() -> int:
                 "ok": bool(followup_resp.get("ok")),
                 "reason_code": followup_execute_reason,
             })
+        else:
+            followup_skip_reason = "no_allowed_followup_action"
+    summary["followup_selected_action"] = followup_selected_action
+    summary["followup_skip_reason"] = followup_skip_reason
 
     approve_reason = run_or_skip_direct(
         "approve",
