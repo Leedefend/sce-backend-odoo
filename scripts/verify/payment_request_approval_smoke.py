@@ -253,7 +253,9 @@ def main() -> int:
     })
     if actions_resp.get("ok"):
         actions = ((actions_resp.get("data") or {}).get("actions") or [])
+        primary_action_key = str(((actions_resp.get("data") or {}).get("primary_action_key") or "")).strip()
         summary["actions_count"] = len(actions)
+        summary["primary_action_key"] = primary_action_key
         action_by_key = {
             str(item.get("key") or ""): item
             for item in actions
@@ -270,6 +272,16 @@ def main() -> int:
         reject_action = action_by_key.get("reject") or {}
         if bool(reject_action.get("requires_reason")) is not True:
             raise AssertionError("available_actions.reject requires_reason expected true")
+        if picked:
+            if primary_action_key and primary_action_key not in action_by_key:
+                raise AssertionError("available_actions primary_action_key not in actions")
+            for key, item in action_by_key.items():
+                if "current_state" not in item:
+                    raise AssertionError(f"available_actions.{key} current_state missing")
+                if "next_state_hint" not in item:
+                    raise AssertionError(f"available_actions.{key} next_state_hint missing")
+                if not bool(item.get("allowed")) and not str(item.get("blocked_message") or "").strip():
+                    raise AssertionError(f"available_actions.{key} blocked_message missing")
         allowed_actions = [
             str(item.get("key") or "")
             for item in actions
