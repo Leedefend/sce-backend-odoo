@@ -6,6 +6,7 @@ from uuid import uuid4
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_MISSING_PARAMS,
+    REASON_UNSUPPORTED_BUTTON_TYPE,
     failure_meta_for_reason,
 )
 
@@ -37,8 +38,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
                 return value
         return f"pay_req_exec_{uuid4().hex[:12]}"
 
-    def _error(self, *, message: str, trace_id: str, code: int = 400):
-        reason_code = REASON_MISSING_PARAMS
+    def _error(self, *, message: str, trace_id: str, code: int = 400, reason_code: str = REASON_MISSING_PARAMS):
         return {
             "ok": False,
             "data": {
@@ -67,7 +67,12 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
             return self._error(message="missing action", trace_id=trace_id, code=400)
         handler_cls = self._ACTION_TO_HANDLER.get(action)
         if not handler_cls:
-            return self._error(message="unsupported action", trace_id=trace_id, code=400)
+            return self._error(
+                message="unsupported action",
+                trace_id=trace_id,
+                code=400,
+                reason_code=REASON_UNSUPPORTED_BUTTON_TYPE,
+            )
 
         delegated_params = dict(params or {})
         delegated_params.pop("action", None)
@@ -88,4 +93,3 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
         data.setdefault("intent_action", action)
         result["data"] = data
         return result
-

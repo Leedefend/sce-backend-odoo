@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.handlers.reason_codes import (
+    REASON_BUSINESS_RULE_FAILED,
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
     REASON_OK,
@@ -49,6 +50,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "allowed_states": {"approved"},
         },
     ]
+    _EXECUTE_INTENT = "payment.request.execute"
 
     def _trace_id(self) -> str:
         if isinstance(self.context, dict):
@@ -82,16 +84,25 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         method_ok = callable(fn)
         state_ok = state in set(spec.get("allowed_states") or [])
         allowed = bool(method_ok and state_ok)
-        reason_code = REASON_OK if allowed else "ACTION_NOT_ALLOWED"
+        reason_code = REASON_OK if allowed else REASON_BUSINESS_RULE_FAILED
+        execute_payload = {
+            "id": int(record.id or 0),
+            "action": str(spec.get("key") or ""),
+        }
+        required_params = list(spec.get("required_params") or [])
         return {
             "key": str(spec.get("key") or ""),
             "label": str(spec.get("label") or ""),
             "intent": str(spec.get("intent") or ""),
             "method": method_name,
-            "required_params": list(spec.get("required_params") or []),
+            "required_params": required_params,
             "allowed": allowed,
             "reason_code": reason_code,
             "state_required": sorted(list(spec.get("allowed_states") or [])),
+            "execute_intent": self._EXECUTE_INTENT,
+            "execute_params": execute_payload,
+            "idempotency_required": True,
+            "requires_reason": "reason" in required_params,
         }
 
     def handle(self, payload=None, ctx=None):
@@ -138,4 +149,3 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             },
             "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id},
         }
-

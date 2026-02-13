@@ -177,6 +177,22 @@ def main() -> int:
     if actions_resp.get("ok"):
         actions = ((actions_resp.get("data") or {}).get("actions") or [])
         summary["actions_count"] = len(actions)
+        action_by_key = {
+            str(item.get("key") or ""): item
+            for item in actions
+            if isinstance(item, dict)
+        }
+        submit_action = action_by_key.get("submit") or {}
+        if str(submit_action.get("execute_intent") or "") != "payment.request.execute":
+            raise AssertionError("available_actions.submit execute_intent mismatch")
+        execute_params = submit_action.get("execute_params") or {}
+        if int(execute_params.get("id") or 0) != int(payment_request_id):
+            raise AssertionError("available_actions.submit execute_params.id mismatch")
+        if str(execute_params.get("action") or "") != "submit":
+            raise AssertionError("available_actions.submit execute_params.action mismatch")
+        reject_action = action_by_key.get("reject") or {}
+        if bool(reject_action.get("requires_reason")) is not True:
+            raise AssertionError("available_actions.reject requires_reason expected true")
 
     submit_resp = request_intent(
         "payment.request.submit",

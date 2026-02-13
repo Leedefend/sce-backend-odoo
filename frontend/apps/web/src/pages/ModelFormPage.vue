@@ -10,7 +10,7 @@
       </div>
       <div class="actions">
         <button
-          v-for="btn in headerButtons"
+          v-for="btn in nativeHeaderButtons"
           :key="btn.name ?? btn.string"
           :disabled="!recordId || saving || loading || executing === btn.name || buttonState(btn).state !== 'enabled'"
           class="action secondary"
@@ -18,6 +18,16 @@
           @click="runButton(btn)"
         >
           {{ buttonLabel(btn) }}
+        </button>
+        <button
+          v-for="action in semanticActionButtons"
+          :key="`semantic-${action.key}`"
+          :disabled="!recordId || saving || loading || actionBusy || !action.allowed"
+          class="action secondary"
+          :title="semanticActionTooltip(action)"
+          @click="runSemanticAction(action)"
+        >
+          {{ action.label }}
         </button>
         <button :disabled="saving" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
         <button @click="reload">Reload</button>
@@ -92,6 +102,11 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createRecord, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
+import {
+  executePaymentRequestAction,
+  fetchPaymentRequestAvailableActions,
+  type PaymentRequestActionSurfaceItem,
+} from '../api/paymentRequest';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -113,6 +128,7 @@ const { error, clearError, setError } = useStatus();
 const loading = ref(false);
 const saving = ref(false);
 const executing = ref<string | null>(null);
+const actionBusy = ref(false);
 const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
 
 const model = computed(() => String(route.params.model || ''));
@@ -142,6 +158,33 @@ const headerButtons = computed(() => {
     (viewContract.value as { layout?: { header_buttons?: ViewButton[] } } | null)?.layout?.header_buttons ??
     [];
   return normalizeButtons(raw);
+});
+type SemanticActionButton = {
+  key: string;
+  label: string;
+  allowed: boolean;
+  reasonCode: string;
+  requiresReason: boolean;
+  executeIntent: string;
+};
+const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
+const isPaymentRequestModel = computed(() => model.value === 'payment.request');
+const semanticActionButtons = computed<SemanticActionButton[]>(() => {
+  if (!isPaymentRequestModel.value) return [];
+  return paymentActionSurface.value.map((item) => ({
+    key: String(item.key || '').trim(),
+    label: String(item.label || item.key || '操作').trim(),
+    allowed: Boolean(item.allowed),
+    reasonCode: String(item.reason_code || ''),
+    requiresReason: Boolean(item.requires_reason),
+    executeIntent: String(item.execute_intent || 'payment.request.execute'),
+  }));
+});
+const nativeHeaderButtons = computed(() => {
+  if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
+    return [];
+  }
+  return headerButtons.value;
 });
 const renderMode = computed(() => (viewContract.value?.layout ? 'layout_tree' : 'fallback_fields'));
 const supportedNodes = ['field', 'group', 'notebook', 'page', 'headerButtons', 'statButtons', 'ribbon', 'chatter'];
@@ -183,6 +226,7 @@ const hudEntries = computed(() => [
   { label: 'layout_nodes', value: JSON.stringify(layoutStats.value) },
   { label: 'unsupported_nodes', value: missingNodes.value.join(',') || '-' },
   { label: 'coverage_supported', value: supportedNodes.join(',') },
+  { label: 'semantic_actions', value: semanticActionButtons.value.map((item) => `${item.key}:${item.allowed}`).join(',') || '-' },
 ]);
 
 function isTextField(field: (typeof fields.value)[number]) {
@@ -242,6 +286,7 @@ async function load() {
       formData[field.name] = record[field.name] ?? '';
     });
     draftName.value = String(record?.name ?? '');
+    await loadPaymentActionSurface();
     recordTrace({
       ts: Date.now(),
       trace_id: createTraceId(),
@@ -255,6 +300,22 @@ async function load() {
     setError(err, 'failed to load record');
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadPaymentActionSurface() {
+  paymentActionSurface.value = [];
+  if (!isPaymentRequestModel.value || !recordId.value) {
+    return;
+  }
+  try {
+    const response = await fetchPaymentRequestAvailableActions(recordId.value);
+    paymentActionSurface.value = Array.isArray(response.data?.actions) ? response.data.actions : [];
+    if (response.traceId) {
+      lastTraceId.value = response.traceId;
+    }
+  } catch (err) {
+    setError(err, 'failed to load payment request actions');
   }
 }
 
@@ -389,6 +450,62 @@ async function runButton(btn: ViewButton) {
     actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
   } finally {
     executing.value = null;
+  }
+}
+
+function semanticActionTooltip(action: SemanticActionButton) {
+  if (action.allowed) return '';
+  if (action.reasonCode) return `不可执行：${action.reasonCode}`;
+  return '当前状态不可执行';
+}
+
+function parseIntentActionResult(data: Record<string, unknown> | null | undefined) {
+  const reasonCode = String(data?.reason_code || 'OK');
+  const success =
+    typeof data?.success === 'boolean'
+      ? Boolean(data.success)
+      : reasonCode === 'OK' || reasonCode === 'DRY_RUN';
+  const message = String(data?.message || (success ? '操作成功' : '操作失败'));
+  return { message, reasonCode, success };
+}
+
+async function runSemanticAction(action: SemanticActionButton) {
+  actionFeedback.value = null;
+  if (!model.value || !recordId.value || !action.allowed) {
+    return;
+  }
+  let reason = '';
+  if (action.requiresReason) {
+    reason = String(window.prompt('请输入驳回原因', '') || '').trim();
+    if (!reason) {
+      actionFeedback.value = { message: '已取消：缺少原因', reasonCode: 'MISSING_PARAMS', success: false };
+      return;
+    }
+  }
+  actionBusy.value = true;
+  try {
+    const response = await executePaymentRequestAction({
+      paymentRequestId: recordId.value,
+      action: action.key,
+      reason,
+    });
+    lastTraceId.value = response.traceId || lastTraceId.value;
+    actionFeedback.value = parseIntentActionResult(response.data as Record<string, unknown>);
+    recordTrace({
+      ts: Date.now(),
+      trace_id: response.traceId || createTraceId(),
+      intent: action.executeIntent || 'payment.request.execute',
+      status: actionFeedback.value.success ? 'ok' : 'error',
+      model: model.value,
+      view_mode: 'form',
+      params_digest: JSON.stringify({ id: recordId.value, action: action.key }),
+    });
+    await load();
+  } catch (err) {
+    setError(err, 'failed to execute semantic action');
+    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
+  } finally {
+    actionBusy.value = false;
   }
 }
 
