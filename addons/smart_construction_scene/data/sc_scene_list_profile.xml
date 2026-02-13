@@ -102,5 +102,49 @@
         <record id="sc_scene_projects_ledger" model="sc.scene">
             <field name="active_version_id" ref="sc_scene_version_projects_ledger_v2"/>
         </record>
+
+        <!-- Finance payment requests scene -->
+        <record id="sc_scene_version_finance_payment_requests_v2" model="sc.scene.version">
+            <field name="scene_id" ref="sc_scene_finance_payment_requests"/>
+            <field name="version">v2</field>
+            <field name="source">system</field>
+            <field name="payload_json" eval="{
+                'code': 'finance.payment_requests',
+                'name': '付款申请审批',
+                'version': 'v2',
+                'layout': {'kind': 'list', 'sidebar': 'fixed', 'header': 'full'},
+                'target': {
+                    'menu_xmlid': 'smart_construction_core.menu_payment_request',
+                    'action_xmlid': 'smart_construction_core.action_payment_request_my'
+                },
+                'list_profile': {
+                    'columns': [
+                        'name',
+                        'state',
+                        'project_id',
+                        'partner_id',
+                        'amount',
+                        'date_request'
+                    ],
+                    'column_labels': {
+                        'name': '申请单号',
+                        'state': '状态',
+                        'project_id': '项目',
+                        'partner_id': '往来单位',
+                        'amount': '申请金额',
+                        'date_request': '申请日期'
+                    },
+                    'row_primary': 'name',
+                    'row_secondary': 'partner_id'
+                },
+                'default_sort': 'id desc',
+                'filters': [],
+                'tiles': []
+            }"/>
+        </record>
+
+        <record id="sc_scene_finance_payment_requests" model="sc.scene">
+            <field name="active_version_id" ref="sc_scene_version_finance_payment_requests_v2"/>
+        </record>
     </data>
 </odoo>
