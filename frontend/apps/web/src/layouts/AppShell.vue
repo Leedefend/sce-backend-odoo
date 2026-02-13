@@ -15,7 +15,7 @@
       </div>
 
       <div class="role-surface">
-        <p class="role-label">Role: {{ roleLabel }}</p>
+        <p class="role-label">当前角色：{{ roleLabel }}</p>
         <div class="role-actions">
           <button class="ghost mini" @click="openRoleLanding">进入角色首页</button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
@@ -46,15 +46,15 @@
       </div>
 
       <div class="footer">
-        <button v-if="showRefresh" class="ghost" @click="refreshInit">Refresh init</button>
-        <button class="ghost" @click="logout">Logout</button>
+        <button v-if="showRefresh" class="ghost" @click="refreshInit">刷新</button>
+        <button class="ghost" @click="logout">退出登录</button>
       </div>
     </aside>
 
     <section class="content">
       <header class="topbar" :class="{ 'topbar--compact': activeLayout.header === 'compact' }">
         <div>
-          <p class="eyebrow">Portal Shell v0.7 · UX Hardening</p>
+          <p class="eyebrow">智能工程协作平台</p>
           <div class="breadcrumb">
             <button
               v-for="(item, index) in breadcrumb"
