@@ -484,6 +484,7 @@ async function runButton(btn: ViewButton) {
 
 function semanticActionTooltip(action: SemanticActionButton) {
   if (action.allowed) return '';
+  if (action.suggestedAction) return `不可执行：${action.blockedMessage || action.reasonCode}；建议：${action.suggestedAction}`;
   if (action.blockedMessage) return `不可执行：${action.blockedMessage}`;
   if (action.reasonCode) return `不可执行：${action.reasonCode}`;
   return '当前状态不可执行';
