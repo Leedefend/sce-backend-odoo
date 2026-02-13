@@ -442,6 +442,8 @@ def main() -> int:
         "reason_code": execute_submit_reason,
     })
 
+    followup_execute_reason = "SKIPPED_NOT_ALLOWED"
+
     post_actions_resp, _post_actions_data = fetch_available_actions(token, payment_request_id)
     write_artifacts(out_dir, "payment_request_available_actions_after_execute.log", post_actions_resp)
     ensure_envelope(post_actions_resp, "payment.request.available_actions.after_execute")
@@ -454,6 +456,32 @@ def main() -> int:
             if isinstance(item, dict) and bool(item.get("allowed"))
         ]
         summary["allowed_actions_after_execute"] = allowed_actions
+        preferred = ("approve", "reject", "done", "submit")
+        followup_action = next((name for name in preferred if name in set(allowed_actions)), "")
+        if followup_action:
+            followup_resp = request_intent(
+                "payment.request.execute",
+                {
+                    "id": payment_request_id,
+                    "action": followup_action,
+                    "request_id": f"smoke_exec2_{followup_action}_{payment_request_id}_{ts}",
+                    "reason": "smoke reject reason" if followup_action == "reject" else "",
+                },
+                token=token,
+            )
+            write_artifacts(out_dir, f"payment_request_execute_followup_{followup_action}.log", followup_resp)
+            ensure_envelope(followup_resp, "payment.request.execute.followup")
+            ensure_reason(followup_resp, "payment.request.execute.followup")
+            followup_execute_reason = (
+                (followup_resp.get("data") or {}).get("reason_code")
+                if followup_resp.get("ok")
+                else ((followup_resp.get("error") or {}).get("reason_code") or (followup_resp.get("error") or {}).get("code"))
+            )
+            summary["steps"].append({
+                "step": f"payment.request.execute.{followup_action}.followup",
+                "ok": bool(followup_resp.get("ok")),
+                "reason_code": followup_execute_reason,
+            })
 
     approve_reason = run_or_skip_direct(
         "approve",
@@ -505,6 +533,7 @@ def main() -> int:
             ("approve", approve_reason),
             ("reject", reject_reason),
             ("done", done_reason),
+            ("execute.followup", followup_execute_reason),
         ):
             if str(value or "") == "SKIPPED_NOT_ALLOWED":
                 continue
