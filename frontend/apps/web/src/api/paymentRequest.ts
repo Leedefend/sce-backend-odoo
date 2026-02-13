@@ -8,7 +8,11 @@ export interface PaymentRequestActionSurfaceItem {
   required_params?: string[];
   allowed: boolean;
   reason_code?: string;
+  blocked_message?: string;
+  suggested_action?: string;
   state_required?: string[];
+  current_state?: string;
+  next_state_hint?: string;
   execute_intent?: string;
   execute_params?: {
     id?: number;
@@ -20,6 +24,7 @@ export interface PaymentRequestActionSurfaceItem {
 
 export interface PaymentRequestActionSurfaceData {
   reason_code?: string;
+  primary_action_key?: string;
   payment_request?: {
     id: number;
     name?: string;
@@ -38,6 +43,9 @@ export interface PaymentRequestExecuteResult {
   idempotency_key?: string;
   idempotency_fingerprint?: string;
   idempotent_replay?: boolean;
+  replay_from_audit_id?: number;
+  replay_original_trace_id?: string;
+  replay_age_ms?: number;
 }
 
 export async function fetchPaymentRequestAvailableActions(paymentRequestId: number) {

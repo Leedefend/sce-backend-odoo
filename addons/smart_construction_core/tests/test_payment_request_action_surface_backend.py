@@ -56,6 +56,7 @@ class TestPaymentRequestActionSurfaceBackend(TransactionCase):
         self.assertTrue(result.get("ok"))
         data = result.get("data") or {}
         self.assertEqual(data.get("reason_code"), REASON_OK)
+        self.assertEqual(data.get("primary_action_key"), "reject")
         actions = data.get("actions") or []
         keys = {str(item.get("key") or "") for item in actions if isinstance(item, dict)}
         self.assertEqual(keys, {"submit", "approve", "reject", "done"})
@@ -68,6 +69,10 @@ class TestPaymentRequestActionSurfaceBackend(TransactionCase):
         self.assertEqual(submit.get("reason_code"), "PAYMENT_ATTACHMENTS_REQUIRED")
         self.assertFalse(bool(submit.get("allowed")))
         self.assertFalse(bool(submit.get("requires_reason")))
+        self.assertEqual(submit.get("current_state"), "draft")
+        self.assertEqual(submit.get("next_state_hint"), "submit")
+        self.assertTrue(str(submit.get("blocked_message") or "").strip())
+        self.assertTrue(str(submit.get("suggested_action") or "").strip())
         reject = by_key.get("reject") or {}
         self.assertEqual(reject.get("reason_code"), REASON_BUSINESS_RULE_FAILED)
         self.assertTrue(bool(reject.get("requires_reason")))
