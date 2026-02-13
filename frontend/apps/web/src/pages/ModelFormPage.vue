@@ -24,6 +24,7 @@
           :key="`semantic-${action.key}`"
           :disabled="!recordId || saving || loading || actionBusy || !action.allowed"
           class="action secondary"
+          :class="{ primary: action.key === primaryActionKey }"
           :title="semanticActionTooltip(action)"
           @click="runSemanticAction(action)"
         >
@@ -185,6 +186,7 @@ type SemanticActionButton = {
   executeIntent: string;
 };
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
+const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const semanticActionButtons = computed<SemanticActionButton[]>(() => {
   if (!isPaymentRequestModel.value) return [];
@@ -325,12 +327,14 @@ async function load() {
 
 async function loadPaymentActionSurface() {
   paymentActionSurface.value = [];
+  primaryActionKey.value = '';
   if (!isPaymentRequestModel.value || !recordId.value) {
     return;
   }
   try {
     const response = await fetchPaymentRequestAvailableActions(recordId.value);
     paymentActionSurface.value = Array.isArray(response.data?.actions) ? response.data.actions : [];
+    primaryActionKey.value = String(response.data?.primary_action_key || '').trim();
     if (response.traceId) {
       lastTraceId.value = response.traceId;
     }
@@ -607,6 +611,11 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .actions {
   display: flex;
   gap: 8px;
+}
+
+.actions .primary {
+  border-color: #0f766e;
+  box-shadow: inset 0 0 0 1px #0f766e;
 }
 
 .meta {
