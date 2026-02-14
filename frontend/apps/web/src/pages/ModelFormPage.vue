@@ -12,6 +12,7 @@
           <span v-if="actionFeedback.requestId"> · request: <code>{{ actionFeedback.requestId }}</code></span>
           <span v-if="actionFeedback.replayed"> · replayed</span>
           <button type="button" class="evidence-copy" @click="copyActionEvidence">复制证据</button>
+          <button type="button" class="evidence-copy" @click="clearActionFeedback">关闭</button>
         </p>
       </div>
       <div class="actions">
@@ -80,6 +81,15 @@
         <button type="button" :class="{ active: actionFilterMode === 'blocked' }" @click="actionFilterMode = 'blocked'">
           阻塞 ({{ semanticActionStats.blocked }})
         </button>
+        <button type="button" :class="{ active: hideBlockedHints }" @click="hideBlockedHints = !hideBlockedHints">
+          {{ hideBlockedHints ? '显示阻塞' : '隐藏阻塞' }}
+        </button>
+        <input
+          v-model.trim="semanticActionSearch"
+          class="semantic-search"
+          type="text"
+          placeholder="搜索动作/原因码"
+        />
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
         <span>主动作: {{ primaryActionKey || '-' }}</span>
@@ -87,6 +97,10 @@
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span>刷新: {{ actionSurfaceAgeLabel }}</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
+        <label class="auto-refresh-toggle">
+          <input v-model="autoRefreshActionSurface" type="checkbox" />
+          自动刷新
+        </label>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
         快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
@@ -119,7 +133,10 @@
       <section v-if="actionHistory.length" class="semantic-action-history">
         <div class="history-header">
           <h3>最近操作</h3>
-          <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
+          <div class="history-actions">
+            <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
+            <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
+          </div>
         </div>
         <div class="history-filters">
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
@@ -138,6 +155,7 @@
             <strong>{{ entry.label }}</strong>
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
+            <span class="history-meta">at: {{ entry.atText }} ({{ historyAgeLabel(entry) }})</span>
             <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
             <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
           </li>
@@ -230,6 +248,8 @@ type ActionHistoryEntry = {
   success: boolean;
   stateBefore: string;
   traceId: string;
+  at: number;
+  atText: string;
 };
 
 const actionFeedback = ref<ActionFeedback | null>(null);
@@ -237,6 +257,7 @@ const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
+let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 
@@ -283,9 +304,12 @@ type SemanticActionButton = {
 };
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const paymentActionSurfaceLoadedAt = ref(0);
+const autoRefreshActionSurface = ref(false);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
+const hideBlockedHints = ref(false);
+const semanticActionSearch = ref('');
 try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
   if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
@@ -322,13 +346,16 @@ const semanticActionButtons = computed<SemanticActionButton[]>(() => {
     });
 });
 const displayedSemanticActionButtons = computed(() => {
+  const search = semanticActionSearch.value.toLowerCase();
   if (actionFilterMode.value === 'allowed') {
-    return semanticActionButtons.value.filter((item) => item.allowed);
+    return semanticActionButtons.value.filter((item) => item.allowed && `${item.label} ${item.reasonCode}`.toLowerCase().includes(search));
   }
   if (actionFilterMode.value === 'blocked') {
-    return semanticActionButtons.value.filter((item) => !item.allowed);
+    return semanticActionButtons.value.filter((item) => !item.allowed && `${item.label} ${item.reasonCode}`.toLowerCase().includes(search));
   }
-  return semanticActionButtons.value;
+  return semanticActionButtons.value.filter(
+    (item) => (hideBlockedHints.value ? item.allowed : true) && `${item.label} ${item.reasonCode}`.toLowerCase().includes(search),
+  );
 });
 const semanticActionStats = computed(() => {
   const total = semanticActionButtons.value.length;
@@ -740,6 +767,8 @@ async function runSemanticAction(action: SemanticActionButton) {
         success: parsed.success,
         stateBefore,
         traceId: response.traceId || '',
+        at: Date.now(),
+        atText: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
       },
       ...actionHistory.value,
     ].slice(0, 6);
@@ -793,6 +822,14 @@ function clearActionHistory() {
   actionHistory.value = [];
 }
 
+function historyAgeLabel(entry: ActionHistoryEntry) {
+  const deltaSec = Math.max(0, Math.floor((Date.now() - Number(entry.at || 0)) / 1000));
+  if (deltaSec < 60) return `${deltaSec}s ago`;
+  const min = Math.floor(deltaSec / 60);
+  const sec = deltaSec % 60;
+  return `${min}m${sec}s ago`;
+}
+
 function armActionFeedbackAutoClear() {
   if (actionFeedbackTimer) {
     clearTimeout(actionFeedbackTimer);
@@ -817,6 +854,25 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
     await navigator.clipboard.writeText(payload);
   } catch {
     // Ignore clipboard failures for this utility action.
+  }
+}
+
+async function copyAllHistory() {
+  if (!actionHistory.value.length) return;
+  const lines = actionHistory.value.map((entry) =>
+    [
+      `action=${entry.label}`,
+      `reason_code=${entry.reasonCode}`,
+      `state_before=${entry.stateBefore || '-'}`,
+      `trace_id=${entry.traceId || '-'}`,
+      `at=${entry.atText}`,
+      `success=${String(entry.success)}`,
+    ].join(' | '),
+  );
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+  } catch {
+    // Ignore clipboard errors.
   }
 }
 
@@ -856,6 +912,10 @@ async function copyActionEvidence() {
   }
 }
 
+function clearActionFeedback() {
+  actionFeedback.value = null;
+}
+
 function handleSuggestedAction(action: string): boolean {
   if (action !== 'open_record') return false;
   if (!model.value || !recordId.value) return false;
@@ -866,12 +926,20 @@ function handleSuggestedAction(action: string): boolean {
 onMounted(() => {
   load();
   window.addEventListener('keydown', onSemanticHotkey);
+  actionSurfaceRefreshTimer = window.setInterval(() => {
+    if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
+    void loadPaymentActionSurface();
+  }, 15000);
 });
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onSemanticHotkey);
   if (actionFeedbackTimer) {
     clearTimeout(actionFeedbackTimer);
     actionFeedbackTimer = null;
+  }
+  if (actionSurfaceRefreshTimer) {
+    clearInterval(actionSurfaceRefreshTimer);
+    actionSurfaceRefreshTimer = null;
   }
 });
 watch(actionFilterMode, (value) => {
@@ -910,6 +978,8 @@ watch(
           success: Boolean(item?.success),
           stateBefore: String(item?.stateBefore || ''),
           traceId: String(item?.traceId || ''),
+          at: Number(item?.at || Date.now()),
+          atText: String(item?.atText || ''),
         }));
       }
     } catch {
@@ -1056,6 +1126,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
   font-size: 11px;
 }
 
+.auto-refresh-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #334155;
+}
+
 .semantic-action-shortcuts {
   font-size: 12px;
   color: #475569;
@@ -1079,6 +1157,15 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .semantic-action-filters button.active {
   border-color: #0f766e;
   box-shadow: inset 0 0 0 1px #0f766e;
+}
+
+.semantic-search {
+  margin-left: auto;
+  min-width: 180px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
 }
 
 .semantic-action-hint {
@@ -1124,6 +1211,11 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.history-actions {
+  display: flex;
+  gap: 6px;
 }
 
 .history-filters {
