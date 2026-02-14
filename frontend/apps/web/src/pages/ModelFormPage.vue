@@ -351,6 +351,9 @@ const hudEntries = computed(() => [
   { label: 'unsupported_nodes', value: missingNodes.value.join(',') || '-' },
   { label: 'coverage_supported', value: supportedNodes.join(',') },
   { label: 'semantic_actions', value: semanticActionButtons.value.map((item) => `${item.key}:${item.allowed}`).join(',') || '-' },
+  { label: 'action_filter', value: actionFilterMode.value },
+  { label: 'action_history_count', value: String(actionHistory.value.length) },
+  { label: 'last_semantic_action', value: lastSemanticAction.value?.action || '-' },
 ]);
 
 function isTextField(field: (typeof fields.value)[number]) {
