@@ -232,9 +232,9 @@
           <h3>最近操作</h3>
           <div class="history-actions">
             <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
-            <button type="button" class="history-clear" title="复制全部历史记录" aria-label="复制全部历史记录" @click="copyAllHistory">复制全部</button>
-            <button type="button" class="history-clear" title="导出历史JSON" aria-label="导出历史JSON" @click="exportActionHistory">导出历史</button>
-            <button type="button" class="history-clear" title="导出历史CSV" aria-label="导出历史CSV" @click="exportActionHistoryCsv">导出CSV</button>
+            <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" @click="copyAllHistory">复制当前视图</button>
+            <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" @click="exportActionHistory">导出当前视图</button>
+            <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
@@ -1474,7 +1474,7 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
 }
 
 async function copyLatestTrace() {
-  const trace = String(actionHistory.value[0]?.traceId || actionFeedback.value?.traceId || lastTraceId.value || '').trim();
+  const trace = String(displayedActionHistory.value[0]?.traceId || actionFeedback.value?.traceId || lastTraceId.value || '').trim();
   if (!trace) return;
   try {
     await navigator.clipboard.writeText(trace);
@@ -1496,8 +1496,8 @@ async function copyLatestTrace() {
 }
 
 async function copyAllHistory() {
-  if (!actionHistory.value.length) return;
-  const lines = actionHistory.value.map((entry) =>
+  if (!displayedActionHistory.value.length) return;
+  const lines = displayedActionHistory.value.map((entry) =>
     [
       `action=${entry.label}`,
       `reason_code=${entry.reasonCode}`,
@@ -1509,8 +1509,20 @@ async function copyAllHistory() {
   );
   try {
     await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: `已复制当前视图历史（${displayedActionHistory.value.length} 条）`,
+      reasonCode: 'HISTORY_VISIBLE_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
   } catch {
-    // Ignore clipboard errors.
+    actionFeedback.value = {
+      message: '当前视图历史复制失败',
+      reasonCode: 'HISTORY_VISIBLE_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
   }
 }
 
@@ -1546,13 +1558,18 @@ async function copyHistoryFilterSummary() {
 }
 
 function exportActionHistory() {
-  if (!actionHistory.value.length || !recordId.value) return;
+  if (!displayedActionHistory.value.length || !recordId.value) return;
   const payload = {
     model: model.value,
     record_id: recordId.value,
     exported_at: Date.now(),
+    history_total: actionHistory.value.length,
+    history_visible: displayedActionHistory.value.length,
+    outcome_filter: historyOutcomeFilter.value,
     reason_filter: historyReasonFilter.value,
-    entries: filteredActionHistory.value,
+    search: historySearch.value || '',
+    sort_mode: historySortMode.value,
+    entries: displayedActionHistory.value,
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -1564,15 +1581,17 @@ function exportActionHistory() {
 }
 
 function exportActionHistoryCsv() {
-  if (!filteredActionHistory.value.length || !recordId.value) return;
-  const header = ["label", "reason_code", "success", "state_before", "trace_id", "at"];
-  const rows = filteredActionHistory.value.map((entry) =>
+  if (!displayedActionHistory.value.length || !recordId.value) return;
+  const header = ["label", "reason_code", "success", "state_before", "trace_id", "duration_ms", "at_epoch", "at"];
+  const rows = displayedActionHistory.value.map((entry) =>
     [
       entry.label,
       entry.reasonCode,
       String(entry.success),
       entry.stateBefore || '',
       entry.traceId || '',
+      String(Math.max(0, Number(entry.durationMs || 0))),
+      String(Number(entry.at || 0)),
       entry.atText || '',
     ]
       .map((item) => `"${String(item).replace(/"/g, '""')}"`)
