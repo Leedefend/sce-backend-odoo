@@ -149,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createRecord, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
@@ -202,6 +202,7 @@ type ActionHistoryEntry = {
 const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
+const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -247,6 +248,14 @@ const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
+try {
+  const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
+  if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
+    actionFilterMode.value = cachedFilter;
+  }
+} catch {
+  // Ignore storage errors and keep default mode.
+}
 function semanticActionRank(action: SemanticActionButton) {
   if (action.key === primaryActionKey.value) return 0;
   if (action.allowed) return 1;
@@ -734,6 +743,13 @@ function handleSuggestedAction(action: string): boolean {
 }
 
 onMounted(load);
+watch(actionFilterMode, (value) => {
+  try {
+    window.localStorage.setItem(actionFilterStorageKey, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
 
 function analyzeLayout(layout: ViewContract['layout']) {
   const stats = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
