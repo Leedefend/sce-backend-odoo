@@ -118,6 +118,7 @@
         <span v-if="latestFailureReason">最近失败: {{ latestFailureReason }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
         <button type="button" class="stats-refresh" @click="copyBlockedReasonsText">复制阻塞文本</button>
+        <button type="button" class="stats-refresh" @click="copyAllowedActionsText">复制可执行文本</button>
         <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
         <button type="button" class="stats-refresh" @click="exportAllowedSummary">导出可执行</button>
         <button type="button" class="stats-refresh" @click="exportBlockedSummary">导出阻塞</button>
@@ -629,6 +630,29 @@ async function copyBlockedReasonsText() {
     actionFeedback.value = {
       message: '阻塞文本复制失败',
       reasonCode: 'BLOCKED_TEXT_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+async function copyAllowedActionsText() {
+  const allowed = semanticActionButtons.value.filter((item) => item.allowed);
+  if (!allowed.length) return;
+  const lines = allowed.map((item) => `${item.label}: ${item.nextStateHint || '可执行'}`);
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: '可执行文本已复制',
+      reasonCode: 'ALLOWED_TEXT_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '可执行文本复制失败',
+      reasonCode: 'ALLOWED_TEXT_COPY_FAILED',
       success: false,
       traceId: lastTraceId.value,
     };
