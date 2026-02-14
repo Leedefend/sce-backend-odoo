@@ -2615,8 +2615,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 6px;
 }
 
+.semantic-action-history li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 .history-outcome {
-  margin-left: 8px;
   color: #0f766e;
 }
 
@@ -2625,13 +2631,12 @@ function analyzeLayout(layout: ViewContract['layout']) {
 }
 
 .history-meta {
-  margin-left: 8px;
   color: #64748b;
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .history-copy {
-  margin-left: 8px;
   padding: 2px 8px;
   border-radius: 8px;
   border: 1px solid #cbd5e1;
@@ -2648,7 +2653,6 @@ function analyzeLayout(layout: ViewContract['layout']) {
 }
 
 .history-trace-link {
-  margin-left: 8px;
   padding: 0;
   border: none;
   background: transparent;
@@ -2656,6 +2660,8 @@ function analyzeLayout(layout: ViewContract['layout']) {
   font-size: 12px;
   text-decoration: underline;
   cursor: pointer;
+  overflow-wrap: anywhere;
+  word-break: break-all;
 }
 
 .field {
