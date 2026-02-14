@@ -25,7 +25,7 @@
           {{ buttonLabel(btn) }}
         </button>
         <button
-          v-for="action in semanticActionButtons"
+          v-for="action in displayedSemanticActionButtons"
           :key="`semantic-${action.key}`"
           :disabled="!recordId || saving || loading || actionBusy || !action.allowed"
           class="action secondary"
@@ -66,9 +66,14 @@
     />
 
     <section v-else class="card">
+      <section v-if="semanticActionButtons.length" class="semantic-action-filters">
+        <button type="button" :class="{ active: actionFilterMode === 'all' }" @click="actionFilterMode = 'all'">全部</button>
+        <button type="button" :class="{ active: actionFilterMode === 'allowed' }" @click="actionFilterMode = 'allowed'">可执行</button>
+        <button type="button" :class="{ active: actionFilterMode === 'blocked' }" @click="actionFilterMode = 'blocked'">阻塞</button>
+      </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
-          v-for="action in semanticActionButtons"
+          v-for="action in displayedSemanticActionButtons"
           :key="`semantic-hint-${action.key}`"
           class="semantic-action-hint"
           :class="{ blocked: !action.allowed }"
@@ -236,6 +241,7 @@ type SemanticActionButton = {
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
+const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
 function semanticActionRank(action: SemanticActionButton) {
   if (action.key === primaryActionKey.value) return 0;
   if (action.allowed) return 1;
@@ -262,6 +268,15 @@ const semanticActionButtons = computed<SemanticActionButton[]>(() => {
       if (rankDelta !== 0) return rankDelta;
       return a.label.localeCompare(b.label, 'zh-CN');
     });
+});
+const displayedSemanticActionButtons = computed(() => {
+  if (actionFilterMode.value === 'allowed') {
+    return semanticActionButtons.value.filter((item) => item.allowed);
+  }
+  if (actionFilterMode.value === 'blocked') {
+    return semanticActionButtons.value.filter((item) => !item.allowed);
+  }
+  return semanticActionButtons.value;
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -766,6 +781,25 @@ function analyzeLayout(layout: ViewContract['layout']) {
   border-radius: 10px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
+}
+
+.semantic-action-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.semantic-action-filters button {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.semantic-action-filters button.active {
+  border-color: #0f766e;
+  box-shadow: inset 0 0 0 1px #0f766e;
 }
 
 .semantic-action-hint {
