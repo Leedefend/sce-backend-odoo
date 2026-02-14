@@ -76,9 +76,16 @@ class TestPaymentRequestActionSurfaceBackend(TransactionCase):
         self.assertFalse(bool(submit.get("allowed_by_precheck")))
         self.assertTrue(str(submit.get("blocked_message") or "").strip())
         self.assertTrue(str(submit.get("suggested_action") or "").strip())
+        self.assertEqual(submit.get("required_role_key"), "finance")
+        self.assertEqual(submit.get("required_role_label"), "财务")
+        self.assertEqual(submit.get("required_group_xmlid"), "smart_construction_custom.group_sc_role_finance")
+        self.assertTrue(str(submit.get("handoff_hint") or "").strip())
         reject = by_key.get("reject") or {}
         self.assertEqual(reject.get("reason_code"), REASON_BUSINESS_RULE_FAILED)
         self.assertTrue(bool(reject.get("requires_reason")))
+        self.assertEqual(reject.get("required_role_key"), "executive")
+        self.assertEqual(reject.get("required_role_label"), "管理层")
+        self.assertEqual(reject.get("required_group_xmlid"), "smart_construction_custom.group_sc_role_executive")
 
     def test_execute_missing_action(self):
         payment = self._create_payment_request_minimal()
