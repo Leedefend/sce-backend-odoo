@@ -247,7 +247,7 @@ const pageTitle = computed(() => {
   if (route.name === 'record') {
     return 'Record';
   }
-  return 'Workspace';
+  return '工作台';
 });
 
 provide('pageTitle', pageTitle);
@@ -393,7 +393,7 @@ const breadcrumb = computed(() => {
     crumbs.push({ label: recordLabel });
   }
   if (!crumbs.length) {
-    crumbs.push({ label: 'Workspace' });
+    crumbs.push({ label: '工作台' });
   }
   return crumbs;
 });
