@@ -302,6 +302,7 @@ const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
 const autoRefreshIntervalStorageKey = 'sc.payment.auto_refresh_interval.v1';
+const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -312,6 +313,7 @@ const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${
 const historyReasonFilterStorageKey = computed(
   () => `${historyReasonFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
+const actionSearchStorageKey = computed(() => `${actionSearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
   PAYMENT_ATTACHMENTS_REQUIRED: "提交前请先上传附件",
   BUSINESS_RULE_FAILED: "当前状态不满足执行条件",
@@ -381,6 +383,7 @@ try {
   if (cachedReason) {
     historyReasonFilter.value = cachedReason;
   }
+  semanticActionSearch.value = String(window.localStorage.getItem(actionSearchStorageKey.value) || '');
 } catch {
   // Ignore storage errors and keep default mode.
 }
@@ -1288,6 +1291,13 @@ watch(autoRefreshIntervalSec, (value) => {
       if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
       void loadPaymentActionSurface();
     }, interval * 1000);
+  }
+});
+watch(semanticActionSearch, (value) => {
+  try {
+    window.localStorage.setItem(actionSearchStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
   }
 });
 watch(
