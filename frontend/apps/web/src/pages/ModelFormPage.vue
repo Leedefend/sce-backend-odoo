@@ -235,16 +235,16 @@
           </h3>
           <div class="history-actions">
             <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
-            <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" @click="copyAllHistory">复制当前视图</button>
-            <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" @click="exportActionHistory">导出当前视图</button>
-            <button type="button" class="history-clear" title="复制当前视图历史JSON" aria-label="复制当前视图历史JSON" @click="copyVisibleHistoryJson">复制当前JSON</button>
-            <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
-            <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
-            <button type="button" class="history-clear" title="复制当前视图原因统计" aria-label="复制当前视图原因统计" @click="copyVisibleReasonStats">复制原因统计</button>
+            <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" :disabled="!hasVisibleHistory" @click="copyAllHistory">复制当前视图</button>
+            <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" :disabled="!hasVisibleHistory" @click="exportActionHistory">导出当前视图</button>
+            <button type="button" class="history-clear" title="复制当前视图历史JSON" aria-label="复制当前视图历史JSON" :disabled="!hasVisibleHistory" @click="copyVisibleHistoryJson">复制当前JSON</button>
+            <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" :disabled="!hasVisibleHistory" @click="exportActionHistoryCsv">导出当前CSV</button>
+            <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" :disabled="!hasVisibleTrace" @click="copyVisibleTraces">复制Trace列表</button>
+            <button type="button" class="history-clear" title="复制当前视图原因统计" aria-label="复制当前视图原因统计" :disabled="!hasVisibleHistory" @click="copyVisibleReasonStats">复制原因统计</button>
             <button type="button" class="history-clear" title="复制筛选查询串" aria-label="复制筛选查询串" @click="copyHistoryFilterQuery">复制查询串</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
-            <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" @click="clearVisibleHistory">清空当前视图</button>
+            <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" :disabled="!hasVisibleHistory" @click="clearVisibleHistory">清空当前视图</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
             <button type="button" class="history-clear" :disabled="!canUndoHistoryClear" @click="undoHistoryClear">撤销清空</button>
           </div>
@@ -874,6 +874,10 @@ const displayedActionHistory = computed(() => {
   const rows = [...filteredActionHistory.value];
   return rows.sort((a, b) => (historySortMode.value === 'ASC' ? a.at - b.at : b.at - a.at));
 });
+const hasVisibleHistory = computed(() => displayedActionHistory.value.length > 0);
+const hasVisibleTrace = computed(() =>
+  displayedActionHistory.value.some((entry) => String(entry.traceId || '').trim().length > 0),
+);
 const historyFilterSummaryText = computed(() => {
   const parts = [
     `结果=${historyOutcomeFilter.value}`,
@@ -2609,6 +2613,11 @@ function analyzeLayout(layout: ViewContract['layout']) {
   background: #f8fafc;
   color: #334155;
   font-size: 11px;
+}
+
+.history-clear:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .semantic-action-history ul {
