@@ -95,6 +95,7 @@
         <button type="button" class="stats-refresh" @click="resetActionPanelPrefs">重置面板</button>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
+        <span :class="['readiness-badge', readinessLevelClass]">就绪度: {{ actionReadinessScore }}%</span>
         <span>主动作: {{ primaryActionKey || '-' }}</span>
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
@@ -440,6 +441,17 @@ const semanticActionStats = computed(() => {
   const allowed = semanticActionButtons.value.filter((item) => item.allowed).length;
   const blocked = total - allowed;
   return { total, allowed, blocked };
+});
+const actionReadinessScore = computed(() => {
+  const total = Math.max(1, semanticActionStats.value.total);
+  const allowed = semanticActionStats.value.allowed;
+  const base = Math.round((allowed / total) * 100);
+  return actionSurfaceIsStale.value ? Math.max(0, base - 10) : base;
+});
+const readinessLevelClass = computed(() => {
+  if (actionReadinessScore.value >= 80) return "good";
+  if (actionReadinessScore.value >= 50) return "warn";
+  return "bad";
 });
 const blockedTopReasons = computed(() => {
   const counts = new Map<string, number>();
@@ -1489,6 +1501,30 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .semantic-action-stats .stale {
   color: #b45309;
   font-weight: 600;
+}
+
+.readiness-badge {
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid #cbd5e1;
+}
+
+.readiness-badge.good {
+  color: #065f46;
+  border-color: #6ee7b7;
+  background: #ecfdf5;
+}
+
+.readiness-badge.warn {
+  color: #92400e;
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.readiness-badge.bad {
+  color: #991b1b;
+  border-color: #fca5a5;
+  background: #fef2f2;
 }
 
 .semantic-action-stale-banner {
