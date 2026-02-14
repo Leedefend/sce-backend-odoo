@@ -48,6 +48,7 @@ Existing fields remain unchanged:
   - `重置面板` clears local UI preferences (filter/search/auto-refresh) in one click.
   - action-surface readiness score (`就绪度`) gives quick execution confidence (with stale penalty).
   - top blocked action summary surfaces the first blocking candidates.
+  - action stats now show top allowed actions for quick execution preview.
 
 ## Verification
 
