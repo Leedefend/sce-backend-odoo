@@ -260,6 +260,10 @@
           <button type="button" :class="{ active: historyDurationFilter === 'LE_1S' }" @click="historyDurationFilter = 'LE_1S'">≤1s</button>
           <button type="button" :class="{ active: historyDurationFilter === 'BETWEEN_1S_3S' }" @click="historyDurationFilter = 'BETWEEN_1S_3S'">1-3s</button>
           <button type="button" :class="{ active: historyDurationFilter === 'GT_3S' }" @click="historyDurationFilter = 'GT_3S'">&gt;3s</button>
+          <button type="button" :class="{ active: historyTimeWindow === 'ALL' }" @click="historyTimeWindow = 'ALL'">全部时间</button>
+          <button type="button" :class="{ active: historyTimeWindow === 'H1' }" @click="historyTimeWindow = 'H1'">近1小时</button>
+          <button type="button" :class="{ active: historyTimeWindow === 'D1' }" @click="historyTimeWindow = 'D1'">近24小时</button>
+          <button type="button" :class="{ active: historyTimeWindow === 'D7' }" @click="historyTimeWindow = 'D7'">近7天</button>
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
           <button
             v-for="reason in historyReasonCodes"
@@ -386,6 +390,7 @@ const lastSemanticAction = ref<{ action: string; reason: string; label: string }
 const historyReasonFilter = ref('ALL');
 const historyOutcomeFilter = ref<'ALL' | 'SUCCESS' | 'FAILED'>('ALL');
 const historyDurationFilter = ref<'ALL' | 'LE_1S' | 'BETWEEN_1S_3S' | 'GT_3S'>('ALL');
+const historyTimeWindow = ref<'ALL' | 'H1' | 'D1' | 'D7'>('ALL');
 const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
@@ -801,10 +806,15 @@ const historyReasonCodes = computed(() =>
 );
 const filteredActionHistory = computed(() => {
   const keyword = historySearch.value.toLowerCase();
+  const now = Date.now();
+  const windowMs =
+    historyTimeWindow.value === 'H1' ? 3600_000 : historyTimeWindow.value === 'D1' ? 86_400_000 : historyTimeWindow.value === 'D7' ? 604_800_000 : 0;
+  const byTime =
+    windowMs > 0 ? actionHistory.value.filter((item) => Math.max(0, now - Number(item.at || 0)) <= windowMs) : actionHistory.value;
   const byOutcome =
     historyOutcomeFilter.value === 'ALL'
-      ? actionHistory.value
-      : actionHistory.value.filter((item) =>
+      ? byTime
+      : byTime.filter((item) =>
           historyOutcomeFilter.value === 'SUCCESS' ? item.success : !item.success,
         );
   const byReason =
@@ -1263,6 +1273,7 @@ function resetHistoryFilters() {
   historyReasonFilter.value = 'ALL';
   historyOutcomeFilter.value = 'ALL';
   historyDurationFilter.value = 'ALL';
+  historyTimeWindow.value = 'ALL';
   historySearch.value = '';
   historySortMode.value = 'DESC';
 }
