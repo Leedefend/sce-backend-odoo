@@ -49,6 +49,7 @@ Existing fields remain unchanged:
   - action-surface readiness score (`就绪度`) gives quick execution confidence (with stale penalty).
   - top blocked action summary surfaces the first blocking candidates.
   - action stats now show top allowed actions for quick execution preview.
+  - `导出阻塞` exports blocked action summary JSON for coordination.
 
 ## Verification
 
