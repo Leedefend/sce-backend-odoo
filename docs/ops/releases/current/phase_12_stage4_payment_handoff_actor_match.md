@@ -31,6 +31,7 @@ Existing fields remain unchanged:
   - `复制动作面` copies structured JSON (actions + role hints + priority).
   - `导出动作面` downloads JSON for delivery evidence.
   - `导出证据包` downloads one bundle (action surface + action history + last feedback/trace).
+  - `复制转交说明` (for handoff-required actions) copies a plain-text handoff note with role and trace.
   - stale refresh hint highlights action surface older than 60 seconds.
 
 ## Verification
