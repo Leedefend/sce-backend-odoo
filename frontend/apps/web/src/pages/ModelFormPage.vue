@@ -148,6 +148,7 @@
           <h3>最近操作</h3>
           <div class="history-actions">
             <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
+            <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
         </div>
@@ -770,6 +771,36 @@ function exportActionSurface() {
   anchor.download = `payment_action_surface_${model.value}_${recordId.value}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function exportEvidenceBundle() {
+  if (!recordId.value) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    primary_action_key: primaryActionKey.value,
+    action_surface_loaded_at: paymentActionSurfaceLoadedAt.value,
+    action_surface_stale: actionSurfaceIsStale.value,
+    last_trace_id: lastTraceId.value,
+    last_feedback: actionFeedback.value,
+    semantic_actions: semanticActionButtons.value,
+    action_history: actionHistory.value,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `payment_evidence_bundle_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+  actionFeedback.value = {
+    message: '证据包已导出',
+    reasonCode: 'EVIDENCE_BUNDLE_EXPORTED',
+    success: true,
+    traceId: lastTraceId.value,
+  };
+  armActionFeedbackAutoClear();
 }
 
 function suggestedActionMeta(action: SemanticActionButton) {
