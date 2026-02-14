@@ -258,6 +258,7 @@
           <button type="button" :class="{ active: historyOutcomeFilter === 'ALL' }" @click="historyOutcomeFilter = 'ALL'">全部结果</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'SUCCESS' }" @click="historyOutcomeFilter = 'SUCCESS'">成功</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'FAILED' }" @click="historyOutcomeFilter = 'FAILED'">失败</button>
+          <button type="button" class="history-clear" @click="applyFailureFocusPreset">失败聚焦</button>
           <button type="button" :class="{ active: historySortMode === 'DESC' }" @click="historySortMode = 'DESC'">最新优先</button>
           <button type="button" :class="{ active: historySortMode === 'ASC' }" @click="historySortMode = 'ASC'">最早优先</button>
           <button type="button" :class="{ active: historyDurationFilter === 'ALL' }" @click="historyDurationFilter = 'ALL'">全部耗时</button>
@@ -1293,6 +1294,12 @@ function resetHistoryFilters() {
   historyDurationFilter.value = 'ALL';
   historyTimeWindow.value = 'ALL';
   historySearch.value = '';
+  historySortMode.value = 'DESC';
+}
+
+function applyFailureFocusPreset() {
+  historyOutcomeFilter.value = 'FAILED';
+  historyTimeWindow.value = 'D1';
   historySortMode.value = 'DESC';
 }
 
