@@ -250,6 +250,8 @@
           <button type="button" :class="{ active: historyOutcomeFilter === 'ALL' }" @click="historyOutcomeFilter = 'ALL'">全部结果</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'SUCCESS' }" @click="historyOutcomeFilter = 'SUCCESS'">成功</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'FAILED' }" @click="historyOutcomeFilter = 'FAILED'">失败</button>
+          <button type="button" :class="{ active: historySortMode === 'DESC' }" @click="historySortMode = 'DESC'">最新优先</button>
+          <button type="button" :class="{ active: historySortMode === 'ASC' }" @click="historySortMode = 'ASC'">最早优先</button>
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
           <button
             v-for="reason in historyReasonCodes"
@@ -263,10 +265,11 @@
           <button type="button" class="history-clear" @click="resetHistoryFilters">重置历史筛选</button>
         </div>
         <ul>
-          <li v-for="entry in filteredActionHistory" :key="entry.key">
+          <li v-for="entry in displayedActionHistory" :key="entry.key">
             <strong>{{ entry.label }}</strong>
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
+            <span class="history-meta">cost: {{ historyDurationLabel(entry) }}</span>
             <span class="history-meta">at: {{ entry.atText }} ({{ historyAgeLabel(entry) }})</span>
             <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
             <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
@@ -364,6 +367,7 @@ type ActionHistoryEntry = {
   success: boolean;
   stateBefore: string;
   traceId: string;
+  durationMs: number;
   at: number;
   atText: string;
 };
@@ -373,6 +377,7 @@ const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
 const historyOutcomeFilter = ref<'ALL' | 'SUCCESS' | 'FAILED'>('ALL');
+const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -381,6 +386,7 @@ const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
 const historyOutcomeFilterStoragePrefix = 'sc.payment.history_outcome_filter.v1';
 const historySearchStoragePrefix = 'sc.payment.history_search.v1';
+const historySortModeStoragePrefix = 'sc.payment.history_sort_mode.v1';
 const actionHistoryLimitStorageKey = 'sc.payment.history_limit.v1';
 const autoRefreshIntervalStorageKey = 'sc.payment.auto_refresh_interval.v1';
 const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
@@ -399,6 +405,9 @@ const historyOutcomeFilterStorageKey = computed(
 );
 const historySearchStorageKey = computed(
   () => `${historySearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historySortModeStorageKey = computed(
+  () => `${historySortModeStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const actionSearchStorageKey = computed(() => `${actionSearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
@@ -482,6 +491,10 @@ try {
     historyOutcomeFilter.value = cachedOutcome;
   }
   historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
+  const cachedSort = String(window.localStorage.getItem(historySortModeStorageKey.value) || '').trim();
+  if (cachedSort === 'DESC' || cachedSort === 'ASC') {
+    historySortMode.value = cachedSort;
+  }
   semanticActionSearch.value = String(window.localStorage.getItem(actionSearchStorageKey.value) || '');
 } catch {
   // Ignore storage errors and keep default mode.
@@ -779,6 +792,10 @@ const filteredActionHistory = computed(() => {
   return byReason.filter((item) =>
     `${item.label} ${item.reasonCode} ${item.traceId}`.toLowerCase().includes(keyword),
   );
+});
+const displayedActionHistory = computed(() => {
+  const rows = [...filteredActionHistory.value];
+  return rows.sort((a, b) => (historySortMode.value === 'ASC' ? a.at - b.at : b.at - a.at));
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -1202,6 +1219,7 @@ function resetActionPanelPrefs() {
     window.localStorage.removeItem(historyReasonFilterStorageKey.value);
     window.localStorage.removeItem(historyOutcomeFilterStorageKey.value);
     window.localStorage.removeItem(historySearchStorageKey.value);
+    window.localStorage.removeItem(historySortModeStorageKey.value);
     window.localStorage.removeItem(actionSearchStorageKey.value);
     window.localStorage.removeItem(autoRefreshIntervalStorageKey);
     window.localStorage.removeItem(actionHistoryLimitStorageKey);
@@ -1214,6 +1232,7 @@ function resetHistoryFilters() {
   historyReasonFilter.value = 'ALL';
   historyOutcomeFilter.value = 'ALL';
   historySearch.value = '';
+  historySortMode.value = 'DESC';
 }
 
 function exportEvidenceBundle() {
@@ -1325,6 +1344,7 @@ async function runSemanticAction(action: SemanticActionButton) {
   actionBusy.value = true;
   actionBusyKey.value = action.key;
   const stateBefore = action.currentState;
+  const startedAt = Date.now();
   try {
     lastSemanticAction.value = {
       action: action.key,
@@ -1350,6 +1370,7 @@ async function runSemanticAction(action: SemanticActionButton) {
         success: parsed.success,
         stateBefore,
         traceId: response.traceId || '',
+        durationMs: Math.max(0, Date.now() - startedAt),
         at: Date.now(),
         atText: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
       },
@@ -1413,6 +1434,13 @@ function historyAgeLabel(entry: ActionHistoryEntry) {
   return `${min}m${sec}s ago`;
 }
 
+function historyDurationLabel(entry: ActionHistoryEntry) {
+  const ms = Math.max(0, Number(entry.durationMs || 0));
+  if (!ms) return '-';
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(2)}s`;
+}
+
 function armActionFeedbackAutoClear() {
   if (actionFeedbackTimer) {
     clearTimeout(actionFeedbackTimer);
@@ -1430,6 +1458,7 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
     `action=${entry.label}`,
     `reason_code=${entry.reasonCode}`,
     `state_before=${entry.stateBefore || '-'}`,
+    `duration=${historyDurationLabel(entry)}`,
     `trace_id=${entry.traceId || '-'}`,
     `success=${String(entry.success)}`,
   ].join('\n');
@@ -1719,6 +1748,13 @@ watch(historySearch, (value) => {
     // Ignore storage errors.
   }
 });
+watch(historySortMode, (value) => {
+  try {
+    window.localStorage.setItem(historySortModeStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
 watch(autoRefreshIntervalSec, (value) => {
   const interval = [15, 30, 60].includes(Number(value)) ? Number(value) : 15;
   try {
@@ -1780,6 +1816,7 @@ watch(
           success: Boolean(item?.success),
           stateBefore: String(item?.stateBefore || ''),
           traceId: String(item?.traceId || ''),
+          durationMs: Number(item?.durationMs || 0),
           at: Number(item?.at || Date.now()),
           atText: String(item?.atText || ''),
         }));
