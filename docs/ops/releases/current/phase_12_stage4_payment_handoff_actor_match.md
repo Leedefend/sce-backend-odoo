@@ -43,6 +43,7 @@ Existing fields remain unchanged:
   - blocked reason top summary is visible in action stats for quick diagnosis.
   - `复制统计` copies action-surface stats snapshot for support handoff.
   - action stats now show absolute `刷新时刻` timestamp.
+  - semantic action search keyword is persisted per record.
 
 ## Verification
 
