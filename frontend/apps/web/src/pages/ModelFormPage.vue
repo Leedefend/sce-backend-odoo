@@ -86,6 +86,9 @@
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
       </section>
+      <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
+        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
+      </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
           v-for="action in displayedSemanticActionButtons"
@@ -990,6 +993,17 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 12px;
   font-size: 12px;
   color: #64748b;
+}
+
+.semantic-action-shortcuts {
+  font-size: 12px;
+  color: #475569;
+}
+
+.semantic-action-shortcuts code {
+  background: #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 6px;
 }
 
 .semantic-action-filters button {
