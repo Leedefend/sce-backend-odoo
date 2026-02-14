@@ -250,6 +250,8 @@
           <button type="button" :class="{ active: historyOutcomeFilter === 'ALL' }" @click="historyOutcomeFilter = 'ALL'">全部结果</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'SUCCESS' }" @click="historyOutcomeFilter = 'SUCCESS'">成功</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'FAILED' }" @click="historyOutcomeFilter = 'FAILED'">失败</button>
+          <button type="button" :class="{ active: historySortMode === 'DESC' }" @click="historySortMode = 'DESC'">最新优先</button>
+          <button type="button" :class="{ active: historySortMode === 'ASC' }" @click="historySortMode = 'ASC'">最早优先</button>
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
           <button
             v-for="reason in historyReasonCodes"
@@ -263,7 +265,7 @@
           <button type="button" class="history-clear" @click="resetHistoryFilters">重置历史筛选</button>
         </div>
         <ul>
-          <li v-for="entry in filteredActionHistory" :key="entry.key">
+          <li v-for="entry in displayedActionHistory" :key="entry.key">
             <strong>{{ entry.label }}</strong>
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
@@ -375,6 +377,7 @@ const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
 const historyOutcomeFilter = ref<'ALL' | 'SUCCESS' | 'FAILED'>('ALL');
+const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -781,6 +784,10 @@ const filteredActionHistory = computed(() => {
   return byReason.filter((item) =>
     `${item.label} ${item.reasonCode} ${item.traceId}`.toLowerCase().includes(keyword),
   );
+});
+const displayedActionHistory = computed(() => {
+  const rows = [...filteredActionHistory.value];
+  return rows.sort((a, b) => (historySortMode.value === 'ASC' ? a.at - b.at : b.at - a.at));
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
