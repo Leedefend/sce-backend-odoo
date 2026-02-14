@@ -12,6 +12,8 @@
           <span v-if="actionFeedback.requestId"> · request: <code>{{ actionFeedback.requestId }}</code></span>
           <span v-if="actionFeedback.replayed"> · replayed</span>
           <button type="button" class="evidence-copy" @click="copyActionEvidence">复制证据</button>
+          <button type="button" class="evidence-copy" @click="copyLatestExecutionBundle">复制执行包</button>
+          <button type="button" class="evidence-copy" @click="exportLatestExecutionBundle">导出执行包</button>
           <button type="button" class="evidence-copy" @click="clearActionFeedback">关闭</button>
         </p>
       </div>
@@ -1090,6 +1092,47 @@ async function copyActionEvidence() {
   } catch {
     // Ignore clipboard failures; keep primary action result visible.
   }
+}
+
+function latestExecutionBundle() {
+  return {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    trace_id: actionFeedback.value?.traceId || lastTraceId.value || "",
+    last_feedback: actionFeedback.value,
+    last_semantic_action: lastSemanticAction.value,
+    primary_action_key: primaryActionKey.value,
+    action_surface_loaded_at: paymentActionSurfaceLoadedAt.value,
+    action_surface_stale: actionSurfaceIsStale.value,
+    history_top3: actionHistory.value.slice(0, 3),
+  };
+}
+
+async function copyLatestExecutionBundle() {
+  if (!actionFeedback.value) return;
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(latestExecutionBundle(), null, 2));
+    actionFeedback.value = {
+      ...actionFeedback.value,
+      message: `${actionFeedback.value.message}（执行包已复制）`,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    // Ignore clipboard failures; keep primary action result visible.
+  }
+}
+
+function exportLatestExecutionBundle() {
+  if (!actionFeedback.value || !recordId.value) return;
+  const bundle = latestExecutionBundle();
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `payment_execution_bundle_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function clearActionFeedback() {
