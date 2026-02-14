@@ -238,6 +238,7 @@
             <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" @click="copyAllHistory">复制当前视图</button>
             <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" @click="exportActionHistory">导出当前视图</button>
             <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
+            <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
@@ -1523,6 +1524,34 @@ async function copyAllHistory() {
     actionFeedback.value = {
       message: '当前视图历史复制失败',
       reasonCode: 'HISTORY_VISIBLE_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+async function copyVisibleTraces() {
+  const traces = Array.from(
+    new Set(
+      displayedActionHistory.value
+        .map((entry) => String(entry.traceId || '').trim())
+        .filter(Boolean),
+    ),
+  );
+  if (!traces.length) return;
+  try {
+    await navigator.clipboard.writeText(traces.join('\n'));
+    actionFeedback.value = {
+      message: `已复制 Trace 列表（${traces.length} 条）`,
+      reasonCode: 'HISTORY_TRACE_LIST_COPIED',
+      success: true,
+      traceId: traces[0],
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: 'Trace 列表复制失败',
+      reasonCode: 'HISTORY_TRACE_LIST_COPY_FAILED',
       success: false,
       traceId: lastTraceId.value,
     };
