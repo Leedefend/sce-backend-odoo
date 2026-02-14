@@ -83,6 +83,12 @@
         <button type="button" :class="{ active: hideBlockedHints }" @click="hideBlockedHints = !hideBlockedHints">
           {{ hideBlockedHints ? '显示阻塞' : '隐藏阻塞' }}
         </button>
+        <input
+          v-model.trim="semanticActionSearch"
+          class="semantic-search"
+          type="text"
+          placeholder="搜索动作/原因码"
+        />
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
         <span>主动作: {{ primaryActionKey || '-' }}</span>
@@ -293,6 +299,7 @@ const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
 const hideBlockedHints = ref(false);
+const semanticActionSearch = ref('');
 try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
   if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
@@ -329,13 +336,16 @@ const semanticActionButtons = computed<SemanticActionButton[]>(() => {
     });
 });
 const displayedSemanticActionButtons = computed(() => {
+  const search = semanticActionSearch.value.toLowerCase();
   if (actionFilterMode.value === 'allowed') {
-    return semanticActionButtons.value.filter((item) => item.allowed);
+    return semanticActionButtons.value.filter((item) => item.allowed && `${item.label} ${item.reasonCode}`.toLowerCase().includes(search));
   }
   if (actionFilterMode.value === 'blocked') {
-    return semanticActionButtons.value.filter((item) => !item.allowed);
+    return semanticActionButtons.value.filter((item) => !item.allowed && `${item.label} ${item.reasonCode}`.toLowerCase().includes(search));
   }
-  return semanticActionButtons.value.filter((item) => (hideBlockedHints.value ? item.allowed : true));
+  return semanticActionButtons.value.filter(
+    (item) => (hideBlockedHints.value ? item.allowed : true) && `${item.label} ${item.reasonCode}`.toLowerCase().includes(search),
+  );
 });
 const semanticActionStats = computed(() => {
   const total = semanticActionButtons.value.length;
@@ -1098,6 +1108,15 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .semantic-action-filters button.active {
   border-color: #0f766e;
   box-shadow: inset 0 0 0 1px #0f766e;
+}
+
+.semantic-search {
+  margin-left: auto;
+  min-width: 180px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
 }
 
 .semantic-action-hint {
