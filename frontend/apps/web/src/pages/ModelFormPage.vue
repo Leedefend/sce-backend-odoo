@@ -231,6 +231,10 @@
           </li>
         </ul>
       </section>
+      <section v-else-if="semanticActionButtons.length" class="semantic-action-history history-empty">
+        <h3>最近操作</h3>
+        <p>还没有执行记录。可先点击上方动作按钮，系统将自动记录原因码与 Trace。</p>
+      </section>
       <ViewLayoutRenderer
         v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
@@ -1922,6 +1926,12 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin: 0 0 8px;
   font-size: 14px;
   color: #0f172a;
+}
+
+.semantic-action-history.history-empty p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
 }
 
 .history-header {
