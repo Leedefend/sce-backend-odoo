@@ -37,7 +37,7 @@
           {{ actionBusy && actionBusyKey === action.key ? `${action.label} · 执行中...` : action.label }}
         </button>
         <button :disabled="!lastSemanticAction || actionBusy || loading" class="action secondary" @click="rerunLastSemanticAction">
-          重试上次动作
+          {{ retryLastActionLabel }}
         </button>
         <button :disabled="saving" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
         <button @click="reload">Reload</button>
@@ -321,6 +321,10 @@ const primaryAllowedAction = computed(() => {
   );
   if (primary) return primary;
   return displayedSemanticActionButtons.value.find((item) => item.allowed) || null;
+});
+const retryLastActionLabel = computed(() => {
+  if (!lastSemanticAction.value) return '重试上次动作';
+  return `重试：${lastSemanticAction.value.label}`;
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
