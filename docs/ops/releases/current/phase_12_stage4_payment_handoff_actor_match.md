@@ -41,6 +41,7 @@ Existing fields remain unchanged:
   - auto-refresh interval selector (15s/30s/60s) with local storage persistence.
   - blocked reason top summary is visible in action stats for quick diagnosis.
   - `复制统计` copies action-surface stats snapshot for support handoff.
+  - action stats now show absolute `刷新时刻` timestamp.
 
 ## Verification
 
