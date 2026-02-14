@@ -221,6 +221,7 @@ type ActionHistoryEntry = {
 const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
+let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 
@@ -760,6 +761,18 @@ function clearActionHistory() {
   actionHistory.value = [];
 }
 
+function armActionFeedbackAutoClear() {
+  if (actionFeedbackTimer) {
+    clearTimeout(actionFeedbackTimer);
+    actionFeedbackTimer = null;
+  }
+  if (!actionFeedback.value) return;
+  actionFeedbackTimer = setTimeout(() => {
+    actionFeedback.value = null;
+    actionFeedbackTimer = null;
+  }, 6000);
+}
+
 async function copyHistoryEntry(entry: ActionHistoryEntry) {
   const payload = [
     `action=${entry.label}`,
@@ -824,6 +837,10 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onSemanticHotkey);
+  if (actionFeedbackTimer) {
+    clearTimeout(actionFeedbackTimer);
+    actionFeedbackTimer = null;
+  }
 });
 watch(actionFilterMode, (value) => {
   try {
@@ -869,6 +886,9 @@ watch(
   },
   { immediate: true },
 );
+watch(actionFeedback, () => {
+  armActionFeedbackAutoClear();
+});
 
 function analyzeLayout(layout: ViewContract['layout']) {
   const stats = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
