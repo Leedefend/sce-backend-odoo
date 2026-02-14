@@ -280,6 +280,10 @@
           </button>
           <button type="button" class="history-clear" @click="resetHistoryFilters">重置历史筛选</button>
         </div>
+        <div v-if="actionHistory.length && !displayedActionHistory.length" class="history-empty-tip">
+          当前筛选条件下暂无记录。
+          <button type="button" class="history-clear" @click="resetHistoryFilters">恢复全部</button>
+        </div>
         <ul>
           <li v-for="entry in displayedActionHistory" :key="entry.key">
             <strong>{{ entry.label }}</strong>
@@ -2417,6 +2421,15 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .history-filters button.active {
   border-color: #0f766e;
   box-shadow: inset 0 0 0 1px #0f766e;
+}
+
+.history-empty-tip {
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .history-clear {
