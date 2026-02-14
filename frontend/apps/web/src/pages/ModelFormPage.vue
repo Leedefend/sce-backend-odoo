@@ -1569,6 +1569,14 @@ async function copyHistoryFilterSummary() {
 
 function exportActionHistory() {
   if (!displayedActionHistory.value.length || !recordId.value) return;
+  const ts = new Date()
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z');
+  const outcomeTag = historyOutcomeFilter.value.toLowerCase();
+  const reasonTag = historyReasonFilter.value === 'ALL' ? 'all' : 'reason';
+  const searchTag = historySearch.value.trim() ? 'search' : 'nosearch';
+  const fileSuffix = `${ts}_${historySortMode.value.toLowerCase()}_${outcomeTag}_${reasonTag}_${searchTag}`;
   const payload = {
     model: model.value,
     record_id: recordId.value,
@@ -1585,13 +1593,21 @@ function exportActionHistory() {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `payment_action_history_${model.value}_${recordId.value}.json`;
+  anchor.download = `payment_action_history_${model.value}_${recordId.value}_${fileSuffix}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
 
 function exportActionHistoryCsv() {
   if (!displayedActionHistory.value.length || !recordId.value) return;
+  const ts = new Date()
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z');
+  const outcomeTag = historyOutcomeFilter.value.toLowerCase();
+  const reasonTag = historyReasonFilter.value === 'ALL' ? 'all' : 'reason';
+  const searchTag = historySearch.value.trim() ? 'search' : 'nosearch';
+  const fileSuffix = `${ts}_${historySortMode.value.toLowerCase()}_${outcomeTag}_${reasonTag}_${searchTag}`;
   const header = ["label", "reason_code", "success", "state_before", "trace_id", "duration_ms", "at_epoch", "at"];
   const rows = displayedActionHistory.value.map((entry) =>
     [
@@ -1612,7 +1628,7 @@ function exportActionHistoryCsv() {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `payment_action_history_${model.value}_${recordId.value}.csv`;
+  anchor.download = `payment_action_history_${model.value}_${recordId.value}_${fileSuffix}.csv`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
