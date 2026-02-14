@@ -91,6 +91,7 @@
           class="semantic-search"
           type="text"
           placeholder="搜索动作/原因码"
+          aria-label="搜索动作或原因码"
         />
         <button type="button" class="stats-refresh" @click="resetActionPanelPrefs">重置面板</button>
       </section>
@@ -118,14 +119,14 @@
         <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
         <span v-if="latestFailureReason">最近失败: {{ latestFailureReason }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
-        <button type="button" class="stats-refresh" @click="copyBlockedReasonsText">复制阻塞文本</button>
-        <button type="button" class="stats-refresh" @click="copyAllowedActionsText">复制可执行文本</button>
-        <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
-        <button type="button" class="stats-refresh" @click="exportAllowedSummary">导出可执行</button>
-        <button type="button" class="stats-refresh" @click="exportBlockedSummary">导出阻塞</button>
-        <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
-        <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
-        <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
+        <button type="button" class="stats-refresh" title="复制阻塞动作文本" aria-label="复制阻塞动作文本" @click="copyBlockedReasonsText">复制阻塞文本</button>
+        <button type="button" class="stats-refresh" title="复制可执行动作文本" aria-label="复制可执行动作文本" @click="copyAllowedActionsText">复制可执行文本</button>
+        <button type="button" class="stats-refresh" title="复制动作统计快照" aria-label="复制动作统计快照" @click="copyActionStats">复制统计</button>
+        <button type="button" class="stats-refresh" title="导出可执行动作摘要" aria-label="导出可执行动作摘要" @click="exportAllowedSummary">导出可执行</button>
+        <button type="button" class="stats-refresh" title="导出阻塞动作摘要" aria-label="导出阻塞动作摘要" @click="exportBlockedSummary">导出阻塞</button>
+        <button type="button" class="stats-refresh" title="刷新动作面" aria-label="刷新动作面" @click="loadPaymentActionSurface">刷新动作面</button>
+        <button type="button" class="stats-refresh" title="复制动作面JSON" aria-label="复制动作面JSON" @click="copyActionSurface">复制动作面</button>
+        <button type="button" class="stats-refresh" title="导出动作面JSON" aria-label="导出动作面JSON" @click="exportActionSurface">导出动作面</button>
         <label class="auto-refresh-toggle">
           <input v-model="autoRefreshActionSurface" type="checkbox" />
           自动刷新
@@ -200,11 +201,11 @@
         <div class="history-header">
           <h3>最近操作</h3>
           <div class="history-actions">
-            <button type="button" class="history-clear" @click="copyLatestTrace">复制最新Trace</button>
-            <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
-            <button type="button" class="history-clear" @click="exportActionHistory">导出历史</button>
-            <button type="button" class="history-clear" @click="exportActionHistoryCsv">导出CSV</button>
-            <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
+            <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
+            <button type="button" class="history-clear" title="复制全部历史记录" aria-label="复制全部历史记录" @click="copyAllHistory">复制全部</button>
+            <button type="button" class="history-clear" title="导出历史JSON" aria-label="导出历史JSON" @click="exportActionHistory">导出历史</button>
+            <button type="button" class="history-clear" title="导出历史CSV" aria-label="导出历史CSV" @click="exportActionHistoryCsv">导出CSV</button>
+            <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
         </div>
