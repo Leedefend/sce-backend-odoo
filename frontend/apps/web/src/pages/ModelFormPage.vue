@@ -12,6 +12,7 @@
           <span v-if="actionFeedback.requestId"> · request: <code>{{ actionFeedback.requestId }}</code></span>
           <span v-if="actionFeedback.replayed"> · replayed</span>
           <button type="button" class="evidence-copy" @click="copyActionEvidence">复制证据</button>
+          <button type="button" class="evidence-copy" @click="clearActionFeedback">关闭</button>
         </p>
       </div>
       <div class="actions">
@@ -903,6 +904,10 @@ async function copyActionEvidence() {
   } catch {
     // Ignore clipboard failures; keep primary action result visible.
   }
+}
+
+function clearActionFeedback() {
+  actionFeedback.value = null;
 }
 
 function handleSuggestedAction(action: string): boolean {
