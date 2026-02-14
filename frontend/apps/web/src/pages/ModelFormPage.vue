@@ -113,6 +113,7 @@
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span v-if="actionHistory.length">近期成功率: {{ actionHistorySuccessRate }}%</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
+        <span v-if="actionSurfaceRefreshPaused" class="stale">自动刷新已暂停（页面非激活）</span>
         <span v-if="actionSurfaceLoadedAtText">刷新时刻: {{ actionSurfaceLoadedAtText }}</span>
         <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
         <span v-if="latestFailureReason">最近失败: {{ latestFailureReason }}</span>
