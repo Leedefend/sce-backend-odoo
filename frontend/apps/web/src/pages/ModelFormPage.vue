@@ -104,6 +104,7 @@
         <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
         <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
+        <button type="button" class="stats-refresh" @click="exportBlockedSummary">导出阻塞</button>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
         <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
         <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
@@ -514,6 +515,35 @@ async function copyActionStats() {
       traceId: lastTraceId.value,
     };
   }
+}
+
+function exportBlockedSummary() {
+  if (!semanticActionButtons.value.length || !recordId.value) return;
+  const blocked = semanticActionButtons.value
+    .filter((item) => !item.allowed)
+    .map((item) => ({
+      key: item.key,
+      label: item.label,
+      reason_code: item.reasonCode || "UNKNOWN",
+      blocked_message: item.blockedMessage || "",
+      required_role: item.requiredRoleLabel || item.requiredRoleKey || "",
+      handoff_required: item.handoffRequired,
+    }));
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    blocked_count: blocked.length,
+    blocked_top_reasons: blockedTopReasons.value,
+    blocked_actions: blocked,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `payment_blocked_summary_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 const actionSurfaceAgeLabel = computed(() => {
   if (!paymentActionSurfaceLoadedAt.value) return '-';
