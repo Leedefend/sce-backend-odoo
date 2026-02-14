@@ -77,6 +77,12 @@
     - finance re-probes available actions and executes `done` when allowed
   - Optional env knob:
     - `PAYMENT_REQUEST_HANDOFF_EXEC_ACTION_ORDER=approve,reject` (default)
+- Payment form delivery UX notes (frontend):
+  - Blocked actions can run `suggested_action` directly from form hint area.
+  - Action feedback shows trace/request evidence and supports one-click copy.
+  - Shortcuts:
+    - `Ctrl+Enter`: run primary allowed semantic action
+    - `Alt+R`: retry last semantic action
 
 ## Baseline Semantics
 - Platform baseline (environment/bootstrap consistency)
