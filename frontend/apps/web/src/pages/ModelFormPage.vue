@@ -177,6 +177,7 @@
         <div class="history-header">
           <h3>最近操作</h3>
           <div class="history-actions">
+            <button type="button" class="history-clear" @click="copyLatestTrace">复制最新Trace</button>
             <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
             <button type="button" class="history-clear" @click="exportActionHistory">导出历史</button>
             <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
@@ -1155,6 +1156,28 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
     await navigator.clipboard.writeText(payload);
   } catch {
     // Ignore clipboard failures for this utility action.
+  }
+}
+
+async function copyLatestTrace() {
+  const trace = String(actionHistory.value[0]?.traceId || actionFeedback.value?.traceId || lastTraceId.value || '').trim();
+  if (!trace) return;
+  try {
+    await navigator.clipboard.writeText(trace);
+    actionFeedback.value = {
+      message: '最新 Trace 已复制',
+      reasonCode: 'LATEST_TRACE_COPIED',
+      success: true,
+      traceId: trace,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '最新 Trace 复制失败',
+      reasonCode: 'LATEST_TRACE_COPY_FAILED',
+      success: false,
+      traceId: trace,
+    };
   }
 }
 
