@@ -1630,7 +1630,10 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
 }
 
 async function copyLatestTrace() {
-  const trace = String(displayedActionHistory.value[0]?.traceId || actionFeedback.value?.traceId || lastTraceId.value || '').trim();
+  const latestHistory = [...actionHistory.value]
+    .sort((a, b) => Number(b.at || 0) - Number(a.at || 0))
+    .find((entry) => String(entry.traceId || '').trim());
+  const trace = String(latestHistory?.traceId || actionFeedback.value?.traceId || lastTraceId.value || '').trim();
   if (!trace) return;
   try {
     await navigator.clipboard.writeText(trace);
