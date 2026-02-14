@@ -59,6 +59,8 @@
 ## Stage 3 Approval MVP
 - Cross-stack payment request approval smoke:
   - `make verify.portal.payment_request_approval_smoke.container`
+  - Shared prepare step can be skipped when already prepared:
+    - `PAYMENT_APPROVAL_SKIP_PREPARE=1 make verify.portal.payment_request_approval_smoke.container`
   - Covers login -> `api.data` payment request discovery -> `payment.request.submit` -> `payment.request.approve`.
   - Live path selection is action-surface aware:
     - probes `payment.request.available_actions` and prefers records with executable actions
@@ -71,12 +73,17 @@
     - `PAYMENT_REQUEST_SMOKE_REQUIRE_LIVE=1`: fail if smoke cannot enter live-record path.
 - Cross-role handoff smoke (finance -> executive -> finance):
   - `make verify.portal.payment_request_approval_handoff_smoke.container`
+  - Shared prepare step can be skipped when already prepared:
+    - `PAYMENT_APPROVAL_SKIP_PREPARE=1 make verify.portal.payment_request_approval_handoff_smoke.container`
   - Verifies a delivery-grade handoff path:
     - finance executes `payment.request.execute` with `submit`
     - executive executes one allowed follow-up action (`approve` preferred, fallback `reject`)
     - finance re-probes available actions and executes `done` when allowed
   - Optional env knob:
     - `PAYMENT_REQUEST_HANDOFF_EXEC_ACTION_ORDER=approve,reject` (default)
+- One-command sequential aggregate (single upgrade/restart + both smokes):
+  - `make verify.portal.payment_request_approval_all_smoke.container`
+  - Use this target in CI/local when running both approval smokes to avoid concurrent `mod.upgrade` conflicts on the same DB.
 - Payment form delivery UX notes (frontend):
   - Blocked actions can run `suggested_action` directly from form hint area.
   - Action feedback shows trace/request evidence and supports one-click copy.

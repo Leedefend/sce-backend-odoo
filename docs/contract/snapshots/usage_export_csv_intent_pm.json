@@ -2,6 +2,7 @@
   "action": null,
   "case": "usage_export_csv_intent_pm",
   "contract_version": "v1",
+  "error": null,
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -12,8 +13,8 @@
   "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "content": "section,key,count,extra\nmeta,export_filtered_only,1,\nmeta,day_from,2026-02-04,\nmeta,day_to,2026-02-10,\nmeta,role_code,,\nmeta,user_id,0,\ntotal,scene_open_total,2,\ntotal,capability_open_total,0,\nscene_top,my.work,2,\nrole_top,admin,2,2/0\nuser_top,2,2,2/0\nscene_daily,2026-02-04,0,\nscene_daily,2026-02-05,0,\nscene_daily,2026-02-06,0,\nscene_daily,2026-02-07,0,\nscene_daily,2026-02-08,0,\nscene_daily,2026-02-09,0,\nscene_daily,2026-02-10,2,\ncapability_daily,2026-02-04,0,\ncapability_daily,2026-02-05,0,\ncapability_daily,2026-02-06,0,\ncapability_daily,2026-02-07,0,\ncapability_daily,2026-02-08,0,\ncapability_daily,2026-02-09,0,\ncapability_daily,2026-02-10,0,\ncapability_visibility,total,5,\ncapability_visibility,visible,1,\ncapability_visibility,hidden,4,\nreason_count,PERMISSION_DENIED,4,\nhidden_sample,project.work,0,PERMISSION_DENIED\nhidden_sample,contract.work,0,PERMISSION_DENIED\nhidden_sample,cost.work,0,PERMISSION_DENIED\nhidden_sample,finance.work,0,PERMISSION_DENIED",
-    "filename": "usage-analytics-2026-02-04-2026-02-10.csv"
+    "content": "section,key,count,extra\nmeta,export_filtered_only,1,\nmeta,day_from,2026-02-08,\nmeta,day_to,2026-02-14,\nmeta,role_code,,\nmeta,user_id,0,\ntotal,scene_open_total,12,\ntotal,capability_open_total,0,\nscene_top,my.work,12,\nrole_top,admin,12,12/0\nuser_top,2,12,12/0\nscene_daily,2026-02-08,0,\nscene_daily,2026-02-09,0,\nscene_daily,2026-02-10,0,\nscene_daily,2026-02-11,0,\nscene_daily,2026-02-12,0,\nscene_daily,2026-02-13,4,\nscene_daily,2026-02-14,8,\ncapability_daily,2026-02-08,0,\ncapability_daily,2026-02-09,0,\ncapability_daily,2026-02-10,0,\ncapability_daily,2026-02-11,0,\ncapability_daily,2026-02-12,0,\ncapability_daily,2026-02-13,0,\ncapability_daily,2026-02-14,0,\ncapability_visibility,total,5,\ncapability_visibility,visible,1,\ncapability_visibility,hidden,4,\nreason_count,PERMISSION_DENIED,4,\nhidden_sample,project.work,0,PERMISSION_DENIED\nhidden_sample,contract.work,0,PERMISSION_DENIED\nhidden_sample,cost.work,0,PERMISSION_DENIED\nhidden_sample,finance.work,0,PERMISSION_DENIED",
+    "filename": "usage-analytics-2026-02-08-2026-02-14.csv"
   },
   "user": "pm",
   "user_fallback": "admin",

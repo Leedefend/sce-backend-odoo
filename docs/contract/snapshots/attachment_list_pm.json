@@ -1,18 +1,17 @@
 {
-  "case": "attachment_list_pm",
-  "trace_id": "02aa327a-782f-469b-8781-e6b3ae2ae86b",
-  "exported_at": "2026-02-09T05:15:04Z",
-  "contract_version": "v1",
-  "model": "ir.attachment",
-  "view_type": "list",
-  "op": "model",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
+  "case": "attachment_list_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": "ir.attachment",
+  "op": "model",
+  "record": null,
+  "record_error": null,
   "ui_contract": {
-    "model": "ir.attachment",
-    "view_type": "list",
     "columns": [
       "name",
       "res_model",
@@ -23,542 +22,396 @@
       "create_uid",
       "create_date"
     ],
-    "columnsSchema": []
+    "columnsSchema": [],
+    "model": "ir.attachment",
+    "view_type": "list"
   },
   "ui_contract_raw": {
-    "head": {},
-    "views": {
-      "tree": {
+    "buttons": [
+      {
+        "groups": [],
+        "groups_xmlids": [],
+        "intent": "open",
+        "key": "base.action_attachment",
+        "kind": "open",
+        "label": "Attachments",
+        "level": "toolbar",
         "model": "ir.attachment",
-        "view_type": "tree",
-        "version": 1,
-        "meta": {},
-        "modifiers": {},
-        "toolbar": {
-          "header": [],
-          "sidebar": [],
-          "footer": []
+        "params": {
+          "target": "current"
         },
-        "search": {},
-        "order": "id desc",
-        "columns": [
-          "name",
-          "res_model",
-          "res_field",
-          "res_id",
-          "type",
-          "file_size",
-          "create_uid",
-          "create_date"
-        ],
-        "row_actions": [
-          {
-            "kind": "open",
-            "name": "open_form",
-            "label": "Open",
-            "level": "row",
-            "intent": "open",
-            "selection": "single"
-          }
-        ],
-        "page_size": 50,
-        "row_classes": []
-      },
-      "form": {}
-    },
+        "payload": {
+          "action_id": 26,
+          "context_raw": "{}",
+          "domain_raw": false,
+          "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    Create a new document\n                </p>\n                <p>\n                    Also you will find here all the related documents and download it by clicking on any individual document.\n                </p>\n            ",
+          "view_id": null,
+          "view_mode": "kanban,tree,form",
+          "xml_id": "base.action_attachment"
+        },
+        "selection": "none",
+        "target_model": "ir.attachment",
+        "visible": {
+          "domain": [],
+          "states": []
+        }
+      }
+    ],
+    "degraded": false,
     "fields": {
       "access_token": {
+        "context": {},
+        "domain": [],
         "name": "access_token",
-        "string": "Access Token",
-        "type": "char",
         "readonly": false,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Access Token",
+        "type": "char"
       },
       "checksum": {
+        "context": {},
+        "domain": [],
         "name": "checksum",
-        "string": "Checksum/SHA1",
-        "type": "char",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Checksum/SHA1",
+        "type": "char"
       },
       "company_id": {
-        "name": "company_id",
-        "string": "Company",
-        "type": "many2one",
-        "relation": "res.company",
-        "readonly": false,
-        "required": false,
-        "domain": [],
         "context": {},
-        "selection": []
+        "domain": [],
+        "name": "company_id",
+        "readonly": false,
+        "relation": "res.company",
+        "required": false,
+        "selection": [],
+        "string": "Company",
+        "type": "many2one"
       },
       "create_date": {
+        "context": {},
+        "domain": [],
         "name": "create_date",
-        "string": "Created on",
-        "type": "datetime",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Created on",
+        "type": "datetime"
       },
       "create_uid": {
-        "name": "create_uid",
-        "string": "Created by",
-        "type": "many2one",
-        "relation": "res.users",
-        "readonly": true,
-        "required": false,
-        "domain": [],
         "context": {},
-        "selection": []
+        "domain": [],
+        "name": "create_uid",
+        "readonly": true,
+        "relation": "res.users",
+        "required": false,
+        "selection": [],
+        "string": "Created by",
+        "type": "many2one"
       },
       "datas": {
+        "context": {},
+        "domain": [],
         "name": "datas",
-        "string": "File Content (base64)",
-        "type": "binary",
         "readonly": false,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "File Content (base64)",
+        "type": "binary"
       },
       "db_datas": {
+        "context": {},
+        "domain": [],
         "name": "db_datas",
-        "string": "Database Data",
-        "type": "binary",
         "readonly": false,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Database Data",
+        "type": "binary"
       },
       "description": {
+        "context": {},
+        "domain": [],
         "name": "description",
-        "string": "Description",
-        "type": "text",
         "readonly": false,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Description",
+        "type": "text"
       },
       "display_name": {
+        "context": {},
+        "domain": [],
         "name": "display_name",
-        "string": "Display Name",
-        "type": "char",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Display Name",
+        "type": "char"
       },
       "file_size": {
+        "context": {},
+        "domain": [],
         "name": "file_size",
-        "string": "File Size",
-        "type": "integer",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "File Size",
+        "type": "integer"
       },
       "id": {
+        "context": {},
+        "domain": [],
         "name": "id",
-        "string": "ID",
-        "type": "integer",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "ID",
+        "type": "integer"
       },
       "image_height": {
+        "context": {},
+        "domain": [],
         "name": "image_height",
-        "string": "Image Height",
-        "type": "integer",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Image Height",
+        "type": "integer"
       },
       "image_src": {
+        "context": {},
+        "domain": [],
         "name": "image_src",
-        "string": "Image Src",
-        "type": "char",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Image Src",
+        "type": "char"
       },
       "image_width": {
+        "context": {},
+        "domain": [],
         "name": "image_width",
-        "string": "Image Width",
-        "type": "integer",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Image Width",
+        "type": "integer"
       },
       "index_content": {
+        "context": {},
+        "domain": [],
         "name": "index_content",
-        "string": "Indexed Content",
-        "type": "text",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Indexed Content",
+        "type": "text"
       },
       "local_url": {
+        "context": {},
+        "domain": [],
         "name": "local_url",
-        "string": "Attachment URL",
-        "type": "char",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Attachment URL",
+        "type": "char"
       },
       "mimetype": {
+        "context": {},
+        "domain": [],
         "name": "mimetype",
-        "string": "Mime Type",
-        "type": "char",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Mime Type",
+        "type": "char"
       },
       "name": {
+        "context": {},
+        "domain": [],
         "name": "name",
-        "string": "Name",
-        "type": "char",
         "readonly": false,
         "required": true,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Name",
+        "type": "char"
       },
       "original_id": {
-        "name": "original_id",
-        "string": "Original (unoptimized, unresized) attachment",
-        "type": "many2one",
-        "relation": "ir.attachment",
-        "readonly": false,
-        "required": false,
-        "domain": [],
         "context": {},
-        "selection": []
+        "domain": [],
+        "name": "original_id",
+        "readonly": false,
+        "relation": "ir.attachment",
+        "required": false,
+        "selection": [],
+        "string": "Original (unoptimized, unresized) attachment",
+        "type": "many2one"
       },
       "public": {
+        "context": {},
+        "domain": [],
         "name": "public",
-        "string": "Is public document",
-        "type": "boolean",
         "readonly": false,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Is public document",
+        "type": "boolean"
       },
       "raw": {
+        "context": {},
+        "domain": [],
         "name": "raw",
-        "string": "File Content (raw)",
-        "type": "binary",
         "readonly": false,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "File Content (raw)",
+        "type": "binary"
       },
       "res_field": {
+        "context": {},
+        "domain": [],
         "name": "res_field",
-        "string": "Resource Field",
-        "type": "char",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Resource Field",
+        "type": "char"
       },
       "res_id": {
+        "context": {},
+        "domain": [],
         "name": "res_id",
-        "string": "Resource ID",
-        "type": "many2one_reference",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Resource ID",
+        "type": "many2one_reference"
       },
       "res_model": {
+        "context": {},
+        "domain": [],
         "name": "res_model",
-        "string": "Resource Model",
-        "type": "char",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Resource Model",
+        "type": "char"
       },
       "res_name": {
+        "context": {},
+        "domain": [],
         "name": "res_name",
-        "string": "Resource Name",
-        "type": "char",
         "readonly": true,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Resource Name",
+        "type": "char"
       },
       "store_fname": {
+        "context": {},
+        "domain": [],
         "name": "store_fname",
-        "string": "Stored Filename",
-        "type": "char",
         "readonly": false,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Stored Filename",
+        "type": "char"
       },
       "type": {
+        "context": {},
+        "domain": [],
         "name": "type",
-        "string": "Type",
-        "type": "selection",
         "readonly": false,
         "required": true,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Type",
+        "type": "selection"
       },
       "url": {
+        "context": {},
+        "domain": [],
         "name": "url",
-        "string": "Url",
-        "type": "char",
         "readonly": false,
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Url",
+        "type": "char"
       },
       "voice_ids": {
+        "context": {},
+        "domain": [],
         "name": "voice_ids",
-        "string": "Voice",
-        "type": "one2many",
-        "relation": "discuss.voice.metadata",
         "readonly": false,
+        "relation": "discuss.voice.metadata",
         "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
-      },
-      "write_date": {
-        "name": "write_date",
-        "string": "Last Updated on",
-        "type": "datetime",
-        "readonly": true,
-        "required": false,
-        "domain": [],
-        "context": {},
-        "selection": []
+        "selection": [],
+        "string": "Voice",
+        "type": "one2many"
       },
       "write_uid": {
-        "name": "write_uid",
-        "string": "Last Updated by",
-        "type": "many2one",
-        "relation": "res.users",
-        "readonly": true,
-        "required": false,
-        "domain": [],
         "context": {},
-        "selection": []
+        "domain": [],
+        "name": "write_uid",
+        "readonly": true,
+        "relation": "res.users",
+        "required": false,
+        "selection": [],
+        "string": "Last Updated by",
+        "type": "many2one"
       }
     },
-    "search": {
-      "model": "ir.attachment",
-      "version": 1,
-      "facets": {
-        "enabled": true
-      },
-      "filters": [
-        {
-          "key": "creation_month",
-          "help": "",
-          "tags": [],
-          "label": "Creation Date",
-          "domain": [],
-          "domain_raw": "[]",
-          "context_raw": "{'group_by':'create_date'}",
-          "groups_xmlids": []
-        },
-        {
-          "key": "my_documents_filter",
-          "help": "Filter on my documents",
-          "tags": [],
-          "label": "My Document(s)",
-          "domain": [],
-          "domain_raw": "[('create_uid','=',uid)]",
-          "context_raw": null,
-          "groups_xmlids": []
-        },
-        {
-          "key": "owner",
-          "help": "",
-          "tags": [],
-          "label": "Owner",
-          "domain": [],
-          "domain_raw": "[]",
-          "context_raw": "{'group_by':'create_uid'}",
-          "groups_xmlids": []
-        },
-        {
-          "key": "binary_filter",
-          "help": "",
-          "tags": [],
-          "label": "Stored",
-          "domain": [
-            [
-              "type",
-              "=",
-              "binary"
-            ]
-          ],
-          "domain_raw": "[('type', '=', 'binary')]",
-          "context_raw": null,
-          "groups_xmlids": []
-        },
-        {
-          "key": "url_filter",
-          "help": "",
-          "tags": [],
-          "label": "URL",
-          "domain": [
-            [
-              "type",
-              "=",
-              "url"
-            ]
-          ],
-          "domain_raw": "[('type', '=', 'url')]",
-          "context_raw": null,
-          "groups_xmlids": []
-        }
-      ],
-      "defaults": {
-        "limit": 80,
-        "order": "id desc"
-      },
-      "group_by": [
-        {
-          "type": "many2one",
-          "field": "company_id",
-          "label": "Company",
-          "default": false
-        },
-        {
-          "type": "many2one",
-          "field": "create_uid",
-          "label": "Created by",
-          "default": false
-        },
-        {
-          "type": "datetime",
-          "field": "create_date",
-          "label": "Created on",
-          "default": false
-        },
-        {
-          "type": "boolean",
-          "field": "public",
-          "label": "Is public document",
-          "default": false
-        },
-        {
-          "type": "many2one",
-          "field": "write_uid",
-          "label": "Last Updated by",
-          "default": false
-        },
-        {
-          "type": "datetime",
-          "field": "write_date",
-          "label": "Last Updated on",
-          "default": false
-        },
-        {
-          "type": "many2one",
-          "field": "original_id",
-          "label": "Original (unoptimized, unresized) attachment",
-          "default": false
-        },
-        {
-          "type": "selection",
-          "field": "type",
-          "label": "Type",
-          "default": false
-        }
-      ],
-      "saved_filters": []
-    },
+    "head": {},
+    "missing_models": [],
     "permissions": {
-      "model": "ir.attachment",
-      "rules": {
-        "read": {
-          "mode": "OR",
-          "clauses": []
+      "domain_default": [],
+      "effective": {
+        "groups": [
+          1,
+          2,
+          3,
+          34,
+          4,
+          33,
+          7,
+          8,
+          9,
+          15,
+          18,
+          60,
+          95
+        ],
+        "rights": {
+          "create": true,
+          "read": true,
+          "unlink": true,
+          "write": true
         },
-        "write": {
-          "mode": "OR",
-          "clauses": []
-        },
-        "create": {
-          "mode": "OR",
-          "clauses": []
-        },
-        "unlink": {
-          "mode": "OR",
-          "clauses": []
+        "rules": {
+          "create": {
+            "clauses": [],
+            "mode": "OR"
+          },
+          "read": {
+            "clauses": [],
+            "mode": "OR"
+          },
+          "unlink": {
+            "clauses": [],
+            "mode": "OR"
+          },
+          "write": {
+            "clauses": [],
+            "mode": "OR"
+          }
         }
       },
       "field_groups": {
-        "id": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "raw": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "url": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "name": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "type": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "datas": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "public": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "res_id": {
+        "access_token": {
           "groups_ids": [],
           "groups_xmlids": []
         },
@@ -566,15 +419,31 @@
           "groups_ids": [],
           "groups_xmlids": []
         },
+        "company_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "create_date": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "create_uid": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "datas": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
         "db_datas": {
           "groups_ids": [],
           "groups_xmlids": []
         },
-        "mimetype": {
+        "description": {
           "groups_ids": [],
           "groups_xmlids": []
         },
-        "res_name": {
+        "display_name": {
           "groups_ids": [],
           "groups_xmlids": []
         },
@@ -582,7 +451,23 @@
           "groups_ids": [],
           "groups_xmlids": []
         },
+        "id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "image_height": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
         "image_src": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "image_width": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "index_content": {
           "groups_ids": [],
           "groups_xmlids": []
         },
@@ -590,11 +475,51 @@
           "groups_ids": [],
           "groups_xmlids": []
         },
+        "mimetype": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "name": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "original_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "public": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "raw": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
         "res_field": {
           "groups_ids": [],
           "groups_xmlids": []
         },
+        "res_id": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
         "res_model": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "res_name": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "store_fname": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "type": {
+          "groups_ids": [],
+          "groups_xmlids": []
+        },
+        "url": {
           "groups_ids": [],
           "groups_xmlids": []
         },
@@ -605,293 +530,500 @@
         "write_uid": {
           "groups_ids": [],
           "groups_xmlids": []
-        },
-        "company_id": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "create_uid": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "write_date": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "create_date": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "description": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "image_width": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "original_id": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "store_fname": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "access_token": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "display_name": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "image_height": {
-          "groups_ids": [],
-          "groups_xmlids": []
-        },
-        "index_content": {
-          "groups_ids": [],
-          "groups_xmlids": []
         }
       },
+      "model": "ir.attachment",
       "order_default": "id desc",
-      "domain_default": [],
       "perms_by_group": {
         "__all__": {
-          "read": false,
-          "write": false,
           "create": false,
-          "unlink": false
+          "read": false,
+          "unlink": false,
+          "write": false
         },
         "base.group_user": {
-          "read": true,
-          "write": true,
           "create": true,
-          "unlink": true
+          "read": true,
+          "unlink": true,
+          "write": true
         }
       },
-      "effective": {
-        "groups": [
-          1,
-          2,
-          3,
-          34,
-          66,
-          6,
-          4,
-          8,
-          9,
-          7,
-          33,
-          15,
-          18,
-          91,
-          60,
-          95
-        ],
-        "rights": {
-          "read": true,
-          "write": true,
-          "create": true,
-          "unlink": true
+      "rules": {
+        "create": {
+          "clauses": [],
+          "mode": "OR"
         },
-        "rules": {
-          "read": {
-            "mode": "OR",
-            "clauses": []
-          },
-          "write": {
-            "mode": "OR",
-            "clauses": []
-          },
-          "create": {
-            "mode": "OR",
-            "clauses": []
-          },
-          "unlink": {
-            "mode": "OR",
-            "clauses": []
-          }
+        "read": {
+          "clauses": [],
+          "mode": "OR"
+        },
+        "unlink": {
+          "clauses": [],
+          "mode": "OR"
+        },
+        "write": {
+          "clauses": [],
+          "mode": "OR"
         }
       }
     },
-    "buttons": [
-      {
-        "key": "base.action_attachment",
-        "kind": "open",
-        "label": "Attachments",
-        "level": "toolbar",
-        "model": "ir.attachment",
-        "groups": [],
-        "intent": "open",
-        "params": {
-          "target": "current"
-        },
-        "payload": {
-          "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    Create a new document\n                </p>\n                <p>\n                    Also you will find here all the related documents and download it by clicking on any individual document.\n                </p>\n            ",
-          "xml_id": "base.action_attachment",
-          "view_id": null,
-          "action_id": 26,
-          "view_mode": "kanban,tree,form",
-          "domain_raw": false,
-          "context_raw": "{}"
-        },
-        "visible": {
+    "reports": [],
+    "search": {
+      "defaults": {
+        "limit": 80,
+        "order": "id desc"
+      },
+      "facets": {
+        "enabled": true
+      },
+      "filters": [
+        {
+          "context_raw": "{'group_by':'create_date'}",
           "domain": [],
-          "states": []
+          "domain_raw": "[]",
+          "groups_xmlids": [],
+          "help": "",
+          "key": "creation_month",
+          "label": "Creation Date",
+          "tags": []
         },
-        "selection": "none",
-        "target_model": "ir.attachment",
-        "groups_xmlids": []
-      }
-    ],
+        {
+          "context_raw": null,
+          "domain": [],
+          "domain_raw": "[('create_uid','=',uid)]",
+          "groups_xmlids": [],
+          "help": "Filter on my documents",
+          "key": "my_documents_filter",
+          "label": "My Document(s)",
+          "tags": []
+        },
+        {
+          "context_raw": "{'group_by':'create_uid'}",
+          "domain": [],
+          "domain_raw": "[]",
+          "groups_xmlids": [],
+          "help": "",
+          "key": "owner",
+          "label": "Owner",
+          "tags": []
+        },
+        {
+          "context_raw": null,
+          "domain": [
+            [
+              "type",
+              "=",
+              "binary"
+            ]
+          ],
+          "domain_raw": "[('type', '=', 'binary')]",
+          "groups_xmlids": [],
+          "help": "",
+          "key": "binary_filter",
+          "label": "Stored",
+          "tags": []
+        },
+        {
+          "context_raw": null,
+          "domain": [
+            [
+              "type",
+              "=",
+              "url"
+            ]
+          ],
+          "domain_raw": "[('type', '=', 'url')]",
+          "groups_xmlids": [],
+          "help": "",
+          "key": "url_filter",
+          "label": "URL",
+          "tags": []
+        }
+      ],
+      "group_by": [
+        {
+          "default": false,
+          "field": "company_id",
+          "label": "Company",
+          "type": "many2one"
+        },
+        {
+          "default": false,
+          "field": "create_uid",
+          "label": "Created by",
+          "type": "many2one"
+        },
+        {
+          "default": false,
+          "field": "create_date",
+          "label": "Created on",
+          "type": "datetime"
+        },
+        {
+          "default": false,
+          "field": "public",
+          "label": "Is public document",
+          "type": "boolean"
+        },
+        {
+          "default": false,
+          "field": "write_uid",
+          "label": "Last Updated by",
+          "type": "many2one"
+        },
+        {
+          "default": false,
+          "field": "write_date",
+          "label": "Last Updated on",
+          "type": "datetime"
+        },
+        {
+          "default": false,
+          "field": "original_id",
+          "label": "Original (unoptimized, unresized) attachment",
+          "type": "many2one"
+        },
+        {
+          "default": false,
+          "field": "type",
+          "label": "Type",
+          "type": "selection"
+        }
+      ],
+      "model": "ir.attachment",
+      "saved_filters": [],
+      "version": 1
+    },
     "toolbar": {
+      "footer": [],
       "header": [
         {
+          "groups": [],
+          "groups_xmlids": [],
+          "intent": "open",
           "key": "base.action_attachment",
           "kind": "open",
           "label": "Attachments",
           "level": "toolbar",
           "model": "ir.attachment",
-          "groups": [],
-          "intent": "open",
           "params": {
             "target": "current"
           },
           "payload": {
-            "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    Create a new document\n                </p>\n                <p>\n                    Also you will find here all the related documents and download it by clicking on any individual document.\n                </p>\n            ",
-            "xml_id": "base.action_attachment",
-            "view_id": null,
             "action_id": 26,
-            "view_mode": "kanban,tree,form",
+            "context_raw": "{}",
             "domain_raw": false,
-            "context_raw": "{}"
-          },
-          "visible": {
-            "domain": [],
-            "states": []
+            "help": "<p class=\"o_view_nocontent_smiling_face\">\n                    Create a new document\n                </p>\n                <p>\n                    Also you will find here all the related documents and download it by clicking on any individual document.\n                </p>\n            ",
+            "view_id": null,
+            "view_mode": "kanban,tree,form",
+            "xml_id": "base.action_attachment"
           },
           "selection": "none",
           "target_model": "ir.attachment",
-          "groups_xmlids": []
+          "visible": {
+            "domain": [],
+            "states": []
+          }
         }
       ],
-      "sidebar": [],
-      "footer": []
+      "sidebar": []
     },
-    "workflow": {
-      "meta": {
-        "source": "fields_get + form.buttons"
-      },
-      "model": "ir.attachment",
-      "engine": "inferred",
-      "states": [],
-      "activities": [
-        {
-          "id": 1,
-          "name": "Email",
-          "category": "default",
-          "res_model": false
-        },
-        {
-          "id": 2,
-          "name": "Call",
-          "category": "phonecall",
-          "res_model": false
-        },
-        {
-          "id": 3,
-          "name": "Meeting",
-          "category": "default",
-          "res_model": false
-        },
-        {
-          "id": 7,
-          "name": "Tier Validation Reminder",
-          "category": "default",
-          "res_model": false
-        },
-        {
-          "id": 4,
-          "name": "To-Do",
-          "category": "reminder",
-          "res_model": false
-        },
-        {
-          "id": 8,
-          "name": "Reminder",
-          "category": "reminder",
-          "res_model": false
-        },
-        {
-          "id": 5,
-          "name": "Upload Document",
-          "category": "upload_file",
-          "res_model": false
-        }
-      ],
-      "state_field": null,
-      "transitions": []
-    },
-    "reports": [],
-    "degraded": false,
-    "missing_models": [],
-    "warnings": [],
     "validator": {
-      "model": "ir.attachment",
-      "version": 1,
+      "defaults_sample": {
+        "company_id": "dynamic",
+        "type": "dynamic"
+      },
       "field_rules": {
+        "access_token": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Access Token",
+          "type": "char"
+        },
+        "checksum": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": 40,
+          "string": "Checksum/SHA1",
+          "type": "char"
+        },
+        "company_id": {
+          "digits": null,
+          "domain_raw": [],
+          "help": "",
+          "relation": "res.company",
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Company",
+          "type": "many2one"
+        },
+        "create_date": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Created on",
+          "type": "datetime"
+        },
+        "create_uid": {
+          "digits": null,
+          "domain_raw": [],
+          "help": "",
+          "relation": "res.users",
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Created by",
+          "type": "many2one"
+        },
+        "datas": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "File Content (base64)",
+          "type": "binary"
+        },
+        "db_datas": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Database Data",
+          "type": "binary"
+        },
+        "description": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Description",
+          "type": "text"
+        },
+        "display_name": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Display Name",
+          "type": "char"
+        },
+        "file_size": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "File Size",
+          "type": "integer"
+        },
         "id": {
-          "help": "",
-          "size": null,
-          "type": "integer",
           "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
           "string": "ID",
+          "type": "integer"
+        },
+        "image_height": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
           "relation": null,
           "required": false,
           "selection": [],
-          "domain_raw": null
-        },
-        "raw": {
-          "help": "",
           "size": null,
-          "type": "binary",
-          "digits": null,
-          "string": "File Content (raw)",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
+          "string": "Image Height",
+          "type": "integer"
         },
-        "url": {
-          "help": "",
-          "size": 1024,
-          "type": "char",
+        "image_src": {
           "digits": null,
-          "string": "Url",
+          "domain_raw": null,
+          "help": "",
           "relation": null,
           "required": false,
           "selection": [],
-          "domain_raw": null
+          "size": null,
+          "string": "Image Src",
+          "type": "char"
+        },
+        "image_width": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Image Width",
+          "type": "integer"
+        },
+        "index_content": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Indexed Content",
+          "type": "text"
+        },
+        "local_url": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Attachment URL",
+          "type": "char"
+        },
+        "mimetype": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Mime Type",
+          "type": "char"
         },
         "name": {
-          "help": "",
-          "size": null,
-          "type": "char",
           "digits": null,
-          "string": "Name",
+          "domain_raw": null,
+          "help": "",
           "relation": null,
           "required": true,
           "selection": [],
-          "domain_raw": null
+          "size": null,
+          "string": "Name",
+          "type": "char"
+        },
+        "original_id": {
+          "digits": null,
+          "domain_raw": [],
+          "help": "",
+          "relation": "ir.attachment",
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Original (unoptimized, unresized) attachment",
+          "type": "many2one"
+        },
+        "public": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Is public document",
+          "type": "boolean"
+        },
+        "raw": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "File Content (raw)",
+          "type": "binary"
+        },
+        "res_field": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Resource Field",
+          "type": "char"
+        },
+        "res_id": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Resource ID",
+          "type": "many2one_reference"
+        },
+        "res_model": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Resource Model",
+          "type": "char"
+        },
+        "res_name": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Resource Name",
+          "type": "char"
+        },
+        "store_fname": {
+          "digits": null,
+          "domain_raw": null,
+          "help": "",
+          "relation": null,
+          "required": false,
+          "selection": [],
+          "size": null,
+          "string": "Stored Filename",
+          "type": "char"
         },
         "type": {
-          "help": "You can either upload a file from your computer or copy/paste an internet link to your file.",
-          "size": null,
-          "type": "selection",
           "digits": null,
-          "string": "Type",
+          "domain_raw": null,
+          "help": "You can either upload a file from your computer or copy/paste an internet link to your file.",
           "relation": null,
           "required": true,
           "selection": [
@@ -904,308 +1036,147 @@
               "File"
             ]
           ],
-          "domain_raw": null
-        },
-        "datas": {
-          "help": "",
           "size": null,
-          "type": "binary",
-          "digits": null,
-          "string": "File Content (base64)",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
+          "string": "Type",
+          "type": "selection"
         },
-        "public": {
-          "help": "",
-          "size": null,
-          "type": "boolean",
+        "url": {
           "digits": null,
-          "string": "Is public document",
+          "domain_raw": null,
+          "help": "",
           "relation": null,
           "required": false,
           "selection": [],
-          "domain_raw": null
-        },
-        "res_id": {
-          "help": "",
-          "size": null,
-          "type": "many2one_reference",
-          "digits": null,
-          "string": "Resource ID",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "checksum": {
-          "help": "",
-          "size": 40,
-          "type": "char",
-          "digits": null,
-          "string": "Checksum/SHA1",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "db_datas": {
-          "help": "",
-          "size": null,
-          "type": "binary",
-          "digits": null,
-          "string": "Database Data",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "mimetype": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Mime Type",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "res_name": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Resource Name",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "file_size": {
-          "help": "",
-          "size": null,
-          "type": "integer",
-          "digits": null,
-          "string": "File Size",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "image_src": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Image Src",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "local_url": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Attachment URL",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "res_field": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Resource Field",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "res_model": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Resource Model",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
+          "size": 1024,
+          "string": "Url",
+          "type": "char"
         },
         "voice_ids": {
-          "help": "",
-          "size": null,
-          "type": "one2many",
           "digits": null,
-          "string": "Voice",
+          "domain_raw": [],
+          "help": "",
           "relation": "discuss.voice.metadata",
           "required": false,
           "selection": [],
-          "domain_raw": []
+          "size": null,
+          "string": "Voice",
+          "type": "one2many"
         },
         "write_uid": {
-          "help": "",
-          "size": null,
-          "type": "many2one",
           "digits": null,
+          "domain_raw": [],
+          "help": "",
+          "relation": "res.users",
+          "required": false,
+          "selection": [],
+          "size": null,
           "string": "Last Updated by",
-          "relation": "res.users",
-          "required": false,
-          "selection": [],
-          "domain_raw": []
-        },
-        "company_id": {
-          "help": "",
-          "size": null,
-          "type": "many2one",
-          "digits": null,
-          "string": "Company",
-          "relation": "res.company",
-          "required": false,
-          "selection": [],
-          "domain_raw": []
-        },
-        "create_uid": {
-          "help": "",
-          "size": null,
-          "type": "many2one",
-          "digits": null,
-          "string": "Created by",
-          "relation": "res.users",
-          "required": false,
-          "selection": [],
-          "domain_raw": []
-        },
-        "write_date": {
-          "help": "",
-          "size": null,
-          "type": "datetime",
-          "digits": null,
-          "string": "Last Updated on",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "create_date": {
-          "help": "",
-          "size": null,
-          "type": "datetime",
-          "digits": null,
-          "string": "Created on",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "description": {
-          "help": "",
-          "size": null,
-          "type": "text",
-          "digits": null,
-          "string": "Description",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "image_width": {
-          "help": "",
-          "size": null,
-          "type": "integer",
-          "digits": null,
-          "string": "Image Width",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "original_id": {
-          "help": "",
-          "size": null,
-          "type": "many2one",
-          "digits": null,
-          "string": "Original (unoptimized, unresized) attachment",
-          "relation": "ir.attachment",
-          "required": false,
-          "selection": [],
-          "domain_raw": []
-        },
-        "store_fname": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Stored Filename",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "access_token": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Access Token",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "display_name": {
-          "help": "",
-          "size": null,
-          "type": "char",
-          "digits": null,
-          "string": "Display Name",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "image_height": {
-          "help": "",
-          "size": null,
-          "type": "integer",
-          "digits": null,
-          "string": "Image Height",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
-        },
-        "index_content": {
-          "help": "",
-          "size": null,
-          "type": "text",
-          "digits": null,
-          "string": "Indexed Content",
-          "relation": null,
-          "required": false,
-          "selection": [],
-          "domain_raw": null
+          "type": "many2one"
         }
       },
+      "model": "ir.attachment",
       "record_rules": {
-        "unique": [],
-        "sql_checks": []
+        "sql_checks": [],
+        "unique": []
       },
-      "defaults_sample": {
-        "type": "dynamic",
-        "company_id": "dynamic"
+      "version": 1
+    },
+    "views": {
+      "form": {},
+      "tree": {
+        "columns": [
+          "name",
+          "res_model",
+          "res_field",
+          "res_id",
+          "type",
+          "file_size",
+          "create_uid",
+          "create_date"
+        ],
+        "meta": {},
+        "model": "ir.attachment",
+        "modifiers": {},
+        "order": "id desc",
+        "page_size": 50,
+        "row_actions": [
+          {
+            "intent": "open",
+            "kind": "open",
+            "label": "Open",
+            "level": "row",
+            "name": "open_form",
+            "selection": "single"
+          }
+        ],
+        "row_classes": [],
+        "search": {},
+        "toolbar": {
+          "footer": [],
+          "header": [],
+          "sidebar": []
+        },
+        "version": 1,
+        "view_type": "tree"
       }
+    },
+    "warnings": [],
+    "workflow": {
+      "activities": [
+        {
+          "category": "default",
+          "id": 1,
+          "name": "Email",
+          "res_model": false
+        },
+        {
+          "category": "phonecall",
+          "id": 2,
+          "name": "Call",
+          "res_model": false
+        },
+        {
+          "category": "default",
+          "id": 3,
+          "name": "Meeting",
+          "res_model": false
+        },
+        {
+          "category": "default",
+          "id": 7,
+          "name": "Tier Validation Reminder",
+          "res_model": false
+        },
+        {
+          "category": "reminder",
+          "id": 4,
+          "name": "To-Do",
+          "res_model": false
+        },
+        {
+          "category": "reminder",
+          "id": 8,
+          "name": "Reminder",
+          "res_model": false
+        },
+        {
+          "category": "upload_file",
+          "id": 5,
+          "name": "Upload Document",
+          "res_model": false
+        }
+      ],
+      "engine": "inferred",
+      "meta": {
+        "source": "fields_get + form.buttons"
+      },
+      "model": "ir.attachment",
+      "state_field": null,
+      "states": [],
+      "transitions": []
     }
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": "list"
 }

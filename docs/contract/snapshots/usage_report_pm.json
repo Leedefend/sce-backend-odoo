@@ -1,102 +1,119 @@
 {
-  "case": "usage_report_pm",
-  "trace_id": "279db307-827c-4b31-a0b9-09afd9f0dbcb",
-  "exported_at": "2026-02-09T05:16:22Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "intent.invoke",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
+  "case": "usage_report_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "generated_at": "",
-    "totals": {
-      "scene_open_total": 0,
-      "capability_open_total": 0
-    },
+    "capability_top": [],
     "daily": {
-      "scene_open": [
-        {
-          "day": "2026-02-03",
-          "count": 0
-        },
-        {
-          "day": "2026-02-04",
-          "count": 0
-        },
-        {
-          "day": "2026-02-05",
-          "count": 0
-        },
-        {
-          "day": "2026-02-06",
-          "count": 0
-        },
-        {
-          "day": "2026-02-07",
-          "count": 0
-        },
-        {
-          "day": "2026-02-08",
-          "count": 0
-        },
-        {
-          "day": "2026-02-09",
-          "count": 0
-        }
-      ],
       "capability_open": [
         {
-          "day": "2026-02-03",
-          "count": 0
+          "count": 0,
+          "day": "2026-02-08"
         },
         {
-          "day": "2026-02-04",
-          "count": 0
+          "count": 0,
+          "day": "2026-02-09"
         },
         {
-          "day": "2026-02-05",
-          "count": 0
+          "count": 0,
+          "day": "2026-02-10"
         },
         {
-          "day": "2026-02-06",
-          "count": 0
+          "count": 0,
+          "day": "2026-02-11"
         },
         {
-          "day": "2026-02-07",
-          "count": 0
+          "count": 0,
+          "day": "2026-02-12"
         },
         {
-          "day": "2026-02-08",
-          "count": 0
+          "count": 0,
+          "day": "2026-02-13"
         },
         {
-          "day": "2026-02-09",
-          "count": 0
+          "count": 0,
+          "day": "2026-02-14"
+        }
+      ],
+      "scene_open": [
+        {
+          "count": 0,
+          "day": "2026-02-08"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-09"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-10"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-11"
+        },
+        {
+          "count": 0,
+          "day": "2026-02-12"
+        },
+        {
+          "count": 4,
+          "day": "2026-02-13"
+        },
+        {
+          "count": 7,
+          "day": "2026-02-14"
         }
       ]
     },
-    "scene_top": [],
-    "capability_top": [],
-    "role_top": [],
-    "user_top": [],
     "filters": {
-      "top": 10,
-      "days": 7,
-      "day_from": "2026-02-03",
-      "day_to": "2026-02-09",
-      "scene_key_prefix": "",
       "capability_key_prefix": "",
+      "day_from": "2026-02-08",
+      "day_to": "2026-02-14",
+      "days": 7,
       "role_code": "",
+      "scene_key_prefix": "",
+      "top": 10,
       "user_id": 0
-    }
+    },
+    "role_top": [
+      {
+        "capability_open_total": 0,
+        "combined_total": 11,
+        "role_code": "admin",
+        "scene_open_total": 11
+      }
+    ],
+    "scene_top": [
+      {
+        "count": 11,
+        "key": "my.work"
+      }
+    ],
+    "totals": {
+      "capability_open_total": 0,
+      "scene_open_total": 11
+    },
+    "user_top": [
+      {
+        "capability_open_total": 0,
+        "combined_total": 11,
+        "scene_open_total": 11,
+        "user_id": 2
+      }
+    ]
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
 }

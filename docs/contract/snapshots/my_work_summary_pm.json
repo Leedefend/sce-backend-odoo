@@ -1,18 +1,37 @@
 {
-  "case": "my_work_summary_pm",
-  "trace_id": "4e7a2e7a-2f05-432a-b6eb-ce123c2be314",
-  "exported_at": "2026-02-09T05:16:02Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "intent.invoke",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
+  "case": "my_work_summary_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "generated_at": "2026-02-09 05:16:02",
+    "facets": {
+      "reason_code_counts": [],
+      "section_counts": [],
+      "source_counts": []
+    },
+    "filters": {
+      "filtered_count": 0,
+      "page": 1,
+      "page_size": 10,
+      "reason_code": "all",
+      "search": "",
+      "section": "all",
+      "sort_by": "id",
+      "sort_dir": "desc",
+      "source": "all",
+      "total_before_filter": 0,
+      "total_pages": 1
+    },
+    "items": [],
     "sections": [
       {
         "key": "todo",
@@ -35,61 +54,40 @@
         "scene_key": "projects.list"
       }
     ],
+    "status": {
+      "hint": "可稍后刷新，或切换到其他场景创建/关注事项。",
+      "message": "当前没有待处理事项",
+      "reason_code": "NO_WORK_ITEMS",
+      "state": "EMPTY"
+    },
     "summary": [
       {
+        "count": 0,
         "key": "todo",
         "label": "待我处理",
-        "count": 0,
         "scene_key": "projects.list"
       },
       {
+        "count": 0,
         "key": "owned",
         "label": "我负责",
-        "count": 0,
         "scene_key": "projects.list"
       },
       {
+        "count": 0,
         "key": "mentions",
         "label": "@我的",
-        "count": 0,
         "scene_key": "projects.list"
       },
       {
+        "count": 0,
         "key": "following",
         "label": "我关注的",
-        "count": 0,
         "scene_key": "projects.list"
       }
-    ],
-    "items": [],
-    "facets": {
-      "source_counts": [],
-      "reason_code_counts": [],
-      "section_counts": []
-    },
-    "filters": {
-      "section": "all",
-      "source": "all",
-      "reason_code": "all",
-      "search": "",
-      "filtered_count": 0,
-      "total_before_filter": 0,
-      "sort_by": "id",
-      "sort_dir": "desc",
-      "page": 1,
-      "page_size": 10,
-      "total_pages": 1
-    },
-    "status": {
-      "state": "EMPTY",
-      "reason_code": "NO_WORK_ITEMS",
-      "message": "当前没有待处理事项",
-      "hint": "可稍后刷新，或切换到其他场景创建/关注事项。"
-    }
+    ]
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
 }

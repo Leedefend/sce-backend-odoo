@@ -2,6 +2,7 @@
   "action": null,
   "case": "scene_package_list_intent_admin",
   "contract_version": "v1",
+  "error": null,
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -12,8 +13,119 @@
   "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "count": 0,
-    "items": []
+    "count": 11,
+    "items": [
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T08:59:00Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": null,
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T09:14:27Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-13T09:14:27Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T09:20:03Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-13T09:20:03Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T09:25:50Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-13T09:25:50Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T22:10:08Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-13T22:10:08Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T22:22:08Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-13T22:22:08Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T22:29:31Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-13T22:29:31Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T22:44:22Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-13T22:44:22Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-13T22:51:49Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-13T22:51:49Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": false,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-14T01:04:15Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-14T01:04:15Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      },
+      {
+        "active": true,
+        "channel": "stable",
+        "checksum": "3f6a3127419458814029b8fe124a081d4bd6f4a18cd60446c036b90beaba5870",
+        "installed_at": "2026-02-14T01:24:59Z",
+        "installed_version": "0.0.1",
+        "last_upgrade_at": "2026-02-14T01:24:59Z",
+        "package_name": "snapshot.pkg",
+        "source": "import"
+      }
+    ]
   },
   "user": "admin",
   "user_fallback": null,

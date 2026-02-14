@@ -2,6 +2,7 @@
   "action": null,
   "case": "capability_describe_intent_admin",
   "contract_version": "v1",
+  "error": null,
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -15,18 +16,14 @@
     "api_version": "v1",
     "contract_version": "v0.1",
     "default_payload": {
-      "action_id": 527,
       "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
-      "menu_id": 338,
       "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix"
     },
     "intent": "ui.contract",
     "key": "capability.matrix",
     "name": "能力矩阵",
     "payload_schema": {
-      "action_id": "integer",
       "action_xmlid": "string",
-      "menu_id": "integer",
       "menu_xmlid": "string"
     },
     "required_groups": [],
