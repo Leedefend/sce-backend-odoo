@@ -101,7 +101,10 @@
         </div>
       </section>
       <section v-if="actionHistory.length" class="semantic-action-history">
-        <h3>最近操作</h3>
+        <div class="history-header">
+          <h3>最近操作</h3>
+          <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
+        </div>
         <ul>
           <li v-for="entry in actionHistory" :key="entry.key">
             <strong>{{ entry.label }}</strong>
@@ -713,6 +716,10 @@ async function rerunLastSemanticAction() {
   }
 }
 
+function clearActionHistory() {
+  actionHistory.value = [];
+}
+
 function reload() {
   load();
 }
@@ -959,6 +966,21 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin: 0 0 8px;
   font-size: 14px;
   color: #0f172a;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-clear {
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
 }
 
 .semantic-action-history ul {
