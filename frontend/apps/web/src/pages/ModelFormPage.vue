@@ -178,10 +178,10 @@
         <span>主要阻塞：{{ topBlockedActions.join(' / ') }}</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
-        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作 · <code>Alt+F</code> 刷新动作面 · <code>?</code> 显示/隐藏帮助
+        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作 · <code>Alt+F</code> 刷新动作面 · <code>Alt+H</code> 重置历史筛选 · <code>?</code> 显示/隐藏帮助
       </section>
       <section v-if="semanticActionButtons.length && shortcutHelpVisible" class="semantic-action-stale-banner">
-        <span>帮助：`Ctrl+Enter` 执行主动作；`Alt+R` 重试；`Alt+F` 刷新；`?` 切换帮助显示。</span>
+        <span>帮助：`Ctrl+Enter` 执行主动作；`Alt+R` 重试；`Alt+F` 刷新；`Alt+H` 重置历史筛选；`?` 切换帮助显示。</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
@@ -237,8 +237,11 @@
             <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
             <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" @click="copyAllHistory">复制当前视图</button>
             <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" @click="exportActionHistory">导出当前视图</button>
+            <button type="button" class="history-clear" title="复制当前视图历史JSON" aria-label="复制当前视图历史JSON" @click="copyVisibleHistoryJson">复制当前JSON</button>
             <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
             <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
+            <button type="button" class="history-clear" title="复制当前视图原因统计" aria-label="复制当前视图原因统计" @click="copyVisibleReasonStats">复制原因统计</button>
+            <button type="button" class="history-clear" title="复制筛选查询串" aria-label="复制筛选查询串" @click="copyHistoryFilterQuery">复制查询串</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" @click="clearVisibleHistory">清空当前视图</button>
@@ -257,6 +260,8 @@
           <button type="button" :class="{ active: historyOutcomeFilter === 'ALL' }" @click="historyOutcomeFilter = 'ALL'">全部结果</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'SUCCESS' }" @click="historyOutcomeFilter = 'SUCCESS'">成功</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'FAILED' }" @click="historyOutcomeFilter = 'FAILED'">失败</button>
+          <button type="button" class="history-clear" @click="applyFailureFocusPreset">失败聚焦</button>
+          <button type="button" class="history-clear" @click="applySuccessFocusPreset">成功巡检</button>
           <button type="button" :class="{ active: historySortMode === 'DESC' }" @click="historySortMode = 'DESC'">最新优先</button>
           <button type="button" :class="{ active: historySortMode === 'ASC' }" @click="historySortMode = 'ASC'">最早优先</button>
           <button type="button" :class="{ active: historyDurationFilter === 'ALL' }" @click="historyDurationFilter = 'ALL'">全部耗时</button>
@@ -279,6 +284,13 @@
           </button>
           <button type="button" class="history-clear" @click="resetHistoryFilters">重置历史筛选</button>
         </div>
+        <div class="history-filter-summary">
+          当前筛选: {{ historyFilterSummaryText }}
+        </div>
+        <div v-if="actionHistory.length && !displayedActionHistory.length" class="history-empty-tip">
+          当前筛选条件下暂无记录。
+          <button type="button" class="history-clear" @click="resetHistoryFilters">恢复全部</button>
+        </div>
         <ul>
           <li v-for="entry in displayedActionHistory" :key="entry.key">
             <strong>{{ entry.label }}</strong>
@@ -286,7 +298,15 @@
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
             <span class="history-meta">cost: {{ historyDurationLabel(entry) }}</span>
             <span class="history-meta">at: {{ entry.atText }} ({{ historyAgeLabel(entry) }})</span>
-            <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
+            <button
+              v-if="entry.traceId"
+              type="button"
+              class="history-trace-link"
+              :title="`按 Trace 过滤: ${entry.traceId}`"
+              @click="applyHistoryTraceFilter(entry.traceId)"
+            >
+              trace: {{ entry.traceId }}
+            </button>
             <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
           </li>
         </ul>
@@ -849,6 +869,19 @@ const displayedActionHistory = computed(() => {
   const rows = [...filteredActionHistory.value];
   return rows.sort((a, b) => (historySortMode.value === 'ASC' ? a.at - b.at : b.at - a.at));
 });
+const historyFilterSummaryText = computed(() => {
+  const parts = [
+    `结果=${historyOutcomeFilter.value}`,
+    `耗时=${historyDurationFilter.value}`,
+    `时间=${historyTimeWindow.value}`,
+    `原因=${historyReasonFilter.value}`,
+    `排序=${historySortMode.value}`,
+  ];
+  if (historySearch.value.trim()) {
+    parts.push(`搜索=${historySearch.value.trim()}`);
+  }
+  return parts.join(' · ');
+});
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
     return [];
@@ -1291,6 +1324,22 @@ function resetHistoryFilters() {
   historySortMode.value = 'DESC';
 }
 
+function applyFailureFocusPreset() {
+  historyOutcomeFilter.value = 'FAILED';
+  historyTimeWindow.value = 'D1';
+  historySortMode.value = 'DESC';
+}
+
+function applySuccessFocusPreset() {
+  historyOutcomeFilter.value = 'SUCCESS';
+  historyTimeWindow.value = 'D1';
+  historySortMode.value = 'DESC';
+}
+
+function applyHistoryTraceFilter(traceId: string) {
+  historySearch.value = String(traceId || '').trim();
+}
+
 function exportEvidenceBundle() {
   if (!recordId.value) return;
   const payload = {
@@ -1479,7 +1528,17 @@ async function rerunLastSemanticAction() {
 }
 
 function clearActionHistory() {
+  if (!actionHistory.value.length) return;
+  const confirmed = window.confirm(`确定要清空全部历史记录吗？将删除 ${actionHistory.value.length} 条记录。`);
+  if (!confirmed) return;
   actionHistory.value = [];
+  actionFeedback.value = {
+    message: '已清空全部历史记录',
+    reasonCode: 'HISTORY_ALL_CLEARED',
+    success: true,
+    traceId: lastTraceId.value,
+  };
+  armActionFeedbackAutoClear();
 }
 
 function clearVisibleHistory() {
@@ -1621,6 +1680,35 @@ async function copyVisibleTraces() {
   }
 }
 
+async function copyVisibleReasonStats() {
+  if (!displayedActionHistory.value.length) return;
+  const counts = new Map<string, number>();
+  for (const entry of displayedActionHistory.value) {
+    const reason = String(entry.reasonCode || 'UNKNOWN').trim() || 'UNKNOWN';
+    counts.set(reason, Number(counts.get(reason) || 0) + 1);
+  }
+  const lines = Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([reason, count]) => `${reason}: ${count}`);
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: `原因统计已复制（${lines.length} 类）`,
+      reasonCode: 'HISTORY_REASON_STATS_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '原因统计复制失败',
+      reasonCode: 'HISTORY_REASON_STATS_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
 async function copyHistoryFilterSummary() {
   if (!actionHistory.value.length) {
     actionFeedback.value = {
@@ -1664,6 +1752,36 @@ async function copyHistoryFilterSummary() {
   }
 }
 
+async function copyHistoryFilterQuery() {
+  const query = [
+    `model=${encodeURIComponent(model.value)}`,
+    `record_id=${encodeURIComponent(String(recordId.value || '-'))}`,
+    `outcome=${encodeURIComponent(historyOutcomeFilter.value)}`,
+    `duration=${encodeURIComponent(historyDurationFilter.value)}`,
+    `time_window=${encodeURIComponent(historyTimeWindow.value)}`,
+    `reason=${encodeURIComponent(historyReasonFilter.value)}`,
+    `sort=${encodeURIComponent(historySortMode.value)}`,
+    `search=${encodeURIComponent(historySearch.value || '')}`,
+  ].join('&');
+  try {
+    await navigator.clipboard.writeText(query);
+    actionFeedback.value = {
+      message: '筛选查询串已复制',
+      reasonCode: 'HISTORY_FILTER_QUERY_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '筛选查询串复制失败',
+      reasonCode: 'HISTORY_FILTER_QUERY_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
 function exportActionHistory() {
   if (!displayedActionHistory.value.length || !recordId.value) return;
   const ts = new Date()
@@ -1695,6 +1813,33 @@ function exportActionHistory() {
   anchor.download = `payment_action_history_${model.value}_${recordId.value}_${fileSuffix}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+async function copyVisibleHistoryJson() {
+  if (!displayedActionHistory.value.length) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value || null,
+    exported_at: Date.now(),
+    entries: displayedActionHistory.value,
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    actionFeedback.value = {
+      message: `当前视图 JSON 已复制（${displayedActionHistory.value.length} 条）`,
+      reasonCode: 'HISTORY_VISIBLE_JSON_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '当前视图 JSON 复制失败',
+      reasonCode: 'HISTORY_VISIBLE_JSON_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
 }
 
 function exportActionHistoryCsv() {
@@ -1769,6 +1914,11 @@ function onSemanticHotkey(event: KeyboardEvent) {
   if (event.altKey && (event.key === 'f' || event.key === 'F') && !loading.value && !actionBusy.value) {
     event.preventDefault();
     void loadPaymentActionSurface();
+    return;
+  }
+  if (event.altKey && (event.key === 'h' || event.key === 'H')) {
+    event.preventDefault();
+    resetHistoryFilters();
   }
 }
 
@@ -2388,6 +2538,21 @@ function analyzeLayout(layout: ViewContract['layout']) {
   box-shadow: inset 0 0 0 1px #0f766e;
 }
 
+.history-empty-tip {
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-filter-summary {
+  margin-bottom: 8px;
+  color: #475569;
+  font-size: 12px;
+}
+
 .history-clear {
   padding: 2px 8px;
   border-radius: 8px;
@@ -2427,6 +2592,17 @@ function analyzeLayout(layout: ViewContract['layout']) {
   background: #f8fafc;
   color: #334155;
   font-size: 11px;
+}
+
+.history-trace-link {
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .field {
