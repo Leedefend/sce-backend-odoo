@@ -141,6 +141,14 @@
           >
             {{ suggestedActionMeta(action).label || '执行建议' }}
           </button>
+          <button
+            v-if="!action.allowed && action.handoffRequired"
+            class="hint-action"
+            type="button"
+            @click="copyHandoffNote(action)"
+          >
+            复制转交说明
+          </button>
         </div>
       </section>
       <section v-if="actionHistory.length" class="semantic-action-history">
@@ -724,6 +732,34 @@ function blockedReasonText(action: SemanticActionButton) {
   if (message) return message;
   if (reasonCode) return PAYMENT_REASON_TEXT[reasonCode] || reasonCode;
   return '当前状态不可执行';
+}
+
+async function copyHandoffNote(action: SemanticActionButton) {
+  const lines = [
+    `record=${model.value}:${recordId.value || '-'}`,
+    `action=${action.label}(${action.key})`,
+    `required_role=${action.requiredRoleLabel || action.requiredRoleKey || '-'}`,
+    `reason=${blockedReasonText(action)}`,
+    `handoff_hint=${action.handoffHint || '-'}`,
+    `trace_id=${lastTraceId.value || '-'}`,
+  ];
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: '转交说明已复制',
+      reasonCode: 'HANDOFF_NOTE_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '转交说明复制失败',
+      reasonCode: 'HANDOFF_NOTE_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
 }
 
 async function copyActionSurface() {
