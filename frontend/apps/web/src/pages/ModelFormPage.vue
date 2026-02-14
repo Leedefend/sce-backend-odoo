@@ -95,8 +95,10 @@
         <span>主动作: {{ primaryActionKey || '-' }}</span>
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
-        <span>刷新: {{ actionSurfaceAgeLabel }}</span>
+        <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
+        <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
+        <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
         <label class="auto-refresh-toggle">
           <input v-model="autoRefreshActionSurface" type="checkbox" />
           自动刷新
@@ -401,6 +403,10 @@ const actionSurfaceAgeLabel = computed(() => {
   const min = Math.floor(deltaSec / 60);
   const sec = deltaSec % 60;
   return `${min}m${sec}s`;
+});
+const actionSurfaceIsStale = computed(() => {
+  if (!paymentActionSurfaceLoadedAt.value) return true;
+  return Date.now() - paymentActionSurfaceLoadedAt.value > 60_000;
 });
 const primaryAllowedAction = computed(() => {
   const primary = displayedSemanticActionButtons.value.find(
@@ -717,6 +723,53 @@ function blockedReasonText(action: SemanticActionButton) {
   if (message) return message;
   if (reasonCode) return PAYMENT_REASON_TEXT[reasonCode] || reasonCode;
   return '当前状态不可执行';
+}
+
+async function copyActionSurface() {
+  if (!recordId.value || !semanticActionButtons.value.length) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    primary_action_key: primaryActionKey.value,
+    loaded_at: paymentActionSurfaceLoadedAt.value,
+    actions: semanticActionButtons.value,
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    actionFeedback.value = {
+      message: '动作面已复制',
+      reasonCode: 'ACTION_SURFACE_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '动作面复制失败',
+      reasonCode: 'ACTION_SURFACE_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+function exportActionSurface() {
+  if (!recordId.value || !semanticActionButtons.value.length) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    primary_action_key: primaryActionKey.value,
+    loaded_at: paymentActionSurfaceLoadedAt.value,
+    exported_at: Date.now(),
+    actions: semanticActionButtons.value,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `payment_action_surface_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function suggestedActionMeta(action: SemanticActionButton) {
@@ -1158,6 +1211,11 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 12px;
   font-size: 12px;
   color: #64748b;
+}
+
+.semantic-action-stats .stale {
+  color: #b45309;
+  font-weight: 600;
 }
 
 .stats-refresh {
