@@ -229,6 +229,7 @@
           >
             {{ reason }}
           </button>
+          <button type="button" class="history-clear" @click="resetHistoryFilters">重置历史筛选</button>
         </div>
         <ul>
           <li v-for="entry in filteredActionHistory" :key="entry.key">
@@ -1120,17 +1121,25 @@ function resetActionPanelPrefs() {
   actionFilterMode.value = 'all';
   hideBlockedHints.value = false;
   semanticActionSearch.value = '';
-  historyReasonFilter.value = 'ALL';
+  resetHistoryFilters();
   autoRefreshActionSurface.value = false;
   autoRefreshIntervalSec.value = 15;
   try {
     window.localStorage.removeItem(actionFilterStorageKey);
     window.localStorage.removeItem(historyReasonFilterStorageKey.value);
+    window.localStorage.removeItem(historyOutcomeFilterStorageKey.value);
+    window.localStorage.removeItem(historySearchStorageKey.value);
     window.localStorage.removeItem(actionSearchStorageKey.value);
     window.localStorage.removeItem(autoRefreshIntervalStorageKey);
   } catch {
     // Ignore storage errors.
   }
+}
+
+function resetHistoryFilters() {
+  historyReasonFilter.value = 'ALL';
+  historyOutcomeFilter.value = 'ALL';
+  historySearch.value = '';
 }
 
 function exportEvidenceBundle() {
