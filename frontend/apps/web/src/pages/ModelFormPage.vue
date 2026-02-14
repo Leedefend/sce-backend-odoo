@@ -235,17 +235,18 @@
           </h3>
           <div class="history-actions">
             <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
-            <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" @click="copyAllHistory">复制当前视图</button>
-            <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" @click="exportActionHistory">导出当前视图</button>
-            <button type="button" class="history-clear" title="复制当前视图历史JSON" aria-label="复制当前视图历史JSON" @click="copyVisibleHistoryJson">复制当前JSON</button>
-            <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
-            <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
-            <button type="button" class="history-clear" title="复制当前视图原因统计" aria-label="复制当前视图原因统计" @click="copyVisibleReasonStats">复制原因统计</button>
+            <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" :disabled="!hasVisibleHistory" @click="copyAllHistory">复制当前视图</button>
+            <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" :disabled="!hasVisibleHistory" @click="exportActionHistory">导出当前视图</button>
+            <button type="button" class="history-clear" title="复制当前视图历史JSON" aria-label="复制当前视图历史JSON" :disabled="!hasVisibleHistory" @click="copyVisibleHistoryJson">复制当前JSON</button>
+            <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" :disabled="!hasVisibleHistory" @click="exportActionHistoryCsv">导出当前CSV</button>
+            <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" :disabled="!hasVisibleTrace" @click="copyVisibleTraces">复制Trace列表</button>
+            <button type="button" class="history-clear" title="复制当前视图原因统计" aria-label="复制当前视图原因统计" :disabled="!hasVisibleHistory" @click="copyVisibleReasonStats">复制原因统计</button>
             <button type="button" class="history-clear" title="复制筛选查询串" aria-label="复制筛选查询串" @click="copyHistoryFilterQuery">复制查询串</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
-            <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" @click="clearVisibleHistory">清空当前视图</button>
-            <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
+            <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" :disabled="actionBusy || loading || !hasVisibleHistory" @click="clearVisibleHistory">清空当前视图</button>
+            <button type="button" class="history-clear" :disabled="actionBusy || loading || !actionHistory.length" @click="clearActionHistory">清空</button>
+            <button type="button" class="history-clear" :disabled="actionBusy || loading || !canUndoHistoryClear" @click="undoHistoryClear">撤销清空</button>
           </div>
         </div>
         <div class="history-filters">
@@ -417,6 +418,7 @@ const historyTimeWindow = ref<'ALL' | 'H1' | 'D1' | 'D7'>('ALL');
 const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
 const historySearchInputRef = ref<HTMLInputElement | null>(null);
+const lastClearedHistorySnapshot = ref<{ storageKey: string; entries: ActionHistoryEntry[] } | null>(null);
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
@@ -456,6 +458,9 @@ const historySortModeStorageKey = computed(
   () => `${historySortModeStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const actionSearchStorageKey = computed(() => `${actionSearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
+const canUndoHistoryClear = computed(
+  () => Boolean(lastClearedHistorySnapshot.value) && lastClearedHistorySnapshot.value?.storageKey === actionHistoryStorageKey.value,
+);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
   PAYMENT_ATTACHMENTS_REQUIRED: "提交前请先上传附件",
   BUSINESS_RULE_FAILED: "当前状态不满足执行条件",
@@ -869,6 +874,10 @@ const displayedActionHistory = computed(() => {
   const rows = [...filteredActionHistory.value];
   return rows.sort((a, b) => (historySortMode.value === 'ASC' ? a.at - b.at : b.at - a.at));
 });
+const hasVisibleHistory = computed(() => displayedActionHistory.value.length > 0);
+const hasVisibleTrace = computed(() =>
+  displayedActionHistory.value.some((entry) => String(entry.traceId || '').trim().length > 0),
+);
 const historyFilterSummaryText = computed(() => {
   const parts = [
     `结果=${historyOutcomeFilter.value}`,
@@ -1413,6 +1422,13 @@ function parseIntentActionResult(data: Record<string, unknown> | null | undefine
   return { message, reasonCode, success, replayed, requestId };
 }
 
+function createActionHistoryKey(seed = 'entry') {
+  const safeSeed = String(seed || 'entry')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .slice(0, 48);
+  return `${safeSeed}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 async function runSemanticAction(action: SemanticActionButton) {
   actionFeedback.value = null;
   if (!model.value || !recordId.value || !action.allowed) {
@@ -1469,7 +1485,7 @@ async function runSemanticAction(action: SemanticActionButton) {
     };
     actionHistory.value = [
       {
-        key: `${action.key}_${Date.now()}`,
+        key: createActionHistoryKey(action.key),
         label: action.label,
         reasonCode: parsed.reasonCode,
         success: parsed.success,
@@ -1528,9 +1544,11 @@ async function rerunLastSemanticAction() {
 }
 
 function clearActionHistory() {
+  if (actionBusy.value || loading.value) return;
   if (!actionHistory.value.length) return;
   const confirmed = window.confirm(`确定要清空全部历史记录吗？将删除 ${actionHistory.value.length} 条记录。`);
   if (!confirmed) return;
+  lastClearedHistorySnapshot.value = { storageKey: actionHistoryStorageKey.value, entries: [...actionHistory.value] };
   actionHistory.value = [];
   actionFeedback.value = {
     message: '已清空全部历史记录',
@@ -1542,7 +1560,11 @@ function clearActionHistory() {
 }
 
 function clearVisibleHistory() {
+  if (actionBusy.value || loading.value) return;
   if (!displayedActionHistory.value.length) return;
+  const confirmed = window.confirm(`确定要清空当前筛选视图吗？将删除 ${displayedActionHistory.value.length} 条记录。`);
+  if (!confirmed) return;
+  lastClearedHistorySnapshot.value = { storageKey: actionHistoryStorageKey.value, entries: [...actionHistory.value] };
   const keys = new Set(displayedActionHistory.value.map((item) => item.key));
   const before = actionHistory.value.length;
   actionHistory.value = actionHistory.value.filter((item) => !keys.has(item.key));
@@ -1550,6 +1572,21 @@ function clearVisibleHistory() {
   actionFeedback.value = {
     message: `已清空当前视图历史（${removed} 条）`,
     reasonCode: 'HISTORY_VISIBLE_CLEARED',
+    success: true,
+    traceId: lastTraceId.value,
+  };
+  armActionFeedbackAutoClear();
+}
+
+function undoHistoryClear() {
+  if (actionBusy.value || loading.value) return;
+  if (!lastClearedHistorySnapshot.value) return;
+  if (lastClearedHistorySnapshot.value.storageKey !== actionHistoryStorageKey.value) return;
+  actionHistory.value = [...lastClearedHistorySnapshot.value.entries].slice(0, actionHistoryLimit.value);
+  lastClearedHistorySnapshot.value = null;
+  actionFeedback.value = {
+    message: `已恢复历史记录（${actionHistory.value.length} 条）`,
+    reasonCode: 'HISTORY_CLEAR_UNDONE',
     success: true,
     traceId: lastTraceId.value,
   };
@@ -1600,7 +1637,10 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
 }
 
 async function copyLatestTrace() {
-  const trace = String(displayedActionHistory.value[0]?.traceId || actionFeedback.value?.traceId || lastTraceId.value || '').trim();
+  const latestHistory = [...actionHistory.value]
+    .sort((a, b) => Number(b.at || 0) - Number(a.at || 0))
+    .find((entry) => String(entry.traceId || '').trim());
+  const trace = String(latestHistory?.traceId || actionFeedback.value?.traceId || lastTraceId.value || '').trim();
   if (!trace) return;
   try {
     await navigator.clipboard.writeText(trace);
@@ -1896,6 +1936,9 @@ function onSemanticHotkey(event: KeyboardEvent) {
     historySearch.value = '';
     return;
   }
+  if (isTypingContext) {
+    return;
+  }
   if (!event.ctrlKey && !event.altKey && event.key === '?') {
     event.preventDefault();
     shortcutHelpVisible.value = !shortcutHelpVisible.value;
@@ -2154,17 +2197,26 @@ watch(
       }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        actionHistory.value = parsed.slice(0, actionHistoryLimit.value).map((item) => ({
-          key: String(item?.key || `${Date.now()}`),
-          label: String(item?.label || '-'),
-          reasonCode: String(item?.reasonCode || ''),
-          success: Boolean(item?.success),
-          stateBefore: String(item?.stateBefore || ''),
-          traceId: String(item?.traceId || ''),
-          durationMs: Number(item?.durationMs || 0),
-          at: Number(item?.at || Date.now()),
-          atText: String(item?.atText || ''),
-        }));
+        const usedKeys = new Set<string>();
+        actionHistory.value = parsed.slice(0, actionHistoryLimit.value).map((item, index) => {
+          const baseKey = String(item?.key || '').trim() || createActionHistoryKey(`entry_${index}`);
+          let key = baseKey;
+          while (usedKeys.has(key)) {
+            key = createActionHistoryKey(baseKey);
+          }
+          usedKeys.add(key);
+          return {
+            key,
+            label: String(item?.label || '-'),
+            reasonCode: String(item?.reasonCode || ''),
+            success: Boolean(item?.success),
+            stateBefore: String(item?.stateBefore || ''),
+            traceId: String(item?.traceId || ''),
+            durationMs: Number(item?.durationMs || 0),
+            at: Number(item?.at || Date.now()),
+            atText: String(item?.atText || ''),
+          };
+        });
       }
     } catch {
       actionHistory.value = [];
@@ -2503,11 +2555,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .history-actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .history-search {
@@ -2522,6 +2577,7 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   gap: 6px;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .history-filters button {
@@ -2562,6 +2618,11 @@ function analyzeLayout(layout: ViewContract['layout']) {
   font-size: 11px;
 }
 
+.history-clear:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .semantic-action-history ul {
   margin: 0;
   padding-left: 18px;
@@ -2569,8 +2630,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 6px;
 }
 
+.semantic-action-history li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 .history-outcome {
-  margin-left: 8px;
   color: #0f766e;
 }
 
@@ -2579,13 +2646,12 @@ function analyzeLayout(layout: ViewContract['layout']) {
 }
 
 .history-meta {
-  margin-left: 8px;
   color: #64748b;
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .history-copy {
-  margin-left: 8px;
   padding: 2px 8px;
   border-radius: 8px;
   border: 1px solid #cbd5e1;
@@ -2594,8 +2660,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
   font-size: 11px;
 }
 
+@media (max-width: 900px) {
+  .history-search {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 .history-trace-link {
-  margin-left: 8px;
   padding: 0;
   border: none;
   background: transparent;
@@ -2603,6 +2675,8 @@ function analyzeLayout(layout: ViewContract['layout']) {
   font-size: 12px;
   text-decoration: underline;
   cursor: pointer;
+  overflow-wrap: anywhere;
+  word-break: break-all;
 }
 
 .field {
