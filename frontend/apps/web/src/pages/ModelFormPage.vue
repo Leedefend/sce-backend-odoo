@@ -123,6 +123,9 @@
         <span>动作面可能过期（超过 60 秒），请先刷新后再执行。</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">立即刷新</button>
       </section>
+      <section v-if="topBlockedActions.length" class="semantic-action-stale-banner">
+        <span>主要阻塞：{{ topBlockedActions.join(' / ') }}</span>
+      </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
         快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
       </section>
@@ -464,6 +467,12 @@ const blockedTopReasons = computed(() => {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([reason, count]) => `${reason}:${count}`);
+});
+const topBlockedActions = computed(() => {
+  return semanticActionButtons.value
+    .filter((item) => !item.allowed)
+    .slice(0, 3)
+    .map((item) => `${item.label}(${item.reasonCode || 'UNKNOWN'})`);
 });
 
 async function copyActionStats() {
