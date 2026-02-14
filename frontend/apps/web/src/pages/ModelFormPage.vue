@@ -125,6 +125,16 @@
         <button type="button" class="stats-refresh" title="导出可执行动作摘要" aria-label="导出可执行动作摘要" @click="exportAllowedSummary">导出可执行</button>
         <button type="button" class="stats-refresh" title="导出阻塞动作摘要" aria-label="导出阻塞动作摘要" @click="exportBlockedSummary">导出阻塞</button>
         <button type="button" class="stats-refresh" title="刷新动作面" aria-label="刷新动作面" @click="loadPaymentActionSurface">刷新动作面</button>
+        <button
+          type="button"
+          class="stats-refresh"
+          :disabled="!primaryAllowedAction || actionBusy || loading"
+          title="执行当前主动作"
+          aria-label="执行当前主动作"
+          @click="primaryAllowedAction && runSemanticAction(primaryAllowedAction)"
+        >
+          执行主动作
+        </button>
         <button type="button" class="stats-refresh" title="复制动作面JSON" aria-label="复制动作面JSON" @click="copyActionSurface">复制动作面</button>
         <button type="button" class="stats-refresh" title="导出动作面JSON" aria-label="导出动作面JSON" @click="exportActionSurface">导出动作面</button>
         <label class="auto-refresh-toggle">
