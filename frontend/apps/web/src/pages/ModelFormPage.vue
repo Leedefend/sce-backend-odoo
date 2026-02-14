@@ -1493,7 +1493,17 @@ async function rerunLastSemanticAction() {
 }
 
 function clearActionHistory() {
+  if (!actionHistory.value.length) return;
+  const confirmed = window.confirm(`确定要清空全部历史记录吗？将删除 ${actionHistory.value.length} 条记录。`);
+  if (!confirmed) return;
   actionHistory.value = [];
+  actionFeedback.value = {
+    message: '已清空全部历史记录',
+    reasonCode: 'HISTORY_ALL_CLEARED',
+    success: true,
+    traceId: lastTraceId.value,
+  };
+  armActionFeedbackAutoClear();
 }
 
 function clearVisibleHistory() {
