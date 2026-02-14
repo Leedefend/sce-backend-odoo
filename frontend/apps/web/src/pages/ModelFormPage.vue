@@ -127,7 +127,7 @@
           <span v-if="action.handoffRequired" class="handoff-required">
             请转交给 {{ action.requiredRoleLabel || action.requiredRoleKey || '对应角色' }} 处理
           </span>
-          <span v-if="!action.allowed">{{ action.blockedMessage || action.reasonCode || '当前状态不可执行' }}</span>
+          <span v-if="!action.allowed">{{ blockedReasonText(action) }}</span>
           <span v-if="!action.allowed && action.suggestedAction" class="suggestion">
             建议：{{ action.suggestedAction }}
           </span>
@@ -278,6 +278,12 @@ const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new')
 const title = computed(() => `Form: ${model.value}`);
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
 const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
+const PAYMENT_REASON_TEXT: Record<string, string> = {
+  PAYMENT_ATTACHMENTS_REQUIRED: "提交前请先上传附件",
+  BUSINESS_RULE_FAILED: "当前状态不满足执行条件",
+  MISSING_PARAMS: "缺少必要参数",
+  NOT_FOUND: "记录不存在或已被删除",
+};
 
 const viewContract = ref<ViewContract | null>(null);
 const fields = ref<
@@ -692,13 +698,21 @@ async function runButton(btn: ViewButton) {
 function semanticActionTooltip(action: SemanticActionButton) {
   const roleHint = action.requiredRoleLabel ? `应由${action.requiredRoleLabel}处理` : '';
   const handoffHint = action.handoffRequired ? "；当前角色不匹配，请转交" : "";
+  const blockedReason = blockedReasonText(action);
   if (action.allowed) return '';
   if (action.suggestedAction) {
-    return `不可执行：${action.blockedMessage || action.reasonCode}；建议：${action.suggestedAction}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
+    return `不可执行：${blockedReason}；建议：${action.suggestedAction}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
   }
-  if (action.blockedMessage) return `不可执行：${action.blockedMessage}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
-  if (action.reasonCode) return `不可执行：${action.reasonCode}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
+  if (blockedReason) return `不可执行：${blockedReason}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
   return `当前状态不可执行${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
+}
+
+function blockedReasonText(action: SemanticActionButton) {
+  const message = String(action.blockedMessage || '').trim();
+  const reasonCode = String(action.reasonCode || '').trim();
+  if (message) return message;
+  if (reasonCode) return PAYMENT_REASON_TEXT[reasonCode] || reasonCode;
+  return '当前状态不可执行';
 }
 
 function suggestedActionMeta(action: SemanticActionButton) {
