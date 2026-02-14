@@ -41,6 +41,17 @@
     </section>
 
     <section class="filters">
+      <div v-if="enterError" class="status-panel" role="status" aria-live="polite">
+        <p class="status-title">进入失败：{{ enterError.message }}</p>
+        <p class="status-detail">{{ enterError.hint }}</p>
+        <p v-if="isHudEnabled" class="status-meta">
+          code={{ enterError.code || '-' }} · trace_id={{ enterError.traceId || '-' }}
+        </p>
+        <div class="status-actions">
+          <button v-if="lastFailedEntry" @click="retryOpen">重试</button>
+          <button @click="clearEnterError">知道了</button>
+        </div>
+      </div>
       <input
         v-model.trim="searchText"
         class="search-input"
@@ -137,7 +148,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
-import { trackCapabilityOpen } from '../api/usage';
+import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type CapabilityEntry = {
@@ -165,8 +176,9 @@ const readyOnly = ref(false);
 const lockReasonFilter = ref('ALL');
 const collapsedSceneKeys = ref<string[]>([]);
 const collapsedSceneSet = computed(() => new Set(collapsedSceneKeys.value));
-const homeCollapseStorageKey = 'sc.home.scene_groups.collapsed.v1';
-const homeFilterStorageKey = 'sc.home.filters.v1';
+const lastFailedEntry = ref<CapabilityEntry | null>(null);
+const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
+const lastTrackedSearch = ref('');
 const isHudEnabled = computed(() => {
   const hud = String(route.query.hud || '').trim();
   return import.meta.env.DEV || hud === '1' || hud.toLowerCase() === 'true';
@@ -195,6 +207,13 @@ const sceneTitleMap = computed(() => {
 });
 const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || 'projects.list');
 const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || '工作台首页');
+const workspaceScopeKey = computed(() => {
+  const roleKey = asText(roleSurface.value?.role_code) || 'default';
+  const landingScene = asText(roleSurface.value?.landing_scene_key) || 'projects.list';
+  return `${roleKey}:${landingScene}`;
+});
+const homeCollapseStorageKey = computed(() => `sc.home.scene_groups.collapsed.v2:${workspaceScopeKey.value}`);
+const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScopeKey.value}`);
 
 function asText(value: unknown) {
   const text = String(value ?? '').trim();
@@ -427,8 +446,34 @@ function actionLabel(entry: CapabilityEntry) {
 
 async function openScene(entry: CapabilityEntry) {
   if (!canEnter(entry)) return;
-  void trackCapabilityOpen(entry.key).catch(() => {});
-  await router.push({ path: `/s/${entry.sceneKey}` });
+  lastFailedEntry.value = null;
+  enterError.value = null;
+  void trackUsageEvent('capability.enter.click', { capability_key: entry.key, scene_key: entry.sceneKey }).catch(() => {});
+  try {
+    void trackCapabilityOpen(entry.key).catch(() => {});
+    await router.push({ path: `/s/${entry.sceneKey}` });
+    void trackUsageEvent('capability.enter.result', {
+      capability_key: entry.key,
+      scene_key: entry.sceneKey,
+      result: 'ok',
+    }).catch(() => {});
+  } catch (error) {
+    const message = resolveEnterErrorMessage(error);
+    const hint = resolveEnterErrorHint(message.code);
+    lastFailedEntry.value = entry;
+    enterError.value = {
+      message: message.message,
+      hint,
+      code: message.code,
+      traceId: message.traceId,
+    };
+    void trackUsageEvent('capability.enter.result', {
+      capability_key: entry.key,
+      scene_key: entry.sceneKey,
+      result: 'error',
+      code: message.code || 'UNKNOWN',
+    }).catch(() => {});
+  }
 }
 
 function openRoleLanding() {
@@ -444,24 +489,62 @@ function openSuggestion(sceneKey: string) {
   router.push({ path: `/s/${safeSceneKey}` }).catch(() => {});
 }
 
+function retryOpen() {
+  if (!lastFailedEntry.value) return;
+  void openScene(lastFailedEntry.value);
+}
+
+function clearEnterError() {
+  enterError.value = null;
+  lastFailedEntry.value = null;
+}
+
+function resolveEnterErrorMessage(error: unknown) {
+  const message = asText((error as { message?: unknown })?.message) || '能力入口暂时不可用';
+  const lowered = message.toLowerCase();
+  const code = lowered.includes('permission')
+    ? 'PERMISSION_DENIED'
+    : lowered.includes('not found')
+      ? 'ROUTE_NOT_FOUND'
+      : lowered.includes('timeout')
+        ? 'TIMEOUT'
+        : 'ENTER_FAILED';
+  const traceId = asText((error as { trace_id?: unknown })?.trace_id) || asText((error as { traceId?: unknown })?.traceId);
+  return { message, code, traceId };
+}
+
+function resolveEnterErrorHint(code: string) {
+  if (code === 'PERMISSION_DENIED') return '请联系管理员开通对应权限后重试。';
+  if (code === 'ROUTE_NOT_FOUND') return '入口配置异常，请稍后重试或联系管理员。';
+  if (code === 'TIMEOUT') return '网络连接超时，请检查网络后点击重试。';
+  return '请稍后重试；如果问题持续，请联系管理员。';
+}
+
 onMounted(() => {
+  void trackUsageEvent('workspace.view', {
+    role_key: asText(roleSurface.value?.role_code) || 'unknown',
+    landing_scene_key: roleLandingScene.value,
+  }).catch(() => {});
   try {
-    const raw = window.localStorage.getItem(homeCollapseStorageKey);
-    if (!raw) return;
-    const parsed = JSON.parse(raw) as string[];
-    if (!Array.isArray(parsed)) return;
-    collapsedSceneKeys.value = parsed.filter((key) => typeof key === 'string' && key);
+    const raw = window.localStorage.getItem(homeCollapseStorageKey.value);
+    if (raw) {
+      const parsed = JSON.parse(raw) as string[];
+      if (Array.isArray(parsed)) {
+        collapsedSceneKeys.value = parsed.filter((key) => typeof key === 'string' && key);
+      }
+    }
   } catch {
     // Ignore broken local cache.
   }
   try {
-    const raw = window.localStorage.getItem(homeFilterStorageKey);
-    if (!raw) return;
-    const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string };
-    readyOnly.value = Boolean(parsed?.ready_only);
-    const state = String(parsed?.state_filter || '').toUpperCase();
-    if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
-      stateFilter.value = state;
+    const raw = window.localStorage.getItem(homeFilterStorageKey.value);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string };
+      readyOnly.value = Boolean(parsed?.ready_only);
+      const state = String(parsed?.state_filter || '').toUpperCase();
+      if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
+        stateFilter.value = state;
+      }
     }
   } catch {
     // Ignore broken local cache.
@@ -470,7 +553,7 @@ onMounted(() => {
 
 watch(collapsedSceneKeys, () => {
   try {
-    window.localStorage.setItem(homeCollapseStorageKey, JSON.stringify(collapsedSceneKeys.value));
+    window.localStorage.setItem(homeCollapseStorageKey.value, JSON.stringify(collapsedSceneKeys.value));
   } catch {
     // Ignore local storage errors.
   }
@@ -479,12 +562,23 @@ watch(collapsedSceneKeys, () => {
 watch([readyOnly, stateFilter], () => {
   try {
     window.localStorage.setItem(
-      homeFilterStorageKey,
+      homeFilterStorageKey.value,
       JSON.stringify({ ready_only: readyOnly.value, state_filter: stateFilter.value }),
     );
   } catch {
     // Ignore local storage errors.
   }
+});
+
+watch(searchText, (next) => {
+  const query = String(next || '').trim();
+  if (!query) {
+    lastTrackedSearch.value = '';
+    return;
+  }
+  if (query === lastTrackedSearch.value) return;
+  lastTrackedSearch.value = query;
+  void trackUsageEvent('capability.search', { query }).catch(() => {});
 });
 </script>
 
@@ -572,6 +666,48 @@ watch([readyOnly, stateFilter], () => {
 .filters {
   display: grid;
   gap: 10px;
+}
+
+.status-panel {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.status-title {
+  margin: 0;
+  color: #9f1239;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-detail {
+  margin: 0;
+  color: #7f1d1d;
+  font-size: 12px;
+}
+
+.status-meta {
+  margin: 0;
+  color: #9f1239;
+  font-size: 11px;
+}
+
+.status-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.status-actions button {
+  border: 1px solid #fda4af;
+  border-radius: 8px;
+  background: #fff;
+  color: #9f1239;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 
 .today-actions {
