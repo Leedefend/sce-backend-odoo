@@ -120,6 +120,30 @@ def fetch_available_actions(token: str, payment_request_id: int) -> tuple[dict, 
     return resp, data
 
 
+def assert_action_role_hints(action_by_key: dict[str, dict], *, actor_label: str):
+    for key in ("submit", "approve", "reject", "done"):
+        item = action_by_key.get(key) or {}
+        role_key = str(item.get("required_role_key") or "").strip()
+        role_label = str(item.get("required_role_label") or "").strip()
+        group_xmlid = str(item.get("required_group_xmlid") or "").strip()
+        handoff_hint = str(item.get("handoff_hint") or "").strip()
+        actor_matches = bool(item.get("actor_matches_required_role"))
+        handoff_required = bool(item.get("handoff_required"))
+        if not role_key:
+            raise AssertionError(f"{actor_label}:{key} missing required_role_key")
+        if not role_label:
+            raise AssertionError(f"{actor_label}:{key} missing required_role_label")
+        if not group_xmlid:
+            raise AssertionError(f"{actor_label}:{key} missing required_group_xmlid")
+        if not handoff_hint:
+            raise AssertionError(f"{actor_label}:{key} missing handoff_hint")
+        if handoff_required == actor_matches:
+            raise AssertionError(
+                f"{actor_label}:{key} invalid handoff_required/actor_matches pair "
+                f"(handoff_required={handoff_required}, actor_matches={actor_matches})"
+            )
+
+
 def pick_payment_request(token: str) -> tuple[dict | None, dict | None, bool]:
     records = list_payment_requests(token, limit=30)
     if not records:
@@ -367,6 +391,7 @@ def main() -> int:
         if picked:
             if primary_action_key and primary_action_key not in action_by_key:
                 raise AssertionError("available_actions primary_action_key not in actions")
+            assert_action_role_hints(action_by_key, actor_label="finance")
             for key, item in action_by_key.items():
                 if "current_state" not in item:
                     raise AssertionError(f"available_actions.{key} current_state missing")
@@ -462,6 +487,12 @@ def main() -> int:
             for item in post_actions
             if isinstance(item, dict) and bool(item.get("allowed"))
         ]
+        action_by_key_after = {
+            str(item.get("key") or ""): item
+            for item in post_actions
+            if isinstance(item, dict)
+        }
+        assert_action_role_hints(action_by_key_after, actor_label="finance_after_execute")
         summary["allowed_actions_after_execute"] = allowed_actions
         followup_action = next((name for name in FOLLOWUP_ACTION_ORDER if name in set(allowed_actions)), "")
         if followup_action:
