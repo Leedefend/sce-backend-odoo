@@ -104,6 +104,7 @@
         <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
         <span v-if="latestFailureReason">最近失败: {{ latestFailureReason }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
+        <button type="button" class="stats-refresh" @click="copyBlockedReasonsText">复制阻塞文本</button>
         <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
         <button type="button" class="stats-refresh" @click="exportAllowedSummary">导出可执行</button>
         <button type="button" class="stats-refresh" @click="exportBlockedSummary">导出阻塞</button>
@@ -582,6 +583,31 @@ function exportAllowedSummary() {
   anchor.download = `payment_allowed_summary_${model.value}_${recordId.value}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+async function copyBlockedReasonsText() {
+  const blocked = semanticActionButtons.value.filter((item) => !item.allowed);
+  if (!blocked.length) return;
+  const lines = blocked.map(
+    (item) => `${item.label}: ${item.reasonCode || 'UNKNOWN'}${item.blockedMessage ? ` (${item.blockedMessage})` : ''}`,
+  );
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: '阻塞文本已复制',
+      reasonCode: 'BLOCKED_TEXT_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '阻塞文本复制失败',
+      reasonCode: 'BLOCKED_TEXT_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
 }
 const actionSurfaceAgeLabel = computed(() => {
   if (!paymentActionSurfaceLoadedAt.value) return '-';
