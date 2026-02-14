@@ -246,6 +246,7 @@
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" @click="clearVisibleHistory">清空当前视图</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
+            <button type="button" class="history-clear" :disabled="!lastClearedHistorySnapshot" @click="undoHistoryClear">撤销清空</button>
           </div>
         </div>
         <div class="history-filters">
@@ -417,6 +418,7 @@ const historyTimeWindow = ref<'ALL' | 'H1' | 'D1' | 'D7'>('ALL');
 const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
 const historySearchInputRef = ref<HTMLInputElement | null>(null);
+const lastClearedHistorySnapshot = ref<ActionHistoryEntry[] | null>(null);
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
@@ -1531,6 +1533,7 @@ function clearActionHistory() {
   if (!actionHistory.value.length) return;
   const confirmed = window.confirm(`确定要清空全部历史记录吗？将删除 ${actionHistory.value.length} 条记录。`);
   if (!confirmed) return;
+  lastClearedHistorySnapshot.value = [...actionHistory.value];
   actionHistory.value = [];
   actionFeedback.value = {
     message: '已清空全部历史记录',
@@ -1543,6 +1546,9 @@ function clearActionHistory() {
 
 function clearVisibleHistory() {
   if (!displayedActionHistory.value.length) return;
+  const confirmed = window.confirm(`确定要清空当前筛选视图吗？将删除 ${displayedActionHistory.value.length} 条记录。`);
+  if (!confirmed) return;
+  lastClearedHistorySnapshot.value = [...actionHistory.value];
   const keys = new Set(displayedActionHistory.value.map((item) => item.key));
   const before = actionHistory.value.length;
   actionHistory.value = actionHistory.value.filter((item) => !keys.has(item.key));
@@ -1550,6 +1556,19 @@ function clearVisibleHistory() {
   actionFeedback.value = {
     message: `已清空当前视图历史（${removed} 条）`,
     reasonCode: 'HISTORY_VISIBLE_CLEARED',
+    success: true,
+    traceId: lastTraceId.value,
+  };
+  armActionFeedbackAutoClear();
+}
+
+function undoHistoryClear() {
+  if (!lastClearedHistorySnapshot.value) return;
+  actionHistory.value = [...lastClearedHistorySnapshot.value].slice(0, actionHistoryLimit.value);
+  lastClearedHistorySnapshot.value = null;
+  actionFeedback.value = {
+    message: `已恢复历史记录（${actionHistory.value.length} 条）`,
+    reasonCode: 'HISTORY_CLEAR_UNDONE',
     success: true,
     traceId: lastTraceId.value,
   };
