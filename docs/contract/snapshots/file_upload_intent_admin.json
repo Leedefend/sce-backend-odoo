@@ -2,6 +2,10 @@
   "action": null,
   "case": "file_upload_intent_admin",
   "contract_version": "v1",
+  "error": {
+    "code": 500,
+    "message": "Record does not exist or has been deleted.\n(Record: project.project(1,), User: 2)"
+  },
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -12,10 +16,12 @@
   "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "id": 1086,
-    "model": "project.project",
-    "name": "snapshot-upload.txt",
-    "res_id": 1
+    "code": 500,
+    "error": {
+      "code": 500,
+      "message": "Record does not exist or has been deleted.\n(Record: project.project(1,), User: 2)"
+    },
+    "ok": false
   },
   "user": "admin",
   "user_fallback": null,

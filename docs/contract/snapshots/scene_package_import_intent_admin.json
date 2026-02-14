@@ -2,6 +2,7 @@
   "action": null,
   "case": "scene_package_import_intent_admin",
   "contract_version": "v1",
+  "error": null,
   "execute_error": null,
   "execute_result": null,
   "fallback": false,

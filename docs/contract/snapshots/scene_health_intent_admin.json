@@ -2,6 +2,7 @@
   "action": null,
   "case": "scene_health_intent_admin",
   "contract_version": "v1",
+  "error": null,
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -32,22 +33,22 @@
       "triggered": false
     },
     "company_id": 1,
-    "contract_ref": "stable/LATEST.json",
-    "last_updated_at": "2026-02-10 02:52:25",
+    "contract_ref": "stable/PINNED.json",
+    "last_updated_at": "2026-02-14 01:31:43",
     "query": {
       "limit": 50,
       "mode": "summary",
       "offset": 0,
       "since": null
     },
-    "rollback_active": false,
+    "rollback_active": true,
     "scene_channel": "stable",
     "scene_version": "v2",
     "schema_version": "v2",
     "summary": {
       "critical_drift_warn_count": 0,
       "critical_resolve_errors_count": 0,
-      "non_critical_debt_count": 0
+      "non_critical_debt_count": 3
     }
   },
   "user": "admin",

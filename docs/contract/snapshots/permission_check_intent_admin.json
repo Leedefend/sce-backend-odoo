@@ -1,32 +1,31 @@
 {
-  "case": "permission_check_intent_admin",
-  "trace_id": "01157cfe-2646-4a7b-be53-329b376d4e15",
-  "exported_at": "2026-02-10T02:25:47Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "intent.invoke",
-  "user": "admin",
-  "user_fallback": null,
-  "fallback": false,
   "action": null,
+  "case": "permission_check_intent_admin",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
     "allow": true,
-    "reason": "ENTITLEMENT_UNAVAILABLE",
-    "details": {
-      "required_flag": "project_enabled",
-      "capability_key": "project.view_all"
-    },
     "debug": {
-      "reason": "entitlement_model_missing",
       "db": "sc_demo",
-      "model_present": false
-    }
+      "model_present": true,
+      "reason": "entitlement_model_missing"
+    },
+    "details": {
+      "capability_key": "project.view_all",
+      "required_flag": "project_enabled"
+    },
+    "reason": "ENTITLEMENT_UNAVAILABLE"
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

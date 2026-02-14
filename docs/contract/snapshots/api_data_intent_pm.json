@@ -2,6 +2,7 @@
   "action": null,
   "case": "api_data_intent_pm",
   "contract_version": "v1",
+  "error": null,
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -14,32 +15,20 @@
   "ui_contract_raw": {
     "raw": [
       {
-        "next_offset": 5,
+        "next_offset": 2,
         "records": [
           {
-            "id": 22,
+            "id": 4,
             "name": "P2-空壳对照项目（演示）"
           },
           {
-            "id": 21,
+            "id": 3,
             "name": "德阳智能制造产教融合项目"
-          },
-          {
-            "id": 20,
-            "name": "展厅-装配式住宅试点"
-          },
-          {
-            "id": 19,
-            "name": "展厅-海绵城市示范区"
-          },
-          {
-            "id": 18,
-            "name": "展厅-科技研发中心"
           }
         ]
       },
       {
-        "count": 5,
+        "count": 2,
         "fields": [
           "id",
           "name"

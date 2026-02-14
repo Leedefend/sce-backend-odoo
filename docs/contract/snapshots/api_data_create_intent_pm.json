@@ -2,6 +2,7 @@
   "action": null,
   "case": "api_data_create_intent_pm",
   "contract_version": "v1",
+  "error": null,
   "execute_error": null,
   "execute_result": null,
   "fallback": false,

@@ -1,33 +1,32 @@
 {
-  "case": "portal_execute_button_pm",
-  "trace_id": "325b2617-52ce-4e16-9b9c-86d274cf4a29",
-  "exported_at": "2026-02-09T05:15:49Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "contract.portal_execute_button",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
+  "case": "portal_execute_button_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "contract.portal_execute_button",
+  "record": null,
+  "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
     "action": {
-      "label": "执行演示动作",
+      "code": "portal_demo_ping",
       "desc": "触发一次安全的演示动作",
-      "code": "portal_demo_ping"
-    },
-    "target": {
-      "model": "project.project",
-      "res_id": 1,
-      "method": "action_portal_demo_ping"
+      "label": "执行演示动作"
     },
     "allowed": true,
-    "error": null
+    "error": null,
+    "target": {
+      "method": "action_portal_demo_ping",
+      "model": "project.project",
+      "res_id": 3
+    }
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
 }
