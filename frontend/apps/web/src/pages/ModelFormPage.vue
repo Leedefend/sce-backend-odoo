@@ -2503,11 +2503,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .history-actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .history-search {
@@ -2522,6 +2525,7 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   gap: 6px;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .history-filters button {
@@ -2592,6 +2596,13 @@ function analyzeLayout(layout: ViewContract['layout']) {
   background: #f8fafc;
   color: #334155;
   font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .history-search {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .history-trace-link {
