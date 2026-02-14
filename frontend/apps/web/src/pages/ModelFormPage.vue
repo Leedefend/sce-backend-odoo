@@ -71,9 +71,20 @@
 
     <section v-else class="card">
       <section v-if="semanticActionButtons.length" class="semantic-action-filters">
-        <button type="button" :class="{ active: actionFilterMode === 'all' }" @click="actionFilterMode = 'all'">全部</button>
-        <button type="button" :class="{ active: actionFilterMode === 'allowed' }" @click="actionFilterMode = 'allowed'">可执行</button>
-        <button type="button" :class="{ active: actionFilterMode === 'blocked' }" @click="actionFilterMode = 'blocked'">阻塞</button>
+        <button type="button" :class="{ active: actionFilterMode === 'all' }" @click="actionFilterMode = 'all'">
+          全部 ({{ semanticActionStats.total }})
+        </button>
+        <button type="button" :class="{ active: actionFilterMode === 'allowed' }" @click="actionFilterMode = 'allowed'">
+          可执行 ({{ semanticActionStats.allowed }})
+        </button>
+        <button type="button" :class="{ active: actionFilterMode === 'blocked' }" @click="actionFilterMode = 'blocked'">
+          阻塞 ({{ semanticActionStats.blocked }})
+        </button>
+      </section>
+      <section v-if="semanticActionButtons.length" class="semantic-action-stats">
+        <span>主动作: {{ primaryActionKey || '-' }}</span>
+        <span>当前筛选: {{ actionFilterMode }}</span>
+        <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
@@ -296,6 +307,12 @@ const displayedSemanticActionButtons = computed(() => {
     return semanticActionButtons.value.filter((item) => !item.allowed);
   }
   return semanticActionButtons.value;
+});
+const semanticActionStats = computed(() => {
+  const total = semanticActionButtons.value.length;
+  const allowed = semanticActionButtons.value.filter((item) => item.allowed).length;
+  const blocked = total - allowed;
+  return { total, allowed, blocked };
 });
 const primaryAllowedAction = computed(() => {
   const primary = displayedSemanticActionButtons.value.find(
@@ -941,6 +958,13 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .semantic-action-filters {
   display: flex;
   gap: 8px;
+}
+
+.semantic-action-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .semantic-action-filters button {
