@@ -84,6 +84,11 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         },
     }
 
+    def _current_user_group_xmlids(self) -> set[str]:
+        groups = self.env.user.sudo().groups_id
+        ext = groups.get_external_id() or {}
+        return {str(xmlid).strip() for xmlid in ext.values() if str(xmlid or "").strip()}
+
     def _evaluate_prerequisites(self, record, action_key: str) -> tuple[bool, str]:
         key = str(action_key or "").strip()
         if key == "submit":
@@ -135,7 +140,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "meta": {"intent": self.INTENT_TYPE, "trace_id": trace_id},
         }
 
-    def _action_entry(self, record, spec: dict) -> dict:
+    def _action_entry(self, record, spec: dict, *, user_group_xmlids: set[str] | None = None) -> dict:
         state = str(record.state or "")
         action_key = str(spec.get("key") or "")
         method_name = str(spec.get("method") or "")
@@ -162,6 +167,9 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         }
         required_params = list(spec.get("required_params") or [])
         role_hint = self._ACTION_ROLE_HINTS.get(action_key) or {}
+        required_group_xmlid = str(role_hint.get("required_group_xmlid") or "")
+        actor_matches_required_role = bool(required_group_xmlid and required_group_xmlid in (user_group_xmlids or set()))
+        handoff_required = bool(required_group_xmlid and not actor_matches_required_role)
         return {
             "key": action_key,
             "label": str(spec.get("label") or ""),
@@ -184,8 +192,10 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "suggested_action": suggested_action,
             "required_role_key": str(role_hint.get("required_role_key") or ""),
             "required_role_label": str(role_hint.get("required_role_label") or ""),
-            "required_group_xmlid": str(role_hint.get("required_group_xmlid") or ""),
+            "required_group_xmlid": required_group_xmlid,
             "handoff_hint": str(role_hint.get("handoff_hint") or ""),
+            "actor_matches_required_role": actor_matches_required_role,
+            "handoff_required": handoff_required,
         }
 
     def handle(self, payload=None, ctx=None):
@@ -216,7 +226,8 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 code=404,
             )
 
-        actions = [self._action_entry(record, spec) for spec in self._ACTION_SPECS]
+        user_group_xmlids = self._current_user_group_xmlids()
+        actions = [self._action_entry(record, spec, user_group_xmlids=user_group_xmlids) for spec in self._ACTION_SPECS]
         primary_action_key = ""
         for item in actions:
             if bool(item.get("allowed")):

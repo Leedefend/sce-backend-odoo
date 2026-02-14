@@ -118,9 +118,14 @@
           </span>
           <span v-if="action.requiredRoleLabel" class="role-hint">
             角色：{{ action.requiredRoleLabel }}
+            <em v-if="action.actorMatchesRequiredRole" class="role-match">（当前可执行角色）</em>
+            <em v-else class="role-mismatch">（需转交）</em>
           </span>
           <span v-if="action.handoffHint" class="handoff-hint">
             {{ action.handoffHint }}
+          </span>
+          <span v-if="action.handoffRequired" class="handoff-required">
+            请转交给 {{ action.requiredRoleLabel || action.requiredRoleKey || '对应角色' }} 处理
           </span>
           <span v-if="!action.allowed">{{ action.blockedMessage || action.reasonCode || '当前状态不可执行' }}</span>
           <span v-if="!action.allowed && action.suggestedAction" class="suggestion">
@@ -308,6 +313,8 @@ type SemanticActionButton = {
   requiredRoleLabel: string;
   requiredRoleKey: string;
   handoffHint: string;
+  actorMatchesRequiredRole: boolean;
+  handoffRequired: boolean;
   requiresReason: boolean;
   executeIntent: string;
 };
@@ -348,6 +355,8 @@ const semanticActionButtons = computed<SemanticActionButton[]>(() => {
       requiredRoleLabel: String(item.required_role_label || ''),
       requiredRoleKey: String(item.required_role_key || ''),
       handoffHint: String(item.handoff_hint || ''),
+      actorMatchesRequiredRole: Boolean(item.actor_matches_required_role),
+      handoffRequired: Boolean(item.handoff_required),
       requiresReason: Boolean(item.requires_reason),
       executeIntent: String(item.execute_intent || 'payment.request.execute'),
     }))
@@ -682,13 +691,14 @@ async function runButton(btn: ViewButton) {
 
 function semanticActionTooltip(action: SemanticActionButton) {
   const roleHint = action.requiredRoleLabel ? `应由${action.requiredRoleLabel}处理` : '';
+  const handoffHint = action.handoffRequired ? "；当前角色不匹配，请转交" : "";
   if (action.allowed) return '';
   if (action.suggestedAction) {
-    return `不可执行：${action.blockedMessage || action.reasonCode}；建议：${action.suggestedAction}${roleHint ? `；${roleHint}` : ''}`;
+    return `不可执行：${action.blockedMessage || action.reasonCode}；建议：${action.suggestedAction}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
   }
-  if (action.blockedMessage) return `不可执行：${action.blockedMessage}${roleHint ? `；${roleHint}` : ''}`;
-  if (action.reasonCode) return `不可执行：${action.reasonCode}${roleHint ? `；${roleHint}` : ''}`;
-  return `当前状态不可执行${roleHint ? `；${roleHint}` : ''}`;
+  if (action.blockedMessage) return `不可执行：${action.blockedMessage}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
+  if (action.reasonCode) return `不可执行：${action.reasonCode}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
+  return `当前状态不可执行${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
 }
 
 function suggestedActionMeta(action: SemanticActionButton) {
@@ -1203,8 +1213,22 @@ function analyzeLayout(layout: ViewContract['layout']) {
   color: #0f766e;
 }
 
+.semantic-action-hint .role-match {
+  font-style: normal;
+  color: #0f766e;
+}
+
+.semantic-action-hint .role-mismatch {
+  font-style: normal;
+  color: #b45309;
+}
+
 .semantic-action-hint .handoff-hint {
   color: #334155;
+}
+
+.semantic-action-hint .handoff-required {
+  color: #b45309;
 }
 
 .hint-action {

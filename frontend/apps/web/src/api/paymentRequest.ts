@@ -17,6 +17,8 @@ export interface PaymentRequestActionSurfaceItem {
   required_role_label?: string;
   required_group_xmlid?: string;
   handoff_hint?: string;
+  actor_matches_required_role?: boolean;
+  handoff_required?: boolean;
   execute_intent?: string;
   execute_params?: {
     id?: number;
