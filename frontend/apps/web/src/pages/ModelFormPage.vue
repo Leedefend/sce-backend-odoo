@@ -1527,15 +1527,25 @@ async function copyAllHistory() {
 }
 
 async function copyHistoryFilterSummary() {
-  if (!actionHistory.value.length) return;
+  if (!actionHistory.value.length) {
+    actionFeedback.value = {
+      message: '暂无可复制的历史筛选摘要',
+      reasonCode: 'HISTORY_FILTER_SUMMARY_EMPTY',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+    return;
+  }
   const payload = [
     `record=${model.value}:${recordId.value || '-'}`,
     `history_limit=${actionHistoryLimit.value}`,
     `history_total=${actionHistory.value.length}`,
-    `history_visible=${filteredActionHistory.value.length}`,
+    `history_visible=${displayedActionHistory.value.length}`,
     `outcome_filter=${historyOutcomeFilter.value}`,
     `reason_filter=${historyReasonFilter.value}`,
     `search=${historySearch.value || '-'}`,
+    `sort_mode=${historySortMode.value}`,
     `trace_id=${lastTraceId.value || '-'}`,
   ].join('\n');
   try {
