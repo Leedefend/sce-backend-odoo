@@ -239,6 +239,7 @@
             <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" @click="exportActionHistory">导出当前视图</button>
             <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
             <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
+            <button type="button" class="history-clear" title="复制筛选查询串" aria-label="复制筛选查询串" @click="copyHistoryFilterQuery">复制查询串</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" @click="clearVisibleHistory">清空当前视图</button>
@@ -1658,6 +1659,36 @@ async function copyHistoryFilterSummary() {
     actionFeedback.value = {
       message: '历史筛选摘要复制失败',
       reasonCode: 'HISTORY_FILTER_SUMMARY_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+async function copyHistoryFilterQuery() {
+  const query = [
+    `model=${encodeURIComponent(model.value)}`,
+    `record_id=${encodeURIComponent(String(recordId.value || '-'))}`,
+    `outcome=${encodeURIComponent(historyOutcomeFilter.value)}`,
+    `duration=${encodeURIComponent(historyDurationFilter.value)}`,
+    `time_window=${encodeURIComponent(historyTimeWindow.value)}`,
+    `reason=${encodeURIComponent(historyReasonFilter.value)}`,
+    `sort=${encodeURIComponent(historySortMode.value)}`,
+    `search=${encodeURIComponent(historySearch.value || '')}`,
+  ].join('&');
+  try {
+    await navigator.clipboard.writeText(query);
+    actionFeedback.value = {
+      message: '筛选查询串已复制',
+      reasonCode: 'HISTORY_FILTER_QUERY_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '筛选查询串复制失败',
+      reasonCode: 'HISTORY_FILTER_QUERY_COPY_FAILED',
       success: false,
       traceId: lastTraceId.value,
     };
