@@ -1,20 +1,22 @@
 import { intentRequest } from './intents';
 import type { ContractReasonCode, ContractReasonCount } from './contractTypes';
 
-export async function trackSceneOpen(sceneKey: string) {
-  if (!sceneKey) return;
+export async function trackUsageEvent(eventType: string, extra: Record<string, unknown> = {}) {
+  if (!eventType) return;
   await intentRequest<{ tracked?: string[] }>({
     intent: 'usage.track',
-    params: { event_type: 'scene_open', scene_key: sceneKey },
+    params: { event_type: eventType, ...extra },
   });
+}
+
+export async function trackSceneOpen(sceneKey: string) {
+  if (!sceneKey) return;
+  await trackUsageEvent('scene_open', { scene_key: sceneKey });
 }
 
 export async function trackCapabilityOpen(capabilityKey: string) {
   if (!capabilityKey) return;
-  await intentRequest<{ tracked?: string[] }>({
-    intent: 'usage.track',
-    params: { event_type: 'capability_open', capability_key: capabilityKey },
-  });
+  await trackUsageEvent('capability_open', { capability_key: capabilityKey });
 }
 
 export type UsageTopItem = {
