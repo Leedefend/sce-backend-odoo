@@ -136,6 +136,7 @@
           执行主动作
         </button>
         <button type="button" class="stats-refresh" title="复制动作面JSON" aria-label="复制动作面JSON" @click="copyActionSurface">复制动作面</button>
+        <button type="button" class="stats-refresh" title="复制主动作说明" aria-label="复制主动作说明" @click="copyPrimaryActionBrief">复制主动作说明</button>
         <button type="button" class="stats-refresh" title="导出动作面JSON" aria-label="导出动作面JSON" @click="exportActionSurface">导出动作面</button>
         <label class="auto-refresh-toggle">
           <input v-model="autoRefreshActionSurface" type="checkbox" />
@@ -1102,6 +1103,35 @@ async function copyActionSurface() {
     actionFeedback.value = {
       message: '动作面复制失败',
       reasonCode: 'ACTION_SURFACE_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+async function copyPrimaryActionBrief() {
+  if (!primaryAllowedAction.value) return;
+  const lines = [
+    `record=${model.value}:${recordId.value || '-'}`,
+    `primary_action=${primaryAllowedAction.value.label}(${primaryAllowedAction.value.key})`,
+    `next_state=${primaryAllowedAction.value.nextStateHint || '-'}`,
+    `allowed=${String(primaryAllowedAction.value.allowed)}`,
+    `trace_id=${lastTraceId.value || '-'}`,
+    `blocked_top=${blockedTopReasons.value.join(',') || '-'}`,
+  ];
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: '主动作说明已复制',
+      reasonCode: 'PRIMARY_ACTION_BRIEF_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '主动作说明复制失败',
+      reasonCode: 'PRIMARY_ACTION_BRIEF_COPY_FAILED',
       success: false,
       traceId: lastTraceId.value,
     };
