@@ -241,6 +241,7 @@
             <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
+            <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" @click="clearVisibleHistory">清空当前视图</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
         </div>
@@ -1479,6 +1480,21 @@ async function rerunLastSemanticAction() {
 
 function clearActionHistory() {
   actionHistory.value = [];
+}
+
+function clearVisibleHistory() {
+  if (!displayedActionHistory.value.length) return;
+  const keys = new Set(displayedActionHistory.value.map((item) => item.key));
+  const before = actionHistory.value.length;
+  actionHistory.value = actionHistory.value.filter((item) => !keys.has(item.key));
+  const removed = Math.max(0, before - actionHistory.value.length);
+  actionFeedback.value = {
+    message: `已清空当前视图历史（${removed} 条）`,
+    reasonCode: 'HISTORY_VISIBLE_CLEARED',
+    success: true,
+    traceId: lastTraceId.value,
+  };
+  armActionFeedbackAutoClear();
 }
 
 function historyAgeLabel(entry: ActionHistoryEntry) {
