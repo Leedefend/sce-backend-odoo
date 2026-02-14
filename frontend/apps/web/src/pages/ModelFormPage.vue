@@ -284,6 +284,9 @@
           </button>
           <button type="button" class="history-clear" @click="resetHistoryFilters">重置历史筛选</button>
         </div>
+        <div class="history-filter-summary">
+          当前筛选: {{ historyFilterSummaryText }}
+        </div>
         <div v-if="actionHistory.length && !displayedActionHistory.length" class="history-empty-tip">
           当前筛选条件下暂无记录。
           <button type="button" class="history-clear" @click="resetHistoryFilters">恢复全部</button>
@@ -857,6 +860,19 @@ const filteredActionHistory = computed(() => {
 const displayedActionHistory = computed(() => {
   const rows = [...filteredActionHistory.value];
   return rows.sort((a, b) => (historySortMode.value === 'ASC' ? a.at - b.at : b.at - a.at));
+});
+const historyFilterSummaryText = computed(() => {
+  const parts = [
+    `结果=${historyOutcomeFilter.value}`,
+    `耗时=${historyDurationFilter.value}`,
+    `时间=${historyTimeWindow.value}`,
+    `原因=${historyReasonFilter.value}`,
+    `排序=${historySortMode.value}`,
+  ];
+  if (historySearch.value.trim()) {
+    parts.push(`搜索=${historySearch.value.trim()}`);
+  }
+  return parts.join(' · ');
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -2512,6 +2528,12 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.history-filter-summary {
+  margin-bottom: 8px;
+  color: #475569;
+  font-size: 12px;
 }
 
 .history-clear {
