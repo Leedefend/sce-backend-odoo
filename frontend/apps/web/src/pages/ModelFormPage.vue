@@ -394,6 +394,7 @@ const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
 const historyOutcomeFilterStoragePrefix = 'sc.payment.history_outcome_filter.v1';
+const historyDurationFilterStoragePrefix = 'sc.payment.history_duration_filter.v1';
 const historySearchStoragePrefix = 'sc.payment.history_search.v1';
 const historySortModeStoragePrefix = 'sc.payment.history_sort_mode.v1';
 const actionHistoryLimitStorageKey = 'sc.payment.history_limit.v1';
@@ -411,6 +412,9 @@ const historyReasonFilterStorageKey = computed(
 );
 const historyOutcomeFilterStorageKey = computed(
   () => `${historyOutcomeFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historyDurationFilterStorageKey = computed(
+  () => `${historyDurationFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const historySearchStorageKey = computed(
   () => `${historySearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
@@ -500,6 +504,11 @@ function hydrateRecordScopedPanelPrefs() {
     historyReasonFilter.value = cachedReason || 'ALL';
     const cachedOutcome = String(window.localStorage.getItem(historyOutcomeFilterStorageKey.value) || '').trim();
     historyOutcomeFilter.value = cachedOutcome === 'SUCCESS' || cachedOutcome === 'FAILED' ? cachedOutcome : 'ALL';
+    const cachedDuration = String(window.localStorage.getItem(historyDurationFilterStorageKey.value) || '').trim();
+    historyDurationFilter.value =
+      cachedDuration === 'LE_1S' || cachedDuration === 'BETWEEN_1S_3S' || cachedDuration === 'GT_3S'
+        ? cachedDuration
+        : 'ALL';
     historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
     const cachedSort = String(window.localStorage.getItem(historySortModeStorageKey.value) || '').trim();
     historySortMode.value = cachedSort === 'ASC' ? 'ASC' : 'DESC';
@@ -507,6 +516,7 @@ function hydrateRecordScopedPanelPrefs() {
   } catch {
     historyReasonFilter.value = 'ALL';
     historyOutcomeFilter.value = 'ALL';
+    historyDurationFilter.value = 'ALL';
     historySearch.value = '';
     historySortMode.value = 'DESC';
     semanticActionSearch.value = '';
@@ -1238,6 +1248,7 @@ function resetActionPanelPrefs() {
     window.localStorage.removeItem(actionFilterStorageKey);
     window.localStorage.removeItem(historyReasonFilterStorageKey.value);
     window.localStorage.removeItem(historyOutcomeFilterStorageKey.value);
+    window.localStorage.removeItem(historyDurationFilterStorageKey.value);
     window.localStorage.removeItem(historySearchStorageKey.value);
     window.localStorage.removeItem(historySortModeStorageKey.value);
     window.localStorage.removeItem(actionSearchStorageKey.value);
@@ -1588,6 +1599,7 @@ async function copyHistoryFilterSummary() {
     `history_total=${actionHistory.value.length}`,
     `history_visible=${displayedActionHistory.value.length}`,
     `outcome_filter=${historyOutcomeFilter.value}`,
+    `duration_filter=${historyDurationFilter.value}`,
     `reason_filter=${historyReasonFilter.value}`,
     `search=${historySearch.value || '-'}`,
     `sort_mode=${historySortMode.value}`,
@@ -1629,6 +1641,7 @@ function exportActionHistory() {
     history_total: actionHistory.value.length,
     history_visible: displayedActionHistory.value.length,
     outcome_filter: historyOutcomeFilter.value,
+    duration_filter: historyDurationFilter.value,
     reason_filter: historyReasonFilter.value,
     search: historySearch.value || '',
     sort_mode: historySortMode.value,
@@ -1835,6 +1848,13 @@ watch(historyOutcomeFilter, (value) => {
     // Ignore storage errors.
   }
 });
+watch(historyDurationFilter, (value) => {
+  try {
+    window.localStorage.setItem(historyDurationFilterStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
 watch(historySearch, (value) => {
   try {
     window.localStorage.setItem(historySearchStorageKey.value, value);
@@ -1885,6 +1905,7 @@ watch(
   [
     historyReasonFilterStorageKey,
     historyOutcomeFilterStorageKey,
+    historyDurationFilterStorageKey,
     historySearchStorageKey,
     historySortModeStorageKey,
     actionSearchStorageKey,
