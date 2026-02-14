@@ -229,29 +229,44 @@
       </section>
       <section v-if="actionHistory.length" class="semantic-action-history">
         <div class="history-header">
-          <h3>最近操作</h3>
+          <h3>
+            最近操作
+            <small class="history-count">可见 {{ displayedActionHistory.length }} / 总计 {{ actionHistory.length }}</small>
+          </h3>
           <div class="history-actions">
             <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
             <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" @click="copyAllHistory">复制当前视图</button>
             <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" @click="exportActionHistory">导出当前视图</button>
             <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
+            <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
+            <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" @click="clearVisibleHistory">清空当前视图</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
         </div>
         <div class="history-filters">
           <input
+            ref="historySearchInputRef"
             v-model.trim="historySearch"
             class="history-search"
             type="text"
             placeholder="搜索历史动作/原因码/Trace"
+            aria-label="搜索历史动作、原因码或Trace"
           />
           <button type="button" :class="{ active: historyOutcomeFilter === 'ALL' }" @click="historyOutcomeFilter = 'ALL'">全部结果</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'SUCCESS' }" @click="historyOutcomeFilter = 'SUCCESS'">成功</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'FAILED' }" @click="historyOutcomeFilter = 'FAILED'">失败</button>
           <button type="button" :class="{ active: historySortMode === 'DESC' }" @click="historySortMode = 'DESC'">最新优先</button>
           <button type="button" :class="{ active: historySortMode === 'ASC' }" @click="historySortMode = 'ASC'">最早优先</button>
+          <button type="button" :class="{ active: historyDurationFilter === 'ALL' }" @click="historyDurationFilter = 'ALL'">全部耗时</button>
+          <button type="button" :class="{ active: historyDurationFilter === 'LE_1S' }" @click="historyDurationFilter = 'LE_1S'">≤1s</button>
+          <button type="button" :class="{ active: historyDurationFilter === 'BETWEEN_1S_3S' }" @click="historyDurationFilter = 'BETWEEN_1S_3S'">1-3s</button>
+          <button type="button" :class="{ active: historyDurationFilter === 'GT_3S' }" @click="historyDurationFilter = 'GT_3S'">&gt;3s</button>
+          <button type="button" :class="{ active: historyTimeWindow === 'ALL' }" @click="historyTimeWindow = 'ALL'">全部时间</button>
+          <button type="button" :class="{ active: historyTimeWindow === 'H1' }" @click="historyTimeWindow = 'H1'">近1小时</button>
+          <button type="button" :class="{ active: historyTimeWindow === 'D1' }" @click="historyTimeWindow = 'D1'">近24小时</button>
+          <button type="button" :class="{ active: historyTimeWindow === 'D7' }" @click="historyTimeWindow = 'D7'">近7天</button>
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
           <button
             v-for="reason in historyReasonCodes"
@@ -377,14 +392,19 @@ const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
 const historyOutcomeFilter = ref<'ALL' | 'SUCCESS' | 'FAILED'>('ALL');
+const historyDurationFilter = ref<'ALL' | 'LE_1S' | 'BETWEEN_1S_3S' | 'GT_3S'>('ALL');
+const historyTimeWindow = ref<'ALL' | 'H1' | 'D1' | 'D7'>('ALL');
 const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
+const historySearchInputRef = ref<HTMLInputElement | null>(null);
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
 const historyOutcomeFilterStoragePrefix = 'sc.payment.history_outcome_filter.v1';
+const historyDurationFilterStoragePrefix = 'sc.payment.history_duration_filter.v1';
+const historyTimeWindowStoragePrefix = 'sc.payment.history_time_window.v1';
 const historySearchStoragePrefix = 'sc.payment.history_search.v1';
 const historySortModeStoragePrefix = 'sc.payment.history_sort_mode.v1';
 const actionHistoryLimitStorageKey = 'sc.payment.history_limit.v1';
@@ -402,6 +422,12 @@ const historyReasonFilterStorageKey = computed(
 );
 const historyOutcomeFilterStorageKey = computed(
   () => `${historyOutcomeFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historyDurationFilterStorageKey = computed(
+  () => `${historyDurationFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historyTimeWindowStorageKey = computed(
+  () => `${historyTimeWindowStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const historySearchStorageKey = computed(
   () => `${historySearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
@@ -491,6 +517,14 @@ function hydrateRecordScopedPanelPrefs() {
     historyReasonFilter.value = cachedReason || 'ALL';
     const cachedOutcome = String(window.localStorage.getItem(historyOutcomeFilterStorageKey.value) || '').trim();
     historyOutcomeFilter.value = cachedOutcome === 'SUCCESS' || cachedOutcome === 'FAILED' ? cachedOutcome : 'ALL';
+    const cachedDuration = String(window.localStorage.getItem(historyDurationFilterStorageKey.value) || '').trim();
+    historyDurationFilter.value =
+      cachedDuration === 'LE_1S' || cachedDuration === 'BETWEEN_1S_3S' || cachedDuration === 'GT_3S'
+        ? cachedDuration
+        : 'ALL';
+    const cachedTimeWindow = String(window.localStorage.getItem(historyTimeWindowStorageKey.value) || '').trim();
+    historyTimeWindow.value =
+      cachedTimeWindow === 'H1' || cachedTimeWindow === 'D1' || cachedTimeWindow === 'D7' ? cachedTimeWindow : 'ALL';
     historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
     const cachedSort = String(window.localStorage.getItem(historySortModeStorageKey.value) || '').trim();
     historySortMode.value = cachedSort === 'ASC' ? 'ASC' : 'DESC';
@@ -498,6 +532,8 @@ function hydrateRecordScopedPanelPrefs() {
   } catch {
     historyReasonFilter.value = 'ALL';
     historyOutcomeFilter.value = 'ALL';
+    historyDurationFilter.value = 'ALL';
+    historyTimeWindow.value = 'ALL';
     historySearch.value = '';
     historySortMode.value = 'DESC';
     semanticActionSearch.value = '';
@@ -782,18 +818,30 @@ const historyReasonCodes = computed(() =>
 );
 const filteredActionHistory = computed(() => {
   const keyword = historySearch.value.toLowerCase();
+  const now = Date.now();
+  const windowMs =
+    historyTimeWindow.value === 'H1' ? 3600_000 : historyTimeWindow.value === 'D1' ? 86_400_000 : historyTimeWindow.value === 'D7' ? 604_800_000 : 0;
+  const byTime =
+    windowMs > 0 ? actionHistory.value.filter((item) => Math.max(0, now - Number(item.at || 0)) <= windowMs) : actionHistory.value;
   const byOutcome =
     historyOutcomeFilter.value === 'ALL'
-      ? actionHistory.value
-      : actionHistory.value.filter((item) =>
+      ? byTime
+      : byTime.filter((item) =>
           historyOutcomeFilter.value === 'SUCCESS' ? item.success : !item.success,
         );
   const byReason =
     historyReasonFilter.value === 'ALL'
       ? byOutcome
       : byOutcome.filter((item) => item.reasonCode === historyReasonFilter.value);
-  if (!keyword) return byReason;
-  return byReason.filter((item) =>
+  const byDuration = byReason.filter((item) => {
+    const duration = Math.max(0, Number(item.durationMs || 0));
+    if (historyDurationFilter.value === 'LE_1S') return duration <= 1000;
+    if (historyDurationFilter.value === 'BETWEEN_1S_3S') return duration > 1000 && duration <= 3000;
+    if (historyDurationFilter.value === 'GT_3S') return duration > 3000;
+    return true;
+  });
+  if (!keyword) return byDuration;
+  return byDuration.filter((item) =>
     `${item.label} ${item.reasonCode} ${item.traceId}`.toLowerCase().includes(keyword),
   );
 });
@@ -1222,6 +1270,8 @@ function resetActionPanelPrefs() {
     window.localStorage.removeItem(actionFilterStorageKey);
     window.localStorage.removeItem(historyReasonFilterStorageKey.value);
     window.localStorage.removeItem(historyOutcomeFilterStorageKey.value);
+    window.localStorage.removeItem(historyDurationFilterStorageKey.value);
+    window.localStorage.removeItem(historyTimeWindowStorageKey.value);
     window.localStorage.removeItem(historySearchStorageKey.value);
     window.localStorage.removeItem(historySortModeStorageKey.value);
     window.localStorage.removeItem(actionSearchStorageKey.value);
@@ -1235,6 +1285,8 @@ function resetActionPanelPrefs() {
 function resetHistoryFilters() {
   historyReasonFilter.value = 'ALL';
   historyOutcomeFilter.value = 'ALL';
+  historyDurationFilter.value = 'ALL';
+  historyTimeWindow.value = 'ALL';
   historySearch.value = '';
   historySortMode.value = 'DESC';
 }
@@ -1430,6 +1482,21 @@ function clearActionHistory() {
   actionHistory.value = [];
 }
 
+function clearVisibleHistory() {
+  if (!displayedActionHistory.value.length) return;
+  const keys = new Set(displayedActionHistory.value.map((item) => item.key));
+  const before = actionHistory.value.length;
+  actionHistory.value = actionHistory.value.filter((item) => !keys.has(item.key));
+  const removed = Math.max(0, before - actionHistory.value.length);
+  actionFeedback.value = {
+    message: `已清空当前视图历史（${removed} 条）`,
+    reasonCode: 'HISTORY_VISIBLE_CLEARED',
+    success: true,
+    traceId: lastTraceId.value,
+  };
+  armActionFeedbackAutoClear();
+}
+
 function historyAgeLabel(entry: ActionHistoryEntry) {
   const deltaSec = Math.max(0, Math.floor((Date.now() - Number(entry.at || 0)) / 1000));
   if (deltaSec < 60) return `${deltaSec}s ago`;
@@ -1526,16 +1593,56 @@ async function copyAllHistory() {
   }
 }
 
+async function copyVisibleTraces() {
+  const traces = Array.from(
+    new Set(
+      displayedActionHistory.value
+        .map((entry) => String(entry.traceId || '').trim())
+        .filter(Boolean),
+    ),
+  );
+  if (!traces.length) return;
+  try {
+    await navigator.clipboard.writeText(traces.join('\n'));
+    actionFeedback.value = {
+      message: `已复制 Trace 列表（${traces.length} 条）`,
+      reasonCode: 'HISTORY_TRACE_LIST_COPIED',
+      success: true,
+      traceId: traces[0],
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: 'Trace 列表复制失败',
+      reasonCode: 'HISTORY_TRACE_LIST_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
 async function copyHistoryFilterSummary() {
-  if (!actionHistory.value.length) return;
+  if (!actionHistory.value.length) {
+    actionFeedback.value = {
+      message: '暂无可复制的历史筛选摘要',
+      reasonCode: 'HISTORY_FILTER_SUMMARY_EMPTY',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+    return;
+  }
   const payload = [
     `record=${model.value}:${recordId.value || '-'}`,
     `history_limit=${actionHistoryLimit.value}`,
     `history_total=${actionHistory.value.length}`,
-    `history_visible=${filteredActionHistory.value.length}`,
+    `history_visible=${displayedActionHistory.value.length}`,
     `outcome_filter=${historyOutcomeFilter.value}`,
+    `duration_filter=${historyDurationFilter.value}`,
+    `time_window=${historyTimeWindow.value}`,
     `reason_filter=${historyReasonFilter.value}`,
     `search=${historySearch.value || '-'}`,
+    `sort_mode=${historySortMode.value}`,
     `trace_id=${lastTraceId.value || '-'}`,
   ].join('\n');
   try {
@@ -1559,6 +1666,14 @@ async function copyHistoryFilterSummary() {
 
 function exportActionHistory() {
   if (!displayedActionHistory.value.length || !recordId.value) return;
+  const ts = new Date()
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z');
+  const outcomeTag = historyOutcomeFilter.value.toLowerCase();
+  const reasonTag = historyReasonFilter.value === 'ALL' ? 'all' : 'reason';
+  const searchTag = historySearch.value.trim() ? 'search' : 'nosearch';
+  const fileSuffix = `${ts}_${historySortMode.value.toLowerCase()}_${outcomeTag}_${reasonTag}_${searchTag}`;
   const payload = {
     model: model.value,
     record_id: recordId.value,
@@ -1566,6 +1681,8 @@ function exportActionHistory() {
     history_total: actionHistory.value.length,
     history_visible: displayedActionHistory.value.length,
     outcome_filter: historyOutcomeFilter.value,
+    duration_filter: historyDurationFilter.value,
+    time_window: historyTimeWindow.value,
     reason_filter: historyReasonFilter.value,
     search: historySearch.value || '',
     sort_mode: historySortMode.value,
@@ -1575,13 +1692,21 @@ function exportActionHistory() {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `payment_action_history_${model.value}_${recordId.value}.json`;
+  anchor.download = `payment_action_history_${model.value}_${recordId.value}_${fileSuffix}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
 
 function exportActionHistoryCsv() {
   if (!displayedActionHistory.value.length || !recordId.value) return;
+  const ts = new Date()
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z');
+  const outcomeTag = historyOutcomeFilter.value.toLowerCase();
+  const reasonTag = historyReasonFilter.value === 'ALL' ? 'all' : 'reason';
+  const searchTag = historySearch.value.trim() ? 'search' : 'nosearch';
+  const fileSuffix = `${ts}_${historySortMode.value.toLowerCase()}_${outcomeTag}_${reasonTag}_${searchTag}`;
   const header = ["label", "reason_code", "success", "state_before", "trace_id", "duration_ms", "at_epoch", "at"];
   const rows = displayedActionHistory.value.map((entry) =>
     [
@@ -1602,12 +1727,30 @@ function exportActionHistoryCsv() {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `payment_action_history_${model.value}_${recordId.value}.csv`;
+  anchor.download = `payment_action_history_${model.value}_${recordId.value}_${fileSuffix}.csv`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
 
 function onSemanticHotkey(event: KeyboardEvent) {
+  const target = event.target as HTMLElement | null;
+  const isTypingContext =
+    !!target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT' ||
+      Boolean(target.isContentEditable));
+  if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === '/' && !isTypingContext) {
+    event.preventDefault();
+    historySearchInputRef.value?.focus();
+    historySearchInputRef.value?.select();
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'Escape' && target === historySearchInputRef.value) {
+    event.preventDefault();
+    historySearch.value = '';
+    return;
+  }
   if (!event.ctrlKey && !event.altKey && event.key === '?') {
     event.preventDefault();
     shortcutHelpVisible.value = !shortcutHelpVisible.value;
@@ -1764,6 +1907,20 @@ watch(historyOutcomeFilter, (value) => {
     // Ignore storage errors.
   }
 });
+watch(historyDurationFilter, (value) => {
+  try {
+    window.localStorage.setItem(historyDurationFilterStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(historyTimeWindow, (value) => {
+  try {
+    window.localStorage.setItem(historyTimeWindowStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
 watch(historySearch, (value) => {
   try {
     window.localStorage.setItem(historySearchStorageKey.value, value);
@@ -1814,6 +1971,8 @@ watch(
   [
     historyReasonFilterStorageKey,
     historyOutcomeFilterStorageKey,
+    historyDurationFilterStorageKey,
+    historyTimeWindowStorageKey,
     historySearchStorageKey,
     historySortModeStorageKey,
     actionSearchStorageKey,
@@ -2175,6 +2334,13 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin: 0 0 8px;
   font-size: 14px;
   color: #0f172a;
+}
+
+.history-count {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
 }
 
 .semantic-action-history.history-empty p {
