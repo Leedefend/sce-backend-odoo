@@ -237,6 +237,7 @@
             <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
             <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" @click="copyAllHistory">复制当前视图</button>
             <button type="button" class="history-clear" title="导出当前视图历史JSON" aria-label="导出当前视图历史JSON" @click="exportActionHistory">导出当前视图</button>
+            <button type="button" class="history-clear" title="复制当前视图历史JSON" aria-label="复制当前视图历史JSON" @click="copyVisibleHistoryJson">复制当前JSON</button>
             <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
             <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
             <button type="button" class="history-clear" title="复制筛选查询串" aria-label="复制筛选查询串" @click="copyHistoryFilterQuery">复制查询串</button>
@@ -1737,6 +1738,33 @@ function exportActionHistory() {
   anchor.download = `payment_action_history_${model.value}_${recordId.value}_${fileSuffix}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+async function copyVisibleHistoryJson() {
+  if (!displayedActionHistory.value.length) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value || null,
+    exported_at: Date.now(),
+    entries: displayedActionHistory.value,
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    actionFeedback.value = {
+      message: `当前视图 JSON 已复制（${displayedActionHistory.value.length} 条）`,
+      reasonCode: 'HISTORY_VISIBLE_JSON_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '当前视图 JSON 复制失败',
+      reasonCode: 'HISTORY_VISIBLE_JSON_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
 }
 
 function exportActionHistoryCsv() {
