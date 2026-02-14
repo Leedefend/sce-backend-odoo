@@ -1,61 +1,71 @@
 {
-  "case": "my_work_complete_batch_pm",
-  "trace_id": "fe0107f4-f202-4ff1-850a-ae1926dad3ad",
-  "exported_at": "2026-02-09T05:16:09Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "intent.invoke",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
+  "case": "my_work_complete_batch_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "source": "mail.activity",
-    "success": false,
-    "reason_code": "PARTIAL_FAILED",
-    "message": "部分待办完成失败",
-    "done_count": 0,
-    "failed_count": 1,
     "completed_ids": [],
+    "done_at": "2026-02-14 01:30:46",
+    "done_count": 0,
+    "execution_mode": "full",
+    "failed_count": 1,
+    "failed_groups": [
+      {
+        "count": 1,
+        "reason_code": "NOT_FOUND",
+        "retryable_count": 0,
+        "sample_ids": [
+          999999991
+        ],
+        "suggested_action": "refresh_list"
+      }
+    ],
     "failed_items": [
       {
-        "id": 999999991,
-        "reason_code": "NOT_FOUND",
-        "message": "待办不存在",
-        "retryable": false,
         "error_category": "not_found",
-        "suggested_action": "refresh_list",
-        "trace_id": "mw_batch_f7912bba539c"
+        "id": 999999991,
+        "message": "待办不存在",
+        "reason_code": "NOT_FOUND",
+        "retryable": false,
+        "suggested_action": "refresh_list"
+      }
+    ],
+    "failed_reason_summary": [
+      {
+        "count": 1,
+        "reason_code": "NOT_FOUND"
       }
     ],
     "failed_retry_ids": [],
-    "failed_reason_summary": [
-      {
-        "reason_code": "NOT_FOUND",
-        "count": 1
-      }
-    ],
     "failed_retryable_summary": {
-      "retryable": 0,
-      "non_retryable": 1
+      "non_retryable": 1,
+      "retryable": 0
     },
-    "done_at": "2026-02-09 05:16:09",
-    "request_id": "snapshot_my_work_batch_1",
-    "idempotency_key": "snapshot_my_work_batch_1",
     "idempotency_fingerprint": "f8f45f265ac535343ef0d0e9a992c74ae42af0bd",
-    "trace_id": "mw_batch_f7912bba539c",
-    "idempotent_replay": false,
-    "replay_window_expired": false,
+    "idempotency_key": "snapshot_my_work_batch_1",
     "idempotency_replay_reason_code": "",
+    "idempotent_replay": false,
+    "message": "部分待办完成失败",
+    "reason_code": "PARTIAL_FAILED",
+    "replay_age_ms": 0,
     "replay_from_audit_id": 0,
     "replay_original_trace_id": "",
-    "replay_age_ms": 0
+    "replay_window_expired": false,
+    "retry_request": null,
+    "source": "mail.activity",
+    "success": false,
+    "todo_remaining": 0
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
 }

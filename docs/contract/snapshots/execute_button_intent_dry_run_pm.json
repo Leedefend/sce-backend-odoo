@@ -1,36 +1,35 @@
 {
-  "case": "execute_button_intent_dry_run_pm",
-  "trace_id": "73409795-021b-4f93-98e8-bcbb1cb0fd3f",
-  "exported_at": "2026-02-10T02:14:42Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "intent.invoke",
-  "user": "admin",
-  "user_fallback": null,
-  "fallback": false,
   "action": null,
-  "ui_contract": null,
-  "ui_contract_raw": {
-    "result": {
-      "type": "dry_run",
-      "status": "success",
-      "success": true,
-      "reason_code": "DRY_RUN",
-      "message": "Dry run completed",
-      "res_model": "res.partner",
-      "res_id": 1,
-      "method": "write",
-      "button_type": "object"
-    },
-    "effect": {
-      "type": "toast",
-      "message": "dry_run"
-    }
-  },
+  "case": "execute_button_intent_dry_run_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
   "record": null,
   "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "effect": {
+      "message": "dry_run",
+      "type": "toast"
+    },
+    "result": {
+      "button_type": "object",
+      "message": "Dry run completed",
+      "method": "write",
+      "reason_code": "DRY_RUN",
+      "res_id": 1,
+      "res_model": "res.partner",
+      "status": "success",
+      "success": true,
+      "type": "dry_run"
+    }
+  },
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

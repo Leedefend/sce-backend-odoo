@@ -2,6 +2,14 @@
   "action": null,
   "case": "api_data_unlink_intent_pm",
   "contract_version": "v1",
+  "error": {
+    "code": "NOT_FOUND",
+    "error_category": "not_found",
+    "message": "记录不存在",
+    "reason_code": "NOT_FOUND",
+    "retryable": false,
+    "suggested_action": "refresh_list"
+  },
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -12,18 +20,16 @@
   "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "dry_run": true,
-    "idempotency_deduplicated": false,
-    "idempotency_fingerprint": "a9f5baf683eae47561805c56764100a7bac1caea",
-    "idempotency_key": "snapshot_api_data_unlink_1",
-    "idempotency_replay_reason_code": "",
-    "idempotent_replay": false,
-    "ids": [
-      1
-    ],
-    "model": "project.task",
-    "replay_supported": false,
-    "replay_window_expired": false
+    "code": 404,
+    "error": {
+      "code": "NOT_FOUND",
+      "error_category": "not_found",
+      "message": "记录不存在",
+      "reason_code": "NOT_FOUND",
+      "retryable": false,
+      "suggested_action": "refresh_list"
+    },
+    "ok": false
   },
   "user": "pm",
   "user_fallback": "admin",

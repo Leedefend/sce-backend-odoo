@@ -1,39 +1,21 @@
 {
-  "case": "portal_dashboard_pm",
-  "trace_id": "f9f3d949-c939-4a21-bcd2-6f2819a9a9af",
-  "exported_at": "2026-02-09T05:15:43Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "contract.portal_dashboard",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
-  "ui_contract": null,
-  "ui_contract_raw": {
-    "entries": [
-      {
-        "key": "capability_matrix",
-        "label": "能力矩阵",
-        "icon": "M",
-        "desc": "查看角色可用能力",
-        "menu_xmlid": "smart_construction_portal.menu_sc_portal_capability_matrix",
-        "action_xmlid": "smart_construction_portal.action_sc_portal_capability_matrix",
-        "menu_id": 338,
-        "action_id": 527,
-        "target": {
-          "type": "url",
-          "value": "/portal/capability-matrix"
-        },
-        "allowed": true,
-        "deny_reason": []
-      }
-    ]
-  },
+  "case": "portal_dashboard_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "contract.portal_dashboard",
   "record": null,
   "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "ui_contract": null,
+  "ui_contract_raw": {
+    "entries": []
+  },
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
 }

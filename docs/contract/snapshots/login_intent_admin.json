@@ -15,7 +15,14 @@
   "record": null,
   "record_error": null,
   "ui_contract": null,
-  "ui_contract_raw": null,
+  "ui_contract_raw": {
+    "code": 401,
+    "error": {
+      "code": 401,
+      "message": "用户名或密码错误"
+    },
+    "ok": false
+  },
   "user": "admin",
   "user_fallback": null,
   "view_type": null

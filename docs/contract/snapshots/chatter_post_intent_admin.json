@@ -2,6 +2,14 @@
   "action": null,
   "case": "chatter_post_intent_admin",
   "contract_version": "v1",
+  "error": {
+    "code": "NOT_FOUND",
+    "error_category": "not_found",
+    "message": "记录不存在",
+    "reason_code": "NOT_FOUND",
+    "retryable": false,
+    "suggested_action": "refresh_list"
+  },
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -13,11 +21,9 @@
   "ui_contract": null,
   "ui_contract_raw": {
     "result": {
-      "mentioned_partner_ids": [],
-      "message": "Comment posted",
-      "message_id": 4806,
-      "reason_code": "OK",
-      "success": true
+      "message": "记录不存在",
+      "reason_code": "NOT_FOUND",
+      "success": false
     }
   },
   "user": "admin",

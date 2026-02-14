@@ -190,6 +190,7 @@
   {
     "case": "usage_report_pm",
     "user": "pm",
+    "compare_mode": "shape",
     "op": "intent.invoke",
     "intent": "usage.report",
     "intent_params": {
@@ -210,6 +211,7 @@
   {
     "case": "usage_export_csv_intent_pm",
     "user": "pm",
+    "compare_mode": "shape",
     "op": "intent.invoke",
     "intent": "usage.export.csv",
     "intent_params": {
@@ -265,6 +267,7 @@
   {
     "case": "scene_package_list_intent_admin",
     "user": "admin",
+    "compare_mode": "shape",
     "op": "intent.invoke",
     "intent": "scene.package.list",
     "intent_params": {}
@@ -272,6 +275,7 @@
   {
     "case": "scene_packages_installed_intent_admin",
     "user": "admin",
+    "compare_mode": "shape",
     "op": "intent.invoke",
     "intent": "scene.packages.installed",
     "intent_params": {}
@@ -308,6 +312,7 @@
   {
     "case": "scene_package_export_intent_admin",
     "user": "admin",
+    "compare_mode": "shape",
     "op": "intent.invoke",
     "intent": "scene.package.export",
     "intent_params": {
@@ -428,6 +433,7 @@
   {
     "case": "api_data_create_intent_pm",
     "user": "pm",
+    "compare_mode": "shape",
     "op": "intent.invoke",
     "intent": "api.data.create",
     "intent_params": {
@@ -467,6 +473,7 @@
   {
     "case": "load_view_intent_pm",
     "user": "pm",
+    "compare_mode": "shape",
     "op": "intent.invoke",
     "intent": "load_view",
     "intent_params": {

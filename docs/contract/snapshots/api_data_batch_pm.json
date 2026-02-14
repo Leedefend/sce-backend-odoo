@@ -1,81 +1,76 @@
 {
-  "case": "api_data_batch_pm",
-  "trace_id": "25d219e9-5af9-4ce0-b7da-7b123f421e80",
-  "exported_at": "2026-02-09T05:16:15Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "intent.invoke",
-  "user": "pm",
-  "user_fallback": "admin",
-  "fallback": false,
   "action": null,
+  "case": "api_data_batch_pm",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "intent.invoke",
+  "record": null,
+  "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
-    "model": "res.partner",
     "action": "archive",
-    "values": {
-      "active": false
-    },
-    "requested_ids": [
-      999999991
-    ],
-    "succeeded": 0,
     "failed": 1,
-    "results": [
+    "failed_has_more": false,
+    "failed_page_limit": 10,
+    "failed_page_offset": 0,
+    "failed_preview": [
       {
+        "error_category": "not_found",
         "id": 999999991,
+        "message": "记录不存在",
         "ok": false,
         "reason_code": "NOT_FOUND",
-        "message": "记录不存在",
         "retryable": false,
-        "error_category": "not_found",
-        "suggested_action": "refresh_list",
-        "trace_id": "adb_4b299b7e37c5"
+        "suggested_action": "refresh_list"
+      }
+    ],
+    "failed_reason_summary": [
+      {
+        "count": 1,
+        "reason_code": "NOT_FOUND"
       }
     ],
     "failed_retry_ids": [],
-    "failed_reason_summary": [
-      {
-        "reason_code": "NOT_FOUND",
-        "count": 1
-      }
-    ],
     "failed_retryable_summary": {
-      "retryable": 0,
-      "non_retryable": 1
+      "non_retryable": 1,
+      "retryable": 0
     },
-    "request_id": "snapshot_api_data_batch_1",
-    "idempotency_key": "snapshot_api_data_batch_1",
+    "failed_total": 1,
+    "failed_truncated": 0,
     "idempotency_fingerprint": "a670c64b6c55824f39d8af8e232aa555f0e58972",
-    "trace_id": "adb_4b299b7e37c5",
-    "idempotent_replay": false,
-    "replay_window_expired": false,
+    "idempotency_key": "snapshot_api_data_batch_1",
     "idempotency_replay_reason_code": "",
+    "idempotent_replay": false,
+    "model": "res.partner",
+    "replay_age_ms": 0,
     "replay_from_audit_id": 0,
     "replay_original_trace_id": "",
-    "replay_age_ms": 0,
-    "failed_total": 1,
-    "failed_page_offset": 0,
-    "failed_page_limit": 10,
-    "failed_preview": [
+    "replay_window_expired": false,
+    "requested_ids": [
+      999999991
+    ],
+    "results": [
       {
+        "error_category": "not_found",
         "id": 999999991,
+        "message": "记录不存在",
         "ok": false,
         "reason_code": "NOT_FOUND",
-        "message": "记录不存在",
         "retryable": false,
-        "error_category": "not_found",
-        "suggested_action": "refresh_list",
-        "trace_id": "adb_4b299b7e37c5"
+        "suggested_action": "refresh_list"
       }
     ],
-    "failed_truncated": 0,
-    "failed_has_more": false
+    "succeeded": 0,
+    "values": {
+      "active": false
+    }
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "pm",
+  "user_fallback": "admin",
+  "view_type": null
 }

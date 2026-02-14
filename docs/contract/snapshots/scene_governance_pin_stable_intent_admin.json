@@ -16,7 +16,14 @@
   "record": null,
   "record_error": null,
   "ui_contract": null,
-  "ui_contract_raw": null,
+  "ui_contract_raw": {
+    "error": {
+      "code": 500,
+      "message": "[Errno 2] No such file or directory: '/mnt/extra-addons/docs/contract/exports/scenes/stable/LATEST.json'",
+      "type": "FileNotFoundError"
+    },
+    "ok": false
+  },
   "user": "admin",
   "user_fallback": null,
   "view_type": null
