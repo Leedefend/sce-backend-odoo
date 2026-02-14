@@ -236,20 +236,32 @@ type SemanticActionButton = {
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
+function semanticActionRank(action: SemanticActionButton) {
+  if (action.key === primaryActionKey.value) return 0;
+  if (action.allowed) return 1;
+  return 2;
+}
+
 const semanticActionButtons = computed<SemanticActionButton[]>(() => {
   if (!isPaymentRequestModel.value) return [];
-  return paymentActionSurface.value.map((item) => ({
-    key: String(item.key || '').trim(),
-    label: String(item.label || item.key || '操作').trim(),
-    allowed: Boolean(item.allowed),
-    reasonCode: String(item.reason_code || ''),
-    blockedMessage: String(item.blocked_message || ''),
-    suggestedAction: String(item.suggested_action || ''),
-    currentState: String(item.current_state || ''),
-    nextStateHint: String(item.next_state_hint || ''),
-    requiresReason: Boolean(item.requires_reason),
-    executeIntent: String(item.execute_intent || 'payment.request.execute'),
-  }));
+  return paymentActionSurface.value
+    .map((item) => ({
+      key: String(item.key || '').trim(),
+      label: String(item.label || item.key || '操作').trim(),
+      allowed: Boolean(item.allowed),
+      reasonCode: String(item.reason_code || ''),
+      blockedMessage: String(item.blocked_message || ''),
+      suggestedAction: String(item.suggested_action || ''),
+      currentState: String(item.current_state || ''),
+      nextStateHint: String(item.next_state_hint || ''),
+      requiresReason: Boolean(item.requires_reason),
+      executeIntent: String(item.execute_intent || 'payment.request.execute'),
+    }))
+    .sort((a, b) => {
+      const rankDelta = semanticActionRank(a) - semanticActionRank(b);
+      if (rankDelta !== 0) return rankDelta;
+      return a.label.localeCompare(b.label, 'zh-CN');
+    });
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
