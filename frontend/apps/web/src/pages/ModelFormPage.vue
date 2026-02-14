@@ -267,6 +267,7 @@
             <strong>{{ entry.label }}</strong>
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
+            <span class="history-meta">cost: {{ historyDurationLabel(entry) }}</span>
             <span class="history-meta">at: {{ entry.atText }} ({{ historyAgeLabel(entry) }})</span>
             <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
             <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
@@ -364,6 +365,7 @@ type ActionHistoryEntry = {
   success: boolean;
   stateBefore: string;
   traceId: string;
+  durationMs: number;
   at: number;
   atText: string;
 };
@@ -1325,6 +1327,7 @@ async function runSemanticAction(action: SemanticActionButton) {
   actionBusy.value = true;
   actionBusyKey.value = action.key;
   const stateBefore = action.currentState;
+  const startedAt = Date.now();
   try {
     lastSemanticAction.value = {
       action: action.key,
@@ -1350,6 +1353,7 @@ async function runSemanticAction(action: SemanticActionButton) {
         success: parsed.success,
         stateBefore,
         traceId: response.traceId || '',
+        durationMs: Math.max(0, Date.now() - startedAt),
         at: Date.now(),
         atText: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
       },
@@ -1413,6 +1417,13 @@ function historyAgeLabel(entry: ActionHistoryEntry) {
   return `${min}m${sec}s ago`;
 }
 
+function historyDurationLabel(entry: ActionHistoryEntry) {
+  const ms = Math.max(0, Number(entry.durationMs || 0));
+  if (!ms) return '-';
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(2)}s`;
+}
+
 function armActionFeedbackAutoClear() {
   if (actionFeedbackTimer) {
     clearTimeout(actionFeedbackTimer);
@@ -1430,6 +1441,7 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
     `action=${entry.label}`,
     `reason_code=${entry.reasonCode}`,
     `state_before=${entry.stateBefore || '-'}`,
+    `duration=${historyDurationLabel(entry)}`,
     `trace_id=${entry.traceId || '-'}`,
     `success=${String(entry.success)}`,
   ].join('\n');
@@ -1780,6 +1792,7 @@ watch(
           success: Boolean(item?.success),
           stateBefore: String(item?.stateBefore || ''),
           traceId: String(item?.traceId || ''),
+          durationMs: Number(item?.durationMs || 0),
           at: Number(item?.at || Date.now()),
           atText: String(item?.atText || ''),
         }));
