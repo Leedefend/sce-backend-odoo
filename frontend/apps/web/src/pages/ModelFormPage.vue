@@ -104,6 +104,10 @@
           自动刷新
         </label>
       </section>
+      <section v-if="semanticActionButtons.length && actionSurfaceIsStale" class="semantic-action-stale-banner">
+        <span>动作面可能过期（超过 60 秒），请先刷新后再执行。</span>
+        <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">立即刷新</button>
+      </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
         快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
       </section>
@@ -1283,6 +1287,19 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .semantic-action-stats .stale {
   color: #b45309;
   font-weight: 600;
+}
+
+.semantic-action-stale-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #f59e0b;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
 }
 
 .stats-refresh {
