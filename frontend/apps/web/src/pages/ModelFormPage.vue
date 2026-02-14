@@ -891,6 +891,19 @@ async function runSemanticAction(action: SemanticActionButton) {
   if (!model.value || !recordId.value || !action.allowed) {
     return;
   }
+  if (actionSurfaceIsStale.value) {
+    const proceed = window.confirm("动作面已过期（超过 60 秒）。建议先刷新。点击“确定”继续执行，点击“取消”将自动刷新。");
+    if (!proceed) {
+      await loadPaymentActionSurface();
+      actionFeedback.value = {
+        message: "已取消执行并刷新动作面",
+        reasonCode: "ACTION_SURFACE_REFRESH_REQUIRED",
+        success: false,
+        traceId: lastTraceId.value,
+      };
+      return;
+    }
+  }
   if (action.key === 'approve' || action.key === 'done') {
     const confirmed = window.confirm(`确认执行「${action.label}」？`);
     if (!confirmed) {
