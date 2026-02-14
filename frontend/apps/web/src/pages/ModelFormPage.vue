@@ -229,7 +229,10 @@
       </section>
       <section v-if="actionHistory.length" class="semantic-action-history">
         <div class="history-header">
-          <h3>最近操作</h3>
+          <h3>
+            最近操作
+            <small class="history-count">可见 {{ displayedActionHistory.length }} / 总计 {{ actionHistory.length }}</small>
+          </h3>
           <div class="history-actions">
             <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
             <button type="button" class="history-clear" title="复制当前视图历史记录" aria-label="复制当前视图历史记录" @click="copyAllHistory">复制当前视图</button>
@@ -2201,6 +2204,13 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin: 0 0 8px;
   font-size: 14px;
   color: #0f172a;
+}
+
+.history-count {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
 }
 
 .semantic-action-history.history-empty p {
