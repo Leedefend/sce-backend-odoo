@@ -85,6 +85,8 @@
     - `Alt+R`: retry last semantic action
   - Action-surface freshness is visible and can be manually refreshed in form.
   - Action history supports reason-code filtering and per-entry evidence copy.
+  - Optional action-surface auto-refresh is available in form UX.
+  - Action feedback can be explicitly dismissed by user.
 
 ## Baseline Semantics
 - Platform baseline (environment/bootstrap consistency)
