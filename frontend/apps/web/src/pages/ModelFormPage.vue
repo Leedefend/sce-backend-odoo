@@ -138,7 +138,7 @@
             <strong>{{ entry.label }}</strong>
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
-            <span class="history-meta">at: {{ entry.atText }}</span>
+            <span class="history-meta">at: {{ entry.atText }} ({{ historyAgeLabel(entry) }})</span>
             <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
             <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
           </li>
@@ -796,6 +796,14 @@ async function rerunLastSemanticAction() {
 
 function clearActionHistory() {
   actionHistory.value = [];
+}
+
+function historyAgeLabel(entry: ActionHistoryEntry) {
+  const deltaSec = Math.max(0, Math.floor((Date.now() - Number(entry.at || 0)) / 1000));
+  if (deltaSec < 60) return `${deltaSec}s ago`;
+  const min = Math.floor(deltaSec / 60);
+  const sec = deltaSec % 60;
+  return `${min}m${sec}s ago`;
 }
 
 function armActionFeedbackAutoClear() {
