@@ -33,6 +33,12 @@ Existing fields remain unchanged:
   - `导出历史` downloads filtered action history JSON.
   - `导出证据包` downloads one bundle (action surface + action history + last feedback/trace).
   - `复制执行包` / `导出执行包` near feedback trace for latest execution snapshot.
+  - `复制最新Trace` in history panel for direct support handoff.
+  - caution visual emphasis for high-risk actions (`approve` / `done`).
+  - action stats now surface latest failure reason from recent execution history.
+  - `导出可执行` exports current allowed action summary JSON.
+  - `?` hotkey toggles shortcut help panel.
+  - `复制阻塞文本` copies plain-text blocked reasons for chat/email handoff.
   - history reason filter is persisted per record in local storage.
   - `复制转交说明` (for handoff-required actions) copies a plain-text handoff note with role and trace.
     - includes current filter and blocked top reasons for context.
@@ -45,6 +51,10 @@ Existing fields remain unchanged:
   - action stats now show absolute `刷新时刻` timestamp.
   - semantic action search keyword is persisted per record.
   - `重置面板` clears local UI preferences (filter/search/auto-refresh) in one click.
+  - action-surface readiness score (`就绪度`) gives quick execution confidence (with stale penalty).
+  - top blocked action summary surfaces the first blocking candidates.
+  - action stats now show top allowed actions for quick execution preview.
+  - `导出阻塞` exports blocked action summary JSON for coordination.
 
 ## Verification
 
