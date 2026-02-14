@@ -63,6 +63,15 @@ Existing fields remain unchanged:
   - auto-refresh pauses when tab is hidden and exposes paused status in stats.
   - empty history now shows guidance copy before first action run.
   - key action tool buttons now include aria-label/title for accessibility.
+  - history panel supports keyword search (action/reason/trace).
+  - history panel supports success/failed outcome filter.
+  - history filters are persisted per record (outcome + keyword).
+  - history filter reset is available as one-click action.
+  - action stats include quick-run button for current primary action.
+  - `复制主动作说明` copies plain-text action briefing for handoff.
+  - when no action is executable, banner guides user and can run first suggested action.
+  - history retention size is configurable (6/10/20) and persisted.
+  - `复制筛选摘要` copies current history filter context for issue reporting.
 
 ## Verification
 
