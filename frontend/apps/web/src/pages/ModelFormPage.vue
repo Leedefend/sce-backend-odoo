@@ -99,6 +99,7 @@
         <span>主动作: {{ primaryActionKey || '-' }}</span>
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
+        <span v-if="actionHistory.length">近期成功率: {{ actionHistorySuccessRate }}%</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
         <span v-if="actionSurfaceLoadedAtText">刷新时刻: {{ actionSurfaceLoadedAtText }}</span>
         <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
@@ -494,6 +495,11 @@ const allowedActionLabels = computed(() => {
 const latestFailureReason = computed(() => {
   const failed = actionHistory.value.find((item) => !item.success);
   return failed ? `${failed.reasonCode} (${failed.label})` : '';
+});
+const actionHistorySuccessRate = computed(() => {
+  if (!actionHistory.value.length) return 0;
+  const success = actionHistory.value.filter((item) => item.success).length;
+  return Math.round((success / actionHistory.value.length) * 100);
 });
 
 async function copyActionStats() {
