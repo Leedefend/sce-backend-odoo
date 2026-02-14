@@ -98,6 +98,7 @@
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
+        <span v-if="actionSurfaceLoadedAtText">刷新时刻: {{ actionSurfaceLoadedAtText }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
         <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
@@ -488,6 +489,10 @@ const actionSurfaceAgeLabel = computed(() => {
   const min = Math.floor(deltaSec / 60);
   const sec = deltaSec % 60;
   return `${min}m${sec}s`;
+});
+const actionSurfaceLoadedAtText = computed(() => {
+  if (!paymentActionSurfaceLoadedAt.value) return '';
+  return new Date(paymentActionSurfaceLoadedAt.value).toLocaleTimeString('zh-CN', { hour12: false });
 });
 const actionSurfaceIsStale = computed(() => {
   if (!paymentActionSurfaceLoadedAt.value) return true;
