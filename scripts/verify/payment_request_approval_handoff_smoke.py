@@ -156,6 +156,8 @@ def assert_role_hints(resp: dict, *, actor: str):
         role_key = str(item.get("required_role_key") or "").strip()
         role_label = str(item.get("required_role_label") or "").strip()
         handoff_hint = str(item.get("handoff_hint") or "").strip()
+        actor_matches = bool(item.get("actor_matches_required_role"))
+        handoff_required = bool(item.get("handoff_required"))
         if key in ("submit", "done") and role_key != "finance":
             raise AssertionError(f"action={key} expected required_role_key=finance, got={role_key!r}")
         if key in ("approve", "reject") and role_key != "executive":
@@ -164,6 +166,12 @@ def assert_role_hints(resp: dict, *, actor: str):
             raise AssertionError(f"action={key} missing required_role_label")
         if not handoff_hint:
             raise AssertionError(f"action={key} missing handoff_hint")
+        if required_group_xmlid := str(item.get("required_group_xmlid") or "").strip():
+            if handoff_required == actor_matches:
+                raise AssertionError(
+                    f"actor={actor} action={key} expected handoff_required == (not actor_matches_required_role), "
+                    f"got handoff_required={handoff_required} actor_matches={actor_matches} group={required_group_xmlid}"
+                )
 
 
 def first_id(token: str, model: str, fields: list[str], domain: list | None = None) -> int:
