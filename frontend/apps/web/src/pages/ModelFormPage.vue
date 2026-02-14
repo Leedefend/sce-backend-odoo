@@ -33,7 +33,7 @@
           :key="`semantic-${action.key}`"
           :disabled="!recordId || saving || loading || actionBusy || !action.allowed"
           class="action secondary"
-          :class="{ primary: action.key === primaryActionKey }"
+          :class="{ primary: action.key === primaryActionKey, caution: isCautionAction(action) }"
           :title="semanticActionTooltip(action)"
           @click="runSemanticAction(action)"
         >
@@ -95,13 +95,19 @@
         <button type="button" class="stats-refresh" @click="resetActionPanelPrefs">重置面板</button>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
+        <span :class="['readiness-badge', readinessLevelClass]">就绪度: {{ actionReadinessScore }}%</span>
         <span>主动作: {{ primaryActionKey || '-' }}</span>
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
         <span v-if="actionSurfaceLoadedAtText">刷新时刻: {{ actionSurfaceLoadedAtText }}</span>
+        <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
+        <span v-if="latestFailureReason">最近失败: {{ latestFailureReason }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
+        <button type="button" class="stats-refresh" @click="copyBlockedReasonsText">复制阻塞文本</button>
         <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
+        <button type="button" class="stats-refresh" @click="exportAllowedSummary">导出可执行</button>
+        <button type="button" class="stats-refresh" @click="exportBlockedSummary">导出阻塞</button>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
         <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
         <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
@@ -122,8 +128,14 @@
         <span>动作面可能过期（超过 60 秒），请先刷新后再执行。</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">立即刷新</button>
       </section>
+      <section v-if="topBlockedActions.length" class="semantic-action-stale-banner">
+        <span>主要阻塞：{{ topBlockedActions.join(' / ') }}</span>
+      </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
-        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
+        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作 · <code>?</code> 显示/隐藏帮助
+      </section>
+      <section v-if="semanticActionButtons.length && shortcutHelpVisible" class="semantic-action-stale-banner">
+        <span>帮助：`Ctrl+Enter` 执行主动作；`Alt+R` 重试；`?` 切换帮助显示。</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
@@ -173,6 +185,7 @@
         <div class="history-header">
           <h3>最近操作</h3>
           <div class="history-actions">
+            <button type="button" class="history-clear" @click="copyLatestTrace">复制最新Trace</button>
             <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
             <button type="button" class="history-clear" @click="exportActionHistory">导出历史</button>
             <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
@@ -371,6 +384,7 @@ const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
 const hideBlockedHints = ref(false);
 const semanticActionSearch = ref('');
+const shortcutHelpVisible = ref(false);
 try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
   if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
@@ -441,6 +455,17 @@ const semanticActionStats = computed(() => {
   const blocked = total - allowed;
   return { total, allowed, blocked };
 });
+const actionReadinessScore = computed(() => {
+  const total = Math.max(1, semanticActionStats.value.total);
+  const allowed = semanticActionStats.value.allowed;
+  const base = Math.round((allowed / total) * 100);
+  return actionSurfaceIsStale.value ? Math.max(0, base - 10) : base;
+});
+const readinessLevelClass = computed(() => {
+  if (actionReadinessScore.value >= 80) return "good";
+  if (actionReadinessScore.value >= 50) return "warn";
+  return "bad";
+});
 const blockedTopReasons = computed(() => {
   const counts = new Map<string, number>();
   for (const item of semanticActionButtons.value) {
@@ -452,6 +477,22 @@ const blockedTopReasons = computed(() => {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([reason, count]) => `${reason}:${count}`);
+});
+const topBlockedActions = computed(() => {
+  return semanticActionButtons.value
+    .filter((item) => !item.allowed)
+    .slice(0, 3)
+    .map((item) => `${item.label}(${item.reasonCode || 'UNKNOWN'})`);
+});
+const allowedActionLabels = computed(() => {
+  return semanticActionButtons.value
+    .filter((item) => item.allowed)
+    .map((item) => item.label)
+    .slice(0, 3);
+});
+const latestFailureReason = computed(() => {
+  const failed = actionHistory.value.find((item) => !item.success);
+  return failed ? `${failed.reasonCode} (${failed.label})` : '';
 });
 
 async function copyActionStats() {
@@ -481,6 +522,88 @@ async function copyActionStats() {
     actionFeedback.value = {
       message: '动作统计复制失败',
       reasonCode: 'ACTION_STATS_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+function exportBlockedSummary() {
+  if (!semanticActionButtons.value.length || !recordId.value) return;
+  const blocked = semanticActionButtons.value
+    .filter((item) => !item.allowed)
+    .map((item) => ({
+      key: item.key,
+      label: item.label,
+      reason_code: item.reasonCode || "UNKNOWN",
+      blocked_message: item.blockedMessage || "",
+      required_role: item.requiredRoleLabel || item.requiredRoleKey || "",
+      handoff_required: item.handoffRequired,
+    }));
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    blocked_count: blocked.length,
+    blocked_top_reasons: blockedTopReasons.value,
+    blocked_actions: blocked,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `payment_blocked_summary_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAllowedSummary() {
+  if (!semanticActionButtons.value.length || !recordId.value) return;
+  const allowed = semanticActionButtons.value
+    .filter((item) => item.allowed)
+    .map((item) => ({
+      key: item.key,
+      label: item.label,
+      next_state_hint: item.nextStateHint,
+      execute_intent: item.executeIntent,
+      delivery_priority: item.deliveryPriority,
+    }));
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    primary_action_key: primaryActionKey.value,
+    allowed_count: allowed.length,
+    allowed_actions: allowed,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `payment_allowed_summary_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+async function copyBlockedReasonsText() {
+  const blocked = semanticActionButtons.value.filter((item) => !item.allowed);
+  if (!blocked.length) return;
+  const lines = blocked.map(
+    (item) => `${item.label}: ${item.reasonCode || 'UNKNOWN'}${item.blockedMessage ? ` (${item.blockedMessage})` : ''}`,
+  );
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: '阻塞文本已复制',
+      reasonCode: 'BLOCKED_TEXT_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '阻塞文本复制失败',
+      reasonCode: 'BLOCKED_TEXT_COPY_FAILED',
       success: false,
       traceId: lastTraceId.value,
     };
@@ -811,6 +934,10 @@ function semanticActionTooltip(action: SemanticActionButton) {
   return `当前状态不可执行${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
 }
 
+function isCautionAction(action: SemanticActionButton) {
+  return action.key === 'approve' || action.key === 'done';
+}
+
 function blockedReasonText(action: SemanticActionButton) {
   const message = String(action.blockedMessage || '').trim();
   const reasonCode = String(action.reasonCode || '').trim();
@@ -1137,6 +1264,28 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
   }
 }
 
+async function copyLatestTrace() {
+  const trace = String(actionHistory.value[0]?.traceId || actionFeedback.value?.traceId || lastTraceId.value || '').trim();
+  if (!trace) return;
+  try {
+    await navigator.clipboard.writeText(trace);
+    actionFeedback.value = {
+      message: '最新 Trace 已复制',
+      reasonCode: 'LATEST_TRACE_COPIED',
+      success: true,
+      traceId: trace,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '最新 Trace 复制失败',
+      reasonCode: 'LATEST_TRACE_COPY_FAILED',
+      success: false,
+      traceId: trace,
+    };
+  }
+}
+
 async function copyAllHistory() {
   if (!actionHistory.value.length) return;
   const lines = actionHistory.value.map((entry) =>
@@ -1175,6 +1324,11 @@ function exportActionHistory() {
 }
 
 function onSemanticHotkey(event: KeyboardEvent) {
+  if (!event.ctrlKey && !event.altKey && event.key === '?') {
+    event.preventDefault();
+    shortcutHelpVisible.value = !shortcutHelpVisible.value;
+    return;
+  }
   if (event.ctrlKey && event.key === 'Enter' && primaryAllowedAction.value && !actionBusy.value && !loading.value) {
     event.preventDefault();
     runSemanticAction(primaryAllowedAction.value);
@@ -1421,6 +1575,11 @@ function analyzeLayout(layout: ViewContract['layout']) {
   box-shadow: inset 0 0 0 1px #0f766e;
 }
 
+.actions .caution {
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
 .meta {
   color: #64748b;
   font-size: 14px;
@@ -1489,6 +1648,30 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .semantic-action-stats .stale {
   color: #b45309;
   font-weight: 600;
+}
+
+.readiness-badge {
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid #cbd5e1;
+}
+
+.readiness-badge.good {
+  color: #065f46;
+  border-color: #6ee7b7;
+  background: #ecfdf5;
+}
+
+.readiness-badge.warn {
+  color: #92400e;
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.readiness-badge.bad {
+  color: #991b1b;
+  border-color: #fca5a5;
+  background: #fef2f2;
 }
 
 .semantic-action-stale-banner {
