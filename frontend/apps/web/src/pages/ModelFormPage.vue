@@ -246,7 +246,7 @@
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" @click="clearVisibleHistory">清空当前视图</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
-            <button type="button" class="history-clear" :disabled="!lastClearedHistorySnapshot" @click="undoHistoryClear">撤销清空</button>
+            <button type="button" class="history-clear" :disabled="!canUndoHistoryClear" @click="undoHistoryClear">撤销清空</button>
           </div>
         </div>
         <div class="history-filters">
@@ -418,7 +418,7 @@ const historyTimeWindow = ref<'ALL' | 'H1' | 'D1' | 'D7'>('ALL');
 const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
 const historySearchInputRef = ref<HTMLInputElement | null>(null);
-const lastClearedHistorySnapshot = ref<ActionHistoryEntry[] | null>(null);
+const lastClearedHistorySnapshot = ref<{ storageKey: string; entries: ActionHistoryEntry[] } | null>(null);
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
@@ -458,6 +458,9 @@ const historySortModeStorageKey = computed(
   () => `${historySortModeStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const actionSearchStorageKey = computed(() => `${actionSearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
+const canUndoHistoryClear = computed(
+  () => Boolean(lastClearedHistorySnapshot.value) && lastClearedHistorySnapshot.value?.storageKey === actionHistoryStorageKey.value,
+);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
   PAYMENT_ATTACHMENTS_REQUIRED: "提交前请先上传附件",
   BUSINESS_RULE_FAILED: "当前状态不满足执行条件",
@@ -1533,7 +1536,7 @@ function clearActionHistory() {
   if (!actionHistory.value.length) return;
   const confirmed = window.confirm(`确定要清空全部历史记录吗？将删除 ${actionHistory.value.length} 条记录。`);
   if (!confirmed) return;
-  lastClearedHistorySnapshot.value = [...actionHistory.value];
+  lastClearedHistorySnapshot.value = { storageKey: actionHistoryStorageKey.value, entries: [...actionHistory.value] };
   actionHistory.value = [];
   actionFeedback.value = {
     message: '已清空全部历史记录',
@@ -1548,7 +1551,7 @@ function clearVisibleHistory() {
   if (!displayedActionHistory.value.length) return;
   const confirmed = window.confirm(`确定要清空当前筛选视图吗？将删除 ${displayedActionHistory.value.length} 条记录。`);
   if (!confirmed) return;
-  lastClearedHistorySnapshot.value = [...actionHistory.value];
+  lastClearedHistorySnapshot.value = { storageKey: actionHistoryStorageKey.value, entries: [...actionHistory.value] };
   const keys = new Set(displayedActionHistory.value.map((item) => item.key));
   const before = actionHistory.value.length;
   actionHistory.value = actionHistory.value.filter((item) => !keys.has(item.key));
@@ -1564,7 +1567,8 @@ function clearVisibleHistory() {
 
 function undoHistoryClear() {
   if (!lastClearedHistorySnapshot.value) return;
-  actionHistory.value = [...lastClearedHistorySnapshot.value].slice(0, actionHistoryLimit.value);
+  if (lastClearedHistorySnapshot.value.storageKey !== actionHistoryStorageKey.value) return;
+  actionHistory.value = [...lastClearedHistorySnapshot.value.entries].slice(0, actionHistoryLimit.value);
   lastClearedHistorySnapshot.value = null;
   actionFeedback.value = {
     message: `已恢复历史记录（${actionHistory.value.length} 条）`,
@@ -1913,6 +1917,9 @@ function onSemanticHotkey(event: KeyboardEvent) {
   if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'Escape' && target === historySearchInputRef.value) {
     event.preventDefault();
     historySearch.value = '';
+    return;
+  }
+  if (isTypingContext) {
     return;
   }
   if (!event.ctrlKey && !event.altKey && event.key === '?') {
