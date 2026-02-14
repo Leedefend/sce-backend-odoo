@@ -244,9 +244,9 @@
             <button type="button" class="history-clear" title="复制筛选查询串" aria-label="复制筛选查询串" @click="copyHistoryFilterQuery">复制查询串</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
-            <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" :disabled="!hasVisibleHistory" @click="clearVisibleHistory">清空当前视图</button>
-            <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
-            <button type="button" class="history-clear" :disabled="!canUndoHistoryClear" @click="undoHistoryClear">撤销清空</button>
+            <button type="button" class="history-clear" title="仅清空当前筛选视图" aria-label="仅清空当前筛选视图" :disabled="actionBusy || loading || !hasVisibleHistory" @click="clearVisibleHistory">清空当前视图</button>
+            <button type="button" class="history-clear" :disabled="actionBusy || loading || !actionHistory.length" @click="clearActionHistory">清空</button>
+            <button type="button" class="history-clear" :disabled="actionBusy || loading || !canUndoHistoryClear" @click="undoHistoryClear">撤销清空</button>
           </div>
         </div>
         <div class="history-filters">
@@ -1544,6 +1544,7 @@ async function rerunLastSemanticAction() {
 }
 
 function clearActionHistory() {
+  if (actionBusy.value || loading.value) return;
   if (!actionHistory.value.length) return;
   const confirmed = window.confirm(`确定要清空全部历史记录吗？将删除 ${actionHistory.value.length} 条记录。`);
   if (!confirmed) return;
@@ -1559,6 +1560,7 @@ function clearActionHistory() {
 }
 
 function clearVisibleHistory() {
+  if (actionBusy.value || loading.value) return;
   if (!displayedActionHistory.value.length) return;
   const confirmed = window.confirm(`确定要清空当前筛选视图吗？将删除 ${displayedActionHistory.value.length} 条记录。`);
   if (!confirmed) return;
@@ -1577,6 +1579,7 @@ function clearVisibleHistory() {
 }
 
 function undoHistoryClear() {
+  if (actionBusy.value || loading.value) return;
   if (!lastClearedHistorySnapshot.value) return;
   if (lastClearedHistorySnapshot.value.storageKey !== actionHistoryStorageKey.value) return;
   actionHistory.value = [...lastClearedHistorySnapshot.value.entries].slice(0, actionHistoryLimit.value);
