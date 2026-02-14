@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createRecord, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
@@ -296,6 +296,13 @@ const displayedSemanticActionButtons = computed(() => {
     return semanticActionButtons.value.filter((item) => !item.allowed);
   }
   return semanticActionButtons.value;
+});
+const primaryAllowedAction = computed(() => {
+  const primary = displayedSemanticActionButtons.value.find(
+    (item) => item.key === primaryActionKey.value && item.allowed,
+  );
+  if (primary) return primary;
+  return displayedSemanticActionButtons.value.find((item) => item.allowed) || null;
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -720,6 +727,18 @@ function clearActionHistory() {
   actionHistory.value = [];
 }
 
+function onSemanticHotkey(event: KeyboardEvent) {
+  if (event.ctrlKey && event.key === 'Enter' && primaryAllowedAction.value && !actionBusy.value && !loading.value) {
+    event.preventDefault();
+    runSemanticAction(primaryAllowedAction.value);
+    return;
+  }
+  if (event.altKey && (event.key === 'r' || event.key === 'R') && lastSemanticAction.value && !actionBusy.value) {
+    event.preventDefault();
+    rerunLastSemanticAction();
+  }
+}
+
 function reload() {
   load();
 }
@@ -751,7 +770,13 @@ function handleSuggestedAction(action: string): boolean {
   return true;
 }
 
-onMounted(load);
+onMounted(() => {
+  load();
+  window.addEventListener('keydown', onSemanticHotkey);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onSemanticHotkey);
+});
 watch(actionFilterMode, (value) => {
   try {
     window.localStorage.setItem(actionFilterStorageKey, value);
