@@ -19,6 +19,7 @@ export interface PaymentRequestActionSurfaceItem {
   handoff_hint?: string;
   actor_matches_required_role?: boolean;
   handoff_required?: boolean;
+  delivery_priority?: number;
   execute_intent?: string;
   execute_params?: {
     id?: number;

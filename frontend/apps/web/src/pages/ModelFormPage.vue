@@ -321,6 +321,7 @@ type SemanticActionButton = {
   handoffHint: string;
   actorMatchesRequiredRole: boolean;
   handoffRequired: boolean;
+  deliveryPriority: number;
   requiresReason: boolean;
   executeIntent: string;
 };
@@ -363,12 +364,15 @@ const semanticActionButtons = computed<SemanticActionButton[]>(() => {
       handoffHint: String(item.handoff_hint || ''),
       actorMatchesRequiredRole: Boolean(item.actor_matches_required_role),
       handoffRequired: Boolean(item.handoff_required),
+      deliveryPriority: Number(item.delivery_priority || 100),
       requiresReason: Boolean(item.requires_reason),
       executeIntent: String(item.execute_intent || 'payment.request.execute'),
     }))
     .sort((a, b) => {
       const rankDelta = semanticActionRank(a) - semanticActionRank(b);
       if (rankDelta !== 0) return rankDelta;
+      const deliveryDelta = Number(a.deliveryPriority || 100) - Number(b.deliveryPriority || 100);
+      if (deliveryDelta !== 0) return deliveryDelta;
       return a.label.localeCompare(b.label, 'zh-CN');
     });
 });

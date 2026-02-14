@@ -20,6 +20,7 @@ Existing fields remain unchanged:
 - `required_role_label`
 - `required_group_xmlid`
 - `handoff_hint`
+- `delivery_priority`
 
 ## Frontend Delivery
 
