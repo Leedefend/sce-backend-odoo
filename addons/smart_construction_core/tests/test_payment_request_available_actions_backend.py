@@ -75,6 +75,7 @@ class TestPaymentRequestAvailableActionsBackend(TransactionCase):
         self.assertTrue(str(submit.get("handoff_hint") or "").strip())
         self.assertIsInstance(submit.get("actor_matches_required_role"), bool)
         self.assertIsInstance(submit.get("handoff_required"), bool)
+        self.assertEqual(int(submit.get("delivery_priority") or 0), 10)
         reject = by_key.get("reject") or {}
         self.assertEqual(reject.get("reason_code"), REASON_BUSINESS_RULE_FAILED)
         self.assertTrue(bool(reject.get("requires_reason")))
@@ -83,6 +84,7 @@ class TestPaymentRequestAvailableActionsBackend(TransactionCase):
         self.assertEqual(reject.get("required_group_xmlid"), "smart_construction_custom.group_sc_role_executive")
         self.assertIsInstance(reject.get("actor_matches_required_role"), bool)
         self.assertIsInstance(reject.get("handoff_required"), bool)
+        self.assertEqual(int(reject.get("delivery_priority") or 0), 30)
         submit = next(item for item in actions if item.get("key") == "submit")
         self.assertFalse(bool(submit.get("allowed")))
         reject = next(item for item in actions if item.get("key") == "reject")

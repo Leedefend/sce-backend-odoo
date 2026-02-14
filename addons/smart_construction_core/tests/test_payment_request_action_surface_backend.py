@@ -82,6 +82,7 @@ class TestPaymentRequestActionSurfaceBackend(TransactionCase):
         self.assertTrue(str(submit.get("handoff_hint") or "").strip())
         self.assertIsInstance(submit.get("actor_matches_required_role"), bool)
         self.assertIsInstance(submit.get("handoff_required"), bool)
+        self.assertEqual(int(submit.get("delivery_priority") or 0), 10)
         reject = by_key.get("reject") or {}
         self.assertEqual(reject.get("reason_code"), REASON_BUSINESS_RULE_FAILED)
         self.assertTrue(bool(reject.get("requires_reason")))
@@ -90,6 +91,7 @@ class TestPaymentRequestActionSurfaceBackend(TransactionCase):
         self.assertEqual(reject.get("required_group_xmlid"), "smart_construction_custom.group_sc_role_executive")
         self.assertIsInstance(reject.get("actor_matches_required_role"), bool)
         self.assertIsInstance(reject.get("handoff_required"), bool)
+        self.assertEqual(int(reject.get("delivery_priority") or 0), 30)
 
     def test_execute_missing_action(self):
         payment = self._create_payment_request_minimal()

@@ -26,6 +26,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "intent": "payment.request.submit",
             "method": "action_submit",
             "allowed_states": {"draft"},
+            "delivery_priority": 10,
         },
         {
             "key": "approve",
@@ -33,6 +34,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "intent": "payment.request.approve",
             "method": "action_approve",
             "allowed_states": {"submit"},
+            "delivery_priority": 20,
         },
         {
             "key": "reject",
@@ -41,6 +43,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "method": "action_on_tier_rejected",
             "allowed_states": {"submit"},
             "required_params": ["reason"],
+            "delivery_priority": 30,
         },
         {
             "key": "done",
@@ -48,6 +51,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "intent": "payment.request.done",
             "method": "action_done",
             "allowed_states": {"approved"},
+            "delivery_priority": 40,
         },
     ]
     _EXECUTE_INTENT = "payment.request.execute"
@@ -196,6 +200,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "handoff_hint": str(role_hint.get("handoff_hint") or ""),
             "actor_matches_required_role": actor_matches_required_role,
             "handoff_required": handoff_required,
+            "delivery_priority": int(spec.get("delivery_priority") or 100),
         }
 
     def handle(self, payload=None, ctx=None):
