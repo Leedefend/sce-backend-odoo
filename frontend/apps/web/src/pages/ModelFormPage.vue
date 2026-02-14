@@ -125,8 +125,27 @@
         <button type="button" class="stats-refresh" title="导出可执行动作摘要" aria-label="导出可执行动作摘要" @click="exportAllowedSummary">导出可执行</button>
         <button type="button" class="stats-refresh" title="导出阻塞动作摘要" aria-label="导出阻塞动作摘要" @click="exportBlockedSummary">导出阻塞</button>
         <button type="button" class="stats-refresh" title="刷新动作面" aria-label="刷新动作面" @click="loadPaymentActionSurface">刷新动作面</button>
+        <button
+          type="button"
+          class="stats-refresh"
+          :disabled="!primaryAllowedAction || actionBusy || loading"
+          title="执行当前主动作"
+          aria-label="执行当前主动作"
+          @click="primaryAllowedAction && runSemanticAction(primaryAllowedAction)"
+        >
+          执行主动作
+        </button>
         <button type="button" class="stats-refresh" title="复制动作面JSON" aria-label="复制动作面JSON" @click="copyActionSurface">复制动作面</button>
+        <button type="button" class="stats-refresh" title="复制主动作说明" aria-label="复制主动作说明" @click="copyPrimaryActionBrief">复制主动作说明</button>
         <button type="button" class="stats-refresh" title="导出动作面JSON" aria-label="导出动作面JSON" @click="exportActionSurface">导出动作面</button>
+        <label class="auto-refresh-toggle">
+          历史条数
+          <select v-model.number="actionHistoryLimit">
+            <option :value="6">6</option>
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+          </select>
+        </label>
         <label class="auto-refresh-toggle">
           <input v-model="autoRefreshActionSurface" type="checkbox" />
           自动刷新
@@ -143,6 +162,17 @@
       <section v-if="semanticActionButtons.length && actionSurfaceIsStale" class="semantic-action-stale-banner">
         <span>动作面可能过期（超过 60 秒），请先刷新后再执行。</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">立即刷新</button>
+      </section>
+      <section v-if="semanticActionButtons.length && !semanticActionStats.allowed" class="semantic-action-stale-banner">
+        <span>当前没有可执行动作，请先处理阻塞原因或执行建议动作。</span>
+        <button
+          v-if="firstSuggestedBlockedAction"
+          type="button"
+          class="stats-refresh"
+          @click="runBlockedSuggestedAction(firstSuggestedBlockedAction)"
+        >
+          执行首个建议
+        </button>
       </section>
       <section v-if="topBlockedActions.length" class="semantic-action-stale-banner">
         <span>主要阻塞：{{ topBlockedActions.join(' / ') }}</span>
@@ -205,11 +235,21 @@
             <button type="button" class="history-clear" title="复制全部历史记录" aria-label="复制全部历史记录" @click="copyAllHistory">复制全部</button>
             <button type="button" class="history-clear" title="导出历史JSON" aria-label="导出历史JSON" @click="exportActionHistory">导出历史</button>
             <button type="button" class="history-clear" title="导出历史CSV" aria-label="导出历史CSV" @click="exportActionHistoryCsv">导出CSV</button>
+            <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
         </div>
         <div class="history-filters">
+          <input
+            v-model.trim="historySearch"
+            class="history-search"
+            type="text"
+            placeholder="搜索历史动作/原因码/Trace"
+          />
+          <button type="button" :class="{ active: historyOutcomeFilter === 'ALL' }" @click="historyOutcomeFilter = 'ALL'">全部结果</button>
+          <button type="button" :class="{ active: historyOutcomeFilter === 'SUCCESS' }" @click="historyOutcomeFilter = 'SUCCESS'">成功</button>
+          <button type="button" :class="{ active: historyOutcomeFilter === 'FAILED' }" @click="historyOutcomeFilter = 'FAILED'">失败</button>
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
           <button
             v-for="reason in historyReasonCodes"
@@ -220,6 +260,7 @@
           >
             {{ reason }}
           </button>
+          <button type="button" class="history-clear" @click="resetHistoryFilters">重置历史筛选</button>
         </div>
         <ul>
           <li v-for="entry in filteredActionHistory" :key="entry.key">
@@ -331,11 +372,16 @@ const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
+const historyOutcomeFilter = ref<'ALL' | 'SUCCESS' | 'FAILED'>('ALL');
+const historySearch = ref('');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
+const historyOutcomeFilterStoragePrefix = 'sc.payment.history_outcome_filter.v1';
+const historySearchStoragePrefix = 'sc.payment.history_search.v1';
+const actionHistoryLimitStorageKey = 'sc.payment.history_limit.v1';
 const autoRefreshIntervalStorageKey = 'sc.payment.auto_refresh_interval.v1';
 const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
 
@@ -347,6 +393,12 @@ const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load r
 const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const historyReasonFilterStorageKey = computed(
   () => `${historyReasonFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historyOutcomeFilterStorageKey = computed(
+  () => `${historyOutcomeFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historySearchStorageKey = computed(
+  () => `${historySearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const actionSearchStorageKey = computed(() => `${actionSearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
@@ -406,6 +458,7 @@ const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
 const hideBlockedHints = ref(false);
 const semanticActionSearch = ref('');
+const actionHistoryLimit = ref(6);
 const shortcutHelpVisible = ref(false);
 try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
@@ -416,10 +469,19 @@ try {
   if ([15, 30, 60].includes(cachedInterval)) {
     autoRefreshIntervalSec.value = cachedInterval;
   }
+  const cachedHistoryLimit = Number(window.localStorage.getItem(actionHistoryLimitStorageKey) || 6);
+  if ([6, 10, 20].includes(cachedHistoryLimit)) {
+    actionHistoryLimit.value = cachedHistoryLimit;
+  }
   const cachedReason = String(window.localStorage.getItem(historyReasonFilterStorageKey.value) || '').trim();
   if (cachedReason) {
     historyReasonFilter.value = cachedReason;
   }
+  const cachedOutcome = String(window.localStorage.getItem(historyOutcomeFilterStorageKey.value) || '').trim();
+  if (cachedOutcome === 'ALL' || cachedOutcome === 'SUCCESS' || cachedOutcome === 'FAILED') {
+    historyOutcomeFilter.value = cachedOutcome;
+  }
+  historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
   semanticActionSearch.value = String(window.localStorage.getItem(actionSearchStorageKey.value) || '');
 } catch {
   // Ignore storage errors and keep default mode.
@@ -517,6 +579,12 @@ const latestFailureReason = computed(() => {
   const failed = actionHistory.value.find((item) => !item.success);
   return failed ? `${failed.reasonCode} (${failed.label})` : '';
 });
+const firstSuggestedBlockedAction = computed(
+  () =>
+    semanticActionButtons.value.find(
+      (item) => !item.allowed && item.suggestedAction && suggestedActionMeta(item).canRun,
+    ) || null,
+);
 const actionHistorySuccessRate = computed(() => {
   if (!actionHistory.value.length) return 0;
   const success = actionHistory.value.filter((item) => item.success).length;
@@ -696,8 +764,21 @@ const historyReasonCodes = computed(() =>
   Array.from(new Set(actionHistory.value.map((item) => item.reasonCode).filter(Boolean))).sort(),
 );
 const filteredActionHistory = computed(() => {
-  if (historyReasonFilter.value === 'ALL') return actionHistory.value;
-  return actionHistory.value.filter((item) => item.reasonCode === historyReasonFilter.value);
+  const keyword = historySearch.value.toLowerCase();
+  const byOutcome =
+    historyOutcomeFilter.value === 'ALL'
+      ? actionHistory.value
+      : actionHistory.value.filter((item) =>
+          historyOutcomeFilter.value === 'SUCCESS' ? item.success : !item.success,
+        );
+  const byReason =
+    historyReasonFilter.value === 'ALL'
+      ? byOutcome
+      : byOutcome.filter((item) => item.reasonCode === historyReasonFilter.value);
+  if (!keyword) return byReason;
+  return byReason.filter((item) =>
+    `${item.label} ${item.reasonCode} ${item.traceId}`.toLowerCase().includes(keyword),
+  );
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -1060,6 +1141,35 @@ async function copyActionSurface() {
   }
 }
 
+async function copyPrimaryActionBrief() {
+  if (!primaryAllowedAction.value) return;
+  const lines = [
+    `record=${model.value}:${recordId.value || '-'}`,
+    `primary_action=${primaryAllowedAction.value.label}(${primaryAllowedAction.value.key})`,
+    `next_state=${primaryAllowedAction.value.nextStateHint || '-'}`,
+    `allowed=${String(primaryAllowedAction.value.allowed)}`,
+    `trace_id=${lastTraceId.value || '-'}`,
+    `blocked_top=${blockedTopReasons.value.join(',') || '-'}`,
+  ];
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: '主动作说明已复制',
+      reasonCode: 'PRIMARY_ACTION_BRIEF_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '主动作说明复制失败',
+      reasonCode: 'PRIMARY_ACTION_BRIEF_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
 function exportActionSurface() {
   if (!recordId.value || !semanticActionButtons.value.length) return;
   const payload = {
@@ -1083,17 +1193,27 @@ function resetActionPanelPrefs() {
   actionFilterMode.value = 'all';
   hideBlockedHints.value = false;
   semanticActionSearch.value = '';
-  historyReasonFilter.value = 'ALL';
+  resetHistoryFilters();
   autoRefreshActionSurface.value = false;
   autoRefreshIntervalSec.value = 15;
+  actionHistoryLimit.value = 6;
   try {
     window.localStorage.removeItem(actionFilterStorageKey);
     window.localStorage.removeItem(historyReasonFilterStorageKey.value);
+    window.localStorage.removeItem(historyOutcomeFilterStorageKey.value);
+    window.localStorage.removeItem(historySearchStorageKey.value);
     window.localStorage.removeItem(actionSearchStorageKey.value);
     window.localStorage.removeItem(autoRefreshIntervalStorageKey);
+    window.localStorage.removeItem(actionHistoryLimitStorageKey);
   } catch {
     // Ignore storage errors.
   }
+}
+
+function resetHistoryFilters() {
+  historyReasonFilter.value = 'ALL';
+  historyOutcomeFilter.value = 'ALL';
+  historySearch.value = '';
 }
 
 function exportEvidenceBundle() {
@@ -1234,7 +1354,7 @@ async function runSemanticAction(action: SemanticActionButton) {
         atText: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
       },
       ...actionHistory.value,
-    ].slice(0, 6);
+    ].slice(0, actionHistoryLimit.value);
     recordTrace({
       ts: Date.now(),
       trace_id: response.traceId || createTraceId(),
@@ -1358,6 +1478,37 @@ async function copyAllHistory() {
     await navigator.clipboard.writeText(lines.join('\n'));
   } catch {
     // Ignore clipboard errors.
+  }
+}
+
+async function copyHistoryFilterSummary() {
+  if (!actionHistory.value.length) return;
+  const payload = [
+    `record=${model.value}:${recordId.value || '-'}`,
+    `history_limit=${actionHistoryLimit.value}`,
+    `history_total=${actionHistory.value.length}`,
+    `history_visible=${filteredActionHistory.value.length}`,
+    `outcome_filter=${historyOutcomeFilter.value}`,
+    `reason_filter=${historyReasonFilter.value}`,
+    `search=${historySearch.value || '-'}`,
+    `trace_id=${lastTraceId.value || '-'}`,
+  ].join('\n');
+  try {
+    await navigator.clipboard.writeText(payload);
+    actionFeedback.value = {
+      message: '历史筛选摘要已复制',
+      reasonCode: 'HISTORY_FILTER_SUMMARY_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '历史筛选摘要复制失败',
+      reasonCode: 'HISTORY_FILTER_SUMMARY_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
   }
 }
 
@@ -1554,6 +1705,20 @@ watch(historyReasonFilter, (value) => {
     // Ignore storage errors.
   }
 });
+watch(historyOutcomeFilter, (value) => {
+  try {
+    window.localStorage.setItem(historyOutcomeFilterStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(historySearch, (value) => {
+  try {
+    window.localStorage.setItem(historySearchStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
 watch(autoRefreshIntervalSec, (value) => {
   const interval = [15, 30, 60].includes(Number(value)) ? Number(value) : 15;
   try {
@@ -1569,6 +1734,16 @@ watch(autoRefreshIntervalSec, (value) => {
     }, interval * 1000);
   }
 });
+watch(actionHistoryLimit, (value) => {
+  const normalized = [6, 10, 20].includes(Number(value)) ? Number(value) : 6;
+  actionHistoryLimit.value = normalized;
+  actionHistory.value = actionHistory.value.slice(0, normalized);
+  try {
+    window.localStorage.setItem(actionHistoryLimitStorageKey, String(normalized));
+  } catch {
+    // Ignore storage errors.
+  }
+});
 watch(semanticActionSearch, (value) => {
   try {
     window.localStorage.setItem(actionSearchStorageKey.value, value);
@@ -1580,7 +1755,7 @@ watch(
   actionHistory,
   (value) => {
     try {
-      window.localStorage.setItem(actionHistoryStorageKey.value, JSON.stringify(value.slice(0, 6)));
+      window.localStorage.setItem(actionHistoryStorageKey.value, JSON.stringify(value.slice(0, actionHistoryLimit.value)));
     } catch {
       // Ignore storage errors.
     }
@@ -1598,7 +1773,7 @@ watch(
       }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        actionHistory.value = parsed.slice(0, 6).map((item) => ({
+        actionHistory.value = parsed.slice(0, actionHistoryLimit.value).map((item) => ({
           key: String(item?.key || `${Date.now()}`),
           label: String(item?.label || '-'),
           reasonCode: String(item?.reasonCode || ''),
@@ -1944,6 +2119,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .history-actions {
   display: flex;
   gap: 6px;
+}
+
+.history-search {
+  min-width: 220px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
 }
 
 .history-filters {
