@@ -121,8 +121,20 @@
           <h3>最近操作</h3>
           <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
         </div>
+        <div class="history-filters">
+          <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
+          <button
+            v-for="reason in historyReasonCodes"
+            :key="`history-reason-${reason}`"
+            type="button"
+            :class="{ active: historyReasonFilter === reason }"
+            @click="historyReasonFilter = reason"
+          >
+            {{ reason }}
+          </button>
+        </div>
         <ul>
-          <li v-for="entry in actionHistory" :key="entry.key">
+          <li v-for="entry in filteredActionHistory" :key="entry.key">
             <strong>{{ entry.label }}</strong>
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
@@ -223,6 +235,7 @@ type ActionHistoryEntry = {
 const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
+const historyReasonFilter = ref('ALL');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
@@ -341,6 +354,13 @@ const primaryAllowedAction = computed(() => {
 const retryLastActionLabel = computed(() => {
   if (!lastSemanticAction.value) return '重试上次动作';
   return `重试：${lastSemanticAction.value.label}`;
+});
+const historyReasonCodes = computed(() =>
+  Array.from(new Set(actionHistory.value.map((item) => item.reasonCode).filter(Boolean))).sort(),
+);
+const filteredActionHistory = computed(() => {
+  if (historyReasonFilter.value === 'ALL') return actionHistory.value;
+  return actionHistory.value.filter((item) => item.reasonCode === historyReasonFilter.value);
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -1104,6 +1124,26 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.history-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.history-filters button {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
+}
+
+.history-filters button.active {
+  border-color: #0f766e;
+  box-shadow: inset 0 0 0 1px #0f766e;
 }
 
 .history-clear {
