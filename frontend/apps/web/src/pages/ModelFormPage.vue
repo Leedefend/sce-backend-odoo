@@ -101,6 +101,7 @@
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
         <span v-if="actionSurfaceLoadedAtText">刷新时刻: {{ actionSurfaceLoadedAtText }}</span>
+        <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
         <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
@@ -474,6 +475,12 @@ const topBlockedActions = computed(() => {
     .filter((item) => !item.allowed)
     .slice(0, 3)
     .map((item) => `${item.label}(${item.reasonCode || 'UNKNOWN'})`);
+});
+const allowedActionLabels = computed(() => {
+  return semanticActionButtons.value
+    .filter((item) => item.allowed)
+    .map((item) => item.label)
+    .slice(0, 3);
 });
 
 async function copyActionStats() {
