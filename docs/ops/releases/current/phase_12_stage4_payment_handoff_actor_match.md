@@ -38,6 +38,7 @@ Existing fields remain unchanged:
   - action stats now surface latest failure reason from recent execution history.
   - `导出可执行` exports current allowed action summary JSON.
   - `?` hotkey toggles shortcut help panel.
+  - `复制阻塞文本` copies plain-text blocked reasons for chat/email handoff.
   - history reason filter is persisted per record in local storage.
   - `复制转交说明` (for handoff-required actions) copies a plain-text handoff note with role and trace.
     - includes current filter and blocked top reasons for context.
