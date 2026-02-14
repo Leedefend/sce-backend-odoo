@@ -400,6 +400,7 @@ const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
 const historyOutcomeFilterStoragePrefix = 'sc.payment.history_outcome_filter.v1';
 const historyDurationFilterStoragePrefix = 'sc.payment.history_duration_filter.v1';
+const historyTimeWindowStoragePrefix = 'sc.payment.history_time_window.v1';
 const historySearchStoragePrefix = 'sc.payment.history_search.v1';
 const historySortModeStoragePrefix = 'sc.payment.history_sort_mode.v1';
 const actionHistoryLimitStorageKey = 'sc.payment.history_limit.v1';
@@ -420,6 +421,9 @@ const historyOutcomeFilterStorageKey = computed(
 );
 const historyDurationFilterStorageKey = computed(
   () => `${historyDurationFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historyTimeWindowStorageKey = computed(
+  () => `${historyTimeWindowStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const historySearchStorageKey = computed(
   () => `${historySearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
@@ -514,6 +518,9 @@ function hydrateRecordScopedPanelPrefs() {
       cachedDuration === 'LE_1S' || cachedDuration === 'BETWEEN_1S_3S' || cachedDuration === 'GT_3S'
         ? cachedDuration
         : 'ALL';
+    const cachedTimeWindow = String(window.localStorage.getItem(historyTimeWindowStorageKey.value) || '').trim();
+    historyTimeWindow.value =
+      cachedTimeWindow === 'H1' || cachedTimeWindow === 'D1' || cachedTimeWindow === 'D7' ? cachedTimeWindow : 'ALL';
     historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
     const cachedSort = String(window.localStorage.getItem(historySortModeStorageKey.value) || '').trim();
     historySortMode.value = cachedSort === 'ASC' ? 'ASC' : 'DESC';
@@ -522,6 +529,7 @@ function hydrateRecordScopedPanelPrefs() {
     historyReasonFilter.value = 'ALL';
     historyOutcomeFilter.value = 'ALL';
     historyDurationFilter.value = 'ALL';
+    historyTimeWindow.value = 'ALL';
     historySearch.value = '';
     historySortMode.value = 'DESC';
     semanticActionSearch.value = '';
@@ -1259,6 +1267,7 @@ function resetActionPanelPrefs() {
     window.localStorage.removeItem(historyReasonFilterStorageKey.value);
     window.localStorage.removeItem(historyOutcomeFilterStorageKey.value);
     window.localStorage.removeItem(historyDurationFilterStorageKey.value);
+    window.localStorage.removeItem(historyTimeWindowStorageKey.value);
     window.localStorage.removeItem(historySearchStorageKey.value);
     window.localStorage.removeItem(historySortModeStorageKey.value);
     window.localStorage.removeItem(actionSearchStorageKey.value);
@@ -1611,6 +1620,7 @@ async function copyHistoryFilterSummary() {
     `history_visible=${displayedActionHistory.value.length}`,
     `outcome_filter=${historyOutcomeFilter.value}`,
     `duration_filter=${historyDurationFilter.value}`,
+    `time_window=${historyTimeWindow.value}`,
     `reason_filter=${historyReasonFilter.value}`,
     `search=${historySearch.value || '-'}`,
     `sort_mode=${historySortMode.value}`,
@@ -1653,6 +1663,7 @@ function exportActionHistory() {
     history_visible: displayedActionHistory.value.length,
     outcome_filter: historyOutcomeFilter.value,
     duration_filter: historyDurationFilter.value,
+    time_window: historyTimeWindow.value,
     reason_filter: historyReasonFilter.value,
     search: historySearch.value || '',
     sort_mode: historySortMode.value,
@@ -1866,6 +1877,13 @@ watch(historyDurationFilter, (value) => {
     // Ignore storage errors.
   }
 });
+watch(historyTimeWindow, (value) => {
+  try {
+    window.localStorage.setItem(historyTimeWindowStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
 watch(historySearch, (value) => {
   try {
     window.localStorage.setItem(historySearchStorageKey.value, value);
@@ -1917,6 +1935,7 @@ watch(
     historyReasonFilterStorageKey,
     historyOutcomeFilterStorageKey,
     historyDurationFilterStorageKey,
+    historyTimeWindowStorageKey,
     historySearchStorageKey,
     historySortModeStorageKey,
     actionSearchStorageKey,
