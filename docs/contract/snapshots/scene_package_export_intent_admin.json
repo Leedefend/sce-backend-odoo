@@ -2,6 +2,7 @@
   "action": null,
   "case": "scene_package_export_intent_admin",
   "contract_version": "v1",
+  "error": null,
   "execute_error": null,
   "execute_result": null,
   "fallback": false,
@@ -13,9 +14,9 @@
   "ui_contract": null,
   "ui_contract_raw": {
     "action": "package_export",
-    "checksum": "5f70345f1f0e76fb8673ae183355ad5509f5b885fc922cdd186bc02d724c8075",
+    "checksum": "0d0eefc8f88b0a76c3a702a4b386a452b0c4667663e2ac7276060c160176d0aa",
     "package": {
-      "checksum": "5f70345f1f0e76fb8673ae183355ad5509f5b885fc922cdd186bc02d724c8075",
+      "checksum": "0d0eefc8f88b0a76c3a702a4b386a452b0c4667663e2ac7276060c160176d0aa",
       "compatibility": {
         "min_core_version": "10.6.0",
         "supported_schema_versions": [
@@ -164,7 +165,7 @@
           },
           "name": "项目立项",
           "target": {
-            "route": "/workbench?scene=projects.intake&reason=TARGET_MISSING"
+            "route": "/s/projects.intake"
           },
           "tiles": []
         },

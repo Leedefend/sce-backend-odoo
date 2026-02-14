@@ -1,187 +1,1982 @@
 {
-  "case": "menu_tree_admin",
-  "trace_id": "0653a962-9d48-41d2-809f-ce39a8e85898",
-  "exported_at": "2026-02-09T05:13:54Z",
-  "contract_version": "v1",
-  "model": null,
-  "view_type": null,
-  "op": "nav",
-  "user": "admin",
-  "user_fallback": null,
-  "fallback": false,
   "action": null,
+  "case": "menu_tree_admin",
+  "contract_version": "v1",
+  "error": null,
+  "execute_error": null,
+  "execute_result": null,
+  "fallback": false,
+  "meta_fields": null,
+  "model": null,
+  "op": "nav",
+  "record": null,
+  "record_error": null,
   "ui_contract": null,
   "ui_contract_raw": {
+    "buttons": [],
     "nav": [
       {
-        "key": "menu:265",
-        "label": "智能施工 2.0",
-        "icon": null,
-        "menu_id": 265,
-        "children": [
-          {
-            "key": "menu:307",
-            "label": "成本科目",
-            "icon": null,
-            "menu_id": 307,
-            "children": [],
-            "meta": {
-              "scene": "web",
-              "sequence": 40,
-              "menu_id": 307,
-              "menu_xmlid": "smart_construction_core.menu_sc_project_cost_code",
-              "action_id": 451,
-              "action_type": "ir.actions.act_window",
-              "model": "project.cost.code",
-              "groups_xmlids": [
-                91
-              ]
-            }
-          }
-        ],
+        "children": [],
+        "icon": "mail,static/description/icon.png",
+        "key": "menu:76",
+        "label": "Discuss",
+        "menu_id": 76,
         "meta": {
-          "scene": "web",
-          "sequence": 30,
-          "menu_id": 265,
-          "menu_xmlid": "smart_construction_core.menu_sc_root",
-          "action_id": 449,
-          "action_type": "ir.actions.act_window",
-          "model": "project.project",
+          "action_id": 119,
+          "action_type": "ir.actions.client",
+          "action_xmlid": "mail.action_discuss",
           "groups_xmlids": [
-            81,
-            84,
-            90,
-            72,
-            78,
-            91,
-            75,
-            69
-          ]
+            1
+          ],
+          "menu_id": 76,
+          "menu_xmlid": "mail.menu_root_discuss",
+          "model": false,
+          "scene": "web",
+          "sequence": 5
         }
       },
       {
-        "key": "menu:172",
-        "label": "Project",
-        "icon": "project,static/description/icon.png",
-        "menu_id": 172,
+        "children": [],
+        "icon": "project_todo,static/description/icon.png",
+        "key": "menu:243",
+        "label": "To-do",
+        "menu_id": 243,
+        "meta": {
+          "action_id": 421,
+          "action_type": "ir.actions.server",
+          "action_xmlid": "project_todo.project_task_preload_action_todo",
+          "menu_id": 243,
+          "menu_xmlid": "project_todo.menu_todo_todos",
+          "scene": "web",
+          "sequence": 10
+        }
+      },
+      {
         "children": [
           {
-            "key": "menu:173",
-            "label": "Projects",
-            "icon": null,
-            "menu_id": 173,
             "children": [],
+            "icon": null,
+            "key": "menu:191",
+            "label": "Dashboards",
+            "menu_id": 191,
             "meta": {
+              "action_id": 329,
+              "action_type": "ir.actions.client",
+              "action_xmlid": "spreadsheet_dashboard.ir_actions_dashboard_action",
+              "menu_id": 191,
+              "menu_xmlid": "spreadsheet_dashboard.spreadsheet_dashboard_menu_dashboard",
+              "model": false,
               "scene": "web",
-              "sequence": 1,
-              "menu_id": 173,
-              "menu_xmlid": "project.menu_projects",
-              "action_id": 302,
-              "action_type": "ir.actions.act_window",
-              "model": "project.project"
+              "sequence": 1
             }
           },
           {
-            "key": "menu:177",
-            "label": "All Tasks",
-            "icon": null,
-            "menu_id": 177,
-            "children": [],
-            "meta": {
-              "scene": "web",
-              "sequence": 2,
-              "menu_id": 177,
-              "menu_xmlid": "project.menu_project_management_all_tasks",
-              "action_id": 312,
-              "action_type": "ir.actions.act_window",
-              "model": "project.task"
-            }
-          },
-          {
-            "key": "menu:181",
-            "label": "Configuration",
-            "icon": null,
-            "menu_id": 181,
             "children": [
               {
-                "key": "menu:184",
-                "label": "Projects",
-                "icon": null,
-                "menu_id": 184,
                 "children": [],
-                "meta": {
-                  "scene": "web",
-                  "sequence": 5,
-                  "menu_id": 184,
-                  "menu_xmlid": "project.menu_projects_config",
-                  "action_id": 304,
-                  "action_type": "ir.actions.act_window",
-                  "model": "project.project"
-                }
-              },
-              {
-                "key": "menu:187",
-                "label": "Tags",
                 "icon": null,
-                "menu_id": 187,
-                "children": [],
+                "key": "menu:193",
+                "label": "Dashboards",
+                "menu_id": 193,
                 "meta": {
-                  "scene": "web",
-                  "sequence": 10,
-                  "menu_id": 187,
-                  "menu_xmlid": "project.menu_project_tags_act",
-                  "action_id": 320,
+                  "action_id": 330,
                   "action_type": "ir.actions.act_window",
-                  "model": "project.tags"
-                }
-              },
-              {
-                "key": "menu:186",
-                "label": "Task Stages",
-                "icon": null,
-                "menu_id": 186,
-                "children": [],
-                "meta": {
+                  "menu_id": 193,
+                  "menu_xmlid": "spreadsheet_dashboard.spreadsheet_dashboard_menu_configuration_dashboards",
+                  "model": "spreadsheet.dashboard.group",
                   "scene": "web",
-                  "sequence": 10,
-                  "menu_id": 186,
-                  "menu_xmlid": "project.menu_project_config_project",
-                  "action_id": 297,
-                  "action_type": "ir.actions.act_window",
-                  "model": "project.task.type",
-                  "groups_xmlids": [
-                    7
-                  ]
+                  "sequence": 10
                 }
               }
             ],
+            "icon": null,
+            "key": "menu:192",
+            "label": "Configuration",
+            "menu_id": 192,
             "meta": {
+              "menu_id": 192,
+              "menu_xmlid": "spreadsheet_dashboard.spreadsheet_dashboard_menu_configuration",
               "scene": "web",
-              "sequence": 100,
-              "menu_id": 181,
-              "menu_xmlid": "project.menu_project_config",
-              "groups_xmlids": [
-                34
-              ]
+              "sequence": 150
             }
           }
         ],
+        "icon": "spreadsheet_dashboard,static/description/icon.png",
+        "key": "menu:190",
+        "label": "Dashboards",
+        "menu_id": 190,
         "meta": {
+          "action_id": 329,
+          "action_type": "ir.actions.client",
+          "action_xmlid": "spreadsheet_dashboard.ir_actions_dashboard_action",
+          "menu_id": 190,
+          "menu_xmlid": "spreadsheet_dashboard.spreadsheet_dashboard_menu_root",
+          "model": false,
           "scene": "web",
-          "sequence": 70,
-          "menu_id": 172,
-          "menu_xmlid": "project.menu_main_pm",
+          "sequence": 37
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:48",
+                "label": "Main Apps",
+                "menu_id": 48,
+                "meta": {
+                  "action_id": 38,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 48,
+                  "menu_xmlid": "base.menu_module_tree",
+                  "model": "ir.module.module",
+                  "scene": "web",
+                  "sequence": 5
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:51",
+                "label": "Theme Store",
+                "menu_id": 51,
+                "meta": {
+                  "action_id": 40,
+                  "action_type": "ir.actions.act_url",
+                  "action_xmlid": "base.action_theme_store",
+                  "menu_id": 51,
+                  "menu_xmlid": "base.menu_theme_store",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:49",
+                "label": "Theme Store",
+                "menu_id": 49,
+                "meta": {
+                  "menu_id": 49,
+                  "menu_xmlid": "base.theme_store",
+                  "scene": "web",
+                  "sequence": 15
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:50",
+                "label": "Third-Party Apps",
+                "menu_id": 50,
+                "meta": {
+                  "action_id": 39,
+                  "action_type": "ir.actions.act_url",
+                  "action_xmlid": "base.action_third_party",
+                  "menu_id": 50,
+                  "menu_xmlid": "base.menu_third_party",
+                  "scene": "web",
+                  "sequence": 20
+                }
+              }
+            ],
+            "icon": null,
+            "key": "menu:47",
+            "label": "Apps",
+            "menu_id": 47,
+            "meta": {
+              "groups_xmlids": [
+                4
+              ],
+              "menu_id": 47,
+              "menu_xmlid": "base.menu_apps",
+              "scene": "web",
+              "sequence": 5
+            }
+          },
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:52",
+            "label": "Update Apps List",
+            "menu_id": 52,
+            "meta": {
+              "action_id": 42,
+              "action_type": "ir.actions.act_window",
+              "groups_xmlids": [
+                7
+              ],
+              "menu_id": 52,
+              "menu_xmlid": "base.menu_view_base_module_update",
+              "model": "base.module.update",
+              "scene": "web",
+              "sequence": 40
+            }
+          },
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:54",
+            "label": "Apply Scheduled Upgrades",
+            "menu_id": 54,
+            "meta": {
+              "action_id": 45,
+              "action_type": "ir.actions.act_window",
+              "groups_xmlids": [
+                7
+              ],
+              "menu_id": 54,
+              "menu_xmlid": "base.menu_view_base_module_upgrade",
+              "model": "base.module.upgrade",
+              "scene": "web",
+              "sequence": 50
+            }
+          },
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:65",
+            "label": "Import Module",
+            "menu_id": 65,
+            "meta": {
+              "action_id": 83,
+              "action_type": "ir.actions.act_window",
+              "groups_xmlids": [
+                7
+              ],
+              "menu_id": 65,
+              "menu_xmlid": "base_import_module.menu_view_base_module_import",
+              "model": "base.import.module",
+              "scene": "web",
+              "sequence": 100
+            }
+          }
+        ],
+        "icon": "base,static/description/modules.png",
+        "key": "menu:15",
+        "label": "Apps",
+        "menu_id": 15,
+        "meta": {
           "groups_xmlids": [
-            91
-          ]
+            4
+          ],
+          "menu_id": 15,
+          "menu_xmlid": "base.menu_management",
+          "scene": "web",
+          "sequence": 500
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:66",
+            "label": "General Settings",
+            "menu_id": 66,
+            "meta": {
+              "action_id": 84,
+              "action_type": "ir.actions.act_window",
+              "groups_xmlids": [
+                4
+              ],
+              "menu_id": 66,
+              "menu_xmlid": "base_setup.menu_config",
+              "model": "res.config.settings",
+              "scene": "web",
+              "sequence": 0
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:60",
+                "label": "Users",
+                "menu_id": 60,
+                "meta": {
+                  "action_id": 69,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 60,
+                  "menu_xmlid": "base.menu_action_res_users",
+                  "model": "res.users",
+                  "scene": "web",
+                  "sequence": 0
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:59",
+                "label": "Groups",
+                "menu_id": 59,
+                "meta": {
+                  "action_id": 68,
+                  "action_type": "ir.actions.act_window",
+                  "groups_xmlids": [
+                    91,
+                    94,
+                    7
+                  ],
+                  "menu_id": 59,
+                  "menu_xmlid": "base.menu_action_res_groups",
+                  "model": "res.groups",
+                  "scene": "web",
+                  "sequence": 3
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:57",
+                "label": "Companies",
+                "menu_id": 57,
+                "meta": {
+                  "action_id": 52,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 57,
+                  "menu_xmlid": "base.menu_action_res_company_form",
+                  "model": "res.company",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              }
+            ],
+            "icon": null,
+            "key": "menu:3",
+            "label": "Users & Companies",
+            "menu_id": 3,
+            "meta": {
+              "menu_id": 3,
+              "menu_xmlid": "base.menu_users",
+              "scene": "web",
+              "sequence": 1
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:58",
+                "label": "Languages",
+                "menu_id": 58,
+                "meta": {
+                  "action_id": 53,
+                  "action_type": "ir.actions.act_window",
+                  "menu_id": 58,
+                  "menu_xmlid": "base.menu_res_lang_act_window",
+                  "model": "res.lang",
+                  "scene": "web",
+                  "sequence": 1
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:55",
+                    "label": "Export Translation",
+                    "menu_id": 55,
+                    "meta": {
+                      "action_id": 47,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 55,
+                      "menu_xmlid": "base.menu_wizard_lang_export",
+                      "model": "base.language.export",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:53",
+                    "label": "Import Translation",
+                    "menu_id": 53,
+                    "meta": {
+                      "action_id": 44,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 53,
+                      "menu_xmlid": "base.menu_view_base_import_language",
+                      "model": "base.language.import",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:6",
+                "label": "Import / Export",
+                "menu_id": 6,
+                "meta": {
+                  "groups_xmlids": [
+                    7
+                  ],
+                  "menu_id": 6,
+                  "menu_xmlid": "base.menu_translation_export",
+                  "scene": "web",
+                  "sequence": 3
+                }
+              },
+              {
+                "children": [],
+                "icon": null,
+                "key": "menu:5",
+                "label": "Application Terms",
+                "menu_id": 5,
+                "meta": {
+                  "groups_xmlids": [
+                    7
+                  ],
+                  "menu_id": 5,
+                  "menu_xmlid": "base.menu_translation_app",
+                  "scene": "web",
+                  "sequence": 4
+                }
+              }
+            ],
+            "icon": null,
+            "key": "menu:4",
+            "label": "Translations",
+            "menu_id": 4,
+            "meta": {
+              "groups_xmlids": [
+                7
+              ],
+              "menu_id": 4,
+              "menu_xmlid": "base.menu_translation",
+              "scene": "web",
+              "sequence": 2
+            }
+          },
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:7",
+            "label": "General Settings",
+            "menu_id": 7,
+            "meta": {
+              "menu_id": 7,
+              "menu_xmlid": "base.menu_config",
+              "scene": "web",
+              "sequence": 3
+            }
+          },
+          {
+            "children": [],
+            "icon": null,
+            "key": "menu:2",
+            "label": "Custom Shortcuts",
+            "menu_id": 2,
+            "meta": {
+              "menu_id": 2,
+              "menu_xmlid": "base.menu_administration_shortcut",
+              "scene": "web",
+              "sequence": 50
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:86",
+                    "label": "Messages",
+                    "menu_id": 86,
+                    "meta": {
+                      "action_id": 108,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 86,
+                      "menu_xmlid": "mail.menu_mail_message",
+                      "model": "mail.message",
+                      "scene": "web",
+                      "sequence": 1
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:87",
+                    "label": "Scheduled Messages",
+                    "menu_id": 87,
+                    "meta": {
+                      "action_id": 109,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 87,
+                      "menu_xmlid": "mail.mail_message_schedule_menu",
+                      "model": "mail.message.schedule",
+                      "scene": "web",
+                      "sequence": 2
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:88",
+                    "label": "Subtypes",
+                    "menu_id": 88,
+                    "meta": {
+                      "action_id": 105,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 88,
+                      "menu_xmlid": "mail.menu_message_subtype",
+                      "model": "mail.message.subtype",
+                      "scene": "web",
+                      "sequence": 4
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:89",
+                    "label": "Tracking Values",
+                    "menu_id": 89,
+                    "meta": {
+                      "action_id": 106,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 89,
+                      "menu_xmlid": "mail.menu_mail_tracking_value",
+                      "model": "mail.tracking.value",
+                      "scene": "web",
+                      "sequence": 5
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:90",
+                    "label": "Activity Types",
+                    "menu_id": 90,
+                    "meta": {
+                      "action_id": 121,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 90,
+                      "menu_xmlid": "mail.menu_mail_activity_type",
+                      "model": "mail.activity.type",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:91",
+                    "label": "Activities",
+                    "menu_id": 91,
+                    "meta": {
+                      "action_id": 122,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 91,
+                      "menu_xmlid": "mail.menu_mail_activities",
+                      "model": "mail.activity",
+                      "scene": "web",
+                      "sequence": 11
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:92",
+                    "label": "Activity Plans",
+                    "menu_id": 92,
+                    "meta": {
+                      "action_id": 124,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 92,
+                      "menu_xmlid": "mail.menu_mail_activity_plan",
+                      "model": "mail.activity.plan",
+                      "scene": "web",
+                      "sequence": 12
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:93",
+                    "label": "Notifications",
+                    "menu_id": 93,
+                    "meta": {
+                      "action_id": 107,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 93,
+                      "menu_xmlid": "mail.mail_notification_menu",
+                      "model": "mail.notification",
+                      "scene": "web",
+                      "sequence": 20
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:94",
+                    "label": "Followers",
+                    "menu_id": 94,
+                    "meta": {
+                      "action_id": 112,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 94,
+                      "menu_xmlid": "mail.menu_email_followers",
+                      "model": "mail.followers",
+                      "scene": "web",
+                      "sequence": 21
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:95",
+                    "label": "Email Blacklist",
+                    "menu_id": 95,
+                    "meta": {
+                      "action_id": 140,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 95,
+                      "menu_xmlid": "mail.mail_blacklist_menu",
+                      "model": "mail.blacklist",
+                      "scene": "web",
+                      "sequence": 22
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:111",
+                    "label": "Ratings",
+                    "menu_id": 111,
+                    "meta": {
+                      "action_id": 186,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 111,
+                      "menu_xmlid": "rating.rating_rating_menu_technical",
+                      "model": "rating.rating",
+                      "scene": "web",
+                      "sequence": 30
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:96",
+                    "label": "User Settings",
+                    "menu_id": 96,
+                    "meta": {
+                      "action_id": 137,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 96,
+                      "menu_xmlid": "mail.res_users_settings_menu",
+                      "model": "res.users.settings",
+                      "scene": "web",
+                      "sequence": 50
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:97",
+                    "label": "Guests",
+                    "menu_id": 97,
+                    "meta": {
+                      "action_id": 135,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 97,
+                      "menu_xmlid": "mail.mail_guest_menu",
+                      "model": "mail.guest",
+                      "scene": "web",
+                      "sequence": 51
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:98",
+                    "label": "RTC sessions",
+                    "menu_id": 98,
+                    "meta": {
+                      "action_id": 115,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 98,
+                      "menu_xmlid": "mail.discuss_channel_rtc_session_menu",
+                      "model": "discuss.channel.rtc.session",
+                      "scene": "web",
+                      "sequence": 52
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:99",
+                    "label": "ICE servers",
+                    "menu_id": 99,
+                    "meta": {
+                      "action_id": 113,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 99,
+                      "menu_xmlid": "mail.ice_servers_menu",
+                      "model": "mail.ice.server",
+                      "scene": "web",
+                      "sequence": 53
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:100",
+                    "label": "Message Reactions",
+                    "menu_id": 100,
+                    "meta": {
+                      "action_id": 136,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 100,
+                      "menu_xmlid": "mail.mail_message_reaction_menu",
+                      "model": "mail.message.reaction",
+                      "scene": "web",
+                      "sequence": 54
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:101",
+                    "label": "Link Previews",
+                    "menu_id": 101,
+                    "meta": {
+                      "action_id": 116,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 101,
+                      "menu_xmlid": "mail.mail_link_preview_menu",
+                      "model": "mail.link.preview",
+                      "scene": "web",
+                      "sequence": 55
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:102",
+                    "label": "GIF favorite",
+                    "menu_id": 102,
+                    "meta": {
+                      "action_id": 117,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 102,
+                      "menu_xmlid": "mail.discuss_gif_favorite_menu",
+                      "model": "discuss.gif.favorite",
+                      "scene": "web",
+                      "sequence": 56
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:85",
+                "label": "Discuss",
+                "menu_id": 85,
+                "meta": {
+                  "menu_id": 85,
+                  "menu_xmlid": "mail.mail_menu_technical",
+                  "scene": "web",
+                  "sequence": 1
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:77",
+                    "label": "Emails",
+                    "menu_id": 77,
+                    "meta": {
+                      "action_id": 110,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 77,
+                      "menu_xmlid": "mail.menu_mail_mail",
+                      "model": "mail.mail",
+                      "scene": "web",
+                      "sequence": 1
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:30",
+                    "label": "Outgoing Mail Servers",
+                    "menu_id": 30,
+                    "meta": {
+                      "action_id": 17,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 30,
+                      "menu_xmlid": "base.menu_mail_servers",
+                      "model": "ir.mail_server",
+                      "scene": "web",
+                      "sequence": 5
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:80",
+                    "label": "Incoming Mail Servers",
+                    "menu_id": 80,
+                    "meta": {
+                      "action_id": 104,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 80,
+                      "menu_xmlid": "mail.menu_action_fetchmail_server_tree",
+                      "model": "fetchmail.server",
+                      "scene": "web",
+                      "sequence": 6
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:81",
+                    "label": "Email Templates",
+                    "menu_id": 81,
+                    "meta": {
+                      "action_id": 138,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 81,
+                      "menu_xmlid": "mail.menu_email_templates",
+                      "model": "mail.template",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:78",
+                    "label": "Aliases",
+                    "menu_id": 78,
+                    "meta": {
+                      "action_id": 133,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 78,
+                      "menu_xmlid": "mail.mail_alias_menu",
+                      "model": "mail.alias",
+                      "scene": "web",
+                      "sequence": 11
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:79",
+                    "label": "Alias Domains",
+                    "menu_id": 79,
+                    "meta": {
+                      "action_id": 132,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 79,
+                      "menu_xmlid": "mail.mail_alias_domain_menu",
+                      "model": "mail.alias.domain",
+                      "scene": "web",
+                      "sequence": 12
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:82",
+                    "label": "Channels",
+                    "menu_id": 82,
+                    "meta": {
+                      "action_id": 118,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 82,
+                      "menu_xmlid": "mail.discuss_channel_menu_settings",
+                      "model": "discuss.channel",
+                      "scene": "web",
+                      "sequence": 20
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:83",
+                    "label": "Channels/Members",
+                    "menu_id": 83,
+                    "meta": {
+                      "action_id": 114,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 83,
+                      "menu_xmlid": "mail.discuss_channel_member_menu",
+                      "model": "discuss.channel.member",
+                      "scene": "web",
+                      "sequence": 21
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:84",
+                    "label": "Mail Gateway Allowed",
+                    "menu_id": 84,
+                    "meta": {
+                      "action_id": 134,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 84,
+                      "menu_xmlid": "mail.mail_gateway_allowed_menu",
+                      "model": "mail.gateway.allowed",
+                      "scene": "web",
+                      "sequence": 22
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:114",
+                    "label": "Snailmail Letters",
+                    "menu_id": 114,
+                    "meta": {
+                      "action_id": 203,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 114,
+                      "menu_xmlid": "snailmail.menu_snailmail_letters",
+                      "model": "snailmail.letter",
+                      "scene": "web",
+                      "sequence": 50
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:115",
+                    "label": "Digest Emails",
+                    "menu_id": 115,
+                    "meta": {
+                      "action_id": 207,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        2
+                      ],
+                      "menu_id": 115,
+                      "menu_xmlid": "digest.digest_menu",
+                      "model": "digest.digest",
+                      "scene": "web",
+                      "sequence": 80
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:116",
+                    "label": "Digest Tips",
+                    "menu_id": 116,
+                    "meta": {
+                      "action_id": 208,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        2
+                      ],
+                      "menu_id": 116,
+                      "menu_xmlid": "digest.digest_tip_menu",
+                      "model": "digest.tip",
+                      "scene": "web",
+                      "sequence": 81
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:10",
+                "label": "Email",
+                "menu_id": 10,
+                "meta": {
+                  "menu_id": 10,
+                  "menu_xmlid": "base.menu_email",
+                  "scene": "web",
+                  "sequence": 1
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:112",
+                    "label": "SMS",
+                    "menu_id": 112,
+                    "meta": {
+                      "action_id": 199,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 112,
+                      "menu_xmlid": "sms.sms_sms_menu",
+                      "model": "sms.sms",
+                      "scene": "web",
+                      "sequence": 1
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:113",
+                    "label": "SMS Templates",
+                    "menu_id": 113,
+                    "meta": {
+                      "action_id": 201,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 113,
+                      "menu_xmlid": "sms.sms_template_menu",
+                      "model": "sms.template",
+                      "scene": "web",
+                      "sequence": 2
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:108",
+                    "label": "Phone Blacklist",
+                    "menu_id": 108,
+                    "meta": {
+                      "action_id": 155,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 108,
+                      "menu_xmlid": "phone_validation.phone_blacklist_menu",
+                      "model": "phone.blacklist",
+                      "scene": "web",
+                      "sequence": 3
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:107",
+                "label": "Phone / SMS",
+                "menu_id": 107,
+                "meta": {
+                  "menu_id": 107,
+                  "menu_xmlid": "phone_validation.phone_menu_main",
+                  "scene": "web",
+                  "sequence": 3
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:19",
+                    "label": "Actions",
+                    "menu_id": 19,
+                    "meta": {
+                      "action_id": 5,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 19,
+                      "menu_xmlid": "base.menu_ir_sequence_actions",
+                      "model": "ir.actions.actions",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:22",
+                    "label": "Client Actions",
+                    "menu_id": 22,
+                    "meta": {
+                      "action_id": 8,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 22,
+                      "menu_xmlid": "base.menu_ir_client_actions_report",
+                      "model": "ir.actions.client",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:24",
+                    "label": "Configuration Wizards",
+                    "menu_id": 24,
+                    "meta": {
+                      "action_id": 10,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 24,
+                      "menu_xmlid": "base.menu_ir_actions_todo_form",
+                      "model": "ir.actions.todo",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:20",
+                    "label": "Reports",
+                    "menu_id": 20,
+                    "meta": {
+                      "action_id": 6,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 20,
+                      "menu_xmlid": "base.menu_ir_action_report",
+                      "model": "ir.actions.report",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:23",
+                    "label": "Server Actions",
+                    "menu_id": 23,
+                    "meta": {
+                      "action_id": 9,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 23,
+                      "menu_xmlid": "base.menu_server_action",
+                      "model": "ir.actions.server",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:45",
+                    "label": "User-defined Defaults",
+                    "menu_id": 45,
+                    "meta": {
+                      "action_id": 33,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 45,
+                      "menu_xmlid": "base.ir_default_menu",
+                      "model": "ir.default",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:21",
+                    "label": "Window Actions",
+                    "menu_id": 21,
+                    "meta": {
+                      "action_id": 7,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 21,
+                      "menu_xmlid": "base.menu_ir_action_window",
+                      "model": "ir.actions.act_window",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:18",
+                "label": "Actions",
+                "menu_id": 18,
+                "meta": {
+                  "menu_id": 18,
+                  "menu_xmlid": "base.next_id_6",
+                  "scene": "web",
+                  "sequence": 5
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:69",
+                    "label": "IAP Accounts",
+                    "menu_id": 69,
+                    "meta": {
+                      "action_id": 86,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 69,
+                      "menu_xmlid": "iap.iap_account_menu",
+                      "model": "iap.account",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:68",
+                "label": "IAP",
+                "menu_id": 68,
+                "meta": {
+                  "menu_id": 68,
+                  "menu_xmlid": "iap.iap_root_menu",
+                  "scene": "web",
+                  "sequence": 5
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:27",
+                    "label": "Scheduled Actions",
+                    "menu_id": 27,
+                    "meta": {
+                      "action_id": 14,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 27,
+                      "menu_xmlid": "base.menu_ir_cron_act",
+                      "model": "ir.cron",
+                      "scene": "web",
+                      "sequence": 2
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:28",
+                    "label": "Scheduled Actions Triggers",
+                    "menu_id": 28,
+                    "meta": {
+                      "action_id": 15,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 28,
+                      "menu_xmlid": "base.ir_cron_trigger_menu",
+                      "model": "ir.cron.trigger",
+                      "scene": "web",
+                      "sequence": 3
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:12",
+                "label": "Automation",
+                "menu_id": 12,
+                "meta": {
+                  "menu_id": 12,
+                  "menu_xmlid": "base.menu_automation",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:25",
+                    "label": "Assets",
+                    "menu_id": 25,
+                    "meta": {
+                      "action_id": 12,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 25,
+                      "menu_xmlid": "base.menu_action_asset",
+                      "model": "ir.asset",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:39",
+                    "label": "Attachments",
+                    "menu_id": 39,
+                    "meta": {
+                      "action_id": 26,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 39,
+                      "menu_xmlid": "base.menu_action_attachment",
+                      "model": "ir.attachment",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:17",
+                    "label": "Decimal Accuracy",
+                    "menu_id": 17,
+                    "meta": {
+                      "action_id": 4,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 17,
+                      "menu_xmlid": "base.menu_decimal_precision_form",
+                      "model": "decimal.precision",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:32",
+                    "label": "Fields",
+                    "menu_id": 32,
+                    "meta": {
+                      "action_id": 20,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 32,
+                      "menu_xmlid": "base.ir_model_model_fields",
+                      "model": "ir.model.fields",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:33",
+                    "label": "Fields Selection",
+                    "menu_id": 33,
+                    "meta": {
+                      "action_id": 21,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 33,
+                      "menu_xmlid": "base.ir_model_model_fields_selection",
+                      "model": "ir.model.fields.selection",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:46",
+                    "label": "Logging",
+                    "menu_id": 46,
+                    "meta": {
+                      "action_id": 37,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 46,
+                      "menu_xmlid": "base.ir_logging_all_menu",
+                      "model": "ir.logging",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:37",
+                    "label": "ManyToMany Relations",
+                    "menu_id": 37,
+                    "meta": {
+                      "action_id": 24,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 37,
+                      "menu_xmlid": "base.ir_model_relation_menu",
+                      "model": "ir.model.relation",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:36",
+                    "label": "Model Constraints",
+                    "menu_id": 36,
+                    "meta": {
+                      "action_id": 23,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 36,
+                      "menu_xmlid": "base.ir_model_constraint_menu",
+                      "model": "ir.model.constraint",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:31",
+                    "label": "Models",
+                    "menu_id": 31,
+                    "meta": {
+                      "action_id": 19,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 31,
+                      "menu_xmlid": "base.ir_model_model_menu",
+                      "model": "ir.model",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:56",
+                    "label": "Profiling",
+                    "menu_id": 56,
+                    "meta": {
+                      "action_id": 51,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 56,
+                      "menu_xmlid": "base.menu_ir_profile",
+                      "model": "ir.profile",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:11",
+                "label": "Database Structure",
+                "menu_id": 11,
+                "meta": {
+                  "menu_id": 11,
+                  "menu_xmlid": "base.next_id_9",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:105",
+                    "label": "Tier Definition",
+                    "menu_id": 105,
+                    "meta": {
+                      "action_id": 153,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 105,
+                      "menu_xmlid": "base_tier_validation.menu_tier_definition",
+                      "model": "tier.definition",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:106",
+                    "label": "Tier Validation Exception",
+                    "menu_id": 106,
+                    "meta": {
+                      "action_id": 154,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 106,
+                      "menu_xmlid": "base_tier_validation.menu_tier_validation_exception",
+                      "model": "tier.validation.exception",
+                      "scene": "web",
+                      "sequence": 20
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:104",
+                "label": "Tier Validations",
+                "menu_id": 104,
+                "meta": {
+                  "menu_id": 104,
+                  "menu_xmlid": "base_tier_validation.menu_tier_confirmation",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:42",
+                    "label": "Menu Items",
+                    "menu_id": 42,
+                    "meta": {
+                      "action_id": 29,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 42,
+                      "menu_xmlid": "base.menu_grant_menu_access",
+                      "model": "ir.ui.menu",
+                      "scene": "web",
+                      "sequence": 1
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:70",
+                    "label": "Onboardings",
+                    "menu_id": 70,
+                    "meta": {
+                      "action_id": 90,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 70,
+                      "menu_xmlid": "onboarding.menu_onboarding",
+                      "model": "onboarding.onboarding",
+                      "scene": "web",
+                      "sequence": 1
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:71",
+                    "label": "Onboardings Steps",
+                    "menu_id": 71,
+                    "meta": {
+                      "action_id": 91,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 71,
+                      "menu_xmlid": "onboarding.menu_onboarding_step",
+                      "model": "onboarding.onboarding.step",
+                      "scene": "web",
+                      "sequence": 1
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:43",
+                    "label": "Views",
+                    "menu_id": 43,
+                    "meta": {
+                      "action_id": 30,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 43,
+                      "menu_xmlid": "base.menu_action_ui_view",
+                      "model": "ir.ui.view",
+                      "scene": "web",
+                      "sequence": 2
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:44",
+                    "label": "Customized Views",
+                    "menu_id": 44,
+                    "meta": {
+                      "action_id": 32,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 44,
+                      "menu_xmlid": "base.menu_action_ui_view_custom",
+                      "model": "ir.ui.view.custom",
+                      "scene": "web",
+                      "sequence": 3
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:67",
+                    "label": "Tours",
+                    "menu_id": 67,
+                    "meta": {
+                      "action_id": 85,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 67,
+                      "menu_xmlid": "web_tour.menu_tour_action",
+                      "model": "web_tour.tour",
+                      "scene": "web",
+                      "sequence": 5
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:29",
+                    "label": "User-defined Filters",
+                    "menu_id": 29,
+                    "meta": {
+                      "action_id": 16,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 29,
+                      "menu_xmlid": "base.menu_ir_filters",
+                      "model": "ir.filters",
+                      "scene": "web",
+                      "sequence": 5
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:9",
+                "label": "User Interface",
+                "menu_id": 9,
+                "meta": {
+                  "menu_id": 9,
+                  "menu_xmlid": "base.next_id_2",
+                  "scene": "web",
+                  "sequence": 10
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:63",
+                    "label": "Paper Format",
+                    "menu_id": 63,
+                    "meta": {
+                      "action_id": 75,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 63,
+                      "menu_xmlid": "base.paper_format_menuitem",
+                      "model": "report.paperformat",
+                      "scene": "web",
+                      "sequence": 2
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:64",
+                    "label": "Reports",
+                    "menu_id": 64,
+                    "meta": {
+                      "action_id": 76,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 64,
+                      "menu_xmlid": "base.reports_menuitem",
+                      "model": "ir.actions.report",
+                      "scene": "web",
+                      "sequence": 3
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:62",
+                "label": "Reporting",
+                "menu_id": 62,
+                "meta": {
+                  "groups_xmlids": [
+                    7
+                  ],
+                  "menu_id": 62,
+                  "menu_xmlid": "base.reporting_menuitem",
+                  "scene": "web",
+                  "sequence": 15
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:35",
+                    "label": "External Identifiers",
+                    "menu_id": 35,
+                    "meta": {
+                      "action_id": 22,
+                      "action_type": "ir.actions.act_window",
+                      "groups_xmlids": [
+                        7
+                      ],
+                      "menu_id": 35,
+                      "menu_xmlid": "base.ir_model_data_menu",
+                      "model": "ir.model.data",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:41",
+                    "label": "Sequences",
+                    "menu_id": 41,
+                    "meta": {
+                      "action_id": 28,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 41,
+                      "menu_xmlid": "base.menu_ir_sequence_form",
+                      "model": "ir.sequence",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:34",
+                "label": "Sequences & Identifiers",
+                "menu_id": 34,
+                "meta": {
+                  "groups_xmlids": [
+                    7
+                  ],
+                  "menu_id": 34,
+                  "menu_xmlid": "base.next_id_5",
+                  "scene": "web",
+                  "sequence": 21
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:61",
+                    "label": "Company Properties",
+                    "menu_id": 61,
+                    "meta": {
+                      "action_id": 73,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 61,
+                      "menu_xmlid": "base.menu_ir_property_form_all",
+                      "model": "ir.property",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:26",
+                    "label": "System Parameters",
+                    "menu_id": 26,
+                    "meta": {
+                      "action_id": 13,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 26,
+                      "menu_xmlid": "base.ir_config_menu",
+                      "model": "ir.config_parameter",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:14",
+                "label": "Parameters",
+                "menu_id": 14,
+                "meta": {
+                  "menu_id": 14,
+                  "menu_xmlid": "base.menu_ir_property",
+                  "scene": "web",
+                  "sequence": 24
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:40",
+                    "label": "Record Rules",
+                    "menu_id": 40,
+                    "meta": {
+                      "action_id": 27,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 40,
+                      "menu_xmlid": "base.menu_action_rule",
+                      "model": "ir.rule",
+                      "scene": "web",
+                      "sequence": 3
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:38",
+                    "label": "Access Rights",
+                    "menu_id": 38,
+                    "meta": {
+                      "action_id": 25,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 38,
+                      "menu_xmlid": "base.menu_ir_access_act",
+                      "model": "ir.model.access",
+                      "scene": "web",
+                      "sequence": 10
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:13",
+                "label": "Security",
+                "menu_id": 13,
+                "meta": {
+                  "menu_id": 13,
+                  "menu_xmlid": "base.menu_security",
+                  "scene": "web",
+                  "sequence": 25
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:110",
+                    "label": "Privacy Logs",
+                    "menu_id": 110,
+                    "meta": {
+                      "action_id": 160,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 110,
+                      "menu_xmlid": "privacy_lookup.pricacy_log_menu",
+                      "model": "privacy.log",
+                      "scene": "web",
+                      "sequence": 1
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:109",
+                "label": "Privacy",
+                "menu_id": 109,
+                "meta": {
+                  "menu_id": 109,
+                  "menu_xmlid": "privacy_lookup.privacy_menu",
+                  "scene": "web",
+                  "sequence": 26
+                }
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:73",
+                    "label": "Working Schedules",
+                    "menu_id": 73,
+                    "meta": {
+                      "action_id": 98,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 73,
+                      "menu_xmlid": "resource.menu_resource_calendar",
+                      "model": "resource.calendar",
+                      "scene": "web",
+                      "sequence": 1
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:74",
+                    "label": "Resource Time Off",
+                    "menu_id": 74,
+                    "meta": {
+                      "action_id": 94,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 74,
+                      "menu_xmlid": "resource.menu_view_resource_calendar_leaves_search",
+                      "model": "resource.calendar.leaves",
+                      "scene": "web",
+                      "sequence": 2
+                    }
+                  },
+                  {
+                    "children": [],
+                    "icon": null,
+                    "key": "menu:75",
+                    "label": "Resources",
+                    "menu_id": 75,
+                    "meta": {
+                      "action_id": 92,
+                      "action_type": "ir.actions.act_window",
+                      "menu_id": 75,
+                      "menu_xmlid": "resource.menu_resource_resource",
+                      "model": "resource.resource",
+                      "scene": "web",
+                      "sequence": 3
+                    }
+                  }
+                ],
+                "icon": null,
+                "key": "menu:72",
+                "label": "Resource",
+                "menu_id": 72,
+                "meta": {
+                  "menu_id": 72,
+                  "menu_xmlid": "resource.menu_resource_config",
+                  "scene": "web",
+                  "sequence": 30
+                }
+              }
+            ],
+            "icon": null,
+            "key": "menu:8",
+            "label": "Technical",
+            "menu_id": 8,
+            "meta": {
+              "groups_xmlids": [
+                7
+              ],
+              "menu_id": 8,
+              "menu_xmlid": "base.menu_custom",
+              "scene": "web",
+              "sequence": 110
+            }
+          }
+        ],
+        "icon": "base,static/description/settings.png",
+        "key": "menu:1",
+        "label": "Settings",
+        "menu_id": 1,
+        "meta": {
+          "groups_xmlids": [
+            2,
+            4
+          ],
+          "menu_id": 1,
+          "menu_xmlid": "base.menu_administration",
+          "scene": "web",
+          "sequence": 550
+        }
+      },
+      {
+        "children": [],
+        "icon": "test_exceptions,static/description/icon.png",
+        "key": "menu:16",
+        "label": "Tests",
+        "menu_id": 16,
+        "meta": {
+          "menu_id": 16,
+          "menu_xmlid": "base.menu_tests",
+          "scene": "web",
+          "sequence": 1000
         }
       }
-    ],
-    "buttons": []
+    ]
   },
-  "record": null,
-  "record_error": null,
-  "meta_fields": null,
-  "execute_result": null,
-  "execute_error": null
+  "user": "admin",
+  "user_fallback": null,
+  "view_type": null
 }

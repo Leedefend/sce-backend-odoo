@@ -15,7 +15,12 @@
   "record": null,
   "record_error": null,
   "ui_contract": null,
-  "ui_contract_raw": null,
+  "ui_contract_raw": {
+    "code": 404,
+    "data": null,
+    "message": "未知模型: project.project (db=sc_demo, module(project)=installed)",
+    "status": "error"
+  },
   "user": "admin",
   "user_fallback": null,
   "view_type": null
