@@ -27,6 +27,10 @@ Existing fields remain unchanged:
 - `ModelFormPage` renders actor-role match hint in semantic action cards.
 - When role mismatch exists, UI shows explicit handoff copy:
   - `请转交给 <角色> 处理`
+- Action-surface evidence utilities in user form:
+  - `复制动作面` copies structured JSON (actions + role hints + priority).
+  - `导出动作面` downloads JSON for delivery evidence.
+  - stale refresh hint highlights action surface older than 60 seconds.
 
 ## Verification
 
