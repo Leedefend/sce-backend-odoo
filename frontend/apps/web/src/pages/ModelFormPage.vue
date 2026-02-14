@@ -11,6 +11,7 @@
           trace: <code>{{ actionFeedback.traceId }}</code>
           <span v-if="actionFeedback.requestId"> · request: <code>{{ actionFeedback.requestId }}</code></span>
           <span v-if="actionFeedback.replayed"> · replayed</span>
+          <button type="button" class="evidence-copy" @click="copyActionEvidence">复制证据</button>
         </p>
       </div>
       <div class="actions">
@@ -671,6 +672,26 @@ function reload() {
   load();
 }
 
+async function copyActionEvidence() {
+  if (!actionFeedback.value) return;
+  const lines = [
+    `reason_code=${actionFeedback.value.reasonCode}`,
+    `trace_id=${actionFeedback.value.traceId || '-'}`,
+    `request_id=${actionFeedback.value.requestId || '-'}`,
+    `replayed=${String(Boolean(actionFeedback.value.replayed))}`,
+  ];
+  const payload = lines.join('\n');
+  try {
+    await navigator.clipboard.writeText(payload);
+    actionFeedback.value = {
+      ...actionFeedback.value,
+      message: `${actionFeedback.value.message}（证据已复制）`,
+    };
+  } catch {
+    // Ignore clipboard failures; keep primary action result visible.
+  }
+}
+
 function handleSuggestedAction(action: string): boolean {
   if (action !== 'open_record') return false;
   if (!model.value || !recordId.value) return false;
@@ -763,6 +784,16 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin: 4px 0 0;
   color: #475569;
   font-size: 12px;
+}
+
+.evidence-copy {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 11px;
 }
 
 .card {
