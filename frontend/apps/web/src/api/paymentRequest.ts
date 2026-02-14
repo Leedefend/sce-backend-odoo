@@ -13,6 +13,13 @@ export interface PaymentRequestActionSurfaceItem {
   state_required?: string[];
   current_state?: string;
   next_state_hint?: string;
+  required_role_key?: string;
+  required_role_label?: string;
+  required_group_xmlid?: string;
+  handoff_hint?: string;
+  actor_matches_required_role?: boolean;
+  handoff_required?: boolean;
+  delivery_priority?: number;
   execute_intent?: string;
   execute_params?: {
     id?: number;
