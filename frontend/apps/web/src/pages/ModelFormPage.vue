@@ -256,6 +256,10 @@
           <button type="button" :class="{ active: historyOutcomeFilter === 'FAILED' }" @click="historyOutcomeFilter = 'FAILED'">失败</button>
           <button type="button" :class="{ active: historySortMode === 'DESC' }" @click="historySortMode = 'DESC'">最新优先</button>
           <button type="button" :class="{ active: historySortMode === 'ASC' }" @click="historySortMode = 'ASC'">最早优先</button>
+          <button type="button" :class="{ active: historyDurationFilter === 'ALL' }" @click="historyDurationFilter = 'ALL'">全部耗时</button>
+          <button type="button" :class="{ active: historyDurationFilter === 'LE_1S' }" @click="historyDurationFilter = 'LE_1S'">≤1s</button>
+          <button type="button" :class="{ active: historyDurationFilter === 'BETWEEN_1S_3S' }" @click="historyDurationFilter = 'BETWEEN_1S_3S'">1-3s</button>
+          <button type="button" :class="{ active: historyDurationFilter === 'GT_3S' }" @click="historyDurationFilter = 'GT_3S'">&gt;3s</button>
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
           <button
             v-for="reason in historyReasonCodes"
@@ -381,6 +385,7 @@ const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
 const historyOutcomeFilter = ref<'ALL' | 'SUCCESS' | 'FAILED'>('ALL');
+const historyDurationFilter = ref<'ALL' | 'LE_1S' | 'BETWEEN_1S_3S' | 'GT_3S'>('ALL');
 const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
@@ -796,8 +801,15 @@ const filteredActionHistory = computed(() => {
     historyReasonFilter.value === 'ALL'
       ? byOutcome
       : byOutcome.filter((item) => item.reasonCode === historyReasonFilter.value);
-  if (!keyword) return byReason;
-  return byReason.filter((item) =>
+  const byDuration = byReason.filter((item) => {
+    const duration = Math.max(0, Number(item.durationMs || 0));
+    if (historyDurationFilter.value === 'LE_1S') return duration <= 1000;
+    if (historyDurationFilter.value === 'BETWEEN_1S_3S') return duration > 1000 && duration <= 3000;
+    if (historyDurationFilter.value === 'GT_3S') return duration > 3000;
+    return true;
+  });
+  if (!keyword) return byDuration;
+  return byDuration.filter((item) =>
     `${item.label} ${item.reasonCode} ${item.traceId}`.toLowerCase().includes(keyword),
   );
 });
@@ -1239,6 +1251,7 @@ function resetActionPanelPrefs() {
 function resetHistoryFilters() {
   historyReasonFilter.value = 'ALL';
   historyOutcomeFilter.value = 'ALL';
+  historyDurationFilter.value = 'ALL';
   historySearch.value = '';
   historySortMode.value = 'DESC';
 }
