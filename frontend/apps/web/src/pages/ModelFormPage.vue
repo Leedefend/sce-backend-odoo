@@ -94,6 +94,18 @@
         />
         <button type="button" class="stats-refresh" @click="resetActionPanelPrefs">重置面板</button>
       </section>
+      <section v-if="blockedReasonCodes.length" class="semantic-action-reason-chips">
+        <span>阻塞原因:</span>
+        <button
+          v-for="reason in blockedReasonCodes"
+          :key="`blocked-reason-${reason}`"
+          type="button"
+          class="reason-chip"
+          @click="applyBlockedReasonFilter(reason)"
+        >
+          {{ reason }}
+        </button>
+      </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
         <span :class="['readiness-badge', readinessLevelClass]">就绪度: {{ actionReadinessScore }}%</span>
         <span>主动作: {{ primaryActionKey || '-' }}</span>
@@ -480,6 +492,7 @@ const blockedTopReasons = computed(() => {
     .slice(0, 3)
     .map(([reason, count]) => `${reason}:${count}`);
 });
+const blockedReasonCodes = computed(() => blockedTopReasons.value.map((item) => item.split(':')[0]).filter(Boolean));
 const topBlockedActions = computed(() => {
   return semanticActionButtons.value
     .filter((item) => !item.allowed)
@@ -533,6 +546,11 @@ async function copyActionStats() {
       traceId: lastTraceId.value,
     };
   }
+}
+
+function applyBlockedReasonFilter(reason: string) {
+  actionFilterMode.value = 'blocked';
+  semanticActionSearch.value = reason;
 }
 
 function exportBlockedSummary() {
@@ -1680,6 +1698,23 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 12px;
   font-size: 12px;
   color: #64748b;
+}
+
+.semantic-action-reason-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 12px;
+}
+
+.reason-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 11px;
 }
 
 .semantic-action-stats .stale {
