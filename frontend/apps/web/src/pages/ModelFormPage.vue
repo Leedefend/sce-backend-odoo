@@ -347,6 +347,8 @@ let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
+const historyOutcomeFilterStoragePrefix = 'sc.payment.history_outcome_filter.v1';
+const historySearchStoragePrefix = 'sc.payment.history_search.v1';
 const autoRefreshIntervalStorageKey = 'sc.payment.auto_refresh_interval.v1';
 const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
 
@@ -358,6 +360,12 @@ const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load r
 const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const historyReasonFilterStorageKey = computed(
   () => `${historyReasonFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historyOutcomeFilterStorageKey = computed(
+  () => `${historyOutcomeFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historySearchStorageKey = computed(
+  () => `${historySearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const actionSearchStorageKey = computed(() => `${actionSearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
@@ -431,6 +439,11 @@ try {
   if (cachedReason) {
     historyReasonFilter.value = cachedReason;
   }
+  const cachedOutcome = String(window.localStorage.getItem(historyOutcomeFilterStorageKey.value) || '').trim();
+  if (cachedOutcome === 'ALL' || cachedOutcome === 'SUCCESS' || cachedOutcome === 'FAILED') {
+    historyOutcomeFilter.value = cachedOutcome;
+  }
+  historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
   semanticActionSearch.value = String(window.localStorage.getItem(actionSearchStorageKey.value) || '');
 } catch {
   // Ignore storage errors and keep default mode.
@@ -1574,6 +1587,20 @@ watch(actionFilterMode, (value) => {
 watch(historyReasonFilter, (value) => {
   try {
     window.localStorage.setItem(historyReasonFilterStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(historyOutcomeFilter, (value) => {
+  try {
+    window.localStorage.setItem(historyOutcomeFilterStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(historySearch, (value) => {
+  try {
+    window.localStorage.setItem(historySearchStorageKey.value, value);
   } catch {
     // Ignore storage errors.
   }
