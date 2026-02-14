@@ -394,6 +394,7 @@ const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const paymentActionSurfaceLoadedAt = ref(0);
 const autoRefreshActionSurface = ref(false);
 const autoRefreshIntervalSec = ref(15);
+const actionSurfaceRefreshPaused = ref(false);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
@@ -1419,6 +1420,21 @@ function onSemanticHotkey(event: KeyboardEvent) {
   }
 }
 
+function shouldRefreshActionSurface() {
+  return (
+    autoRefreshActionSurface.value &&
+    !actionSurfaceRefreshPaused.value &&
+    Boolean(recordId.value) &&
+    isPaymentRequestModel.value &&
+    !loading.value &&
+    !actionBusy.value
+  );
+}
+
+function onVisibilityChange() {
+  actionSurfaceRefreshPaused.value = document.hidden;
+}
+
 function reload() {
   load();
 }
@@ -1498,14 +1514,17 @@ function handleSuggestedAction(action: string): boolean {
 onMounted(() => {
   load();
   window.addEventListener('keydown', onSemanticHotkey);
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  actionSurfaceRefreshPaused.value = document.hidden;
   const interval = Math.max(5, Number(autoRefreshIntervalSec.value || 15)) * 1000;
   actionSurfaceRefreshTimer = window.setInterval(() => {
-    if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
+    if (!shouldRefreshActionSurface()) return;
     void loadPaymentActionSurface();
   }, interval);
 });
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onSemanticHotkey);
+  document.removeEventListener('visibilitychange', onVisibilityChange);
   if (actionFeedbackTimer) {
     clearTimeout(actionFeedbackTimer);
     actionFeedbackTimer = null;
@@ -1539,7 +1558,7 @@ watch(autoRefreshIntervalSec, (value) => {
   if (actionSurfaceRefreshTimer) {
     clearInterval(actionSurfaceRefreshTimer);
     actionSurfaceRefreshTimer = window.setInterval(() => {
-      if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
+      if (!shouldRefreshActionSurface()) return;
       void loadPaymentActionSurface();
     }, interval * 1000);
   }
