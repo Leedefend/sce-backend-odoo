@@ -139,6 +139,14 @@
         <button type="button" class="stats-refresh" title="复制主动作说明" aria-label="复制主动作说明" @click="copyPrimaryActionBrief">复制主动作说明</button>
         <button type="button" class="stats-refresh" title="导出动作面JSON" aria-label="导出动作面JSON" @click="exportActionSurface">导出动作面</button>
         <label class="auto-refresh-toggle">
+          历史条数
+          <select v-model.number="actionHistoryLimit">
+            <option :value="6">6</option>
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+          </select>
+        </label>
+        <label class="auto-refresh-toggle">
           <input v-model="autoRefreshActionSurface" type="checkbox" />
           自动刷新
         </label>
@@ -372,6 +380,7 @@ const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
 const historyOutcomeFilterStoragePrefix = 'sc.payment.history_outcome_filter.v1';
 const historySearchStoragePrefix = 'sc.payment.history_search.v1';
+const actionHistoryLimitStorageKey = 'sc.payment.history_limit.v1';
 const autoRefreshIntervalStorageKey = 'sc.payment.auto_refresh_interval.v1';
 const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
 
@@ -448,6 +457,7 @@ const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
 const hideBlockedHints = ref(false);
 const semanticActionSearch = ref('');
+const actionHistoryLimit = ref(6);
 const shortcutHelpVisible = ref(false);
 try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
@@ -457,6 +467,10 @@ try {
   const cachedInterval = Number(window.localStorage.getItem(autoRefreshIntervalStorageKey) || 15);
   if ([15, 30, 60].includes(cachedInterval)) {
     autoRefreshIntervalSec.value = cachedInterval;
+  }
+  const cachedHistoryLimit = Number(window.localStorage.getItem(actionHistoryLimitStorageKey) || 6);
+  if ([6, 10, 20].includes(cachedHistoryLimit)) {
+    actionHistoryLimit.value = cachedHistoryLimit;
   }
   const cachedReason = String(window.localStorage.getItem(historyReasonFilterStorageKey.value) || '').trim();
   if (cachedReason) {
@@ -1181,6 +1195,7 @@ function resetActionPanelPrefs() {
   resetHistoryFilters();
   autoRefreshActionSurface.value = false;
   autoRefreshIntervalSec.value = 15;
+  actionHistoryLimit.value = 6;
   try {
     window.localStorage.removeItem(actionFilterStorageKey);
     window.localStorage.removeItem(historyReasonFilterStorageKey.value);
@@ -1188,6 +1203,7 @@ function resetActionPanelPrefs() {
     window.localStorage.removeItem(historySearchStorageKey.value);
     window.localStorage.removeItem(actionSearchStorageKey.value);
     window.localStorage.removeItem(autoRefreshIntervalStorageKey);
+    window.localStorage.removeItem(actionHistoryLimitStorageKey);
   } catch {
     // Ignore storage errors.
   }
@@ -1337,7 +1353,7 @@ async function runSemanticAction(action: SemanticActionButton) {
         atText: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
       },
       ...actionHistory.value,
-    ].slice(0, 6);
+    ].slice(0, actionHistoryLimit.value);
     recordTrace({
       ts: Date.now(),
       trace_id: response.traceId || createTraceId(),
@@ -1686,6 +1702,16 @@ watch(autoRefreshIntervalSec, (value) => {
     }, interval * 1000);
   }
 });
+watch(actionHistoryLimit, (value) => {
+  const normalized = [6, 10, 20].includes(Number(value)) ? Number(value) : 6;
+  actionHistoryLimit.value = normalized;
+  actionHistory.value = actionHistory.value.slice(0, normalized);
+  try {
+    window.localStorage.setItem(actionHistoryLimitStorageKey, String(normalized));
+  } catch {
+    // Ignore storage errors.
+  }
+});
 watch(semanticActionSearch, (value) => {
   try {
     window.localStorage.setItem(actionSearchStorageKey.value, value);
@@ -1697,7 +1723,7 @@ watch(
   actionHistory,
   (value) => {
     try {
-      window.localStorage.setItem(actionHistoryStorageKey.value, JSON.stringify(value.slice(0, 6)));
+      window.localStorage.setItem(actionHistoryStorageKey.value, JSON.stringify(value.slice(0, actionHistoryLimit.value)));
     } catch {
       // Ignore storage errors.
     }
@@ -1715,7 +1741,7 @@ watch(
       }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        actionHistory.value = parsed.slice(0, 6).map((item) => ({
+        actionHistory.value = parsed.slice(0, actionHistoryLimit.value).map((item) => ({
           key: String(item?.key || `${Date.now()}`),
           label: String(item?.label || '-'),
           reasonCode: String(item?.reasonCode || ''),
