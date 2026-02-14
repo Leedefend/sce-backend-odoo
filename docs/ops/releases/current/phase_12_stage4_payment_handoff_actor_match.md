@@ -39,6 +39,7 @@ Existing fields remain unchanged:
   - stale banner blocks user attention and provides one-click refresh before execution.
   - stale execution guard: semantic action execution asks for confirmation when surface is stale; cancel triggers auto-refresh.
   - auto-refresh interval selector (15s/30s/60s) with local storage persistence.
+  - blocked reason top summary is visible in action stats for quick diagnosis.
 
 ## Verification
 

@@ -98,6 +98,7 @@
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
+        <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
         <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
         <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
@@ -433,6 +434,18 @@ const semanticActionStats = computed(() => {
   const allowed = semanticActionButtons.value.filter((item) => item.allowed).length;
   const blocked = total - allowed;
   return { total, allowed, blocked };
+});
+const blockedTopReasons = computed(() => {
+  const counts = new Map<string, number>();
+  for (const item of semanticActionButtons.value) {
+    if (item.allowed) continue;
+    const key = item.reasonCode || "UNKNOWN";
+    counts.set(key, Number(counts.get(key) || 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([reason, count]) => `${reason}:${count}`);
 });
 const actionSurfaceAgeLabel = computed(() => {
   if (!paymentActionSurfaceLoadedAt.value) return '-';
