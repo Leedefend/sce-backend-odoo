@@ -80,6 +80,9 @@
         <button type="button" :class="{ active: actionFilterMode === 'blocked' }" @click="actionFilterMode = 'blocked'">
           阻塞 ({{ semanticActionStats.blocked }})
         </button>
+        <button type="button" :class="{ active: hideBlockedHints }" @click="hideBlockedHints = !hideBlockedHints">
+          {{ hideBlockedHints ? '显示阻塞' : '隐藏阻塞' }}
+        </button>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
         <span>主动作: {{ primaryActionKey || '-' }}</span>
@@ -289,6 +292,7 @@ const paymentActionSurfaceLoadedAt = ref(0);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
+const hideBlockedHints = ref(false);
 try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
   if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
@@ -331,7 +335,7 @@ const displayedSemanticActionButtons = computed(() => {
   if (actionFilterMode.value === 'blocked') {
     return semanticActionButtons.value.filter((item) => !item.allowed);
   }
-  return semanticActionButtons.value;
+  return semanticActionButtons.value.filter((item) => (hideBlockedHints.value ? item.allowed : true));
 });
 const semanticActionStats = computed(() => {
   const total = semanticActionButtons.value.length;
