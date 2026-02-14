@@ -298,7 +298,15 @@
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
             <span class="history-meta">cost: {{ historyDurationLabel(entry) }}</span>
             <span class="history-meta">at: {{ entry.atText }} ({{ historyAgeLabel(entry) }})</span>
-            <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
+            <button
+              v-if="entry.traceId"
+              type="button"
+              class="history-trace-link"
+              :title="`按 Trace 过滤: ${entry.traceId}`"
+              @click="applyHistoryTraceFilter(entry.traceId)"
+            >
+              trace: {{ entry.traceId }}
+            </button>
             <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
           </li>
         </ul>
@@ -1326,6 +1334,10 @@ function applySuccessFocusPreset() {
   historyOutcomeFilter.value = 'SUCCESS';
   historyTimeWindow.value = 'D1';
   historySortMode.value = 'DESC';
+}
+
+function applyHistoryTraceFilter(traceId: string) {
+  historySearch.value = String(traceId || '').trim();
 }
 
 function exportEvidenceBundle() {
@@ -2575,6 +2587,17 @@ function analyzeLayout(layout: ViewContract['layout']) {
   background: #f8fafc;
   color: #334155;
   font-size: 11px;
+}
+
+.history-trace-link {
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .field {
