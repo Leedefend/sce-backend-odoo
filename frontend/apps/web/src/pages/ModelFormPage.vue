@@ -34,7 +34,7 @@
           :title="semanticActionTooltip(action)"
           @click="runSemanticAction(action)"
         >
-          {{ action.label }}
+          {{ actionBusy && actionBusyKey === action.key ? `${action.label} · 执行中...` : action.label }}
         </button>
         <button :disabled="!lastSemanticAction || actionBusy || loading" class="action secondary" @click="rerunLastSemanticAction">
           重试上次动作
@@ -195,6 +195,7 @@ const loading = ref(false);
 const saving = ref(false);
 const executing = ref<string | null>(null);
 const actionBusy = ref(false);
+const actionBusyKey = ref('');
 type ActionFeedback = {
   message: string;
   reasonCode: string;
@@ -671,6 +672,7 @@ async function runSemanticAction(action: SemanticActionButton) {
     }
   }
   actionBusy.value = true;
+  actionBusyKey.value = action.key;
   const stateBefore = action.currentState;
   try {
     lastSemanticAction.value = {
@@ -715,12 +717,14 @@ async function runSemanticAction(action: SemanticActionButton) {
     actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false, traceId: lastTraceId.value };
   } finally {
     actionBusy.value = false;
+    actionBusyKey.value = '';
   }
 }
 
 async function rerunLastSemanticAction() {
   if (!lastSemanticAction.value || !recordId.value) return;
   actionBusy.value = true;
+  actionBusyKey.value = lastSemanticAction.value.action;
   try {
     const response = await executePaymentRequestAction({
       paymentRequestId: recordId.value,
@@ -740,6 +744,7 @@ async function rerunLastSemanticAction() {
     actionFeedback.value = { message: '重试失败', reasonCode: 'EXECUTE_FAILED', success: false, traceId: lastTraceId.value };
   } finally {
     actionBusy.value = false;
+    actionBusyKey.value = '';
   }
 }
 
