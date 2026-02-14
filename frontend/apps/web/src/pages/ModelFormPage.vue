@@ -138,6 +138,7 @@
             <strong>{{ entry.label }}</strong>
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
+            <span class="history-meta">at: {{ entry.atText }}</span>
             <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
             <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
           </li>
@@ -230,6 +231,8 @@ type ActionHistoryEntry = {
   success: boolean;
   stateBefore: string;
   traceId: string;
+  at: number;
+  atText: string;
 };
 
 const actionFeedback = ref<ActionFeedback | null>(null);
@@ -740,6 +743,8 @@ async function runSemanticAction(action: SemanticActionButton) {
         success: parsed.success,
         stateBefore,
         traceId: response.traceId || '',
+        at: Date.now(),
+        atText: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
       },
       ...actionHistory.value,
     ].slice(0, 6);
@@ -910,6 +915,8 @@ watch(
           success: Boolean(item?.success),
           stateBefore: String(item?.stateBefore || ''),
           traceId: String(item?.traceId || ''),
+          at: Number(item?.at || Date.now()),
+          atText: String(item?.atText || ''),
         }));
       }
     } catch {
