@@ -246,10 +246,12 @@
         </div>
         <div class="history-filters">
           <input
+            ref="historySearchInputRef"
             v-model.trim="historySearch"
             class="history-search"
             type="text"
             placeholder="搜索历史动作/原因码/Trace"
+            aria-label="搜索历史动作、原因码或Trace"
           />
           <button type="button" :class="{ active: historyOutcomeFilter === 'ALL' }" @click="historyOutcomeFilter = 'ALL'">全部结果</button>
           <button type="button" :class="{ active: historyOutcomeFilter === 'SUCCESS' }" @click="historyOutcomeFilter = 'SUCCESS'">成功</button>
@@ -393,6 +395,7 @@ const historyDurationFilter = ref<'ALL' | 'LE_1S' | 'BETWEEN_1S_3S' | 'GT_3S'>('
 const historyTimeWindow = ref<'ALL' | 'H1' | 'D1' | 'D7'>('ALL');
 const historySortMode = ref<'DESC' | 'ASC'>('DESC');
 const historySearch = ref('');
+const historySearchInputRef = ref<HTMLInputElement | null>(null);
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
@@ -1714,6 +1717,24 @@ function exportActionHistoryCsv() {
 }
 
 function onSemanticHotkey(event: KeyboardEvent) {
+  const target = event.target as HTMLElement | null;
+  const isTypingContext =
+    !!target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT' ||
+      Boolean(target.isContentEditable));
+  if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === '/' && !isTypingContext) {
+    event.preventDefault();
+    historySearchInputRef.value?.focus();
+    historySearchInputRef.value?.select();
+    return;
+  }
+  if (!event.ctrlKey && !event.altKey && !event.metaKey && event.key === 'Escape' && target === historySearchInputRef.value) {
+    event.preventDefault();
+    historySearch.value = '';
+    return;
+  }
   if (!event.ctrlKey && !event.altKey && event.key === '?') {
     event.preventDefault();
     shortcutHelpVisible.value = !shortcutHelpVisible.value;
