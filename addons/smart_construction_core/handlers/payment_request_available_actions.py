@@ -57,6 +57,32 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
         "reject": "draft",
         "done": "done",
     }
+    _ACTION_ROLE_HINTS = {
+        "submit": {
+            "required_role_key": "finance",
+            "required_role_label": "财务",
+            "required_group_xmlid": "smart_construction_custom.group_sc_role_finance",
+            "handoff_hint": "请由财务提交申请后进入审批链路。",
+        },
+        "approve": {
+            "required_role_key": "executive",
+            "required_role_label": "管理层",
+            "required_group_xmlid": "smart_construction_custom.group_sc_role_executive",
+            "handoff_hint": "请由管理层执行审批决策。",
+        },
+        "reject": {
+            "required_role_key": "executive",
+            "required_role_label": "管理层",
+            "required_group_xmlid": "smart_construction_custom.group_sc_role_executive",
+            "handoff_hint": "请由管理层执行驳回并填写原因。",
+        },
+        "done": {
+            "required_role_key": "finance",
+            "required_role_label": "财务",
+            "required_group_xmlid": "smart_construction_custom.group_sc_role_finance",
+            "handoff_hint": "审批完成后由财务确认办结。",
+        },
+    }
 
     def _evaluate_prerequisites(self, record, action_key: str) -> tuple[bool, str]:
         key = str(action_key or "").strip()
@@ -111,11 +137,12 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
 
     def _action_entry(self, record, spec: dict) -> dict:
         state = str(record.state or "")
+        action_key = str(spec.get("key") or "")
         method_name = str(spec.get("method") or "")
         fn = getattr(record, method_name, None)
         method_ok = callable(fn)
         state_ok = state in set(spec.get("allowed_states") or [])
-        precheck_ok, precheck_reason = self._evaluate_prerequisites(record, str(spec.get("key") or ""))
+        precheck_ok, precheck_reason = self._evaluate_prerequisites(record, action_key)
         allowed = bool(method_ok and state_ok and precheck_ok)
         if allowed:
             reason_code = REASON_OK
@@ -131,11 +158,12 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             suggested_action = str(reason_meta.get("suggested_action") or "")
         execute_payload = {
             "id": int(record.id or 0),
-            "action": str(spec.get("key") or ""),
+            "action": action_key,
         }
         required_params = list(spec.get("required_params") or [])
+        role_hint = self._ACTION_ROLE_HINTS.get(action_key) or {}
         return {
-            "key": str(spec.get("key") or ""),
+            "key": action_key,
             "label": str(spec.get("label") or ""),
             "intent": str(spec.get("intent") or ""),
             "method": method_name,
@@ -144,7 +172,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "reason_code": reason_code,
             "state_required": sorted(list(spec.get("allowed_states") or [])),
             "current_state": state,
-            "next_state_hint": self._NEXT_STATE_HINT.get(str(spec.get("key") or ""), ""),
+            "next_state_hint": self._NEXT_STATE_HINT.get(action_key, ""),
             "allowed_by_state": bool(state_ok),
             "allowed_by_method": bool(method_ok),
             "allowed_by_precheck": bool(precheck_ok),
@@ -154,6 +182,10 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "requires_reason": "reason" in required_params,
             "blocked_message": blocked_message,
             "suggested_action": suggested_action,
+            "required_role_key": str(role_hint.get("required_role_key") or ""),
+            "required_role_label": str(role_hint.get("required_role_label") or ""),
+            "required_group_xmlid": str(role_hint.get("required_group_xmlid") or ""),
+            "handoff_hint": str(role_hint.get("handoff_hint") or ""),
         }
 
     def handle(self, payload=None, ctx=None):

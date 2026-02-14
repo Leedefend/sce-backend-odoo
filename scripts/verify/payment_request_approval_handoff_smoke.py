@@ -144,6 +144,28 @@ def allowed_keys(resp: dict) -> list[str]:
     ]
 
 
+def assert_role_hints(resp: dict, *, actor: str):
+    data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
+    actions = data.get("actions") if isinstance(data.get("actions"), list) else []
+    if not actions:
+        raise AssertionError(f"payment.request.available_actions[{actor}] returned empty actions")
+    for item in actions:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key") or "").strip()
+        role_key = str(item.get("required_role_key") or "").strip()
+        role_label = str(item.get("required_role_label") or "").strip()
+        handoff_hint = str(item.get("handoff_hint") or "").strip()
+        if key in ("submit", "done") and role_key != "finance":
+            raise AssertionError(f"action={key} expected required_role_key=finance, got={role_key!r}")
+        if key in ("approve", "reject") and role_key != "executive":
+            raise AssertionError(f"action={key} expected required_role_key=executive, got={role_key!r}")
+        if not role_label:
+            raise AssertionError(f"action={key} missing required_role_label")
+        if not handoff_hint:
+            raise AssertionError(f"action={key} missing handoff_hint")
+
+
 def first_id(token: str, model: str, fields: list[str], domain: list | None = None) -> int:
     resp = request_intent(
         "api.data",
@@ -328,6 +350,7 @@ def main() -> int:
         out_dir=out_dir,
         name="payment_request_available_actions_finance_before.log",
     )
+    assert_role_hints(before_finance_actions, actor="finance_before")
     before_finance_allowed = allowed_keys(before_finance_actions)
     summary["finance_allowed_before"] = before_finance_allowed
     if "submit" not in set(before_finance_allowed):
@@ -350,6 +373,7 @@ def main() -> int:
         out_dir=out_dir,
         name="payment_request_available_actions_executive_after_submit.log",
     )
+    assert_role_hints(executive_actions, actor="executive_after_submit")
     executive_allowed = allowed_keys(executive_actions)
     summary["executive_allowed_after_submit"] = executive_allowed
     summary["steps"].append({
@@ -386,6 +410,7 @@ def main() -> int:
         out_dir=out_dir,
         name="payment_request_available_actions_finance_after_handoff.log",
     )
+    assert_role_hints(finance_after, actor="finance_after_handoff")
     finance_allowed_after = allowed_keys(finance_after)
     summary["finance_allowed_after_handoff"] = finance_allowed_after
     summary["steps"].append({
