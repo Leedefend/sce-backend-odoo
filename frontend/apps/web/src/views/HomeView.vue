@@ -5,8 +5,11 @@
         <h2>能力目录</h2>
         <p class="lead">选择你要完成的工作，直接进入场景。</p>
         <p class="role-line">
-          当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingScene }}
+          当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingLabel }}
           <button class="inline-link" @click="openRoleLanding">进入角色首页</button>
+        </p>
+        <p v-if="isHudEnabled" class="hud-line">
+          HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
       </div>
       <div class="view-toggle">
@@ -23,7 +26,32 @@
       </div>
     </header>
 
+    <section class="today-actions" aria-label="今日建议">
+      <header class="today-actions-header">
+        <h3>今日建议</h3>
+        <p>10 秒内开始今天最常见的工作。</p>
+      </header>
+      <div class="today-actions-grid">
+        <article v-for="item in todaySuggestions" :key="item.id" class="today-card">
+          <p class="today-title">{{ item.title }}</p>
+          <p class="today-desc">{{ item.description }}</p>
+          <button class="today-btn" @click="openSuggestion(item.sceneKey)">立即进入</button>
+        </article>
+      </div>
+    </section>
+
     <section class="filters">
+      <div v-if="enterError" class="status-panel" role="status" aria-live="polite">
+        <p class="status-title">进入失败：{{ enterError.message }}</p>
+        <p class="status-detail">{{ enterError.hint }}</p>
+        <p v-if="isHudEnabled" class="status-meta">
+          code={{ enterError.code || '-' }} · trace_id={{ enterError.traceId || '-' }}
+        </p>
+        <div class="status-actions">
+          <button v-if="lastFailedEntry" @click="retryOpen">重试</button>
+          <button @click="clearEnterError">知道了</button>
+        </div>
+      </div>
       <input
         v-model.trim="searchText"
         class="search-input"
@@ -93,20 +121,21 @@
             <div class="entry-main">
               <p class="title-row">
                 <span class="title">{{ entry.title }}</span>
-                <span class="state">{{ stateLabel(entry.state) }}</span>
+                <span v-if="entry.state !== 'READY'" class="state">{{ stateLabel(entry.state) }}</span>
               </p>
               <p class="subtitle" :title="entry.reason || entry.subtitle">{{ entry.subtitle || '无说明' }}</p>
+              <p v-if="isHudEnabled" class="hud-meta">scene_key={{ entry.sceneKey }} · capability_key={{ entry.key }}</p>
               <p v-if="entry.state === 'LOCKED'" class="lock-reason">
                 {{ entry.reason || lockReasonLabel(entry.reasonCode) }}
               </p>
             </div>
             <button
               class="open-btn"
-              :disabled="entry.state === 'LOCKED'"
+              :disabled="!canEnter(entry)"
               :title="entry.reason || ''"
               @click="openScene(entry)"
             >
-              进入
+              {{ actionLabel(entry) }}
             </button>
           </article>
         </div>
@@ -117,9 +146,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
-import { trackCapabilityOpen } from '../api/usage';
+import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type CapabilityEntry = {
@@ -134,9 +163,11 @@ type CapabilityEntry = {
   state: EntryState;
   reason: string;
   reasonCode: string;
+  tags: string[];
 };
 
 const router = useRouter();
+const route = useRoute();
 const session = useSessionStore();
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
@@ -145,14 +176,82 @@ const readyOnly = ref(false);
 const lockReasonFilter = ref('ALL');
 const collapsedSceneKeys = ref<string[]>([]);
 const collapsedSceneSet = computed(() => new Set(collapsedSceneKeys.value));
-const homeCollapseStorageKey = 'sc.home.scene_groups.collapsed.v1';
+const lastFailedEntry = ref<CapabilityEntry | null>(null);
+const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
+const lastTrackedSearch = ref('');
+const isHudEnabled = computed(() => {
+  const hud = String(route.query.hud || '').trim();
+  return import.meta.env.DEV || hud === '1' || hud.toLowerCase() === 'true';
+});
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
 });
 const roleSurface = computed(() => session.roleSurface);
-const roleLabel = computed(() => roleSurface.value?.role_label || roleSurface.value?.role_code?.toUpperCase() || 'Owner');
-const roleLandingScene = computed(() => roleSurface.value?.landing_scene_key || 'projects.list');
+const roleLabel = computed(() => {
+  const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
+  const normalized = raw.toLowerCase();
+  if (!raw) return '负责人';
+  if (normalized === 'executive') return '高管';
+  if (normalized === 'owner') return '负责人';
+  return raw;
+});
+const sceneTitleMap = computed(() => {
+  const map = new Map<string, string>();
+  for (const scene of session.scenes) {
+    const key = asText(scene.key);
+    if (!key) continue;
+    map.set(key, resolveSceneTitle(scene));
+  }
+  return map;
+});
+const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || 'projects.list');
+const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || '工作台首页');
+const workspaceScopeKey = computed(() => {
+  const roleKey = asText(roleSurface.value?.role_code) || 'default';
+  const landingScene = asText(roleSurface.value?.landing_scene_key) || 'projects.list';
+  return `${roleKey}:${landingScene}`;
+});
+const homeCollapseStorageKey = computed(() => `sc.home.scene_groups.collapsed.v2:${workspaceScopeKey.value}`);
+const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScopeKey.value}`);
+
+function asText(value: unknown) {
+  const text = String(value ?? '').trim();
+  if (!text || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') return '';
+  return text;
+}
+
+function hasInternalTag(raw: unknown) {
+  if (Array.isArray(raw)) {
+    return raw.some((item) => {
+      const key = asText(item).toLowerCase();
+      return key === 'internal' || key === 'smoke' || key === 'test';
+    });
+  }
+  const text = asText(raw).toLowerCase();
+  if (!text) return false;
+  return text.split(/[,\s;|]+/).some((item) => item === 'internal' || item === 'smoke' || item === 'test');
+}
+
+function resolveSceneTitle(scene: { title?: unknown; key?: unknown }) {
+  const title = asText(scene.title);
+  if (title) return title;
+  const key = asText(scene.key);
+  if (!key) return '未分类能力';
+  return isHudEnabled.value ? `未分类能力（${key}）` : '未分类能力';
+}
+
+function isInternalEntry(params: {
+  sceneKey: string;
+  title: string;
+  key: string;
+  sceneTags?: unknown;
+  tileTags?: unknown;
+}) {
+  if (hasInternalTag(params.sceneTags) || hasInternalTag(params.tileTags)) return true;
+  const merged = `${params.sceneKey} ${params.title} ${params.key}`.toLowerCase();
+  return merged.includes('smoke') || merged.includes('internal') || merged.includes('test');
+}
 
 function mapState(rawState: string | undefined, status: string): EntryState {
   const state = String(rawState || '').toUpperCase();
@@ -165,30 +264,88 @@ function mapState(rawState: string | undefined, status: string): EntryState {
 const entries = computed<CapabilityEntry[]>(() => {
   const list: CapabilityEntry[] = [];
   session.scenes.forEach((scene, sceneIndex) => {
+    const sceneKey = asText(scene.key);
+    if (!sceneKey) return;
+    const sceneTitle = resolveSceneTitle(scene as { title?: unknown; key?: unknown });
     const tiles = Array.isArray(scene.tiles) ? scene.tiles : [];
     tiles.forEach((tile, tileIndex) => {
-      const key = String(tile.key || '');
+      const key = asText(tile.key);
       if (!key) return;
+      const title = asText((tile as { title?: string }).title) || (isHudEnabled.value ? key : `能力 ${sceneIndex + 1}-${tileIndex + 1}`);
+      if (
+        !isHudEnabled.value &&
+        isInternalEntry({
+          sceneKey,
+          title,
+          key,
+          sceneTags: (scene as { tags?: unknown }).tags,
+          tileTags: (tile as { tags?: unknown }).tags,
+        })
+      ) {
+        return;
+      }
       const status = String((tile as { status?: string }).status || 'alpha').toLowerCase();
       const reason = String((tile as { reason?: string }).reason || '');
       const reasonCode = String((tile as { reason_code?: string }).reason_code || '');
       const state = mapState((tile as { state?: string }).state, status);
       list.push({
-        id: `${scene.key}-${key}-${sceneIndex}-${tileIndex}`,
+        id: `${sceneKey}-${key}-${sceneIndex}-${tileIndex}`,
         key,
-        title: String(tile.title || key),
-        subtitle: String(tile.subtitle || ''),
-        sceneKey: scene.key,
-        sceneTitle: String((scene as { title?: string }).title || scene.key),
+        title,
+        subtitle: asText((tile as { subtitle?: string }).subtitle),
+        sceneKey,
+        sceneTitle,
         sequence: Number((tile as { sequence?: number }).sequence ?? 9999),
         status,
         state,
         reason,
         reasonCode,
+        tags: [
+          ...new Set(
+            [
+              ...(Array.isArray((scene as { tags?: unknown }).tags) ? (scene as { tags?: string[] }).tags : []),
+              ...(Array.isArray((tile as { tags?: unknown }).tags) ? (tile as { tags?: string[] }).tags : []),
+            ]
+              .map((item) => asText(item).toLowerCase())
+              .filter(Boolean),
+          ),
+        ],
       });
     });
   });
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
+});
+
+const todaySuggestions = computed(() => {
+  const all = entries.value;
+  const firstReady = all.find((entry) => entry.state === 'READY');
+  const pickSceneByKeyword = (keywords: string[], fallback?: string) => {
+    const found = all.find((entry) => {
+      const text = `${entry.title} ${entry.subtitle} ${entry.sceneKey}`.toLowerCase();
+      return keywords.some((keyword) => text.includes(keyword));
+    });
+    return found?.sceneKey || fallback || firstReady?.sceneKey || roleLandingScene.value;
+  };
+  return [
+    {
+      id: 'project-intake',
+      title: '项目立项',
+      description: '新建项目并完成立项信息录入。',
+      sceneKey: pickSceneByKeyword(['立项', 'project', 'intake']),
+    },
+    {
+      id: 'contract-approval',
+      title: '合同审批',
+      description: '查看待审批合同并快速处理。',
+      sceneKey: pickSceneByKeyword(['合同', 'contract', 'approve', 'approval']),
+    },
+    {
+      id: 'cost-ledger',
+      title: '成本台账',
+      description: '跟踪成本执行并核对差异。',
+      sceneKey: pickSceneByKeyword(['成本', 'cost', 'ledger']),
+    },
+  ];
 });
 
 const filteredEntries = computed<CapabilityEntry[]>(() => {
@@ -202,7 +359,10 @@ const filteredEntries = computed<CapabilityEntry[]>(() => {
       if (String(entry.reasonCode || '').toUpperCase() !== lockReasonFilter.value) return false;
     }
     if (!query) return true;
-    return [entry.title, entry.subtitle, entry.key].some((text) => String(text || '').toLowerCase().includes(query));
+    const fields = isHudEnabled.value
+      ? [entry.title, entry.subtitle, entry.key, ...entry.tags]
+      : [entry.title, entry.subtitle, ...entry.tags];
+    return fields.some((text) => String(text || '').toLowerCase().includes(query));
   });
 });
 
@@ -271,26 +431,121 @@ function lockReasonLabel(reasonCode: string) {
 function stateLabel(state: EntryState) {
   if (state === 'READY') return '可进入';
   if (state === 'LOCKED') return '暂不可用';
-  return '预览中';
+  return '即将开放';
+}
+
+function canEnter(entry: CapabilityEntry) {
+  return entry.state === 'READY';
+}
+
+function actionLabel(entry: CapabilityEntry) {
+  if (entry.state === 'LOCKED') return '暂不可用';
+  if (entry.state === 'PREVIEW') return '即将开放';
+  return '进入';
 }
 
 async function openScene(entry: CapabilityEntry) {
-  if (entry.state === 'LOCKED') return;
-  void trackCapabilityOpen(entry.key).catch(() => {});
-  await router.push({ path: `/s/${entry.sceneKey}` });
+  if (!canEnter(entry)) return;
+  lastFailedEntry.value = null;
+  enterError.value = null;
+  void trackUsageEvent('capability.enter.click', { capability_key: entry.key, scene_key: entry.sceneKey }).catch(() => {});
+  try {
+    void trackCapabilityOpen(entry.key).catch(() => {});
+    await router.push({ path: `/s/${entry.sceneKey}` });
+    void trackUsageEvent('capability.enter.result', {
+      capability_key: entry.key,
+      scene_key: entry.sceneKey,
+      result: 'ok',
+    }).catch(() => {});
+  } catch (error) {
+    const message = resolveEnterErrorMessage(error);
+    const hint = resolveEnterErrorHint(message.code);
+    lastFailedEntry.value = entry;
+    enterError.value = {
+      message: message.message,
+      hint,
+      code: message.code,
+      traceId: message.traceId,
+    };
+    void trackUsageEvent('capability.enter.result', {
+      capability_key: entry.key,
+      scene_key: entry.sceneKey,
+      result: 'error',
+      code: message.code || 'UNKNOWN',
+    }).catch(() => {});
+  }
 }
 
 function openRoleLanding() {
   router.push(session.resolveLandingPath('/s/projects.list')).catch(() => {});
 }
 
+function openSuggestion(sceneKey: string) {
+  const safeSceneKey = asText(sceneKey);
+  if (!safeSceneKey) {
+    openRoleLanding();
+    return;
+  }
+  router.push({ path: `/s/${safeSceneKey}` }).catch(() => {});
+}
+
+function retryOpen() {
+  if (!lastFailedEntry.value) return;
+  void openScene(lastFailedEntry.value);
+}
+
+function clearEnterError() {
+  enterError.value = null;
+  lastFailedEntry.value = null;
+}
+
+function resolveEnterErrorMessage(error: unknown) {
+  const message = asText((error as { message?: unknown })?.message) || '能力入口暂时不可用';
+  const lowered = message.toLowerCase();
+  const code = lowered.includes('permission')
+    ? 'PERMISSION_DENIED'
+    : lowered.includes('not found')
+      ? 'ROUTE_NOT_FOUND'
+      : lowered.includes('timeout')
+        ? 'TIMEOUT'
+        : 'ENTER_FAILED';
+  const traceId = asText((error as { trace_id?: unknown })?.trace_id) || asText((error as { traceId?: unknown })?.traceId);
+  return { message, code, traceId };
+}
+
+function resolveEnterErrorHint(code: string) {
+  if (code === 'PERMISSION_DENIED') return '请联系管理员开通对应权限后重试。';
+  if (code === 'ROUTE_NOT_FOUND') return '入口配置异常，请稍后重试或联系管理员。';
+  if (code === 'TIMEOUT') return '网络连接超时，请检查网络后点击重试。';
+  return '请稍后重试；如果问题持续，请联系管理员。';
+}
+
 onMounted(() => {
+  void trackUsageEvent('workspace.view', {
+    role_key: asText(roleSurface.value?.role_code) || 'unknown',
+    landing_scene_key: roleLandingScene.value,
+  }).catch(() => {});
   try {
-    const raw = window.localStorage.getItem(homeCollapseStorageKey);
-    if (!raw) return;
-    const parsed = JSON.parse(raw) as string[];
-    if (!Array.isArray(parsed)) return;
-    collapsedSceneKeys.value = parsed.filter((key) => typeof key === 'string' && key);
+    const raw = window.localStorage.getItem(homeCollapseStorageKey.value);
+    if (raw) {
+      const parsed = JSON.parse(raw) as string[];
+      if (Array.isArray(parsed)) {
+        collapsedSceneKeys.value = parsed.filter((key) => typeof key === 'string' && key);
+      }
+    }
+  } catch {
+    // Ignore broken local cache.
+  }
+  try {
+    const raw = window.localStorage.getItem(homeFilterStorageKey.value);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string };
+      readyOnly.value = Boolean(parsed?.ready_only);
+      const state = String(parsed?.state_filter || '').toUpperCase();
+      if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
+        stateFilter.value = state;
+      }
+    }
   } catch {
     // Ignore broken local cache.
   }
@@ -298,10 +553,32 @@ onMounted(() => {
 
 watch(collapsedSceneKeys, () => {
   try {
-    window.localStorage.setItem(homeCollapseStorageKey, JSON.stringify(collapsedSceneKeys.value));
+    window.localStorage.setItem(homeCollapseStorageKey.value, JSON.stringify(collapsedSceneKeys.value));
   } catch {
     // Ignore local storage errors.
   }
+});
+
+watch([readyOnly, stateFilter], () => {
+  try {
+    window.localStorage.setItem(
+      homeFilterStorageKey.value,
+      JSON.stringify({ ready_only: readyOnly.value, state_filter: stateFilter.value }),
+    );
+  } catch {
+    // Ignore local storage errors.
+  }
+});
+
+watch(searchText, (next) => {
+  const query = String(next || '').trim();
+  if (!query) {
+    lastTrackedSearch.value = '';
+    return;
+  }
+  if (query === lastTrackedSearch.value) return;
+  lastTrackedSearch.value = query;
+  void trackUsageEvent('capability.search', { query }).catch(() => {});
 });
 </script>
 
@@ -338,6 +615,12 @@ watch(collapsedSceneKeys, () => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.hud-line {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 12px;
 }
 
 .inline-link {
@@ -383,6 +666,107 @@ watch(collapsedSceneKeys, () => {
 .filters {
   display: grid;
   gap: 10px;
+}
+
+.status-panel {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.status-title {
+  margin: 0;
+  color: #9f1239;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-detail {
+  margin: 0;
+  color: #7f1d1d;
+  font-size: 12px;
+}
+
+.status-meta {
+  margin: 0;
+  color: #9f1239;
+  font-size: 11px;
+}
+
+.status-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.status-actions button {
+  border: 1px solid #fda4af;
+  border-radius: 8px;
+  background: #fff;
+  color: #9f1239;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.today-actions {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0f9ff, #f8fafc);
+  padding: 14px;
+}
+
+.today-actions-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.today-actions-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.today-actions-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.today-card {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.today-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.today-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+  min-height: 34px;
+}
+
+.today-btn {
+  justify-self: start;
+  border: 0;
+  border-radius: 8px;
+  background: #0ea5e9;
+  color: #fff;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 .search-input {
@@ -542,6 +926,13 @@ watch(collapsedSceneKeys, () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.hud-meta {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 11px;
+  overflow-wrap: anywhere;
 }
 
 .lock-reason {
