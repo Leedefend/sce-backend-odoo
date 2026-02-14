@@ -97,6 +97,10 @@
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span>刷新: {{ actionSurfaceAgeLabel }}</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
+        <label class="auto-refresh-toggle">
+          <input v-model="autoRefreshActionSurface" type="checkbox" />
+          自动刷新
+        </label>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
         快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
@@ -299,6 +303,7 @@ type SemanticActionButton = {
 };
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const paymentActionSurfaceLoadedAt = ref(0);
+const autoRefreshActionSurface = ref(false);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
@@ -920,6 +925,10 @@ function handleSuggestedAction(action: string): boolean {
 onMounted(() => {
   load();
   window.addEventListener('keydown', onSemanticHotkey);
+  window.setInterval(() => {
+    if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
+    void loadPaymentActionSurface();
+  }, 15000);
 });
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onSemanticHotkey);
@@ -1110,6 +1119,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
   background: #f8fafc;
   color: #334155;
   font-size: 11px;
+}
+
+.auto-refresh-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #334155;
 }
 
 .semantic-action-shortcuts {
