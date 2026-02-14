@@ -55,6 +55,14 @@ Existing fields remain unchanged:
   - top blocked action summary surfaces the first blocking candidates.
   - action stats now show top allowed actions for quick execution preview.
   - `导出阻塞` exports blocked action summary JSON for coordination.
+  - `导出CSV` exports action history as CSV for offline review.
+  - action stats show recent execution success rate.
+  - `Alt+F` hotkey refreshes action surface quickly.
+  - blocked reason chips support one-click reason filtering.
+  - `复制可执行文本` copies allowed actions in plain text for chat handoff.
+  - auto-refresh pauses when tab is hidden and exposes paused status in stats.
+  - empty history now shows guidance copy before first action run.
+  - key action tool buttons now include aria-label/title for accessibility.
 
 ## Verification
 
