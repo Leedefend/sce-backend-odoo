@@ -162,6 +162,7 @@
           <h3>最近操作</h3>
           <div class="history-actions">
             <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
+            <button type="button" class="history-clear" @click="exportActionHistory">导出历史</button>
             <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
@@ -1056,6 +1057,24 @@ async function copyAllHistory() {
   } catch {
     // Ignore clipboard errors.
   }
+}
+
+function exportActionHistory() {
+  if (!actionHistory.value.length || !recordId.value) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    reason_filter: historyReasonFilter.value,
+    entries: filteredActionHistory.value,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `payment_action_history_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function onSemanticHotkey(event: KeyboardEvent) {
