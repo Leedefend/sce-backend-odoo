@@ -289,6 +289,7 @@ let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
+const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -296,6 +297,9 @@ const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new')
 const title = computed(() => `Form: ${model.value}`);
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
 const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
+const historyReasonFilterStorageKey = computed(
+  () => `${historyReasonFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
   PAYMENT_ATTACHMENTS_REQUIRED: "提交前请先上传附件",
   BUSINESS_RULE_FAILED: "当前状态不满足执行条件",
@@ -355,6 +359,10 @@ try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
   if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
     actionFilterMode.value = cachedFilter;
+  }
+  const cachedReason = String(window.localStorage.getItem(historyReasonFilterStorageKey.value) || '').trim();
+  if (cachedReason) {
+    historyReasonFilter.value = cachedReason;
   }
 } catch {
   // Ignore storage errors and keep default mode.
@@ -1187,6 +1195,13 @@ onBeforeUnmount(() => {
 watch(actionFilterMode, (value) => {
   try {
     window.localStorage.setItem(actionFilterStorageKey, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(historyReasonFilter, (value) => {
+  try {
+    window.localStorage.setItem(historyReasonFilterStorageKey.value, value);
   } catch {
     // Ignore storage errors.
   }
