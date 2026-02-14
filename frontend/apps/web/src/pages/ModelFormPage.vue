@@ -92,6 +92,7 @@
           type="text"
           placeholder="搜索动作/原因码"
         />
+        <button type="button" class="stats-refresh" @click="resetActionPanelPrefs">重置面板</button>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
         <span>主动作: {{ primaryActionKey || '-' }}</span>
@@ -893,6 +894,23 @@ function exportActionSurface() {
   anchor.download = `payment_action_surface_${model.value}_${recordId.value}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function resetActionPanelPrefs() {
+  actionFilterMode.value = 'all';
+  hideBlockedHints.value = false;
+  semanticActionSearch.value = '';
+  historyReasonFilter.value = 'ALL';
+  autoRefreshActionSurface.value = false;
+  autoRefreshIntervalSec.value = 15;
+  try {
+    window.localStorage.removeItem(actionFilterStorageKey);
+    window.localStorage.removeItem(historyReasonFilterStorageKey.value);
+    window.localStorage.removeItem(actionSearchStorageKey.value);
+    window.localStorage.removeItem(autoRefreshIntervalStorageKey);
+  } catch {
+    // Ignore storage errors.
+  }
 }
 
 function exportEvidenceBundle() {
