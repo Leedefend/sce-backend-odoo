@@ -210,6 +210,12 @@
           </div>
         </div>
         <div class="history-filters">
+          <input
+            v-model.trim="historySearch"
+            class="history-search"
+            type="text"
+            placeholder="搜索历史动作/原因码/Trace"
+          />
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
           <button
             v-for="reason in historyReasonCodes"
@@ -331,6 +337,7 @@ const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
+const historySearch = ref('');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
@@ -696,8 +703,15 @@ const historyReasonCodes = computed(() =>
   Array.from(new Set(actionHistory.value.map((item) => item.reasonCode).filter(Boolean))).sort(),
 );
 const filteredActionHistory = computed(() => {
-  if (historyReasonFilter.value === 'ALL') return actionHistory.value;
-  return actionHistory.value.filter((item) => item.reasonCode === historyReasonFilter.value);
+  const keyword = historySearch.value.toLowerCase();
+  const byReason =
+    historyReasonFilter.value === 'ALL'
+      ? actionHistory.value
+      : actionHistory.value.filter((item) => item.reasonCode === historyReasonFilter.value);
+  if (!keyword) return byReason;
+  return byReason.filter((item) =>
+    `${item.label} ${item.reasonCode} ${item.traceId}`.toLowerCase().includes(keyword),
+  );
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -1944,6 +1958,14 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .history-actions {
   display: flex;
   gap: 6px;
+}
+
+.history-search {
+  min-width: 220px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
 }
 
 .history-filters {
