@@ -155,6 +155,17 @@
         <span>动作面可能过期（超过 60 秒），请先刷新后再执行。</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">立即刷新</button>
       </section>
+      <section v-if="semanticActionButtons.length && !semanticActionStats.allowed" class="semantic-action-stale-banner">
+        <span>当前没有可执行动作，请先处理阻塞原因或执行建议动作。</span>
+        <button
+          v-if="firstSuggestedBlockedAction"
+          type="button"
+          class="stats-refresh"
+          @click="runBlockedSuggestedAction(firstSuggestedBlockedAction)"
+        >
+          执行首个建议
+        </button>
+      </section>
       <section v-if="topBlockedActions.length" class="semantic-action-stale-banner">
         <span>主要阻塞：{{ topBlockedActions.join(' / ') }}</span>
       </section>
@@ -553,6 +564,12 @@ const latestFailureReason = computed(() => {
   const failed = actionHistory.value.find((item) => !item.success);
   return failed ? `${failed.reasonCode} (${failed.label})` : '';
 });
+const firstSuggestedBlockedAction = computed(
+  () =>
+    semanticActionButtons.value.find(
+      (item) => !item.allowed && item.suggestedAction && suggestedActionMeta(item).canRun,
+    ) || null,
+);
 const actionHistorySuccessRate = computed(() => {
   if (!actionHistory.value.length) return 0;
   const success = actionHistory.value.filter((item) => item.success).length;
