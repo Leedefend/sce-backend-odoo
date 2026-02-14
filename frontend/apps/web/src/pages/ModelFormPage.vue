@@ -85,6 +85,8 @@
         <span>主动作: {{ primaryActionKey || '-' }}</span>
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
+        <span>刷新: {{ actionSurfaceAgeLabel }}</span>
+        <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
         快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
@@ -267,6 +269,7 @@ type SemanticActionButton = {
   executeIntent: string;
 };
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
+const paymentActionSurfaceLoadedAt = ref(0);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
@@ -319,6 +322,14 @@ const semanticActionStats = computed(() => {
   const allowed = semanticActionButtons.value.filter((item) => item.allowed).length;
   const blocked = total - allowed;
   return { total, allowed, blocked };
+});
+const actionSurfaceAgeLabel = computed(() => {
+  if (!paymentActionSurfaceLoadedAt.value) return '-';
+  const deltaSec = Math.max(0, Math.floor((Date.now() - paymentActionSurfaceLoadedAt.value) / 1000));
+  if (deltaSec < 60) return `${deltaSec}s`;
+  const min = Math.floor(deltaSec / 60);
+  const sec = deltaSec % 60;
+  return `${min}m${sec}s`;
 });
 const primaryAllowedAction = computed(() => {
   const primary = displayedSemanticActionButtons.value.find(
@@ -466,6 +477,7 @@ async function loadPaymentActionSurface() {
   try {
     const response = await fetchPaymentRequestAvailableActions(recordId.value);
     paymentActionSurface.value = Array.isArray(response.data?.actions) ? response.data.actions : [];
+    paymentActionSurfaceLoadedAt.value = Date.now();
     primaryActionKey.value = String(response.data?.primary_action_key || '').trim();
     if (response.traceId) {
       lastTraceId.value = response.traceId;
@@ -1013,6 +1025,15 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 12px;
   font-size: 12px;
   color: #64748b;
+}
+
+.stats-refresh {
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
 }
 
 .semantic-action-shortcuts {
