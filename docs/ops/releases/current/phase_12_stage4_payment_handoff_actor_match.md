@@ -34,6 +34,7 @@ Existing fields remain unchanged:
   - `复制转交说明` (for handoff-required actions) copies a plain-text handoff note with role and trace.
   - stale refresh hint highlights action surface older than 60 seconds.
   - stale banner blocks user attention and provides one-click refresh before execution.
+  - stale execution guard: semantic action execution asks for confirmation when surface is stale; cancel triggers auto-refresh.
 
 ## Verification
 
