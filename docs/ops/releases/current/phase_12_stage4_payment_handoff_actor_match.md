@@ -35,6 +35,7 @@ Existing fields remain unchanged:
   - `复制执行包` / `导出执行包` near feedback trace for latest execution snapshot.
   - history reason filter is persisted per record in local storage.
   - `复制转交说明` (for handoff-required actions) copies a plain-text handoff note with role and trace.
+    - includes current filter and blocked top reasons for context.
   - stale refresh hint highlights action surface older than 60 seconds.
   - stale banner blocks user attention and provides one-click refresh before execution.
   - stale execution guard: semantic action execution asks for confirmation when surface is stale; cancel triggers auto-refresh.

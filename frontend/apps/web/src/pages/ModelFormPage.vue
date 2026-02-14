@@ -822,6 +822,8 @@ async function copyHandoffNote(action: SemanticActionButton) {
     `required_role=${action.requiredRoleLabel || action.requiredRoleKey || '-'}`,
     `reason=${blockedReasonText(action)}`,
     `handoff_hint=${action.handoffHint || '-'}`,
+    `filter=${actionFilterMode.value}`,
+    `blocked_top=${blockedTopReasons.value.join(',') || '-'}`,
     `trace_id=${lastTraceId.value || '-'}`,
   ];
   try {
