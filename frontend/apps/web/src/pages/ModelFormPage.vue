@@ -81,6 +81,14 @@
           <span v-if="!action.allowed && action.suggestedAction" class="suggestion">
             建议：{{ action.suggestedAction }}
           </span>
+          <button
+            v-if="!action.allowed && suggestedActionMeta(action).canRun"
+            class="hint-action"
+            type="button"
+            @click="runBlockedSuggestedAction(action)"
+          >
+            {{ suggestedActionMeta(action).label || '执行建议' }}
+          </button>
         </div>
       </section>
       <section v-if="actionHistory.length" class="semantic-action-history">
@@ -154,6 +162,7 @@ import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
+import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 
 const route = useRoute();
 const router = useRouter();
@@ -525,6 +534,34 @@ function semanticActionTooltip(action: SemanticActionButton) {
   return '当前状态不可执行';
 }
 
+function suggestedActionMeta(action: SemanticActionButton) {
+  return describeSuggestedAction(action.suggestedAction, {
+    traceId: lastTraceId.value || undefined,
+    reasonCode: action.reasonCode || undefined,
+    message: action.blockedMessage || undefined,
+    hasRetryHandler: true,
+    hasActionHandler: true,
+  });
+}
+
+function runBlockedSuggestedAction(action: SemanticActionButton) {
+  runSuggestedAction(action.suggestedAction, {
+    traceId: lastTraceId.value || undefined,
+    reasonCode: action.reasonCode || undefined,
+    message: action.blockedMessage || undefined,
+    onRetry: load,
+    onSuggestedAction: handleSuggestedAction,
+    onExecuted: ({ success }) => {
+      actionFeedback.value = {
+        message: success ? '已执行建议操作' : '建议操作执行失败',
+        reasonCode: success ? 'SUGGESTED_ACTION_OK' : 'SUGGESTED_ACTION_FAILED',
+        success,
+        traceId: lastTraceId.value,
+      };
+    },
+  });
+}
+
 function parseIntentActionResult(data: Record<string, unknown> | null | undefined) {
   const reasonCode = String(data?.reason_code || 'OK');
   const success =
@@ -733,6 +770,16 @@ function analyzeLayout(layout: ViewContract['layout']) {
 
 .semantic-action-hint .suggestion {
   color: #475569;
+}
+
+.hint-action {
+  margin-left: auto;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
 }
 
 .semantic-action-history {
