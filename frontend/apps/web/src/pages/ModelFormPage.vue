@@ -386,6 +386,7 @@ const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
 const historyOutcomeFilterStoragePrefix = 'sc.payment.history_outcome_filter.v1';
 const historySearchStoragePrefix = 'sc.payment.history_search.v1';
+const historySortModeStoragePrefix = 'sc.payment.history_sort_mode.v1';
 const actionHistoryLimitStorageKey = 'sc.payment.history_limit.v1';
 const autoRefreshIntervalStorageKey = 'sc.payment.auto_refresh_interval.v1';
 const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
@@ -404,6 +405,9 @@ const historyOutcomeFilterStorageKey = computed(
 );
 const historySearchStorageKey = computed(
   () => `${historySearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const historySortModeStorageKey = computed(
+  () => `${historySortModeStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
 );
 const actionSearchStorageKey = computed(() => `${actionSearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
@@ -487,6 +491,10 @@ try {
     historyOutcomeFilter.value = cachedOutcome;
   }
   historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
+  const cachedSort = String(window.localStorage.getItem(historySortModeStorageKey.value) || '').trim();
+  if (cachedSort === 'DESC' || cachedSort === 'ASC') {
+    historySortMode.value = cachedSort;
+  }
   semanticActionSearch.value = String(window.localStorage.getItem(actionSearchStorageKey.value) || '');
 } catch {
   // Ignore storage errors and keep default mode.
@@ -1211,6 +1219,7 @@ function resetActionPanelPrefs() {
     window.localStorage.removeItem(historyReasonFilterStorageKey.value);
     window.localStorage.removeItem(historyOutcomeFilterStorageKey.value);
     window.localStorage.removeItem(historySearchStorageKey.value);
+    window.localStorage.removeItem(historySortModeStorageKey.value);
     window.localStorage.removeItem(actionSearchStorageKey.value);
     window.localStorage.removeItem(autoRefreshIntervalStorageKey);
     window.localStorage.removeItem(actionHistoryLimitStorageKey);
@@ -1223,6 +1232,7 @@ function resetHistoryFilters() {
   historyReasonFilter.value = 'ALL';
   historyOutcomeFilter.value = 'ALL';
   historySearch.value = '';
+  historySortMode.value = 'DESC';
 }
 
 function exportEvidenceBundle() {
@@ -1734,6 +1744,13 @@ watch(historyOutcomeFilter, (value) => {
 watch(historySearch, (value) => {
   try {
     window.localStorage.setItem(historySearchStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(historySortMode, (value) => {
+  try {
+    window.localStorage.setItem(historySortModeStorageKey.value, value);
   } catch {
     // Ignore storage errors.
   }
