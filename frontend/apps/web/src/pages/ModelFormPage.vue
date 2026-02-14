@@ -102,6 +102,7 @@
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
         <span v-if="actionSurfaceLoadedAtText">刷新时刻: {{ actionSurfaceLoadedAtText }}</span>
         <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
+        <span v-if="latestFailureReason">最近失败: {{ latestFailureReason }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
         <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
         <button type="button" class="stats-refresh" @click="exportBlockedSummary">导出阻塞</button>
@@ -482,6 +483,10 @@ const allowedActionLabels = computed(() => {
     .filter((item) => item.allowed)
     .map((item) => item.label)
     .slice(0, 3);
+});
+const latestFailureReason = computed(() => {
+  const failed = actionHistory.value.find((item) => !item.success);
+  return failed ? `${failed.reasonCode} (${failed.label})` : '';
 });
 
 async function copyActionStats() {
