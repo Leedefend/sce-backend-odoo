@@ -216,6 +216,9 @@
             type="text"
             placeholder="搜索历史动作/原因码/Trace"
           />
+          <button type="button" :class="{ active: historyOutcomeFilter === 'ALL' }" @click="historyOutcomeFilter = 'ALL'">全部结果</button>
+          <button type="button" :class="{ active: historyOutcomeFilter === 'SUCCESS' }" @click="historyOutcomeFilter = 'SUCCESS'">成功</button>
+          <button type="button" :class="{ active: historyOutcomeFilter === 'FAILED' }" @click="historyOutcomeFilter = 'FAILED'">失败</button>
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
           <button
             v-for="reason in historyReasonCodes"
@@ -337,6 +340,7 @@ const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
+const historyOutcomeFilter = ref<'ALL' | 'SUCCESS' | 'FAILED'>('ALL');
 const historySearch = ref('');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -704,10 +708,16 @@ const historyReasonCodes = computed(() =>
 );
 const filteredActionHistory = computed(() => {
   const keyword = historySearch.value.toLowerCase();
+  const byOutcome =
+    historyOutcomeFilter.value === 'ALL'
+      ? actionHistory.value
+      : actionHistory.value.filter((item) =>
+          historyOutcomeFilter.value === 'SUCCESS' ? item.success : !item.success,
+        );
   const byReason =
     historyReasonFilter.value === 'ALL'
-      ? actionHistory.value
-      : actionHistory.value.filter((item) => item.reasonCode === historyReasonFilter.value);
+      ? byOutcome
+      : byOutcome.filter((item) => item.reasonCode === historyReasonFilter.value);
   if (!keyword) return byReason;
   return byReason.filter((item) =>
     `${item.label} ${item.reasonCode} ${item.traceId}`.toLowerCase().includes(keyword),
