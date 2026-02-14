@@ -44,6 +44,7 @@ Existing fields remain unchanged:
   - `复制统计` copies action-surface stats snapshot for support handoff.
   - action stats now show absolute `刷新时刻` timestamp.
   - semantic action search keyword is persisted per record.
+  - `重置面板` clears local UI preferences (filter/search/auto-refresh) in one click.
 
 ## Verification
 
