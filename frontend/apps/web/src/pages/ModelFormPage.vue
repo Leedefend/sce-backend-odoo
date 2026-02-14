@@ -122,6 +122,7 @@
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
             <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
+            <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
           </li>
         </ul>
       </section>
@@ -756,6 +757,21 @@ function clearActionHistory() {
   actionHistory.value = [];
 }
 
+async function copyHistoryEntry(entry: ActionHistoryEntry) {
+  const payload = [
+    `action=${entry.label}`,
+    `reason_code=${entry.reasonCode}`,
+    `state_before=${entry.stateBefore || '-'}`,
+    `trace_id=${entry.traceId || '-'}`,
+    `success=${String(entry.success)}`,
+  ].join('\n');
+  try {
+    await navigator.clipboard.writeText(payload);
+  } catch {
+    // Ignore clipboard failures for this utility action.
+  }
+}
+
 function onSemanticHotkey(event: KeyboardEvent) {
   if (event.ctrlKey && event.key === 'Enter' && primaryAllowedAction.value && !actionBusy.value && !loading.value) {
     event.preventDefault();
@@ -1064,6 +1080,16 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin-left: 8px;
   color: #64748b;
   font-size: 12px;
+}
+
+.history-copy {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
 }
 
 .field {
