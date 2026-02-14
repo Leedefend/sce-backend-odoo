@@ -188,6 +188,7 @@
             <button type="button" class="history-clear" @click="copyLatestTrace">复制最新Trace</button>
             <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
             <button type="button" class="history-clear" @click="exportActionHistory">导出历史</button>
+            <button type="button" class="history-clear" @click="exportActionHistoryCsv">导出CSV</button>
             <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
@@ -1319,6 +1320,31 @@ function exportActionHistory() {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = `payment_action_history_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportActionHistoryCsv() {
+  if (!filteredActionHistory.value.length || !recordId.value) return;
+  const header = ["label", "reason_code", "success", "state_before", "trace_id", "at"];
+  const rows = filteredActionHistory.value.map((entry) =>
+    [
+      entry.label,
+      entry.reasonCode,
+      String(entry.success),
+      entry.stateBefore || '',
+      entry.traceId || '',
+      entry.atText || '',
+    ]
+      .map((item) => `"${String(item).replace(/"/g, '""')}"`)
+      .join(','),
+  );
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `payment_action_history_${model.value}_${recordId.value}.csv`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
