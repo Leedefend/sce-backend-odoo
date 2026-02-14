@@ -36,6 +36,9 @@
         >
           {{ action.label }}
         </button>
+        <button :disabled="!lastSemanticAction || actionBusy || loading" class="action secondary" @click="rerunLastSemanticAction">
+          重试上次动作
+        </button>
         <button :disabled="saving" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
         <button @click="reload">Reload</button>
       </div>
@@ -198,6 +201,7 @@ type ActionHistoryEntry = {
 
 const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
+const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -628,6 +632,11 @@ async function runSemanticAction(action: SemanticActionButton) {
   actionBusy.value = true;
   const stateBefore = action.currentState;
   try {
+    lastSemanticAction.value = {
+      action: action.key,
+      reason,
+      label: action.label,
+    };
     const response = await executePaymentRequestAction({
       paymentRequestId: recordId.value,
       action: action.key,
@@ -663,6 +672,31 @@ async function runSemanticAction(action: SemanticActionButton) {
   } catch (err) {
     setError(err, 'failed to execute semantic action');
     actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false, traceId: lastTraceId.value };
+  } finally {
+    actionBusy.value = false;
+  }
+}
+
+async function rerunLastSemanticAction() {
+  if (!lastSemanticAction.value || !recordId.value) return;
+  actionBusy.value = true;
+  try {
+    const response = await executePaymentRequestAction({
+      paymentRequestId: recordId.value,
+      action: lastSemanticAction.value.action,
+      reason: lastSemanticAction.value.reason,
+    });
+    lastTraceId.value = response.traceId || lastTraceId.value;
+    const parsed = parseIntentActionResult(response.data as Record<string, unknown>);
+    actionFeedback.value = {
+      ...parsed,
+      message: `${lastSemanticAction.value.label} 重试：${parsed.message}`,
+      traceId: response.traceId || '',
+    };
+    await load();
+  } catch (err) {
+    setError(err, 'failed to retry semantic action');
+    actionFeedback.value = { message: '重试失败', reasonCode: 'EXECUTE_FAILED', success: false, traceId: lastTraceId.value };
   } finally {
     actionBusy.value = false;
   }
