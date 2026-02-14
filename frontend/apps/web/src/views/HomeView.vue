@@ -96,7 +96,7 @@
             <div class="entry-main">
               <p class="title-row">
                 <span class="title">{{ entry.title }}</span>
-                <span class="state">{{ stateLabel(entry.state) }}</span>
+                <span v-if="entry.state !== 'READY'" class="state">{{ stateLabel(entry.state) }}</span>
               </p>
               <p class="subtitle" :title="entry.reason || entry.subtitle">{{ entry.subtitle || '无说明' }}</p>
               <p v-if="isHudEnabled" class="hud-meta">scene_key={{ entry.sceneKey }} · capability_key={{ entry.key }}</p>
@@ -106,11 +106,11 @@
             </div>
             <button
               class="open-btn"
-              :disabled="entry.state === 'LOCKED'"
+              :disabled="!canEnter(entry)"
               :title="entry.reason || ''"
               @click="openScene(entry)"
             >
-              进入
+              {{ actionLabel(entry) }}
             </button>
           </article>
         </div>
@@ -352,11 +352,21 @@ function lockReasonLabel(reasonCode: string) {
 function stateLabel(state: EntryState) {
   if (state === 'READY') return '可进入';
   if (state === 'LOCKED') return '暂不可用';
-  return '预览中';
+  return '即将开放';
+}
+
+function canEnter(entry: CapabilityEntry) {
+  return entry.state === 'READY';
+}
+
+function actionLabel(entry: CapabilityEntry) {
+  if (entry.state === 'LOCKED') return '暂不可用';
+  if (entry.state === 'PREVIEW') return '即将开放';
+  return '进入';
 }
 
 async function openScene(entry: CapabilityEntry) {
-  if (entry.state === 'LOCKED') return;
+  if (!canEnter(entry)) return;
   void trackCapabilityOpen(entry.key).catch(() => {});
   await router.push({ path: `/s/${entry.sceneKey}` });
 }
