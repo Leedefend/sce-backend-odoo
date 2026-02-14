@@ -105,6 +105,14 @@
           <input v-model="autoRefreshActionSurface" type="checkbox" />
           自动刷新
         </label>
+        <label class="auto-refresh-toggle">
+          间隔
+          <select v-model.number="autoRefreshIntervalSec">
+            <option :value="15">15s</option>
+            <option :value="30">30s</option>
+            <option :value="60">60s</option>
+          </select>
+        </label>
       </section>
       <section v-if="semanticActionButtons.length && actionSurfaceIsStale" class="semantic-action-stale-banner">
         <span>动作面可能过期（超过 60 秒），请先刷新后再执行。</span>
@@ -290,6 +298,7 @@ let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
+const autoRefreshIntervalStorageKey = 'sc.payment.auto_refresh_interval.v1';
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -350,6 +359,7 @@ type SemanticActionButton = {
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const paymentActionSurfaceLoadedAt = ref(0);
 const autoRefreshActionSurface = ref(false);
+const autoRefreshIntervalSec = ref(15);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
@@ -359,6 +369,10 @@ try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
   if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
     actionFilterMode.value = cachedFilter;
+  }
+  const cachedInterval = Number(window.localStorage.getItem(autoRefreshIntervalStorageKey) || 15);
+  if ([15, 30, 60].includes(cachedInterval)) {
+    autoRefreshIntervalSec.value = cachedInterval;
   }
   const cachedReason = String(window.localStorage.getItem(historyReasonFilterStorageKey.value) || '').trim();
   if (cachedReason) {
@@ -1176,10 +1190,11 @@ function handleSuggestedAction(action: string): boolean {
 onMounted(() => {
   load();
   window.addEventListener('keydown', onSemanticHotkey);
+  const interval = Math.max(5, Number(autoRefreshIntervalSec.value || 15)) * 1000;
   actionSurfaceRefreshTimer = window.setInterval(() => {
     if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
     void loadPaymentActionSurface();
-  }, 15000);
+  }, interval);
 });
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onSemanticHotkey);
@@ -1204,6 +1219,21 @@ watch(historyReasonFilter, (value) => {
     window.localStorage.setItem(historyReasonFilterStorageKey.value, value);
   } catch {
     // Ignore storage errors.
+  }
+});
+watch(autoRefreshIntervalSec, (value) => {
+  const interval = [15, 30, 60].includes(Number(value)) ? Number(value) : 15;
+  try {
+    window.localStorage.setItem(autoRefreshIntervalStorageKey, String(interval));
+  } catch {
+    // Ignore storage errors.
+  }
+  if (actionSurfaceRefreshTimer) {
+    clearInterval(actionSurfaceRefreshTimer);
+    actionSurfaceRefreshTimer = window.setInterval(() => {
+      if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
+      void loadPaymentActionSurface();
+    }, interval * 1000);
   }
 });
 watch(
@@ -1407,6 +1437,15 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 4px;
   font-size: 11px;
   color: #334155;
+}
+
+.auto-refresh-toggle select {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 11px;
+  padding: 2px 6px;
 }
 
 .semantic-action-shortcuts {
