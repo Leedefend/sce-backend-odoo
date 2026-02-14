@@ -128,7 +128,10 @@
       <section v-if="actionHistory.length" class="semantic-action-history">
         <div class="history-header">
           <h3>最近操作</h3>
-          <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
+          <div class="history-actions">
+            <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
+            <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
+          </div>
         </div>
         <div class="history-filters">
           <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
@@ -847,6 +850,25 @@ async function copyHistoryEntry(entry: ActionHistoryEntry) {
   }
 }
 
+async function copyAllHistory() {
+  if (!actionHistory.value.length) return;
+  const lines = actionHistory.value.map((entry) =>
+    [
+      `action=${entry.label}`,
+      `reason_code=${entry.reasonCode}`,
+      `state_before=${entry.stateBefore || '-'}`,
+      `trace_id=${entry.traceId || '-'}`,
+      `at=${entry.atText}`,
+      `success=${String(entry.success)}`,
+    ].join(' | '),
+  );
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+  } catch {
+    // Ignore clipboard errors.
+  }
+}
+
 function onSemanticHotkey(event: KeyboardEvent) {
   if (event.ctrlKey && event.key === 'Enter' && primaryAllowedAction.value && !actionBusy.value && !loading.value) {
     event.preventDefault();
@@ -1162,6 +1184,11 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.history-actions {
+  display: flex;
+  gap: 6px;
 }
 
 .history-filters {
