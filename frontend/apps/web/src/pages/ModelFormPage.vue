@@ -257,6 +257,7 @@ const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const historyReasonFilter = ref('ALL');
 let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
+let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 
@@ -925,7 +926,7 @@ function handleSuggestedAction(action: string): boolean {
 onMounted(() => {
   load();
   window.addEventListener('keydown', onSemanticHotkey);
-  window.setInterval(() => {
+  actionSurfaceRefreshTimer = window.setInterval(() => {
     if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
     void loadPaymentActionSurface();
   }, 15000);
@@ -935,6 +936,10 @@ onBeforeUnmount(() => {
   if (actionFeedbackTimer) {
     clearTimeout(actionFeedbackTimer);
     actionFeedbackTimer = null;
+  }
+  if (actionSurfaceRefreshTimer) {
+    clearInterval(actionSurfaceRefreshTimer);
+    actionSurfaceRefreshTimer = null;
   }
 });
 watch(actionFilterMode, (value) => {
