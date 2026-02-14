@@ -203,12 +203,14 @@ const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
+const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
 const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new'));
 const title = computed(() => `Form: ${model.value}`);
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
+const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 
 const viewContract = ref<ViewContract | null>(null);
 const fields = ref<
@@ -750,6 +752,43 @@ watch(actionFilterMode, (value) => {
     // Ignore storage errors.
   }
 });
+watch(
+  actionHistory,
+  (value) => {
+    try {
+      window.localStorage.setItem(actionHistoryStorageKey.value, JSON.stringify(value.slice(0, 6)));
+    } catch {
+      // Ignore storage errors.
+    }
+  },
+  { deep: true },
+);
+watch(
+  actionHistoryStorageKey,
+  (key) => {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) {
+        actionHistory.value = [];
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        actionHistory.value = parsed.slice(0, 6).map((item) => ({
+          key: String(item?.key || `${Date.now()}`),
+          label: String(item?.label || '-'),
+          reasonCode: String(item?.reasonCode || ''),
+          success: Boolean(item?.success),
+          stateBefore: String(item?.stateBefore || ''),
+          traceId: String(item?.traceId || ''),
+        }));
+      }
+    } catch {
+      actionHistory.value = [];
+    }
+  },
+  { immediate: true },
+);
 
 function analyzeLayout(layout: ViewContract['layout']) {
   const stats = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
