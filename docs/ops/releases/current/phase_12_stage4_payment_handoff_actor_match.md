@@ -30,11 +30,21 @@ Existing fields remain unchanged:
 - Action-surface evidence utilities in user form:
   - `复制动作面` copies structured JSON (actions + role hints + priority).
   - `导出动作面` downloads JSON for delivery evidence.
+  - `导出历史` downloads filtered action history JSON.
   - `导出证据包` downloads one bundle (action surface + action history + last feedback/trace).
+  - `复制执行包` / `导出执行包` near feedback trace for latest execution snapshot.
+  - history reason filter is persisted per record in local storage.
   - `复制转交说明` (for handoff-required actions) copies a plain-text handoff note with role and trace.
+    - includes current filter and blocked top reasons for context.
   - stale refresh hint highlights action surface older than 60 seconds.
   - stale banner blocks user attention and provides one-click refresh before execution.
   - stale execution guard: semantic action execution asks for confirmation when surface is stale; cancel triggers auto-refresh.
+  - auto-refresh interval selector (15s/30s/60s) with local storage persistence.
+  - blocked reason top summary is visible in action stats for quick diagnosis.
+  - `复制统计` copies action-surface stats snapshot for support handoff.
+  - action stats now show absolute `刷新时刻` timestamp.
+  - semantic action search keyword is persisted per record.
+  - `重置面板` clears local UI preferences (filter/search/auto-refresh) in one click.
 
 ## Verification
 

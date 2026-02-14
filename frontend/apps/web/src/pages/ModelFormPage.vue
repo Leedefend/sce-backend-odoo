@@ -12,6 +12,8 @@
           <span v-if="actionFeedback.requestId"> · request: <code>{{ actionFeedback.requestId }}</code></span>
           <span v-if="actionFeedback.replayed"> · replayed</span>
           <button type="button" class="evidence-copy" @click="copyActionEvidence">复制证据</button>
+          <button type="button" class="evidence-copy" @click="copyLatestExecutionBundle">复制执行包</button>
+          <button type="button" class="evidence-copy" @click="exportLatestExecutionBundle">导出执行包</button>
           <button type="button" class="evidence-copy" @click="clearActionFeedback">关闭</button>
         </p>
       </div>
@@ -90,18 +92,30 @@
           type="text"
           placeholder="搜索动作/原因码"
         />
+        <button type="button" class="stats-refresh" @click="resetActionPanelPrefs">重置面板</button>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
         <span>主动作: {{ primaryActionKey || '-' }}</span>
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
+        <span v-if="actionSurfaceLoadedAtText">刷新时刻: {{ actionSurfaceLoadedAtText }}</span>
+        <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
+        <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
         <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
         <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
         <label class="auto-refresh-toggle">
           <input v-model="autoRefreshActionSurface" type="checkbox" />
           自动刷新
+        </label>
+        <label class="auto-refresh-toggle">
+          间隔
+          <select v-model.number="autoRefreshIntervalSec">
+            <option :value="15">15s</option>
+            <option :value="30">30s</option>
+            <option :value="60">60s</option>
+          </select>
         </label>
       </section>
       <section v-if="semanticActionButtons.length && actionSurfaceIsStale" class="semantic-action-stale-banner">
@@ -160,6 +174,7 @@
           <h3>最近操作</h3>
           <div class="history-actions">
             <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
+            <button type="button" class="history-clear" @click="exportActionHistory">导出历史</button>
             <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
@@ -286,6 +301,9 @@ let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 let actionSurfaceRefreshTimer: ReturnType<typeof setInterval> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
+const historyReasonFilterStoragePrefix = 'sc.payment.history_reason_filter.v1';
+const autoRefreshIntervalStorageKey = 'sc.payment.auto_refresh_interval.v1';
+const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -293,6 +311,10 @@ const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new')
 const title = computed(() => `Form: ${model.value}`);
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
 const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
+const historyReasonFilterStorageKey = computed(
+  () => `${historyReasonFilterStoragePrefix}:${model.value}:${recordIdDisplay.value}`,
+);
+const actionSearchStorageKey = computed(() => `${actionSearchStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const PAYMENT_REASON_TEXT: Record<string, string> = {
   PAYMENT_ATTACHMENTS_REQUIRED: "提交前请先上传附件",
   BUSINESS_RULE_FAILED: "当前状态不满足执行条件",
@@ -343,6 +365,7 @@ type SemanticActionButton = {
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const paymentActionSurfaceLoadedAt = ref(0);
 const autoRefreshActionSurface = ref(false);
+const autoRefreshIntervalSec = ref(15);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
@@ -353,6 +376,15 @@ try {
   if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
     actionFilterMode.value = cachedFilter;
   }
+  const cachedInterval = Number(window.localStorage.getItem(autoRefreshIntervalStorageKey) || 15);
+  if ([15, 30, 60].includes(cachedInterval)) {
+    autoRefreshIntervalSec.value = cachedInterval;
+  }
+  const cachedReason = String(window.localStorage.getItem(historyReasonFilterStorageKey.value) || '').trim();
+  if (cachedReason) {
+    historyReasonFilter.value = cachedReason;
+  }
+  semanticActionSearch.value = String(window.localStorage.getItem(actionSearchStorageKey.value) || '');
 } catch {
   // Ignore storage errors and keep default mode.
 }
@@ -409,6 +441,51 @@ const semanticActionStats = computed(() => {
   const blocked = total - allowed;
   return { total, allowed, blocked };
 });
+const blockedTopReasons = computed(() => {
+  const counts = new Map<string, number>();
+  for (const item of semanticActionButtons.value) {
+    if (item.allowed) continue;
+    const key = item.reasonCode || "UNKNOWN";
+    counts.set(key, Number(counts.get(key) || 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([reason, count]) => `${reason}:${count}`);
+});
+
+async function copyActionStats() {
+  if (!semanticActionButtons.value.length) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    primary_action_key: primaryActionKey.value,
+    total: semanticActionStats.value.total,
+    allowed: semanticActionStats.value.allowed,
+    blocked: semanticActionStats.value.blocked,
+    stale: actionSurfaceIsStale.value,
+    age: actionSurfaceAgeLabel.value,
+    blocked_top_reasons: blockedTopReasons.value,
+    at: Date.now(),
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    actionFeedback.value = {
+      message: '动作统计已复制',
+      reasonCode: 'ACTION_STATS_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '动作统计复制失败',
+      reasonCode: 'ACTION_STATS_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
 const actionSurfaceAgeLabel = computed(() => {
   if (!paymentActionSurfaceLoadedAt.value) return '-';
   const deltaSec = Math.max(0, Math.floor((Date.now() - paymentActionSurfaceLoadedAt.value) / 1000));
@@ -416,6 +493,10 @@ const actionSurfaceAgeLabel = computed(() => {
   const min = Math.floor(deltaSec / 60);
   const sec = deltaSec % 60;
   return `${min}m${sec}s`;
+});
+const actionSurfaceLoadedAtText = computed(() => {
+  if (!paymentActionSurfaceLoadedAt.value) return '';
+  return new Date(paymentActionSurfaceLoadedAt.value).toLocaleTimeString('zh-CN', { hour12: false });
 });
 const actionSurfaceIsStale = computed(() => {
   if (!paymentActionSurfaceLoadedAt.value) return true;
@@ -745,6 +826,8 @@ async function copyHandoffNote(action: SemanticActionButton) {
     `required_role=${action.requiredRoleLabel || action.requiredRoleKey || '-'}`,
     `reason=${blockedReasonText(action)}`,
     `handoff_hint=${action.handoffHint || '-'}`,
+    `filter=${actionFilterMode.value}`,
+    `blocked_top=${blockedTopReasons.value.join(',') || '-'}`,
     `trace_id=${lastTraceId.value || '-'}`,
   ];
   try {
@@ -811,6 +894,23 @@ function exportActionSurface() {
   anchor.download = `payment_action_surface_${model.value}_${recordId.value}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function resetActionPanelPrefs() {
+  actionFilterMode.value = 'all';
+  hideBlockedHints.value = false;
+  semanticActionSearch.value = '';
+  historyReasonFilter.value = 'ALL';
+  autoRefreshActionSurface.value = false;
+  autoRefreshIntervalSec.value = 15;
+  try {
+    window.localStorage.removeItem(actionFilterStorageKey);
+    window.localStorage.removeItem(historyReasonFilterStorageKey.value);
+    window.localStorage.removeItem(actionSearchStorageKey.value);
+    window.localStorage.removeItem(autoRefreshIntervalStorageKey);
+  } catch {
+    // Ignore storage errors.
+  }
 }
 
 function exportEvidenceBundle() {
@@ -1056,6 +1156,24 @@ async function copyAllHistory() {
   }
 }
 
+function exportActionHistory() {
+  if (!actionHistory.value.length || !recordId.value) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    reason_filter: historyReasonFilter.value,
+    entries: filteredActionHistory.value,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `payment_action_history_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 function onSemanticHotkey(event: KeyboardEvent) {
   if (event.ctrlKey && event.key === 'Enter' && primaryAllowedAction.value && !actionBusy.value && !loading.value) {
     event.preventDefault();
@@ -1092,6 +1210,47 @@ async function copyActionEvidence() {
   }
 }
 
+function latestExecutionBundle() {
+  return {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    trace_id: actionFeedback.value?.traceId || lastTraceId.value || "",
+    last_feedback: actionFeedback.value,
+    last_semantic_action: lastSemanticAction.value,
+    primary_action_key: primaryActionKey.value,
+    action_surface_loaded_at: paymentActionSurfaceLoadedAt.value,
+    action_surface_stale: actionSurfaceIsStale.value,
+    history_top3: actionHistory.value.slice(0, 3),
+  };
+}
+
+async function copyLatestExecutionBundle() {
+  if (!actionFeedback.value) return;
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(latestExecutionBundle(), null, 2));
+    actionFeedback.value = {
+      ...actionFeedback.value,
+      message: `${actionFeedback.value.message}（执行包已复制）`,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    // Ignore clipboard failures; keep primary action result visible.
+  }
+}
+
+function exportLatestExecutionBundle() {
+  if (!actionFeedback.value || !recordId.value) return;
+  const bundle = latestExecutionBundle();
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `payment_execution_bundle_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 function clearActionFeedback() {
   actionFeedback.value = null;
 }
@@ -1106,10 +1265,11 @@ function handleSuggestedAction(action: string): boolean {
 onMounted(() => {
   load();
   window.addEventListener('keydown', onSemanticHotkey);
+  const interval = Math.max(5, Number(autoRefreshIntervalSec.value || 15)) * 1000;
   actionSurfaceRefreshTimer = window.setInterval(() => {
     if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
     void loadPaymentActionSurface();
-  }, 15000);
+  }, interval);
 });
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onSemanticHotkey);
@@ -1125,6 +1285,35 @@ onBeforeUnmount(() => {
 watch(actionFilterMode, (value) => {
   try {
     window.localStorage.setItem(actionFilterStorageKey, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(historyReasonFilter, (value) => {
+  try {
+    window.localStorage.setItem(historyReasonFilterStorageKey.value, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(autoRefreshIntervalSec, (value) => {
+  const interval = [15, 30, 60].includes(Number(value)) ? Number(value) : 15;
+  try {
+    window.localStorage.setItem(autoRefreshIntervalStorageKey, String(interval));
+  } catch {
+    // Ignore storage errors.
+  }
+  if (actionSurfaceRefreshTimer) {
+    clearInterval(actionSurfaceRefreshTimer);
+    actionSurfaceRefreshTimer = window.setInterval(() => {
+      if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
+      void loadPaymentActionSurface();
+    }, interval * 1000);
+  }
+});
+watch(semanticActionSearch, (value) => {
+  try {
+    window.localStorage.setItem(actionSearchStorageKey.value, value);
   } catch {
     // Ignore storage errors.
   }
@@ -1330,6 +1519,15 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 4px;
   font-size: 11px;
   color: #334155;
+}
+
+.auto-refresh-toggle select {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 11px;
+  padding: 2px 6px;
 }
 
 .semantic-action-shortcuts {
