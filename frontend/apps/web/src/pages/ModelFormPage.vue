@@ -235,6 +235,7 @@
             <button type="button" class="history-clear" title="复制全部历史记录" aria-label="复制全部历史记录" @click="copyAllHistory">复制全部</button>
             <button type="button" class="history-clear" title="导出历史JSON" aria-label="导出历史JSON" @click="exportActionHistory">导出历史</button>
             <button type="button" class="history-clear" title="导出历史CSV" aria-label="导出历史CSV" @click="exportActionHistoryCsv">导出CSV</button>
+            <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
@@ -1477,6 +1478,37 @@ async function copyAllHistory() {
     await navigator.clipboard.writeText(lines.join('\n'));
   } catch {
     // Ignore clipboard errors.
+  }
+}
+
+async function copyHistoryFilterSummary() {
+  if (!actionHistory.value.length) return;
+  const payload = [
+    `record=${model.value}:${recordId.value || '-'}`,
+    `history_limit=${actionHistoryLimit.value}`,
+    `history_total=${actionHistory.value.length}`,
+    `history_visible=${filteredActionHistory.value.length}`,
+    `outcome_filter=${historyOutcomeFilter.value}`,
+    `reason_filter=${historyReasonFilter.value}`,
+    `search=${historySearch.value || '-'}`,
+    `trace_id=${lastTraceId.value || '-'}`,
+  ].join('\n');
+  try {
+    await navigator.clipboard.writeText(payload);
+    actionFeedback.value = {
+      message: '历史筛选摘要已复制',
+      reasonCode: 'HISTORY_FILTER_SUMMARY_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '历史筛选摘要复制失败',
+      reasonCode: 'HISTORY_FILTER_SUMMARY_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
   }
 }
 
