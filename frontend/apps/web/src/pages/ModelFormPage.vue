@@ -99,6 +99,7 @@
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
+        <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
         <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
         <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
@@ -447,6 +448,39 @@ const blockedTopReasons = computed(() => {
     .slice(0, 3)
     .map(([reason, count]) => `${reason}:${count}`);
 });
+
+async function copyActionStats() {
+  if (!semanticActionButtons.value.length) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    primary_action_key: primaryActionKey.value,
+    total: semanticActionStats.value.total,
+    allowed: semanticActionStats.value.allowed,
+    blocked: semanticActionStats.value.blocked,
+    stale: actionSurfaceIsStale.value,
+    age: actionSurfaceAgeLabel.value,
+    blocked_top_reasons: blockedTopReasons.value,
+    at: Date.now(),
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    actionFeedback.value = {
+      message: '动作统计已复制',
+      reasonCode: 'ACTION_STATS_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '动作统计复制失败',
+      reasonCode: 'ACTION_STATS_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
 const actionSurfaceAgeLabel = computed(() => {
   if (!paymentActionSurfaceLoadedAt.value) return '-';
   const deltaSec = Math.max(0, Math.floor((Date.now() - paymentActionSurfaceLoadedAt.value) / 1000));
