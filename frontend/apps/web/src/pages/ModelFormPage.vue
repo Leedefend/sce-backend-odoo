@@ -131,7 +131,10 @@
         <span>主要阻塞：{{ topBlockedActions.join(' / ') }}</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
-        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
+        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作 · <code>?</code> 显示/隐藏帮助
+      </section>
+      <section v-if="semanticActionButtons.length && shortcutHelpVisible" class="semantic-action-stale-banner">
+        <span>帮助：`Ctrl+Enter` 执行主动作；`Alt+R` 重试；`?` 切换帮助显示。</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
@@ -380,6 +383,7 @@ const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
 const hideBlockedHints = ref(false);
 const semanticActionSearch = ref('');
+const shortcutHelpVisible = ref(false);
 try {
   const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
   if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
@@ -1294,6 +1298,11 @@ function exportActionHistory() {
 }
 
 function onSemanticHotkey(event: KeyboardEvent) {
+  if (!event.ctrlKey && !event.altKey && event.key === '?') {
+    event.preventDefault();
+    shortcutHelpVisible.value = !shortcutHelpVisible.value;
+    return;
+  }
   if (event.ctrlKey && event.key === 'Enter' && primaryAllowedAction.value && !actionBusy.value && !loading.value) {
     event.preventDefault();
     runSemanticAction(primaryAllowedAction.value);
