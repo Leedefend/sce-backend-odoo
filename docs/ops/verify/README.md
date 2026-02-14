@@ -69,6 +69,14 @@
   - Optional env knobs:
     - `PAYMENT_REQUEST_SMOKE_AUTO_CREATE=1` (default): auto-create minimal payment request + attachment when no live record is available.
     - `PAYMENT_REQUEST_SMOKE_REQUIRE_LIVE=1`: fail if smoke cannot enter live-record path.
+- Cross-role handoff smoke (finance -> executive -> finance):
+  - `make verify.portal.payment_request_approval_handoff_smoke.container`
+  - Verifies a delivery-grade handoff path:
+    - finance executes `payment.request.execute` with `submit`
+    - executive executes one allowed follow-up action (`approve` preferred, fallback `reject`)
+    - finance re-probes available actions and executes `done` when allowed
+  - Optional env knob:
+    - `PAYMENT_REQUEST_HANDOFF_EXEC_ACTION_ORDER=approve,reject` (default)
 
 ## Baseline Semantics
 - Platform baseline (environment/bootstrap consistency)
