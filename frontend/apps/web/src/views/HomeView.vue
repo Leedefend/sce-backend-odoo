@@ -26,6 +26,20 @@
       </div>
     </header>
 
+    <section class="today-actions" aria-label="今日建议">
+      <header class="today-actions-header">
+        <h3>今日建议</h3>
+        <p>10 秒内开始今天最常见的工作。</p>
+      </header>
+      <div class="today-actions-grid">
+        <article v-for="item in todaySuggestions" :key="item.id" class="today-card">
+          <p class="today-title">{{ item.title }}</p>
+          <p class="today-desc">{{ item.description }}</p>
+          <button class="today-btn" @click="openSuggestion(item.sceneKey)">立即进入</button>
+        </article>
+      </div>
+    </section>
+
     <section class="filters">
       <input
         v-model.trim="searchText"
@@ -138,6 +152,7 @@ type CapabilityEntry = {
   state: EntryState;
   reason: string;
   reasonCode: string;
+  tags: string[];
 };
 
 const router = useRouter();
@@ -151,6 +166,7 @@ const lockReasonFilter = ref('ALL');
 const collapsedSceneKeys = ref<string[]>([]);
 const collapsedSceneSet = computed(() => new Set(collapsedSceneKeys.value));
 const homeCollapseStorageKey = 'sc.home.scene_groups.collapsed.v1';
+const homeFilterStorageKey = 'sc.home.filters.v1';
 const isHudEnabled = computed(() => {
   const hud = String(route.query.hud || '').trim();
   return import.meta.env.DEV || hud === '1' || hud.toLowerCase() === 'true';
@@ -265,10 +281,52 @@ const entries = computed<CapabilityEntry[]>(() => {
         state,
         reason,
         reasonCode,
+        tags: [
+          ...new Set(
+            [
+              ...(Array.isArray((scene as { tags?: unknown }).tags) ? (scene as { tags?: string[] }).tags : []),
+              ...(Array.isArray((tile as { tags?: unknown }).tags) ? (tile as { tags?: string[] }).tags : []),
+            ]
+              .map((item) => asText(item).toLowerCase())
+              .filter(Boolean),
+          ),
+        ],
       });
     });
   });
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
+});
+
+const todaySuggestions = computed(() => {
+  const all = entries.value;
+  const firstReady = all.find((entry) => entry.state === 'READY');
+  const pickSceneByKeyword = (keywords: string[], fallback?: string) => {
+    const found = all.find((entry) => {
+      const text = `${entry.title} ${entry.subtitle} ${entry.sceneKey}`.toLowerCase();
+      return keywords.some((keyword) => text.includes(keyword));
+    });
+    return found?.sceneKey || fallback || firstReady?.sceneKey || roleLandingScene.value;
+  };
+  return [
+    {
+      id: 'project-intake',
+      title: '项目立项',
+      description: '新建项目并完成立项信息录入。',
+      sceneKey: pickSceneByKeyword(['立项', 'project', 'intake']),
+    },
+    {
+      id: 'contract-approval',
+      title: '合同审批',
+      description: '查看待审批合同并快速处理。',
+      sceneKey: pickSceneByKeyword(['合同', 'contract', 'approve', 'approval']),
+    },
+    {
+      id: 'cost-ledger',
+      title: '成本台账',
+      description: '跟踪成本执行并核对差异。',
+      sceneKey: pickSceneByKeyword(['成本', 'cost', 'ledger']),
+    },
+  ];
 });
 
 const filteredEntries = computed<CapabilityEntry[]>(() => {
@@ -282,7 +340,9 @@ const filteredEntries = computed<CapabilityEntry[]>(() => {
       if (String(entry.reasonCode || '').toUpperCase() !== lockReasonFilter.value) return false;
     }
     if (!query) return true;
-    const fields = isHudEnabled.value ? [entry.title, entry.subtitle, entry.key] : [entry.title, entry.subtitle];
+    const fields = isHudEnabled.value
+      ? [entry.title, entry.subtitle, entry.key, ...entry.tags]
+      : [entry.title, entry.subtitle, ...entry.tags];
     return fields.some((text) => String(text || '').toLowerCase().includes(query));
   });
 });
@@ -375,6 +435,15 @@ function openRoleLanding() {
   router.push(session.resolveLandingPath('/s/projects.list')).catch(() => {});
 }
 
+function openSuggestion(sceneKey: string) {
+  const safeSceneKey = asText(sceneKey);
+  if (!safeSceneKey) {
+    openRoleLanding();
+    return;
+  }
+  router.push({ path: `/s/${safeSceneKey}` }).catch(() => {});
+}
+
 onMounted(() => {
   try {
     const raw = window.localStorage.getItem(homeCollapseStorageKey);
@@ -385,11 +454,34 @@ onMounted(() => {
   } catch {
     // Ignore broken local cache.
   }
+  try {
+    const raw = window.localStorage.getItem(homeFilterStorageKey);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string };
+    readyOnly.value = Boolean(parsed?.ready_only);
+    const state = String(parsed?.state_filter || '').toUpperCase();
+    if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
+      stateFilter.value = state;
+    }
+  } catch {
+    // Ignore broken local cache.
+  }
 });
 
 watch(collapsedSceneKeys, () => {
   try {
     window.localStorage.setItem(homeCollapseStorageKey, JSON.stringify(collapsedSceneKeys.value));
+  } catch {
+    // Ignore local storage errors.
+  }
+});
+
+watch([readyOnly, stateFilter], () => {
+  try {
+    window.localStorage.setItem(
+      homeFilterStorageKey,
+      JSON.stringify({ ready_only: readyOnly.value, state_filter: stateFilter.value }),
+    );
   } catch {
     // Ignore local storage errors.
   }
@@ -480,6 +572,65 @@ watch(collapsedSceneKeys, () => {
 .filters {
   display: grid;
   gap: 10px;
+}
+
+.today-actions {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0f9ff, #f8fafc);
+  padding: 14px;
+}
+
+.today-actions-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.today-actions-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.today-actions-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.today-card {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.today-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.today-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+  min-height: 34px;
+}
+
+.today-btn {
+  justify-self: start;
+  border: 0;
+  border-radius: 8px;
+  background: #0ea5e9;
+  color: #fff;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 .search-input {
