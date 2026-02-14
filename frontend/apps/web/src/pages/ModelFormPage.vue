@@ -11,6 +11,7 @@
           trace: <code>{{ actionFeedback.traceId }}</code>
           <span v-if="actionFeedback.requestId"> · request: <code>{{ actionFeedback.requestId }}</code></span>
           <span v-if="actionFeedback.replayed"> · replayed</span>
+          <button type="button" class="evidence-copy" @click="copyActionEvidence">复制证据</button>
         </p>
       </div>
       <div class="actions">
@@ -25,7 +26,7 @@
           {{ buttonLabel(btn) }}
         </button>
         <button
-          v-for="action in semanticActionButtons"
+          v-for="action in displayedSemanticActionButtons"
           :key="`semantic-${action.key}`"
           :disabled="!recordId || saving || loading || actionBusy || !action.allowed"
           class="action secondary"
@@ -34,6 +35,9 @@
           @click="runSemanticAction(action)"
         >
           {{ action.label }}
+        </button>
+        <button :disabled="!lastSemanticAction || actionBusy || loading" class="action secondary" @click="rerunLastSemanticAction">
+          重试上次动作
         </button>
         <button :disabled="saving" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
         <button @click="reload">Reload</button>
@@ -66,9 +70,14 @@
     />
 
     <section v-else class="card">
+      <section v-if="semanticActionButtons.length" class="semantic-action-filters">
+        <button type="button" :class="{ active: actionFilterMode === 'all' }" @click="actionFilterMode = 'all'">全部</button>
+        <button type="button" :class="{ active: actionFilterMode === 'allowed' }" @click="actionFilterMode = 'allowed'">可执行</button>
+        <button type="button" :class="{ active: actionFilterMode === 'blocked' }" @click="actionFilterMode = 'blocked'">阻塞</button>
+      </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
-          v-for="action in semanticActionButtons"
+          v-for="action in displayedSemanticActionButtons"
           :key="`semantic-hint-${action.key}`"
           class="semantic-action-hint"
           :class="{ blocked: !action.allowed }"
@@ -92,7 +101,10 @@
         </div>
       </section>
       <section v-if="actionHistory.length" class="semantic-action-history">
-        <h3>最近操作</h3>
+        <div class="history-header">
+          <h3>最近操作</h3>
+          <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
+        </div>
         <ul>
           <li v-for="entry in actionHistory" :key="entry.key">
             <strong>{{ entry.label }}</strong>
@@ -140,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { createRecord, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
@@ -192,12 +204,16 @@ type ActionHistoryEntry = {
 
 const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
+const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
+const actionFilterStorageKey = 'sc.payment.action_filter.v1';
+const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
 const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new'));
 const title = computed(() => `Form: ${model.value}`);
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
+const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 
 const viewContract = ref<ViewContract | null>(null);
 const fields = ref<
@@ -236,20 +252,57 @@ type SemanticActionButton = {
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
+const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
+try {
+  const cachedFilter = String(window.localStorage.getItem(actionFilterStorageKey) || '').trim();
+  if (cachedFilter === 'all' || cachedFilter === 'allowed' || cachedFilter === 'blocked') {
+    actionFilterMode.value = cachedFilter;
+  }
+} catch {
+  // Ignore storage errors and keep default mode.
+}
+function semanticActionRank(action: SemanticActionButton) {
+  if (action.key === primaryActionKey.value) return 0;
+  if (action.allowed) return 1;
+  return 2;
+}
+
 const semanticActionButtons = computed<SemanticActionButton[]>(() => {
   if (!isPaymentRequestModel.value) return [];
-  return paymentActionSurface.value.map((item) => ({
-    key: String(item.key || '').trim(),
-    label: String(item.label || item.key || '操作').trim(),
-    allowed: Boolean(item.allowed),
-    reasonCode: String(item.reason_code || ''),
-    blockedMessage: String(item.blocked_message || ''),
-    suggestedAction: String(item.suggested_action || ''),
-    currentState: String(item.current_state || ''),
-    nextStateHint: String(item.next_state_hint || ''),
-    requiresReason: Boolean(item.requires_reason),
-    executeIntent: String(item.execute_intent || 'payment.request.execute'),
-  }));
+  return paymentActionSurface.value
+    .map((item) => ({
+      key: String(item.key || '').trim(),
+      label: String(item.label || item.key || '操作').trim(),
+      allowed: Boolean(item.allowed),
+      reasonCode: String(item.reason_code || ''),
+      blockedMessage: String(item.blocked_message || ''),
+      suggestedAction: String(item.suggested_action || ''),
+      currentState: String(item.current_state || ''),
+      nextStateHint: String(item.next_state_hint || ''),
+      requiresReason: Boolean(item.requires_reason),
+      executeIntent: String(item.execute_intent || 'payment.request.execute'),
+    }))
+    .sort((a, b) => {
+      const rankDelta = semanticActionRank(a) - semanticActionRank(b);
+      if (rankDelta !== 0) return rankDelta;
+      return a.label.localeCompare(b.label, 'zh-CN');
+    });
+});
+const displayedSemanticActionButtons = computed(() => {
+  if (actionFilterMode.value === 'allowed') {
+    return semanticActionButtons.value.filter((item) => item.allowed);
+  }
+  if (actionFilterMode.value === 'blocked') {
+    return semanticActionButtons.value.filter((item) => !item.allowed);
+  }
+  return semanticActionButtons.value;
+});
+const primaryAllowedAction = computed(() => {
+  const primary = displayedSemanticActionButtons.value.find(
+    (item) => item.key === primaryActionKey.value && item.allowed,
+  );
+  if (primary) return primary;
+  return displayedSemanticActionButtons.value.find((item) => item.allowed) || null;
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -298,6 +351,9 @@ const hudEntries = computed(() => [
   { label: 'unsupported_nodes', value: missingNodes.value.join(',') || '-' },
   { label: 'coverage_supported', value: supportedNodes.join(',') },
   { label: 'semantic_actions', value: semanticActionButtons.value.map((item) => `${item.key}:${item.allowed}`).join(',') || '-' },
+  { label: 'action_filter', value: actionFilterMode.value },
+  { label: 'action_history_count', value: String(actionHistory.value.length) },
+  { label: 'last_semantic_action', value: lastSemanticAction.value?.action || '-' },
 ]);
 
 function isTextField(field: (typeof fields.value)[number]) {
@@ -600,6 +656,11 @@ async function runSemanticAction(action: SemanticActionButton) {
   actionBusy.value = true;
   const stateBefore = action.currentState;
   try {
+    lastSemanticAction.value = {
+      action: action.key,
+      reason,
+      label: action.label,
+    };
     const response = await executePaymentRequestAction({
       paymentRequestId: recordId.value,
       action: action.key,
@@ -640,8 +701,69 @@ async function runSemanticAction(action: SemanticActionButton) {
   }
 }
 
+async function rerunLastSemanticAction() {
+  if (!lastSemanticAction.value || !recordId.value) return;
+  actionBusy.value = true;
+  try {
+    const response = await executePaymentRequestAction({
+      paymentRequestId: recordId.value,
+      action: lastSemanticAction.value.action,
+      reason: lastSemanticAction.value.reason,
+    });
+    lastTraceId.value = response.traceId || lastTraceId.value;
+    const parsed = parseIntentActionResult(response.data as Record<string, unknown>);
+    actionFeedback.value = {
+      ...parsed,
+      message: `${lastSemanticAction.value.label} 重试：${parsed.message}`,
+      traceId: response.traceId || '',
+    };
+    await load();
+  } catch (err) {
+    setError(err, 'failed to retry semantic action');
+    actionFeedback.value = { message: '重试失败', reasonCode: 'EXECUTE_FAILED', success: false, traceId: lastTraceId.value };
+  } finally {
+    actionBusy.value = false;
+  }
+}
+
+function clearActionHistory() {
+  actionHistory.value = [];
+}
+
+function onSemanticHotkey(event: KeyboardEvent) {
+  if (event.ctrlKey && event.key === 'Enter' && primaryAllowedAction.value && !actionBusy.value && !loading.value) {
+    event.preventDefault();
+    runSemanticAction(primaryAllowedAction.value);
+    return;
+  }
+  if (event.altKey && (event.key === 'r' || event.key === 'R') && lastSemanticAction.value && !actionBusy.value) {
+    event.preventDefault();
+    rerunLastSemanticAction();
+  }
+}
+
 function reload() {
   load();
+}
+
+async function copyActionEvidence() {
+  if (!actionFeedback.value) return;
+  const lines = [
+    `reason_code=${actionFeedback.value.reasonCode}`,
+    `trace_id=${actionFeedback.value.traceId || '-'}`,
+    `request_id=${actionFeedback.value.requestId || '-'}`,
+    `replayed=${String(Boolean(actionFeedback.value.replayed))}`,
+  ];
+  const payload = lines.join('\n');
+  try {
+    await navigator.clipboard.writeText(payload);
+    actionFeedback.value = {
+      ...actionFeedback.value,
+      message: `${actionFeedback.value.message}（证据已复制）`,
+    };
+  } catch {
+    // Ignore clipboard failures; keep primary action result visible.
+  }
 }
 
 function handleSuggestedAction(action: string): boolean {
@@ -651,7 +773,57 @@ function handleSuggestedAction(action: string): boolean {
   return true;
 }
 
-onMounted(load);
+onMounted(() => {
+  load();
+  window.addEventListener('keydown', onSemanticHotkey);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onSemanticHotkey);
+});
+watch(actionFilterMode, (value) => {
+  try {
+    window.localStorage.setItem(actionFilterStorageKey, value);
+  } catch {
+    // Ignore storage errors.
+  }
+});
+watch(
+  actionHistory,
+  (value) => {
+    try {
+      window.localStorage.setItem(actionHistoryStorageKey.value, JSON.stringify(value.slice(0, 6)));
+    } catch {
+      // Ignore storage errors.
+    }
+  },
+  { deep: true },
+);
+watch(
+  actionHistoryStorageKey,
+  (key) => {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) {
+        actionHistory.value = [];
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        actionHistory.value = parsed.slice(0, 6).map((item) => ({
+          key: String(item?.key || `${Date.now()}`),
+          label: String(item?.label || '-'),
+          reasonCode: String(item?.reasonCode || ''),
+          success: Boolean(item?.success),
+          stateBefore: String(item?.stateBefore || ''),
+          traceId: String(item?.traceId || ''),
+        }));
+      }
+    } catch {
+      actionHistory.value = [];
+    }
+  },
+  { immediate: true },
+);
 
 function analyzeLayout(layout: ViewContract['layout']) {
   const stats = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
@@ -738,6 +910,16 @@ function analyzeLayout(layout: ViewContract['layout']) {
   font-size: 12px;
 }
 
+.evidence-copy {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 11px;
+}
+
 .card {
   background: white;
   border-radius: 12px;
@@ -754,6 +936,25 @@ function analyzeLayout(layout: ViewContract['layout']) {
   border-radius: 10px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
+}
+
+.semantic-action-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.semantic-action-filters button {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.semantic-action-filters button.active {
+  border-color: #0f766e;
+  box-shadow: inset 0 0 0 1px #0f766e;
 }
 
 .semantic-action-hint {
@@ -793,6 +994,21 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin: 0 0 8px;
   font-size: 14px;
   color: #0f172a;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-clear {
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
 }
 
 .semantic-action-history ul {
