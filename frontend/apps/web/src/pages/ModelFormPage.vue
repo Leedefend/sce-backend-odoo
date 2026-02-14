@@ -105,6 +105,7 @@
         <span v-if="latestFailureReason">最近失败: {{ latestFailureReason }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
         <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
+        <button type="button" class="stats-refresh" @click="exportAllowedSummary">导出可执行</button>
         <button type="button" class="stats-refresh" @click="exportBlockedSummary">导出阻塞</button>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
         <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
@@ -547,6 +548,34 @@ function exportBlockedSummary() {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = `payment_blocked_summary_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAllowedSummary() {
+  if (!semanticActionButtons.value.length || !recordId.value) return;
+  const allowed = semanticActionButtons.value
+    .filter((item) => item.allowed)
+    .map((item) => ({
+      key: item.key,
+      label: item.label,
+      next_state_hint: item.nextStateHint,
+      execute_intent: item.executeIntent,
+      delivery_priority: item.deliveryPriority,
+    }));
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    primary_action_key: primaryActionKey.value,
+    allowed_count: allowed.length,
+    allowed_actions: allowed,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `payment_allowed_summary_${model.value}_${recordId.value}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
