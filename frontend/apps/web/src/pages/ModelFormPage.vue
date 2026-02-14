@@ -7,6 +7,11 @@
         <p v-if="actionFeedback" class="action-feedback" :class="{ error: !actionFeedback.success }">
           {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
         </p>
+        <p v-if="actionFeedback && actionFeedback.traceId" class="action-evidence">
+          trace: <code>{{ actionFeedback.traceId }}</code>
+          <span v-if="actionFeedback.requestId"> · request: <code>{{ actionFeedback.requestId }}</code></span>
+          <span v-if="actionFeedback.replayed"> · replayed</span>
+        </p>
       </div>
       <div class="actions">
         <button
@@ -78,6 +83,17 @@
           </span>
         </div>
       </section>
+      <section v-if="actionHistory.length" class="semantic-action-history">
+        <h3>最近操作</h3>
+        <ul>
+          <li v-for="entry in actionHistory" :key="entry.key">
+            <strong>{{ entry.label }}</strong>
+            <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
+            <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
+            <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
+          </li>
+        </ul>
+      </section>
       <ViewLayoutRenderer
         v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
@@ -147,7 +163,26 @@ const loading = ref(false);
 const saving = ref(false);
 const executing = ref<string | null>(null);
 const actionBusy = ref(false);
-const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
+type ActionFeedback = {
+  message: string;
+  reasonCode: string;
+  success: boolean;
+  traceId?: string;
+  requestId?: string;
+  replayed?: boolean;
+};
+
+type ActionHistoryEntry = {
+  key: string;
+  label: string;
+  reasonCode: string;
+  success: boolean;
+  stateBefore: string;
+  traceId: string;
+};
+
+const actionFeedback = ref<ActionFeedback | null>(null);
+const actionHistory = ref<ActionHistoryEntry[]>([]);
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
@@ -501,7 +536,8 @@ function parseIntentActionResult(data: Record<string, unknown> | null | undefine
   if (replayed && success) {
     message = `${message}（复用先前执行结果）`;
   }
-  return { message, reasonCode, success };
+  const requestId = String(data?.request_id || '');
+  return { message, reasonCode, success, replayed, requestId };
 }
 
 async function runSemanticAction(action: SemanticActionButton) {
@@ -525,6 +561,7 @@ async function runSemanticAction(action: SemanticActionButton) {
     }
   }
   actionBusy.value = true;
+  const stateBefore = action.currentState;
   try {
     const response = await executePaymentRequestAction({
       paymentRequestId: recordId.value,
@@ -532,7 +569,22 @@ async function runSemanticAction(action: SemanticActionButton) {
       reason,
     });
     lastTraceId.value = response.traceId || lastTraceId.value;
-    actionFeedback.value = parseIntentActionResult(response.data as Record<string, unknown>);
+    const parsed = parseIntentActionResult(response.data as Record<string, unknown>);
+    actionFeedback.value = {
+      ...parsed,
+      traceId: response.traceId || '',
+    };
+    actionHistory.value = [
+      {
+        key: `${action.key}_${Date.now()}`,
+        label: action.label,
+        reasonCode: parsed.reasonCode,
+        success: parsed.success,
+        stateBefore,
+        traceId: response.traceId || '',
+      },
+      ...actionHistory.value,
+    ].slice(0, 6);
     recordTrace({
       ts: Date.now(),
       trace_id: response.traceId || createTraceId(),
@@ -545,7 +597,7 @@ async function runSemanticAction(action: SemanticActionButton) {
     await load();
   } catch (err) {
     setError(err, 'failed to execute semantic action');
-    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
+    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false, traceId: lastTraceId.value };
   } finally {
     actionBusy.value = false;
   }
@@ -643,6 +695,12 @@ function analyzeLayout(layout: ViewContract['layout']) {
   color: #64748b;
 }
 
+.action-evidence {
+  margin: 4px 0 0;
+  color: #475569;
+  font-size: 12px;
+}
+
 .card {
   background: white;
   border-radius: 12px;
@@ -675,6 +733,41 @@ function analyzeLayout(layout: ViewContract['layout']) {
 
 .semantic-action-hint .suggestion {
   color: #475569;
+}
+
+.semantic-action-history {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.semantic-action-history h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.semantic-action-history ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.history-outcome {
+  margin-left: 8px;
+  color: #0f766e;
+}
+
+.history-outcome.error {
+  color: #b91c1c;
+}
+
+.history-meta {
+  margin-left: 8px;
+  color: #64748b;
+  font-size: 12px;
 }
 
 .field {
