@@ -91,26 +91,42 @@
           class="semantic-search"
           type="text"
           placeholder="搜索动作/原因码"
+          aria-label="搜索动作或原因码"
         />
         <button type="button" class="stats-refresh" @click="resetActionPanelPrefs">重置面板</button>
+      </section>
+      <section v-if="blockedReasonCodes.length" class="semantic-action-reason-chips">
+        <span>阻塞原因:</span>
+        <button
+          v-for="reason in blockedReasonCodes"
+          :key="`blocked-reason-${reason}`"
+          type="button"
+          class="reason-chip"
+          @click="applyBlockedReasonFilter(reason)"
+        >
+          {{ reason }}
+        </button>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-stats">
         <span :class="['readiness-badge', readinessLevelClass]">就绪度: {{ actionReadinessScore }}%</span>
         <span>主动作: {{ primaryActionKey || '-' }}</span>
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
+        <span v-if="actionHistory.length">近期成功率: {{ actionHistorySuccessRate }}%</span>
         <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
+        <span v-if="actionSurfaceRefreshPaused" class="stale">自动刷新已暂停（页面非激活）</span>
         <span v-if="actionSurfaceLoadedAtText">刷新时刻: {{ actionSurfaceLoadedAtText }}</span>
         <span v-if="allowedActionLabels.length">可执行: {{ allowedActionLabels.join(' / ') }}</span>
         <span v-if="latestFailureReason">最近失败: {{ latestFailureReason }}</span>
         <span v-if="blockedTopReasons.length">阻塞TOP: {{ blockedTopReasons.join(' / ') }}</span>
-        <button type="button" class="stats-refresh" @click="copyBlockedReasonsText">复制阻塞文本</button>
-        <button type="button" class="stats-refresh" @click="copyActionStats">复制统计</button>
-        <button type="button" class="stats-refresh" @click="exportAllowedSummary">导出可执行</button>
-        <button type="button" class="stats-refresh" @click="exportBlockedSummary">导出阻塞</button>
-        <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
-        <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
-        <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
+        <button type="button" class="stats-refresh" title="复制阻塞动作文本" aria-label="复制阻塞动作文本" @click="copyBlockedReasonsText">复制阻塞文本</button>
+        <button type="button" class="stats-refresh" title="复制可执行动作文本" aria-label="复制可执行动作文本" @click="copyAllowedActionsText">复制可执行文本</button>
+        <button type="button" class="stats-refresh" title="复制动作统计快照" aria-label="复制动作统计快照" @click="copyActionStats">复制统计</button>
+        <button type="button" class="stats-refresh" title="导出可执行动作摘要" aria-label="导出可执行动作摘要" @click="exportAllowedSummary">导出可执行</button>
+        <button type="button" class="stats-refresh" title="导出阻塞动作摘要" aria-label="导出阻塞动作摘要" @click="exportBlockedSummary">导出阻塞</button>
+        <button type="button" class="stats-refresh" title="刷新动作面" aria-label="刷新动作面" @click="loadPaymentActionSurface">刷新动作面</button>
+        <button type="button" class="stats-refresh" title="复制动作面JSON" aria-label="复制动作面JSON" @click="copyActionSurface">复制动作面</button>
+        <button type="button" class="stats-refresh" title="导出动作面JSON" aria-label="导出动作面JSON" @click="exportActionSurface">导出动作面</button>
         <label class="auto-refresh-toggle">
           <input v-model="autoRefreshActionSurface" type="checkbox" />
           自动刷新
@@ -132,10 +148,10 @@
         <span>主要阻塞：{{ topBlockedActions.join(' / ') }}</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
-        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作 · <code>?</code> 显示/隐藏帮助
+        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作 · <code>Alt+F</code> 刷新动作面 · <code>?</code> 显示/隐藏帮助
       </section>
       <section v-if="semanticActionButtons.length && shortcutHelpVisible" class="semantic-action-stale-banner">
-        <span>帮助：`Ctrl+Enter` 执行主动作；`Alt+R` 重试；`?` 切换帮助显示。</span>
+        <span>帮助：`Ctrl+Enter` 执行主动作；`Alt+R` 重试；`Alt+F` 刷新；`?` 切换帮助显示。</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
@@ -185,10 +201,11 @@
         <div class="history-header">
           <h3>最近操作</h3>
           <div class="history-actions">
-            <button type="button" class="history-clear" @click="copyLatestTrace">复制最新Trace</button>
-            <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
-            <button type="button" class="history-clear" @click="exportActionHistory">导出历史</button>
-            <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
+            <button type="button" class="history-clear" title="复制最新Trace" aria-label="复制最新Trace" @click="copyLatestTrace">复制最新Trace</button>
+            <button type="button" class="history-clear" title="复制全部历史记录" aria-label="复制全部历史记录" @click="copyAllHistory">复制全部</button>
+            <button type="button" class="history-clear" title="导出历史JSON" aria-label="导出历史JSON" @click="exportActionHistory">导出历史</button>
+            <button type="button" class="history-clear" title="导出历史CSV" aria-label="导出历史CSV" @click="exportActionHistoryCsv">导出CSV</button>
+            <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
         </div>
@@ -214,6 +231,10 @@
             <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
           </li>
         </ul>
+      </section>
+      <section v-else-if="semanticActionButtons.length" class="semantic-action-history history-empty">
+        <h3>最近操作</h3>
+        <p>还没有执行记录。可先点击上方动作按钮，系统将自动记录原因码与 Trace。</p>
       </section>
       <ViewLayoutRenderer
         v-if="renderMode === 'layout_tree'"
@@ -379,6 +400,7 @@ const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
 const paymentActionSurfaceLoadedAt = ref(0);
 const autoRefreshActionSurface = ref(false);
 const autoRefreshIntervalSec = ref(15);
+const actionSurfaceRefreshPaused = ref(false);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
@@ -478,6 +500,7 @@ const blockedTopReasons = computed(() => {
     .slice(0, 3)
     .map(([reason, count]) => `${reason}:${count}`);
 });
+const blockedReasonCodes = computed(() => blockedTopReasons.value.map((item) => item.split(':')[0]).filter(Boolean));
 const topBlockedActions = computed(() => {
   return semanticActionButtons.value
     .filter((item) => !item.allowed)
@@ -493,6 +516,11 @@ const allowedActionLabels = computed(() => {
 const latestFailureReason = computed(() => {
   const failed = actionHistory.value.find((item) => !item.success);
   return failed ? `${failed.reasonCode} (${failed.label})` : '';
+});
+const actionHistorySuccessRate = computed(() => {
+  if (!actionHistory.value.length) return 0;
+  const success = actionHistory.value.filter((item) => item.success).length;
+  return Math.round((success / actionHistory.value.length) * 100);
 });
 
 async function copyActionStats() {
@@ -526,6 +554,11 @@ async function copyActionStats() {
       traceId: lastTraceId.value,
     };
   }
+}
+
+function applyBlockedReasonFilter(reason: string) {
+  actionFilterMode.value = 'blocked';
+  semanticActionSearch.value = reason;
 }
 
 function exportBlockedSummary() {
@@ -604,6 +637,29 @@ async function copyBlockedReasonsText() {
     actionFeedback.value = {
       message: '阻塞文本复制失败',
       reasonCode: 'BLOCKED_TEXT_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+async function copyAllowedActionsText() {
+  const allowed = semanticActionButtons.value.filter((item) => item.allowed);
+  if (!allowed.length) return;
+  const lines = allowed.map((item) => `${item.label}: ${item.nextStateHint || '可执行'}`);
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: '可执行文本已复制',
+      reasonCode: 'ALLOWED_TEXT_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '可执行文本复制失败',
+      reasonCode: 'ALLOWED_TEXT_COPY_FAILED',
       success: false,
       traceId: lastTraceId.value,
     };
@@ -1323,6 +1379,31 @@ function exportActionHistory() {
   URL.revokeObjectURL(url);
 }
 
+function exportActionHistoryCsv() {
+  if (!filteredActionHistory.value.length || !recordId.value) return;
+  const header = ["label", "reason_code", "success", "state_before", "trace_id", "at"];
+  const rows = filteredActionHistory.value.map((entry) =>
+    [
+      entry.label,
+      entry.reasonCode,
+      String(entry.success),
+      entry.stateBefore || '',
+      entry.traceId || '',
+      entry.atText || '',
+    ]
+      .map((item) => `"${String(item).replace(/"/g, '""')}"`)
+      .join(','),
+  );
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `payment_action_history_${model.value}_${recordId.value}.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 function onSemanticHotkey(event: KeyboardEvent) {
   if (!event.ctrlKey && !event.altKey && event.key === '?') {
     event.preventDefault();
@@ -1337,7 +1418,27 @@ function onSemanticHotkey(event: KeyboardEvent) {
   if (event.altKey && (event.key === 'r' || event.key === 'R') && lastSemanticAction.value && !actionBusy.value) {
     event.preventDefault();
     rerunLastSemanticAction();
+    return;
   }
+  if (event.altKey && (event.key === 'f' || event.key === 'F') && !loading.value && !actionBusy.value) {
+    event.preventDefault();
+    void loadPaymentActionSurface();
+  }
+}
+
+function shouldRefreshActionSurface() {
+  return (
+    autoRefreshActionSurface.value &&
+    !actionSurfaceRefreshPaused.value &&
+    Boolean(recordId.value) &&
+    isPaymentRequestModel.value &&
+    !loading.value &&
+    !actionBusy.value
+  );
+}
+
+function onVisibilityChange() {
+  actionSurfaceRefreshPaused.value = document.hidden;
 }
 
 function reload() {
@@ -1419,14 +1520,17 @@ function handleSuggestedAction(action: string): boolean {
 onMounted(() => {
   load();
   window.addEventListener('keydown', onSemanticHotkey);
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  actionSurfaceRefreshPaused.value = document.hidden;
   const interval = Math.max(5, Number(autoRefreshIntervalSec.value || 15)) * 1000;
   actionSurfaceRefreshTimer = window.setInterval(() => {
-    if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
+    if (!shouldRefreshActionSurface()) return;
     void loadPaymentActionSurface();
   }, interval);
 });
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onSemanticHotkey);
+  document.removeEventListener('visibilitychange', onVisibilityChange);
   if (actionFeedbackTimer) {
     clearTimeout(actionFeedbackTimer);
     actionFeedbackTimer = null;
@@ -1460,7 +1564,7 @@ watch(autoRefreshIntervalSec, (value) => {
   if (actionSurfaceRefreshTimer) {
     clearInterval(actionSurfaceRefreshTimer);
     actionSurfaceRefreshTimer = window.setInterval(() => {
-      if (!autoRefreshActionSurface.value || !recordId.value || !isPaymentRequestModel.value || loading.value || actionBusy.value) return;
+      if (!shouldRefreshActionSurface()) return;
       void loadPaymentActionSurface();
     }, interval * 1000);
   }
@@ -1645,6 +1749,23 @@ function analyzeLayout(layout: ViewContract['layout']) {
   color: #64748b;
 }
 
+.semantic-action-reason-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 12px;
+}
+
+.reason-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 11px;
+}
+
 .semantic-action-stats .stale {
   color: #b45309;
   font-weight: 600;
@@ -1806,6 +1927,12 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin: 0 0 8px;
   font-size: 14px;
   color: #0f172a;
+}
+
+.semantic-action-history.history-empty p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
 }
 
 .history-header {
