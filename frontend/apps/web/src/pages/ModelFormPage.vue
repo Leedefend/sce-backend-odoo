@@ -482,22 +482,26 @@ try {
   if ([6, 10, 20].includes(cachedHistoryLimit)) {
     actionHistoryLimit.value = cachedHistoryLimit;
   }
-  const cachedReason = String(window.localStorage.getItem(historyReasonFilterStorageKey.value) || '').trim();
-  if (cachedReason) {
-    historyReasonFilter.value = cachedReason;
-  }
-  const cachedOutcome = String(window.localStorage.getItem(historyOutcomeFilterStorageKey.value) || '').trim();
-  if (cachedOutcome === 'ALL' || cachedOutcome === 'SUCCESS' || cachedOutcome === 'FAILED') {
-    historyOutcomeFilter.value = cachedOutcome;
-  }
-  historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
-  const cachedSort = String(window.localStorage.getItem(historySortModeStorageKey.value) || '').trim();
-  if (cachedSort === 'DESC' || cachedSort === 'ASC') {
-    historySortMode.value = cachedSort;
-  }
-  semanticActionSearch.value = String(window.localStorage.getItem(actionSearchStorageKey.value) || '');
 } catch {
   // Ignore storage errors and keep default mode.
+}
+function hydrateRecordScopedPanelPrefs() {
+  try {
+    const cachedReason = String(window.localStorage.getItem(historyReasonFilterStorageKey.value) || '').trim();
+    historyReasonFilter.value = cachedReason || 'ALL';
+    const cachedOutcome = String(window.localStorage.getItem(historyOutcomeFilterStorageKey.value) || '').trim();
+    historyOutcomeFilter.value = cachedOutcome === 'SUCCESS' || cachedOutcome === 'FAILED' ? cachedOutcome : 'ALL';
+    historySearch.value = String(window.localStorage.getItem(historySearchStorageKey.value) || '');
+    const cachedSort = String(window.localStorage.getItem(historySortModeStorageKey.value) || '').trim();
+    historySortMode.value = cachedSort === 'ASC' ? 'ASC' : 'DESC';
+    semanticActionSearch.value = String(window.localStorage.getItem(actionSearchStorageKey.value) || '');
+  } catch {
+    historyReasonFilter.value = 'ALL';
+    historyOutcomeFilter.value = 'ALL';
+    historySearch.value = '';
+    historySortMode.value = 'DESC';
+    semanticActionSearch.value = '';
+  }
 }
 function semanticActionRank(action: SemanticActionButton) {
   if (action.key === primaryActionKey.value) return 0;
@@ -1787,6 +1791,19 @@ watch(semanticActionSearch, (value) => {
     // Ignore storage errors.
   }
 });
+watch(
+  [
+    historyReasonFilterStorageKey,
+    historyOutcomeFilterStorageKey,
+    historySearchStorageKey,
+    historySortModeStorageKey,
+    actionSearchStorageKey,
+  ],
+  () => {
+    hydrateRecordScopedPanelPrefs();
+  },
+  { immediate: true },
+);
 watch(
   actionHistory,
   (value) => {
