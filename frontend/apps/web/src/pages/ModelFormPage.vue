@@ -34,10 +34,10 @@
           :title="semanticActionTooltip(action)"
           @click="runSemanticAction(action)"
         >
-          {{ action.label }}
+          {{ actionBusy && actionBusyKey === action.key ? `${action.label} · 执行中...` : action.label }}
         </button>
         <button :disabled="!lastSemanticAction || actionBusy || loading" class="action secondary" @click="rerunLastSemanticAction">
-          重试上次动作
+          {{ retryLastActionLabel }}
         </button>
         <button :disabled="saving" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
         <button @click="reload">Reload</button>
@@ -71,9 +71,25 @@
 
     <section v-else class="card">
       <section v-if="semanticActionButtons.length" class="semantic-action-filters">
-        <button type="button" :class="{ active: actionFilterMode === 'all' }" @click="actionFilterMode = 'all'">全部</button>
-        <button type="button" :class="{ active: actionFilterMode === 'allowed' }" @click="actionFilterMode = 'allowed'">可执行</button>
-        <button type="button" :class="{ active: actionFilterMode === 'blocked' }" @click="actionFilterMode = 'blocked'">阻塞</button>
+        <button type="button" :class="{ active: actionFilterMode === 'all' }" @click="actionFilterMode = 'all'">
+          全部 ({{ semanticActionStats.total }})
+        </button>
+        <button type="button" :class="{ active: actionFilterMode === 'allowed' }" @click="actionFilterMode = 'allowed'">
+          可执行 ({{ semanticActionStats.allowed }})
+        </button>
+        <button type="button" :class="{ active: actionFilterMode === 'blocked' }" @click="actionFilterMode = 'blocked'">
+          阻塞 ({{ semanticActionStats.blocked }})
+        </button>
+      </section>
+      <section v-if="semanticActionButtons.length" class="semantic-action-stats">
+        <span>主动作: {{ primaryActionKey || '-' }}</span>
+        <span>当前筛选: {{ actionFilterMode }}</span>
+        <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
+        <span>刷新: {{ actionSurfaceAgeLabel }}</span>
+        <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
+      </section>
+      <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
+        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
@@ -105,12 +121,25 @@
           <h3>最近操作</h3>
           <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
         </div>
+        <div class="history-filters">
+          <button type="button" :class="{ active: historyReasonFilter === 'ALL' }" @click="historyReasonFilter = 'ALL'">全部</button>
+          <button
+            v-for="reason in historyReasonCodes"
+            :key="`history-reason-${reason}`"
+            type="button"
+            :class="{ active: historyReasonFilter === reason }"
+            @click="historyReasonFilter = reason"
+          >
+            {{ reason }}
+          </button>
+        </div>
         <ul>
-          <li v-for="entry in actionHistory" :key="entry.key">
+          <li v-for="entry in filteredActionHistory" :key="entry.key">
             <strong>{{ entry.label }}</strong>
             <span class="history-outcome" :class="{ error: !entry.success }">{{ entry.reasonCode }}</span>
             <span class="history-meta">state: {{ entry.stateBefore || '-' }}</span>
             <span v-if="entry.traceId" class="history-meta">trace: {{ entry.traceId }}</span>
+            <button type="button" class="history-copy" @click="copyHistoryEntry(entry)">复制</button>
           </li>
         </ul>
       </section>
@@ -184,6 +213,7 @@ const loading = ref(false);
 const saving = ref(false);
 const executing = ref<string | null>(null);
 const actionBusy = ref(false);
+const actionBusyKey = ref('');
 type ActionFeedback = {
   message: string;
   reasonCode: string;
@@ -205,6 +235,8 @@ type ActionHistoryEntry = {
 const actionFeedback = ref<ActionFeedback | null>(null);
 const actionHistory = ref<ActionHistoryEntry[]>([]);
 const lastSemanticAction = ref<{ action: string; reason: string; label: string } | null>(null);
+const historyReasonFilter = ref('ALL');
+let actionFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 const actionFilterStorageKey = 'sc.payment.action_filter.v1';
 const actionHistoryStoragePrefix = 'sc.payment.action_history.v1';
 
@@ -250,6 +282,7 @@ type SemanticActionButton = {
   executeIntent: string;
 };
 const paymentActionSurface = ref<PaymentRequestActionSurfaceItem[]>([]);
+const paymentActionSurfaceLoadedAt = ref(0);
 const primaryActionKey = ref('');
 const isPaymentRequestModel = computed(() => model.value === 'payment.request');
 const actionFilterMode = ref<'all' | 'allowed' | 'blocked'>('all');
@@ -297,12 +330,37 @@ const displayedSemanticActionButtons = computed(() => {
   }
   return semanticActionButtons.value;
 });
+const semanticActionStats = computed(() => {
+  const total = semanticActionButtons.value.length;
+  const allowed = semanticActionButtons.value.filter((item) => item.allowed).length;
+  const blocked = total - allowed;
+  return { total, allowed, blocked };
+});
+const actionSurfaceAgeLabel = computed(() => {
+  if (!paymentActionSurfaceLoadedAt.value) return '-';
+  const deltaSec = Math.max(0, Math.floor((Date.now() - paymentActionSurfaceLoadedAt.value) / 1000));
+  if (deltaSec < 60) return `${deltaSec}s`;
+  const min = Math.floor(deltaSec / 60);
+  const sec = deltaSec % 60;
+  return `${min}m${sec}s`;
+});
 const primaryAllowedAction = computed(() => {
   const primary = displayedSemanticActionButtons.value.find(
     (item) => item.key === primaryActionKey.value && item.allowed,
   );
   if (primary) return primary;
   return displayedSemanticActionButtons.value.find((item) => item.allowed) || null;
+});
+const retryLastActionLabel = computed(() => {
+  if (!lastSemanticAction.value) return '重试上次动作';
+  return `重试：${lastSemanticAction.value.label}`;
+});
+const historyReasonCodes = computed(() =>
+  Array.from(new Set(actionHistory.value.map((item) => item.reasonCode).filter(Boolean))).sort(),
+);
+const filteredActionHistory = computed(() => {
+  if (historyReasonFilter.value === 'ALL') return actionHistory.value;
+  return actionHistory.value.filter((item) => item.reasonCode === historyReasonFilter.value);
 });
 const nativeHeaderButtons = computed(() => {
   if (isPaymentRequestModel.value && semanticActionButtons.value.length > 0) {
@@ -439,6 +497,7 @@ async function loadPaymentActionSurface() {
   try {
     const response = await fetchPaymentRequestAvailableActions(recordId.value);
     paymentActionSurface.value = Array.isArray(response.data?.actions) ? response.data.actions : [];
+    paymentActionSurfaceLoadedAt.value = Date.now();
     primaryActionKey.value = String(response.data?.primary_action_key || '').trim();
     if (response.traceId) {
       lastTraceId.value = response.traceId;
@@ -654,6 +713,7 @@ async function runSemanticAction(action: SemanticActionButton) {
     }
   }
   actionBusy.value = true;
+  actionBusyKey.value = action.key;
   const stateBefore = action.currentState;
   try {
     lastSemanticAction.value = {
@@ -698,12 +758,14 @@ async function runSemanticAction(action: SemanticActionButton) {
     actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false, traceId: lastTraceId.value };
   } finally {
     actionBusy.value = false;
+    actionBusyKey.value = '';
   }
 }
 
 async function rerunLastSemanticAction() {
   if (!lastSemanticAction.value || !recordId.value) return;
   actionBusy.value = true;
+  actionBusyKey.value = lastSemanticAction.value.action;
   try {
     const response = await executePaymentRequestAction({
       paymentRequestId: recordId.value,
@@ -723,11 +785,39 @@ async function rerunLastSemanticAction() {
     actionFeedback.value = { message: '重试失败', reasonCode: 'EXECUTE_FAILED', success: false, traceId: lastTraceId.value };
   } finally {
     actionBusy.value = false;
+    actionBusyKey.value = '';
   }
 }
 
 function clearActionHistory() {
   actionHistory.value = [];
+}
+
+function armActionFeedbackAutoClear() {
+  if (actionFeedbackTimer) {
+    clearTimeout(actionFeedbackTimer);
+    actionFeedbackTimer = null;
+  }
+  if (!actionFeedback.value) return;
+  actionFeedbackTimer = setTimeout(() => {
+    actionFeedback.value = null;
+    actionFeedbackTimer = null;
+  }, 6000);
+}
+
+async function copyHistoryEntry(entry: ActionHistoryEntry) {
+  const payload = [
+    `action=${entry.label}`,
+    `reason_code=${entry.reasonCode}`,
+    `state_before=${entry.stateBefore || '-'}`,
+    `trace_id=${entry.traceId || '-'}`,
+    `success=${String(entry.success)}`,
+  ].join('\n');
+  try {
+    await navigator.clipboard.writeText(payload);
+  } catch {
+    // Ignore clipboard failures for this utility action.
+  }
 }
 
 function onSemanticHotkey(event: KeyboardEvent) {
@@ -779,6 +869,10 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onSemanticHotkey);
+  if (actionFeedbackTimer) {
+    clearTimeout(actionFeedbackTimer);
+    actionFeedbackTimer = null;
+  }
 });
 watch(actionFilterMode, (value) => {
   try {
@@ -824,6 +918,9 @@ watch(
   },
   { immediate: true },
 );
+watch(actionFeedback, () => {
+  armActionFeedbackAutoClear();
+});
 
 function analyzeLayout(layout: ViewContract['layout']) {
   const stats = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
@@ -943,6 +1040,33 @@ function analyzeLayout(layout: ViewContract['layout']) {
   gap: 8px;
 }
 
+.semantic-action-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.stats-refresh {
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
+}
+
+.semantic-action-shortcuts {
+  font-size: 12px;
+  color: #475569;
+}
+
+.semantic-action-shortcuts code {
+  background: #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
 .semantic-action-filters button {
   padding: 6px 10px;
   border-radius: 999px;
@@ -1002,6 +1126,26 @@ function analyzeLayout(layout: ViewContract['layout']) {
   justify-content: space-between;
 }
 
+.history-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.history-filters button {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
+}
+
+.history-filters button.active {
+  border-color: #0f766e;
+  box-shadow: inset 0 0 0 1px #0f766e;
+}
+
 .history-clear {
   padding: 2px 8px;
   border-radius: 8px;
@@ -1031,6 +1175,16 @@ function analyzeLayout(layout: ViewContract['layout']) {
   margin-left: 8px;
   color: #64748b;
   font-size: 12px;
+}
+
+.history-copy {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
 }
 
 .field {
