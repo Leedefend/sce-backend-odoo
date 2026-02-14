@@ -133,10 +133,10 @@
         <span>主要阻塞：{{ topBlockedActions.join(' / ') }}</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
-        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作 · <code>?</code> 显示/隐藏帮助
+        快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作 · <code>Alt+F</code> 刷新动作面 · <code>?</code> 显示/隐藏帮助
       </section>
       <section v-if="semanticActionButtons.length && shortcutHelpVisible" class="semantic-action-stale-banner">
-        <span>帮助：`Ctrl+Enter` 执行主动作；`Alt+R` 重试；`?` 切换帮助显示。</span>
+        <span>帮助：`Ctrl+Enter` 执行主动作；`Alt+R` 重试；`Alt+F` 刷新；`?` 切换帮助显示。</span>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-hints">
         <div
@@ -1369,6 +1369,11 @@ function onSemanticHotkey(event: KeyboardEvent) {
   if (event.altKey && (event.key === 'r' || event.key === 'R') && lastSemanticAction.value && !actionBusy.value) {
     event.preventDefault();
     rerunLastSemanticAction();
+    return;
+  }
+  if (event.altKey && (event.key === 'f' || event.key === 'F') && !loading.value && !actionBusy.value) {
+    event.preventDefault();
+    void loadPaymentActionSurface();
   }
 }
 
