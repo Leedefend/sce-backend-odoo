@@ -240,6 +240,7 @@
             <button type="button" class="history-clear" title="复制当前视图历史JSON" aria-label="复制当前视图历史JSON" @click="copyVisibleHistoryJson">复制当前JSON</button>
             <button type="button" class="history-clear" title="导出当前视图历史CSV" aria-label="导出当前视图历史CSV" @click="exportActionHistoryCsv">导出当前CSV</button>
             <button type="button" class="history-clear" title="复制当前视图Trace列表" aria-label="复制当前视图Trace列表" @click="copyVisibleTraces">复制Trace列表</button>
+            <button type="button" class="history-clear" title="复制当前视图原因统计" aria-label="复制当前视图原因统计" @click="copyVisibleReasonStats">复制原因统计</button>
             <button type="button" class="history-clear" title="复制筛选查询串" aria-label="复制筛选查询串" @click="copyHistoryFilterQuery">复制查询串</button>
             <button type="button" class="history-clear" title="复制筛选摘要" aria-label="复制筛选摘要" @click="copyHistoryFilterSummary">复制筛选摘要</button>
             <button type="button" class="history-clear" title="导出证据包" aria-label="导出证据包" @click="exportEvidenceBundle">导出证据包</button>
@@ -1628,6 +1629,35 @@ async function copyVisibleTraces() {
     actionFeedback.value = {
       message: 'Trace 列表复制失败',
       reasonCode: 'HISTORY_TRACE_LIST_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+async function copyVisibleReasonStats() {
+  if (!displayedActionHistory.value.length) return;
+  const counts = new Map<string, number>();
+  for (const entry of displayedActionHistory.value) {
+    const reason = String(entry.reasonCode || 'UNKNOWN').trim() || 'UNKNOWN';
+    counts.set(reason, Number(counts.get(reason) || 0) + 1);
+  }
+  const lines = Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([reason, count]) => `${reason}: ${count}`);
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: `原因统计已复制（${lines.length} 类）`,
+      reasonCode: 'HISTORY_REASON_STATS_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '原因统计复制失败',
+      reasonCode: 'HISTORY_REASON_STATS_COPY_FAILED',
       success: false,
       traceId: lastTraceId.value,
     };
