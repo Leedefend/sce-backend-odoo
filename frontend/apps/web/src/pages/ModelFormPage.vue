@@ -95,12 +95,18 @@
         <span>主动作: {{ primaryActionKey || '-' }}</span>
         <span>当前筛选: {{ actionFilterMode }}</span>
         <span>显示中: {{ displayedSemanticActionButtons.length }}</span>
-        <span>刷新: {{ actionSurfaceAgeLabel }}</span>
+        <span :class="{ stale: actionSurfaceIsStale }">刷新: {{ actionSurfaceAgeLabel }}</span>
         <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">刷新动作面</button>
+        <button type="button" class="stats-refresh" @click="copyActionSurface">复制动作面</button>
+        <button type="button" class="stats-refresh" @click="exportActionSurface">导出动作面</button>
         <label class="auto-refresh-toggle">
           <input v-model="autoRefreshActionSurface" type="checkbox" />
           自动刷新
         </label>
+      </section>
+      <section v-if="semanticActionButtons.length && actionSurfaceIsStale" class="semantic-action-stale-banner">
+        <span>动作面可能过期（超过 60 秒），请先刷新后再执行。</span>
+        <button type="button" class="stats-refresh" @click="loadPaymentActionSurface">立即刷新</button>
       </section>
       <section v-if="semanticActionButtons.length" class="semantic-action-shortcuts">
         快捷键: <code>Ctrl+Enter</code> 执行主动作 · <code>Alt+R</code> 重试上次动作
@@ -116,7 +122,18 @@
           <span>
             {{ action.currentState || '-' }} → {{ action.nextStateHint || '-' }}
           </span>
-          <span v-if="!action.allowed">{{ action.blockedMessage || action.reasonCode || '当前状态不可执行' }}</span>
+          <span v-if="action.requiredRoleLabel" class="role-hint">
+            角色：{{ action.requiredRoleLabel }}
+            <em v-if="action.actorMatchesRequiredRole" class="role-match">（当前可执行角色）</em>
+            <em v-else class="role-mismatch">（需转交）</em>
+          </span>
+          <span v-if="action.handoffHint" class="handoff-hint">
+            {{ action.handoffHint }}
+          </span>
+          <span v-if="action.handoffRequired" class="handoff-required">
+            请转交给 {{ action.requiredRoleLabel || action.requiredRoleKey || '对应角色' }} 处理
+          </span>
+          <span v-if="!action.allowed">{{ blockedReasonText(action) }}</span>
           <span v-if="!action.allowed && action.suggestedAction" class="suggestion">
             建议：{{ action.suggestedAction }}
           </span>
@@ -128,6 +145,14 @@
           >
             {{ suggestedActionMeta(action).label || '执行建议' }}
           </button>
+          <button
+            v-if="!action.allowed && action.handoffRequired"
+            class="hint-action"
+            type="button"
+            @click="copyHandoffNote(action)"
+          >
+            复制转交说明
+          </button>
         </div>
       </section>
       <section v-if="actionHistory.length" class="semantic-action-history">
@@ -135,6 +160,7 @@
           <h3>最近操作</h3>
           <div class="history-actions">
             <button type="button" class="history-clear" @click="copyAllHistory">复制全部</button>
+            <button type="button" class="history-clear" @click="exportEvidenceBundle">导出证据包</button>
             <button type="button" class="history-clear" @click="clearActionHistory">清空</button>
           </div>
         </div>
@@ -267,6 +293,12 @@ const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new')
 const title = computed(() => `Form: ${model.value}`);
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
 const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
+const PAYMENT_REASON_TEXT: Record<string, string> = {
+  PAYMENT_ATTACHMENTS_REQUIRED: "提交前请先上传附件",
+  BUSINESS_RULE_FAILED: "当前状态不满足执行条件",
+  MISSING_PARAMS: "缺少必要参数",
+  NOT_FOUND: "记录不存在或已被删除",
+};
 
 const viewContract = ref<ViewContract | null>(null);
 const fields = ref<
@@ -299,6 +331,12 @@ type SemanticActionButton = {
   suggestedAction: string;
   currentState: string;
   nextStateHint: string;
+  requiredRoleLabel: string;
+  requiredRoleKey: string;
+  handoffHint: string;
+  actorMatchesRequiredRole: boolean;
+  handoffRequired: boolean;
+  deliveryPriority: number;
   requiresReason: boolean;
   executeIntent: string;
 };
@@ -336,12 +374,20 @@ const semanticActionButtons = computed<SemanticActionButton[]>(() => {
       suggestedAction: String(item.suggested_action || ''),
       currentState: String(item.current_state || ''),
       nextStateHint: String(item.next_state_hint || ''),
+      requiredRoleLabel: String(item.required_role_label || ''),
+      requiredRoleKey: String(item.required_role_key || ''),
+      handoffHint: String(item.handoff_hint || ''),
+      actorMatchesRequiredRole: Boolean(item.actor_matches_required_role),
+      handoffRequired: Boolean(item.handoff_required),
+      deliveryPriority: Number(item.delivery_priority || 100),
       requiresReason: Boolean(item.requires_reason),
       executeIntent: String(item.execute_intent || 'payment.request.execute'),
     }))
     .sort((a, b) => {
       const rankDelta = semanticActionRank(a) - semanticActionRank(b);
       if (rankDelta !== 0) return rankDelta;
+      const deliveryDelta = Number(a.deliveryPriority || 100) - Number(b.deliveryPriority || 100);
+      if (deliveryDelta !== 0) return deliveryDelta;
       return a.label.localeCompare(b.label, 'zh-CN');
     });
 });
@@ -370,6 +416,10 @@ const actionSurfaceAgeLabel = computed(() => {
   const min = Math.floor(deltaSec / 60);
   const sec = deltaSec % 60;
   return `${min}m${sec}s`;
+});
+const actionSurfaceIsStale = computed(() => {
+  if (!paymentActionSurfaceLoadedAt.value) return true;
+  return Date.now() - paymentActionSurfaceLoadedAt.value > 60_000;
 });
 const primaryAllowedAction = computed(() => {
   const primary = displayedSemanticActionButtons.value.find(
@@ -669,11 +719,128 @@ async function runButton(btn: ViewButton) {
 }
 
 function semanticActionTooltip(action: SemanticActionButton) {
+  const roleHint = action.requiredRoleLabel ? `应由${action.requiredRoleLabel}处理` : '';
+  const handoffHint = action.handoffRequired ? "；当前角色不匹配，请转交" : "";
+  const blockedReason = blockedReasonText(action);
   if (action.allowed) return '';
-  if (action.suggestedAction) return `不可执行：${action.blockedMessage || action.reasonCode}；建议：${action.suggestedAction}`;
-  if (action.blockedMessage) return `不可执行：${action.blockedMessage}`;
-  if (action.reasonCode) return `不可执行：${action.reasonCode}`;
+  if (action.suggestedAction) {
+    return `不可执行：${blockedReason}；建议：${action.suggestedAction}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
+  }
+  if (blockedReason) return `不可执行：${blockedReason}${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
+  return `当前状态不可执行${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
+}
+
+function blockedReasonText(action: SemanticActionButton) {
+  const message = String(action.blockedMessage || '').trim();
+  const reasonCode = String(action.reasonCode || '').trim();
+  if (message) return message;
+  if (reasonCode) return PAYMENT_REASON_TEXT[reasonCode] || reasonCode;
   return '当前状态不可执行';
+}
+
+async function copyHandoffNote(action: SemanticActionButton) {
+  const lines = [
+    `record=${model.value}:${recordId.value || '-'}`,
+    `action=${action.label}(${action.key})`,
+    `required_role=${action.requiredRoleLabel || action.requiredRoleKey || '-'}`,
+    `reason=${blockedReasonText(action)}`,
+    `handoff_hint=${action.handoffHint || '-'}`,
+    `trace_id=${lastTraceId.value || '-'}`,
+  ];
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    actionFeedback.value = {
+      message: '转交说明已复制',
+      reasonCode: 'HANDOFF_NOTE_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '转交说明复制失败',
+      reasonCode: 'HANDOFF_NOTE_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+async function copyActionSurface() {
+  if (!recordId.value || !semanticActionButtons.value.length) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    primary_action_key: primaryActionKey.value,
+    loaded_at: paymentActionSurfaceLoadedAt.value,
+    actions: semanticActionButtons.value,
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    actionFeedback.value = {
+      message: '动作面已复制',
+      reasonCode: 'ACTION_SURFACE_COPIED',
+      success: true,
+      traceId: lastTraceId.value,
+    };
+    armActionFeedbackAutoClear();
+  } catch {
+    actionFeedback.value = {
+      message: '动作面复制失败',
+      reasonCode: 'ACTION_SURFACE_COPY_FAILED',
+      success: false,
+      traceId: lastTraceId.value,
+    };
+  }
+}
+
+function exportActionSurface() {
+  if (!recordId.value || !semanticActionButtons.value.length) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    primary_action_key: primaryActionKey.value,
+    loaded_at: paymentActionSurfaceLoadedAt.value,
+    exported_at: Date.now(),
+    actions: semanticActionButtons.value,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `payment_action_surface_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportEvidenceBundle() {
+  if (!recordId.value) return;
+  const payload = {
+    model: model.value,
+    record_id: recordId.value,
+    exported_at: Date.now(),
+    primary_action_key: primaryActionKey.value,
+    action_surface_loaded_at: paymentActionSurfaceLoadedAt.value,
+    action_surface_stale: actionSurfaceIsStale.value,
+    last_trace_id: lastTraceId.value,
+    last_feedback: actionFeedback.value,
+    semantic_actions: semanticActionButtons.value,
+    action_history: actionHistory.value,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `payment_evidence_bundle_${model.value}_${recordId.value}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+  actionFeedback.value = {
+    message: '证据包已导出',
+    reasonCode: 'EVIDENCE_BUNDLE_EXPORTED',
+    success: true,
+    traceId: lastTraceId.value,
+  };
+  armActionFeedbackAutoClear();
 }
 
 function suggestedActionMeta(action: SemanticActionButton) {
@@ -723,6 +890,19 @@ async function runSemanticAction(action: SemanticActionButton) {
   actionFeedback.value = null;
   if (!model.value || !recordId.value || !action.allowed) {
     return;
+  }
+  if (actionSurfaceIsStale.value) {
+    const proceed = window.confirm("动作面已过期（超过 60 秒）。建议先刷新。点击“确定”继续执行，点击“取消”将自动刷新。");
+    if (!proceed) {
+      await loadPaymentActionSurface();
+      actionFeedback.value = {
+        message: "已取消执行并刷新动作面",
+        reasonCode: "ACTION_SURFACE_REFRESH_REQUIRED",
+        success: false,
+        traceId: lastTraceId.value,
+      };
+      return;
+    }
   }
   if (action.key === 'approve' || action.key === 'done') {
     const confirmed = window.confirm(`确认执行「${action.label}」？`);
@@ -1117,6 +1297,24 @@ function analyzeLayout(layout: ViewContract['layout']) {
   color: #64748b;
 }
 
+.semantic-action-stats .stale {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.semantic-action-stale-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #f59e0b;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
 .stats-refresh {
   padding: 2px 8px;
   border-radius: 8px;
@@ -1182,6 +1380,28 @@ function analyzeLayout(layout: ViewContract['layout']) {
 
 .semantic-action-hint .suggestion {
   color: #475569;
+}
+
+.semantic-action-hint .role-hint {
+  color: #0f766e;
+}
+
+.semantic-action-hint .role-match {
+  font-style: normal;
+  color: #0f766e;
+}
+
+.semantic-action-hint .role-mismatch {
+  font-style: normal;
+  color: #b45309;
+}
+
+.semantic-action-hint .handoff-hint {
+  color: #334155;
+}
+
+.semantic-action-hint .handoff-required {
+  color: #b45309;
 }
 
 .hint-action {
