@@ -1418,6 +1418,13 @@ function parseIntentActionResult(data: Record<string, unknown> | null | undefine
   return { message, reasonCode, success, replayed, requestId };
 }
 
+function createActionHistoryKey(seed = 'entry') {
+  const safeSeed = String(seed || 'entry')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .slice(0, 48);
+  return `${safeSeed}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 async function runSemanticAction(action: SemanticActionButton) {
   actionFeedback.value = null;
   if (!model.value || !recordId.value || !action.allowed) {
@@ -1474,7 +1481,7 @@ async function runSemanticAction(action: SemanticActionButton) {
     };
     actionHistory.value = [
       {
-        key: `${action.key}_${Date.now()}`,
+        key: createActionHistoryKey(action.key),
         label: action.label,
         reasonCode: parsed.reasonCode,
         success: parsed.success,
@@ -2180,17 +2187,26 @@ watch(
       }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        actionHistory.value = parsed.slice(0, actionHistoryLimit.value).map((item) => ({
-          key: String(item?.key || `${Date.now()}`),
-          label: String(item?.label || '-'),
-          reasonCode: String(item?.reasonCode || ''),
-          success: Boolean(item?.success),
-          stateBefore: String(item?.stateBefore || ''),
-          traceId: String(item?.traceId || ''),
-          durationMs: Number(item?.durationMs || 0),
-          at: Number(item?.at || Date.now()),
-          atText: String(item?.atText || ''),
-        }));
+        const usedKeys = new Set<string>();
+        actionHistory.value = parsed.slice(0, actionHistoryLimit.value).map((item, index) => {
+          const baseKey = String(item?.key || '').trim() || createActionHistoryKey(`entry_${index}`);
+          let key = baseKey;
+          while (usedKeys.has(key)) {
+            key = createActionHistoryKey(baseKey);
+          }
+          usedKeys.add(key);
+          return {
+            key,
+            label: String(item?.label || '-'),
+            reasonCode: String(item?.reasonCode || ''),
+            success: Boolean(item?.success),
+            stateBefore: String(item?.stateBefore || ''),
+            traceId: String(item?.traceId || ''),
+            durationMs: Number(item?.durationMs || 0),
+            at: Number(item?.at || Date.now()),
+            atText: String(item?.atText || ''),
+          };
+        });
       }
     } catch {
       actionHistory.value = [];
