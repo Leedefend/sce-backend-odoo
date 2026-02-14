@@ -33,7 +33,7 @@
           :key="`semantic-${action.key}`"
           :disabled="!recordId || saving || loading || actionBusy || !action.allowed"
           class="action secondary"
-          :class="{ primary: action.key === primaryActionKey }"
+          :class="{ primary: action.key === primaryActionKey, caution: isCautionAction(action) }"
           :title="semanticActionTooltip(action)"
           @click="runSemanticAction(action)"
         >
@@ -870,6 +870,10 @@ function semanticActionTooltip(action: SemanticActionButton) {
   return `当前状态不可执行${roleHint ? `；${roleHint}` : ''}${handoffHint}`;
 }
 
+function isCautionAction(action: SemanticActionButton) {
+  return action.key === 'approve' || action.key === 'done';
+}
+
 function blockedReasonText(action: SemanticActionButton) {
   const message = String(action.blockedMessage || '').trim();
   const reasonCode = String(action.reasonCode || '').trim();
@@ -1500,6 +1504,11 @@ function analyzeLayout(layout: ViewContract['layout']) {
 .actions .primary {
   border-color: #0f766e;
   box-shadow: inset 0 0 0 1px #0f766e;
+}
+
+.actions .caution {
+  border-color: #f59e0b;
+  color: #92400e;
 }
 
 .meta {
