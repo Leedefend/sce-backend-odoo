@@ -729,18 +729,34 @@ async function openScene(entry: CapabilityEntry) {
 }
 
 function openRoleLanding() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'landing',
+    from: 'workspace.home',
+  }).catch(() => {});
   router.push({ path: session.resolveLandingPath('/s/projects.list'), query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToMyWork() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'my_work',
+    from: 'workspace.home',
+  }).catch(() => {});
   router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToUsageAnalytics() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'usage_analytics',
+    from: 'workspace.home',
+  }).catch(() => {});
   router.push({ path: '/admin/usage-analytics' }).catch(() => {});
 }
 
 function goHome() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'home',
+    from: 'workspace.home',
+  }).catch(() => {});
   router.push({ path: '/' }).catch(() => {});
 }
 
