@@ -614,17 +614,30 @@ const lockedReasonOptions = computed(() => {
 
 function toggleSceneGroup(sceneKey: string) {
   const next = new Set(collapsedSceneKeys.value);
-  if (next.has(sceneKey)) next.delete(sceneKey);
+  const expanded = next.has(sceneKey);
+  if (expanded) next.delete(sceneKey);
   else next.add(sceneKey);
   collapsedSceneKeys.value = Array.from(next);
+  void trackUsageEvent('workspace.group_toggle', {
+    scene_key: sceneKey,
+    action: expanded ? 'expand' : 'collapse',
+  }).catch(() => {});
 }
 
 function expandAllSceneGroups() {
   collapsedSceneKeys.value = [];
+  void trackUsageEvent('workspace.group_toggle', {
+    scene_key: '*',
+    action: 'expand_all',
+  }).catch(() => {});
 }
 
 function collapseAllSceneGroups() {
   collapsedSceneKeys.value = groupedEntries.value.map((group) => group.sceneKey);
+  void trackUsageEvent('workspace.group_toggle', {
+    scene_key: '*',
+    action: 'collapse_all',
+  }).catch(() => {});
 }
 
 function lockReasonLabel(reasonCode: string) {
