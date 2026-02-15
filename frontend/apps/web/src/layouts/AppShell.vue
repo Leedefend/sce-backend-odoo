@@ -33,7 +33,7 @@
       </div>
 
       <div class="search">
-        <input v-model="query" type="search" placeholder="Search menu..." />
+        <input v-model="query" type="search" placeholder="搜索菜单..." />
       </div>
 
       <div class="menu">
@@ -73,7 +73,7 @@
 
       <StatusPanel
         v-if="initStatus === 'loading'"
-        title="Initializing app shell..."
+        title="正在初始化工作台..."
         variant="info"
       />
       <StatusPanel
@@ -165,14 +165,14 @@ const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
 const menuCount = computed(() => menuNodes.value.length);
 const rootTitle = computed(() => {
   const root = rootNode.value;
-  return root?.title || root?.name || root?.label || 'Smart Construction';
+  return root?.title || root?.name || root?.label || '智能工程协作平台';
 });
-const userName = computed(() => session.user?.name ?? 'Guest');
+const userName = computed(() => session.user?.name ?? '访客');
 const roleLabel = computed(() => {
   const label = roleSurface.value?.role_label;
   if (label) return label;
   const code = roleSurface.value?.role_code || '';
-  return code ? code.toUpperCase() : 'Owner';
+  return code ? code.toUpperCase() : '负责人';
 });
 const roleLandingPath = computed(() => session.resolveLandingPath('/s/projects.list'));
 const capabilities = computed(() => session.capabilities);
