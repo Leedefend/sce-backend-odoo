@@ -578,7 +578,12 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
-const resultSummaryText = computed(() => `当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`);
+const resultSummaryText = computed(() => {
+  const parts = [`当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`];
+  if (stateFilter.value !== 'ALL') parts.push(`状态：${stateLabel(stateFilter.value)}`);
+  if (lockReasonFilter.value !== 'ALL') parts.push(`原因：${lockReasonLabel(lockReasonFilter.value)}`);
+  return parts.join(' · ');
+});
 const readyOnlyNoResult = computed(
   () => readyOnly.value && filteredEntries.value.length === 0 && stateCounts.value.READY === 0,
 );
