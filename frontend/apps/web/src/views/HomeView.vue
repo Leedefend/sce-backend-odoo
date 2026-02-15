@@ -61,12 +61,15 @@
           <button @click="clearEnterError">知道了</button>
         </div>
       </div>
-      <input
-        v-model.trim="searchText"
-        class="search-input"
-        type="search"
-        placeholder="搜索能力名称或说明"
-      />
+      <div class="search-row">
+        <input
+          v-model.trim="searchText"
+          class="search-input"
+          type="search"
+          placeholder="搜索能力名称或说明"
+        />
+        <button v-if="searchText.trim()" class="search-clear-btn" @click="clearSearchText">清空搜索</button>
+      </div>
       <p class="result-summary">{{ resultSummaryText }}</p>
       <label class="ready-only">
         <input v-model="readyOnly" type="checkbox" />
@@ -737,6 +740,10 @@ function clearSearchAndFilters() {
   }
 }
 
+function clearSearchText() {
+  searchText.value = '';
+}
+
 function showAllCapabilities() {
   const wasReadyOnly = readyOnly.value;
   readyOnly.value = false;
@@ -1283,6 +1290,21 @@ function highlightParts(raw: string) {
   border-radius: 10px;
   padding: 10px 12px;
   background: #fff;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.search-clear-btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  padding: 0 10px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .result-summary {
