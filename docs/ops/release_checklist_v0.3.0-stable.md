@@ -19,6 +19,12 @@ since: v0.3.0-stable
   - required module tokens in `sc.core.extension_modules`:
     - `smart_construction_core`
     - `smart_construction_portal`
+- 导航对齐审计通过（业务前缀口径）:
+  - `make audit.nav.alignment DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+  - `artifacts/audit/nav_alignment_report.latest.json` 中：
+    - `status = pass`
+    - `menu_scene_resolve.summary.failures = 0`
+    - `actions.missing_groups_count = 0`
 - Phase 9.8 menu/scene coverage summary is present in release evidence:
   - `make verify.menu.scene_resolve.summary`
   - required keys in `artifacts/codex/summary.md`:

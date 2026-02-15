@@ -92,6 +92,54 @@ jobs:
         run: |
           make stage.run STAGE=p3-runtime-r1 DB=sc_p3
 
+      - name: Navigation alignment audit
+        run: |
+          make audit.nav.alignment DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo
+
+      - name: Publish nav alignment summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          report = "artifacts/audit/nav_alignment_report.latest.json"
+          status = "n/a"
+          blockers = []
+          warnings = []
+          menu = {}
+          actions = {}
+          if os.path.exists(report):
+              try:
+                  payload = json.load(open(report, "r", encoding="utf-8"))
+                  status = payload.get("status", "n/a")
+                  blockers = payload.get("blockers") or []
+                  warnings = payload.get("warnings") or []
+                  menu = payload.get("menu_scene_resolve", {}).get("summary", {}) or {}
+                  actions = payload.get("actions") or {}
+              except Exception:
+                  pass
+
+          lines = [
+              "## Navigation Alignment",
+              "",
+              f"- report: `{report}`",
+              f"- status: `{status}`",
+              f"- blockers: `{', '.join(blockers) if blockers else '-'}`",
+              f"- warnings: `{', '.join(warnings) if warnings else '-'}`",
+              f"- menu_scene_failures: `{menu.get('failures', 'n/a')}`",
+              f"- menu_scene_coverage: `{menu.get('coverage', 'n/a')}`",
+              f"- action_missing_groups_scoped: `{actions.get('missing_groups_count', 'n/a')}`",
+              f"- unguarded_visible_total_scoped: `{actions.get('unguarded_visible_total', 'n/a')}`",
+          ]
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines) + "\n")
+          print("\n".join(lines))
+          PY
+
       - name: Publish menu scene coverage summary
         if: always()
         run: |
