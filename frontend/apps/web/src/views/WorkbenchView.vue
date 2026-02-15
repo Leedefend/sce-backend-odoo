@@ -11,14 +11,14 @@
         </p>
       </div>
       <div class="actions">
-        <button class="ghost" @click="goToProjects">Back to home</button>
-        <button class="ghost" @click="openFirstReachableMenu">Open menu</button>
-        <button class="ghost" @click="refresh">Refresh</button>
+        <button class="ghost" @click="goToProjects">返回工作台</button>
+        <button class="ghost" @click="openFirstReachableMenu">打开菜单</button>
+        <button class="ghost" @click="refresh">刷新</button>
       </div>
     </header>
 
     <StatusPanel
-      title="We could not open that page"
+      title="页面暂时无法打开"
       :message="message"
       :variant="panelVariant"
     />
