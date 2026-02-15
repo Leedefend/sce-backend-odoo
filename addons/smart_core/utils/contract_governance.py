@@ -4,6 +4,85 @@ from __future__ import annotations
 from typing import Any
 
 CONTRACT_MODES = {"user", "hud"}
+_USER_MODE_STRIP_KEYS = {
+    "action_xmlid",
+    "menu_xmlid",
+    "scene_key",
+    "res_id",
+    "id",
+}
+_USER_CAPABILITY_KEYS = {
+    "key",
+    "name",
+    "ui_label",
+    "ui_hint",
+    "intent",
+    "status",
+    "state",
+    "reason",
+    "reason_code",
+    "version",
+    "tags",
+    "default_payload",
+}
+_USER_SCENE_KEYS = {
+    "code",
+    "key",
+    "name",
+    "title",
+    "label",
+    "icon",
+    "route",
+    "target",
+    "layout",
+    "tiles",
+    "capabilities",
+    "required_capabilities",
+    "breadcrumbs",
+    "list_profile",
+    "filters",
+    "default_sort",
+    "access",
+    "status",
+    "state",
+    "version",
+    "tags",
+}
+_USER_SCENE_TARGET_KEYS = {
+    "route",
+    "action_id",
+    "menu_id",
+    "model",
+    "view_mode",
+    "view_type",
+    "record_id",
+}
+_USER_SCENE_TILE_KEYS = {
+    "key",
+    "title",
+    "subtitle",
+    "icon",
+    "status",
+    "state",
+    "reason",
+    "reason_code",
+    "route",
+    "intent",
+    "payload",
+    "capabilities",
+    "required_capabilities",
+    "requiredCapabilities",
+    "allowed",
+    "tags",
+}
+_USER_SCENE_ACCESS_KEYS = {
+    "allowed",
+    "state",
+    "reason_code",
+    "reason",
+    "required_capabilities",
+    "suggested_action",
+}
 
 
 def is_truthy(value: Any) -> bool:
@@ -84,6 +163,59 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
     return out
 
 
+def _strip_user_mode_fields(obj: Any) -> Any:
+    if isinstance(obj, list):
+        return [_strip_user_mode_fields(item) for item in obj]
+    if not isinstance(obj, dict):
+        return obj
+    out: dict[str, Any] = {}
+    for key, value in obj.items():
+        if str(key or "").strip().lower() in _USER_MODE_STRIP_KEYS:
+            continue
+        out[key] = _strip_user_mode_fields(value)
+    return out
+
+
+def _pick_fields(raw: dict, allowed_keys: set[str]) -> dict:
+    out: dict[str, Any] = {}
+    for key in allowed_keys:
+        if key in raw:
+            out[key] = raw.get(key)
+    return out
+
+
+def _sanitize_capability_for_user(item: dict) -> dict:
+    cap = _pick_fields(dict(item), _USER_CAPABILITY_KEYS)
+    payload = cap.get("default_payload")
+    if isinstance(payload, dict):
+        cap["default_payload"] = _strip_user_mode_fields(payload)
+    return cap
+
+
+def _sanitize_scene_for_user(item: dict) -> dict:
+    scene = _pick_fields(dict(item), _USER_SCENE_KEYS)
+    scene = _strip_user_mode_fields(scene)
+    scene["code"] = _safe_text(scene.get("code") or scene.get("key"))
+    scene["key"] = _safe_text(scene.get("key"), scene.get("code"))
+    scene["name"] = _safe_text(scene.get("name"), scene.get("code") or "未命名场景")
+    target = scene.get("target")
+    if isinstance(target, dict):
+        scene["target"] = _strip_user_mode_fields(_pick_fields(target, _USER_SCENE_TARGET_KEYS))
+    access = scene.get("access")
+    if isinstance(access, dict):
+        scene["access"] = _strip_user_mode_fields(_pick_fields(access, _USER_SCENE_ACCESS_KEYS))
+    tiles = scene.get("tiles")
+    if isinstance(tiles, list):
+        cleaned_tiles = []
+        for tile in tiles:
+            if not isinstance(tile, dict):
+                continue
+            cleaned_tiles.append(_strip_user_mode_fields(_pick_fields(tile, _USER_SCENE_TILE_KEYS)))
+        scene["tiles"] = cleaned_tiles
+    scene["tags"] = _normalized_tags_for_item(scene)
+    return scene
+
+
 def normalize_scenes(scenes: list) -> list[dict]:
     out: list[dict] = []
     for scene in scenes or []:
@@ -112,12 +244,14 @@ def apply_contract_governance(
         capabilities = normalize_capabilities(data.get("capabilities") or [])
         if contract_mode == "user":
             capabilities = [item for item in capabilities if not is_internal_or_smoke(item)]
+            capabilities = [_sanitize_capability_for_user(item) for item in capabilities]
         data["capabilities"] = capabilities
 
     if isinstance(data.get("scenes"), list):
         scenes = normalize_scenes(data.get("scenes") or [])
         if contract_mode == "user":
             scenes = [item for item in scenes if not is_internal_or_smoke(item)]
+            scenes = [_sanitize_scene_for_user(item) for item in scenes]
         data["scenes"] = scenes
 
     if inject_contract_mode:
