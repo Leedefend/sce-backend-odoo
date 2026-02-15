@@ -9,6 +9,10 @@
         <button class="secondary" @click="load">刷新</button>
       </div>
     </header>
+    <section v-if="appliedPresetLabel" class="route-preset">
+      <p>已应用推荐视图：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
+      <button class="link-btn mini-btn" @click="clearRoutePreset">清除推荐</button>
+    </section>
 
     <StatusPanel v-if="loading" title="加载我的工作中..." variant="info" />
     <StatusPanel
@@ -374,13 +378,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 
 const router = useRouter();
+const route = useRoute();
 
 const loading = ref(false);
 const errorText = ref('');
@@ -435,6 +440,8 @@ const myWorkFilterStorageKey = 'sc.mywork.filters.v1';
 const myWorkPresetStorageKey = 'sc.mywork.filter_preset.v1';
 const myWorkRetryPanelStorageKey = 'sc.mywork.retry_panel.v1';
 const hasFilterPreset = ref(false);
+const appliedPresetLabel = ref('');
+const routeContextSource = ref('');
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
@@ -688,14 +695,30 @@ function onErrorSuggestedActionExecuted(payload: { action: string; success: bool
   actionFeedbackError.value = !payload.success;
 }
 
+function resolveWorkspaceContextQuery() {
+  const preset = String(route.query.preset || '').trim();
+  const ctxSource = String(route.query.ctx_source || '').trim();
+  const search = String(route.query.search || '').trim();
+  const context: Record<string, string> = {};
+  if (preset) context.preset = preset;
+  if (ctxSource) context.ctx_source = ctxSource;
+  if (search) context.search = search;
+  return context;
+}
+
 function openScene(sceneKey: string) {
   if (!sceneKey) return;
-  router.push({ path: `/s/${sceneKey}` }).catch(() => {});
+  router.push({ path: `/s/${sceneKey}`, query: resolveWorkspaceContextQuery() }).catch(() => {});
 }
 
 function openRecord(item: MyWorkRecordItem) {
   if (item.model && item.record_id) {
-    router.push({ path: `/r/${item.model}/${item.record_id}` }).catch(() => {});
+    router
+      .push({
+        path: `/r/${item.model}/${item.record_id}`,
+        query: resolveWorkspaceContextQuery(),
+      })
+      .catch(() => {});
     return;
   }
   openScene(item.scene_key);
@@ -1339,9 +1362,59 @@ function restoreRetryPanelState() {
   }
 }
 
+function applyRouteOverrides() {
+  let changed = false;
+  const preset = String(route.query.preset || '').trim();
+  const section = String(route.query.section || '').trim();
+  const source = String(route.query.source || '').trim();
+  const reason = String(route.query.reason || '').trim();
+  const search = String(route.query.search || '').trim();
+  const ctxSource = String(route.query.ctx_source || '').trim();
+  routeContextSource.value = ctxSource;
+
+  const setIfDiff = <T>(target: { value: T }, next: T) => {
+    if (target.value === next) return;
+    target.value = next;
+    changed = true;
+  };
+
+  if (preset === 'pending_approval') {
+    appliedPresetLabel.value = '合同待审批';
+    setIfDiff(activeSection, 'todo');
+    setIfDiff(sourceFilter, 'mail.activity');
+    setIfDiff(searchText, search || '审批');
+  } else if (preset === 'project_intake') {
+    appliedPresetLabel.value = '项目立项';
+    setIfDiff(activeSection, 'owned');
+    setIfDiff(searchText, search || '立项');
+  } else if (preset === 'cost_watchlist') {
+    appliedPresetLabel.value = '成本台账关注';
+    setIfDiff(activeSection, 'following');
+    setIfDiff(searchText, search || '成本');
+  } else {
+    appliedPresetLabel.value = '';
+  }
+
+  if (section) setIfDiff(activeSection, section);
+  if (source && source !== 'workspace_today') setIfDiff(sourceFilter, source);
+  if (reason) setIfDiff(reasonFilter, reason);
+  if (search && preset === '') setIfDiff(searchText, search);
+  if (changed) {
+    page.value = 1;
+  }
+  return changed;
+}
+
+function clearRoutePreset() {
+  appliedPresetLabel.value = '';
+  routeContextSource.value = '';
+  router.replace({ path: '/my-work' }).catch(() => {});
+}
+
 onMounted(() => {
   restoreFilters();
   restoreRetryPanelState();
+  applyRouteOverrides();
   hasFilterPreset.value = Boolean(window.localStorage.getItem(myWorkPresetStorageKey));
   void load();
 });
@@ -1392,6 +1465,15 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
   page.value = 1;
   scheduleAutoLoad();
 });
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (applyRouteOverrides()) {
+      void load();
+    }
+  },
+);
 </script>
 
 <style scoped>
@@ -1452,6 +1534,23 @@ watch([activeSection, searchText, sourceFilter, reasonFilter, sortBy, sortDir, p
 .hero p {
   margin: 0;
   color: #334155;
+}
+
+.route-preset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+}
+
+.route-preset p {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 13px;
 }
 
 .secondary {

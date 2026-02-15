@@ -39,6 +39,20 @@ const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, 'Scene resolve failed'));
 const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger', 'projects.intake']);
 
+function resolveWorkspaceContextQuery() {
+  const query = route.query;
+  const context: Record<string, string> = {};
+  const preset = String(query.preset || '').trim();
+  const source = String(query.source || '').trim();
+  const ctxSource = String(query.ctx_source || '').trim();
+  const search = String(query.search || '').trim();
+  if (preset) context.preset = preset;
+  if (source) context.source = source;
+  if (ctxSource) context.ctx_source = ctxSource;
+  if (search) context.search = search;
+  return context;
+}
+
 function isPortalPath(url: string) {
   return url.startsWith('/portal/');
 }
@@ -103,12 +117,13 @@ async function resolveScene() {
 
   const target = scene.target || {};
   const layout = resolveSceneLayout(scene);
+  const workspaceContextQuery = resolveWorkspaceContextQuery();
   if (layout.kind === 'workspace') {
     if (CORE_SCENE_FALLBACK.has(sceneKey)) {
-      await router.replace('/s/projects.list');
+      await router.replace({ path: '/s/projects.list', query: workspaceContextQuery });
       return;
     }
-    await router.replace({ name: 'workbench', query: { scene: sceneKey || undefined } });
+    await router.replace({ name: 'workbench', query: { scene: sceneKey || undefined, ...workspaceContextQuery } });
     return;
   }
 
@@ -121,14 +136,14 @@ async function resolveScene() {
       if (recordId) {
         await router.replace({
           path: `/r/${target.model}/${recordId}`,
-          query: { menu_id: menuId || undefined, action_id: actionId || undefined },
+          query: { menu_id: menuId || undefined, action_id: actionId || undefined, ...workspaceContextQuery },
         });
         return;
       }
       if (actionId) {
         await router.replace({
           path: `/a/${actionId}`,
-          query: { menu_id: menuId || undefined },
+          query: { menu_id: menuId || undefined, ...workspaceContextQuery },
         });
         return;
       }
@@ -136,7 +151,7 @@ async function resolveScene() {
     if (target.action_id) {
       await router.replace({
         path: `/a/${target.action_id}`,
-        query: { menu_id: target.menu_id || undefined },
+        query: { menu_id: target.menu_id || undefined, ...workspaceContextQuery },
       });
       return;
     }
@@ -146,7 +161,7 @@ async function resolveScene() {
     if (target.action_id) {
       await router.replace({
         path: `/a/${target.action_id}`,
-        query: { menu_id: target.menu_id || undefined },
+        query: { menu_id: target.menu_id || undefined, ...workspaceContextQuery },
       });
       return;
     }
@@ -157,7 +172,7 @@ async function resolveScene() {
       if (actionId) {
         await router.replace({
           path: `/a/${actionId}`,
-          query: { menu_id: menuId || undefined },
+          query: { menu_id: menuId || undefined, ...workspaceContextQuery },
         });
         return;
       }
@@ -166,7 +181,7 @@ async function resolveScene() {
         if (recordId) {
           await router.replace({
             path: `/r/${target.model}/${recordId}`,
-            query: { menu_id: menuId || undefined, action_id: actionId || undefined },
+            query: { menu_id: menuId || undefined, action_id: actionId || undefined, ...workspaceContextQuery },
           });
           return;
         }
@@ -179,29 +194,29 @@ async function resolveScene() {
       window.location.assign(buildPortalBridgeUrl(target.route));
       return;
     }
-    await router.replace(target.route);
+    await router.replace({ path: target.route, query: workspaceContextQuery });
     return;
   }
 
   const menuHint = Number(route.query.menu_id || 0) || undefined;
   if (menuHint) {
-    await router.replace({ path: `/m/${menuHint}` });
+    await router.replace({ path: `/m/${menuHint}`, query: workspaceContextQuery });
     return;
   }
   const sceneNode = findActionNodeBySceneKey(session.menuTree, sceneKey);
   if (sceneNode?.meta?.action_id) {
     await router.replace({
       path: `/a/${sceneNode.meta.action_id}`,
-      query: { menu_id: sceneNode.menu_id || sceneNode.id || undefined },
+      query: { menu_id: sceneNode.menu_id || sceneNode.id || undefined, ...workspaceContextQuery },
     });
     return;
   }
   if (sceneNode?.menu_id || sceneNode?.id) {
-    await router.replace({ path: `/m/${sceneNode.menu_id || sceneNode.id}` });
+    await router.replace({ path: `/m/${sceneNode.menu_id || sceneNode.id}`, query: workspaceContextQuery });
     return;
   }
   if (CORE_SCENE_FALLBACK.has(sceneKey)) {
-    await router.replace('/s/projects.list');
+    await router.replace({ path: '/s/projects.list', query: workspaceContextQuery });
     return;
   }
 

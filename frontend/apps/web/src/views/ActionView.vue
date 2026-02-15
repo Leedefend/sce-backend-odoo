@@ -1,5 +1,9 @@
 <template>
   <section class="page">
+    <section v-if="appliedPresetLabel" class="route-preset">
+      <p>已应用推荐筛选：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
+      <button class="clear-btn" @click="clearRoutePreset">清除推荐</button>
+    </section>
     <KanbanPage
       v-if="viewMode === 'kanban'"
       :title="pageTitle"
@@ -69,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -142,6 +146,8 @@ const batchBusy = ref(false);
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
+const appliedPresetLabel = ref('');
+const routeContextSource = ref('');
 const { error, clearError, setError } = useStatus();
 type ContractColumnSchema = { name?: string };
 type ContractViewBlock = {
@@ -237,6 +243,59 @@ const hudEntries = computed(() => [
   { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
 ]);
+
+function resolveWorkspaceContextQuery() {
+  const preset = String(route.query.preset || '').trim();
+  const ctxSource = String(route.query.ctx_source || '').trim();
+  const search = String(route.query.search || '').trim();
+  const context: Record<string, string> = {};
+  if (preset) context.preset = preset;
+  if (ctxSource) context.ctx_source = ctxSource;
+  if (search) context.search = search;
+  return context;
+}
+
+function applyRoutePreset() {
+  const preset = String(route.query.preset || '').trim();
+  const routeSearch = String(route.query.search || '').trim();
+  const ctxSource = String(route.query.ctx_source || '').trim();
+  routeContextSource.value = ctxSource;
+  let changed = false;
+  const setIfDiff = <T>(target: { value: T }, next: T) => {
+    if (target.value === next) return;
+    target.value = next;
+    changed = true;
+  };
+
+  if (preset === 'pending_approval') {
+    appliedPresetLabel.value = '待审批合同';
+    setIfDiff(searchTerm, routeSearch || '审批');
+    setIfDiff(filterValue, 'active');
+  } else if (preset === 'project_intake') {
+    appliedPresetLabel.value = '项目立项';
+    setIfDiff(searchTerm, routeSearch || '立项');
+    setIfDiff(filterValue, 'active');
+  } else if (preset === 'cost_watchlist') {
+    appliedPresetLabel.value = '成本台账关注';
+    setIfDiff(searchTerm, routeSearch || '成本');
+  } else {
+    appliedPresetLabel.value = '';
+    if (routeSearch) {
+      setIfDiff(searchTerm, routeSearch);
+    }
+  }
+  return changed;
+}
+
+function clearRoutePreset() {
+  appliedPresetLabel.value = '';
+  routeContextSource.value = '';
+  const nextQuery: Record<string, unknown> = { ...route.query };
+  delete nextQuery.preset;
+  delete nextQuery.search;
+  delete nextQuery.ctx_source;
+  router.replace({ name: 'action', params: route.params, query: nextQuery }).catch(() => {});
+}
 
 function mergeContext(base: Record<string, unknown> | string | undefined) {
   if (!base || typeof base === 'string') {
@@ -786,12 +845,12 @@ function handleRowClick(row: Record<string, unknown>) {
   if (typeof id === 'number') {
     router.push({
       path: `/r/${model.value}/${id}`,
-      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined },
+      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined, ...resolveWorkspaceContextQuery() },
     });
   } else if (typeof id === 'string' && id) {
     router.push({
       path: `/r/${model.value}/${id}`,
-      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined },
+      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined, ...resolveWorkspaceContextQuery() },
     });
   }
 }
@@ -1080,12 +1139,50 @@ async function handleLoadMoreFailures() {
   }
 }
 
-onMounted(load);
+onMounted(async () => {
+  applyRoutePreset();
+  await load();
+});
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (applyRoutePreset()) {
+      void load();
+    }
+  },
+);
 </script>
 
 <style scoped>
 .page {
   display: grid;
   gap: 16px;
+}
+
+.route-preset {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+}
+
+.route-preset p {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 13px;
+}
+
+.clear-btn {
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 </style>
