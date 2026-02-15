@@ -149,3 +149,39 @@ def merge_missing_scenes_from_registry(env, scenes, warnings):
         })
     return current
 
+
+def load_scenes_from_db_or_fallback(env, *, drift=None, logger=None) -> dict:
+    out = {
+        "scenes": [],
+        "scene_version": None,
+        "schema_version": None,
+        "loaded_from": "fallback",
+    }
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import (
+            get_schema_version,
+            get_scene_version,
+            has_db_scenes,
+            load_scene_configs,
+        )
+    except Exception as exc:
+        if logger is not None:
+            try:
+                logger.warning("scene registry import failed: %s", exc)
+            except Exception:
+                pass
+        return out
+
+    try:
+        scenes_payload = load_scene_configs(env, drift=drift) or []
+        out["scenes"] = scenes_payload if isinstance(scenes_payload, list) else []
+        out["loaded_from"] = "db" if has_db_scenes(env) else "fallback"
+        out["scene_version"] = get_scene_version()
+        out["schema_version"] = get_schema_version()
+    except Exception as exc:
+        if logger is not None:
+            try:
+                logger.warning("scene source load failed: %s", exc)
+            except Exception:
+                pass
+    return out

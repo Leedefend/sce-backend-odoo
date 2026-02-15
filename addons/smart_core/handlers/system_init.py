@@ -19,6 +19,7 @@ from odoo.addons.smart_core.core.handler_registry import HANDLER_REGISTRY
 from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
 from odoo.addons.smart_core.core.scene_provider import (
     load_scene_contract as provider_load_scene_contract,
+    load_scenes_from_db_or_fallback as provider_load_scenes_from_db_or_fallback,
     merge_missing_scenes_from_registry as provider_merge_missing_scenes_from_registry,
     resolve_scene_channel as provider_resolve_scene_channel,
 )
@@ -1536,26 +1537,21 @@ class SystemInitHandler(BaseIntentHandler):
             scene_diagnostics["loaded_from"] = "contract"
             data["scenes"] = _merge_missing_scenes_from_registry(env, data.get("scenes"), scene_diagnostics["normalize_warnings"])
         else:
-            try:
-                from odoo.addons.smart_construction_scene.scene_registry import (
-                    load_scene_configs,
-                    get_scene_version,
-                    get_schema_version,
-                    has_db_scenes,
-                )
-                t_load_start = time.time()
-                drift_entries = scene_diagnostics["drift"]
-                scenes_payload = load_scene_configs(env, drift=drift_entries) or []
-                scene_diagnostics["loaded_from"] = "db" if has_db_scenes(env) else "fallback"
-                scene_diagnostics["timings"]["load_ms"] = int((time.time() - t_load_start) * 1000)
-                if scenes_payload:
-                    data["scenes"] = scenes_payload
-                    data["scene_version"] = get_scene_version() or data.get("scene_version")
-                    data["schema_version"] = get_schema_version() or data.get("schema_version")
-                    scene_diagnostics["scene_version"] = data.get("scene_version")
-                    scene_diagnostics["schema_version"] = data.get("schema_version")
-            except Exception as e:
-                _logger.warning("system.init scene source load failed: %s", e)
+            t_load_start = time.time()
+            scene_source = provider_load_scenes_from_db_or_fallback(
+                env,
+                drift=scene_diagnostics["drift"],
+                logger=_logger,
+            )
+            scene_diagnostics["loaded_from"] = scene_source.get("loaded_from") or "fallback"
+            scene_diagnostics["timings"]["load_ms"] = int((time.time() - t_load_start) * 1000)
+            scenes_payload = scene_source.get("scenes") if isinstance(scene_source.get("scenes"), list) else []
+            if scenes_payload:
+                data["scenes"] = scenes_payload
+                data["scene_version"] = scene_source.get("scene_version") or data.get("scene_version")
+                data["schema_version"] = scene_source.get("schema_version") or data.get("schema_version")
+                scene_diagnostics["scene_version"] = data.get("scene_version")
+                scene_diagnostics["schema_version"] = data.get("schema_version")
 
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
         scene_keys = {
