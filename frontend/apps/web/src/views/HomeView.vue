@@ -67,6 +67,7 @@
         type="search"
         placeholder="搜索能力名称或说明"
       />
+      <p class="result-summary">{{ resultSummaryText }}</p>
       <label class="ready-only">
         <input v-model="readyOnly" type="checkbox" />
         仅显示可进入能力
@@ -116,6 +117,7 @@
         >
           {{ chip.label }} ×
         </button>
+        <button class="filter-chip filter-chip-clear" @click="clearSearchAndFilters">清空全部筛选</button>
       </div>
       <div v-if="groupedEntries.length" class="group-actions">
         <button @click="expandAllSceneGroups">展开全部分组</button>
@@ -136,6 +138,7 @@
           }}
         </p>
         <div class="empty-actions">
+          <button v-if="lockReasonFilter !== 'ALL'" class="empty-btn" @click="clearLockReasonFilter">清除锁定原因</button>
           <button v-if="readyOnlyNoResult" class="empty-btn" @click="showAllCapabilities">显示全部能力</button>
           <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
         </div>
@@ -518,8 +521,8 @@ function resolveSuggestionCount(sceneKey: string, fallbackKeys: string[]) {
 function matchesSearch(entry: CapabilityEntry, query: string) {
   if (!query) return true;
   const fields = isHudEnabled.value
-    ? [entry.title, entry.subtitle, entry.key, ...entry.tags]
-    : [entry.title, entry.subtitle, ...entry.tags];
+    ? [entry.title, entry.subtitle, entry.sceneTitle, entry.key, ...entry.tags]
+    : [entry.title, entry.subtitle, entry.sceneTitle, ...entry.tags];
   return fields.some((text) => String(text || '').toLowerCase().includes(query));
 }
 
@@ -561,6 +564,7 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
+const resultSummaryText = computed(() => `当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`);
 const readyOnlyNoResult = computed(
   () => readyOnly.value && filteredEntries.value.length === 0 && stateCounts.value.READY === 0,
 );
@@ -604,7 +608,7 @@ const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group
 
 const lockedReasonOptions = computed(() => {
   const map = new Map<string, number>();
-  entries.value.forEach((entry) => {
+  searchedEntries.value.forEach((entry) => {
     if (entry.state !== 'LOCKED') return;
     const code = String(entry.reasonCode || 'UNKNOWN').toUpperCase();
     map.set(code, (map.get(code) || 0) + 1);
@@ -723,15 +727,27 @@ function toggleEmptyHelp() {
 }
 
 function clearSearchAndFilters() {
+  const hadFilters = Boolean(searchText.value.trim() || readyOnly.value || stateFilter.value !== 'ALL' || lockReasonFilter.value !== 'ALL');
   searchText.value = '';
   readyOnly.value = false;
   stateFilter.value = 'ALL';
   lockReasonFilter.value = 'ALL';
+  if (hadFilters) {
+    void trackUsageEvent('workspace.filter_clear_all', { source: 'workspace.home' }).catch(() => {});
+  }
 }
 
 function showAllCapabilities() {
+  const wasReadyOnly = readyOnly.value;
   readyOnly.value = false;
   stateFilter.value = 'ALL';
+  if (wasReadyOnly) {
+    void trackUsageEvent('workspace.ready_only.recover', { from: 'empty_state' }).catch(() => {});
+  }
+}
+
+function clearLockReasonFilter() {
+  lockReasonFilter.value = 'ALL';
 }
 
 function clearFilterChip(key: string) {
@@ -739,6 +755,7 @@ function clearFilterChip(key: string) {
   if (key === 'ready-only') readyOnly.value = false;
   if (key === 'state') stateFilter.value = 'ALL';
   if (key === 'reason') lockReasonFilter.value = 'ALL';
+  void trackUsageEvent('workspace.filter_chip_clear', { filter_key: key }).catch(() => {});
 }
 
 function normalizeViewMode(raw: unknown) {
@@ -752,9 +769,10 @@ function pushRecentEntry(recentKey: string) {
 }
 
 function clearRecentEntries() {
-  if (!recentEntryKeys.value.length) return;
+  const cleared = recentEntryKeys.value.length;
+  if (!cleared) return;
   recentEntryKeys.value = [];
-  void trackUsageEvent('workspace.recent.clear', { scope: workspaceScopeKey.value }).catch(() => {});
+  void trackUsageEvent('workspace.recent.clear', { scope: workspaceScopeKey.value, cleared_count: cleared }).catch(() => {});
 }
 
 function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<string, string>) {
@@ -974,6 +992,12 @@ watch([readyOnly, stateFilter, lockReasonFilter], () => {
     state_filter: stateFilter.value,
     lock_reason_filter: lockReasonFilter.value,
   }).catch(() => {});
+});
+
+watch(lockReasonFilter, (next) => {
+  if (next === 'ALL') return;
+  if (stateFilter.value === 'LOCKED') return;
+  stateFilter.value = 'LOCKED';
 });
 
 watch(searchText, (next) => {
@@ -1253,6 +1277,12 @@ function highlightParts(raw: string) {
   background: #fff;
 }
 
+.result-summary {
+  margin: -2px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
 .state-filters {
   display: flex;
   gap: 8px;
@@ -1328,6 +1358,12 @@ function highlightParts(raw: string) {
   color: #1e40af;
   background: #eff6ff;
   cursor: pointer;
+}
+
+.filter-chip-clear {
+  border-style: dashed;
+  color: #475569;
+  background: #fff;
 }
 
 .group-actions {
