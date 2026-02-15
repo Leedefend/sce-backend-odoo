@@ -37,6 +37,10 @@ from odoo.addons.smart_core.core.exceptions import (
     DEFAULT_CONTRACT_VERSION,
     build_error_envelope,
 )
+from odoo.addons.smart_core.utils.contract_governance import (
+    apply_contract_governance,
+    resolve_contract_mode,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -81,6 +85,7 @@ class ContractService:
 
         # 2) 解析/规范化 payload（强约束字段、兜底默认值）
         p = parse_payload(payload)
+        contract_mode = resolve_contract_mode(payload if isinstance(payload, dict) else p)
         _logger.warning("CONTRACT_PARSED_PAYLOAD %s", p)
 
         # 3) 根据 subject 分发
@@ -107,6 +112,7 @@ class ContractService:
             _contract_fixed = self.finalize_contract(_contract_min)
             # 用修复后的 data 覆盖
             data = _contract_fixed.get("data", data)
+            data = apply_contract_governance(data, contract_mode, inject_contract_mode=False)
         except AssertionError as ae:
             # 统一化自检失败：返回 422，方便开发期快速定位脏数据/不一致
             _logger.exception("contract finalize self-check failed")
@@ -132,6 +138,7 @@ class ContractService:
             "trace_id": trace_id,
             "api_version": DEFAULT_API_VERSION,
             "contract_version": DEFAULT_CONTRACT_VERSION,
+            "contract_mode": contract_mode,
         }
 
         # 6) 返回成功响应
