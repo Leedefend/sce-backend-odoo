@@ -67,6 +67,7 @@
         type="search"
         placeholder="搜索能力名称或说明"
       />
+      <p class="result-summary">{{ resultSummaryText }}</p>
       <label class="ready-only">
         <input v-model="readyOnly" type="checkbox" />
         仅显示可进入能力
@@ -562,6 +563,7 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
+const resultSummaryText = computed(() => `当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`);
 const readyOnlyNoResult = computed(
   () => readyOnly.value && filteredEntries.value.length === 0 && stateCounts.value.READY === 0,
 );
@@ -1257,6 +1259,12 @@ function highlightParts(raw: string) {
   border-radius: 10px;
   padding: 10px 12px;
   background: #fff;
+}
+
+.result-summary {
+  margin: -2px 0 0;
+  color: #64748b;
+  font-size: 12px;
 }
 
 .state-filters {
