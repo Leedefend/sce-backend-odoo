@@ -744,6 +744,7 @@ function clearFilterChip(key: string) {
   if (key === 'ready-only') readyOnly.value = false;
   if (key === 'state') stateFilter.value = 'ALL';
   if (key === 'reason') lockReasonFilter.value = 'ALL';
+  void trackUsageEvent('workspace.filter_chip_clear', { filter_key: key }).catch(() => {});
 }
 
 function normalizeViewMode(raw: unknown) {
