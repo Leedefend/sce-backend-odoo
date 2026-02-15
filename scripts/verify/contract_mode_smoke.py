@@ -7,6 +7,15 @@ import os
 from intent_smoke_utils import require_ok
 from python_http_smoke_utils import get_base_url, http_post_json
 
+FORBIDDEN_USER_KEYS = {
+    "action_id",
+    "menu_id",
+    "view_id",
+    "model",
+    "res_model",
+    "scene_key",
+}
+
 
 def _has_internal_or_smoke(item: dict) -> bool:
     if not isinstance(item, dict):
@@ -26,6 +35,23 @@ def _has_internal_or_smoke(item: dict) -> bool:
         return True
     text = f"{name} {key}"
     return ("smoke" in text) or ("internal" in text)
+
+
+def _find_forbidden_keys(value, *, path="", found=None):
+    found = found if isinstance(found, list) else []
+    if isinstance(value, list):
+        for idx, item in enumerate(value):
+            _find_forbidden_keys(item, path=f"{path}[{idx}]", found=found)
+        return found
+    if not isinstance(value, dict):
+        return found
+    for key, item in value.items():
+        key_text = str(key or "").strip().lower()
+        next_path = f"{path}.{key}" if path else str(key)
+        if key_text in FORBIDDEN_USER_KEYS:
+            found.append(next_path)
+        _find_forbidden_keys(item, path=next_path, found=found)
+    return found
 
 
 def _post_intent(intent_url: str, token: str, intent: str, params: dict) -> tuple[int, dict]:
@@ -85,6 +111,10 @@ def main() -> None:
         raise RuntimeError("system.init user mode contains internal/smoke scene")
     if any(_has_internal_or_smoke(item) for item in user_caps):
         raise RuntimeError("system.init user mode contains internal/smoke capability")
+    forbidden_hits = _find_forbidden_keys({"scenes": user_scenes, "capabilities": user_caps})
+    if forbidden_hits:
+        detail = ";".join(forbidden_hits[:10])
+        raise RuntimeError(f"system.init user mode exposes technical keys: {detail}")
 
     status, hud_init = _post_intent(
         intent_url,

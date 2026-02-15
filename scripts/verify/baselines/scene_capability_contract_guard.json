@@ -1,6 +1,10 @@
 {
-  "min_scenes": 1,
-  "min_capabilities": 1,
+  "min_scenes": 20,
+  "min_capabilities": 3,
+  "role_min_capabilities": {
+    "demo_pm": 3,
+    "demo_finance": 1
+  },
   "max_missing_refs": 0,
   "max_errors": 0
 }

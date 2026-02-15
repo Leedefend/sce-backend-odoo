@@ -39,35 +39,31 @@ def _collect_required_caps(scene: dict):
     return required
 
 
-def main() -> None:
-    base_url = get_base_url()
-    db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
-    login = os.getenv("E2E_LOGIN") or "admin"
-    password = os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin"
-    intent_url = f"{base_url}/api/v1/intent"
-
+def _login(intent_url: str, *, db_name: str, login: str, password: str):
     status, login_resp = http_post_json(
         intent_url,
         {"intent": "login", "params": {"db": db_name, "login": login, "password": password}},
         headers={"X-Anonymous-Intent": "1"},
     )
-    require_ok(status, login_resp, "login")
-    token = (login_resp.get("data") or {}).get("token")
+    if status != 200:
+        return None
+    data = login_resp.get("data") if isinstance(login_resp, dict) else {}
+    token = data.get("token") if isinstance(data, dict) else None
     if not token:
-        raise RuntimeError("login response missing token")
-    auth = {"Authorization": f"Bearer {token}"}
+        return None
+    return str(token)
 
+
+def _system_init_hud(intent_url: str, token: str):
     status, init_resp = http_post_json(
         intent_url,
         {"intent": "system.init", "params": {"contract_mode": "hud"}},
-        headers=auth,
+        headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, init_resp, "system.init hud")
-
     data = init_resp.get("data") if isinstance(init_resp.get("data"), dict) else {}
     if isinstance(data.get("data"), dict):  # compat with nested envelope
         data = data.get("data") or data
-
     scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
     capabilities = data.get("capabilities") if isinstance(data.get("capabilities"), list) else []
     cap_keys = {
@@ -75,6 +71,64 @@ def main() -> None:
         for item in capabilities
         if isinstance(item, dict) and str(item.get("key") or "").strip()
     }
+    return {
+        "scenes": scenes,
+        "cap_keys": cap_keys,
+    }
+
+
+def main() -> None:
+    base_url = get_base_url()
+    db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
+    login = os.getenv("E2E_LOGIN") or "admin"
+    password = os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin"
+    intent_url = f"{base_url}/api/v1/intent"
+
+    raw_logins = os.getenv("E2E_ROLE_MATRIX_LOGINS") or "demo_pm,demo_finance,demo_role_executive,admin"
+    login_candidates = [item.strip() for item in str(raw_logins).split(",") if item.strip()]
+    if login not in login_candidates:
+        login_candidates.append(login)
+
+    demo_pwd = os.getenv("E2E_ROLE_MATRIX_DEFAULT_PASSWORD") or "demo"
+    default_pwd_map = {
+        "admin": password,
+    }
+    role_samples = {}
+    login_failures = []
+    for candidate in login_candidates:
+        candidate_pwd = default_pwd_map.get(candidate) or demo_pwd
+        token = _login(intent_url, db_name=db_name, login=candidate, password=candidate_pwd)
+        if not token:
+            login_failures.append(candidate)
+            continue
+        try:
+            payload = _system_init_hud(intent_url, token)
+            role_samples[candidate] = {
+                "scene_count": len(payload["scenes"]),
+                "capability_count": len(payload["cap_keys"]),
+                "scenes": payload["scenes"],
+                "cap_keys": payload["cap_keys"],
+            }
+        except Exception:
+            login_failures.append(candidate)
+
+    if not role_samples:
+        raise RuntimeError(
+            f"all role-matrix logins failed: {','.join(login_candidates)} "
+            "(override by E2E_ROLE_MATRIX_LOGINS or E2E_LOGIN/E2E_PASSWORD)"
+        )
+
+    best_login = sorted(
+        role_samples.keys(),
+        key=lambda key: (
+            int(role_samples[key]["capability_count"]),
+            int(role_samples[key]["scene_count"]),
+            key,
+        ),
+        reverse=True,
+    )[0]
+    scenes = role_samples[best_login]["scenes"]
+    cap_keys = role_samples[best_login]["cap_keys"]
 
     errors = []
     missing_refs = []
@@ -95,6 +149,7 @@ def main() -> None:
     baseline = {
         "min_scenes": 1,
         "min_capabilities": 1,
+        "role_min_capabilities": {},
         "max_errors": 0,
         "max_missing_refs": 0,
     }
@@ -110,6 +165,18 @@ def main() -> None:
         errors.append(f"scenes below baseline: {len(scenes)} < {baseline.get('min_scenes')}")
     if len(cap_keys) < int(baseline.get("min_capabilities", 1)):
         errors.append(f"capabilities below baseline: {len(cap_keys)} < {baseline.get('min_capabilities')}")
+    role_min_caps = baseline.get("role_min_capabilities")
+    if isinstance(role_min_caps, dict):
+        for role_login, expected in role_min_caps.items():
+            key = str(role_login or "").strip()
+            if not key:
+                continue
+            if key not in role_samples:
+                errors.append(f"required role login missing: {key}")
+                continue
+            actual = int(role_samples[key]["capability_count"])
+            if actual < int(expected):
+                errors.append(f"{key}: capabilities below baseline: {actual} < {int(expected)}")
     if len(missing_refs) > int(baseline.get("max_missing_refs", 0)):
         errors.append(f"missing refs above baseline: {len(missing_refs)} > {baseline.get('max_missing_refs')}")
     if len(errors) > int(baseline.get("max_errors", 0)):
@@ -119,11 +186,21 @@ def main() -> None:
         "ok": len(errors) <= int(baseline.get("max_errors", 0)),
         "baseline": baseline,
         "summary": {
+            "probe_login": best_login,
             "scene_count": len(scenes),
             "capability_count": len(cap_keys),
             "missing_ref_count": len(missing_refs),
             "error_count": len(errors),
+            "role_sample_count": len(role_samples),
         },
+        "role_samples": {
+            key: {
+                "scene_count": int(val["scene_count"]),
+                "capability_count": int(val["capability_count"]),
+            }
+            for key, val in sorted(role_samples.items())
+        },
+        "login_failures": sorted(login_failures),
         "missing_refs": missing_refs,
         "errors": errors,
     }
@@ -136,9 +213,19 @@ def main() -> None:
         f"- status: {'PASS' if report['ok'] else 'FAIL'}",
         f"- scene_count: {report['summary']['scene_count']}",
         f"- capability_count: {report['summary']['capability_count']}",
+        f"- probe_login: {report['summary']['probe_login']}",
+        f"- role_sample_count: {report['summary']['role_sample_count']}",
         f"- missing_ref_count: {report['summary']['missing_ref_count']}",
         f"- error_count: {report['summary']['error_count']}",
     ]
+    if report["role_samples"]:
+        lines.extend(["", "## Role Samples", ""])
+        for key, val in report["role_samples"].items():
+            lines.append(f"- {key}: scenes={val['scene_count']} capabilities={val['capability_count']}")
+    if report["login_failures"]:
+        lines.extend(["", "## Login Failures", ""])
+        for key in report["login_failures"]:
+            lines.append(f"- {key}")
     if missing_refs:
         lines.extend(["", "## Missing Refs", ""])
         for item in missing_refs[:50]:
