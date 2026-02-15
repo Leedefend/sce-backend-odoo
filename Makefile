@@ -877,7 +877,7 @@ ops.auth.dev.rollback:
 ops.auth.dev.verify:
 	@./scripts/ops/auth_policy.sh verify -p $(AUTH_PROJECT) -d $(AUTH_DB)
 
-.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions audit.nav.alignment
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions audit.nav.alignment audit.nav.role_diff
 demo.verify: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
@@ -922,6 +922,10 @@ audit.nav.alignment: guard.prod.forbid check-compose-project check-compose-env
 	@ENABLE_SUGGESTIONS=1 $(MAKE) --no-print-directory audit.project.actions DB_NAME=$(DB_NAME)
 	@$(MAKE) --no-print-directory verify.menu.scene_resolve.container DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD)
 	@python3 scripts/audit/nav_alignment_report.py
+
+audit.nav.role_diff: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) --no-print-directory verify.portal.role_surface_preflight.container DB_NAME=$(DB_NAME)
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "BASE_URL=http://localhost:8069 DB_NAME=$(DB_NAME) ROOT_XMLID=$(ROOT_XMLID) ROLE_OWNER_LOGIN=$(or $(ROLE_OWNER_LOGIN),demo_role_owner) ROLE_OWNER_PASSWORD=$(or $(ROLE_OWNER_PASSWORD),demo) ROLE_PM_LOGIN=$(or $(ROLE_PM_LOGIN),demo_role_pm) ROLE_PM_PASSWORD=$(or $(ROLE_PM_PASSWORD),demo) ROLE_FINANCE_LOGIN=$(or $(ROLE_FINANCE_LOGIN),demo_role_finance) ROLE_FINANCE_PASSWORD=$(or $(ROLE_FINANCE_PASSWORD),demo) ROLE_EXECUTIVE_LOGIN=$(or $(ROLE_EXECUTIVE_LOGIN),demo_role_executive) ROLE_EXECUTIVE_PASSWORD=$(or $(ROLE_EXECUTIVE_PASSWORD),demo) python3 /mnt/scripts/audit/role_nav_diff.py"
 
 .PHONY: prod.upgrade.core
 prod.upgrade.core: guard.prod.danger check-compose-project check-compose-env

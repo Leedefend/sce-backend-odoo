@@ -32,6 +32,8 @@ status: active
 - 初始化评分表：`docs/ops/init_scorecard.md`
 - 导航对齐审计：`make audit.nav.alignment DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
   - 输出：`artifacts/audit/nav_alignment_report.latest.json`、`artifacts/audit/nav_alignment_report.latest.md`
+- 角色菜单差异审计：`make audit.nav.role_diff DB_NAME=sc_demo`
+  - 输出：`artifacts/audit/role_nav_diff.latest.json`、`artifacts/audit/role_nav_diff.latest.md`
 
 ## 产品/UX 参考
 - 项目中心表达：`docs/ops/A1_project_center_expression.md`

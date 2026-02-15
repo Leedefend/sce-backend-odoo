@@ -25,6 +25,12 @@ since: v0.3.0-stable
     - `status = pass`
     - `menu_scene_resolve.summary.failures = 0`
     - `actions.missing_groups_count = 0`
+- 角色导航差异审计通过（角色基线口径）:
+  - `make audit.nav.role_diff DB_NAME=sc_demo`
+  - `artifacts/audit/role_nav_diff.latest.json` 中：
+    - `status = pass`
+    - `blockers = []`
+    - 各角色 `nav_count > 0`
 - Phase 9.8 menu/scene coverage summary is present in release evidence:
   - `make verify.menu.scene_resolve.summary`
   - required keys in `artifacts/codex/summary.md`:

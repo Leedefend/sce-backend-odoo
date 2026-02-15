@@ -96,6 +96,10 @@ jobs:
         run: |
           make audit.nav.alignment DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo
 
+      - name: Role navigation diff audit
+        run: |
+          make audit.nav.role_diff DB_NAME=sc_demo
+
       - name: Publish nav alignment summary
         if: always()
         run: |
@@ -131,6 +135,71 @@ jobs:
               f"- menu_scene_coverage: `{menu.get('coverage', 'n/a')}`",
               f"- action_missing_groups_scoped: `{actions.get('missing_groups_count', 'n/a')}`",
               f"- unguarded_visible_total_scoped: `{actions.get('unguarded_visible_total', 'n/a')}`",
+          ]
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines) + "\n")
+          print("\n".join(lines))
+          PY
+
+      - name: Publish role nav diff summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          report = "artifacts/audit/role_nav_diff.latest.json"
+          status = "n/a"
+          blockers = []
+          roles = []
+          pairwise = []
+          if os.path.exists(report):
+              try:
+                  payload = json.load(open(report, "r", encoding="utf-8"))
+                  status = payload.get("status", "n/a")
+                  blockers = payload.get("blockers") or []
+                  roles = payload.get("roles") or []
+                  pairwise = payload.get("pairwise_diff") or []
+              except Exception:
+                  pass
+
+          role_lines = []
+          for row in roles:
+              role = row.get("role", "")
+              if row.get("error"):
+                  role_lines.append(f"  - {role}: error={row.get('error')}")
+              else:
+                  role_lines.append(
+                      f"  - {role}: nav_count={row.get('nav_count', 'n/a')} "
+                      f"scene_bound={row.get('scene_bound_count', 'n/a')} "
+                      f"landing={row.get('landing_scene_key', '')}"
+                  )
+          if not role_lines:
+              role_lines = ["  - n/a"]
+
+          pair_lines = []
+          for row in pairwise[:6]:
+              pair_lines.append(
+                  f"  - {row.get('left')} vs {row.get('right')}: "
+                  f"left_only={row.get('left_only_count', 'n/a')} "
+                  f"right_only={row.get('right_only_count', 'n/a')}"
+              )
+          if not pair_lines:
+              pair_lines = ["  - n/a"]
+
+          lines = [
+              "## Role Navigation Diff",
+              "",
+              f"- report: `{report}`",
+              f"- status: `{status}`",
+              f"- blockers: `{', '.join(blockers) if blockers else '-'}`",
+              "- role summary:",
+              *role_lines,
+              "- pairwise summary:",
+              *pair_lines,
           ]
 
           step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
