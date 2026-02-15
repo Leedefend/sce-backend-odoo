@@ -2,11 +2,19 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import sys
 import time
 from datetime import datetime
 from http.client import RemoteDisconnected
+from pathlib import Path
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+
+COMMON_DIR = Path(__file__).resolve().parents[1] / "common"
+if str(COMMON_DIR) not in sys.path:
+    sys.path.insert(0, str(COMMON_DIR))
+
+from scene_legacy_contract import require_deprecation_headers, require_deprecation_payload  # noqa: E402
 
 
 def _load_env_value_from_file(env_path: str, key: str) -> str | None:
@@ -225,25 +233,8 @@ def main():
             scenes = scenes_data.get("scenes") or []
             if not scenes:
                 raise RuntimeError("scenes.my returned empty scenes list after seed")
-        deprecation = scenes_data.get("deprecation") if isinstance(scenes_data.get("deprecation"), dict) else {}
-        if (deprecation.get("status") or "").strip().lower() != "deprecated":
-            raise RuntimeError("scenes.my response missing deprecation.status=deprecated")
-        if not str(deprecation.get("replacement") or "").strip():
-            raise RuntimeError("scenes.my response missing deprecation.replacement")
-        sunset_date = str(deprecation.get("sunset_date") or "").strip()
-        if sunset_date != "2026-04-30":
-            raise RuntimeError(f"scenes.my response invalid deprecation.sunset_date: {sunset_date}")
-        dep_header = str(scenes_headers.get("Deprecation") or scenes_headers.get("deprecation") or "").strip().lower()
-        if dep_header != "true":
-            raise RuntimeError(f"scenes.my response missing Deprecation header=true: {dep_header}")
-        sunset_header = str(scenes_headers.get("Sunset") or scenes_headers.get("sunset") or "").strip()
-        if not sunset_header:
-            raise RuntimeError("scenes.my response missing Sunset header")
-        if "GMT" not in sunset_header:
-            raise RuntimeError(f"scenes.my response Sunset header must be GMT: {sunset_header}")
-        link_header = str(scenes_headers.get("Link") or scenes_headers.get("link") or "").strip()
-        if "successor-version" not in link_header or "/api/v1/intent" not in link_header:
-            raise RuntimeError("scenes.my response missing Link successor-version header")
+        require_deprecation_payload(scenes_data, label="scenes.my")
+        require_deprecation_headers(scenes_headers, label="scenes.my")
         default_code = scenes_data.get("default_scene")
         scene = next((s for s in scenes if s.get("code") == default_code), scenes[0])
         tiles = scene.get("tiles") or []
