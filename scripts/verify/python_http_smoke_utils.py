@@ -60,18 +60,23 @@ def http_post_json(url: str, payload: dict, headers: dict | None = None) -> tupl
 
 
 def http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
+    status, payload, _ = http_get_json_with_headers(url, headers=headers)
+    return status, payload
+
+
+def http_get_json_with_headers(url: str, headers: dict | None = None) -> tuple[int, dict, dict]:
     req = urlrequest.Request(url, method="GET")
     for k, v in (headers or {}).items():
         req.add_header(k, v)
     try:
         with urlrequest.urlopen(req, timeout=30) as resp:
             body = resp.read().decode("utf-8") or "{}"
-            return resp.status, json.loads(body)
+            return resp.status, json.loads(body), dict(resp.headers or {})
     except HTTPError as e:
         body = e.read().decode("utf-8") if hasattr(e, "read") else ""
         try:
-            return e.code, json.loads(body or "{}")
+            return e.code, json.loads(body or "{}"), dict(getattr(e, "headers", {}) or {})
         except Exception:
-            return e.code, {"raw": body}
+            return e.code, {"raw": body}, dict(getattr(e, "headers", {}) or {})
     except URLError as e:
         raise RuntimeError(f"HTTP request failed: {e}") from e
