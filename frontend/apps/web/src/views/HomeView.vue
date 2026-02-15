@@ -112,8 +112,10 @@
 
     <div v-if="!filteredEntries.length" class="empty">
       <template v-if="entries.length">
-        <p>未找到相关能力，请调整筛选条件。</p>
-        <button class="empty-btn" @click="clearSearchAndFilters">清空筛选</button>
+        <p>
+          {{ searchKeyword ? `未找到与“${searchKeyword}”相关的能力，请调整筛选条件。` : '未找到相关能力，请调整筛选条件。' }}
+        </p>
+        <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
       </template>
       <template v-else>
         <p>当前账号暂无可用能力，可能因为角色权限未开通或工作台尚未配置。</p>
@@ -276,6 +278,7 @@ const homeCollapseStorageKey = computed(() => `sc.home.scene_groups.collapsed.v2
 const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScopeKey.value}`);
 const homeViewModeStorageKey = computed(() => `workspace:view_mode:${workspaceScopeKey.value}`);
 const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKey.value}`);
+const searchKeyword = computed(() => searchText.value.trim());
 
 function stringifyEntryContext(context: { section?: string; source?: string; reason?: string; search?: string }) {
   const next: Record<string, string> = {};
