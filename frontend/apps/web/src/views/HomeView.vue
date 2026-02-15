@@ -33,9 +33,15 @@
       </header>
       <div class="today-actions-grid">
         <article v-for="item in todaySuggestions" :key="item.id" class="today-card">
-          <p class="today-title">{{ item.title }}</p>
+          <p class="today-title">
+            <span>{{ item.title }}</span>
+            <span v-if="item.status" class="today-status" :class="`today-status-${item.status}`">
+              {{ item.status === 'urgent' ? '紧急' : '普通' }}
+            </span>
+          </p>
           <p class="today-desc">{{ item.description }}</p>
-          <button class="today-btn" @click="openSuggestion(item.sceneKey)">立即进入</button>
+          <p v-if="typeof item.count === 'number'" class="today-count">待处理 {{ item.count }}</p>
+          <button class="today-btn" @click="openSuggestion(item.sceneKey, item.contextQuery)">立即进入</button>
         </article>
       </div>
     </section>
@@ -69,11 +75,19 @@
         <button :class="{ active: stateFilter === 'READY' }" @click="stateFilter = 'READY'">
           可进入 {{ stateCounts.READY }}
         </button>
-        <button :class="{ active: stateFilter === 'LOCKED' }" @click="stateFilter = 'LOCKED'">
+        <button
+          :class="{ active: stateFilter === 'LOCKED' }"
+          :disabled="readyOnly"
+          @click="stateFilter = 'LOCKED'"
+        >
           暂不可用 {{ stateCounts.LOCKED }}
         </button>
-        <button :class="{ active: stateFilter === 'PREVIEW' }" @click="stateFilter = 'PREVIEW'">
-          预览中 {{ stateCounts.PREVIEW }}
+        <button
+          :class="{ active: stateFilter === 'PREVIEW' }"
+          :disabled="readyOnly"
+          @click="stateFilter = 'PREVIEW'"
+        >
+          即将开放 {{ stateCounts.PREVIEW }}
         </button>
       </div>
       <div v-if="lockedReasonOptions.length" class="reason-filters">
@@ -136,10 +150,18 @@
           >
             <div class="entry-main">
               <p class="title-row">
-                <span class="title">{{ entry.title }}</span>
+                <span class="title">
+                  <template v-for="(part, index) in highlightParts(entry.title)" :key="`title-${entry.id}-${index}`">
+                    <span :class="{ hit: part.hit }">{{ part.text }}</span>
+                  </template>
+                </span>
                 <span v-if="entry.state !== 'READY'" class="state">{{ stateLabel(entry.state) }}</span>
               </p>
-              <p class="subtitle" :title="entry.reason || entry.subtitle">{{ entry.subtitle || '无说明' }}</p>
+              <p class="subtitle" :title="entry.reason || entry.subtitle">
+                <template v-for="(part, index) in highlightParts(entry.subtitle || '无说明')" :key="`sub-${entry.id}-${index}`">
+                  <span :class="{ hit: part.hit }">{{ part.text }}</span>
+                </template>
+              </p>
               <p v-if="isHudEnabled" class="hud-meta">scene_key={{ entry.sceneKey }} · capability_key={{ entry.key }}</p>
               <p v-if="entry.state === 'LOCKED'" class="lock-reason">
                 {{ entry.reason || lockReasonLabel(entry.reasonCode) }}
@@ -167,6 +189,7 @@ import { useSessionStore } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
+type SuggestionStatus = 'urgent' | 'normal';
 type CapabilityEntry = {
   id: string;
   key: string;
@@ -180,6 +203,15 @@ type CapabilityEntry = {
   reason: string;
   reasonCode: string;
   tags: string[];
+};
+type SuggestionItem = {
+  id: string;
+  title: string;
+  description: string;
+  sceneKey: string;
+  contextQuery?: Record<string, string>;
+  count?: number;
+  status?: SuggestionStatus;
 };
 
 const router = useRouter();
@@ -334,41 +366,68 @@ const entries = computed<CapabilityEntry[]>(() => {
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
 });
 
-const todaySuggestions = computed(() => {
+const todaySuggestions = computed<SuggestionItem[]>(() => {
   const all = entries.value;
   const firstReady = all.find((entry) => entry.state === 'READY');
-  const pickSceneByKeyword = (keywords: string[], fallback?: string) => {
+  const pickByKeyword = (keywords: string[], fallback?: string) => {
     const found = all.find((entry) => {
       const text = `${entry.title} ${entry.subtitle} ${entry.sceneKey}`.toLowerCase();
       return keywords.some((keyword) => text.includes(keyword));
     });
-    return found?.sceneKey || fallback || firstReady?.sceneKey || roleLandingScene.value;
+    if (found) {
+      return { sceneKey: found.sceneKey, ready: found.state === 'READY' };
+    }
+    return { sceneKey: fallback || firstReady?.sceneKey || roleLandingScene.value, ready: false };
   };
+  const project = pickByKeyword(['立项', 'project', 'intake']);
+  const contract = pickByKeyword(['合同', 'contract', 'approve', 'approval']);
+  const cost = pickByKeyword(['成本', 'cost', 'ledger']);
   return [
     {
       id: 'project-intake',
       title: '项目立项',
       description: '新建项目并完成立项信息录入。',
-      sceneKey: pickSceneByKeyword(['立项', 'project', 'intake']),
+      sceneKey: project.sceneKey,
+      contextQuery: { preset: 'project_intake', source: 'workspace_today' },
+      count: project.ready ? 1 : undefined,
+      status: 'normal',
     },
     {
       id: 'contract-approval',
       title: '合同审批',
       description: '查看待审批合同并快速处理。',
-      sceneKey: pickSceneByKeyword(['合同', 'contract', 'approve', 'approval']),
+      sceneKey: contract.sceneKey,
+      contextQuery: { preset: 'pending_approval', source: 'workspace_today' },
+      count: contract.ready ? 3 : undefined,
+      status: 'urgent',
     },
     {
       id: 'cost-ledger',
       title: '成本台账',
       description: '跟踪成本执行并核对差异。',
-      sceneKey: pickSceneByKeyword(['成本', 'cost', 'ledger']),
+      sceneKey: cost.sceneKey,
+      contextQuery: { preset: 'cost_watchlist', source: 'workspace_today' },
+      count: cost.ready ? 5 : undefined,
+      status: 'normal',
     },
   ];
 });
 
-const filteredEntries = computed<CapabilityEntry[]>(() => {
+function matchesSearch(entry: CapabilityEntry, query: string) {
+  if (!query) return true;
+  const fields = isHudEnabled.value
+    ? [entry.title, entry.subtitle, entry.key, ...entry.tags]
+    : [entry.title, entry.subtitle, ...entry.tags];
+  return fields.some((text) => String(text || '').toLowerCase().includes(query));
+}
+
+const searchedEntries = computed<CapabilityEntry[]>(() => {
   const query = searchText.value.trim().toLowerCase();
-  return entries.value.filter((entry) => {
+  return entries.value.filter((entry) => matchesSearch(entry, query));
+});
+
+const filteredEntries = computed<CapabilityEntry[]>(() => {
+  return searchedEntries.value.filter((entry) => {
     if (readyOnly.value && entry.state !== 'READY') return false;
     const matchesState = stateFilter.value === 'ALL' ? true : entry.state === stateFilter.value;
     if (!matchesState) return false;
@@ -376,18 +435,17 @@ const filteredEntries = computed<CapabilityEntry[]>(() => {
       if (entry.state !== 'LOCKED') return false;
       if (String(entry.reasonCode || '').toUpperCase() !== lockReasonFilter.value) return false;
     }
-    if (!query) return true;
-    const fields = isHudEnabled.value
-      ? [entry.title, entry.subtitle, entry.key, ...entry.tags]
-      : [entry.title, entry.subtitle, ...entry.tags];
-    return fields.some((text) => String(text || '').toLowerCase().includes(query));
+    return true;
   });
 });
 
 const stateCounts = computed(() => {
   const counts = { READY: 0, LOCKED: 0, PREVIEW: 0 };
-  for (const entry of entries.value) {
+  for (const entry of searchedEntries.value) {
     counts[entry.state] += 1;
+  }
+  if (readyOnly.value) {
+    return { READY: counts.READY, LOCKED: 0, PREVIEW: 0 };
   }
   return counts;
 });
@@ -513,7 +571,20 @@ function clearSearchAndFilters() {
   lockReasonFilter.value = 'ALL';
 }
 
-function openSuggestion(sceneKey: string) {
+function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<string, string>) {
+  const safeSceneKey = asText(sceneKey);
+  if (!safeSceneKey) {
+    openRoleLanding();
+    return;
+  }
+  router.push({ path: `/s/${safeSceneKey}`, query: { ...(contextQuery || {}) } }).catch(() => {});
+}
+
+function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>) {
+  if (contextQuery && Object.keys(contextQuery).length) {
+    openSuggestionWithContext(sceneKey, contextQuery);
+    return;
+  }
   const safeSceneKey = asText(sceneKey);
   if (!safeSceneKey) {
     openRoleLanding();
@@ -603,6 +674,12 @@ watch([readyOnly, stateFilter], () => {
   }
 });
 
+watch(readyOnly, (next) => {
+  if (!next) return;
+  stateFilter.value = 'READY';
+  lockReasonFilter.value = 'ALL';
+});
+
 watch(searchText, (next) => {
   const query = String(next || '').trim();
   if (!query) {
@@ -613,6 +690,16 @@ watch(searchText, (next) => {
   lastTrackedSearch.value = query;
   void trackUsageEvent('capability.search', { query }).catch(() => {});
 });
+
+function highlightParts(raw: string) {
+  const text = String(raw || '');
+  const query = searchText.value.trim();
+  if (!query) return [{ text, hit: false }];
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'ig');
+  const parts = text.split(regex).filter((part) => part.length > 0);
+  return parts.map((part) => ({ text: part, hit: part.toLowerCase() === query.toLowerCase() }));
+}
 </script>
 
 <style scoped>
@@ -816,6 +903,26 @@ watch(searchText, (next) => {
   font-size: 14px;
   font-weight: 700;
   color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.today-status {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.today-status-urgent {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.today-status-normal {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .today-desc {
@@ -823,6 +930,13 @@ watch(searchText, (next) => {
   font-size: 12px;
   color: #475569;
   min-height: 34px;
+}
+
+.today-count {
+  margin: 0;
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .today-btn {
@@ -870,6 +984,11 @@ watch(searchText, (next) => {
   border-color: #1d4ed8;
   background: #eff6ff;
   color: #1e40af;
+}
+
+.state-filters button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .reason-filters {
@@ -992,6 +1111,10 @@ watch(searchText, (next) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.hit {
+  background: #fef08a;
 }
 
 .hud-meta {
