@@ -13,11 +13,11 @@
         </p>
       </div>
       <div class="view-toggle">
-        <button class="my-work-btn" @click="router.push({ path: '/my-work' })">我的工作</button>
+        <button class="my-work-btn" @click="goToMyWork">我的工作</button>
         <button
           v-if="isAdmin"
           class="my-work-btn"
-          @click="router.push({ path: '/admin/usage-analytics' })"
+          @click="goToUsageAnalytics"
         >
           使用分析
         </button>
@@ -603,6 +603,10 @@ function openRoleLanding() {
 
 function goToMyWork() {
   router.push({ path: '/my-work' }).catch(() => {});
+}
+
+function goToUsageAnalytics() {
+  router.push({ path: '/admin/usage-analytics' }).catch(() => {});
 }
 
 function goHome() {
