@@ -644,10 +644,22 @@ function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>)
   };
   if (preset && presetRouteMap[preset]) {
     const target = presetRouteMap[preset](ctxSource);
+    void trackUsageEvent('workspace.preset.navigate', {
+      preset,
+      from: 'workspace.home',
+      to: target.path,
+      ctx_source: ctxSource,
+    }).catch(() => {});
     router.push(target).catch(() => {});
     return;
   }
   if (contextQuery && Object.keys(contextQuery).length) {
+    void trackUsageEvent('workspace.preset.navigate', {
+      preset: preset || '',
+      from: 'workspace.home',
+      to: `/s/${asText(sceneKey) || ''}`,
+      ctx_source: ctxSource,
+    }).catch(() => {});
     openSuggestionWithContext(sceneKey, contextQuery);
     return;
   }
@@ -656,6 +668,12 @@ function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>)
     openRoleLanding();
     return;
   }
+  void trackUsageEvent('workspace.preset.navigate', {
+    preset: '',
+    from: 'workspace.home',
+    to: `/s/${safeSceneKey}`,
+    ctx_source: '',
+  }).catch(() => {});
   router.push({ path: `/s/${safeSceneKey}` }).catch(() => {});
 }
 
