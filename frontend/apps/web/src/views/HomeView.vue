@@ -668,18 +668,27 @@ function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<strin
 function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>) {
   const preset = asText(contextQuery?.preset);
   const ctxSource = asText(contextQuery?.ctx_source) || 'workspace_today';
+  const entryContext = asText(contextQuery?.entry_context);
+  const withEntryContext = (query: Record<string, string>) =>
+    entryContext ? { ...query, entry_context: entryContext } : query;
   const presetRouteMap: Record<string, (source: string) => SuggestionRoute> = {
     pending_approval: (source) => ({
       path: '/my-work',
-      query: { preset: 'pending_approval', ctx_source: source, section: 'todo', source: 'mail.activity', search: '审批' },
+      query: withEntryContext({
+        preset: 'pending_approval',
+        ctx_source: source,
+        section: 'todo',
+        source: 'mail.activity',
+        search: '审批',
+      }),
     }),
     project_intake: (source) => ({
       path: '/my-work',
-      query: { preset: 'project_intake', ctx_source: source, section: 'owned', search: '立项' },
+      query: withEntryContext({ preset: 'project_intake', ctx_source: source, section: 'owned', search: '立项' }),
     }),
     cost_watchlist: (source) => ({
       path: '/my-work',
-      query: { preset: 'cost_watchlist', ctx_source: source, section: 'following', search: '成本' },
+      query: withEntryContext({ preset: 'cost_watchlist', ctx_source: source, section: 'following', search: '成本' }),
     }),
   };
   if (preset && presetRouteMap[preset]) {
