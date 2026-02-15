@@ -177,6 +177,13 @@ def main():
     scenes = scenes_data.get("scenes") or []
     if not scenes:
         raise RuntimeError("scenes.my returned empty scenes list")
+    deprecation = scenes_data.get("deprecation") if isinstance(scenes_data.get("deprecation"), dict) else {}
+    if (deprecation.get("status") or "").strip().lower() != "deprecated":
+        raise RuntimeError("scenes.my response missing deprecation.status=deprecated")
+    if not str(deprecation.get("replacement") or "").strip():
+        raise RuntimeError("scenes.my response missing deprecation.replacement")
+    if not str(deprecation.get("sunset_date") or "").strip():
+        raise RuntimeError("scenes.my response missing deprecation.sunset_date")
     default_code = scenes_data.get("default_scene")
     scene = next((s for s in scenes if s.get("code") == default_code), scenes[0])
     tiles = scene.get("tiles") or []
