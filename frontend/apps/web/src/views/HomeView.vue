@@ -394,10 +394,16 @@ function isInternalEntry(params: {
   return merged.includes('smoke') || merged.includes('internal') || merged.includes('test');
 }
 
-function mapState(rawState: string | undefined, status: string): EntryState {
+function mapState(rawState: string | undefined, status: string, allowed?: unknown): EntryState {
   const state = String(rawState || '').toUpperCase();
   if (state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
     return state;
+  }
+  if (typeof allowed === 'boolean') {
+    return allowed ? 'READY' : 'LOCKED';
+  }
+  if (!status) {
+    return 'READY';
   }
   return status === 'ga' ? 'READY' : 'PREVIEW';
 }
@@ -425,10 +431,11 @@ const entries = computed<CapabilityEntry[]>(() => {
       ) {
         return;
       }
-      const status = String((tile as { status?: string }).status || 'alpha').toLowerCase();
+      const rawStatus = asText((tile as { status?: unknown }).status).toLowerCase();
+      const status = rawStatus || 'ga';
       const reason = String((tile as { reason?: string }).reason || '');
       const reasonCode = String((tile as { reason_code?: string }).reason_code || '');
-      const state = mapState((tile as { state?: string }).state, status);
+      const state = mapState((tile as { state?: string }).state, rawStatus, (tile as { allowed?: unknown }).allowed);
       list.push({
         id: `${sceneKey}-${key}-${sceneIndex}-${tileIndex}`,
         key,

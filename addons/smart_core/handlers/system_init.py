@@ -1055,6 +1055,82 @@ def _to_bool(value, default: bool) -> bool:
     return bool(value)
 
 
+def _normalize_tile_status(value) -> str:
+    status = str(value or "").strip().lower()
+    if status in {"ga", "beta", "alpha"}:
+        return status
+    return ""
+
+
+def _normalize_tile_state(value) -> str:
+    state = str(value or "").strip().upper()
+    if state in {"READY", "LOCKED", "PREVIEW"}:
+        return state
+    return ""
+
+
+def _derive_tile_state(status: str, allowed) -> str:
+    if isinstance(allowed, bool):
+        return "READY" if allowed else "LOCKED"
+    return "READY" if status == "ga" else "PREVIEW"
+
+
+def _normalize_scene_tiles(scenes, capabilities, warnings):
+    cap_map: Dict[str, dict] = {}
+    for capability in capabilities or []:
+        if not isinstance(capability, dict):
+            continue
+        cap_key = str(capability.get("key") or "").strip()
+        if not cap_key:
+            continue
+        cap_map[cap_key] = {
+            "status": _normalize_tile_status(capability.get("status")),
+            "state": _normalize_tile_state(capability.get("state")),
+            "reason_code": str(capability.get("reason_code") or "").strip(),
+            "reason": str(capability.get("reason") or "").strip(),
+        }
+
+    for scene in scenes or []:
+        if not isinstance(scene, dict):
+            continue
+        scene_key = scene.get("code") or scene.get("key") or ""
+        tiles = scene.get("tiles")
+        if not isinstance(tiles, list):
+            continue
+        for tile in tiles:
+            if not isinstance(tile, dict):
+                continue
+            key = str(tile.get("key") or "").strip()
+            cap_meta = cap_map.get(key) if key else None
+            status = _normalize_tile_status(tile.get("status"))
+            state = _normalize_tile_state(tile.get("state"))
+            if not status and cap_meta:
+                status = cap_meta.get("status") or ""
+            if not state and cap_meta:
+                state = cap_meta.get("state") or ""
+            if not state:
+                state = _derive_tile_state(status or "ga", tile.get("allowed"))
+            if not status:
+                status = "ga" if state == "READY" else "alpha"
+            tile["status"] = status
+            tile["state"] = state
+            if cap_meta:
+                if not tile.get("reason_code") and cap_meta.get("reason_code"):
+                    tile["reason_code"] = cap_meta.get("reason_code")
+                if not tile.get("reason") and cap_meta.get("reason"):
+                    tile["reason"] = cap_meta.get("reason")
+            if not key:
+                warnings.append({
+                    "code": "TILE_KEY_MISSING",
+                    "severity": "non_critical",
+                    "scene_key": scene_key,
+                    "message": "tile key missing; state/status defaults applied",
+                    "field": "tiles.key",
+                    "reason": "missing_key",
+                })
+    return scenes
+
+
 def _normalize_scene_accesses(scenes, warnings):
     for scene in scenes:
         if not isinstance(scene, dict):
@@ -1431,6 +1507,7 @@ class SystemInitHandler(BaseIntentHandler):
         _append_inferred_scene_warnings(nav_tree, scene_keys, scene_diagnostics["normalize_warnings"])
         _normalize_scene_layouts(scenes_payload, scene_diagnostics["normalize_warnings"])
         _normalize_scene_accesses(scenes_payload, scene_diagnostics["normalize_warnings"])
+        _normalize_scene_tiles(scenes_payload, data.get("capabilities"), scene_diagnostics["normalize_warnings"])
         scene_diagnostics["timings"]["normalize_ms"] = int((time.time() - t_norm_start) * 1000)
         nav_targets = _index_nav_scene_targets(nav_tree)
         t_resolve_start = time.time()
@@ -1483,6 +1560,7 @@ class SystemInitHandler(BaseIntentHandler):
                 t_norm2 = time.time()
                 _normalize_scene_layouts(data["scenes"], scene_diagnostics["normalize_warnings"])
                 _normalize_scene_accesses(data["scenes"], scene_diagnostics["normalize_warnings"])
+                _normalize_scene_tiles(data["scenes"], data.get("capabilities"), scene_diagnostics["normalize_warnings"])
                 scene_diagnostics["timings"]["normalize_after_degrade_ms"] = int((time.time() - t_norm2) * 1000)
                 t_resolve2 = time.time()
                 _normalize_scene_targets(env, data["scenes"], nav_targets, scene_diagnostics["resolve_errors"])
