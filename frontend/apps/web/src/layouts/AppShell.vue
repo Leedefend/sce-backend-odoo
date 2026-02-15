@@ -479,7 +479,7 @@ function handleSelect(node: NavNode) {
     node.menu_id = node.id as number;
   }
   const sceneKey = resolveSceneKeyFromNode(node);
-  if (sceneKey) {
+  if (sceneKey && getSceneByKey(sceneKey)) {
     router.push({ path: `/s/${sceneKey}`, query: { menu_id: node.menu_id || undefined } }).catch(() => {});
     return;
   }

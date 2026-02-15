@@ -1192,6 +1192,101 @@ def _normalize_scene_accesses(scenes, warnings):
 
 
 
+def _build_scene_target_maps(scenes):
+    menu_id_map: Dict[int, str] = {}
+    action_id_map: Dict[int, str] = {}
+    model_view_map: Dict[Tuple[str, str | None], str] = {}
+    for scene in scenes or []:
+        if not isinstance(scene, dict):
+            continue
+        scene_key = str(scene.get("code") or scene.get("key") or "").strip()
+        if not scene_key:
+            continue
+        target = scene.get("target")
+        if not isinstance(target, dict):
+            continue
+        menu_id = target.get("menu_id")
+        action_id = target.get("action_id")
+        model = str(target.get("model") or "").strip()
+        view_mode = _normalize_view_mode(target.get("view_mode") or target.get("view_type"))
+
+        if isinstance(menu_id, int) and menu_id > 0:
+            menu_id_map.setdefault(menu_id, scene_key)
+        if isinstance(action_id, int) and action_id > 0:
+            action_id_map.setdefault(action_id, scene_key)
+        if model:
+            model_view_map.setdefault((model, view_mode), scene_key)
+    return menu_id_map, action_id_map, model_view_map
+
+
+def _sync_nav_scene_keys(nav_tree, scenes, warnings):
+    scene_keys = {
+        str(scene.get("code") or scene.get("key") or "").strip()
+        for scene in scenes or []
+        if isinstance(scene, dict)
+    }
+    scene_keys = {key for key in scene_keys if key}
+    if not scene_keys:
+        return
+
+    menu_id_map, action_id_map, model_view_map = _build_scene_target_maps(scenes)
+
+    def walk(nodes):
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            node_scene_key = str(node.get("scene_key") or "").strip()
+            meta_scene_key = str(meta.get("scene_key") or "").strip()
+            scene_key = node_scene_key or meta_scene_key
+            if scene_key and scene_key not in scene_keys:
+                warnings.append({
+                    "code": "NAV_SCENEKEY_INVALID",
+                    "severity": "warn",
+                    "scene_key": scene_key,
+                    "message": "nav scene_key not found in scenes payload; fallback to menu/action routing",
+                    "field": "nav.scene_key",
+                    "reason": "scene_not_in_registry",
+                    "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
+                })
+                node.pop("scene_key", None)
+                meta.pop("scene_key", None)
+                scene_key = ""
+
+            if not scene_key:
+                menu_id = node.get("menu_id") or node.get("id")
+                action_id = meta.get("action_id")
+                if isinstance(action_id, str) and action_id.isdigit():
+                    action_id = int(action_id)
+                if isinstance(menu_id, str) and menu_id.isdigit():
+                    menu_id = int(menu_id)
+                model = str(meta.get("model") or "").strip()
+                view_mode = _normalize_view_mode(meta.get("view_mode") or meta.get("view_type"))
+                if not view_mode:
+                    view_modes = meta.get("view_modes")
+                    if isinstance(view_modes, list) and view_modes:
+                        view_mode = _normalize_view_mode(view_modes[0])
+
+                if isinstance(menu_id, int) and menu_id in menu_id_map:
+                    scene_key = menu_id_map[menu_id]
+                elif isinstance(action_id, int) and action_id in action_id_map:
+                    scene_key = action_id_map[action_id]
+                elif model and (model, view_mode) in model_view_map:
+                    scene_key = model_view_map[(model, view_mode)]
+                elif model and (model, None) in model_view_map:
+                    scene_key = model_view_map[(model, None)]
+
+            if scene_key and scene_key in scene_keys:
+                node["scene_key"] = scene_key
+                meta["scene_key"] = scene_key
+                node["meta"] = meta
+
+            if node.get("children"):
+                walk(node.get("children"))
+
+    walk(nav_tree)
+
+
 def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
     """
     从 HANDLER_REGISTRY 动态收集可用意图（按权限过滤）。
@@ -1512,6 +1607,7 @@ class SystemInitHandler(BaseIntentHandler):
         nav_targets = _index_nav_scene_targets(nav_tree)
         t_resolve_start = time.time()
         _normalize_scene_targets(env, scenes_payload, nav_targets, scene_diagnostics["resolve_errors"])
+        _sync_nav_scene_keys(nav_tree, scenes_payload, scene_diagnostics["normalize_warnings"])
         scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
 
         # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
@@ -1564,6 +1660,7 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["timings"]["normalize_after_degrade_ms"] = int((time.time() - t_norm2) * 1000)
                 t_resolve2 = time.time()
                 _normalize_scene_targets(env, data["scenes"], nav_targets, scene_diagnostics["resolve_errors"])
+                _sync_nav_scene_keys(nav_tree, data["scenes"], scene_diagnostics["normalize_warnings"])
                 scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload
