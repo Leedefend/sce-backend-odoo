@@ -88,6 +88,103 @@ jobs:
         run: |
           make stage.run STAGE=p3-runtime-r1 DB=sc_p3
 
+      - name: Publish menu scene coverage summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          summary_path = "artifacts/codex/summary.md"
+          menu_dir = "artifacts/codex/portal-menu-scene-resolve"
+
+          def last_summary_value(key: str) -> str:
+              if not os.path.exists(summary_path):
+                  return "n/a"
+              value = "n/a"
+              with open(summary_path, "r", encoding="utf-8", errors="ignore") as fh:
+                  for raw in fh:
+                      line = raw.strip()
+                      prefix = f"{key}:"
+                      if line.startswith(prefix):
+                          value = line[len(prefix):].strip() or "n/a"
+              return value
+
+          latest_json = ""
+          if os.path.isdir(menu_dir):
+              dirs = sorted(
+                  [
+                      name
+                      for name in os.listdir(menu_dir)
+                      if os.path.isdir(os.path.join(menu_dir, name))
+                  ]
+              )
+              if dirs:
+                  candidate = os.path.join(menu_dir, dirs[-1], "menu_scene_resolve.json")
+                  if os.path.exists(candidate):
+                      latest_json = candidate
+
+          total = "n/a"
+          resolved = "n/a"
+          failures = "n/a"
+          exempt = "n/a"
+          coverage = "n/a"
+          effective_total = "n/a"
+          enforce_prefixes = "n/a"
+          if latest_json:
+              try:
+                  with open(latest_json, "r", encoding="utf-8") as fh:
+                      data = json.load(fh)
+                  summary = data.get("summary") or {}
+                  total = summary.get("total", "n/a")
+                  resolved = summary.get("resolved", "n/a")
+                  failures = summary.get("failures", "n/a")
+                  exempt = summary.get("exempt", "n/a")
+                  coverage = summary.get("coverage", "n/a")
+                  effective_total = summary.get("effective_total", "n/a")
+                  prefixes = summary.get("enforce_prefixes") or []
+                  enforce_prefixes = ",".join(prefixes) if isinstance(prefixes, list) and prefixes else "n/a"
+              except Exception:
+                  pass
+
+          lines = [
+              "## Menu Scene Coverage",
+              "",
+              f"- latest_json: `{latest_json or 'n/a'}`",
+              f"- total: `{total}`",
+              f"- resolved: `{resolved}`",
+              f"- failures: `{failures}`",
+              f"- exempt: `{exempt}`",
+              f"- effective_total: `{effective_total}`",
+              f"- coverage: `{coverage}`",
+              f"- enforce_prefixes: `{enforce_prefixes}`",
+              "",
+              "### Summary Keys",
+              f"- menu_scene_resolve_effective_total: `{last_summary_value('menu_scene_resolve_effective_total')}`",
+              f"- menu_scene_resolve_coverage: `{last_summary_value('menu_scene_resolve_coverage')}`",
+              f"- menu_scene_resolve_enforce_prefixes: `{last_summary_value('menu_scene_resolve_enforce_prefixes')}`",
+              f"- phase_9_8_menu_resolve_exempt_manual: `{last_summary_value('phase_9_8_menu_resolve_exempt_manual')}`",
+              f"- phase_9_8_menu_resolve_exempt_auto: `{last_summary_value('phase_9_8_menu_resolve_exempt_auto')}`",
+          ]
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines) + "\n")
+          print("\n".join(lines))
+          PY
+
+      - name: Upload menu scene coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-scene-coverage
+          path: |
+            artifacts/codex/summary.md
+            artifacts/codex/phase-9-8/gate_summary.json
+            artifacts/codex/portal-menu-scene-resolve/**/menu_scene_resolve.json
+          if-no-files-found: warn
+
       - name: Dump logs on failure
         if: failure()
         run: |
