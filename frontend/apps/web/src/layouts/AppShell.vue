@@ -224,6 +224,20 @@ const menuLabel = computed(() => {
 
 const hudEnabled = computed(() => isHudEnabled(route));
 
+function resolveActionBusinessTitle(action: unknown) {
+  const source = asDict(action);
+  if (!source) return '';
+  const uiTitle = asText(source.ui_title);
+  if (uiTitle) return uiTitle;
+  const sceneTitle = asText(source.scene_title);
+  if (sceneTitle) return sceneTitle;
+  const menuTitle = asText(source.menu_title);
+  if (menuTitle) return menuTitle;
+  const actionName = asText(source.name);
+  if (actionName) return actionName;
+  return '';
+}
+
 const pageTitle = computed(() => {
   const sceneKey = route.meta?.sceneKey as string | undefined;
   if (sceneKey) {
@@ -235,8 +249,9 @@ const pageTitle = computed(() => {
   if (menuLabel.value) {
     return menuLabel.value;
   }
-  if (session.currentAction?.name) {
-    return session.currentAction.name;
+  const actionBusinessTitle = resolveActionBusinessTitle(session.currentAction);
+  if (actionBusinessTitle) {
+    return actionBusinessTitle;
   }
   if (hudEnabled.value) {
     const currentAction = asDict(session.currentAction);
@@ -278,6 +293,7 @@ const hudEntries = computed(() => [
   { label: 'user', value: userName.value || '-' },
   { label: 'db', value: effectiveDb.value || '-' },
   { label: 'nav_version', value: navVersion.value || '-' },
+  { label: 'model', value: asText(asDict(session.currentAction)?.model) || '-' },
   { label: 'sa_kind', value: latestSuggestedAction.value?.suggested_action_kind || '-' },
   { label: 'sa_success', value: String(latestSuggestedAction.value?.suggested_action_success ?? '-') },
   { label: 'sa_ts', value: latestSuggestedActionTs.value },
