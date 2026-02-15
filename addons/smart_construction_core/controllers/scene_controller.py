@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
+from email.utils import format_datetime
 
 from odoo import http
 from odoo.http import request
@@ -12,7 +14,10 @@ from odoo.addons.smart_core.security.auth import get_user_from_token
 from .api_base import fail, fail_from_exception, ok
 
 _logger = logging.getLogger(__name__)
-_LEGACY_SCENES_SUNSET = "2026-04-30T00:00:00Z"
+_LEGACY_SCENES_SUNSET_DATE = "2026-04-30"
+_LEGACY_SCENES_SUNSET_HTTP = format_datetime(
+    datetime(2026, 4, 30, 0, 0, 0, tzinfo=timezone.utc), usegmt=True
+)
 _LEGACY_SCENES_SUCCESSOR = "/api/v1/intent"
 
 
@@ -55,7 +60,7 @@ class SceneController(http.Controller):
                 "deprecation": {
                     "status": "deprecated",
                     "replacement": f"{_LEGACY_SCENES_SUCCESSOR} (intent=app.init)",
-                    "sunset_date": "2026-04-30",
+                    "sunset_date": _LEGACY_SCENES_SUNSET_DATE,
                 },
             }
             _logger.warning(
@@ -69,7 +74,7 @@ class SceneController(http.Controller):
                 status=200,
                 headers=[
                     ("Deprecation", "true"),
-                    ("Sunset", _LEGACY_SCENES_SUNSET),
+                    ("Sunset", _LEGACY_SCENES_SUNSET_HTTP),
                     ("Link", f"<{_LEGACY_SCENES_SUCCESSOR}>; rel=\"successor-version\""),
                 ],
             )
