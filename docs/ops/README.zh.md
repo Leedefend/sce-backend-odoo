@@ -8,6 +8,7 @@ status: active
 
 ## 发布与生产
 - 版本索引：`docs/ops/releases/README.zh.md`
+- 菜单场景覆盖率证据（当前基线）：`docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 生产命令策略：`docs/ops/prod_command_policy.md`
 - Release Notes：`docs/ops/release_notes_v0.3.0-stable.md`
 - Release Checklist：`docs/ops/release_checklist_v0.3.0-stable.md`

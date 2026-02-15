@@ -4,6 +4,7 @@
 
 ## 主要入口
 - Release 证据目录: `docs/ops/releases/`
+- 菜单场景覆盖率证据（当前基线）: `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 验证入口（含 strict/兼容模式说明）: `docs/ops/verify/README.md`
 - 基线冻结策略: `docs/ops/baseline_freeze_policy.md`
 - 场景观测命令分层:
