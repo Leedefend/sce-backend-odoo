@@ -765,9 +765,10 @@ function pushRecentEntry(recentKey: string) {
 }
 
 function clearRecentEntries() {
-  if (!recentEntryKeys.value.length) return;
+  const cleared = recentEntryKeys.value.length;
+  if (!cleared) return;
   recentEntryKeys.value = [];
-  void trackUsageEvent('workspace.recent.clear', { scope: workspaceScopeKey.value }).catch(() => {});
+  void trackUsageEvent('workspace.recent.clear', { scope: workspaceScopeKey.value, cleared_count: cleared }).catch(() => {});
 }
 
 function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<string, string>) {
