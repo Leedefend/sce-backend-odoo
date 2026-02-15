@@ -19,6 +19,12 @@ const PASSWORD =
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const EXEMPTIONS_FILE =
   process.env.MENU_SCENE_EXEMPTIONS || path.resolve(__dirname, '../../docs/ops/verify/menu_scene_exemptions.yml');
+const ENFORCE_XMLID_PREFIXES = String(
+  process.env.MENU_SCENE_ENFORCE_PREFIXES || 'smart_construction_core.,smart_construction_demo.,smart_construction_portal.'
+)
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean);
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -130,6 +136,12 @@ function hasAction(meta) {
   return Boolean(meta.action_id || meta.action_xmlid || meta.action_type || meta.action_tag);
 }
 
+function shouldEnforceXmlid(xmlid) {
+  if (!xmlid) return false;
+  if (!ENFORCE_XMLID_PREFIXES.length) return true;
+  return ENFORCE_XMLID_PREFIXES.some((prefix) => xmlid.startsWith(prefix));
+}
+
 function preflightUrl(url) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -214,6 +226,9 @@ async function main() {
   if (exemptions.items.length) {
     log(`exemptions: ${exemptions.items.length} from ${EXEMPTIONS_FILE}`);
   }
+  if (ENFORCE_XMLID_PREFIXES.length) {
+    log(`enforce prefixes: ${ENFORCE_XMLID_PREFIXES.join(', ')}`);
+  }
   let total = 0;
 
   for (const node of all) {
@@ -231,6 +246,15 @@ async function main() {
           menu_id: node.menu_id || node.id,
           xmlid,
           reason: exemptions.map.get(xmlid),
+          action_type: meta.action_type || meta.actionType,
+          action_id: meta.action_id || null,
+        });
+      } else if (!shouldEnforceXmlid(xmlid)) {
+        exempt.push({
+          name: node.name,
+          menu_id: node.menu_id || node.id,
+          xmlid,
+          reason: 'auto_exempt_non_business_namespace',
           action_type: meta.action_type || meta.actionType,
           action_id: meta.action_id || null,
         });
@@ -259,6 +283,7 @@ async function main() {
     exempt: exempt.length,
     effective_total: effectiveTotal,
     coverage,
+    enforce_prefixes: ENFORCE_XMLID_PREFIXES,
   };
   writeJson(path.join(outDir, 'menu_scene_resolve.json'), { summary, failures, exempt });
 
