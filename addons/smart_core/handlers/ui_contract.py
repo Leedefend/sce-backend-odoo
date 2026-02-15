@@ -162,7 +162,7 @@ class UiContractHandler(BaseIntentHandler):
         data, meta = (res if isinstance(res, tuple) else (res or {}, {}))
         data = apply_contract_governance(data or {}, contract_mode, inject_contract_mode=False)
         meta = _normalize_meta(meta)
-        etag = self._make_etag(meta=meta, ctx=ctx, op=op, p=p)
+        etag = self._make_etag(meta=meta, ctx=ctx, op=op, p=p, contract_mode=contract_mode)
 
         if if_none_match and if_none_match == etag and not force_refresh:
             return {"ok": True, "data": None,
@@ -312,7 +312,7 @@ class UiContractHandler(BaseIntentHandler):
         param = (str(param or "")).strip().strip('"')
         return hdr or param
 
-    def _make_etag(self, meta, ctx, op, p):
+    def _make_etag(self, meta, ctx, op, p, contract_mode="user"):
         meta = _normalize_meta(meta)
         etag_src = _json({
             "view_hash": meta.get("view_hash"),
@@ -327,6 +327,7 @@ class UiContractHandler(BaseIntentHandler):
             "menu_id": self._get_param(p, "menu_id","menuId","id"),
             "model": self._get_param(p, "model","model_code","modelCode"),
             "action_id": self._get_param(p, "action_id","actionId"),
+            "contract_mode": contract_mode,
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
         })

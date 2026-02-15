@@ -120,7 +120,7 @@ class ContractService:
         # -----------------------------------------
 
         # 4) 计算 ETag，支持 304
-        etag = stable_etag(data)
+        etag = stable_etag({"data": data, "contract_mode": contract_mode})
         # 约定：with_data=True 时不缓存（避免列表数据频繁变化造成误判）
         skip_cache = bool(p.get("with_data"))
         if not skip_cache and client_etag and client_etag == etag:
