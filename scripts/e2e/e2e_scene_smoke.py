@@ -229,14 +229,17 @@ def main():
             raise RuntimeError("scenes.my response missing deprecation.status=deprecated")
         if not str(deprecation.get("replacement") or "").strip():
             raise RuntimeError("scenes.my response missing deprecation.replacement")
-        if not str(deprecation.get("sunset_date") or "").strip():
-            raise RuntimeError("scenes.my response missing deprecation.sunset_date")
+        sunset_date = str(deprecation.get("sunset_date") or "").strip()
+        if sunset_date != "2026-04-30":
+            raise RuntimeError(f"scenes.my response invalid deprecation.sunset_date: {sunset_date}")
         dep_header = str(scenes_headers.get("Deprecation") or scenes_headers.get("deprecation") or "").strip().lower()
         if dep_header != "true":
             raise RuntimeError(f"scenes.my response missing Deprecation header=true: {dep_header}")
         sunset_header = str(scenes_headers.get("Sunset") or scenes_headers.get("sunset") or "").strip()
         if not sunset_header:
             raise RuntimeError("scenes.my response missing Sunset header")
+        if "GMT" not in sunset_header:
+            raise RuntimeError(f"scenes.my response Sunset header must be GMT: {sunset_header}")
         link_header = str(scenes_headers.get("Link") or scenes_headers.get("link") or "").strip()
         if "successor-version" not in link_header or "/api/v1/intent" not in link_header:
             raise RuntimeError("scenes.my response missing Link successor-version header")

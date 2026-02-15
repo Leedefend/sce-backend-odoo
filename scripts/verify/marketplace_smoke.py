@@ -12,8 +12,9 @@ def _require_deprecation(payload: dict, *, label: str) -> None:
         raise RuntimeError(f"{label} missing deprecation.status=deprecated")
     if not str(dep.get("replacement") or "").strip():
         raise RuntimeError(f"{label} missing deprecation.replacement")
-    if not str(dep.get("sunset_date") or "").strip():
-        raise RuntimeError(f"{label} missing deprecation.sunset_date")
+    sunset_date = str(dep.get("sunset_date") or "").strip()
+    if sunset_date != "2026-04-30":
+        raise RuntimeError(f"{label} invalid deprecation.sunset_date: {sunset_date}")
 
 
 def _require_deprecation_headers(headers: dict, *, label: str) -> None:
@@ -23,6 +24,8 @@ def _require_deprecation_headers(headers: dict, *, label: str) -> None:
     sunset_header = str(headers.get("Sunset") or headers.get("sunset") or "").strip()
     if not sunset_header:
         raise RuntimeError(f"{label} missing Sunset header")
+    if "GMT" not in sunset_header:
+        raise RuntimeError(f"{label} Sunset header must be GMT: {sunset_header}")
     link_header = str(headers.get("Link") or headers.get("link") or "").strip()
     if "successor-version" not in link_header or "/api/v1/intent" not in link_header:
         raise RuntimeError(f"{label} missing Link successor-version header")
