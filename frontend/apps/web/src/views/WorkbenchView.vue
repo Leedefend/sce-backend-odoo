@@ -2,7 +2,7 @@
   <section class="workbench">
     <header class="header">
       <div>
-        <p v-if="showHud" class="diagnostic">Diagnostic surface only — not product UI.</p>
+        <p v-if="showHud" class="diagnostic">诊断页仅用于排查，不作为正式产品界面。</p>
         <h2>页面暂时无法打开</h2>
         <p class="meta">我们已为你保留可继续操作的入口。</p>
         <p v-if="hasContext" class="context-line">
@@ -11,14 +11,14 @@
         </p>
       </div>
       <div class="actions">
-        <button class="ghost" @click="goToProjects">Back to home</button>
-        <button class="ghost" @click="openFirstReachableMenu">Open menu</button>
-        <button class="ghost" @click="refresh">Refresh</button>
+        <button class="ghost" @click="goToProjects">返回工作台</button>
+        <button class="ghost" @click="openFirstReachableMenu">打开菜单</button>
+        <button class="ghost" @click="refresh">刷新</button>
       </div>
     </header>
 
     <StatusPanel
-      title="We could not open that page"
+      title="页面暂时无法打开"
       :message="message"
       :variant="panelVariant"
     />
@@ -43,50 +43,50 @@
 
     <div v-if="showHud" class="details">
       <div class="detail">
-        <span class="label">Reason</span>
+        <span class="label">原因</span>
         <span class="value">{{ reasonLabel }}</span>
       </div>
       <div class="detail">
-        <span class="label">Menu</span>
+        <span class="label">菜单</span>
         <span class="value">{{ menuId || 'N/A' }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">Action</span>
+        <span class="label">动作</span>
         <span class="value">{{ actionId || 'N/A' }}</span>
       </div>
       <div class="detail">
-        <span class="label">Route</span>
+        <span class="label">路由</span>
         <span class="value">{{ route.fullPath }}</span>
       </div>
       <div v-if="diag" class="detail">
-        <span class="label">Diag</span>
+        <span class="label">诊断</span>
         <span class="value">{{ diag }}</span>
       </div>
       <div v-if="showHud && diagActionType" class="detail">
-        <span class="label">Action Type</span>
+        <span class="label">动作类型</span>
         <span class="value">{{ diagActionType }}</span>
       </div>
       <div v-if="showHud && diagContractType" class="detail">
-        <span class="label">Contract Type</span>
+        <span class="label">契约类型</span>
         <span class="value">{{ diagContractType }}</span>
       </div>
       <div v-if="showHud && diagContractUrl" class="detail">
-        <span class="label">Contract URL</span>
+        <span class="label">契约链接</span>
         <span class="value">{{ diagContractUrl }}</span>
       </div>
       <div v-if="showHud && diagMetaUrl" class="detail">
-        <span class="label">Meta URL</span>
+        <span class="label">元信息链接</span>
         <span class="value">{{ diagMetaUrl }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">Last Intent</span>
+        <span class="label">最近意图</span>
         <span class="value">{{ lastIntent || 'N/A' }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">Trace</span>
+        <span class="label">追踪 ID</span>
         <span class="value">
           {{ lastTraceId || 'N/A' }}
-          <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">Copy</button>
+          <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">复制</button>
         </span>
       </div>
     </div>
@@ -210,30 +210,30 @@ const tiles = computed<EnrichedWorkbenchTile[]>(() => {
 const reasonLabel = computed(() => {
   switch (reason.value) {
     case ErrorCodes.NAV_MENU_NO_ACTION:
-      return 'Menu group (no action)';
+      return '菜单分组（无可执行动作）';
     case ErrorCodes.ACT_NO_MODEL:
-      return 'Action has no model';
+      return '动作未绑定模型';
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return 'Action type not supported';
+      return '动作类型暂不支持';
     case ErrorCodes.CAPABILITY_MISSING:
-      return 'Capability missing';
+      return '缺少能力权限';
     default:
-      return reason.value || 'Unknown';
+      return reason.value || '未知原因';
   }
 });
 
 const message = computed(() => {
   switch (reason.value) {
     case ErrorCodes.NAV_MENU_NO_ACTION:
-      return 'This menu is a directory and no reachable submenu is available.';
+      return '当前菜单是目录，暂时没有可进入的子菜单。';
     case ErrorCodes.ACT_NO_MODEL:
-      return 'This action opens a custom workspace without a model.';
+      return '当前动作对应的是自定义工作区，未绑定数据模型。';
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return 'This action type is not yet supported in the portal shell.';
+      return '当前动作类型暂未在门户壳层支持。';
     case ErrorCodes.CAPABILITY_MISSING:
-      return 'This capability is not enabled for your account.';
+      return '当前账号尚未开通该能力。';
     default:
-      return 'Return to home or open the menu to continue.';
+      return '你可以返回工作台或打开菜单继续操作。';
   }
 });
 

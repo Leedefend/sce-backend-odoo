@@ -903,7 +903,7 @@ function clearReasonFilterFromFailure() {
 
 function formatFailedItemText(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
   const actionHint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
-  const retryTag = item.retryable === true ? 'retryable' : item.retryable === false ? 'non-retryable' : '';
+  const retryTag = item.retryable === true ? '可重试' : item.retryable === false ? '不可重试' : '';
   return [`#${item.id} ${item.reason_code || 'UNKNOWN'} ${item.message || '-'}`, retryTag, actionHint]
     .filter(Boolean)
     .join(' | ');
@@ -913,7 +913,7 @@ function buildRetrySummaryText() {
   if (!retryFailedItems.value.length) return '';
   const reasons = retryFailedGroups.value.length
     ? retryFailedGroups.value
-        .map((item) => `${item.reason_code} x ${item.count} (retryable ${item.retryable_count})`)
+        .map((item) => `${item.reason_code} x ${item.count} (可重试 ${item.retryable_count})`)
         .join('; ')
     : retryReasonSummary.value
     .map((item) => `${item.reason_code} x ${item.count}`)

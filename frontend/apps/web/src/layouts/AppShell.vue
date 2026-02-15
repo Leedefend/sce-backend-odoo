@@ -78,22 +78,22 @@
       />
       <StatusPanel
         v-else-if="initStatus === 'error'"
-        title="Initialization failed"
-        :message="initError || 'Unknown error'"
+        title="初始化失败"
+        :message="initError || '未知错误'"
         :trace-id="initTraceId || undefined"
         variant="error"
         :on-retry="refreshInit"
       />
       <StatusPanel
         v-else-if="showSceneErrors"
-        title="Scene registry invalid"
+        title="场景注册异常"
         :message="sceneErrorMessage"
         variant="error"
       />
       <StatusPanel
         v-else-if="initStatus === 'ready' && !menuCount"
-        title="No navigation data"
-        message="Menu tree is empty. Try refreshing app init."
+        title="暂无导航数据"
+        message="菜单树为空，请尝试刷新初始化。"
         variant="error"
         :on-retry="refreshInit"
       />
@@ -246,7 +246,7 @@ const pageTitle = computed(() => {
     }
   }
   if (route.name === 'workbench') {
-    return 'Navigation issue';
+    return '导航异常';
   }
   if (route.name === 'record') {
     return '记录';
@@ -381,7 +381,7 @@ const breadcrumb = computed(() => {
   const menuPath = findMenuPath(menuTree.value, menuId);
   if (menuPath.length) {
     menuPath.forEach((node) => {
-      const label = node.title || node.name || node.label || 'Menu';
+      const label = node.title || node.name || node.label || '菜单';
       const id = node.menu_id ?? node.id;
       if (id) {
         crumbs.push({ label, to: `/m/${id}` });
@@ -389,11 +389,11 @@ const breadcrumb = computed(() => {
     });
   }
   if (route.name === 'action') {
-    const label = session.currentAction?.name || `Action ${route.params.actionId ?? ''}`.trim();
+    const label = session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
     crumbs.push({ label });
   }
   if (route.name === 'record') {
-    const recordLabel = `Record ${route.params.id ?? ''}`.trim();
+    const recordLabel = `记录 ${route.params.id ?? ''}`.trim();
     crumbs.push({ label: recordLabel });
   }
   if (!crumbs.length) {
@@ -447,7 +447,7 @@ const roleMenus = computed(() => {
       const id = Number(node.menu_id || node.id || 0);
       if (xmlid && allow.has(xmlid) && id && !seen.has(id)) {
         seen.add(id);
-        found.push({ id, label: node.title || node.name || node.label || `Menu ${id}` });
+        found.push({ id, label: node.title || node.name || node.label || `菜单 ${id}` });
       }
       if (node.children?.length) {
         walk(node.children);

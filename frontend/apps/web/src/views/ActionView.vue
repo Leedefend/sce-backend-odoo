@@ -200,24 +200,24 @@ const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
-  { label: 'Updated ↓ / Name ↑', value: 'write_date desc,name asc' },
-  { label: 'Updated ↑ / Name ↑', value: 'write_date asc,name asc' },
-  { label: 'Name ↑ / Updated ↓', value: 'name asc,write_date desc' },
-  { label: 'Name ↓ / Updated ↓', value: 'name desc,write_date desc' },
+  { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
+  { label: '更新时间↑ / 名称↑', value: 'write_date asc,name asc' },
+  { label: '名称↑ / 更新时间↓', value: 'name asc,write_date desc' },
+  { label: '名称↓ / 更新时间↓', value: 'name desc,write_date desc' },
 ]);
-const subtitle = computed(() => `${records.value.length} records · sorted by ${sortLabel.value}`);
+const subtitle = computed(() => `${records.value.length} 条记录 · 排序：${sortLabel.value}`);
 const kanbanTitleField = computed(() => {
   const candidates = ['display_name', 'name'];
   const found = candidates.find((field) => kanbanFields.value.includes(field));
   return found || kanbanFields.value[0] || 'id';
 });
 const statusLabel = computed(() => {
-  if (status.value === 'loading') return 'Loading';
-  if (status.value === 'error') return 'Error';
-  if (status.value === 'empty') return 'Empty';
-  return 'Ready';
+  if (status.value === 'loading') return '加载中';
+  if (status.value === 'error') return '加载失败';
+  if (status.value === 'empty') return '暂无数据';
+  return '已就绪';
 });
-const pageTitle = computed(() => injectedTitle?.value || actionMeta.value?.name || 'Workspace');
+const pageTitle = computed(() => injectedTitle?.value || actionMeta.value?.name || '工作台');
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
 const sceneKey = computed(() => {
@@ -411,7 +411,7 @@ function applyBatchFailureArtifacts(result: {
   const preview = Array.isArray(result.failed_preview) ? result.failed_preview : [];
   const lines: BatchDetailLine[] = preview.map((item) => {
     const hint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
-    const retryTag = item.retryable === true ? 'retryable' : item.retryable === false ? 'non-retryable' : '';
+    const retryTag = item.retryable === true ? '可重试' : item.retryable === false ? '不可重试' : '';
     const text = [`#${item.id} ${item.reason_code}: ${item.message}`, retryTag, hint].filter(Boolean).join(' | ');
     const action = describeSuggestedAction(item.suggested_action, {
       hasRetryHandler: true,
