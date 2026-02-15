@@ -10,12 +10,16 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 CORE_EXTENSION = ROOT / "addons/smart_construction_core/core_extension.py"
 CORE_CONTROLLERS = ROOT / "addons/smart_construction_core/controllers"
+SYSTEM_INIT_HANDLER = ROOT / "addons/smart_core/handlers/system_init.py"
 
 FORBIDDEN_HOOK_SHAPE_RE = re.compile(r'data\[\s*["\'](?:scenes|capabilities)["\']\s*\]')
 FORBIDDEN_RUNTIME_ROUTE_RE = re.compile(r'@http\.route\(\s*["\'](?:/api/v1/intent|/api/contract/get)')
 FORBIDDEN_RUNTIME_IMPORT_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_core\.utils\.contract_governance\s+import)"
     r"|(?:from\s+odoo\.addons\.smart_core\.handlers\.system_init\s+import)"
+)
+FORBIDDEN_SYSTEM_INIT_SCENE_REGISTRY_RE = re.compile(
+    r"(?:from\s+odoo\.addons\.smart_construction_scene\.scene_registry\s+import)"
 )
 
 
@@ -44,6 +48,14 @@ def main() -> int:
                 "smart_core_extend_system_init must write into data['ext_facts'] namespace"
             )
 
+    if SYSTEM_INIT_HANDLER.is_file():
+        sys_init_text = SYSTEM_INIT_HANDLER.read_text(encoding="utf-8", errors="ignore")
+        if FORBIDDEN_SYSTEM_INIT_SCENE_REGISTRY_RE.search(sys_init_text):
+            violations.append(
+                "addons/smart_core/handlers/system_init.py: scene registry import must go through "
+                "smart_core.core.scene_provider"
+            )
+
     for path in _iter_controller_files():
         rel = path.relative_to(ROOT).as_posix()
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -70,4 +82,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
