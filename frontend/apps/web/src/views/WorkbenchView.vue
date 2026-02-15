@@ -210,30 +210,30 @@ const tiles = computed<EnrichedWorkbenchTile[]>(() => {
 const reasonLabel = computed(() => {
   switch (reason.value) {
     case ErrorCodes.NAV_MENU_NO_ACTION:
-      return 'Menu group (no action)';
+      return '菜单分组（无可执行动作）';
     case ErrorCodes.ACT_NO_MODEL:
-      return 'Action has no model';
+      return '动作未绑定模型';
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return 'Action type not supported';
+      return '动作类型暂不支持';
     case ErrorCodes.CAPABILITY_MISSING:
-      return 'Capability missing';
+      return '缺少能力权限';
     default:
-      return reason.value || 'Unknown';
+      return reason.value || '未知原因';
   }
 });
 
 const message = computed(() => {
   switch (reason.value) {
     case ErrorCodes.NAV_MENU_NO_ACTION:
-      return 'This menu is a directory and no reachable submenu is available.';
+      return '当前菜单是目录，暂时没有可进入的子菜单。';
     case ErrorCodes.ACT_NO_MODEL:
-      return 'This action opens a custom workspace without a model.';
+      return '当前动作对应的是自定义工作区，未绑定数据模型。';
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return 'This action type is not yet supported in the portal shell.';
+      return '当前动作类型暂未在门户壳层支持。';
     case ErrorCodes.CAPABILITY_MISSING:
-      return 'This capability is not enabled for your account.';
+      return '当前账号尚未开通该能力。';
     default:
-      return 'Return to home or open the menu to continue.';
+      return '你可以返回工作台或打开菜单继续操作。';
   }
 });
 
