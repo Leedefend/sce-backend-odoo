@@ -1,6 +1,6 @@
 <template>
   <section class="scene">
-    <StatusPanel v-if="status === 'loading'" title="Resolving scene..." variant="info" />
+    <StatusPanel v-if="status === 'loading'" title="正在加载场景..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -37,7 +37,7 @@ const router = useRouter();
 const session = useSessionStore();
 const status = ref<'loading' | 'error' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
-const errorCopy = ref(resolveErrorCopy(null, 'Scene resolve failed'));
+const errorCopy = ref(resolveErrorCopy(null, '场景加载失败'));
 const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger', 'projects.intake']);
 
 function resolveWorkspaceContextQuery() {
@@ -91,7 +91,7 @@ async function resolveScene() {
   const scene = getSceneByKey(sceneKey);
   if (!scene) {
     setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
-    errorCopy.value = resolveErrorCopy(error.value, 'Scene resolve failed');
+    errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
     status.value = 'error';
     return;
   }
@@ -212,7 +212,7 @@ async function resolveScene() {
   }
 
   setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
-  errorCopy.value = resolveErrorCopy(error.value, 'Scene resolve failed');
+  errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
   status.value = 'error';
 }
 
