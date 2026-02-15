@@ -380,9 +380,11 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
+import { trackUsageEvent } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
+import { readWorkspaceContext } from '../app/workspaceContext';
 
 const router = useRouter();
 const route = useRoute();
@@ -442,6 +444,7 @@ const myWorkRetryPanelStorageKey = 'sc.mywork.retry_panel.v1';
 const hasFilterPreset = ref(false);
 const appliedPresetLabel = ref('');
 const routeContextSource = ref('');
+const lastTrackedPreset = ref('');
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
@@ -696,14 +699,7 @@ function onErrorSuggestedActionExecuted(payload: { action: string; success: bool
 }
 
 function resolveWorkspaceContextQuery() {
-  const preset = String(route.query.preset || '').trim();
-  const ctxSource = String(route.query.ctx_source || '').trim();
-  const search = String(route.query.search || '').trim();
-  const context: Record<string, string> = {};
-  if (preset) context.preset = preset;
-  if (ctxSource) context.ctx_source = ctxSource;
-  if (search) context.search = search;
-  return context;
+  return readWorkspaceContext(route.query as Record<string, unknown>);
 }
 
 function openScene(sceneKey: string) {
@@ -1364,13 +1360,13 @@ function restoreRetryPanelState() {
 
 function applyRouteOverrides() {
   let changed = false;
-  const preset = String(route.query.preset || '').trim();
+  const context = readWorkspaceContext(route.query as Record<string, unknown>);
+  const preset = String(context.preset || '').trim();
   const section = String(route.query.section || '').trim();
   const source = String(route.query.source || '').trim();
   const reason = String(route.query.reason || '').trim();
-  const search = String(route.query.search || '').trim();
-  const ctxSource = String(route.query.ctx_source || '').trim();
-  routeContextSource.value = ctxSource;
+  const search = String(context.search || '').trim();
+  routeContextSource.value = String(context.ctx_source || '').trim();
 
   const setIfDiff = <T>(target: { value: T }, next: T) => {
     if (target.value === next) return;
@@ -1394,6 +1390,13 @@ function applyRouteOverrides() {
   } else {
     appliedPresetLabel.value = '';
   }
+  if (preset && preset !== lastTrackedPreset.value) {
+    lastTrackedPreset.value = preset;
+    void trackUsageEvent('workspace.preset.apply', { preset, view: 'my_work' }).catch(() => {});
+  }
+  if (!preset) {
+    lastTrackedPreset.value = '';
+  }
 
   if (section) setIfDiff(activeSection, section);
   if (source && source !== 'workspace_today') setIfDiff(sourceFilter, source);
@@ -1408,6 +1411,7 @@ function applyRouteOverrides() {
 function clearRoutePreset() {
   appliedPresetLabel.value = '';
   routeContextSource.value = '';
+  void trackUsageEvent('workspace.preset.clear', { view: 'my_work' }).catch(() => {});
   router.replace({ path: '/my-work' }).catch(() => {});
 }
 

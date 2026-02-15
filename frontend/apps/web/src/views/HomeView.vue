@@ -215,6 +215,10 @@ type SuggestionItem = {
   count?: number;
   status?: SuggestionStatus;
 };
+type SuggestionRoute = {
+  path: string;
+  query: Record<string, string>;
+};
 
 const router = useRouter();
 const route = useRoute();
@@ -624,34 +628,38 @@ function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<strin
 function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>) {
   const preset = asText(contextQuery?.preset);
   const ctxSource = asText(contextQuery?.ctx_source) || 'workspace_today';
-  if (preset === 'pending_approval') {
-    router
-      .push({
-        path: '/my-work',
-        query: { preset, ctx_source: ctxSource, section: 'todo', source: 'mail.activity', search: '审批' },
-      })
-      .catch(() => {});
-    return;
-  }
-  if (preset === 'project_intake') {
-    router
-      .push({
-        path: '/my-work',
-        query: { preset, ctx_source: ctxSource, section: 'owned', search: '立项' },
-      })
-      .catch(() => {});
-    return;
-  }
-  if (preset === 'cost_watchlist') {
-    router
-      .push({
-        path: '/my-work',
-        query: { preset, ctx_source: ctxSource, section: 'following', search: '成本' },
-      })
-      .catch(() => {});
+  const presetRouteMap: Record<string, (source: string) => SuggestionRoute> = {
+    pending_approval: (source) => ({
+      path: '/my-work',
+      query: { preset: 'pending_approval', ctx_source: source, section: 'todo', source: 'mail.activity', search: '审批' },
+    }),
+    project_intake: (source) => ({
+      path: '/my-work',
+      query: { preset: 'project_intake', ctx_source: source, section: 'owned', search: '立项' },
+    }),
+    cost_watchlist: (source) => ({
+      path: '/my-work',
+      query: { preset: 'cost_watchlist', ctx_source: source, section: 'following', search: '成本' },
+    }),
+  };
+  if (preset && presetRouteMap[preset]) {
+    const target = presetRouteMap[preset](ctxSource);
+    void trackUsageEvent('workspace.preset.navigate', {
+      preset,
+      from: 'workspace.home',
+      to: target.path,
+      ctx_source: ctxSource,
+    }).catch(() => {});
+    router.push(target).catch(() => {});
     return;
   }
   if (contextQuery && Object.keys(contextQuery).length) {
+    void trackUsageEvent('workspace.preset.navigate', {
+      preset: preset || '',
+      from: 'workspace.home',
+      to: `/s/${asText(sceneKey) || ''}`,
+      ctx_source: ctxSource,
+    }).catch(() => {});
     openSuggestionWithContext(sceneKey, contextQuery);
     return;
   }
@@ -660,6 +668,12 @@ function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>)
     openRoleLanding();
     return;
   }
+  void trackUsageEvent('workspace.preset.navigate', {
+    preset: '',
+    from: 'workspace.home',
+    to: `/s/${safeSceneKey}`,
+    ctx_source: '',
+  }).catch(() => {});
   router.push({ path: `/s/${safeSceneKey}` }).catch(() => {});
 }
 
