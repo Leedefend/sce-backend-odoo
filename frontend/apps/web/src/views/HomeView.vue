@@ -869,10 +869,21 @@ function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>)
 
 function retryOpen() {
   if (!lastFailedEntry.value) return;
+  void trackUsageEvent('workspace.enter_retry', {
+    capability_key: lastFailedEntry.value.key,
+    scene_key: lastFailedEntry.value.sceneKey,
+    code: enterError.value?.code || '',
+  }).catch(() => {});
   void openScene(lastFailedEntry.value);
 }
 
 function clearEnterError() {
+  if (enterError.value) {
+    void trackUsageEvent('workspace.enter_error_dismiss', {
+      code: enterError.value.code || '',
+      trace_id: enterError.value.traceId || '',
+    }).catch(() => {});
+  }
   enterError.value = null;
   lastFailedEntry.value = null;
 }
