@@ -518,8 +518,8 @@ function resolveSuggestionCount(sceneKey: string, fallbackKeys: string[]) {
 function matchesSearch(entry: CapabilityEntry, query: string) {
   if (!query) return true;
   const fields = isHudEnabled.value
-    ? [entry.title, entry.subtitle, entry.key, ...entry.tags]
-    : [entry.title, entry.subtitle, ...entry.tags];
+    ? [entry.title, entry.subtitle, entry.sceneTitle, entry.key, ...entry.tags]
+    : [entry.title, entry.subtitle, entry.sceneTitle, ...entry.tags];
   return fields.some((text) => String(text || '').toLowerCase().includes(query));
 }
 
