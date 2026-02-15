@@ -128,6 +128,18 @@ def _fingerprint(obj: dict) -> str:
     payload = json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.md5(payload.encode("utf-8")).hexdigest()
 
+def _build_scene_trace_meta(data: dict, scene_diagnostics: dict | None, elapsed_ms: int) -> dict:
+    diagnostics = scene_diagnostics if isinstance(scene_diagnostics, dict) else {}
+    return {
+        "latency_ms": int(elapsed_ms),
+        "scene_source": diagnostics.get("loaded_from") or "unknown",
+        "scene_contract_ref": data.get("scene_contract_ref") or "unknown",
+        "scene_channel": data.get("scene_channel") or "stable",
+        "channel_selector": diagnostics.get("channel_selector") or "default",
+        "channel_source_ref": diagnostics.get("channel_source_ref") or "default",
+        "governance": diagnostics.get("governance"),
+    }
+
 
 def _walk_nav_nodes(nodes):
     for node in nodes or []:
@@ -1664,6 +1676,7 @@ class SystemInitHandler(BaseIntentHandler):
         etags["nav"] = nav_fp
 
         elapsed_ms = int((time.time() - ts0) * 1000)
+        scene_trace_meta = _build_scene_trace_meta(data, scene_diagnostics, elapsed_ms)
         meta = {
             "elapsed_ms": elapsed_ms,
             "parts": {"nav": format_versions(nav_versions), **parts_version},
@@ -1672,6 +1685,7 @@ class SystemInitHandler(BaseIntentHandler):
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
             "contract_mode": contract_mode,
+            "scene_trace": scene_trace_meta,
         }
         if contract_mode == "hud":
             data["hud"] = {
@@ -1679,12 +1693,7 @@ class SystemInitHandler(BaseIntentHandler):
                 "latency_ms": elapsed_ms,
                 "contract_version": CONTRACT_VERSION,
                 "role_key": data.get("role_surface", {}).get("role_code"),
-                "scene_source": scene_diagnostics.get("loaded_from") or "unknown",
-                "scene_contract_ref": data.get("scene_contract_ref") or "unknown",
-                "scene_channel": data.get("scene_channel") or "stable",
-                "channel_selector": scene_diagnostics.get("channel_selector") or "default",
-                "channel_source_ref": scene_diagnostics.get("channel_source_ref") or "default",
-                "governance": scene_diagnostics.get("governance"),
+                **scene_trace_meta,
             }
         if diag_enabled and diagnostic_info is not None and contract_mode == "hud":
             data["diagnostic"] = diagnostic_info
