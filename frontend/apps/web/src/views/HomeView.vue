@@ -352,7 +352,8 @@ function stringifyEntryContext(context: { section?: string; source?: string; rea
   if (context.reason) next.reason = context.reason;
   if (context.search) next.search = context.search;
   if (!Object.keys(next).length) return '';
-  return JSON.stringify(next);
+  const payload = JSON.stringify(next);
+  return payload.length <= 256 ? payload : '';
 }
 
 function asText(value: unknown) {
