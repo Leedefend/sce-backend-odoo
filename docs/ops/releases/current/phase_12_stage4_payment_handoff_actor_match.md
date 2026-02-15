@@ -79,3 +79,8 @@ Existing fields remain unchanged:
 - `make verify.frontend.build` ✅
 - `make verify.portal.payment_request_approval_smoke.container DB_NAME=sc_demo` ✅
 - `make verify.portal.payment_request_approval_handoff_smoke.container DB_NAME=sc_demo` ✅
+
+## Release Review Baseline
+
+- Sidebar menu scene coverage evidence (required for release review):
+  - `docs/ops/releases/current/menu_scene_coverage_evidence.md`

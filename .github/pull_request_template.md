@@ -39,6 +39,13 @@ Closes #ISSUE_ID
 
  [ ] 若为业务增量迭代，已附 preflight 证据（`verify.business.increment.preflight`）
  [ ] 若使用业务增量 profile，已在 PR 描述注明（`BUSINESS_INCREMENT_PROFILE=...`）
+ [ ] 若触及侧边栏/场景路由，已附菜单场景覆盖证据：
+      - `make verify.menu.scene_resolve.container DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+      - `make verify.menu.scene_resolve.summary`
+      - 证据中需包含：
+        - `menu_scene_resolve_effective_total`
+        - `menu_scene_resolve_coverage`
+        - `menu_scene_resolve_enforce_prefixes`
 
  权限（ir.model.access）设置正确
 

@@ -66,6 +66,10 @@ jobs:
           docker compose exec -T db createdb -U odoo -T template0 sc_p2 || true
           docker compose exec -T db createdb -U odoo -T template0 sc_p3 || true
 
+      - name: Verify extension modules baseline
+        run: |
+          AUTO_FIX_EXTENSION_MODULES=1 make policy.ensure.extension_modules DB_NAME=sc_demo
+
       - name: Gate tp08
         run: |
           make ci.gate.tp08 DB=sc_demo
@@ -87,6 +91,220 @@ jobs:
       - name: Stage p3-runtime-r1
         run: |
           make stage.run STAGE=p3-runtime-r1 DB=sc_p3
+
+      - name: Navigation alignment audit
+        run: |
+          make audit.nav.alignment DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo
+
+      - name: Role navigation diff audit
+        run: |
+          make audit.nav.role_diff DB_NAME=sc_demo
+
+      - name: Publish nav alignment summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          report = "artifacts/audit/nav_alignment_report.latest.json"
+          status = "n/a"
+          blockers = []
+          warnings = []
+          menu = {}
+          actions = {}
+          if os.path.exists(report):
+              try:
+                  payload = json.load(open(report, "r", encoding="utf-8"))
+                  status = payload.get("status", "n/a")
+                  blockers = payload.get("blockers") or []
+                  warnings = payload.get("warnings") or []
+                  menu = payload.get("menu_scene_resolve", {}).get("summary", {}) or {}
+                  actions = payload.get("actions") or {}
+              except Exception:
+                  pass
+
+          lines = [
+              "## Navigation Alignment",
+              "",
+              f"- report: `{report}`",
+              f"- status: `{status}`",
+              f"- blockers: `{', '.join(blockers) if blockers else '-'}`",
+              f"- warnings: `{', '.join(warnings) if warnings else '-'}`",
+              f"- menu_scene_failures: `{menu.get('failures', 'n/a')}`",
+              f"- menu_scene_coverage: `{menu.get('coverage', 'n/a')}`",
+              f"- action_missing_groups_scoped: `{actions.get('missing_groups_count', 'n/a')}`",
+              f"- unguarded_visible_total_scoped: `{actions.get('unguarded_visible_total', 'n/a')}`",
+          ]
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines) + "\n")
+          print("\n".join(lines))
+          PY
+
+      - name: Publish role nav diff summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          report = "artifacts/audit/role_nav_diff.latest.json"
+          status = "n/a"
+          blockers = []
+          roles = []
+          pairwise = []
+          if os.path.exists(report):
+              try:
+                  payload = json.load(open(report, "r", encoding="utf-8"))
+                  status = payload.get("status", "n/a")
+                  blockers = payload.get("blockers") or []
+                  roles = payload.get("roles") or []
+                  pairwise = payload.get("pairwise_diff") or []
+              except Exception:
+                  pass
+
+          role_lines = []
+          for row in roles:
+              role = row.get("role", "")
+              if row.get("error"):
+                  role_lines.append(f"  - {role}: error={row.get('error')}")
+              else:
+                  role_lines.append(
+                      f"  - {role}: nav_count={row.get('nav_count', 'n/a')} "
+                      f"scene_bound={row.get('scene_bound_count', 'n/a')} "
+                      f"landing={row.get('landing_scene_key', '')}"
+                  )
+          if not role_lines:
+              role_lines = ["  - n/a"]
+
+          pair_lines = []
+          for row in pairwise[:6]:
+              pair_lines.append(
+                  f"  - {row.get('left')} vs {row.get('right')}: "
+                  f"left_only={row.get('left_only_count', 'n/a')} "
+                  f"right_only={row.get('right_only_count', 'n/a')}"
+              )
+          if not pair_lines:
+              pair_lines = ["  - n/a"]
+
+          lines = [
+              "## Role Navigation Diff",
+              "",
+              f"- report: `{report}`",
+              f"- status: `{status}`",
+              f"- blockers: `{', '.join(blockers) if blockers else '-'}`",
+              "- role summary:",
+              *role_lines,
+              "- pairwise summary:",
+              *pair_lines,
+          ]
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines) + "\n")
+          print("\n".join(lines))
+          PY
+
+      - name: Publish menu scene coverage summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          summary_path = "artifacts/codex/summary.md"
+          menu_dir = "artifacts/codex/portal-menu-scene-resolve"
+
+          def last_summary_value(key: str) -> str:
+              if not os.path.exists(summary_path):
+                  return "n/a"
+              value = "n/a"
+              with open(summary_path, "r", encoding="utf-8", errors="ignore") as fh:
+                  for raw in fh:
+                      line = raw.strip()
+                      prefix = f"{key}:"
+                      if line.startswith(prefix):
+                          value = line[len(prefix):].strip() or "n/a"
+              return value
+
+          latest_json = ""
+          if os.path.isdir(menu_dir):
+              dirs = sorted(
+                  [
+                      name
+                      for name in os.listdir(menu_dir)
+                      if os.path.isdir(os.path.join(menu_dir, name))
+                  ]
+              )
+              if dirs:
+                  candidate = os.path.join(menu_dir, dirs[-1], "menu_scene_resolve.json")
+                  if os.path.exists(candidate):
+                      latest_json = candidate
+
+          total = "n/a"
+          resolved = "n/a"
+          failures = "n/a"
+          exempt = "n/a"
+          coverage = "n/a"
+          effective_total = "n/a"
+          enforce_prefixes = "n/a"
+          if latest_json:
+              try:
+                  with open(latest_json, "r", encoding="utf-8") as fh:
+                      data = json.load(fh)
+                  summary = data.get("summary") or {}
+                  total = summary.get("total", "n/a")
+                  resolved = summary.get("resolved", "n/a")
+                  failures = summary.get("failures", "n/a")
+                  exempt = summary.get("exempt", "n/a")
+                  coverage = summary.get("coverage", "n/a")
+                  effective_total = summary.get("effective_total", "n/a")
+                  prefixes = summary.get("enforce_prefixes") or []
+                  enforce_prefixes = ",".join(prefixes) if isinstance(prefixes, list) and prefixes else "n/a"
+              except Exception:
+                  pass
+
+          lines = [
+              "## Menu Scene Coverage",
+              "",
+              f"- latest_json: `{latest_json or 'n/a'}`",
+              f"- total: `{total}`",
+              f"- resolved: `{resolved}`",
+              f"- failures: `{failures}`",
+              f"- exempt: `{exempt}`",
+              f"- effective_total: `{effective_total}`",
+              f"- coverage: `{coverage}`",
+              f"- enforce_prefixes: `{enforce_prefixes}`",
+              "",
+              "### Summary Keys",
+              f"- menu_scene_resolve_effective_total: `{last_summary_value('menu_scene_resolve_effective_total')}`",
+              f"- menu_scene_resolve_coverage: `{last_summary_value('menu_scene_resolve_coverage')}`",
+              f"- menu_scene_resolve_enforce_prefixes: `{last_summary_value('menu_scene_resolve_enforce_prefixes')}`",
+              f"- phase_9_8_menu_resolve_exempt_manual: `{last_summary_value('phase_9_8_menu_resolve_exempt_manual')}`",
+              f"- phase_9_8_menu_resolve_exempt_auto: `{last_summary_value('phase_9_8_menu_resolve_exempt_auto')}`",
+          ]
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines) + "\n")
+          print("\n".join(lines))
+          PY
+
+      - name: Upload menu scene coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-scene-coverage
+          path: |
+            artifacts/codex/summary.md
+            artifacts/codex/phase-9-8/gate_summary.json
+            artifacts/codex/portal-menu-scene-resolve/**/menu_scene_resolve.json
+          if-no-files-found: warn
 
       - name: Dump logs on failure
         if: failure()

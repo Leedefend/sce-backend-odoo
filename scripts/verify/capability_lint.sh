@@ -48,5 +48,6 @@ ensure_module_installed() {
 
 ensure_module_installed "smart_core"
 ensure_module_installed "smart_construction_core"
+ensure_module_installed "smart_construction_portal"
 
 python3 "$ROOT_DIR/scripts/verify/capability_lint.py"

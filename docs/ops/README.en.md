@@ -17,6 +17,12 @@ This directory hosts release, verification, and operational governance documenta
   - `make verify.business.increment.preflight`
   - `make verify.business.increment.preflight.strict`
   - optional profile: `BUSINESS_INCREMENT_PROFILE=base|strict`
+- Navigation alignment audit:
+  - `make audit.nav.alignment DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+  - outputs: `artifacts/audit/nav_alignment_report.latest.json`, `artifacts/audit/nav_alignment_report.latest.md`
+- Role navigation diff audit:
+  - `make audit.nav.role_diff DB_NAME=sc_demo`
+  - outputs: `artifacts/audit/role_nav_diff.latest.json`, `artifacts/audit/role_nav_diff.latest.md`
 - Phase 11 Backend Closure: `docs/ops/releases/current/phase_11_backend_closure.md`
 - Phase 11.1 Contract Visibility: `docs/ops/releases/current/phase_11_1_contract_visibility.md`
 - Temporary archive (non-official, traceability only): `docs/ops/releases/archive/temp/`

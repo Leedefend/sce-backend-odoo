@@ -4,5 +4,14 @@
 # Each entry requires a menu xmlid and a short reason.
 
 exemptions:
-  # - xmlid: base.menu_action
-  #   reason: system menu
+  # system/technical menus not part of scene semantic routing
+  - xmlid: mail.menu_root_discuss
+    reason: system messaging root (act_client)
+  - xmlid: project_todo.menu_todo_todos
+    reason: todo helper menu (server action)
+  - xmlid: spreadsheet_dashboard.spreadsheet_dashboard_menu_root
+    reason: spreadsheet dashboard shell (act_client)
+  - xmlid: spreadsheet_dashboard.spreadsheet_dashboard_menu_dashboard
+    reason: spreadsheet dashboard entry (act_client)
+  - xmlid: spreadsheet_dashboard.spreadsheet_dashboard_menu_configuration_dashboards
+    reason: spreadsheet dashboard config

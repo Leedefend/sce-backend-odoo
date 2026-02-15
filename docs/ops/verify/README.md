@@ -134,6 +134,9 @@
 - Typical env: `DB_NAME=sc_demo E2E_LOGIN=svc_e2e_smoke E2E_PASSWORD=demo`.
 - Phase 9.8 warnings baseline can be adjusted via `SC_WARN_ACT_URL_LEGACY_MAX`.
 - Menu exemptions file: `docs/ops/verify/menu_scene_exemptions.yml`.
+- Menu scene resolve enforcement scope (default business namespace only):
+  - `MENU_SCENE_ENFORCE_PREFIXES=smart_construction_core.,smart_construction_demo.,smart_construction_portal.`
+  - Set `MENU_SCENE_ENFORCE_PREFIXES=` (empty) to enforce all namespaces (including Odoo technical menus).
 - Strict failure guide: `docs/ops/verify/scene_observability_troubleshooting.md`.
 - Baseline freeze guard:
   - `make verify.baseline.freeze_guard`

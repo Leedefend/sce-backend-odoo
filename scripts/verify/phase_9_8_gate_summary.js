@@ -36,6 +36,24 @@ function appendSummary(lines) {
   fs.appendFileSync(SUMMARY_PATH, lines.join('\n') + '\n');
 }
 
+function summarizeMenuResolve(menuData) {
+  const summary = (menuData && menuData.summary) || {};
+  const exempt = Array.isArray(menuData?.exempt) ? menuData.exempt : [];
+  const autoExempt = exempt.filter((item) => item && item.reason === 'auto_exempt_non_business_namespace').length;
+  const manualExempt = Math.max(exempt.length - autoExempt, 0);
+  return {
+    total: summary.total ?? 'n/a',
+    resolved: summary.resolved ?? 'n/a',
+    failures: summary.failures ?? 'n/a',
+    exempt: summary.exempt ?? 0,
+    effective_total: summary.effective_total ?? 'n/a',
+    coverage: summary.coverage ?? 'n/a',
+    enforce_prefixes: Array.isArray(summary.enforce_prefixes) ? summary.enforce_prefixes : [],
+    exempt_manual: manualExempt,
+    exempt_auto: autoExempt,
+  };
+}
+
 function main() {
   const warningsDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-scene-warnings');
   const menuDir = path.join(ARTIFACTS_DIR, 'codex', 'portal-menu-scene-resolve');
@@ -47,6 +65,8 @@ function main() {
     warnings: warningsPath ? readJson(warningsPath) : null,
     menu_scene_resolve: menuPath ? readJson(menuPath) : null,
   };
+  const menuQuick = summarizeMenuResolve(out.menu_scene_resolve);
+  out.menu_scene_resolve_quick = menuQuick;
 
   const outDir = path.join(ARTIFACTS_DIR, 'codex', 'phase-9-8');
   fs.mkdirSync(outDir, { recursive: true });
@@ -57,6 +77,12 @@ function main() {
     `phase_9_8_gate_summary: ${outFile}`,
     `phase_9_8_menu_resolve: ${menuPath || 'n/a'}`,
     `phase_9_8_warnings: ${warningsPath || 'n/a'}`,
+    `phase_9_8_menu_resolve_effective_total: ${menuQuick.effective_total}`,
+    `phase_9_8_menu_resolve_coverage: ${menuQuick.coverage}%`,
+    `phase_9_8_menu_resolve_failures: ${menuQuick.failures}`,
+    `phase_9_8_menu_resolve_exempt_manual: ${menuQuick.exempt_manual}`,
+    `phase_9_8_menu_resolve_exempt_auto: ${menuQuick.exempt_auto}`,
+    `phase_9_8_menu_resolve_enforce_prefixes: ${menuQuick.enforce_prefixes.join(',') || '-'}`,
   ];
   appendSummary(summaryLines);
 }
