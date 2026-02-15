@@ -4,6 +4,7 @@ import json
 import os
 import time
 from datetime import datetime
+from http.client import RemoteDisconnected
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
 
@@ -44,18 +45,23 @@ def _http_post_json(url: str, payload: dict, headers: dict | None = None) -> tup
     req.add_header("Content-Type", "application/json")
     for k, v in (headers or {}).items():
         req.add_header(k, v)
-    try:
-        with urlrequest.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8") or "{}"
-            return resp.status, json.loads(body)
-    except HTTPError as e:
-        body = e.read().decode("utf-8") if hasattr(e, "read") else ""
+    attempt = 0
+    while True:
+        attempt += 1
         try:
-            return e.code, json.loads(body or "{}")
-        except Exception:
-            return e.code, {"raw": body}
-    except URLError as e:
-        raise RuntimeError(f"HTTP request failed: {e}") from e
+            with urlrequest.urlopen(req, timeout=30) as resp:
+                body = resp.read().decode("utf-8") or "{}"
+                return resp.status, json.loads(body)
+        except HTTPError as e:
+            body = e.read().decode("utf-8") if hasattr(e, "read") else ""
+            try:
+                return e.code, json.loads(body or "{}")
+            except Exception:
+                return e.code, {"raw": body}
+        except (RemoteDisconnected, ConnectionResetError, URLError) as e:
+            if attempt >= 3:
+                raise RuntimeError(f"HTTP request failed after retries: {e}") from e
+            time.sleep(0.5 * attempt)
 
 
 def _assert_error(resp: dict, code: str):
