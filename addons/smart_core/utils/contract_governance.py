@@ -42,6 +42,19 @@ def _parse_tags(raw: Any) -> set[str]:
     return out
 
 
+def _normalized_tags_for_item(item: dict) -> list[str]:
+    tags = _parse_tags(item.get("tags"))
+    key = _safe_text(item.get("key") or item.get("code")).lower()
+    name = _safe_text(item.get("name")).lower()
+    if item.get("is_test") or item.get("smoke_test"):
+        tags.update({"internal", "smoke"})
+    if "smoke" in key or "smoke" in name:
+        tags.update({"internal", "smoke"})
+    if "internal" in key or "internal" in name:
+        tags.add("internal")
+    return sorted(tags)
+
+
 def is_internal_or_smoke(item: dict) -> bool:
     if not isinstance(item, dict):
         return False
@@ -66,6 +79,7 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
         item["name"] = _safe_text(item.get("name"), item.get("key") or "未命名能力")
         item["ui_label"] = _safe_text(item.get("ui_label"), item.get("name") or item.get("key") or "未命名能力")
         item["status"] = _safe_text(item.get("status"), "active")
+        item["tags"] = _normalized_tags_for_item(item)
         out.append(item)
     return out
 
@@ -80,6 +94,7 @@ def normalize_scenes(scenes: list) -> list[dict]:
         item["code"] = code or item.get("code")
         item["key"] = _safe_text(item.get("key"), code)
         item["name"] = _safe_text(item.get("name"), code or "未命名场景")
+        item["tags"] = _normalized_tags_for_item(item)
         out.append(item)
     return out
 
