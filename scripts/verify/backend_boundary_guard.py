@@ -13,6 +13,7 @@ CORE_CONTROLLERS = ROOT / "addons/smart_construction_core/controllers"
 SYSTEM_INIT_HANDLER = ROOT / "addons/smart_core/handlers/system_init.py"
 
 FORBIDDEN_HOOK_SHAPE_RE = re.compile(r'data\[\s*["\'](?:scenes|capabilities)["\']\s*\]')
+HOOK_DATA_ASSIGN_RE = re.compile(r'data\[\s*["\']([^"\']+)["\']\s*\]\s*=')
 FORBIDDEN_RUNTIME_ROUTE_RE = re.compile(r'@http\.route\(\s*["\'](?:/api/v1/intent|/api/contract/get)')
 FORBIDDEN_RUNTIME_IMPORT_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_core\.utils\.contract_governance\s+import)"
@@ -42,6 +43,13 @@ def main() -> int:
                 "addons/smart_construction_core/core_extension.py: "
                 "smart_core_extend_system_init must not write data['scenes']/data['capabilities']"
             )
+        assigned_keys = sorted({m.group(1) for m in HOOK_DATA_ASSIGN_RE.finditer(text)})
+        for key in assigned_keys:
+            if key != "ext_facts":
+                violations.append(
+                    "addons/smart_construction_core/core_extension.py: "
+                    f"smart_core_extend_system_init must not write data['{key}'] (allowed: data['ext_facts'])"
+                )
         if "ext_facts" not in text:
             violations.append(
                 "addons/smart_construction_core/core_extension.py: "
