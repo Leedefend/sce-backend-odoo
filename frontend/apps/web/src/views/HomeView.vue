@@ -107,6 +107,15 @@
           {{ lockReasonLabel(item.reasonCode) }} {{ item.count }}
         </button>
       </div>
+      <div v-if="activeFilterChips.length" class="active-filters">
+        <span
+          v-for="chip in activeFilterChips"
+          :key="chip.key"
+          class="filter-chip"
+        >
+          {{ chip.label }}
+        </span>
+      </div>
       <div v-if="groupedEntries.length" class="group-actions">
         <button @click="expandAllSceneGroups">展开全部分组</button>
         <button @click="collapseAllSceneGroups">折叠全部分组</button>
@@ -225,6 +234,7 @@ type SuggestionRoute = {
   path: string;
   query: Record<string, string>;
 };
+type FilterChip = { key: string; label: string };
 
 const router = useRouter();
 const route = useRoute();
@@ -538,6 +548,17 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
+const activeFilterChips = computed<FilterChip[]>(() => {
+  const chips: FilterChip[] = [];
+  const keyword = searchText.value.trim();
+  if (keyword) chips.push({ key: 'search', label: `搜索：${keyword}` });
+  if (readyOnly.value) chips.push({ key: 'ready-only', label: '仅显示可进入' });
+  if (stateFilter.value !== 'ALL') chips.push({ key: 'state', label: `状态：${stateLabel(stateFilter.value)}` });
+  if (lockReasonFilter.value !== 'ALL') {
+    chips.push({ key: 'reason', label: `锁定原因：${lockReasonLabel(lockReasonFilter.value)}` });
+  }
+  return chips;
+});
 
 const groupedEntries = computed(() => {
   const filteredByRecent = new Map(filteredEntries.value.map((entry) => [entry.recentKey, entry]));
@@ -1223,6 +1244,21 @@ function highlightParts(raw: string) {
   border-color: #b91c1c;
   color: #b91c1c;
   background: #fff1f2;
+}
+
+.active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #1e40af;
+  background: #eff6ff;
 }
 
 .group-actions {
