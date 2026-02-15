@@ -138,6 +138,7 @@
           }}
         </p>
         <div class="empty-actions">
+          <button v-if="lockReasonFilter !== 'ALL'" class="empty-btn" @click="clearLockReasonFilter">清除锁定原因</button>
           <button v-if="readyOnlyNoResult" class="empty-btn" @click="showAllCapabilities">显示全部能力</button>
           <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
         </div>
@@ -739,6 +740,10 @@ function clearSearchAndFilters() {
 function showAllCapabilities() {
   readyOnly.value = false;
   stateFilter.value = 'ALL';
+}
+
+function clearLockReasonFilter() {
+  lockReasonFilter.value = 'ALL';
 }
 
 function clearFilterChip(key: string) {
