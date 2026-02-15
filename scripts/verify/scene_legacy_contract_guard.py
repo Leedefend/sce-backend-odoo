@@ -9,6 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 SCENE_CONTROLLER = ROOT / "addons/smart_construction_core/controllers/scene_controller.py"
+LEGACY_CONTRACT = ROOT / "scripts/common/scene_legacy_contract.py"
 
 REQUIRED_PATTERNS = (
     (r'"status"\s*:\s*"deprecated"', "missing deprecation.status=deprecated payload"),
@@ -16,9 +17,14 @@ REQUIRED_PATTERNS = (
     (r'\("Deprecation",\s*"true"\)', "missing Deprecation header"),
     (r'\("Sunset",\s*_LEGACY_SCENES_SUNSET_HTTP\)', "missing Sunset header constant wiring"),
     (r'rel=\\"successor-version\\"', "missing successor-version Link header"),
-    (r'_LEGACY_SCENES_SUCCESSOR\s*=\s*"/api/v1/intent"', "unexpected successor endpoint"),
-    (r'_LEGACY_SCENES_SUNSET_DATE\s*=\s*"2026-04-30"', "unexpected sunset date constant"),
+    (r'_LEGACY_SCENES_SUCCESSOR\s*=\s*"([^"]+)"', "missing successor endpoint constant"),
+    (r'_LEGACY_SCENES_SUNSET_DATE\s*=\s*"([^"]+)"', "missing sunset date constant"),
 )
+
+
+def _extract_constant(text: str, name: str) -> str:
+    match = re.search(rf'{re.escape(name)}\s*=\s*"([^"]+)"', text)
+    return str(match.group(1) or "").strip() if match else ""
 
 
 def main() -> int:
@@ -26,13 +32,36 @@ def main() -> int:
         print("[scene_legacy_contract_guard] FAIL")
         print(f"missing file: {SCENE_CONTROLLER.as_posix()}")
         return 1
+    if not LEGACY_CONTRACT.is_file():
+        print("[scene_legacy_contract_guard] FAIL")
+        print(f"missing file: {LEGACY_CONTRACT.as_posix()}")
+        return 1
 
     text = SCENE_CONTROLLER.read_text(encoding="utf-8", errors="ignore")
+    legacy_text = LEGACY_CONTRACT.read_text(encoding="utf-8", errors="ignore")
     violations: list[str] = []
 
     for pattern, message in REQUIRED_PATTERNS:
         if not re.search(pattern, text):
             violations.append(message)
+
+    controller_successor = _extract_constant(text, "_LEGACY_SCENES_SUCCESSOR")
+    controller_sunset = _extract_constant(text, "_LEGACY_SCENES_SUNSET_DATE")
+    contract_successor = _extract_constant(legacy_text, "LEGACY_SCENES_SUCCESSOR")
+    contract_sunset = _extract_constant(legacy_text, "LEGACY_SCENES_SUNSET_DATE")
+
+    if not contract_successor:
+        violations.append("missing LEGACY_SCENES_SUCCESSOR in scripts/common/scene_legacy_contract.py")
+    if not contract_sunset:
+        violations.append("missing LEGACY_SCENES_SUNSET_DATE in scripts/common/scene_legacy_contract.py")
+    if controller_successor and contract_successor and controller_successor != contract_successor:
+        violations.append(
+            f"successor constant mismatch: controller={controller_successor} common={contract_successor}"
+        )
+    if controller_sunset and contract_sunset and controller_sunset != contract_sunset:
+        violations.append(
+            f"sunset date constant mismatch: controller={controller_sunset} common={contract_sunset}"
+        )
 
     if violations:
         print("[scene_legacy_contract_guard] FAIL")
