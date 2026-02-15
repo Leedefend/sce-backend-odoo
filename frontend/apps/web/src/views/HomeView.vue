@@ -738,8 +738,12 @@ function clearSearchAndFilters() {
 }
 
 function showAllCapabilities() {
+  const wasReadyOnly = readyOnly.value;
   readyOnly.value = false;
   stateFilter.value = 'ALL';
+  if (wasReadyOnly) {
+    void trackUsageEvent('workspace.ready_only.recover', { from: 'empty_state' }).catch(() => {});
+  }
 }
 
 function clearLockReasonFilter() {
