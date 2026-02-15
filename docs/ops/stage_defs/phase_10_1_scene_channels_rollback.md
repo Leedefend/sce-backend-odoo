@@ -35,10 +35,17 @@ SCENE_CHANNEL=stable SCENE_USE_PINNED=1 make scene.rollback.stable
 New fields:
 - `scene_channel`
 - `scene_contract_ref`
+- `meta.scene_trace.scene_source`
+- `meta.scene_trace.scene_contract_ref`
+- `meta.scene_trace.scene_channel`
+- `meta.scene_trace.channel_selector`
+- `meta.scene_trace.channel_source_ref`
 
 Diagnostics:
 - `rollback_active`
 - `rollback_ref`
+- `meta.scene_trace.governance` (before/after/filtered summary)
+- HUD payload keeps the same scene tracing keys as `meta.scene_trace`
 
 ## Verifies
 Channel smoke:
