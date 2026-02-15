@@ -984,6 +984,12 @@ watch([readyOnly, stateFilter, lockReasonFilter], () => {
   }).catch(() => {});
 });
 
+watch(lockReasonFilter, (next) => {
+  if (next === 'ALL') return;
+  if (stateFilter.value === 'LOCKED') return;
+  stateFilter.value = 'LOCKED';
+});
+
 watch(searchText, (next) => {
   const query = String(next || '').trim();
   if (!query) {
