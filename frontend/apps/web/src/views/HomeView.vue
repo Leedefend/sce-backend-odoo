@@ -90,6 +90,7 @@
           即将开放 {{ stateCounts.PREVIEW }}
         </button>
       </div>
+      <p v-if="readyOnly" class="filter-tip">已启用“仅显示可进入能力”，暂不可用与即将开放不会展示。</p>
       <div v-if="lockedReasonOptions.length" class="reason-filters">
         <button :class="{ active: lockReasonFilter === 'ALL' }" @click="lockReasonFilter = 'ALL'">
           锁定原因：全部
@@ -1144,6 +1145,12 @@ function highlightParts(raw: string) {
   gap: 6px;
   color: #334155;
   font-size: 13px;
+}
+
+.filter-tip {
+  margin: -2px 0 0;
+  color: #475569;
+  font-size: 12px;
 }
 
 .state-filters button {
