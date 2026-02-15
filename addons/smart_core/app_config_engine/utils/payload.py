@@ -36,4 +36,7 @@ def parse_payload(payload):
         "action_key": payload.get("action_key"),
         "context": payload.get("context") or {},
         "breadcrumbs": payload.get("breadcrumbs") or [],
+        "contract_mode": payload.get("contract_mode"),
+        "hud": payload.get("hud"),
+        "debug_hud": payload.get("debug_hud"),
     }

@@ -44,6 +44,18 @@ def _normalize_scene(scene, drift=None, source="registry"):
         return None
     if not scene.get("code") and scene.get("key"):
         scene["code"] = scene.get("key")
+    tags = scene.get("tags")
+    if isinstance(tags, str):
+        scene["tags"] = [t.strip() for t in tags.split(",") if t and t.strip()]
+    elif isinstance(tags, list):
+        scene["tags"] = [str(t).strip() for t in tags if str(t).strip()]
+    else:
+        scene["tags"] = []
+    if scene.get("is_test"):
+        if "internal" not in scene["tags"]:
+            scene["tags"].append("internal")
+        if "smoke" not in scene["tags"]:
+            scene["tags"].append("smoke")
     scene = _apply_scene_defaults(scene, drift=drift, source=source)
     return scene
 
@@ -134,6 +146,8 @@ def load_scene_configs(env, drift=None):
         {
             "code": "scene_smoke_default",
             "name": "Scene Smoke Default",
+            "is_test": True,
+            "tags": ["internal", "smoke"],
             "target": {"route": "/workbench?scene=scene_smoke_default"},
         },
         {

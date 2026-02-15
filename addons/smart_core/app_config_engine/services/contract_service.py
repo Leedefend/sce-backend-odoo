@@ -37,6 +37,10 @@ from odoo.addons.smart_core.core.exceptions import (
     DEFAULT_CONTRACT_VERSION,
     build_error_envelope,
 )
+from odoo.addons.smart_core.utils.contract_governance import (
+    apply_contract_governance,
+    resolve_contract_mode,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -76,11 +80,14 @@ class ContractService:
 
         # 1) 读取 body 与请求头
         payload = read_json_body()
-        client_etag = request.httprequest.headers.get('If-None-Match')
+        client_etag = (request.httprequest.headers.get('If-None-Match') or "").strip()
+        if client_etag.startswith('"') and client_etag.endswith('"'):
+            client_etag = client_etag[1:-1]
         _logger.warning("CONTRACT_REQUEST payload=%s headers=%s", payload, dict(request.httprequest.headers))
 
         # 2) 解析/规范化 payload（强约束字段、兜底默认值）
         p = parse_payload(payload)
+        contract_mode = resolve_contract_mode(payload if isinstance(payload, dict) else p)
         _logger.warning("CONTRACT_PARSED_PAYLOAD %s", p)
 
         # 3) 根据 subject 分发
@@ -107,6 +114,7 @@ class ContractService:
             _contract_fixed = self.finalize_contract(_contract_min)
             # 用修复后的 data 覆盖
             data = _contract_fixed.get("data", data)
+            data = apply_contract_governance(data, contract_mode, inject_contract_mode=False)
         except AssertionError as ae:
             # 统一化自检失败：返回 422，方便开发期快速定位脏数据/不一致
             _logger.exception("contract finalize self-check failed")
@@ -114,7 +122,7 @@ class ContractService:
         # -----------------------------------------
 
         # 4) 计算 ETag，支持 304
-        etag = stable_etag(data)
+        etag = stable_etag({"data": data, "contract_mode": contract_mode})
         # 约定：with_data=True 时不缓存（避免列表数据频繁变化造成误判）
         skip_cache = bool(p.get("with_data"))
         if not skip_cache and client_etag and client_etag == etag:
@@ -132,6 +140,7 @@ class ContractService:
             "trace_id": trace_id,
             "api_version": DEFAULT_API_VERSION,
             "contract_version": DEFAULT_CONTRACT_VERSION,
+            "contract_mode": contract_mode,
         }
 
         # 6) 返回成功响应

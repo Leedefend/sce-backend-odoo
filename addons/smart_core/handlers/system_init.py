@@ -22,6 +22,11 @@ from odoo.addons.smart_core.utils.reason_codes import (
     REASON_PERMISSION_DENIED,
     failure_meta_for_reason,
 )
+from odoo.addons.smart_core.utils.contract_governance import (
+    apply_contract_governance,
+    is_truthy,
+    resolve_contract_mode,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -29,7 +34,6 @@ _logger = logging.getLogger(__name__)
 CONTRACT_VERSION = "v0.1"
 API_VERSION = "v1"
 SCENE_CHANNELS = {"stable", "beta", "dev"}
-
 ROLE_SURFACE_MAP = {
     "owner": {
         "label": "Owner",
@@ -285,11 +289,6 @@ def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, st
         return env_val, "env", "SCENE_CHANNEL"
 
     return "stable", selector, source_ref
-
-def _is_truthy(value) -> bool:
-    if value is None:
-        return False
-    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 def _resolve_scene_contract_path(rel_path: str) -> str | None:
     roots = [
@@ -614,7 +613,7 @@ def _get_auto_degrade_policy(env) -> dict:
             return fallback
 
     enabled_raw = config.get_param("sc.scene.auto_degrade.enabled")
-    enabled = defaults["enabled"] if enabled_raw in (None, "") else _is_truthy(enabled_raw)
+    enabled = defaults["enabled"] if enabled_raw in (None, "") else is_truthy(enabled_raw)
     action = (config.get_param("sc.scene.auto_degrade.action") or defaults["action"]).strip().lower()
     if action not in {"rollback_pinned", "stable_latest"}:
         action = defaults["action"]
@@ -638,7 +637,7 @@ def _get_auto_degrade_notify_policy(env) -> dict:
         return defaults
 
     enabled_raw = config.get_param("sc.scene.auto_degrade.notify.enabled")
-    enabled = defaults["enabled"] if enabled_raw in (None, "") else _is_truthy(enabled_raw)
+    enabled = defaults["enabled"] if enabled_raw in (None, "") else is_truthy(enabled_raw)
     raw_channels = (config.get_param("sc.scene.auto_degrade.notify.channels") or "internal").strip().lower()
     allowed = {"email", "internal", "webhook"}
     channels = [item.strip() for item in raw_channels.split(",") if item.strip() in allowed]
@@ -1396,6 +1395,7 @@ class SystemInitHandler(BaseIntentHandler):
         params = payload.get("params") if isinstance(payload, dict) else None
         if not isinstance(params, dict):
             params = payload if isinstance(payload, dict) else {}
+        contract_mode = resolve_contract_mode(params)
         trace_id = ""
         try:
             trace_id = str((self.context or {}).get("trace_id") or "")
@@ -1411,15 +1411,15 @@ class SystemInitHandler(BaseIntentHandler):
         try:
             rollback_active = bool(self.get_bool("scene_use_pinned", False) or self.get_bool("scene_rollback", False))
         except Exception:
-            rollback_active = _is_truthy(pinned_param) or _is_truthy(rollback_param)
+            rollback_active = is_truthy(pinned_param) or is_truthy(rollback_param)
         if pinned_param is not None and str(pinned_param).strip() not in {"", "0", "false", "no", "off"}:
             rollback_active = True
         try:
             config = env["ir.config_parameter"].sudo()
-            rollback_active = rollback_active or _is_truthy(config.get_param("sc.scene.use_pinned")) or                 _is_truthy(config.get_param("sc.scene.rollback"))
+            rollback_active = rollback_active or is_truthy(config.get_param("sc.scene.use_pinned")) or                 is_truthy(config.get_param("sc.scene.rollback"))
         except Exception:
             pass
-        rollback_active = rollback_active or _is_truthy(os.environ.get("SCENE_USE_PINNED")) or             _is_truthy(os.environ.get("SCENE_ROLLBACK"))
+        rollback_active = rollback_active or is_truthy(os.environ.get("SCENE_USE_PINNED")) or             is_truthy(os.environ.get("SCENE_ROLLBACK"))
         if rollback_active:
             scene_channel = "stable"
         
@@ -1575,6 +1575,7 @@ class SystemInitHandler(BaseIntentHandler):
             "scene_channel_selector": channel_selector,
             "scene_channel_source_ref": channel_source_ref,
             "scene_contract_ref": None,
+            "contract_mode": contract_mode,
         }
         scene_diagnostics = {
             "schema_version": data.get("schema_version"),
@@ -1653,7 +1654,7 @@ class SystemInitHandler(BaseIntentHandler):
         scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
 
         # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
-        if _is_truthy(params.get("scene_inject_critical_error")) and _diagnostics_enabled(env):
+        if is_truthy(params.get("scene_inject_critical_error")) and _diagnostics_enabled(env):
             _append_resolve_error(
                 scene_diagnostics["resolve_errors"],
                 scene_key="projects.list",
@@ -1707,6 +1708,8 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload
+        data = apply_contract_governance(data, contract_mode)
+        scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
         scene_keys_latest = {
             (s.get("code") or s.get("key"))
             for s in scenes_payload
@@ -1719,15 +1722,24 @@ class SystemInitHandler(BaseIntentHandler):
         # 分部 etag：加入导航
         etags["nav"] = nav_fp
 
+        elapsed_ms = int((time.time() - ts0) * 1000)
         meta = {
-            "elapsed_ms": int((time.time() - ts0) * 1000),
+            "elapsed_ms": elapsed_ms,
             "parts": {"nav": format_versions(nav_versions), **parts_version},
             "etags": etags,
             "intent": self.INTENT_TYPE,
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
+            "contract_mode": contract_mode,
         }
-        if diag_enabled and diagnostic_info is not None:
+        if contract_mode == "hud":
+            data["hud"] = {
+                "trace_id": trace_id,
+                "latency_ms": elapsed_ms,
+                "contract_version": CONTRACT_VERSION,
+                "role_key": data.get("role_surface", {}).get("role_code"),
+            }
+        if diag_enabled and diagnostic_info is not None and contract_mode == "hud":
             data["diagnostic"] = diagnostic_info
 
         # 顶层 ETag：纳入用户、导航指纹、默认路由、特性开关、可用意图
@@ -1741,6 +1753,7 @@ class SystemInitHandler(BaseIntentHandler):
             "scene_channel": data.get("scene_channel"),
             "scene_contract_ref": data.get("scene_contract_ref"),
             "capabilities": data.get("capabilities"),
+            "contract_mode": contract_mode,
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
         })
