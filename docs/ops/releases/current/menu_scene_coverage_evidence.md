@@ -11,6 +11,7 @@
 ## Commands
 
 ```bash
+make verify.extension_modules.guard DB_NAME=sc_demo
 make verify.menu.scene_resolve.container DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo
 make verify.menu.scene_resolve.summary
 make verify.phase_9_8.gate_summary
@@ -43,5 +44,6 @@ From `artifacts/codex/phase-9-8/gate_summary.json`:
 ## Review Rule
 
 - Business delivery review is PASS only when:
+  - extension baseline includes both `smart_construction_core` and `smart_construction_portal`
   - `menu_scene_resolve_failures = 0`
   - and `menu_scene_resolve_coverage = 100%` under default business enforcement prefixes.

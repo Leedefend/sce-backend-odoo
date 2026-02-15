@@ -14,6 +14,11 @@ since: v0.3.0-stable
 - `ENV=prod make verify.prod.guard` passes (guard-only)
 - JSON summary emitted by `scripts/verify/prod_guard_smoke.sh`
 - Release is approved iff JSON reports `rc=0`
+- Runtime extension baseline for demo gate is satisfied:
+  - `make verify.extension_modules.guard DB_NAME=sc_demo`
+  - required module tokens in `sc.core.extension_modules`:
+    - `smart_construction_core`
+    - `smart_construction_portal`
 - Phase 9.8 menu/scene coverage summary is present in release evidence:
   - `make verify.menu.scene_resolve.summary`
   - required keys in `artifacts/codex/summary.md`:

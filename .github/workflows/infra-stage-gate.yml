@@ -66,6 +66,10 @@ jobs:
           docker compose exec -T db createdb -U odoo -T template0 sc_p2 || true
           docker compose exec -T db createdb -U odoo -T template0 sc_p3 || true
 
+      - name: Verify extension modules baseline
+        run: |
+          AUTO_FIX_EXTENSION_MODULES=1 make policy.ensure.extension_modules DB_NAME=sc_demo
+
       - name: Gate tp08
         run: |
           make ci.gate.tp08 DB=sc_demo
