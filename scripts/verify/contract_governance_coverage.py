@@ -22,14 +22,19 @@ RULES = {
     "system_init": [
         r"resolve_contract_mode",
         r"apply_contract_governance",
+        r"\"contract_mode\"\s*:\s*contract_mode",
     ],
     "ui_contract": [
         r"resolve_contract_mode",
         r"apply_contract_governance",
+        r"contract_mode\s*=\s*resolve_contract_mode",
+        r"\"contract_mode\"\s*:\s*contract_mode",
     ],
     "contract_service": [
         r"resolve_contract_mode",
         r"apply_contract_governance",
+        r"stable_etag\(\{\"data\":\s*data,\s*\"contract_mode\":\s*contract_mode\}\)",
+        r"\"contract_mode\"\s*:\s*contract_mode",
     ],
 }
 

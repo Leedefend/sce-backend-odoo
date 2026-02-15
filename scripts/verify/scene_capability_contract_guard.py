@@ -2,10 +2,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import json
 import os
+from pathlib import Path
 
 from intent_smoke_utils import require_ok
 from python_http_smoke_utils import get_base_url, http_post_json
+
+ROOT = Path(__file__).resolve().parents[2]
+ARTIFACT_JSON = ROOT / "artifacts" / "scene_capability_contract_guard.json"
+ARTIFACT_MD = ROOT / "artifacts" / "scene_capability_contract_guard.md"
+BASELINE_JSON = ROOT / "scripts/verify/baselines/scene_capability_contract_guard.json"
 
 
 def _to_str_list(value):
@@ -63,20 +70,14 @@ def main() -> None:
 
     scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
     capabilities = data.get("capabilities") if isinstance(data.get("capabilities"), list) else []
-    if not scenes:
-        raise RuntimeError("system.init scenes empty")
-    if not capabilities:
-        raise RuntimeError("system.init capabilities empty")
-
     cap_keys = {
         str(item.get("key") or "").strip()
         for item in capabilities
         if isinstance(item, dict) and str(item.get("key") or "").strip()
     }
-    if not cap_keys:
-        raise RuntimeError("capability keys empty")
 
     errors = []
+    missing_refs = []
     for scene in scenes:
         if not isinstance(scene, dict):
             errors.append("scene item must be object")
@@ -88,11 +89,70 @@ def main() -> None:
         refs = _collect_required_caps(scene)
         missing = sorted([key for key in refs if key not in cap_keys])
         if missing:
+            missing_refs.append({"scene_key": scene_key, "missing_capabilities": missing})
             errors.append(f"{scene_key}: missing required capabilities {','.join(missing)}")
 
-    if errors:
-        raise RuntimeError("scene-capability inconsistency: " + " | ".join(errors[:20]))
+    baseline = {
+        "min_scenes": 1,
+        "min_capabilities": 1,
+        "max_errors": 0,
+        "max_missing_refs": 0,
+    }
+    if BASELINE_JSON.is_file():
+        try:
+            data = json.loads(BASELINE_JSON.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                baseline.update(data)
+        except Exception:
+            errors.append(f"invalid baseline file: {BASELINE_JSON.as_posix()}")
 
+    if len(scenes) < int(baseline.get("min_scenes", 1)):
+        errors.append(f"scenes below baseline: {len(scenes)} < {baseline.get('min_scenes')}")
+    if len(cap_keys) < int(baseline.get("min_capabilities", 1)):
+        errors.append(f"capabilities below baseline: {len(cap_keys)} < {baseline.get('min_capabilities')}")
+    if len(missing_refs) > int(baseline.get("max_missing_refs", 0)):
+        errors.append(f"missing refs above baseline: {len(missing_refs)} > {baseline.get('max_missing_refs')}")
+    if len(errors) > int(baseline.get("max_errors", 0)):
+        pass
+
+    report = {
+        "ok": len(errors) <= int(baseline.get("max_errors", 0)),
+        "baseline": baseline,
+        "summary": {
+            "scene_count": len(scenes),
+            "capability_count": len(cap_keys),
+            "missing_ref_count": len(missing_refs),
+            "error_count": len(errors),
+        },
+        "missing_refs": missing_refs,
+        "errors": errors,
+    }
+
+    ARTIFACT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    ARTIFACT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    lines = [
+        "# Scene Capability Contract Guard",
+        "",
+        f"- status: {'PASS' if report['ok'] else 'FAIL'}",
+        f"- scene_count: {report['summary']['scene_count']}",
+        f"- capability_count: {report['summary']['capability_count']}",
+        f"- missing_ref_count: {report['summary']['missing_ref_count']}",
+        f"- error_count: {report['summary']['error_count']}",
+    ]
+    if missing_refs:
+        lines.extend(["", "## Missing Refs", ""])
+        for item in missing_refs[:50]:
+            lines.append(f"- {item['scene_key']}: {','.join(item['missing_capabilities'])}")
+    if errors:
+        lines.extend(["", "## Errors", ""])
+        for item in errors[:50]:
+            lines.append(f"- {item}")
+    ARTIFACT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    print(str(ARTIFACT_JSON))
+    print(str(ARTIFACT_MD))
+    if not report["ok"]:
+        raise RuntimeError("scene-capability inconsistency: " + " | ".join(errors[:20]))
     print(f"[scene_capability_contract_guard] PASS scenes={len(scenes)} capabilities={len(cap_keys)}")
 
 

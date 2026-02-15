@@ -1753,6 +1753,7 @@ class SystemInitHandler(BaseIntentHandler):
             "scene_channel": data.get("scene_channel"),
             "scene_contract_ref": data.get("scene_contract_ref"),
             "capabilities": data.get("capabilities"),
+            "contract_mode": contract_mode,
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
         })
