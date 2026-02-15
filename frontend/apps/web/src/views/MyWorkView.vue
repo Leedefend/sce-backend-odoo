@@ -380,6 +380,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
+import { trackUsageEvent } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
@@ -443,6 +444,7 @@ const myWorkRetryPanelStorageKey = 'sc.mywork.retry_panel.v1';
 const hasFilterPreset = ref(false);
 const appliedPresetLabel = ref('');
 const routeContextSource = ref('');
+const lastTrackedPreset = ref('');
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
@@ -1388,6 +1390,13 @@ function applyRouteOverrides() {
   } else {
     appliedPresetLabel.value = '';
   }
+  if (preset && preset !== lastTrackedPreset.value) {
+    lastTrackedPreset.value = preset;
+    void trackUsageEvent('workspace.preset.apply', { preset, view: 'my_work' }).catch(() => {});
+  }
+  if (!preset) {
+    lastTrackedPreset.value = '';
+  }
 
   if (section) setIfDiff(activeSection, section);
   if (source && source !== 'workspace_today') setIfDiff(sourceFilter, source);
@@ -1402,6 +1411,7 @@ function applyRouteOverrides() {
 function clearRoutePreset() {
   appliedPresetLabel.value = '';
   routeContextSource.value = '';
+  void trackUsageEvent('workspace.preset.clear', { view: 'my_work' }).catch(() => {});
   router.replace({ path: '/my-work' }).catch(() => {});
 }
 
