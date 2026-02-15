@@ -46,6 +46,11 @@ class SceneController(http.Controller):
                 "scenes": out,
                 "count": len(out),
                 "default_scene": default_scene_code,
+                "deprecation": {
+                    "status": "deprecated",
+                    "replacement": "/api/v1/intent (intent=app.init)",
+                    "sunset_date": "2026-04-30",
+                },
             }
             return ok(payload, status=200)
         except AccessDenied as exc:
