@@ -383,6 +383,7 @@ import { completeMyWorkItem, completeMyWorkItemsBatch, fetchMyWorkSummary, type 
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
+import { readWorkspaceContext } from '../app/workspaceContext';
 
 const router = useRouter();
 const route = useRoute();
@@ -696,14 +697,7 @@ function onErrorSuggestedActionExecuted(payload: { action: string; success: bool
 }
 
 function resolveWorkspaceContextQuery() {
-  const preset = String(route.query.preset || '').trim();
-  const ctxSource = String(route.query.ctx_source || '').trim();
-  const search = String(route.query.search || '').trim();
-  const context: Record<string, string> = {};
-  if (preset) context.preset = preset;
-  if (ctxSource) context.ctx_source = ctxSource;
-  if (search) context.search = search;
-  return context;
+  return readWorkspaceContext(route.query as Record<string, unknown>);
 }
 
 function openScene(sceneKey: string) {
@@ -1364,13 +1358,13 @@ function restoreRetryPanelState() {
 
 function applyRouteOverrides() {
   let changed = false;
-  const preset = String(route.query.preset || '').trim();
+  const context = readWorkspaceContext(route.query as Record<string, unknown>);
+  const preset = String(context.preset || '').trim();
   const section = String(route.query.section || '').trim();
   const source = String(route.query.source || '').trim();
   const reason = String(route.query.reason || '').trim();
-  const search = String(route.query.search || '').trim();
-  const ctxSource = String(route.query.ctx_source || '').trim();
-  routeContextSource.value = ctxSource;
+  const search = String(context.search || '').trim();
+  routeContextSource.value = String(context.ctx_source || '').trim();
 
   const setIfDiff = <T>(target: { value: T }, next: T) => {
     if (target.value === next) return;
