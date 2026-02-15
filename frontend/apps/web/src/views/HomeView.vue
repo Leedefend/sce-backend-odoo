@@ -724,10 +724,14 @@ function toggleEmptyHelp() {
 }
 
 function clearSearchAndFilters() {
+  const hadFilters = Boolean(searchText.value.trim() || readyOnly.value || stateFilter.value !== 'ALL' || lockReasonFilter.value !== 'ALL');
   searchText.value = '';
   readyOnly.value = false;
   stateFilter.value = 'ALL';
   lockReasonFilter.value = 'ALL';
+  if (hadFilters) {
+    void trackUsageEvent('workspace.filter_clear_all', { source: 'workspace.home' }).catch(() => {});
+  }
 }
 
 function showAllCapabilities() {
