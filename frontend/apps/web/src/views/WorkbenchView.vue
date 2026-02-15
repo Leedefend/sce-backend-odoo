@@ -97,6 +97,7 @@ import { ErrorCodes } from '../app/error_codes';
 import { useSessionStore } from '../stores/session';
 import { isHudEnabled } from '../config/debug';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
+import { readWorkspaceContext } from '../app/workspaceContext';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import type { NavNode } from '@sc/schema';
 
@@ -172,14 +173,7 @@ const diagContractType = computed(() => String(route.query.diag_contract_type ||
 const diagContractUrl = computed(() => String(route.query.diag_contract_url || ''));
 const diagMetaUrl = computed(() => String(route.query.diag_meta_url || ''));
 const workspaceContextQuery = computed(() => {
-  const preset = String(route.query.preset || '').trim();
-  const ctxSource = String(route.query.ctx_source || '').trim();
-  const search = String(route.query.search || '').trim();
-  const context: Record<string, string> = {};
-  if (preset) context.preset = preset;
-  if (ctxSource) context.ctx_source = ctxSource;
-  if (search) context.search = search;
-  return context;
+  return readWorkspaceContext(route.query as Record<string, unknown>);
 });
 const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
