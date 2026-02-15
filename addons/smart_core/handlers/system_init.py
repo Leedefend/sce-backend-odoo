@@ -1287,6 +1287,47 @@ def _sync_nav_scene_keys(nav_tree, scenes, warnings):
     walk(nav_tree)
 
 
+def _merge_missing_scenes_from_registry(env, scenes, warnings):
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
+    except Exception:
+        return scenes
+    current = [scene for scene in (scenes or []) if isinstance(scene, dict)]
+    existing = {
+        str(scene.get("code") or scene.get("key") or "").strip()
+        for scene in current
+        if isinstance(scene, dict)
+    }
+    existing = {code for code in existing if code}
+    registry_scenes = load_scene_configs(env) or []
+    appended = []
+    for scene in registry_scenes:
+        if not isinstance(scene, dict):
+            continue
+        code = str(scene.get("code") or scene.get("key") or "").strip()
+        if not code or code in existing:
+            continue
+        item = dict(scene)
+        target = item.get("target")
+        if isinstance(target, dict):
+            item["target"] = dict(target)
+        current.append(item)
+        existing.add(code)
+        appended.append(code)
+    if appended:
+        warnings.append({
+            "code": "SCENE_FALLBACK_MERGED",
+            "severity": "info",
+            "scene_key": "",
+            "message": "missing scenes merged from registry fallback",
+            "field": "scenes",
+            "reason": "contract_gap",
+            "count": len(appended),
+            "scene_codes": appended[:20],
+        })
+    return current
+
+
 def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
     """
     从 HANDLER_REGISTRY 动态收集可用意图（按权限过滤）。
@@ -1570,6 +1611,7 @@ class SystemInitHandler(BaseIntentHandler):
             scene_diagnostics["scene_version"] = data.get("scene_version")
             scene_diagnostics["schema_version"] = data.get("schema_version")
             scene_diagnostics["loaded_from"] = "contract"
+            data["scenes"] = _merge_missing_scenes_from_registry(env, data.get("scenes"), scene_diagnostics["normalize_warnings"])
         else:
             try:
                 from odoo.addons.smart_construction_scene.scene_registry import (
@@ -1653,6 +1695,7 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["resolve_errors"] = []
                 scene_diagnostics["drift"] = []
                 scene_diagnostics["normalize_warnings"] = []
+                data["scenes"] = _merge_missing_scenes_from_registry(env, data.get("scenes"), scene_diagnostics["normalize_warnings"])
                 t_norm2 = time.time()
                 _normalize_scene_layouts(data["scenes"], scene_diagnostics["normalize_warnings"])
                 _normalize_scene_accesses(data["scenes"], scene_diagnostics["normalize_warnings"])
