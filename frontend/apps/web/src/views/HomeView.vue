@@ -120,6 +120,7 @@
       <div v-if="groupedEntries.length" class="group-actions">
         <button @click="expandAllSceneGroups">展开全部分组</button>
         <button @click="collapseAllSceneGroups">折叠全部分组</button>
+        <button v-if="hasRecentGroup" @click="clearRecentEntries">清空最近使用</button>
       </div>
     </section>
 
@@ -599,6 +600,7 @@ const groupedEntries = computed(() => {
   if (!recentItems.length) return grouped;
   return [{ sceneKey: '__recent__', sceneTitle: '最近使用', items: recentItems }, ...grouped];
 });
+const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group.sceneKey === '__recent__'));
 
 const lockedReasonOptions = computed(() => {
   const map = new Map<string, number>();
@@ -747,6 +749,12 @@ function pushRecentEntry(recentKey: string) {
   if (!recentKey) return;
   const deduped = [recentKey, ...recentEntryKeys.value.filter((item) => item !== recentKey)].slice(0, 5);
   recentEntryKeys.value = deduped;
+}
+
+function clearRecentEntries() {
+  if (!recentEntryKeys.value.length) return;
+  recentEntryKeys.value = [];
+  void trackUsageEvent('workspace.recent.clear', { scope: workspaceScopeKey.value }).catch(() => {});
 }
 
 function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<string, string>) {
