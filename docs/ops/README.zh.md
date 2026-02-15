@@ -30,6 +30,8 @@ status: active
 ## 验证与评分
 - P0 验证流程：`docs/ops/verify_p0.md`
 - 初始化评分表：`docs/ops/init_scorecard.md`
+- 导航对齐审计：`make audit.nav.alignment DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo`
+  - 输出：`artifacts/audit/nav_alignment_report.latest.json`、`artifacts/audit/nav_alignment_report.latest.md`
 
 ## 产品/UX 参考
 - 项目中心表达：`docs/ops/A1_project_center_expression.md`

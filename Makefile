@@ -877,7 +877,7 @@ ops.auth.dev.rollback:
 ops.auth.dev.verify:
 	@./scripts/ops/auth_policy.sh verify -p $(AUTH_PROJECT) -d $(AUTH_DB)
 
-.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions audit.nav.alignment
 demo.verify: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
@@ -917,6 +917,11 @@ seed.run: check-compose-project check-compose-env
 
 audit.project.actions: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) OUT=$(OUT) bash scripts/ops/audit_project_actions.sh
+
+audit.nav.alignment: guard.prod.forbid check-compose-project check-compose-env
+	@ENABLE_SUGGESTIONS=1 $(MAKE) --no-print-directory audit.project.actions DB_NAME=$(DB_NAME)
+	@$(MAKE) --no-print-directory verify.menu.scene_resolve.container DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD)
+	@python3 scripts/audit/nav_alignment_report.py
 
 .PHONY: prod.upgrade.core
 prod.upgrade.core: guard.prod.danger check-compose-project check-compose-env
