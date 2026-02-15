@@ -604,7 +604,7 @@ const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group
 
 const lockedReasonOptions = computed(() => {
   const map = new Map<string, number>();
-  entries.value.forEach((entry) => {
+  searchedEntries.value.forEach((entry) => {
     if (entry.state !== 'LOCKED') return;
     const code = String(entry.reasonCode || 'UNKNOWN').toUpperCase();
     map.set(code, (map.get(code) || 0) + 1);
