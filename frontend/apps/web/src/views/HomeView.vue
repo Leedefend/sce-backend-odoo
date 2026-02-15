@@ -222,6 +222,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
+import { readWorkspaceContext } from '../app/workspaceContext';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type SuggestionStatus = 'urgent' | 'normal';
@@ -340,6 +341,9 @@ const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScope
 const homeViewModeStorageKey = computed(() => `workspace:view_mode:${workspaceScopeKey.value}`);
 const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKey.value}`);
 const searchKeyword = computed(() => searchText.value.trim());
+const workspaceContextQuery = computed(() => {
+  return readWorkspaceContext(route.query as Record<string, unknown>) as Record<string, unknown>;
+});
 
 function stringifyEntryContext(context: { section?: string; source?: string; reason?: string; search?: string }) {
   const next: Record<string, string> = {};
@@ -725,11 +729,11 @@ async function openScene(entry: CapabilityEntry) {
 }
 
 function openRoleLanding() {
-  router.push(session.resolveLandingPath('/s/projects.list')).catch(() => {});
+  router.push({ path: session.resolveLandingPath('/s/projects.list'), query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToMyWork() {
-  router.push({ path: '/my-work' }).catch(() => {});
+  router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToUsageAnalytics() {
