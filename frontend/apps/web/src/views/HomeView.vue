@@ -269,6 +269,7 @@ const enterError = ref<{ message: string; hint: string; code: string; traceId: s
 const lastTrackedSearch = ref('');
 const lastTrackedFilterSignature = ref('');
 const lastTrackedViewMode = ref('');
+const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
 const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
 const isHudEnabled = computed(() => {
@@ -571,6 +572,14 @@ const resultSummaryText = computed(() => `当前显示 ${filteredEntries.value.l
 const readyOnlyNoResult = computed(
   () => readyOnly.value && filteredEntries.value.length === 0 && stateCounts.value.READY === 0,
 );
+const emptyStateReason = computed(() => {
+  if (filteredEntries.value.length > 0) return '';
+  if (!entries.value.length) return 'no_capability';
+  if (readyOnlyNoResult.value) return 'ready_only_filtered';
+  if (lockReasonFilter.value !== 'ALL') return 'lock_reason_filtered';
+  if (searchText.value.trim()) return 'search_filtered';
+  return 'filter_filtered';
+});
 const activeFilterChips = computed<FilterChip[]>(() => {
   const chips: FilterChip[] = [];
   const keyword = searchText.value.trim();
@@ -1024,6 +1033,21 @@ watch(searchText, (next) => {
   if (query === lastTrackedSearch.value) return;
   lastTrackedSearch.value = query;
   void trackUsageEvent('workspace.search', { query }).catch(() => {});
+});
+
+watch([filteredEntries, entries, readyOnly, lockReasonFilter, stateFilter, searchText], () => {
+  const reason = emptyStateReason.value;
+  if (!reason) return;
+  const signature = `${reason}:${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${lockReasonFilter.value}:${searchText.value.trim()}`;
+  if (signature === lastTrackedEmptySignature.value) return;
+  lastTrackedEmptySignature.value = signature;
+  void trackUsageEvent('workspace.empty_state', {
+    reason,
+    ready_only: readyOnly.value,
+    state_filter: stateFilter.value,
+    lock_reason_filter: lockReasonFilter.value,
+    search: searchText.value.trim(),
+  }).catch(() => {});
 });
 
 function highlightParts(raw: string) {
