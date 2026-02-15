@@ -11,6 +11,9 @@
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
+        <p v-if="isHudEnabled" class="hud-line">
+          HUD: internal_tiles={{ internalTileCount }} · visible_mode=show_all
+        </p>
       </div>
       <div class="view-toggle">
         <button class="my-work-btn" @click="goToMyWork">我的工作</button>
@@ -268,6 +271,31 @@ const sceneTitleMap = computed(() => {
 });
 const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || 'projects.list');
 const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || '工作台首页');
+const internalTileCount = computed(() => {
+  let count = 0;
+  session.scenes.forEach((scene) => {
+    const sceneKey = asText(scene.key);
+    if (!sceneKey) return;
+    const tiles = Array.isArray(scene.tiles) ? scene.tiles : [];
+    tiles.forEach((tile, tileIndex) => {
+      const key = asText(tile.key);
+      if (!key) return;
+      const title = asText((tile as { title?: string }).title) || `能力 ${tileIndex + 1}`;
+      if (
+        isInternalEntry({
+          sceneKey,
+          title,
+          key,
+          sceneTags: (scene as { tags?: unknown }).tags,
+          tileTags: (tile as { tags?: unknown }).tags,
+        })
+      ) {
+        count += 1;
+      }
+    });
+  });
+  return count;
+});
 const workspaceScopeKey = computed(() => {
   const roleKey = asText(roleSurface.value?.role_code) || 'default';
   const landingScene = asText(roleSurface.value?.landing_scene_key) || 'projects.list';
