@@ -84,29 +84,23 @@ def smart_core_register(registry):
 
 def smart_core_extend_system_init(data, env, user):
     """
-    Enrich smart_core system.init response with construction scenes/capabilities.
+    Enrich smart_core system.init response with construction facts only.
+    Contract shape fields (e.g. scenes/capabilities) are owned by smart_core.
     """
     try:
-        Cap = env["sc.capability"].sudo()
-        Scene = env["sc.scene"].sudo()
         Entitlement = env.get("sc.entitlement")
         Usage = env.get("sc.usage.counter")
-        caps = Cap.search([("active", "=", True)], order="sequence, id")
-        scenes = Scene.search([
-            ("active", "=", True),
-            ("state", "=", "published"),
-            ("is_test", "=", False),
-        ], order="sequence, id")
-        data["capabilities"] = [
-            rec.to_public_dict(user) for rec in caps if rec._user_visible(user)
-        ]
-        if not data.get("scenes"):
-            data["scenes"] = [
-                scene.to_public_dict(user) for scene in scenes if scene._user_allowed(user)
-            ]
+        ext_facts = data.get("ext_facts")
+        if not isinstance(ext_facts, dict):
+            ext_facts = {}
+        module_facts = ext_facts.get("smart_construction_core")
+        if not isinstance(module_facts, dict):
+            module_facts = {}
         if Entitlement:
-            data["entitlements"] = Entitlement.get_payload(user)
+            module_facts["entitlements"] = Entitlement.get_payload(user)
         if Usage:
-            data["usage"] = Usage.get_usage_map(user.company_id)
+            module_facts["usage"] = Usage.get_usage_map(user.company_id)
+        ext_facts["smart_construction_core"] = module_facts
+        data["ext_facts"] = ext_facts
     except Exception as exc:
         _logger.warning("[smart_core_extend_system_init] failed: %s", exc)
