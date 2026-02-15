@@ -2,7 +2,7 @@
   <section class="workbench">
     <header class="header">
       <div>
-        <p v-if="showHud" class="diagnostic">Diagnostic surface only — not product UI.</p>
+        <p v-if="showHud" class="diagnostic">诊断页仅用于排查，不作为正式产品界面。</p>
         <h2>页面暂时无法打开</h2>
         <p class="meta">我们已为你保留可继续操作的入口。</p>
         <p v-if="hasContext" class="context-line">
@@ -43,50 +43,50 @@
 
     <div v-if="showHud" class="details">
       <div class="detail">
-        <span class="label">Reason</span>
+        <span class="label">原因</span>
         <span class="value">{{ reasonLabel }}</span>
       </div>
       <div class="detail">
-        <span class="label">Menu</span>
+        <span class="label">菜单</span>
         <span class="value">{{ menuId || 'N/A' }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">Action</span>
+        <span class="label">动作</span>
         <span class="value">{{ actionId || 'N/A' }}</span>
       </div>
       <div class="detail">
-        <span class="label">Route</span>
+        <span class="label">路由</span>
         <span class="value">{{ route.fullPath }}</span>
       </div>
       <div v-if="diag" class="detail">
-        <span class="label">Diag</span>
+        <span class="label">诊断</span>
         <span class="value">{{ diag }}</span>
       </div>
       <div v-if="showHud && diagActionType" class="detail">
-        <span class="label">Action Type</span>
+        <span class="label">动作类型</span>
         <span class="value">{{ diagActionType }}</span>
       </div>
       <div v-if="showHud && diagContractType" class="detail">
-        <span class="label">Contract Type</span>
+        <span class="label">契约类型</span>
         <span class="value">{{ diagContractType }}</span>
       </div>
       <div v-if="showHud && diagContractUrl" class="detail">
-        <span class="label">Contract URL</span>
+        <span class="label">契约链接</span>
         <span class="value">{{ diagContractUrl }}</span>
       </div>
       <div v-if="showHud && diagMetaUrl" class="detail">
-        <span class="label">Meta URL</span>
+        <span class="label">元信息链接</span>
         <span class="value">{{ diagMetaUrl }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">Last Intent</span>
+        <span class="label">最近意图</span>
         <span class="value">{{ lastIntent || 'N/A' }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">Trace</span>
+        <span class="label">追踪 ID</span>
         <span class="value">
           {{ lastTraceId || 'N/A' }}
-          <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">Copy</button>
+          <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">复制</button>
         </span>
       </div>
     </div>
