@@ -38,7 +38,6 @@ _logger = logging.getLogger(__name__)
 # Contract/API version markers for client compatibility
 CONTRACT_VERSION = "v0.1"
 API_VERSION = "v1"
-SCENE_CHANNELS = {"stable", "beta", "dev"}
 ROLE_SURFACE_MAP = {
     "owner": {
         "label": "Owner",
@@ -281,31 +280,8 @@ def _get_request_header(name: str) -> str | None:
     except Exception:
         return None
 
-def _normalize_scene_channel(value: str | None) -> str | None:
-    if not value:
-        return None
-    raw = str(value).strip().lower()
-    return raw if raw in SCENE_CHANNELS else None
-
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
     return provider_resolve_scene_channel(env, user, params, get_header=_get_request_header)
-
-def _resolve_scene_contract_path(rel_path: str) -> str | None:
-    roots = [
-        os.environ.get("SCENE_CONTRACT_ROOT"),
-        "/mnt/extra-addons",
-        "/mnt/addons_external",
-        "/mnt/odoo",
-        "/mnt/e/sc-backend-odoo",
-        "/mnt",
-    ]
-    for root in roots:
-        if not root:
-            continue
-        candidate = os.path.join(root, rel_path)
-        if os.path.exists(candidate):
-            return candidate
-    return None
 
 def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     return provider_load_scene_contract(env, scene_channel, use_pinned, logger=_logger)
