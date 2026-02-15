@@ -762,6 +762,12 @@ function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>)
   const preset = asText(contextQuery?.preset);
   const ctxSource = asText(contextQuery?.ctx_source) || 'workspace_today';
   const entryContext = asText(contextQuery?.entry_context);
+  void trackUsageEvent('workspace.today_click', {
+    scene_key: asText(sceneKey) || '',
+    preset: preset || '',
+    ctx_source: ctxSource,
+    has_entry_context: Boolean(entryContext),
+  }).catch(() => {});
   const withEntryContext = (query: Record<string, string>) =>
     entryContext ? { ...query, entry_context: entryContext } : query;
   const presetRouteMap: Record<string, (source: string) => SuggestionRoute> = {
