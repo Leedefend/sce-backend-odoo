@@ -22,6 +22,11 @@ from odoo.addons.smart_core.utils.reason_codes import (
     REASON_PERMISSION_DENIED,
     failure_meta_for_reason,
 )
+from odoo.addons.smart_core.utils.contract_governance import (
+    apply_contract_governance,
+    is_truthy,
+    resolve_contract_mode,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -29,8 +34,6 @@ _logger = logging.getLogger(__name__)
 CONTRACT_VERSION = "v0.1"
 API_VERSION = "v1"
 SCENE_CHANNELS = {"stable", "beta", "dev"}
-CONTRACT_MODES = {"user", "hud"}
-
 ROLE_SURFACE_MAP = {
     "owner": {
         "label": "Owner",
@@ -286,99 +289,6 @@ def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, st
         return env_val, "env", "SCENE_CHANNEL"
 
     return "stable", selector, source_ref
-
-def _is_truthy(value) -> bool:
-    if value is None:
-        return False
-    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
-
-
-def _resolve_contract_mode(params: dict | None) -> str:
-    params = params if isinstance(params, dict) else {}
-    raw_mode = str(params.get("contract_mode") or "").strip().lower()
-    if raw_mode in CONTRACT_MODES:
-        return raw_mode
-    if _is_truthy(params.get("hud")) or _is_truthy(params.get("debug_hud")):
-        return "hud"
-    return "user"
-
-
-def _safe_text(value, fallback: str = "") -> str:
-    text = str(value or "").strip()
-    if text.lower() in {"undefined", "null"}:
-        text = ""
-    return text or fallback
-
-
-def _parse_tags(raw) -> set:
-    if isinstance(raw, list):
-        items = raw
-    else:
-        items = str(raw or "").split(",")
-    out = set()
-    for item in items:
-        val = _safe_text(item).lower()
-        if val:
-            out.add(val)
-    return out
-
-
-def _is_internal_or_smoke(item: dict) -> bool:
-    if not isinstance(item, dict):
-        return False
-    tags = _parse_tags(item.get("tags"))
-    key = _safe_text(item.get("key") or item.get("code")).lower()
-    name = _safe_text(item.get("name")).lower()
-    if "internal" in tags or "smoke" in tags:
-        return True
-    if item.get("is_test") or item.get("smoke_test"):
-        return True
-    combined = f"{key} {name}"
-    return "smoke" in combined or "internal" in combined
-
-
-def _normalize_capabilities(capabilities: list) -> list:
-    out = []
-    for cap in capabilities or []:
-        if not isinstance(cap, dict):
-            continue
-        item = dict(cap)
-        item["key"] = _safe_text(item.get("key"))
-        item["name"] = _safe_text(item.get("name"), item.get("key") or "未命名能力")
-        item["ui_label"] = _safe_text(item.get("ui_label"), item.get("name") or item.get("key") or "未命名能力")
-        item["status"] = _safe_text(item.get("status"), "active")
-        out.append(item)
-    return out
-
-
-def _normalize_scenes(scenes: list) -> list:
-    out = []
-    for scene in scenes or []:
-        if not isinstance(scene, dict):
-            continue
-        item = dict(scene)
-        code = _safe_text(item.get("code") or item.get("key"))
-        item["code"] = code or item.get("code")
-        item["key"] = _safe_text(item.get("key"), code)
-        item["name"] = _safe_text(item.get("name"), code or "未命名场景")
-        out.append(item)
-    return out
-
-
-def _apply_contract_governance(data: dict, contract_mode: str) -> dict:
-    if not isinstance(data, dict):
-        return data
-    capabilities = _normalize_capabilities(data.get("capabilities") if isinstance(data.get("capabilities"), list) else [])
-    scenes = _normalize_scenes(data.get("scenes") if isinstance(data.get("scenes"), list) else [])
-    if contract_mode == "user":
-        capabilities = [item for item in capabilities if not _is_internal_or_smoke(item)]
-        scenes = [item for item in scenes if not _is_internal_or_smoke(item)]
-    data["capabilities"] = capabilities
-    data["scenes"] = scenes
-    data["contract_mode"] = contract_mode
-    if contract_mode != "hud":
-        data.pop("diagnostic", None)
-    return data
 
 def _resolve_scene_contract_path(rel_path: str) -> str | None:
     roots = [
@@ -703,7 +613,7 @@ def _get_auto_degrade_policy(env) -> dict:
             return fallback
 
     enabled_raw = config.get_param("sc.scene.auto_degrade.enabled")
-    enabled = defaults["enabled"] if enabled_raw in (None, "") else _is_truthy(enabled_raw)
+    enabled = defaults["enabled"] if enabled_raw in (None, "") else is_truthy(enabled_raw)
     action = (config.get_param("sc.scene.auto_degrade.action") or defaults["action"]).strip().lower()
     if action not in {"rollback_pinned", "stable_latest"}:
         action = defaults["action"]
@@ -727,7 +637,7 @@ def _get_auto_degrade_notify_policy(env) -> dict:
         return defaults
 
     enabled_raw = config.get_param("sc.scene.auto_degrade.notify.enabled")
-    enabled = defaults["enabled"] if enabled_raw in (None, "") else _is_truthy(enabled_raw)
+    enabled = defaults["enabled"] if enabled_raw in (None, "") else is_truthy(enabled_raw)
     raw_channels = (config.get_param("sc.scene.auto_degrade.notify.channels") or "internal").strip().lower()
     allowed = {"email", "internal", "webhook"}
     channels = [item.strip() for item in raw_channels.split(",") if item.strip() in allowed]
@@ -1485,7 +1395,7 @@ class SystemInitHandler(BaseIntentHandler):
         params = payload.get("params") if isinstance(payload, dict) else None
         if not isinstance(params, dict):
             params = payload if isinstance(payload, dict) else {}
-        contract_mode = _resolve_contract_mode(params)
+        contract_mode = resolve_contract_mode(params)
         trace_id = ""
         try:
             trace_id = str((self.context or {}).get("trace_id") or "")
@@ -1501,15 +1411,15 @@ class SystemInitHandler(BaseIntentHandler):
         try:
             rollback_active = bool(self.get_bool("scene_use_pinned", False) or self.get_bool("scene_rollback", False))
         except Exception:
-            rollback_active = _is_truthy(pinned_param) or _is_truthy(rollback_param)
+            rollback_active = is_truthy(pinned_param) or is_truthy(rollback_param)
         if pinned_param is not None and str(pinned_param).strip() not in {"", "0", "false", "no", "off"}:
             rollback_active = True
         try:
             config = env["ir.config_parameter"].sudo()
-            rollback_active = rollback_active or _is_truthy(config.get_param("sc.scene.use_pinned")) or                 _is_truthy(config.get_param("sc.scene.rollback"))
+            rollback_active = rollback_active or is_truthy(config.get_param("sc.scene.use_pinned")) or                 is_truthy(config.get_param("sc.scene.rollback"))
         except Exception:
             pass
-        rollback_active = rollback_active or _is_truthy(os.environ.get("SCENE_USE_PINNED")) or             _is_truthy(os.environ.get("SCENE_ROLLBACK"))
+        rollback_active = rollback_active or is_truthy(os.environ.get("SCENE_USE_PINNED")) or             is_truthy(os.environ.get("SCENE_ROLLBACK"))
         if rollback_active:
             scene_channel = "stable"
         
@@ -1744,7 +1654,7 @@ class SystemInitHandler(BaseIntentHandler):
         scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
 
         # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
-        if _is_truthy(params.get("scene_inject_critical_error")) and _diagnostics_enabled(env):
+        if is_truthy(params.get("scene_inject_critical_error")) and _diagnostics_enabled(env):
             _append_resolve_error(
                 scene_diagnostics["resolve_errors"],
                 scene_key="projects.list",
@@ -1798,7 +1708,7 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload
-        data = _apply_contract_governance(data, contract_mode)
+        data = apply_contract_governance(data, contract_mode)
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
         scene_keys_latest = {
             (s.get("code") or s.get("key"))

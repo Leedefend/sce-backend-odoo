@@ -12,6 +12,10 @@ from odoo.addons.smart_core.app_config_engine.services.contract_service import C
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.menu_dispatcher import MenuDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
+from odoo.addons.smart_core.utils.contract_governance import (
+    apply_contract_governance,
+    resolve_contract_mode,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -104,6 +108,12 @@ class UiContractHandler(BaseIntentHandler):
     # ---------------- 主入口 ----------------
     def handle(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         p = payload or {}
+        mode_params: Dict[str, Any] = {}
+        for layer in self._collect_layers(p):
+            for key in ("contract_mode", "hud", "debug_hud"):
+                if key in layer and key not in mode_params:
+                    mode_params[key] = layer.get(key)
+        contract_mode = resolve_contract_mode(mode_params)
 
         # 智能推断 op/subject（兼容你的前端请求形状）
         op = (self._get_param(p, "op", "subject") or "").strip().lower()
@@ -150,6 +160,7 @@ class UiContractHandler(BaseIntentHandler):
             return res
 
         data, meta = (res if isinstance(res, tuple) else (res or {}, {}))
+        data = apply_contract_governance(data or {}, contract_mode, inject_contract_mode=False)
         meta = _normalize_meta(meta)
         etag = self._make_etag(meta=meta, ctx=ctx, op=op, p=p)
 
@@ -157,13 +168,15 @@ class UiContractHandler(BaseIntentHandler):
             return {"ok": True, "data": None,
                     "meta": {"intent": self.INTENT_TYPE, "op": op, "etag": etag,
                              "version": self.VERSION, "elapsed_ms": int((time.time()-t0)*1000),
-                             "contract_version": CONTRACT_VERSION, "api_version": API_VERSION},
+                             "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
+                             "contract_mode": contract_mode},
                     "code": 304}
 
         meta_out = dict(meta)
         meta_out.update({"intent": self.INTENT_TYPE, "op": op, "version": self.VERSION,
                          "etag": etag, "elapsed_ms": int((time.time()-t0)*1000),
-                         "contract_version": CONTRACT_VERSION, "api_version": API_VERSION})
+                         "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
+                         "contract_mode": contract_mode})
         return {"ok": True, "data": data or {}, "meta": meta_out}
 
     # ---------------- op 实现 ----------------
