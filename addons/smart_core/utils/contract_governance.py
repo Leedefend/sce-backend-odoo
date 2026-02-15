@@ -4,6 +4,12 @@ from __future__ import annotations
 from typing import Any
 
 CONTRACT_MODES = {"user", "hud"}
+_NON_HUD_STRIP_KEYS = {
+    "diagnostic",
+    "scene_diagnostics",
+    "scene_channel_selector",
+    "scene_channel_source_ref",
+}
 _USER_MODE_STRIP_KEYS = {
     "action_xmlid",
     "menu_xmlid",
@@ -257,5 +263,6 @@ def apply_contract_governance(
     if inject_contract_mode:
         data["contract_mode"] = contract_mode
     if contract_mode != "hud":
-        data.pop("diagnostic", None)
+        for key in _NON_HUD_STRIP_KEYS:
+            data.pop(key, None)
     return data

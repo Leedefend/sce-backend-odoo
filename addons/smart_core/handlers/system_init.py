@@ -1670,7 +1670,8 @@ class SystemInitHandler(BaseIntentHandler):
         }
         data["role_surface"] = _build_role_surface(user_groups_xmlids, nav_tree, scene_keys_latest)
         data["role_surface_map"] = _build_role_surface_map_payload()
-        data["scene_diagnostics"] = scene_diagnostics
+        if contract_mode == "hud":
+            data["scene_diagnostics"] = scene_diagnostics
 
         # 分部 etag：加入导航
         etags["nav"] = nav_fp
