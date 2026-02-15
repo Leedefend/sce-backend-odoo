@@ -276,6 +276,16 @@ const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScope
 const homeViewModeStorageKey = computed(() => `workspace:view_mode:${workspaceScopeKey.value}`);
 const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKey.value}`);
 
+function stringifyEntryContext(context: { section?: string; source?: string; reason?: string; search?: string }) {
+  const next: Record<string, string> = {};
+  if (context.section) next.section = context.section;
+  if (context.source) next.source = context.source;
+  if (context.reason) next.reason = context.reason;
+  if (context.search) next.search = context.search;
+  if (!Object.keys(next).length) return '';
+  return JSON.stringify(next);
+}
+
 function asText(value: unknown) {
   const text = String(value ?? '').trim();
   if (!text || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') return '';
@@ -403,7 +413,11 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '项目立项',
       description: '新建项目并完成立项信息录入。',
       sceneKey: project.sceneKey,
-      contextQuery: { preset: 'project_intake', ctx_source: 'workspace_today' },
+      contextQuery: {
+        preset: 'project_intake',
+        ctx_source: 'workspace_today',
+        entry_context: stringifyEntryContext({ section: 'owned', search: '立项' }),
+      },
       count: project.ready ? projectCount : undefined,
       status: 'normal',
     },
@@ -412,7 +426,11 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '合同审批',
       description: '查看待审批合同并快速处理。',
       sceneKey: contract.sceneKey,
-      contextQuery: { preset: 'pending_approval', ctx_source: 'workspace_today' },
+      contextQuery: {
+        preset: 'pending_approval',
+        ctx_source: 'workspace_today',
+        entry_context: stringifyEntryContext({ section: 'todo', source: 'mail.activity', search: '审批' }),
+      },
       count: contract.ready ? contractCount : undefined,
       status: 'urgent',
     },
@@ -421,7 +439,11 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '成本台账',
       description: '跟踪成本执行并核对差异。',
       sceneKey: cost.sceneKey,
-      contextQuery: { preset: 'cost_watchlist', ctx_source: 'workspace_today' },
+      contextQuery: {
+        preset: 'cost_watchlist',
+        ctx_source: 'workspace_today',
+        entry_context: stringifyEntryContext({ section: 'following', search: '成本' }),
+      },
       count: cost.ready ? costCount : undefined,
       status: 'normal',
     },
