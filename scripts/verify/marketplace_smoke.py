@@ -6,6 +6,16 @@ from intent_smoke_utils import require_ok
 from python_http_smoke_utils import get_base_url, http_get_json, http_post_json
 
 
+def _require_deprecation(payload: dict, *, label: str) -> None:
+    dep = payload.get("deprecation") if isinstance(payload.get("deprecation"), dict) else {}
+    if (dep.get("status") or "").strip().lower() != "deprecated":
+        raise RuntimeError(f"{label} missing deprecation.status=deprecated")
+    if not str(dep.get("replacement") or "").strip():
+        raise RuntimeError(f"{label} missing deprecation.replacement")
+    if not str(dep.get("sunset_date") or "").strip():
+        raise RuntimeError(f"{label} missing deprecation.sunset_date")
+
+
 def main():
     base_url = get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
@@ -70,6 +80,7 @@ def main():
 
     status, scenes_resp = http_get_json(scenes_url, headers=auth_header)
     require_ok(status, scenes_resp, "scenes.my")
+    _require_deprecation(scenes_resp.get("data") or {}, label="scenes.my")
 
     print("[marketplace_smoke] PASS")
 

@@ -18,6 +18,16 @@ def _cleanup_test_pack(import_url: str, auth_header: dict, payload: dict) -> Non
     )
 
 
+def _require_deprecation(payload: dict, *, label: str) -> None:
+    dep = payload.get("deprecation") if isinstance(payload.get("deprecation"), dict) else {}
+    if (dep.get("status") or "").strip().lower() != "deprecated":
+        raise RuntimeError(f"{label} missing deprecation.status=deprecated")
+    if not str(dep.get("replacement") or "").strip():
+        raise RuntimeError(f"{label} missing deprecation.replacement")
+    if not str(dep.get("sunset_date") or "").strip():
+        raise RuntimeError(f"{label} missing deprecation.sunset_date")
+
+
 def main():
     base_url = get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
@@ -105,6 +115,7 @@ def main():
         status, scenes_resp = http_get_json(scenes_url, headers=auth_header)
         require_ok(status, scenes_resp, "scenes.my")
         scenes_data = scenes_resp.get("data") or {}
+        _require_deprecation(scenes_data, label="scenes.my")
         scenes = scenes_data.get("scenes") or []
         if not scenes:
             status, seed_resp = http_post_json(import_url, seed_payload, headers=auth_header)
@@ -113,6 +124,7 @@ def main():
             status, scenes_resp = http_get_json(scenes_url_tests, headers=auth_header)
             require_ok(status, scenes_resp, "scenes.my (after seed)")
             scenes_data = scenes_resp.get("data") or {}
+            _require_deprecation(scenes_data, label="scenes.my (after seed)")
             scenes = scenes_data.get("scenes") or []
             if not scenes:
                 raise RuntimeError("scenes.my returned empty list after seed")
@@ -134,6 +146,7 @@ def main():
         # scenes.my should reflect default_scene
         status, scenes_resp2 = http_get_json(scenes_url, headers=auth_header)
         require_ok(status, scenes_resp2, "scenes.my (after pref)")
+        _require_deprecation(scenes_resp2.get("data") or {}, label="scenes.my (after pref)")
         if (scenes_resp2.get("data") or {}).get("default_scene") != default_scene:
             raise RuntimeError("scenes.my default_scene did not update")
 
