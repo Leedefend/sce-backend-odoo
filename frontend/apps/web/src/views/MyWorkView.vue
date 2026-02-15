@@ -695,14 +695,30 @@ function onErrorSuggestedActionExecuted(payload: { action: string; success: bool
   actionFeedbackError.value = !payload.success;
 }
 
+function resolveWorkspaceContextQuery() {
+  const preset = String(route.query.preset || '').trim();
+  const ctxSource = String(route.query.ctx_source || '').trim();
+  const search = String(route.query.search || '').trim();
+  const context: Record<string, string> = {};
+  if (preset) context.preset = preset;
+  if (ctxSource) context.ctx_source = ctxSource;
+  if (search) context.search = search;
+  return context;
+}
+
 function openScene(sceneKey: string) {
   if (!sceneKey) return;
-  router.push({ path: `/s/${sceneKey}` }).catch(() => {});
+  router.push({ path: `/s/${sceneKey}`, query: resolveWorkspaceContextQuery() }).catch(() => {});
 }
 
 function openRecord(item: MyWorkRecordItem) {
   if (item.model && item.record_id) {
-    router.push({ path: `/r/${item.model}/${item.record_id}` }).catch(() => {});
+    router
+      .push({
+        path: `/r/${item.model}/${item.record_id}`,
+        query: resolveWorkspaceContextQuery(),
+      })
+      .catch(() => {});
     return;
   }
   openScene(item.scene_key);

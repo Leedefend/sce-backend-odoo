@@ -45,9 +45,11 @@ function resolveWorkspaceContextQuery() {
   const preset = String(query.preset || '').trim();
   const source = String(query.source || '').trim();
   const ctxSource = String(query.ctx_source || '').trim();
+  const search = String(query.search || '').trim();
   if (preset) context.preset = preset;
   if (source) context.source = source;
   if (ctxSource) context.ctx_source = ctxSource;
+  if (search) context.search = search;
   return context;
 }
 

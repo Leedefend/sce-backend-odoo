@@ -244,6 +244,17 @@ const hudEntries = computed(() => [
   { label: 'route', value: route.fullPath },
 ]);
 
+function resolveWorkspaceContextQuery() {
+  const preset = String(route.query.preset || '').trim();
+  const ctxSource = String(route.query.ctx_source || '').trim();
+  const search = String(route.query.search || '').trim();
+  const context: Record<string, string> = {};
+  if (preset) context.preset = preset;
+  if (ctxSource) context.ctx_source = ctxSource;
+  if (search) context.search = search;
+  return context;
+}
+
 function applyRoutePreset() {
   const preset = String(route.query.preset || '').trim();
   const routeSearch = String(route.query.search || '').trim();
@@ -834,12 +845,12 @@ function handleRowClick(row: Record<string, unknown>) {
   if (typeof id === 'number') {
     router.push({
       path: `/r/${model.value}/${id}`,
-      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined },
+      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined, ...resolveWorkspaceContextQuery() },
     });
   } else if (typeof id === 'string' && id) {
     router.push({
       path: `/r/${model.value}/${id}`,
-      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined },
+      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined, ...resolveWorkspaceContextQuery() },
     });
   }
 }
