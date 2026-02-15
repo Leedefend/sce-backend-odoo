@@ -44,7 +44,9 @@
           </p>
           <p class="today-desc">{{ item.description }}</p>
           <p v-if="typeof item.count === 'number'" class="today-count">待处理 {{ item.count }}</p>
-          <button class="today-btn" @click="openSuggestion(item.sceneKey, item.contextQuery)">立即进入</button>
+          <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item.sceneKey, item.contextQuery)">
+            {{ item.ready === false ? '即将开放' : '立即进入' }}
+          </button>
         </article>
       </div>
     </section>
@@ -61,12 +63,15 @@
           <button @click="clearEnterError">知道了</button>
         </div>
       </div>
-      <input
-        v-model.trim="searchText"
-        class="search-input"
-        type="search"
-        placeholder="搜索能力名称或说明"
-      />
+      <div class="search-row">
+        <input
+          v-model.trim="searchText"
+          class="search-input"
+          type="search"
+          placeholder="搜索能力名称或说明"
+        />
+        <button v-if="searchText.trim()" class="search-clear-btn" @click="clearSearchText">清空搜索</button>
+      </div>
       <p class="result-summary">{{ resultSummaryText }}</p>
       <label class="ready-only">
         <input v-model="readyOnly" type="checkbox" />
@@ -212,11 +217,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
+import { readWorkspaceContext } from '../app/workspaceContext';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type SuggestionStatus = 'urgent' | 'normal';
@@ -243,6 +249,7 @@ type SuggestionItem = {
   contextQuery?: Record<string, string>;
   count?: number;
   status?: SuggestionStatus;
+  ready?: boolean;
 };
 type SuggestionRoute = {
   path: string;
@@ -266,6 +273,7 @@ const enterError = ref<{ message: string; hint: string; code: string; traceId: s
 const lastTrackedSearch = ref('');
 const lastTrackedFilterSignature = ref('');
 const lastTrackedViewMode = ref('');
+const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
 const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
 const isHudEnabled = computed(() => {
@@ -333,6 +341,9 @@ const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScope
 const homeViewModeStorageKey = computed(() => `workspace:view_mode:${workspaceScopeKey.value}`);
 const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKey.value}`);
 const searchKeyword = computed(() => searchText.value.trim());
+const workspaceContextQuery = computed(() => {
+  return readWorkspaceContext(route.query as Record<string, unknown>) as Record<string, unknown>;
+});
 
 function stringifyEntryContext(context: { section?: string; source?: string; reason?: string; search?: string }) {
   const next: Record<string, string> = {};
@@ -341,7 +352,8 @@ function stringifyEntryContext(context: { section?: string; source?: string; rea
   if (context.reason) next.reason = context.reason;
   if (context.search) next.search = context.search;
   if (!Object.keys(next).length) return '';
-  return JSON.stringify(next);
+  const payload = JSON.stringify(next);
+  return payload.length <= 256 ? payload : '';
 }
 
 function asText(value: unknown) {
@@ -478,6 +490,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       },
       count: project.ready ? projectCount : undefined,
       status: 'normal',
+      ready: project.ready,
     },
     {
       id: 'contract-approval',
@@ -491,6 +504,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       },
       count: contract.ready ? contractCount : undefined,
       status: 'urgent',
+      ready: contract.ready,
     },
     {
       id: 'cost-ledger',
@@ -504,6 +518,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       },
       count: cost.ready ? costCount : undefined,
       status: 'normal',
+      ready: cost.ready,
     },
   ];
 });
@@ -564,10 +579,23 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
-const resultSummaryText = computed(() => `当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`);
+const resultSummaryText = computed(() => {
+  const parts = [`当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`];
+  if (stateFilter.value !== 'ALL') parts.push(`状态：${stateLabel(stateFilter.value)}`);
+  if (lockReasonFilter.value !== 'ALL') parts.push(`原因：${lockReasonLabel(lockReasonFilter.value)}`);
+  return parts.join(' · ');
+});
 const readyOnlyNoResult = computed(
   () => readyOnly.value && filteredEntries.value.length === 0 && stateCounts.value.READY === 0,
 );
+const emptyStateReason = computed(() => {
+  if (filteredEntries.value.length > 0) return '';
+  if (!entries.value.length) return 'no_capability';
+  if (readyOnlyNoResult.value) return 'ready_only_filtered';
+  if (lockReasonFilter.value !== 'ALL') return 'lock_reason_filtered';
+  if (searchText.value.trim()) return 'search_filtered';
+  return 'filter_filtered';
+});
 const activeFilterChips = computed<FilterChip[]>(() => {
   const chips: FilterChip[] = [];
   const keyword = searchText.value.trim();
@@ -707,18 +735,34 @@ async function openScene(entry: CapabilityEntry) {
 }
 
 function openRoleLanding() {
-  router.push(session.resolveLandingPath('/s/projects.list')).catch(() => {});
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'landing',
+    from: 'workspace.home',
+  }).catch(() => {});
+  router.push({ path: session.resolveLandingPath('/s/projects.list'), query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToMyWork() {
-  router.push({ path: '/my-work' }).catch(() => {});
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'my_work',
+    from: 'workspace.home',
+  }).catch(() => {});
+  router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToUsageAnalytics() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'usage_analytics',
+    from: 'workspace.home',
+  }).catch(() => {});
   router.push({ path: '/admin/usage-analytics' }).catch(() => {});
 }
 
 function goHome() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'home',
+    from: 'workspace.home',
+  }).catch(() => {});
   router.push({ path: '/' }).catch(() => {});
 }
 
@@ -735,6 +779,10 @@ function clearSearchAndFilters() {
   if (hadFilters) {
     void trackUsageEvent('workspace.filter_clear_all', { source: 'workspace.home' }).catch(() => {});
   }
+}
+
+function clearSearchText() {
+  searchText.value = '';
 }
 
 function showAllCapabilities() {
@@ -853,12 +901,34 @@ function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>)
 
 function retryOpen() {
   if (!lastFailedEntry.value) return;
+  void trackUsageEvent('workspace.enter_retry', {
+    capability_key: lastFailedEntry.value.key,
+    scene_key: lastFailedEntry.value.sceneKey,
+    code: enterError.value?.code || '',
+  }).catch(() => {});
   void openScene(lastFailedEntry.value);
 }
 
 function clearEnterError() {
+  if (enterError.value) {
+    void trackUsageEvent('workspace.enter_error_dismiss', {
+      code: enterError.value.code || '',
+      trace_id: enterError.value.traceId || '',
+    }).catch(() => {});
+  }
   enterError.value = null;
   lastFailedEntry.value = null;
+}
+
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return;
+  if (enterError.value) {
+    clearEnterError();
+    return;
+  }
+  if (searchText.value.trim()) {
+    clearSearchText();
+  }
 }
 
 function resolveEnterErrorMessage(error: unknown) {
@@ -908,11 +978,15 @@ onMounted(() => {
   try {
     const raw = window.localStorage.getItem(homeFilterStorageKey.value);
     if (raw) {
-      const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string };
+      const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string; lock_reason_filter?: string };
       readyOnly.value = Boolean(parsed?.ready_only);
       const state = String(parsed?.state_filter || '').toUpperCase();
       if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
         stateFilter.value = state;
+      }
+      const lockReason = String(parsed?.lock_reason_filter || '').toUpperCase();
+      if (lockReason) {
+        lockReasonFilter.value = lockReason;
       }
     }
   } catch {
@@ -937,6 +1011,11 @@ onMounted(() => {
   } catch {
     // Ignore broken local cache.
   }
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 
 watch(collapsedSceneKeys, () => {
@@ -947,11 +1026,15 @@ watch(collapsedSceneKeys, () => {
   }
 });
 
-watch([readyOnly, stateFilter], () => {
+watch([readyOnly, stateFilter, lockReasonFilter], () => {
   try {
     window.localStorage.setItem(
       homeFilterStorageKey.value,
-      JSON.stringify({ ready_only: readyOnly.value, state_filter: stateFilter.value }),
+      JSON.stringify({
+        ready_only: readyOnly.value,
+        state_filter: stateFilter.value,
+        lock_reason_filter: lockReasonFilter.value,
+      }),
     );
   } catch {
     // Ignore local storage errors.
@@ -1009,6 +1092,21 @@ watch(searchText, (next) => {
   if (query === lastTrackedSearch.value) return;
   lastTrackedSearch.value = query;
   void trackUsageEvent('workspace.search', { query }).catch(() => {});
+});
+
+watch([filteredEntries, entries, readyOnly, lockReasonFilter, stateFilter, searchText], () => {
+  const reason = emptyStateReason.value;
+  if (!reason) return;
+  const signature = `${reason}:${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${lockReasonFilter.value}:${searchText.value.trim()}`;
+  if (signature === lastTrackedEmptySignature.value) return;
+  lastTrackedEmptySignature.value = signature;
+  void trackUsageEvent('workspace.empty_state', {
+    reason,
+    ready_only: readyOnly.value,
+    state_filter: stateFilter.value,
+    lock_reason_filter: lockReasonFilter.value,
+    search: searchText.value.trim(),
+  }).catch(() => {});
 });
 
 function highlightParts(raw: string) {
@@ -1269,12 +1367,33 @@ function highlightParts(raw: string) {
   cursor: pointer;
 }
 
+.today-btn:disabled {
+  background: #cbd5e1;
+  color: #475569;
+  cursor: not-allowed;
+}
+
 .search-input {
   width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
   padding: 10px 12px;
   background: #fff;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.search-clear-btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  padding: 0 10px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .result-summary {
