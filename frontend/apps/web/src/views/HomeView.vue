@@ -187,6 +187,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
+import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type SuggestionStatus = 'urgent' | 'normal';
@@ -230,6 +231,7 @@ const lastFailedEntry = ref<CapabilityEntry | null>(null);
 const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
 const lastTrackedSearch = ref('');
 const showEmptyHelp = ref(false);
+const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
 const isHudEnabled = computed(() => {
   const hud = String(route.query.hud || '').trim();
   return import.meta.env.DEV || hud === '1' || hud.toLowerCase() === 'true';
@@ -388,6 +390,9 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
   const project = pickByKeyword(['立项', 'project', 'intake']);
   const contract = pickByKeyword(['合同', 'contract', 'approve', 'approval']);
   const cost = pickByKeyword(['成本', 'cost', 'ledger']);
+  const projectCount = resolveSuggestionCount(project.sceneKey, ['owned', 'todo']);
+  const contractCount = resolveSuggestionCount(contract.sceneKey, ['todo']);
+  const costCount = resolveSuggestionCount(cost.sceneKey, ['following', 'mentions']);
   return [
     {
       id: 'project-intake',
@@ -395,7 +400,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       description: '新建项目并完成立项信息录入。',
       sceneKey: project.sceneKey,
       contextQuery: { preset: 'project_intake', source: 'workspace_today' },
-      count: project.ready ? 1 : undefined,
+      count: project.ready ? projectCount : undefined,
       status: 'normal',
     },
     {
@@ -404,7 +409,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       description: '查看待审批合同并快速处理。',
       sceneKey: contract.sceneKey,
       contextQuery: { preset: 'pending_approval', source: 'workspace_today' },
-      count: contract.ready ? 3 : undefined,
+      count: contract.ready ? contractCount : undefined,
       status: 'urgent',
     },
     {
@@ -413,11 +418,21 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       description: '跟踪成本执行并核对差异。',
       sceneKey: cost.sceneKey,
       contextQuery: { preset: 'cost_watchlist', source: 'workspace_today' },
-      count: cost.ready ? 5 : undefined,
+      count: cost.ready ? costCount : undefined,
       status: 'normal',
     },
   ];
 });
+
+function resolveSuggestionCount(sceneKey: string, fallbackKeys: string[]) {
+  const byScene = myWorkSummary.value.find((item) => String(item.scene_key || '') === sceneKey);
+  if (byScene) return Number(byScene.count || 0);
+  for (const key of fallbackKeys) {
+    const matched = myWorkSummary.value.find((item) => String(item.key || '') === key);
+    if (matched) return Number(matched.count || 0);
+  }
+  return undefined;
+}
 
 function matchesSearch(entry: CapabilityEntry, query: string) {
   if (!query) return true;
@@ -655,6 +670,13 @@ onMounted(() => {
     role_key: asText(roleSurface.value?.role_code) || 'unknown',
     landing_scene_key: roleLandingScene.value,
   }).catch(() => {});
+  fetchMyWorkSummary(20, 8)
+    .then((result) => {
+      myWorkSummary.value = Array.isArray(result.summary) ? result.summary : [];
+    })
+    .catch(() => {
+      myWorkSummary.value = [];
+    });
   try {
     const raw = window.localStorage.getItem(homeCollapseStorageKey.value);
     if (raw) {
