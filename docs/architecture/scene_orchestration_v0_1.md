@@ -35,6 +35,9 @@ Frontend renders tiles and executes intents; backend governs visibility, orderin
 ## API
 
 ### `GET /api/scenes/my`
+
+> Deprecated endpoint: runtime clients should migrate to `/api/v1/intent` with `intent=app.init`.
+> Response includes deprecation signals (`deprecation` payload + `Deprecation`/`Sunset`/`Link` headers).
 Returns scenes visible to the current user and their tiles.
 Only `published` scenes are returned; if a published version exists, the snapshot is served.
 
