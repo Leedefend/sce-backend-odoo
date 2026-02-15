@@ -39,6 +39,7 @@ function readEntryContext(query: Record<string, unknown>): WorkspaceEntryContext
   if (typeof raw === 'object') return normalizeEntryContext(raw);
   const textValue = text(raw);
   if (!textValue) return undefined;
+  if (textValue.length > 512) return undefined;
   try {
     const parsed = JSON.parse(textValue) as unknown;
     return normalizeEntryContext(parsed);
