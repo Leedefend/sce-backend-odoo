@@ -3,7 +3,7 @@
     <data noupdate="1">
         <record id="param_sc_extension_modules_default" model="ir.config_parameter">
             <field name="key">sc.core.extension_modules</field>
-            <field name="value">smart_construction_core</field>
+            <field name="value">smart_construction_core,smart_construction_portal</field>
         </record>
     </data>
 </odoo>

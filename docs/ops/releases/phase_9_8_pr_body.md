@@ -10,6 +10,15 @@
   - `ACT_URL_MISSING_SCENE` must be 0.
   - `ACT_URL_LEGACY` capped at `SC_WARN_ACT_URL_LEGACY_MAX` (default 3).
 - Menu scene resolve smoke produces coverage summary and is appended to gate summary.
+- Menu scene resolve default enforcement scope is business namespace only:
+  - `smart_construction_core.`
+  - `smart_construction_demo.`
+  - `smart_construction_portal.`
+- Gate/report outputs now include:
+  - `menu_scene_resolve_effective_total`
+  - `menu_scene_resolve_coverage`
+  - `menu_scene_resolve_enforce_prefixes`
+  - manual/auto exempt breakdown
 - Warning codes added: `ACT_URL_MISSING_SCENE`, `ACT_URL_LEGACY`, `SCENEKEY_INFERRED_NOT_FOUND`.
 - Gate strict toggle: `SC_GATE_STRICT=0` skips Phase 9.8 guards.
 
@@ -26,3 +35,10 @@
 - `/mnt/artifacts/codex/portal-scene-warnings/20260207T052724`
 - `/mnt/artifacts/codex/portal-scene-warnings/20260207T053445`
 - `artifacts/codex/phase-9-8/gate_summary.json`
+
+## Evidence Keys (from summary.md / gate summary)
+- `menu_scene_resolve_effective_total`
+- `menu_scene_resolve_coverage`
+- `menu_scene_resolve_enforce_prefixes`
+- `phase_9_8_menu_resolve_exempt_manual`
+- `phase_9_8_menu_resolve_exempt_auto`

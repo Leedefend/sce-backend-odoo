@@ -145,6 +145,30 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "data.dictionary",
+            "name": "业务字典",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_dictionary",
+                "action_xmlid": "smart_construction_core.action_project_dictionary",
+            },
+        },
+        {
+            "code": "projects.dashboard",
+            "name": "项目驾驶舱",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_project_dashboard",
+                "action_xmlid": "smart_construction_core.action_project_dashboard",
+            },
+        },
+        {
+            "code": "projects.dashboard_showcase",
+            "name": "项目驾驶舱（演示）",
+            "target": {
+                "menu_xmlid": "smart_construction_demo.menu_sc_project_dashboard_showcase",
+                "action_xmlid": "smart_construction_demo.action_project_dashboard_showcase",
+            },
+        },
+        {
             "code": "projects.intake",
             "name": "项目立项",
             "target": {
@@ -158,6 +182,110 @@ def load_scene_configs(env, drift=None):
             "target": {
                 "menu_xmlid": "smart_construction_core.menu_sc_project_project",
                 "action_xmlid": "smart_construction_core.action_sc_project_kanban_lifecycle",
+            },
+        },
+        {
+            "code": "finance.center",
+            "name": "财务中心",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_finance_center",
+                "action_xmlid": "smart_construction_core.action_sc_tier_review_my_payment_request",
+            },
+        },
+        {
+            "code": "finance.operating_metrics",
+            "name": "经营指标看板",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_operating_metrics_project",
+                "action_xmlid": "smart_construction_core.action_sc_operating_metrics_project",
+            },
+        },
+        {
+            "code": "finance.payment_requests",
+            "name": "付款收款申请",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_payment_request",
+                "action_xmlid": "smart_construction_core.action_payment_request",
+            },
+        },
+        {
+            "code": "finance.settlement_orders",
+            "name": "结算单",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_settlement_order",
+                "action_xmlid": "smart_construction_core.action_sc_settlement_order",
+            },
+        },
+        {
+            "code": "finance.treasury_ledger",
+            "name": "资金台账",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_treasury_ledger",
+                "action_xmlid": "smart_construction_core.action_sc_treasury_ledger",
+            },
+        },
+        {
+            "code": "finance.payment_ledger",
+            "name": "收付款台账",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_payment_ledger",
+                "action_xmlid": "smart_construction_core.action_payment_ledger",
+            },
+        },
+        {
+            "code": "cost.cost_compare",
+            "name": "成本中心",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_cost_center",
+                "action_xmlid": "smart_construction_core.action_project_cost_compare",
+            },
+        },
+        {
+            "code": "cost.project_budget",
+            "name": "预算管理",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_project_budget",
+                "action_xmlid": "smart_construction_core.action_project_budget",
+            },
+        },
+        {
+            "code": "cost.project_boq",
+            "name": "工程量清单",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_project_boq_root",
+                "action_xmlid": "smart_construction_core.action_project_boq_line",
+            },
+        },
+        {
+            "code": "cost.budget_alloc",
+            "name": "预算分配",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_budget_alloc",
+                "action_xmlid": "smart_construction_core.action_project_budget_cost_alloc",
+            },
+        },
+        {
+            "code": "cost.project_progress",
+            "name": "进度填报",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_project_progress",
+                "action_xmlid": "smart_construction_core.action_project_progress_entry",
+            },
+        },
+        {
+            "code": "cost.project_cost_ledger",
+            "name": "成本台账",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
+                "action_xmlid": "smart_construction_core.action_project_cost_ledger",
+            },
+        },
+        {
+            "code": "cost.profit_compare",
+            "name": "盈亏对比",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_profit_reports",
+                "action_xmlid": "smart_construction_core.action_project_profit_compare",
             },
         },
         {

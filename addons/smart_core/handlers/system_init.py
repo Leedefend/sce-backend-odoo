@@ -1055,6 +1055,82 @@ def _to_bool(value, default: bool) -> bool:
     return bool(value)
 
 
+def _normalize_tile_status(value) -> str:
+    status = str(value or "").strip().lower()
+    if status in {"ga", "beta", "alpha"}:
+        return status
+    return ""
+
+
+def _normalize_tile_state(value) -> str:
+    state = str(value or "").strip().upper()
+    if state in {"READY", "LOCKED", "PREVIEW"}:
+        return state
+    return ""
+
+
+def _derive_tile_state(status: str, allowed) -> str:
+    if isinstance(allowed, bool):
+        return "READY" if allowed else "LOCKED"
+    return "READY" if status == "ga" else "PREVIEW"
+
+
+def _normalize_scene_tiles(scenes, capabilities, warnings):
+    cap_map: Dict[str, dict] = {}
+    for capability in capabilities or []:
+        if not isinstance(capability, dict):
+            continue
+        cap_key = str(capability.get("key") or "").strip()
+        if not cap_key:
+            continue
+        cap_map[cap_key] = {
+            "status": _normalize_tile_status(capability.get("status")),
+            "state": _normalize_tile_state(capability.get("state")),
+            "reason_code": str(capability.get("reason_code") or "").strip(),
+            "reason": str(capability.get("reason") or "").strip(),
+        }
+
+    for scene in scenes or []:
+        if not isinstance(scene, dict):
+            continue
+        scene_key = scene.get("code") or scene.get("key") or ""
+        tiles = scene.get("tiles")
+        if not isinstance(tiles, list):
+            continue
+        for tile in tiles:
+            if not isinstance(tile, dict):
+                continue
+            key = str(tile.get("key") or "").strip()
+            cap_meta = cap_map.get(key) if key else None
+            status = _normalize_tile_status(tile.get("status"))
+            state = _normalize_tile_state(tile.get("state"))
+            if not status and cap_meta:
+                status = cap_meta.get("status") or ""
+            if not state and cap_meta:
+                state = cap_meta.get("state") or ""
+            if not state:
+                state = _derive_tile_state(status or "ga", tile.get("allowed"))
+            if not status:
+                status = "ga" if state == "READY" else "alpha"
+            tile["status"] = status
+            tile["state"] = state
+            if cap_meta:
+                if not tile.get("reason_code") and cap_meta.get("reason_code"):
+                    tile["reason_code"] = cap_meta.get("reason_code")
+                if not tile.get("reason") and cap_meta.get("reason"):
+                    tile["reason"] = cap_meta.get("reason")
+            if not key:
+                warnings.append({
+                    "code": "TILE_KEY_MISSING",
+                    "severity": "non_critical",
+                    "scene_key": scene_key,
+                    "message": "tile key missing; state/status defaults applied",
+                    "field": "tiles.key",
+                    "reason": "missing_key",
+                })
+    return scenes
+
+
 def _normalize_scene_accesses(scenes, warnings):
     for scene in scenes:
         if not isinstance(scene, dict):
@@ -1114,6 +1190,142 @@ def _normalize_scene_accesses(scenes, warnings):
 
     return scenes
 
+
+
+def _build_scene_target_maps(scenes):
+    menu_id_map: Dict[int, str] = {}
+    action_id_map: Dict[int, str] = {}
+    model_view_map: Dict[Tuple[str, str | None], str] = {}
+    for scene in scenes or []:
+        if not isinstance(scene, dict):
+            continue
+        scene_key = str(scene.get("code") or scene.get("key") or "").strip()
+        if not scene_key:
+            continue
+        target = scene.get("target")
+        if not isinstance(target, dict):
+            continue
+        menu_id = target.get("menu_id")
+        action_id = target.get("action_id")
+        model = str(target.get("model") or "").strip()
+        view_mode = _normalize_view_mode(target.get("view_mode") or target.get("view_type"))
+
+        if isinstance(menu_id, int) and menu_id > 0:
+            menu_id_map.setdefault(menu_id, scene_key)
+        if isinstance(action_id, int) and action_id > 0:
+            action_id_map.setdefault(action_id, scene_key)
+        if model:
+            model_view_map.setdefault((model, view_mode), scene_key)
+    return menu_id_map, action_id_map, model_view_map
+
+
+def _sync_nav_scene_keys(nav_tree, scenes, warnings):
+    scene_keys = {
+        str(scene.get("code") or scene.get("key") or "").strip()
+        for scene in scenes or []
+        if isinstance(scene, dict)
+    }
+    scene_keys = {key for key in scene_keys if key}
+    if not scene_keys:
+        return
+
+    menu_id_map, action_id_map, model_view_map = _build_scene_target_maps(scenes)
+
+    def walk(nodes):
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            node_scene_key = str(node.get("scene_key") or "").strip()
+            meta_scene_key = str(meta.get("scene_key") or "").strip()
+            scene_key = node_scene_key or meta_scene_key
+            if scene_key and scene_key not in scene_keys:
+                warnings.append({
+                    "code": "NAV_SCENEKEY_INVALID",
+                    "severity": "warn",
+                    "scene_key": scene_key,
+                    "message": "nav scene_key not found in scenes payload; fallback to menu/action routing",
+                    "field": "nav.scene_key",
+                    "reason": "scene_not_in_registry",
+                    "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
+                })
+                node.pop("scene_key", None)
+                meta.pop("scene_key", None)
+                scene_key = ""
+
+            if not scene_key:
+                menu_id = node.get("menu_id") or node.get("id")
+                action_id = meta.get("action_id")
+                if isinstance(action_id, str) and action_id.isdigit():
+                    action_id = int(action_id)
+                if isinstance(menu_id, str) and menu_id.isdigit():
+                    menu_id = int(menu_id)
+                model = str(meta.get("model") or "").strip()
+                view_mode = _normalize_view_mode(meta.get("view_mode") or meta.get("view_type"))
+                if not view_mode:
+                    view_modes = meta.get("view_modes")
+                    if isinstance(view_modes, list) and view_modes:
+                        view_mode = _normalize_view_mode(view_modes[0])
+
+                if isinstance(menu_id, int) and menu_id in menu_id_map:
+                    scene_key = menu_id_map[menu_id]
+                elif isinstance(action_id, int) and action_id in action_id_map:
+                    scene_key = action_id_map[action_id]
+                elif model and (model, view_mode) in model_view_map:
+                    scene_key = model_view_map[(model, view_mode)]
+                elif model and (model, None) in model_view_map:
+                    scene_key = model_view_map[(model, None)]
+
+            if scene_key and scene_key in scene_keys:
+                node["scene_key"] = scene_key
+                meta["scene_key"] = scene_key
+                node["meta"] = meta
+
+            if node.get("children"):
+                walk(node.get("children"))
+
+    walk(nav_tree)
+
+
+def _merge_missing_scenes_from_registry(env, scenes, warnings):
+    try:
+        from odoo.addons.smart_construction_scene.scene_registry import load_scene_configs
+    except Exception:
+        return scenes
+    current = [scene for scene in (scenes or []) if isinstance(scene, dict)]
+    existing = {
+        str(scene.get("code") or scene.get("key") or "").strip()
+        for scene in current
+        if isinstance(scene, dict)
+    }
+    existing = {code for code in existing if code}
+    registry_scenes = load_scene_configs(env) or []
+    appended = []
+    for scene in registry_scenes:
+        if not isinstance(scene, dict):
+            continue
+        code = str(scene.get("code") or scene.get("key") or "").strip()
+        if not code or code in existing:
+            continue
+        item = dict(scene)
+        target = item.get("target")
+        if isinstance(target, dict):
+            item["target"] = dict(target)
+        current.append(item)
+        existing.add(code)
+        appended.append(code)
+    if appended:
+        warnings.append({
+            "code": "SCENE_FALLBACK_MERGED",
+            "severity": "info",
+            "scene_key": "",
+            "message": "missing scenes merged from registry fallback",
+            "field": "scenes",
+            "reason": "contract_gap",
+            "count": len(appended),
+            "scene_codes": appended[:20],
+        })
+    return current
 
 
 def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
@@ -1399,6 +1611,7 @@ class SystemInitHandler(BaseIntentHandler):
             scene_diagnostics["scene_version"] = data.get("scene_version")
             scene_diagnostics["schema_version"] = data.get("schema_version")
             scene_diagnostics["loaded_from"] = "contract"
+            data["scenes"] = _merge_missing_scenes_from_registry(env, data.get("scenes"), scene_diagnostics["normalize_warnings"])
         else:
             try:
                 from odoo.addons.smart_construction_scene.scene_registry import (
@@ -1431,10 +1644,12 @@ class SystemInitHandler(BaseIntentHandler):
         _append_inferred_scene_warnings(nav_tree, scene_keys, scene_diagnostics["normalize_warnings"])
         _normalize_scene_layouts(scenes_payload, scene_diagnostics["normalize_warnings"])
         _normalize_scene_accesses(scenes_payload, scene_diagnostics["normalize_warnings"])
+        _normalize_scene_tiles(scenes_payload, data.get("capabilities"), scene_diagnostics["normalize_warnings"])
         scene_diagnostics["timings"]["normalize_ms"] = int((time.time() - t_norm_start) * 1000)
         nav_targets = _index_nav_scene_targets(nav_tree)
         t_resolve_start = time.time()
         _normalize_scene_targets(env, scenes_payload, nav_targets, scene_diagnostics["resolve_errors"])
+        _sync_nav_scene_keys(nav_tree, scenes_payload, scene_diagnostics["normalize_warnings"])
         scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
 
         # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
@@ -1480,12 +1695,15 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["resolve_errors"] = []
                 scene_diagnostics["drift"] = []
                 scene_diagnostics["normalize_warnings"] = []
+                data["scenes"] = _merge_missing_scenes_from_registry(env, data.get("scenes"), scene_diagnostics["normalize_warnings"])
                 t_norm2 = time.time()
                 _normalize_scene_layouts(data["scenes"], scene_diagnostics["normalize_warnings"])
                 _normalize_scene_accesses(data["scenes"], scene_diagnostics["normalize_warnings"])
+                _normalize_scene_tiles(data["scenes"], data.get("capabilities"), scene_diagnostics["normalize_warnings"])
                 scene_diagnostics["timings"]["normalize_after_degrade_ms"] = int((time.time() - t_norm2) * 1000)
                 t_resolve2 = time.time()
                 _normalize_scene_targets(env, data["scenes"], nav_targets, scene_diagnostics["resolve_errors"])
+                _sync_nav_scene_keys(nav_tree, data["scenes"], scene_diagnostics["normalize_warnings"])
                 scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload

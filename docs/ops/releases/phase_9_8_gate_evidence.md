@@ -10,6 +10,9 @@
   - `ACT_URL_MISSING_SCENE` must be 0.
   - `ACT_URL_LEGACY` capped at `SC_WARN_ACT_URL_LEGACY_MAX` (default 3).
 - Menu scene resolve smoke emits coverage summary and is appended to gate summary.
+- Menu scene resolve enforcement is business-scoped by default:
+  - `MENU_SCENE_ENFORCE_PREFIXES=smart_construction_core.,smart_construction_demo.,smart_construction_portal.`
+  - Non-business namespace menus are counted as exempt (manual or auto), not failures.
 
 ## Gate Additions
 - `gate.full` includes:
@@ -34,6 +37,12 @@
   - `/mnt/artifacts/codex/portal-scene-warnings/20260207T061821`
 - `DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make verify.phase_9_8.gate_summary`
   - `artifacts/codex/phase-9-8/gate_summary.json`
+- Required summary keys (release evidence):
+  - `menu_scene_resolve_effective_total`
+  - `menu_scene_resolve_coverage`
+  - `menu_scene_resolve_enforce_prefixes`
+  - `phase_9_8_menu_resolve_exempt_manual`
+  - `phase_9_8_menu_resolve_exempt_auto`
 - `CODEX_MODE=gate DB_NAME=sc_demo E2E_LOGIN=demo_pm E2E_PASSWORD=demo make gate.full`: PASS
 
 ## Safety / Rollback
