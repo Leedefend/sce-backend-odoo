@@ -29,6 +29,7 @@ import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
+import { readWorkspaceContext } from '../app/workspaceContext';
 import type { NavNode } from '@sc/schema';
 
 const route = useRoute();
@@ -40,17 +41,7 @@ const errorCopy = ref(resolveErrorCopy(null, 'Scene resolve failed'));
 const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger', 'projects.intake']);
 
 function resolveWorkspaceContextQuery() {
-  const query = route.query;
-  const context: Record<string, string> = {};
-  const preset = String(query.preset || '').trim();
-  const source = String(query.source || '').trim();
-  const ctxSource = String(query.ctx_source || '').trim();
-  const search = String(query.search || '').trim();
-  if (preset) context.preset = preset;
-  if (source) context.source = source;
-  if (ctxSource) context.ctx_source = ctxSource;
-  if (search) context.search = search;
-  return context;
+  return readWorkspaceContext(route.query as Record<string, unknown>);
 }
 
 function isPortalPath(url: string) {
