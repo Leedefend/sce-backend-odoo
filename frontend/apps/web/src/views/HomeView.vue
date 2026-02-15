@@ -193,6 +193,7 @@ type SuggestionStatus = 'urgent' | 'normal';
 type CapabilityEntry = {
   id: string;
   key: string;
+  recentKey: string;
   title: string;
   subtitle: string;
   sceneKey: string;
@@ -224,6 +225,7 @@ const readyOnly = ref(false);
 const lockReasonFilter = ref('ALL');
 const collapsedSceneKeys = ref<string[]>([]);
 const collapsedSceneSet = computed(() => new Set(collapsedSceneKeys.value));
+const recentEntryKeys = ref<string[]>([]);
 const lastFailedEntry = ref<CapabilityEntry | null>(null);
 const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
 const lastTrackedSearch = ref('');
@@ -260,10 +262,13 @@ const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene
 const workspaceScopeKey = computed(() => {
   const roleKey = asText(roleSurface.value?.role_code) || 'default';
   const landingScene = asText(roleSurface.value?.landing_scene_key) || 'projects.list';
-  return `${roleKey}:${landingScene}`;
+  const userId = Number(session.user?.id || 0) || 0;
+  return `${userId}:${roleKey}:${landingScene}`;
 });
 const homeCollapseStorageKey = computed(() => `sc.home.scene_groups.collapsed.v2:${workspaceScopeKey.value}`);
 const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScopeKey.value}`);
+const homeViewModeStorageKey = computed(() => `workspace:view_mode:${workspaceScopeKey.value}`);
+const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKey.value}`);
 
 function asText(value: unknown) {
   const text = String(value ?? '').trim();
@@ -341,6 +346,7 @@ const entries = computed<CapabilityEntry[]>(() => {
       list.push({
         id: `${sceneKey}-${key}-${sceneIndex}-${tileIndex}`,
         key,
+        recentKey: `${sceneKey}::${key}`,
         title,
         subtitle: asText((tile as { subtitle?: string }).subtitle),
         sceneKey,
@@ -451,8 +457,14 @@ const stateCounts = computed(() => {
 });
 
 const groupedEntries = computed(() => {
+  const filteredByRecent = new Map(filteredEntries.value.map((entry) => [entry.recentKey, entry]));
+  const recentItems = recentEntryKeys.value
+    .map((key) => filteredByRecent.get(key))
+    .filter((entry): entry is CapabilityEntry => Boolean(entry));
+  const recentKeySet = new Set(recentItems.map((item) => item.recentKey));
   const map = new Map<string, { sceneKey: string; sceneTitle: string; items: CapabilityEntry[] }>();
   filteredEntries.value.forEach((entry) => {
+    if (recentKeySet.has(entry.recentKey)) return;
     const current = map.get(entry.sceneKey);
     if (current) {
       current.items.push(entry);
@@ -464,7 +476,9 @@ const groupedEntries = computed(() => {
       items: [entry],
     });
   });
-  return Array.from(map.values()).sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
+  const grouped = Array.from(map.values()).sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
+  if (!recentItems.length) return grouped;
+  return [{ sceneKey: '__recent__', sceneTitle: '最近使用', items: recentItems }, ...grouped];
 });
 
 const lockedReasonOptions = computed(() => {
@@ -524,11 +538,12 @@ async function openScene(entry: CapabilityEntry) {
   if (!canEnter(entry)) return;
   lastFailedEntry.value = null;
   enterError.value = null;
-  void trackUsageEvent('capability.enter.click', { capability_key: entry.key, scene_key: entry.sceneKey }).catch(() => {});
+  void trackUsageEvent('workspace.enter_click', { capability_key: entry.key, scene_key: entry.sceneKey }).catch(() => {});
   try {
     void trackCapabilityOpen(entry.key).catch(() => {});
     await router.push({ path: `/s/${entry.sceneKey}` });
-    void trackUsageEvent('capability.enter.result', {
+    pushRecentEntry(entry.recentKey);
+    void trackUsageEvent('workspace.enter_result', {
       capability_key: entry.key,
       scene_key: entry.sceneKey,
       result: 'ok',
@@ -543,11 +558,12 @@ async function openScene(entry: CapabilityEntry) {
       code: message.code,
       traceId: message.traceId,
     };
-    void trackUsageEvent('capability.enter.result', {
+    void trackUsageEvent('workspace.enter_result', {
       capability_key: entry.key,
       scene_key: entry.sceneKey,
       result: 'error',
       code: message.code || 'UNKNOWN',
+      trace_id: message.traceId || '',
     }).catch(() => {});
   }
 }
@@ -569,6 +585,16 @@ function clearSearchAndFilters() {
   readyOnly.value = false;
   stateFilter.value = 'ALL';
   lockReasonFilter.value = 'ALL';
+}
+
+function normalizeViewMode(raw: unknown) {
+  return raw === 'list' ? 'list' : 'card';
+}
+
+function pushRecentEntry(recentKey: string) {
+  if (!recentKey) return;
+  const deduped = [recentKey, ...recentEntryKeys.value.filter((item) => item !== recentKey)].slice(0, 5);
+  recentEntryKeys.value = deduped;
 }
 
 function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<string, string>) {
@@ -653,6 +679,25 @@ onMounted(() => {
   } catch {
     // Ignore broken local cache.
   }
+  try {
+    const raw = window.localStorage.getItem(homeViewModeStorageKey.value);
+    if (raw) {
+      viewMode.value = normalizeViewMode(raw);
+    }
+  } catch {
+    // Ignore broken local cache.
+  }
+  try {
+    const raw = window.localStorage.getItem(homeRecentStorageKey.value);
+    if (raw) {
+      const parsed = JSON.parse(raw) as string[];
+      if (Array.isArray(parsed)) {
+        recentEntryKeys.value = parsed.filter((item) => typeof item === 'string' && item).slice(0, 5);
+      }
+    }
+  } catch {
+    // Ignore broken local cache.
+  }
 });
 
 watch(collapsedSceneKeys, () => {
@@ -674,6 +719,22 @@ watch([readyOnly, stateFilter], () => {
   }
 });
 
+watch(viewMode, (next) => {
+  try {
+    window.localStorage.setItem(homeViewModeStorageKey.value, normalizeViewMode(next));
+  } catch {
+    // Ignore local storage errors.
+  }
+});
+
+watch(recentEntryKeys, () => {
+  try {
+    window.localStorage.setItem(homeRecentStorageKey.value, JSON.stringify(recentEntryKeys.value));
+  } catch {
+    // Ignore local storage errors.
+  }
+});
+
 watch(readyOnly, (next) => {
   if (!next) return;
   stateFilter.value = 'READY';
@@ -688,7 +749,7 @@ watch(searchText, (next) => {
   }
   if (query === lastTrackedSearch.value) return;
   lastTrackedSearch.value = query;
-  void trackUsageEvent('capability.search', { query }).catch(() => {});
+  void trackUsageEvent('workspace.search', { query }).catch(() => {});
 });
 
 function highlightParts(raw: string) {
