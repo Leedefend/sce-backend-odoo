@@ -219,6 +219,38 @@ def _build_role_surface_map_payload() -> Dict[str, dict]:
         }
     return payload
 
+
+def _load_capabilities_for_user(env, user) -> List[dict]:
+    try:
+        Cap = env["sc.capability"].sudo()
+    except Exception:
+        return []
+    try:
+        caps = Cap.search([("active", "=", True)], order="sequence, id")
+    except Exception:
+        return []
+    out: List[dict] = []
+    for rec in caps:
+        try:
+            if rec._user_visible(user):
+                out.append(rec.to_public_dict(user))
+        except Exception:
+            continue
+    return out
+
+
+def _merge_extension_facts(data: dict) -> None:
+    ext_facts = data.get("ext_facts")
+    if not isinstance(ext_facts, dict):
+        return
+    # Transitional compatibility: keep top-level reads stable while enforcing
+    # extension hooks to write facts into a namespaced container only.
+    core_facts = ext_facts.get("smart_construction_core")
+    if isinstance(core_facts, dict):
+        for key in ("entitlements", "usage"):
+            if key in core_facts and key not in data:
+                data[key] = core_facts.get(key)
+
 def _is_menu_node(node: dict) -> bool:
     """仅保留真正菜单节点（有 menu_id 或有 children 的分组）"""
     return bool(node.get("menu_id") or node.get("children"))
@@ -1567,6 +1599,7 @@ class SystemInitHandler(BaseIntentHandler):
             "intents": intents,                                                  # ✅ 动态意图（主名）
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
             "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
+            "capabilities": _load_capabilities_for_user(env, user),
             "preload": [],
             "scenes": [],
             "scene_version": "v1",
@@ -1576,6 +1609,7 @@ class SystemInitHandler(BaseIntentHandler):
             "scene_channel_source_ref": channel_source_ref,
             "scene_contract_ref": None,
             "contract_mode": contract_mode,
+            "ext_facts": {},
         }
         scene_diagnostics = {
             "schema_version": data.get("schema_version"),
@@ -1599,6 +1633,7 @@ class SystemInitHandler(BaseIntentHandler):
 
         # 扩展模块可附加场景/能力等（不影响主流程）
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
+        _merge_extension_facts(data)
 
         # Scene orchestration source (contract export or smart_construction_scene)
         contract_payload, contract_ref = _load_scene_contract(env, scene_channel, rollback_active)
