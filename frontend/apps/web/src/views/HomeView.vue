@@ -116,6 +116,7 @@
         >
           {{ chip.label }} ×
         </button>
+        <button class="filter-chip filter-chip-clear" @click="clearSearchAndFilters">清空全部筛选</button>
       </div>
       <div v-if="groupedEntries.length" class="group-actions">
         <button @click="expandAllSceneGroups">展开全部分组</button>
@@ -1328,6 +1329,12 @@ function highlightParts(raw: string) {
   color: #1e40af;
   background: #eff6ff;
   cursor: pointer;
+}
+
+.filter-chip-clear {
+  border-style: dashed;
+  color: #475569;
+  background: #fff;
 }
 
 .group-actions {
