@@ -217,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
@@ -914,6 +914,17 @@ function clearEnterError() {
   lastFailedEntry.value = null;
 }
 
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return;
+  if (enterError.value) {
+    clearEnterError();
+    return;
+  }
+  if (searchText.value.trim()) {
+    clearSearchText();
+  }
+}
+
 function resolveEnterErrorMessage(error: unknown) {
   const message = asText((error as { message?: unknown })?.message) || '能力入口暂时不可用';
   const lowered = message.toLowerCase();
@@ -994,6 +1005,11 @@ onMounted(() => {
   } catch {
     // Ignore broken local cache.
   }
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 
 watch(collapsedSceneKeys, () => {
