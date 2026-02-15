@@ -11,13 +11,16 @@
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
+        <p v-if="isHudEnabled" class="hud-line">
+          HUD: internal_tiles={{ internalTileCount }} · visible_mode=show_all
+        </p>
       </div>
       <div class="view-toggle">
-        <button class="my-work-btn" @click="router.push({ path: '/my-work' })">我的工作</button>
+        <button class="my-work-btn" @click="goToMyWork">我的工作</button>
         <button
           v-if="isAdmin"
           class="my-work-btn"
-          @click="router.push({ path: '/admin/usage-analytics' })"
+          @click="goToUsageAnalytics"
         >
           使用分析
         </button>
@@ -90,6 +93,7 @@
           即将开放 {{ stateCounts.PREVIEW }}
         </button>
       </div>
+      <p v-if="readyOnly" class="filter-tip">已启用“仅显示可进入能力”，暂不可用与即将开放不会展示。</p>
       <div v-if="lockedReasonOptions.length" class="reason-filters">
         <button :class="{ active: lockReasonFilter === 'ALL' }" @click="lockReasonFilter = 'ALL'">
           锁定原因：全部
@@ -111,20 +115,22 @@
 
     <div v-if="!filteredEntries.length" class="empty">
       <template v-if="entries.length">
-        <p>未找到相关能力，请调整筛选条件。</p>
-        <button class="empty-btn" @click="clearSearchAndFilters">清空筛选</button>
+        <p>
+          {{ searchKeyword ? `未找到与“${searchKeyword}”相关的能力，请调整筛选条件。` : '未找到相关能力，请调整筛选条件。' }}
+        </p>
+        <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
       </template>
       <template v-else>
         <p>当前账号暂无可用能力，可能因为角色权限未开通或工作台尚未配置。</p>
         <div class="empty-actions">
           <button v-if="hasRoleSwitch" class="empty-btn" @click="goToMyWork">切换角色</button>
-          <button class="empty-btn" @click="openRoleLanding">进入工作台</button>
+          <button class="empty-btn" @click="goHome">返回首页</button>
           <button class="empty-btn secondary" @click="toggleEmptyHelp">
             {{ showEmptyHelp ? '收起帮助' : '查看帮助' }}
           </button>
         </div>
         <p v-if="showEmptyHelp" class="empty-help">
-          建议先进入“我的工作”确认当前角色；若仍无能力，请联系管理员开通角色权限或配置能力目录。
+          建议先点击“切换角色”确认当前角色；若仍无能力，请联系管理员开通角色权限或配置能力目录。
         </p>
       </template>
     </div>
@@ -265,6 +271,31 @@ const sceneTitleMap = computed(() => {
 });
 const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || 'projects.list');
 const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || '工作台首页');
+const internalTileCount = computed(() => {
+  let count = 0;
+  session.scenes.forEach((scene) => {
+    const sceneKey = asText(scene.key);
+    if (!sceneKey) return;
+    const tiles = Array.isArray(scene.tiles) ? scene.tiles : [];
+    tiles.forEach((tile, tileIndex) => {
+      const key = asText(tile.key);
+      if (!key) return;
+      const title = asText((tile as { title?: string }).title) || `能力 ${tileIndex + 1}`;
+      if (
+        isInternalEntry({
+          sceneKey,
+          title,
+          key,
+          sceneTags: (scene as { tags?: unknown }).tags,
+          tileTags: (tile as { tags?: unknown }).tags,
+        })
+      ) {
+        count += 1;
+      }
+    });
+  });
+  return count;
+});
 const workspaceScopeKey = computed(() => {
   const roleKey = asText(roleSurface.value?.role_code) || 'default';
   const landingScene = asText(roleSurface.value?.landing_scene_key) || 'projects.list';
@@ -275,6 +306,17 @@ const homeCollapseStorageKey = computed(() => `sc.home.scene_groups.collapsed.v2
 const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScopeKey.value}`);
 const homeViewModeStorageKey = computed(() => `workspace:view_mode:${workspaceScopeKey.value}`);
 const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKey.value}`);
+const searchKeyword = computed(() => searchText.value.trim());
+
+function stringifyEntryContext(context: { section?: string; source?: string; reason?: string; search?: string }) {
+  const next: Record<string, string> = {};
+  if (context.section) next.section = context.section;
+  if (context.source) next.source = context.source;
+  if (context.reason) next.reason = context.reason;
+  if (context.search) next.search = context.search;
+  if (!Object.keys(next).length) return '';
+  return JSON.stringify(next);
+}
 
 function asText(value: unknown) {
   const text = String(value ?? '').trim();
@@ -403,7 +445,11 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '项目立项',
       description: '新建项目并完成立项信息录入。',
       sceneKey: project.sceneKey,
-      contextQuery: { preset: 'project_intake', ctx_source: 'workspace_today' },
+      contextQuery: {
+        preset: 'project_intake',
+        ctx_source: 'workspace_today',
+        entry_context: stringifyEntryContext({ section: 'owned', search: '立项' }),
+      },
       count: project.ready ? projectCount : undefined,
       status: 'normal',
     },
@@ -412,7 +458,11 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '合同审批',
       description: '查看待审批合同并快速处理。',
       sceneKey: contract.sceneKey,
-      contextQuery: { preset: 'pending_approval', ctx_source: 'workspace_today' },
+      contextQuery: {
+        preset: 'pending_approval',
+        ctx_source: 'workspace_today',
+        entry_context: stringifyEntryContext({ section: 'todo', source: 'mail.activity', search: '审批' }),
+      },
       count: contract.ready ? contractCount : undefined,
       status: 'urgent',
     },
@@ -421,7 +471,11 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '成本台账',
       description: '跟踪成本执行并核对差异。',
       sceneKey: cost.sceneKey,
-      contextQuery: { preset: 'cost_watchlist', ctx_source: 'workspace_today' },
+      contextQuery: {
+        preset: 'cost_watchlist',
+        ctx_source: 'workspace_today',
+        entry_context: stringifyEntryContext({ section: 'following', search: '成本' }),
+      },
       count: cost.ready ? costCount : undefined,
       status: 'normal',
     },
@@ -605,6 +659,14 @@ function goToMyWork() {
   router.push({ path: '/my-work' }).catch(() => {});
 }
 
+function goToUsageAnalytics() {
+  router.push({ path: '/admin/usage-analytics' }).catch(() => {});
+}
+
+function goHome() {
+  router.push({ path: '/' }).catch(() => {});
+}
+
 function toggleEmptyHelp() {
   showEmptyHelp.value = !showEmptyHelp.value;
 }
@@ -638,18 +700,27 @@ function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<strin
 function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>) {
   const preset = asText(contextQuery?.preset);
   const ctxSource = asText(contextQuery?.ctx_source) || 'workspace_today';
+  const entryContext = asText(contextQuery?.entry_context);
+  const withEntryContext = (query: Record<string, string>) =>
+    entryContext ? { ...query, entry_context: entryContext } : query;
   const presetRouteMap: Record<string, (source: string) => SuggestionRoute> = {
     pending_approval: (source) => ({
       path: '/my-work',
-      query: { preset: 'pending_approval', ctx_source: source, section: 'todo', source: 'mail.activity', search: '审批' },
+      query: withEntryContext({
+        preset: 'pending_approval',
+        ctx_source: source,
+        section: 'todo',
+        source: 'mail.activity',
+        search: '审批',
+      }),
     }),
     project_intake: (source) => ({
       path: '/my-work',
-      query: { preset: 'project_intake', ctx_source: source, section: 'owned', search: '立项' },
+      query: withEntryContext({ preset: 'project_intake', ctx_source: source, section: 'owned', search: '立项' }),
     }),
     cost_watchlist: (source) => ({
       path: '/my-work',
-      query: { preset: 'cost_watchlist', ctx_source: source, section: 'following', search: '成本' },
+      query: withEntryContext({ preset: 'cost_watchlist', ctx_source: source, section: 'following', search: '成本' }),
     }),
   };
   if (preset && presetRouteMap[preset]) {
@@ -1105,6 +1176,12 @@ function highlightParts(raw: string) {
   gap: 6px;
   color: #334155;
   font-size: 13px;
+}
+
+.filter-tip {
+  margin: -2px 0 0;
+  color: #475569;
+  font-size: 12px;
 }
 
 .state-filters button {
