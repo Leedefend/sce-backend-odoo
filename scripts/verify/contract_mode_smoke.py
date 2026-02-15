@@ -8,12 +8,13 @@ from intent_smoke_utils import require_ok
 from python_http_smoke_utils import get_base_url, http_post_json
 
 FORBIDDEN_USER_KEYS = {
-    "action_id",
-    "menu_id",
-    "view_id",
-    "model",
-    "res_model",
+    "action_xmlid",
+    "menu_xmlid",
     "scene_key",
+    "required_groups",
+    "required_flag",
+    "role_scope",
+    "capability_scope",
 }
 
 
