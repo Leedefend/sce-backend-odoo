@@ -80,7 +80,9 @@ class ContractService:
 
         # 1) 读取 body 与请求头
         payload = read_json_body()
-        client_etag = request.httprequest.headers.get('If-None-Match')
+        client_etag = (request.httprequest.headers.get('If-None-Match') or "").strip()
+        if client_etag.startswith('"') and client_etag.endswith('"'):
+            client_etag = client_etag[1:-1]
         _logger.warning("CONTRACT_REQUEST payload=%s headers=%s", payload, dict(request.httprequest.headers))
 
         # 2) 解析/规范化 payload（强约束字段、兜底默认值）

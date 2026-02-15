@@ -102,7 +102,7 @@ def _run_one(base_url: str, db: str, login: str, password: str) -> bool:
         contract_url,
         payload_user,
         cookie_jar=cookie_jar,
-        headers={"If-None-Match": etag_u},
+        headers={"If-None-Match": f'"{etag_u}"'},
     )
     if status_u304 != 304:
         raise RuntimeError(f"user 304 expected, got status={status_u304} body={body_u304}")
