@@ -60,6 +60,12 @@ SCENE_CHANNEL=stable SCENE_USE_PINNED=1 DB_NAME=sc_demo E2E_LOGIN=svc_project_ro
 make verify.portal.scene_rollback_smoke.container
 ```
 
+Meta tracing smoke:
+```
+DB_NAME=sc_demo E2E_LOGIN=svc_project_ro E2E_PASSWORD='ChangeMe_123!' \
+make verify.scene.meta.trace.smoke
+```
+
 ## Gate
 - `verify.portal.ui.v0_8.semantic.container` includes:
   - `verify.portal.scene_channel_smoke.container`
