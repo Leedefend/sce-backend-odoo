@@ -5,6 +5,10 @@
         <p v-if="showHud" class="diagnostic">Diagnostic surface only — not product UI.</p>
         <h2>页面暂时无法打开</h2>
         <p class="meta">我们已为你保留可继续操作的入口。</p>
+        <p v-if="hasContext" class="context-line">
+          推荐上下文：{{ workspaceContextSummary }}
+          <button class="ghost mini" @click="clearWorkspaceContext">清除</button>
+        </p>
       </div>
       <div class="actions">
         <button class="ghost" @click="goToProjects">Back to home</button>
@@ -97,7 +101,7 @@ import { ErrorCodes } from '../app/error_codes';
 import { useSessionStore } from '../stores/session';
 import { isHudEnabled } from '../config/debug';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
-import { readWorkspaceContext } from '../app/workspaceContext';
+import { hasWorkspaceContext as hasWorkspaceContextValue, readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import type { NavNode } from '@sc/schema';
 
@@ -174,6 +178,14 @@ const diagContractUrl = computed(() => String(route.query.diag_contract_url || '
 const diagMetaUrl = computed(() => String(route.query.diag_meta_url || ''));
 const workspaceContextQuery = computed(() => {
   return readWorkspaceContext(route.query as Record<string, unknown>);
+});
+const hasContext = computed(() => hasWorkspaceContextValue(workspaceContextQuery.value));
+const workspaceContextSummary = computed(() => {
+  const parts = [];
+  if (workspaceContextQuery.value.preset) parts.push(`preset=${workspaceContextQuery.value.preset}`);
+  if (workspaceContextQuery.value.search) parts.push(`search=${workspaceContextQuery.value.search}`);
+  if (workspaceContextQuery.value.ctx_source) parts.push(`source=${workspaceContextQuery.value.ctx_source}`);
+  return parts.join(' · ');
 });
 const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
@@ -300,6 +312,11 @@ async function copyTrace() {
   }
 }
 
+function clearWorkspaceContext() {
+  const nextQuery = stripWorkspaceContext(route.query as Record<string, unknown>);
+  router.replace({ path: route.path, query: nextQuery }).catch(() => {});
+}
+
 function resolveNodeSceneKey(node: NavNode): string {
   return asText((node as NavNode & { scene_key?: string; sceneKey?: string }).scene_key)
     || asText((node as NavNode & { scene_key?: string; sceneKey?: string }).sceneKey)
@@ -361,6 +378,15 @@ function findFirstReachableMenuId(nodes: NavNode[]): number | null {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #b45309;
+}
+
+.context-line {
+  margin: 8px 0 0;
+  color: #334155;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .details {
