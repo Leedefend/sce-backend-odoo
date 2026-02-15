@@ -6,7 +6,7 @@
         <p class="lead">选择你要完成的工作，直接进入场景。</p>
         <p class="role-line">
           当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingLabel }}
-          <button class="inline-link" @click="openRoleLanding">进入角色首页</button>
+          <button class="inline-link" @click="openRoleLanding">进入工作台</button>
         </p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
@@ -96,7 +96,23 @@
     </section>
 
     <div v-if="!filteredEntries.length" class="empty">
-      <p>{{ entries.length ? '没有匹配的能力，请调整筛选条件。' : '当前账号暂无可用能力。' }}</p>
+      <template v-if="entries.length">
+        <p>未找到相关能力，请调整筛选条件。</p>
+        <button class="empty-btn" @click="clearSearchAndFilters">清空筛选</button>
+      </template>
+      <template v-else>
+        <p>当前账号暂无可用能力，可能因为角色权限未开通或工作台尚未配置。</p>
+        <div class="empty-actions">
+          <button v-if="hasRoleSwitch" class="empty-btn" @click="goToMyWork">切换角色</button>
+          <button class="empty-btn" @click="openRoleLanding">进入工作台</button>
+          <button class="empty-btn secondary" @click="toggleEmptyHelp">
+            {{ showEmptyHelp ? '收起帮助' : '查看帮助' }}
+          </button>
+        </div>
+        <p v-if="showEmptyHelp" class="empty-help">
+          建议先进入“我的工作”确认当前角色；若仍无能力，请联系管理员开通角色权限或配置能力目录。
+        </p>
+      </template>
     </div>
 
     <div v-else class="scene-groups">
@@ -179,6 +195,7 @@ const collapsedSceneSet = computed(() => new Set(collapsedSceneKeys.value));
 const lastFailedEntry = ref<CapabilityEntry | null>(null);
 const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
 const lastTrackedSearch = ref('');
+const showEmptyHelp = ref(false);
 const isHudEnabled = computed(() => {
   const hud = String(route.query.hud || '').trim();
   return import.meta.env.DEV || hud === '1' || hud.toLowerCase() === 'true';
@@ -188,6 +205,7 @@ const isAdmin = computed(() => {
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
 });
 const roleSurface = computed(() => session.roleSurface);
+const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
   const normalized = raw.toLowerCase();
@@ -480,6 +498,21 @@ function openRoleLanding() {
   router.push(session.resolveLandingPath('/s/projects.list')).catch(() => {});
 }
 
+function goToMyWork() {
+  router.push({ path: '/my-work' }).catch(() => {});
+}
+
+function toggleEmptyHelp() {
+  showEmptyHelp.value = !showEmptyHelp.value;
+}
+
+function clearSearchAndFilters() {
+  searchText.value = '';
+  readyOnly.value = false;
+  stateFilter.value = 'ALL';
+  lockReasonFilter.value = 'ALL';
+}
+
 function openSuggestion(sceneKey: string) {
   const safeSceneKey = asText(sceneKey);
   if (!safeSceneKey) {
@@ -661,6 +694,39 @@ watch(searchText, (next) => {
   border: 1px dashed #cbd5e1;
   border-radius: 12px;
   background: #f8fafc;
+  display: grid;
+  gap: 10px;
+}
+
+.empty p {
+  margin: 0;
+  color: #334155;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.empty-btn {
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.empty-btn.secondary {
+  border-color: #cbd5e1;
+  background: #fff;
+  color: #475569;
+}
+
+.empty-help {
+  font-size: 12px;
+  color: #475569;
 }
 
 .filters {

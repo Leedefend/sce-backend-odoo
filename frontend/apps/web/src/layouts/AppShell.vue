@@ -17,7 +17,7 @@
       <div class="role-surface">
         <p class="role-label">当前角色：{{ roleLabel }}</p>
         <div class="role-actions">
-          <button class="ghost mini" @click="openRoleLanding">进入角色首页</button>
+          <button class="ghost mini" @click="openRoleLanding">进入工作台</button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
         </div>
         <div v-if="roleMenus.length" class="role-menus">
@@ -222,6 +222,8 @@ const menuLabel = computed(() => {
   return node?.title || node?.name || node?.label || '';
 });
 
+const hudEnabled = computed(() => isHudEnabled(route));
+
 const pageTitle = computed(() => {
   const sceneKey = route.meta?.sceneKey as string | undefined;
   if (sceneKey) {
@@ -236,22 +238,24 @@ const pageTitle = computed(() => {
   if (session.currentAction?.name) {
     return session.currentAction.name;
   }
-  const currentAction = asDict(session.currentAction);
-  const modelLabel = asText(currentAction?.model_label) || asText(currentAction?.model);
-  if (modelLabel) {
-    return modelLabel;
+  if (hudEnabled.value) {
+    const currentAction = asDict(session.currentAction);
+    const modelLabel = asText(currentAction?.model_label) || asText(currentAction?.model);
+    if (modelLabel) {
+      return modelLabel;
+    }
   }
   if (route.name === 'workbench') {
     return 'Navigation issue';
   }
   if (route.name === 'record') {
-    return 'Record';
+    return '记录';
   }
   return '工作台';
 });
 
 provide('pageTitle', pageTitle);
-const showHud = computed(() => isHudEnabled(route));
+const showHud = hudEnabled;
 const latestSuggestedAction = computed(() => {
   const stamp = suggestedActionStamp.value;
   void stamp;
