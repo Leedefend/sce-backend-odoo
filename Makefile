@@ -1359,6 +1359,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene_capability.contract.guard
 	@$(MAKE) --no-print-directory verify.contract.governance.brief
 	@$(MAKE) --no-print-directory verify.contract.mode.smoke
+	@$(MAKE) --no-print-directory verify.scene.hud.trace.smoke
 	@$(MAKE) --no-print-directory verify.contract.api.mode.smoke
 	@$(MAKE) --no-print-directory verify.scene.contract.shape
 	@$(MAKE) --no-print-directory contract.evidence.export
