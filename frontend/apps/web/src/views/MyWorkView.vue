@@ -1361,11 +1361,12 @@ function restoreRetryPanelState() {
 function applyRouteOverrides() {
   let changed = false;
   const context = readWorkspaceContext(route.query as Record<string, unknown>);
+  const entryContext = context.entry_context || {};
   const preset = String(context.preset || '').trim();
-  const section = String(route.query.section || '').trim();
-  const source = String(route.query.source || '').trim();
-  const reason = String(route.query.reason || '').trim();
-  const search = String(context.search || '').trim();
+  const section = String(route.query.section || entryContext.section || '').trim();
+  const source = String(route.query.source || entryContext.source || '').trim();
+  const reason = String(route.query.reason || entryContext.reason || '').trim();
+  const search = String(context.search || entryContext.search || '').trim();
   routeContextSource.value = String(context.ctx_source || '').trim();
 
   const setIfDiff = <T>(target: { value: T }, next: T) => {
