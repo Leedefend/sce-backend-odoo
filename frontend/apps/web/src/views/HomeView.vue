@@ -126,9 +126,18 @@
     <div v-if="!filteredEntries.length" class="empty">
       <template v-if="entries.length">
         <p>
-          {{ searchKeyword ? `未找到与“${searchKeyword}”相关的能力，请调整筛选条件。` : '未找到相关能力，请调整筛选条件。' }}
+          {{
+            readyOnlyNoResult
+              ? '当前启用了“仅显示可进入能力”，暂时没有可进入能力。'
+              : searchKeyword
+                ? `未找到与“${searchKeyword}”相关的能力，请调整筛选条件。`
+                : '未找到相关能力，请调整筛选条件。'
+          }}
         </p>
-        <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
+        <div class="empty-actions">
+          <button v-if="readyOnlyNoResult" class="empty-btn" @click="showAllCapabilities">显示全部能力</button>
+          <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
+        </div>
       </template>
       <template v-else>
         <p>当前账号暂无可用能力，可能因为角色权限未开通或工作台尚未配置。</p>
@@ -549,6 +558,9 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
+const readyOnlyNoResult = computed(
+  () => readyOnly.value && filteredEntries.value.length === 0 && stateCounts.value.READY === 0,
+);
 const activeFilterChips = computed<FilterChip[]>(() => {
   const chips: FilterChip[] = [];
   const keyword = searchText.value.trim();
@@ -698,6 +710,11 @@ function clearSearchAndFilters() {
   readyOnly.value = false;
   stateFilter.value = 'ALL';
   lockReasonFilter.value = 'ALL';
+}
+
+function showAllCapabilities() {
+  readyOnly.value = false;
+  stateFilter.value = 'ALL';
 }
 
 function clearFilterChip(key: string) {
