@@ -399,7 +399,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '项目立项',
       description: '新建项目并完成立项信息录入。',
       sceneKey: project.sceneKey,
-      contextQuery: { preset: 'project_intake', source: 'workspace_today' },
+      contextQuery: { preset: 'project_intake', ctx_source: 'workspace_today' },
       count: project.ready ? projectCount : undefined,
       status: 'normal',
     },
@@ -408,7 +408,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '合同审批',
       description: '查看待审批合同并快速处理。',
       sceneKey: contract.sceneKey,
-      contextQuery: { preset: 'pending_approval', source: 'workspace_today' },
+      contextQuery: { preset: 'pending_approval', ctx_source: 'workspace_today' },
       count: contract.ready ? contractCount : undefined,
       status: 'urgent',
     },
@@ -417,7 +417,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       title: '成本台账',
       description: '跟踪成本执行并核对差异。',
       sceneKey: cost.sceneKey,
-      contextQuery: { preset: 'cost_watchlist', source: 'workspace_today' },
+      contextQuery: { preset: 'cost_watchlist', ctx_source: 'workspace_today' },
       count: cost.ready ? costCount : undefined,
       status: 'normal',
     },
@@ -622,6 +622,35 @@ function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<strin
 }
 
 function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>) {
+  const preset = asText(contextQuery?.preset);
+  const ctxSource = asText(contextQuery?.ctx_source) || 'workspace_today';
+  if (preset === 'pending_approval') {
+    router
+      .push({
+        path: '/my-work',
+        query: { preset, ctx_source: ctxSource, section: 'todo', source: 'mail.activity', search: '审批' },
+      })
+      .catch(() => {});
+    return;
+  }
+  if (preset === 'project_intake') {
+    router
+      .push({
+        path: '/my-work',
+        query: { preset, ctx_source: ctxSource, section: 'owned', search: '立项' },
+      })
+      .catch(() => {});
+    return;
+  }
+  if (preset === 'cost_watchlist') {
+    router
+      .push({
+        path: '/my-work',
+        query: { preset, ctx_source: ctxSource, section: 'following', search: '成本' },
+      })
+      .catch(() => {});
+    return;
+  }
   if (contextQuery && Object.keys(contextQuery).length) {
     openSuggestionWithContext(sceneKey, contextQuery);
     return;
