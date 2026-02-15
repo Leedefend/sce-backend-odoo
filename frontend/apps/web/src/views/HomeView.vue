@@ -908,11 +908,15 @@ onMounted(() => {
   try {
     const raw = window.localStorage.getItem(homeFilterStorageKey.value);
     if (raw) {
-      const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string };
+      const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string; lock_reason_filter?: string };
       readyOnly.value = Boolean(parsed?.ready_only);
       const state = String(parsed?.state_filter || '').toUpperCase();
       if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
         stateFilter.value = state;
+      }
+      const lockReason = String(parsed?.lock_reason_filter || '').toUpperCase();
+      if (lockReason) {
+        lockReasonFilter.value = lockReason;
       }
     }
   } catch {
@@ -947,11 +951,15 @@ watch(collapsedSceneKeys, () => {
   }
 });
 
-watch([readyOnly, stateFilter], () => {
+watch([readyOnly, stateFilter, lockReasonFilter], () => {
   try {
     window.localStorage.setItem(
       homeFilterStorageKey.value,
-      JSON.stringify({ ready_only: readyOnly.value, state_filter: stateFilter.value }),
+      JSON.stringify({
+        ready_only: readyOnly.value,
+        state_filter: stateFilter.value,
+        lock_reason_filter: lockReasonFilter.value,
+      }),
     );
   } catch {
     // Ignore local storage errors.
