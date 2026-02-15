@@ -1349,6 +1349,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
 	@$(MAKE) --no-print-directory verify.boundary.import_guard
 	@$(MAKE) --no-print-directory verify.backend.boundary_guard
+	@$(MAKE) --no-print-directory verify.scene.provider.guard
 	@$(MAKE) --no-print-directory verify.contract.governance.coverage
 	@$(MAKE) --no-print-directory verify.docs.all
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
