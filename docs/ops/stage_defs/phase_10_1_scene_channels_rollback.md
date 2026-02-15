@@ -46,6 +46,7 @@ Diagnostics:
 - `rollback_ref`
 - `meta.scene_trace.governance` (before/after/filtered summary)
 - HUD payload keeps the same scene tracing keys as `meta.scene_trace`
+- `data.scene_diagnostics` is HUD-only (`contract_mode=hud`)
 
 ## Verifies
 Channel smoke:
