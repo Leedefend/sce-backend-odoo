@@ -71,6 +71,9 @@ def main() -> None:
         raise RuntimeError(f"system.init user mode mismatch: meta={user_meta.get('contract_mode')}")
     if user_data.get("hud") is not None:
         raise RuntimeError("system.init user should not include data.hud")
+    for key in ("scene_diagnostics", "diagnostic", "scene_channel_selector", "scene_channel_source_ref"):
+        if key in user_data:
+            raise RuntimeError(f"system.init user should not include {key}")
     user_trace = _assert_trace(user_meta, label="system.init user")
 
     status, hud_resp = http_post_json(
@@ -86,6 +89,8 @@ def main() -> None:
     hud_payload = hud_data.get("hud") if isinstance(hud_data.get("hud"), dict) else {}
     if not hud_payload:
         raise RuntimeError("system.init hud missing data.hud")
+    if not isinstance(hud_data.get("scene_diagnostics"), dict):
+        raise RuntimeError("system.init hud missing data.scene_diagnostics")
     for key in REQUIRED_TRACE_KEYS:
         if str(hud_trace.get(key) or "") != str(hud_payload.get(key) or ""):
             raise RuntimeError(f"system.init hud/meta trace mismatch: {key}")

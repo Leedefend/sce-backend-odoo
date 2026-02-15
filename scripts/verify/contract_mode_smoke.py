@@ -120,6 +120,9 @@ def main() -> None:
     if (user_data.get("contract_mode") or "") != "user":
         raise RuntimeError(f"system.init user mode mismatch: data={user_data.get('contract_mode')}")
     _require_scene_trace(user_meta, label="system.init user")
+    for key in ("scene_diagnostics", "diagnostic", "scene_channel_selector", "scene_channel_source_ref"):
+        if key in user_data:
+            raise RuntimeError(f"system.init user mode should not expose {key}")
 
     user_scenes = user_data.get("scenes") if isinstance(user_data.get("scenes"), list) else []
     user_caps = user_data.get("capabilities") if isinstance(user_data.get("capabilities"), list) else []
@@ -154,6 +157,8 @@ def main() -> None:
     governance = hud_trace.get("governance") if isinstance(hud_trace.get("governance"), dict) else {}
     if not governance:
         raise RuntimeError("system.init hud tracing missing governance summary")
+    if not isinstance(hud_data.get("scene_diagnostics"), dict):
+        raise RuntimeError("system.init hud must include scene_diagnostics")
 
     status, user_contract = _post_intent(
         intent_url,
