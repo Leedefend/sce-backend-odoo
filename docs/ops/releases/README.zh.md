@@ -16,3 +16,7 @@ status: active
 - Release Checklist 模板：`docs/ops/releases/templates/release_checklist_TEMPLATE.md`
 - Release Notes 模板（zh）：`docs/ops/releases/templates/release_notes_TEMPLATE.zh.md`
 - Release Checklist 模板（zh）：`docs/ops/releases/templates/release_checklist_TEMPLATE.zh.md`
+
+## 当前评审基线
+- 菜单场景覆盖证据：
+  - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
