@@ -70,7 +70,7 @@
       </label>
       <div class="state-filters">
         <button :class="{ active: stateFilter === 'ALL' }" @click="stateFilter = 'ALL'">
-          全部 {{ entries.length }}
+          全部 {{ allCount }}
         </button>
         <button :class="{ active: stateFilter === 'READY' }" @click="stateFilter = 'READY'">
           可进入 {{ stateCounts.READY }}
@@ -451,6 +451,14 @@ const searchedEntries = computed<CapabilityEntry[]>(() => {
   return entries.value.filter((entry) => matchesSearch(entry, query));
 });
 
+const tabBaseEntries = computed<CapabilityEntry[]>(() => {
+  if (lockReasonFilter.value === 'ALL') return searchedEntries.value;
+  return searchedEntries.value.filter((entry) => {
+    if (entry.state !== 'LOCKED') return false;
+    return String(entry.reasonCode || '').toUpperCase() === lockReasonFilter.value;
+  });
+});
+
 const filteredEntries = computed<CapabilityEntry[]>(() => {
   return searchedEntries.value.filter((entry) => {
     if (readyOnly.value && entry.state !== 'READY') return false;
@@ -466,7 +474,7 @@ const filteredEntries = computed<CapabilityEntry[]>(() => {
 
 const stateCounts = computed(() => {
   const counts = { READY: 0, LOCKED: 0, PREVIEW: 0 };
-  for (const entry of searchedEntries.value) {
+  for (const entry of tabBaseEntries.value) {
     counts[entry.state] += 1;
   }
   if (readyOnly.value) {
@@ -474,6 +482,8 @@ const stateCounts = computed(() => {
   }
   return counts;
 });
+
+const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
 
 const groupedEntries = computed(() => {
   const filteredByRecent = new Map(filteredEntries.value.map((entry) => [entry.recentKey, entry]));
