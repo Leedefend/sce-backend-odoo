@@ -515,9 +515,9 @@ verify.portal.guard_groups: guard.prod.forbid check-compose-project check-compos
 verify.portal.menu_no_action: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) node scripts/verify/fe_menu_no_action_smoke.js
 verify.menu.scene_resolve: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) node scripts/verify/fe_menu_scene_resolve_smoke.js
+	@$(RUN_ENV) $(if $(MENU_SCENE_ENFORCE_PREFIXES),MENU_SCENE_ENFORCE_PREFIXES="$(MENU_SCENE_ENFORCE_PREFIXES)") $(if $(MENU_SCENE_EXEMPTIONS),MENU_SCENE_EXEMPTIONS="$(MENU_SCENE_EXEMPTIONS)") node scripts/verify/fe_menu_scene_resolve_smoke.js
 verify.menu.scene_resolve.container: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "API_BASE=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node /mnt/scripts/verify/fe_menu_scene_resolve_smoke.js"
+	@$(RUN_ENV) $(COMPOSE_BASE) exec -T $(ODOO_SERVICE) sh -lc "API_BASE=http://localhost:8069 ARTIFACTS_DIR=/mnt/artifacts DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) $(if $(MENU_SCENE_ENFORCE_PREFIXES),MENU_SCENE_ENFORCE_PREFIXES='$(MENU_SCENE_ENFORCE_PREFIXES)') $(if $(MENU_SCENE_EXEMPTIONS),MENU_SCENE_EXEMPTIONS='$(MENU_SCENE_EXEMPTIONS)') node /mnt/scripts/verify/fe_menu_scene_resolve_smoke.js"
 verify.menu.scene_resolve.summary: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SUMMARY_PATH=artifacts/codex/summary.md ARTIFACTS_DIR=artifacts node scripts/verify/menu_scene_resolve_summary.js
 verify.phase_9_8.gate_summary: guard.prod.forbid check-compose-project check-compose-env

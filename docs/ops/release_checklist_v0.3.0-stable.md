@@ -14,6 +14,14 @@ since: v0.3.0-stable
 - `ENV=prod make verify.prod.guard` passes (guard-only)
 - JSON summary emitted by `scripts/verify/prod_guard_smoke.sh`
 - Release is approved iff JSON reports `rc=0`
+- Phase 9.8 menu/scene coverage summary is present in release evidence:
+  - `make verify.menu.scene_resolve.summary`
+  - required keys in `artifacts/codex/summary.md`:
+    - `menu_scene_resolve_effective_total`
+    - `menu_scene_resolve_coverage`
+    - `menu_scene_resolve_enforce_prefixes`
+  - default business enforcement scope:
+    - `MENU_SCENE_ENFORCE_PREFIXES=smart_construction_core.,smart_construction_demo.,smart_construction_portal.`
 
 ## Production Safety Checks
 - `ENV=prod` forbids: `make db.reset`, `make demo.*`, `make ci.*`, `make gate.*`
