@@ -260,6 +260,7 @@ const recentEntryKeys = ref<string[]>([]);
 const lastFailedEntry = ref<CapabilityEntry | null>(null);
 const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
 const lastTrackedSearch = ref('');
+const lastTrackedFilterSignature = ref('');
 const showEmptyHelp = ref(false);
 const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
 const isHudEnabled = computed(() => {
@@ -931,6 +932,17 @@ watch(readyOnly, (next) => {
   if (!next) return;
   stateFilter.value = 'READY';
   lockReasonFilter.value = 'ALL';
+});
+
+watch([readyOnly, stateFilter, lockReasonFilter], () => {
+  const signature = `${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${lockReasonFilter.value}`;
+  if (signature === lastTrackedFilterSignature.value) return;
+  lastTrackedFilterSignature.value = signature;
+  void trackUsageEvent('workspace.filter_change', {
+    ready_only: readyOnly.value,
+    state_filter: stateFilter.value,
+    lock_reason_filter: lockReasonFilter.value,
+  }).catch(() => {});
 });
 
 watch(searchText, (next) => {
