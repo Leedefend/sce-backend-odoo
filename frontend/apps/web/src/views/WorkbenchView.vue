@@ -171,6 +171,16 @@ const diagActionType = computed(() => String(route.query.diag_action_type || '')
 const diagContractType = computed(() => String(route.query.diag_contract_type || ''));
 const diagContractUrl = computed(() => String(route.query.diag_contract_url || ''));
 const diagMetaUrl = computed(() => String(route.query.diag_meta_url || ''));
+const workspaceContextQuery = computed(() => {
+  const preset = String(route.query.preset || '').trim();
+  const ctxSource = String(route.query.ctx_source || '').trim();
+  const search = String(route.query.search || '').trim();
+  const context: Record<string, string> = {};
+  if (preset) context.preset = preset;
+  if (ctxSource) context.ctx_source = ctxSource;
+  if (search) context.search = search;
+  return context;
+});
 const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
   return (
@@ -235,12 +245,12 @@ function refresh() {
 }
 
 async function goToProjects() {
-  await router.push('/s/projects.list');
+  await router.push({ path: '/s/projects.list', query: workspaceContextQuery.value });
 }
 
 async function openFirstReachableMenu() {
   if (firstReachableMenuId.value) {
-    await router.push(`/m/${firstReachableMenuId.value}`);
+    await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
     return;
   }
   await goToProjects();
@@ -249,7 +259,7 @@ async function openFirstReachableMenu() {
 async function handleTileClick(tile: EnrichedWorkbenchTile) {
   const explicitScene = resolveTileScene(tile);
   if (explicitScene) {
-    await router.push({ path: `/s/${explicitScene}` });
+    await router.push({ path: `/s/${explicitScene}`, query: workspaceContextQuery.value });
     return;
   }
   if (tile.policy?.state === 'disabled_capability') {
@@ -264,21 +274,25 @@ async function handleTileClick(tile: EnrichedWorkbenchTile) {
     return;
   }
   if (tile.route) {
-    await router.push(String(tile.route));
+    await router.push({ path: String(tile.route), query: workspaceContextQuery.value });
     return;
   }
   const payload = tile.payload || {};
   if (payload.action_id) {
     await router.push({
       path: `/a/${payload.action_id}`,
-      query: { menu_id: payload.menu_id || undefined },
+      query: { menu_id: payload.menu_id || undefined, ...workspaceContextQuery.value },
     });
     return;
   }
   if (payload.model && payload.record_id) {
     await router.push({
       path: `/r/${payload.model}/${payload.record_id}`,
-      query: { menu_id: payload.menu_id || undefined, action_id: payload.action_id || undefined },
+      query: {
+        menu_id: payload.menu_id || undefined,
+        action_id: payload.action_id || undefined,
+        ...workspaceContextQuery.value,
+      },
     });
   }
 }

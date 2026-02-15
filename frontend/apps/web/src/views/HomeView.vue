@@ -6,7 +6,7 @@
         <p class="lead">选择你要完成的工作，直接进入场景。</p>
         <p class="role-line">
           当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingLabel }}
-          <button class="inline-link" @click="openRoleLanding">进入角色首页</button>
+          <button class="inline-link" @click="openRoleLanding">进入工作台</button>
         </p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
@@ -33,9 +33,15 @@
       </header>
       <div class="today-actions-grid">
         <article v-for="item in todaySuggestions" :key="item.id" class="today-card">
-          <p class="today-title">{{ item.title }}</p>
+          <p class="today-title">
+            <span>{{ item.title }}</span>
+            <span v-if="item.status" class="today-status" :class="`today-status-${item.status}`">
+              {{ item.status === 'urgent' ? '紧急' : '普通' }}
+            </span>
+          </p>
           <p class="today-desc">{{ item.description }}</p>
-          <button class="today-btn" @click="openSuggestion(item.sceneKey)">立即进入</button>
+          <p v-if="typeof item.count === 'number'" class="today-count">待处理 {{ item.count }}</p>
+          <button class="today-btn" @click="openSuggestion(item.sceneKey, item.contextQuery)">立即进入</button>
         </article>
       </div>
     </section>
@@ -69,11 +75,19 @@
         <button :class="{ active: stateFilter === 'READY' }" @click="stateFilter = 'READY'">
           可进入 {{ stateCounts.READY }}
         </button>
-        <button :class="{ active: stateFilter === 'LOCKED' }" @click="stateFilter = 'LOCKED'">
+        <button
+          :class="{ active: stateFilter === 'LOCKED' }"
+          :disabled="readyOnly"
+          @click="stateFilter = 'LOCKED'"
+        >
           暂不可用 {{ stateCounts.LOCKED }}
         </button>
-        <button :class="{ active: stateFilter === 'PREVIEW' }" @click="stateFilter = 'PREVIEW'">
-          预览中 {{ stateCounts.PREVIEW }}
+        <button
+          :class="{ active: stateFilter === 'PREVIEW' }"
+          :disabled="readyOnly"
+          @click="stateFilter = 'PREVIEW'"
+        >
+          即将开放 {{ stateCounts.PREVIEW }}
         </button>
       </div>
       <div v-if="lockedReasonOptions.length" class="reason-filters">
@@ -96,7 +110,23 @@
     </section>
 
     <div v-if="!filteredEntries.length" class="empty">
-      <p>{{ entries.length ? '没有匹配的能力，请调整筛选条件。' : '当前账号暂无可用能力。' }}</p>
+      <template v-if="entries.length">
+        <p>未找到相关能力，请调整筛选条件。</p>
+        <button class="empty-btn" @click="clearSearchAndFilters">清空筛选</button>
+      </template>
+      <template v-else>
+        <p>当前账号暂无可用能力，可能因为角色权限未开通或工作台尚未配置。</p>
+        <div class="empty-actions">
+          <button v-if="hasRoleSwitch" class="empty-btn" @click="goToMyWork">切换角色</button>
+          <button class="empty-btn" @click="openRoleLanding">进入工作台</button>
+          <button class="empty-btn secondary" @click="toggleEmptyHelp">
+            {{ showEmptyHelp ? '收起帮助' : '查看帮助' }}
+          </button>
+        </div>
+        <p v-if="showEmptyHelp" class="empty-help">
+          建议先进入“我的工作”确认当前角色；若仍无能力，请联系管理员开通角色权限或配置能力目录。
+        </p>
+      </template>
     </div>
 
     <div v-else class="scene-groups">
@@ -120,10 +150,18 @@
           >
             <div class="entry-main">
               <p class="title-row">
-                <span class="title">{{ entry.title }}</span>
+                <span class="title">
+                  <template v-for="(part, index) in highlightParts(entry.title)" :key="`title-${entry.id}-${index}`">
+                    <span :class="{ hit: part.hit }">{{ part.text }}</span>
+                  </template>
+                </span>
                 <span v-if="entry.state !== 'READY'" class="state">{{ stateLabel(entry.state) }}</span>
               </p>
-              <p class="subtitle" :title="entry.reason || entry.subtitle">{{ entry.subtitle || '无说明' }}</p>
+              <p class="subtitle" :title="entry.reason || entry.subtitle">
+                <template v-for="(part, index) in highlightParts(entry.subtitle || '无说明')" :key="`sub-${entry.id}-${index}`">
+                  <span :class="{ hit: part.hit }">{{ part.text }}</span>
+                </template>
+              </p>
               <p v-if="isHudEnabled" class="hud-meta">scene_key={{ entry.sceneKey }} · capability_key={{ entry.key }}</p>
               <p v-if="entry.state === 'LOCKED'" class="lock-reason">
                 {{ entry.reason || lockReasonLabel(entry.reasonCode) }}
@@ -149,11 +187,14 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
+import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
+type SuggestionStatus = 'urgent' | 'normal';
 type CapabilityEntry = {
   id: string;
   key: string;
+  recentKey: string;
   title: string;
   subtitle: string;
   sceneKey: string;
@@ -164,6 +205,15 @@ type CapabilityEntry = {
   reason: string;
   reasonCode: string;
   tags: string[];
+};
+type SuggestionItem = {
+  id: string;
+  title: string;
+  description: string;
+  sceneKey: string;
+  contextQuery?: Record<string, string>;
+  count?: number;
+  status?: SuggestionStatus;
 };
 
 const router = useRouter();
@@ -176,9 +226,12 @@ const readyOnly = ref(false);
 const lockReasonFilter = ref('ALL');
 const collapsedSceneKeys = ref<string[]>([]);
 const collapsedSceneSet = computed(() => new Set(collapsedSceneKeys.value));
+const recentEntryKeys = ref<string[]>([]);
 const lastFailedEntry = ref<CapabilityEntry | null>(null);
 const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
 const lastTrackedSearch = ref('');
+const showEmptyHelp = ref(false);
+const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
 const isHudEnabled = computed(() => {
   const hud = String(route.query.hud || '').trim();
   return import.meta.env.DEV || hud === '1' || hud.toLowerCase() === 'true';
@@ -188,6 +241,7 @@ const isAdmin = computed(() => {
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
 });
 const roleSurface = computed(() => session.roleSurface);
+const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
   const normalized = raw.toLowerCase();
@@ -210,10 +264,13 @@ const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene
 const workspaceScopeKey = computed(() => {
   const roleKey = asText(roleSurface.value?.role_code) || 'default';
   const landingScene = asText(roleSurface.value?.landing_scene_key) || 'projects.list';
-  return `${roleKey}:${landingScene}`;
+  const userId = Number(session.user?.id || 0) || 0;
+  return `${userId}:${roleKey}:${landingScene}`;
 });
 const homeCollapseStorageKey = computed(() => `sc.home.scene_groups.collapsed.v2:${workspaceScopeKey.value}`);
 const homeFilterStorageKey = computed(() => `sc.home.filters.v2:${workspaceScopeKey.value}`);
+const homeViewModeStorageKey = computed(() => `workspace:view_mode:${workspaceScopeKey.value}`);
+const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKey.value}`);
 
 function asText(value: unknown) {
   const text = String(value ?? '').trim();
@@ -291,6 +348,7 @@ const entries = computed<CapabilityEntry[]>(() => {
       list.push({
         id: `${sceneKey}-${key}-${sceneIndex}-${tileIndex}`,
         key,
+        recentKey: `${sceneKey}::${key}`,
         title,
         subtitle: asText((tile as { subtitle?: string }).subtitle),
         sceneKey,
@@ -316,41 +374,81 @@ const entries = computed<CapabilityEntry[]>(() => {
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
 });
 
-const todaySuggestions = computed(() => {
+const todaySuggestions = computed<SuggestionItem[]>(() => {
   const all = entries.value;
   const firstReady = all.find((entry) => entry.state === 'READY');
-  const pickSceneByKeyword = (keywords: string[], fallback?: string) => {
+  const pickByKeyword = (keywords: string[], fallback?: string) => {
     const found = all.find((entry) => {
       const text = `${entry.title} ${entry.subtitle} ${entry.sceneKey}`.toLowerCase();
       return keywords.some((keyword) => text.includes(keyword));
     });
-    return found?.sceneKey || fallback || firstReady?.sceneKey || roleLandingScene.value;
+    if (found) {
+      return { sceneKey: found.sceneKey, ready: found.state === 'READY' };
+    }
+    return { sceneKey: fallback || firstReady?.sceneKey || roleLandingScene.value, ready: false };
   };
+  const project = pickByKeyword(['立项', 'project', 'intake']);
+  const contract = pickByKeyword(['合同', 'contract', 'approve', 'approval']);
+  const cost = pickByKeyword(['成本', 'cost', 'ledger']);
+  const projectCount = resolveSuggestionCount(project.sceneKey, ['owned', 'todo']);
+  const contractCount = resolveSuggestionCount(contract.sceneKey, ['todo']);
+  const costCount = resolveSuggestionCount(cost.sceneKey, ['following', 'mentions']);
   return [
     {
       id: 'project-intake',
       title: '项目立项',
       description: '新建项目并完成立项信息录入。',
-      sceneKey: pickSceneByKeyword(['立项', 'project', 'intake']),
+      sceneKey: project.sceneKey,
+      contextQuery: { preset: 'project_intake', ctx_source: 'workspace_today' },
+      count: project.ready ? projectCount : undefined,
+      status: 'normal',
     },
     {
       id: 'contract-approval',
       title: '合同审批',
       description: '查看待审批合同并快速处理。',
-      sceneKey: pickSceneByKeyword(['合同', 'contract', 'approve', 'approval']),
+      sceneKey: contract.sceneKey,
+      contextQuery: { preset: 'pending_approval', ctx_source: 'workspace_today' },
+      count: contract.ready ? contractCount : undefined,
+      status: 'urgent',
     },
     {
       id: 'cost-ledger',
       title: '成本台账',
       description: '跟踪成本执行并核对差异。',
-      sceneKey: pickSceneByKeyword(['成本', 'cost', 'ledger']),
+      sceneKey: cost.sceneKey,
+      contextQuery: { preset: 'cost_watchlist', ctx_source: 'workspace_today' },
+      count: cost.ready ? costCount : undefined,
+      status: 'normal',
     },
   ];
 });
 
-const filteredEntries = computed<CapabilityEntry[]>(() => {
+function resolveSuggestionCount(sceneKey: string, fallbackKeys: string[]) {
+  const byScene = myWorkSummary.value.find((item) => String(item.scene_key || '') === sceneKey);
+  if (byScene) return Number(byScene.count || 0);
+  for (const key of fallbackKeys) {
+    const matched = myWorkSummary.value.find((item) => String(item.key || '') === key);
+    if (matched) return Number(matched.count || 0);
+  }
+  return undefined;
+}
+
+function matchesSearch(entry: CapabilityEntry, query: string) {
+  if (!query) return true;
+  const fields = isHudEnabled.value
+    ? [entry.title, entry.subtitle, entry.key, ...entry.tags]
+    : [entry.title, entry.subtitle, ...entry.tags];
+  return fields.some((text) => String(text || '').toLowerCase().includes(query));
+}
+
+const searchedEntries = computed<CapabilityEntry[]>(() => {
   const query = searchText.value.trim().toLowerCase();
-  return entries.value.filter((entry) => {
+  return entries.value.filter((entry) => matchesSearch(entry, query));
+});
+
+const filteredEntries = computed<CapabilityEntry[]>(() => {
+  return searchedEntries.value.filter((entry) => {
     if (readyOnly.value && entry.state !== 'READY') return false;
     const matchesState = stateFilter.value === 'ALL' ? true : entry.state === stateFilter.value;
     if (!matchesState) return false;
@@ -358,25 +456,30 @@ const filteredEntries = computed<CapabilityEntry[]>(() => {
       if (entry.state !== 'LOCKED') return false;
       if (String(entry.reasonCode || '').toUpperCase() !== lockReasonFilter.value) return false;
     }
-    if (!query) return true;
-    const fields = isHudEnabled.value
-      ? [entry.title, entry.subtitle, entry.key, ...entry.tags]
-      : [entry.title, entry.subtitle, ...entry.tags];
-    return fields.some((text) => String(text || '').toLowerCase().includes(query));
+    return true;
   });
 });
 
 const stateCounts = computed(() => {
   const counts = { READY: 0, LOCKED: 0, PREVIEW: 0 };
-  for (const entry of entries.value) {
+  for (const entry of searchedEntries.value) {
     counts[entry.state] += 1;
+  }
+  if (readyOnly.value) {
+    return { READY: counts.READY, LOCKED: 0, PREVIEW: 0 };
   }
   return counts;
 });
 
 const groupedEntries = computed(() => {
+  const filteredByRecent = new Map(filteredEntries.value.map((entry) => [entry.recentKey, entry]));
+  const recentItems = recentEntryKeys.value
+    .map((key) => filteredByRecent.get(key))
+    .filter((entry): entry is CapabilityEntry => Boolean(entry));
+  const recentKeySet = new Set(recentItems.map((item) => item.recentKey));
   const map = new Map<string, { sceneKey: string; sceneTitle: string; items: CapabilityEntry[] }>();
   filteredEntries.value.forEach((entry) => {
+    if (recentKeySet.has(entry.recentKey)) return;
     const current = map.get(entry.sceneKey);
     if (current) {
       current.items.push(entry);
@@ -388,7 +491,9 @@ const groupedEntries = computed(() => {
       items: [entry],
     });
   });
-  return Array.from(map.values()).sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
+  const grouped = Array.from(map.values()).sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
+  if (!recentItems.length) return grouped;
+  return [{ sceneKey: '__recent__', sceneTitle: '最近使用', items: recentItems }, ...grouped];
 });
 
 const lockedReasonOptions = computed(() => {
@@ -448,11 +553,12 @@ async function openScene(entry: CapabilityEntry) {
   if (!canEnter(entry)) return;
   lastFailedEntry.value = null;
   enterError.value = null;
-  void trackUsageEvent('capability.enter.click', { capability_key: entry.key, scene_key: entry.sceneKey }).catch(() => {});
+  void trackUsageEvent('workspace.enter_click', { capability_key: entry.key, scene_key: entry.sceneKey }).catch(() => {});
   try {
     void trackCapabilityOpen(entry.key).catch(() => {});
     await router.push({ path: `/s/${entry.sceneKey}` });
-    void trackUsageEvent('capability.enter.result', {
+    pushRecentEntry(entry.recentKey);
+    void trackUsageEvent('workspace.enter_result', {
       capability_key: entry.key,
       scene_key: entry.sceneKey,
       result: 'ok',
@@ -467,11 +573,12 @@ async function openScene(entry: CapabilityEntry) {
       code: message.code,
       traceId: message.traceId,
     };
-    void trackUsageEvent('capability.enter.result', {
+    void trackUsageEvent('workspace.enter_result', {
       capability_key: entry.key,
       scene_key: entry.sceneKey,
       result: 'error',
       code: message.code || 'UNKNOWN',
+      trace_id: message.traceId || '',
     }).catch(() => {});
   }
 }
@@ -480,7 +587,74 @@ function openRoleLanding() {
   router.push(session.resolveLandingPath('/s/projects.list')).catch(() => {});
 }
 
-function openSuggestion(sceneKey: string) {
+function goToMyWork() {
+  router.push({ path: '/my-work' }).catch(() => {});
+}
+
+function toggleEmptyHelp() {
+  showEmptyHelp.value = !showEmptyHelp.value;
+}
+
+function clearSearchAndFilters() {
+  searchText.value = '';
+  readyOnly.value = false;
+  stateFilter.value = 'ALL';
+  lockReasonFilter.value = 'ALL';
+}
+
+function normalizeViewMode(raw: unknown) {
+  return raw === 'list' ? 'list' : 'card';
+}
+
+function pushRecentEntry(recentKey: string) {
+  if (!recentKey) return;
+  const deduped = [recentKey, ...recentEntryKeys.value.filter((item) => item !== recentKey)].slice(0, 5);
+  recentEntryKeys.value = deduped;
+}
+
+function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<string, string>) {
+  const safeSceneKey = asText(sceneKey);
+  if (!safeSceneKey) {
+    openRoleLanding();
+    return;
+  }
+  router.push({ path: `/s/${safeSceneKey}`, query: { ...(contextQuery || {}) } }).catch(() => {});
+}
+
+function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>) {
+  const preset = asText(contextQuery?.preset);
+  const ctxSource = asText(contextQuery?.ctx_source) || 'workspace_today';
+  if (preset === 'pending_approval') {
+    router
+      .push({
+        path: '/my-work',
+        query: { preset, ctx_source: ctxSource, section: 'todo', source: 'mail.activity', search: '审批' },
+      })
+      .catch(() => {});
+    return;
+  }
+  if (preset === 'project_intake') {
+    router
+      .push({
+        path: '/my-work',
+        query: { preset, ctx_source: ctxSource, section: 'owned', search: '立项' },
+      })
+      .catch(() => {});
+    return;
+  }
+  if (preset === 'cost_watchlist') {
+    router
+      .push({
+        path: '/my-work',
+        query: { preset, ctx_source: ctxSource, section: 'following', search: '成本' },
+      })
+      .catch(() => {});
+    return;
+  }
+  if (contextQuery && Object.keys(contextQuery).length) {
+    openSuggestionWithContext(sceneKey, contextQuery);
+    return;
+  }
   const safeSceneKey = asText(sceneKey);
   if (!safeSceneKey) {
     openRoleLanding();
@@ -525,6 +699,13 @@ onMounted(() => {
     role_key: asText(roleSurface.value?.role_code) || 'unknown',
     landing_scene_key: roleLandingScene.value,
   }).catch(() => {});
+  fetchMyWorkSummary(20, 8)
+    .then((result) => {
+      myWorkSummary.value = Array.isArray(result.summary) ? result.summary : [];
+    })
+    .catch(() => {
+      myWorkSummary.value = [];
+    });
   try {
     const raw = window.localStorage.getItem(homeCollapseStorageKey.value);
     if (raw) {
@@ -544,6 +725,25 @@ onMounted(() => {
       const state = String(parsed?.state_filter || '').toUpperCase();
       if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
         stateFilter.value = state;
+      }
+    }
+  } catch {
+    // Ignore broken local cache.
+  }
+  try {
+    const raw = window.localStorage.getItem(homeViewModeStorageKey.value);
+    if (raw) {
+      viewMode.value = normalizeViewMode(raw);
+    }
+  } catch {
+    // Ignore broken local cache.
+  }
+  try {
+    const raw = window.localStorage.getItem(homeRecentStorageKey.value);
+    if (raw) {
+      const parsed = JSON.parse(raw) as string[];
+      if (Array.isArray(parsed)) {
+        recentEntryKeys.value = parsed.filter((item) => typeof item === 'string' && item).slice(0, 5);
       }
     }
   } catch {
@@ -570,6 +770,28 @@ watch([readyOnly, stateFilter], () => {
   }
 });
 
+watch(viewMode, (next) => {
+  try {
+    window.localStorage.setItem(homeViewModeStorageKey.value, normalizeViewMode(next));
+  } catch {
+    // Ignore local storage errors.
+  }
+});
+
+watch(recentEntryKeys, () => {
+  try {
+    window.localStorage.setItem(homeRecentStorageKey.value, JSON.stringify(recentEntryKeys.value));
+  } catch {
+    // Ignore local storage errors.
+  }
+});
+
+watch(readyOnly, (next) => {
+  if (!next) return;
+  stateFilter.value = 'READY';
+  lockReasonFilter.value = 'ALL';
+});
+
 watch(searchText, (next) => {
   const query = String(next || '').trim();
   if (!query) {
@@ -578,8 +800,18 @@ watch(searchText, (next) => {
   }
   if (query === lastTrackedSearch.value) return;
   lastTrackedSearch.value = query;
-  void trackUsageEvent('capability.search', { query }).catch(() => {});
+  void trackUsageEvent('workspace.search', { query }).catch(() => {});
 });
+
+function highlightParts(raw: string) {
+  const text = String(raw || '');
+  const query = searchText.value.trim();
+  if (!query) return [{ text, hit: false }];
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'ig');
+  const parts = text.split(regex).filter((part) => part.length > 0);
+  return parts.map((part) => ({ text: part, hit: part.toLowerCase() === query.toLowerCase() }));
+}
 </script>
 
 <style scoped>
@@ -661,6 +893,39 @@ watch(searchText, (next) => {
   border: 1px dashed #cbd5e1;
   border-radius: 12px;
   background: #f8fafc;
+  display: grid;
+  gap: 10px;
+}
+
+.empty p {
+  margin: 0;
+  color: #334155;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.empty-btn {
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.empty-btn.secondary {
+  border-color: #cbd5e1;
+  background: #fff;
+  color: #475569;
+}
+
+.empty-help {
+  font-size: 12px;
+  color: #475569;
 }
 
 .filters {
@@ -750,6 +1015,26 @@ watch(searchText, (next) => {
   font-size: 14px;
   font-weight: 700;
   color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.today-status {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.today-status-urgent {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.today-status-normal {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .today-desc {
@@ -757,6 +1042,13 @@ watch(searchText, (next) => {
   font-size: 12px;
   color: #475569;
   min-height: 34px;
+}
+
+.today-count {
+  margin: 0;
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .today-btn {
@@ -804,6 +1096,11 @@ watch(searchText, (next) => {
   border-color: #1d4ed8;
   background: #eff6ff;
   color: #1e40af;
+}
+
+.state-filters button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .reason-filters {
@@ -926,6 +1223,10 @@ watch(searchText, (next) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.hit {
+  background: #fef08a;
 }
 
 .hud-meta {
