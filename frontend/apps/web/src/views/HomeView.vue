@@ -261,6 +261,7 @@ const lastFailedEntry = ref<CapabilityEntry | null>(null);
 const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
 const lastTrackedSearch = ref('');
 const lastTrackedFilterSignature = ref('');
+const lastTrackedViewMode = ref('');
 const showEmptyHelp = ref(false);
 const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
 const isHudEnabled = computed(() => {
@@ -918,6 +919,9 @@ watch(viewMode, (next) => {
   } catch {
     // Ignore local storage errors.
   }
+  if (next === lastTrackedViewMode.value) return;
+  lastTrackedViewMode.value = next;
+  void trackUsageEvent('workspace.view_mode_change', { view_mode: next }).catch(() => {});
 });
 
 watch(recentEntryKeys, () => {
