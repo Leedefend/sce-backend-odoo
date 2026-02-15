@@ -411,7 +411,7 @@ function applyBatchFailureArtifacts(result: {
   const preview = Array.isArray(result.failed_preview) ? result.failed_preview : [];
   const lines: BatchDetailLine[] = preview.map((item) => {
     const hint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
-    const retryTag = item.retryable === true ? 'retryable' : item.retryable === false ? 'non-retryable' : '';
+    const retryTag = item.retryable === true ? '可重试' : item.retryable === false ? '不可重试' : '';
     const text = [`#${item.id} ${item.reason_code}: ${item.message}`, retryTag, hint].filter(Boolean).join(' | ');
     const action = describeSuggestedAction(item.suggested_action, {
       hasRetryHandler: true,
