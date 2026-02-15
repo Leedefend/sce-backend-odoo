@@ -44,7 +44,9 @@
           </p>
           <p class="today-desc">{{ item.description }}</p>
           <p v-if="typeof item.count === 'number'" class="today-count">待处理 {{ item.count }}</p>
-          <button class="today-btn" @click="openSuggestion(item.sceneKey, item.contextQuery)">立即进入</button>
+          <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item.sceneKey, item.contextQuery)">
+            {{ item.ready === false ? '即将开放' : '立即进入' }}
+          </button>
         </article>
       </div>
     </section>
@@ -246,6 +248,7 @@ type SuggestionItem = {
   contextQuery?: Record<string, string>;
   count?: number;
   status?: SuggestionStatus;
+  ready?: boolean;
 };
 type SuggestionRoute = {
   path: string;
@@ -482,6 +485,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       },
       count: project.ready ? projectCount : undefined,
       status: 'normal',
+      ready: project.ready,
     },
     {
       id: 'contract-approval',
@@ -495,6 +499,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       },
       count: contract.ready ? contractCount : undefined,
       status: 'urgent',
+      ready: contract.ready,
     },
     {
       id: 'cost-ledger',
@@ -508,6 +513,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
       },
       count: cost.ready ? costCount : undefined,
       status: 'normal',
+      ready: cost.ready,
     },
   ];
 });
@@ -1317,6 +1323,12 @@ function highlightParts(raw: string) {
   color: #fff;
   padding: 6px 10px;
   cursor: pointer;
+}
+
+.today-btn:disabled {
+  background: #cbd5e1;
+  color: #475569;
+  cursor: not-allowed;
 }
 
 .search-input {
