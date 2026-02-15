@@ -107,18 +107,38 @@
           {{ lockReasonLabel(item.reasonCode) }} {{ item.count }}
         </button>
       </div>
+      <div v-if="activeFilterChips.length" class="active-filters">
+        <button
+          v-for="chip in activeFilterChips"
+          :key="chip.key"
+          class="filter-chip"
+          @click="clearFilterChip(chip.key)"
+        >
+          {{ chip.label }} ×
+        </button>
+      </div>
       <div v-if="groupedEntries.length" class="group-actions">
         <button @click="expandAllSceneGroups">展开全部分组</button>
         <button @click="collapseAllSceneGroups">折叠全部分组</button>
+        <button v-if="hasRecentGroup" @click="clearRecentEntries">清空最近使用</button>
       </div>
     </section>
 
     <div v-if="!filteredEntries.length" class="empty">
       <template v-if="entries.length">
         <p>
-          {{ searchKeyword ? `未找到与“${searchKeyword}”相关的能力，请调整筛选条件。` : '未找到相关能力，请调整筛选条件。' }}
+          {{
+            readyOnlyNoResult
+              ? '当前启用了“仅显示可进入能力”，暂时没有可进入能力。'
+              : searchKeyword
+                ? `未找到与“${searchKeyword}”相关的能力，请调整筛选条件。`
+                : '未找到相关能力，请调整筛选条件。'
+          }}
         </p>
-        <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
+        <div class="empty-actions">
+          <button v-if="readyOnlyNoResult" class="empty-btn" @click="showAllCapabilities">显示全部能力</button>
+          <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
+        </div>
       </template>
       <template v-else>
         <p>当前账号暂无可用能力，可能因为角色权限未开通或工作台尚未配置。</p>
@@ -225,6 +245,7 @@ type SuggestionRoute = {
   path: string;
   query: Record<string, string>;
 };
+type FilterChip = { key: string; label: string };
 
 const router = useRouter();
 const route = useRoute();
@@ -240,6 +261,8 @@ const recentEntryKeys = ref<string[]>([]);
 const lastFailedEntry = ref<CapabilityEntry | null>(null);
 const enterError = ref<{ message: string; hint: string; code: string; traceId: string } | null>(null);
 const lastTrackedSearch = ref('');
+const lastTrackedFilterSignature = ref('');
+const lastTrackedViewMode = ref('');
 const showEmptyHelp = ref(false);
 const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
 const isHudEnabled = computed(() => {
@@ -538,6 +561,20 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
+const readyOnlyNoResult = computed(
+  () => readyOnly.value && filteredEntries.value.length === 0 && stateCounts.value.READY === 0,
+);
+const activeFilterChips = computed<FilterChip[]>(() => {
+  const chips: FilterChip[] = [];
+  const keyword = searchText.value.trim();
+  if (keyword) chips.push({ key: 'search', label: `搜索：${keyword}` });
+  if (readyOnly.value) chips.push({ key: 'ready-only', label: '仅显示可进入' });
+  if (stateFilter.value !== 'ALL') chips.push({ key: 'state', label: `状态：${stateLabel(stateFilter.value)}` });
+  if (lockReasonFilter.value !== 'ALL') {
+    chips.push({ key: 'reason', label: `锁定原因：${lockReasonLabel(lockReasonFilter.value)}` });
+  }
+  return chips;
+});
 
 const groupedEntries = computed(() => {
   const filteredByRecent = new Map(filteredEntries.value.map((entry) => [entry.recentKey, entry]));
@@ -563,6 +600,7 @@ const groupedEntries = computed(() => {
   if (!recentItems.length) return grouped;
   return [{ sceneKey: '__recent__', sceneTitle: '最近使用', items: recentItems }, ...grouped];
 });
+const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group.sceneKey === '__recent__'));
 
 const lockedReasonOptions = computed(() => {
   const map = new Map<string, number>();
@@ -578,17 +616,30 @@ const lockedReasonOptions = computed(() => {
 
 function toggleSceneGroup(sceneKey: string) {
   const next = new Set(collapsedSceneKeys.value);
-  if (next.has(sceneKey)) next.delete(sceneKey);
+  const expanded = next.has(sceneKey);
+  if (expanded) next.delete(sceneKey);
   else next.add(sceneKey);
   collapsedSceneKeys.value = Array.from(next);
+  void trackUsageEvent('workspace.group_toggle', {
+    scene_key: sceneKey,
+    action: expanded ? 'expand' : 'collapse',
+  }).catch(() => {});
 }
 
 function expandAllSceneGroups() {
   collapsedSceneKeys.value = [];
+  void trackUsageEvent('workspace.group_toggle', {
+    scene_key: '*',
+    action: 'expand_all',
+  }).catch(() => {});
 }
 
 function collapseAllSceneGroups() {
   collapsedSceneKeys.value = groupedEntries.value.map((group) => group.sceneKey);
+  void trackUsageEvent('workspace.group_toggle', {
+    scene_key: '*',
+    action: 'collapse_all',
+  }).catch(() => {});
 }
 
 function lockReasonLabel(reasonCode: string) {
@@ -678,6 +729,18 @@ function clearSearchAndFilters() {
   lockReasonFilter.value = 'ALL';
 }
 
+function showAllCapabilities() {
+  readyOnly.value = false;
+  stateFilter.value = 'ALL';
+}
+
+function clearFilterChip(key: string) {
+  if (key === 'search') searchText.value = '';
+  if (key === 'ready-only') readyOnly.value = false;
+  if (key === 'state') stateFilter.value = 'ALL';
+  if (key === 'reason') lockReasonFilter.value = 'ALL';
+}
+
 function normalizeViewMode(raw: unknown) {
   return raw === 'list' ? 'list' : 'card';
 }
@@ -686,6 +749,12 @@ function pushRecentEntry(recentKey: string) {
   if (!recentKey) return;
   const deduped = [recentKey, ...recentEntryKeys.value.filter((item) => item !== recentKey)].slice(0, 5);
   recentEntryKeys.value = deduped;
+}
+
+function clearRecentEntries() {
+  if (!recentEntryKeys.value.length) return;
+  recentEntryKeys.value = [];
+  void trackUsageEvent('workspace.recent.clear', { scope: workspaceScopeKey.value }).catch(() => {});
 }
 
 function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<string, string>) {
@@ -701,6 +770,12 @@ function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>)
   const preset = asText(contextQuery?.preset);
   const ctxSource = asText(contextQuery?.ctx_source) || 'workspace_today';
   const entryContext = asText(contextQuery?.entry_context);
+  void trackUsageEvent('workspace.today_click', {
+    scene_key: asText(sceneKey) || '',
+    preset: preset || '',
+    ctx_source: ctxSource,
+    has_entry_context: Boolean(entryContext),
+  }).catch(() => {});
   const withEntryContext = (query: Record<string, string>) =>
     entryContext ? { ...query, entry_context: entryContext } : query;
   const presetRouteMap: Record<string, (source: string) => SuggestionRoute> = {
@@ -871,6 +946,9 @@ watch(viewMode, (next) => {
   } catch {
     // Ignore local storage errors.
   }
+  if (next === lastTrackedViewMode.value) return;
+  lastTrackedViewMode.value = next;
+  void trackUsageEvent('workspace.view_mode_change', { view_mode: next }).catch(() => {});
 });
 
 watch(recentEntryKeys, () => {
@@ -885,6 +963,17 @@ watch(readyOnly, (next) => {
   if (!next) return;
   stateFilter.value = 'READY';
   lockReasonFilter.value = 'ALL';
+});
+
+watch([readyOnly, stateFilter, lockReasonFilter], () => {
+  const signature = `${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${lockReasonFilter.value}`;
+  if (signature === lastTrackedFilterSignature.value) return;
+  lastTrackedFilterSignature.value = signature;
+  void trackUsageEvent('workspace.filter_change', {
+    ready_only: readyOnly.value,
+    state_filter: stateFilter.value,
+    lock_reason_filter: lockReasonFilter.value,
+  }).catch(() => {});
 });
 
 watch(searchText, (next) => {
@@ -1223,6 +1312,22 @@ function highlightParts(raw: string) {
   border-color: #b91c1c;
   color: #b91c1c;
   background: #fff1f2;
+}
+
+.active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #1e40af;
+  background: #eff6ff;
+  cursor: pointer;
 }
 
 .group-actions {
