@@ -108,13 +108,14 @@
         </button>
       </div>
       <div v-if="activeFilterChips.length" class="active-filters">
-        <span
+        <button
           v-for="chip in activeFilterChips"
           :key="chip.key"
           class="filter-chip"
+          @click="clearFilterChip(chip.key)"
         >
-          {{ chip.label }}
-        </span>
+          {{ chip.label }} ×
+        </button>
       </div>
       <div v-if="groupedEntries.length" class="group-actions">
         <button @click="expandAllSceneGroups">展开全部分组</button>
@@ -699,6 +700,13 @@ function clearSearchAndFilters() {
   lockReasonFilter.value = 'ALL';
 }
 
+function clearFilterChip(key: string) {
+  if (key === 'search') searchText.value = '';
+  if (key === 'ready-only') readyOnly.value = false;
+  if (key === 'state') stateFilter.value = 'ALL';
+  if (key === 'reason') lockReasonFilter.value = 'ALL';
+}
+
 function normalizeViewMode(raw: unknown) {
   return raw === 'list' ? 'list' : 'card';
 }
@@ -1259,6 +1267,7 @@ function highlightParts(raw: string) {
   font-size: 12px;
   color: #1e40af;
   background: #eff6ff;
+  cursor: pointer;
 }
 
 .group-actions {
