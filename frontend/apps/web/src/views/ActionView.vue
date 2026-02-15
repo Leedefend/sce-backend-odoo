@@ -76,6 +76,7 @@
 import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
+import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
 import { config } from '../config';
@@ -149,6 +150,7 @@ const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
 const appliedPresetLabel = ref('');
 const routeContextSource = ref('');
+const lastTrackedPreset = ref('');
 const { error, clearError, setError } = useStatus();
 type ContractColumnSchema = { name?: string };
 type ContractViewBlock = {
@@ -278,6 +280,13 @@ function applyRoutePreset() {
       setIfDiff(searchTerm, routeSearch);
     }
   }
+  if (preset && preset !== lastTrackedPreset.value) {
+    lastTrackedPreset.value = preset;
+    void trackUsageEvent('workspace.preset.apply', { preset, view: 'action' }).catch(() => {});
+  }
+  if (!preset) {
+    lastTrackedPreset.value = '';
+  }
   return changed;
 }
 
@@ -285,6 +294,7 @@ function clearRoutePreset() {
   appliedPresetLabel.value = '';
   routeContextSource.value = '';
   const nextQuery = stripWorkspaceContext(route.query as Record<string, unknown>);
+  void trackUsageEvent('workspace.preset.clear', { view: 'action' }).catch(() => {});
   router.replace({ name: 'action', params: route.params, query: nextQuery }).catch(() => {});
 }
 
