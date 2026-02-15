@@ -4,6 +4,7 @@ import json
 import os
 from intent_smoke_utils import require_ok
 from python_http_smoke_utils import get_base_url, http_get_json, http_get_json_with_headers, http_post_json
+from scene_legacy_assertions import require_deprecation_headers, require_deprecation_payload
 
 
 def _cleanup_test_pack(import_url: str, auth_header: dict, payload: dict) -> None:
@@ -16,31 +17,6 @@ def _cleanup_test_pack(import_url: str, auth_header: dict, payload: dict) -> Non
         },
         headers=auth_header,
     )
-
-
-def _require_deprecation(payload: dict, *, label: str) -> None:
-    dep = payload.get("deprecation") if isinstance(payload.get("deprecation"), dict) else {}
-    if (dep.get("status") or "").strip().lower() != "deprecated":
-        raise RuntimeError(f"{label} missing deprecation.status=deprecated")
-    if not str(dep.get("replacement") or "").strip():
-        raise RuntimeError(f"{label} missing deprecation.replacement")
-    sunset_date = str(dep.get("sunset_date") or "").strip()
-    if sunset_date != "2026-04-30":
-        raise RuntimeError(f"{label} invalid deprecation.sunset_date: {sunset_date}")
-
-
-def _require_deprecation_headers(headers: dict, *, label: str) -> None:
-    dep_header = str(headers.get("Deprecation") or headers.get("deprecation") or "").strip().lower()
-    if dep_header != "true":
-        raise RuntimeError(f"{label} missing Deprecation header=true")
-    sunset_header = str(headers.get("Sunset") or headers.get("sunset") or "").strip()
-    if not sunset_header:
-        raise RuntimeError(f"{label} missing Sunset header")
-    if "GMT" not in sunset_header:
-        raise RuntimeError(f"{label} Sunset header must be GMT: {sunset_header}")
-    link_header = str(headers.get("Link") or headers.get("link") or "").strip()
-    if "successor-version" not in link_header or "/api/v1/intent" not in link_header:
-        raise RuntimeError(f"{label} missing Link successor-version header")
 
 
 def main():
@@ -130,8 +106,8 @@ def main():
         status, scenes_resp, scenes_headers = http_get_json_with_headers(scenes_url, headers=auth_header)
         require_ok(status, scenes_resp, "scenes.my")
         scenes_data = scenes_resp.get("data") or {}
-        _require_deprecation(scenes_data, label="scenes.my")
-        _require_deprecation_headers(scenes_headers, label="scenes.my")
+        require_deprecation_payload(scenes_data, label="scenes.my")
+        require_deprecation_headers(scenes_headers, label="scenes.my")
         scenes = scenes_data.get("scenes") or []
         if not scenes:
             status, seed_resp = http_post_json(import_url, seed_payload, headers=auth_header)
@@ -140,8 +116,8 @@ def main():
             status, scenes_resp, scenes_headers = http_get_json_with_headers(scenes_url_tests, headers=auth_header)
             require_ok(status, scenes_resp, "scenes.my (after seed)")
             scenes_data = scenes_resp.get("data") or {}
-            _require_deprecation(scenes_data, label="scenes.my (after seed)")
-            _require_deprecation_headers(scenes_headers, label="scenes.my (after seed)")
+            require_deprecation_payload(scenes_data, label="scenes.my (after seed)")
+            require_deprecation_headers(scenes_headers, label="scenes.my (after seed)")
             scenes = scenes_data.get("scenes") or []
             if not scenes:
                 raise RuntimeError("scenes.my returned empty list after seed")
@@ -163,8 +139,8 @@ def main():
         # scenes.my should reflect default_scene
         status, scenes_resp2, scenes2_headers = http_get_json_with_headers(scenes_url, headers=auth_header)
         require_ok(status, scenes_resp2, "scenes.my (after pref)")
-        _require_deprecation(scenes_resp2.get("data") or {}, label="scenes.my (after pref)")
-        _require_deprecation_headers(scenes2_headers, label="scenes.my (after pref)")
+        require_deprecation_payload(scenes_resp2.get("data") or {}, label="scenes.my (after pref)")
+        require_deprecation_headers(scenes2_headers, label="scenes.my (after pref)")
         if (scenes_resp2.get("data") or {}).get("default_scene") != default_scene:
             raise RuntimeError("scenes.my default_scene did not update")
 
