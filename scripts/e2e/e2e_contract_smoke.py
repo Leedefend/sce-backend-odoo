@@ -71,6 +71,16 @@ def _assert_error(resp: dict, code: str):
         raise RuntimeError("missing meta.trace_id in error response")
 
 
+def _assert_scene_trace(resp: dict, *, label: str):
+    meta = resp.get("meta") if isinstance(resp.get("meta"), dict) else {}
+    scene_trace = meta.get("scene_trace") if isinstance(meta.get("scene_trace"), dict) else {}
+    if not scene_trace:
+        raise RuntimeError(f"{label} missing meta.scene_trace")
+    for key in ("scene_source", "scene_contract_ref", "scene_channel", "channel_selector", "channel_source_ref"):
+        if not str(scene_trace.get(key) or "").strip():
+            raise RuntimeError(f"{label} missing meta.scene_trace.{key}")
+
+
 def _normalize_obj(obj):
     deny_keys = {
         "trace_id",
@@ -174,6 +184,7 @@ def main():
     status, init_resp = _http_post_json(intent_url, init_payload, headers=auth_header)
     if status >= 400 or not init_resp.get("ok"):
         raise RuntimeError(f"system.init failed: {init_resp}")
+    _assert_scene_trace(init_resp, label="system.init")
 
     # 3) ui.contract (nav op)
     contract_payload = {"intent": "ui.contract", "params": {"db": db_name, "op": "nav"}}
