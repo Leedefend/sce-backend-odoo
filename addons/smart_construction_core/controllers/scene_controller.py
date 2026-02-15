@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+
 from odoo import http
 from odoo.http import request
 
@@ -8,6 +10,10 @@ from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
 
 from .api_base import fail, fail_from_exception, ok
+
+_logger = logging.getLogger(__name__)
+_LEGACY_SCENES_SUNSET = "2026-04-30T00:00:00Z"
+_LEGACY_SCENES_SUCCESSOR = "/api/v1/intent"
 
 
 def _has_admin(user):
@@ -48,11 +54,25 @@ class SceneController(http.Controller):
                 "default_scene": default_scene_code,
                 "deprecation": {
                     "status": "deprecated",
-                    "replacement": "/api/v1/intent (intent=app.init)",
+                    "replacement": f"{_LEGACY_SCENES_SUCCESSOR} (intent=app.init)",
                     "sunset_date": "2026-04-30",
                 },
             }
-            return ok(payload, status=200)
+            _logger.warning(
+                "[legacy_endpoint] /api/scenes/my called by uid=%s include_tests=%s; successor=%s",
+                user.id,
+                include_tests,
+                _LEGACY_SCENES_SUCCESSOR,
+            )
+            return ok(
+                payload,
+                status=200,
+                headers=[
+                    ("Deprecation", "true"),
+                    ("Sunset", _LEGACY_SCENES_SUNSET),
+                    ("Link", f"<{_LEGACY_SCENES_SUCCESSOR}>; rel=\"successor-version\""),
+                ],
+            )
         except AccessDenied as exc:
             return fail("AUTH_REQUIRED", str(exc), http_status=401)
         except Exception as exc:
