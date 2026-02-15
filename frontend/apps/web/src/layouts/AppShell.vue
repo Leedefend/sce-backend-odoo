@@ -381,7 +381,7 @@ const breadcrumb = computed(() => {
   const menuPath = findMenuPath(menuTree.value, menuId);
   if (menuPath.length) {
     menuPath.forEach((node) => {
-      const label = node.title || node.name || node.label || 'Menu';
+      const label = node.title || node.name || node.label || '菜单';
       const id = node.menu_id ?? node.id;
       if (id) {
         crumbs.push({ label, to: `/m/${id}` });
@@ -447,7 +447,7 @@ const roleMenus = computed(() => {
       const id = Number(node.menu_id || node.id || 0);
       if (xmlid && allow.has(xmlid) && id && !seen.has(id)) {
         seen.add(id);
-        found.push({ id, label: node.title || node.name || node.label || `Menu ${id}` });
+        found.push({ id, label: node.title || node.name || node.label || `菜单 ${id}` });
       }
       if (node.children?.length) {
         walk(node.children);
