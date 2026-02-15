@@ -118,13 +118,13 @@
         <p>当前账号暂无可用能力，可能因为角色权限未开通或工作台尚未配置。</p>
         <div class="empty-actions">
           <button v-if="hasRoleSwitch" class="empty-btn" @click="goToMyWork">切换角色</button>
-          <button class="empty-btn" @click="openRoleLanding">进入工作台</button>
+          <button class="empty-btn" @click="goHome">返回首页</button>
           <button class="empty-btn secondary" @click="toggleEmptyHelp">
             {{ showEmptyHelp ? '收起帮助' : '查看帮助' }}
           </button>
         </div>
         <p v-if="showEmptyHelp" class="empty-help">
-          建议先进入“我的工作”确认当前角色；若仍无能力，请联系管理员开通角色权限或配置能力目录。
+          建议先点击“切换角色”确认当前角色；若仍无能力，请联系管理员开通角色权限或配置能力目录。
         </p>
       </template>
     </div>
@@ -603,6 +603,10 @@ function openRoleLanding() {
 
 function goToMyWork() {
   router.push({ path: '/my-work' }).catch(() => {});
+}
+
+function goHome() {
+  router.push({ path: '/' }).catch(() => {});
 }
 
 function toggleEmptyHelp() {
