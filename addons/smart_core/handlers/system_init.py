@@ -1654,7 +1654,30 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload
+        pre_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
+        pre_governance_capability_count = (
+            len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
+        )
         data = apply_contract_governance(data, contract_mode)
+        post_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
+        post_governance_capability_count = (
+            len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
+        )
+        scene_diagnostics["governance"] = {
+            "contract_mode": contract_mode,
+            "before": {
+                "scene_count": pre_governance_scene_count,
+                "capability_count": pre_governance_capability_count,
+            },
+            "after": {
+                "scene_count": post_governance_scene_count,
+                "capability_count": post_governance_capability_count,
+            },
+            "filtered": {
+                "scene_count": max(0, pre_governance_scene_count - post_governance_scene_count),
+                "capability_count": max(0, pre_governance_capability_count - post_governance_capability_count),
+            },
+        }
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
         scene_keys_latest = {
             (s.get("code") or s.get("key"))
@@ -1684,6 +1707,12 @@ class SystemInitHandler(BaseIntentHandler):
                 "latency_ms": elapsed_ms,
                 "contract_version": CONTRACT_VERSION,
                 "role_key": data.get("role_surface", {}).get("role_code"),
+                "scene_source": scene_diagnostics.get("loaded_from") or "unknown",
+                "scene_contract_ref": data.get("scene_contract_ref") or "unknown",
+                "scene_channel": data.get("scene_channel") or "stable",
+                "channel_selector": scene_diagnostics.get("channel_selector") or "default",
+                "channel_source_ref": scene_diagnostics.get("channel_source_ref") or "default",
+                "governance": scene_diagnostics.get("governance"),
             }
         if diag_enabled and diagnostic_info is not None and contract_mode == "hud":
             data["diagnostic"] = diagnostic_info

@@ -129,6 +129,13 @@ def main() -> None:
         raise RuntimeError(f"system.init hud mode mismatch: meta={hud_meta.get('contract_mode')}")
     if (hud_data.get("contract_mode") or "") != "hud":
         raise RuntimeError(f"system.init hud mode mismatch: data={hud_data.get('contract_mode')}")
+    hud_trace = hud_data.get("hud") if isinstance(hud_data.get("hud"), dict) else {}
+    for key in ("scene_source", "scene_contract_ref", "channel_selector", "channel_source_ref"):
+        if not str(hud_trace.get(key) or "").strip():
+            raise RuntimeError(f"system.init hud tracing missing key: {key}")
+    governance = hud_trace.get("governance") if isinstance(hud_trace.get("governance"), dict) else {}
+    if not governance:
+        raise RuntimeError("system.init hud tracing missing governance summary")
 
     status, user_contract = _post_intent(
         intent_url,
