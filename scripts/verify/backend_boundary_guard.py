@@ -24,6 +24,11 @@ FORBIDDEN_RUNTIME_IMPORT_RE = re.compile(
 FORBIDDEN_SYSTEM_INIT_SCENE_REGISTRY_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_construction_scene\.scene_registry\s+import)"
 )
+FORBIDDEN_CONTROLLER_IMPORT_MODULES = (
+    "odoo.addons.smart_core.utils.contract_governance",
+    "odoo.addons.smart_core.handlers.system_init",
+    "odoo.addons.smart_core.core.scene_provider",
+)
 
 
 def _extract_data_write_key(target: ast.expr) -> str | None:
@@ -71,6 +76,27 @@ def _iter_controller_files():
         yield path
 
 
+def _find_forbidden_import_modules(text: str) -> set[str]:
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return set()
+    hits: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            mod = str(node.module or "")
+            for forbidden in FORBIDDEN_CONTROLLER_IMPORT_MODULES:
+                if mod == forbidden or mod.startswith(f"{forbidden}."):
+                    hits.add(forbidden)
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                mod = str(alias.name or "")
+                for forbidden in FORBIDDEN_CONTROLLER_IMPORT_MODULES:
+                    if mod == forbidden or mod.startswith(f"{forbidden}."):
+                        hits.add(forbidden)
+    return hits
+
+
 def main() -> int:
     violations: list[str] = []
 
@@ -116,6 +142,11 @@ def main() -> int:
             violations.append(
                 f"{rel}: controllers in smart_construction_core must not import "
                 "smart_core runtime contract assemblers/governance"
+            )
+        forbidden_modules = sorted(_find_forbidden_import_modules(text))
+        for module in forbidden_modules:
+            violations.append(
+                f"{rel}: controllers in smart_construction_core must not import {module}"
             )
 
     if violations:
