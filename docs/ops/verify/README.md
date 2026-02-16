@@ -38,6 +38,10 @@
   - Verifies contract catalog exports are deterministic across repeated generations.
 - `make verify.contract.envelope`
   - Aggregates envelope consistency checks (`ok/data/meta`) across intent and contract API paths.
+- `make verify.contract.envelope.guard`
+  - Explicit runtime envelope guard for `login/system.init/ui.contract` intent responses (`ok/data/meta`).
+- `make verify.baseline.policy_integrity.guard`
+  - Verifies required governance policy baseline JSON files exist and are valid objects.
 - `make verify.backend.architecture.full`
   - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + snapshot determinism + governance coverage + HUD trace smokes).
 - `make verify.scene.catalog.runtime_alignment.guard`
