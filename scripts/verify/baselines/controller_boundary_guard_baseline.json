@@ -1,0 +1,14 @@
+{
+  "max_errors": 0,
+  "checks": {
+    "delegate": {
+      "max_violation_count": 0
+    },
+    "allowlist_routes": {
+      "max_violation_count": 0
+    },
+    "route_policy": {
+      "max_violation_count": 0
+    }
+  }
+}

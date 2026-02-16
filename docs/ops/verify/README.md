@@ -39,9 +39,24 @@
 - `make verify.contract.envelope`
   - Aggregates envelope consistency checks (`ok/data/meta`) across intent and contract API paths.
 - `make verify.backend.architecture.full`
-  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + snapshot determinism).
+  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + snapshot determinism + governance coverage + HUD trace smokes).
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
+- `make verify.controller.delegate.guard`
+  - AST guard: route methods in `smart_construction_core/controllers` must not directly return runtime envelope/runtime-shape dicts (except governance allowlist controllers).
+- `make verify.controller.allowlist.routes.guard`
+  - AST guard: allowlist controllers (`frontend_api.py` / `scene_template_controller.py` / `pack_controller.py`) may expose only explicit approved route set.
+- `make verify.controller.route.policy.guard`
+  - AST guard: allowlist controller routes must keep approved policy (`type/auth/methods/csrf`, plus `cors=*` for `frontend_api.py`).
+- `make verify.controller.boundary.guard`
+  - Aggregates controller boundary checks (`delegate` + `allowlist routes` + `route policy`) and emits a summary artifact report.
+  - Includes baseline guard: `scripts/verify/baselines/controller_boundary_guard_baseline.json`.
+  - Artifacts:
+    - `artifacts/controller_delegate_guard.json`
+    - `artifacts/controller_allowlist_routes_guard.json`
+    - `artifacts/controller_route_policy_guard.json`
+    - `artifacts/controller_boundary_guard_report.json`
+    - `artifacts/controller_boundary_guard_report.md`
 - Guard coverage matrix:
   - `docs/ops/verify/backend_architecture_guard_matrix.md`
 
