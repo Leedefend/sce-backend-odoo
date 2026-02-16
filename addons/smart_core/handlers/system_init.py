@@ -130,6 +130,7 @@ def _fingerprint(obj: dict) -> str:
 
 def _build_scene_trace_meta(data: dict, scene_diagnostics: dict | None, elapsed_ms: int) -> dict:
     diagnostics = scene_diagnostics if isinstance(scene_diagnostics, dict) else {}
+    governance = diagnostics.get("governance")
     return {
         "latency_ms": int(elapsed_ms),
         "scene_source": diagnostics.get("loaded_from") or "unknown",
@@ -137,7 +138,8 @@ def _build_scene_trace_meta(data: dict, scene_diagnostics: dict | None, elapsed_
         "scene_channel": data.get("scene_channel") or "stable",
         "channel_selector": diagnostics.get("channel_selector") or "default",
         "channel_source_ref": diagnostics.get("channel_source_ref") or "default",
-        "governance": diagnostics.get("governance"),
+        "governance": governance,
+        "governance_applied": governance,
     }
 
 
