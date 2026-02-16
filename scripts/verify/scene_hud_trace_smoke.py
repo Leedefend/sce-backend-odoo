@@ -73,14 +73,24 @@ def main() -> None:
     governance = hud.get("governance")
     if not isinstance(governance, dict):
         raise RuntimeError("system.init hud governance summary missing")
+    governance_applied = hud.get("governance_applied")
+    if not isinstance(governance_applied, dict):
+        raise RuntimeError("system.init hud governance_applied summary missing")
     meta_governance = meta_trace.get("governance")
     if not isinstance(meta_governance, dict):
         raise RuntimeError("system.init hud meta.scene_trace governance summary missing")
+    meta_governance_applied = meta_trace.get("governance_applied")
+    if not isinstance(meta_governance_applied, dict):
+        raise RuntimeError("system.init hud meta.scene_trace governance_applied summary missing")
     for key in ("before", "after", "filtered"):
         if not isinstance(governance.get(key), dict):
             raise RuntimeError(f"system.init hud governance missing section: {key}")
+        if not isinstance(governance_applied.get(key), dict):
+            raise RuntimeError(f"system.init hud governance_applied missing section: {key}")
         if not isinstance(meta_governance.get(key), dict):
             raise RuntimeError(f"system.init hud meta.scene_trace governance missing section: {key}")
+        if not isinstance(meta_governance_applied.get(key), dict):
+            raise RuntimeError(f"system.init hud meta.scene_trace governance_applied missing section: {key}")
     print("[scene_hud_trace_smoke] PASS")
 
 
