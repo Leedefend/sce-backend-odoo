@@ -36,6 +36,8 @@
   - Verifies scene/capability sequence determinism across repeated `system.init` calls.
 - `make verify.contract.catalog.determinism`
   - Verifies contract catalog exports are deterministic across repeated generations.
+- `make verify.contract.envelope`
+  - Aggregates envelope consistency checks (`ok/data/meta`) across intent and contract API paths.
 - Guard coverage matrix:
   - `docs/ops/verify/backend_architecture_guard_matrix.md`
 
