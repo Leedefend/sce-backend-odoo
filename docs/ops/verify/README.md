@@ -29,7 +29,7 @@
 - `make verify.capability.schema`
   - Verifies capability payload schema and scene/capability contract cohesion.
 - `make verify.scene.schema`
-  - Verifies scene contract schema shape.
+  - Verifies scene definition semantics + scene contract schema shape.
 
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
