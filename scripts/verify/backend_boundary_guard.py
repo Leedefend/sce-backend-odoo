@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import re
 import sys
@@ -13,7 +14,6 @@ CORE_CONTROLLERS = ROOT / "addons/smart_construction_core/controllers"
 SYSTEM_INIT_HANDLER = ROOT / "addons/smart_core/handlers/system_init.py"
 
 FORBIDDEN_HOOK_SHAPE_RE = re.compile(r'data\[\s*["\'](?:scenes|capabilities)["\']\s*\]')
-HOOK_DATA_ASSIGN_RE = re.compile(r'data\[\s*["\']([^"\']+)["\']\s*\]\s*=')
 FORBIDDEN_RUNTIME_ROUTE_RE = re.compile(r'@http\.route\(\s*["\'](?:/api/v1/intent|/api/contract/get)')
 FORBIDDEN_RUNTIME_IMPORT_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_core\.utils\.contract_governance\s+import)"
@@ -22,6 +22,44 @@ FORBIDDEN_RUNTIME_IMPORT_RE = re.compile(
 FORBIDDEN_SYSTEM_INIT_SCENE_REGISTRY_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_construction_scene\.scene_registry\s+import)"
 )
+
+
+def _extract_data_write_key(target: ast.expr) -> str | None:
+    if not isinstance(target, ast.Subscript):
+        return None
+    if not isinstance(target.value, ast.Name) or target.value.id != "data":
+        return None
+    slice_node = target.slice
+    if isinstance(slice_node, ast.Constant) and isinstance(slice_node.value, str):
+        return slice_node.value
+    return None
+
+
+def _hook_data_write_keys(text: str) -> set[str]:
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return set()
+    for node in tree.body:
+        if not isinstance(node, ast.FunctionDef) or node.name != "smart_core_extend_system_init":
+            continue
+        keys: set[str] = set()
+        for sub in ast.walk(node):
+            if isinstance(sub, ast.Assign):
+                for target in sub.targets:
+                    key = _extract_data_write_key(target)
+                    if key:
+                        keys.add(key)
+            elif isinstance(sub, ast.AnnAssign):
+                key = _extract_data_write_key(sub.target)
+                if key:
+                    keys.add(key)
+            elif isinstance(sub, ast.AugAssign):
+                key = _extract_data_write_key(sub.target)
+                if key:
+                    keys.add(key)
+        return keys
+    return set()
 
 
 def _iter_controller_files():
@@ -43,7 +81,7 @@ def main() -> int:
                 "addons/smart_construction_core/core_extension.py: "
                 "smart_core_extend_system_init must not write data['scenes']/data['capabilities']"
             )
-        assigned_keys = sorted({m.group(1) for m in HOOK_DATA_ASSIGN_RE.finditer(text)})
+        assigned_keys = sorted(_hook_data_write_keys(text))
         for key in assigned_keys:
             if key != "ext_facts":
                 violations.append(
