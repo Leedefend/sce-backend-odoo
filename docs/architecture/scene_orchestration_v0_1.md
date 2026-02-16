@@ -28,9 +28,10 @@ Frontend renders tiles and executes intents; backend governs visibility, orderin
 - **layout hints**: `visible`, `span`, `min_width`, `badge`.
 
 ## Orchestration Flow
-1. User logs in and calls `/api/scenes/my`.
+1. User logs in and calls `/api/v1/intent` with `intent=app.init`.
 2. Backend filters scenes and tiles by group permissions.
 3. Frontend renders tiles and executes the provided `intent + payload`.
+4. `/api/scenes/my` remains as a legacy compatibility endpoint during migration window.
 
 ## API
 

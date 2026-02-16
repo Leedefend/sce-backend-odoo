@@ -42,6 +42,8 @@ def main() -> int:
         violations.append(f"doc missing successor endpoint: {successor}")
     if successor and "intent=app.init" not in doc_text:
         violations.append("doc missing migration hint: intent=app.init")
+    if "/api/v1/intent" not in doc_text or "intent=app.init" not in doc_text:
+        violations.append("doc orchestration flow must use /api/v1/intent with intent=app.init")
     if sunset_date and sunset_date not in doc_text:
         violations.append(f"doc missing sunset date: {sunset_date}")
 
