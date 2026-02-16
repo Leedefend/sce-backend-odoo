@@ -27,8 +27,12 @@ def main() -> int:
         "max_errors": 0,
         "min_business_capability_check_count": 1,
         "min_scene_catalog_runtime_ratio": 0.0,
+        "min_prod_like_fixture_count": 0,
+        "max_contract_assembler_semantic_error_count": 0,
         "require_alignment_ok": True,
         "require_business_capability_ok": True,
+        "require_prod_like_ok": True,
+        "require_contract_assembler_semantic_ok": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -47,6 +51,9 @@ def main() -> int:
         "intent_surface",
         "scene_runtime_alignment",
         "business_capability_baseline",
+        "role_capability_prod_like",
+        "contract_assembler_semantic",
+        "runtime_surface_dashboard",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -72,6 +79,27 @@ def main() -> int:
     min_checks = int(policy.get("min_business_capability_check_count", 1) or 1)
     if int(capability_baseline.get("check_count") or 0) < min_checks:
         errors.append(f"business_capability_baseline.check_count must be >= {min_checks}")
+
+    prod_like = payload.get("role_capability_prod_like") if isinstance(payload.get("role_capability_prod_like"), dict) else {}
+    if not isinstance(prod_like.get("ok"), bool):
+        errors.append("role_capability_prod_like.ok must be bool")
+    if bool(policy.get("require_prod_like_ok", True)) and not bool(prod_like.get("ok")):
+        errors.append("role_capability_prod_like.ok must be true under baseline policy")
+    min_prod_fixtures = int(policy.get("min_prod_like_fixture_count", 0) or 0)
+    if int(prod_like.get("fixture_count") or 0) < min_prod_fixtures:
+        errors.append(f"role_capability_prod_like.fixture_count must be >= {min_prod_fixtures}")
+
+    semantic = payload.get("contract_assembler_semantic") if isinstance(payload.get("contract_assembler_semantic"), dict) else {}
+    if not isinstance(semantic.get("ok"), bool):
+        errors.append("contract_assembler_semantic.ok must be bool")
+    if bool(policy.get("require_contract_assembler_semantic_ok", True)) and not bool(semantic.get("ok")):
+        errors.append("contract_assembler_semantic.ok must be true under baseline policy")
+    max_semantic_errors = int(policy.get("max_contract_assembler_semantic_error_count", 0) or 0)
+    if int(semantic.get("error_count") or 0) > max_semantic_errors:
+        errors.append(
+            "contract_assembler_semantic.error_count must be <= "
+            f"{max_semantic_errors}"
+        )
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

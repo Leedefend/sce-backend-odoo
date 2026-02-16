@@ -101,7 +101,7 @@
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/business_capability_baseline_report.md`
 - `make verify.contract.evidence.guard`
-  - Exports and validates contract evidence bundle including runtime alignment and business capability baseline summaries.
+  - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, and runtime surface dashboard summaries.
   - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`
