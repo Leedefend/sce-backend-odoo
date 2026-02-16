@@ -42,6 +42,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.capability.schema`
 - `make verify.scene.schema`
 - `make verify.seed.demo.isolation`
+- `make verify.backend.architecture.full`
 
 ## Notes
 
