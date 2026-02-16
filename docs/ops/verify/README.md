@@ -50,6 +50,7 @@
   - AST guard: allowlist controller routes must keep approved policy (`type/auth/methods/csrf`, plus `cors=*` for `frontend_api.py`).
 - `make verify.controller.boundary.guard`
   - Aggregates controller boundary checks (`delegate` + `allowlist routes` + `route policy`) and emits a summary artifact report.
+  - Includes baseline guard: `scripts/verify/baselines/controller_boundary_guard_baseline.json`.
   - Artifacts:
     - `artifacts/controller_delegate_guard.json`
     - `artifacts/controller_allowlist_routes_guard.json`
