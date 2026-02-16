@@ -172,7 +172,7 @@ async function main() {
   };
 
   log('app.init');
-  const initParams = { scene: 'web', with_preload: false };
+  const initParams = { scene: 'web', with_preload: false, contract_mode: 'hud' };
   if (SCENE_CHANNEL) initParams.scene_channel = SCENE_CHANNEL;
   if (USE_PINNED) initParams.scene_use_pinned = '1';
   const initPayload = { intent: 'app.init', params: initParams };

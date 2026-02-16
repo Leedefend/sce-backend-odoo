@@ -118,7 +118,13 @@ async function main() {
   log('app.init');
   const initPayload = {
     intent: 'app.init',
-    params: { scene: 'web', with_preload: false, scene_channel: SCENE_CHANNEL, scene_use_pinned: SCENE_USE_PINNED },
+    params: {
+      scene: 'web',
+      with_preload: false,
+      contract_mode: 'hud',
+      scene_channel: SCENE_CHANNEL,
+      scene_use_pinned: SCENE_USE_PINNED,
+    },
   };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);

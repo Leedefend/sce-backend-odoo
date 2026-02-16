@@ -2,10 +2,19 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import sys
 import time
 from datetime import datetime
+from http.client import RemoteDisconnected
+from pathlib import Path
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+
+COMMON_DIR = Path(__file__).resolve().parents[1] / "common"
+if str(COMMON_DIR) not in sys.path:
+    sys.path.insert(0, str(COMMON_DIR))
+
+from scene_legacy_contract import require_deprecation_headers, require_deprecation_payload  # noqa: E402
 
 
 def _load_env_value_from_file(env_path: str, key: str) -> str | None:
@@ -38,42 +47,42 @@ def _get_base_url() -> str:
     return f"http://localhost:{port}"
 
 
+def _request_json(req: urlrequest.Request, *, retries: int = 3, backoff_sec: float = 0.5):
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            with urlrequest.urlopen(req, timeout=30) as resp:
+                body = resp.read().decode("utf-8") or "{}"
+                return resp.status, json.loads(body), dict(resp.headers or {})
+        except HTTPError as e:
+            body = e.read().decode("utf-8") if hasattr(e, "read") else ""
+            try:
+                payload = json.loads(body or "{}")
+            except Exception:
+                payload = {"raw": body}
+            return e.code, payload, dict(getattr(e, "headers", {}) or {})
+        except (RemoteDisconnected, ConnectionResetError, URLError) as e:
+            if attempt >= retries:
+                raise RuntimeError(f"HTTP request failed after retries: {e}") from e
+            time.sleep(backoff_sec * attempt)
+
+
 def _http_post_json(url: str, payload: dict, headers: dict | None = None) -> tuple[int, dict]:
     data = json.dumps(payload).encode("utf-8")
     req = urlrequest.Request(url, data=data, method="POST")
     req.add_header("Content-Type", "application/json")
     for k, v in (headers or {}).items():
         req.add_header(k, v)
-    try:
-        with urlrequest.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8") or "{}"
-            return resp.status, json.loads(body)
-    except HTTPError as e:
-        body = e.read().decode("utf-8") if hasattr(e, "read") else ""
-        try:
-            return e.code, json.loads(body or "{}")
-        except Exception:
-            return e.code, {"raw": body}
-    except URLError as e:
-        raise RuntimeError(f"HTTP request failed: {e}") from e
+    status, body, _ = _request_json(req)
+    return status, body
 
 
-def _http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
+def _http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict, dict]:
     req = urlrequest.Request(url, method="GET")
     for k, v in (headers or {}).items():
         req.add_header(k, v)
-    try:
-        with urlrequest.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8") or "{}"
-            return resp.status, json.loads(body)
-    except HTTPError as e:
-        body = e.read().decode("utf-8") if hasattr(e, "read") else ""
-        try:
-            return e.code, json.loads(body or "{}")
-        except Exception:
-            return e.code, {"raw": body}
-    except URLError as e:
-        raise RuntimeError(f"HTTP request failed: {e}") from e
+    return _request_json(req)
 
 
 def _normalize_obj(obj):
@@ -136,6 +145,18 @@ def _write_snapshot(out_dir: str, name: str, payload: dict):
     return path
 
 
+def _cleanup_test_pack(import_url: str, headers: dict, payload: dict) -> None:
+    _http_post_json(
+        import_url,
+        {
+            "cleanup_test": True,
+            "capabilities": payload.get("capabilities"),
+            "scenes": payload.get("scenes"),
+        },
+        headers=headers,
+    )
+
+
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or os.getenv("DB") or ""
@@ -148,6 +169,8 @@ def main():
 
     intent_url = f"{base_url}/api/v1/intent"
     scenes_url = f"{base_url}/api/scenes/my"
+    scenes_url_tests = f"{base_url}/api/scenes/my?include_tests=1"
+    import_url = f"{base_url}/api/scenes/import"
 
     # login
     login_payload = {
@@ -169,49 +192,87 @@ def main():
 
     auth_header = {"Authorization": f"Bearer {token}"}
 
-    # get scenes
-    status, scenes_resp = _http_get_json(scenes_url, headers=auth_header)
-    if status >= 400 or not scenes_resp.get("ok"):
-        raise RuntimeError(f"scenes.my failed: {scenes_resp}")
-    scenes_data = scenes_resp.get("data") or {}
-    scenes = scenes_data.get("scenes") or []
-    if not scenes:
-        raise RuntimeError("scenes.my returned empty scenes list")
-    default_code = scenes_data.get("default_scene")
-    scene = next((s for s in scenes if s.get("code") == default_code), scenes[0])
-    tiles = scene.get("tiles") or []
-    if not tiles:
-        raise RuntimeError("scene has no tiles")
-    tile = tiles[0]
-    intent = tile.get("intent")
-    payload = tile.get("payload") or {}
-    if not intent:
-        raise RuntimeError("tile missing intent")
-    if db_name and "db" not in payload:
-        payload["db"] = db_name
-
-    status, intent_resp = _http_post_json(
-        intent_url, {"intent": intent, "params": payload}, headers=auth_header
-    )
-    if status >= 400 or not intent_resp.get("ok"):
-        raise RuntimeError(f"scene tile intent failed: {intent_resp}")
-
-    snapshot = {
-        "meta": {
-            "base_url": base_url,
-            "db": db_name,
-            "login": login,
-            "captured_at": int(time.time()),
-        },
-        "scenes": scenes_resp,
-        "tile_intent": {"intent": intent, "payload": payload},
-        "tile_result": intent_resp,
+    seed_payload = {
+        "mode": "merge",
+        "capabilities": [
+            {
+                "key": "scene.smoke.default",
+                "name": "Scene Smoke Default",
+                "intent": "system.init",
+                "is_test": True,
+            }
+        ],
+        "scenes": [
+            {
+                "code": "scene_smoke_default",
+                "name": "Scene Smoke Default",
+                "layout": "grid",
+                "state": "published",
+                "is_test": True,
+                "tiles": [{"capability_key": "scene.smoke.default", "sequence": 10}],
+            }
+        ],
     }
-    raw_path = _write_snapshot(out_dir, "snapshot.raw.json", snapshot)
-    normalized = _normalize_obj(snapshot)
-    norm_path = _write_snapshot(out_dir, "snapshot.normalized.json", normalized)
-    print(f"[e2e.scene] raw snapshot: {raw_path}")
-    print(f"[e2e.scene] normalized snapshot: {norm_path}")
+    created_test = False
+    try:
+        # get scenes
+        status, scenes_resp, scenes_headers = _http_get_json(scenes_url, headers=auth_header)
+        if status >= 400 or not scenes_resp.get("ok"):
+            raise RuntimeError(f"scenes.my failed: {scenes_resp}")
+        scenes_data = scenes_resp.get("data") or {}
+        scenes = scenes_data.get("scenes") or []
+        if not scenes:
+            status, seed_resp = _http_post_json(import_url, seed_payload, headers=auth_header)
+            if status >= 400 or not seed_resp.get("ok"):
+                raise RuntimeError(f"scenes.import seed failed: {seed_resp}")
+            created_test = True
+            status, scenes_resp, scenes_headers = _http_get_json(scenes_url_tests, headers=auth_header)
+            if status >= 400 or not scenes_resp.get("ok"):
+                raise RuntimeError(f"scenes.my (after seed) failed: {scenes_resp}")
+            scenes_data = scenes_resp.get("data") or {}
+            scenes = scenes_data.get("scenes") or []
+            if not scenes:
+                raise RuntimeError("scenes.my returned empty scenes list after seed")
+        require_deprecation_payload(scenes_data, label="scenes.my")
+        require_deprecation_headers(scenes_headers, label="scenes.my")
+        default_code = scenes_data.get("default_scene")
+        scene = next((s for s in scenes if s.get("code") == default_code), scenes[0])
+        tiles = scene.get("tiles") or []
+        if not tiles:
+            raise RuntimeError("scene has no tiles")
+        tile = tiles[0]
+        intent = tile.get("intent")
+        payload = tile.get("payload") or {}
+        if not intent:
+            raise RuntimeError("tile missing intent")
+        if db_name and "db" not in payload:
+            payload["db"] = db_name
+
+        status, intent_resp = _http_post_json(
+            intent_url, {"intent": intent, "params": payload}, headers=auth_header
+        )
+        if status >= 400 or not intent_resp.get("ok"):
+            raise RuntimeError(f"scene tile intent failed: {intent_resp}")
+
+        snapshot = {
+            "meta": {
+                "base_url": base_url,
+                "db": db_name,
+                "login": login,
+                "captured_at": int(time.time()),
+            },
+            "scenes": scenes_resp,
+            "tile_intent": {"intent": intent, "payload": payload},
+            "tile_result": intent_resp,
+        }
+        raw_path = _write_snapshot(out_dir, "snapshot.raw.json", snapshot)
+        normalized = _normalize_obj(snapshot)
+        norm_path = _write_snapshot(out_dir, "snapshot.normalized.json", normalized)
+        print(f"[e2e.scene] raw snapshot: {raw_path}")
+        print(f"[e2e.scene] normalized snapshot: {norm_path}")
+    finally:
+        if created_test:
+            _cleanup_test_pack(import_url, auth_header, seed_payload)
 
 
 if __name__ == "__main__":

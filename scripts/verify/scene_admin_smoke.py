@@ -3,7 +3,8 @@
 import json
 import os
 from intent_smoke_utils import require_ok
-from python_http_smoke_utils import get_base_url, http_get_json, http_post_json
+from python_http_smoke_utils import get_base_url, http_get_json, http_get_json_with_headers, http_post_json
+from scene_legacy_assertions import require_deprecation_headers, require_deprecation_payload
 
 
 def _cleanup_test_pack(import_url: str, auth_header: dict, payload: dict) -> None:
@@ -102,17 +103,21 @@ def main():
     }
     try:
         # scenes.my should be OK and non-empty
-        status, scenes_resp = http_get_json(scenes_url, headers=auth_header)
+        status, scenes_resp, scenes_headers = http_get_json_with_headers(scenes_url, headers=auth_header)
         require_ok(status, scenes_resp, "scenes.my")
         scenes_data = scenes_resp.get("data") or {}
+        require_deprecation_payload(scenes_data, label="scenes.my")
+        require_deprecation_headers(scenes_headers, label="scenes.my")
         scenes = scenes_data.get("scenes") or []
         if not scenes:
             status, seed_resp = http_post_json(import_url, seed_payload, headers=auth_header)
             require_ok(status, seed_resp, "scenes.import seed")
             created_test = True
-            status, scenes_resp = http_get_json(scenes_url_tests, headers=auth_header)
+            status, scenes_resp, scenes_headers = http_get_json_with_headers(scenes_url_tests, headers=auth_header)
             require_ok(status, scenes_resp, "scenes.my (after seed)")
             scenes_data = scenes_resp.get("data") or {}
+            require_deprecation_payload(scenes_data, label="scenes.my (after seed)")
+            require_deprecation_headers(scenes_headers, label="scenes.my (after seed)")
             scenes = scenes_data.get("scenes") or []
             if not scenes:
                 raise RuntimeError("scenes.my returned empty list after seed")
@@ -132,8 +137,10 @@ def main():
             raise RuntimeError("preferences default_scene mismatch")
 
         # scenes.my should reflect default_scene
-        status, scenes_resp2 = http_get_json(scenes_url, headers=auth_header)
+        status, scenes_resp2, scenes2_headers = http_get_json_with_headers(scenes_url, headers=auth_header)
         require_ok(status, scenes_resp2, "scenes.my (after pref)")
+        require_deprecation_payload(scenes_resp2.get("data") or {}, label="scenes.my (after pref)")
+        require_deprecation_headers(scenes2_headers, label="scenes.my (after pref)")
         if (scenes_resp2.get("data") or {}).get("default_scene") != default_scene:
             raise RuntimeError("scenes.my default_scene did not update")
 

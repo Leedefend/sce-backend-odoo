@@ -1,13 +1,25 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import logging
+from datetime import datetime, timezone
+from email.utils import format_datetime
+
 from odoo import http
 from odoo.http import request
 
 from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
 
-from .api_base import fail, fail_from_exception, ok
+from .api_base import fail, ok
+
+_logger = logging.getLogger(__name__)
+_LEGACY_SCENES_SUNSET_DATE = "2026-04-30"
+_LEGACY_SCENES_SUNSET_HTTP = format_datetime(
+    datetime(2026, 4, 30, 0, 0, 0, tzinfo=timezone.utc), usegmt=True
+)
+_LEGACY_SCENES_SUCCESSOR = "/api/v1/intent"
+_LEGACY_SCENES_ENDPOINT_NAME = "scenes.my"
 
 
 def _has_admin(user):
@@ -20,6 +32,15 @@ def _parse_bool(val, default=False):
     if isinstance(val, bool):
         return val
     return str(val).strip().lower() in {"1", "true", "yes", "y"}
+
+
+def _legacy_response_headers():
+    return [
+        ("Deprecation", "true"),
+        ("Sunset", _LEGACY_SCENES_SUNSET_HTTP),
+        ("X-Legacy-Endpoint", _LEGACY_SCENES_ENDPOINT_NAME),
+        ("Link", f"<{_LEGACY_SCENES_SUCCESSOR}>; rel=\"successor-version\""),
+    ]
 
 
 class SceneController(http.Controller):
@@ -46,9 +67,24 @@ class SceneController(http.Controller):
                 "scenes": out,
                 "count": len(out),
                 "default_scene": default_scene_code,
+                "deprecation": {
+                    "status": "deprecated",
+                    "replacement": f"{_LEGACY_SCENES_SUCCESSOR} (intent=app.init)",
+                    "sunset_date": _LEGACY_SCENES_SUNSET_DATE,
+                },
             }
-            return ok(payload, status=200)
+            _logger.warning(
+                "[legacy_endpoint] /api/scenes/my called by uid=%s include_tests=%s; successor=%s",
+                user.id,
+                include_tests,
+                _LEGACY_SCENES_SUCCESSOR,
+            )
+            return ok(
+                payload,
+                status=200,
+                headers=_legacy_response_headers(),
+            )
         except AccessDenied as exc:
-            return fail("AUTH_REQUIRED", str(exc), http_status=401)
-        except Exception as exc:
-            return fail_from_exception(exc, http_status=500)
+            return fail("AUTH_REQUIRED", str(exc), http_status=401, headers=_legacy_response_headers())
+        except Exception:
+            return fail("SERVER_ERROR", "Internal server error", http_status=500, headers=_legacy_response_headers())

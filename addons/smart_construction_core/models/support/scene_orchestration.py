@@ -473,7 +473,6 @@ class ScScene(models.Model):
         self.ensure_one()
         issues = []
         allowed_intents = self._get_allowed_intents()
-        group_xmlids = {}
         for tile in self.tile_ids.filtered(lambda t: t.active and t.visible):
             cap = tile.capability_id
             if not cap:
@@ -497,8 +496,7 @@ class ScScene(models.Model):
                 })
 
             if cap.required_group_ids:
-                if not group_xmlids:
-                    group_xmlids = cap.required_group_ids.get_external_id()
+                group_xmlids = cap.required_group_ids.get_external_id()
                 missing = [
                     g.id for g in cap.required_group_ids if not group_xmlids.get(g.id)
                 ]
