@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import ast
+import json
 from pathlib import Path
 import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTROLLERS_ROOT = ROOT / "addons/smart_construction_core/controllers"
+ARTIFACT_JSON = ROOT / "artifacts" / "controller_route_policy_guard.json"
 POLICY = {
     "frontend_api.py": {
         "/api/login": {"type": "json", "auth": "public", "csrf": False, "methods": {"POST"}, "cors": "*"},
@@ -113,6 +115,18 @@ def main() -> int:
                         f"{rel}: route {route} {key} mismatch expected={val!r} actual={actual.get(key)!r}"
                     )
 
+    report = {
+        "ok": not violations,
+        "summary": {
+            "controller_root": CONTROLLERS_ROOT.relative_to(ROOT).as_posix(),
+            "policy_file_count": len(POLICY),
+            "violation_count": len(violations),
+        },
+        "violations": violations,
+    }
+    ARTIFACT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    ARTIFACT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(str(ARTIFACT_JSON))
     if violations:
         print("[controller_route_policy_guard] FAIL")
         for item in violations:

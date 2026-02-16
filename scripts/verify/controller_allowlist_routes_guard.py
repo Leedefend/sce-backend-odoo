@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import ast
+import json
 from pathlib import Path
 import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTROLLERS_ROOT = ROOT / "addons/smart_construction_core/controllers"
+ARTIFACT_JSON = ROOT / "artifacts" / "controller_allowlist_routes_guard.json"
 ALLOWED_ROUTE_MAP = {
     "frontend_api.py": {
         "/api/login",
@@ -87,6 +89,18 @@ def main() -> int:
         if missing:
             violations.append(f"{rel}: missing allowlist routes: {', '.join(missing)}")
 
+    report = {
+        "ok": not violations,
+        "summary": {
+            "controller_root": CONTROLLERS_ROOT.relative_to(ROOT).as_posix(),
+            "allowlist_size": len(ALLOWED_ROUTE_MAP),
+            "violation_count": len(violations),
+        },
+        "violations": violations,
+    }
+    ARTIFACT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    ARTIFACT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(str(ARTIFACT_JSON))
     if violations:
         print("[controller_allowlist_routes_guard] FAIL")
         for item in violations:
