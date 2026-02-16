@@ -12,8 +12,11 @@ def require_deprecation_payload(payload: dict, *, label: str) -> None:
     dep = payload.get("deprecation") if isinstance(payload.get("deprecation"), dict) else {}
     if (dep.get("status") or "").strip().lower() != "deprecated":
         raise RuntimeError(f"{label} missing deprecation.status=deprecated")
-    if not str(dep.get("replacement") or "").strip():
+    replacement = str(dep.get("replacement") or "").strip()
+    if not replacement:
         raise RuntimeError(f"{label} missing deprecation.replacement")
+    if LEGACY_SCENES_SUCCESSOR not in replacement or "intent=app.init" not in replacement:
+        raise RuntimeError(f"{label} invalid deprecation.replacement: {replacement}")
     sunset_date = str(dep.get("sunset_date") or "").strip()
     if sunset_date != LEGACY_SCENES_SUNSET_DATE:
         raise RuntimeError(f"{label} invalid deprecation.sunset_date: {sunset_date}")

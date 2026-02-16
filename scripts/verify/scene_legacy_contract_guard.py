@@ -14,6 +14,10 @@ LEGACY_CONTRACT = ROOT / "scripts/common/scene_legacy_contract.py"
 REQUIRED_PATTERNS = (
     (r"def\s+_legacy_response_headers\(", "missing _legacy_response_headers helper"),
     (r'"status"\s*:\s*"deprecated"', "missing deprecation.status=deprecated payload"),
+    (
+        r'"replacement"\s*:\s*f"\{_LEGACY_SCENES_SUCCESSOR\}\s+\(intent=app\.init\)"',
+        "missing deprecation.replacement successor intent hint wiring",
+    ),
     (r'"sunset_date"\s*:\s*_LEGACY_SCENES_SUNSET_DATE', "missing payload sunset_date constant wiring"),
     (r'\("Deprecation",\s*"true"\)', "missing Deprecation header"),
     (r'\("Sunset",\s*_LEGACY_SCENES_SUNSET_HTTP\)', "missing Sunset header constant wiring"),

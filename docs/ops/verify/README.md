@@ -15,6 +15,7 @@
     - `make verify.scene.contract_path.gate`
   - Full legacy endpoint aggregate (includes endpoint usage guard):
     - `make verify.scene.legacy.all`
+    - legacy endpoint `/api/scenes/my` is deprecated; successor is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
   - Any docs mentioning `/api/scenes/my` must include deprecated + successor migration semantics; enforced by:
     - `make verify.scene.legacy_docs.guard`
 
