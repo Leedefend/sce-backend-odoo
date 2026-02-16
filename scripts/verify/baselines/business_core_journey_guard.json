@@ -1,0 +1,35 @@
+{
+  "max_errors": 0,
+  "required_intents": {
+    "system.init": {
+      "min_test_refs": 1
+    },
+    "api.data": {
+      "min_test_refs": 1
+    },
+    "my.work.summary": {
+      "min_test_refs": 1
+    },
+    "my.work.complete": {
+      "min_test_refs": 1
+    },
+    "payment.request.submit": {
+      "min_test_refs": 1
+    },
+    "payment.request.approve": {
+      "min_test_refs": 1
+    },
+    "payment.request.reject": {
+      "min_test_refs": 1
+    },
+    "payment.request.done": {
+      "min_test_refs": 1
+    },
+    "payment.request.available_actions": {
+      "min_test_refs": 0
+    },
+    "payment.request.execute": {
+      "min_test_refs": 1
+    }
+  }
+}
