@@ -40,10 +40,12 @@ def main() -> int:
         violations.append("missing LEGACY_SCENES_SUNSET_DATE in common contract")
     if successor and successor not in doc_text:
         violations.append(f"doc missing successor endpoint: {successor}")
+    if successor and "intent=app.init" not in doc_text:
+        violations.append("doc missing migration hint: intent=app.init")
     if sunset_date and sunset_date not in doc_text:
         violations.append(f"doc missing sunset date: {sunset_date}")
 
-    for required in ("Deprecation", "Sunset", "Link"):
+    for required in ("Deprecation", "Sunset", "Link", "X-Legacy-Endpoint"):
         if required not in doc_text:
             violations.append(f"doc missing header keyword: {required}")
 
