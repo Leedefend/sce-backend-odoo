@@ -23,7 +23,7 @@
 - `make verify.boundary.guard`
   - Aggregates scene runtime boundary + legacy contract path checks.
 - `make verify.contract.snapshot`
-  - Snapshot-structure baseline gate for scene contract shape.
+  - Snapshot-structure baseline gate for scene contract shape + ordering determinism smoke.
 - `make verify.mode.filter`
   - Verifies user/hud mode isolation (`contract_mode` behavior).
 - `make verify.capability.schema`
@@ -31,7 +31,9 @@
 - `make verify.scene.schema`
   - Verifies scene definition semantics + scene contract schema shape.
 - `make verify.seed.demo.isolation`
-  - Verifies provider layer does not depend on demo/seed modules and tests avoid seed leakage.
+  - Verifies provider layer does not depend on demo/seed modules and user-mode contract output does not leak demo/showcase semantics.
+- `make verify.contract.ordering.smoke`
+  - Verifies scene/capability sequence determinism across repeated `system.init` calls.
 - Guard coverage matrix:
   - `docs/ops/verify/backend_architecture_guard_matrix.md`
 
