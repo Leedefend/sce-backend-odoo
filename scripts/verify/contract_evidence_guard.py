@@ -33,7 +33,6 @@ def main() -> int:
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
         policy.update(policy_payload)
-
     payload = _load_json(EVIDENCE_JSON)
     if not payload:
         print("[contract_evidence_guard] FAIL")
