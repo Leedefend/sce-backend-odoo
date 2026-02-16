@@ -34,6 +34,15 @@ def _parse_bool(val, default=False):
     return str(val).strip().lower() in {"1", "true", "yes", "y"}
 
 
+def _legacy_response_headers():
+    return [
+        ("Deprecation", "true"),
+        ("Sunset", _LEGACY_SCENES_SUNSET_HTTP),
+        ("X-Legacy-Endpoint", _LEGACY_SCENES_ENDPOINT_NAME),
+        ("Link", f"<{_LEGACY_SCENES_SUCCESSOR}>; rel=\"successor-version\""),
+    ]
+
+
 class SceneController(http.Controller):
     @http.route("/api/scenes/my", type="http", auth="public", methods=["GET"], csrf=False)
     def my_scenes(self, **params):
@@ -73,14 +82,9 @@ class SceneController(http.Controller):
             return ok(
                 payload,
                 status=200,
-                headers=[
-                    ("Deprecation", "true"),
-                    ("Sunset", _LEGACY_SCENES_SUNSET_HTTP),
-                    ("X-Legacy-Endpoint", _LEGACY_SCENES_ENDPOINT_NAME),
-                    ("Link", f"<{_LEGACY_SCENES_SUCCESSOR}>; rel=\"successor-version\""),
-                ],
+                headers=_legacy_response_headers(),
             )
         except AccessDenied as exc:
-            return fail("AUTH_REQUIRED", str(exc), http_status=401)
+            return fail("AUTH_REQUIRED", str(exc), http_status=401, headers=_legacy_response_headers())
         except Exception as exc:
-            return fail_from_exception(exc, http_status=500)
+            return fail("SERVER_ERROR", "Internal server error", http_status=500, headers=_legacy_response_headers())

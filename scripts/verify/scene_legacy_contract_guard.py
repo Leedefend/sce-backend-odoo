@@ -21,6 +21,8 @@ REQUIRED_PATTERNS = (
     (r'_LEGACY_SCENES_SUCCESSOR\s*=\s*"([^"]+)"', "missing successor endpoint constant"),
     (r'_LEGACY_SCENES_SUNSET_DATE\s*=\s*"([^"]+)"', "missing sunset date constant"),
     (r'_LEGACY_SCENES_ENDPOINT_NAME\s*=\s*"([^"]+)"', "missing legacy endpoint name constant"),
+    (r'fail\("AUTH_REQUIRED".*headers=_legacy_response_headers\(\)\)', "missing legacy headers on auth failure"),
+    (r'fail\("SERVER_ERROR".*headers=_legacy_response_headers\(\)\)', "missing legacy headers on server error"),
 )
 
 
