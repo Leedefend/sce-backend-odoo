@@ -1,0 +1,7 @@
+{
+  "max_errors": 0,
+  "min_business_capability_check_count": 3,
+  "min_scene_catalog_runtime_ratio": 0.01,
+  "require_alignment_ok": true,
+  "require_business_capability_ok": true
+}

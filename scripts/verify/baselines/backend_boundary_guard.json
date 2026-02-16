@@ -1,0 +1,25 @@
+{
+  "allowed_hook_write_keys": [
+    "ext_facts"
+  ],
+  "required_hook_write_keys": [
+    "ext_facts"
+  ],
+  "forbidden_runtime_route_patterns": [
+    "@http\\.route\\(\\s*[\"'](?:/api/v1/intent|/api/contract/get)"
+  ],
+  "forbidden_runtime_import_patterns": [
+    "(?:from\\s+odoo\\.addons\\.smart_core\\.utils\\.contract_governance\\s+import)",
+    "(?:from\\s+odoo\\.addons\\.smart_core\\.handlers\\.system_init\\s+import)",
+    "(?:from\\s+odoo\\.addons\\.smart_core\\.core\\.scene_provider\\s+import)",
+    "(?:import\\s+odoo\\.addons\\.smart_core\\.core\\.scene_provider)"
+  ],
+  "forbidden_system_init_scene_registry_patterns": [
+    "(?:from\\s+odoo\\.addons\\.smart_construction_scene\\.scene_registry\\s+import)"
+  ],
+  "forbidden_controller_import_modules": [
+    "odoo.addons.smart_core.utils.contract_governance",
+    "odoo.addons.smart_core.handlers.system_init",
+    "odoo.addons.smart_core.core.scene_provider"
+  ]
+}

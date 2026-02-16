@@ -1,0 +1,16 @@
+{
+  "forbidden_keywords": [
+    "project.",
+    "material.",
+    "settlement.",
+    "boq.",
+    "payment.request",
+    "contract."
+  ],
+  "target_files": [
+    "addons/smart_core/core/intent_router.py",
+    "addons/smart_core/core/enhanced_intent_router.py",
+    "addons/smart_core/controllers/intent_dispatcher.py",
+    "addons/smart_core/controllers/enhanced_intent_dispatcher.py"
+  ]
+}

@@ -23,6 +23,9 @@ from odoo.addons.smart_core.core.scene_provider import (
     merge_missing_scenes_from_registry as provider_merge_missing_scenes_from_registry,
     resolve_scene_channel as provider_resolve_scene_channel,
 )
+from odoo.addons.smart_core.core.capability_provider import (
+    load_capabilities_for_user as provider_load_capabilities_for_user,
+)
 from odoo.addons.smart_core.utils.reason_codes import (
     REASON_OK,
     REASON_PERMISSION_DENIED,
@@ -240,22 +243,7 @@ def _build_role_surface_map_payload() -> Dict[str, dict]:
 
 
 def _load_capabilities_for_user(env, user) -> List[dict]:
-    try:
-        Cap = env["sc.capability"].sudo()
-    except Exception:
-        return []
-    try:
-        caps = Cap.search([("active", "=", True)], order="sequence, id")
-    except Exception:
-        return []
-    out: List[dict] = []
-    for rec in caps:
-        try:
-            if rec._user_visible(user):
-                out.append(rec.to_public_dict(user))
-        except Exception:
-            continue
-    return out
+    return provider_load_capabilities_for_user(env, user)
 
 
 def _merge_extension_facts(data: dict) -> None:
