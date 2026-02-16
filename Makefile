@@ -237,7 +237,7 @@ guard.codex.fast.upgrade:
 # ======================================================
 .PHONY: contract.export contract.export_all contract.catalog.export contract.evidence.export verify.contract.catalog verify.scene.contract.shape verify.contract.evidence gate.contract gate.contract.bootstrap gate.contract.bootstrap-pass
 
-INTENT_SURFACE_MD ?= docs/ops/audit/intent_surface_report.md
+INTENT_SURFACE_MD ?= artifacts/intent_surface_report.md
 INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
 CONTRACT_PREFLIGHT_INTENT_SURFACE_MD ?= artifacts/intent_surface_report.md
 CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON ?= artifacts/intent_surface_report.json
