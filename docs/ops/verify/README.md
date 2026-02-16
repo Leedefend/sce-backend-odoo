@@ -42,6 +42,8 @@
   - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + snapshot determinism).
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
+- `make verify.controller.delegate.guard`
+  - AST guard: route methods in `smart_construction_core/controllers` must not directly return runtime envelope/runtime-shape dicts (except governance allowlist controllers).
 - Guard coverage matrix:
   - `docs/ops/verify/backend_architecture_guard_matrix.md`
 
