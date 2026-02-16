@@ -13,7 +13,20 @@ def load_json(path: Path) -> object:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def build_evidence(intent_catalog: dict, scene_catalog: dict, shape_report: dict, intent_surface: list[dict]) -> dict:
+def load_json_optional(path: Path, default: object) -> object:
+    if not path.exists():
+        return default
+    return load_json(path)
+
+
+def build_evidence(
+    intent_catalog: dict,
+    scene_catalog: dict,
+    shape_report: dict,
+    intent_surface: list[dict],
+    scene_alignment_report: dict,
+    business_capability_report: dict,
+) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
 
@@ -53,6 +66,7 @@ def build_evidence(intent_catalog: dict, scene_catalog: dict, shape_report: dict
         },
         "scene_catalog": {
             "scene_count": len(scenes),
+            "catalog_scope": ((scene_catalog.get("source") or {}).get("scene_catalog_scope") or ""),
             "layout_kind_counts": scene_catalog.get("layout_kind_counts") or {},
             "target_type_counts": scene_catalog.get("target_type_counts") or {},
             "renderability": scene_catalog.get("renderability") or {},
@@ -67,6 +81,19 @@ def build_evidence(intent_catalog: dict, scene_catalog: dict, shape_report: dict
         "intent_surface": {
             "rows": len(intent_surface),
         },
+        "scene_runtime_alignment": {
+            "ok": bool(scene_alignment_report.get("ok")),
+            "catalog_scene_count": int((((scene_alignment_report.get("summary") or {}).get("catalog_scene_count")) or 0)),
+            "runtime_scene_count": int((((scene_alignment_report.get("summary") or {}).get("runtime_scene_count")) or 0)),
+            "catalog_runtime_ratio": float((((scene_alignment_report.get("summary") or {}).get("catalog_runtime_ratio")) or 0.0)),
+            "report": "artifacts/scene_catalog_runtime_alignment_guard.json",
+        },
+        "business_capability_baseline": {
+            "ok": bool(business_capability_report.get("ok")),
+            "check_count": int((((business_capability_report.get("summary") or {}).get("check_count")) or 0)),
+            "failed_check_count": int((((business_capability_report.get("summary") or {}).get("failed_check_count")) or 0)),
+            "report": "artifacts/business_capability_baseline_report.json",
+        },
     }
     return evidence
 
@@ -76,6 +103,8 @@ def to_markdown(evidence: dict) -> str:
     s = evidence["scene_catalog"]
     g = evidence["shape_guard"]
     t = evidence["intent_surface"]
+    a = evidence["scene_runtime_alignment"]
+    b = evidence["business_capability_baseline"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -89,11 +118,25 @@ def to_markdown(evidence: dict) -> str:
         "",
         "## Scene Orchestration",
         f"- scenes: {s['scene_count']}",
+        f"- catalog_scope: {s['catalog_scope']}",
         f"- schema_version: {s['schema_version']}",
         f"- scene_version: {s['scene_version']}",
         f"- layout kinds: {json.dumps(s['layout_kind_counts'], ensure_ascii=False)}",
         f"- target types: {json.dumps(s['target_type_counts'], ensure_ascii=False)}",
         f"- renderability: {json.dumps(s.get('renderability') or {}, ensure_ascii=False)}",
+        "",
+        "## Runtime Alignment",
+        f"- ok: {a['ok']}",
+        f"- catalog_scene_count: {a['catalog_scene_count']}",
+        f"- runtime_scene_count: {a['runtime_scene_count']}",
+        f"- catalog_runtime_ratio: {a['catalog_runtime_ratio']}",
+        f"- report: `{a['report']}`",
+        "",
+        "## Business Capability Baseline",
+        f"- ok: {b['ok']}",
+        f"- check_count: {b['check_count']}",
+        f"- failed_check_count: {b['failed_check_count']}",
+        f"- report: `{b['report']}`",
         "",
         "## Shape Guard",
         f"- ok: {g['ok']}",
@@ -118,6 +161,8 @@ def main() -> int:
     parser.add_argument("--scene-catalog", default="docs/contract/exports/scene_catalog.json")
     parser.add_argument("--shape-report", default="artifacts/scene_contract_shape_guard.json")
     parser.add_argument("--intent-surface", default="artifacts/intent_surface_report.json")
+    parser.add_argument("--scene-alignment-report", default="artifacts/scene_catalog_runtime_alignment_guard.json")
+    parser.add_argument("--business-capability-report", default="artifacts/business_capability_baseline_report.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -126,6 +171,8 @@ def main() -> int:
     scene_catalog = load_json(Path(args.scene_catalog))
     shape_report = load_json(Path(args.shape_report))
     intent_surface = load_json(Path(args.intent_surface))
+    scene_alignment_report = load_json_optional(Path(args.scene_alignment_report), {})
+    business_capability_report = load_json_optional(Path(args.business_capability_report), {})
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -135,8 +182,19 @@ def main() -> int:
         raise SystemExit("shape report must be object")
     if not isinstance(intent_surface, list):
         raise SystemExit("intent surface report must be list")
+    if not isinstance(scene_alignment_report, dict):
+        raise SystemExit("scene alignment report must be object")
+    if not isinstance(business_capability_report, dict):
+        raise SystemExit("business capability report must be object")
 
-    evidence = build_evidence(intent_catalog, scene_catalog, shape_report, intent_surface)
+    evidence = build_evidence(
+        intent_catalog,
+        scene_catalog,
+        shape_report,
+        intent_surface,
+        scene_alignment_report,
+        business_capability_report,
+    )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)
     out_json.parent.mkdir(parents=True, exist_ok=True)
