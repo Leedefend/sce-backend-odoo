@@ -36,6 +36,7 @@ This matrix maps governance checkpoints to executable verification targets.
 ## Aggregated Targets
 
 - `make verify.boundary.guard`
+- `make verify.contract.envelope`
 - `make verify.contract.snapshot`
 - `make verify.mode.filter`
 - `make verify.capability.schema`
@@ -44,5 +45,4 @@ This matrix maps governance checkpoints to executable verification targets.
 
 ## Notes
 
-- "Partially covered" marks areas where behavior is protected but could still use stricter AST/schema assertions.
 - Current baseline is non-destructive: guards are focused on boundary hardening and output governance, not architecture rewrites.
