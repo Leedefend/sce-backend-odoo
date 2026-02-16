@@ -99,7 +99,7 @@
   - Verifies CapabilityProvider runtime boundary policy from baseline (`scripts/verify/baselines/capability_provider_guard.json`):
     - required provider symbols
     - importer allowlist
-    - forbidden demo/seed imports in provider
+    - forbidden `smart_construction_*` imports in provider
 - `make verify.backend.boundary_guard`
   - Verifies extension/controller runtime boundary policy from baseline (`scripts/verify/baselines/backend_boundary_guard.json`):
     - extension hook write namespace allowlist (`data.ext_facts`)
