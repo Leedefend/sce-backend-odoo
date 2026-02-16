@@ -32,6 +32,8 @@
   - Verifies scene definition semantics + scene contract schema shape.
 - `make verify.seed.demo.isolation`
   - Verifies provider layer does not depend on demo/seed modules and tests avoid seed leakage.
+- Guard coverage matrix:
+  - `docs/ops/verify/backend_architecture_guard_matrix.md`
 
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
