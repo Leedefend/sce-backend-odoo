@@ -12,6 +12,7 @@ SCENE_CONTROLLER = ROOT / "addons/smart_construction_core/controllers/scene_cont
 LEGACY_CONTRACT = ROOT / "scripts/common/scene_legacy_contract.py"
 
 REQUIRED_PATTERNS = (
+    (r"def\s+_legacy_response_headers\(", "missing _legacy_response_headers helper"),
     (r'"status"\s*:\s*"deprecated"', "missing deprecation.status=deprecated payload"),
     (r'"sunset_date"\s*:\s*_LEGACY_SCENES_SUNSET_DATE', "missing payload sunset_date constant wiring"),
     (r'\("Deprecation",\s*"true"\)', "missing Deprecation header"),
@@ -21,6 +22,8 @@ REQUIRED_PATTERNS = (
     (r'_LEGACY_SCENES_SUCCESSOR\s*=\s*"([^"]+)"', "missing successor endpoint constant"),
     (r'_LEGACY_SCENES_SUNSET_DATE\s*=\s*"([^"]+)"', "missing sunset date constant"),
     (r'_LEGACY_SCENES_ENDPOINT_NAME\s*=\s*"([^"]+)"', "missing legacy endpoint name constant"),
+    (r'return\s+ok\(\s*payload,\s*status=200,\s*headers=_legacy_response_headers\(\)\s*,?\s*\)',
+     "missing legacy headers on success response"),
     (r'fail\("AUTH_REQUIRED".*headers=_legacy_response_headers\(\)\)', "missing legacy headers on auth failure"),
     (r'fail\("SERVER_ERROR".*headers=_legacy_response_headers\(\)\)', "missing legacy headers on server error"),
 )
