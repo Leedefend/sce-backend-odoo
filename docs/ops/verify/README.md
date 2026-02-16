@@ -19,6 +19,18 @@
   - Any docs mentioning `/api/scenes/my` must include deprecated + successor migration semantics; enforced by:
     - `make verify.scene.legacy_docs.guard`
 
+## Architecture Guard Aliases
+- `make verify.boundary.guard`
+  - Aggregates scene runtime boundary + legacy contract path checks.
+- `make verify.contract.snapshot`
+  - Snapshot-structure baseline gate for scene contract shape.
+- `make verify.mode.filter`
+  - Verifies user/hud mode isolation (`contract_mode` behavior).
+- `make verify.capability.schema`
+  - Verifies capability payload schema and scene/capability contract cohesion.
+- `make verify.scene.schema`
+  - Verifies scene contract schema shape.
+
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
 - `make verify.menu.scene_resolve.summary`
