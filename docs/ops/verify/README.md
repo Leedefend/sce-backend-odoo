@@ -46,6 +46,12 @@
   - Artifacts:
     - `artifacts/scene_catalog_runtime_alignment_guard.json`
     - `artifacts/scene_catalog_runtime_alignment_guard.md`
+- `make verify.business.core_journey.guard`
+  - Verifies business-critical intent chain coverage from `intent_catalog` against baseline (`required_intents` + `min_test_refs`).
+  - Baseline: `scripts/verify/baselines/business_core_journey_guard.json`.
+  - Artifacts:
+    - `artifacts/business_core_journey_guard.json`
+    - `artifacts/business_core_journey_guard.md`
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
 - `make verify.controller.delegate.guard`
