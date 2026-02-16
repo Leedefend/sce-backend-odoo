@@ -9,7 +9,9 @@
   - Contract preflight now runs baseline freeze guard by default (`BASELINE_FREEZE_ENFORCE=1`).
   - Contract preflight includes scene runtime boundary gate:
     - `make verify.scene.runtime_boundary.gate`
-  - Contract preflight includes legacy endpoint aggregate checks:
+  - Contract preflight includes legacy contract bundle checks:
+    - `make verify.scene.legacy.bundle`
+  - Full legacy endpoint aggregate (includes endpoint usage guard):
     - `make verify.scene.legacy.all`
 
 ## Phase 9.8 Menu/Scene Coverage
