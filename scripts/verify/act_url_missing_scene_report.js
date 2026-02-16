@@ -41,7 +41,10 @@ async function main() {
   if (!token) throw new Error('login token missing');
 
   const authHeader = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME };
-  const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
+  const initPayload = {
+    intent: 'app.init',
+    params: { scene: 'web', with_preload: false, contract_mode: 'hud' },
+  };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });
 

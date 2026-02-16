@@ -355,6 +355,10 @@ help:
 	@echo "  make verify.portal.scene_observability_preflight.report"
 	@echo "  make verify.portal.scene_observability.structure_guard"
 	@echo "  make verify.baseline.freeze_guard"
+	@echo "  make verify.scene.runtime_boundary.gate"
+	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
+	@echo "  make verify.scene.legacy.contract.guard   # alias to verify.scene.legacy_contract.guard"
+	@echo "  make verify.scene.contract_path.gate"
 	@echo "  make verify.business.increment.preflight [BUSINESS_INCREMENT_PROFILE=base|strict]"
 	@echo "  make verify.business.increment.readiness.brief [BUSINESS_INCREMENT_PROFILE=base|strict]"
 	@echo "  make verify.portal.scene_observability_smoke.container DB_NAME=<name>"
@@ -1226,7 +1230,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.baseline.freeze_guard verify.business.increment.preflight verify.business.increment.preflight.strict verify.business.increment.readiness verify.business.increment.readiness.strict verify.business.increment.readiness.brief verify.business.increment.readiness.brief.strict verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.boundary.import_guard verify.backend.boundary_guard verify.scene.provider.guard verify.scene.hud.trace.smoke verify.contract.governance.coverage verify.scene_capability.contract.guard verify.contract.governance.brief verify.contract.mode.smoke verify.contract.api.mode.smoke verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.frontend.intent_channel.guard verify.scene.legacy_endpoint.guard verify.scene.legacy_contract.guard verify.scene.legacy.contract.guard verify.scene.legacy_docs.guard verify.scene.legacy_auth.smoke verify.scene.legacy_deprecation.smoke verify.scene.legacy.bundle verify.scene.legacy.all verify.scene.runtime_boundary.gate verify.scene.contract_path.gate verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.baseline.freeze_guard verify.business.increment.preflight verify.business.increment.preflight.strict verify.business.increment.readiness verify.business.increment.readiness.strict verify.business.increment.readiness.brief verify.business.increment.readiness.brief.strict verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.boundary.import_guard verify.backend.boundary_guard verify.scene.provider.guard verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke verify.contract.governance.coverage verify.scene_capability.contract.guard verify.contract.governance.brief verify.contract.mode.smoke verify.contract.api.mode.smoke verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1251,6 +1255,39 @@ verify.capability.lint: guard.prod.forbid check-compose-project check-compose-en
 
 verify.frontend_api: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/frontend_api_smoke.py
+
+verify.frontend.intent_channel.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_intent_channel_guard.py
+
+verify.scene.legacy_endpoint.guard: guard.prod.forbid
+	@python3 scripts/verify/legacy_scene_endpoint_guard.py
+
+verify.scene.legacy_contract.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_legacy_contract_guard.py
+
+verify.scene.legacy.contract.guard: verify.scene.legacy_contract.guard
+	@echo "[OK] verify.scene.legacy.contract.guard alias -> verify.scene.legacy_contract.guard"
+
+verify.scene.legacy_docs.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_legacy_docs_guard.py
+
+verify.scene.legacy_auth.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/scene_legacy_auth_smoke.py
+
+verify.scene.legacy_deprecation.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/scene_legacy_deprecation_smoke.py
+
+verify.scene.legacy.bundle: guard.prod.forbid verify.scene.legacy_contract.guard verify.scene.legacy_docs.guard verify.scene.legacy_auth.smoke verify.scene.legacy_deprecation.smoke
+	@echo "[OK] verify.scene.legacy.bundle done"
+
+verify.scene.legacy.all: guard.prod.forbid verify.scene.legacy_endpoint.guard verify.scene.legacy.bundle
+	@echo "[OK] verify.scene.legacy.all done"
+
+verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.frontend.intent_channel.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard
+	@echo "[OK] verify.scene.runtime_boundary.gate done"
+
+verify.scene.contract_path.gate: guard.prod.forbid verify.scene.runtime_boundary.gate verify.scene.legacy.bundle
+	@echo "[OK] verify.scene.contract_path.gate done"
 
 verify.extension_modules.guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/extension_modules_guard.sh
@@ -1327,6 +1364,9 @@ verify.scene.provider.guard: guard.prod.forbid
 verify.scene.hud.trace.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/scene_hud_trace_smoke.py
 
+verify.scene.meta.trace.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/scene_meta_trace_smoke.py
+
 verify.contract.governance.coverage: guard.prod.forbid
 	@python3 scripts/verify/contract_governance_coverage.py
 
@@ -1350,15 +1390,15 @@ verify.contract.preflight: guard.prod.forbid
 	fi
 	@$(MAKE) --no-print-directory verify.test_seed_dependency.guard
 	@$(MAKE) --no-print-directory verify.contract_drift.guard
-	@$(MAKE) --no-print-directory verify.boundary.import_guard
-	@$(MAKE) --no-print-directory verify.backend.boundary_guard
-	@$(MAKE) --no-print-directory verify.scene.provider.guard
+	@$(MAKE) --no-print-directory verify.scene.contract_path.gate
 	@$(MAKE) --no-print-directory verify.contract.governance.coverage
 	@$(MAKE) --no-print-directory verify.docs.all
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
 	@$(MAKE) --no-print-directory verify.scene_capability.contract.guard
 	@$(MAKE) --no-print-directory verify.contract.governance.brief
 	@$(MAKE) --no-print-directory verify.contract.mode.smoke
+	@$(MAKE) --no-print-directory verify.scene.hud.trace.smoke
+	@$(MAKE) --no-print-directory verify.scene.meta.trace.smoke
 	@$(MAKE) --no-print-directory verify.contract.api.mode.smoke
 	@$(MAKE) --no-print-directory verify.scene.contract.shape
 	@$(MAKE) --no-print-directory contract.evidence.export

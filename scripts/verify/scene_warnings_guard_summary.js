@@ -94,7 +94,10 @@ async function main() {
   const authHeader = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME };
 
   log('app.init');
-  const initPayload = { intent: 'app.init', params: { scene: 'web', with_preload: false } };
+  const initPayload = {
+    intent: 'app.init',
+    params: { scene: 'web', with_preload: false, contract_mode: 'hud' },
+  };
   const initResp = await requestJson(intentUrl, initPayload, authHeader);
   writeJson(path.join(outDir, 'app_init.log'), initResp);
   assertIntentEnvelope(initResp, 'app.init', { allowMetaIntentAliases: ['system.init'] });

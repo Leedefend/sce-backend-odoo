@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import re
 import sys
@@ -17,10 +18,55 @@ FORBIDDEN_RUNTIME_ROUTE_RE = re.compile(r'@http\.route\(\s*["\'](?:/api/v1/inten
 FORBIDDEN_RUNTIME_IMPORT_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_core\.utils\.contract_governance\s+import)"
     r"|(?:from\s+odoo\.addons\.smart_core\.handlers\.system_init\s+import)"
+    r"|(?:from\s+odoo\.addons\.smart_core\.core\.scene_provider\s+import)"
+    r"|(?:import\s+odoo\.addons\.smart_core\.core\.scene_provider)"
 )
 FORBIDDEN_SYSTEM_INIT_SCENE_REGISTRY_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_construction_scene\.scene_registry\s+import)"
 )
+FORBIDDEN_CONTROLLER_IMPORT_MODULES = (
+    "odoo.addons.smart_core.utils.contract_governance",
+    "odoo.addons.smart_core.handlers.system_init",
+    "odoo.addons.smart_core.core.scene_provider",
+)
+
+
+def _extract_data_write_key(target: ast.expr) -> str | None:
+    if not isinstance(target, ast.Subscript):
+        return None
+    if not isinstance(target.value, ast.Name) or target.value.id != "data":
+        return None
+    slice_node = target.slice
+    if isinstance(slice_node, ast.Constant) and isinstance(slice_node.value, str):
+        return slice_node.value
+    return None
+
+
+def _hook_data_write_keys(text: str) -> set[str]:
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return set()
+    for node in tree.body:
+        if not isinstance(node, ast.FunctionDef) or node.name != "smart_core_extend_system_init":
+            continue
+        keys: set[str] = set()
+        for sub in ast.walk(node):
+            if isinstance(sub, ast.Assign):
+                for target in sub.targets:
+                    key = _extract_data_write_key(target)
+                    if key:
+                        keys.add(key)
+            elif isinstance(sub, ast.AnnAssign):
+                key = _extract_data_write_key(sub.target)
+                if key:
+                    keys.add(key)
+            elif isinstance(sub, ast.AugAssign):
+                key = _extract_data_write_key(sub.target)
+                if key:
+                    keys.add(key)
+        return keys
+    return set()
 
 
 def _iter_controller_files():
@@ -28,6 +74,27 @@ def _iter_controller_files():
         return
     for path in CORE_CONTROLLERS.rglob("*.py"):
         yield path
+
+
+def _find_forbidden_import_modules(text: str) -> set[str]:
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return set()
+    hits: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            mod = str(node.module or "")
+            for forbidden in FORBIDDEN_CONTROLLER_IMPORT_MODULES:
+                if mod == forbidden or mod.startswith(f"{forbidden}."):
+                    hits.add(forbidden)
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                mod = str(alias.name or "")
+                for forbidden in FORBIDDEN_CONTROLLER_IMPORT_MODULES:
+                    if mod == forbidden or mod.startswith(f"{forbidden}."):
+                        hits.add(forbidden)
+    return hits
 
 
 def main() -> int:
@@ -42,6 +109,13 @@ def main() -> int:
                 "addons/smart_construction_core/core_extension.py: "
                 "smart_core_extend_system_init must not write data['scenes']/data['capabilities']"
             )
+        assigned_keys = sorted(_hook_data_write_keys(text))
+        for key in assigned_keys:
+            if key != "ext_facts":
+                violations.append(
+                    "addons/smart_construction_core/core_extension.py: "
+                    f"smart_core_extend_system_init must not write data['{key}'] (allowed: data['ext_facts'])"
+                )
         if "ext_facts" not in text:
             violations.append(
                 "addons/smart_construction_core/core_extension.py: "
@@ -68,6 +142,11 @@ def main() -> int:
             violations.append(
                 f"{rel}: controllers in smart_construction_core must not import "
                 "smart_core runtime contract assemblers/governance"
+            )
+        forbidden_modules = sorted(_find_forbidden_import_modules(text))
+        for module in forbidden_modules:
+            violations.append(
+                f"{rel}: controllers in smart_construction_core must not import {module}"
             )
 
     if violations:

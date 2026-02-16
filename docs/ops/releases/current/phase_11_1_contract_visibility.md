@@ -28,9 +28,10 @@ make verify.contract.evidence
 `verify.contract.preflight`:
 1. `verify.test_seed_dependency.guard`
 2. `verify.contract_drift.guard`
-3. `audit.intent.surface`
-4. `verify.scene.contract.shape`
-5. `contract.evidence.export`
+3. `verify.scene.contract_path.gate`
+5. `audit.intent.surface`
+6. `verify.scene.contract.shape`
+7. `contract.evidence.export`
 
 ## Outcome
 

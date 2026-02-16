@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import json
 import os
+import time
+from http.client import RemoteDisconnected
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
 
@@ -39,39 +41,49 @@ def get_base_url() -> str:
     return f"http://localhost:{port}"
 
 
+def _request_json(
+    req: urlrequest.Request,
+    *,
+    retries: int = 3,
+    backoff_sec: float = 0.5,
+) -> tuple[int, dict, dict]:
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            with urlrequest.urlopen(req, timeout=30) as resp:
+                body = resp.read().decode("utf-8") or "{}"
+                return resp.status, json.loads(body), dict(resp.headers or {})
+        except HTTPError as e:
+            body = e.read().decode("utf-8") if hasattr(e, "read") else ""
+            try:
+                payload = json.loads(body or "{}")
+            except Exception:
+                payload = {"raw": body}
+            return e.code, payload, dict(getattr(e, "headers", {}) or {})
+        except (RemoteDisconnected, ConnectionResetError, URLError) as e:
+            if attempt >= retries:
+                raise RuntimeError(f"HTTP request failed after retries: {e}") from e
+            time.sleep(backoff_sec * attempt)
+
+
 def http_post_json(url: str, payload: dict, headers: dict | None = None) -> tuple[int, dict]:
     data = json.dumps(payload).encode("utf-8")
     req = urlrequest.Request(url, data=data, method="POST")
     req.add_header("Content-Type", "application/json")
     for k, v in (headers or {}).items():
         req.add_header(k, v)
-    try:
-        with urlrequest.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8") or "{}"
-            return resp.status, json.loads(body)
-    except HTTPError as e:
-        body = e.read().decode("utf-8") if hasattr(e, "read") else ""
-        try:
-            return e.code, json.loads(body or "{}")
-        except Exception:
-            return e.code, {"raw": body}
-    except URLError as e:
-        raise RuntimeError(f"HTTP request failed: {e}") from e
+    status, body, _ = _request_json(req)
+    return status, body
 
 
 def http_get_json(url: str, headers: dict | None = None) -> tuple[int, dict]:
+    status, payload, _ = http_get_json_with_headers(url, headers=headers)
+    return status, payload
+
+
+def http_get_json_with_headers(url: str, headers: dict | None = None) -> tuple[int, dict, dict]:
     req = urlrequest.Request(url, method="GET")
     for k, v in (headers or {}).items():
         req.add_header(k, v)
-    try:
-        with urlrequest.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8") or "{}"
-            return resp.status, json.loads(body)
-    except HTTPError as e:
-        body = e.read().decode("utf-8") if hasattr(e, "read") else ""
-        try:
-            return e.code, json.loads(body or "{}")
-        except Exception:
-            return e.code, {"raw": body}
-    except URLError as e:
-        raise RuntimeError(f"HTTP request failed: {e}") from e
+    return _request_json(req)

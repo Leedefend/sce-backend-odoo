@@ -35,10 +35,18 @@ SCENE_CHANNEL=stable SCENE_USE_PINNED=1 make scene.rollback.stable
 New fields:
 - `scene_channel`
 - `scene_contract_ref`
+- `meta.scene_trace.scene_source`
+- `meta.scene_trace.scene_contract_ref`
+- `meta.scene_trace.scene_channel`
+- `meta.scene_trace.channel_selector`
+- `meta.scene_trace.channel_source_ref`
 
 Diagnostics:
 - `rollback_active`
 - `rollback_ref`
+- `meta.scene_trace.governance` (before/after/filtered summary)
+- HUD payload keeps the same scene tracing keys as `meta.scene_trace`
+- `data.scene_diagnostics` is HUD-only (`contract_mode=hud`)
 
 ## Verifies
 Channel smoke:
@@ -51,6 +59,12 @@ Rollback smoke:
 ```
 SCENE_CHANNEL=stable SCENE_USE_PINNED=1 DB_NAME=sc_demo E2E_LOGIN=svc_project_ro E2E_PASSWORD='ChangeMe_123!' \
 make verify.portal.scene_rollback_smoke.container
+```
+
+Meta tracing smoke:
+```
+DB_NAME=sc_demo E2E_LOGIN=svc_project_ro E2E_PASSWORD='ChangeMe_123!' \
+make verify.scene.meta.trace.smoke
 ```
 
 ## Gate

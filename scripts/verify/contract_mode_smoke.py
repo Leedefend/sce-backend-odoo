@@ -16,6 +16,7 @@ FORBIDDEN_USER_KEYS = {
     "role_scope",
     "capability_scope",
 }
+TRACE_KEYS = ("scene_source", "scene_contract_ref", "channel_selector", "channel_source_ref")
 
 
 def _has_internal_or_smoke(item: dict) -> bool:
@@ -76,6 +77,19 @@ def _extract_meta_data(resp: dict) -> tuple[dict, dict]:
     return meta, data
 
 
+def _require_scene_trace(meta: dict, *, label: str) -> dict:
+    trace = meta.get("scene_trace") if isinstance(meta.get("scene_trace"), dict) else {}
+    if not trace:
+        raise RuntimeError(f"{label} missing meta.scene_trace")
+    for key in TRACE_KEYS:
+        if not str(trace.get(key) or "").strip():
+            raise RuntimeError(f"{label} missing meta.scene_trace.{key}")
+    governance = trace.get("governance") if isinstance(trace.get("governance"), dict) else {}
+    if not governance:
+        raise RuntimeError(f"{label} missing meta.scene_trace.governance")
+    return trace
+
+
 def main() -> None:
     base_url = get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or ""
@@ -105,6 +119,10 @@ def main() -> None:
         raise RuntimeError(f"system.init user mode mismatch: meta={user_meta.get('contract_mode')}")
     if (user_data.get("contract_mode") or "") != "user":
         raise RuntimeError(f"system.init user mode mismatch: data={user_data.get('contract_mode')}")
+    _require_scene_trace(user_meta, label="system.init user")
+    for key in ("scene_diagnostics", "diagnostic", "scene_channel_selector", "scene_channel_source_ref"):
+        if key in user_data:
+            raise RuntimeError(f"system.init user mode should not expose {key}")
 
     user_scenes = user_data.get("scenes") if isinstance(user_data.get("scenes"), list) else []
     user_caps = user_data.get("capabilities") if isinstance(user_data.get("capabilities"), list) else []
@@ -129,13 +147,18 @@ def main() -> None:
         raise RuntimeError(f"system.init hud mode mismatch: meta={hud_meta.get('contract_mode')}")
     if (hud_data.get("contract_mode") or "") != "hud":
         raise RuntimeError(f"system.init hud mode mismatch: data={hud_data.get('contract_mode')}")
+    hud_meta_trace = _require_scene_trace(hud_meta, label="system.init hud")
     hud_trace = hud_data.get("hud") if isinstance(hud_data.get("hud"), dict) else {}
-    for key in ("scene_source", "scene_contract_ref", "channel_selector", "channel_source_ref"):
+    for key in TRACE_KEYS:
         if not str(hud_trace.get(key) or "").strip():
             raise RuntimeError(f"system.init hud tracing missing key: {key}")
+        if str(hud_trace.get(key) or "") != str(hud_meta_trace.get(key) or ""):
+            raise RuntimeError(f"system.init hud trace mismatch for key={key}")
     governance = hud_trace.get("governance") if isinstance(hud_trace.get("governance"), dict) else {}
     if not governance:
         raise RuntimeError("system.init hud tracing missing governance summary")
+    if not isinstance(hud_data.get("scene_diagnostics"), dict):
+        raise RuntimeError("system.init hud must include scene_diagnostics")
 
     status, user_contract = _post_intent(
         intent_url,

@@ -39,7 +39,8 @@ Phase 11 backend core goals are closed:
 `verify.contract.preflight` includes:
 1. `verify.test_seed_dependency.guard`
 2. `verify.contract_drift.guard`
-3. `audit.intent.surface` (artifact output)
+3. `verify.scene.contract_path.gate`
+5. `audit.intent.surface` (artifact output)
 
 Applied to:
 - `ci.gate` / `ci.smoke` / `ci.full` / `ci.repro`
@@ -49,4 +50,3 @@ Applied to:
 ## Out of Scope / Next Phase
 
 - Frontend strict type convergence and UI-level error/action rendering remain cross-repo tasks and move to Phase 12.
-

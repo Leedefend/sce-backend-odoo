@@ -16,13 +16,20 @@ def _server_time() -> str:
     return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
 
-def _json_response(payload: Dict[str, Any], status: int = 200):
+def _json_response(payload: Dict[str, Any], status: int = 200, headers: Optional[list[tuple[str, str]]] = None):
     body = json.dumps(payload, ensure_ascii=False, default=str)
-    headers = [("Content-Type", "application/json; charset=utf-8")]
-    return request.make_response(body, headers=headers, status=status)
+    response_headers = [("Content-Type", "application/json; charset=utf-8")]
+    if headers:
+        response_headers.extend(headers)
+    return request.make_response(body, headers=response_headers, status=status)
 
 
-def ok(data: Any, warnings: Optional[list] = None, status: int = 200):
+def ok(
+    data: Any,
+    warnings: Optional[list] = None,
+    status: int = 200,
+    headers: Optional[list[tuple[str, str]]] = None,
+):
     trace_id = get_trace_id()
     payload = {
         "ok": True,
@@ -32,7 +39,7 @@ def ok(data: Any, warnings: Optional[list] = None, status: int = 200):
         "warnings": warnings or [],
         "data": data,
     }
-    return _json_response(payload, status=status)
+    return _json_response(payload, status=status, headers=headers)
 
 
 def fail(
@@ -41,6 +48,7 @@ def fail(
     details: Optional[Dict[str, Any]] = None,
     http_status: int = 400,
     warnings: Optional[list] = None,
+    headers: Optional[list[tuple[str, str]]] = None,
 ):
     trace_id = get_trace_id()
     error = {
@@ -57,7 +65,7 @@ def fail(
         "warnings": warnings or [],
         "error": error,
     }
-    return _json_response(payload, status=http_status)
+    return _json_response(payload, status=http_status, headers=headers)
 
 
 def fail_from_exception(exc: Exception, http_status: int = 500):

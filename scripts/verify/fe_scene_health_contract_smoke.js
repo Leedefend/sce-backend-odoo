@@ -150,7 +150,7 @@ async function main() {
   log('app.init');
   const initResp = await requestJson(
     intentUrl,
-    { intent: 'app.init', params: { scene: 'web', with_preload: false } },
+    { intent: 'app.init', params: { scene: 'web', with_preload: false, contract_mode: 'hud' } },
     authHeader
   );
   writeJson(path.join(outDir, 'app_init.log'), initResp);

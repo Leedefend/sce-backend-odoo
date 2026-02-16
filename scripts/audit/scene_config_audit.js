@@ -91,7 +91,7 @@ async function main() {
   const auth = { Authorization: `Bearer ${token}`, 'X-Odoo-DB': DB_NAME };
   const initResp = await requestJson(
     intentUrl,
-    { intent: 'app.init', params: { scene: 'web', with_preload: false } },
+    { intent: 'app.init', params: { scene: 'web', with_preload: false, contract_mode: 'hud' } },
     auth
   );
   if (initResp.status >= 400 || !initResp.body.ok) throw new Error(`app.init failed: ${initResp.status}`);

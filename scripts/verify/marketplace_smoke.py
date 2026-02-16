@@ -3,7 +3,8 @@
 import json
 import os
 from intent_smoke_utils import require_ok
-from python_http_smoke_utils import get_base_url, http_get_json, http_post_json
+from python_http_smoke_utils import get_base_url, http_get_json, http_get_json_with_headers, http_post_json
+from scene_legacy_assertions import require_deprecation_headers, require_deprecation_payload
 
 
 def main():
@@ -68,8 +69,10 @@ def main():
     )
     require_ok(status, install_ok, "packs.install confirm")
 
-    status, scenes_resp = http_get_json(scenes_url, headers=auth_header)
+    status, scenes_resp, scenes_headers = http_get_json_with_headers(scenes_url, headers=auth_header)
     require_ok(status, scenes_resp, "scenes.my")
+    require_deprecation_payload(scenes_resp.get("data") or {}, label="scenes.my")
+    require_deprecation_headers(scenes_headers, label="scenes.my")
 
     print("[marketplace_smoke] PASS")
 

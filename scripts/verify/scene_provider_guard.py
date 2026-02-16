@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import re
 import sys
@@ -9,6 +10,10 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 PROVIDER = ROOT / "addons/smart_core/core/scene_provider.py"
+ADDONS_ROOT = ROOT / "addons"
+ALLOWED_IMPORTERS = {
+    "addons/smart_core/handlers/system_init.py",
+}
 
 REQUIRED_SYMBOLS = (
     "resolve_scene_channel",
@@ -18,6 +23,45 @@ REQUIRED_SYMBOLS = (
 )
 
 FORBIDDEN_IMPORT_RE = re.compile(r"(?:from\s+odoo\.addons\.smart_construction_core)")
+PROVIDER_MODULE = "odoo.addons.smart_core.core.scene_provider"
+FORBIDDEN_PROVIDER_IMPORT_PREFIX = "odoo.addons.smart_construction_core"
+
+
+def _imports_scene_provider(file_text: str) -> bool:
+    try:
+        tree = ast.parse(file_text)
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == PROVIDER_MODULE:
+            return True
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == PROVIDER_MODULE:
+                    return True
+    return False
+
+
+def _imports_forbidden_provider_module(file_text: str) -> bool:
+    try:
+        tree = ast.parse(file_text)
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            mod = str(node.module or "")
+            if mod == FORBIDDEN_PROVIDER_IMPORT_PREFIX or mod.startswith(
+                f"{FORBIDDEN_PROVIDER_IMPORT_PREFIX}."
+            ):
+                return True
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                mod = str(alias.name or "")
+                if mod == FORBIDDEN_PROVIDER_IMPORT_PREFIX or mod.startswith(
+                    f"{FORBIDDEN_PROVIDER_IMPORT_PREFIX}."
+                ):
+                    return True
+    return False
 
 
 def main() -> int:
@@ -33,8 +77,18 @@ def main() -> int:
         if f"def {symbol}(" not in text:
             violations.append(f"missing provider symbol: {symbol}")
 
-    if FORBIDDEN_IMPORT_RE.search(text):
+    if FORBIDDEN_IMPORT_RE.search(text) or _imports_forbidden_provider_module(text):
         violations.append("scene_provider must not import smart_construction_core")
+
+    for path in ADDONS_ROOT.rglob("*.py"):
+        rel = path.relative_to(ROOT).as_posix()
+        if rel == PROVIDER.relative_to(ROOT).as_posix():
+            continue
+        file_text = path.read_text(encoding="utf-8", errors="ignore")
+        if _imports_scene_provider(file_text) and rel not in ALLOWED_IMPORTERS:
+            violations.append(
+                f"{rel}: scene_provider import is restricted to {sorted(ALLOWED_IMPORTERS)}"
+            )
 
     if violations:
         print("[scene_provider_guard] FAIL")
@@ -48,4 +102,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

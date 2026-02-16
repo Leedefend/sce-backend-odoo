@@ -4,6 +4,7 @@ import json
 import os
 import time
 from datetime import datetime
+from http.client import RemoteDisconnected
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
 
@@ -44,18 +45,23 @@ def _http_post_json(url: str, payload: dict, headers: dict | None = None) -> tup
     req.add_header("Content-Type", "application/json")
     for k, v in (headers or {}).items():
         req.add_header(k, v)
-    try:
-        with urlrequest.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8") or "{}"
-            return resp.status, json.loads(body)
-    except HTTPError as e:
-        body = e.read().decode("utf-8") if hasattr(e, "read") else ""
+    attempt = 0
+    while True:
+        attempt += 1
         try:
-            return e.code, json.loads(body or "{}")
-        except Exception:
-            return e.code, {"raw": body}
-    except URLError as e:
-        raise RuntimeError(f"HTTP request failed: {e}") from e
+            with urlrequest.urlopen(req, timeout=30) as resp:
+                body = resp.read().decode("utf-8") or "{}"
+                return resp.status, json.loads(body)
+        except HTTPError as e:
+            body = e.read().decode("utf-8") if hasattr(e, "read") else ""
+            try:
+                return e.code, json.loads(body or "{}")
+            except Exception:
+                return e.code, {"raw": body}
+        except (RemoteDisconnected, ConnectionResetError, URLError) as e:
+            if attempt >= 3:
+                raise RuntimeError(f"HTTP request failed after retries: {e}") from e
+            time.sleep(0.5 * attempt)
 
 
 def _assert_error(resp: dict, code: str):
@@ -69,6 +75,16 @@ def _assert_error(resp: dict, code: str):
     meta = resp.get("meta") or {}
     if not meta.get("trace_id"):
         raise RuntimeError("missing meta.trace_id in error response")
+
+
+def _assert_scene_trace(resp: dict, *, label: str):
+    meta = resp.get("meta") if isinstance(resp.get("meta"), dict) else {}
+    scene_trace = meta.get("scene_trace") if isinstance(meta.get("scene_trace"), dict) else {}
+    if not scene_trace:
+        raise RuntimeError(f"{label} missing meta.scene_trace")
+    for key in ("scene_source", "scene_contract_ref", "scene_channel", "channel_selector", "channel_source_ref"):
+        if not str(scene_trace.get(key) or "").strip():
+            raise RuntimeError(f"{label} missing meta.scene_trace.{key}")
 
 
 def _normalize_obj(obj):
@@ -174,6 +190,7 @@ def main():
     status, init_resp = _http_post_json(intent_url, init_payload, headers=auth_header)
     if status >= 400 or not init_resp.get("ok"):
         raise RuntimeError(f"system.init failed: {init_resp}")
+    _assert_scene_trace(init_resp, label="system.init")
 
     # 3) ui.contract (nav op)
     contract_payload = {"intent": "ui.contract", "params": {"db": db_name, "op": "nav"}}
