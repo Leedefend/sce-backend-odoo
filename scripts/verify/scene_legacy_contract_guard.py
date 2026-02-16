@@ -16,9 +16,11 @@ REQUIRED_PATTERNS = (
     (r'"sunset_date"\s*:\s*_LEGACY_SCENES_SUNSET_DATE', "missing payload sunset_date constant wiring"),
     (r'\("Deprecation",\s*"true"\)', "missing Deprecation header"),
     (r'\("Sunset",\s*_LEGACY_SCENES_SUNSET_HTTP\)', "missing Sunset header constant wiring"),
+    (r'\("X-Legacy-Endpoint",\s*_LEGACY_SCENES_ENDPOINT_NAME\)', "missing X-Legacy-Endpoint header"),
     (r'rel=\\"successor-version\\"', "missing successor-version Link header"),
     (r'_LEGACY_SCENES_SUCCESSOR\s*=\s*"([^"]+)"', "missing successor endpoint constant"),
     (r'_LEGACY_SCENES_SUNSET_DATE\s*=\s*"([^"]+)"', "missing sunset date constant"),
+    (r'_LEGACY_SCENES_ENDPOINT_NAME\s*=\s*"([^"]+)"', "missing legacy endpoint name constant"),
 )
 
 
@@ -47,13 +49,17 @@ def main() -> int:
 
     controller_successor = _extract_constant(text, "_LEGACY_SCENES_SUCCESSOR")
     controller_sunset = _extract_constant(text, "_LEGACY_SCENES_SUNSET_DATE")
+    controller_endpoint_name = _extract_constant(text, "_LEGACY_SCENES_ENDPOINT_NAME")
     contract_successor = _extract_constant(legacy_text, "LEGACY_SCENES_SUCCESSOR")
     contract_sunset = _extract_constant(legacy_text, "LEGACY_SCENES_SUNSET_DATE")
+    contract_endpoint_name = _extract_constant(legacy_text, "LEGACY_SCENES_ENDPOINT_NAME")
 
     if not contract_successor:
         violations.append("missing LEGACY_SCENES_SUCCESSOR in scripts/common/scene_legacy_contract.py")
     if not contract_sunset:
         violations.append("missing LEGACY_SCENES_SUNSET_DATE in scripts/common/scene_legacy_contract.py")
+    if not contract_endpoint_name:
+        violations.append("missing LEGACY_SCENES_ENDPOINT_NAME in scripts/common/scene_legacy_contract.py")
     if controller_successor and contract_successor and controller_successor != contract_successor:
         violations.append(
             f"successor constant mismatch: controller={controller_successor} common={contract_successor}"
@@ -61,6 +67,11 @@ def main() -> int:
     if controller_sunset and contract_sunset and controller_sunset != contract_sunset:
         violations.append(
             f"sunset date constant mismatch: controller={controller_sunset} common={contract_sunset}"
+        )
+    if controller_endpoint_name and contract_endpoint_name and controller_endpoint_name != contract_endpoint_name:
+        violations.append(
+            "endpoint name constant mismatch: "
+            f"controller={controller_endpoint_name} common={contract_endpoint_name}"
         )
 
     if violations:

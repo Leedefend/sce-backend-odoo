@@ -19,6 +19,7 @@ _LEGACY_SCENES_SUNSET_HTTP = format_datetime(
     datetime(2026, 4, 30, 0, 0, 0, tzinfo=timezone.utc), usegmt=True
 )
 _LEGACY_SCENES_SUCCESSOR = "/api/v1/intent"
+_LEGACY_SCENES_ENDPOINT_NAME = "scenes.my"
 
 
 def _has_admin(user):
@@ -75,6 +76,7 @@ class SceneController(http.Controller):
                 headers=[
                     ("Deprecation", "true"),
                     ("Sunset", _LEGACY_SCENES_SUNSET_HTTP),
+                    ("X-Legacy-Endpoint", _LEGACY_SCENES_ENDPOINT_NAME),
                     ("Link", f"<{_LEGACY_SCENES_SUCCESSOR}>; rel=\"successor-version\""),
                 ],
             )
