@@ -26,6 +26,9 @@ def build_evidence(
     intent_surface: list[dict],
     scene_alignment_report: dict,
     business_capability_report: dict,
+    role_capability_prod_like_report: dict,
+    contract_assembler_semantic_report: dict,
+    runtime_surface_dashboard_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -94,6 +97,29 @@ def build_evidence(
             "failed_check_count": int((((business_capability_report.get("summary") or {}).get("failed_check_count")) or 0)),
             "report": "artifacts/business_capability_baseline_report.json",
         },
+        "role_capability_prod_like": {
+            "ok": bool(role_capability_prod_like_report.get("ok")),
+            "fixture_count": int((((role_capability_prod_like_report.get("summary") or {}).get("fixture_count")) or 0)),
+            "failed_fixture_count": int(
+                (((role_capability_prod_like_report.get("summary") or {}).get("failed_fixture_count")) or 0)
+            ),
+            "report": "artifacts/backend/role_capability_floor_prod_like.json",
+        },
+        "contract_assembler_semantic": {
+            "ok": bool(contract_assembler_semantic_report.get("ok")),
+            "role_count": int((((contract_assembler_semantic_report.get("summary") or {}).get("role_count")) or 0)),
+            "error_count": int((((contract_assembler_semantic_report.get("summary") or {}).get("error_count")) or 0)),
+            "report": "artifacts/backend/contract_assembler_semantic_smoke.json",
+        },
+        "runtime_surface_dashboard": {
+            "ok": bool(runtime_surface_dashboard_report.get("ok", True)),
+            "warning_count": int((((runtime_surface_dashboard_report.get("summary") or {}).get("warning_count")) or 0)),
+            "scene_delta": int((((runtime_surface_dashboard_report.get("summary") or {}).get("scene_delta")) or 0)),
+            "catalog_runtime_ratio": float(
+                (((runtime_surface_dashboard_report.get("summary") or {}).get("catalog_runtime_ratio")) or 0.0)
+            ),
+            "report": "artifacts/backend/runtime_surface_dashboard_report.json",
+        },
     }
     return evidence
 
@@ -105,6 +131,9 @@ def to_markdown(evidence: dict) -> str:
     t = evidence["intent_surface"]
     a = evidence["scene_runtime_alignment"]
     b = evidence["business_capability_baseline"]
+    p = evidence["role_capability_prod_like"]
+    c = evidence["contract_assembler_semantic"]
+    r = evidence["runtime_surface_dashboard"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -143,6 +172,25 @@ def to_markdown(evidence: dict) -> str:
         f"- error_count: {g['error_count']}",
         f"- report: `{g['report']}`",
         "",
+        "## Prod-like Role Fixtures",
+        f"- ok: {p['ok']}",
+        f"- fixture_count: {p['fixture_count']}",
+        f"- failed_fixture_count: {p['failed_fixture_count']}",
+        f"- report: `{p['report']}`",
+        "",
+        "## Contract Assembler Semantic",
+        f"- ok: {c['ok']}",
+        f"- role_count: {c['role_count']}",
+        f"- error_count: {c['error_count']}",
+        f"- report: `{c['report']}`",
+        "",
+        "## Runtime Surface Dashboard",
+        f"- ok: {r['ok']}",
+        f"- warning_count: {r['warning_count']}",
+        f"- scene_delta: {r['scene_delta']}",
+        f"- catalog_runtime_ratio: {r['catalog_runtime_ratio']}",
+        f"- report: `{r['report']}`",
+        "",
         "## Top Observed reason_code",
     ]
     top_codes = i.get("top_observed_reason_codes") or []
@@ -163,6 +211,9 @@ def main() -> int:
     parser.add_argument("--intent-surface", default="artifacts/intent_surface_report.json")
     parser.add_argument("--scene-alignment-report", default="artifacts/scene_catalog_runtime_alignment_guard.json")
     parser.add_argument("--business-capability-report", default="artifacts/business_capability_baseline_report.json")
+    parser.add_argument("--role-capability-prod-like-report", default="artifacts/backend/role_capability_floor_prod_like.json")
+    parser.add_argument("--contract-assembler-semantic-report", default="artifacts/backend/contract_assembler_semantic_smoke.json")
+    parser.add_argument("--runtime-surface-dashboard-report", default="artifacts/backend/runtime_surface_dashboard_report.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -173,6 +224,9 @@ def main() -> int:
     intent_surface = load_json(Path(args.intent_surface))
     scene_alignment_report = load_json_optional(Path(args.scene_alignment_report), {})
     business_capability_report = load_json_optional(Path(args.business_capability_report), {})
+    role_capability_prod_like_report = load_json_optional(Path(args.role_capability_prod_like_report), {})
+    contract_assembler_semantic_report = load_json_optional(Path(args.contract_assembler_semantic_report), {})
+    runtime_surface_dashboard_report = load_json_optional(Path(args.runtime_surface_dashboard_report), {})
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -186,6 +240,12 @@ def main() -> int:
         raise SystemExit("scene alignment report must be object")
     if not isinstance(business_capability_report, dict):
         raise SystemExit("business capability report must be object")
+    if not isinstance(role_capability_prod_like_report, dict):
+        raise SystemExit("role capability prod-like report must be object")
+    if not isinstance(contract_assembler_semantic_report, dict):
+        raise SystemExit("contract assembler semantic report must be object")
+    if not isinstance(runtime_surface_dashboard_report, dict):
+        raise SystemExit("runtime surface dashboard report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -194,6 +254,9 @@ def main() -> int:
         intent_surface,
         scene_alignment_report,
         business_capability_report,
+        role_capability_prod_like_report,
+        contract_assembler_semantic_report,
+        runtime_surface_dashboard_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)

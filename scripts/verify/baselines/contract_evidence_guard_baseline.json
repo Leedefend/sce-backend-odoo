@@ -2,6 +2,10 @@
   "max_errors": 0,
   "min_business_capability_check_count": 3,
   "min_scene_catalog_runtime_ratio": 0.01,
+  "min_prod_like_fixture_count": 6,
+  "max_contract_assembler_semantic_error_count": 0,
   "require_alignment_ok": true,
-  "require_business_capability_ok": true
+  "require_business_capability_ok": true,
+  "require_prod_like_ok": true,
+  "require_contract_assembler_semantic_ok": true
 }

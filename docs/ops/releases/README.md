@@ -113,3 +113,10 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 ## Current Review Baseline
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
+- Backend evidence & observability expansion (Phase Next):
+  - `make verify.role.capability_floor.prod_like`
+    - artifact: `/mnt/artifacts/backend/role_capability_floor_prod_like.json` (fallback: `artifacts/backend/role_capability_floor_prod_like.json`)
+  - `make verify.contract.assembler.semantic.smoke`
+    - artifact: `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback: `artifacts/backend/contract_assembler_semantic_smoke.json`)
+  - `make verify.runtime.surface.dashboard.report`
+    - artifact: `/mnt/artifacts/backend/runtime_surface_dashboard_report.json` (fallback: `artifacts/backend/runtime_surface_dashboard_report.json`)

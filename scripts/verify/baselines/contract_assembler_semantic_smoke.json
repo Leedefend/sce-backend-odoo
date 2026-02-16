@@ -1,0 +1,20 @@
+{
+  "fixture_password": "prod_like",
+  "max_errors": 0,
+  "roles": [
+    {
+      "role": "pm",
+      "login": "sc_fx_pm"
+    },
+    {
+      "role": "executive",
+      "login": "sc_fx_executive"
+    }
+  ],
+  "system_init_required_keys": [
+    "scenes",
+    "capabilities",
+    "contract_mode"
+  ],
+  "ui_contract_required_keys": []
+}
