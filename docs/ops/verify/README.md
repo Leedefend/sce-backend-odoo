@@ -32,6 +32,10 @@
   - Verifies scene definition semantics + scene contract schema shape.
 - `make verify.seed.demo.isolation`
   - Verifies provider layer does not depend on demo/seed modules and user-mode contract output does not leak demo/showcase semantics.
+- `make verify.seed.demo.import_boundary.guard`
+  - Static import guard for runtime paths; blocks imports from `smart_construction_demo` / `smart_construction_seed` in smart_core/core/scene/portal modules.
+- `make verify.seed.demo.import_boundary.guard`
+  - Static import guard: blocks runtime module imports from `smart_construction_demo` / `smart_construction_seed` in smart_core/core/scene/portal paths.
 - `make verify.contract.ordering.smoke`
   - Verifies scene/capability sequence determinism across repeated `system.init` calls.
 - `make verify.contract.catalog.determinism`

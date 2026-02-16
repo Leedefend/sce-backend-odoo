@@ -25,6 +25,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | C1.1 Business core journey intent coverage baseline | `make verify.business.core_journey.guard` + `make verify.business.capability_baseline.guard` | Covered |
 | C1.2 Role capability floor baseline | `make verify.role.capability_floor.guard` + `make verify.business.capability_baseline.guard` | Covered |
 | D1.1 Demo/seed must not leak into core provider path | `make verify.seed.demo.isolation` | Covered |
+| D1.1.a Runtime modules must not import demo/seed addons | `make verify.seed.demo.import_boundary.guard` + `make verify.seed.demo.isolation` | Covered |
 | D1.2 Demo data should not leak in user contract path | `make verify.seed.demo.isolation` + `make verify.scene.demo_leak.guard` | Covered |
 
 ## P2 Stability / HUD / Snapshot
@@ -49,6 +50,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.capability.schema`
 - `make verify.scene.schema`
 - `make verify.seed.demo.isolation`
+- `make verify.seed.demo.import_boundary.guard`
 - `make verify.backend.architecture.full`
 - `make verify.controller.boundary.guard`
 - `make verify.scene.catalog.runtime_alignment.guard`
