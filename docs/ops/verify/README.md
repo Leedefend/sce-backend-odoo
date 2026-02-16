@@ -48,6 +48,12 @@
   - Verifies required governance policy baseline JSON files exist and are valid objects.
 - `make verify.backend.architecture.full`
   - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + governance coverage + HUD trace smokes).
+  - Optional strict runtime-surface warning gate: `SC_RUNTIME_SURFACE_STRICT=1 make verify.backend.architecture.full`.
+  - Always emits consolidated summary artifacts:
+    - `artifacts/backend/backend_architecture_full_report.json`
+    - `artifacts/backend/backend_architecture_full_report.md`
+- `make verify.backend.architecture.full.report`
+  - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
 - `make verify.scene.catalog.runtime_alignment.guard`
   - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
   - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
@@ -93,11 +99,15 @@
 - `make verify.runtime.surface.dashboard.report`
   - Emits runtime scenes/capabilities dashboard vs catalog snapshot scope with threshold warnings (warning-only, non-blocking).
   - Baseline: `scripts/verify/baselines/runtime_surface_dashboard_report.json`.
+  - Baseline snapshot (for diff): `scripts/verify/baselines/runtime_surface_dashboard_baseline_snapshot.json`.
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `runtime_surface_dashboard_report.json`
     - `runtime_surface_dashboard_report.md`
 - `make verify.runtime.surface.dashboard.schema.guard`
   - Schema guard for runtime surface dashboard evidence structure and warning count consistency.
+- `make verify.runtime.surface.dashboard.strict.guard`
+  - Optional strict warning gate for runtime surface dashboard report.
+  - Uses `SC_RUNTIME_SURFACE_WARN_MAX` as warning threshold (default: `0`).
 - `make verify.phase_next.evidence.bundle`
   - Aggregate target for phase-next evidence chain:
     - prod-like role fixture evidence + schema guard

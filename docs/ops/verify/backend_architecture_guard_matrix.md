@@ -45,6 +45,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | E1.2.a Contract assembler semantic evidence schema stability | `make verify.contract.assembler.semantic.schema.guard` | Covered |
 | E1.3 Runtime surface dashboard report (warning-only thresholds) | `make verify.runtime.surface.dashboard.report` | Covered |
 | E1.3.a Runtime surface dashboard evidence schema stability | `make verify.runtime.surface.dashboard.schema.guard` | Covered |
+| E1.3.b Runtime surface dashboard strict warning gate (optional) | `make verify.runtime.surface.dashboard.strict.guard` | Covered (enabled by `SC_RUNTIME_SURFACE_STRICT=1`) |
 | H1.1 Default user mode, hud gated by flag | `make verify.mode.filter` | Covered |
 | H1.2 HUD tracing fields coverage | `make verify.scene.hud.trace.smoke` + `make verify.scene.meta.trace.smoke` | Covered |
 
@@ -60,6 +61,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.seed.demo.isolation`
 - `make verify.seed.demo.import_boundary.guard`
 - `make verify.backend.architecture.full`
+- `make verify.backend.architecture.full.report`
 - `make verify.phase_next.evidence.bundle`
 - `make verify.controller.boundary.guard`
 - `make verify.scene.catalog.runtime_alignment.guard`
@@ -72,6 +74,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.contract.assembler.semantic.schema.guard`
 - `make verify.runtime.surface.dashboard.report`
 - `make verify.runtime.surface.dashboard.schema.guard`
+- `make verify.runtime.surface.dashboard.strict.guard`
 - `make verify.business.core_journey.guard`
 - `make verify.role.capability_floor.guard`
 - `make verify.business.capability_baseline.guard`
