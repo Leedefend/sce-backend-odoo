@@ -7,6 +7,10 @@
   - Use `SC_SCENE_OBS_STRICT=1` to additionally enforce strict scene observability evidence during gate runs.
   - Default gate path includes `verify.portal.scene_observability_gate_smoke.container` (structure + preflight smoke + smoke chain).
   - Contract preflight now runs baseline freeze guard by default (`BASELINE_FREEZE_ENFORCE=1`).
+  - Contract preflight includes scene runtime boundary gate:
+    - `make verify.scene.runtime_boundary.gate`
+  - Contract preflight includes legacy endpoint aggregate checks:
+    - `make verify.scene.legacy.all`
 
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
