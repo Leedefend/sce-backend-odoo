@@ -76,6 +76,7 @@
     - `artifacts/business_capability_baseline_report.md`
 - `make verify.contract.evidence.guard`
   - Exports and validates contract evidence bundle including runtime alignment and business capability baseline summaries.
+  - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`
     - `artifacts/contract/phase11_1_contract_evidence.md`
