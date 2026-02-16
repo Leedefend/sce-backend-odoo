@@ -10,6 +10,10 @@
     "scripts/verify/scene_observability_preflight_brief.py",
     "scripts/verify/scene_observability_structure_guard.py",
     "scripts/verify/baselines/scene_observability_structure.json",
+    "scripts/verify/baselines/scene_catalog_runtime_alignment.json",
+    "scripts/verify/baselines/business_core_journey_guard.json",
+    "scripts/verify/baselines/role_capability_floor_guard.json",
+    "scripts/verify/baselines/controller_boundary_guard_baseline.json",
     "docs/ops/verify/scene_observability_troubleshooting.md"
   ],
   "exempt_paths": [
