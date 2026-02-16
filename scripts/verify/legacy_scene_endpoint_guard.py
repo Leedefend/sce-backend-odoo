@@ -24,6 +24,7 @@ ALLOWLIST = {
     "scripts/verify/scene_admin_smoke.py",
     "scripts/verify/scene_legacy_auth_smoke.py",
     "scripts/verify/scene_legacy_deprecation_smoke.py",
+    "scripts/verify/scene_legacy_docs_guard.py",
 }
 
 
