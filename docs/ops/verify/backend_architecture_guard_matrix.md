@@ -8,7 +8,7 @@ This matrix maps governance checkpoints to executable verification targets.
 |---|---|---|
 | G0.1 Intent layer must avoid business hardcoding | `make verify.intent.router.purity` | Covered |
 | G0.2 Contract envelope consistency (`ok/data/meta`) | `make verify.contract.envelope` | Covered |
-| B1.1 Business module must not assemble runtime scene/capability shape | `make verify.backend.boundary_guard` | Covered |
+| B1.1 Business module must not assemble runtime scene/capability shape | `make verify.backend.boundary_guard` + `make verify.business.shape.guard` | Covered |
 | B1.2 Runtime scene reads only through provider in smart_core | `make verify.scene.provider.guard` + `make verify.backend.boundary_guard` | Covered |
 
 ## P1 Boundary / Permission / Isolation
@@ -42,6 +42,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.capability.schema`
 - `make verify.scene.schema`
 - `make verify.seed.demo.isolation`
+- `make verify.backend.architecture.full`
 
 ## Notes
 
