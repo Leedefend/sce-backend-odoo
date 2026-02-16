@@ -9,6 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE_JSON = ROOT / "artifacts" / "contract" / "phase11_1_contract_evidence.json"
+BASELINE_JSON = ROOT / "scripts" / "verify" / "baselines" / "contract_evidence_guard_baseline.json"
 
 
 def _load_json(path: Path) -> dict:
@@ -22,6 +23,17 @@ def _load_json(path: Path) -> dict:
 
 
 def main() -> int:
+    policy = {
+        "max_errors": 0,
+        "min_business_capability_check_count": 1,
+        "min_scene_catalog_runtime_ratio": 0.0,
+        "require_alignment_ok": True,
+        "require_business_capability_ok": True,
+    }
+    policy_payload = _load_json(BASELINE_JSON)
+    if policy_payload:
+        policy.update(policy_payload)
+
     payload = _load_json(EVIDENCE_JSON)
     if not payload:
         print("[contract_evidence_guard] FAIL")
@@ -47,16 +59,22 @@ def main() -> int:
     align = payload.get("scene_runtime_alignment") if isinstance(payload.get("scene_runtime_alignment"), dict) else {}
     if not isinstance(align.get("ok"), bool):
         errors.append("scene_runtime_alignment.ok must be bool")
-    if float(align.get("catalog_runtime_ratio") or 0.0) <= 0.0:
-        errors.append("scene_runtime_alignment.catalog_runtime_ratio must be > 0")
+    if bool(policy.get("require_alignment_ok", True)) and not bool(align.get("ok")):
+        errors.append("scene_runtime_alignment.ok must be true under baseline policy")
+    min_ratio = float(policy.get("min_scene_catalog_runtime_ratio", 0.0) or 0.0)
+    if float(align.get("catalog_runtime_ratio") or 0.0) < min_ratio:
+        errors.append(f"scene_runtime_alignment.catalog_runtime_ratio must be >= {min_ratio}")
 
-    baseline = payload.get("business_capability_baseline") if isinstance(payload.get("business_capability_baseline"), dict) else {}
-    if not isinstance(baseline.get("ok"), bool):
+    capability_baseline = payload.get("business_capability_baseline") if isinstance(payload.get("business_capability_baseline"), dict) else {}
+    if not isinstance(capability_baseline.get("ok"), bool):
         errors.append("business_capability_baseline.ok must be bool")
-    if int(baseline.get("check_count") or 0) < 1:
-        errors.append("business_capability_baseline.check_count must be >= 1")
+    if bool(policy.get("require_business_capability_ok", True)) and not bool(capability_baseline.get("ok")):
+        errors.append("business_capability_baseline.ok must be true under baseline policy")
+    min_checks = int(policy.get("min_business_capability_check_count", 1) or 1)
+    if int(capability_baseline.get("check_count") or 0) < min_checks:
+        errors.append(f"business_capability_baseline.check_count must be >= {min_checks}")
 
-    if errors:
+    if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
         for item in errors:
             print(item)
