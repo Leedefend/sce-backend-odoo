@@ -26,6 +26,10 @@ REQUIRED_PATTERNS = (
 )
 
 
+def _has_pattern(pattern: str, text: str) -> bool:
+    return bool(re.search(pattern, text, flags=re.MULTILINE | re.DOTALL))
+
+
 def _extract_constant(text: str, name: str) -> str:
     match = re.search(rf'{re.escape(name)}\s*=\s*"([^"]+)"', text)
     return str(match.group(1) or "").strip() if match else ""
@@ -46,7 +50,7 @@ def main() -> int:
     violations: list[str] = []
 
     for pattern, message in REQUIRED_PATTERNS:
-        if not re.search(pattern, text):
+        if not _has_pattern(pattern, text):
             violations.append(message)
 
     controller_successor = _extract_constant(text, "_LEGACY_SCENES_SUCCESSOR")
