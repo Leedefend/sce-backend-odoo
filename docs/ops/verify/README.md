@@ -58,6 +58,14 @@
   - Artifacts:
     - `artifacts/role_capability_floor_guard.json`
     - `artifacts/role_capability_floor_guard.md`
+- `make verify.business.capability_baseline.guard`
+  - Aggregates business capability baselines:
+    - `verify.scene.catalog.runtime_alignment.guard`
+    - `verify.business.core_journey.guard`
+    - `verify.role.capability_floor.guard`
+  - Summary artifacts:
+    - `artifacts/business_capability_baseline_report.json`
+    - `artifacts/business_capability_baseline_report.md`
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
 - `make verify.controller.delegate.guard`
