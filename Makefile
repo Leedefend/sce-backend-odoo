@@ -1394,6 +1394,7 @@ verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verif
 
 verify.boundary.import_guard: guard.prod.forbid
 	@python3 scripts/verify/boundary_import_guard.py
+	@python3 scripts/verify/model_ui_dependency_guard.py
 
 verify.backend.boundary_guard: guard.prod.forbid
 	@python3 scripts/verify/backend_boundary_guard.py
