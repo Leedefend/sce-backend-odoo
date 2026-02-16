@@ -12,6 +12,7 @@ POLICY_FILES = [
     "scripts/verify/baselines/scene_catalog_runtime_alignment.json",
     "scripts/verify/baselines/intent_router_purity_guard.json",
     "scripts/verify/baselines/scene_provider_guard.json",
+    "scripts/verify/baselines/backend_boundary_guard.json",
     "scripts/verify/baselines/business_core_journey_guard.json",
     "scripts/verify/baselines/role_capability_floor_guard.json",
     "scripts/verify/baselines/contract_evidence_guard_baseline.json",
