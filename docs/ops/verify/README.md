@@ -95,6 +95,11 @@
     - required provider symbols
     - importer allowlist
     - forbidden business/demo/seed imports in provider
+- `make verify.backend.boundary_guard`
+  - Verifies extension/controller runtime boundary policy from baseline (`scripts/verify/baselines/backend_boundary_guard.json`):
+    - extension hook write namespace allowlist (`data.ext_facts`)
+    - controller forbidden runtime route/import patterns
+    - system-init direct scene-registry import prohibition
 - `make verify.controller.delegate.guard`
   - AST guard: route methods in `smart_construction_core/controllers` must not directly return runtime envelope/runtime-shape dicts (except governance allowlist controllers).
 - `make verify.controller.allowlist.routes.guard`
