@@ -39,7 +39,46 @@
 - `make verify.contract.envelope`
   - Aggregates envelope consistency checks (`ok/data/meta`) across intent and contract API paths.
 - `make verify.backend.architecture.full`
-  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + snapshot determinism + governance coverage + HUD trace smokes).
+  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + snapshot determinism + governance coverage + HUD trace smokes).
+- `make verify.scene.catalog.runtime_alignment.guard`
+  - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
+  - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
+  - Artifacts:
+    - `artifacts/scene_catalog_runtime_alignment_guard.json`
+    - `artifacts/scene_catalog_runtime_alignment_guard.md`
+- `make verify.scene.catalog.source.guard`
+  - Verifies scene catalog source metadata invariants (`scene_catalog_scope` / `scene_catalog_semantics` / `scene_contract_scene_count`).
+  - Artifact:
+    - `artifacts/scene_catalog_source_guard.json`
+- `make verify.scene.catalog.governance.guard`
+  - Aggregates scene catalog governance checks:
+    - `verify.scene.catalog.source.guard`
+    - `verify.scene.catalog.runtime_alignment.guard`
+- `make verify.business.core_journey.guard`
+  - Verifies business-critical intent chain coverage from `intent_catalog` against baseline (`required_intents` + `min_test_refs`).
+  - Baseline: `scripts/verify/baselines/business_core_journey_guard.json`.
+  - Artifacts:
+    - `artifacts/business_core_journey_guard.json`
+    - `artifacts/business_core_journey_guard.md`
+- `make verify.role.capability_floor.guard`
+  - Verifies role capability floors from `scene_capability_contract_guard` samples against baseline (`required_roles` + `min_capabilities`).
+  - Baseline: `scripts/verify/baselines/role_capability_floor_guard.json`.
+  - Artifacts:
+    - `artifacts/role_capability_floor_guard.json`
+    - `artifacts/role_capability_floor_guard.md`
+- `make verify.business.capability_baseline.guard`
+  - Aggregates business capability baselines:
+    - `verify.scene.catalog.runtime_alignment.guard`
+    - `verify.business.core_journey.guard`
+    - `verify.role.capability_floor.guard`
+  - Summary artifacts:
+    - `artifacts/business_capability_baseline_report.json`
+    - `artifacts/business_capability_baseline_report.md`
+- `make verify.contract.evidence.guard`
+  - Exports and validates contract evidence bundle including runtime alignment and business capability baseline summaries.
+  - Artifacts:
+    - `artifacts/contract/phase11_1_contract_evidence.json`
+    - `artifacts/contract/phase11_1_contract_evidence.md`
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
 - `make verify.controller.delegate.guard`

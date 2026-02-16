@@ -1,0 +1,17 @@
+{
+  "max_errors": 0,
+  "required_roles": {
+    "admin": {
+      "min_capabilities": 1
+    },
+    "demo_finance": {
+      "min_capabilities": 2
+    },
+    "demo_pm": {
+      "min_capabilities": 5
+    },
+    "demo_role_executive": {
+      "min_capabilities": 4
+    }
+  }
+}

@@ -434,6 +434,12 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
     return {
         "source": {
             "scene_contract_file": str(scene_contract_file.relative_to(repo_root)),
+            "scene_catalog_scope": "scene_contract_snapshot",
+            "scene_catalog_semantics": (
+                "scene_catalog is a contract-shape snapshot for stable export surface; "
+                "runtime system.init may include expanded role/runtime scenes."
+            ),
+            "scene_contract_scene_count": len(scenes),
         },
         "schema_version": payload.get("schema_version", ""),
         "scene_version": payload.get("scene_version", ""),

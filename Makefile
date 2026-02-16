@@ -1233,7 +1233,7 @@ test: guard.prod.forbid check-compose-project check-compose-env
 test.safe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/test/test_safe.sh
 
-.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.frontend.intent_channel.guard verify.scene.legacy_endpoint.guard verify.scene.legacy_contract.guard verify.scene.legacy.contract.guard verify.scene.legacy_docs.guard verify.scene.legacy_auth.smoke verify.scene.legacy_deprecation.smoke verify.scene.legacy.bundle verify.scene.legacy.all verify.scene.runtime_boundary.gate verify.scene.contract_path.gate verify.intent.router.purity verify.scene.definition.semantics verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.delegate.guard verify.controller.allowlist.routes.guard verify.controller.route.policy.guard verify.controller.boundary.report verify.controller.boundary.baseline.guard verify.controller.boundary.guard verify.scene.demo_leak.guard verify.contract.ordering.smoke verify.contract.catalog.determinism verify.contract.envelope verify.seed.demo.isolation verify.boundary.guard verify.contract.snapshot verify.mode.filter verify.capability.schema verify.scene.schema verify.backend.architecture.full verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.baseline.freeze_guard verify.business.increment.preflight verify.business.increment.preflight.strict verify.business.increment.readiness verify.business.increment.readiness.strict verify.business.increment.readiness.brief verify.business.increment.readiness.brief.strict verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.boundary.import_guard verify.backend.boundary_guard verify.scene.provider.guard verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke verify.contract.governance.coverage verify.scene_capability.contract.guard verify.contract.governance.brief verify.contract.mode.smoke verify.contract.api.mode.smoke verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
+.PHONY: verify.e2e.contract verify.e2e.scene verify.e2e.scene_admin verify.e2e.capability_smoke verify.e2e.marketplace_smoke verify.e2e.subscription_smoke verify.e2e.ops_batch_smoke verify.capability.lint verify.frontend_api verify.frontend.intent_channel.guard verify.scene.legacy_endpoint.guard verify.scene.legacy_contract.guard verify.scene.legacy.contract.guard verify.scene.legacy_docs.guard verify.scene.legacy_auth.smoke verify.scene.legacy_deprecation.smoke verify.scene.legacy.bundle verify.scene.legacy.all verify.scene.runtime_boundary.gate verify.scene.contract_path.gate verify.intent.router.purity verify.scene.definition.semantics verify.scene.catalog.source.guard verify.scene.catalog.runtime_alignment.guard verify.scene.catalog.governance.guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.delegate.guard verify.controller.allowlist.routes.guard verify.controller.route.policy.guard verify.controller.boundary.report verify.controller.boundary.baseline.guard verify.controller.boundary.guard verify.business.core_journey.guard verify.role.capability_floor.guard verify.business.capability_baseline.report verify.business.capability_baseline.guard verify.contract.evidence.export verify.contract.evidence.guard verify.scene.demo_leak.guard verify.contract.ordering.smoke verify.contract.catalog.determinism verify.contract.envelope verify.seed.demo.isolation verify.boundary.guard verify.contract.snapshot verify.mode.filter verify.capability.schema verify.scene.schema verify.backend.architecture.full verify.extension_modules.guard verify.test_seed_dependency.guard verify.contract_drift.guard verify.intent.side_effect_policy_guard verify.baseline.freeze_guard verify.business.increment.preflight verify.business.increment.preflight.strict verify.business.increment.readiness verify.business.increment.readiness.strict verify.business.increment.readiness.brief verify.business.increment.readiness.brief.strict verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.all verify.boundary.import_guard verify.backend.boundary_guard verify.scene.provider.guard verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke verify.contract.governance.coverage verify.scene_capability.contract.guard verify.contract.governance.brief verify.contract.mode.smoke verify.contract.api.mode.smoke verify.contract.preflight audit.intent.surface policy.apply.extension_modules policy.ensure.extension_modules
 verify.e2e.contract: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/e2e_contract_guard.sh
 	@$(RUN_ENV) python3 scripts/e2e/e2e_contract_smoke.py
@@ -1292,6 +1292,9 @@ verify.intent.router.purity: guard.prod.forbid
 verify.scene.definition.semantics: guard.prod.forbid
 	@python3 scripts/verify/scene_definition_semantics_guard.py
 
+verify.scene.catalog.source.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_catalog_source_guard.py
+
 verify.model.ui_dependency.guard: guard.prod.forbid
 	@python3 scripts/verify/model_ui_dependency_guard.py
 
@@ -1315,6 +1318,30 @@ verify.controller.boundary.baseline.guard: guard.prod.forbid
 
 verify.controller.boundary.guard: guard.prod.forbid verify.controller.delegate.guard verify.controller.allowlist.routes.guard verify.controller.route.policy.guard verify.controller.boundary.report verify.controller.boundary.baseline.guard
 	@echo "[OK] verify.controller.boundary.guard done"
+
+verify.scene.catalog.runtime_alignment.guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/scene_catalog_runtime_alignment_guard.py
+
+verify.scene.catalog.governance.guard: guard.prod.forbid verify.scene.catalog.source.guard verify.scene.catalog.runtime_alignment.guard
+	@echo "[OK] verify.scene.catalog.governance.guard done"
+
+verify.business.core_journey.guard: guard.prod.forbid
+	@python3 scripts/verify/business_core_journey_guard.py
+
+verify.role.capability_floor.guard: guard.prod.forbid
+	@python3 scripts/verify/role_capability_floor_guard.py
+
+verify.business.capability_baseline.report: guard.prod.forbid
+	@python3 scripts/verify/business_capability_baseline_report.py
+
+verify.business.capability_baseline.guard: guard.prod.forbid verify.scene.catalog.runtime_alignment.guard verify.business.core_journey.guard verify.role.capability_floor.guard verify.business.capability_baseline.report
+	@echo "[OK] verify.business.capability_baseline.guard done"
+
+verify.contract.evidence.export: guard.prod.forbid audit.intent.surface verify.scene.contract.shape verify.business.capability_baseline.guard
+	@python3 scripts/contract/export_evidence.py
+
+verify.contract.evidence.guard: guard.prod.forbid verify.contract.evidence.export
+	@python3 scripts/verify/contract_evidence_guard.py
 
 verify.scene.demo_leak.guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/scene_demo_leak_guard.py
@@ -1350,10 +1377,10 @@ verify.mode.filter: guard.prod.forbid verify.contract.mode.smoke verify.contract
 verify.capability.schema: guard.prod.forbid verify.scene_capability.contract.guard
 	@echo "[OK] verify.capability.schema done"
 
-verify.scene.schema: guard.prod.forbid verify.scene.definition.semantics verify.scene.contract.shape
+verify.scene.schema: guard.prod.forbid verify.scene.definition.semantics verify.scene.catalog.source.guard verify.scene.contract.shape
 	@echo "[OK] verify.scene.schema done"
 
-verify.backend.architecture.full: guard.prod.forbid verify.intent.router.purity verify.boundary.guard verify.contract.envelope verify.mode.filter verify.capability.schema verify.scene.schema verify.seed.demo.isolation verify.contract.snapshot verify.contract.governance.coverage verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke
+verify.backend.architecture.full: guard.prod.forbid verify.intent.router.purity verify.boundary.guard verify.contract.envelope verify.mode.filter verify.capability.schema verify.scene.schema verify.seed.demo.isolation verify.scene.catalog.governance.guard verify.business.capability_baseline.guard verify.contract.snapshot verify.contract.governance.coverage verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke
 	@echo "[OK] verify.backend.architecture.full done"
 
 verify.extension_modules.guard: guard.prod.forbid check-compose-project check-compose-env
