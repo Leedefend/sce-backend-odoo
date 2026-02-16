@@ -50,6 +50,10 @@
   - Verifies scene catalog source metadata invariants (`scene_catalog_scope` / `scene_catalog_semantics` / `scene_contract_scene_count`).
   - Artifact:
     - `artifacts/scene_catalog_source_guard.json`
+- `make verify.scene.catalog.governance.guard`
+  - Aggregates scene catalog governance checks:
+    - `verify.scene.catalog.source.guard`
+    - `verify.scene.catalog.runtime_alignment.guard`
 - `make verify.business.core_journey.guard`
   - Verifies business-critical intent chain coverage from `intent_catalog` against baseline (`required_intents` + `min_test_refs`).
   - Baseline: `scripts/verify/baselines/business_core_journey_guard.json`.
