@@ -15,6 +15,8 @@
     - `make verify.scene.contract_path.gate`
   - Full legacy endpoint aggregate (includes endpoint usage guard):
     - `make verify.scene.legacy.all`
+  - Any docs mentioning `/api/scenes/my` must include deprecated + successor migration semantics; enforced by:
+    - `make verify.scene.legacy_docs.guard`
 
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
