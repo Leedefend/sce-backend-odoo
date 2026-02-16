@@ -7,28 +7,14 @@ import json
 from pathlib import Path
 import sys
 
+from controller_allowlist_policy import CONTROLLER_ROUTE_POLICY
+
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTROLLERS_ROOT = ROOT / "addons/smart_construction_core/controllers"
 ARTIFACT_JSON = ROOT / "artifacts" / "controller_allowlist_routes_guard.json"
 ALLOWED_ROUTE_MAP = {
-    "frontend_api.py": {
-        "/api/login",
-        "/api/logout",
-        "/api/session/get",
-        "/api/menu/tree",
-        "/api/user_menus",
-    },
-    "scene_template_controller.py": {
-        "/api/scenes/export",
-        "/api/scenes/import",
-    },
-    "pack_controller.py": {
-        "/api/packs/publish",
-        "/api/packs/catalog",
-        "/api/packs/install",
-        "/api/packs/upgrade",
-    },
+    filename: set(routes.keys()) for filename, routes in CONTROLLER_ROUTE_POLICY.items()
 }
 
 

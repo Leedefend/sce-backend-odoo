@@ -7,15 +7,13 @@ import json
 from pathlib import Path
 import sys
 
+from controller_allowlist_policy import CONTROLLER_ROUTE_POLICY
+
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTROLLERS_ROOT = ROOT / "addons/smart_construction_core/controllers"
 ARTIFACT_JSON = ROOT / "artifacts" / "controller_delegate_guard.json"
-ALLOWLIST = {
-    "frontend_api.py",
-    "scene_template_controller.py",
-    "pack_controller.py",
-}
+ALLOWLIST = set(CONTROLLER_ROUTE_POLICY.keys())
 ENVELOPE_KEYS = {"ok", "data", "meta", "code", "error", "status"}
 RUNTIME_SHAPE_KEYS = {"scenes", "capabilities"}
 

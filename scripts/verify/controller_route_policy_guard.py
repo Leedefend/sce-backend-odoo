@@ -7,29 +7,13 @@ import json
 from pathlib import Path
 import sys
 
+from controller_allowlist_policy import CONTROLLER_ROUTE_POLICY
+
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTROLLERS_ROOT = ROOT / "addons/smart_construction_core/controllers"
 ARTIFACT_JSON = ROOT / "artifacts" / "controller_route_policy_guard.json"
-POLICY = {
-    "frontend_api.py": {
-        "/api/login": {"type": "json", "auth": "public", "csrf": False, "methods": {"POST"}, "cors": "*"},
-        "/api/logout": {"type": "json", "auth": "public", "csrf": False, "methods": {"POST"}, "cors": "*"},
-        "/api/session/get": {"type": "json", "auth": "public", "csrf": False, "methods": {"POST"}, "cors": "*"},
-        "/api/menu/tree": {"type": "json", "auth": "user", "csrf": False, "methods": {"POST"}, "cors": "*"},
-        "/api/user_menus": {"type": "json", "auth": "user", "csrf": False, "methods": {"POST"}, "cors": "*"},
-    },
-    "scene_template_controller.py": {
-        "/api/scenes/export": {"type": "http", "auth": "public", "csrf": False, "methods": {"GET"}},
-        "/api/scenes/import": {"type": "http", "auth": "public", "csrf": False, "methods": {"POST"}},
-    },
-    "pack_controller.py": {
-        "/api/packs/publish": {"type": "http", "auth": "public", "csrf": False, "methods": {"POST"}},
-        "/api/packs/catalog": {"type": "http", "auth": "public", "csrf": False, "methods": {"GET"}},
-        "/api/packs/install": {"type": "http", "auth": "public", "csrf": False, "methods": {"POST"}},
-        "/api/packs/upgrade": {"type": "http", "auth": "public", "csrf": False, "methods": {"POST"}},
-    },
-}
+POLICY = CONTROLLER_ROUTE_POLICY
 
 
 def _literal_value(node: ast.AST):
