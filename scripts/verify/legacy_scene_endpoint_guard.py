@@ -22,6 +22,8 @@ ALLOWLIST = {
     "scripts/e2e/e2e_scene_smoke.py",
     "scripts/verify/marketplace_smoke.py",
     "scripts/verify/scene_admin_smoke.py",
+    "scripts/verify/scene_legacy_auth_smoke.py",
+    "scripts/verify/scene_legacy_deprecation_smoke.py",
 }
 
 
