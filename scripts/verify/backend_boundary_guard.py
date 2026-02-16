@@ -18,6 +18,8 @@ FORBIDDEN_RUNTIME_ROUTE_RE = re.compile(r'@http\.route\(\s*["\'](?:/api/v1/inten
 FORBIDDEN_RUNTIME_IMPORT_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_core\.utils\.contract_governance\s+import)"
     r"|(?:from\s+odoo\.addons\.smart_core\.handlers\.system_init\s+import)"
+    r"|(?:from\s+odoo\.addons\.smart_core\.core\.scene_provider\s+import)"
+    r"|(?:import\s+odoo\.addons\.smart_core\.core\.scene_provider)"
 )
 FORBIDDEN_SYSTEM_INIT_SCENE_REGISTRY_RE = re.compile(
     r"(?:from\s+odoo\.addons\.smart_construction_scene\.scene_registry\s+import)"
