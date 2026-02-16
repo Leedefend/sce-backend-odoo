@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import re
 import sys
@@ -22,7 +23,22 @@ REQUIRED_SYMBOLS = (
 )
 
 FORBIDDEN_IMPORT_RE = re.compile(r"(?:from\s+odoo\.addons\.smart_construction_core)")
-PROVIDER_IMPORT_RE = re.compile(r"(?:from\s+odoo\.addons\.smart_core\.core\.scene_provider\s+import)")
+PROVIDER_MODULE = "odoo.addons.smart_core.core.scene_provider"
+
+
+def _imports_scene_provider(file_text: str) -> bool:
+    try:
+        tree = ast.parse(file_text)
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == PROVIDER_MODULE:
+            return True
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == PROVIDER_MODULE:
+                    return True
+    return False
 
 
 def main() -> int:
@@ -46,7 +62,7 @@ def main() -> int:
         if rel == PROVIDER.relative_to(ROOT).as_posix():
             continue
         file_text = path.read_text(encoding="utf-8", errors="ignore")
-        if PROVIDER_IMPORT_RE.search(file_text) and rel not in ALLOWED_IMPORTERS:
+        if _imports_scene_provider(file_text) and rel not in ALLOWED_IMPORTERS:
             violations.append(
                 f"{rel}: scene_provider import is restricted to {sorted(ALLOWED_IMPORTERS)}"
             )
