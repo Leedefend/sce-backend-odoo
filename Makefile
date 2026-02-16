@@ -1380,7 +1380,7 @@ verify.capability.schema: guard.prod.forbid verify.scene_capability.contract.gua
 verify.scene.schema: guard.prod.forbid verify.scene.definition.semantics verify.scene.catalog.source.guard verify.scene.contract.shape
 	@echo "[OK] verify.scene.schema done"
 
-verify.backend.architecture.full: guard.prod.forbid verify.intent.router.purity verify.boundary.guard verify.contract.envelope verify.mode.filter verify.capability.schema verify.scene.schema verify.seed.demo.isolation verify.scene.catalog.governance.guard verify.business.capability_baseline.guard verify.contract.snapshot verify.contract.governance.coverage verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke
+verify.backend.architecture.full: guard.prod.forbid verify.intent.router.purity verify.boundary.guard verify.contract.envelope verify.mode.filter verify.capability.schema verify.scene.schema verify.seed.demo.isolation verify.scene.catalog.governance.guard verify.business.capability_baseline.guard verify.contract.snapshot verify.contract.governance.coverage verify.contract.evidence.guard verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke
 	@echo "[OK] verify.backend.architecture.full done"
 
 verify.extension_modules.guard: guard.prod.forbid check-compose-project check-compose-env
