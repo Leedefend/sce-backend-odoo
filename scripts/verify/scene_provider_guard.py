@@ -22,9 +22,12 @@ REQUIRED_SYMBOLS = (
     "load_scenes_from_db_or_fallback",
 )
 
-FORBIDDEN_IMPORT_RE = re.compile(r"(?:from\s+odoo\.addons\.smart_construction_core)")
 PROVIDER_MODULE = "odoo.addons.smart_core.core.scene_provider"
-FORBIDDEN_PROVIDER_IMPORT_PREFIX = "odoo.addons.smart_construction_core"
+FORBIDDEN_PROVIDER_IMPORT_PREFIXES = (
+    "odoo.addons.smart_construction_core",
+    "odoo.addons.smart_construction_demo",
+    "odoo.addons.smart_construction_seed",
+)
 
 
 def _imports_scene_provider(file_text: str) -> bool:
@@ -50,17 +53,15 @@ def _imports_forbidden_provider_module(file_text: str) -> bool:
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom):
             mod = str(node.module or "")
-            if mod == FORBIDDEN_PROVIDER_IMPORT_PREFIX or mod.startswith(
-                f"{FORBIDDEN_PROVIDER_IMPORT_PREFIX}."
-            ):
-                return True
+            for prefix in FORBIDDEN_PROVIDER_IMPORT_PREFIXES:
+                if mod == prefix or mod.startswith(f"{prefix}."):
+                    return True
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 mod = str(alias.name or "")
-                if mod == FORBIDDEN_PROVIDER_IMPORT_PREFIX or mod.startswith(
-                    f"{FORBIDDEN_PROVIDER_IMPORT_PREFIX}."
-                ):
-                    return True
+                for prefix in FORBIDDEN_PROVIDER_IMPORT_PREFIXES:
+                    if mod == prefix or mod.startswith(f"{prefix}."):
+                        return True
     return False
 
 
@@ -77,8 +78,8 @@ def main() -> int:
         if f"def {symbol}(" not in text:
             violations.append(f"missing provider symbol: {symbol}")
 
-    if FORBIDDEN_IMPORT_RE.search(text) or _imports_forbidden_provider_module(text):
-        violations.append("scene_provider must not import smart_construction_core")
+    if _imports_forbidden_provider_module(text):
+        violations.append("scene_provider must not import smart_construction_* business/demo/seed modules")
 
     for path in ADDONS_ROOT.rglob("*.py"):
         rel = path.relative_to(ROOT).as_posix()
