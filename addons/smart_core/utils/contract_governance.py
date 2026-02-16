@@ -127,16 +127,51 @@ def _parse_tags(raw: Any) -> set[str]:
     return out
 
 
+def _contains_demo_marker(value: Any) -> bool:
+    text = _safe_text(value).lower()
+    if not text:
+        return False
+    return any(marker in text for marker in ("demo", "showcase", "smart_construction_demo"))
+
+
+def _has_demo_semantics(item: dict) -> bool:
+    if not isinstance(item, dict):
+        return False
+    tags = _parse_tags(item.get("tags"))
+    if any(_contains_demo_marker(tag) for tag in tags):
+        return True
+    for key in ("key", "code", "name", "title", "label", "scene_key"):
+        if _contains_demo_marker(item.get(key)):
+            return True
+    target = item.get("target") if isinstance(item.get("target"), dict) else {}
+    for key in ("menu_xmlid", "action_xmlid", "route"):
+        if _contains_demo_marker(target.get(key)):
+            return True
+    return False
+
+
 def _normalized_tags_for_item(item: dict) -> list[str]:
     tags = _parse_tags(item.get("tags"))
-    key = _safe_text(item.get("key") or item.get("code")).lower()
+    key = _safe_text(item.get("key")).lower()
+    code = _safe_text(item.get("code")).lower()
     name = _safe_text(item.get("name")).lower()
+    target = item.get("target") if isinstance(item.get("target"), dict) else {}
+    target_text = " ".join(
+        [
+            _safe_text(target.get("menu_xmlid")).lower(),
+            _safe_text(target.get("action_xmlid")).lower(),
+            _safe_text(target.get("route")).lower(),
+        ]
+    ).strip()
     if item.get("is_test") or item.get("smoke_test"):
         tags.update({"internal", "smoke"})
-    if "smoke" in key or "smoke" in name:
+    if "smoke" in key or "smoke" in code or "smoke" in name:
         tags.update({"internal", "smoke"})
-    if "internal" in key or "internal" in name:
+    if "internal" in key or "internal" in code or "internal" in name:
         tags.add("internal")
+    combined = f"{key} {code} {name} {target_text}"
+    if "showcase" in combined or "demo" in combined or "smart_construction_demo" in combined:
+        tags.add("demo")
     return sorted(tags)
 
 
@@ -144,14 +179,29 @@ def is_internal_or_smoke(item: dict) -> bool:
     if not isinstance(item, dict):
         return False
     tags = _parse_tags(item.get("tags"))
-    key = _safe_text(item.get("key") or item.get("code")).lower()
+    key = _safe_text(item.get("key")).lower()
+    code = _safe_text(item.get("code")).lower()
     name = _safe_text(item.get("name")).lower()
-    if "internal" in tags or "smoke" in tags:
+    target = item.get("target") if isinstance(item.get("target"), dict) else {}
+    target_text = " ".join(
+        [
+            _safe_text(target.get("menu_xmlid")).lower(),
+            _safe_text(target.get("action_xmlid")).lower(),
+            _safe_text(target.get("route")).lower(),
+        ]
+    ).strip()
+    if "internal" in tags or "smoke" in tags or "demo" in tags:
         return True
     if item.get("is_test") or item.get("smoke_test"):
         return True
-    combined = f"{key} {name}"
-    return "smoke" in combined or "internal" in combined
+    combined = f"{key} {code} {name} {target_text}"
+    return (
+        "smoke" in combined
+        or "internal" in combined
+        or "showcase" in combined
+        or "demo" in combined
+        or "smart_construction_demo" in combined
+    )
 
 
 def normalize_capabilities(capabilities: list) -> list[dict]:
@@ -250,6 +300,7 @@ def apply_contract_governance(
         capabilities = normalize_capabilities(data.get("capabilities") or [])
         if contract_mode == "user":
             capabilities = [item for item in capabilities if not is_internal_or_smoke(item)]
+            capabilities = [item for item in capabilities if not _has_demo_semantics(item)]
             capabilities = [_sanitize_capability_for_user(item) for item in capabilities]
         data["capabilities"] = capabilities
 
@@ -257,7 +308,9 @@ def apply_contract_governance(
         scenes = normalize_scenes(data.get("scenes") or [])
         if contract_mode == "user":
             scenes = [item for item in scenes if not is_internal_or_smoke(item)]
+            scenes = [item for item in scenes if not _has_demo_semantics(item)]
             scenes = [_sanitize_scene_for_user(item) for item in scenes]
+            scenes = [item for item in scenes if not _has_demo_semantics(item)]
         data["scenes"] = scenes
 
     if inject_contract_mode:

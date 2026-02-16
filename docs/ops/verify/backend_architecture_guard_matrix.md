@@ -22,14 +22,14 @@ This matrix maps governance checkpoints to executable verification targets.
 | P4.1 `available/reason` must not be in scene definitions | `make verify.scene.definition.semantics` | Covered |
 | P4.2 Permission semantics centralized in contract governance path | `make verify.contract.governance.coverage` + `make verify.boundary.guard` | Covered |
 | D1.1 Demo/seed must not leak into core provider path | `make verify.seed.demo.isolation` | Covered |
-| D1.2 Demo data should not leak in user contract path | `make verify.contract.mode.smoke` + `make verify.scene.legacy.bundle` | Partially covered |
+| D1.2 Demo data should not leak in user contract path | `make verify.seed.demo.isolation` + `make verify.scene.demo_leak.guard` | Covered |
 
 ## P2 Stability / HUD / Snapshot
 
 | Guard | Target(s) | Status |
 |---|---|---|
 | S1.1 Contract snapshot baseline | `make verify.contract.snapshot` | Covered (scene shape baseline) |
-| S1.2 Deterministic contract ordering | `make verify.scene.schema` + `make verify.contract.catalog` | Partially covered |
+| S1.2 Deterministic contract ordering | `make verify.contract.ordering.smoke` + `make verify.contract.snapshot` | Covered |
 | H1.1 Default user mode, hud gated by flag | `make verify.mode.filter` | Covered |
 | H1.2 HUD tracing fields coverage | `make verify.scene.hud.trace.smoke` + `make verify.scene.meta.trace.smoke` | Covered |
 
