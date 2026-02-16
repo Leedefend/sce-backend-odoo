@@ -1,0 +1,16 @@
+{
+  "allowed_importers": [
+    "addons/smart_core/handlers/system_init.py"
+  ],
+  "required_symbols": [
+    "resolve_scene_channel",
+    "load_scene_contract",
+    "merge_missing_scenes_from_registry",
+    "load_scenes_from_db_or_fallback"
+  ],
+  "forbidden_provider_import_prefixes": [
+    "odoo.addons.smart_construction_core",
+    "odoo.addons.smart_construction_demo",
+    "odoo.addons.smart_construction_seed"
+  ]
+}

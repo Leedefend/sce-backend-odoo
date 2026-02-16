@@ -32,12 +32,20 @@
   - Verifies scene definition semantics + scene contract schema shape.
 - `make verify.seed.demo.isolation`
   - Verifies provider layer does not depend on demo/seed modules and user-mode contract output does not leak demo/showcase semantics.
+- `make verify.seed.demo.import_boundary.guard`
+  - Static import guard for runtime paths; blocks imports from `smart_construction_demo` / `smart_construction_seed` in smart_core/core/scene/portal modules.
+- `make verify.seed.demo.import_boundary.guard`
+  - Static import guard: blocks runtime module imports from `smart_construction_demo` / `smart_construction_seed` in smart_core/core/scene/portal paths.
 - `make verify.contract.ordering.smoke`
   - Verifies scene/capability sequence determinism across repeated `system.init` calls.
 - `make verify.contract.catalog.determinism`
   - Verifies contract catalog exports are deterministic across repeated generations.
 - `make verify.contract.envelope`
   - Aggregates envelope consistency checks (`ok/data/meta`) across intent and contract API paths.
+- `make verify.contract.envelope.guard`
+  - Explicit runtime envelope guard for `login/system.init/ui.contract` intent responses (`ok/data/meta`).
+- `make verify.baseline.policy_integrity.guard`
+  - Verifies required governance policy baseline JSON files exist and are valid objects.
 - `make verify.backend.architecture.full`
   - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + snapshot determinism + governance coverage + HUD trace smokes).
 - `make verify.scene.catalog.runtime_alignment.guard`
@@ -76,11 +84,27 @@
     - `artifacts/business_capability_baseline_report.md`
 - `make verify.contract.evidence.guard`
   - Exports and validates contract evidence bundle including runtime alignment and business capability baseline summaries.
+  - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`
     - `artifacts/contract/phase11_1_contract_evidence.md`
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
+- `make verify.scene.provider.guard`
+  - Verifies SceneProvider runtime boundary policy from baseline (`scripts/verify/baselines/scene_provider_guard.json`):
+    - required provider symbols
+    - importer allowlist
+    - forbidden business/demo/seed imports in provider
+- `make verify.capability.provider.guard`
+  - Verifies CapabilityProvider runtime boundary policy from baseline (`scripts/verify/baselines/capability_provider_guard.json`):
+    - required provider symbols
+    - importer allowlist
+    - forbidden `smart_construction_*` imports in provider
+- `make verify.backend.boundary_guard`
+  - Verifies extension/controller runtime boundary policy from baseline (`scripts/verify/baselines/backend_boundary_guard.json`):
+    - extension hook write namespace allowlist (`data.ext_facts`)
+    - controller forbidden runtime route/import patterns
+    - system-init direct scene-registry import prohibition
 - `make verify.controller.delegate.guard`
   - AST guard: route methods in `smart_construction_core/controllers` must not directly return runtime envelope/runtime-shape dicts (except governance allowlist controllers).
 - `make verify.controller.allowlist.routes.guard`

@@ -3,31 +3,17 @@
 from __future__ import annotations
 
 import ast
+import json
 from pathlib import Path
-import re
 import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
 PROVIDER = ROOT / "addons/smart_core/core/scene_provider.py"
 ADDONS_ROOT = ROOT / "addons"
-ALLOWED_IMPORTERS = {
-    "addons/smart_core/handlers/system_init.py",
-}
-
-REQUIRED_SYMBOLS = (
-    "resolve_scene_channel",
-    "load_scene_contract",
-    "merge_missing_scenes_from_registry",
-    "load_scenes_from_db_or_fallback",
-)
+BASELINE_JSON = ROOT / "scripts/verify/baselines/scene_provider_guard.json"
 
 PROVIDER_MODULE = "odoo.addons.smart_core.core.scene_provider"
-FORBIDDEN_PROVIDER_IMPORT_PREFIXES = (
-    "odoo.addons.smart_construction_core",
-    "odoo.addons.smart_construction_demo",
-    "odoo.addons.smart_construction_seed",
-)
 
 
 def _imports_scene_provider(file_text: str) -> bool:
@@ -45,7 +31,7 @@ def _imports_scene_provider(file_text: str) -> bool:
     return False
 
 
-def _imports_forbidden_provider_module(file_text: str) -> bool:
+def _imports_forbidden_provider_module(file_text: str, forbidden_prefixes: tuple[str, ...]) -> bool:
     try:
         tree = ast.parse(file_text)
     except SyntaxError:
@@ -53,19 +39,59 @@ def _imports_forbidden_provider_module(file_text: str) -> bool:
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom):
             mod = str(node.module or "")
-            for prefix in FORBIDDEN_PROVIDER_IMPORT_PREFIXES:
+            for prefix in forbidden_prefixes:
                 if mod == prefix or mod.startswith(f"{prefix}."):
                     return True
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 mod = str(alias.name or "")
-                for prefix in FORBIDDEN_PROVIDER_IMPORT_PREFIXES:
+                for prefix in forbidden_prefixes:
                     if mod == prefix or mod.startswith(f"{prefix}."):
                         return True
     return False
 
 
+def _load_policy() -> tuple[set[str], tuple[str, ...], tuple[str, ...]]:
+    payload = {}
+    if BASELINE_JSON.is_file():
+        payload = json.loads(BASELINE_JSON.read_text(encoding="utf-8"))
+
+    allowed_raw = payload.get("allowed_importers") if isinstance(payload, dict) else None
+    symbols_raw = payload.get("required_symbols") if isinstance(payload, dict) else None
+    forbidden_raw = payload.get("forbidden_provider_import_prefixes") if isinstance(payload, dict) else None
+
+    allowed_importers = {
+        str(item or "").strip()
+        for item in (allowed_raw if isinstance(allowed_raw, list) else [])
+        if str(item or "").strip()
+    }
+    required_symbols = tuple(
+        str(item or "").strip()
+        for item in (symbols_raw if isinstance(symbols_raw, list) else [])
+        if str(item or "").strip()
+    )
+    forbidden_prefixes = tuple(
+        str(item or "").strip()
+        for item in (forbidden_raw if isinstance(forbidden_raw, list) else [])
+        if str(item or "").strip()
+    )
+    if not allowed_importers:
+        raise RuntimeError("scene provider policy missing allowed_importers")
+    if not required_symbols:
+        raise RuntimeError("scene provider policy missing required_symbols")
+    if not forbidden_prefixes:
+        raise RuntimeError("scene provider policy missing forbidden_provider_import_prefixes")
+    return allowed_importers, required_symbols, forbidden_prefixes
+
+
 def main() -> int:
+    try:
+        allowed_importers, required_symbols, forbidden_prefixes = _load_policy()
+    except Exception as exc:
+        print("[scene_provider_guard] FAIL")
+        print(f"failed to load policy: {exc}")
+        return 1
+
     if not PROVIDER.is_file():
         print("[scene_provider_guard] FAIL")
         print(f"missing file: {PROVIDER.as_posix()}")
@@ -74,11 +100,11 @@ def main() -> int:
     text = PROVIDER.read_text(encoding="utf-8", errors="ignore")
     violations: list[str] = []
 
-    for symbol in REQUIRED_SYMBOLS:
+    for symbol in required_symbols:
         if f"def {symbol}(" not in text:
             violations.append(f"missing provider symbol: {symbol}")
 
-    if _imports_forbidden_provider_module(text):
+    if _imports_forbidden_provider_module(text, forbidden_prefixes):
         violations.append("scene_provider must not import smart_construction_* business/demo/seed modules")
 
     for path in ADDONS_ROOT.rglob("*.py"):
@@ -86,9 +112,9 @@ def main() -> int:
         if rel == PROVIDER.relative_to(ROOT).as_posix():
             continue
         file_text = path.read_text(encoding="utf-8", errors="ignore")
-        if _imports_scene_provider(file_text) and rel not in ALLOWED_IMPORTERS:
+        if _imports_scene_provider(file_text) and rel not in allowed_importers:
             violations.append(
-                f"{rel}: scene_provider import is restricted to {sorted(ALLOWED_IMPORTERS)}"
+                f"{rel}: scene_provider import is restricted to {sorted(allowed_importers)}"
             )
 
     if violations:

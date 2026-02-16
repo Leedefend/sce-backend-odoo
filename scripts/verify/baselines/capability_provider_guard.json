@@ -1,0 +1,15 @@
+{
+  "provider_file": "addons/smart_core/core/capability_provider.py",
+  "provider_module": "odoo.addons.smart_core.core.capability_provider",
+  "allowed_importers": [
+    "addons/smart_core/handlers/system_init.py"
+  ],
+  "required_symbols": [
+    "load_capabilities_for_user"
+  ],
+  "forbidden_provider_import_prefixes": [
+    "odoo.addons.smart_construction_core",
+    "odoo.addons.smart_construction_demo",
+    "odoo.addons.smart_construction_seed"
+  ]
+}
