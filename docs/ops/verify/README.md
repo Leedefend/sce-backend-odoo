@@ -80,18 +80,29 @@
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `role_capability_floor_prod_like.json`
     - `role_capability_floor_prod_like.md`
+- `make verify.role.capability_floor.prod_like.schema.guard`
+  - Schema/determinism guard for `role_capability_floor_prod_like.json` evidence structure.
 - `make verify.contract.assembler.semantic.smoke`
   - Semantic smoke checks for contract assembler outputs (`system.init` + `ui.contract`) across pm/executive roles in user/hud modes.
   - Baseline: `scripts/verify/baselines/contract_assembler_semantic_smoke.json`.
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `contract_assembler_semantic_smoke.json`
     - `contract_assembler_semantic_smoke.md`
+- `make verify.contract.assembler.semantic.schema.guard`
+  - Schema/determinism guard for `contract_assembler_semantic_smoke.json` evidence structure.
 - `make verify.runtime.surface.dashboard.report`
   - Emits runtime scenes/capabilities dashboard vs catalog snapshot scope with threshold warnings (warning-only, non-blocking).
   - Baseline: `scripts/verify/baselines/runtime_surface_dashboard_report.json`.
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `runtime_surface_dashboard_report.json`
     - `runtime_surface_dashboard_report.md`
+- `make verify.runtime.surface.dashboard.schema.guard`
+  - Schema guard for runtime surface dashboard evidence structure and warning count consistency.
+- `make verify.phase_next.evidence.bundle`
+  - Aggregate target for phase-next evidence chain:
+    - prod-like role fixture evidence + schema guard
+    - contract assembler semantic smoke + schema guard
+    - runtime surface dashboard report + schema guard
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`
