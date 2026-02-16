@@ -20,10 +20,12 @@ ALLOWED_OPS = {
     "intent.invoke",
 }
 ALLOWED_VIEW_TYPES = {"form", "list", "kanban"}
+ALLOWED_COMPARE_MODES = {"strict", "shape"}
 ALLOWED_CASE_KEYS = {
     "action_xmlid",
     "allow_error_response",
     "case",
+    "compare_mode",
     "execute_method",
     "id",
     "include_meta",
@@ -128,6 +130,13 @@ def main() -> int:
             invalid.append(f"{case_name}: include_meta must be boolean")
         if "allow_error_response" in item and not isinstance(item.get("allow_error_response"), bool):
             invalid.append(f"{case_name}: allow_error_response must be boolean")
+        if "compare_mode" in item:
+            compare_mode = _as_str(item.get("compare_mode")).lower()
+            if compare_mode not in ALLOWED_COMPARE_MODES:
+                invalid.append(
+                    f"{case_name}: unsupported compare_mode={compare_mode} "
+                    f"(allowed: {', '.join(sorted(ALLOWED_COMPARE_MODES))})"
+                )
 
         _validate_positive_int(item.get("id"), "id", case_name, invalid)
         _validate_positive_int(item.get("menu_id"), "menu_id", case_name, invalid)
