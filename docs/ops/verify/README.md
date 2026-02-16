@@ -47,7 +47,7 @@
 - `make verify.baseline.policy_integrity.guard`
   - Verifies required governance policy baseline JSON files exist and are valid objects.
 - `make verify.backend.architecture.full`
-  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + snapshot determinism + governance coverage + HUD trace smokes).
+  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + governance coverage + HUD trace smokes).
 - `make verify.scene.catalog.runtime_alignment.guard`
   - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
   - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
@@ -74,6 +74,24 @@
   - Artifacts:
     - `artifacts/role_capability_floor_guard.json`
     - `artifacts/role_capability_floor_guard.md`
+- `make verify.role.capability_floor.prod_like`
+  - Creates/updates sanitized prod-like fixture users (>=6 roles, no demo dependency) and verifies per-role capability floors + key journey intents.
+  - Baseline: `scripts/verify/baselines/role_capability_floor_prod_like.json`.
+  - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
+    - `role_capability_floor_prod_like.json`
+    - `role_capability_floor_prod_like.md`
+- `make verify.contract.assembler.semantic.smoke`
+  - Semantic smoke checks for contract assembler outputs (`system.init` + `ui.contract`) across pm/executive roles in user/hud modes.
+  - Baseline: `scripts/verify/baselines/contract_assembler_semantic_smoke.json`.
+  - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
+    - `contract_assembler_semantic_smoke.json`
+    - `contract_assembler_semantic_smoke.md`
+- `make verify.runtime.surface.dashboard.report`
+  - Emits runtime scenes/capabilities dashboard vs catalog snapshot scope with threshold warnings (warning-only, non-blocking).
+  - Baseline: `scripts/verify/baselines/runtime_surface_dashboard_report.json`.
+  - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
+    - `runtime_surface_dashboard_report.json`
+    - `runtime_surface_dashboard_report.md`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`

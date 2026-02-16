@@ -1,0 +1,73 @@
+{
+  "fixture_password": "prod_like",
+  "max_errors": 0,
+  "journey_intents": [
+    "system.init",
+    "ui.contract"
+  ],
+  "fixtures": [
+    {
+      "role": "pm",
+      "login": "sc_fx_pm",
+      "name": "Fixture PM",
+      "groups_xmlids": [
+        "base.group_user",
+        "smart_construction_core.group_sc_role_project_manager",
+        "smart_construction_core.group_sc_role_purchase_user"
+      ],
+      "min_capabilities": 1
+    },
+    {
+      "role": "executive",
+      "login": "sc_fx_executive",
+      "name": "Fixture Executive",
+      "groups_xmlids": [
+        "base.group_user",
+        "smart_construction_core.group_sc_role_project_manager",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_role_contract_admin"
+      ],
+      "min_capabilities": 1
+    },
+    {
+      "role": "finance",
+      "login": "sc_fx_finance",
+      "name": "Fixture Finance",
+      "groups_xmlids": [
+        "base.group_user",
+        "smart_construction_core.group_sc_role_finance_manager"
+      ],
+      "min_capabilities": 1
+    },
+    {
+      "role": "contract_admin",
+      "login": "sc_fx_contract_admin",
+      "name": "Fixture Contract Admin",
+      "groups_xmlids": [
+        "base.group_user",
+        "smart_construction_core.group_sc_role_contract_admin"
+      ],
+      "min_capabilities": 1
+    },
+    {
+      "role": "material_user",
+      "login": "sc_fx_material_user",
+      "name": "Fixture Material User",
+      "groups_xmlids": [
+        "base.group_user",
+        "smart_construction_core.group_sc_role_material_user"
+      ],
+      "min_capabilities": 1
+    },
+    {
+      "role": "cost_user",
+      "login": "sc_fx_cost_user",
+      "name": "Fixture Cost User",
+      "groups_xmlids": [
+        "base.group_user",
+        "smart_construction_core.group_sc_role_cost_user"
+      ],
+      "min_capabilities": 1
+    }
+  ]
+}
