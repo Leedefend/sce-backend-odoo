@@ -357,6 +357,7 @@ help:
 	@echo "  make verify.baseline.freeze_guard"
 	@echo "  make verify.scene.runtime_boundary.gate"
 	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
+	@echo "  make verify.scene.legacy.contract.guard   # alias to verify.scene.legacy_contract.guard"
 	@echo "  make verify.scene.contract_path.gate"
 	@echo "  make verify.business.increment.preflight [BUSINESS_INCREMENT_PROFILE=base|strict]"
 	@echo "  make verify.business.increment.readiness.brief [BUSINESS_INCREMENT_PROFILE=base|strict]"
