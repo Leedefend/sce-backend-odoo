@@ -46,6 +46,8 @@
   - AST guard: route methods in `smart_construction_core/controllers` must not directly return runtime envelope/runtime-shape dicts (except governance allowlist controllers).
 - `make verify.controller.allowlist.routes.guard`
   - AST guard: allowlist controllers (`frontend_api.py` / `scene_template_controller.py` / `pack_controller.py`) may expose only explicit approved route set.
+- `make verify.controller.route.policy.guard`
+  - AST guard: allowlist controller routes must keep approved policy (`type/auth/methods/csrf`, plus `cors=*` for `frontend_api.py`).
 - Guard coverage matrix:
   - `docs/ops/verify/backend_architecture_guard_matrix.md`
 

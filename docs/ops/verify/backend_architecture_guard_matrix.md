@@ -17,7 +17,7 @@ This matrix maps governance checkpoints to executable verification targets.
 |---|---|---|
 | B1.3 extension hook only writes `ext_facts` namespace | `make verify.backend.boundary_guard` | Covered |
 | B2.1 Model layer must not depend on scene UI registry | `make verify.boundary.import_guard` | Covered |
-| B2.2 Controllers delegate to handler/service contract path | `make verify.backend.boundary_guard` + `make verify.controller.delegate.guard` + `make verify.controller.allowlist.routes.guard` | Covered |
+| B2.2 Controllers delegate to handler/service contract path | `make verify.backend.boundary_guard` + `make verify.controller.delegate.guard` + `make verify.controller.allowlist.routes.guard` + `make verify.controller.route.policy.guard` | Covered |
 | P3.1 SceneProvider unified runtime entry | `make verify.scene.provider.guard` | Covered |
 | P4.1 `available/reason` must not be in scene definitions | `make verify.scene.definition.semantics` | Covered |
 | P4.2 Permission semantics centralized in contract governance path | `make verify.contract.governance.coverage` + `make verify.boundary.guard` | Covered |
