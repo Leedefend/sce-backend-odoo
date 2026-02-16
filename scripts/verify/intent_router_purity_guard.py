@@ -3,28 +3,13 @@
 from __future__ import annotations
 
 import ast
+import json
 from pathlib import Path
 import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
-
-# Guard only core intent-layer files. Business extensions may legitimately register
-# industry intents in their own modules.
-TARGET_FILES = (
-    ROOT / "addons/smart_core/core/intent_router.py",
-    ROOT / "addons/smart_core/core/enhanced_intent_router.py",
-    ROOT / "addons/smart_core/controllers/intent_dispatcher.py",
-    ROOT / "addons/smart_core/controllers/enhanced_intent_dispatcher.py",
-)
-
-FORBIDDEN_KEYWORDS = (
-    "project.",
-    "material.",
-    "settlement.",
-    "boq.",
-    "payment.request",
-)
+BASELINE_JSON = ROOT / "scripts/verify/baselines/intent_router_purity_guard.json"
 
 
 def _iter_string_literals(tree: ast.AST):
@@ -37,9 +22,39 @@ def _iter_string_literals(tree: ast.AST):
                     yield part.value, getattr(part, "lineno", getattr(node, "lineno", 0))
 
 
+def _load_policy() -> tuple[list[Path], list[str]]:
+    payload = {}
+    if BASELINE_JSON.is_file():
+        payload = json.loads(BASELINE_JSON.read_text(encoding="utf-8"))
+    target_files = payload.get("target_files") if isinstance(payload, dict) else None
+    forbidden_keywords = payload.get("forbidden_keywords") if isinstance(payload, dict) else None
+    targets = []
+    for item in target_files if isinstance(target_files, list) else []:
+        rel = str(item or "").strip()
+        if rel:
+            targets.append(ROOT / rel)
+    keywords = []
+    for item in forbidden_keywords if isinstance(forbidden_keywords, list) else []:
+        key = str(item or "").strip().lower()
+        if key:
+            keywords.append(key)
+    if not targets:
+        raise RuntimeError("intent router purity policy missing target_files")
+    if not keywords:
+        raise RuntimeError("intent router purity policy missing forbidden_keywords")
+    return targets, keywords
+
+
 def main() -> int:
+    try:
+        target_files, forbidden_keywords = _load_policy()
+    except Exception as exc:
+        print("[intent_router_purity_guard] FAIL")
+        print(f"failed to load policy: {exc}")
+        return 1
+
     violations: list[str] = []
-    for path in TARGET_FILES:
+    for path in target_files:
         if not path.is_file():
             violations.append(f"missing file: {path.relative_to(ROOT).as_posix()}")
             continue
@@ -52,7 +67,7 @@ def main() -> int:
         rel = path.relative_to(ROOT).as_posix()
         for literal, lineno in _iter_string_literals(tree):
             lowered = literal.lower()
-            for keyword in FORBIDDEN_KEYWORDS:
+            for keyword in forbidden_keywords:
                 if keyword in lowered:
                     violations.append(f"{rel}:{lineno}: forbidden industry keyword in intent layer: {keyword}")
 
