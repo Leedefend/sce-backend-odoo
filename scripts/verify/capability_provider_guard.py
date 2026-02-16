@@ -97,7 +97,7 @@ def main() -> int:
             if f"def {symbol}(" not in provider_text:
                 violations.append(f"missing provider symbol: {symbol}")
         if forbidden_prefixes and _imports_forbidden_prefix(provider_text, forbidden_prefixes):
-            violations.append("capability_provider must not import smart_construction_demo/seed modules")
+            violations.append("capability_provider must not import smart_construction_* modules")
 
     provider_rel = provider_file.relative_to(ROOT).as_posix()
     for path in ADDONS_ROOT.rglob("*.py"):
