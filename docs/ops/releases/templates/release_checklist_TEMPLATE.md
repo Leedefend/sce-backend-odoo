@@ -9,6 +9,14 @@
 - `ENV=prod make verify.prod.guard` passes (guard-only)
 - JSON summary emitted by `scripts/verify/prod_guard_smoke.sh`
 - Release is approved iff JSON reports `rc=0`
+- Backend evidence bundle is up-to-date:
+  - `make verify.phase_next.evidence.bundle`
+  - `make verify.contract.evidence.guard`
+  - required artifacts:
+    - `/mnt/artifacts/backend/role_capability_floor_prod_like.json` (fallback `artifacts/backend/...`)
+    - `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback `artifacts/backend/...`)
+    - `/mnt/artifacts/backend/runtime_surface_dashboard_report.json` (fallback `artifacts/backend/...`)
+    - `artifacts/contract/phase11_1_contract_evidence.json`
 - Phase 9.8 menu/scene coverage summary is present:
   - `make verify.menu.scene_resolve.summary`
   - required keys in `artifacts/codex/summary.md`:

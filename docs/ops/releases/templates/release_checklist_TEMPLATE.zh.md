@@ -9,6 +9,14 @@
 - `ENV=prod make verify.prod.guard` 通过（guard-only）
 - `scripts/verify/prod_guard_smoke.sh` 产出 JSON 结果
 - 仅当 JSON 报告 `rc=0` 时允许发布
+- 后端证据包已更新：
+  - `make verify.phase_next.evidence.bundle`
+  - `make verify.contract.evidence.guard`
+  - 必须产物：
+    - `/mnt/artifacts/backend/role_capability_floor_prod_like.json`（不可写时回落 `artifacts/backend/...`）
+    - `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json`（不可写时回落 `artifacts/backend/...`）
+    - `/mnt/artifacts/backend/runtime_surface_dashboard_report.json`（不可写时回落 `artifacts/backend/...`）
+    - `artifacts/contract/phase11_1_contract_evidence.json`
 - 已包含 Phase 9.8 菜单/场景覆盖汇总证据：
   - `make verify.menu.scene_resolve.summary`
   - `artifacts/codex/summary.md` 必须包含：

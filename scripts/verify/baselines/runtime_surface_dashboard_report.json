@@ -1,0 +1,7 @@
+{
+  "ratio_min_warn": 0.01,
+  "ratio_max_warn": 1.0,
+  "scene_delta_warn_abs": 500,
+  "capability_min_warn": 1,
+  "capability_max_warn": 200
+}
