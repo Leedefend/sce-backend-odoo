@@ -66,6 +66,11 @@
   - Summary artifacts:
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/business_capability_baseline_report.md`
+- `make verify.contract.evidence.guard`
+  - Exports and validates contract evidence bundle including runtime alignment and business capability baseline summaries.
+  - Artifacts:
+    - `artifacts/contract/phase11_1_contract_evidence.json`
+    - `artifacts/contract/phase11_1_contract_evidence.md`
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
 - `make verify.controller.delegate.guard`
