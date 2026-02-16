@@ -1377,11 +1377,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.boundary.import_guard
 	@$(MAKE) --no-print-directory verify.backend.boundary_guard
 	@$(MAKE) --no-print-directory verify.frontend.intent_channel.guard
-	@$(MAKE) --no-print-directory verify.scene.legacy_endpoint.guard
-	@$(MAKE) --no-print-directory verify.scene.legacy_contract.guard
-	@$(MAKE) --no-print-directory verify.scene.legacy_docs.guard
-	@$(MAKE) --no-print-directory verify.scene.legacy_auth.smoke
-	@$(MAKE) --no-print-directory verify.scene.legacy_deprecation.smoke
+	@$(MAKE) --no-print-directory verify.scene.legacy.all
 	@$(MAKE) --no-print-directory verify.scene.provider.guard
 	@$(MAKE) --no-print-directory verify.contract.governance.coverage
 	@$(MAKE) --no-print-directory verify.docs.all
