@@ -11,6 +11,8 @@
     - `make verify.scene.runtime_boundary.gate`
   - Contract preflight includes legacy contract bundle checks:
     - `make verify.scene.legacy.bundle`
+  - Contract preflight can be run as a single scene contract path gate:
+    - `make verify.scene.contract_path.gate`
   - Full legacy endpoint aggregate (includes endpoint usage guard):
     - `make verify.scene.legacy.all`
 
