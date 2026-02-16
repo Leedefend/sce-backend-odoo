@@ -52,6 +52,12 @@
   - Artifacts:
     - `artifacts/business_core_journey_guard.json`
     - `artifacts/business_core_journey_guard.md`
+- `make verify.role.capability_floor.guard`
+  - Verifies role capability floors from `scene_capability_contract_guard` samples against baseline (`required_roles` + `min_capabilities`).
+  - Baseline: `scripts/verify/baselines/role_capability_floor_guard.json`.
+  - Artifacts:
+    - `artifacts/role_capability_floor_guard.json`
+    - `artifacts/role_capability_floor_guard.md`
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
 - `make verify.controller.delegate.guard`

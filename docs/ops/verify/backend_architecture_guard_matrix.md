@@ -22,6 +22,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | P4.1 `available/reason` must not be in scene definitions | `make verify.scene.definition.semantics` | Covered |
 | P4.2 Permission semantics centralized in contract governance path | `make verify.contract.governance.coverage` + `make verify.boundary.guard` | Covered |
 | C1.1 Business core journey intent coverage baseline | `make verify.business.core_journey.guard` | Covered |
+| C1.2 Role capability floor baseline | `make verify.role.capability_floor.guard` | Covered |
 | D1.1 Demo/seed must not leak into core provider path | `make verify.seed.demo.isolation` | Covered |
 | D1.2 Demo data should not leak in user contract path | `make verify.seed.demo.isolation` + `make verify.scene.demo_leak.guard` | Covered |
 
@@ -48,6 +49,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.controller.boundary.guard`
 - `make verify.scene.catalog.runtime_alignment.guard`
 - `make verify.business.core_journey.guard`
+- `make verify.role.capability_floor.guard`
 
 ## Notes
 
