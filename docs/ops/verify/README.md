@@ -90,6 +90,11 @@
     - `artifacts/contract/phase11_1_contract_evidence.md`
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
+- `make verify.scene.provider.guard`
+  - Verifies SceneProvider runtime boundary policy from baseline (`scripts/verify/baselines/scene_provider_guard.json`):
+    - required provider symbols
+    - importer allowlist
+    - forbidden business/demo/seed imports in provider
 - `make verify.controller.delegate.guard`
   - AST guard: route methods in `smart_construction_core/controllers` must not directly return runtime envelope/runtime-shape dicts (except governance allowlist controllers).
 - `make verify.controller.allowlist.routes.guard`

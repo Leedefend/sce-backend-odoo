@@ -10,7 +10,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | G0.2 Contract envelope consistency (`ok/data/meta`) | `make verify.contract.envelope` + `make verify.contract.envelope.guard` | Covered |
 | G0.3 Baseline policy integrity for governance guards | `make verify.baseline.policy_integrity.guard` | Covered |
 | B1.1 Business module must not assemble runtime scene/capability shape | `make verify.backend.boundary_guard` + `make verify.business.shape.guard` | Covered |
-| B1.2 Runtime scene reads only through provider in smart_core | `make verify.scene.provider.guard` + `make verify.backend.boundary_guard` | Covered |
+| B1.2 Runtime scene reads only through provider in smart_core | `make verify.scene.provider.guard` + `make verify.backend.boundary_guard` | Covered (baseline policy: `scene_provider_guard.json`) |
 
 ## P1 Boundary / Permission / Isolation
 
