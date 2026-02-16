@@ -34,6 +34,8 @@
   - Verifies provider layer does not depend on demo/seed modules and user-mode contract output does not leak demo/showcase semantics.
 - `make verify.contract.ordering.smoke`
   - Verifies scene/capability sequence determinism across repeated `system.init` calls.
+- `make verify.contract.catalog.determinism`
+  - Verifies contract catalog exports are deterministic across repeated generations.
 - Guard coverage matrix:
   - `docs/ops/verify/backend_architecture_guard_matrix.md`
 
