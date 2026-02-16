@@ -11,7 +11,7 @@ from odoo.http import request
 from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
 
-from .api_base import fail, fail_from_exception, ok
+from .api_base import fail, ok
 
 _logger = logging.getLogger(__name__)
 _LEGACY_SCENES_SUNSET_DATE = "2026-04-30"
@@ -86,5 +86,5 @@ class SceneController(http.Controller):
             )
         except AccessDenied as exc:
             return fail("AUTH_REQUIRED", str(exc), http_status=401, headers=_legacy_response_headers())
-        except Exception as exc:
+        except Exception:
             return fail("SERVER_ERROR", "Internal server error", http_status=500, headers=_legacy_response_headers())
