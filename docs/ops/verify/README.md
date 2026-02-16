@@ -30,6 +30,8 @@
   - Verifies capability payload schema and scene/capability contract cohesion.
 - `make verify.scene.schema`
   - Verifies scene definition semantics + scene contract schema shape.
+- `make verify.seed.demo.isolation`
+  - Verifies provider layer does not depend on demo/seed modules and tests avoid seed leakage.
 
 ## Phase 9.8 Menu/Scene Coverage
 - `make verify.menu.scene_resolve.container`
