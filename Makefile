@@ -359,6 +359,8 @@ help:
 	@echo "  make verify.scene.legacy.bundle | verify.scene.legacy.all"
 	@echo "  make verify.scene.legacy.contract.guard   # alias to verify.scene.legacy_contract.guard"
 	@echo "  make verify.scene.contract_path.gate"
+	@echo "  make verify.boundary.guard | verify.contract.snapshot"
+	@echo "  make verify.mode.filter | verify.capability.schema | verify.scene.schema"
 	@echo "  make verify.business.increment.preflight [BUSINESS_INCREMENT_PROFILE=base|strict]"
 	@echo "  make verify.business.increment.readiness.brief [BUSINESS_INCREMENT_PROFILE=base|strict]"
 	@echo "  make verify.portal.scene_observability_smoke.container DB_NAME=<name>"
