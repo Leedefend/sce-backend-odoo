@@ -39,7 +39,13 @@
 - `make verify.contract.envelope`
   - Aggregates envelope consistency checks (`ok/data/meta`) across intent and contract API paths.
 - `make verify.backend.architecture.full`
-  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + snapshot determinism + governance coverage + HUD trace smokes).
+  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + snapshot determinism + governance coverage + HUD trace smokes).
+- `make verify.scene.catalog.runtime_alignment.guard`
+  - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
+  - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
+  - Artifacts:
+    - `artifacts/scene_catalog_runtime_alignment_guard.json`
+    - `artifacts/scene_catalog_runtime_alignment_guard.md`
 - `make verify.business.shape.guard`
   - AST guard: blocks runtime shape assembly keys (`scenes/capabilities/layout/tiles`) in `smart_construction_core/handlers`.
 - `make verify.controller.delegate.guard`

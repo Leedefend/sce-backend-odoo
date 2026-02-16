@@ -30,6 +30,7 @@ This matrix maps governance checkpoints to executable verification targets.
 |---|---|---|
 | S1.1 Contract snapshot baseline | `make verify.contract.snapshot` | Covered (scene shape baseline) |
 | S1.2 Deterministic contract ordering | `make verify.contract.ordering.smoke` + `make verify.contract.catalog.determinism` + `make verify.contract.snapshot` | Covered |
+| A1.1 Catalog/runtime scene surface alignment | `make verify.scene.catalog.runtime_alignment.guard` | Covered |
 | H1.1 Default user mode, hud gated by flag | `make verify.mode.filter` | Covered |
 | H1.2 HUD tracing fields coverage | `make verify.scene.hud.trace.smoke` + `make verify.scene.meta.trace.smoke` | Covered |
 
@@ -44,6 +45,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.seed.demo.isolation`
 - `make verify.backend.architecture.full`
 - `make verify.controller.boundary.guard`
+- `make verify.scene.catalog.runtime_alignment.guard`
 
 ## Notes
 

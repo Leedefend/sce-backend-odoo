@@ -1,6 +1,9 @@
 {
   "source": {
-    "scene_contract_file": "docs/contract/exports/scenes/stable/LATEST.json"
+    "scene_contract_file": "docs/contract/exports/scenes/stable/LATEST.json",
+    "scene_catalog_scope": "scene_contract_snapshot",
+    "scene_catalog_semantics": "scene_catalog is a contract-shape snapshot for stable export surface; runtime system.init may include expanded role/runtime scenes.",
+    "scene_contract_scene_count": 5
   },
   "schema_version": "v2",
   "scene_version": "v2",

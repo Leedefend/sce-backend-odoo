@@ -1,0 +1,9 @@
+{
+  "min_catalog_scene_count": 1,
+  "min_runtime_scene_count": 20,
+  "min_catalog_runtime_ratio": 0.01,
+  "max_catalog_runtime_ratio": 1.0,
+  "require_runtime_gte_catalog": true,
+  "expected_catalog_scope": "scene_contract_snapshot",
+  "max_errors": 0
+}
