@@ -52,6 +52,7 @@
   - Always emits consolidated summary artifacts:
     - `artifacts/backend/backend_architecture_full_report.json`
     - `artifacts/backend/backend_architecture_full_report.md`
+  - Includes backend evidence manifest guard for release-critical artifact integrity.
 - `make verify.backend.architecture.full.report`
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
 - `make verify.backend.architecture.full.report.schema.guard`
@@ -63,6 +64,14 @@
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `backend_architecture_full_report_guard.json`
     - `backend_architecture_full_report_guard.md`
+- `make verify.backend.evidence.manifest`
+  - Generates deterministic backend evidence manifest (`path`/`exists`/`size_bytes`/`sha256`) for release-critical artifacts.
+  - Baseline: `scripts/verify/baselines/backend_evidence_manifest_guard.json`.
+  - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
+    - `backend_evidence_manifest.json`
+    - `backend_evidence_manifest.md`
+- `make verify.backend.evidence.manifest.guard`
+  - Enforces evidence manifest policy (`required_artifacts`, missing budget, minimal total size, checksum format).
 - `make verify.scene.catalog.runtime_alignment.guard`
   - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
   - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
@@ -127,6 +136,7 @@
     - `verify.phase_next.evidence.bundle`
     - `verify.runtime.surface.dashboard.strict.guard`
     - `verify.backend.architecture.full.report.guard`
+    - `verify.backend.evidence.manifest.guard`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`
