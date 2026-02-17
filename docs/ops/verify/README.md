@@ -154,9 +154,15 @@
   - Baselines:
     - `scripts/verify/baselines/business_capability_baseline_snapshot.json`
     - `scripts/verify/baselines/business_capability_baseline_report_guard.json`
+- `make verify.business.capability_baseline.report.schema.guard`
+  - Schema/determinism guard for baseline report summary + delta fields and sorted check ordering.
 - `make verify.contract.evidence.guard`
   - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, runtime surface dashboard summary, backend architecture full summary, and backend evidence manifest summary.
   - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
+  - Business baseline floors in policy:
+    - `min_business_required_intent_count`
+    - `min_business_required_role_count`
+    - `min_business_catalog_runtime_ratio`
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`
     - `artifacts/contract/phase11_1_contract_evidence.md`

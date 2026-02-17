@@ -15,6 +15,7 @@
     "scripts/verify/baselines/role_capability_floor_guard.json",
     "scripts/verify/baselines/business_capability_baseline_snapshot.json",
     "scripts/verify/baselines/business_capability_baseline_report_guard.json",
+    "scripts/verify/business_capability_baseline_report_schema_guard.py",
     "scripts/verify/baselines/role_capability_floor_prod_like.json",
     "scripts/verify/baselines/contract_assembler_semantic_smoke.json",
     "scripts/verify/baselines/runtime_surface_dashboard_report.json",
