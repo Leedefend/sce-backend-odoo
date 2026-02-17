@@ -1,0 +1,11 @@
+{
+  "required_checks": [
+    "role_capability_prod_like",
+    "contract_assembler_semantic_smoke",
+    "runtime_surface_dashboard",
+    "contract_governance_coverage",
+    "controller_boundary_report",
+    "scene_catalog_runtime_alignment"
+  ],
+  "min_check_count": 6
+}
