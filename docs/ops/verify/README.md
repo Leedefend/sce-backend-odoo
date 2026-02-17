@@ -54,6 +54,8 @@
     - `artifacts/backend/backend_architecture_full_report.md`
 - `make verify.backend.architecture.full.report`
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
+- `make verify.backend.architecture.full.report.schema.guard`
+  - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.
 - `make verify.scene.catalog.runtime_alignment.guard`
   - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
   - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
@@ -122,7 +124,7 @@
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/business_capability_baseline_report.md`
 - `make verify.contract.evidence.guard`
-  - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, and runtime surface dashboard summaries.
+  - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, runtime surface dashboard summary, and backend architecture full summary.
   - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`
