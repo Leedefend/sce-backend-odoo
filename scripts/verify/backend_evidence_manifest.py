@@ -59,6 +59,7 @@ def main() -> int:
         for item in (baseline.get("required_artifacts") if isinstance(baseline.get("required_artifacts"), list) else [])
         if str(item).strip()
     ]
+    required = sorted(set(required))
     if not required:
         print("[backend_evidence_manifest] FAIL")
         print(f"invalid baseline required_artifacts: {BASELINE_JSON.relative_to(ROOT).as_posix()}")
@@ -88,6 +89,8 @@ def main() -> int:
         if not exists:
             missing.append(rel)
 
+    entries = sorted(entries, key=lambda row: str(row.get("path") or ""))
+    missing = sorted(set(missing))
     payload = {
         "ok": len(missing) == 0,
         "summary": {
