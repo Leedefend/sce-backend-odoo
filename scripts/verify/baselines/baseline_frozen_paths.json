@@ -17,6 +17,7 @@
     "scripts/verify/baselines/contract_assembler_semantic_smoke.json",
     "scripts/verify/baselines/runtime_surface_dashboard_report.json",
     "scripts/verify/baselines/runtime_surface_dashboard_baseline_snapshot.json",
+    "scripts/verify/baselines/backend_architecture_full_report_schema_guard.json",
     "scripts/verify/baselines/controller_boundary_guard_baseline.json",
     "scripts/verify/baselines/contract_evidence_guard_baseline.json",
     "docs/ops/verify/scene_observability_troubleshooting.md"

@@ -56,6 +56,7 @@
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
 - `make verify.backend.architecture.full.report.schema.guard`
   - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.
+  - Baseline: `scripts/verify/baselines/backend_architecture_full_report_schema_guard.json`.
 - `make verify.scene.catalog.runtime_alignment.guard`
   - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
   - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
