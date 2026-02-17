@@ -86,6 +86,7 @@ def main() -> int:
     role_floor = _load_json(backend_dir / "role_capability_floor_prod_like.json") or _load_json(
         local_artifacts / "backend" / "role_capability_floor_prod_like.json"
     )
+    business_baseline = _load_json(local_artifacts / "business_capability_baseline_report.json")
     coverage = _load_json(local_artifacts / "contract_governance_coverage.json")
     boundary_report = _load_json(local_artifacts / "controller_boundary_guard_report.json")
     catalog_alignment = _load_json(local_artifacts / "scene_catalog_runtime_alignment_guard.json")
@@ -114,6 +115,17 @@ def main() -> int:
             "ok": bool(runtime_surface.get("ok", True)),
             "warning_count": _safe_int((runtime_surface.get("summary") or {}).get("warning_count"), 0),
             "source": "artifacts/backend/runtime_surface_dashboard_report.json",
+        }
+    )
+    checks.append(
+        {
+            "name": "business_capability_baseline",
+            "ok": bool(business_baseline.get("ok") is True),
+            "failed_check_count": _safe_int((business_baseline.get("summary") or {}).get("failed_check_count"), 0),
+            "required_intent_count": _safe_int((business_baseline.get("summary") or {}).get("required_intent_count"), 0),
+            "required_role_count": _safe_int((business_baseline.get("summary") or {}).get("required_role_count"), 0),
+            "catalog_runtime_ratio": _safe_float((business_baseline.get("summary") or {}).get("catalog_runtime_ratio"), 0.0),
+            "source": "artifacts/business_capability_baseline_report.json",
         }
     )
     checks.append(
