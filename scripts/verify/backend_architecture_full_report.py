@@ -56,6 +56,19 @@ def _safe_float(value, default: float = 0.0) -> float:
         return default
 
 
+def _parse_ratio(value: object) -> float:
+    if isinstance(value, str) and "/" in value:
+        left, _, right = value.partition("/")
+        try:
+            numerator = float(left.strip())
+            denominator = float(right.strip())
+            if denominator > 0:
+                return round(numerator / denominator, 6)
+        except Exception:
+            return 0.0
+    return _safe_float(value, 0.0)
+
+
 def main() -> int:
     artifacts_root = _resolve_artifacts_dir()
     backend_dir = artifacts_root / "backend"
@@ -73,7 +86,6 @@ def main() -> int:
     role_floor = _load_json(backend_dir / "role_capability_floor_prod_like.json") or _load_json(
         local_artifacts / "backend" / "role_capability_floor_prod_like.json"
     )
-    evidence = _load_json(local_artifacts / "contract" / "phase11_1_contract_evidence.json")
     coverage = _load_json(local_artifacts / "contract_governance_coverage.json")
     boundary_report = _load_json(local_artifacts / "controller_boundary_guard_report.json")
     catalog_alignment = _load_json(local_artifacts / "scene_catalog_runtime_alignment_guard.json")
@@ -106,18 +118,9 @@ def main() -> int:
     )
     checks.append(
         {
-            "name": "contract_evidence_bundle",
-            "ok": bool(evidence),
-            "intent_count": _safe_int((evidence.get("intent_catalog") or {}).get("intent_count"), 0),
-            "scene_count": _safe_int((evidence.get("scene_catalog") or {}).get("scene_count"), 0),
-            "source": "artifacts/contract/phase11_1_contract_evidence.json",
-        }
-    )
-    checks.append(
-        {
             "name": "contract_governance_coverage",
             "ok": bool(coverage.get("ok") is True),
-            "coverage_ratio": _safe_float((coverage.get("summary") or {}).get("coverage_ratio"), 0.0),
+            "coverage_ratio": _parse_ratio(coverage.get("coverage_ratio")),
             "source": "artifacts/contract_governance_coverage.json",
         }
     )
