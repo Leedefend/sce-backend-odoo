@@ -15,12 +15,14 @@
   - `make verify.contract.evidence.guard`
   - `make verify.backend.architecture.full.report`
   - `make verify.backend.architecture.full.report.guard`
+  - `make verify.backend.evidence.manifest.guard`
   - 必须产物：
     - `/mnt/artifacts/backend/role_capability_floor_prod_like.json`（不可写时回落 `artifacts/backend/...`）
     - `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json`（不可写时回落 `artifacts/backend/...`）
     - `/mnt/artifacts/backend/runtime_surface_dashboard_report.json`（不可写时回落 `artifacts/backend/...`）
     - `/mnt/artifacts/backend/backend_architecture_full_report.json`（不可写时回落 `artifacts/backend/...`）
     - `/mnt/artifacts/backend/backend_architecture_full_report_guard.json`（不可写时回落 `artifacts/backend/...`）
+    - `/mnt/artifacts/backend/backend_evidence_manifest.json`（不可写时回落 `artifacts/backend/...`）
     - `artifacts/contract/phase11_1_contract_evidence.json`
 - 已包含 Phase 9.8 菜单/场景覆盖汇总证据：
   - `make verify.menu.scene_resolve.summary`

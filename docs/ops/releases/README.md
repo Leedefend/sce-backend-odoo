@@ -122,3 +122,5 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - artifact: `/mnt/artifacts/backend/runtime_surface_dashboard_report.json` (fallback: `artifacts/backend/runtime_surface_dashboard_report.json`)
   - `make verify.backend.architecture.full.report`
     - artifact: `/mnt/artifacts/backend/backend_architecture_full_report.json` (fallback: `artifacts/backend/backend_architecture_full_report.json`)
+  - `make verify.backend.evidence.manifest.guard`
+    - artifact: `/mnt/artifacts/backend/backend_evidence_manifest.json` (fallback: `artifacts/backend/backend_evidence_manifest.json`)
