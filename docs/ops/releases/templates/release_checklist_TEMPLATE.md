@@ -23,6 +23,7 @@
     - `/mnt/artifacts/backend/backend_architecture_full_report.json` (fallback `artifacts/backend/...`)
     - `/mnt/artifacts/backend/backend_architecture_full_report_guard.json` (fallback `artifacts/backend/...`)
     - `/mnt/artifacts/backend/backend_evidence_manifest.json` (fallback `artifacts/backend/...`)
+    - `artifacts/business_capability_baseline_report.json`
     - `artifacts/contract/phase11_1_contract_evidence.json`
 - Phase 9.8 menu/scene coverage summary is present:
   - `make verify.menu.scene_resolve.summary`

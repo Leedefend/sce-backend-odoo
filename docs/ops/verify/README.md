@@ -57,6 +57,7 @@
 - `make verify.backend.architecture.full.report`
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
   - Includes business capability baseline check summary (`required_intent_count`, `required_role_count`, `catalog_runtime_ratio`).
+  - Output check list is sorted by check name for deterministic diff.
 - `make verify.backend.architecture.full.report.schema.guard`
   - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.
   - Baseline: `scripts/verify/baselines/backend_architecture_full_report_schema_guard.json`.
@@ -78,6 +79,7 @@
     - `backend_evidence_manifest.md`
 - `make verify.backend.evidence.manifest.guard`
   - Enforces evidence manifest policy (`required_artifacts`, missing budget, minimal total size, checksum format).
+- Manifest required artifacts include `artifacts/business_capability_baseline_report.json`.
 - `make verify.backend.evidence.manifest.schema.guard`
   - Schema/determinism guard for manifest structure (summary consistency, sorted paths, size accounting).
 - `make verify.scene.catalog.runtime_alignment.guard`
