@@ -28,6 +28,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | C1.2 Role capability floor baseline | `make verify.role.capability_floor.guard` + `make verify.business.capability_baseline.guard` | Covered |
 | C1.2.a Business capability baseline summary policy guard | `make verify.business.capability_baseline.report.guard` | Covered |
 | C1.2.b Business capability baseline summary schema/determinism guard | `make verify.business.capability_baseline.report.schema.guard` | Covered |
+| C1.2.c Business capability baseline included in backend full summary | `make verify.backend.architecture.full.report` + `make verify.backend.architecture.full.report.guard` | Covered |
 | C1.3 Prod-like role fixture floor (non-demo) | `make verify.role.capability_floor.prod_like` | Covered |
 | C1.4 Prod-like role evidence schema stability | `make verify.role.capability_floor.prod_like.schema.guard` | Covered |
 | D1.1 Demo/seed must not leak into core provider path | `make verify.seed.demo.isolation` | Covered |

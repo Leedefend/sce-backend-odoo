@@ -56,12 +56,17 @@
   - Includes backend evidence manifest guard for release-critical artifact integrity.
 - `make verify.backend.architecture.full.report`
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
+  - Includes business capability baseline check summary (`required_intent_count`, `required_role_count`, `catalog_runtime_ratio`).
 - `make verify.backend.architecture.full.report.schema.guard`
   - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.
   - Baseline: `scripts/verify/baselines/backend_architecture_full_report_schema_guard.json`.
 - `make verify.backend.architecture.full.report.guard`
   - Baseline policy guard for full report health signals (check count, failed/warning budget, coverage ratio, alignment ratio).
   - Baseline: `scripts/verify/baselines/backend_architecture_full_report_guard.json`.
+  - Enforces additional business capability floors from full report:
+    - `min_business_required_intent_count`
+    - `min_business_required_role_count`
+    - `min_business_catalog_runtime_ratio`
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `backend_architecture_full_report_guard.json`
     - `backend_architecture_full_report_guard.md`
