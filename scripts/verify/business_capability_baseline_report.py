@@ -82,6 +82,8 @@ def main() -> int:
         ),
     }
 
+    checks = sorted(checks, key=lambda item: str(item.get("name") or ""))
+
     report = {
         "ok": (not errors) and all(item["ok"] for item in checks),
         "summary": {
