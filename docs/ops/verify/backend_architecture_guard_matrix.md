@@ -50,6 +50,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | E1.4.a Backend architecture full summary schema stability | `make verify.backend.architecture.full.report.schema.guard` | Covered |
 | E1.4.b Backend architecture full summary baseline policy guard | `make verify.backend.architecture.full.report.guard` | Covered |
 | E1.5 Backend evidence manifest integrity guard | `make verify.backend.evidence.manifest.guard` | Covered |
+| E1.5.a Backend evidence manifest schema/determinism guard | `make verify.backend.evidence.manifest.schema.guard` | Covered |
 | H1.1 Default user mode, hud gated by flag | `make verify.mode.filter` | Covered |
 | H1.2 HUD tracing fields coverage | `make verify.scene.hud.trace.smoke` + `make verify.scene.meta.trace.smoke` | Covered |
 
@@ -83,6 +84,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.backend.architecture.full.report.schema.guard`
 - `make verify.backend.architecture.full.report.guard`
 - `make verify.backend.evidence.manifest`
+- `make verify.backend.evidence.manifest.schema.guard`
 - `make verify.backend.evidence.manifest.guard`
 - `make verify.phase_next.evidence.bundle.strict`
 - `make verify.business.core_journey.guard`

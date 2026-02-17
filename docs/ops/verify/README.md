@@ -49,6 +49,7 @@
 - `make verify.backend.architecture.full`
   - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + governance coverage + HUD trace smokes).
   - Optional strict runtime-surface warning gate: `SC_RUNTIME_SURFACE_STRICT=1 make verify.backend.architecture.full`.
+  - Optional strict phase-next aggregate gate: `SC_PHASE_NEXT_STRICT=1 make verify.backend.architecture.full`.
   - Always emits consolidated summary artifacts:
     - `artifacts/backend/backend_architecture_full_report.json`
     - `artifacts/backend/backend_architecture_full_report.md`
@@ -72,6 +73,8 @@
     - `backend_evidence_manifest.md`
 - `make verify.backend.evidence.manifest.guard`
   - Enforces evidence manifest policy (`required_artifacts`, missing budget, minimal total size, checksum format).
+- `make verify.backend.evidence.manifest.schema.guard`
+  - Schema/determinism guard for manifest structure (summary consistency, sorted paths, size accounting).
 - `make verify.scene.catalog.runtime_alignment.guard`
   - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
   - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
@@ -146,7 +149,7 @@
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/business_capability_baseline_report.md`
 - `make verify.contract.evidence.guard`
-  - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, runtime surface dashboard summary, and backend architecture full summary.
+  - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, runtime surface dashboard summary, backend architecture full summary, and backend evidence manifest summary.
   - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`
