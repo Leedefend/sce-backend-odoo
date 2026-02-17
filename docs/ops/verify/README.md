@@ -57,6 +57,12 @@
 - `make verify.backend.architecture.full.report.schema.guard`
   - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.
   - Baseline: `scripts/verify/baselines/backend_architecture_full_report_schema_guard.json`.
+- `make verify.backend.architecture.full.report.guard`
+  - Baseline policy guard for full report health signals (check count, failed/warning budget, coverage ratio, alignment ratio).
+  - Baseline: `scripts/verify/baselines/backend_architecture_full_report_guard.json`.
+  - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
+    - `backend_architecture_full_report_guard.json`
+    - `backend_architecture_full_report_guard.md`
 - `make verify.scene.catalog.runtime_alignment.guard`
   - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
   - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
@@ -116,6 +122,11 @@
     - prod-like role fixture evidence + schema guard
     - contract assembler semantic smoke + schema guard
     - runtime surface dashboard report + schema guard
+- `make verify.phase_next.evidence.bundle.strict`
+  - Strict aggregate target:
+    - `verify.phase_next.evidence.bundle`
+    - `verify.runtime.surface.dashboard.strict.guard`
+    - `verify.backend.architecture.full.report.guard`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`
