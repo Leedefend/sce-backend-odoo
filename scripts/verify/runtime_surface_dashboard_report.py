@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BASELINE_JSON = ROOT / "scripts" / "verify" / "baselines" / "runtime_surface_dashboard_report.json"
 SCENE_CATALOG_JSON = ROOT / "docs" / "contract" / "exports" / "scene_catalog.json"
 ALIGNMENT_JSON = ROOT / "artifacts" / "scene_catalog_runtime_alignment_guard.json"
+BASELINE_SNAPSHOT_JSON = ROOT / "scripts" / "verify" / "baselines" / "runtime_surface_dashboard_baseline_snapshot.json"
 
 
 def _resolve_artifacts_dir() -> Path:
@@ -51,6 +52,13 @@ def _safe_float(v, default=0.0) -> float:
         return default
 
 
+def _safe_int(v, default=0) -> int:
+    try:
+        return int(v)
+    except Exception:
+        return default
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_JSON)
     if not baseline:
@@ -69,6 +77,7 @@ def main() -> int:
     scene_catalog = _load_json(SCENE_CATALOG_JSON)
     alignment = _load_json(ALIGNMENT_JSON)
     prod_like = _load_json(role_prod_like_json)
+    baseline_snapshot = _load_json(BASELINE_SNAPSHOT_JSON)
 
     catalog_count = int(scene_catalog.get("scene_count") or 0)
     runtime_scene_count = int(((alignment.get("summary") or {}).get("runtime_scene_count")) or 0)
@@ -85,6 +94,21 @@ def main() -> int:
             runtime_capability_max = max(caps)
             runtime_capability_min = min(caps)
             runtime_capability_avg = round(sum(caps) / len(caps), 3)
+
+    baseline_catalog_count = _safe_int(baseline_snapshot.get("catalog_scene_count"))
+    baseline_runtime_scene_count = _safe_int(baseline_snapshot.get("runtime_scene_count"))
+    baseline_ratio = _safe_float(baseline_snapshot.get("catalog_runtime_ratio"), 0.0)
+    baseline_runtime_capability_avg = _safe_float(baseline_snapshot.get("runtime_capability_avg"), 0.0)
+    baseline_runtime_capability_max = _safe_int(baseline_snapshot.get("runtime_capability_max"))
+    baseline_runtime_capability_min = _safe_int(baseline_snapshot.get("runtime_capability_min"))
+    delta_vs_baseline = {
+        "catalog_scene_count": catalog_count - baseline_catalog_count,
+        "runtime_scene_count": runtime_scene_count - baseline_runtime_scene_count,
+        "catalog_runtime_ratio": round(ratio - baseline_ratio, 6),
+        "runtime_capability_avg": round(runtime_capability_avg - baseline_runtime_capability_avg, 3),
+        "runtime_capability_max": runtime_capability_max - baseline_runtime_capability_max,
+        "runtime_capability_min": runtime_capability_min - baseline_runtime_capability_min,
+    }
 
     warnings: list[str] = []
     ratio_min_warn = _safe_float(baseline.get("ratio_min_warn"), 0.0)
@@ -115,10 +139,18 @@ def main() -> int:
             "runtime_capability_min": runtime_capability_min,
             "runtime_capability_avg": runtime_capability_avg,
             "runtime_capability_max": runtime_capability_max,
+            "baseline_catalog_scene_count": baseline_catalog_count,
+            "baseline_runtime_scene_count": baseline_runtime_scene_count,
+            "baseline_catalog_runtime_ratio": baseline_ratio,
+            "baseline_runtime_capability_min": baseline_runtime_capability_min,
+            "baseline_runtime_capability_avg": baseline_runtime_capability_avg,
+            "baseline_runtime_capability_max": baseline_runtime_capability_max,
             "warning_count": len(warnings),
             "artifacts_dir": str(artifacts_dir),
         },
+        "delta_vs_baseline": delta_vs_baseline,
         "baseline": baseline,
+        "baseline_snapshot": baseline_snapshot,
         "warnings": warnings,
     }
     artifact_json.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -131,6 +163,14 @@ def main() -> int:
         f"- scene_delta: {scene_delta}",
         f"- catalog_runtime_ratio: {ratio}",
         f"- runtime_capability_min/avg/max: {runtime_capability_min}/{runtime_capability_avg}/{runtime_capability_max}",
+        f"- baseline_catalog_scene_count: {baseline_catalog_count}",
+        f"- baseline_runtime_scene_count: {baseline_runtime_scene_count}",
+        f"- baseline_catalog_runtime_ratio: {baseline_ratio}",
+        f"- baseline_runtime_capability_min/avg/max: {baseline_runtime_capability_min}/{baseline_runtime_capability_avg}/{baseline_runtime_capability_max}",
+        f"- delta_vs_baseline.catalog_scene_count: {delta_vs_baseline['catalog_scene_count']}",
+        f"- delta_vs_baseline.runtime_scene_count: {delta_vs_baseline['runtime_scene_count']}",
+        f"- delta_vs_baseline.catalog_runtime_ratio: {delta_vs_baseline['catalog_runtime_ratio']}",
+        f"- delta_vs_baseline.runtime_capability_min/avg/max: {delta_vs_baseline['runtime_capability_min']}/{delta_vs_baseline['runtime_capability_avg']}/{delta_vs_baseline['runtime_capability_max']}",
         f"- warning_count: {len(warnings)}",
     ]
     if warnings:

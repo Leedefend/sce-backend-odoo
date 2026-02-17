@@ -1,0 +1,15 @@
+{
+  "min_check_count": 6,
+  "max_failed_check_count": 0,
+  "max_warning_check_count": 0,
+  "min_contract_governance_coverage_ratio": 0.95,
+  "min_scene_catalog_runtime_alignment_ratio": 0.01,
+  "required_checks": [
+    "role_capability_prod_like",
+    "contract_assembler_semantic_smoke",
+    "runtime_surface_dashboard",
+    "contract_governance_coverage",
+    "controller_boundary_report",
+    "scene_catalog_runtime_alignment"
+  ]
+}

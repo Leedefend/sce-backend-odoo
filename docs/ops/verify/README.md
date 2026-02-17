@@ -48,6 +48,33 @@
   - Verifies required governance policy baseline JSON files exist and are valid objects.
 - `make verify.backend.architecture.full`
   - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + governance coverage + HUD trace smokes).
+  - Optional strict runtime-surface warning gate: `SC_RUNTIME_SURFACE_STRICT=1 make verify.backend.architecture.full`.
+  - Optional strict phase-next aggregate gate: `SC_PHASE_NEXT_STRICT=1 make verify.backend.architecture.full`.
+  - Always emits consolidated summary artifacts:
+    - `artifacts/backend/backend_architecture_full_report.json`
+    - `artifacts/backend/backend_architecture_full_report.md`
+  - Includes backend evidence manifest guard for release-critical artifact integrity.
+- `make verify.backend.architecture.full.report`
+  - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
+- `make verify.backend.architecture.full.report.schema.guard`
+  - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.
+  - Baseline: `scripts/verify/baselines/backend_architecture_full_report_schema_guard.json`.
+- `make verify.backend.architecture.full.report.guard`
+  - Baseline policy guard for full report health signals (check count, failed/warning budget, coverage ratio, alignment ratio).
+  - Baseline: `scripts/verify/baselines/backend_architecture_full_report_guard.json`.
+  - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
+    - `backend_architecture_full_report_guard.json`
+    - `backend_architecture_full_report_guard.md`
+- `make verify.backend.evidence.manifest`
+  - Generates deterministic backend evidence manifest (`path`/`exists`/`size_bytes`/`sha256`) for release-critical artifacts.
+  - Baseline: `scripts/verify/baselines/backend_evidence_manifest_guard.json`.
+  - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
+    - `backend_evidence_manifest.json`
+    - `backend_evidence_manifest.md`
+- `make verify.backend.evidence.manifest.guard`
+  - Enforces evidence manifest policy (`required_artifacts`, missing budget, minimal total size, checksum format).
+- `make verify.backend.evidence.manifest.schema.guard`
+  - Schema/determinism guard for manifest structure (summary consistency, sorted paths, size accounting).
 - `make verify.scene.catalog.runtime_alignment.guard`
   - Verifies scene catalog export scope/size remains explainable against runtime `system.init` scene surface using baseline policy.
   - Baseline: `scripts/verify/baselines/scene_catalog_runtime_alignment.json`.
@@ -93,16 +120,26 @@
 - `make verify.runtime.surface.dashboard.report`
   - Emits runtime scenes/capabilities dashboard vs catalog snapshot scope with threshold warnings (warning-only, non-blocking).
   - Baseline: `scripts/verify/baselines/runtime_surface_dashboard_report.json`.
+  - Baseline snapshot (for diff): `scripts/verify/baselines/runtime_surface_dashboard_baseline_snapshot.json`.
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `runtime_surface_dashboard_report.json`
     - `runtime_surface_dashboard_report.md`
 - `make verify.runtime.surface.dashboard.schema.guard`
   - Schema guard for runtime surface dashboard evidence structure and warning count consistency.
+- `make verify.runtime.surface.dashboard.strict.guard`
+  - Optional strict warning gate for runtime surface dashboard report.
+  - Uses `SC_RUNTIME_SURFACE_WARN_MAX` as warning threshold (default: `0`).
 - `make verify.phase_next.evidence.bundle`
   - Aggregate target for phase-next evidence chain:
     - prod-like role fixture evidence + schema guard
     - contract assembler semantic smoke + schema guard
     - runtime surface dashboard report + schema guard
+- `make verify.phase_next.evidence.bundle.strict`
+  - Strict aggregate target:
+    - `verify.phase_next.evidence.bundle`
+    - `verify.runtime.surface.dashboard.strict.guard`
+    - `verify.backend.architecture.full.report.guard`
+    - `verify.backend.evidence.manifest.guard`
 - `make verify.business.capability_baseline.guard`
   - Aggregates business capability baselines:
     - `verify.scene.catalog.runtime_alignment.guard`
@@ -112,7 +149,7 @@
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/business_capability_baseline_report.md`
 - `make verify.contract.evidence.guard`
-  - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, and runtime surface dashboard summaries.
+  - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, runtime surface dashboard summary, backend architecture full summary, and backend evidence manifest summary.
   - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`

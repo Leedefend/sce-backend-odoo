@@ -1,0 +1,14 @@
+{
+  "max_missing_count": 0,
+  "min_total_size_bytes": 2048,
+  "required_artifacts": [
+    "artifacts/backend/role_capability_floor_prod_like.json",
+    "artifacts/backend/contract_assembler_semantic_smoke.json",
+    "artifacts/backend/runtime_surface_dashboard_report.json",
+    "artifacts/backend/backend_architecture_full_report.json",
+    "artifacts/backend/backend_architecture_full_report_guard.json",
+    "artifacts/contract/phase11_1_contract_evidence.json",
+    "artifacts/contract_governance_coverage.json",
+    "artifacts/scene_catalog_runtime_alignment_guard.json"
+  ]
+}
