@@ -33,6 +33,8 @@ def main() -> int:
         "require_business_capability_ok": True,
         "require_prod_like_ok": True,
         "require_contract_assembler_semantic_ok": True,
+        "require_backend_architecture_full_ok": True,
+        "max_backend_architecture_failed_check_count": 0,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -54,6 +56,7 @@ def main() -> int:
         "role_capability_prod_like",
         "contract_assembler_semantic",
         "runtime_surface_dashboard",
+        "backend_architecture_full",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -99,6 +102,18 @@ def main() -> int:
         errors.append(
             "contract_assembler_semantic.error_count must be <= "
             f"{max_semantic_errors}"
+        )
+
+    backend_full = payload.get("backend_architecture_full") if isinstance(payload.get("backend_architecture_full"), dict) else {}
+    if not isinstance(backend_full.get("ok"), bool):
+        errors.append("backend_architecture_full.ok must be bool")
+    if bool(policy.get("require_backend_architecture_full_ok", True)) and not bool(backend_full.get("ok")):
+        errors.append("backend_architecture_full.ok must be true under baseline policy")
+    max_failed_checks = int(policy.get("max_backend_architecture_failed_check_count", 0) or 0)
+    if int(backend_full.get("failed_check_count") or 0) > max_failed_checks:
+        errors.append(
+            "backend_architecture_full.failed_check_count must be <= "
+            f"{max_failed_checks}"
         )
 
     if len(errors) > int(policy.get("max_errors", 0)):

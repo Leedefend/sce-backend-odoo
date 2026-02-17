@@ -29,6 +29,7 @@ def build_evidence(
     role_capability_prod_like_report: dict,
     contract_assembler_semantic_report: dict,
     runtime_surface_dashboard_report: dict,
+    backend_architecture_full_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -120,6 +121,17 @@ def build_evidence(
             ),
             "report": "artifacts/backend/runtime_surface_dashboard_report.json",
         },
+        "backend_architecture_full": {
+            "ok": bool(backend_architecture_full_report.get("ok", False)),
+            "check_count": int((((backend_architecture_full_report.get("summary") or {}).get("check_count")) or 0)),
+            "failed_check_count": int(
+                (((backend_architecture_full_report.get("summary") or {}).get("failed_check_count")) or 0)
+            ),
+            "warning_check_count": int(
+                (((backend_architecture_full_report.get("summary") or {}).get("warning_check_count")) or 0)
+            ),
+            "report": "artifacts/backend/backend_architecture_full_report.json",
+        },
     }
     return evidence
 
@@ -134,6 +146,7 @@ def to_markdown(evidence: dict) -> str:
     p = evidence["role_capability_prod_like"]
     c = evidence["contract_assembler_semantic"]
     r = evidence["runtime_surface_dashboard"]
+    a2 = evidence["backend_architecture_full"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -191,6 +204,13 @@ def to_markdown(evidence: dict) -> str:
         f"- catalog_runtime_ratio: {r['catalog_runtime_ratio']}",
         f"- report: `{r['report']}`",
         "",
+        "## Backend Architecture Full",
+        f"- ok: {a2['ok']}",
+        f"- check_count: {a2['check_count']}",
+        f"- failed_check_count: {a2['failed_check_count']}",
+        f"- warning_check_count: {a2['warning_check_count']}",
+        f"- report: `{a2['report']}`",
+        "",
         "## Top Observed reason_code",
     ]
     top_codes = i.get("top_observed_reason_codes") or []
@@ -214,6 +234,7 @@ def main() -> int:
     parser.add_argument("--role-capability-prod-like-report", default="artifacts/backend/role_capability_floor_prod_like.json")
     parser.add_argument("--contract-assembler-semantic-report", default="artifacts/backend/contract_assembler_semantic_smoke.json")
     parser.add_argument("--runtime-surface-dashboard-report", default="artifacts/backend/runtime_surface_dashboard_report.json")
+    parser.add_argument("--backend-architecture-full-report", default="artifacts/backend/backend_architecture_full_report.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -227,6 +248,7 @@ def main() -> int:
     role_capability_prod_like_report = load_json_optional(Path(args.role_capability_prod_like_report), {})
     contract_assembler_semantic_report = load_json_optional(Path(args.contract_assembler_semantic_report), {})
     runtime_surface_dashboard_report = load_json_optional(Path(args.runtime_surface_dashboard_report), {})
+    backend_architecture_full_report = load_json_optional(Path(args.backend_architecture_full_report), {})
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -246,6 +268,8 @@ def main() -> int:
         raise SystemExit("contract assembler semantic report must be object")
     if not isinstance(runtime_surface_dashboard_report, dict):
         raise SystemExit("runtime surface dashboard report must be object")
+    if not isinstance(backend_architecture_full_report, dict):
+        raise SystemExit("backend architecture full report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -257,6 +281,7 @@ def main() -> int:
         role_capability_prod_like_report,
         contract_assembler_semantic_report,
         runtime_surface_dashboard_report,
+        backend_architecture_full_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)
