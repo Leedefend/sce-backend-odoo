@@ -145,9 +145,15 @@
     - `verify.scene.catalog.runtime_alignment.guard`
     - `verify.business.core_journey.guard`
     - `verify.role.capability_floor.guard`
+    - `verify.business.capability_baseline.report.guard`
   - Summary artifacts:
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/business_capability_baseline_report.md`
+- `make verify.business.capability_baseline.report.guard`
+  - Policy guard for business capability baseline summary (failed/error budgets + minimum intent/role/ratio floors).
+  - Baselines:
+    - `scripts/verify/baselines/business_capability_baseline_snapshot.json`
+    - `scripts/verify/baselines/business_capability_baseline_report_guard.json`
 - `make verify.contract.evidence.guard`
   - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, runtime surface dashboard summary, backend architecture full summary, and backend evidence manifest summary.
   - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
