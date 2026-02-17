@@ -153,14 +153,19 @@ def main() -> int:
         }
     )
 
-    failed = [item["name"] for item in checks if item.get("ok") is not True]
-    warnings = [item["name"] for item in checks if _safe_int(item.get("warning_count"), 0) > 0]
+    checks = sorted(checks, key=lambda item: str(item.get("name") or ""))
+    failed = sorted([item["name"] for item in checks if item.get("ok") is not True])
+    warnings = sorted([item["name"] for item in checks if _safe_int(item.get("warning_count"), 0) > 0])
+    business_row = next((item for item in checks if item.get("name") == "business_capability_baseline"), {})
     report = {
         "ok": not failed,
         "summary": {
             "check_count": len(checks),
             "failed_check_count": len(failed),
             "warning_check_count": len(warnings),
+            "business_required_intent_count": _safe_int(business_row.get("required_intent_count"), 0),
+            "business_required_role_count": _safe_int(business_row.get("required_role_count"), 0),
+            "business_catalog_runtime_ratio": _safe_float(business_row.get("catalog_runtime_ratio"), 0.0),
             "failed_checks": failed,
             "warning_checks": warnings,
             "artifacts_dir": str(backend_dir),
@@ -176,6 +181,9 @@ def main() -> int:
         f"- check_count: {report['summary']['check_count']}",
         f"- failed_check_count: {report['summary']['failed_check_count']}",
         f"- warning_check_count: {report['summary']['warning_check_count']}",
+        f"- business_required_intent_count: {report['summary']['business_required_intent_count']}",
+        f"- business_required_role_count: {report['summary']['business_required_role_count']}",
+        f"- business_catalog_runtime_ratio: {report['summary']['business_catalog_runtime_ratio']}",
         "",
         "## Checks",
         "",

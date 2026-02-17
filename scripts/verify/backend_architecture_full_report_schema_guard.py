@@ -67,7 +67,17 @@ def main() -> int:
         errors.append("checks must be list")
         checks = []
 
-    for key in ("check_count", "failed_check_count", "warning_check_count", "failed_checks", "warning_checks", "artifacts_dir"):
+    for key in (
+        "check_count",
+        "failed_check_count",
+        "warning_check_count",
+        "business_required_intent_count",
+        "business_required_role_count",
+        "business_catalog_runtime_ratio",
+        "failed_checks",
+        "warning_checks",
+        "artifacts_dir",
+    ):
         if key not in summary:
             errors.append(f"summary missing key: {key}")
 
@@ -94,6 +104,9 @@ def main() -> int:
 
     if isinstance(summary.get("check_count"), int) and int(summary.get("check_count")) != len(checks):
         errors.append(f"summary.check_count mismatch: {summary.get('check_count')} != {len(checks)}")
+    check_order = [str(row.get("name") or "") for row in checks if isinstance(row, dict)]
+    if check_order != sorted(check_order):
+        errors.append("checks must be sorted by name for deterministic diff")
     if isinstance(summary.get("failed_checks"), list):
         failed_actual = sorted([str(row.get("name") or "") for row in checks if isinstance(row, dict) and row.get("ok") is False])
         failed_summary = sorted([str(v) for v in summary.get("failed_checks") if isinstance(v, str)])
