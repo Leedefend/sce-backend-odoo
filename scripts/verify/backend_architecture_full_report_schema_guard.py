@@ -10,14 +10,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ARTIFACT = ROOT / "artifacts" / "backend" / "backend_architecture_full_report.json"
-REQUIRED_CHECKS = {
-    "role_capability_prod_like",
-    "contract_assembler_semantic_smoke",
-    "runtime_surface_dashboard",
-    "contract_governance_coverage",
-    "controller_boundary_report",
-    "scene_catalog_runtime_alignment",
-}
+BASELINE_JSON = ROOT / "scripts" / "verify" / "baselines" / "backend_architecture_full_report_schema_guard.json"
 
 
 def _resolve_artifact_path() -> Path:
@@ -44,6 +37,18 @@ def _load_json(path: Path) -> dict:
 
 
 def main() -> int:
+    baseline = _load_json(BASELINE_JSON)
+    required_checks = {
+        str(item).strip()
+        for item in (baseline.get("required_checks") if isinstance(baseline.get("required_checks"), list) else [])
+        if str(item).strip()
+    }
+    if not required_checks:
+        print("[backend_architecture_full_report_schema_guard] FAIL")
+        print(f"invalid baseline required_checks: {BASELINE_JSON.relative_to(ROOT).as_posix()}")
+        return 1
+    min_check_count = int(baseline.get("min_check_count") or len(required_checks))
+
     path = _resolve_artifact_path()
     payload = _load_json(path)
     if not payload:
@@ -81,9 +86,11 @@ def main() -> int:
         if not str(row.get("source") or "").strip():
             errors.append(f"checks[{idx}].source is required")
 
-    missing_checks = sorted(REQUIRED_CHECKS - names)
+    missing_checks = sorted(required_checks - names)
     if missing_checks:
         errors.append(f"required checks missing: {', '.join(missing_checks)}")
+    if len(checks) < min_check_count:
+        errors.append(f"check_count too small: {len(checks)} < {min_check_count}")
 
     if isinstance(summary.get("check_count"), int) and int(summary.get("check_count")) != len(checks):
         errors.append(f"summary.check_count mismatch: {summary.get('check_count')} != {len(checks)}")
