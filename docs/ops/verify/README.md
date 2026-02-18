@@ -71,6 +71,9 @@
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `backend_architecture_full_report_guard.json`
     - `backend_architecture_full_report_guard.md`
+- `make verify.backend.architecture.full.report.guard.schema.guard`
+  - Schema guard for full-report guard artifact fields (`summary` + `observed`) and deterministic key coverage.
+  - Baseline: `scripts/verify/baselines/backend_architecture_full_report_guard_schema_guard.json`.
 - `make verify.backend.evidence.manifest`
   - Generates deterministic backend evidence manifest (`path`/`exists`/`size_bytes`/`sha256`) for release-critical artifacts.
   - Baseline: `scripts/verify/baselines/backend_evidence_manifest_guard.json`.
