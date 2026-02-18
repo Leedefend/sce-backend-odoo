@@ -44,6 +44,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | A1.1 Catalog/runtime scene surface alignment | `make verify.scene.catalog.runtime_alignment.guard` + `make verify.scene.catalog.governance.guard` | Covered |
 | A1.2 Scene catalog source semantics invariants | `make verify.scene.catalog.source.guard` + `make verify.scene.catalog.governance.guard` | Covered |
 | E1.1 Contract evidence bundle includes alignment/baseline signals | `make verify.contract.evidence.guard` (with `contract_evidence_guard_baseline.json`) | Covered |
+| E1.1.a Contract evidence schema stability | `make verify.contract.evidence.schema.guard` (with `contract_evidence_schema_guard.json`) | Covered |
 | E1.2 Contract assembler semantic smoke (pm/executive, user/hud) | `make verify.contract.assembler.semantic.smoke` | Covered |
 | E1.2.a Contract assembler semantic evidence schema stability | `make verify.contract.assembler.semantic.schema.guard` | Covered |
 | E1.3 Runtime surface dashboard report (warning-only thresholds) | `make verify.runtime.surface.dashboard.report` | Covered |
@@ -98,6 +99,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.business.capability_baseline.report.guard`
 - `make verify.business.capability_baseline.report.schema.guard`
 - `make verify.contract.evidence.guard`
+- `make verify.contract.evidence.schema.guard`
 
 ## Notes
 

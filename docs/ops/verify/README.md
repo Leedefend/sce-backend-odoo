@@ -173,6 +173,9 @@
     - `min_business_required_intent_count`
     - `min_business_required_role_count`
     - `min_business_catalog_runtime_ratio`
+- `make verify.contract.evidence.schema.guard`
+  - Schema guard for `phase11_1_contract_evidence.json` required sections and required section keys.
+  - Baseline: `scripts/verify/baselines/contract_evidence_schema_guard.json`.
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`
     - `artifacts/contract/phase11_1_contract_evidence.md`
