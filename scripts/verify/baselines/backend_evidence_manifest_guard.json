@@ -7,6 +7,7 @@
     "artifacts/backend/runtime_surface_dashboard_report.json",
     "artifacts/backend/backend_architecture_full_report.json",
     "artifacts/backend/backend_architecture_full_report_guard.json",
+    "artifacts/business_capability_baseline_report.json",
     "artifacts/contract/phase11_1_contract_evidence.json",
     "artifacts/contract_governance_coverage.json",
     "artifacts/scene_catalog_runtime_alignment_guard.json"

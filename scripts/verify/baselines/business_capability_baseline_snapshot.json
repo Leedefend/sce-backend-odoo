@@ -1,0 +1,6 @@
+{
+  "check_count": 3,
+  "required_intent_count": 10,
+  "required_role_count": 4,
+  "catalog_runtime_ratio": 0.030488
+}

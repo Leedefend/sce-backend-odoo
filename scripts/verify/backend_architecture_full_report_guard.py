@@ -104,6 +104,9 @@ def main() -> int:
     max_warning_check_count = _safe_int(baseline.get("max_warning_check_count"), 0)
     min_coverage_ratio = _safe_float(baseline.get("min_contract_governance_coverage_ratio"), 0.0)
     min_alignment_ratio = _safe_float(baseline.get("min_scene_catalog_runtime_alignment_ratio"), 0.0)
+    min_business_required_intent_count = _safe_int(baseline.get("min_business_required_intent_count"), 0)
+    min_business_required_role_count = _safe_int(baseline.get("min_business_required_role_count"), 0)
+    min_business_catalog_runtime_ratio = _safe_float(baseline.get("min_business_catalog_runtime_ratio"), 0.0)
 
     check_count = _safe_int(summary.get("check_count"), 0)
     failed_check_count = _safe_int(summary.get("failed_check_count"), 0)
@@ -134,6 +137,26 @@ def main() -> int:
             f"scene_catalog_runtime_alignment_ratio too small: {alignment_ratio} < {min_alignment_ratio}"
         )
 
+    business_row = checks_by_name.get("business_capability_baseline") or {}
+    business_required_intent_count = _safe_int(business_row.get("required_intent_count"), 0)
+    business_required_role_count = _safe_int(business_row.get("required_role_count"), 0)
+    business_catalog_runtime_ratio = _safe_float(business_row.get("catalog_runtime_ratio"), 0.0)
+    if business_required_intent_count < min_business_required_intent_count:
+        errors.append(
+            "business_required_intent_count too small: "
+            f"{business_required_intent_count} < {min_business_required_intent_count}"
+        )
+    if business_required_role_count < min_business_required_role_count:
+        errors.append(
+            "business_required_role_count too small: "
+            f"{business_required_role_count} < {min_business_required_role_count}"
+        )
+    if business_catalog_runtime_ratio < min_business_catalog_runtime_ratio:
+        errors.append(
+            "business_catalog_runtime_ratio too small: "
+            f"{business_catalog_runtime_ratio} < {min_business_catalog_runtime_ratio}"
+        )
+
     payload = {
         "ok": len(errors) == 0,
         "summary": {
@@ -149,6 +172,9 @@ def main() -> int:
         "observed": {
             "contract_governance_coverage_ratio": coverage_ratio,
             "scene_catalog_runtime_alignment_ratio": alignment_ratio,
+            "business_required_intent_count": business_required_intent_count,
+            "business_required_role_count": business_required_role_count,
+            "business_catalog_runtime_ratio": business_catalog_runtime_ratio,
         },
         "errors": errors,
     }
@@ -165,6 +191,9 @@ def main() -> int:
         f"- missing_check_count: {len(missing_checks)}",
         f"- contract_governance_coverage_ratio: {coverage_ratio}",
         f"- scene_catalog_runtime_alignment_ratio: {alignment_ratio}",
+        f"- business_required_intent_count: {business_required_intent_count}",
+        f"- business_required_role_count: {business_required_role_count}",
+        f"- business_catalog_runtime_ratio: {business_catalog_runtime_ratio}",
         f"- error_count: {len(errors)}",
     ]
     if errors:

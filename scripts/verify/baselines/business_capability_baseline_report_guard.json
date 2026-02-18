@@ -1,0 +1,7 @@
+{
+  "max_failed_check_count": 0,
+  "max_error_count": 0,
+  "min_required_intent_count": 10,
+  "min_required_role_count": 4,
+  "min_catalog_runtime_ratio": 0.01
+}

@@ -1,6 +1,9 @@
 {
   "max_errors": 0,
   "min_business_capability_check_count": 3,
+  "min_business_required_intent_count": 10,
+  "min_business_required_role_count": 4,
+  "min_business_catalog_runtime_ratio": 0.01,
   "min_scene_catalog_runtime_ratio": 0.01,
   "min_prod_like_fixture_count": 6,
   "max_contract_assembler_semantic_error_count": 0,

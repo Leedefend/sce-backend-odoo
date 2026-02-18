@@ -23,6 +23,7 @@
     - `/mnt/artifacts/backend/backend_architecture_full_report.json`（不可写时回落 `artifacts/backend/...`）
     - `/mnt/artifacts/backend/backend_architecture_full_report_guard.json`（不可写时回落 `artifacts/backend/...`）
     - `/mnt/artifacts/backend/backend_evidence_manifest.json`（不可写时回落 `artifacts/backend/...`）
+    - `artifacts/business_capability_baseline_report.json`
     - `artifacts/contract/phase11_1_contract_evidence.json`
 - 已包含 Phase 9.8 菜单/场景覆盖汇总证据：
   - `make verify.menu.scene_resolve.summary`

@@ -97,6 +97,15 @@ def build_evidence(
             "ok": bool(business_capability_report.get("ok")),
             "check_count": int((((business_capability_report.get("summary") or {}).get("check_count")) or 0)),
             "failed_check_count": int((((business_capability_report.get("summary") or {}).get("failed_check_count")) or 0)),
+            "required_intent_count": int(
+                (((business_capability_report.get("summary") or {}).get("required_intent_count")) or 0)
+            ),
+            "required_role_count": int(
+                (((business_capability_report.get("summary") or {}).get("required_role_count")) or 0)
+            ),
+            "catalog_runtime_ratio": float(
+                (((business_capability_report.get("summary") or {}).get("catalog_runtime_ratio")) or 0.0)
+            ),
             "report": "artifacts/business_capability_baseline_report.json",
         },
         "role_capability_prod_like": {
@@ -189,6 +198,9 @@ def to_markdown(evidence: dict) -> str:
         f"- ok: {b['ok']}",
         f"- check_count: {b['check_count']}",
         f"- failed_check_count: {b['failed_check_count']}",
+        f"- required_intent_count: {b['required_intent_count']}",
+        f"- required_role_count: {b['required_role_count']}",
+        f"- catalog_runtime_ratio: {b['catalog_runtime_ratio']}",
         f"- report: `{b['report']}`",
         "",
         "## Shape Guard",

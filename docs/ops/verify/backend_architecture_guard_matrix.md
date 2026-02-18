@@ -26,6 +26,9 @@ This matrix maps governance checkpoints to executable verification targets.
 | P4.2 Permission semantics centralized in contract governance path | `make verify.contract.governance.coverage` + `make verify.boundary.guard` | Covered |
 | C1.1 Business core journey intent coverage baseline | `make verify.business.core_journey.guard` + `make verify.business.capability_baseline.guard` | Covered |
 | C1.2 Role capability floor baseline | `make verify.role.capability_floor.guard` + `make verify.business.capability_baseline.guard` | Covered |
+| C1.2.a Business capability baseline summary policy guard | `make verify.business.capability_baseline.report.guard` | Covered |
+| C1.2.b Business capability baseline summary schema/determinism guard | `make verify.business.capability_baseline.report.schema.guard` | Covered |
+| C1.2.c Business capability baseline included in backend full summary | `make verify.backend.architecture.full.report` + `make verify.backend.architecture.full.report.guard` | Covered |
 | C1.3 Prod-like role fixture floor (non-demo) | `make verify.role.capability_floor.prod_like` | Covered |
 | C1.4 Prod-like role evidence schema stability | `make verify.role.capability_floor.prod_like.schema.guard` | Covered |
 | D1.1 Demo/seed must not leak into core provider path | `make verify.seed.demo.isolation` | Covered |
@@ -41,6 +44,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | A1.1 Catalog/runtime scene surface alignment | `make verify.scene.catalog.runtime_alignment.guard` + `make verify.scene.catalog.governance.guard` | Covered |
 | A1.2 Scene catalog source semantics invariants | `make verify.scene.catalog.source.guard` + `make verify.scene.catalog.governance.guard` | Covered |
 | E1.1 Contract evidence bundle includes alignment/baseline signals | `make verify.contract.evidence.guard` (with `contract_evidence_guard_baseline.json`) | Covered |
+| E1.1.a Contract evidence schema stability | `make verify.contract.evidence.schema.guard` (with `contract_evidence_schema_guard.json`) | Covered |
 | E1.2 Contract assembler semantic smoke (pm/executive, user/hud) | `make verify.contract.assembler.semantic.smoke` | Covered |
 | E1.2.a Contract assembler semantic evidence schema stability | `make verify.contract.assembler.semantic.schema.guard` | Covered |
 | E1.3 Runtime surface dashboard report (warning-only thresholds) | `make verify.runtime.surface.dashboard.report` | Covered |
@@ -49,6 +53,7 @@ This matrix maps governance checkpoints to executable verification targets.
 | E1.4 Backend architecture full summary report | `make verify.backend.architecture.full.report` | Covered |
 | E1.4.a Backend architecture full summary schema stability | `make verify.backend.architecture.full.report.schema.guard` | Covered |
 | E1.4.b Backend architecture full summary baseline policy guard | `make verify.backend.architecture.full.report.guard` | Covered |
+| E1.4.c Backend architecture full summary guard schema stability | `make verify.backend.architecture.full.report.guard.schema.guard` | Covered |
 | E1.5 Backend evidence manifest integrity guard | `make verify.backend.evidence.manifest.guard` | Covered |
 | E1.5.a Backend evidence manifest schema/determinism guard | `make verify.backend.evidence.manifest.schema.guard` | Covered |
 | H1.1 Default user mode, hud gated by flag | `make verify.mode.filter` | Covered |
@@ -83,6 +88,7 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.backend.architecture.full.report`
 - `make verify.backend.architecture.full.report.schema.guard`
 - `make verify.backend.architecture.full.report.guard`
+- `make verify.backend.architecture.full.report.guard.schema.guard`
 - `make verify.backend.evidence.manifest`
 - `make verify.backend.evidence.manifest.schema.guard`
 - `make verify.backend.evidence.manifest.guard`
@@ -90,7 +96,10 @@ This matrix maps governance checkpoints to executable verification targets.
 - `make verify.business.core_journey.guard`
 - `make verify.role.capability_floor.guard`
 - `make verify.business.capability_baseline.guard`
+- `make verify.business.capability_baseline.report.guard`
+- `make verify.business.capability_baseline.report.schema.guard`
 - `make verify.contract.evidence.guard`
+- `make verify.contract.evidence.schema.guard`
 
 ## Notes
 

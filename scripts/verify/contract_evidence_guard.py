@@ -26,6 +26,9 @@ def main() -> int:
     policy = {
         "max_errors": 0,
         "min_business_capability_check_count": 1,
+        "min_business_required_intent_count": 0,
+        "min_business_required_role_count": 0,
+        "min_business_catalog_runtime_ratio": 0.0,
         "min_scene_catalog_runtime_ratio": 0.0,
         "min_prod_like_fixture_count": 0,
         "max_contract_assembler_semantic_error_count": 0,
@@ -85,6 +88,15 @@ def main() -> int:
     min_checks = int(policy.get("min_business_capability_check_count", 1) or 1)
     if int(capability_baseline.get("check_count") or 0) < min_checks:
         errors.append(f"business_capability_baseline.check_count must be >= {min_checks}")
+    min_required_intent_count = int(policy.get("min_business_required_intent_count", 0) or 0)
+    if int(capability_baseline.get("required_intent_count") or 0) < min_required_intent_count:
+        errors.append(f"business_capability_baseline.required_intent_count must be >= {min_required_intent_count}")
+    min_required_role_count = int(policy.get("min_business_required_role_count", 0) or 0)
+    if int(capability_baseline.get("required_role_count") or 0) < min_required_role_count:
+        errors.append(f"business_capability_baseline.required_role_count must be >= {min_required_role_count}")
+    min_business_ratio = float(policy.get("min_business_catalog_runtime_ratio", 0.0) or 0.0)
+    if float(capability_baseline.get("catalog_runtime_ratio") or 0.0) < min_business_ratio:
+        errors.append(f"business_capability_baseline.catalog_runtime_ratio must be >= {min_business_ratio}")
 
     prod_like = payload.get("role_capability_prod_like") if isinstance(payload.get("role_capability_prod_like"), dict) else {}
     if not isinstance(prod_like.get("ok"), bool):

@@ -56,15 +56,24 @@
   - Includes backend evidence manifest guard for release-critical artifact integrity.
 - `make verify.backend.architecture.full.report`
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.
+  - Includes business capability baseline check summary (`required_intent_count`, `required_role_count`, `catalog_runtime_ratio`).
+  - Output check list is sorted by check name for deterministic diff.
 - `make verify.backend.architecture.full.report.schema.guard`
   - Schema guard for `backend_architecture_full_report.json` and required check-set coverage.
   - Baseline: `scripts/verify/baselines/backend_architecture_full_report_schema_guard.json`.
 - `make verify.backend.architecture.full.report.guard`
   - Baseline policy guard for full report health signals (check count, failed/warning budget, coverage ratio, alignment ratio).
   - Baseline: `scripts/verify/baselines/backend_architecture_full_report_guard.json`.
+  - Enforces additional business capability floors from full report:
+    - `min_business_required_intent_count`
+    - `min_business_required_role_count`
+    - `min_business_catalog_runtime_ratio`
   - Artifacts (`ARTIFACTS_DIR/backend`, fallback `artifacts/backend`):
     - `backend_architecture_full_report_guard.json`
     - `backend_architecture_full_report_guard.md`
+- `make verify.backend.architecture.full.report.guard.schema.guard`
+  - Schema guard for full-report guard artifact fields (`summary` + `observed`) and deterministic key coverage.
+  - Baseline: `scripts/verify/baselines/backend_architecture_full_report_guard_schema_guard.json`.
 - `make verify.backend.evidence.manifest`
   - Generates deterministic backend evidence manifest (`path`/`exists`/`size_bytes`/`sha256`) for release-critical artifacts.
   - Baseline: `scripts/verify/baselines/backend_evidence_manifest_guard.json`.
@@ -73,6 +82,7 @@
     - `backend_evidence_manifest.md`
 - `make verify.backend.evidence.manifest.guard`
   - Enforces evidence manifest policy (`required_artifacts`, missing budget, minimal total size, checksum format).
+- Manifest required artifacts include `artifacts/business_capability_baseline_report.json`.
 - `make verify.backend.evidence.manifest.schema.guard`
   - Schema/determinism guard for manifest structure (summary consistency, sorted paths, size accounting).
 - `make verify.scene.catalog.runtime_alignment.guard`
@@ -145,12 +155,27 @@
     - `verify.scene.catalog.runtime_alignment.guard`
     - `verify.business.core_journey.guard`
     - `verify.role.capability_floor.guard`
+    - `verify.business.capability_baseline.report.guard`
   - Summary artifacts:
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/business_capability_baseline_report.md`
+- `make verify.business.capability_baseline.report.guard`
+  - Policy guard for business capability baseline summary (failed/error budgets + minimum intent/role/ratio floors).
+  - Baselines:
+    - `scripts/verify/baselines/business_capability_baseline_snapshot.json`
+    - `scripts/verify/baselines/business_capability_baseline_report_guard.json`
+- `make verify.business.capability_baseline.report.schema.guard`
+  - Schema/determinism guard for baseline report summary + delta fields and sorted check ordering.
 - `make verify.contract.evidence.guard`
   - Exports and validates contract evidence bundle including runtime alignment, business capability baseline, prod-like role fixture floor, contract assembler semantic smoke, runtime surface dashboard summary, backend architecture full summary, and backend evidence manifest summary.
   - Baseline policy: `scripts/verify/baselines/contract_evidence_guard_baseline.json`.
+  - Business baseline floors in policy:
+    - `min_business_required_intent_count`
+    - `min_business_required_role_count`
+    - `min_business_catalog_runtime_ratio`
+- `make verify.contract.evidence.schema.guard`
+  - Schema guard for `phase11_1_contract_evidence.json` required sections and required section keys.
+  - Baseline: `scripts/verify/baselines/contract_evidence_schema_guard.json`.
   - Artifacts:
     - `artifacts/contract/phase11_1_contract_evidence.json`
     - `artifacts/contract/phase11_1_contract_evidence.md`
