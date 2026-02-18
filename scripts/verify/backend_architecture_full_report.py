@@ -86,6 +86,7 @@ def main() -> int:
     role_floor = _load_json(backend_dir / "role_capability_floor_prod_like.json") or _load_json(
         local_artifacts / "backend" / "role_capability_floor_prod_like.json"
     )
+    business_baseline = _load_json(local_artifacts / "business_capability_baseline_report.json")
     coverage = _load_json(local_artifacts / "contract_governance_coverage.json")
     boundary_report = _load_json(local_artifacts / "controller_boundary_guard_report.json")
     catalog_alignment = _load_json(local_artifacts / "scene_catalog_runtime_alignment_guard.json")
@@ -118,6 +119,17 @@ def main() -> int:
     )
     checks.append(
         {
+            "name": "business_capability_baseline",
+            "ok": bool(business_baseline.get("ok") is True),
+            "failed_check_count": _safe_int((business_baseline.get("summary") or {}).get("failed_check_count"), 0),
+            "required_intent_count": _safe_int((business_baseline.get("summary") or {}).get("required_intent_count"), 0),
+            "required_role_count": _safe_int((business_baseline.get("summary") or {}).get("required_role_count"), 0),
+            "catalog_runtime_ratio": _safe_float((business_baseline.get("summary") or {}).get("catalog_runtime_ratio"), 0.0),
+            "source": "artifacts/business_capability_baseline_report.json",
+        }
+    )
+    checks.append(
+        {
             "name": "contract_governance_coverage",
             "ok": bool(coverage.get("ok") is True),
             "coverage_ratio": _parse_ratio(coverage.get("coverage_ratio")),
@@ -141,14 +153,19 @@ def main() -> int:
         }
     )
 
-    failed = [item["name"] for item in checks if item.get("ok") is not True]
-    warnings = [item["name"] for item in checks if _safe_int(item.get("warning_count"), 0) > 0]
+    checks = sorted(checks, key=lambda item: str(item.get("name") or ""))
+    failed = sorted([item["name"] for item in checks if item.get("ok") is not True])
+    warnings = sorted([item["name"] for item in checks if _safe_int(item.get("warning_count"), 0) > 0])
+    business_row = next((item for item in checks if item.get("name") == "business_capability_baseline"), {})
     report = {
         "ok": not failed,
         "summary": {
             "check_count": len(checks),
             "failed_check_count": len(failed),
             "warning_check_count": len(warnings),
+            "business_required_intent_count": _safe_int(business_row.get("required_intent_count"), 0),
+            "business_required_role_count": _safe_int(business_row.get("required_role_count"), 0),
+            "business_catalog_runtime_ratio": _safe_float(business_row.get("catalog_runtime_ratio"), 0.0),
             "failed_checks": failed,
             "warning_checks": warnings,
             "artifacts_dir": str(backend_dir),
@@ -164,6 +181,9 @@ def main() -> int:
         f"- check_count: {report['summary']['check_count']}",
         f"- failed_check_count: {report['summary']['failed_check_count']}",
         f"- warning_check_count: {report['summary']['warning_check_count']}",
+        f"- business_required_intent_count: {report['summary']['business_required_intent_count']}",
+        f"- business_required_role_count: {report['summary']['business_required_role_count']}",
+        f"- business_catalog_runtime_ratio: {report['summary']['business_catalog_runtime_ratio']}",
         "",
         "## Checks",
         "",

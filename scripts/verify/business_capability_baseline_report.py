@@ -13,6 +13,7 @@ INPUTS = {
     "business_core_journey": ROOT / "artifacts" / "business_core_journey_guard.json",
     "role_capability_floor": ROOT / "artifacts" / "role_capability_floor_guard.json",
 }
+BASELINE_SNAPSHOT = ROOT / "scripts" / "verify" / "baselines" / "business_capability_baseline_snapshot.json"
 OUT_JSON = ROOT / "artifacts" / "business_capability_baseline_report.json"
 OUT_MD = ROOT / "artifacts" / "business_capability_baseline_report.md"
 
@@ -27,9 +28,29 @@ def _load_json(path: Path) -> dict:
     return payload if isinstance(payload, dict) else {}
 
 
+def _safe_int(v, default: int = 0) -> int:
+    try:
+        return int(v)
+    except Exception:
+        return default
+
+
+def _safe_float(v, default: float = 0.0) -> float:
+    try:
+        return float(v)
+    except Exception:
+        return default
+
+
 def main() -> int:
+    baseline_snapshot = _load_json(BASELINE_SNAPSHOT)
     checks = []
     errors = []
+    observed = {
+        "catalog_runtime_ratio": 0.0,
+        "required_intent_count": 0,
+        "required_role_count": 0,
+    }
     for name, path in INPUTS.items():
         payload = _load_json(path)
         if not payload:
@@ -37,6 +58,12 @@ def main() -> int:
             errors.append(f"missing or invalid artifact: {path.relative_to(ROOT).as_posix()}")
             continue
         summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+        if name == "scene_catalog_runtime_alignment":
+            observed["catalog_runtime_ratio"] = _safe_float(summary.get("catalog_runtime_ratio"), 0.0)
+        elif name == "business_core_journey":
+            observed["required_intent_count"] = _safe_int(summary.get("required_intent_count"), 0)
+        elif name == "role_capability_floor":
+            observed["required_role_count"] = _safe_int(summary.get("required_role_count"), 0)
         checks.append(
             {
                 "name": name,
@@ -45,13 +72,30 @@ def main() -> int:
             }
         )
 
+    delta_vs_baseline = {
+        "check_count": len(checks) - _safe_int(baseline_snapshot.get("check_count"), 0),
+        "required_intent_count": observed["required_intent_count"] - _safe_int(baseline_snapshot.get("required_intent_count"), 0),
+        "required_role_count": observed["required_role_count"] - _safe_int(baseline_snapshot.get("required_role_count"), 0),
+        "catalog_runtime_ratio": round(
+            observed["catalog_runtime_ratio"] - _safe_float(baseline_snapshot.get("catalog_runtime_ratio"), 0.0),
+            6,
+        ),
+    }
+
+    checks = sorted(checks, key=lambda item: str(item.get("name") or ""))
+
     report = {
         "ok": (not errors) and all(item["ok"] for item in checks),
         "summary": {
             "check_count": len(checks),
             "failed_check_count": len([x for x in checks if not x.get("ok")]),
             "error_count": len(errors),
+            "required_intent_count": observed["required_intent_count"],
+            "required_role_count": observed["required_role_count"],
+            "catalog_runtime_ratio": observed["catalog_runtime_ratio"],
         },
+        "baseline_snapshot": baseline_snapshot,
+        "delta_vs_baseline": delta_vs_baseline,
         "checks": checks,
         "errors": errors,
     }
@@ -65,6 +109,13 @@ def main() -> int:
         f"- check_count: {report['summary']['check_count']}",
         f"- failed_check_count: {report['summary']['failed_check_count']}",
         f"- error_count: {report['summary']['error_count']}",
+        f"- required_intent_count: {report['summary']['required_intent_count']}",
+        f"- required_role_count: {report['summary']['required_role_count']}",
+        f"- catalog_runtime_ratio: {report['summary']['catalog_runtime_ratio']}",
+        f"- delta_vs_baseline.check_count: {delta_vs_baseline['check_count']}",
+        f"- delta_vs_baseline.required_intent_count: {delta_vs_baseline['required_intent_count']}",
+        f"- delta_vs_baseline.required_role_count: {delta_vs_baseline['required_role_count']}",
+        f"- delta_vs_baseline.catalog_runtime_ratio: {delta_vs_baseline['catalog_runtime_ratio']}",
         "",
         "## Checks",
         "",

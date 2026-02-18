@@ -1,0 +1,18 @@
+{
+  "required_observed_keys": [
+    "contract_governance_coverage_ratio",
+    "scene_catalog_runtime_alignment_ratio",
+    "business_required_intent_count",
+    "business_required_role_count",
+    "business_catalog_runtime_ratio"
+  ],
+  "required_summary_keys": [
+    "check_count",
+    "failed_check_count",
+    "warning_check_count",
+    "required_check_count",
+    "missing_check_count",
+    "error_count",
+    "artifacts_dir"
+  ]
+}
