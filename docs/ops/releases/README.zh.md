@@ -37,3 +37,5 @@ status: active
     - 产物：`/mnt/artifacts/backend/backend_architecture_full_report.json`（不可写时回落 `artifacts/backend/backend_architecture_full_report.json`）
   - `make verify.backend.evidence.manifest.guard`
     - 产物：`/mnt/artifacts/backend/backend_evidence_manifest.json`（不可写时回落 `artifacts/backend/backend_evidence_manifest.json`）
+  - `make verify.contract.evidence.guard`
+    - 合同证据需包含 `load_view_access_contract` 区段（allowed model + forbidden status/code）
