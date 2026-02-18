@@ -126,9 +126,17 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - artifact: `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback: `artifacts/backend/contract_assembler_semantic_smoke.json`)
   - `make verify.runtime.surface.dashboard.report`
     - artifact: `/mnt/artifacts/backend/runtime_surface_dashboard_report.json` (fallback: `artifacts/backend/runtime_surface_dashboard_report.json`)
+  - `make verify.boundary.import_guard`
+    - artifact: `/mnt/artifacts/backend/boundary_import_guard_report.json` (fallback: `artifacts/backend/boundary_import_guard_report.json`)
+    - release check: no forbidden cross-layer imports and no forbidden manifest depends between platform/business/demo tiers
+  - `make verify.boundary.import_guard.schema.guard`
+    - release check: boundary import report schema stays deterministic for diff/CI guard
+  - `SC_BOUNDARY_IMPORT_STRICT=1 make verify.backend.architecture.full`
+    - strict check: enforce boundary import warnings/violations thresholds (`SC_BOUNDARY_IMPORT_WARN_MAX`, `SC_BOUNDARY_IMPORT_VIOLATION_MAX`)
   - `make verify.backend.architecture.full.report`
     - artifact: `/mnt/artifacts/backend/backend_architecture_full_report.json` (fallback: `artifacts/backend/backend_architecture_full_report.json`)
   - `make verify.backend.evidence.manifest.guard`
     - artifact: `/mnt/artifacts/backend/backend_evidence_manifest.json` (fallback: `artifacts/backend/backend_evidence_manifest.json`)
   - `make verify.contract.evidence.guard`
     - contract evidence now includes `load_view_access_contract` section (allowed model + forbidden status/code) for release audit
+    - contract evidence now includes `boundary_import_report` section (warning/violation/tracked modules) for layer-governance audit

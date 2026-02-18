@@ -1,0 +1,78 @@
+{
+  "source_roots": [
+    "addons/smart_core",
+    "addons/smart_construction_core",
+    "addons/smart_construction_scene"
+  ],
+  "forbidden_imports": {
+    "addons/smart_core": [
+      "smart_construction_portal",
+      "smart_construction_demo",
+      "smart_construction_seed",
+      "smart_construction_custom"
+    ],
+    "addons/smart_construction_core": [
+      "smart_construction_portal",
+      "smart_construction_demo",
+      "smart_construction_seed",
+      "smart_construction_custom"
+    ],
+    "addons/smart_construction_scene": [
+      "smart_construction_portal",
+      "smart_construction_demo",
+      "smart_construction_seed",
+      "smart_construction_custom"
+    ]
+  },
+  "tracked_modules": [
+    "smart_core",
+    "smart_construction_core",
+    "smart_construction_scene",
+    "smart_construction_portal",
+    "smart_construction_seed",
+    "smart_construction_demo",
+    "smart_construction_custom"
+  ],
+  "forbidden_manifest_depends": {
+    "smart_core": [
+      "smart_construction_core",
+      "smart_construction_scene",
+      "smart_construction_portal",
+      "smart_construction_seed",
+      "smart_construction_demo",
+      "smart_construction_custom"
+    ],
+    "smart_construction_core": [
+      "smart_construction_portal",
+      "smart_construction_seed",
+      "smart_construction_demo",
+      "smart_construction_custom"
+    ],
+    "smart_construction_scene": [
+      "smart_construction_portal",
+      "smart_construction_seed",
+      "smart_construction_demo",
+      "smart_construction_custom"
+    ],
+    "smart_construction_seed": [
+      "smart_construction_demo"
+    ]
+  },
+  "required_manifest_depends": {
+    "smart_construction_core": [
+      "smart_core"
+    ],
+    "smart_construction_scene": [
+      "smart_construction_core"
+    ],
+    "smart_construction_portal": [
+      "smart_construction_core"
+    ],
+    "smart_construction_demo": [
+      "smart_construction_core"
+    ],
+    "smart_construction_seed": [
+      "smart_construction_core"
+    ]
+  }
+}
