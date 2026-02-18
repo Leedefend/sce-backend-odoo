@@ -223,6 +223,7 @@ import { useSessionStore } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 import { readWorkspaceContext } from '../app/workspaceContext';
+import { isHudEnabled as resolveHudEnabled } from '../config/debug';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type SuggestionStatus = 'urgent' | 'normal';
@@ -276,10 +277,7 @@ const lastTrackedViewMode = ref('');
 const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
 const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
-const isHudEnabled = computed(() => {
-  const hud = String(route.query.hud || '').trim();
-  return import.meta.env.DEV || hud === '1' || hud.toLowerCase() === 'true';
-});
+const isHudEnabled = computed(() => resolveHudEnabled(route));
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
