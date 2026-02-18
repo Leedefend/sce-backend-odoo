@@ -70,6 +70,8 @@ def main() -> int:
         "runtime_capability_min",
         "runtime_capability_avg",
         "runtime_capability_max",
+        "alignment_probe_login",
+        "alignment_probe_source",
         "baseline_catalog_scene_count",
         "baseline_runtime_scene_count",
         "baseline_catalog_runtime_ratio",

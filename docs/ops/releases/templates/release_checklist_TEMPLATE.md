@@ -17,6 +17,7 @@
   - `make verify.backend.architecture.full.report.guard`
   - `make verify.backend.evidence.manifest.guard`
   - required artifacts:
+    - `artifacts/scene_catalog_runtime_alignment_guard.json` (`summary.probe_source` should be `prod_like_baseline` or explicit env override)
     - `/mnt/artifacts/backend/role_capability_floor_prod_like.json` (fallback `artifacts/backend/...`)
     - `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback `artifacts/backend/...`)
     - `/mnt/artifacts/backend/runtime_surface_dashboard_report.json` (fallback `artifacts/backend/...`)
