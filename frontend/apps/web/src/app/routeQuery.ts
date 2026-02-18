@@ -1,6 +1,7 @@
 type QueryLike = Record<string, unknown>;
 
 const SCENE_QUERY_KEYS = ['scene', 'scene_key', 'sceneKey'] as const;
+const WORKBENCH_PATH = '/workbench';
 
 export function firstQueryValue(raw: unknown): string {
   if (Array.isArray(raw)) {
@@ -43,4 +44,40 @@ export function normalizeEmbeddedSceneQuery(query: QueryLike): { query: QueryLik
     });
   }
   return { query: nextQuery, changed };
+}
+
+export function normalizeLegacyWorkbenchPath(rawPath: string): string {
+  const candidate = String(rawPath || '').trim();
+  if (!candidate.startsWith(WORKBENCH_PATH)) {
+    return candidate;
+  }
+  const [pathname, queryString = ''] = candidate.split('?', 2);
+  if (pathname !== WORKBENCH_PATH) {
+    return candidate;
+  }
+  if (!queryString) {
+    return '/';
+  }
+  const params = new URLSearchParams(queryString);
+  const reason = firstQueryValue(params.get('reason'));
+  if (reason) {
+    return candidate;
+  }
+
+  let sceneKey = '';
+  for (const key of SCENE_QUERY_KEYS) {
+    const current = firstQueryValue(params.get(key));
+    if (!current) continue;
+    sceneKey = current.split('?', 2)[0]?.trim() || '';
+    if (sceneKey) break;
+  }
+
+  for (const key of SCENE_QUERY_KEYS) {
+    params.delete(key);
+  }
+  const nestedQuery = params.toString();
+  if (!sceneKey) {
+    return nestedQuery ? `/?${nestedQuery}` : '/';
+  }
+  return nestedQuery ? `/s/${sceneKey}?${nestedQuery}` : `/s/${sceneKey}`;
 }

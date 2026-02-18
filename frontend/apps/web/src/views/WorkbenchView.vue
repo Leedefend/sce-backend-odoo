@@ -251,6 +251,14 @@ onMounted(() => {
   const normalized = normalizeEmbeddedSceneQuery(route.query as Record<string, unknown>);
   if (normalized.changed) {
     router.replace({ path: route.path, query: normalized.query }).catch(() => {});
+    return;
+  }
+  if (!reason.value) {
+    if (sceneKey.value) {
+      router.replace({ path: `/s/${sceneKey.value}`, query: workspaceContextQuery.value }).catch(() => {});
+      return;
+    }
+    router.replace({ path: '/', query: workspaceContextQuery.value }).catch(() => {});
   }
 });
 

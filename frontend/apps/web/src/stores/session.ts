@@ -4,6 +4,7 @@ import { intentRequest } from '../api/intents';
 import { ApiError } from '../api/client';
 import { setSceneRegistry } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
+import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 
 export interface RoleSurface {
   role_code: string;
@@ -375,7 +376,8 @@ export const useSessionStore = defineStore('session', {
     resolveLandingPath(fallback = '/s/projects.list') {
       const candidate = String(this.roleSurface?.landing_path || '').trim();
       if (candidate.startsWith('/')) {
-        return candidate;
+        const normalized = normalizeLegacyWorkbenchPath(candidate);
+        return normalized || fallback;
       }
       const sceneKey = String(this.roleSurface?.landing_scene_key || '').trim();
       if (sceneKey) {

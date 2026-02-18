@@ -30,6 +30,7 @@ import { ErrorCodes } from '../app/error_codes';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
+import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import type { NavNode } from '@sc/schema';
 
 const route = useRoute();
@@ -110,11 +111,22 @@ async function resolveScene() {
   const layout = resolveSceneLayout(scene);
   const workspaceContextQuery = resolveWorkspaceContextQuery();
   if (layout.kind === 'workspace') {
+    if (typeof target.route === 'string' && target.route.trim()) {
+      const normalizedRoute = normalizeLegacyWorkbenchPath(target.route);
+      if (isPortalPath(normalizedRoute)) {
+        window.location.assign(buildPortalBridgeUrl(normalizedRoute));
+        return;
+      }
+      if (normalizedRoute !== route.fullPath) {
+        await router.replace({ path: normalizedRoute, query: workspaceContextQuery });
+        return;
+      }
+    }
     if (CORE_SCENE_FALLBACK.has(sceneKey)) {
-      await router.replace({ path: '/s/projects.list', query: workspaceContextQuery });
+      await router.replace({ path: '/', query: workspaceContextQuery });
       return;
     }
-    await router.replace({ name: 'workbench', query: { scene: sceneKey || undefined, ...workspaceContextQuery } });
+    await router.replace({ path: '/', query: workspaceContextQuery });
     return;
   }
 
