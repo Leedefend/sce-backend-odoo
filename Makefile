@@ -1376,7 +1376,7 @@ verify.backend.evidence.manifest.schema.guard: guard.prod.forbid verify.backend.
 verify.backend.evidence.manifest.guard: guard.prod.forbid verify.backend.evidence.manifest.schema.guard
 	@python3 scripts/verify/backend_evidence_manifest_guard.py
 
-verify.phase_next.evidence.bundle: guard.prod.forbid verify.role.capability_floor.prod_like verify.role.capability_floor.prod_like.schema.guard verify.contract.assembler.semantic.smoke verify.contract.assembler.semantic.schema.guard verify.runtime.surface.dashboard.report verify.runtime.surface.dashboard.schema.guard
+verify.phase_next.evidence.bundle: guard.prod.forbid verify.role.capability_floor.prod_like verify.role.capability_floor.prod_like.schema.guard verify.load_view.access.contract.guard verify.contract.assembler.semantic.smoke verify.contract.assembler.semantic.schema.guard verify.runtime.surface.dashboard.report verify.runtime.surface.dashboard.schema.guard
 	@echo "[OK] verify.phase_next.evidence.bundle done"
 
 verify.phase_next.evidence.bundle.strict: guard.prod.forbid verify.phase_next.evidence.bundle verify.runtime.surface.dashboard.strict.guard verify.backend.architecture.full.report.guard
