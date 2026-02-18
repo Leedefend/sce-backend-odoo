@@ -4,6 +4,7 @@
       <div>
         <h1>{{ title }}</h1>
         <p class="meta">Model: {{ model }} · ID: {{ recordIdDisplay }}</p>
+        <p v-if="contractMetaLine" class="meta">{{ contractMetaLine }}</p>
         <p v-if="actionFeedback" class="action-feedback" :class="{ error: !actionFeedback.success }">
           {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
         </p>
@@ -29,6 +30,16 @@
           {{ buttonLabel(btn) }}
         </button>
         <button
+          v-for="action in contractHeaderActions"
+          :key="`contract-open-${action.key}`"
+          class="action secondary"
+          :disabled="saving || loading || !action.actionId"
+          :title="action.description"
+          @click="openContractAction(action)"
+        >
+          {{ action.label }}
+        </button>
+        <button
           v-for="action in displayedSemanticActionButtons"
           :key="`semantic-${action.key}`"
           :disabled="!recordId || saving || loading || actionBusy || !action.allowed"
@@ -42,7 +53,7 @@
         <button :disabled="!lastSemanticAction || actionBusy || loading" class="action secondary" @click="rerunLastSemanticAction">
           {{ retryLastActionLabel }}
         </button>
-        <button :disabled="saving" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
+        <button :disabled="saving || !canSaveByContract" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
         <button @click="reload">Reload</button>
       </div>
     </header>
@@ -316,6 +327,86 @@
         <h3>最近操作</h3>
         <p>还没有执行记录。可先点击上方动作按钮，系统将自动记录原因码与 Trace。</p>
       </section>
+      <section v-if="contractWarnings.length" class="contract-warning-block">
+        <h3>契约告警</h3>
+        <ul>
+          <li v-for="warn in contractWarnings" :key="warn">{{ warn }}</li>
+        </ul>
+      </section>
+      <section v-if="contractTransitions.length" class="contract-workflow-block">
+        <h3>流程建议</h3>
+        <div class="workflow-actions">
+          <button
+            v-for="item in contractTransitions"
+            :key="item.key"
+            type="button"
+            class="stats-refresh"
+            :title="item.notes || item.label"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </section>
+      <section v-if="contractSearchFilters.length" class="contract-search-block">
+        <h3>契约筛选</h3>
+        <div class="workflow-actions">
+          <button
+            v-for="item in contractSearchFilters"
+            :key="`filter-${item.key}`"
+            type="button"
+            class="stats-refresh"
+            @click="applyContractFilter(item.key)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </section>
+      <section v-if="contractActionGroups.length" class="contract-workflow-block">
+        <h3>契约动作</h3>
+        <div v-for="group in contractActionGroups" :key="`group-${group.level}`" class="contract-action-group">
+          <p class="meta">level={{ group.level }} · count={{ group.items.length }}</p>
+          <div class="workflow-actions">
+            <button
+              v-for="item in group.items"
+              :key="item.key"
+              type="button"
+              class="stats-refresh"
+              :disabled="!item.enabled"
+              :title="item.hint"
+              @click="runContractAction(item)"
+            >
+              {{ item.label }} · {{ item.kind }}
+            </button>
+          </div>
+        </div>
+      </section>
+      <section class="contract-workflow-block">
+        <h3>契约审计面板</h3>
+        <details>
+          <summary>permissions.rules</summary>
+          <pre>{{ prettyJson(actionContract?.permissions?.rules || {}) }}</pre>
+        </details>
+        <details>
+          <summary>permissions.perms_by_group</summary>
+          <pre>{{ prettyJson(actionContract?.permissions?.perms_by_group || {}) }}</pre>
+        </details>
+        <details>
+          <summary>workflow(full)</summary>
+          <pre>{{ prettyJson(actionContract?.workflow || {}) }}</pre>
+        </details>
+        <details>
+          <summary>search(full)</summary>
+          <pre>{{ prettyJson(actionContract?.search || {}) }}</pre>
+        </details>
+        <details>
+          <summary>validator</summary>
+          <pre>{{ prettyJson(actionContract?.validator || {}) }}</pre>
+        </details>
+        <details>
+          <summary>reports</summary>
+          <pre>{{ prettyJson(actionContract?.reports || []) }}</pre>
+        </details>
+      </section>
       <ViewLayoutRenderer
         v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
@@ -363,11 +454,12 @@ import {
   fetchPaymentRequestAvailableActions,
   type PaymentRequestActionSurfaceItem,
 } from '../api/paymentRequest';
+import { loadActionContractRaw } from '../api/contract';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
-import type { ViewButton, ViewContract } from '@sc/schema';
+import type { ActionContract, ViewButton, ViewContract } from '@sc/schema';
 import { recordTrace, createTraceId } from '../services/trace';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import DevContextPanel from '../components/DevContextPanel.vue';
@@ -436,7 +528,19 @@ const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
 const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new'));
-const title = computed(() => `Form: ${model.value}`);
+const actionIdFromQuery = computed(() => {
+  const raw = route.query.action_id;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+});
+const actionContract = ref<ActionContract | null>(null);
+const actionContractMeta = ref<Record<string, unknown> | null>(null);
+const title = computed(() => {
+  const headTitle = String(actionContract.value?.head?.title || '').trim();
+  if (headTitle) return headTitle;
+  return `Form: ${model.value}`;
+});
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
 const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const historyReasonFilterStorageKey = computed(
@@ -490,6 +594,222 @@ const headerButtons = computed(() => {
     [];
   return normalizeButtons(raw);
 });
+
+type ContractOpenAction = {
+  key: string;
+  label: string;
+  actionId: number | null;
+  description: string;
+};
+
+const contractRights = computed(() => {
+  const head = actionContract.value?.head?.permissions;
+  const effectiveRights = actionContract.value?.permissions?.effective?.rights;
+  const resolve = (key: string) => {
+    const fromHead = head?.[key as keyof typeof head];
+    if (typeof fromHead === 'boolean') return fromHead;
+    const fromEffective = effectiveRights?.[key as keyof typeof effectiveRights];
+    if (typeof fromEffective === 'boolean') return fromEffective;
+    return true;
+  };
+  return {
+    read: resolve('read'),
+    write: resolve('write'),
+    create: resolve('create'),
+    unlink: resolve('unlink'),
+  };
+});
+
+const canSaveByContract = computed(() => {
+  if (recordId.value) return contractRights.value.write;
+  return contractRights.value.create;
+});
+
+function toActionId(raw: unknown): number | null {
+  const parsed = Number(raw || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+const contractHeaderActions = computed<ContractOpenAction[]>(() => {
+  const toolbar = actionContract.value?.toolbar?.header;
+  const buttons = actionContract.value?.buttons;
+  const merged: unknown[] = [];
+  if (Array.isArray(toolbar)) merged.push(...toolbar);
+  if (Array.isArray(buttons)) merged.push(...buttons);
+
+  const seen = new Set<string>();
+  const result: ContractOpenAction[] = [];
+  for (const item of merged) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    if (String(row.kind || '').toLowerCase() !== 'open') continue;
+    const level = String(row.level || '').toLowerCase();
+    if (level && level !== 'header' && level !== 'toolbar') continue;
+    const payload = row.payload as Record<string, unknown> | undefined;
+    const actionId = toActionId(payload?.action_id) ?? toActionId(payload?.ref);
+    const key = String(row.key || `open_${actionId || 'na'}_${result.length}`).trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push({
+      key,
+      label: String(row.label || key),
+      actionId,
+      description: String((payload && payload.xml_id) || ''),
+    });
+  }
+  return result.slice(0, 8);
+});
+
+const contractMetaLine = computed(() => {
+  const root = actionContract.value;
+  if (!root) return '';
+  const viewType = String(root.head?.view_type || root.view_type || '').trim() || '-';
+  const filters = Array.isArray(root.search?.filters) ? root.search.filters.length : 0;
+  const transitions = Array.isArray(root.workflow?.transitions) ? root.workflow.transitions.length : 0;
+  const contractMode = String(actionContractMeta.value?.contract_mode || '').trim();
+  const parts = [
+    `contract.view_type=${viewType}`,
+    `filters=${filters}`,
+    `transitions=${transitions}`,
+    `rights=${contractRights.value.read ? 'R' : '-'}${contractRights.value.write ? 'W' : '-'}${contractRights.value.create ? 'C' : '-'}${contractRights.value.unlink ? 'D' : '-'}`,
+  ];
+  if (root.degraded) parts.push('degraded=yes');
+  if (Array.isArray(root.missing_models) && root.missing_models.length) {
+    parts.push(`missing_models=${root.missing_models.length}`);
+  }
+  if (contractMode) parts.push(`mode=${contractMode}`);
+  return parts.join(' · ');
+});
+
+const contractWarnings = computed(() => {
+  const warnings = actionContract.value?.warnings;
+  if (!Array.isArray(warnings)) return [];
+  return warnings
+    .map((item) => {
+      if (typeof item === 'string') return item.trim();
+      if (item && typeof item === 'object') {
+        const row = item as Record<string, unknown>;
+        return String(row.message || row.code || '').trim();
+      }
+      return '';
+    })
+    .filter(Boolean);
+});
+
+const contractTransitions = computed(() => {
+  const transitions = actionContract.value?.workflow?.transitions;
+  if (!Array.isArray(transitions)) return [];
+  return transitions
+    .map((item, index) => {
+      const trigger = item?.trigger || {};
+      const label = String(trigger.label || trigger.name || `transition_${index + 1}`).trim();
+      const notes = String(item?.notes || '').trim();
+      return { key: `${label}_${index}`, label, notes };
+    })
+    .filter((item) => item.label)
+    .slice(0, 8);
+});
+
+const contractSearchFilters = computed(() => {
+  const filters = actionContract.value?.search?.filters;
+  if (!Array.isArray(filters)) return [];
+  return filters
+    .map((item) => {
+      const key = String(item?.key || '').trim();
+      const label = String(item?.label || key).trim();
+      return { key, label };
+    })
+    .filter((item) => item.key && item.label)
+    .slice(0, 10);
+});
+
+type ContractActionItem = {
+  key: string;
+  label: string;
+  kind: string;
+  level: string;
+  model: string;
+  actionId: number | null;
+  methodName: string;
+  enabled: boolean;
+  hint: string;
+  context: Record<string, unknown>;
+};
+
+const contractActionItems = computed<ContractActionItem[]>(() => {
+  const merged: Array<Record<string, unknown>> = [];
+  if (Array.isArray(actionContract.value?.buttons)) {
+    merged.push(...(actionContract.value?.buttons as Array<Record<string, unknown>>));
+  }
+  if (Array.isArray(actionContract.value?.toolbar?.header)) {
+    merged.push(...(actionContract.value?.toolbar?.header as Array<Record<string, unknown>>));
+  }
+  const seen = new Set<string>();
+  const rows: ContractActionItem[] = [];
+  for (const row of merged) {
+    const key = String(row.key || '').trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const payload = (row.payload && typeof row.payload === 'object') ? (row.payload as Record<string, unknown>) : {};
+    const groupsXmlids = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
+    const enabledByGroup = hasGroupAccess(groupsXmlids);
+    const kind = String(row.kind || '').trim().toLowerCase() || 'unknown';
+    const level = String(row.level || 'unknown').trim().toLowerCase();
+    const modelName = String(row.model || model.value || '').trim();
+    const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
+    const methodName = String(payload.method || '').trim();
+    const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
+    const enabled = enabledByGroup && (!needRecord || Boolean(recordId.value));
+    const hint = enabledByGroup ? (needRecord && !recordId.value ? '需要已保存记录' : '') : '当前账号无权限';
+    rows.push({
+      key,
+      label: String(row.label || key).trim(),
+      kind,
+      level,
+      model: modelName,
+      actionId,
+      methodName,
+      enabled,
+      hint,
+      context: (payload.context_raw && typeof payload.context_raw === 'object') ? (payload.context_raw as Record<string, unknown>) : {},
+    });
+  }
+  return rows;
+});
+
+const contractActionGroups = computed(() => {
+  const map = new Map<string, ContractActionItem[]>();
+  for (const row of contractActionItems.value) {
+    const group = map.get(row.level) || [];
+    group.push(row);
+    map.set(row.level, group);
+  }
+  return Array.from(map.entries())
+    .map(([level, items]) => ({ level, items }))
+    .sort((a, b) => a.level.localeCompare(b.level));
+});
+
+function prettyJson(value: unknown) {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value ?? '');
+  }
+}
+
+function extractContractFieldOrder(contract: ActionContract | null) {
+  const layout = contract?.views?.form?.layout;
+  if (!Array.isArray(layout)) return [];
+  const ordered: string[] = [];
+  for (const node of layout) {
+    if (!node || typeof node !== 'object') continue;
+    const kind = String(node.type || '').trim().toLowerCase();
+    const name = String(node.name || '').trim();
+    if (kind !== 'field' || !name || ordered.includes(name)) continue;
+    ordered.push(name);
+  }
+  return ordered;
+}
 type SemanticActionButton = {
   key: string;
   label: string;
@@ -932,9 +1252,15 @@ const userGroups = computed(() => session.user?.groups_xmlids ?? []);
 const hudEntries = computed(() => [
   { label: 'model', value: model.value },
   { label: 'record_id', value: recordIdDisplay.value },
+  { label: 'action_id', value: actionIdFromQuery.value || '-' },
   { label: 'render_mode', value: renderMode.value },
   { label: 'layout_present', value: Boolean(viewContract.value?.layout) },
   { label: 'layout_nodes', value: JSON.stringify(layoutStats.value) },
+  { label: 'contract_loaded', value: Boolean(actionContract.value) },
+  { label: 'contract_mode', value: String(actionContractMeta.value?.contract_mode || '-') },
+  { label: 'contract_buttons', value: Array.isArray(actionContract.value?.buttons) ? actionContract.value?.buttons.length : 0 },
+  { label: 'contract_toolbar_header', value: Array.isArray(actionContract.value?.toolbar?.header) ? actionContract.value?.toolbar?.header.length : 0 },
+  { label: 'contract_rights', value: `${contractRights.value.read ? 'R' : '-'}${contractRights.value.write ? 'W' : '-'}${contractRights.value.create ? 'C' : '-'}${contractRights.value.unlink ? 'D' : '-'}` },
   { label: 'unsupported_nodes', value: missingNodes.value.join(',') || '-' },
   { label: 'coverage_supported', value: supportedNodes.join(',') },
   { label: 'semantic_actions', value: semanticActionButtons.value.map((item) => `${item.key}:${item.allowed}`).join(',') || '-' },
@@ -966,6 +1292,8 @@ async function load() {
   clearError();
   loading.value = true;
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
+  actionContract.value = null;
+  actionContractMeta.value = null;
 
   if (!model.value) {
     setError(new Error('Missing model'), 'Missing model');
@@ -974,12 +1302,21 @@ async function load() {
   }
 
   try {
+    if (actionIdFromQuery.value) {
+      const actionContractRes = await loadActionContractRaw(actionIdFromQuery.value);
+      if (actionContractRes?.data && typeof actionContractRes.data === 'object') {
+        actionContract.value = actionContractRes.data as ActionContract;
+      }
+      actionContractMeta.value = actionContractRes?.meta || null;
+    }
     const view = await resolveView(model.value, 'form');
     viewContract.value = view;
     if (view.layout) {
       layoutStats.value = analyzeLayout(view.layout);
     }
-    const fieldNames = extractFieldNames(view.layout).filter(Boolean);
+    const layoutFieldNames = extractFieldNames(view.layout).filter(Boolean);
+    const contractFieldOrder = extractContractFieldOrder(actionContract.value);
+    const fieldNames = contractFieldOrder.length ? contractFieldOrder : layoutFieldNames;
     const read = recordId.value
       ? await readRecord({
           model: model.value,
@@ -989,12 +1326,25 @@ async function load() {
       : { records: [{}] };
 
     const record = read.records?.[0] ?? {};
-    fields.value = (fieldNames.length ? fieldNames : Object.keys(record)).map((name) => ({
-      name,
-      label: view.fields?.[name]?.string ?? name,
-      descriptor: view.fields?.[name],
-      readonly: view.fields?.[name]?.readonly,
-    }));
+    const contractFields = (actionContract.value?.fields || {}) as Record<string, ViewContract['fields'][string]>;
+    const fieldGroups = actionContract.value?.permissions?.field_groups || {};
+    fields.value = (fieldNames.length ? fieldNames : Object.keys(record))
+      .filter((name) => {
+        const groupsXmlids = fieldGroups[name]?.groups_xmlids;
+        return hasGroupAccess(Array.isArray(groupsXmlids) ? groupsXmlids : []);
+      })
+      .map((name) => {
+      const fromView = view.fields?.[name];
+      const fromContract = contractFields[name];
+      const descriptor = fromView || fromContract;
+      const readonlyByPermission = recordId.value ? !contractRights.value.write : !contractRights.value.create;
+      return {
+        name,
+        label: descriptor?.string ?? name,
+        descriptor,
+        readonly: Boolean(descriptor?.readonly || readonlyByPermission),
+      };
+    });
 
     fields.value.forEach((field) => {
       formData[field.name] = record[field.name] ?? '';
@@ -1120,6 +1470,77 @@ function getQueryNumber(key: string) {
     return Number.isNaN(n) ? undefined : n;
   }
   return undefined;
+}
+
+function hasGroupAccess(groupsXmlids?: string[]) {
+  if (!Array.isArray(groupsXmlids) || !groupsXmlids.length) return true;
+  return groupsXmlids.some((group) => userGroups.value.includes(group));
+}
+
+async function openContractAction(action: ContractOpenAction) {
+  if (!action.actionId) return;
+  await router.push({
+    name: 'action',
+    params: { actionId: String(action.actionId) },
+    query: {
+      menu_id: getQueryNumber('menu_id'),
+      action_id: action.actionId,
+    },
+  });
+}
+
+async function applyContractFilter(filterKey: string) {
+  if (!actionIdFromQuery.value || !filterKey) return;
+  await router.push({
+    name: 'action',
+    params: { actionId: String(actionIdFromQuery.value) },
+    query: {
+      menu_id: getQueryNumber('menu_id'),
+      action_id: actionIdFromQuery.value,
+      preset_filter: filterKey,
+    },
+  });
+}
+
+async function runContractAction(item: ContractActionItem) {
+  if (!item.enabled) return;
+  if (item.kind === 'open' && item.actionId) {
+    await router.push({
+      name: 'action',
+      params: { actionId: String(item.actionId) },
+      query: {
+        menu_id: getQueryNumber('menu_id'),
+        action_id: item.actionId,
+      },
+    });
+    return;
+  }
+  if ((item.kind === 'object' || item.kind === 'server') && item.methodName && item.model && recordId.value) {
+    executing.value = item.key;
+    try {
+      const response = await executeButton({
+        model: item.model,
+        res_id: recordId.value,
+        button: { name: item.methodName, type: 'object' },
+        context: item.context,
+        meta: {
+          menu_id: getQueryNumber('menu_id'),
+          action_id: getQueryNumber('action_id'),
+          view_id: viewContract.value?.view_id,
+        },
+      });
+      actionFeedback.value = parseExecuteResult(response);
+      if (response?.result?.type === 'refresh') {
+        await load();
+      }
+      return;
+    } catch (err) {
+      setError(err, 'failed to run contract action');
+      actionFeedback.value = { message: '契约动作执行失败', reasonCode: 'CONTRACT_ACTION_FAILED', success: false };
+    } finally {
+      executing.value = null;
+    }
+  }
 }
 
 async function runButton(btn: ViewButton) {
@@ -2677,6 +3098,55 @@ function analyzeLayout(layout: ViewContract['layout']) {
   cursor: pointer;
   overflow-wrap: anywhere;
   word-break: break-all;
+}
+
+.contract-warning-block,
+.contract-workflow-block,
+.contract-search-block {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  margin-bottom: 10px;
+}
+
+.contract-warning-block h3,
+.contract-workflow-block h3,
+.contract-search-block h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.contract-warning-block ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #b45309;
+}
+
+.workflow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.contract-action-group {
+  margin-bottom: 8px;
+}
+
+.contract-workflow-block details {
+  margin-top: 6px;
+}
+
+.contract-workflow-block pre {
+  margin: 6px 0 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f1f5f9;
+  font-size: 11px;
 }
 
 .field {

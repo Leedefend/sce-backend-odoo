@@ -300,6 +300,7 @@ function extractActionResId(contract: unknown, routeQuery: Record<string, unknow
 
 function applyRoutePreset() {
   const preset = String(route.query.preset || '').trim();
+  const presetFilter = String(route.query.preset_filter || '').trim();
   const routeSearch = String(route.query.search || '').trim();
   const ctxSource = String(route.query.ctx_source || '').trim();
   routeContextSource.value = ctxSource;
@@ -327,11 +328,15 @@ function applyRoutePreset() {
       setIfDiff(searchTerm, routeSearch);
     }
   }
+  if (!preset && presetFilter) {
+    appliedPresetLabel.value = `契约筛选: ${presetFilter}`;
+    setIfDiff(searchTerm, routeSearch || presetFilter);
+  }
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'action' }).catch(() => {});
   }
-  if (!preset) {
+  if (!preset && !presetFilter) {
     lastTrackedPreset.value = '';
   }
   return changed;
