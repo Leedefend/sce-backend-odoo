@@ -2,6 +2,8 @@
   "required_observed_keys": [
     "contract_governance_coverage_ratio",
     "scene_catalog_runtime_alignment_ratio",
+    "boundary_import_warning_count",
+    "boundary_import_violation_count",
     "load_view_forbidden_status",
     "load_view_forbidden_error_code",
     "business_required_intent_count",
