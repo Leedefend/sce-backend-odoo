@@ -36,6 +36,10 @@ status: active
   - `make verify.boundary.import_guard`
     - 产物：`/mnt/artifacts/backend/boundary_import_guard_report.json`（不可写时回落 `artifacts/backend/boundary_import_guard_report.json`）
     - 发布检查：平台/业务/demo 分层之间不得出现禁用跨层 import 或禁用 manifest 依赖
+  - `make verify.boundary.import_guard.schema.guard`
+    - 发布检查：boundary import 报告 schema 固定，便于 CI 与差异审计
+  - `SC_BOUNDARY_IMPORT_STRICT=1 make verify.backend.architecture.full`
+    - 严格检查：执行 boundary import 的告警/违规阈值守卫（`SC_BOUNDARY_IMPORT_WARN_MAX`、`SC_BOUNDARY_IMPORT_VIOLATION_MAX`）
   - `make verify.backend.architecture.full.report`
     - 产物：`/mnt/artifacts/backend/backend_architecture_full_report.json`（不可写时回落 `artifacts/backend/backend_architecture_full_report.json`）
   - `make verify.backend.evidence.manifest.guard`
