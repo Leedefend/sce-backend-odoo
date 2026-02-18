@@ -114,6 +114,9 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Backend evidence & observability expansion (Phase Next):
+  - `make verify.load_view.access.contract.guard`
+    - artifact: `/mnt/artifacts/backend/load_view_access_contract_guard.json` (fallback: `artifacts/backend/load_view_access_contract_guard.json`)
+    - release check: finance fixture should have at least one allowed business model and reject `ir.ui.view` with `403/PERMISSION_DENIED`
   - `make verify.scene.catalog.governance.guard`
     - artifact: `artifacts/scene_catalog_runtime_alignment_guard.json`
     - release check: `summary.probe_source` should be `prod_like_baseline` (or explicit env override), not demo-only fallback
@@ -127,3 +130,5 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - artifact: `/mnt/artifacts/backend/backend_architecture_full_report.json` (fallback: `artifacts/backend/backend_architecture_full_report.json`)
   - `make verify.backend.evidence.manifest.guard`
     - artifact: `/mnt/artifacts/backend/backend_evidence_manifest.json` (fallback: `artifacts/backend/backend_evidence_manifest.json`)
+  - `make verify.contract.evidence.guard`
+    - contract evidence now includes `load_view_access_contract` section (allowed model + forbidden status/code) for release audit

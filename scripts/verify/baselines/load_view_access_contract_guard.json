@@ -1,0 +1,16 @@
+{
+  "fixture_role": "finance",
+  "allowed_model_candidates": [
+    "res.partner",
+    "project.project",
+    "account.move",
+    "payment.request"
+  ],
+  "view_type": "form",
+  "forbidden_model": "ir.ui.view",
+  "forbidden_error_codes": [
+    "PERMISSION_DENIED",
+    "ACCESS_DENIED"
+  ],
+  "max_errors": 0
+}

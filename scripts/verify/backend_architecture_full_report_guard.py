@@ -107,6 +107,8 @@ def main() -> int:
     min_business_required_intent_count = _safe_int(baseline.get("min_business_required_intent_count"), 0)
     min_business_required_role_count = _safe_int(baseline.get("min_business_required_role_count"), 0)
     min_business_catalog_runtime_ratio = _safe_float(baseline.get("min_business_catalog_runtime_ratio"), 0.0)
+    required_load_view_forbidden_status = _safe_int(baseline.get("required_load_view_forbidden_status"), 0)
+    required_load_view_forbidden_error_code = str(baseline.get("required_load_view_forbidden_error_code") or "").strip()
     require_alignment_probe_login = bool(baseline.get("require_alignment_probe_login", False))
     require_alignment_probe_source = bool(baseline.get("require_alignment_probe_source", False))
 
@@ -165,6 +167,22 @@ def main() -> int:
             f"{business_catalog_runtime_ratio} < {min_business_catalog_runtime_ratio}"
         )
 
+    load_view_row = checks_by_name.get("load_view_access_contract") or {}
+    load_view_forbidden_status = _safe_int(load_view_row.get("forbidden_status"), 0)
+    load_view_forbidden_error_code = str(load_view_row.get("forbidden_error_code") or "").strip()
+    if required_load_view_forbidden_status > 0 and load_view_forbidden_status != required_load_view_forbidden_status:
+        errors.append(
+            "load_view_access_contract.forbidden_status mismatch: "
+            f"{load_view_forbidden_status} != {required_load_view_forbidden_status}"
+        )
+    if required_load_view_forbidden_error_code and (
+        load_view_forbidden_error_code != required_load_view_forbidden_error_code
+    ):
+        errors.append(
+            "load_view_access_contract.forbidden_error_code mismatch: "
+            f"{load_view_forbidden_error_code or '-'} != {required_load_view_forbidden_error_code}"
+        )
+
     payload = {
         "ok": len(errors) == 0,
         "summary": {
@@ -185,6 +203,8 @@ def main() -> int:
             "business_required_intent_count": business_required_intent_count,
             "business_required_role_count": business_required_role_count,
             "business_catalog_runtime_ratio": business_catalog_runtime_ratio,
+            "load_view_forbidden_status": load_view_forbidden_status,
+            "load_view_forbidden_error_code": load_view_forbidden_error_code,
         },
         "errors": errors,
     }
@@ -206,6 +226,8 @@ def main() -> int:
         f"- business_required_intent_count: {business_required_intent_count}",
         f"- business_required_role_count: {business_required_role_count}",
         f"- business_catalog_runtime_ratio: {business_catalog_runtime_ratio}",
+        f"- load_view_forbidden_status: {load_view_forbidden_status}",
+        f"- load_view_forbidden_error_code: {load_view_forbidden_error_code or '-'}",
         f"- error_count: {len(errors)}",
     ]
     if errors:

@@ -1,8 +1,11 @@
+from odoo.exceptions import AccessError
+
 from .view_dispatcher import ViewDispatcher
 
 class UniversalViewSemanticParser:
-    def __init__(self, env, model, view_type="form", view_id=None, context=None):
+    def __init__(self, env, model, view_type="form", view_id=None, context=None, permission_env=None):
         self.env = env
+        self.permission_env = permission_env or env
         self.model = model
         self.view_type = view_type
         self.view_id = view_id
@@ -26,8 +29,15 @@ class UniversalViewSemanticParser:
         self._apply_permissions_to_layout(raw_layout, fields)
 
         # 6. 菜单、动作解析
-        menus = self._parse_menus()
-        actions = self._parse_actions()
+        # Menus/actions are auxiliary metadata; do not block main view payload on ACL restrictions.
+        try:
+            menus = self._parse_menus()
+        except AccessError:
+            menus = []
+        try:
+            actions = self._parse_actions()
+        except AccessError:
+            actions = []
 
         # 7. 动态覆盖
         final_layout = self._apply_dynamic_overrides(raw_layout)
@@ -45,7 +55,7 @@ class UniversalViewSemanticParser:
 
     # ---------------- 模型权限 ----------------
     def _parse_model_permissions(self):
-        model = self.env[self.model]
+        model = self.permission_env[self.model]
         return {
             "read": model.check_access_rights("read", raise_exception=False),
             "write": model.check_access_rights("write", raise_exception=False),
@@ -70,7 +80,7 @@ class UniversalViewSemanticParser:
         group_xml_ids = self._normalize_groups(groups_str)
 
         group_ok = any(
-            self.env.ref(xml_id, raise_if_not_found=False) in self.env.user.groups_id
+            self.permission_env.ref(xml_id, raise_if_not_found=False) in self.permission_env.user.groups_id
             for xml_id in group_xml_ids
         ) if group_xml_ids else True
 
@@ -136,16 +146,16 @@ class UniversalViewSemanticParser:
         if not group_xml_ids:
             return True
         return any(
-            self.env.ref(xml_id, raise_if_not_found=False) in self.env.user.groups_id
+            self.permission_env.ref(xml_id, raise_if_not_found=False) in self.permission_env.user.groups_id
             for xml_id in group_xml_ids
         )
 
     # ---------------- 菜单解析 ----------------
     def _parse_menus(self):
         menus = []
-        all_menus = self.env["ir.ui.menu"].search([("parent_id", "=", False)], order="sequence")
+        all_menus = self.permission_env["ir.ui.menu"].search([("parent_id", "=", False)], order="sequence")
         for menu in all_menus:
-            if not menu.groups_id or menu.groups_id & self.env.user.groups_id:
+            if not menu.groups_id or menu.groups_id & self.permission_env.user.groups_id:
                 menus.append(self._build_menu_node(menu))
         return menus
 
@@ -158,14 +168,14 @@ class UniversalViewSemanticParser:
             "children": [
                 self._build_menu_node(child)
                 for child in menu.child_id
-                if not child.groups_id or child.groups_id & self.env.user.groups_id
+                if not child.groups_id or child.groups_id & self.permission_env.user.groups_id
             ]
         }
 
     # ---------------- 动作解析 ----------------
     def _parse_actions(self):
         actions = []
-        all_actions = self.env["ir.actions.act_window"].search([])
+        all_actions = self.permission_env["ir.actions.act_window"].search([])
         for act in all_actions:
             actions.append({
                 "id": act.id,

@@ -40,6 +40,9 @@ def main() -> int:
         "max_backend_architecture_failed_check_count": 0,
         "require_backend_evidence_manifest_ok": True,
         "max_backend_evidence_manifest_missing_count": 0,
+        "require_load_view_access_ok": True,
+        "require_load_view_forbidden_status_403": True,
+        "require_load_view_forbidden_error_code": "PERMISSION_DENIED",
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -61,6 +64,7 @@ def main() -> int:
         "role_capability_prod_like",
         "contract_assembler_semantic",
         "runtime_surface_dashboard",
+        "load_view_access_contract",
         "backend_architecture_full",
         "backend_evidence_manifest",
     ):
@@ -142,6 +146,23 @@ def main() -> int:
             "backend_evidence_manifest.missing_count must be <= "
             f"{max_manifest_missing}"
         )
+
+    load_view_access = payload.get("load_view_access_contract") if isinstance(payload.get("load_view_access_contract"), dict) else {}
+    if not isinstance(load_view_access.get("ok"), bool):
+        errors.append("load_view_access_contract.ok must be bool")
+    if bool(policy.get("require_load_view_access_ok", True)) and not bool(load_view_access.get("ok")):
+        errors.append("load_view_access_contract.ok must be true under baseline policy")
+    if bool(policy.get("require_load_view_forbidden_status_403", True)):
+        if int(load_view_access.get("forbidden_status") or 0) != 403:
+            errors.append("load_view_access_contract.forbidden_status must be 403")
+    required_forbidden_code = str(policy.get("require_load_view_forbidden_error_code") or "").strip()
+    if required_forbidden_code:
+        actual_forbidden_code = str(load_view_access.get("forbidden_error_code") or "").strip()
+        if actual_forbidden_code != required_forbidden_code:
+            errors.append(
+                "load_view_access_contract.forbidden_error_code must be "
+                f"{required_forbidden_code}, got {actual_forbidden_code or '-'}"
+            )
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

@@ -9,6 +9,7 @@
     "role_capability_prod_like",
     "contract_assembler_semantic",
     "runtime_surface_dashboard",
+    "load_view_access_contract",
     "backend_architecture_full",
     "backend_evidence_manifest"
   ],
@@ -51,6 +52,15 @@
       "check_count",
       "failed_check_count",
       "warning_check_count",
+      "report"
+    ],
+    "load_view_access_contract": [
+      "ok",
+      "fixture_login",
+      "allowed_model",
+      "forbidden_model",
+      "forbidden_status",
+      "forbidden_error_code",
       "report"
     ],
     "backend_evidence_manifest": [
