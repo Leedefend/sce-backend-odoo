@@ -29,6 +29,7 @@ def build_evidence(
     role_capability_prod_like_report: dict,
     contract_assembler_semantic_report: dict,
     runtime_surface_dashboard_report: dict,
+    boundary_import_report: dict,
     load_view_access_contract_report: dict,
     backend_architecture_full_report: dict,
     backend_evidence_manifest_report: dict,
@@ -134,6 +135,13 @@ def build_evidence(
             ),
             "report": "artifacts/backend/runtime_surface_dashboard_report.json",
         },
+        "boundary_import_report": {
+            "ok": bool(boundary_import_report.get("ok", False)),
+            "warning_count": int((((boundary_import_report.get("summary") or {}).get("warning_count")) or 0)),
+            "violation_count": int((((boundary_import_report.get("summary") or {}).get("violation_count")) or 0)),
+            "tracked_module_count": int((((boundary_import_report.get("summary") or {}).get("tracked_module_count")) or 0)),
+            "report": "artifacts/backend/boundary_import_guard_report.json",
+        },
         "load_view_access_contract": {
             "ok": bool(load_view_access_contract_report.get("ok", False)),
             "fixture_login": str((((load_view_access_contract_report.get("summary") or {}).get("fixture_login")) or "")).strip(),
@@ -177,6 +185,7 @@ def to_markdown(evidence: dict) -> str:
     p = evidence["role_capability_prod_like"]
     c = evidence["contract_assembler_semantic"]
     r = evidence["runtime_surface_dashboard"]
+    bi = evidence["boundary_import_report"]
     lv = evidence["load_view_access_contract"]
     a2 = evidence["backend_architecture_full"]
     m2 = evidence["backend_evidence_manifest"]
@@ -242,6 +251,13 @@ def to_markdown(evidence: dict) -> str:
         f"- catalog_runtime_ratio: {r['catalog_runtime_ratio']}",
         f"- report: `{r['report']}`",
         "",
+        "## Boundary Import Report",
+        f"- ok: {bi['ok']}",
+        f"- warning_count: {bi['warning_count']}",
+        f"- violation_count: {bi['violation_count']}",
+        f"- tracked_module_count: {bi['tracked_module_count']}",
+        f"- report: `{bi['report']}`",
+        "",
         "## Load View Access Contract",
         f"- ok: {lv['ok']}",
         f"- fixture_login: {lv['fixture_login'] or '-'}",
@@ -288,6 +304,7 @@ def main() -> int:
     parser.add_argument("--role-capability-prod-like-report", default="artifacts/backend/role_capability_floor_prod_like.json")
     parser.add_argument("--contract-assembler-semantic-report", default="artifacts/backend/contract_assembler_semantic_smoke.json")
     parser.add_argument("--runtime-surface-dashboard-report", default="artifacts/backend/runtime_surface_dashboard_report.json")
+    parser.add_argument("--boundary-import-report", default="artifacts/backend/boundary_import_guard_report.json")
     parser.add_argument("--load-view-access-contract-report", default="artifacts/backend/load_view_access_contract_guard.json")
     parser.add_argument("--backend-architecture-full-report", default="artifacts/backend/backend_architecture_full_report.json")
     parser.add_argument("--backend-evidence-manifest-report", default="artifacts/backend/backend_evidence_manifest.json")
@@ -304,6 +321,7 @@ def main() -> int:
     role_capability_prod_like_report = load_json_optional(Path(args.role_capability_prod_like_report), {})
     contract_assembler_semantic_report = load_json_optional(Path(args.contract_assembler_semantic_report), {})
     runtime_surface_dashboard_report = load_json_optional(Path(args.runtime_surface_dashboard_report), {})
+    boundary_import_report = load_json_optional(Path(args.boundary_import_report), {})
     load_view_access_contract_report = load_json_optional(Path(args.load_view_access_contract_report), {})
     backend_architecture_full_report = load_json_optional(Path(args.backend_architecture_full_report), {})
     backend_evidence_manifest_report = load_json_optional(Path(args.backend_evidence_manifest_report), {})
@@ -343,6 +361,7 @@ def main() -> int:
         role_capability_prod_like_report,
         contract_assembler_semantic_report,
         runtime_surface_dashboard_report,
+        boundary_import_report,
         load_view_access_contract_report,
         backend_architecture_full_report,
         backend_evidence_manifest_report,

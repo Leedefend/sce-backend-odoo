@@ -107,6 +107,8 @@ def main() -> int:
     min_business_required_intent_count = _safe_int(baseline.get("min_business_required_intent_count"), 0)
     min_business_required_role_count = _safe_int(baseline.get("min_business_required_role_count"), 0)
     min_business_catalog_runtime_ratio = _safe_float(baseline.get("min_business_catalog_runtime_ratio"), 0.0)
+    max_boundary_import_warning_count = _safe_int(baseline.get("max_boundary_import_warning_count"), 0)
+    max_boundary_import_violation_count = _safe_int(baseline.get("max_boundary_import_violation_count"), 0)
     required_load_view_forbidden_status = _safe_int(baseline.get("required_load_view_forbidden_status"), 0)
     required_load_view_forbidden_error_code = str(baseline.get("required_load_view_forbidden_error_code") or "").strip()
     require_alignment_probe_login = bool(baseline.get("require_alignment_probe_login", False))
@@ -135,6 +137,7 @@ def main() -> int:
         )
 
     alignment_row = checks_by_name.get("scene_catalog_runtime_alignment") or {}
+    boundary_import_row = checks_by_name.get("boundary_import_report") or {}
     alignment_ratio = _safe_float(alignment_row.get("catalog_runtime_ratio"), 0.0)
     alignment_probe_login = str(alignment_row.get("probe_login") or "").strip()
     alignment_probe_source = str(alignment_row.get("probe_source") or "").strip()
@@ -146,6 +149,18 @@ def main() -> int:
         errors.append("scene_catalog_runtime_alignment.probe_login must be non-empty")
     if require_alignment_probe_source and not alignment_probe_source:
         errors.append("scene_catalog_runtime_alignment.probe_source must be non-empty")
+    boundary_import_warning_count = _safe_int(boundary_import_row.get("warning_count"), 0)
+    boundary_import_violation_count = _safe_int(boundary_import_row.get("violation_count"), 0)
+    if boundary_import_warning_count > max_boundary_import_warning_count:
+        errors.append(
+            "boundary_import_report.warning_count exceeded: "
+            f"{boundary_import_warning_count} > {max_boundary_import_warning_count}"
+        )
+    if boundary_import_violation_count > max_boundary_import_violation_count:
+        errors.append(
+            "boundary_import_report.violation_count exceeded: "
+            f"{boundary_import_violation_count} > {max_boundary_import_violation_count}"
+        )
 
     business_row = checks_by_name.get("business_capability_baseline") or {}
     business_required_intent_count = _safe_int(business_row.get("required_intent_count"), 0)
@@ -200,6 +215,8 @@ def main() -> int:
             "scene_catalog_runtime_alignment_ratio": alignment_ratio,
             "scene_catalog_runtime_alignment_probe_login": alignment_probe_login,
             "scene_catalog_runtime_alignment_probe_source": alignment_probe_source,
+            "boundary_import_warning_count": boundary_import_warning_count,
+            "boundary_import_violation_count": boundary_import_violation_count,
             "business_required_intent_count": business_required_intent_count,
             "business_required_role_count": business_required_role_count,
             "business_catalog_runtime_ratio": business_catalog_runtime_ratio,
@@ -223,6 +240,8 @@ def main() -> int:
         f"- scene_catalog_runtime_alignment_ratio: {alignment_ratio}",
         f"- scene_catalog_runtime_alignment_probe_login: {alignment_probe_login or '-'}",
         f"- scene_catalog_runtime_alignment_probe_source: {alignment_probe_source or '-'}",
+        f"- boundary_import_warning_count: {boundary_import_warning_count}",
+        f"- boundary_import_violation_count: {boundary_import_violation_count}",
         f"- business_required_intent_count: {business_required_intent_count}",
         f"- business_required_role_count: {business_required_role_count}",
         f"- business_catalog_runtime_ratio: {business_catalog_runtime_ratio}",

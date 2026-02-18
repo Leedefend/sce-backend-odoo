@@ -1,0 +1,18 @@
+{
+  "required_top_keys": [
+    "ok",
+    "summary",
+    "manifest_depends",
+    "violations",
+    "warnings"
+  ],
+  "required_summary_keys": [
+    "source_root_count",
+    "tracked_module_count",
+    "import_violation_count",
+    "manifest_violation_count",
+    "warning_count",
+    "violation_count"
+  ],
+  "min_tracked_module_count": 5
+}

@@ -40,6 +40,9 @@ def main() -> int:
         "max_backend_architecture_failed_check_count": 0,
         "require_backend_evidence_manifest_ok": True,
         "max_backend_evidence_manifest_missing_count": 0,
+        "require_boundary_import_report_ok": True,
+        "max_boundary_import_warning_count": 0,
+        "max_boundary_import_violation_count": 0,
         "require_load_view_access_ok": True,
         "require_load_view_forbidden_status_403": True,
         "require_load_view_forbidden_error_code": "PERMISSION_DENIED",
@@ -64,6 +67,7 @@ def main() -> int:
         "role_capability_prod_like",
         "contract_assembler_semantic",
         "runtime_surface_dashboard",
+        "boundary_import_report",
         "load_view_access_contract",
         "backend_architecture_full",
         "backend_evidence_manifest",
@@ -145,6 +149,23 @@ def main() -> int:
         errors.append(
             "backend_evidence_manifest.missing_count must be <= "
             f"{max_manifest_missing}"
+        )
+    boundary_import_report = payload.get("boundary_import_report") if isinstance(payload.get("boundary_import_report"), dict) else {}
+    if not isinstance(boundary_import_report.get("ok"), bool):
+        errors.append("boundary_import_report.ok must be bool")
+    if bool(policy.get("require_boundary_import_report_ok", True)) and not bool(boundary_import_report.get("ok")):
+        errors.append("boundary_import_report.ok must be true under baseline policy")
+    max_boundary_import_warning_count = int(policy.get("max_boundary_import_warning_count", 0) or 0)
+    max_boundary_import_violation_count = int(policy.get("max_boundary_import_violation_count", 0) or 0)
+    if int(boundary_import_report.get("warning_count") or 0) > max_boundary_import_warning_count:
+        errors.append(
+            "boundary_import_report.warning_count must be <= "
+            f"{max_boundary_import_warning_count}"
+        )
+    if int(boundary_import_report.get("violation_count") or 0) > max_boundary_import_violation_count:
+        errors.append(
+            "boundary_import_report.violation_count must be <= "
+            f"{max_boundary_import_violation_count}"
         )
 
     load_view_access = payload.get("load_view_access_contract") if isinstance(payload.get("load_view_access_contract"), dict) else {}

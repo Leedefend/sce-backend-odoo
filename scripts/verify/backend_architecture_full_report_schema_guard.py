@@ -74,6 +74,8 @@ def main() -> int:
         "business_required_intent_count",
         "business_required_role_count",
         "business_catalog_runtime_ratio",
+        "boundary_import_warning_count",
+        "boundary_import_violation_count",
         "failed_checks",
         "warning_checks",
         "artifacts_dir",

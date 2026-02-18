@@ -9,6 +9,7 @@
     "role_capability_prod_like",
     "contract_assembler_semantic",
     "runtime_surface_dashboard",
+    "boundary_import_report",
     "load_view_access_contract",
     "backend_architecture_full",
     "backend_evidence_manifest"
@@ -52,6 +53,13 @@
       "check_count",
       "failed_check_count",
       "warning_check_count",
+      "report"
+    ],
+    "boundary_import_report": [
+      "ok",
+      "warning_count",
+      "violation_count",
+      "tracked_module_count",
       "report"
     ],
     "load_view_access_contract": [
