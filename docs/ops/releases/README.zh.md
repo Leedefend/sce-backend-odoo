@@ -33,6 +33,9 @@ status: active
     - 产物：`/mnt/artifacts/backend/contract_assembler_semantic_smoke.json`（不可写时回落 `artifacts/backend/contract_assembler_semantic_smoke.json`）
   - `make verify.runtime.surface.dashboard.report`
     - 产物：`/mnt/artifacts/backend/runtime_surface_dashboard_report.json`（不可写时回落 `artifacts/backend/runtime_surface_dashboard_report.json`）
+  - `make verify.boundary.import_guard`
+    - 产物：`/mnt/artifacts/backend/boundary_import_guard_report.json`（不可写时回落 `artifacts/backend/boundary_import_guard_report.json`）
+    - 发布检查：平台/业务/demo 分层之间不得出现禁用跨层 import 或禁用 manifest 依赖
   - `make verify.backend.architecture.full.report`
     - 产物：`/mnt/artifacts/backend/backend_architecture_full_report.json`（不可写时回落 `artifacts/backend/backend_architecture_full_report.json`）
   - `make verify.backend.evidence.manifest.guard`
