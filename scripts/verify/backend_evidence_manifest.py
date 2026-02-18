@@ -91,6 +91,10 @@ def main() -> int:
 
     entries = sorted(entries, key=lambda row: str(row.get("path") or ""))
     missing = sorted(set(missing))
+    alignment = _load_json(ROOT / "artifacts" / "scene_catalog_runtime_alignment_guard.json")
+    alignment_summary = alignment.get("summary") if isinstance(alignment.get("summary"), dict) else {}
+    alignment_probe_login = str(alignment_summary.get("probe_login") or "").strip()
+    alignment_probe_source = str(alignment_summary.get("probe_source") or "").strip()
     payload = {
         "ok": len(missing) == 0,
         "summary": {
@@ -98,6 +102,8 @@ def main() -> int:
             "present_count": sum(1 for item in entries if item.get("exists")),
             "missing_count": len(missing),
             "total_size_bytes": total_size_bytes,
+            "alignment_probe_login": alignment_probe_login,
+            "alignment_probe_source": alignment_probe_source,
             "artifacts_dir": str(backend_dir),
         },
         "baseline": baseline,
@@ -114,6 +120,8 @@ def main() -> int:
         f"- present_count: {payload['summary']['present_count']}",
         f"- missing_count: {payload['summary']['missing_count']}",
         f"- total_size_bytes: {payload['summary']['total_size_bytes']}",
+        f"- alignment_probe_login: {payload['summary']['alignment_probe_login'] or '-'}",
+        f"- alignment_probe_source: {payload['summary']['alignment_probe_source'] or '-'}",
         "",
         "## Artifacts",
         "",

@@ -149,6 +149,11 @@ def main() -> int:
             "name": "scene_catalog_runtime_alignment",
             "ok": bool(catalog_alignment.get("ok") is True),
             "catalog_runtime_ratio": _safe_float((catalog_alignment.get("summary") or {}).get("catalog_runtime_ratio"), 0.0),
+            "probe_login": str((catalog_alignment.get("summary") or {}).get("probe_login") or "").strip(),
+            "probe_source": str((catalog_alignment.get("summary") or {}).get("probe_source") or "").strip(),
+            "warning_count": 1
+            if str((catalog_alignment.get("summary") or {}).get("probe_login") or "").strip().startswith("demo_")
+            else 0,
             "source": "artifacts/scene_catalog_runtime_alignment_guard.json",
         }
     )
@@ -157,6 +162,9 @@ def main() -> int:
     failed = sorted([item["name"] for item in checks if item.get("ok") is not True])
     warnings = sorted([item["name"] for item in checks if _safe_int(item.get("warning_count"), 0) > 0])
     business_row = next((item for item in checks if item.get("name") == "business_capability_baseline"), {})
+    alignment_row = next((item for item in checks if item.get("name") == "scene_catalog_runtime_alignment"), {})
+    alignment_probe_login = str(alignment_row.get("probe_login") or "").strip()
+    alignment_probe_source = str(alignment_row.get("probe_source") or "").strip()
     report = {
         "ok": not failed,
         "summary": {
@@ -166,6 +174,8 @@ def main() -> int:
             "business_required_intent_count": _safe_int(business_row.get("required_intent_count"), 0),
             "business_required_role_count": _safe_int(business_row.get("required_role_count"), 0),
             "business_catalog_runtime_ratio": _safe_float(business_row.get("catalog_runtime_ratio"), 0.0),
+            "alignment_probe_login": alignment_probe_login,
+            "alignment_probe_source": alignment_probe_source,
             "failed_checks": failed,
             "warning_checks": warnings,
             "artifacts_dir": str(backend_dir),
@@ -184,6 +194,8 @@ def main() -> int:
         f"- business_required_intent_count: {report['summary']['business_required_intent_count']}",
         f"- business_required_role_count: {report['summary']['business_required_role_count']}",
         f"- business_catalog_runtime_ratio: {report['summary']['business_catalog_runtime_ratio']}",
+        f"- alignment_probe_login: {report['summary']['alignment_probe_login'] or '-'}",
+        f"- alignment_probe_source: {report['summary']['alignment_probe_source'] or '-'}",
         "",
         "## Checks",
         "",

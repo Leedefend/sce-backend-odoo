@@ -82,6 +82,8 @@ def main() -> int:
     catalog_count = int(scene_catalog.get("scene_count") or 0)
     runtime_scene_count = int(((alignment.get("summary") or {}).get("runtime_scene_count")) or 0)
     ratio = _safe_float((alignment.get("summary") or {}).get("catalog_runtime_ratio"), 0.0)
+    alignment_probe_login = str(((alignment.get("summary") or {}).get("probe_login")) or "").strip()
+    alignment_probe_source = str(((alignment.get("summary") or {}).get("probe_source")) or "").strip()
     if runtime_scene_count > 0 and ratio <= 0:
         ratio = round(catalog_count / runtime_scene_count, 6)
     runtime_capability_max = 0
@@ -128,6 +130,10 @@ def main() -> int:
         warnings.append(f"runtime capability max below warning threshold: {runtime_capability_max} < {cap_min_warn}")
     if runtime_capability_max > cap_max_warn:
         warnings.append(f"runtime capability max above warning threshold: {runtime_capability_max} > {cap_max_warn}")
+    if alignment_probe_login.startswith("demo_"):
+        warnings.append(
+            f"alignment probe login is demo fallback: {alignment_probe_login} (source={alignment_probe_source or '-'})"
+        )
 
     report = {
         "ok": True,
@@ -139,6 +145,8 @@ def main() -> int:
             "runtime_capability_min": runtime_capability_min,
             "runtime_capability_avg": runtime_capability_avg,
             "runtime_capability_max": runtime_capability_max,
+            "alignment_probe_login": alignment_probe_login,
+            "alignment_probe_source": alignment_probe_source,
             "baseline_catalog_scene_count": baseline_catalog_count,
             "baseline_runtime_scene_count": baseline_runtime_scene_count,
             "baseline_catalog_runtime_ratio": baseline_ratio,
@@ -163,6 +171,7 @@ def main() -> int:
         f"- scene_delta: {scene_delta}",
         f"- catalog_runtime_ratio: {ratio}",
         f"- runtime_capability_min/avg/max: {runtime_capability_min}/{runtime_capability_avg}/{runtime_capability_max}",
+        f"- alignment_probe_login/source: {alignment_probe_login or '-'}/{alignment_probe_source or '-'}",
         f"- baseline_catalog_scene_count: {baseline_catalog_count}",
         f"- baseline_runtime_scene_count: {baseline_runtime_scene_count}",
         f"- baseline_catalog_runtime_ratio: {baseline_ratio}",

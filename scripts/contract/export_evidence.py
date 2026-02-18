@@ -91,6 +91,8 @@ def build_evidence(
             "catalog_scene_count": int((((scene_alignment_report.get("summary") or {}).get("catalog_scene_count")) or 0)),
             "runtime_scene_count": int((((scene_alignment_report.get("summary") or {}).get("runtime_scene_count")) or 0)),
             "catalog_runtime_ratio": float((((scene_alignment_report.get("summary") or {}).get("catalog_runtime_ratio")) or 0.0)),
+            "probe_login": str((((scene_alignment_report.get("summary") or {}).get("probe_login")) or "")).strip(),
+            "probe_source": str((((scene_alignment_report.get("summary") or {}).get("probe_source")) or "")).strip(),
             "report": "artifacts/scene_catalog_runtime_alignment_guard.json",
         },
         "business_capability_baseline": {
@@ -192,6 +194,8 @@ def to_markdown(evidence: dict) -> str:
         f"- catalog_scene_count: {a['catalog_scene_count']}",
         f"- runtime_scene_count: {a['runtime_scene_count']}",
         f"- catalog_runtime_ratio: {a['catalog_runtime_ratio']}",
+        f"- probe_login: {a['probe_login'] or '-'}",
+        f"- probe_source: {a['probe_source'] or '-'}",
         f"- report: `{a['report']}`",
         "",
         "## Business Capability Baseline",
