@@ -31,6 +31,7 @@
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/contract/phase11_1_contract_evidence.json`
       - 必须包含 `load_view_access_contract`，且 `forbidden_status=403`、`forbidden_error_code=PERMISSION_DENIED`
+      - 必须包含 `boundary_import_report`，且 `warning_count=0`、`violation_count=0`
 - 已包含 Phase 9.8 菜单/场景覆盖汇总证据：
   - `make verify.menu.scene_resolve.summary`
   - `artifacts/codex/summary.md` 必须包含：

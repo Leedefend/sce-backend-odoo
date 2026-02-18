@@ -31,6 +31,7 @@
     - `artifacts/business_capability_baseline_report.json`
     - `artifacts/contract/phase11_1_contract_evidence.json`
       - must contain `load_view_access_contract` with `forbidden_status=403` and `forbidden_error_code=PERMISSION_DENIED`
+      - must contain `boundary_import_report` with `warning_count=0` and `violation_count=0`
 - Phase 9.8 menu/scene coverage summary is present:
   - `make verify.menu.scene_resolve.summary`
   - required keys in `artifacts/codex/summary.md`:
