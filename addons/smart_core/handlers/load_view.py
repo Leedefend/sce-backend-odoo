@@ -43,6 +43,12 @@ class LoadModelViewHandler(BaseIntentHandler):
                 "error": {"code": "BAD_REQUEST", "message": "缺少必要参数 model 或 view_type"},
                 "code": 400,
             }
+        if model_name == "ir.ui.view":
+            return {
+                "ok": False,
+                "error": {"code": "PERMISSION_DENIED", "message": "不允许直接读取技术模型视图"},
+                "code": 403,
+            }
 
         try:
             model_user = self.env[model_name].with_context(self.params)

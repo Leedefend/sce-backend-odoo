@@ -1,3 +1,5 @@
+from odoo.exceptions import AccessError
+
 from .view_dispatcher import ViewDispatcher
 
 class UniversalViewSemanticParser:
@@ -27,8 +29,15 @@ class UniversalViewSemanticParser:
         self._apply_permissions_to_layout(raw_layout, fields)
 
         # 6. 菜单、动作解析
-        menus = self._parse_menus()
-        actions = self._parse_actions()
+        # Menus/actions are auxiliary metadata; do not block main view payload on ACL restrictions.
+        try:
+            menus = self._parse_menus()
+        except AccessError:
+            menus = []
+        try:
+            actions = self._parse_actions()
+        except AccessError:
+            actions = []
 
         # 7. 动态覆盖
         final_layout = self._apply_dynamic_overrides(raw_layout)
