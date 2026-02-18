@@ -189,9 +189,12 @@ def main() -> int:
     warnings = sorted([item["name"] for item in checks if _safe_int(item.get("warning_count"), 0) > 0])
     business_row = next((item for item in checks if item.get("name") == "business_capability_baseline"), {})
     alignment_row = next((item for item in checks if item.get("name") == "scene_catalog_runtime_alignment"), {})
+    boundary_import_row = next((item for item in checks if item.get("name") == "boundary_import_report"), {})
     load_view_row = next((item for item in checks if item.get("name") == "load_view_access_contract"), {})
     alignment_probe_login = str(alignment_row.get("probe_login") or "").strip()
     alignment_probe_source = str(alignment_row.get("probe_source") or "").strip()
+    boundary_import_warning_count = _safe_int(boundary_import_row.get("warning_count"), 0)
+    boundary_import_violation_count = _safe_int(boundary_import_row.get("violation_count"), 0)
     load_view_allowed_model = str(load_view_row.get("allowed_model") or "").strip()
     load_view_forbidden_status = _safe_int(load_view_row.get("forbidden_status"), 0)
     load_view_forbidden_error_code = str(load_view_row.get("forbidden_error_code") or "").strip()
@@ -206,6 +209,8 @@ def main() -> int:
             "business_catalog_runtime_ratio": _safe_float(business_row.get("catalog_runtime_ratio"), 0.0),
             "alignment_probe_login": alignment_probe_login,
             "alignment_probe_source": alignment_probe_source,
+            "boundary_import_warning_count": boundary_import_warning_count,
+            "boundary_import_violation_count": boundary_import_violation_count,
             "load_view_allowed_model": load_view_allowed_model,
             "load_view_forbidden_status": load_view_forbidden_status,
             "load_view_forbidden_error_code": load_view_forbidden_error_code,
@@ -229,6 +234,8 @@ def main() -> int:
         f"- business_catalog_runtime_ratio: {report['summary']['business_catalog_runtime_ratio']}",
         f"- alignment_probe_login: {report['summary']['alignment_probe_login'] or '-'}",
         f"- alignment_probe_source: {report['summary']['alignment_probe_source'] or '-'}",
+        f"- boundary_import_warning_count: {report['summary']['boundary_import_warning_count']}",
+        f"- boundary_import_violation_count: {report['summary']['boundary_import_violation_count']}",
         f"- load_view_allowed_model: {report['summary']['load_view_allowed_model'] or '-'}",
         f"- load_view_forbidden_status: {report['summary']['load_view_forbidden_status']}",
         f"- load_view_forbidden_error_code: {report['summary']['load_view_forbidden_error_code'] or '-'}",
