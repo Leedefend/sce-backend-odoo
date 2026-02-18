@@ -9,6 +9,8 @@
   "min_business_required_intent_count": 10,
   "min_business_required_role_count": 4,
   "min_business_catalog_runtime_ratio": 0.01,
+  "max_boundary_import_warning_count": 0,
+  "max_boundary_import_violation_count": 0,
   "required_load_view_forbidden_status": 403,
   "required_load_view_forbidden_error_code": "PERMISSION_DENIED",
   "required_checks": [
