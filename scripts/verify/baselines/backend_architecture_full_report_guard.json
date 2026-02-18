@@ -1,5 +1,5 @@
 {
-  "min_check_count": 7,
+  "min_check_count": 8,
   "max_failed_check_count": 0,
   "max_warning_check_count": 0,
   "min_contract_governance_coverage_ratio": 0.95,
@@ -16,6 +16,7 @@
     "runtime_surface_dashboard",
     "contract_governance_coverage",
     "controller_boundary_report",
-    "scene_catalog_runtime_alignment"
+    "scene_catalog_runtime_alignment",
+    "load_view_access_contract"
   ]
 }

@@ -90,6 +90,9 @@ def main() -> int:
     coverage = _load_json(local_artifacts / "contract_governance_coverage.json")
     boundary_report = _load_json(local_artifacts / "controller_boundary_guard_report.json")
     catalog_alignment = _load_json(local_artifacts / "scene_catalog_runtime_alignment_guard.json")
+    load_view_access = _load_json(backend_dir / "load_view_access_contract_guard.json") or _load_json(
+        local_artifacts / "backend" / "load_view_access_contract_guard.json"
+    )
 
     checks: list[dict] = []
 
@@ -155,6 +158,17 @@ def main() -> int:
             if str((catalog_alignment.get("summary") or {}).get("probe_login") or "").strip().startswith("demo_")
             else 0,
             "source": "artifacts/scene_catalog_runtime_alignment_guard.json",
+        }
+    )
+    checks.append(
+        {
+            "name": "load_view_access_contract",
+            "ok": bool(load_view_access.get("ok") is True),
+            "error_count": _safe_int((load_view_access.get("summary") or {}).get("error_count"), 0),
+            "allowed_model": str((load_view_access.get("summary") or {}).get("allowed_model") or "").strip(),
+            "forbidden_status": _safe_int((load_view_access.get("summary") or {}).get("forbidden_status"), 0),
+            "forbidden_error_code": str((load_view_access.get("summary") or {}).get("forbidden_error_code") or "").strip(),
+            "source": "artifacts/backend/load_view_access_contract_guard.json",
         }
     )
 
