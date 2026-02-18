@@ -230,8 +230,68 @@ export interface LoadViewRequest {
 }
 
 export interface ActionContract {
+  head?: {
+    title?: string;
+    model?: string;
+    view_type?: string;
+    action_id?: number;
+    context?: Record<string, unknown> | null;
+    permissions?: {
+      read?: boolean;
+      write?: boolean;
+      create?: boolean;
+      unlink?: boolean;
+    };
+    res_id?: number | string;
+  };
   model?: string;
   view_type?: string;
+  fields?: Record<string, FieldDescriptor>;
+  views?: Record<
+    string,
+    {
+      model?: string;
+      view_type?: string;
+      layout?: Array<{ type?: string; name?: string }>;
+      fields?: string[];
+      order?: string;
+    }
+  >;
+  toolbar?: {
+    header?: Array<Record<string, unknown>>;
+    sidebar?: Array<Record<string, unknown>>;
+    footer?: Array<Record<string, unknown>>;
+  };
+  buttons?: Array<Record<string, unknown>>;
+  permissions?: {
+    effective?: {
+      rights?: {
+        read?: boolean;
+        write?: boolean;
+        create?: boolean;
+        unlink?: boolean;
+      };
+    };
+    field_groups?: Record<string, { groups_xmlids?: string[] }>;
+  };
+  search?: {
+    filters?: Array<{
+      key?: string;
+      label?: string;
+      domain?: unknown[];
+      domain_raw?: string | null;
+      context_raw?: string | null;
+    }>;
+  };
+  workflow?: {
+    transitions?: Array<{
+      trigger?: { label?: string; name?: string; kind?: string };
+      notes?: string;
+    }>;
+  };
+  warnings?: Array<string | Record<string, unknown>>;
+  degraded?: boolean;
+  missing_models?: string[];
   ui_contract_raw?: {
     fields?: Record<string, FieldDescriptor>;
   };

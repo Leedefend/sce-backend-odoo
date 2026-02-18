@@ -327,6 +327,40 @@
         <h3>最近操作</h3>
         <p>还没有执行记录。可先点击上方动作按钮，系统将自动记录原因码与 Trace。</p>
       </section>
+      <section v-if="contractWarnings.length" class="contract-warning-block">
+        <h3>契约告警</h3>
+        <ul>
+          <li v-for="warn in contractWarnings" :key="warn">{{ warn }}</li>
+        </ul>
+      </section>
+      <section v-if="contractTransitions.length" class="contract-workflow-block">
+        <h3>流程建议</h3>
+        <div class="workflow-actions">
+          <button
+            v-for="item in contractTransitions"
+            :key="item.key"
+            type="button"
+            class="stats-refresh"
+            :title="item.notes || item.label"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </section>
+      <section v-if="contractSearchFilters.length" class="contract-search-block">
+        <h3>契约筛选</h3>
+        <div class="workflow-actions">
+          <button
+            v-for="item in contractSearchFilters"
+            :key="`filter-${item.key}`"
+            type="button"
+            class="stats-refresh"
+            @click="applyContractFilter(item.key)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+      </section>
       <ViewLayoutRenderer
         v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
@@ -379,7 +413,7 @@ import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
-import type { ViewButton, ViewContract } from '@sc/schema';
+import type { ActionContract, ViewButton, ViewContract } from '@sc/schema';
 import { recordTrace, createTraceId } from '../services/trace';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import DevContextPanel from '../components/DevContextPanel.vue';
@@ -454,11 +488,10 @@ const actionIdFromQuery = computed(() => {
   const parsed = Number(value || 0);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 });
-const actionContract = ref<Record<string, unknown> | null>(null);
+const actionContract = ref<ActionContract | null>(null);
 const actionContractMeta = ref<Record<string, unknown> | null>(null);
 const title = computed(() => {
-  const head = actionContract.value?.head as Record<string, unknown> | undefined;
-  const headTitle = String(head?.title || '').trim();
+  const headTitle = String(actionContract.value?.head?.title || '').trim();
   if (headTitle) return headTitle;
   return `Form: ${model.value}`;
 });
@@ -524,13 +557,12 @@ type ContractOpenAction = {
 };
 
 const contractRights = computed(() => {
-  const root = actionContract.value as Record<string, unknown> | null;
-  const head = (root?.head as Record<string, unknown> | undefined)?.permissions;
-  const effectiveRights = (((root?.permissions as Record<string, unknown> | undefined)?.effective as Record<string, unknown> | undefined)?.rights as Record<string, unknown> | undefined);
+  const head = actionContract.value?.head?.permissions;
+  const effectiveRights = actionContract.value?.permissions?.effective?.rights;
   const resolve = (key: string) => {
-    const fromHead = head && typeof head === 'object' ? head[key] : undefined;
+    const fromHead = head?.[key as keyof typeof head];
     if (typeof fromHead === 'boolean') return fromHead;
-    const fromEffective = effectiveRights?.[key];
+    const fromEffective = effectiveRights?.[key as keyof typeof effectiveRights];
     if (typeof fromEffective === 'boolean') return fromEffective;
     return true;
   };
@@ -553,9 +585,8 @@ function toActionId(raw: unknown): number | null {
 }
 
 const contractHeaderActions = computed<ContractOpenAction[]>(() => {
-  const root = actionContract.value as Record<string, unknown> | null;
-  const toolbar = (root?.toolbar as Record<string, unknown> | undefined)?.header;
-  const buttons = root?.buttons;
+  const toolbar = actionContract.value?.toolbar?.header;
+  const buttons = actionContract.value?.buttons;
   const merged: unknown[] = [];
   if (Array.isArray(toolbar)) merged.push(...toolbar);
   if (Array.isArray(buttons)) merged.push(...buttons);
@@ -584,14 +615,11 @@ const contractHeaderActions = computed<ContractOpenAction[]>(() => {
 });
 
 const contractMetaLine = computed(() => {
-  const root = actionContract.value as Record<string, unknown> | null;
+  const root = actionContract.value;
   if (!root) return '';
-  const head = root.head as Record<string, unknown> | undefined;
-  const search = root.search as Record<string, unknown> | undefined;
-  const workflow = root.workflow as Record<string, unknown> | undefined;
-  const viewType = String(head?.view_type || root.view_type || '').trim() || '-';
-  const filters = Array.isArray(search?.filters) ? search.filters.length : 0;
-  const transitions = Array.isArray(workflow?.transitions) ? workflow.transitions.length : 0;
+  const viewType = String(root.head?.view_type || root.view_type || '').trim() || '-';
+  const filters = Array.isArray(root.search?.filters) ? root.search.filters.length : 0;
+  const transitions = Array.isArray(root.workflow?.transitions) ? root.workflow.transitions.length : 0;
   const contractMode = String(actionContractMeta.value?.contract_mode || '').trim();
   const parts = [
     `contract.view_type=${viewType}`,
@@ -599,9 +627,69 @@ const contractMetaLine = computed(() => {
     `transitions=${transitions}`,
     `rights=${contractRights.value.read ? 'R' : '-'}${contractRights.value.write ? 'W' : '-'}${contractRights.value.create ? 'C' : '-'}${contractRights.value.unlink ? 'D' : '-'}`,
   ];
+  if (root.degraded) parts.push('degraded=yes');
+  if (Array.isArray(root.missing_models) && root.missing_models.length) {
+    parts.push(`missing_models=${root.missing_models.length}`);
+  }
   if (contractMode) parts.push(`mode=${contractMode}`);
   return parts.join(' · ');
 });
+
+const contractWarnings = computed(() => {
+  const warnings = actionContract.value?.warnings;
+  if (!Array.isArray(warnings)) return [];
+  return warnings
+    .map((item) => {
+      if (typeof item === 'string') return item.trim();
+      if (item && typeof item === 'object') {
+        const row = item as Record<string, unknown>;
+        return String(row.message || row.code || '').trim();
+      }
+      return '';
+    })
+    .filter(Boolean);
+});
+
+const contractTransitions = computed(() => {
+  const transitions = actionContract.value?.workflow?.transitions;
+  if (!Array.isArray(transitions)) return [];
+  return transitions
+    .map((item, index) => {
+      const trigger = item?.trigger || {};
+      const label = String(trigger.label || trigger.name || `transition_${index + 1}`).trim();
+      const notes = String(item?.notes || '').trim();
+      return { key: `${label}_${index}`, label, notes };
+    })
+    .filter((item) => item.label)
+    .slice(0, 8);
+});
+
+const contractSearchFilters = computed(() => {
+  const filters = actionContract.value?.search?.filters;
+  if (!Array.isArray(filters)) return [];
+  return filters
+    .map((item) => {
+      const key = String(item?.key || '').trim();
+      const label = String(item?.label || key).trim();
+      return { key, label };
+    })
+    .filter((item) => item.key && item.label)
+    .slice(0, 10);
+});
+
+function extractContractFieldOrder(contract: ActionContract | null) {
+  const layout = contract?.views?.form?.layout;
+  if (!Array.isArray(layout)) return [];
+  const ordered: string[] = [];
+  for (const node of layout) {
+    if (!node || typeof node !== 'object') continue;
+    const kind = String(node.type || '').trim().toLowerCase();
+    const name = String(node.name || '').trim();
+    if (kind !== 'field' || !name || ordered.includes(name)) continue;
+    ordered.push(name);
+  }
+  return ordered;
+}
 type SemanticActionButton = {
   key: string;
   label: string;
@@ -1050,8 +1138,8 @@ const hudEntries = computed(() => [
   { label: 'layout_nodes', value: JSON.stringify(layoutStats.value) },
   { label: 'contract_loaded', value: Boolean(actionContract.value) },
   { label: 'contract_mode', value: String(actionContractMeta.value?.contract_mode || '-') },
-  { label: 'contract_buttons', value: Array.isArray((actionContract.value as Record<string, unknown> | null)?.buttons) ? ((actionContract.value as Record<string, unknown>).buttons as unknown[]).length : 0 },
-  { label: 'contract_toolbar_header', value: Array.isArray(((actionContract.value as Record<string, unknown> | null)?.toolbar as Record<string, unknown> | undefined)?.header) ? ((((actionContract.value as Record<string, unknown> | null)?.toolbar as Record<string, unknown>).header as unknown[]).length) : 0 },
+  { label: 'contract_buttons', value: Array.isArray(actionContract.value?.buttons) ? actionContract.value?.buttons.length : 0 },
+  { label: 'contract_toolbar_header', value: Array.isArray(actionContract.value?.toolbar?.header) ? actionContract.value?.toolbar?.header.length : 0 },
   { label: 'contract_rights', value: `${contractRights.value.read ? 'R' : '-'}${contractRights.value.write ? 'W' : '-'}${contractRights.value.create ? 'C' : '-'}${contractRights.value.unlink ? 'D' : '-'}` },
   { label: 'unsupported_nodes', value: missingNodes.value.join(',') || '-' },
   { label: 'coverage_supported', value: supportedNodes.join(',') },
@@ -1097,7 +1185,7 @@ async function load() {
     if (actionIdFromQuery.value) {
       const actionContractRes = await loadActionContractRaw(actionIdFromQuery.value);
       if (actionContractRes?.data && typeof actionContractRes.data === 'object') {
-        actionContract.value = actionContractRes.data as Record<string, unknown>;
+        actionContract.value = actionContractRes.data as ActionContract;
       }
       actionContractMeta.value = actionContractRes?.meta || null;
     }
@@ -1106,7 +1194,9 @@ async function load() {
     if (view.layout) {
       layoutStats.value = analyzeLayout(view.layout);
     }
-    const fieldNames = extractFieldNames(view.layout).filter(Boolean);
+    const layoutFieldNames = extractFieldNames(view.layout).filter(Boolean);
+    const contractFieldOrder = extractContractFieldOrder(actionContract.value);
+    const fieldNames = contractFieldOrder.length ? contractFieldOrder : layoutFieldNames;
     const read = recordId.value
       ? await readRecord({
           model: model.value,
@@ -1116,16 +1206,23 @@ async function load() {
       : { records: [{}] };
 
     const record = read.records?.[0] ?? {};
-    const contractFields = (actionContract.value?.fields as Record<string, ViewContract['fields'][string]> | undefined) || {};
-    fields.value = (fieldNames.length ? fieldNames : Object.keys(record)).map((name) => {
+    const contractFields = (actionContract.value?.fields || {}) as Record<string, ViewContract['fields'][string]>;
+    const fieldGroups = actionContract.value?.permissions?.field_groups || {};
+    fields.value = (fieldNames.length ? fieldNames : Object.keys(record))
+      .filter((name) => {
+        const groupsXmlids = fieldGroups[name]?.groups_xmlids;
+        return hasGroupAccess(Array.isArray(groupsXmlids) ? groupsXmlids : []);
+      })
+      .map((name) => {
       const fromView = view.fields?.[name];
       const fromContract = contractFields[name];
       const descriptor = fromView || fromContract;
+      const readonlyByPermission = recordId.value ? !contractRights.value.write : !contractRights.value.create;
       return {
         name,
         label: descriptor?.string ?? name,
         descriptor,
-        readonly: descriptor?.readonly,
+        readonly: Boolean(descriptor?.readonly || readonlyByPermission),
       };
     });
 
@@ -1255,6 +1352,11 @@ function getQueryNumber(key: string) {
   return undefined;
 }
 
+function hasGroupAccess(groupsXmlids?: string[]) {
+  if (!Array.isArray(groupsXmlids) || !groupsXmlids.length) return true;
+  return groupsXmlids.some((group) => userGroups.value.includes(group));
+}
+
 async function openContractAction(action: ContractOpenAction) {
   if (!action.actionId) return;
   await router.push({
@@ -1263,6 +1365,19 @@ async function openContractAction(action: ContractOpenAction) {
     query: {
       menu_id: getQueryNumber('menu_id'),
       action_id: action.actionId,
+    },
+  });
+}
+
+async function applyContractFilter(filterKey: string) {
+  if (!actionIdFromQuery.value || !filterKey) return;
+  await router.push({
+    name: 'action',
+    params: { actionId: String(actionIdFromQuery.value) },
+    query: {
+      menu_id: getQueryNumber('menu_id'),
+      action_id: actionIdFromQuery.value,
+      preset_filter: filterKey,
     },
   });
 }
@@ -2822,6 +2937,36 @@ function analyzeLayout(layout: ViewContract['layout']) {
   cursor: pointer;
   overflow-wrap: anywhere;
   word-break: break-all;
+}
+
+.contract-warning-block,
+.contract-workflow-block,
+.contract-search-block {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  margin-bottom: 10px;
+}
+
+.contract-warning-block h3,
+.contract-workflow-block h3,
+.contract-search-block h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.contract-warning-block ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #b45309;
+}
+
+.workflow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .field {
