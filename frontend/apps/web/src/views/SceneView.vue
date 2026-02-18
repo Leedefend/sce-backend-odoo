@@ -39,7 +39,7 @@ const session = useSessionStore();
 const status = ref<'loading' | 'error' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, '场景加载失败'));
-const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger', 'projects.intake']);
+const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger']);
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -131,6 +131,23 @@ async function resolveScene() {
   }
 
   if (layout.kind === 'record') {
+    if (typeof target.menu_xmlid === 'string' && target.menu_xmlid.trim()) {
+      const menuNode = findActionNodeByMenuXmlid(session.menuTree, target.menu_xmlid);
+      if (menuNode?.meta?.action_id) {
+        await router.replace({
+          path: `/a/${menuNode.meta.action_id}`,
+          query: { menu_id: menuNode.menu_id || menuNode.id || undefined, ...workspaceContextQuery },
+        });
+        return;
+      }
+      if (menuNode?.menu_id || menuNode?.id) {
+        await router.replace({
+          path: `/m/${menuNode.menu_id || menuNode.id}`,
+          query: workspaceContextQuery,
+        });
+        return;
+      }
+    }
     if (target.model) {
       const node = findActionNodeByModel(session.menuTree, target.model);
       const menuId = node?.menu_id ?? node?.id;
@@ -234,6 +251,24 @@ function findActionNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode |
     for (const node of items) {
       const sceneNode = node as NavNode & { scene_key?: string };
       if (sceneNode.scene_key === sceneKey || node.meta?.scene_key === sceneKey) {
+        return node;
+      }
+      if (node.children?.length) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nodes) || null;
+}
+
+function findActionNodeByMenuXmlid(nodes: NavNode[], menuXmlid: string): NavNode | null {
+  if (!menuXmlid) return null;
+  const walk = (items: NavNode[]): NavNode | null => {
+    for (const node of items) {
+      const xmlid = String((node as NavNode & { xmlid?: string }).xmlid || node.meta?.menu_xmlid || '').trim();
+      if (xmlid && xmlid === menuXmlid) {
         return node;
       }
       if (node.children?.length) {
