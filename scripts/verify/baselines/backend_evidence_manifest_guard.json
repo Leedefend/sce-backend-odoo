@@ -5,6 +5,7 @@
     "artifacts/backend/role_capability_floor_prod_like.json",
     "artifacts/backend/contract_assembler_semantic_smoke.json",
     "artifacts/backend/runtime_surface_dashboard_report.json",
+    "artifacts/backend/load_view_access_contract_guard.json",
     "artifacts/backend/backend_architecture_full_report.json",
     "artifacts/backend/backend_architecture_full_report_guard.json",
     "artifacts/business_capability_baseline_report.json",
