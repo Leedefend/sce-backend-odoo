@@ -361,6 +361,52 @@
           </button>
         </div>
       </section>
+      <section v-if="contractActionGroups.length" class="contract-workflow-block">
+        <h3>契约动作</h3>
+        <div v-for="group in contractActionGroups" :key="`group-${group.level}`" class="contract-action-group">
+          <p class="meta">level={{ group.level }} · count={{ group.items.length }}</p>
+          <div class="workflow-actions">
+            <button
+              v-for="item in group.items"
+              :key="item.key"
+              type="button"
+              class="stats-refresh"
+              :disabled="!item.enabled"
+              :title="item.hint"
+              @click="runContractAction(item)"
+            >
+              {{ item.label }} · {{ item.kind }}
+            </button>
+          </div>
+        </div>
+      </section>
+      <section class="contract-workflow-block">
+        <h3>契约审计面板</h3>
+        <details>
+          <summary>permissions.rules</summary>
+          <pre>{{ prettyJson(actionContract?.permissions?.rules || {}) }}</pre>
+        </details>
+        <details>
+          <summary>permissions.perms_by_group</summary>
+          <pre>{{ prettyJson(actionContract?.permissions?.perms_by_group || {}) }}</pre>
+        </details>
+        <details>
+          <summary>workflow(full)</summary>
+          <pre>{{ prettyJson(actionContract?.workflow || {}) }}</pre>
+        </details>
+        <details>
+          <summary>search(full)</summary>
+          <pre>{{ prettyJson(actionContract?.search || {}) }}</pre>
+        </details>
+        <details>
+          <summary>validator</summary>
+          <pre>{{ prettyJson(actionContract?.validator || {}) }}</pre>
+        </details>
+        <details>
+          <summary>reports</summary>
+          <pre>{{ prettyJson(actionContract?.reports || []) }}</pre>
+        </details>
+      </section>
       <ViewLayoutRenderer
         v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
@@ -676,6 +722,80 @@ const contractSearchFilters = computed(() => {
     .filter((item) => item.key && item.label)
     .slice(0, 10);
 });
+
+type ContractActionItem = {
+  key: string;
+  label: string;
+  kind: string;
+  level: string;
+  model: string;
+  actionId: number | null;
+  methodName: string;
+  enabled: boolean;
+  hint: string;
+  context: Record<string, unknown>;
+};
+
+const contractActionItems = computed<ContractActionItem[]>(() => {
+  const merged: Array<Record<string, unknown>> = [];
+  if (Array.isArray(actionContract.value?.buttons)) {
+    merged.push(...(actionContract.value?.buttons as Array<Record<string, unknown>>));
+  }
+  if (Array.isArray(actionContract.value?.toolbar?.header)) {
+    merged.push(...(actionContract.value?.toolbar?.header as Array<Record<string, unknown>>));
+  }
+  const seen = new Set<string>();
+  const rows: ContractActionItem[] = [];
+  for (const row of merged) {
+    const key = String(row.key || '').trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const payload = (row.payload && typeof row.payload === 'object') ? (row.payload as Record<string, unknown>) : {};
+    const groupsXmlids = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
+    const enabledByGroup = hasGroupAccess(groupsXmlids);
+    const kind = String(row.kind || '').trim().toLowerCase() || 'unknown';
+    const level = String(row.level || 'unknown').trim().toLowerCase();
+    const modelName = String(row.model || model.value || '').trim();
+    const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
+    const methodName = String(payload.method || '').trim();
+    const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
+    const enabled = enabledByGroup && (!needRecord || Boolean(recordId.value));
+    const hint = enabledByGroup ? (needRecord && !recordId.value ? '需要已保存记录' : '') : '当前账号无权限';
+    rows.push({
+      key,
+      label: String(row.label || key).trim(),
+      kind,
+      level,
+      model: modelName,
+      actionId,
+      methodName,
+      enabled,
+      hint,
+      context: (payload.context_raw && typeof payload.context_raw === 'object') ? (payload.context_raw as Record<string, unknown>) : {},
+    });
+  }
+  return rows;
+});
+
+const contractActionGroups = computed(() => {
+  const map = new Map<string, ContractActionItem[]>();
+  for (const row of contractActionItems.value) {
+    const group = map.get(row.level) || [];
+    group.push(row);
+    map.set(row.level, group);
+  }
+  return Array.from(map.entries())
+    .map(([level, items]) => ({ level, items }))
+    .sort((a, b) => a.level.localeCompare(b.level));
+});
+
+function prettyJson(value: unknown) {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value ?? '');
+  }
+}
 
 function extractContractFieldOrder(contract: ActionContract | null) {
   const layout = contract?.views?.form?.layout;
@@ -1380,6 +1500,47 @@ async function applyContractFilter(filterKey: string) {
       preset_filter: filterKey,
     },
   });
+}
+
+async function runContractAction(item: ContractActionItem) {
+  if (!item.enabled) return;
+  if (item.kind === 'open' && item.actionId) {
+    await router.push({
+      name: 'action',
+      params: { actionId: String(item.actionId) },
+      query: {
+        menu_id: getQueryNumber('menu_id'),
+        action_id: item.actionId,
+      },
+    });
+    return;
+  }
+  if ((item.kind === 'object' || item.kind === 'server') && item.methodName && item.model && recordId.value) {
+    executing.value = item.key;
+    try {
+      const response = await executeButton({
+        model: item.model,
+        res_id: recordId.value,
+        button: { name: item.methodName, type: 'object' },
+        context: item.context,
+        meta: {
+          menu_id: getQueryNumber('menu_id'),
+          action_id: getQueryNumber('action_id'),
+          view_id: viewContract.value?.view_id,
+        },
+      });
+      actionFeedback.value = parseExecuteResult(response);
+      if (response?.result?.type === 'refresh') {
+        await load();
+      }
+      return;
+    } catch (err) {
+      setError(err, 'failed to run contract action');
+      actionFeedback.value = { message: '契约动作执行失败', reasonCode: 'CONTRACT_ACTION_FAILED', success: false };
+    } finally {
+      executing.value = null;
+    }
+  }
 }
 
 async function runButton(btn: ViewButton) {
@@ -2967,6 +3128,25 @@ function analyzeLayout(layout: ViewContract['layout']) {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.contract-action-group {
+  margin-bottom: 8px;
+}
+
+.contract-workflow-block details {
+  margin-top: 6px;
+}
+
+.contract-workflow-block pre {
+  margin: 6px 0 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f1f5f9;
+  font-size: 11px;
 }
 
 .field {

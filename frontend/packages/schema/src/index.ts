@@ -230,6 +230,7 @@ export interface LoadViewRequest {
 }
 
 export interface ActionContract {
+  meta?: Record<string, unknown>;
   head?: {
     title?: string;
     model?: string;
@@ -264,6 +265,8 @@ export interface ActionContract {
   };
   buttons?: Array<Record<string, unknown>>;
   permissions?: {
+    rules?: Record<string, { mode?: string; clauses?: Array<Record<string, unknown>> }>;
+    perms_by_group?: Record<string, { read?: boolean; write?: boolean; create?: boolean; unlink?: boolean }>;
     effective?: {
       rights?: {
         read?: boolean;
@@ -273,6 +276,8 @@ export interface ActionContract {
       };
     };
     field_groups?: Record<string, { groups_xmlids?: string[] }>;
+    order_default?: string;
+    domain_default?: unknown[];
   };
   search?: {
     filters?: Array<{
@@ -284,11 +289,15 @@ export interface ActionContract {
     }>;
   };
   workflow?: {
+    states?: Array<Record<string, unknown>>;
+    activities?: Array<Record<string, unknown>>;
     transitions?: Array<{
       trigger?: { label?: string; name?: string; kind?: string };
       notes?: string;
     }>;
   };
+  reports?: Array<Record<string, unknown>>;
+  validator?: Record<string, unknown>;
   warnings?: Array<string | Record<string, unknown>>;
   degraded?: boolean;
   missing_models?: string[];
