@@ -1,15 +1,9 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
+import { firstQueryValue } from '../app/routeQuery';
 
 function isTruthyHudValue(raw: unknown) {
   const value = String(raw || '').trim().toLowerCase();
   return value === '1' || value === 'true';
-}
-
-function firstQueryValue(raw: unknown) {
-  if (Array.isArray(raw)) {
-    return raw.length ? raw[0] : '';
-  }
-  return raw;
 }
 
 function extractHudFromRawSearch(rawSearch: string) {

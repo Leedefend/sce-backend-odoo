@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { ErrorCodes } from '../app/error_codes';
@@ -102,6 +102,7 @@ import { useSessionStore } from '../stores/session';
 import { isHudEnabled } from '../config/debug';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { hasWorkspaceContext as hasWorkspaceContextValue, readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
+import { normalizeEmbeddedSceneQuery, parseSceneKeyFromQuery } from '../app/routeQuery';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import type { NavNode } from '@sc/schema';
 
@@ -166,7 +167,7 @@ const router = useRouter();
 const reason = computed(() => String(route.query.reason || ''));
 const menuId = computed(() => Number(route.query.menu_id || 0) || undefined);
 const actionId = computed(() => Number(route.query.action_id || 0) || undefined);
-const sceneKey = computed(() => String(route.query.scene || route.query.scene_key || route.query.sceneKey || ''));
+const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as Record<string, unknown>));
 const session = useSessionStore();
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
@@ -245,6 +246,13 @@ const panelVariant = computed(() => {
 });
 
 const firstReachableMenuId = computed(() => findFirstReachableMenuId(session.menuTree));
+
+onMounted(() => {
+  const normalized = normalizeEmbeddedSceneQuery(route.query as Record<string, unknown>);
+  if (normalized.changed) {
+    router.replace({ path: route.path, query: normalized.query }).catch(() => {});
+  }
+});
 
 function refresh() {
   window.location.reload();
