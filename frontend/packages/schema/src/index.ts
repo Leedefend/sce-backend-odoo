@@ -230,8 +230,77 @@ export interface LoadViewRequest {
 }
 
 export interface ActionContract {
+  meta?: Record<string, unknown>;
+  head?: {
+    title?: string;
+    model?: string;
+    view_type?: string;
+    action_id?: number;
+    context?: Record<string, unknown> | null;
+    permissions?: {
+      read?: boolean;
+      write?: boolean;
+      create?: boolean;
+      unlink?: boolean;
+    };
+    res_id?: number | string;
+  };
   model?: string;
   view_type?: string;
+  fields?: Record<string, FieldDescriptor>;
+  views?: Record<
+    string,
+    {
+      model?: string;
+      view_type?: string;
+      layout?: Array<{ type?: string; name?: string }>;
+      fields?: string[];
+      order?: string;
+    }
+  >;
+  toolbar?: {
+    header?: Array<Record<string, unknown>>;
+    sidebar?: Array<Record<string, unknown>>;
+    footer?: Array<Record<string, unknown>>;
+  };
+  buttons?: Array<Record<string, unknown>>;
+  permissions?: {
+    rules?: Record<string, { mode?: string; clauses?: Array<Record<string, unknown>> }>;
+    perms_by_group?: Record<string, { read?: boolean; write?: boolean; create?: boolean; unlink?: boolean }>;
+    effective?: {
+      rights?: {
+        read?: boolean;
+        write?: boolean;
+        create?: boolean;
+        unlink?: boolean;
+      };
+    };
+    field_groups?: Record<string, { groups_xmlids?: string[] }>;
+    order_default?: string;
+    domain_default?: unknown[];
+  };
+  search?: {
+    filters?: Array<{
+      key?: string;
+      label?: string;
+      domain?: unknown[];
+      domain_raw?: string | null;
+      context_raw?: string | null;
+    }>;
+  };
+  workflow?: {
+    states?: Array<Record<string, unknown>>;
+    activities?: Array<Record<string, unknown>>;
+    transitions?: Array<{
+      trigger?: { label?: string; name?: string; kind?: string };
+      notes?: string;
+    }>;
+  };
+  reports?: Array<Record<string, unknown>>;
+  validator?: Record<string, unknown>;
+  warnings?: Array<string | Record<string, unknown>>;
+  degraded?: boolean;
+  missing_models?: string[];
   ui_contract_raw?: {
     fields?: Record<string, FieldDescriptor>;
   };
