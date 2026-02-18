@@ -122,6 +122,7 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { isHudEnabled } from '../config/debug';
+import { parseSceneKeyFromQuery } from '../app/routeQuery';
 import type { NavNode } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
@@ -192,8 +193,12 @@ const initError = computed(() => session.initError);
 const initTraceId = computed(() => session.initTraceId);
 const showSceneErrors = computed(() => import.meta.env.DEV && sceneRegistryErrors.length > 0);
 const sceneRegistryErrors = getSceneRegistryDiagnostics().errors;
+const routeSceneKey = computed(() => {
+  const metaSceneKey = route.meta?.sceneKey as string | undefined;
+  return metaSceneKey || parseSceneKeyFromQuery(route.query as Record<string, unknown>);
+});
 const activeLayout = computed(() => {
-  const sceneKey = route.meta?.sceneKey as string | undefined;
+  const sceneKey = routeSceneKey.value;
   const scene = sceneKey ? getSceneByKey(sceneKey) : null;
   return resolveSceneLayout(scene);
 });
@@ -239,7 +244,7 @@ function resolveActionBusinessTitle(action: unknown) {
 }
 
 const pageTitle = computed(() => {
-  const sceneKey = route.meta?.sceneKey as string | undefined;
+  const sceneKey = routeSceneKey.value;
   if (sceneKey) {
     const scene = getSceneByKey(sceneKey);
     if (scene?.label) {
@@ -286,7 +291,7 @@ const latestSuggestedActionTs = computed(() => {
   }
 });
 const hudEntries = computed(() => [
-  { label: 'scene_key', value: (route.meta?.sceneKey as string | undefined) || '-' },
+  { label: 'scene_key', value: routeSceneKey.value || '-' },
   { label: 'menu_id', value: activeMenuId.value || '-' },
   { label: 'menu_label', value: menuLabel.value || '-' },
   { label: 'route', value: route.fullPath },
