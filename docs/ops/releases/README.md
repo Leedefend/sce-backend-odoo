@@ -130,3 +130,5 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - artifact: `/mnt/artifacts/backend/backend_architecture_full_report.json` (fallback: `artifacts/backend/backend_architecture_full_report.json`)
   - `make verify.backend.evidence.manifest.guard`
     - artifact: `/mnt/artifacts/backend/backend_evidence_manifest.json` (fallback: `artifacts/backend/backend_evidence_manifest.json`)
+  - `make verify.contract.evidence.guard`
+    - contract evidence now includes `load_view_access_contract` section (allowed model + forbidden status/code) for release audit
