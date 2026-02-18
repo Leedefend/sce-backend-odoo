@@ -3,7 +3,9 @@ import { validateSceneRegistry } from './sceneRegistryCore';
 
 export interface SceneTarget {
   menu_id?: number;
+  menu_xmlid?: string;
   action_id?: number;
+  action_xmlid?: string;
   model?: string;
   view_mode?: string;
   record_id?: number | string;
