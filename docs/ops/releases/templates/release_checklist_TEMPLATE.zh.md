@@ -17,6 +17,7 @@
   - `make verify.backend.architecture.full.report.guard`
   - `make verify.backend.evidence.manifest.guard`
   - 必须产物：
+    - `/mnt/artifacts/backend/load_view_access_contract_guard.json`（不可写时回落 `artifacts/backend/...`；finance 夹具应对 `ir.ui.view` 返回 403）
     - `artifacts/scene_catalog_runtime_alignment_guard.json`（`summary.probe_source` 应为 `prod_like_baseline` 或显式环境变量覆盖）
     - `/mnt/artifacts/backend/role_capability_floor_prod_like.json`（不可写时回落 `artifacts/backend/...`）
     - `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json`（不可写时回落 `artifacts/backend/...`）
