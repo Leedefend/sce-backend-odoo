@@ -29,6 +29,7 @@ def build_evidence(
     role_capability_prod_like_report: dict,
     contract_assembler_semantic_report: dict,
     runtime_surface_dashboard_report: dict,
+    load_view_access_contract_report: dict,
     backend_architecture_full_report: dict,
     backend_evidence_manifest_report: dict,
 ) -> dict:
@@ -133,6 +134,15 @@ def build_evidence(
             ),
             "report": "artifacts/backend/runtime_surface_dashboard_report.json",
         },
+        "load_view_access_contract": {
+            "ok": bool(load_view_access_contract_report.get("ok", False)),
+            "fixture_login": str((((load_view_access_contract_report.get("summary") or {}).get("fixture_login")) or "")).strip(),
+            "allowed_model": str((((load_view_access_contract_report.get("summary") or {}).get("allowed_model")) or "")).strip(),
+            "forbidden_model": str((((load_view_access_contract_report.get("summary") or {}).get("forbidden_model")) or "")).strip(),
+            "forbidden_status": int((((load_view_access_contract_report.get("summary") or {}).get("forbidden_status")) or 0)),
+            "forbidden_error_code": str((((load_view_access_contract_report.get("summary") or {}).get("forbidden_error_code")) or "")).strip(),
+            "report": "artifacts/backend/load_view_access_contract_guard.json",
+        },
         "backend_architecture_full": {
             "ok": bool(backend_architecture_full_report.get("ok", False)),
             "check_count": int((((backend_architecture_full_report.get("summary") or {}).get("check_count")) or 0)),
@@ -167,6 +177,7 @@ def to_markdown(evidence: dict) -> str:
     p = evidence["role_capability_prod_like"]
     c = evidence["contract_assembler_semantic"]
     r = evidence["runtime_surface_dashboard"]
+    lv = evidence["load_view_access_contract"]
     a2 = evidence["backend_architecture_full"]
     m2 = evidence["backend_evidence_manifest"]
     lines = [
@@ -231,6 +242,15 @@ def to_markdown(evidence: dict) -> str:
         f"- catalog_runtime_ratio: {r['catalog_runtime_ratio']}",
         f"- report: `{r['report']}`",
         "",
+        "## Load View Access Contract",
+        f"- ok: {lv['ok']}",
+        f"- fixture_login: {lv['fixture_login'] or '-'}",
+        f"- allowed_model: {lv['allowed_model'] or '-'}",
+        f"- forbidden_model: {lv['forbidden_model'] or '-'}",
+        f"- forbidden_status: {lv['forbidden_status']}",
+        f"- forbidden_error_code: {lv['forbidden_error_code'] or '-'}",
+        f"- report: `{lv['report']}`",
+        "",
         "## Backend Architecture Full",
         f"- ok: {a2['ok']}",
         f"- check_count: {a2['check_count']}",
@@ -268,6 +288,7 @@ def main() -> int:
     parser.add_argument("--role-capability-prod-like-report", default="artifacts/backend/role_capability_floor_prod_like.json")
     parser.add_argument("--contract-assembler-semantic-report", default="artifacts/backend/contract_assembler_semantic_smoke.json")
     parser.add_argument("--runtime-surface-dashboard-report", default="artifacts/backend/runtime_surface_dashboard_report.json")
+    parser.add_argument("--load-view-access-contract-report", default="artifacts/backend/load_view_access_contract_guard.json")
     parser.add_argument("--backend-architecture-full-report", default="artifacts/backend/backend_architecture_full_report.json")
     parser.add_argument("--backend-evidence-manifest-report", default="artifacts/backend/backend_evidence_manifest.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
@@ -283,6 +304,7 @@ def main() -> int:
     role_capability_prod_like_report = load_json_optional(Path(args.role_capability_prod_like_report), {})
     contract_assembler_semantic_report = load_json_optional(Path(args.contract_assembler_semantic_report), {})
     runtime_surface_dashboard_report = load_json_optional(Path(args.runtime_surface_dashboard_report), {})
+    load_view_access_contract_report = load_json_optional(Path(args.load_view_access_contract_report), {})
     backend_architecture_full_report = load_json_optional(Path(args.backend_architecture_full_report), {})
     backend_evidence_manifest_report = load_json_optional(Path(args.backend_evidence_manifest_report), {})
 
@@ -304,6 +326,8 @@ def main() -> int:
         raise SystemExit("contract assembler semantic report must be object")
     if not isinstance(runtime_surface_dashboard_report, dict):
         raise SystemExit("runtime surface dashboard report must be object")
+    if not isinstance(load_view_access_contract_report, dict):
+        raise SystemExit("load view access contract report must be object")
     if not isinstance(backend_architecture_full_report, dict):
         raise SystemExit("backend architecture full report must be object")
     if not isinstance(backend_evidence_manifest_report, dict):
@@ -319,6 +343,7 @@ def main() -> int:
         role_capability_prod_like_report,
         contract_assembler_semantic_report,
         runtime_surface_dashboard_report,
+        load_view_access_contract_report,
         backend_architecture_full_report,
         backend_evidence_manifest_report,
     )
