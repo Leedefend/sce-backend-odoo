@@ -106,7 +106,7 @@ function coerceSceneSource(source: Scene[]) {
             raw.target.route
           )
             ? raw.target
-            : { route: `/workbench?scene=${raw.code}` };
+            : { route: `/s/${raw.code}` };
         return {
           key: raw.code,
           label: raw.name || raw.code,
