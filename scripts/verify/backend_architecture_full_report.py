@@ -89,6 +89,9 @@ def main() -> int:
     business_baseline = _load_json(local_artifacts / "business_capability_baseline_report.json")
     coverage = _load_json(local_artifacts / "contract_governance_coverage.json")
     boundary_report = _load_json(local_artifacts / "controller_boundary_guard_report.json")
+    boundary_import_report = _load_json(backend_dir / "boundary_import_guard_report.json") or _load_json(
+        local_artifacts / "backend" / "boundary_import_guard_report.json"
+    )
     catalog_alignment = _load_json(local_artifacts / "scene_catalog_runtime_alignment_guard.json")
     load_view_access = _load_json(backend_dir / "load_view_access_contract_guard.json") or _load_json(
         local_artifacts / "backend" / "load_view_access_contract_guard.json"
@@ -137,6 +140,15 @@ def main() -> int:
             "ok": bool(coverage.get("ok") is True),
             "coverage_ratio": _parse_ratio(coverage.get("coverage_ratio")),
             "source": "artifacts/contract_governance_coverage.json",
+        }
+    )
+    checks.append(
+        {
+            "name": "boundary_import_report",
+            "ok": bool(boundary_import_report.get("ok", True)),
+            "violation_count": _safe_int((boundary_import_report.get("summary") or {}).get("violation_count"), 0),
+            "warning_count": _safe_int((boundary_import_report.get("summary") or {}).get("warning_count"), 0),
+            "source": "artifacts/backend/boundary_import_guard_report.json",
         }
     )
     checks.append(
