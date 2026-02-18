@@ -4,6 +4,7 @@
       <div>
         <h1>{{ title }}</h1>
         <p class="meta">Model: {{ model }} · ID: {{ recordIdDisplay }}</p>
+        <p v-if="contractMetaLine" class="meta">{{ contractMetaLine }}</p>
         <p v-if="actionFeedback" class="action-feedback" :class="{ error: !actionFeedback.success }">
           {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
         </p>
@@ -29,6 +30,16 @@
           {{ buttonLabel(btn) }}
         </button>
         <button
+          v-for="action in contractHeaderActions"
+          :key="`contract-open-${action.key}`"
+          class="action secondary"
+          :disabled="saving || loading || !action.actionId"
+          :title="action.description"
+          @click="openContractAction(action)"
+        >
+          {{ action.label }}
+        </button>
+        <button
           v-for="action in displayedSemanticActionButtons"
           :key="`semantic-${action.key}`"
           :disabled="!recordId || saving || loading || actionBusy || !action.allowed"
@@ -42,7 +53,7 @@
         <button :disabled="!lastSemanticAction || actionBusy || loading" class="action secondary" @click="rerunLastSemanticAction">
           {{ retryLastActionLabel }}
         </button>
-        <button :disabled="saving" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
+        <button :disabled="saving || !canSaveByContract" @click="save">{{ saving ? 'Saving...' : 'Save' }}</button>
         <button @click="reload">Reload</button>
       </div>
     </header>
@@ -363,6 +374,7 @@ import {
   fetchPaymentRequestAvailableActions,
   type PaymentRequestActionSurfaceItem,
 } from '../api/paymentRequest';
+import { loadActionContractRaw } from '../api/contract';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -436,7 +448,20 @@ const actionSearchStoragePrefix = 'sc.payment.action_search.v1';
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => (route.params.id === 'new' ? null : Number(route.params.id)));
 const recordIdDisplay = computed(() => (recordId.value ? recordId.value : 'new'));
-const title = computed(() => `Form: ${model.value}`);
+const actionIdFromQuery = computed(() => {
+  const raw = route.query.action_id;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+});
+const actionContract = ref<Record<string, unknown> | null>(null);
+const actionContractMeta = ref<Record<string, unknown> | null>(null);
+const title = computed(() => {
+  const head = actionContract.value?.head as Record<string, unknown> | undefined;
+  const headTitle = String(head?.title || '').trim();
+  if (headTitle) return headTitle;
+  return `Form: ${model.value}`;
+});
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'failed to load record'));
 const actionHistoryStorageKey = computed(() => `${actionHistoryStoragePrefix}:${model.value}:${recordIdDisplay.value}`);
 const historyReasonFilterStorageKey = computed(
@@ -489,6 +514,93 @@ const headerButtons = computed(() => {
     (viewContract.value as { layout?: { header_buttons?: ViewButton[] } } | null)?.layout?.header_buttons ??
     [];
   return normalizeButtons(raw);
+});
+
+type ContractOpenAction = {
+  key: string;
+  label: string;
+  actionId: number | null;
+  description: string;
+};
+
+const contractRights = computed(() => {
+  const root = actionContract.value as Record<string, unknown> | null;
+  const head = (root?.head as Record<string, unknown> | undefined)?.permissions;
+  const effectiveRights = (((root?.permissions as Record<string, unknown> | undefined)?.effective as Record<string, unknown> | undefined)?.rights as Record<string, unknown> | undefined);
+  const resolve = (key: string) => {
+    const fromHead = head && typeof head === 'object' ? head[key] : undefined;
+    if (typeof fromHead === 'boolean') return fromHead;
+    const fromEffective = effectiveRights?.[key];
+    if (typeof fromEffective === 'boolean') return fromEffective;
+    return true;
+  };
+  return {
+    read: resolve('read'),
+    write: resolve('write'),
+    create: resolve('create'),
+    unlink: resolve('unlink'),
+  };
+});
+
+const canSaveByContract = computed(() => {
+  if (recordId.value) return contractRights.value.write;
+  return contractRights.value.create;
+});
+
+function toActionId(raw: unknown): number | null {
+  const parsed = Number(raw || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+const contractHeaderActions = computed<ContractOpenAction[]>(() => {
+  const root = actionContract.value as Record<string, unknown> | null;
+  const toolbar = (root?.toolbar as Record<string, unknown> | undefined)?.header;
+  const buttons = root?.buttons;
+  const merged: unknown[] = [];
+  if (Array.isArray(toolbar)) merged.push(...toolbar);
+  if (Array.isArray(buttons)) merged.push(...buttons);
+
+  const seen = new Set<string>();
+  const result: ContractOpenAction[] = [];
+  for (const item of merged) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    if (String(row.kind || '').toLowerCase() !== 'open') continue;
+    const level = String(row.level || '').toLowerCase();
+    if (level && level !== 'header' && level !== 'toolbar') continue;
+    const payload = row.payload as Record<string, unknown> | undefined;
+    const actionId = toActionId(payload?.action_id) ?? toActionId(payload?.ref);
+    const key = String(row.key || `open_${actionId || 'na'}_${result.length}`).trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push({
+      key,
+      label: String(row.label || key),
+      actionId,
+      description: String((payload && payload.xml_id) || ''),
+    });
+  }
+  return result.slice(0, 8);
+});
+
+const contractMetaLine = computed(() => {
+  const root = actionContract.value as Record<string, unknown> | null;
+  if (!root) return '';
+  const head = root.head as Record<string, unknown> | undefined;
+  const search = root.search as Record<string, unknown> | undefined;
+  const workflow = root.workflow as Record<string, unknown> | undefined;
+  const viewType = String(head?.view_type || root.view_type || '').trim() || '-';
+  const filters = Array.isArray(search?.filters) ? search.filters.length : 0;
+  const transitions = Array.isArray(workflow?.transitions) ? workflow.transitions.length : 0;
+  const contractMode = String(actionContractMeta.value?.contract_mode || '').trim();
+  const parts = [
+    `contract.view_type=${viewType}`,
+    `filters=${filters}`,
+    `transitions=${transitions}`,
+    `rights=${contractRights.value.read ? 'R' : '-'}${contractRights.value.write ? 'W' : '-'}${contractRights.value.create ? 'C' : '-'}${contractRights.value.unlink ? 'D' : '-'}`,
+  ];
+  if (contractMode) parts.push(`mode=${contractMode}`);
+  return parts.join(' · ');
 });
 type SemanticActionButton = {
   key: string;
@@ -932,9 +1044,15 @@ const userGroups = computed(() => session.user?.groups_xmlids ?? []);
 const hudEntries = computed(() => [
   { label: 'model', value: model.value },
   { label: 'record_id', value: recordIdDisplay.value },
+  { label: 'action_id', value: actionIdFromQuery.value || '-' },
   { label: 'render_mode', value: renderMode.value },
   { label: 'layout_present', value: Boolean(viewContract.value?.layout) },
   { label: 'layout_nodes', value: JSON.stringify(layoutStats.value) },
+  { label: 'contract_loaded', value: Boolean(actionContract.value) },
+  { label: 'contract_mode', value: String(actionContractMeta.value?.contract_mode || '-') },
+  { label: 'contract_buttons', value: Array.isArray((actionContract.value as Record<string, unknown> | null)?.buttons) ? ((actionContract.value as Record<string, unknown>).buttons as unknown[]).length : 0 },
+  { label: 'contract_toolbar_header', value: Array.isArray(((actionContract.value as Record<string, unknown> | null)?.toolbar as Record<string, unknown> | undefined)?.header) ? ((((actionContract.value as Record<string, unknown> | null)?.toolbar as Record<string, unknown>).header as unknown[]).length) : 0 },
+  { label: 'contract_rights', value: `${contractRights.value.read ? 'R' : '-'}${contractRights.value.write ? 'W' : '-'}${contractRights.value.create ? 'C' : '-'}${contractRights.value.unlink ? 'D' : '-'}` },
   { label: 'unsupported_nodes', value: missingNodes.value.join(',') || '-' },
   { label: 'coverage_supported', value: supportedNodes.join(',') },
   { label: 'semantic_actions', value: semanticActionButtons.value.map((item) => `${item.key}:${item.allowed}`).join(',') || '-' },
@@ -966,6 +1084,8 @@ async function load() {
   clearError();
   loading.value = true;
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
+  actionContract.value = null;
+  actionContractMeta.value = null;
 
   if (!model.value) {
     setError(new Error('Missing model'), 'Missing model');
@@ -974,6 +1094,13 @@ async function load() {
   }
 
   try {
+    if (actionIdFromQuery.value) {
+      const actionContractRes = await loadActionContractRaw(actionIdFromQuery.value);
+      if (actionContractRes?.data && typeof actionContractRes.data === 'object') {
+        actionContract.value = actionContractRes.data as Record<string, unknown>;
+      }
+      actionContractMeta.value = actionContractRes?.meta || null;
+    }
     const view = await resolveView(model.value, 'form');
     viewContract.value = view;
     if (view.layout) {
@@ -989,12 +1116,18 @@ async function load() {
       : { records: [{}] };
 
     const record = read.records?.[0] ?? {};
-    fields.value = (fieldNames.length ? fieldNames : Object.keys(record)).map((name) => ({
-      name,
-      label: view.fields?.[name]?.string ?? name,
-      descriptor: view.fields?.[name],
-      readonly: view.fields?.[name]?.readonly,
-    }));
+    const contractFields = (actionContract.value?.fields as Record<string, ViewContract['fields'][string]> | undefined) || {};
+    fields.value = (fieldNames.length ? fieldNames : Object.keys(record)).map((name) => {
+      const fromView = view.fields?.[name];
+      const fromContract = contractFields[name];
+      const descriptor = fromView || fromContract;
+      return {
+        name,
+        label: descriptor?.string ?? name,
+        descriptor,
+        readonly: descriptor?.readonly,
+      };
+    });
 
     fields.value.forEach((field) => {
       formData[field.name] = record[field.name] ?? '';
@@ -1120,6 +1253,18 @@ function getQueryNumber(key: string) {
     return Number.isNaN(n) ? undefined : n;
   }
   return undefined;
+}
+
+async function openContractAction(action: ContractOpenAction) {
+  if (!action.actionId) return;
+  await router.push({
+    name: 'action',
+    params: { actionId: String(action.actionId) },
+    query: {
+      menu_id: getQueryNumber('menu_id'),
+      action_id: action.actionId,
+    },
+  });
 }
 
 async function runButton(btn: ViewButton) {

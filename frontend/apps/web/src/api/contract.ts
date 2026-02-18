@@ -1,8 +1,15 @@
-import { intentRequest } from './intents';
+import { intentRequest, intentRequestRaw } from './intents';
 import type { ActionContract } from '@sc/schema';
 
 export async function loadActionContract(actionId: number) {
   return intentRequest<ActionContract>({
+    intent: 'ui.contract',
+    params: { op: 'action_open', action_id: actionId },
+  });
+}
+
+export async function loadActionContractRaw(actionId: number) {
+  return intentRequestRaw<ActionContract & Record<string, unknown>>({
     intent: 'ui.contract',
     params: { op: 'action_open', action_id: actionId },
   });
