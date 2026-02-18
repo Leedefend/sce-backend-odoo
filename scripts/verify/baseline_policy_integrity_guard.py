@@ -13,6 +13,7 @@ POLICY_FILES = [
     "scripts/verify/baselines/intent_router_purity_guard.json",
     "scripts/verify/baselines/scene_provider_guard.json",
     "scripts/verify/baselines/capability_provider_guard.json",
+    "scripts/verify/baselines/boundary_import_guard.json",
     "scripts/verify/baselines/backend_boundary_guard.json",
     "scripts/verify/baselines/role_capability_floor_prod_like.json",
     "scripts/verify/baselines/contract_assembler_semantic_smoke.json",
