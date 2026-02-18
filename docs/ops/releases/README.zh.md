@@ -21,6 +21,9 @@ status: active
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - 后端证据与可观测扩展（Phase Next）：
+  - `make verify.load_view.access.contract.guard`
+    - 产物：`/mnt/artifacts/backend/load_view_access_contract_guard.json`（不可写时回落 `artifacts/backend/load_view_access_contract_guard.json`）
+    - 发布检查：finance 夹具应至少有一个业务模型可读取，同时对 `ir.ui.view` 返回 `403/PERMISSION_DENIED`
   - `make verify.scene.catalog.governance.guard`
     - 产物：`artifacts/scene_catalog_runtime_alignment_guard.json`
     - 发布检查：`summary.probe_source` 应为 `prod_like_baseline`（或显式环境变量覆盖），不应依赖 demo-only 回退

@@ -17,6 +17,7 @@
   - `make verify.backend.architecture.full.report.guard`
   - `make verify.backend.evidence.manifest.guard`
   - required artifacts:
+    - `/mnt/artifacts/backend/load_view_access_contract_guard.json` (fallback `artifacts/backend/...`; finance fixture should reject `ir.ui.view` with 403)
     - `artifacts/scene_catalog_runtime_alignment_guard.json` (`summary.probe_source` should be `prod_like_baseline` or explicit env override)
     - `/mnt/artifacts/backend/role_capability_floor_prod_like.json` (fallback `artifacts/backend/...`)
     - `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback `artifacts/backend/...`)
