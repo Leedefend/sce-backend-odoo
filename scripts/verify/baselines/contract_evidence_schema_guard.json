@@ -1,0 +1,64 @@
+{
+  "required_sections": [
+    "intent_catalog",
+    "scene_catalog",
+    "shape_guard",
+    "intent_surface",
+    "scene_runtime_alignment",
+    "business_capability_baseline",
+    "role_capability_prod_like",
+    "contract_assembler_semantic",
+    "runtime_surface_dashboard",
+    "backend_architecture_full",
+    "backend_evidence_manifest"
+  ],
+  "required_section_keys": {
+    "intent_catalog": [
+      "intent_count",
+      "with_aliases",
+      "with_idempotency_window",
+      "with_examples",
+      "with_inferred_examples",
+      "top_observed_reason_codes"
+    ],
+    "scene_catalog": [
+      "scene_count",
+      "catalog_scope",
+      "layout_kind_counts",
+      "target_type_counts",
+      "renderability",
+      "schema_version",
+      "scene_version"
+    ],
+    "scene_runtime_alignment": [
+      "ok",
+      "catalog_scene_count",
+      "runtime_scene_count",
+      "catalog_runtime_ratio",
+      "report"
+    ],
+    "business_capability_baseline": [
+      "ok",
+      "check_count",
+      "failed_check_count",
+      "required_intent_count",
+      "required_role_count",
+      "catalog_runtime_ratio",
+      "report"
+    ],
+    "backend_architecture_full": [
+      "ok",
+      "check_count",
+      "failed_check_count",
+      "warning_check_count",
+      "report"
+    ],
+    "backend_evidence_manifest": [
+      "ok",
+      "artifact_count",
+      "missing_count",
+      "total_size_bytes",
+      "report"
+    ]
+  }
+}
