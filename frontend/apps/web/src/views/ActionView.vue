@@ -162,6 +162,11 @@ type ContractViewBlock = {
   order?: string;
 };
 type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
+  head?: {
+    view_type?: string;
+    context?: unknown;
+    res_id?: number | string;
+  };
   views?: {
     tree?: ContractViewBlock;
     list?: ContractViewBlock;
@@ -198,6 +203,7 @@ const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
+const contractViewType = ref('');
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
   { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
@@ -239,6 +245,7 @@ const hudEntries = computed(() => [
   { label: 'scene_key', value: sceneKey.value || '-' },
   { label: 'model', value: model.value || '-' },
   { label: 'view_mode', value: viewMode.value || '-' },
+  { label: 'contract_view_type', value: contractViewType.value || '-' },
   { label: 'order', value: sortLabel.value || '-' },
   { label: 'last_intent', value: lastIntent.value || '-' },
   { label: 'write_mode', value: lastWriteMode.value || '-' },
@@ -249,6 +256,46 @@ const hudEntries = computed(() => [
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
+}
+
+function resolveActionViewType(meta: unknown, contract: unknown) {
+  const typedContract = contract as ActionContractLoose;
+  const fromHead = String(typedContract.head?.view_type || '').trim();
+  if (fromHead) return fromHead;
+  const fromContract = String(typedContract.view_type || '').trim();
+  if (fromContract) return fromContract;
+  const metaModes = (meta as { view_modes?: unknown })?.view_modes;
+  if (Array.isArray(metaModes) && metaModes.length) {
+    const first = String(metaModes[0] || '').trim();
+    if (first) return first;
+  }
+  return '';
+}
+
+function parseNumericId(raw: unknown): number | null {
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return raw;
+  if (typeof raw === 'string' && raw.trim()) {
+    const parsed = Number(raw.trim());
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return null;
+}
+
+function extractActionResId(contract: unknown, routeQuery: Record<string, unknown>): number | null {
+  const typed = contract as ActionContractLoose;
+  const routeResId = parseNumericId(routeQuery.res_id);
+  if (routeResId) return routeResId;
+  const headResId = parseNumericId(typed.head?.res_id);
+  if (headResId) return headResId;
+  const headContext = typed.head?.context;
+  if (headContext && typeof headContext === 'object' && !Array.isArray(headContext)) {
+    const ctx = headContext as Record<string, unknown>;
+    const activeId = parseNumericId(ctx.active_id);
+    if (activeId) return activeId;
+    const defaultResId = parseNumericId(ctx.default_res_id);
+    if (defaultResId) return defaultResId;
+  }
+  return null;
 }
 
 function applyRoutePreset() {
@@ -698,6 +745,7 @@ async function load() {
   lastIntent.value = 'api.data.list';
   lastWriteMode.value = 'read';
   lastLatencyMs.value = null;
+  contractViewType.value = '';
   records.value = [];
   columns.value = [];
   kanbanFields.value = [];
@@ -714,6 +762,7 @@ async function load() {
     if (meta) {
       session.setActionMeta(meta);
     }
+    contractViewType.value = resolveActionViewType(meta, contract);
     if (isUrlAction(meta, contract)) {
       await redirectUrlAction(meta, contract);
       return;
@@ -782,6 +831,19 @@ async function load() {
       }
       setError(new Error('Action has no model'), 'Action has no model');
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
+      return;
+    }
+    if (contractViewType.value === 'form') {
+      const actionResId = extractActionResId(contract, route.query as Record<string, unknown>);
+      await router.replace({
+        name: 'model-form',
+        params: { model: resolvedModel, id: actionResId ? String(actionResId) : 'new' },
+        query: {
+          menu_id: menuId.value || undefined,
+          action_id: actionId.value || undefined,
+          ...resolveWorkspaceContextQuery(),
+        },
+      });
       return;
     }
     const contractColumns = extractColumnsFromContract(contract);
