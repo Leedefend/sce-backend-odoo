@@ -20,6 +20,22 @@ status: active
 ## 当前评审基线
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
+- 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
+  - `make verify.frontend.contract_route.guard`
+  - `make verify.frontend.contract_runtime.guard`
+  - `make verify.frontend.contract_normalized_fields.guard`
+  - `make verify.frontend.contract_query_context.guard`
+  - `make verify.frontend.contract_record_layout.guard`
+  - `make verify.frontend.typecheck.strict`
+  - `make verify.frontend.build`
+  - 发布检查：
+    - `/a/:actionId`、`/r/:model/:id`、`/f/:model/:id` 必须由 `ui.contract`（`head/views/fields/buttons/toolbar/permissions/workflow/search`）驱动渲染，不以 `load_view` 作为主来源
+    - 记录页运行时不得回退到 `load_view`，必须先解析 action 上下文并仅消费 `ui.contract` 的 form 载荷
+    - 功能与交互变化应通过契约内容调整实现，不再新增按场景硬编码前端分支
+    - 列表/看板需消费契约字段标签、契约筛选与契约动作（toolbar/buttons）作为运行时行为来源
+    - 表单保存需按契约字段类型归一化 payload，并仅提交可写且发生变化的字段
+    - 记录表单运行时需将 `views.form.layout` 节点数组归一化为渲染布局，并确保与契约 `fields` 字段覆盖一致（不得因 layout 不完整静默丢字段）
+    - 遗留模型页面（`ModelFormPage`/`ModelListPage`）仅允许作为兼容壳，必须委派到契约驱动运行时
 - 后端证据与可观测扩展（Phase Next）：
   - `make verify.load_view.access.contract.guard`
     - 产物：`/mnt/artifacts/backend/load_view_access_contract_guard.json`（不可写时回落 `artifacts/backend/load_view_access_contract_guard.json`）

@@ -24,6 +24,7 @@ import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import StatusPanel from '../components/StatusPanel.vue';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
+import { pickContractNavQuery } from '../app/navigationContext';
 
 const route = useRoute();
 const router = useRouter();
@@ -31,6 +32,10 @@ const session = useSessionStore();
 const error = ref('');
 const info = ref('');
 const loading = ref(true);
+
+function resolveCarryQuery(extra?: Record<string, unknown>) {
+  return pickContractNavQuery(route.query as Record<string, unknown>, extra);
+}
 
 async function resolve() {
   loading.value = true;
@@ -57,7 +62,11 @@ async function resolve() {
         return;
       }
       session.setActionMeta(result.meta);
-      await router.replace(`/a/${result.meta.action_id}?menu_id=${menuId}`);
+      await router.replace({
+        name: 'action',
+        params: { actionId: result.meta.action_id },
+        query: resolveCarryQuery({ menu_id: menuId, action_id: result.meta.action_id }),
+      });
       return;
     }
     if (result.kind === 'redirect') {
@@ -78,13 +87,17 @@ async function resolve() {
         if (result.target.meta) {
           session.setActionMeta(result.target.meta);
         }
-        await router.replace(`/a/${result.target.action_id}?menu_id=${result.target.menu_id}`);
+        await router.replace({
+          name: 'action',
+          params: { actionId: result.target.action_id },
+          query: resolveCarryQuery({ menu_id: result.target.menu_id, action_id: result.target.action_id }),
+        });
         return;
       }
       if (result.target.scene_key) {
         await router.replace({
           path: `/s/${result.target.scene_key}`,
-          query: { menu_id: result.target.menu_id },
+          query: resolveCarryQuery({ menu_id: result.target.menu_id }),
         });
         return;
       }

@@ -83,23 +83,36 @@
         v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
-        :record="recordData"
+        :record="renderRecord"
         :parent-id="recordId"
         :editing="status === 'editing'"
         :draft-name="draftName"
-        :edit-mode="status === 'editing' ? 'name' : 'none'"
+        :edit-mode="status === 'editing' ? 'all' : 'none'"
         @update:field="handleFieldUpdate"
       />
       <div v-else>
         <div v-for="field in fields" :key="field.name" class="field">
           <span class="label">{{ field.label }}</span>
           <span class="value">
-            <input
-              v-if="status === 'editing' && field.name === 'name'"
-              v-model="draftName"
-              class="input"
-              type="text"
-            />
+            <template v-if="status === 'editing' && canEditField(field.name)">
+              <select
+                v-if="isSelectionField(field.name)"
+                :value="String(resolveDraftValue(field.name))"
+                class="input"
+                @change="updateDraftField(field.name, ($event.target as HTMLSelectElement).value)"
+              >
+                <option v-for="opt in selectionOptions(field.name)" :key="opt[0]" :value="opt[0]">
+                  {{ opt[1] }}
+                </option>
+              </select>
+              <input
+                v-else
+                :value="String(resolveDraftValue(field.name) ?? '')"
+                class="input"
+                :type="fieldInputType(field.name)"
+                @input="updateDraftField(field.name, ($event.target as HTMLInputElement).value)"
+              />
+            </template>
             <FieldValue v-else :value="field.value" :field="field.descriptor" />
           </span>
         </div>
@@ -156,7 +169,8 @@ import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { fetchChatterTimeline, postChatterMessage, type ChatterTimelineEntry } from '../api/chatter';
 import { downloadFile, fileToBase64, uploadFile } from '../api/files';
-import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
+import { loadActionContractRaw } from '../api/contract';
+import { buildRecordRuntimeFromContract } from '../app/contractRecordRuntime';
 import { deriveRecordStatus } from '../app/view_state';
 import type { ViewButton, ViewContract } from '@sc/schema';
 import FieldValue from '../components/FieldValue.vue';
@@ -170,11 +184,15 @@ import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
+import { pickContractNavQuery } from '../app/navigationContext';
+import { resolveActionIdFromContext } from '../app/actionContext';
 
 const route = useRoute();
 const router = useRouter();
 const traceId = ref('');
 const lastTraceId = ref('');
+const contractMode = ref('');
+const contractWriteAllowed = ref(true);
 const { error, clearError, setError } = useStatus();
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error' | 'editing' | 'saving'>('idle');
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
@@ -188,6 +206,7 @@ const chatterUploading = ref(false);
 const chatterUploadError = ref('');
 const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
 const draftName = ref('');
+const draftValues = ref<Record<string, unknown>>({});
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
@@ -207,8 +226,30 @@ const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
 const recordTitle = ref<string | null>(null);
 const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
-const subtitle = computed(() => (status.value === 'editing' ? 'Editing name' : 'Record details'));
-const canEdit = computed(() => model.value === 'project.project');
+const subtitle = computed(() => (status.value === 'editing' ? 'Editing contract fields' : 'Record details'));
+const canEdit = computed(() => contractWriteAllowed.value);
+const actionContext = computed(() => {
+  const fromQuery = Number(route.query.action_id || 0);
+  if (Number.isFinite(fromQuery) && fromQuery > 0) return { id: fromQuery, source: 'query' as const };
+  const fromCurrent = Number(session.currentAction?.action_id || 0);
+  if (Number.isFinite(fromCurrent) && fromCurrent > 0) {
+    const currentModel = String(session.currentAction?.model || '').trim();
+    if (!currentModel || currentModel === model.value) {
+      return { id: fromCurrent, source: 'current_action' as const };
+    }
+  }
+  const resolved = resolveActionIdFromContext({
+    routeQuery: route.query as Record<string, unknown>,
+    currentActionId: session.currentAction?.action_id,
+    currentActionModel: session.currentAction?.model,
+    menuTree: session.menuTree,
+    model: model.value,
+    preferredMode: 'form',
+  });
+  if (resolved) return { id: resolved, source: 'menu_tree' as const };
+  return { id: null, source: 'none' as const };
+});
+const actionId = computed(() => actionContext.value.id);
 const showHud = computed(() => isHudEnabled(route));
 const session = useSessionStore();
 const userGroups = computed(() => session.user?.groups_xmlids ?? []);
@@ -228,6 +269,10 @@ const statusTone = computed(() => {
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'Record load failed'));
 const emptyCopy = computed(() => resolveEmptyCopy('record'));
 const renderMode = computed(() => (viewContract.value?.layout ? 'layout_tree' : 'fallback_fields'));
+const renderRecord = computed(() => {
+  if (status.value !== 'editing') return recordData.value;
+  return { ...(recordData.value || {}), ...draftValues.value };
+});
 const headerButtons = computed(() => normalizeButtons(viewContract.value?.layout?.headerButtons ?? []));
 const statButtons = computed(() => normalizeButtons(viewContract.value?.layout?.statButtons ?? []));
 const ribbon = computed(() => {
@@ -272,6 +317,7 @@ const hudEntries = computed(() => [
   { label: 'model', value: model.value },
   { label: 'record_id', value: recordId.value },
   { label: 'status', value: status.value },
+  { label: 'action_source', value: actionContext.value.source },
   { label: 'render_mode', value: renderMode.value },
   { label: 'layout_present', value: Boolean(viewContract.value?.layout) },
   { label: 'layout_nodes', value: JSON.stringify(layoutStats.value) },
@@ -280,9 +326,15 @@ const hudEntries = computed(() => [
   { label: 'last_intent', value: lastIntent.value || '-' },
   { label: 'write_mode', value: lastWriteMode.value || '-' },
   { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
+  { label: 'contract_mode', value: contractMode.value || '-' },
+  { label: 'contract_write', value: contractWriteAllowed.value },
   { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
 ]);
+
+function resolveCarryQuery(extra?: Record<string, unknown>) {
+  return pickContractNavQuery(route.query as Record<string, unknown>, extra);
+}
 
 function buttonState(btn: ViewButton) {
   return evaluateCapabilityPolicy({
@@ -303,10 +355,13 @@ async function load() {
   fields.value = [];
   viewContract.value = null;
   recordData.value = null;
+  draftValues.value = {};
   timelineEntries.value = [];
   chatterError.value = '';
   chatterUploadError.value = '';
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
+  contractMode.value = '';
+  contractWriteAllowed.value = true;
   status.value = 'loading';
   lastIntent.value = 'api.data.read';
   lastWriteMode.value = 'read';
@@ -320,7 +375,22 @@ async function load() {
   }
 
   try {
-    const view = await resolveView(model.value, 'form');
+    if (!actionId.value) {
+      throw new Error('missing action_id for contract-driven record view');
+    }
+    const actionContract = await loadActionContractRaw(actionId.value);
+    let view: ViewContract | null = null;
+    let contractFieldNames: string[] = [];
+    if (actionContract?.data && typeof actionContract.data === 'object') {
+      const runtime = buildRecordRuntimeFromContract(actionContract.data);
+      view = runtime.view;
+      contractFieldNames = runtime.fieldNames;
+      contractWriteAllowed.value = runtime.rights.write;
+    }
+    contractMode.value = String(actionContract?.meta?.contract_mode || '');
+    if (!view) {
+      throw new Error('missing ui.contract form payload');
+    }
     viewContract.value = view || null;
     const layout = view?.layout;
     if (!layout) {
@@ -331,7 +401,7 @@ async function load() {
     }
     layoutStats.value = analyzeLayout(layout);
 
-    const fieldNames = extractFieldNames(layout).filter(Boolean);
+    const fieldNames = contractFieldNames.length ? contractFieldNames : Object.keys(view?.fields || {}).filter(Boolean);
     const readFields = fieldNames.length ? [...fieldNames] : ['*'];
     if (readFields.length && readFields[0] !== '*' && !readFields.includes('write_date')) {
       readFields.push('write_date');
@@ -358,6 +428,10 @@ async function load() {
       value: (record as Record<string, unknown>)[name],
       descriptor: view?.fields?.[name],
     }));
+    draftValues.value = displayFields.reduce<Record<string, unknown>>((acc, name) => {
+      acc[name] = (record as Record<string, unknown>)[name];
+      return acc;
+    }, {});
     status.value = deriveRecordStatus({ error: '', fieldsLength: fields.value.length });
     draftName.value = String(record?.name ?? '');
     recordTitle.value = String(record?.name ?? '') || null;
@@ -488,13 +562,8 @@ function analyzeLayout(layout: ViewContract['layout']) {
       pageGroups.forEach((group) => countGroup(group as LayoutGroupLike));
     });
   });
-  const unsupported = [
-    Array.isArray(layout.headerButtons) ? layout.headerButtons.length : 0,
-    Array.isArray(layout.statButtons) ? layout.statButtons.length : 0,
-    layout.ribbon ? 1 : 0,
-    layout.chatter ? 1 : 0,
-  ].reduce((sum, value) => sum + value, 0);
-  stats.unsupported = unsupported;
+  // Current renderer supports header buttons, stat buttons, ribbon, and chatter.
+  stats.unsupported = 0;
   return stats;
 }
 
@@ -505,7 +574,9 @@ function reload() {
 function handleSuggestedAction(action: string): boolean {
   if (action !== 'open_record') return false;
   if (!model.value || !recordId.value) return false;
-  router.push({ name: 'record', params: { model: model.value, id: recordId.value } }).catch(() => {});
+  router
+    .push({ name: 'record', params: { model: model.value, id: recordId.value }, query: resolveCarryQuery() })
+    .catch(() => {});
   return true;
 }
 
@@ -520,10 +591,58 @@ function buttonLabel(btn: ViewButton) {
   return semanticButtonLabel(btn);
 }
 
-function handleFieldUpdate(payload: { name: string; value: string }) {
-  if (payload.name === 'name') {
-    draftName.value = payload.value;
+function canEditField(fieldName: string) {
+  if (!canEdit.value) return false;
+  const descriptor = viewContract.value?.fields?.[fieldName];
+  if (!descriptor) return false;
+  return !descriptor.readonly;
+}
+
+function isSelectionField(fieldName: string) {
+  const descriptor = viewContract.value?.fields?.[fieldName];
+  const ttype = descriptor?.ttype || descriptor?.type;
+  return ttype === 'selection';
+}
+
+function selectionOptions(fieldName: string) {
+  const descriptor = viewContract.value?.fields?.[fieldName];
+  return Array.isArray(descriptor?.selection) ? descriptor.selection : [];
+}
+
+function fieldInputType(fieldName: string) {
+  const descriptor = viewContract.value?.fields?.[fieldName];
+  const ttype = descriptor?.ttype || descriptor?.type;
+  switch (ttype) {
+    case 'integer':
+    case 'float':
+    case 'monetary':
+      return 'number';
+    case 'date':
+      return 'date';
+    case 'datetime':
+      return 'datetime-local';
+    default:
+      return 'text';
   }
+}
+
+function resolveDraftValue(fieldName: string) {
+  if (fieldName in draftValues.value) {
+    return draftValues.value[fieldName];
+  }
+  return recordData.value?.[fieldName];
+}
+
+function updateDraftField(fieldName: string, value: unknown) {
+  draftValues.value = { ...draftValues.value, [fieldName]: value };
+  if (fieldName === 'name') {
+    draftName.value = String(value ?? '');
+  }
+}
+
+function handleFieldUpdate(payload: { name: string; value: string }) {
+  if (!payload.name) return;
+  updateDraftField(payload.name, payload.value);
 }
 
 async function runHeaderButton(btn: ViewButton) {
@@ -541,6 +660,31 @@ async function runHeaderButton(btn: ViewButton) {
   if (!model.value || !recordId.value || !btn.name) {
     return;
   }
+  if (btn.type === 'action_open' || String(btn.name).startsWith('__open__')) {
+    const rawAction = String(btn.name).replace('__open__', '');
+    const openActionId = Number(rawAction || 0);
+    if (Number.isFinite(openActionId) && openActionId > 0) {
+      const enriched = btn as ViewButton & {
+        buttonContext?: Record<string, unknown>;
+        domainRaw?: string;
+        actionTarget?: string;
+      };
+      await router.push({
+        name: 'action',
+        params: { actionId: openActionId },
+        query: resolveCarryQuery({
+          action_id: openActionId,
+          target: enriched.actionTarget || undefined,
+          domain_raw: enriched.domainRaw || undefined,
+          context_raw:
+            enriched.buttonContext && Object.keys(enriched.buttonContext).length
+              ? JSON.stringify(enriched.buttonContext)
+              : undefined,
+        }),
+      });
+    }
+    return;
+  }
   lastIntent.value = 'execute_button';
   lastWriteMode.value = 'execute';
   lastAction.value = 'execute';
@@ -550,7 +694,7 @@ async function runHeaderButton(btn: ViewButton) {
     const response = await executeButton({
       model: model.value,
       res_id: recordId.value,
-      button: { name: btn.name, type: btn.type ?? 'object' },
+      button: { name: btn.name, type: btn.type === 'server' ? 'server' : btn.type ?? 'object' },
       context: btn.context ?? {},
       meta: { view_id: viewContract.value?.view_id },
     });
@@ -592,11 +736,19 @@ async function applyButtonEffect(effect: { type: string; target?: Record<string,
   if (effect.type === 'navigate' && effect.target) {
     const target = effect.target as { kind?: string; model?: string; id?: number; action_id?: number; url?: string };
     if (target.kind === 'record' && target.model && target.id) {
-      await router.push({ name: 'record', params: { model: target.model, id: target.id } });
+      await router.push({
+        name: 'record',
+        params: { model: target.model, id: target.id },
+        query: resolveCarryQuery(),
+      });
       return;
     }
     if (target.kind === 'action' && target.action_id) {
-      await router.push({ name: 'action', params: { actionId: target.action_id } });
+      await router.push({
+        name: 'action',
+        params: { actionId: target.action_id },
+        query: resolveCarryQuery({ action_id: target.action_id }),
+      });
       return;
     }
     if (target.kind === 'url' && target.url) {
@@ -614,8 +766,11 @@ function startEdit() {
   if (status.value !== 'ok') {
     return;
   }
-  const nameField = fields.value.find((field) => field.name === 'name');
-  draftName.value = String(nameField?.value ?? '');
+  draftValues.value = fields.value.reduce<Record<string, unknown>>((acc, field) => {
+    acc[field.name] = field.value;
+    return acc;
+  }, {});
+  draftName.value = String(draftValues.value.name ?? '');
   status.value = 'editing';
   editTx.beginEdit();
 }
@@ -624,13 +779,23 @@ function cancelEdit() {
   if (status.value !== 'editing') {
     return;
   }
-  const nameField = fields.value.find((field) => field.name === 'name');
-  draftName.value = String(nameField?.value ?? '');
+  draftValues.value = fields.value.reduce<Record<string, unknown>>((acc, field) => {
+    acc[field.name] = field.value;
+    return acc;
+  }, {});
+  draftName.value = String(draftValues.value.name ?? '');
   status.value = 'ok';
   editTx.cancelEdit();
 }
 
-const isSaveDisabled = computed(() => status.value === 'saving' || !draftName.value.trim());
+const hasDraftChanges = computed(() => {
+  const current = recordData.value || {};
+  return Object.keys(draftValues.value).some((key) => {
+    if (!canEditField(key)) return false;
+    return String(current[key] ?? '') !== String(draftValues.value[key] ?? '');
+  });
+});
+const isSaveDisabled = computed(() => status.value === 'saving' || !hasDraftChanges.value);
 
 async function save() {
   if (status.value !== 'editing') {
@@ -645,11 +810,25 @@ async function save() {
   const startedAt = Date.now();
 
   try {
+    const current = recordData.value || {};
+    const payload = Object.keys(draftValues.value).reduce<Record<string, unknown>>((acc, key) => {
+      if (!canEditField(key)) return acc;
+      const before = current[key];
+      const after = draftValues.value[key];
+      if (String(before ?? '') === String(after ?? '')) return acc;
+      acc[key] = after;
+      return acc;
+    }, {});
+    if (!Object.keys(payload).length) {
+      status.value = 'ok';
+      editTx.cancelEdit();
+      return;
+    }
     const result = await editTx.save(async () => {
       return writeRecordV6Raw({
         model: model.value,
         id: recordId.value,
-        values: { name: draftName.value.trim() },
+        values: payload,
         ifMatch: recordData.value?.write_date ? String(recordData.value?.write_date) : undefined,
       });
     });

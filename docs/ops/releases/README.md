@@ -113,6 +113,22 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 ## Current Review Baseline
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
+- Frontend contract-driven runtime (all views use contract as the only render source):
+  - `make verify.frontend.contract_route.guard`
+  - `make verify.frontend.contract_runtime.guard`
+  - `make verify.frontend.contract_normalized_fields.guard`
+  - `make verify.frontend.contract_query_context.guard`
+  - `make verify.frontend.contract_record_layout.guard`
+  - `make verify.frontend.typecheck.strict`
+  - `make verify.frontend.build`
+  - release check:
+    - `/a/:actionId` and `/r/:model/:id` and `/f/:model/:id` must render from `ui.contract` (`head/views/fields/buttons/toolbar/permissions/workflow/search`) without requiring `load_view` as primary source
+    - record runtime must not fallback to `load_view`; it should resolve an action context and consume `ui.contract` form payload only
+    - behavior/interaction changes should be driven by contract payload changes (no per-scene hardcoded UI branches)
+    - list/kanban must consume contract field labels, search filters, and toolbar/button actions as runtime behavior source
+    - form save must normalize payload by contract field types and submit diff-only writable fields
+    - record form runtime must normalize `views.form.layout` node arrays into renderer layout and keep field coverage aligned with contract `fields` (no silent field drop from partial layout nodes)
+    - legacy model pages (`ModelFormPage`/`ModelListPage`) should only act as compatibility shells and must delegate to contract-driven runtime
 - Backend evidence & observability expansion (Phase Next):
   - `make verify.load_view.access.contract.guard`
     - artifact: `/mnt/artifacts/backend/load_view_access_contract_guard.json` (fallback: `artifacts/backend/load_view_access_contract_guard.json`)

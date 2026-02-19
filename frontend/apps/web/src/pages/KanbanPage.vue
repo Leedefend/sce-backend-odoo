@@ -42,7 +42,7 @@
         <h3 class="card-title">{{ formatValue(row[titleField]) || formatValue(row.name) || formatValue(row.display_name) || row.id }}</h3>
         <dl class="card-meta">
           <div v-for="field in metaFields" :key="field" class="meta-row">
-            <dt>{{ field }}</dt>
+            <dt>{{ fieldLabel(field) }}</dt>
             <dd>{{ formatValue(row[field]) }}</dd>
           </div>
         </dl>
@@ -69,6 +69,7 @@ const props = defineProps<{
   error?: StatusError | null;
   records: Array<Record<string, unknown>>;
   fields: string[];
+  fieldLabels?: Record<string, string>;
   titleField: string;
   onReload: () => void;
   onCardClick: (row: Record<string, unknown>) => void;
@@ -87,6 +88,11 @@ const metaFields = computed(() => props.fields.filter((field) => field !== props
 
 function formatValue(value: unknown) {
   return formatDisplayValue(value);
+}
+
+function fieldLabel(name: string) {
+  const labels = props.fieldLabels || {};
+  return labels[name] || name;
 }
 
 function handleCard(row: Record<string, unknown>) {

@@ -44,9 +44,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { createRecord, listRecords, unlinkRecord, writeRecord } from '../../api/data';
 import { useEditTx } from '../../composables/useEditTx';
+import { pickContractNavQuery } from '../../app/navigationContext';
 
 const props = defineProps<{
   ids: number[];
@@ -57,6 +58,7 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+const route = useRoute();
 const loading = ref(false);
 const error = ref('');
 const rows = ref<Array<{ id: number; name?: string }>>([]);
@@ -113,7 +115,8 @@ async function load() {
 
 function openRecord(id: number) {
   if (!props.model) return;
-  router.push({ name: 'record', params: { model: props.model, id } });
+  const carry = pickContractNavQuery(route.query as Record<string, unknown>);
+  router.push({ name: 'record', params: { model: props.model, id }, query: carry });
 }
 
 function startCreate() {

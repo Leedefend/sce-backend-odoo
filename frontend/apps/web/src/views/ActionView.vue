@@ -4,6 +4,44 @@
       <p>已应用推荐筛选：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
       <button class="clear-btn" @click="clearRoutePreset">清除推荐</button>
     </section>
+    <section v-if="contractFilterChips.length" class="contract-block">
+      <p class="contract-label">契约筛选</p>
+      <div class="contract-chips">
+        <button
+          v-for="chip in contractFilterChips"
+          :key="`contract-filter-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeContractFilterKey === chip.key }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applyContractFilter(chip.key)"
+        >
+          {{ chip.label }}
+        </button>
+        <button
+          v-if="activeContractFilterKey"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="clearContractFilter"
+        >
+          清除
+        </button>
+      </div>
+    </section>
+    <section v-if="contractActionButtons.length" class="contract-block">
+      <p class="contract-label">契约动作</p>
+      <div class="contract-chips">
+        <button
+          v-for="btn in contractActionButtons"
+          :key="`contract-action-${btn.key}`"
+          class="contract-chip"
+          :disabled="!btn.enabled || status === 'loading' || batchBusy"
+          :title="btn.hint"
+          @click="runContractAction(btn)"
+        >
+          {{ btn.label }}
+        </button>
+      </div>
+    </section>
     <KanbanPage
       v-if="viewMode === 'kanban'"
       :title="pageTitle"
@@ -14,6 +52,7 @@
       :error="error"
       :records="records"
       :fields="kanbanFields"
+      :field-labels="contractColumnLabels"
       :title-field="kanbanTitleField"
       :subtitle="subtitle"
       :status-label="statusLabel"
@@ -31,6 +70,7 @@
       :error="error"
       :columns="columns"
       :records="records"
+      :column-labels="contractColumnLabels"
       :sort-label="sortLabel"
       :sort-options="sortOptions"
       :sort-value="sortValue"
@@ -76,6 +116,7 @@
 import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
+import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
 import { loadActionContract } from '../api/contract';
@@ -90,8 +131,11 @@ import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
+import { parseContractContextRaw, resolveContractReadRight, resolveContractViewMode } from '../app/contractActionRuntime';
+import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
+import { pickContractNavQuery } from '../app/navigationContext';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -190,10 +234,46 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     url?: string;
     target?: string;
   };
+  warnings?: Array<string | Record<string, unknown>>;
+  degraded?: boolean;
+  permissions?: {
+    effective?: {
+      rights?: {
+        read?: boolean;
+        write?: boolean;
+        create?: boolean;
+        unlink?: boolean;
+      };
+    };
+  };
 };
 type ActionMetaLoose = {
   order?: string;
   url?: string;
+};
+type ContractFilterChip = {
+  key: string;
+  label: string;
+  domain: unknown[];
+  domainRaw: string;
+  context: Record<string, unknown>;
+  contextRaw: string;
+};
+type ContractActionSelection = 'none' | 'single' | 'multi';
+type ContractActionButton = {
+  key: string;
+  label: string;
+  kind: string;
+  actionId: number | null;
+  methodName: string;
+  model: string;
+  target: string;
+  url: string;
+  selection: ContractActionSelection;
+  context: Record<string, unknown>;
+  domainRaw: string;
+  enabled: boolean;
+  hint: string;
 };
 
 const actionId = computed(() => Number(route.params.actionId));
@@ -202,8 +282,19 @@ const actionMeta = computed(() => session.currentAction);
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
-const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const contractViewType = ref('');
+const contractReadAllowed = ref(true);
+const contractWarningCount = ref(0);
+const contractDegraded = ref(false);
+const actionContract = ref<ActionContractLoose | null>(null);
+const resolvedModelRef = ref('');
+const activeContractFilterKey = ref('');
+const contractLimit = ref(40);
+const viewMode = computed(() => {
+  if (contractViewType.value === 'kanban') return 'kanban';
+  if (contractViewType.value === 'list' || contractViewType.value === 'tree') return 'tree';
+  return (actionMeta.value?.view_modes?.[0] ?? 'tree').toString();
+});
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
   { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
@@ -223,7 +314,11 @@ const statusLabel = computed(() => {
   if (status.value === 'empty') return '暂无数据';
   return '已就绪';
 });
-const pageTitle = computed(() => injectedTitle?.value || actionMeta.value?.name || '工作台');
+const pageTitle = computed(() => {
+  const contractTitle = String(actionContract.value?.head?.title || '').trim();
+  if (contractTitle) return contractTitle;
+  return injectedTitle?.value || actionMeta.value?.name || '工作台';
+});
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
 const sceneKey = computed(() => {
@@ -246,6 +341,12 @@ const hudEntries = computed(() => [
   { label: 'model', value: model.value || '-' },
   { label: 'view_mode', value: viewMode.value || '-' },
   { label: 'contract_view_type', value: contractViewType.value || '-' },
+  { label: 'contract_filter', value: activeContractFilterKey.value || '-' },
+  { label: 'contract_actions', value: contractActionButtons.value.length },
+  { label: 'contract_limit', value: contractLimit.value },
+  { label: 'contract_read', value: contractReadAllowed.value },
+  { label: 'contract_warnings', value: contractWarningCount.value },
+  { label: 'contract_degraded', value: contractDegraded.value },
   { label: 'order', value: sortLabel.value || '-' },
   { label: 'last_intent', value: lastIntent.value || '-' },
   { label: 'write_mode', value: lastWriteMode.value || '-' },
@@ -253,9 +354,93 @@ const hudEntries = computed(() => [
   { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
 ]);
+const contractFilterChips = computed<ContractFilterChip[]>(() => {
+  const rows = actionContract.value?.search?.filters;
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map((row) => {
+      const key = String(row?.key || '').trim();
+      const label = String(row?.label || row?.key || '').trim();
+      if (!key || !label) return null;
+      const domain = Array.isArray(row?.domain) ? row.domain : [];
+      const domainRaw = String(row?.domain_raw || '').trim();
+      const contextRaw = String(row?.context_raw || '').trim();
+      const context = parseContractContextRaw(row?.context_raw);
+      return { key, label, domain, domainRaw, context, contextRaw };
+    })
+    .filter((item): item is ContractFilterChip => Boolean(item));
+});
+const contractActionButtons = computed<ContractActionButton[]>(() => {
+  const contract = actionContract.value;
+  if (!contract) return [];
+  const merged: Array<Record<string, unknown>> = [];
+  if (Array.isArray(contract.buttons)) merged.push(...(contract.buttons as Array<Record<string, unknown>>));
+  if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
+  if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
+  if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
+  const userGroups = session.user?.groups_xmlids || [];
+  const dedup = new Set<string>();
+  return merged
+    .map((row) => {
+      const key = String(row.key || '').trim();
+      if (!key || dedup.has(key)) return null;
+      dedup.add(key);
+      const payload = parseContractContextRaw(row.payload);
+      const kind = normalizeActionKind(row.kind);
+      const actionId = toPositiveInt(payload.action_id) ?? toPositiveInt(payload.ref);
+      const methodName = detectObjectMethodFromActionKey(key, String(payload.method || '').trim());
+      const selectionRaw = String(row.selection || 'none').toLowerCase();
+      const selection: ContractActionSelection =
+        selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
+      const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
+      const allowedByGroup = !groups.length || groups.some((group) => userGroups.includes(group));
+      const selectedCount = selectedIds.value.length;
+      const enabledBySelection =
+        selection === 'none' ? true : selection === 'single' ? selectedCount === 1 : selectedCount > 0;
+      const enabled = allowedByGroup && enabledBySelection;
+      const hint = allowedByGroup
+        ? enabledBySelection
+          ? ''
+          : selection === 'single'
+            ? '请选择 1 条记录'
+            : '请先选择记录'
+        : '权限不足';
+      return {
+        key,
+        label: String(row.label || key),
+        kind,
+        actionId,
+        methodName,
+        model: String(row.target_model || row.model || resolvedModelRef.value || model.value || '').trim(),
+        target: String(payload.target || '').trim(),
+        url: String(payload.url || '').trim(),
+        selection,
+        context: parseContractContextRaw(payload.context_raw),
+        domainRaw: String(payload.domain_raw || '').trim(),
+        enabled,
+        hint,
+      };
+    })
+    .filter((item): item is ContractActionButton => Boolean(item));
+});
+const contractColumnLabels = computed<Record<string, string>>(() => {
+  const rows = actionContract.value?.fields || {};
+  return Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
+    const label = String(descriptor?.string || '').trim();
+    if (label) acc[name] = label;
+    return acc;
+  }, {});
+});
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
+}
+
+function resolveCarryQuery() {
+  return {
+    ...pickContractNavQuery(route.query as Record<string, unknown>),
+    ...resolveWorkspaceContextQuery(),
+  };
 }
 
 function resolveActionViewType(meta: unknown, contract: unknown) {
@@ -350,14 +535,63 @@ function clearRoutePreset() {
   router.replace({ name: 'action', params: route.params, query: nextQuery }).catch(() => {});
 }
 
-function mergeContext(base: Record<string, unknown> | string | undefined) {
+function applyContractFilter(key: string) {
+  if (!key) return;
+  activeContractFilterKey.value = key;
+  clearSelection();
+  const query = { ...(route.query as Record<string, unknown>), preset_filter: key };
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function clearContractFilter() {
+  activeContractFilterKey.value = '';
+  clearSelection();
+  const query = { ...(route.query as Record<string, unknown>) };
+  delete query.preset_filter;
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function resolveContractFilterDomain() {
+  const key = activeContractFilterKey.value;
+  if (!key) return [];
+  const found = contractFilterChips.value.find((chip) => chip.key === key);
+  return found?.domain || [];
+}
+
+function resolveContractFilterDomainRaw() {
+  const key = activeContractFilterKey.value;
+  if (!key) return '';
+  const found = contractFilterChips.value.find((chip) => chip.key === key);
+  return found?.domainRaw || '';
+}
+
+function resolveContractFilterContext() {
+  const key = activeContractFilterKey.value;
+  if (!key) return {};
+  const found = contractFilterChips.value.find((chip) => chip.key === key);
+  return found?.context || {};
+}
+
+function resolveContractFilterContextRaw() {
+  const key = activeContractFilterKey.value;
+  if (!key) return '';
+  const found = contractFilterChips.value.find((chip) => chip.key === key);
+  return found?.contextRaw || '';
+}
+
+function mergeContext(base: Record<string, unknown> | string | undefined, extra?: Record<string, unknown>) {
+  const routeContextRaw = String(route.query.context_raw || '').trim();
+  const routeContext = parseContractContextRaw(routeContextRaw);
+  const mergedExtra = extra || {};
   if (!base || typeof base === 'string') {
-    return menuId.value ? { menu_id: menuId.value } : {};
+    return menuId.value ? { menu_id: menuId.value, ...routeContext, ...mergedExtra } : { ...routeContext, ...mergedExtra };
   }
   if (!menuId.value) {
-    return base;
+    return { ...base, ...routeContext, ...mergedExtra };
   }
-  return { ...base, menu_id: menuId.value };
+  return { ...base, menu_id: menuId.value, ...routeContext, ...mergedExtra };
 }
 
 function normalizeDomain(domain: unknown) {
@@ -518,9 +752,9 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
   if (Array.isArray(schema) && schema.length) {
     return schema.map((col) => col.name).filter(Boolean) as string[];
   }
-  const rawFields = contract?.ui_contract_raw?.fields;
-  if (rawFields && typeof rawFields === 'object') {
-    return Object.keys(rawFields);
+  const typedFields = typed.fields;
+  if (typedFields && typeof typedFields === 'object') {
+    return Object.keys(typedFields);
   }
   return [];
 }
@@ -534,7 +768,7 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
       return kanbanBlock.fields;
     }
   }
-  const fieldsMap = typed.fields || typed.ui_contract_raw?.fields;
+  const fieldsMap = typed.fields;
   if (fieldsMap && typeof fieldsMap === 'object') {
     const preferred = ['display_name', 'name', 'stage_id', 'user_id', 'partner_id', 'write_date', 'create_date'];
     const available = Object.keys(fieldsMap);
@@ -711,6 +945,100 @@ function isWindowAction(meta: unknown) {
   return actionType.includes('act_window') || actionType.includes('window') || actionType === '';
 }
 
+function resolveSelectedIdsForAction(selection: ContractActionSelection) {
+  if (selection === 'none') return [];
+  if (selection === 'single') {
+    return selectedIds.value.length === 1 ? [selectedIds.value[0]] : [];
+  }
+  return selectedIds.value.length ? [...selectedIds.value] : [];
+}
+
+function resolveActionContextRecordId() {
+  const fromRoute = parseNumericId(route.query.res_id);
+  if (fromRoute) return fromRoute;
+  const fromContract = parseNumericId(actionContract.value?.head?.res_id);
+  if (fromContract) return fromContract;
+  return null;
+}
+
+async function runContractAction(action: ContractActionButton) {
+  if (!action.enabled) return;
+  if (action.kind === 'open') {
+    if (action.actionId) {
+      await router.push({
+        name: 'action',
+        params: { actionId: action.actionId },
+        query: {
+          menu_id: menuId.value || undefined,
+          action_id: action.actionId,
+          ...resolveCarryQuery(),
+        },
+      });
+      return;
+    }
+    if (action.url) {
+      const navUrl = resolveNavigationUrl(action.url);
+      window.open(navUrl, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
+      return;
+    }
+    batchMessage.value = '契约动作缺少 action_id，无法打开目标页面';
+    return;
+  }
+
+  const ids = resolveSelectedIdsForAction(action.selection);
+  if (action.selection !== 'none' && !ids.length) {
+    batchMessage.value = action.selection === 'single' ? '请选择 1 条记录后再执行' : '请先选择记录后再执行';
+    return;
+  }
+  if (!action.model) {
+    batchMessage.value = '契约动作缺少 model，无法执行';
+    return;
+  }
+  const contextRecordId = resolveActionContextRecordId();
+  const execIds = ids.length ? ids : contextRecordId ? [contextRecordId] : [];
+  if (!execIds.length) {
+    batchMessage.value = '当前动作需要记录上下文，暂不支持无记录执行';
+    return;
+  }
+
+  batchBusy.value = true;
+  try {
+    let successCount = 0;
+    let failureCount = 0;
+    for (const id of execIds) {
+      try {
+        const response = await executeButton({
+          model: action.model,
+          res_id: id,
+          button: { name: action.methodName || action.key, type: action.kind || 'object' },
+          context: action.context,
+        });
+        if (response?.result?.action_id) {
+          await router.push({
+            name: 'action',
+            params: { actionId: response.result.action_id },
+            query: {
+              menu_id: menuId.value || undefined,
+              action_id: response.result.action_id,
+              ...resolveCarryQuery(),
+            },
+          });
+          return;
+        }
+        successCount += 1;
+      } catch {
+        failureCount += 1;
+      }
+    }
+    batchMessage.value = `契约动作执行完成：成功 ${successCount}，失败 ${failureCount}`;
+    if (successCount > 0) {
+      await load();
+    }
+  } finally {
+    batchBusy.value = false;
+  }
+}
+
 async function loadAssigneeOptions() {
   if (!hasAssigneeField.value) {
     assigneeOptions.value = [];
@@ -751,6 +1079,9 @@ async function load() {
   lastWriteMode.value = 'read';
   lastLatencyMs.value = null;
   contractViewType.value = '';
+  actionContract.value = null;
+  resolvedModelRef.value = '';
+  contractLimit.value = 40;
   records.value = [];
   columns.value = [];
   kanbanFields.value = [];
@@ -767,21 +1098,56 @@ async function load() {
     if (meta) {
       session.setActionMeta(meta);
     }
-    contractViewType.value = resolveActionViewType(meta, contract);
+    contractViewType.value = resolveContractViewMode(contract as ActionContractLoose, resolveActionViewType(meta, contract));
+    const typedContract = contract as ActionContractLoose;
+    actionContract.value = typedContract;
+    const routeFilter = String(route.query.preset_filter || '').trim();
+    if (!activeContractFilterKey.value && routeFilter) {
+      activeContractFilterKey.value = routeFilter;
+    }
+    if (activeContractFilterKey.value) {
+      const hasFilter = Array.isArray(typedContract.search?.filters)
+        && typedContract.search.filters.some((row) => String(row?.key || '') === activeContractFilterKey.value);
+      if (!hasFilter) {
+        activeContractFilterKey.value = '';
+      }
+    }
+    contractReadAllowed.value = resolveContractReadRight(typedContract);
+    contractWarningCount.value = Array.isArray(typedContract.warnings) ? typedContract.warnings.length : 0;
+    contractDegraded.value = Boolean(typedContract.degraded);
+    if (!contractReadAllowed.value) {
+      await router.replace({
+        name: 'workbench',
+        query: {
+          menu_id: menuId.value || undefined,
+          action_id: actionId.value || undefined,
+          reason: ErrorCodes.CAPABILITY_MISSING,
+          diag: 'contract_read_forbidden',
+        },
+      });
+      return;
+    }
     if (isUrlAction(meta, contract)) {
       await redirectUrlAction(meta, contract);
       return;
     }
     if (!sortValue.value) {
       const typedContract = contract as ActionContractLoose;
+      const searchDefaults = typedContract.search?.defaults;
+      const searchOrder = searchDefaults?.order;
       const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
       const metaOrder = (meta as ActionMetaLoose | undefined)?.order;
-      const order = scene.value?.default_sort || viewOrder || metaOrder;
+      const order = scene.value?.default_sort || searchOrder || viewOrder || metaOrder;
       if (typeof order === 'string' && order.trim()) {
         sortValue.value = order;
       } else {
         sortValue.value = 'id asc';
       }
+    }
+    {
+      const searchDefaults = typedContract.search?.defaults;
+      const limitRaw = Number(searchDefaults?.limit || 40);
+      contractLimit.value = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(Math.trunc(limitRaw), 200) : 40;
     }
     const policy = evaluateCapabilityPolicy({ source: meta, available: session.capabilities });
     if (policy.state !== 'enabled') {
@@ -798,6 +1164,7 @@ async function load() {
     }
     const contractModel = resolveModelFromContract(contract);
     const resolvedModel = meta?.model ?? model.value ?? contractModel;
+    resolvedModelRef.value = resolvedModel || '';
     if (meta && !meta.model && resolvedModel) {
       session.setActionMeta({ ...meta, model: resolvedModel });
     }
@@ -843,19 +1210,16 @@ async function load() {
       await router.replace({
         name: 'model-form',
         params: { model: resolvedModel, id: actionResId ? String(actionResId) : 'new' },
-        query: {
-          menu_id: menuId.value || undefined,
-          action_id: actionId.value || undefined,
-          ...resolveWorkspaceContextQuery(),
-        },
+        query: resolveCarryQuery(),
       });
       return;
     }
     const contractColumns = extractColumnsFromContract(contract);
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
-    hasActiveField.value = Boolean(contract.ui_contract_raw?.fields?.active);
-    hasAssigneeField.value = Boolean(contract.ui_contract_raw?.fields?.user_id);
+    const fieldMap = typedContract.fields || {};
+    hasActiveField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'active' in fieldMap);
+    hasAssigneeField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'user_id' in fieldMap);
     await loadAssigneeOptions();
     const requestedFields =
       viewMode.value === 'kanban'
@@ -864,9 +1228,11 @@ async function load() {
     const result = await listRecordsRaw({
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
-      domain: mergeActiveFilter(mergeSceneDomain(meta?.domain, scene.value?.filters)),
-      context: mergeContext(meta?.context),
-      limit: 40,
+      domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveContractFilterDomain())),
+      domain_raw: resolveContractFilterDomainRaw(),
+      context: mergeContext(meta?.context, resolveContractFilterContext()),
+      context_raw: resolveContractFilterContextRaw(),
+      limit: contractLimit.value,
       offset: 0,
       search_term: searchTerm.value.trim() || undefined,
       order: sortLabel.value,
@@ -907,18 +1273,19 @@ async function load() {
 
 function handleRowClick(row: Record<string, unknown>) {
   const id = row.id;
-  if (!model.value) {
+  const targetModel = resolvedModelRef.value || model.value;
+  if (!targetModel) {
     return;
   }
   if (typeof id === 'number') {
     router.push({
-      path: `/r/${model.value}/${id}`,
-      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined, ...resolveWorkspaceContextQuery() },
+      path: `/r/${targetModel}/${id}`,
+      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined, ...resolveCarryQuery() },
     });
   } else if (typeof id === 'string' && id) {
     router.push({
-      path: `/r/${model.value}/${id}`,
-      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined, ...resolveWorkspaceContextQuery() },
+      path: `/r/${targetModel}/${id}`,
+      query: { menu_id: menuId.value || undefined, action_id: actionId.value || undefined, ...resolveCarryQuery() },
     });
   }
 }
@@ -995,8 +1362,9 @@ function buildIfMatchMap(ids: number[]) {
 }
 
 function buildIdempotencyKey(action: string, ids: number[], extra: Record<string, unknown> = {}) {
+  const targetModel = resolvedModelRef.value || model.value || '';
   const payload = {
-    model: model.value || '',
+    model: targetModel,
     action,
     ids: [...ids].sort((a, b) => a - b),
     extra,
@@ -1012,7 +1380,8 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   batchFailedOffset.value = 0;
   batchHasMoreFailures.value = false;
   lastBatchRequest.value = null;
-  if (!model.value || !selectedIds.value.length) return;
+  const targetModel = resolvedModelRef.value || model.value;
+  if (!targetModel || !selectedIds.value.length) return;
   if (!hasActiveField.value) {
     batchMessage.value = '当前模型不支持 active 字段，无法批量归档/激活';
     return;
@@ -1021,9 +1390,9 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   try {
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { active: action === 'activate' });
-    const requestContext = mergeContext(actionMeta.value?.context);
+    const requestContext = mergeContext(actionMeta.value?.context, resolveContractFilterContext());
     const result = await batchUpdateRecords({
-      model: model.value,
+      model: targetModel,
       ids: selectedIds.value,
       action,
       ifMatchMap,
@@ -1035,7 +1404,7 @@ async function handleBatchAction(action: 'archive' | 'activate') {
       context: requestContext,
     });
     lastBatchRequest.value = {
-      model: model.value,
+      model: targetModel,
       ids: [...selectedIds.value],
       action,
       ifMatchMap,
@@ -1075,7 +1444,8 @@ async function handleBatchAssign(assigneeId: number) {
   batchFailedOffset.value = 0;
   batchHasMoreFailures.value = false;
   lastBatchRequest.value = null;
-  if (!model.value || !selectedIds.value.length) return;
+  const targetModel = resolvedModelRef.value || model.value;
+  if (!targetModel || !selectedIds.value.length) return;
   if (!hasAssigneeField.value) {
     batchMessage.value = '当前模型不支持负责人字段，无法批量指派';
     return;
@@ -1088,9 +1458,9 @@ async function handleBatchAssign(assigneeId: number) {
   try {
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey('assign', selectedIds.value, { assignee_id: assigneeId });
-    const requestContext = mergeContext(actionMeta.value?.context);
+    const requestContext = mergeContext(actionMeta.value?.context, resolveContractFilterContext());
     const result = await batchUpdateRecords({
-      model: model.value,
+      model: targetModel,
       ids: selectedIds.value,
       action: 'assign',
       assigneeId,
@@ -1103,7 +1473,7 @@ async function handleBatchAssign(assigneeId: number) {
       context: requestContext,
     });
     lastBatchRequest.value = {
-      model: model.value,
+      model: targetModel,
       ids: [...selectedIds.value],
       action: 'assign',
       assigneeId,
@@ -1143,7 +1513,8 @@ async function exportByBackend(scope: 'selected' | 'all') {
   batchDetails.value = [];
   failedCsvFileName.value = '';
   failedCsvContentB64.value = '';
-  if (!model.value) return;
+  const targetModel = resolvedModelRef.value || model.value;
+  if (!targetModel) return;
   if (scope === 'selected' && !selectedIds.value.length) {
     batchMessage.value = '没有可导出的选中记录';
     return;
@@ -1151,16 +1522,21 @@ async function exportByBackend(scope: 'selected' | 'all') {
   batchBusy.value = true;
   try {
     const ids = scope === 'selected' ? selectedIds.value : [];
-    const domain = scope === 'all' ? mergeActiveFilter(mergeSceneDomain(actionMeta.value?.domain, scene.value?.filters)) : [];
+    const domain =
+      scope === 'all'
+        ? mergeActiveFilter(
+            mergeSceneDomain(mergeSceneDomain(actionMeta.value?.domain, scene.value?.filters), resolveContractFilterDomain()),
+          )
+        : [];
     const fields = columns.value.length ? ['id', ...columns.value.filter((col) => col !== 'id')] : ['id', 'name'];
     const result = await exportRecordsCsv({
-      model: model.value,
+      model: targetModel,
       fields,
       ids,
       domain,
       order: sortLabel.value,
       limit: scope === 'all' ? 10000 : 5000,
-      context: mergeContext(actionMeta.value?.context),
+      context: mergeContext(actionMeta.value?.context, resolveContractFilterContext()),
     });
     if (!result.content_b64) {
       batchMessage.value = '没有可导出的记录';
@@ -1252,5 +1628,42 @@ watch(
   color: #1d4ed8;
   padding: 4px 8px;
   cursor: pointer;
+}
+
+.contract-block {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-label {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+}
+
+.contract-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contract-chip {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f172a;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.contract-chip.active {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.contract-chip.ghost {
+  border-style: dashed;
 }
 </style>

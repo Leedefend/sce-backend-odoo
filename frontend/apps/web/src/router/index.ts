@@ -5,7 +5,7 @@ import HomeView from '../views/HomeView.vue';
 import MenuView from '../views/MenuView.vue';
 import ActionView from '../views/ActionView.vue';
 import RecordView from '../views/RecordView.vue';
-import ModelFormPage from '../pages/ModelFormPage.vue';
+import ContractFormPage from '../pages/ContractFormPage.vue';
 import WorkbenchView from '../views/WorkbenchView.vue';
 import SceneView from '../views/SceneView.vue';
 import SceneHealthView from '../views/SceneHealthView.vue';
@@ -30,7 +30,7 @@ const router = createRouter({
     { path: '/admin/scene-packages', name: 'scene-packages', component: ScenePackagesView, meta: { layout: 'shell', adminOnly: true } },
     { path: '/admin/usage-analytics', name: 'usage-analytics', component: UsageAnalyticsView, meta: { layout: 'shell', adminOnly: true } },
     { path: '/a/:actionId', name: 'action', component: ActionView, meta: { layout: 'shell' } },
-    { path: '/f/:model/:id', name: 'model-form', component: ModelFormPage, meta: { layout: 'shell' } },
+    { path: '/f/:model/:id', name: 'model-form', component: ContractFormPage, meta: { layout: 'shell' } },
     { path: '/r/:model/:id', name: 'record', component: RecordView, meta: { layout: 'shell' } },
   ],
 });
