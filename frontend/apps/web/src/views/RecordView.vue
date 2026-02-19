@@ -644,12 +644,23 @@ async function runHeaderButton(btn: ViewButton) {
     const rawAction = String(btn.name).replace('__open__', '');
     const openActionId = Number(rawAction || 0);
     if (Number.isFinite(openActionId) && openActionId > 0) {
+      const enriched = btn as ViewButton & {
+        buttonContext?: Record<string, unknown>;
+        domainRaw?: string;
+        actionTarget?: string;
+      };
       await router.push({
         name: 'action',
         params: { actionId: openActionId },
         query: {
           menu_id: route.query.menu_id,
           action_id: openActionId,
+          target: enriched.actionTarget || undefined,
+          domain_raw: enriched.domainRaw || undefined,
+          context_raw:
+            enriched.buttonContext && Object.keys(enriched.buttonContext).length
+              ? JSON.stringify(enriched.buttonContext)
+              : undefined,
         },
       });
     }
@@ -664,7 +675,7 @@ async function runHeaderButton(btn: ViewButton) {
     const response = await executeButton({
       model: model.value,
       res_id: recordId.value,
-      button: { name: btn.name, type: btn.type ?? 'object' },
+      button: { name: btn.name, type: btn.type === 'server' ? 'server' : btn.type ?? 'object' },
       context: btn.context ?? {},
       meta: { view_id: viewContract.value?.view_id },
     });

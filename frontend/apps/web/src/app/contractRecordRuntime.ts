@@ -5,6 +5,8 @@ export type RecordRuntimeButton = ViewButton & {
   actionKind?: string;
   actionId?: number;
   buttonContext?: Record<string, unknown>;
+  domainRaw?: string;
+  actionTarget?: string;
   sourceLevel?: string;
 };
 
@@ -54,10 +56,12 @@ function mapContractButton(raw: Record<string, unknown>): RecordRuntimeButton | 
   return {
     name: kind === 'open' ? `__open__${String(actionId || '')}` : methodName,
     string: label,
-    type: kind === 'open' ? 'action_open' : 'object',
+    type: kind === 'open' ? 'action_open' : kind === 'server' ? 'server' : 'object',
     actionKind: kind,
     actionId: actionId || undefined,
     buttonContext: parseMaybeJsonRecord(payload.context_raw),
+    domainRaw: String(payload.domain_raw || '').trim() || undefined,
+    actionTarget: String(payload.target || '').trim() || undefined,
     sourceLevel: level,
   };
 }
@@ -107,4 +111,3 @@ export function buildRecordRuntimeFromContract(contract: ActionContract): Record
     rights: resolveRights(contract),
   };
 }
-
