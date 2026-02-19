@@ -293,7 +293,7 @@ const contractLimit = ref(40);
 const viewMode = computed(() => {
   if (contractViewType.value === 'kanban') return 'kanban';
   if (contractViewType.value === 'list' || contractViewType.value === 'tree') return 'tree';
-  return (actionMeta.value?.view_modes?.[0] ?? 'tree').toString();
+  return '';
 });
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
@@ -443,17 +443,12 @@ function resolveCarryQuery() {
   };
 }
 
-function resolveActionViewType(meta: unknown, contract: unknown) {
+function resolveActionViewType(_meta: unknown, contract: unknown) {
   const typedContract = contract as ActionContractLoose;
   const fromHead = String(typedContract.head?.view_type || '').trim();
   if (fromHead) return fromHead;
   const fromContract = String(typedContract.view_type || '').trim();
   if (fromContract) return fromContract;
-  const metaModes = (meta as { view_modes?: unknown })?.view_modes;
-  if (Array.isArray(metaModes) && metaModes.length) {
-    const first = String(metaModes[0] || '').trim();
-    if (first) return first;
-  }
   return '';
 }
 
@@ -660,15 +655,6 @@ function findMenuNode(nodes: NavNode[], menuId?: number): NavNode | null {
   return walk(nodes) || null;
 }
 
-function pickColumns(rows: Array<Record<string, unknown>>) {
-  if (!rows.length) {
-    return ['id', 'name'];
-  }
-  const first = rows[0];
-  const keys = Object.keys(first);
-  return keys.slice(0, 6);
-}
-
 function downloadCsvBase64(filename: string, mimeType: string, contentB64: string) {
   if (!contentB64) return;
   const binary = atob(contentB64);
@@ -751,10 +737,6 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
   const schema = typed.ui_contract?.columnsSchema;
   if (Array.isArray(schema) && schema.length) {
     return schema.map((col) => col.name).filter(Boolean) as string[];
-  }
-  const typedFields = typed.fields;
-  if (typedFields && typeof typedFields === 'object') {
-    return Object.keys(typedFields);
   }
   return [];
 }
@@ -1099,6 +1081,11 @@ async function load() {
       session.setActionMeta(meta);
     }
     contractViewType.value = resolveContractViewMode(contract as ActionContractLoose, resolveActionViewType(meta, contract));
+    if (!contractViewType.value) {
+      setError(new Error('missing contract view_type'), 'missing contract view_type');
+      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
+      return;
+    }
     const typedContract = contract as ActionContractLoose;
     actionContract.value = typedContract;
     const routeFilter = String(route.query.preset_filter || '').trim();
@@ -1225,6 +1212,11 @@ async function load() {
       viewMode.value === 'kanban'
         ? kanbanContractFields
         : resolveRequestedFields(contractColumns, listProfile.value);
+    if (viewMode.value === 'tree' && !contractColumns.length) {
+      setError(new Error('missing contract columns for list/tree view'), 'missing contract columns for list/tree view');
+      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
+      return;
+    }
     const result = await listRecordsRaw({
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
@@ -1252,7 +1244,7 @@ async function load() {
         .filter((id): id is number => typeof id === 'number'),
     );
     selectedIds.value = selectedIds.value.filter((id) => currentIds.has(id));
-    columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
+    columns.value = contractColumns;
     status.value = deriveListStatus({ error: '', recordsLength: records.value.length });
     if (result.meta?.trace_id) {
       traceId.value = String(result.meta.trace_id);

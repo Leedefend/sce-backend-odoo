@@ -11,6 +11,9 @@ PATTERNS = [
     'intent: "load_view"',
     "resolveView(",
     "viewResolver",
+    "fallback_fields",
+    "pickColumns(",
+    "actionMeta.value?.view_modes?.[0]",
 ]
 
 

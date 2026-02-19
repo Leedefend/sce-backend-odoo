@@ -80,7 +80,6 @@
         </button>
       </div>
       <ViewLayoutRenderer
-        v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
         :record="renderRecord"
@@ -90,33 +89,6 @@
         :edit-mode="status === 'editing' ? 'all' : 'none'"
         @update:field="handleFieldUpdate"
       />
-      <div v-else>
-        <div v-for="field in fields" :key="field.name" class="field">
-          <span class="label">{{ field.label }}</span>
-          <span class="value">
-            <template v-if="status === 'editing' && canEditField(field.name)">
-              <select
-                v-if="isSelectionField(field.name)"
-                :value="String(resolveDraftValue(field.name))"
-                class="input"
-                @change="updateDraftField(field.name, ($event.target as HTMLSelectElement).value)"
-              >
-                <option v-for="opt in selectionOptions(field.name)" :key="opt[0]" :value="opt[0]">
-                  {{ opt[1] }}
-                </option>
-              </select>
-              <input
-                v-else
-                :value="String(resolveDraftValue(field.name) ?? '')"
-                class="input"
-                :type="fieldInputType(field.name)"
-                @input="updateDraftField(field.name, ($event.target as HTMLInputElement).value)"
-              />
-            </template>
-            <FieldValue v-else :value="field.value" :field="field.descriptor" />
-          </span>
-        </div>
-      </div>
       <section v-if="hasChatter" class="chatter">
         <h3>协作时间线</h3>
         <p v-if="chatterError" class="meta">{{ chatterError }}</p>
@@ -173,7 +145,6 @@ import { loadActionContractRaw } from '../api/contract';
 import { buildRecordRuntimeFromContract } from '../app/contractRecordRuntime';
 import { deriveRecordStatus } from '../app/view_state';
 import type { ViewButton, ViewContract } from '@sc/schema';
-import FieldValue from '../components/FieldValue.vue';
 import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -268,7 +239,7 @@ const statusTone = computed(() => {
 });
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'Record load failed'));
 const emptyCopy = computed(() => resolveEmptyCopy('record'));
-const renderMode = computed(() => (viewContract.value?.layout ? 'layout_tree' : 'fallback_fields'));
+const renderMode = computed(() => 'layout_tree');
 const renderRecord = computed(() => {
   if (status.value !== 'editing') return recordData.value;
   return { ...(recordData.value || {}), ...draftValues.value };
@@ -312,7 +283,7 @@ const missingNodes = computed(() => {
   if (layout.chatter) present.add('chatter');
   return Array.from(present).filter((node) => !supportedNodes.includes(node));
 });
-const renderBlocked = computed(() => showHud.value && renderMode.value === 'layout_tree' && missingNodes.value.length > 0);
+const renderBlocked = computed(() => showHud.value && missingNodes.value.length > 0);
 const hudEntries = computed(() => [
   { label: 'model', value: model.value },
   { label: 'record_id', value: recordId.value },
