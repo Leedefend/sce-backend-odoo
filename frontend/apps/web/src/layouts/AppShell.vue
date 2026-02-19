@@ -175,7 +175,7 @@ const roleLabel = computed(() => {
   const code = roleSurface.value?.role_code || '';
   return code ? code.toUpperCase() : '负责人';
 });
-const roleLandingPath = computed(() => session.resolveLandingPath('/s/projects.list'));
+const roleLandingPath = computed(() => session.resolveLandingPath('/'));
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
 const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? 'N/A');

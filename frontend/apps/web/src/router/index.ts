@@ -19,8 +19,6 @@ const router = createRouter({
   routes: [
     { path: '/login', name: 'login', component: LoginView },
     { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell' } },
-    { path: '/projects', name: 'scene-projects', component: SceneView, meta: { layout: 'shell', sceneKey: 'projects' } },
-    { path: '/projects/:id', name: 'scene-project', component: SceneView, meta: { layout: 'shell', sceneKey: 'project-record' } },
     { path: '/my-work', name: 'my-work', component: MyWorkView, meta: { layout: 'shell' } },
     { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
@@ -56,7 +54,7 @@ router.beforeEach(async (to) => {
       groups.includes('base.group_system') ||
       groups.includes('smart_construction_core.group_sc_cap_config_admin');
     if (!isAdmin) {
-      return { path: '/s/projects.list' };
+      return { path: session.resolveLandingPath('/') };
     }
   }
   return true;

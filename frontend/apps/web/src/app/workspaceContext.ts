@@ -1,4 +1,4 @@
-export type WorkspacePreset = 'pending_approval' | 'project_intake' | 'cost_watchlist' | '';
+export type WorkspacePreset = string;
 
 export type WorkspaceContext = {
   preset?: WorkspacePreset | string;

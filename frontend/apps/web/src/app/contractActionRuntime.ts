@@ -1,7 +1,7 @@
 import type { ActionContract } from '@sc/schema';
 import { parseMaybeJsonRecord } from './contractRuntime';
 
-export function resolveContractViewMode(contract: ActionContract | null, fallback = 'tree') {
+export function resolveContractViewMode(contract: ActionContract | null, fallback = '') {
   const headMode = String(contract?.head?.view_type || '').trim();
   if (headMode) return headMode;
   const rootMode = String(contract?.view_type || '').trim();
@@ -20,4 +20,3 @@ export function resolveContractReadRight(contract: ActionContract | null) {
 export function parseContractContextRaw(raw: unknown) {
   return parseMaybeJsonRecord(raw);
 }
-

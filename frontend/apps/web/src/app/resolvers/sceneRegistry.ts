@@ -1,4 +1,3 @@
-import { SCENES } from '../../config/scenes';
 import { validateSceneRegistry } from './sceneRegistryCore';
 
 export interface SceneTarget {
@@ -142,14 +141,14 @@ function buildSceneRegistry(source: Scene[]) {
   return sceneRegistry;
 }
 
-buildSceneRegistry(SCENES as Scene[]);
+buildSceneRegistry([]);
 
 export function getSceneRegistryDiagnostics() {
   return { errors };
 }
 
 export function setSceneRegistry(scenes?: Scene[] | null) {
-  const source = Array.isArray(scenes) && scenes.length ? scenes : (SCENES as Scene[]);
+  const source = Array.isArray(scenes) ? scenes : [];
   return buildSceneRegistry(source);
 }
 

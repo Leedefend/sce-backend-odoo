@@ -293,7 +293,7 @@ const contractLimit = ref(40);
 const viewMode = computed(() => {
   if (contractViewType.value === 'kanban') return 'kanban';
   if (contractViewType.value === 'list' || contractViewType.value === 'tree') return 'tree';
-  return (actionMeta.value?.view_modes?.[0] ?? 'tree').toString();
+  return '';
 });
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
@@ -443,17 +443,12 @@ function resolveCarryQuery() {
   };
 }
 
-function resolveActionViewType(meta: unknown, contract: unknown) {
+function resolveActionViewType(_meta: unknown, contract: unknown) {
   const typedContract = contract as ActionContractLoose;
   const fromHead = String(typedContract.head?.view_type || '').trim();
   if (fromHead) return fromHead;
   const fromContract = String(typedContract.view_type || '').trim();
   if (fromContract) return fromContract;
-  const metaModes = (meta as { view_modes?: unknown })?.view_modes;
-  if (Array.isArray(metaModes) && metaModes.length) {
-    const first = String(metaModes[0] || '').trim();
-    if (first) return first;
-  }
   return '';
 }
 
@@ -496,22 +491,9 @@ function applyRoutePreset() {
     changed = true;
   };
 
-  if (preset === 'pending_approval') {
-    appliedPresetLabel.value = '待审批合同';
-    setIfDiff(searchTerm, routeSearch || '审批');
-    setIfDiff(filterValue, 'active');
-  } else if (preset === 'project_intake') {
-    appliedPresetLabel.value = '项目立项';
-    setIfDiff(searchTerm, routeSearch || '立项');
-    setIfDiff(filterValue, 'active');
-  } else if (preset === 'cost_watchlist') {
-    appliedPresetLabel.value = '成本台账关注';
-    setIfDiff(searchTerm, routeSearch || '成本');
-  } else {
-    appliedPresetLabel.value = '';
-    if (routeSearch) {
-      setIfDiff(searchTerm, routeSearch);
-    }
+  appliedPresetLabel.value = '';
+  if (routeSearch) {
+    setIfDiff(searchTerm, routeSearch);
   }
   if (!preset && presetFilter) {
     appliedPresetLabel.value = `契约筛选: ${presetFilter}`;
@@ -660,15 +642,6 @@ function findMenuNode(nodes: NavNode[], menuId?: number): NavNode | null {
   return walk(nodes) || null;
 }
 
-function pickColumns(rows: Array<Record<string, unknown>>) {
-  if (!rows.length) {
-    return ['id', 'name'];
-  }
-  const first = rows[0];
-  const keys = Object.keys(first);
-  return keys.slice(0, 6);
-}
-
 function downloadCsvBase64(filename: string, mimeType: string, contentB64: string) {
   if (!contentB64) return;
   const binary = atob(contentB64);
@@ -752,10 +725,6 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
   if (Array.isArray(schema) && schema.length) {
     return schema.map((col) => col.name).filter(Boolean) as string[];
   }
-  const typedFields = typed.fields;
-  if (typedFields && typeof typedFields === 'object') {
-    return Object.keys(typedFields);
-  }
   return [];
 }
 
@@ -768,17 +737,7 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
       return kanbanBlock.fields;
     }
   }
-  const fieldsMap = typed.fields;
-  if (fieldsMap && typeof fieldsMap === 'object') {
-    const preferred = ['display_name', 'name', 'stage_id', 'user_id', 'partner_id', 'write_date', 'create_date'];
-    const available = Object.keys(fieldsMap);
-    const picked = preferred.filter((field) => available.includes(field));
-    if (picked.length) {
-      return picked;
-    }
-    return available.slice(0, 6);
-  }
-  return ['name', 'id'];
+  return [];
 }
 
 function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
@@ -1099,6 +1058,11 @@ async function load() {
       session.setActionMeta(meta);
     }
     contractViewType.value = resolveContractViewMode(contract as ActionContractLoose, resolveActionViewType(meta, contract));
+    if (!contractViewType.value) {
+      setError(new Error('missing contract view_type'), 'missing contract view_type');
+      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
+      return;
+    }
     const typedContract = contract as ActionContractLoose;
     actionContract.value = typedContract;
     const routeFilter = String(route.query.preset_filter || '').trim();
@@ -1225,6 +1189,16 @@ async function load() {
       viewMode.value === 'kanban'
         ? kanbanContractFields
         : resolveRequestedFields(contractColumns, listProfile.value);
+    if (viewMode.value === 'kanban' && !kanbanContractFields.length) {
+      setError(new Error('missing contract fields for kanban view'), 'missing contract fields for kanban view');
+      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
+      return;
+    }
+    if (viewMode.value === 'tree' && !contractColumns.length) {
+      setError(new Error('missing contract columns for list/tree view'), 'missing contract columns for list/tree view');
+      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
+      return;
+    }
     const result = await listRecordsRaw({
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
@@ -1252,7 +1226,7 @@ async function load() {
         .filter((id): id is number => typeof id === 'number'),
     );
     selectedIds.value = selectedIds.value.filter((id) => currentIds.has(id));
-    columns.value = contractColumns.length ? contractColumns : pickColumns(records.value);
+    columns.value = contractColumns;
     status.value = deriveListStatus({ error: '', recordsLength: records.value.length });
     if (result.meta?.trace_id) {
       traceId.value = String(result.meta.trace_id);

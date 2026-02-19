@@ -108,7 +108,6 @@ function normalizeUniqueFields(items: string[]): string[] {
 }
 
 function extractFieldOrder(contract: ActionContract): string[] {
-  const fields = contract.fields || {};
   const direct = contract.views?.form?.layout || [];
   const ordered: string[] = [];
   for (const node of direct as RawFormLayoutNode[]) {
@@ -137,7 +136,7 @@ function extractFieldOrder(contract: ActionContract): string[] {
 
   const normalized = normalizeUniqueFields(ordered);
   const fallback = Array.isArray(contract.views?.form?.fields) ? contract.views?.form?.fields || [] : [];
-  const merged = normalizeUniqueFields([...normalized, ...fallback, ...Object.keys(fields)]);
+  const merged = normalizeUniqueFields([...normalized, ...fallback]);
   return merged;
 }
 
@@ -164,7 +163,27 @@ function buildLayout(contract: ActionContract, fieldNames: string[]): ViewContra
 
 export function buildRecordRuntimeFromContract(contract: ActionContract): RecordRuntimeContract {
   const fields = contract.fields || {};
+  const hasFormLayout = Array.isArray(contract.views?.form?.layout) && (contract.views?.form?.layout?.length || 0) > 0;
+  const hasFormFields = Array.isArray(contract.views?.form?.fields) && (contract.views?.form?.fields?.length || 0) > 0;
+  if (!hasFormLayout && !hasFormFields) {
+    return {
+      view: null,
+      fieldNames: [],
+      headerButtons: [],
+      statButtons: [],
+      rights: resolveRights(contract),
+    };
+  }
   const fieldNames = extractFieldOrder(contract);
+  if (!fieldNames.length) {
+    return {
+      view: null,
+      fieldNames: [],
+      headerButtons: [],
+      statButtons: [],
+      rights: resolveRights(contract),
+    };
+  }
 
   const view: ViewContract = {
     model: String(contract.head?.model || contract.model || ''),
