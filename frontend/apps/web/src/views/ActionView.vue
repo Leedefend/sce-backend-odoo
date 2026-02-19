@@ -90,6 +90,7 @@ import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
+import { parseContractContextRaw, resolveContractReadRight, resolveContractViewMode } from '../app/contractActionRuntime';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import type { NavNode } from '@sc/schema';
@@ -369,13 +370,15 @@ function clearRoutePreset() {
 }
 
 function mergeContext(base: Record<string, unknown> | string | undefined) {
+  const routeContextRaw = String(route.query.context_raw || '').trim();
+  const routeContext = parseContractContextRaw(routeContextRaw);
   if (!base || typeof base === 'string') {
-    return menuId.value ? { menu_id: menuId.value } : {};
+    return menuId.value ? { menu_id: menuId.value, ...routeContext } : routeContext;
   }
   if (!menuId.value) {
-    return base;
+    return { ...base, ...routeContext };
   }
-  return { ...base, menu_id: menuId.value };
+  return { ...base, menu_id: menuId.value, ...routeContext };
 }
 
 function normalizeDomain(domain: unknown) {
@@ -785,10 +788,9 @@ async function load() {
     if (meta) {
       session.setActionMeta(meta);
     }
-    contractViewType.value = resolveActionViewType(meta, contract);
+    contractViewType.value = resolveContractViewMode(contract as ActionContractLoose, resolveActionViewType(meta, contract));
     const typedContract = contract as ActionContractLoose;
-    const read = typedContract.permissions?.effective?.rights?.read;
-    contractReadAllowed.value = typeof read === 'boolean' ? read : true;
+    contractReadAllowed.value = resolveContractReadRight(typedContract);
     contractWarningCount.value = Array.isArray(typedContract.warnings) ? typedContract.warnings.length : 0;
     contractDegraded.value = Boolean(typedContract.degraded);
     if (!contractReadAllowed.value) {
