@@ -306,14 +306,7 @@ export const useSessionStore = defineStore('session', {
         ...(result.meta ?? {}),
         nav_meta: (result as AppInitResponse & { nav_meta?: unknown }).nav_meta ?? null,
       } as AppInitResponse['meta'];
-      const candidates = [
-        result.nav,
-        // tolerate legacy/misaligned keys during bootstrap
-        (result as AppInitResponse & { menuTree?: NavNode[] }).menuTree,
-        (result as AppInitResponse & { menu_tree?: NavNode[] }).menu_tree,
-        (result as AppInitResponse & { menus?: NavNode[] }).menus,
-        (result as AppInitResponse & { sections?: NavNode[] }).sections,
-      ];
+      const candidates = [result.nav];
       if (debugIntent) {
         console.info('[debug] app.init candidates:', candidates.map(c => ({
           type: typeof c,
@@ -321,7 +314,12 @@ export const useSessionStore = defineStore('session', {
           length: Array.isArray(c) ? c.length : 'N/A'
         })));
       }
-      const nav = (candidates.find((entry) => Array.isArray(entry)) ?? []) as NavNode[];
+      const nav = (candidates.find((entry) => Array.isArray(entry)) ?? null) as NavNode[] | null;
+      if (!nav) {
+        this.initError = 'app.init missing required nav contract';
+        this.initStatus = 'error';
+        throw new Error('app.init missing required nav contract');
+      }
       if (debugIntent) {
         // eslint-disable-next-line no-console
         console.info('[debug] app.init nav length', nav.length);
@@ -334,38 +332,9 @@ export const useSessionStore = defineStore('session', {
       const menuTreeWithKeys = nav.map((item, index) => addKeys(item, index));
       this.menuTree = menuTreeWithKeys;
       this.menuExpandedKeys = filterExpandedKeys(this.menuTree, this.menuExpandedKeys);
-      if (!this.menuTree.length) {
-        await this.loadNavFallback();
-      }
       this.isReady = true;
       this.initStatus = 'ready';
       this.persist();
-    },
-    async loadNavFallback() {
-      const debugIntent =
-        import.meta.env.DEV ||
-        localStorage.getItem('DEBUG_INTENT') === '1' ||
-        new URLSearchParams(window.location.search).get('debug') === '1';
-      try {
-        const result = await intentRequest<{ nav?: NavNode[] }>({
-          intent: 'ui.contract',
-          params: { op: 'nav', root_xmlid: 'smart_construction_core.menu_sc_root' },
-        });
-        const nav = result.nav ?? [];
-        if (debugIntent) {
-          // eslint-disable-next-line no-console
-          console.info('[debug] ui.contract nav length', nav.length);
-        }
-        if (nav.length) {
-          this.menuTree = nav;
-          this.persist();
-        }
-      } catch (err) {
-        if (debugIntent) {
-          // eslint-disable-next-line no-console
-          console.warn('[debug] ui.contract nav failed', err);
-        }
-      }
     },
     async ensureReady() {
       if (this.isReady) {
