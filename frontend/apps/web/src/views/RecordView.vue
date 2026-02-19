@@ -185,7 +185,7 @@ import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPo
 import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 import { pickContractNavQuery } from '../app/navigationContext';
-import type { NavNode, NavMeta } from '@sc/schema';
+import { resolveActionIdFromContext } from '../app/actionContext';
 
 const route = useRoute();
 const router = useRouter();
@@ -229,10 +229,8 @@ const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
 const subtitle = computed(() => (status.value === 'editing' ? 'Editing contract fields' : 'Record details'));
 const canEdit = computed(() => contractWriteAllowed.value);
 const actionContext = computed(() => {
-  const raw = route.query.action_id;
-  const current = Array.isArray(raw) ? raw[0] : raw;
-  const parsed = Number(current || 0);
-  if (Number.isFinite(parsed) && parsed > 0) return { id: parsed, source: 'query' as const };
+  const fromQuery = Number(route.query.action_id || 0);
+  if (Number.isFinite(fromQuery) && fromQuery > 0) return { id: fromQuery, source: 'query' as const };
   const fromCurrent = Number(session.currentAction?.action_id || 0);
   if (Number.isFinite(fromCurrent) && fromCurrent > 0) {
     const currentModel = String(session.currentAction?.model || '').trim();
@@ -240,10 +238,15 @@ const actionContext = computed(() => {
       return { id: fromCurrent, source: 'current_action' as const };
     }
   }
-  const fromMenu = findRecordActionIdByModel(session.menuTree, model.value);
-  if (fromMenu) {
-    return { id: fromMenu, source: 'menu_tree' as const };
-  }
+  const resolved = resolveActionIdFromContext({
+    routeQuery: route.query as Record<string, unknown>,
+    currentActionId: session.currentAction?.action_id,
+    currentActionModel: session.currentAction?.model,
+    menuTree: session.menuTree,
+    model: model.value,
+    preferredMode: 'form',
+  });
+  if (resolved) return { id: resolved, source: 'menu_tree' as const };
   return { id: null, source: 'none' as const };
 });
 const actionId = computed(() => actionContext.value.id);
@@ -331,27 +334,6 @@ const hudEntries = computed(() => [
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
-}
-
-function findRecordActionIdByModel(nodes: NavNode[], targetModel: string): number | null {
-  if (!targetModel) return null;
-  const stack = [...nodes];
-  while (stack.length) {
-    const node = stack.shift();
-    if (!node) continue;
-    const meta = (node.meta || {}) as NavMeta;
-    const modelName = String(meta.model || '').trim();
-    const actionId = Number(meta.action_id || 0);
-    const modes = Array.isArray(meta.view_modes) ? meta.view_modes.map((item) => String(item || '').toLowerCase()) : [];
-    const includesForm = modes.includes('form');
-    if (modelName === targetModel && Number.isFinite(actionId) && actionId > 0 && (includesForm || !modes.length)) {
-      return actionId;
-    }
-    if (Array.isArray(node.children) && node.children.length) {
-      stack.push(...node.children);
-    }
-  }
-  return null;
 }
 
 function buttonState(btn: ViewButton) {

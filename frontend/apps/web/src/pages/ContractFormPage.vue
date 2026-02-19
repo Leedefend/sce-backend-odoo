@@ -151,7 +151,7 @@ import { isHudEnabled } from '../config/debug';
 import { loadActionContractRaw } from '../api/contract';
 import { createRecord, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
-import type { ActionContract, FieldDescriptor, NavNode, NavMeta } from '@sc/schema';
+import type { ActionContract, FieldDescriptor } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
 import {
   detectObjectMethodFromActionKey,
@@ -160,6 +160,8 @@ import {
   toPositiveInt,
 } from '../app/contractRuntime';
 import { validateContractFormData } from '../app/contractValidation';
+import { resolveActionIdFromContext } from '../app/actionContext';
+import { pickContractNavQuery } from '../app/navigationContext';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -206,18 +208,14 @@ const formData = reactive<Record<string, unknown>>({});
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
-  const raw = route.query.action_id;
-  const current = Array.isArray(raw) ? raw[0] : raw;
-  const parsed = Number(current || 0);
-  if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  const fallback = Number(session.currentAction?.action_id || 0);
-  if (Number.isFinite(fallback) && fallback > 0) {
-    const currentModel = String(session.currentAction?.model || '').trim();
-    if (!currentModel || currentModel === model.value) {
-      return fallback;
-    }
-  }
-  return findFormActionIdByModel(session.menuTree, model.value);
+  return resolveActionIdFromContext({
+    routeQuery: route.query as Record<string, unknown>,
+    currentActionId: session.currentAction?.action_id,
+    currentActionModel: session.currentAction?.model,
+    menuTree: session.menuTree,
+    model: model.value,
+    preferredMode: 'form',
+  });
 });
 const recordId = computed(() => {
   const raw = String(route.params.id || '').trim();
@@ -526,27 +524,6 @@ function resolveNavigationUrl(url: string) {
   return raw;
 }
 
-function findFormActionIdByModel(nodes: NavNode[], targetModel: string): number | null {
-  if (!targetModel) return null;
-  const stack = [...nodes];
-  while (stack.length) {
-    const node = stack.shift();
-    if (!node) continue;
-    const meta = (node.meta || {}) as NavMeta;
-    const modelName = String(meta.model || '').trim();
-    const actionId = Number(meta.action_id || 0);
-    const modes = Array.isArray(meta.view_modes) ? meta.view_modes.map((item) => String(item || '').toLowerCase()) : [];
-    const includesForm = modes.includes('form');
-    if (modelName === targetModel && Number.isFinite(actionId) && actionId > 0 && (includesForm || !modes.length)) {
-      return actionId;
-    }
-    if (Array.isArray(node.children) && node.children.length) {
-      stack.push(...node.children);
-    }
-  }
-  return null;
-}
-
 const hudEntries = computed(() => [
   { label: 'model', value: model.value || '-' },
   { label: 'action_id', value: actionId.value || '-' },
@@ -642,12 +619,11 @@ async function runAction(action: ContractAction) {
       await router.push({
         name: 'action',
         params: { actionId: String(action.actionId) },
-        query: {
-          ...route.query,
+        query: pickContractNavQuery(route.query as Record<string, unknown>, {
           action_id: action.actionId,
           target: action.target || undefined,
           domain_raw: action.domainRaw || undefined,
-        },
+        }),
       });
       return;
     }
@@ -684,10 +660,7 @@ async function runAction(action: ContractAction) {
         await router.push({
           name: 'action',
           params: { actionId: String(nextActionId) },
-          query: {
-            ...route.query,
-            action_id: nextActionId,
-          },
+          query: pickContractNavQuery(route.query as Record<string, unknown>, { action_id: nextActionId }),
         });
       }
     } catch (err) {
@@ -706,13 +679,12 @@ async function openFilter(filterKey: string) {
   await router.push({
     name: 'action',
     params: { actionId: String(actionId.value) },
-    query: {
-      ...route.query,
+    query: pickContractNavQuery(route.query as Record<string, unknown>, {
       action_id: actionId.value,
       preset_filter: filterKey,
       domain_raw: selected?.domainRaw || undefined,
       context_raw: selected?.contextRaw || undefined,
-    },
+    }),
   });
 }
 
@@ -759,7 +731,7 @@ async function saveRecord() {
       await router.replace({
         name: 'model-form',
         params: { model: model.value, id: String(created.id) },
-        query: { ...route.query },
+        query: pickContractNavQuery(route.query as Record<string, unknown>),
       });
       return;
     }
