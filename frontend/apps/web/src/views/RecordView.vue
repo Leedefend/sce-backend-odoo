@@ -314,6 +314,21 @@ const hudEntries = computed(() => [
   { label: 'route', value: route.fullPath },
 ]);
 
+function resolveCarryQuery(extra?: Record<string, unknown>) {
+  const source = route.query as Record<string, unknown>;
+  const out: Record<string, unknown> = {
+    menu_id: source.menu_id,
+    action_id: source.action_id,
+  };
+  const keys = ['hud', 'scene', 'scene_key', 'context_raw', 'preset', 'preset_filter', 'search', 'ctx_source'];
+  keys.forEach((key) => {
+    if (source[key] !== undefined) {
+      out[key] = source[key];
+    }
+  });
+  return { ...out, ...(extra || {}) };
+}
+
 function buttonState(btn: ViewButton) {
   return evaluateCapabilityPolicy({
     source: btn,
@@ -652,8 +667,7 @@ async function runHeaderButton(btn: ViewButton) {
       await router.push({
         name: 'action',
         params: { actionId: openActionId },
-        query: {
-          menu_id: route.query.menu_id,
+        query: resolveCarryQuery({
           action_id: openActionId,
           target: enriched.actionTarget || undefined,
           domain_raw: enriched.domainRaw || undefined,
@@ -661,7 +675,7 @@ async function runHeaderButton(btn: ViewButton) {
             enriched.buttonContext && Object.keys(enriched.buttonContext).length
               ? JSON.stringify(enriched.buttonContext)
               : undefined,
-        },
+        }),
       });
     }
     return;
@@ -717,11 +731,19 @@ async function applyButtonEffect(effect: { type: string; target?: Record<string,
   if (effect.type === 'navigate' && effect.target) {
     const target = effect.target as { kind?: string; model?: string; id?: number; action_id?: number; url?: string };
     if (target.kind === 'record' && target.model && target.id) {
-      await router.push({ name: 'record', params: { model: target.model, id: target.id } });
+      await router.push({
+        name: 'record',
+        params: { model: target.model, id: target.id },
+        query: resolveCarryQuery(),
+      });
       return;
     }
     if (target.kind === 'action' && target.action_id) {
-      await router.push({ name: 'action', params: { actionId: target.action_id } });
+      await router.push({
+        name: 'action',
+        params: { actionId: target.action_id },
+        query: resolveCarryQuery({ action_id: target.action_id }),
+      });
       return;
     }
     if (target.kind === 'url' && target.url) {
