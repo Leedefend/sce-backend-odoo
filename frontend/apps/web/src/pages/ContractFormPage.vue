@@ -17,7 +17,7 @@
         >
           {{ action.label }}
         </button>
-        <button class="primary" :disabled="busy || !canSave" @click="saveRecord">
+        <button class="primary" :disabled="busy || !canSave || (Boolean(recordId) && !hasChanges)" @click="saveRecord">
           {{ busy && busyKind === 'save' ? 'Saving...' : 'Save' }}
         </button>
         <button class="ghost" :disabled="busy || !contract" @click="copyContractJson">Copy Contract</button>
@@ -82,8 +82,15 @@
               <FieldValue :value="formData[node.name]" :field="node.descriptor" />
             </template>
             <template v-else>
+              <input
+                v-if="node.descriptor?.ttype === 'boolean'"
+                :checked="Boolean(formData[node.name])"
+                class="input-checkbox"
+                type="checkbox"
+                @change="setBooleanField(node.name, ($event.target as HTMLInputElement).checked)"
+              />
               <select
-                v-if="node.descriptor?.ttype === 'selection'"
+                v-else-if="node.descriptor?.ttype === 'selection'"
                 v-model="formData[node.name]"
                 class="input"
               >
@@ -91,6 +98,13 @@
                   {{ option[1] }}
                 </option>
               </select>
+              <input
+                v-else-if="node.descriptor?.ttype === 'many2one'"
+                :value="displayMany2oneValue(node.name)"
+                class="input"
+                type="text"
+                @input="setMany2oneField(node.name, ($event.target as HTMLInputElement).value)"
+              />
               <input
                 v-else
                 v-model="formData[node.name]"
@@ -186,6 +200,7 @@ const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
 const activeFilterKey = ref('');
+const originalValues = ref<Record<string, unknown>>({});
 const formData = reactive<Record<string, unknown>>({});
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
@@ -226,6 +241,13 @@ const rights = computed(() => {
 });
 
 const canSave = computed(() => (recordId.value ? rights.value.write : rights.value.create));
+const hasChanges = computed(() => {
+  const keys = Object.keys(formData);
+  return keys.some((key) => {
+    if (!isFieldWritable(key)) return false;
+    return normalizeComparable(formData[key]) !== normalizeComparable(originalValues.value[key]);
+  });
+});
 
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
@@ -405,6 +427,76 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   return nodes;
 });
 
+function normalizeComparable(value: unknown) {
+  if (Array.isArray(value)) return JSON.stringify(value);
+  if (value && typeof value === 'object') return JSON.stringify(value);
+  return String(value ?? '');
+}
+
+function isFieldWritable(name: string) {
+  const node = layoutNodes.value.find((item) => item.kind === 'field' && item.name === name);
+  return Boolean(node && !node.readonly);
+}
+
+function parseNumeric(text: unknown) {
+  const raw = String(text ?? '').trim();
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeFieldValue(name: string, value: unknown) {
+  const descriptor = contract.value?.fields?.[name];
+  const ttype = String(descriptor?.ttype || descriptor?.type || '').toLowerCase();
+  if (ttype === 'boolean') {
+    return Boolean(value);
+  }
+  if (ttype === 'integer') {
+    const parsed = parseNumeric(value);
+    return parsed === null ? false : Math.trunc(parsed);
+  }
+  if (ttype === 'float' || ttype === 'monetary') {
+    const parsed = parseNumeric(value);
+    return parsed === null ? false : parsed;
+  }
+  if (ttype === 'many2one') {
+    if (Array.isArray(value) && typeof value[0] === 'number') return value[0];
+    if (typeof value === 'number') return value;
+    const parsed = parseNumeric(value);
+    return parsed === null ? false : Math.trunc(parsed);
+  }
+  if (ttype === 'date' || ttype === 'datetime' || ttype === 'char' || ttype === 'text' || ttype === 'html') {
+    return String(value ?? '');
+  }
+  return value;
+}
+
+function setBooleanField(name: string, checked: boolean) {
+  formData[name] = checked;
+}
+
+function setMany2oneField(name: string, text: string) {
+  const parsed = parseNumeric(text);
+  formData[name] = parsed === null ? false : Math.trunc(parsed);
+}
+
+function displayMany2oneValue(name: string) {
+  const value = formData[name];
+  if (Array.isArray(value)) {
+    return String(value[0] ?? '');
+  }
+  return String(value ?? '');
+}
+
+function collectWritableValues() {
+  return layoutNodes.value
+    .filter((node) => node.kind === 'field' && !node.readonly)
+    .reduce<Record<string, unknown>>((acc, node) => {
+      acc[node.name] = normalizeFieldValue(node.name, formData[node.name]);
+      return acc;
+    }, {});
+}
+
 function fieldInputType(ttype?: string) {
   if (ttype === 'integer' || ttype === 'float' || ttype === 'monetary') return 'number';
   if (ttype === 'date') return 'date';
@@ -438,6 +530,9 @@ async function loadContract() {
 
 async function loadRecord() {
   const fieldNames = Object.keys(contract.value?.fields || {});
+  Object.keys(formData).forEach((key) => {
+    delete formData[key];
+  });
   if (!recordId.value) {
     const context = contract.value?.head?.context;
     const defaults: Record<string, unknown> = {};
@@ -460,6 +555,10 @@ async function loadRecord() {
     fieldNames.forEach((name) => {
       formData[name] = name in defaults ? defaults[name] : '';
     });
+    originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
+      acc[name] = normalizeFieldValue(name, formData[name]);
+      return acc;
+    }, {});
     return;
   }
   const read = await readRecord({
@@ -471,6 +570,10 @@ async function loadRecord() {
   fieldNames.forEach((name) => {
     formData[name] = row[name] ?? '';
   });
+  originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
+    acc[name] = normalizeFieldValue(name, formData[name]);
+    return acc;
+  }, {});
 }
 
 async function reload() {
@@ -489,17 +592,22 @@ async function reload() {
 
 async function runAction(action: ContractAction) {
   if (!action.enabled) return;
-  if (action.kind === 'open' && action.actionId) {
-    await router.push({
-      name: 'action',
-      params: { actionId: String(action.actionId) },
-      query: {
-        ...route.query,
-        action_id: action.actionId,
-        target: action.target || undefined,
-        domain_raw: action.domainRaw || undefined,
-      },
-    });
+  if (action.kind === 'open') {
+    if (action.actionId) {
+      await router.push({
+        name: 'action',
+        params: { actionId: String(action.actionId) },
+        query: {
+          ...route.query,
+          action_id: action.actionId,
+          target: action.target || undefined,
+          domain_raw: action.domainRaw || undefined,
+        },
+      });
+      return;
+    }
+    errorMessage.value = 'contract open action missing action_id';
+    status.value = 'error';
     return;
   }
   if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
@@ -508,17 +616,33 @@ async function runAction(action: ContractAction) {
       const response = await executeButton({
         model: action.targetModel || model.value,
         res_id: recordId.value,
-        button: { name: action.methodName, type: 'object' },
+        button: { name: action.methodName, type: action.kind === 'server' ? 'server' : 'object' },
         context: action.context,
         meta: {
           menu_id: Number(route.query.menu_id || 0) || undefined,
           action_id: actionId.value || undefined,
         },
       });
-      const refresh = response?.result && typeof response.result === 'object' ? (response.result as Record<string, unknown>).type : '';
+      const result = response?.result && typeof response.result === 'object' ? (response.result as Record<string, unknown>) : {};
+      const refresh = result.type;
       if (refresh === 'refresh') {
         await reload();
+        return;
       }
+      const nextActionId = toPositiveInt(result.action_id);
+      if (nextActionId) {
+        await router.push({
+          name: 'action',
+          params: { actionId: String(nextActionId) },
+          query: {
+            ...route.query,
+            action_id: nextActionId,
+          },
+        });
+      }
+    } catch (err) {
+      errorMessage.value = err instanceof Error ? err.message : 'action execute failed';
+      status.value = 'error';
     } finally {
       busyKind.value = null;
     }
@@ -545,12 +669,7 @@ async function openFilter(filterKey: string) {
 async function saveRecord() {
   if (!canSave.value || !model.value) return;
   validationErrors.value = [];
-  const editableMap: Record<string, unknown> = {};
-  layoutNodes.value
-    .filter((node) => node.kind === 'field' && !node.readonly)
-    .forEach((node) => {
-      editableMap[node.name] = formData[node.name];
-    });
+  const editableMap = collectWritableValues();
   const labels = layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
     if (node.kind === 'field') acc[node.name] = node.label || node.name;
     return acc;
@@ -566,12 +685,20 @@ async function saveRecord() {
   }
   busyKind.value = 'save';
   try {
-    const values: Record<string, unknown> = {};
-    layoutNodes.value
-      .filter((node) => node.kind === 'field' && !node.readonly)
-      .forEach((node) => {
-        values[node.name] = formData[node.name];
-      });
+    const values = Object.entries(editableMap).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      if (!recordId.value) {
+        acc[key] = value;
+        return acc;
+      }
+      if (normalizeComparable(value) !== normalizeComparable(originalValues.value[key])) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+    if (recordId.value && !Object.keys(values).length) {
+      busyKind.value = null;
+      return;
+    }
     if (recordId.value) {
       await writeRecord({ model: model.value, ids: [recordId.value], vals: values });
       await reload();
@@ -753,6 +880,11 @@ reload();
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 8px 10px;
+}
+
+.input-checkbox {
+  width: 18px;
+  height: 18px;
 }
 
 .ghost,
