@@ -175,6 +175,7 @@ const props = defineProps<{
   subtitle: string;
   statusLabel: string;
   listProfile?: SceneListProfile | null;
+  columnLabels?: Record<string, string>;
   onFilter: (value: 'all' | 'active' | 'archived') => void;
   selectedIds?: number[];
   onToggleSelection?: (id: number, selected: boolean) => void;
@@ -342,6 +343,7 @@ const hiddenColumns = computed(() => {
 });
 const preferredColumns = computed(() => props.listProfile?.columns || []);
 const columnLabels = computed(() => props.listProfile?.column_labels || {});
+const contractColumnLabels = computed(() => props.columnLabels || {});
 const displayedColumns = computed(() => {
   const source = preferredColumns.value.length ? preferredColumns.value : props.columns;
   const filtered = source.filter((col) => !hiddenColumns.value[col]);
@@ -349,7 +351,7 @@ const displayedColumns = computed(() => {
 });
 
 function columnLabel(col: string) {
-  return columnLabels.value[col] || col;
+  return columnLabels.value[col] || contractColumnLabels.value[col] || col;
 }
 
 </script>
