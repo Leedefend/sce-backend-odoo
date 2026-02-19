@@ -144,6 +144,10 @@ type ContractAction = {
   level: string;
   actionId: number | null;
   methodName: string;
+  targetModel: string;
+  context: Record<string, unknown>;
+  domainRaw: string;
+  target: string;
   enabled: boolean;
   hint: string;
 };
@@ -287,6 +291,10 @@ const contractActions = computed<ContractAction[]>(() => {
     const level = String(row.level || 'body').trim().toLowerCase();
     const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
     const methodName = detectMethodName(key, String(payload.method || '').trim());
+    const targetModel = String(row.target_model || row.model || model.value || '').trim();
+    const context = parseMaybeJsonRecord(payload.context_raw);
+    const domainRaw = String(payload.domain_raw || '').trim();
+    const target = String(payload.target || '').trim();
     const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
     const byGroup = hasGroupAccess(groups);
     const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
@@ -298,6 +306,10 @@ const contractActions = computed<ContractAction[]>(() => {
       level,
       actionId,
       methodName,
+      targetModel,
+      context,
+      domainRaw,
+      target,
       enabled,
       hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
     });
@@ -453,6 +465,8 @@ async function runAction(action: ContractAction) {
       query: {
         ...route.query,
         action_id: action.actionId,
+        target: action.target || undefined,
+        domain_raw: action.domainRaw || undefined,
       },
     });
     return;
@@ -461,10 +475,10 @@ async function runAction(action: ContractAction) {
     busyKind.value = 'action';
     try {
       const response = await executeButton({
-        model: model.value,
+        model: action.targetModel || model.value,
         res_id: recordId.value,
         button: { name: action.methodName, type: 'object' },
-        context: {},
+        context: action.context,
         meta: {
           menu_id: Number(route.query.menu_id || 0) || undefined,
           action_id: actionId.value || undefined,
