@@ -122,6 +122,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - behavior/interaction changes should be driven by contract payload changes (no per-scene hardcoded UI branches)
     - list/kanban must consume contract field labels, search filters, and toolbar/button actions as runtime behavior source
     - form save must normalize payload by contract field types and submit diff-only writable fields
+    - legacy model pages (`ModelFormPage`/`ModelListPage`) should only act as compatibility shells and must delegate to contract-driven runtime
 - Backend evidence & observability expansion (Phase Next):
   - `make verify.load_view.access.contract.guard`
     - artifact: `/mnt/artifacts/backend/load_view_access_contract_guard.json` (fallback: `artifacts/backend/load_view_access_contract_guard.json`)
