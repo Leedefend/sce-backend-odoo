@@ -737,17 +737,7 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
       return kanbanBlock.fields;
     }
   }
-  const fieldsMap = typed.fields;
-  if (fieldsMap && typeof fieldsMap === 'object') {
-    const preferred = ['display_name', 'name', 'stage_id', 'user_id', 'partner_id', 'write_date', 'create_date'];
-    const available = Object.keys(fieldsMap);
-    const picked = preferred.filter((field) => available.includes(field));
-    if (picked.length) {
-      return picked;
-    }
-    return available.slice(0, 6);
-  }
-  return ['name', 'id'];
+  return [];
 }
 
 function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
@@ -1199,6 +1189,11 @@ async function load() {
       viewMode.value === 'kanban'
         ? kanbanContractFields
         : resolveRequestedFields(contractColumns, listProfile.value);
+    if (viewMode.value === 'kanban' && !kanbanContractFields.length) {
+      setError(new Error('missing contract fields for kanban view'), 'missing contract fields for kanban view');
+      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
+      return;
+    }
     if (viewMode.value === 'tree' && !contractColumns.length) {
       setError(new Error('missing contract columns for list/tree view'), 'missing contract columns for list/tree view');
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
