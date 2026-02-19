@@ -429,7 +429,7 @@ async function load() {
     }
     layoutStats.value = analyzeLayout(layout);
 
-    const fieldNames = contractFieldNames.length ? contractFieldNames : extractFieldNames(layout).filter(Boolean);
+    const fieldNames = contractFieldNames.length ? contractFieldNames : Object.keys(view?.fields || {}).filter(Boolean);
     const readFields = fieldNames.length ? [...fieldNames] : ['*'];
     if (readFields.length && readFields[0] !== '*' && !readFields.includes('write_date')) {
       readFields.push('write_date');
