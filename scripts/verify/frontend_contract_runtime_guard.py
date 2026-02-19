@@ -19,6 +19,10 @@ PATTERNS = [
     "config/scenesCore",
     "config/scenes'",
     'config/scenes"',
+    "path: '/projects'",
+    "path: '/projects/:id'",
+    "appendQuery('/projects'",
+    "appendQuery(`/projects/",
 ]
 
 
