@@ -133,6 +133,7 @@ import {
   parseMaybeJsonRecord,
   toPositiveInt,
 } from '../app/contractRuntime';
+import { validateContractFormData } from '../app/contractValidation';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -510,16 +511,23 @@ async function openFilter(filterKey: string) {
 async function saveRecord() {
   if (!canSave.value || !model.value) return;
   validationErrors.value = [];
-  const missingRequired = layoutNodes.value
-    .filter((node) => node.kind === 'field' && node.required && !node.readonly)
-    .filter((node) => {
-      const value = formData[node.name];
-      if (Array.isArray(value)) return value.length === 0;
-      return value === undefined || value === null || String(value).trim() === '';
-    })
-    .map((node) => node.label || node.name);
-  if (missingRequired.length) {
-    validationErrors.value = [`必填项未填写: ${missingRequired.join('、')}`];
+  const editableMap: Record<string, unknown> = {};
+  layoutNodes.value
+    .filter((node) => node.kind === 'field' && !node.readonly)
+    .forEach((node) => {
+      editableMap[node.name] = formData[node.name];
+    });
+  const labels = layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
+    if (node.kind === 'field') acc[node.name] = node.label || node.name;
+    return acc;
+  }, {});
+  const issues = validateContractFormData({
+    contract: contract.value,
+    fieldLabels: labels,
+    values: editableMap,
+  });
+  if (issues.length) {
+    validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
     return;
   }
   busyKind.value = 'save';
