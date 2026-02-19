@@ -211,11 +211,6 @@ async function resolveScene() {
     return;
   }
 
-  const menuHint = Number(route.query.menu_id || 0) || undefined;
-  if (menuHint) {
-    await router.replace({ path: `/m/${menuHint}`, query: workspaceContextQuery });
-    return;
-  }
   const sceneNode = findActionNodeBySceneKey(session.menuTree, sceneKey);
   if (sceneNode?.meta?.action_id) {
     await router.replace({
