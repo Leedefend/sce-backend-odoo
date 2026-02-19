@@ -38,7 +38,16 @@
       <section v-if="workflowTransitions.length" class="block">
         <h3>Workflow</h3>
         <div class="chips">
-          <span v-for="item in workflowTransitions" :key="item.key" class="chip" :title="item.notes || ''">{{ item.label }}</span>
+          <button
+            v-for="item in workflowTransitions"
+            :key="item.key"
+            class="chip-btn"
+            :disabled="busy || !item.action"
+            :title="item.notes || ''"
+            @click="item.action && runAction(item.action)"
+          >
+            {{ item.label }}
+          </button>
         </div>
       </section>
 
@@ -245,11 +254,23 @@ const warnings = computed(() => {
 const workflowTransitions = computed(() => {
   const rows = contract.value?.workflow?.transitions;
   if (!Array.isArray(rows)) return [];
-  return rows.map((row, idx) => ({
-    key: `wf_${idx}`,
-    label: String(row.trigger?.label || row.trigger?.name || `transition_${idx + 1}`),
-    notes: String(row.notes || ''),
-  }));
+  return rows.map((row, idx) => {
+    const triggerLabel = String(row.trigger?.label || '').trim();
+    const triggerName = String(row.trigger?.name || '').trim();
+    const triggerKind = String(row.trigger?.kind || '').trim().toLowerCase();
+    const action = contractActions.value.find((item) => {
+      if (triggerKind && item.kind && item.kind !== triggerKind) return false;
+      if (triggerName && (item.methodName === triggerName || item.key.includes(triggerName))) return true;
+      if (triggerLabel && item.label === triggerLabel) return true;
+      return false;
+    }) || null;
+    return {
+      key: `wf_${idx}`,
+      label: triggerLabel || triggerName || `transition_${idx + 1}`,
+      notes: String(row.notes || ''),
+      action,
+    };
+  });
 });
 
 const searchFilters = computed(() => {
