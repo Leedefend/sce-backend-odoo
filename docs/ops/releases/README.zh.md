@@ -20,6 +20,12 @@ status: active
 ## 当前评审基线
 - 菜单场景覆盖证据：
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
+- 前端契约驱动表单运行时（契约是唯一渲染依据）：
+  - `make verify.frontend.typecheck.strict`
+  - `make verify.frontend.build`
+  - 发布检查：
+    - `/f/:model/:id` 必须由 `ui.contract`（`head/views/fields/buttons/toolbar/permissions/workflow/search`）驱动渲染，不以 `load_view` 作为主来源
+    - 功能变化应通过契约内容调整实现，不再新增按场景硬编码前端分支
 - 后端证据与可观测扩展（Phase Next）：
   - `make verify.load_view.access.contract.guard`
     - 产物：`/mnt/artifacts/backend/load_view_access_contract_guard.json`（不可写时回落 `artifacts/backend/load_view_access_contract_guard.json`）
