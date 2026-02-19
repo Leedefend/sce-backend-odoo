@@ -27,7 +27,7 @@ onMounted(() => {
   router
     .replace({
       name: 'workbench',
-      query: { reason: ErrorCodes.ACT_UNSUPPORTED_TYPE, diag: 'legacy_route_missing_action_id' },
+      query: { reason: ErrorCodes.CONTRACT_CONTEXT_MISSING, diag: 'legacy_route_missing_action_id' },
     })
     .catch(() => {});
 });
