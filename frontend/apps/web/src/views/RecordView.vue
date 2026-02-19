@@ -83,23 +83,36 @@
         v-if="renderMode === 'layout_tree'"
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
-        :record="recordData"
+        :record="renderRecord"
         :parent-id="recordId"
         :editing="status === 'editing'"
         :draft-name="draftName"
-        :edit-mode="status === 'editing' ? 'name' : 'none'"
+        :edit-mode="status === 'editing' ? 'all' : 'none'"
         @update:field="handleFieldUpdate"
       />
       <div v-else>
         <div v-for="field in fields" :key="field.name" class="field">
           <span class="label">{{ field.label }}</span>
           <span class="value">
-            <input
-              v-if="status === 'editing' && field.name === 'name'"
-              v-model="draftName"
-              class="input"
-              type="text"
-            />
+            <template v-if="status === 'editing' && canEditField(field.name)">
+              <select
+                v-if="isSelectionField(field.name)"
+                :value="String(resolveDraftValue(field.name))"
+                class="input"
+                @change="updateDraftField(field.name, ($event.target as HTMLSelectElement).value)"
+              >
+                <option v-for="opt in selectionOptions(field.name)" :key="opt[0]" :value="opt[0]">
+                  {{ opt[1] }}
+                </option>
+              </select>
+              <input
+                v-else
+                :value="String(resolveDraftValue(field.name) ?? '')"
+                class="input"
+                :type="fieldInputType(field.name)"
+                @input="updateDraftField(field.name, ($event.target as HTMLInputElement).value)"
+              />
+            </template>
             <FieldValue v-else :value="field.value" :field="field.descriptor" />
           </span>
         </div>
@@ -192,6 +205,7 @@ const chatterUploading = ref(false);
 const chatterUploadError = ref('');
 const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
 const draftName = ref('');
+const draftValues = ref<Record<string, unknown>>({});
 const lastIntent = ref('');
 const lastWriteMode = ref('');
 const lastLatencyMs = ref<number | null>(null);
@@ -211,7 +225,7 @@ const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
 const recordTitle = ref<string | null>(null);
 const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
-const subtitle = computed(() => (status.value === 'editing' ? 'Editing name' : 'Record details'));
+const subtitle = computed(() => (status.value === 'editing' ? 'Editing contract fields' : 'Record details'));
 const canEdit = computed(() => contractWriteAllowed.value);
 const actionId = computed(() => {
   const raw = route.query.action_id;
@@ -238,6 +252,10 @@ const statusTone = computed(() => {
 const errorCopy = computed(() => resolveErrorCopy(error.value, 'Record load failed'));
 const emptyCopy = computed(() => resolveEmptyCopy('record'));
 const renderMode = computed(() => (viewContract.value?.layout ? 'layout_tree' : 'fallback_fields'));
+const renderRecord = computed(() => {
+  if (status.value !== 'editing') return recordData.value;
+  return { ...(recordData.value || {}), ...draftValues.value };
+});
 const headerButtons = computed(() => normalizeButtons(viewContract.value?.layout?.headerButtons ?? []));
 const statButtons = computed(() => normalizeButtons(viewContract.value?.layout?.statButtons ?? []));
 const ribbon = computed(() => {
@@ -315,6 +333,7 @@ async function load() {
   fields.value = [];
   viewContract.value = null;
   recordData.value = null;
+  draftValues.value = {};
   timelineEntries.value = [];
   chatterError.value = '';
   chatterUploadError.value = '';
@@ -386,6 +405,10 @@ async function load() {
       value: (record as Record<string, unknown>)[name],
       descriptor: view?.fields?.[name],
     }));
+    draftValues.value = displayFields.reduce<Record<string, unknown>>((acc, name) => {
+      acc[name] = (record as Record<string, unknown>)[name];
+      return acc;
+    }, {});
     status.value = deriveRecordStatus({ error: '', fieldsLength: fields.value.length });
     draftName.value = String(record?.name ?? '');
     recordTitle.value = String(record?.name ?? '') || null;
@@ -548,10 +571,58 @@ function buttonLabel(btn: ViewButton) {
   return semanticButtonLabel(btn);
 }
 
-function handleFieldUpdate(payload: { name: string; value: string }) {
-  if (payload.name === 'name') {
-    draftName.value = payload.value;
+function canEditField(fieldName: string) {
+  if (!canEdit.value) return false;
+  const descriptor = viewContract.value?.fields?.[fieldName];
+  if (!descriptor) return false;
+  return !descriptor.readonly;
+}
+
+function isSelectionField(fieldName: string) {
+  const descriptor = viewContract.value?.fields?.[fieldName];
+  const ttype = descriptor?.ttype || descriptor?.type;
+  return ttype === 'selection';
+}
+
+function selectionOptions(fieldName: string) {
+  const descriptor = viewContract.value?.fields?.[fieldName];
+  return Array.isArray(descriptor?.selection) ? descriptor.selection : [];
+}
+
+function fieldInputType(fieldName: string) {
+  const descriptor = viewContract.value?.fields?.[fieldName];
+  const ttype = descriptor?.ttype || descriptor?.type;
+  switch (ttype) {
+    case 'integer':
+    case 'float':
+    case 'monetary':
+      return 'number';
+    case 'date':
+      return 'date';
+    case 'datetime':
+      return 'datetime-local';
+    default:
+      return 'text';
   }
+}
+
+function resolveDraftValue(fieldName: string) {
+  if (fieldName in draftValues.value) {
+    return draftValues.value[fieldName];
+  }
+  return recordData.value?.[fieldName];
+}
+
+function updateDraftField(fieldName: string, value: unknown) {
+  draftValues.value = { ...draftValues.value, [fieldName]: value };
+  if (fieldName === 'name') {
+    draftName.value = String(value ?? '');
+  }
+}
+
+function handleFieldUpdate(payload: { name: string; value: string }) {
+  if (!payload.name) return;
+  updateDraftField(payload.name, payload.value);
 }
 
 async function runHeaderButton(btn: ViewButton) {
@@ -657,8 +728,11 @@ function startEdit() {
   if (status.value !== 'ok') {
     return;
   }
-  const nameField = fields.value.find((field) => field.name === 'name');
-  draftName.value = String(nameField?.value ?? '');
+  draftValues.value = fields.value.reduce<Record<string, unknown>>((acc, field) => {
+    acc[field.name] = field.value;
+    return acc;
+  }, {});
+  draftName.value = String(draftValues.value.name ?? '');
   status.value = 'editing';
   editTx.beginEdit();
 }
@@ -667,13 +741,23 @@ function cancelEdit() {
   if (status.value !== 'editing') {
     return;
   }
-  const nameField = fields.value.find((field) => field.name === 'name');
-  draftName.value = String(nameField?.value ?? '');
+  draftValues.value = fields.value.reduce<Record<string, unknown>>((acc, field) => {
+    acc[field.name] = field.value;
+    return acc;
+  }, {});
+  draftName.value = String(draftValues.value.name ?? '');
   status.value = 'ok';
   editTx.cancelEdit();
 }
 
-const isSaveDisabled = computed(() => status.value === 'saving' || !draftName.value.trim());
+const hasDraftChanges = computed(() => {
+  const current = recordData.value || {};
+  return Object.keys(draftValues.value).some((key) => {
+    if (!canEditField(key)) return false;
+    return String(current[key] ?? '') !== String(draftValues.value[key] ?? '');
+  });
+});
+const isSaveDisabled = computed(() => status.value === 'saving' || !hasDraftChanges.value);
 
 async function save() {
   if (status.value !== 'editing') {
@@ -688,11 +772,25 @@ async function save() {
   const startedAt = Date.now();
 
   try {
+    const current = recordData.value || {};
+    const payload = Object.keys(draftValues.value).reduce<Record<string, unknown>>((acc, key) => {
+      if (!canEditField(key)) return acc;
+      const before = current[key];
+      const after = draftValues.value[key];
+      if (String(before ?? '') === String(after ?? '')) return acc;
+      acc[key] = after;
+      return acc;
+    }, {});
+    if (!Object.keys(payload).length) {
+      status.value = 'ok';
+      editTx.cancelEdit();
+      return;
+    }
     const result = await editTx.save(async () => {
       return writeRecordV6Raw({
         model: model.value,
         id: recordId.value,
-        values: { name: draftName.value.trim() },
+        values: payload,
         ifMatch: recordData.value?.write_date ? String(recordData.value?.write_date) : undefined,
       });
     });
