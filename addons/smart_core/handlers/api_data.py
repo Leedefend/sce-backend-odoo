@@ -144,6 +144,23 @@ class ApiDataHandler(BaseIntentHandler):
                         return []
         return []
 
+    def _safe_eval_with_runtime(self, raw: str):
+        if not isinstance(raw, str):
+            return None
+        text = raw.strip()
+        if not text:
+            return None
+        runtime_env = {
+            "uid": int(getattr(self.env, "uid", 0) or 0),
+            "user": self.env.user,
+            "context_today": lambda: datetime.now().date(),
+            "datetime": datetime,
+        }
+        try:
+            return safe_eval(text, runtime_env)
+        except Exception:
+            return None
+
     def _pick_model(self, p: Dict[str, Any]) -> str:
         model = self._get_str(p, "model", "").strip()
         if model:
@@ -251,7 +268,19 @@ class ApiDataHandler(BaseIntentHandler):
         offset = self._get_int(p, "offset", 0)
         order = self._get_str(p, "order", "")
         domain = self._normalize_domain(self._dig(p, "domain"))
+        domain_raw = self._get_str(p, "domain_raw", "").strip()
+        context_raw = self._get_str(p, "context_raw", "").strip()
         search_term = self._get_str(p, "search_term", "").strip()
+
+        if context_raw:
+            parsed_ctx = self._safe_eval_with_runtime(context_raw)
+            if isinstance(parsed_ctx, dict):
+                ctx = {**ctx, **parsed_ctx}
+
+        if (not domain) and domain_raw:
+            parsed_domain = self._safe_eval_with_runtime(domain_raw)
+            if isinstance(parsed_domain, list):
+                domain = parsed_domain
 
         if search_term:
             try:
@@ -300,6 +329,8 @@ class ApiDataHandler(BaseIntentHandler):
             "order": order,
             "count": len(rows),
             "fields": fields_safe,
+            "domain_raw_applied": bool(domain_raw),
+            "context_raw_applied": bool(context_raw),
         }
         return data, meta
 

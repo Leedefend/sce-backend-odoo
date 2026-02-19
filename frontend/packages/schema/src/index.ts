@@ -120,11 +120,13 @@ export interface ApiDataListRequest {
   model: string;
   fields?: string[] | '*';
   domain?: unknown[] | string;
+  domain_raw?: string;
   search_term?: string;
   limit?: number;
   offset?: number;
   order?: string;
   context?: Record<string, unknown>;
+  context_raw?: string;
 }
 
 export interface ApiDataReadResult {
@@ -287,6 +289,17 @@ export interface ActionContract {
       domain_raw?: string | null;
       context_raw?: string | null;
     }>;
+    defaults?: {
+      limit?: number;
+      order?: string;
+    };
+    group_by?: Array<{
+      field?: string;
+      label?: string;
+      type?: string;
+      default?: boolean;
+    }>;
+    saved_filters?: Array<Record<string, unknown>>;
   };
   workflow?: {
     states?: Array<Record<string, unknown>>;
