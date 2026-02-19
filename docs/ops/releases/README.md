@@ -118,6 +118,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.frontend.build`
   - release check:
     - `/a/:actionId` and `/r/:model/:id` and `/f/:model/:id` must render from `ui.contract` (`head/views/fields/buttons/toolbar/permissions/workflow/search`) without requiring `load_view` as primary source
+    - record runtime must not fallback to `load_view`; it should resolve an action context and consume `ui.contract` form payload only
     - behavior/interaction changes should be driven by contract payload changes (no per-scene hardcoded UI branches)
     - list/kanban must consume contract field labels, search filters, and toolbar/button actions as runtime behavior source
     - form save must normalize payload by contract field types and submit diff-only writable fields

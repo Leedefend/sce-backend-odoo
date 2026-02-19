@@ -25,6 +25,7 @@ status: active
   - `make verify.frontend.build`
   - 发布检查：
     - `/a/:actionId`、`/r/:model/:id`、`/f/:model/:id` 必须由 `ui.contract`（`head/views/fields/buttons/toolbar/permissions/workflow/search`）驱动渲染，不以 `load_view` 作为主来源
+    - 记录页运行时不得回退到 `load_view`，必须先解析 action 上下文并仅消费 `ui.contract` 的 form 载荷
     - 功能与交互变化应通过契约内容调整实现，不再新增按场景硬编码前端分支
     - 列表/看板需消费契约字段标签、契约筛选与契约动作（toolbar/buttons）作为运行时行为来源
     - 表单保存需按契约字段类型归一化 payload，并仅提交可写且发生变化的字段
