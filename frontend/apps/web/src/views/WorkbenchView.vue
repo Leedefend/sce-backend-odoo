@@ -216,6 +216,8 @@ const reasonLabel = computed(() => {
       return '动作未绑定模型';
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
       return '动作类型暂不支持';
+    case ErrorCodes.CONTRACT_CONTEXT_MISSING:
+      return '契约上下文缺失';
     case ErrorCodes.CAPABILITY_MISSING:
       return '缺少能力权限';
     default:
@@ -231,6 +233,8 @@ const message = computed(() => {
       return '当前动作对应的是自定义工作区，未绑定数据模型。';
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
       return '当前动作类型暂未在门户壳层支持。';
+    case ErrorCodes.CONTRACT_CONTEXT_MISSING:
+      return '页面缺少契约必需上下文（例如 action_id）。';
     case ErrorCodes.CAPABILITY_MISSING:
       return '当前账号尚未开通该能力。';
     default:
@@ -267,7 +271,7 @@ function refresh() {
 }
 
 async function goToProjects() {
-  await router.push({ path: '/s/projects.list', query: workspaceContextQuery.value });
+  await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
 }
 
 async function openFirstReachableMenu() {
@@ -275,7 +279,7 @@ async function openFirstReachableMenu() {
     await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
     return;
   }
-  await goToProjects();
+  await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
 }
 
 async function handleTileClick(tile: EnrichedWorkbenchTile) {

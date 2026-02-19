@@ -12,6 +12,7 @@
 import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
+import { ErrorCodes } from '../app/error_codes';
 
 const route = useRoute();
 const router = useRouter();
@@ -23,7 +24,12 @@ onMounted(() => {
     router.replace({ name: 'action', params: { actionId }, query }).catch(() => {});
     return;
   }
-  router.replace({ name: 'workbench', query: { reason: 'legacy_list_without_action' } }).catch(() => {});
+  router
+    .replace({
+      name: 'workbench',
+      query: { reason: ErrorCodes.CONTRACT_CONTEXT_MISSING, diag: 'legacy_route_missing_action_id' },
+    })
+    .catch(() => {});
 });
 </script>
 

@@ -16,12 +16,16 @@ function normalizeContext(context: unknown) {
 
 export function openAction(router: Router, action: NavMeta, menuId?: number) {
   const model = action.model ?? '';
-  const viewMode = (action.view_modes?.[0] ?? 'tree').toString();
+  const viewMode = Array.isArray(action.view_modes) && action.view_modes.length
+    ? String(action.view_modes[0] || '')
+    : '';
   const query = {
     menu_id: menuId?.toString(),
     action_id: action.action_id?.toString(),
-    view_mode: viewMode,
   } as Record<string, string>;
+  if (viewMode.trim()) {
+    query.view_mode = viewMode;
+  }
 
   const session = useSessionStore();
   session.setActionMeta(action);
@@ -42,12 +46,11 @@ export function openAction(router: Router, action: NavMeta, menuId?: number) {
 }
 
 export function openForm(router: Router, model: string, id: number, action?: NavMeta, menuId?: number) {
-  const viewMode = 'form';
   const query = {
     menu_id: menuId?.toString(),
     action_id: action?.action_id?.toString(),
-    view_mode: viewMode,
   } as Record<string, string>;
+  query.view_mode = 'form';
 
   recordTrace({
     ts: Date.now(),
@@ -57,7 +60,7 @@ export function openForm(router: Router, model: string, id: number, action?: Nav
     menu_id: menuId,
     action_id: action?.action_id,
     model,
-    view_mode: viewMode,
+    view_mode: 'form',
     params_digest: digestParams({ id }),
   });
 

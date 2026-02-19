@@ -38,7 +38,7 @@ async function onSubmit() {
   try {
     await session.login(username.value, password.value);
     await session.loadAppInit();
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : session.resolveLandingPath('/s/projects.list');
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : session.resolveLandingPath('/');
     await router.push(redirect);
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Login failed';

@@ -24,7 +24,6 @@ import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { useSessionStore } from '../stores/session';
 import { config } from '../config';
-import { findActionNodeByModel } from '../app/menu';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
@@ -39,7 +38,6 @@ const session = useSessionStore();
 const status = ref<'loading' | 'error' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, '场景加载失败'));
-const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger']);
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -122,12 +120,6 @@ async function resolveScene() {
         return;
       }
     }
-    if (CORE_SCENE_FALLBACK.has(sceneKey)) {
-      await router.replace({ path: '/', query: workspaceContextQuery });
-      return;
-    }
-    await router.replace({ path: '/', query: workspaceContextQuery });
-    return;
   }
 
   if (layout.kind === 'record') {
@@ -149,21 +141,15 @@ async function resolveScene() {
       }
     }
     if (target.model) {
-      const node = findActionNodeByModel(session.menuTree, target.model);
-      const menuId = node?.menu_id ?? node?.id;
-      const actionId = node?.meta?.action_id;
       const recordId = resolveRecordId(target.record_id ?? route.params.id);
       if (recordId) {
         await router.replace({
           path: `/r/${target.model}/${recordId}`,
-          query: { menu_id: menuId || undefined, action_id: actionId || undefined, ...workspaceContextQuery },
-        });
-        return;
-      }
-      if (actionId) {
-        await router.replace({
-          path: `/a/${actionId}`,
-          query: { menu_id: menuId || undefined, ...workspaceContextQuery },
+          query: {
+            menu_id: target.menu_id || undefined,
+            action_id: target.action_id || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
       }
@@ -185,26 +171,18 @@ async function resolveScene() {
       });
       return;
     }
-    if (target.model) {
-      const node = findActionNodeByModel(session.menuTree, target.model);
-      const menuId = node?.menu_id ?? node?.id;
-      const actionId = node?.meta?.action_id;
-      if (actionId) {
+    if (target.model && target.record_id) {
+      const recordId = resolveRecordId(target.record_id);
+      if (recordId) {
         await router.replace({
-          path: `/a/${actionId}`,
-          query: { menu_id: menuId || undefined, ...workspaceContextQuery },
+          path: `/r/${target.model}/${recordId}`,
+          query: {
+            menu_id: target.menu_id || undefined,
+            action_id: target.action_id || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
-      }
-      if (target.record_id) {
-        const recordId = resolveRecordId(target.record_id);
-        if (recordId) {
-          await router.replace({
-            path: `/r/${target.model}/${recordId}`,
-            query: { menu_id: menuId || undefined, action_id: actionId || undefined, ...workspaceContextQuery },
-          });
-          return;
-        }
       }
     }
   }
@@ -218,49 +196,9 @@ async function resolveScene() {
     return;
   }
 
-  const menuHint = Number(route.query.menu_id || 0) || undefined;
-  if (menuHint) {
-    await router.replace({ path: `/m/${menuHint}`, query: workspaceContextQuery });
-    return;
-  }
-  const sceneNode = findActionNodeBySceneKey(session.menuTree, sceneKey);
-  if (sceneNode?.meta?.action_id) {
-    await router.replace({
-      path: `/a/${sceneNode.meta.action_id}`,
-      query: { menu_id: sceneNode.menu_id || sceneNode.id || undefined, ...workspaceContextQuery },
-    });
-    return;
-  }
-  if (sceneNode?.menu_id || sceneNode?.id) {
-    await router.replace({ path: `/m/${sceneNode.menu_id || sceneNode.id}`, query: workspaceContextQuery });
-    return;
-  }
-  if (CORE_SCENE_FALLBACK.has(sceneKey)) {
-    await router.replace({ path: '/s/projects.list', query: workspaceContextQuery });
-    return;
-  }
-
   setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
   errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
   status.value = 'error';
-}
-
-function findActionNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode | null {
-  if (!sceneKey) return null;
-  const walk = (items: NavNode[]): NavNode | null => {
-    for (const node of items) {
-      const sceneNode = node as NavNode & { scene_key?: string };
-      if (sceneNode.scene_key === sceneKey || node.meta?.scene_key === sceneKey) {
-        return node;
-      }
-      if (node.children?.length) {
-        const found = walk(node.children);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-  return walk(nodes) || null;
 }
 
 function findActionNodeByMenuXmlid(nodes: NavNode[], menuXmlid: string): NavNode | null {

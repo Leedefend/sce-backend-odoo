@@ -212,9 +212,7 @@ const actionId = computed(() => {
     routeQuery: route.query as Record<string, unknown>,
     currentActionId: session.currentAction?.action_id,
     currentActionModel: session.currentAction?.model,
-    menuTree: session.menuTree,
     model: model.value,
-    preferredMode: 'form',
   });
 });
 const recordId = computed(() => {
