@@ -26,6 +26,8 @@ status: active
   - 发布检查：
     - `/a/:actionId`、`/r/:model/:id`、`/f/:model/:id` 必须由 `ui.contract`（`head/views/fields/buttons/toolbar/permissions/workflow/search`）驱动渲染，不以 `load_view` 作为主来源
     - 功能与交互变化应通过契约内容调整实现，不再新增按场景硬编码前端分支
+    - 列表/看板需消费契约字段标签、契约筛选与契约动作（toolbar/buttons）作为运行时行为来源
+    - 表单保存需按契约字段类型归一化 payload，并仅提交可写且发生变化的字段
 - 后端证据与可观测扩展（Phase Next）：
   - `make verify.load_view.access.contract.guard`
     - 产物：`/mnt/artifacts/backend/load_view_access_contract_guard.json`（不可写时回落 `artifacts/backend/load_view_access_contract_guard.json`）
