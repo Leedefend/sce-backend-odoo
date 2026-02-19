@@ -14,6 +14,8 @@ PATTERNS = [
     "fallback_fields",
     "pickColumns(",
     "actionMeta.value?.view_modes?.[0]",
+    "/s/projects.list",
+    "legacy_list_without_action",
 ]
 
 
