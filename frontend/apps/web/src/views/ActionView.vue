@@ -738,6 +738,10 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
   if (Array.isArray(schema) && schema.length) {
     return schema.map((col) => col.name).filter(Boolean) as string[];
   }
+  const typedFields = typed.fields;
+  if (typedFields && typeof typedFields === 'object') {
+    return Object.keys(typedFields);
+  }
   const rawFields = contract?.ui_contract_raw?.fields;
   if (rawFields && typeof rawFields === 'object') {
     return Object.keys(rawFields);
@@ -1207,8 +1211,9 @@ async function load() {
     const contractColumns = extractColumnsFromContract(contract);
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
-    hasActiveField.value = Boolean(contract.ui_contract_raw?.fields?.active);
-    hasAssigneeField.value = Boolean(contract.ui_contract_raw?.fields?.user_id);
+    const fieldMap = typedContract.fields || typedContract.ui_contract_raw?.fields || {};
+    hasActiveField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'active' in fieldMap);
+    hasAssigneeField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'user_id' in fieldMap);
     await loadAssigneeOptions();
     const requestedFields =
       viewMode.value === 'kanban'
