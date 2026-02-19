@@ -44,6 +44,10 @@ SCENE_VIEW_ONLY_PATTERNS = [
     "findActionNodeByModel(",
 ]
 
+ACTION_CONTEXT_ONLY_PATTERNS = [
+    "meta.view_modes",
+]
+
 
 def iter_files():
     if not WEB_SRC.is_dir():
@@ -74,6 +78,10 @@ def main() -> int:
             for pattern in SCENE_VIEW_ONLY_PATTERNS:
                 if pattern in text:
                     violations.append(f"{rel}: forbidden scene fallback token: {pattern}")
+        if rel.endswith("app/actionContext.ts"):
+            for pattern in ACTION_CONTEXT_ONLY_PATTERNS:
+                if pattern in text:
+                    violations.append(f"{rel}: forbidden action-context fallback token: {pattern}")
 
     if violations:
         print("[frontend_contract_runtime_guard] FAIL")
