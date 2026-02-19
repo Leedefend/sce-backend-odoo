@@ -169,7 +169,6 @@ import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { fetchChatterTimeline, postChatterMessage, type ChatterTimelineEntry } from '../api/chatter';
 import { downloadFile, fileToBase64, uploadFile } from '../api/files';
-import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
 import { loadActionContractRaw } from '../api/contract';
 import { buildRecordRuntimeFromContract } from '../app/contractRecordRuntime';
 import { deriveRecordStatus } from '../app/view_state';
@@ -185,6 +184,7 @@ import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
+import type { NavNode, NavMeta } from '@sc/schema';
 
 const route = useRoute();
 const router = useRouter();
@@ -231,7 +231,16 @@ const actionId = computed(() => {
   const raw = route.query.action_id;
   const current = Array.isArray(raw) ? raw[0] : raw;
   const parsed = Number(current || 0);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  const fromCurrent = Number(session.currentAction?.action_id || 0);
+  if (Number.isFinite(fromCurrent) && fromCurrent > 0) {
+    const currentModel = String(session.currentAction?.model || '').trim();
+    if (!currentModel || currentModel === model.value) {
+      return fromCurrent;
+    }
+  }
+  const fromMenu = findRecordActionIdByModel(session.menuTree, model.value);
+  return fromMenu;
 });
 const showHud = computed(() => isHudEnabled(route));
 const session = useSessionStore();
@@ -329,6 +338,27 @@ function resolveCarryQuery(extra?: Record<string, unknown>) {
   return { ...out, ...(extra || {}) };
 }
 
+function findRecordActionIdByModel(nodes: NavNode[], targetModel: string): number | null {
+  if (!targetModel) return null;
+  const stack = [...nodes];
+  while (stack.length) {
+    const node = stack.shift();
+    if (!node) continue;
+    const meta = (node.meta || {}) as NavMeta;
+    const modelName = String(meta.model || '').trim();
+    const actionId = Number(meta.action_id || 0);
+    const modes = Array.isArray(meta.view_modes) ? meta.view_modes.map((item) => String(item || '').toLowerCase()) : [];
+    const includesForm = modes.includes('form');
+    if (modelName === targetModel && Number.isFinite(actionId) && actionId > 0 && (includesForm || !modes.length)) {
+      return actionId;
+    }
+    if (Array.isArray(node.children) && node.children.length) {
+      stack.push(...node.children);
+    }
+  }
+  return null;
+}
+
 function buttonState(btn: ViewButton) {
   return evaluateCapabilityPolicy({
     source: btn,
@@ -368,20 +398,21 @@ async function load() {
   }
 
   try {
+    if (!actionId.value) {
+      throw new Error('missing action_id for contract-driven record view');
+    }
+    const actionContract = await loadActionContractRaw(actionId.value);
     let view: ViewContract | null = null;
     let contractFieldNames: string[] = [];
-    if (actionId.value) {
-      const actionContract = await loadActionContractRaw(actionId.value);
-      if (actionContract?.data && typeof actionContract.data === 'object') {
-        const runtime = buildRecordRuntimeFromContract(actionContract.data);
-        view = runtime.view;
-        contractFieldNames = runtime.fieldNames;
-        contractWriteAllowed.value = runtime.rights.write;
-      }
-      contractMode.value = String(actionContract?.meta?.contract_mode || '');
+    if (actionContract?.data && typeof actionContract.data === 'object') {
+      const runtime = buildRecordRuntimeFromContract(actionContract.data);
+      view = runtime.view;
+      contractFieldNames = runtime.fieldNames;
+      contractWriteAllowed.value = runtime.rights.write;
     }
+    contractMode.value = String(actionContract?.meta?.contract_mode || '');
     if (!view) {
-      view = await resolveView(model.value, 'form');
+      throw new Error('missing ui.contract form payload');
     }
     viewContract.value = view || null;
     const layout = view?.layout;
