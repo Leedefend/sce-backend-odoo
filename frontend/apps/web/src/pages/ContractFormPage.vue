@@ -248,6 +248,12 @@ const hasChanges = computed(() => {
     return normalizeComparable(formData[key]) !== normalizeComparable(originalValues.value[key]);
   });
 });
+const writableFieldCount = computed(() =>
+  layoutNodes.value.filter((node) => node.kind === 'field' && !node.readonly).length,
+);
+const changedFieldCount = computed(() =>
+  Object.keys(formData).filter((key) => isFieldWritable(key) && normalizeComparable(formData[key]) !== normalizeComparable(originalValues.value[key])).length,
+);
 
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
@@ -512,6 +518,8 @@ const hudEntries = computed(() => [
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
   { label: 'layout_nodes', value: layoutNodes.value.length },
+  { label: 'writable_fields', value: writableFieldCount.value },
+  { label: 'changed_fields', value: changedFieldCount.value },
   { label: 'actions_count', value: contractActions.value.length },
   { label: 'rights', value: `${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}` },
 ]);
