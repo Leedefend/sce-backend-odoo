@@ -286,6 +286,7 @@ const contractDegraded = ref(false);
 const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
 const activeContractFilterKey = ref('');
+const contractLimit = ref(40);
 const viewMode = computed(() => {
   if (contractViewType.value === 'kanban') return 'kanban';
   if (contractViewType.value === 'list' || contractViewType.value === 'tree') return 'tree';
@@ -310,7 +311,11 @@ const statusLabel = computed(() => {
   if (status.value === 'empty') return '暂无数据';
   return '已就绪';
 });
-const pageTitle = computed(() => injectedTitle?.value || actionMeta.value?.name || '工作台');
+const pageTitle = computed(() => {
+  const contractTitle = String(actionContract.value?.head?.title || '').trim();
+  if (contractTitle) return contractTitle;
+  return injectedTitle?.value || actionMeta.value?.name || '工作台';
+});
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
 const sceneKey = computed(() => {
@@ -335,6 +340,7 @@ const hudEntries = computed(() => [
   { label: 'contract_view_type', value: contractViewType.value || '-' },
   { label: 'contract_filter', value: activeContractFilterKey.value || '-' },
   { label: 'contract_actions', value: contractActionButtons.value.length },
+  { label: 'contract_limit', value: contractLimit.value },
   { label: 'contract_read', value: contractReadAllowed.value },
   { label: 'contract_warnings', value: contractWarningCount.value },
   { label: 'contract_degraded', value: contractDegraded.value },
@@ -933,6 +939,14 @@ function resolveSelectedIdsForAction(selection: ContractActionSelection) {
   return selectedIds.value.length ? [...selectedIds.value] : [];
 }
 
+function resolveActionContextRecordId() {
+  const fromRoute = parseNumericId(route.query.res_id);
+  if (fromRoute) return fromRoute;
+  const fromContract = parseNumericId(actionContract.value?.head?.res_id);
+  if (fromContract) return fromContract;
+  return null;
+}
+
 async function runContractAction(action: ContractActionButton) {
   if (!action.enabled) return;
   if (action.kind === 'open') {
@@ -966,7 +980,9 @@ async function runContractAction(action: ContractActionButton) {
     batchMessage.value = '契约动作缺少 model，无法执行';
     return;
   }
-  if (!ids.length) {
+  const contextRecordId = resolveActionContextRecordId();
+  const execIds = ids.length ? ids : contextRecordId ? [contextRecordId] : [];
+  if (!execIds.length) {
     batchMessage.value = '当前动作需要记录上下文，暂不支持无记录执行';
     return;
   }
@@ -975,7 +991,7 @@ async function runContractAction(action: ContractActionButton) {
   try {
     let successCount = 0;
     let failureCount = 0;
-    for (const id of ids) {
+    for (const id of execIds) {
       try {
         const response = await executeButton({
           model: action.model,
@@ -1051,6 +1067,7 @@ async function load() {
   contractViewType.value = '';
   actionContract.value = null;
   resolvedModelRef.value = '';
+  contractLimit.value = 40;
   records.value = [];
   columns.value = [];
   kanbanFields.value = [];
@@ -1102,14 +1119,21 @@ async function load() {
     }
     if (!sortValue.value) {
       const typedContract = contract as ActionContractLoose;
+      const searchDefaults = (typedContract.search as { defaults?: { order?: string; limit?: number } } | undefined)?.defaults;
+      const searchOrder = searchDefaults?.order;
       const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
       const metaOrder = (meta as ActionMetaLoose | undefined)?.order;
-      const order = scene.value?.default_sort || viewOrder || metaOrder;
+      const order = scene.value?.default_sort || searchOrder || viewOrder || metaOrder;
       if (typeof order === 'string' && order.trim()) {
         sortValue.value = order;
       } else {
         sortValue.value = 'id asc';
       }
+    }
+    {
+      const searchDefaults = (typedContract.search as { defaults?: { order?: string; limit?: number } } | undefined)?.defaults;
+      const limitRaw = Number(searchDefaults?.limit || 40);
+      contractLimit.value = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(Math.trunc(limitRaw), 200) : 40;
     }
     const policy = evaluateCapabilityPolicy({ source: meta, available: session.capabilities });
     if (policy.state !== 'enabled') {
@@ -1195,7 +1219,7 @@ async function load() {
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
       domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveContractFilterDomain())),
       context: mergeContext(meta?.context, resolveContractFilterContext()),
-      limit: 40,
+      limit: contractLimit.value,
       offset: 0,
       search_term: searchTerm.value.trim() || undefined,
       order: sortLabel.value,
