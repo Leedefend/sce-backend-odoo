@@ -16,6 +16,9 @@ PATTERNS = [
     "actionMeta.value?.view_modes?.[0]",
     "/s/projects.list",
     "legacy_list_without_action",
+    "config/scenesCore",
+    "config/scenes'",
+    'config/scenes"',
 ]
 
 
