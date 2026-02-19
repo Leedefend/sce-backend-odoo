@@ -1119,7 +1119,7 @@ async function load() {
     }
     if (!sortValue.value) {
       const typedContract = contract as ActionContractLoose;
-      const searchDefaults = (typedContract.search as { defaults?: { order?: string; limit?: number } } | undefined)?.defaults;
+      const searchDefaults = typedContract.search?.defaults;
       const searchOrder = searchDefaults?.order;
       const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
       const metaOrder = (meta as ActionMetaLoose | undefined)?.order;
@@ -1131,7 +1131,7 @@ async function load() {
       }
     }
     {
-      const searchDefaults = (typedContract.search as { defaults?: { order?: string; limit?: number } } | undefined)?.defaults;
+      const searchDefaults = typedContract.search?.defaults;
       const limitRaw = Number(searchDefaults?.limit || 40);
       contractLimit.value = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(Math.trunc(limitRaw), 200) : 40;
     }

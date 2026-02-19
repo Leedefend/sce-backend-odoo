@@ -287,6 +287,17 @@ export interface ActionContract {
       domain_raw?: string | null;
       context_raw?: string | null;
     }>;
+    defaults?: {
+      limit?: number;
+      order?: string;
+    };
+    group_by?: Array<{
+      field?: string;
+      label?: string;
+      type?: string;
+      default?: boolean;
+    }>;
+    saved_filters?: Array<Record<string, unknown>>;
   };
   workflow?: {
     states?: Array<Record<string, unknown>>;
