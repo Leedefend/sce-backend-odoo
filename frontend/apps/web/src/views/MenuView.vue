@@ -32,6 +32,16 @@ const error = ref('');
 const info = ref('');
 const loading = ref(true);
 
+function resolveCarryQuery(extra?: Record<string, unknown>) {
+  const source = route.query as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  const keys = ['hud', 'scene', 'scene_key', 'context_raw', 'preset', 'preset_filter', 'search', 'ctx_source'];
+  keys.forEach((key) => {
+    if (source[key] !== undefined) out[key] = source[key];
+  });
+  return { ...out, ...(extra || {}) };
+}
+
 async function resolve() {
   loading.value = true;
   error.value = '';
@@ -57,7 +67,11 @@ async function resolve() {
         return;
       }
       session.setActionMeta(result.meta);
-      await router.replace(`/a/${result.meta.action_id}?menu_id=${menuId}`);
+      await router.replace({
+        name: 'action',
+        params: { actionId: result.meta.action_id },
+        query: resolveCarryQuery({ menu_id: menuId, action_id: result.meta.action_id }),
+      });
       return;
     }
     if (result.kind === 'redirect') {
@@ -78,13 +92,17 @@ async function resolve() {
         if (result.target.meta) {
           session.setActionMeta(result.target.meta);
         }
-        await router.replace(`/a/${result.target.action_id}?menu_id=${result.target.menu_id}`);
+        await router.replace({
+          name: 'action',
+          params: { actionId: result.target.action_id },
+          query: resolveCarryQuery({ menu_id: result.target.menu_id, action_id: result.target.action_id }),
+        });
         return;
       }
       if (result.target.scene_key) {
         await router.replace({
           path: `/s/${result.target.scene_key}`,
-          query: { menu_id: result.target.menu_id },
+          query: resolveCarryQuery({ menu_id: result.target.menu_id }),
         });
         return;
       }
