@@ -1270,6 +1270,10 @@ verify.frontend.contract_runtime.guard: guard.prod.forbid
 verify.frontend.contract_route.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_contract_route_guard.py
 
+.PHONY: verify.frontend.contract_normalized_fields.guard
+verify.frontend.contract_normalized_fields.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_contract_normalized_fields_guard.py
+
 verify.scene.legacy_endpoint.guard: guard.prod.forbid
 	@python3 scripts/verify/legacy_scene_endpoint_guard.py
 

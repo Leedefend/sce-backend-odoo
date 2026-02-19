@@ -116,6 +116,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - Frontend contract-driven runtime (all views use contract as the only render source):
   - `make verify.frontend.contract_route.guard`
   - `make verify.frontend.contract_runtime.guard`
+  - `make verify.frontend.contract_normalized_fields.guard`
   - `make verify.frontend.typecheck.strict`
   - `make verify.frontend.build`
   - release check:

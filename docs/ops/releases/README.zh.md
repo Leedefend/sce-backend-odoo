@@ -23,6 +23,7 @@ status: active
 - 前端契约驱动运行时（所有视图都以契约为唯一渲染依据）：
   - `make verify.frontend.contract_route.guard`
   - `make verify.frontend.contract_runtime.guard`
+  - `make verify.frontend.contract_normalized_fields.guard`
   - `make verify.frontend.typecheck.strict`
   - `make verify.frontend.build`
   - 发布检查：
