@@ -512,6 +512,14 @@ function fieldInputType(ttype?: string) {
   return 'text';
 }
 
+function resolveNavigationUrl(url: string) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('/')) return `${window.location.origin}${raw}`;
+  return raw;
+}
+
 const hudEntries = computed(() => [
   { label: 'model', value: model.value || '-' },
   { label: 'action_id', value: actionId.value || '-' },
@@ -617,7 +625,8 @@ async function runAction(action: ContractAction) {
       return;
     }
     if (action.url) {
-      window.open(action.url, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
+      const navUrl = resolveNavigationUrl(action.url);
+      window.open(navUrl, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
       return;
     }
     errorMessage.value = 'contract open action missing action_id';
