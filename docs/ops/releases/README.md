@@ -141,6 +141,9 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.contract.assembler.semantic.smoke`
     - artifact: `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback: `artifacts/backend/contract_assembler_semantic_smoke.json`)
     - includes project form density assertions (user mode `project.project/form`: field cap, layout-field coverage, search-filter cap, toolbar/header/smart action caps, hud >= user field surface)
+  - `make verify.project.form.contract.surface.guard`
+    - artifact: `/mnt/artifacts/backend/project_form_contract_surface_guard.json` (fallback: `artifacts/backend/project_form_contract_surface_guard.json`)
+    - release check: `project.project/form` user profile must keep required business fields, strip technical fields, and remain within density caps
   - `make verify.runtime.surface.dashboard.report`
     - artifact: `/mnt/artifacts/backend/runtime_surface_dashboard_report.json` (fallback: `artifacts/backend/runtime_surface_dashboard_report.json`)
   - `make verify.boundary.import_guard`

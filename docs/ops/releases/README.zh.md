@@ -48,6 +48,9 @@ status: active
   - `make verify.contract.assembler.semantic.smoke`
     - 产物：`/mnt/artifacts/backend/contract_assembler_semantic_smoke.json`（不可写时回落 `artifacts/backend/contract_assembler_semantic_smoke.json`）
     - 已包含项目表单密度断言（user 模式 `project.project/form`：字段上限、layout 字段覆盖、搜索筛选上限、toolbar/header/smart 动作上限、hud 字段面 >= user）
+  - `make verify.project.form.contract.surface.guard`
+    - 产物：`/mnt/artifacts/backend/project_form_contract_surface_guard.json`（不可写时回落 `artifacts/backend/project_form_contract_surface_guard.json`）
+    - 发布检查：`project.project/form` user profile 必须保留业务必需字段、剔除技术字段，并满足密度上限
   - `make verify.runtime.surface.dashboard.report`
     - 产物：`/mnt/artifacts/backend/runtime_surface_dashboard_report.json`（不可写时回落 `artifacts/backend/runtime_surface_dashboard_report.json`）
   - `make verify.boundary.import_guard`
