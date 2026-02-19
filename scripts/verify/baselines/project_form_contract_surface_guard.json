@@ -1,0 +1,31 @@
+{
+  "fixture_password": "prod_like",
+  "roles": [
+    {
+      "role": "pm",
+      "login": "sc_fx_pm"
+    },
+    {
+      "role": "executive",
+      "login": "sc_fx_executive"
+    }
+  ],
+  "max_user_fields": 25,
+  "max_user_header_buttons": 3,
+  "max_user_smart_buttons": 4,
+  "max_user_search_filters": 8,
+  "required_user_fields": [
+    "name",
+    "project_type_id",
+    "manager_id",
+    "lifecycle_state",
+    "stage_id"
+  ],
+  "forbidden_user_fields": [
+    "create_uid",
+    "write_uid",
+    "message_ids",
+    "activity_ids",
+    "access_token"
+  ]
+}
