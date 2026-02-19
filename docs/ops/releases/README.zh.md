@@ -33,6 +33,7 @@ status: active
     - 功能与交互变化应通过契约内容调整实现，不再新增按场景硬编码前端分支
     - 列表/看板需消费契约字段标签、契约筛选与契约动作（toolbar/buttons）作为运行时行为来源
     - 表单保存需按契约字段类型归一化 payload，并仅提交可写且发生变化的字段
+    - 记录表单运行时需将 `views.form.layout` 节点数组归一化为渲染布局，并确保与契约 `fields` 字段覆盖一致（不得因 layout 不完整静默丢字段）
     - 遗留模型页面（`ModelFormPage`/`ModelListPage`）仅允许作为兼容壳，必须委派到契约驱动运行时
 - 后端证据与可观测扩展（Phase Next）：
   - `make verify.load_view.access.contract.guard`
