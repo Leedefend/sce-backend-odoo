@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { createRecord, listRecords, unlinkRecord, writeRecord } from '../../api/data';
 import { useEditTx } from '../../composables/useEditTx';
 
@@ -57,6 +57,7 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+const route = useRoute();
 const loading = ref(false);
 const error = ref('');
 const rows = ref<Array<{ id: number; name?: string }>>([]);
@@ -113,7 +114,15 @@ async function load() {
 
 function openRecord(id: number) {
   if (!props.model) return;
-  router.push({ name: 'record', params: { model: props.model, id } });
+  const source = route.query as Record<string, unknown>;
+  const carry: Record<string, unknown> = {};
+  const keys = ['menu_id', 'action_id', 'hud', 'scene', 'scene_key', 'context_raw', 'preset', 'preset_filter', 'search', 'ctx_source'];
+  keys.forEach((key) => {
+    if (source[key] !== undefined) {
+      carry[key] = source[key];
+    }
+  });
+  router.push({ name: 'record', params: { model: props.model, id }, query: carry });
 }
 
 function startCreate() {

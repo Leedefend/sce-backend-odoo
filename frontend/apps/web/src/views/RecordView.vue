@@ -607,7 +607,9 @@ function reload() {
 function handleSuggestedAction(action: string): boolean {
   if (action !== 'open_record') return false;
   if (!model.value || !recordId.value) return false;
-  router.push({ name: 'record', params: { model: model.value, id: recordId.value } }).catch(() => {});
+  router
+    .push({ name: 'record', params: { model: model.value, id: recordId.value }, query: resolveCarryQuery() })
+    .catch(() => {});
   return true;
 }
 
