@@ -58,11 +58,14 @@
       </section>
 
       <section class="form-grid">
+        <p v-if="validationErrors.length" class="validation-error">
+          {{ validationErrors.join('；') }}
+        </p>
         <template v-for="node in layoutNodes" :key="node.key">
           <div v-if="node.kind === 'header'" class="layout-divider">Header</div>
           <div v-else-if="node.kind === 'sheet'" class="layout-divider">Sheet</div>
           <div v-else-if="node.kind === 'field'" class="field">
-            <label class="label">{{ node.label }}</label>
+            <label class="label">{{ node.label }}<span v-if="node.required" class="required">*</span></label>
             <template v-if="node.readonly">
               <FieldValue :value="formData[node.name]" :field="node.descriptor" />
             </template>
@@ -145,6 +148,7 @@ type LayoutNode = {
   name: string;
   label: string;
   readonly: boolean;
+  required: boolean;
   descriptor?: FieldDescriptor;
 };
 
@@ -154,6 +158,7 @@ const session = useSessionStore();
 
 const status = ref<UiStatus>('loading');
 const errorMessage = ref('');
+const validationErrors = ref<string[]>([]);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
@@ -307,7 +312,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     const item = order[i];
     const kind = String(item?.type || '').trim().toLowerCase();
     if (kind === 'header' || kind === 'sheet') {
-      nodes.push({ key: `${kind}_${i}`, kind: kind as 'header' | 'sheet', name: '', label: '', readonly: true });
+      nodes.push({ key: `${kind}_${i}`, kind: kind as 'header' | 'sheet', name: '', label: '', readonly: true, required: false });
       continue;
     }
     if (kind !== 'field') continue;
@@ -323,6 +328,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       name,
       label: String(descriptor?.string || name),
       readonly: Boolean(descriptor?.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(descriptor?.required),
       descriptor,
     });
   }
@@ -337,6 +343,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       name,
       label: String(descriptor?.string || name),
       readonly: Boolean(descriptor?.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(descriptor?.required),
       descriptor,
     });
   });
@@ -378,8 +385,26 @@ async function loadContract() {
 async function loadRecord() {
   const fieldNames = Object.keys(contract.value?.fields || {});
   if (!recordId.value) {
+    const context = contract.value?.head?.context;
+    const defaults: Record<string, unknown> = {};
+    if (context && typeof context === 'object' && !Array.isArray(context)) {
+      Object.entries(context).forEach(([key, value]) => {
+        if (key.startsWith('default_')) {
+          defaults[key.replace(/^default_/, '')] = value;
+        }
+      });
+    }
+    const validator = contract.value?.validator as Record<string, unknown> | undefined;
+    const defaultsSample = validator?.defaults_sample;
+    if (defaultsSample && typeof defaultsSample === 'object' && !Array.isArray(defaultsSample)) {
+      Object.entries(defaultsSample as Record<string, unknown>).forEach(([key, value]) => {
+        if (!(key in defaults)) {
+          defaults[key] = value === 'dynamic' ? '' : value;
+        }
+      });
+    }
     fieldNames.forEach((name) => {
-      formData[name] = '';
+      formData[name] = name in defaults ? defaults[name] : '';
     });
     return;
   }
@@ -397,6 +422,7 @@ async function loadRecord() {
 async function reload() {
   status.value = 'loading';
   errorMessage.value = '';
+  validationErrors.value = [];
   try {
     await loadContract();
     await loadRecord();
@@ -414,7 +440,7 @@ async function runAction(action: ContractAction) {
       name: 'action',
       params: { actionId: String(action.actionId) },
       query: {
-        menu_id: route.query.menu_id,
+        ...route.query,
         action_id: action.actionId,
       },
     });
@@ -449,7 +475,7 @@ async function openFilter(filterKey: string) {
     name: 'action',
     params: { actionId: String(actionId.value) },
     query: {
-      menu_id: route.query.menu_id,
+      ...route.query,
       action_id: actionId.value,
       preset_filter: filterKey,
     },
@@ -458,6 +484,19 @@ async function openFilter(filterKey: string) {
 
 async function saveRecord() {
   if (!canSave.value || !model.value) return;
+  validationErrors.value = [];
+  const missingRequired = layoutNodes.value
+    .filter((node) => node.kind === 'field' && node.required && !node.readonly)
+    .filter((node) => {
+      const value = formData[node.name];
+      if (Array.isArray(value)) return value.length === 0;
+      return value === undefined || value === null || String(value).trim() === '';
+    })
+    .map((node) => node.label || node.name);
+  if (missingRequired.length) {
+    validationErrors.value = [`必填项未填写: ${missingRequired.join('、')}`];
+    return;
+  }
   busyKind.value = 'save';
   try {
     const values: Record<string, unknown> = {};
@@ -567,6 +606,13 @@ reload();
   gap: 10px;
 }
 
+.validation-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #b91c1c;
+  font-size: 12px;
+}
+
 .layout-divider {
   grid-column: 1 / -1;
   font-size: 12px;
@@ -584,6 +630,11 @@ reload();
   font-size: 12px;
   color: #334155;
   font-weight: 600;
+}
+
+.required {
+  color: #b91c1c;
+  margin-left: 2px;
 }
 
 .input {
