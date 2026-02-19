@@ -215,11 +215,15 @@ const actionMeta = computed(() => session.currentAction);
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
-const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const contractViewType = ref('');
 const contractReadAllowed = ref(true);
 const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
+const viewMode = computed(() => {
+  if (contractViewType.value === 'kanban') return 'kanban';
+  if (contractViewType.value === 'list' || contractViewType.value === 'tree') return 'tree';
+  return (actionMeta.value?.view_modes?.[0] ?? 'tree').toString();
+});
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
   { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
