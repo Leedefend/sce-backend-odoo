@@ -32,6 +32,14 @@ ACTION_VIEW_ONLY_PATTERNS = [
     "(action.view_modes?.[0] ?? 'tree')",
 ]
 
+SESSION_STORE_ONLY_PATTERNS = [
+    "menuTree?: NavNode[]",
+    "menu_tree?: NavNode[]",
+    "menus?: NavNode[]",
+    "sections?: NavNode[]",
+    "loadNavFallback(",
+]
+
 
 def iter_files():
     if not WEB_SRC.is_dir():
@@ -54,6 +62,10 @@ def main() -> int:
             for pattern in ACTION_VIEW_ONLY_PATTERNS:
                 if pattern in text:
                     violations.append(f"{rel}: forbidden ActionView preset token: {pattern}")
+        if rel.endswith("stores/session.ts"):
+            for pattern in SESSION_STORE_ONLY_PATTERNS:
+                if pattern in text:
+                    violations.append(f"{rel}: forbidden session fallback token: {pattern}")
 
     if violations:
         print("[frontend_contract_runtime_guard] FAIL")
