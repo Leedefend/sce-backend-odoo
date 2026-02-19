@@ -40,6 +40,10 @@ SESSION_STORE_ONLY_PATTERNS = [
     "loadNavFallback(",
 ]
 
+SCENE_VIEW_ONLY_PATTERNS = [
+    "findActionNodeByModel(",
+]
+
 
 def iter_files():
     if not WEB_SRC.is_dir():
@@ -66,6 +70,10 @@ def main() -> int:
             for pattern in SESSION_STORE_ONLY_PATTERNS:
                 if pattern in text:
                     violations.append(f"{rel}: forbidden session fallback token: {pattern}")
+        if rel.endswith("views/SceneView.vue"):
+            for pattern in SCENE_VIEW_ONLY_PATTERNS:
+                if pattern in text:
+                    violations.append(f"{rel}: forbidden scene fallback token: {pattern}")
 
     if violations:
         print("[frontend_contract_runtime_guard] FAIL")
