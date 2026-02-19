@@ -169,7 +169,9 @@ const actionId = computed(() => {
   const raw = route.query.action_id;
   const current = Array.isArray(raw) ? raw[0] : raw;
   const parsed = Number(current || 0);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  const fallback = Number(session.currentAction?.action_id || 0);
+  return Number.isFinite(fallback) && fallback > 0 ? fallback : null;
 });
 const recordId = computed(() => {
   const raw = String(route.params.id || '').trim();
@@ -268,6 +270,8 @@ const contractActions = computed<ContractAction[]>(() => {
   const merged: Array<Record<string, unknown>> = [];
   if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
+  if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
+  if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
 
   const dedup = new Set<string>();
   const out: ContractAction[] = [];
@@ -295,7 +299,11 @@ const contractActions = computed<ContractAction[]>(() => {
       hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
     });
   }
-  return out;
+  return out.sort((a, b) => {
+    const levelDelta = a.level.localeCompare(b.level);
+    if (levelDelta !== 0) return levelDelta;
+    return a.label.localeCompare(b.label, 'zh-CN');
+  });
 });
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
