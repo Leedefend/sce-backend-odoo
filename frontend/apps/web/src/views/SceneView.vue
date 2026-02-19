@@ -24,7 +24,6 @@ import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { useSessionStore } from '../stores/session';
 import { config } from '../config';
-import { findActionNodeByModel } from '../app/menu';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
@@ -142,21 +141,15 @@ async function resolveScene() {
       }
     }
     if (target.model) {
-      const node = findActionNodeByModel(session.menuTree, target.model);
-      const menuId = node?.menu_id ?? node?.id;
-      const actionId = node?.meta?.action_id;
       const recordId = resolveRecordId(target.record_id ?? route.params.id);
       if (recordId) {
         await router.replace({
           path: `/r/${target.model}/${recordId}`,
-          query: { menu_id: menuId || undefined, action_id: actionId || undefined, ...workspaceContextQuery },
-        });
-        return;
-      }
-      if (actionId) {
-        await router.replace({
-          path: `/a/${actionId}`,
-          query: { menu_id: menuId || undefined, ...workspaceContextQuery },
+          query: {
+            menu_id: target.menu_id || undefined,
+            action_id: target.action_id || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
       }
@@ -178,26 +171,18 @@ async function resolveScene() {
       });
       return;
     }
-    if (target.model) {
-      const node = findActionNodeByModel(session.menuTree, target.model);
-      const menuId = node?.menu_id ?? node?.id;
-      const actionId = node?.meta?.action_id;
-      if (actionId) {
+    if (target.model && target.record_id) {
+      const recordId = resolveRecordId(target.record_id);
+      if (recordId) {
         await router.replace({
-          path: `/a/${actionId}`,
-          query: { menu_id: menuId || undefined, ...workspaceContextQuery },
+          path: `/r/${target.model}/${recordId}`,
+          query: {
+            menu_id: target.menu_id || undefined,
+            action_id: target.action_id || undefined,
+            ...workspaceContextQuery,
+          },
         });
         return;
-      }
-      if (target.record_id) {
-        const recordId = resolveRecordId(target.record_id);
-        if (recordId) {
-          await router.replace({
-            path: `/r/${target.model}/${recordId}`,
-            query: { menu_id: menuId || undefined, action_id: actionId || undefined, ...workspaceContextQuery },
-          });
-          return;
-        }
       }
     }
   }
