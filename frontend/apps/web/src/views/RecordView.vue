@@ -184,6 +184,7 @@ import { useSessionStore } from '../stores/session';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
+import { pickContractNavQuery } from '../app/navigationContext';
 import type { NavNode, NavMeta } from '@sc/schema';
 
 const route = useRoute();
@@ -329,18 +330,7 @@ const hudEntries = computed(() => [
 ]);
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
-  const source = route.query as Record<string, unknown>;
-  const out: Record<string, unknown> = {
-    menu_id: source.menu_id,
-    action_id: source.action_id,
-  };
-  const keys = ['hud', 'scene', 'scene_key', 'context_raw', 'preset', 'preset_filter', 'search', 'ctx_source'];
-  keys.forEach((key) => {
-    if (source[key] !== undefined) {
-      out[key] = source[key];
-    }
-  });
-  return { ...out, ...(extra || {}) };
+  return pickContractNavQuery(route.query as Record<string, unknown>, extra);
 }
 
 function findRecordActionIdByModel(nodes: NavNode[], targetModel: string): number | null {

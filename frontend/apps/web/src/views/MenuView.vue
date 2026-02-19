@@ -24,6 +24,7 @@ import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import StatusPanel from '../components/StatusPanel.vue';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
+import { pickContractNavQuery } from '../app/navigationContext';
 
 const route = useRoute();
 const router = useRouter();
@@ -33,13 +34,7 @@ const info = ref('');
 const loading = ref(true);
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
-  const source = route.query as Record<string, unknown>;
-  const out: Record<string, unknown> = {};
-  const keys = ['hud', 'scene', 'scene_key', 'context_raw', 'preset', 'preset_filter', 'search', 'ctx_source'];
-  keys.forEach((key) => {
-    if (source[key] !== undefined) out[key] = source[key];
-  });
-  return { ...out, ...(extra || {}) };
+  return pickContractNavQuery(route.query as Record<string, unknown>, extra);
 }
 
 async function resolve() {

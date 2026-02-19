@@ -135,6 +135,7 @@ import { parseContractContextRaw, resolveContractReadRight, resolveContractViewM
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
+import { pickContractNavQuery } from '../app/navigationContext';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -432,15 +433,10 @@ function resolveWorkspaceContextQuery() {
 }
 
 function resolveCarryQuery() {
-  const source = route.query as Record<string, unknown>;
-  const out: Record<string, unknown> = { ...resolveWorkspaceContextQuery() };
-  const keys = ['hud', 'scene', 'scene_key', 'context_raw'];
-  keys.forEach((key) => {
-    if (source[key] !== undefined) {
-      out[key] = source[key];
-    }
-  });
-  return out;
+  return {
+    ...pickContractNavQuery(route.query as Record<string, unknown>),
+    ...resolveWorkspaceContextQuery(),
+  };
 }
 
 function resolveActionViewType(meta: unknown, contract: unknown) {
