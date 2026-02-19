@@ -178,6 +178,7 @@ const router = useRouter();
 const traceId = ref('');
 const lastTraceId = ref('');
 const contractMode = ref('');
+const contractWriteAllowed = ref(true);
 const { error, clearError, setError } = useStatus();
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error' | 'editing' | 'saving'>('idle');
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
@@ -211,7 +212,7 @@ const recordId = computed(() => Number(route.params.id));
 const recordTitle = ref<string | null>(null);
 const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
 const subtitle = computed(() => (status.value === 'editing' ? 'Editing name' : 'Record details'));
-const canEdit = computed(() => model.value === 'project.project');
+const canEdit = computed(() => contractWriteAllowed.value);
 const actionId = computed(() => {
   const raw = route.query.action_id;
   const current = Array.isArray(raw) ? raw[0] : raw;
@@ -290,6 +291,7 @@ const hudEntries = computed(() => [
   { label: 'write_mode', value: lastWriteMode.value || '-' },
   { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
   { label: 'contract_mode', value: contractMode.value || '-' },
+  { label: 'contract_write', value: contractWriteAllowed.value },
   { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
 ]);
@@ -318,6 +320,7 @@ async function load() {
   chatterUploadError.value = '';
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
   contractMode.value = '';
+  contractWriteAllowed.value = true;
   status.value = 'loading';
   lastIntent.value = 'api.data.read';
   lastWriteMode.value = 'read';
@@ -339,6 +342,7 @@ async function load() {
         const runtime = buildRecordRuntimeFromContract(actionContract.data);
         view = runtime.view;
         contractFieldNames = runtime.fieldNames;
+        contractWriteAllowed.value = runtime.rights.write;
       }
       contractMode.value = String(actionContract?.meta?.contract_mode || '');
     }
