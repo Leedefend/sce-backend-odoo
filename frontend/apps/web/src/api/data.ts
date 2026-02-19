@@ -15,22 +15,26 @@ export async function listRecords(params: {
   model: string;
   fields?: string[] | '*';
   domain?: unknown[];
+  domain_raw?: string;
   limit?: number;
   offset?: number;
   order?: string;
   search_term?: string;
   context?: Record<string, unknown>;
+  context_raw?: string;
 }) {
   const payload: ApiDataListRequest = {
     op: 'list',
     model: params.model,
     fields: params.fields ?? ['id', 'name'],
     domain: params.domain ?? [],
+    domain_raw: params.domain_raw ?? '',
     limit: params.limit ?? 40,
     offset: params.offset ?? 0,
     order: params.order ?? '',
     search_term: params.search_term,
     context: params.context ?? {},
+    context_raw: params.context_raw ?? '',
   };
   return intentRequest<ApiDataListResult>({
     intent: 'api.data',
@@ -42,22 +46,26 @@ export async function listRecordsRaw(params: {
   model: string;
   fields?: string[] | '*';
   domain?: unknown[];
+  domain_raw?: string;
   limit?: number;
   offset?: number;
   order?: string;
   search_term?: string;
   context?: Record<string, unknown>;
+  context_raw?: string;
 }) {
   const payload: ApiDataListRequest = {
     op: 'list',
     model: params.model,
     fields: params.fields ?? ['id', 'name'],
     domain: params.domain ?? [],
+    domain_raw: params.domain_raw ?? '',
     limit: params.limit ?? 40,
     offset: params.offset ?? 0,
     order: params.order ?? '',
     search_term: params.search_term,
     context: params.context ?? {},
+    context_raw: params.context_raw ?? '',
   };
   return intentRequestRaw<ApiDataListResult>({
     intent: 'api.data',

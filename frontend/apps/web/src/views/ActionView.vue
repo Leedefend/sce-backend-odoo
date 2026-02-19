@@ -255,7 +255,9 @@ type ContractFilterChip = {
   key: string;
   label: string;
   domain: unknown[];
+  domainRaw: string;
   context: Record<string, unknown>;
+  contextRaw: string;
 };
 type ContractActionSelection = 'none' | 'single' | 'multi';
 type ContractActionButton = {
@@ -361,8 +363,10 @@ const contractFilterChips = computed<ContractFilterChip[]>(() => {
       const label = String(row?.label || row?.key || '').trim();
       if (!key || !label) return null;
       const domain = Array.isArray(row?.domain) ? row.domain : [];
+      const domainRaw = String(row?.domain_raw || '').trim();
+      const contextRaw = String(row?.context_raw || '').trim();
       const context = parseContractContextRaw(row?.context_raw);
-      return { key, label, domain, context };
+      return { key, label, domain, domainRaw, context, contextRaw };
     })
     .filter((item): item is ContractFilterChip => Boolean(item));
 });
@@ -556,11 +560,25 @@ function resolveContractFilterDomain() {
   return found?.domain || [];
 }
 
+function resolveContractFilterDomainRaw() {
+  const key = activeContractFilterKey.value;
+  if (!key) return '';
+  const found = contractFilterChips.value.find((chip) => chip.key === key);
+  return found?.domainRaw || '';
+}
+
 function resolveContractFilterContext() {
   const key = activeContractFilterKey.value;
   if (!key) return {};
   const found = contractFilterChips.value.find((chip) => chip.key === key);
   return found?.context || {};
+}
+
+function resolveContractFilterContextRaw() {
+  const key = activeContractFilterKey.value;
+  if (!key) return '';
+  const found = contractFilterChips.value.find((chip) => chip.key === key);
+  return found?.contextRaw || '';
 }
 
 function mergeContext(base: Record<string, unknown> | string | undefined, extra?: Record<string, unknown>) {
@@ -1211,7 +1229,9 @@ async function load() {
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
       domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveContractFilterDomain())),
+      domain_raw: resolveContractFilterDomainRaw(),
       context: mergeContext(meta?.context, resolveContractFilterContext()),
+      context_raw: resolveContractFilterContextRaw(),
       limit: contractLimit.value,
       offset: 0,
       search_term: searchTerm.value.trim() || undefined,

@@ -120,11 +120,13 @@ export interface ApiDataListRequest {
   model: string;
   fields?: string[] | '*';
   domain?: unknown[] | string;
+  domain_raw?: string;
   search_term?: string;
   limit?: number;
   offset?: number;
   order?: string;
   context?: Record<string, unknown>;
+  context_raw?: string;
 }
 
 export interface ApiDataReadResult {
