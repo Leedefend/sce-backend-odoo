@@ -190,6 +190,18 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     url?: string;
     target?: string;
   };
+  warnings?: Array<string | Record<string, unknown>>;
+  degraded?: boolean;
+  permissions?: {
+    effective?: {
+      rights?: {
+        read?: boolean;
+        write?: boolean;
+        create?: boolean;
+        unlink?: boolean;
+      };
+    };
+  };
 };
 type ActionMetaLoose = {
   order?: string;
@@ -204,6 +216,9 @@ const injectedTitle = inject('pageTitle', computed(() => ''));
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const viewMode = computed(() => (actionMeta.value?.view_modes?.[0] ?? 'tree').toString());
 const contractViewType = ref('');
+const contractReadAllowed = ref(true);
+const contractWarningCount = ref(0);
+const contractDegraded = ref(false);
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const sortOptions = computed(() => [
   { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
@@ -246,6 +261,9 @@ const hudEntries = computed(() => [
   { label: 'model', value: model.value || '-' },
   { label: 'view_mode', value: viewMode.value || '-' },
   { label: 'contract_view_type', value: contractViewType.value || '-' },
+  { label: 'contract_read', value: contractReadAllowed.value },
+  { label: 'contract_warnings', value: contractWarningCount.value },
+  { label: 'contract_degraded', value: contractDegraded.value },
   { label: 'order', value: sortLabel.value || '-' },
   { label: 'last_intent', value: lastIntent.value || '-' },
   { label: 'write_mode', value: lastWriteMode.value || '-' },
@@ -768,6 +786,23 @@ async function load() {
       session.setActionMeta(meta);
     }
     contractViewType.value = resolveActionViewType(meta, contract);
+    const typedContract = contract as ActionContractLoose;
+    const read = typedContract.permissions?.effective?.rights?.read;
+    contractReadAllowed.value = typeof read === 'boolean' ? read : true;
+    contractWarningCount.value = Array.isArray(typedContract.warnings) ? typedContract.warnings.length : 0;
+    contractDegraded.value = Boolean(typedContract.degraded);
+    if (!contractReadAllowed.value) {
+      await router.replace({
+        name: 'workbench',
+        query: {
+          menu_id: menuId.value || undefined,
+          action_id: actionId.value || undefined,
+          reason: ErrorCodes.CAPABILITY_MISSING,
+          diag: 'contract_read_forbidden',
+        },
+      });
+      return;
+    }
     if (isUrlAction(meta, contract)) {
       await redirectUrlAction(meta, contract);
       return;
