@@ -151,7 +151,7 @@ import { isHudEnabled } from '../config/debug';
 import { loadActionContractRaw } from '../api/contract';
 import { createRecord, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
-import type { ActionContract, FieldDescriptor } from '@sc/schema';
+import type { ActionContract, FieldDescriptor, NavNode, NavMeta } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
 import {
   detectObjectMethodFromActionKey,
@@ -211,7 +211,13 @@ const actionId = computed(() => {
   const parsed = Number(current || 0);
   if (Number.isFinite(parsed) && parsed > 0) return parsed;
   const fallback = Number(session.currentAction?.action_id || 0);
-  return Number.isFinite(fallback) && fallback > 0 ? fallback : null;
+  if (Number.isFinite(fallback) && fallback > 0) {
+    const currentModel = String(session.currentAction?.model || '').trim();
+    if (!currentModel || currentModel === model.value) {
+      return fallback;
+    }
+  }
+  return findFormActionIdByModel(session.menuTree, model.value);
 });
 const recordId = computed(() => {
   const raw = String(route.params.id || '').trim();
@@ -518,6 +524,27 @@ function resolveNavigationUrl(url: string) {
   if (/^https?:\/\//i.test(raw)) return raw;
   if (raw.startsWith('/')) return `${window.location.origin}${raw}`;
   return raw;
+}
+
+function findFormActionIdByModel(nodes: NavNode[], targetModel: string): number | null {
+  if (!targetModel) return null;
+  const stack = [...nodes];
+  while (stack.length) {
+    const node = stack.shift();
+    if (!node) continue;
+    const meta = (node.meta || {}) as NavMeta;
+    const modelName = String(meta.model || '').trim();
+    const actionId = Number(meta.action_id || 0);
+    const modes = Array.isArray(meta.view_modes) ? meta.view_modes.map((item) => String(item || '').toLowerCase()) : [];
+    const includesForm = modes.includes('form');
+    if (modelName === targetModel && Number.isFinite(actionId) && actionId > 0 && (includesForm || !modes.length)) {
+      return actionId;
+    }
+    if (Array.isArray(node.children) && node.children.length) {
+      stack.push(...node.children);
+    }
+  }
+  return null;
 }
 
 const hudEntries = computed(() => [
