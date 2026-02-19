@@ -491,22 +491,9 @@ function applyRoutePreset() {
     changed = true;
   };
 
-  if (preset === 'pending_approval') {
-    appliedPresetLabel.value = '待审批合同';
-    setIfDiff(searchTerm, routeSearch || '审批');
-    setIfDiff(filterValue, 'active');
-  } else if (preset === 'project_intake') {
-    appliedPresetLabel.value = '项目立项';
-    setIfDiff(searchTerm, routeSearch || '立项');
-    setIfDiff(filterValue, 'active');
-  } else if (preset === 'cost_watchlist') {
-    appliedPresetLabel.value = '成本台账关注';
-    setIfDiff(searchTerm, routeSearch || '成本');
-  } else {
-    appliedPresetLabel.value = '';
-    if (routeSearch) {
-      setIfDiff(searchTerm, routeSearch);
-    }
+  appliedPresetLabel.value = '';
+  if (routeSearch) {
+    setIfDiff(searchTerm, routeSearch);
   }
   if (!preset && presetFilter) {
     appliedPresetLabel.value = `契约筛选: ${presetFilter}`;
