@@ -533,12 +533,17 @@ function applyContractFilter(key: string) {
   if (!key) return;
   activeContractFilterKey.value = key;
   clearSelection();
+  const query = { ...(route.query as Record<string, unknown>), preset_filter: key };
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
 
 function clearContractFilter() {
   activeContractFilterKey.value = '';
   clearSelection();
+  const query = { ...(route.query as Record<string, unknown>) };
+  delete query.preset_filter;
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
 
@@ -1065,6 +1070,10 @@ async function load() {
     contractViewType.value = resolveContractViewMode(contract as ActionContractLoose, resolveActionViewType(meta, contract));
     const typedContract = contract as ActionContractLoose;
     actionContract.value = typedContract;
+    const routeFilter = String(route.query.preset_filter || '').trim();
+    if (!activeContractFilterKey.value && routeFilter) {
+      activeContractFilterKey.value = routeFilter;
+    }
     if (activeContractFilterKey.value) {
       const hasFilter = Array.isArray(typedContract.search?.filters)
         && typedContract.search.filters.some((row) => String(row?.key || '') === activeContractFilterKey.value);
