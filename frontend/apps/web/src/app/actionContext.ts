@@ -33,7 +33,7 @@ export function resolveActionIdFromContext(input: ResolveActionContextInput): nu
 export function findActionIdByModel(
   nodes: NavNode[],
   targetModel: string,
-  preferredMode: 'form' | 'tree' | 'kanban' | '' = '',
+  _preferredMode: 'form' | 'tree' | 'kanban' | '' = '',
 ): number | null {
   if (!targetModel) return null;
   const stack = [...nodes];
@@ -43,9 +43,7 @@ export function findActionIdByModel(
     const meta = (node.meta || {}) as NavMeta;
     const modelName = String(meta.model || '').trim();
     const actionId = toPositiveInt(meta.action_id);
-    const modes = Array.isArray(meta.view_modes) ? meta.view_modes.map((item) => String(item || '').toLowerCase()) : [];
-    const modeMatches = preferredMode ? modes.includes(preferredMode) || !modes.length : true;
-    if (modelName === targetModel && actionId && modeMatches) {
+    if (modelName === targetModel && actionId) {
       return actionId;
     }
     if (Array.isArray(node.children) && node.children.length) {
