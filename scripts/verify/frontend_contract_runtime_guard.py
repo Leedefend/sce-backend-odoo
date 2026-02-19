@@ -26,6 +26,7 @@ PATTERNS = [
     "pending_approval",
     "project_intake",
     "cost_watchlist",
+    "findActionIdByModel(",
 ]
 
 ACTION_VIEW_ONLY_PATTERNS = [

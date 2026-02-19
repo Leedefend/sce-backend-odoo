@@ -156,7 +156,6 @@ import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPo
 import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 import { pickContractNavQuery } from '../app/navigationContext';
-import { resolveActionIdFromContext } from '../app/actionContext';
 
 const route = useRoute();
 const router = useRouter();
@@ -209,15 +208,6 @@ const actionContext = computed(() => {
       return { id: fromCurrent, source: 'current_action' as const };
     }
   }
-  const resolved = resolveActionIdFromContext({
-    routeQuery: route.query as Record<string, unknown>,
-    currentActionId: session.currentAction?.action_id,
-    currentActionModel: session.currentAction?.model,
-    menuTree: session.menuTree,
-    model: model.value,
-    preferredMode: 'form',
-  });
-  if (resolved) return { id: resolved, source: 'menu_tree' as const };
   return { id: null, source: 'none' as const };
 });
 const actionId = computed(() => actionContext.value.id);
