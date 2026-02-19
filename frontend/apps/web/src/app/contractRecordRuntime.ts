@@ -142,6 +142,11 @@ function extractFieldOrder(contract: ActionContract): string[] {
 }
 
 function buildLayout(contract: ActionContract, fieldNames: string[]): ViewContract['layout'] {
+  const chatterRaw = contract.views?.form?.chatter;
+  const chatterEnabled =
+    typeof chatterRaw === 'object' && chatterRaw !== null
+      ? Boolean((chatterRaw as { enabled?: unknown }).enabled)
+      : Boolean(chatterRaw);
   return {
     groups: [
       {
@@ -150,7 +155,9 @@ function buildLayout(contract: ActionContract, fieldNames: string[]): ViewContra
     ],
     headerButtons: [],
     statButtons: [],
-    chatter: contract.views?.form?.chatter,
+    chatter: chatterEnabled
+      ? (typeof chatterRaw === 'object' && chatterRaw !== null ? (chatterRaw as Record<string, unknown>) : { enabled: true })
+      : undefined,
     ribbon: null,
   };
 }
