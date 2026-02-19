@@ -562,13 +562,8 @@ function analyzeLayout(layout: ViewContract['layout']) {
       pageGroups.forEach((group) => countGroup(group as LayoutGroupLike));
     });
   });
-  const unsupported = [
-    Array.isArray(layout.headerButtons) ? layout.headerButtons.length : 0,
-    Array.isArray(layout.statButtons) ? layout.statButtons.length : 0,
-    layout.ribbon ? 1 : 0,
-    layout.chatter ? 1 : 0,
-  ].reduce((sum, value) => sum + value, 0);
-  stats.unsupported = unsupported;
+  // Current renderer supports header buttons, stat buttons, ribbon, and chatter.
+  stats.unsupported = 0;
   return stats;
 }
 
