@@ -90,6 +90,42 @@ _USER_SCENE_ACCESS_KEYS = {
     "suggested_action",
 }
 
+_PROJECT_FORM_PRIMARY_FIELDS = [
+    "name",
+    "project_code",
+    "project_type_id",
+    "project_category_id",
+    "lifecycle_state",
+    "stage_id",
+    "manager_id",
+    "user_id",
+    "owner_id",
+    "company_id",
+    "start_date",
+    "end_date",
+    "contract_no",
+    "budget_total",
+    "location",
+]
+_PROJECT_FORM_FIELD_MAX = 25
+_PROJECT_FORM_HEADER_ACTION_MAX = 3
+_PROJECT_FORM_SMART_ACTION_MAX = 4
+_PROJECT_FORM_ACTION_DEMOTE_KEYWORDS = {
+    "设置阶段",
+    "评分",
+    "cron",
+    "ir_cron",
+    "演示",
+    "showcase",
+}
+_PROJECT_FORM_ACTION_PRIORITIES = (
+    "提交",
+    "进入下一阶段",
+    "创建项目",
+    "保存",
+    "查看任务",
+)
+
 
 def is_truthy(value: Any) -> bool:
     if value is None:
@@ -272,6 +308,195 @@ def _sanitize_scene_for_user(item: dict) -> dict:
     return scene
 
 
+def _as_dict(value: Any) -> dict:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _safe_lower(value: Any) -> str:
+    return _safe_text(value).lower()
+
+
+def _is_project_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    form_view = _as_dict(views.get("form"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or form_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("form"), dict):
+        view_type = "form"
+    return model == "project.project" and view_type == "form"
+
+
+def _is_technical_field(name: str, descriptor: dict) -> bool:
+    low = _safe_lower(name)
+    if not low:
+        return True
+    if low in {"id", "__last_update", "display_name"}:
+        return True
+    if low.startswith(("create_", "write_", "message_", "activity_", "access_", "alias_", "website_")):
+        return True
+    if low.endswith(("_ids", "_id_count")) and low not in {
+        "project_type_id",
+        "project_category_id",
+        "stage_id",
+        "manager_id",
+        "user_id",
+        "owner_id",
+        "company_id",
+    }:
+        return True
+    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
+    if ttype in {"one2many", "many2many", "properties_definition"}:
+        return True
+    return False
+
+
+def _pick_project_form_fields(data: dict) -> list[str]:
+    fields_map = _as_dict(data.get("fields"))
+    if not fields_map:
+        return []
+    layout = _as_dict(_as_dict(data.get("views")).get("form")).get("layout") or []
+    ordered_fields: list[str] = []
+    for node in layout if isinstance(layout, list) else []:
+        if not isinstance(node, dict):
+            continue
+        if _safe_lower(node.get("type")) != "field":
+            continue
+        name = _safe_text(node.get("name"))
+        if name and name not in ordered_fields:
+            ordered_fields.append(name)
+
+    selected: list[str] = []
+    for name in _PROJECT_FORM_PRIMARY_FIELDS:
+        descriptor = _as_dict(fields_map.get(name))
+        if descriptor and not _is_technical_field(name, descriptor) and name not in selected:
+            selected.append(name)
+
+    for name in ordered_fields:
+        if len(selected) >= _PROJECT_FORM_FIELD_MAX:
+            break
+        descriptor = _as_dict(fields_map.get(name))
+        if not descriptor or _is_technical_field(name, descriptor):
+            continue
+        if name not in selected:
+            selected.append(name)
+
+    for name, descriptor_raw in fields_map.items():
+        if len(selected) >= _PROJECT_FORM_FIELD_MAX:
+            break
+        descriptor = _as_dict(descriptor_raw)
+        if _is_technical_field(name, descriptor):
+            continue
+        required = bool(descriptor.get("required"))
+        readonly = bool(descriptor.get("readonly"))
+        if required and not readonly and name not in selected:
+            selected.append(name)
+
+    if "name" in fields_map and "name" not in selected:
+        selected.insert(0, "name")
+    return selected[:_PROJECT_FORM_FIELD_MAX]
+
+
+def _filter_project_form_layout(data: dict, selected_fields: set[str]) -> None:
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    layout = form.get("layout")
+    if not isinstance(layout, list):
+        return
+    filtered_layout: list[dict] = []
+    for node in layout:
+        if not isinstance(node, dict):
+            continue
+        node_type = _safe_lower(node.get("type"))
+        if node_type == "field":
+            name = _safe_text(node.get("name"))
+            if name and name in selected_fields:
+                filtered_layout.append(node)
+            continue
+        filtered_layout.append(node)
+
+    if not any(_safe_lower(item.get("type")) == "field" for item in filtered_layout):
+        for name in _PROJECT_FORM_PRIMARY_FIELDS:
+            if name in selected_fields:
+                filtered_layout.append({"type": "field", "name": name})
+    form["layout"] = filtered_layout
+    views["form"] = form
+    data["views"] = views
+
+
+def _action_priority(action: dict) -> int:
+    label = _safe_text(action.get("label"))
+    for idx, key in enumerate(_PROJECT_FORM_ACTION_PRIORITIES):
+        if key and key in label:
+            return idx
+    return len(_PROJECT_FORM_ACTION_PRIORITIES) + 1
+
+
+def _is_noisy_project_action(action: dict) -> bool:
+    key = _safe_lower(action.get("key"))
+    label = _safe_lower(action.get("label"))
+    kind = _safe_lower(action.get("kind"))
+    if kind == "server":
+        return True
+    if not label and not key:
+        return True
+    if label.isdigit():
+        return True
+    for marker in _PROJECT_FORM_ACTION_DEMOTE_KEYWORDS:
+        if marker in key or marker in label:
+            return True
+    return False
+
+
+def _govern_project_form_actions(data: dict) -> None:
+    toolbar = _as_dict(data.get("toolbar"))
+    if isinstance(toolbar.get("header"), list):
+        toolbar["header"] = []
+    data["toolbar"] = toolbar
+
+    rows = data.get("buttons")
+    if not isinstance(rows, list):
+        return
+    header_rows: list[dict] = []
+    smart_rows: list[dict] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if _is_noisy_project_action(row):
+            continue
+        level = _safe_lower(row.get("level"))
+        if level == "header":
+            header_rows.append(row)
+        elif level in {"smart", "row"}:
+            smart_rows.append(row)
+
+    header_rows = sorted(header_rows, key=lambda item: (_action_priority(item), _safe_text(item.get("label"))))
+    smart_rows = sorted(smart_rows, key=lambda item: (_action_priority(item), _safe_text(item.get("label"))))
+    data["buttons"] = header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX] + smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX]
+
+
+def _govern_project_form_contract_for_user(data: dict) -> None:
+    selected = _pick_project_form_fields(data)
+    selected_set = set(selected)
+    fields_map = _as_dict(data.get("fields"))
+    data["fields"] = {name: fields_map.get(name) for name in selected if name in fields_map}
+
+    permissions = _as_dict(data.get("permissions"))
+    field_groups = _as_dict(permissions.get("field_groups"))
+    if field_groups:
+        permissions["field_groups"] = {name: val for name, val in field_groups.items() if name in selected_set}
+    data["permissions"] = permissions
+
+    _filter_project_form_layout(data, selected_set)
+    _govern_project_form_actions(data)
+
+
 def normalize_scenes(scenes: list) -> list[dict]:
     out: list[dict] = []
     for scene in scenes or []:
@@ -296,6 +521,10 @@ def apply_contract_governance(
     if not isinstance(data, dict):
         return data
 
+    nested_payload = data.get("data")
+    if isinstance(nested_payload, dict):
+        data["data"] = apply_contract_governance(nested_payload, contract_mode, inject_contract_mode=False)
+
     if isinstance(data.get("capabilities"), list):
         capabilities = normalize_capabilities(data.get("capabilities") or [])
         if contract_mode == "user":
@@ -312,6 +541,9 @@ def apply_contract_governance(
             scenes = [_sanitize_scene_for_user(item) for item in scenes]
             scenes = [item for item in scenes if not _has_demo_semantics(item)]
         data["scenes"] = scenes
+
+    if contract_mode == "user" and _is_project_form_contract(data):
+        _govern_project_form_contract_for_user(data)
 
     if inject_contract_mode:
         data["contract_mode"] = contract_mode
