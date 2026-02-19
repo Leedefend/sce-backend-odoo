@@ -127,6 +127,12 @@ import { createRecord, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
+import {
+  detectObjectMethodFromActionKey,
+  normalizeActionKind,
+  parseMaybeJsonRecord,
+  toPositiveInt,
+} from '../app/contractRuntime';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -256,14 +262,11 @@ function hasGroupAccess(groupsXmlids?: string[]) {
 }
 
 function toActionId(raw: unknown) {
-  const parsed = Number(raw || 0);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  return toPositiveInt(raw);
 }
 
 function detectMethodName(key: string, payloadMethod: string) {
-  if (payloadMethod) return payloadMethod;
-  const m = key.match(/^obj_([^_]+(?:_[^_]+)*)_/);
-  return m?.[1] || '';
+  return detectObjectMethodFromActionKey(key, payloadMethod);
 }
 
 const contractActions = computed<ContractAction[]>(() => {
@@ -279,8 +282,8 @@ const contractActions = computed<ContractAction[]>(() => {
     const key = String(row.key || '').trim();
     if (!key || dedup.has(key)) continue;
     dedup.add(key);
-    const payload = row.payload && typeof row.payload === 'object' ? (row.payload as Record<string, unknown>) : {};
-    const kind = String(row.kind || '').trim().toLowerCase();
+    const payload = parseMaybeJsonRecord(row.payload);
+    const kind = normalizeActionKind(row.kind);
     const level = String(row.level || 'body').trim().toLowerCase();
     const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
     const methodName = detectMethodName(key, String(payload.method || '').trim());
