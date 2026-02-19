@@ -301,7 +301,11 @@ const sceneTitleMap = computed(() => {
   }
   return map;
 });
-const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || 'projects.list');
+const defaultSceneKey = computed(() => {
+  const first = session.scenes.find((scene) => asText(scene.key));
+  return first ? asText(first.key) : '';
+});
+const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || defaultSceneKey.value);
 const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || '工作台首页');
 const internalTileCount = computed(() => {
   let count = 0;
@@ -330,7 +334,7 @@ const internalTileCount = computed(() => {
 });
 const workspaceScopeKey = computed(() => {
   const roleKey = asText(roleSurface.value?.role_code) || 'default';
-  const landingScene = asText(roleSurface.value?.landing_scene_key) || 'projects.list';
+  const landingScene = asText(roleSurface.value?.landing_scene_key) || defaultSceneKey.value || 'none';
   const userId = Number(session.user?.id || 0) || 0;
   return `${userId}:${roleKey}:${landingScene}`;
 });
@@ -744,7 +748,7 @@ function openRoleLanding() {
     target: 'landing',
     from: 'workspace.home',
   }).catch(() => {});
-  router.push({ path: session.resolveLandingPath('/s/projects.list'), query: workspaceContextQuery.value }).catch(() => {});
+  router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToMyWork() {

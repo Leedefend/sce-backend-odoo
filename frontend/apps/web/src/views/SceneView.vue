@@ -39,7 +39,6 @@ const session = useSessionStore();
 const status = ref<'loading' | 'error' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, '场景加载失败'));
-const CORE_SCENE_FALLBACK = new Set(['projects.list', 'projects.ledger']);
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -122,12 +121,6 @@ async function resolveScene() {
         return;
       }
     }
-    if (CORE_SCENE_FALLBACK.has(sceneKey)) {
-      await router.replace({ path: '/', query: workspaceContextQuery });
-      return;
-    }
-    await router.replace({ path: '/', query: workspaceContextQuery });
-    return;
   }
 
   if (layout.kind === 'record') {
@@ -235,11 +228,6 @@ async function resolveScene() {
     await router.replace({ path: `/m/${sceneNode.menu_id || sceneNode.id}`, query: workspaceContextQuery });
     return;
   }
-  if (CORE_SCENE_FALLBACK.has(sceneKey)) {
-    await router.replace({ path: '/s/projects.list', query: workspaceContextQuery });
-    return;
-  }
-
   setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
   errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
   status.value = 'error';

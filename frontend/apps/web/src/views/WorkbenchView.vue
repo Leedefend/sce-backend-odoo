@@ -267,7 +267,7 @@ function refresh() {
 }
 
 async function goToProjects() {
-  await router.push({ path: '/s/projects.list', query: workspaceContextQuery.value });
+  await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
 }
 
 async function openFirstReachableMenu() {
@@ -275,7 +275,7 @@ async function openFirstReachableMenu() {
     await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
     return;
   }
-  await goToProjects();
+  await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
 }
 
 async function handleTileClick(tile: EnrichedWorkbenchTile) {

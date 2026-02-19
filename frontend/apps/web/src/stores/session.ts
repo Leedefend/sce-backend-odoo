@@ -293,7 +293,7 @@ export const useSessionStore = defineStore('session', {
       this.roleSurface = {
         role_code: String(roleSurfaceRaw.role_code || 'owner'),
         role_label: String(roleSurfaceRaw.role_label || roleSurfaceRaw.role_code || 'Owner'),
-        landing_scene_key: String(roleSurfaceRaw.landing_scene_key || 'projects.list'),
+        landing_scene_key: String(roleSurfaceRaw.landing_scene_key || ''),
         landing_menu_id: typeof roleSurfaceRaw.landing_menu_id === 'number' ? roleSurfaceRaw.landing_menu_id : null,
         landing_menu_xmlid: String(roleSurfaceRaw.landing_menu_xmlid || ''),
         landing_path: String(roleSurfaceRaw.landing_path || ''),
@@ -373,7 +373,7 @@ export const useSessionStore = defineStore('session', {
       }
       await this.loadAppInit();
     },
-    resolveLandingPath(fallback = '/s/projects.list') {
+    resolveLandingPath(fallback = '/') {
       const candidate = String(this.roleSurface?.landing_path || '').trim();
       if (candidate.startsWith('/')) {
         const normalized = normalizeLegacyWorkbenchPath(candidate);
