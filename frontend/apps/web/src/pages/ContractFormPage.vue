@@ -20,6 +20,8 @@
         <button class="primary" :disabled="busy || !canSave" @click="saveRecord">
           {{ busy && busyKind === 'save' ? 'Saving...' : 'Save' }}
         </button>
+        <button class="ghost" :disabled="busy || !contract" @click="copyContractJson">Copy Contract</button>
+        <button class="ghost" :disabled="busy || !contract" @click="exportContractJson">Export Contract</button>
         <button class="ghost" :disabled="busy" @click="reload">Reload</button>
       </div>
     </header>
@@ -587,6 +589,46 @@ async function saveRecord() {
   } finally {
     busyKind.value = null;
   }
+}
+
+async function copyContractJson() {
+  if (!contract.value) return;
+  const payload = JSON.stringify(
+    {
+      action_id: actionId.value,
+      model: model.value,
+      contract: contract.value,
+      meta: contractMeta.value || {},
+    },
+    null,
+    2,
+  );
+  try {
+    await navigator.clipboard.writeText(payload);
+  } catch {
+    // ignore clipboard failure in locked environments
+  }
+}
+
+function exportContractJson() {
+  if (!contract.value) return;
+  const payload = JSON.stringify(
+    {
+      action_id: actionId.value,
+      model: model.value,
+      contract: contract.value,
+      meta: contractMeta.value || {},
+    },
+    null,
+    2,
+  );
+  const blob = new Blob([payload], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `contract_form_${model.value || 'unknown'}_${actionId.value || 'na'}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 reload();
