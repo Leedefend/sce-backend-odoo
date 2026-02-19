@@ -196,39 +196,9 @@ async function resolveScene() {
     return;
   }
 
-  const sceneNode = findActionNodeBySceneKey(session.menuTree, sceneKey);
-  if (sceneNode?.meta?.action_id) {
-    await router.replace({
-      path: `/a/${sceneNode.meta.action_id}`,
-      query: { menu_id: sceneNode.menu_id || sceneNode.id || undefined, ...workspaceContextQuery },
-    });
-    return;
-  }
-  if (sceneNode?.menu_id || sceneNode?.id) {
-    await router.replace({ path: `/m/${sceneNode.menu_id || sceneNode.id}`, query: workspaceContextQuery });
-    return;
-  }
   setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
   errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
   status.value = 'error';
-}
-
-function findActionNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode | null {
-  if (!sceneKey) return null;
-  const walk = (items: NavNode[]): NavNode | null => {
-    for (const node of items) {
-      const sceneNode = node as NavNode & { scene_key?: string };
-      if (sceneNode.scene_key === sceneKey || node.meta?.scene_key === sceneKey) {
-        return node;
-      }
-      if (node.children?.length) {
-        const found = walk(node.children);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-  return walk(nodes) || null;
 }
 
 function findActionNodeByMenuXmlid(nodes: NavNode[], menuXmlid: string): NavNode | null {
