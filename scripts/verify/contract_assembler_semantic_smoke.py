@@ -206,6 +206,94 @@ def main() -> int:
             if row["user_mode"]["ui_contract"]["etag"] and row["user_mode"]["ui_contract"]["etag"] == row["hud_mode"]["ui_contract"]["etag"]:
                 errors.append(f"{role}.ui.contract user/hud etag should differ")
 
+            st_fu, resp_fu = _request_intent(
+                intent_url,
+                token,
+                "ui.contract",
+                {"op": "model", "model": "project.project", "view_type": "form", "contract_mode": "user"},
+            )
+            require_ok(st_fu, resp_fu, f"{role}.ui.contract.form.user")
+            data_fu, meta_fu = _extract_data_meta(resp_fu)
+            st_fh, resp_fh = _request_intent(
+                intent_url,
+                token,
+                "ui.contract",
+                {"op": "model", "model": "project.project", "view_type": "form", "contract_mode": "hud"},
+            )
+            require_ok(st_fh, resp_fh, f"{role}.ui.contract.form.hud")
+            data_fh, meta_fh = _extract_data_meta(resp_fh)
+
+            fields_fu = data_fu.get("fields") if isinstance(data_fu.get("fields"), dict) else {}
+            fields_fh = data_fh.get("fields") if isinstance(data_fh.get("fields"), dict) else {}
+            layout_fu = (((data_fu.get("views") or {}).get("form") or {}).get("layout") or [])
+            toolbar_header_fu = (((data_fu.get("toolbar") or {}).get("header")) or [])
+            buttons_fu = data_fu.get("buttons") if isinstance(data_fu.get("buttons"), list) else []
+            header_buttons_fu = [
+                item for item in buttons_fu if isinstance(item, dict) and str(item.get("level") or "").strip().lower() == "header"
+            ]
+            smart_buttons_fu = [
+                item
+                for item in buttons_fu
+                if isinstance(item, dict) and str(item.get("level") or "").strip().lower() in {"smart", "row"}
+            ]
+
+            row["user_mode"]["ui_contract_form"] = {
+                "contract_mode_meta": meta_fu.get("contract_mode"),
+                "field_count": len(fields_fu),
+                "layout_field_count": len(
+                    [
+                        item
+                        for item in layout_fu
+                        if isinstance(item, dict) and str(item.get("type") or "").strip().lower() == "field"
+                    ]
+                ),
+                "toolbar_header_count": len(toolbar_header_fu) if isinstance(toolbar_header_fu, list) else 0,
+                "header_button_count": len(header_buttons_fu),
+                "smart_button_count": len(smart_buttons_fu),
+                "search_filter_count": len((((data_fu.get("search") or {}).get("filters")) or [])),
+            }
+            row["hud_mode"]["ui_contract_form"] = {
+                "contract_mode_meta": meta_fh.get("contract_mode"),
+                "field_count": len(fields_fh),
+            }
+
+            if row["user_mode"]["ui_contract_form"]["contract_mode_meta"] != "user":
+                errors.append(f"{role}.ui.contract.form.user contract_mode_meta != user")
+            if row["hud_mode"]["ui_contract_form"]["contract_mode_meta"] != "hud":
+                errors.append(f"{role}.ui.contract.form.hud contract_mode_meta != hud")
+            if len(fields_fu) > 25:
+                errors.append(f"{role}.ui.contract.form.user field_count={len(fields_fu)} exceeds max=25")
+            if "name" not in fields_fu:
+                errors.append(f"{role}.ui.contract.form.user missing required field `name`")
+            if len(fields_fh) < len(fields_fu):
+                errors.append(f"{role}.ui.contract.form.hud field_count should be >= user ({len(fields_fh)} < {len(fields_fu)})")
+            if row["user_mode"]["ui_contract_form"]["toolbar_header_count"] != 0:
+                errors.append(f"{role}.ui.contract.form.user toolbar.header should be empty")
+            if row["user_mode"]["ui_contract_form"]["header_button_count"] > 3:
+                errors.append(
+                    f"{role}.ui.contract.form.user header_button_count={row['user_mode']['ui_contract_form']['header_button_count']} exceeds max=3"
+                )
+            if row["user_mode"]["ui_contract_form"]["smart_button_count"] > 4:
+                errors.append(
+                    f"{role}.ui.contract.form.user smart_button_count={row['user_mode']['ui_contract_form']['smart_button_count']} exceeds max=4"
+                )
+            if row["user_mode"]["ui_contract_form"]["search_filter_count"] > 8:
+                errors.append(
+                    f"{role}.ui.contract.form.user search_filter_count={row['user_mode']['ui_contract_form']['search_filter_count']} exceeds max=8"
+                )
+            if not isinstance(layout_fu, list) or not layout_fu:
+                errors.append(f"{role}.ui.contract.form.user layout missing")
+            if not any(
+                isinstance(item, dict) and str(item.get("type") or "").strip().lower() == "field"
+                for item in layout_fu
+            ):
+                errors.append(f"{role}.ui.contract.form.user layout has no field nodes")
+            if row["user_mode"]["ui_contract_form"]["layout_field_count"] < min(len(fields_fu), 12):
+                errors.append(
+                    f"{role}.ui.contract.form.user layout_field_count={row['user_mode']['ui_contract_form']['layout_field_count']} "
+                    f"is too low for field_count={len(fields_fu)}"
+                )
+
             row["ok"] = True
         except Exception as exc:
             row["failure_reason"] = str(exc)
