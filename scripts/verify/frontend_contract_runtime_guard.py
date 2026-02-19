@@ -54,6 +54,10 @@ CONTRACT_RECORD_RUNTIME_PATTERNS = [
     "...Object.keys(fields)",
 ]
 
+CONTRACT_ACTION_RUNTIME_PATTERNS = [
+    "fallback = 'tree'",
+]
+
 
 def iter_files():
     if not WEB_SRC.is_dir():
@@ -92,6 +96,10 @@ def main() -> int:
             for pattern in CONTRACT_RECORD_RUNTIME_PATTERNS:
                 if pattern in text:
                     violations.append(f"{rel}: forbidden record-runtime fallback token: {pattern}")
+        if rel.endswith("app/contractActionRuntime.ts"):
+            for pattern in CONTRACT_ACTION_RUNTIME_PATTERNS:
+                if pattern in text:
+                    violations.append(f"{rel}: forbidden action-runtime fallback token: {pattern}")
 
     if violations:
         print("[frontend_contract_runtime_guard] FAIL")
