@@ -1278,6 +1278,10 @@ verify.frontend.contract_normalized_fields.guard: guard.prod.forbid
 verify.frontend.contract_query_context.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_contract_query_context_guard.py
 
+.PHONY: verify.frontend.contract_record_layout.guard
+verify.frontend.contract_record_layout.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_contract_record_layout_guard.py
+
 verify.scene.legacy_endpoint.guard: guard.prod.forbid
 	@python3 scripts/verify/legacy_scene_endpoint_guard.py
 
