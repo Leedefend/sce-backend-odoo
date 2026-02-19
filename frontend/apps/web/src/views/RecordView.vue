@@ -157,6 +157,8 @@ import { executeButton } from '../api/executeButton';
 import { fetchChatterTimeline, postChatterMessage, type ChatterTimelineEntry } from '../api/chatter';
 import { downloadFile, fileToBase64, uploadFile } from '../api/files';
 import { extractFieldNames, resolveView } from '../app/resolvers/viewResolver';
+import { loadActionContractRaw } from '../api/contract';
+import { buildRecordRuntimeFromContract } from '../app/contractRecordRuntime';
 import { deriveRecordStatus } from '../app/view_state';
 import type { ViewButton, ViewContract } from '@sc/schema';
 import FieldValue from '../components/FieldValue.vue';
@@ -175,6 +177,7 @@ const route = useRoute();
 const router = useRouter();
 const traceId = ref('');
 const lastTraceId = ref('');
+const contractMode = ref('');
 const { error, clearError, setError } = useStatus();
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error' | 'editing' | 'saving'>('idle');
 const fields = ref<Array<{ name: string; label: string; value: unknown; descriptor?: ViewContract['fields'][string] }>>([]);
@@ -209,6 +212,12 @@ const recordTitle = ref<string | null>(null);
 const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
 const subtitle = computed(() => (status.value === 'editing' ? 'Editing name' : 'Record details'));
 const canEdit = computed(() => model.value === 'project.project');
+const actionId = computed(() => {
+  const raw = route.query.action_id;
+  const current = Array.isArray(raw) ? raw[0] : raw;
+  const parsed = Number(current || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+});
 const showHud = computed(() => isHudEnabled(route));
 const session = useSessionStore();
 const userGroups = computed(() => session.user?.groups_xmlids ?? []);
@@ -280,6 +289,7 @@ const hudEntries = computed(() => [
   { label: 'last_intent', value: lastIntent.value || '-' },
   { label: 'write_mode', value: lastWriteMode.value || '-' },
   { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
+  { label: 'contract_mode', value: contractMode.value || '-' },
   { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
 ]);
@@ -307,6 +317,7 @@ async function load() {
   chatterError.value = '';
   chatterUploadError.value = '';
   layoutStats.value = { field: 0, group: 0, notebook: 0, page: 0, unsupported: 0 };
+  contractMode.value = '';
   status.value = 'loading';
   lastIntent.value = 'api.data.read';
   lastWriteMode.value = 'read';
@@ -320,7 +331,20 @@ async function load() {
   }
 
   try {
-    const view = await resolveView(model.value, 'form');
+    let view: ViewContract | null = null;
+    let contractFieldNames: string[] = [];
+    if (actionId.value) {
+      const actionContract = await loadActionContractRaw(actionId.value);
+      if (actionContract?.data && typeof actionContract.data === 'object') {
+        const runtime = buildRecordRuntimeFromContract(actionContract.data);
+        view = runtime.view;
+        contractFieldNames = runtime.fieldNames;
+      }
+      contractMode.value = String(actionContract?.meta?.contract_mode || '');
+    }
+    if (!view) {
+      view = await resolveView(model.value, 'form');
+    }
     viewContract.value = view || null;
     const layout = view?.layout;
     if (!layout) {
@@ -331,7 +355,7 @@ async function load() {
     }
     layoutStats.value = analyzeLayout(layout);
 
-    const fieldNames = extractFieldNames(layout).filter(Boolean);
+    const fieldNames = contractFieldNames.length ? contractFieldNames : extractFieldNames(layout).filter(Boolean);
     const readFields = fieldNames.length ? [...fieldNames] : ['*'];
     if (readFields.length && readFields[0] !== '*' && !readFields.includes('write_date')) {
       readFields.push('write_date');
