@@ -48,6 +48,10 @@ ACTION_CONTEXT_ONLY_PATTERNS = [
     "meta.view_modes",
 ]
 
+CONTRACT_RECORD_RUNTIME_PATTERNS = [
+    "...Object.keys(fields)",
+]
+
 
 def iter_files():
     if not WEB_SRC.is_dir():
@@ -82,6 +86,10 @@ def main() -> int:
             for pattern in ACTION_CONTEXT_ONLY_PATTERNS:
                 if pattern in text:
                     violations.append(f"{rel}: forbidden action-context fallback token: {pattern}")
+        if rel.endswith("app/contractRecordRuntime.ts"):
+            for pattern in CONTRACT_RECORD_RUNTIME_PATTERNS:
+                if pattern in text:
+                    violations.append(f"{rel}: forbidden record-runtime fallback token: {pattern}")
 
     if violations:
         print("[frontend_contract_runtime_guard] FAIL")
