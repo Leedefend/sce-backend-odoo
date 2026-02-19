@@ -47,7 +47,7 @@ status: active
     - 产物：`/mnt/artifacts/backend/role_capability_floor_prod_like.json`（不可写时回落 `artifacts/backend/role_capability_floor_prod_like.json`）
   - `make verify.contract.assembler.semantic.smoke`
     - 产物：`/mnt/artifacts/backend/contract_assembler_semantic_smoke.json`（不可写时回落 `artifacts/backend/contract_assembler_semantic_smoke.json`）
-    - 已包含项目表单密度断言（user 模式 `project.project/form`：字段上限、toolbar/header/smart 动作上限、hud 字段面 >= user）
+    - 已包含项目表单密度断言（user 模式 `project.project/form`：字段上限、layout 字段覆盖、搜索筛选上限、toolbar/header/smart 动作上限、hud 字段面 >= user）
   - `make verify.runtime.surface.dashboard.report`
     - 产物：`/mnt/artifacts/backend/runtime_surface_dashboard_report.json`（不可写时回落 `artifacts/backend/runtime_surface_dashboard_report.json`）
   - `make verify.boundary.import_guard`

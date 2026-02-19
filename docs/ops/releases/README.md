@@ -140,7 +140,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - artifact: `/mnt/artifacts/backend/role_capability_floor_prod_like.json` (fallback: `artifacts/backend/role_capability_floor_prod_like.json`)
   - `make verify.contract.assembler.semantic.smoke`
     - artifact: `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback: `artifacts/backend/contract_assembler_semantic_smoke.json`)
-    - includes project form density assertions (user mode `project.project/form`: field cap, toolbar/header/smart action caps, hud >= user field surface)
+    - includes project form density assertions (user mode `project.project/form`: field cap, layout-field coverage, search-filter cap, toolbar/header/smart action caps, hud >= user field surface)
   - `make verify.runtime.surface.dashboard.report`
     - artifact: `/mnt/artifacts/backend/runtime_surface_dashboard_report.json` (fallback: `artifacts/backend/runtime_surface_dashboard_report.json`)
   - `make verify.boundary.import_guard`
