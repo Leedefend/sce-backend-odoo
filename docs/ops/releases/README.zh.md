@@ -24,6 +24,7 @@ status: active
   - `make verify.frontend.contract_route.guard`
   - `make verify.frontend.contract_runtime.guard`
   - `make verify.frontend.contract_normalized_fields.guard`
+  - `make verify.frontend.contract_query_context.guard`
   - `make verify.frontend.typecheck.strict`
   - `make verify.frontend.build`
   - 发布检查：

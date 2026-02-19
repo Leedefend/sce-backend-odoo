@@ -117,6 +117,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.frontend.contract_route.guard`
   - `make verify.frontend.contract_runtime.guard`
   - `make verify.frontend.contract_normalized_fields.guard`
+  - `make verify.frontend.contract_query_context.guard`
   - `make verify.frontend.typecheck.strict`
   - `make verify.frontend.build`
   - release check:
