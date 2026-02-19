@@ -291,8 +291,8 @@ export const useSessionStore = defineStore('session', {
       this.sceneVersion = (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).scene_version ?? (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).sceneVersion ?? null;
       const roleSurfaceRaw = (result as AppInitResponse & { role_surface?: Partial<RoleSurface> }).role_surface ?? {};
       this.roleSurface = {
-        role_code: String(roleSurfaceRaw.role_code || 'owner'),
-        role_label: String(roleSurfaceRaw.role_label || roleSurfaceRaw.role_code || 'Owner'),
+        role_code: String(roleSurfaceRaw.role_code || ''),
+        role_label: String(roleSurfaceRaw.role_label || roleSurfaceRaw.role_code || ''),
         landing_scene_key: String(roleSurfaceRaw.landing_scene_key || ''),
         landing_menu_id: typeof roleSurfaceRaw.landing_menu_id === 'number' ? roleSurfaceRaw.landing_menu_id : null,
         landing_menu_xmlid: String(roleSurfaceRaw.landing_menu_xmlid || ''),
