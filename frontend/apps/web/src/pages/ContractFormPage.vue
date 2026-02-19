@@ -175,6 +175,7 @@ type ContractAction = {
   context: Record<string, unknown>;
   domainRaw: string;
   target: string;
+  url: string;
   enabled: boolean;
   hint: string;
 };
@@ -369,6 +370,7 @@ const contractActions = computed<ContractAction[]>(() => {
       context,
       domainRaw,
       target,
+      url: String(payload.url || '').trim(),
       enabled,
       hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
     });
@@ -612,6 +614,10 @@ async function runAction(action: ContractAction) {
           domain_raw: action.domainRaw || undefined,
         },
       });
+      return;
+    }
+    if (action.url) {
+      window.open(action.url, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
       return;
     }
     errorMessage.value = 'contract open action missing action_id';
