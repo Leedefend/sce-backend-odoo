@@ -227,21 +227,25 @@ const recordTitle = ref<string | null>(null);
 const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
 const subtitle = computed(() => (status.value === 'editing' ? 'Editing contract fields' : 'Record details'));
 const canEdit = computed(() => contractWriteAllowed.value);
-const actionId = computed(() => {
+const actionContext = computed(() => {
   const raw = route.query.action_id;
   const current = Array.isArray(raw) ? raw[0] : raw;
   const parsed = Number(current || 0);
-  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  if (Number.isFinite(parsed) && parsed > 0) return { id: parsed, source: 'query' as const };
   const fromCurrent = Number(session.currentAction?.action_id || 0);
   if (Number.isFinite(fromCurrent) && fromCurrent > 0) {
     const currentModel = String(session.currentAction?.model || '').trim();
     if (!currentModel || currentModel === model.value) {
-      return fromCurrent;
+      return { id: fromCurrent, source: 'current_action' as const };
     }
   }
   const fromMenu = findRecordActionIdByModel(session.menuTree, model.value);
-  return fromMenu;
+  if (fromMenu) {
+    return { id: fromMenu, source: 'menu_tree' as const };
+  }
+  return { id: null, source: 'none' as const };
 });
+const actionId = computed(() => actionContext.value.id);
 const showHud = computed(() => isHudEnabled(route));
 const session = useSessionStore();
 const userGroups = computed(() => session.user?.groups_xmlids ?? []);
@@ -309,6 +313,7 @@ const hudEntries = computed(() => [
   { label: 'model', value: model.value },
   { label: 'record_id', value: recordId.value },
   { label: 'status', value: status.value },
+  { label: 'action_source', value: actionContext.value.source },
   { label: 'render_mode', value: renderMode.value },
   { label: 'layout_present', value: Boolean(viewContract.value?.layout) },
   { label: 'layout_nodes', value: JSON.stringify(layoutStats.value) },
