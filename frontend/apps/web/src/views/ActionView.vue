@@ -742,10 +742,6 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
   if (typedFields && typeof typedFields === 'object') {
     return Object.keys(typedFields);
   }
-  const rawFields = contract?.ui_contract_raw?.fields;
-  if (rawFields && typeof rawFields === 'object') {
-    return Object.keys(rawFields);
-  }
   return [];
 }
 
@@ -758,7 +754,7 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
       return kanbanBlock.fields;
     }
   }
-  const fieldsMap = typed.fields || typed.ui_contract_raw?.fields;
+  const fieldsMap = typed.fields;
   if (fieldsMap && typeof fieldsMap === 'object') {
     const preferred = ['display_name', 'name', 'stage_id', 'user_id', 'partner_id', 'write_date', 'create_date'];
     const available = Object.keys(fieldsMap);
@@ -1211,7 +1207,7 @@ async function load() {
     const contractColumns = extractColumnsFromContract(contract);
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
-    const fieldMap = typedContract.fields || typedContract.ui_contract_raw?.fields || {};
+    const fieldMap = typedContract.fields || {};
     hasActiveField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'active' in fieldMap);
     hasAssigneeField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'user_id' in fieldMap);
     await loadAssigneeOptions();
