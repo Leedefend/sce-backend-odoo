@@ -250,6 +250,7 @@ def main() -> int:
                 "toolbar_header_count": len(toolbar_header_fu) if isinstance(toolbar_header_fu, list) else 0,
                 "header_button_count": len(header_buttons_fu),
                 "smart_button_count": len(smart_buttons_fu),
+                "search_filter_count": len((((data_fu.get("search") or {}).get("filters")) or [])),
             }
             row["hud_mode"]["ui_contract_form"] = {
                 "contract_mode_meta": meta_fh.get("contract_mode"),
@@ -276,6 +277,10 @@ def main() -> int:
                 errors.append(
                     f"{role}.ui.contract.form.user smart_button_count={row['user_mode']['ui_contract_form']['smart_button_count']} exceeds max=4"
                 )
+            if row["user_mode"]["ui_contract_form"]["search_filter_count"] > 8:
+                errors.append(
+                    f"{role}.ui.contract.form.user search_filter_count={row['user_mode']['ui_contract_form']['search_filter_count']} exceeds max=8"
+                )
             if not isinstance(layout_fu, list) or not layout_fu:
                 errors.append(f"{role}.ui.contract.form.user layout missing")
             if not any(
@@ -283,6 +288,11 @@ def main() -> int:
                 for item in layout_fu
             ):
                 errors.append(f"{role}.ui.contract.form.user layout has no field nodes")
+            if row["user_mode"]["ui_contract_form"]["layout_field_count"] < min(len(fields_fu), 12):
+                errors.append(
+                    f"{role}.ui.contract.form.user layout_field_count={row['user_mode']['ui_contract_form']['layout_field_count']} "
+                    f"is too low for field_count={len(fields_fu)}"
+                )
 
             row["ok"] = True
         except Exception as exc:
