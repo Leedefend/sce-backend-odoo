@@ -113,12 +113,12 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 ## Current Review Baseline
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
-- Frontend contract-driven form runtime (contract is the only render source):
+- Frontend contract-driven runtime (all views use contract as the only render source):
   - `make verify.frontend.typecheck.strict`
   - `make verify.frontend.build`
   - release check:
-    - `/f/:model/:id` must render from `ui.contract` (`head/views/fields/buttons/toolbar/permissions/workflow/search`) without requiring `load_view` as primary source
-    - behavior changes should be driven by contract payload changes (no per-scene hardcoded UI branches)
+    - `/a/:actionId` and `/r/:model/:id` and `/f/:model/:id` must render from `ui.contract` (`head/views/fields/buttons/toolbar/permissions/workflow/search`) without requiring `load_view` as primary source
+    - behavior/interaction changes should be driven by contract payload changes (no per-scene hardcoded UI branches)
 - Backend evidence & observability expansion (Phase Next):
   - `make verify.load_view.access.contract.guard`
     - artifact: `/mnt/artifacts/backend/load_view_access_contract_guard.json` (fallback: `artifacts/backend/load_view_access_contract_guard.json`)
