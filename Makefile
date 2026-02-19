@@ -1262,6 +1262,10 @@ verify.frontend_api: guard.prod.forbid check-compose-project check-compose-env
 verify.frontend.intent_channel.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_intent_channel_guard.py
 
+.PHONY: verify.frontend.contract_runtime.guard
+verify.frontend.contract_runtime.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_contract_runtime_guard.py
+
 verify.scene.legacy_endpoint.guard: guard.prod.forbid
 	@python3 scripts/verify/legacy_scene_endpoint_guard.py
 
