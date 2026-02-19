@@ -114,6 +114,7 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
 - Menu scene coverage evidence:
   - `docs/ops/releases/current/menu_scene_coverage_evidence.md`
 - Frontend contract-driven runtime (all views use contract as the only render source):
+  - `make verify.frontend.contract_runtime.guard`
   - `make verify.frontend.typecheck.strict`
   - `make verify.frontend.build`
   - release check:
