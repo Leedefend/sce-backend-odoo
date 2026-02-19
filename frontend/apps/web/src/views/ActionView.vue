@@ -1192,11 +1192,7 @@ async function load() {
       await router.replace({
         name: 'model-form',
         params: { model: resolvedModel, id: actionResId ? String(actionResId) : 'new' },
-        query: {
-          menu_id: menuId.value || undefined,
-          action_id: actionId.value || undefined,
-          ...resolveCarryQuery(),
-        },
+        query: resolveCarryQuery(),
       });
       return;
     }
