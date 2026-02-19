@@ -23,12 +23,12 @@ PATTERNS = [
     "path: '/projects/:id'",
     "appendQuery('/projects'",
     "appendQuery(`/projects/",
+    "pending_approval",
+    "project_intake",
+    "cost_watchlist",
 ]
 
 ACTION_VIEW_ONLY_PATTERNS = [
-    "preset === 'pending_approval'",
-    "preset === 'project_intake'",
-    "preset === 'cost_watchlist'",
     "(action.view_modes?.[0] ?? 'tree')",
 ]
 
