@@ -58,6 +58,7 @@
             v-for="item in searchFilters"
             :key="`flt-${item.key}`"
             class="chip-btn"
+            :class="{ active: activeFilterKey === item.key }"
             :disabled="busy || !item.key"
             @click="openFilter(item.key)"
           >
@@ -182,6 +183,7 @@ const validationErrors = ref<string[]>([]);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
+const activeFilterKey = ref('');
 const formData = reactive<Record<string, unknown>>({});
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
@@ -277,7 +279,12 @@ const searchFilters = computed(() => {
   const rows = contract.value?.search?.filters;
   if (!Array.isArray(rows)) return [];
   return rows
-    .map((row) => ({ key: String(row.key || '').trim(), label: String(row.label || row.key || '').trim() }))
+    .map((row) => ({
+      key: String(row.key || '').trim(),
+      label: String(row.label || row.key || '').trim(),
+      domainRaw: String(row.domain_raw || '').trim(),
+      contextRaw: String(row.context_raw || '').trim(),
+    }))
     .filter((row) => row.key && row.label);
 });
 
@@ -518,6 +525,8 @@ async function runAction(action: ContractAction) {
 
 async function openFilter(filterKey: string) {
   if (!actionId.value) return;
+  const selected = searchFilters.value.find((item) => item.key === filterKey);
+  activeFilterKey.value = filterKey;
   await router.push({
     name: 'action',
     params: { actionId: String(actionId.value) },
@@ -525,6 +534,8 @@ async function openFilter(filterKey: string) {
       ...route.query,
       action_id: actionId.value,
       preset_filter: filterKey,
+      domain_raw: selected?.domainRaw || undefined,
+      context_raw: selected?.contextRaw || undefined,
     },
   });
 }
@@ -652,6 +663,11 @@ reload();
   border: 1px solid #cbd5e1;
   background: #fff;
   cursor: pointer;
+}
+
+.chip-btn.active {
+  border-color: #0f766e;
+  box-shadow: inset 0 0 0 1px #0f766e;
 }
 
 .form-grid {
