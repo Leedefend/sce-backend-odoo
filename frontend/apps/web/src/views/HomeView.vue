@@ -44,7 +44,7 @@
           </p>
           <p class="today-desc">{{ item.description }}</p>
           <p v-if="typeof item.count === 'number'" class="today-count">待处理 {{ item.count }}</p>
-          <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item.sceneKey, item.contextQuery)">
+          <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
             {{ item.ready === false ? '即将开放' : '立即进入' }}
           </button>
         </article>
@@ -241,20 +241,21 @@ type CapabilityEntry = {
   reason: string;
   reasonCode: string;
   tags: string[];
+  route: string;
+  targetActionId: number;
+  targetMenuId: number;
+  targetModel: string;
+  targetRecordId: string;
+  contextQuery: Record<string, string>;
 };
 type SuggestionItem = {
   id: string;
   title: string;
   description: string;
-  sceneKey: string;
-  contextQuery?: Record<string, string>;
   count?: number;
   status?: SuggestionStatus;
   ready?: boolean;
-};
-type SuggestionRoute = {
-  path: string;
-  query: Record<string, string>;
+  entryId: string;
 };
 type FilterChip = { key: string; label: string };
 
@@ -347,17 +348,6 @@ const workspaceContextQuery = computed(() => {
   return readWorkspaceContext(route.query as Record<string, unknown>) as Record<string, unknown>;
 });
 
-function stringifyEntryContext(context: { section?: string; source?: string; reason?: string; search?: string }) {
-  const next: Record<string, string> = {};
-  if (context.section) next.section = context.section;
-  if (context.source) next.source = context.source;
-  if (context.reason) next.reason = context.reason;
-  if (context.search) next.search = context.search;
-  if (!Object.keys(next).length) return '';
-  const payload = JSON.stringify(next);
-  return payload.length <= 256 ? payload : '';
-}
-
 function asText(value: unknown) {
   const text = String(value ?? '').trim();
   if (!text || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') return '';
@@ -374,6 +364,25 @@ function hasInternalTag(raw: unknown) {
   const text = asText(raw).toLowerCase();
   if (!text) return false;
   return text.split(/[,\s;|]+/).some((item) => item === 'internal' || item === 'smoke' || item === 'test');
+}
+
+function normalizeContextQuery(raw: unknown) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const source = raw as Record<string, unknown>;
+  return Object.entries(source).reduce<Record<string, string>>((acc, [key, value]) => {
+    const text = asText(value);
+    if (text) acc[key] = text;
+    return acc;
+  }, {});
+}
+
+function toPositiveInt(raw: unknown) {
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return Math.trunc(raw);
+  if (typeof raw === 'string' && raw.trim()) {
+    const parsed = Number(raw.trim());
+    if (Number.isFinite(parsed) && parsed > 0) return Math.trunc(parsed);
+  }
+  return 0;
 }
 
 function resolveSceneTitle(scene: { title?: unknown; key?: unknown }) {
@@ -438,6 +447,9 @@ const entries = computed<CapabilityEntry[]>(() => {
       const reason = String((tile as { reason?: string }).reason || '');
       const reasonCode = String((tile as { reason_code?: string }).reason_code || '');
       const state = mapState((tile as { state?: string }).state, rawStatus, (tile as { allowed?: unknown }).allowed);
+      const payload = ((tile as { payload?: unknown }).payload || {}) as Record<string, unknown>;
+      const route = asText((tile as { route?: unknown }).route);
+      const contextQuery = normalizeContextQuery(payload.context_query || payload.query || payload.context);
       list.push({
         id: `${sceneKey}-${key}-${sceneIndex}-${tileIndex}`,
         key,
@@ -451,6 +463,12 @@ const entries = computed<CapabilityEntry[]>(() => {
         state,
         reason,
         reasonCode,
+        route,
+        targetActionId: toPositiveInt(payload.action_id),
+        targetMenuId: toPositiveInt(payload.menu_id),
+        targetModel: asText(payload.model),
+        targetRecordId: asText(payload.record_id),
+        contextQuery,
         tags: [
           ...new Set(
             [
@@ -468,77 +486,26 @@ const entries = computed<CapabilityEntry[]>(() => {
 });
 
 const todaySuggestions = computed<SuggestionItem[]>(() => {
-  const all = entries.value;
-  const firstReady = all.find((entry) => entry.state === 'READY');
-  const pickByKeyword = (keywords: string[], fallback?: string) => {
-    const found = all.find((entry) => {
-      const text = `${entry.title} ${entry.subtitle} ${entry.sceneKey}`.toLowerCase();
-      return keywords.some((keyword) => text.includes(keyword));
-    });
-    if (found) {
-      return { sceneKey: found.sceneKey, ready: found.state === 'READY' };
-    }
-    return { sceneKey: fallback || firstReady?.sceneKey || roleLandingScene.value, ready: false };
-  };
-  const project = pickByKeyword(['立项', 'project', 'intake']);
-  const contract = pickByKeyword(['合同', 'contract', 'approve', 'approval']);
-  const cost = pickByKeyword(['成本', 'cost', 'ledger']);
-  const projectCount = resolveSuggestionCount(project.sceneKey, ['owned', 'todo']);
-  const contractCount = resolveSuggestionCount(contract.sceneKey, ['todo']);
-  const costCount = resolveSuggestionCount(cost.sceneKey, ['following', 'mentions']);
-  return [
-    {
-      id: 'project-intake',
-      title: '项目立项',
-      description: '新建项目并完成立项信息录入。',
-      sceneKey: project.sceneKey,
-      contextQuery: {
-        preset: 'project_intake',
-        ctx_source: 'workspace_today',
-        entry_context: stringifyEntryContext({ section: 'owned', search: '立项' }),
-      },
-      count: project.ready ? projectCount : undefined,
-      status: 'normal',
-      ready: project.ready,
-    },
-    {
-      id: 'contract-approval',
-      title: '合同审批',
-      description: '查看待审批合同并快速处理。',
-      sceneKey: contract.sceneKey,
-      contextQuery: {
-        preset: 'pending_approval',
-        ctx_source: 'workspace_today',
-        entry_context: stringifyEntryContext({ section: 'todo', source: 'mail.activity', search: '审批' }),
-      },
-      count: contract.ready ? contractCount : undefined,
-      status: 'urgent',
-      ready: contract.ready,
-    },
-    {
-      id: 'cost-ledger',
-      title: '成本台账',
-      description: '跟踪成本执行并核对差异。',
-      sceneKey: cost.sceneKey,
-      contextQuery: {
-        preset: 'cost_watchlist',
-        ctx_source: 'workspace_today',
-        entry_context: stringifyEntryContext({ section: 'following', search: '成本' }),
-      },
-      count: cost.ready ? costCount : undefined,
-      status: 'normal',
-      ready: cost.ready,
-    },
-  ];
+  const source = entries.value.slice(0, 6);
+  const picked = source.slice(0, 3);
+  return picked.map((entry) => {
+    const count = resolveSuggestionCount(entry.sceneKey);
+    const hasUrgentTag = entry.tags.includes('urgent');
+    return {
+      id: `suggestion-${entry.id}`,
+      title: entry.title,
+      description: entry.subtitle || '从契约能力目录进入对应页面',
+      count: typeof count === 'number' ? count : undefined,
+      status: hasUrgentTag ? 'urgent' : 'normal',
+      ready: entry.state === 'READY',
+      entryId: entry.id,
+    };
+  });
 });
 
-function resolveSuggestionCount(sceneKey: string, fallbackKeys: string[]) {
+function resolveSuggestionCount(sceneKey: string) {
   const byScene = myWorkSummary.value.find((item) => String(item.scene_key || '') === sceneKey);
   if (byScene) return Number(byScene.count || 0);
-  for (const key of fallbackKeys) {
-    const matched = myWorkSummary.value.find((item) => String(item.key || '') === key);
-    if (matched) return Number(matched.count || 0);
-  }
   return undefined;
 }
 
@@ -716,7 +683,25 @@ async function openScene(entry: CapabilityEntry) {
   void trackUsageEvent('workspace.enter_click', { capability_key: entry.key, scene_key: entry.sceneKey }).catch(() => {});
   try {
     void trackCapabilityOpen(entry.key).catch(() => {});
-    await router.push({ path: `/s/${entry.sceneKey}` });
+    if (entry.route) {
+      await router.push({ path: entry.route, query: entry.contextQuery });
+    } else if (entry.targetActionId) {
+      await router.push({
+        path: `/a/${entry.targetActionId}`,
+        query: { menu_id: entry.targetMenuId || undefined, ...entry.contextQuery },
+      });
+    } else if (entry.targetModel && entry.targetRecordId) {
+      await router.push({
+        path: `/r/${entry.targetModel}/${entry.targetRecordId}`,
+        query: {
+          menu_id: entry.targetMenuId || undefined,
+          action_id: entry.targetActionId || undefined,
+          ...entry.contextQuery,
+        },
+      });
+    } else {
+      await router.push({ path: `/s/${entry.sceneKey}`, query: entry.contextQuery });
+    }
     pushRecentEntry(entry.recentKey);
     void trackUsageEvent('workspace.enter_result', {
       capability_key: entry.key,
@@ -832,80 +817,26 @@ function clearRecentEntries() {
   void trackUsageEvent('workspace.recent.clear', { scope: workspaceScopeKey.value, cleared_count: cleared }).catch(() => {});
 }
 
-function openSuggestionWithContext(sceneKey: string, contextQuery?: Record<string, string>) {
-  const safeSceneKey = asText(sceneKey);
-  if (!safeSceneKey) {
+function openSuggestion(item: SuggestionItem) {
+  const entry = entries.value.find((candidate) => candidate.id === item.entryId);
+  if (!entry) {
     openRoleLanding();
     return;
   }
-  router.push({ path: `/s/${safeSceneKey}`, query: { ...(contextQuery || {}) } }).catch(() => {});
-}
-
-function openSuggestion(sceneKey: string, contextQuery?: Record<string, string>) {
-  const preset = asText(contextQuery?.preset);
-  const ctxSource = asText(contextQuery?.ctx_source) || 'workspace_today';
-  const entryContext = asText(contextQuery?.entry_context);
+  const ctxSource = asText(entry.contextQuery.ctx_source) || 'workspace_today';
   void trackUsageEvent('workspace.today_click', {
-    scene_key: asText(sceneKey) || '',
-    preset: preset || '',
+    scene_key: entry.sceneKey || '',
+    preset: '',
     ctx_source: ctxSource,
-    has_entry_context: Boolean(entryContext),
+    has_entry_context: Boolean(entry.contextQuery.entry_context),
   }).catch(() => {});
-  const withEntryContext = (query: Record<string, string>) =>
-    entryContext ? { ...query, entry_context: entryContext } : query;
-  const presetRouteMap: Record<string, (source: string) => SuggestionRoute> = {
-    pending_approval: (source) => ({
-      path: '/my-work',
-      query: withEntryContext({
-        preset: 'pending_approval',
-        ctx_source: source,
-        section: 'todo',
-        source: 'mail.activity',
-        search: '审批',
-      }),
-    }),
-    project_intake: (source) => ({
-      path: '/my-work',
-      query: withEntryContext({ preset: 'project_intake', ctx_source: source, section: 'owned', search: '立项' }),
-    }),
-    cost_watchlist: (source) => ({
-      path: '/my-work',
-      query: withEntryContext({ preset: 'cost_watchlist', ctx_source: source, section: 'following', search: '成本' }),
-    }),
-  };
-  if (preset && presetRouteMap[preset]) {
-    const target = presetRouteMap[preset](ctxSource);
-    void trackUsageEvent('workspace.preset.navigate', {
-      preset,
-      from: 'workspace.home',
-      to: target.path,
-      ctx_source: ctxSource,
-    }).catch(() => {});
-    router.push(target).catch(() => {});
-    return;
-  }
-  if (contextQuery && Object.keys(contextQuery).length) {
-    void trackUsageEvent('workspace.preset.navigate', {
-      preset: preset || '',
-      from: 'workspace.home',
-      to: `/s/${asText(sceneKey) || ''}`,
-      ctx_source: ctxSource,
-    }).catch(() => {});
-    openSuggestionWithContext(sceneKey, contextQuery);
-    return;
-  }
-  const safeSceneKey = asText(sceneKey);
-  if (!safeSceneKey) {
-    openRoleLanding();
-    return;
-  }
   void trackUsageEvent('workspace.preset.navigate', {
     preset: '',
     from: 'workspace.home',
-    to: `/s/${safeSceneKey}`,
-    ctx_source: '',
+    to: `/s/${entry.sceneKey}`,
+    ctx_source: ctxSource,
   }).catch(() => {});
-  router.push({ path: `/s/${safeSceneKey}` }).catch(() => {});
+  void openScene(entry);
 }
 
 function retryOpen() {
