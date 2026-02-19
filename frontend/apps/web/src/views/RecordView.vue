@@ -565,6 +565,21 @@ async function runHeaderButton(btn: ViewButton) {
   if (!model.value || !recordId.value || !btn.name) {
     return;
   }
+  if (btn.type === 'action_open' || String(btn.name).startsWith('__open__')) {
+    const rawAction = String(btn.name).replace('__open__', '');
+    const openActionId = Number(rawAction || 0);
+    if (Number.isFinite(openActionId) && openActionId > 0) {
+      await router.push({
+        name: 'action',
+        params: { actionId: openActionId },
+        query: {
+          menu_id: route.query.menu_id,
+          action_id: openActionId,
+        },
+      });
+    }
+    return;
+  }
   lastIntent.value = 'execute_button';
   lastWriteMode.value = 'execute';
   lastAction.value = 'execute';
