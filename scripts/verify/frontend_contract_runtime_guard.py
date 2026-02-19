@@ -25,6 +25,12 @@ PATTERNS = [
     "appendQuery(`/projects/",
 ]
 
+ACTION_VIEW_ONLY_PATTERNS = [
+    "preset === 'pending_approval'",
+    "preset === 'project_intake'",
+    "preset === 'cost_watchlist'",
+]
+
 
 def iter_files():
     if not WEB_SRC.is_dir():
@@ -43,6 +49,10 @@ def main() -> int:
         for pattern in PATTERNS:
             if pattern in text:
                 violations.append(f"{rel}: forbidden legacy view runtime token: {pattern}")
+        if rel.endswith("views/ActionView.vue"):
+            for pattern in ACTION_VIEW_ONLY_PATTERNS:
+                if pattern in text:
+                    violations.append(f"{rel}: forbidden ActionView preset token: {pattern}")
 
     if violations:
         print("[frontend_contract_runtime_guard] FAIL")
