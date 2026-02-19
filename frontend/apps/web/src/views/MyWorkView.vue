@@ -1375,22 +1375,7 @@ function applyRouteOverrides() {
     changed = true;
   };
 
-  if (preset === 'pending_approval') {
-    appliedPresetLabel.value = '合同待审批';
-    setIfDiff(activeSection, 'todo');
-    setIfDiff(sourceFilter, 'mail.activity');
-    setIfDiff(searchText, search || '审批');
-  } else if (preset === 'project_intake') {
-    appliedPresetLabel.value = '项目立项';
-    setIfDiff(activeSection, 'owned');
-    setIfDiff(searchText, search || '立项');
-  } else if (preset === 'cost_watchlist') {
-    appliedPresetLabel.value = '成本台账关注';
-    setIfDiff(activeSection, 'following');
-    setIfDiff(searchText, search || '成本');
-  } else {
-    appliedPresetLabel.value = '';
-  }
+  appliedPresetLabel.value = preset ? `预设视图：${preset}` : '';
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'my_work' }).catch(() => {});
@@ -1402,7 +1387,7 @@ function applyRouteOverrides() {
   if (section) setIfDiff(activeSection, section);
   if (source && source !== 'workspace_today') setIfDiff(sourceFilter, source);
   if (reason) setIfDiff(reasonFilter, reason);
-  if (search && preset === '') setIfDiff(searchText, search);
+  if (search) setIfDiff(searchText, search);
   if (changed) {
     page.value = 1;
   }
