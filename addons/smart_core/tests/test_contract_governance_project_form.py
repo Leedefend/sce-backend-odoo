@@ -71,6 +71,9 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertNotIn("create_uid", layout_field_names)
         self.assertNotIn("message_ids", layout_field_names)
         self.assertIn("name", layout_field_names)
+        # layout should cover selected field surface, not only original sparse field nodes
+        self.assertIn("manager_id", layout_field_names)
+        self.assertIn("budget_total", layout_field_names)
 
         toolbar_header = ((out.get("toolbar") or {}).get("header") or [])
         self.assertEqual(toolbar_header, [])
@@ -78,6 +81,8 @@ class TestProjectFormGovernance(unittest.TestCase):
         buttons = out.get("buttons") or []
         self.assertTrue(all(str(btn.get("kind", "")).lower() != "server" for btn in buttons if isinstance(btn, dict)))
         self.assertTrue(all("评分" not in str(btn.get("label", "")) for btn in buttons if isinstance(btn, dict)))
+        filters = ((out.get("search") or {}).get("filters")) or []
+        self.assertLessEqual(len(filters), 8)
 
     def test_hud_mode_keeps_full_payload(self):
         data = _sample_payload()

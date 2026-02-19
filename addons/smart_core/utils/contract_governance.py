@@ -421,13 +421,56 @@ def _filter_project_form_layout(data: dict, selected_fields: set[str]) -> None:
             continue
         filtered_layout.append(node)
 
-    if not any(_safe_lower(item.get("type")) == "field" for item in filtered_layout):
+    existing_field_names = {
+        _safe_text(item.get("name"))
+        for item in filtered_layout
+        if isinstance(item, dict) and _safe_lower(item.get("type")) == "field"
+    }
+    if not existing_field_names:
         for name in _PROJECT_FORM_PRIMARY_FIELDS:
             if name in selected_fields:
                 filtered_layout.append({"type": "field", "name": name})
+        existing_field_names = {
+            _safe_text(item.get("name"))
+            for item in filtered_layout
+            if isinstance(item, dict) and _safe_lower(item.get("type")) == "field"
+        }
+
+    # Ensure filtered layout covers selected user-surface fields, so frontend can render
+    # a coherent contract-driven form without falling back to unordered field maps.
+    missing_selected = sorted(name for name in selected_fields if name and name not in existing_field_names)
+    for name in missing_selected:
+        filtered_layout.append({"type": "field", "name": name})
+
     form["layout"] = filtered_layout
     views["form"] = form
     data["views"] = views
+
+
+def _govern_project_form_search(data: dict) -> None:
+    search = _as_dict(data.get("search"))
+    filters = search.get("filters")
+    if not isinstance(filters, list):
+        return
+    cleaned = []
+    seen: set[str] = set()
+    for row in filters:
+        if not isinstance(row, dict):
+            continue
+        key = _safe_text(row.get("key"))
+        label = _safe_text(row.get("label"))
+        if not key or key in seen:
+            continue
+        if not label:
+            continue
+        if any(marker in _safe_lower(label) for marker in ("活动", "评分", "status_period")):
+            continue
+        cleaned.append(row)
+        seen.add(key)
+        if len(cleaned) >= 8:
+            break
+    search["filters"] = cleaned
+    data["search"] = search
 
 
 def _action_priority(action: dict) -> int:
@@ -495,6 +538,7 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
 
     _filter_project_form_layout(data, selected_set)
     _govern_project_form_actions(data)
+    _govern_project_form_search(data)
 
 
 def normalize_scenes(scenes: list) -> list[dict]:
