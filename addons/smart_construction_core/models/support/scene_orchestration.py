@@ -5,6 +5,23 @@ from odoo import api, models, fields, _
 from odoo.exceptions import UserError
 
 
+class ScCapabilityGroup(models.Model):
+    _name = "sc.capability.group"
+    _description = "SC Capability Group"
+    _order = "sequence, id"
+
+    active = fields.Boolean(default=True)
+    sequence = fields.Integer(default=10)
+    key = fields.Char(required=True, index=True)
+    label = fields.Char(required=True)
+    icon = fields.Char()
+    capability_ids = fields.One2many("sc.capability", "group_id", string="Capabilities")
+
+    _sql_constraints = [
+        ("sc_capability_group_key_uniq", "unique(key)", "Capability group key must be unique."),
+    ]
+
+
 class ScCapability(models.Model):
     _name = "sc.capability"
     _description = "SC Capability Catalog"
@@ -14,6 +31,7 @@ class ScCapability(models.Model):
     sequence = fields.Integer(default=10)
     key = fields.Char(required=True, index=True)
     name = fields.Char(required=True)
+    group_id = fields.Many2one("sc.capability.group", string="Capability Group", ondelete="set null")
     ui_label = fields.Char()
     ui_hint = fields.Char()
     intent = fields.Char(help="Intent to execute, e.g. ui.contract / api.data / execute_button")
@@ -211,6 +229,8 @@ class ScCapability(models.Model):
         return {
             "key": self.key,
             "name": self.name,
+            "group_key": self.group_id.key if self.group_id else "",
+            "group_label": self.group_id.label if self.group_id else "",
             "ui_label": self.ui_label or self.name,
             "ui_hint": self.ui_hint or "",
             "intent": self.intent or "",

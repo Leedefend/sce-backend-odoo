@@ -24,6 +24,7 @@ from odoo.addons.smart_core.core.scene_provider import (
     resolve_scene_channel as provider_resolve_scene_channel,
 )
 from odoo.addons.smart_core.core.capability_provider import (
+    build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
 from odoo.addons.smart_core.utils.reason_codes import (
@@ -1490,6 +1491,7 @@ class SystemInitHandler(BaseIntentHandler):
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
             "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
             "capabilities": _load_capabilities_for_user(env, user),
+            "capability_groups": [],
             "preload": [],
             "scenes": [],
             "scene_version": "v1",
@@ -1633,6 +1635,7 @@ class SystemInitHandler(BaseIntentHandler):
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
         )
         data = apply_contract_governance(data, contract_mode)
+        data["capability_groups"] = provider_build_capability_groups(data.get("capabilities") or [])
         post_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
         post_governance_capability_count = (
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
@@ -1700,6 +1703,7 @@ class SystemInitHandler(BaseIntentHandler):
             "scene_channel": data.get("scene_channel"),
             "scene_contract_ref": data.get("scene_contract_ref"),
             "capabilities": data.get("capabilities"),
+            "capability_groups": data.get("capability_groups"),
             "contract_mode": contract_mode,
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
