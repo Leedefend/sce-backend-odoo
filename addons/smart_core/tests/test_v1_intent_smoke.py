@@ -98,5 +98,7 @@ class TestV1IntentSmoke(HttpCase):
             first_group = capability_groups[0]
             self.assertIn("key", first_group)
             self.assertIn("label", first_group)
+            self.assertIn("icon", first_group)
+            self.assertIn("sequence", first_group)
             self.assertIn("capabilities", first_group)
             self.assertIsInstance(first_group.get("capabilities"), list)

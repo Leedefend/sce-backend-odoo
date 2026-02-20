@@ -57,11 +57,19 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
             {
                 "key": group_key,
                 "label": group_label or meta["label"],
-                "icon": meta.get("icon") or "",
-                "sequence": len(grouped) + 1,
+                "icon": str(cap.get("group_icon") or meta.get("icon") or ""),
+                "sequence": int(cap.get("group_sequence") or 0) or len(grouped) + 1,
                 "capabilities": [],
             },
         )
+        if cap.get("group_label"):
+            bucket["label"] = str(cap.get("group_label"))
+        if cap.get("group_icon"):
+            bucket["icon"] = str(cap.get("group_icon"))
+        cap_group_sequence = int(cap.get("group_sequence") or 0)
+        if cap_group_sequence > 0:
+            current_sequence = int(bucket.get("sequence") or 0)
+            bucket["sequence"] = cap_group_sequence if current_sequence <= 0 else min(current_sequence, cap_group_sequence)
         cap_copy = dict(cap)
         cap_copy["group_key"] = group_key
         cap_copy["group_label"] = bucket["label"]
@@ -70,7 +78,13 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
 
     order_map = {item["key"]: index for index, item in enumerate(DEFAULT_CAPABILITY_GROUPS, start=1)}
     result = list(grouped.values())
-    result.sort(key=lambda item: (order_map.get(item.get("key"), 999), str(item.get("label") or "")))
+    result.sort(
+        key=lambda item: (
+            int(item.get("sequence") or 0) if int(item.get("sequence") or 0) > 0 else order_map.get(item.get("key"), 999),
+            order_map.get(item.get("key"), 999),
+            str(item.get("label") or ""),
+        )
+    )
     for seq, item in enumerate(result, start=1):
         item["sequence"] = seq
     return result

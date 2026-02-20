@@ -256,6 +256,8 @@ class ScCapability(models.Model):
             "name": self.name,
             "group_key": self.group_id.key if self.group_id else "",
             "group_label": self.group_id.label if self.group_id else "",
+            "group_icon": self.group_id.icon if self.group_id else "",
+            "group_sequence": self.group_id.sequence if self.group_id else 0,
             "ui_label": self.ui_label or self.name,
             "ui_hint": self.ui_hint or "",
             "intent": self.intent or "",
