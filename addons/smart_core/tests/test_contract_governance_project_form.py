@@ -89,6 +89,10 @@ class TestProjectFormGovernance(unittest.TestCase):
             self.assertIn("label", first_group)
             self.assertIn("actions", first_group)
             self.assertLessEqual(len(first_group.get("actions") or []), 5)
+        lifecycle = out.get("lifecycle") or {}
+        self.assertIsInstance(lifecycle, dict)
+        self.assertIn("state_field", lifecycle)
+        self.assertIn("allowed_transitions", lifecycle)
         filters = ((out.get("search") or {}).get("filters")) or []
         self.assertLessEqual(len(filters), 8)
 
