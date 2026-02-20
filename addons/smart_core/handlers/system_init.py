@@ -1028,10 +1028,28 @@ def _normalize_tile_state(value) -> str:
     return ""
 
 
+def _normalize_capability_state(value) -> str:
+    state = str(value or "").strip().lower()
+    if state in {"allow", "readonly", "deny", "pending", "coming_soon"}:
+        return state
+    return ""
+
+
 def _derive_tile_state(status: str, allowed) -> str:
     if isinstance(allowed, bool):
         return "READY" if allowed else "LOCKED"
     return "READY" if status == "ga" else "PREVIEW"
+
+
+def _derive_capability_state(*, status: str, allowed) -> str:
+    if isinstance(allowed, bool) and not allowed:
+        return "deny"
+    normalized = _normalize_tile_status(status)
+    if normalized == "alpha":
+        return "coming_soon"
+    if normalized == "beta":
+        return "pending"
+    return "allow"
 
 
 def _normalize_scene_tiles(scenes, capabilities, warnings):
@@ -1045,6 +1063,8 @@ def _normalize_scene_tiles(scenes, capabilities, warnings):
         cap_map[cap_key] = {
             "status": _normalize_tile_status(capability.get("status")),
             "state": _normalize_tile_state(capability.get("state")),
+            "capability_state": _normalize_capability_state(capability.get("capability_state")),
+            "capability_state_reason": str(capability.get("capability_state_reason") or "").strip(),
             "reason_code": str(capability.get("reason_code") or "").strip(),
             "reason": str(capability.get("reason") or "").strip(),
         }
@@ -1063,17 +1083,25 @@ def _normalize_scene_tiles(scenes, capabilities, warnings):
             cap_meta = cap_map.get(key) if key else None
             status = _normalize_tile_status(tile.get("status"))
             state = _normalize_tile_state(tile.get("state"))
+            capability_state = _normalize_capability_state(tile.get("capability_state"))
             if not status and cap_meta:
                 status = cap_meta.get("status") or ""
             if not state and cap_meta:
                 state = cap_meta.get("state") or ""
+            if not capability_state and cap_meta:
+                capability_state = cap_meta.get("capability_state") or ""
             if not state:
                 state = _derive_tile_state(status or "ga", tile.get("allowed"))
             if not status:
                 status = "ga" if state == "READY" else "alpha"
+            if not capability_state:
+                capability_state = _derive_capability_state(status=status, allowed=tile.get("allowed"))
             tile["status"] = status
             tile["state"] = state
+            tile["capability_state"] = capability_state
             if cap_meta:
+                if not tile.get("capability_state_reason") and cap_meta.get("capability_state_reason"):
+                    tile["capability_state_reason"] = cap_meta.get("capability_state_reason")
                 if not tile.get("reason_code") and cap_meta.get("reason_code"):
                     tile["reason_code"] = cap_meta.get("reason_code")
                 if not tile.get("reason") and cap_meta.get("reason"):

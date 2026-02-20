@@ -221,11 +221,36 @@ class ScCapability(models.Model):
                 resolved["menu_id"] = menu_ref.id
         return resolved
 
+    def _is_readonly_semantic(self) -> bool:
+        self.ensure_one()
+        key = str(self.key or "").strip().lower()
+        tags = {tag.strip().lower() for tag in str(self.tags or "").split(",") if tag and tag.strip()}
+        return key.endswith(".read") or key.endswith("_read") or "readonly" in tags or "read_only" in tags
+
+    def _semantic_capability_state(self, access: dict) -> tuple[str, str]:
+        self.ensure_one()
+        allowed = bool((access or {}).get("allowed"))
+        reason = str((access or {}).get("reason") or "").strip()
+        reason_code = str((access or {}).get("reason_code") or "").strip()
+        status = str(self.status or "").strip().lower()
+        if not allowed:
+            if not reason and reason_code:
+                reason = self._reason_message(reason_code)
+            return "deny", reason
+        if self._is_readonly_semantic():
+            return "readonly", _("当前能力为只读模式")
+        if status == "alpha":
+            return "coming_soon", _("能力尚在建设中，即将开放")
+        if status == "beta":
+            return "pending", _("能力处于试运行阶段")
+        return "allow", ""
+
     def to_public_dict(self, user):
         self.ensure_one()
         group_xmlids = self.required_group_ids.get_external_id()
         payload = self._resolve_payload(self.default_payload or {})
         access = self._access_context(user)
+        capability_state, capability_state_reason = self._semantic_capability_state(access)
         return {
             "key": self.key,
             "name": self.name,
@@ -248,6 +273,8 @@ class ScCapability(models.Model):
             "version": self.version,
             "smoke_test": bool(self.smoke_test),
             "state": access.get("state"),
+            "capability_state": capability_state,
+            "capability_state_reason": capability_state_reason,
             "reason_code": access.get("reason_code"),
             "reason": access.get("reason"),
         }
