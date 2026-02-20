@@ -25,6 +25,8 @@ _USER_CAPABILITY_KEYS = {
     "intent",
     "status",
     "state",
+    "capability_state",
+    "capability_state_reason",
     "reason",
     "reason_code",
     "version",
@@ -70,6 +72,8 @@ _USER_SCENE_TILE_KEYS = {
     "icon",
     "status",
     "state",
+    "capability_state",
+    "capability_state_reason",
     "reason",
     "reason_code",
     "route",
@@ -125,6 +129,13 @@ _PROJECT_FORM_ACTION_PRIORITIES = (
     "保存",
     "查看任务",
 )
+_PROJECT_FORM_ACTION_GROUP_LIMIT = 5
+_PROJECT_FORM_ACTION_GROUP_LABELS = {
+    "basic": "基础操作",
+    "workflow": "流程推进",
+    "drilldown": "业务查看",
+    "other": "更多操作",
+}
 
 
 def is_truthy(value: Any) -> bool:
@@ -497,6 +508,44 @@ def _is_noisy_project_action(action: dict) -> bool:
     return False
 
 
+def _classify_project_action_group(action: dict) -> str:
+    key = _safe_lower(action.get("key"))
+    label = _safe_lower(action.get("label"))
+    merged = f"{key} {label}"
+    if any(marker in merged for marker in ("阶段", "提交", "审批", "transition", "workflow", "lifecycle")):
+        return "workflow"
+    if any(marker in merged for marker in ("查看", "open", "dashboard", "看板", "列表")):
+        return "drilldown"
+    if any(marker in merged for marker in ("创建", "保存", "提交")):
+        return "basic"
+    return "other"
+
+
+def _build_project_action_groups(rows: list[dict]) -> list[dict]:
+    grouped: dict[str, list[dict]] = {"basic": [], "workflow": [], "drilldown": [], "other": []}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        group_key = _classify_project_action_group(row)
+        grouped.setdefault(group_key, []).append(row)
+
+    result: list[dict] = []
+    for key in ("basic", "workflow", "drilldown", "other"):
+        actions = grouped.get(key) or []
+        if not actions:
+            continue
+        primary = actions[:_PROJECT_FORM_ACTION_GROUP_LIMIT]
+        overflow = actions[_PROJECT_FORM_ACTION_GROUP_LIMIT:]
+        result.append({
+            "key": key,
+            "label": _PROJECT_FORM_ACTION_GROUP_LABELS.get(key, key),
+            "actions": primary,
+            "overflow_actions": overflow,
+            "overflow_count": len(overflow),
+        })
+    return result
+
+
 def _govern_project_form_actions(data: dict) -> None:
     toolbar = _as_dict(data.get("toolbar"))
     if isinstance(toolbar.get("header"), list):
@@ -521,7 +570,9 @@ def _govern_project_form_actions(data: dict) -> None:
 
     header_rows = sorted(header_rows, key=lambda item: (_action_priority(item), _safe_text(item.get("label"))))
     smart_rows = sorted(smart_rows, key=lambda item: (_action_priority(item), _safe_text(item.get("label"))))
-    data["buttons"] = header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX] + smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX]
+    curated = header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX] + smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX]
+    data["buttons"] = curated
+    data["action_groups"] = _build_project_action_groups(curated)
 
 
 def _govern_project_form_contract_for_user(data: dict) -> None:
