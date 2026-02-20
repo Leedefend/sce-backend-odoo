@@ -28,6 +28,7 @@
         'data/cron_signup_throttle_gc.xml',
         'data/sc_extension_params.xml',
         'data/sc_subscription_default.xml',
+        'data/sc_capability_group_seed.xml',
 
         # 安全
         'security/sc_groups.xml',
