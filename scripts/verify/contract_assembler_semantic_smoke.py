@@ -77,12 +77,23 @@ def _check_required_keys(target: dict, required: list[str], prefix: str) -> list
     return errors
 
 
+def _valid_capability_state(value: object) -> bool:
+    return str(value or "").strip() in {"allow", "readonly", "deny", "pending", "coming_soon"}
+
+
 def _request_intent(intent_url: str, token: str, intent: str, params: dict) -> tuple[int, dict]:
     return http_post_json(
         intent_url,
         {"intent": intent, "params": params},
         headers={"Authorization": f"Bearer {token}"},
     )
+
+
+def _record_strict_issue(*, strict: bool, errors: list[str], warnings: list[str], message: str) -> None:
+    if strict:
+        errors.append(message)
+    else:
+        warnings.append(message)
 
 
 def main() -> int:
@@ -103,6 +114,7 @@ def main() -> int:
     required_system_init_keys = [str(x).strip() for x in (baseline.get("system_init_required_keys") or []) if str(x).strip()]
     required_contract_keys = [str(x).strip() for x in (baseline.get("ui_contract_required_keys") or []) if str(x).strip()]
     max_errors = int(baseline.get("max_errors") or 0)
+    strict_p4_semantics = str(os.getenv("SC_P4_SEMANTIC_STRICT") or "").strip().lower() in {"1", "true", "yes", "on"}
     base_url = get_base_url()
     intent_url = f"{base_url}/api/v1/intent"
 
@@ -112,6 +124,7 @@ def main() -> int:
     artifact_md = artifacts_dir / "contract_assembler_semantic_smoke.md"
 
     errors: list[str] = []
+    warnings: list[str] = []
     role_reports: list[dict] = []
 
     for role_cfg in roles:
@@ -152,6 +165,10 @@ def main() -> int:
                 "capability_count": len(data_h.get("capabilities") if isinstance(data_h.get("capabilities"), list) else []),
                 "has_hud_payload": isinstance(data_h.get("hud"), dict),
             }
+            capability_groups_user = data_u.get("capability_groups") if isinstance(data_u.get("capability_groups"), list) else []
+            capability_groups_hud = data_h.get("capability_groups") if isinstance(data_h.get("capability_groups"), list) else []
+            row["user_mode"]["system_init"]["capability_group_count"] = len(capability_groups_user)
+            row["hud_mode"]["system_init"]["capability_group_count"] = len(capability_groups_hud)
 
             errors.extend(_check_required_keys(data_u, required_system_init_keys, f"{role}.system.init.user.data"))
             errors.extend(_check_required_keys(data_h, required_system_init_keys, f"{role}.system.init.hud.data"))
@@ -163,6 +180,40 @@ def main() -> int:
                 errors.append(f"{role}.system.init.user should not include hud payload")
             if not row["hud_mode"]["system_init"]["has_hud_payload"]:
                 errors.append(f"{role}.system.init.hud missing hud payload")
+            if not capability_groups_user:
+                _record_strict_issue(
+                    strict=strict_p4_semantics,
+                    errors=errors,
+                    warnings=warnings,
+                    message=f"{role}.system.init.user missing capability_groups",
+                )
+            if not capability_groups_hud:
+                _record_strict_issue(
+                    strict=strict_p4_semantics,
+                    errors=errors,
+                    warnings=warnings,
+                    message=f"{role}.system.init.hud missing capability_groups",
+                )
+            for mode_name, payload in (("user", data_u), ("hud", data_h)):
+                caps = payload.get("capabilities") if isinstance(payload.get("capabilities"), list) else []
+                for idx, cap in enumerate(caps):
+                    if not isinstance(cap, dict):
+                        errors.append(f"{role}.system.init.{mode_name}.capabilities[{idx}] invalid item")
+                        continue
+                    if not _valid_capability_state(cap.get("capability_state")):
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capabilities[{idx}] invalid capability_state={cap.get('capability_state')!r}",
+                        )
+                    if "capability_state_reason" not in cap:
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capabilities[{idx}] missing capability_state_reason",
+                        )
 
             st_cu, resp_cu = _request_intent(
                 intent_url,
@@ -251,6 +302,8 @@ def main() -> int:
                 "header_button_count": len(header_buttons_fu),
                 "smart_button_count": len(smart_buttons_fu),
                 "search_filter_count": len((((data_fu.get("search") or {}).get("filters")) or [])),
+                "action_group_count": len(data_fu.get("action_groups") if isinstance(data_fu.get("action_groups"), list) else []),
+                "lifecycle_keys": sorted(list((data_fu.get("lifecycle") or {}).keys())) if isinstance(data_fu.get("lifecycle"), dict) else [],
             }
             row["hud_mode"]["ui_contract_form"] = {
                 "contract_mode_meta": meta_fh.get("contract_mode"),
@@ -281,6 +334,67 @@ def main() -> int:
                 errors.append(
                     f"{role}.ui.contract.form.user search_filter_count={row['user_mode']['ui_contract_form']['search_filter_count']} exceeds max=8"
                 )
+            action_groups = data_fu.get("action_groups") if isinstance(data_fu.get("action_groups"), list) else []
+            if not action_groups:
+                _record_strict_issue(
+                    strict=strict_p4_semantics,
+                    errors=errors,
+                    warnings=warnings,
+                    message=f"{role}.ui.contract.form.user missing action_groups",
+                )
+            for idx, group in enumerate(action_groups):
+                if not isinstance(group, dict):
+                    _record_strict_issue(
+                        strict=strict_p4_semantics,
+                        errors=errors,
+                        warnings=warnings,
+                        message=f"{role}.ui.contract.form.user.action_groups[{idx}] invalid item",
+                    )
+                    continue
+                if not str(group.get("key") or "").strip():
+                    _record_strict_issue(
+                        strict=strict_p4_semantics,
+                        errors=errors,
+                        warnings=warnings,
+                        message=f"{role}.ui.contract.form.user.action_groups[{idx}] missing key",
+                    )
+                if not isinstance(group.get("actions"), list):
+                    _record_strict_issue(
+                        strict=strict_p4_semantics,
+                        errors=errors,
+                        warnings=warnings,
+                        message=f"{role}.ui.contract.form.user.action_groups[{idx}] missing actions list",
+                    )
+                if len(group.get("actions") or []) > 5:
+                    _record_strict_issue(
+                        strict=strict_p4_semantics,
+                        errors=errors,
+                        warnings=warnings,
+                        message=f"{role}.ui.contract.form.user.action_groups[{idx}] actions exceeds max=5",
+                    )
+            lifecycle = data_fu.get("lifecycle") if isinstance(data_fu.get("lifecycle"), dict) else {}
+            for required_key in ("state_field", "current_state", "allowed_transitions", "blockers", "progress_percent"):
+                if required_key not in lifecycle:
+                    _record_strict_issue(
+                        strict=strict_p4_semantics,
+                        errors=errors,
+                        warnings=warnings,
+                        message=f"{role}.ui.contract.form.user.lifecycle missing key: {required_key}",
+                    )
+            if lifecycle and not isinstance(lifecycle.get("allowed_transitions"), list):
+                _record_strict_issue(
+                    strict=strict_p4_semantics,
+                    errors=errors,
+                    warnings=warnings,
+                    message=f"{role}.ui.contract.form.user.lifecycle.allowed_transitions should be list",
+                )
+            if lifecycle and not isinstance(lifecycle.get("blockers"), list):
+                _record_strict_issue(
+                    strict=strict_p4_semantics,
+                    errors=errors,
+                    warnings=warnings,
+                    message=f"{role}.ui.contract.form.user.lifecycle.blockers should be list",
+                )
             if not isinstance(layout_fu, list) or not layout_fu:
                 errors.append(f"{role}.ui.contract.form.user layout missing")
             if not any(
@@ -307,11 +421,14 @@ def main() -> int:
             "passed_role_count": sum(1 for row in role_reports if row.get("ok")),
             "failed_role_count": sum(1 for row in role_reports if not row.get("ok")),
             "error_count": len(errors),
+            "warning_count": len(warnings),
+            "strict_p4_semantics": strict_p4_semantics,
             "artifacts_dir": str(artifacts_dir),
         },
         "baseline": baseline,
         "roles": sorted(role_reports, key=lambda row: str(row.get("role") or "")),
         "errors": sorted(errors),
+        "warnings": sorted(warnings),
     }
     artifact_json.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     lines = [
@@ -331,6 +448,10 @@ def main() -> int:
     if report["errors"]:
         lines.extend(["", "## Actionable Errors", ""])
         for item in report["errors"][:200]:
+            lines.append(f"- {item}")
+    if report.get("warnings"):
+        lines.extend(["", "## Semantic Warnings", ""])
+        for item in report["warnings"][:200]:
             lines.append(f"- {item}")
     artifact_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
