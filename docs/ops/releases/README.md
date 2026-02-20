@@ -129,6 +129,11 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - form save must normalize payload by contract field types and submit diff-only writable fields
     - record form runtime must normalize `views.form.layout` node arrays into renderer layout and keep field coverage aligned with contract `fields` (no silent field drop from partial layout nodes)
     - legacy model pages (`ModelFormPage`/`ModelListPage`) should only act as compatibility shells and must delegate to contract-driven runtime
+- P4 contract semantics baseline (productized convergence):
+  - `system.init` must include grouped capability payload (`capability_groups`) and stable grouped ordering
+  - `system.init` capability/tile entries must expose semantic `capability_state` + `capability_state_reason`
+  - `ui.contract` project form (user mode) must expose governed `action_groups` with overflow buckets (not flat action flood)
+  - `ui.contract` project form (user mode) must expose lifecycle summary (`current_state/allowed_transitions/blockers/progress_percent`)
 - Backend evidence & observability expansion (Phase Next):
   - `make verify.load_view.access.contract.guard`
     - artifact: `/mnt/artifacts/backend/load_view_access_contract_guard.json` (fallback: `artifacts/backend/load_view_access_contract_guard.json`)

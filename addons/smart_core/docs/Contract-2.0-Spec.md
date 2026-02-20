@@ -237,6 +237,23 @@
 - **data**：根据请求参数与视图类型返回对应数据形态；分页通过 `limit/offset` 与 `next_offset` 协同。  
 - **permissions/rules**：服务端汇总访问控制与 ir.rule 的默认域、默认排序，前端可渲染禁用态。
 
+### 2.0 语义治理扩展（P4）
+
+> 下列字段用于“契约驱动产品化收敛”，前端应直接消费，不再做场景硬编码分支。
+
+- **capability_groups**（`system.init`）：
+  - 结构：`[{ key, label, icon, sequence, capabilities: [...] }]`
+  - 语义：能力目录按组展示；组内顺序由 `sequence` 决定。
+- **capability_state / capability_state_reason**（`system.init` tiles/capabilities）：
+  - 状态：`allow | readonly | deny | pending | coming_soon`
+  - 语义：统一能力可用性，不允许前端自行推断状态。
+- **action_groups**（`ui.contract` form，当前先覆盖 project form）：
+  - 结构：`[{ key, label, actions, overflow_actions, overflow_count }]`
+  - 语义：页面动作收敛分组；组内核心动作上限固定，其余进入 overflow。
+- **lifecycle**（`ui.contract` form）：
+  - 结构：`{ state_field, current_state, steps, allowed_transitions, blockers, progress_percent }`
+  - 语义：生命周期为页面核心语义区，前端应渲染阶段、可迁移路径与阻塞原因。
+
 ---
 
 ## 四、导航契约（Nav Contract）

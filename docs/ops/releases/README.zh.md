@@ -36,6 +36,11 @@ status: active
     - 表单保存需按契约字段类型归一化 payload，并仅提交可写且发生变化的字段
     - 记录表单运行时需将 `views.form.layout` 节点数组归一化为渲染布局，并确保与契约 `fields` 字段覆盖一致（不得因 layout 不完整静默丢字段）
     - 遗留模型页面（`ModelFormPage`/`ModelListPage`）仅允许作为兼容壳，必须委派到契约驱动运行时
+- P4 契约语义基线（产品化收敛）：
+  - `system.init` 必须包含分组能力载荷（`capability_groups`），并保持分组顺序稳定
+  - `system.init` 的 capability/tile 条目必须输出语义状态 `capability_state` 与 `capability_state_reason`
+  - `ui.contract` 的项目表单（user 模式）必须输出治理后的 `action_groups`（含 overflow），不得回退为动作平铺
+  - `ui.contract` 的项目表单（user 模式）必须输出生命周期摘要（`current_state/allowed_transitions/blockers/progress_percent`）
 - 后端证据与可观测扩展（Phase Next）：
   - `make verify.load_view.access.contract.guard`
     - 产物：`/mnt/artifacts/backend/load_view_access_contract_guard.json`（不可写时回落 `artifacts/backend/load_view_access_contract_guard.json`）
