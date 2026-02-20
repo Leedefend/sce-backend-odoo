@@ -83,3 +83,12 @@ class TestV1IntentSmoke(HttpCase):
         self.assertIn("user", data.get("data", {}))
         self.assertIn("nav", data.get("data", {}))
         self.assertIn("intents", data.get("data", {}))
+        self.assertIn("capability_groups", data.get("data", {}))
+        self.assertIsInstance(data.get("data", {}).get("capability_groups"), list)
+        capability_groups = data.get("data", {}).get("capability_groups") or []
+        if capability_groups:
+            first_group = capability_groups[0]
+            self.assertIn("key", first_group)
+            self.assertIn("label", first_group)
+            self.assertIn("capabilities", first_group)
+            self.assertIsInstance(first_group.get("capabilities"), list)
