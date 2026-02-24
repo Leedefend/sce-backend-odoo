@@ -64,6 +64,11 @@ status: active
   - `make verify.scene.capability.matrix.report`
     - 产物：`/mnt/artifacts/backend/scene_capability_matrix_report.json`（不可写时回落 `artifacts/backend/scene_capability_matrix_report.json`）
     - 发布检查：输出全量 scene/capability 矩阵，并报告 `scene_without_binding_count`、`unused_capability_count`、`missing_capability_ref_count`
+  - `make verify.release.capability.audit`
+    - 产物：
+      - `/mnt/artifacts/backend/release_capability_report.json`（不可写时回落 `artifacts/backend/release_capability_report.json`）
+      - `/mnt/artifacts/backend/release_capability_top20_fix_backlog.json`（不可写时回落 `artifacts/backend/release_capability_top20_fix_backlog.json`）
+    - 发布检查：按 PM/Finance/Executive 各 3 条关键旅程执行审计，导出 intent trace 链路、runtime capability 覆盖矩阵、scene 可打开性审计、系统模型 ACL 探测与 Top-20 修复 backlog
   - `make verify.capability.core.health.report`
     - 产物：`/mnt/artifacts/backend/capability_core_health_report.json`（不可写时回落 `artifacts/backend/capability_core_health_report.json`）
     - 发布检查：抽样角色在 `system.init`（user+hud）返回的 capability 必须具备有效 `group/state/capability_state` 语义
