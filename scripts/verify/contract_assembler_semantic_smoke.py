@@ -196,10 +196,32 @@ def main() -> int:
                 )
             for mode_name, payload in (("user", data_u), ("hud", data_h)):
                 caps = payload.get("capabilities") if isinstance(payload.get("capabilities"), list) else []
+                capability_group_keys = set()
+                raw_groups = payload.get("capability_groups") if isinstance(payload.get("capability_groups"), list) else []
+                for group in raw_groups:
+                    if not isinstance(group, dict):
+                        continue
+                    group_key = str(group.get("key") or "").strip()
+                    if group_key:
+                        capability_group_keys.add(group_key)
                 for idx, cap in enumerate(caps):
                     if not isinstance(cap, dict):
                         errors.append(f"{role}.system.init.{mode_name}.capabilities[{idx}] invalid item")
                         continue
+                    if not str(cap.get("group_key") or "").strip():
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capabilities[{idx}] missing group_key",
+                        )
+                    if not str(cap.get("group_label") or "").strip():
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capabilities[{idx}] missing group_label",
+                        )
                     if not _valid_capability_state(cap.get("capability_state")):
                         _record_strict_issue(
                             strict=strict_p4_semantics,
@@ -213,6 +235,24 @@ def main() -> int:
                             errors=errors,
                             warnings=warnings,
                             message=f"{role}.system.init.{mode_name}.capabilities[{idx}] missing capability_state_reason",
+                        )
+                    state_value = str(cap.get("state") or "").strip().upper()
+                    if state_value not in {"READY", "LOCKED", "PREVIEW"}:
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capabilities[{idx}] invalid state={cap.get('state')!r}",
+                        )
+                    if capability_group_keys and str(cap.get("group_key") or "").strip() not in capability_group_keys:
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=(
+                                f"{role}.system.init.{mode_name}.capabilities[{idx}] group_key not present in capability_groups: "
+                                f"{cap.get('group_key')!r}"
+                            ),
                         )
 
             st_cu, resp_cu = _request_intent(

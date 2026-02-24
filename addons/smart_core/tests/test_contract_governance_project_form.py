@@ -51,6 +51,25 @@ def _sample_payload():
             {"key": "obj_action_view_tasks_任务", "label": "任务", "kind": "object", "level": "smart"},
             {"key": "project.ir_cron_rating_project_ir_actions_server", "label": "项目：发送评级", "kind": "server", "level": "toolbar"},
         ],
+        "capabilities": [
+            {
+                "key": "project.read",
+                "name": "项目读取",
+                "status": "active",
+                "reason_code": "",
+            },
+            {
+                "key": "finance.approval",
+                "name": "财务审批",
+                "status": "beta",
+            },
+            {
+                "key": "contract.edit",
+                "name": "合同编辑",
+                "status": "ga",
+                "tags": ["readonly"],
+            },
+        ],
         "scenes": [
             {
                 "code": "projects.ledger",
@@ -116,6 +135,21 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("allowed_transitions", lifecycle)
         filters = ((out.get("search") or {}).get("filters")) or []
         self.assertLessEqual(len(filters), 8)
+        capabilities = out.get("capabilities") or []
+        self.assertEqual(len(capabilities), 3)
+        for cap in capabilities:
+            self.assertIn("group_key", cap)
+            self.assertIn("group_label", cap)
+            self.assertIn("group_icon", cap)
+            self.assertIn("capability_state", cap)
+            self.assertIn("capability_state_reason", cap)
+            self.assertIn(cap.get("status"), {"ga", "beta", "alpha"})
+            self.assertIn(cap.get("state"), {"READY", "LOCKED", "PREVIEW"})
+            self.assertIn(cap.get("capability_state"), {"allow", "readonly", "deny", "pending", "coming_soon"})
+        cap_index = {cap.get("key"): cap for cap in capabilities}
+        self.assertEqual((cap_index.get("project.read") or {}).get("capability_state"), "allow")
+        self.assertEqual((cap_index.get("finance.approval") or {}).get("capability_state"), "pending")
+        self.assertEqual((cap_index.get("contract.edit") or {}).get("capability_state"), "readonly")
 
     def test_hud_mode_keeps_full_payload(self):
         data = _sample_payload()
@@ -142,6 +176,13 @@ class TestProjectFormGovernance(unittest.TestCase):
             self.assertIn("status_field", list_profile)
             self.assertIn("urgency_score", list_profile)
             self.assertIn("highlight_rule", list_profile)
+        capabilities = out.get("capabilities") or []
+        self.assertEqual(len(capabilities), 3)
+        for cap in capabilities:
+            self.assertIn("group_key", cap)
+            self.assertIn("group_label", cap)
+            self.assertIn("group_icon", cap)
+            self.assertIn("group_sequence", cap)
 
 
 if __name__ == "__main__":

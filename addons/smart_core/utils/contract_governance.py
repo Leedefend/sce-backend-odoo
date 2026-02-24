@@ -20,6 +20,10 @@ _USER_MODE_STRIP_KEYS = {
 _USER_CAPABILITY_KEYS = {
     "key",
     "name",
+    "group_key",
+    "group_label",
+    "group_icon",
+    "group_sequence",
     "ui_label",
     "ui_hint",
     "intent",
@@ -138,6 +142,17 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "other": "更多操作",
 }
 
+_CAPABILITY_GROUP_DEFAULTS = {
+    "project_management": {"label": "项目管理", "icon": "briefcase"},
+    "contract_management": {"label": "合同管理", "icon": "file-text"},
+    "cost_management": {"label": "成本管理", "icon": "calculator"},
+    "finance_management": {"label": "财务管理", "icon": "wallet"},
+    "material_management": {"label": "物资管理", "icon": "boxes"},
+    "governance": {"label": "治理配置", "icon": "shield"},
+    "analytics": {"label": "经营分析", "icon": "chart"},
+    "others": {"label": "其他能力", "icon": "grid"},
+}
+
 
 def is_truthy(value: Any) -> bool:
     if value is None:
@@ -253,6 +268,58 @@ def is_internal_or_smoke(item: dict) -> bool:
 
 
 def normalize_capabilities(capabilities: list) -> list[dict]:
+    def _normalize_capability_status(value: Any) -> str:
+        status = _safe_text(value).lower()
+        if status in {"ga", "beta", "alpha"}:
+            return status
+        if status in {"active", "enabled", "ready"}:
+            return "ga"
+        if status in {"preview", "pilot", "pending"}:
+            return "beta"
+        if status in {"disabled", "inactive", "blocked"}:
+            return "alpha"
+        return "ga"
+
+    def _infer_capability_group_key(capability_key: str) -> str:
+        key = _safe_text(capability_key).lower()
+        if not key:
+            return "others"
+        if key.startswith(("project.", "scene.project", "wbs.", "progress.", "tender.")):
+            return "project_management"
+        if key.startswith(("contract.", "settlement.")):
+            return "contract_management"
+        if key.startswith(("cost.", "budget.", "boq.")):
+            return "cost_management"
+        if key.startswith(("finance.", "payment.", "treasury.")):
+            return "finance_management"
+        if key.startswith(("material.", "purchase.", "stock.")):
+            return "material_management"
+        if key.startswith(("usage.", "report.", "dashboard.", "analytics.")):
+            return "analytics"
+        if key.startswith(("scene.", "portal.", "config.", "permission.", "subscription.", "pack.")):
+            return "governance"
+        return "others"
+
+    def _normalize_capability_state(value: Any) -> str:
+        state = _safe_text(value).lower()
+        if state in {"allow", "readonly", "deny", "pending", "coming_soon"}:
+            return state
+        return ""
+
+    def _derive_capability_state(status: str, state: str, tags: list[str], reason_code: str) -> str:
+        if state:
+            return state
+        tag_set = {str(tag or "").strip().lower() for tag in tags if str(tag or "").strip()}
+        if "readonly" in tag_set or "read_only" in tag_set:
+            return "readonly"
+        if reason_code in {"PERMISSION_DENIED", "ACCESS_DENIED", "FORBIDDEN"}:
+            return "deny"
+        if status == "alpha":
+            return "coming_soon"
+        if status == "beta":
+            return "pending"
+        return "allow"
+
     out: list[dict] = []
     for cap in capabilities or []:
         if not isinstance(cap, dict):
@@ -261,8 +328,41 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
         item["key"] = _safe_text(item.get("key"))
         item["name"] = _safe_text(item.get("name"), item.get("key") or "未命名能力")
         item["ui_label"] = _safe_text(item.get("ui_label"), item.get("name") or item.get("key") or "未命名能力")
-        item["status"] = _safe_text(item.get("status"), "active")
+        item["status"] = _normalize_capability_status(item.get("status"))
+        item["group_key"] = _safe_text(item.get("group_key"), _infer_capability_group_key(item.get("key")))
+        group_meta = _CAPABILITY_GROUP_DEFAULTS.get(item["group_key"], _CAPABILITY_GROUP_DEFAULTS["others"])
+        item["group_label"] = _safe_text(item.get("group_label"), group_meta.get("label") or item["group_key"])
+        item["group_icon"] = _safe_text(item.get("group_icon"), group_meta.get("icon") or "")
+        try:
+            item["group_sequence"] = int(item.get("group_sequence") or 0)
+        except Exception:
+            item["group_sequence"] = 0
         item["tags"] = _normalized_tags_for_item(item)
+        state = _normalize_capability_state(item.get("capability_state"))
+        reason_code = _safe_text(item.get("reason_code")).upper()
+        item["capability_state"] = _derive_capability_state(
+            status=item["status"],
+            state=state,
+            tags=item["tags"],
+            reason_code=reason_code,
+        )
+        item["state"] = _safe_text(item.get("state")).upper()
+        if item["state"] not in {"READY", "LOCKED", "PREVIEW"}:
+            if item["capability_state"] in {"deny"}:
+                item["state"] = "LOCKED"
+            elif item["capability_state"] in {"pending", "coming_soon"}:
+                item["state"] = "PREVIEW"
+            else:
+                item["state"] = "READY"
+        reason = _safe_text(item.get("capability_state_reason"))
+        if not reason:
+            if item["capability_state"] == "readonly":
+                reason = "当前能力为只读模式"
+            elif item["capability_state"] == "pending":
+                reason = "能力处于试运行阶段"
+            elif item["capability_state"] == "coming_soon":
+                reason = "能力尚在建设中，即将开放"
+        item["capability_state_reason"] = reason
         out.append(item)
     return out
 
