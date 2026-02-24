@@ -101,7 +101,16 @@ class TestV1IntentSmoke(HttpCase):
             self.assertIn("icon", first_group)
             self.assertIn("sequence", first_group)
             self.assertIn("capabilities", first_group)
+            self.assertIn("capability_count", first_group)
+            self.assertIn("state_counts", first_group)
+            self.assertIn("capability_state_counts", first_group)
             self.assertIsInstance(first_group.get("capabilities"), list)
+            self.assertIsInstance(first_group.get("state_counts"), dict)
+            self.assertIsInstance(first_group.get("capability_state_counts"), dict)
+            self.assertEqual(
+                int(first_group.get("capability_count") or 0),
+                len(first_group.get("capabilities") or []),
+            )
         scenes = data.get("data", {}).get("scenes") or []
         self.assertIsInstance(scenes, list)
         if scenes:

@@ -60,6 +60,9 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
                 "icon": str(cap.get("group_icon") or meta.get("icon") or ""),
                 "sequence": int(cap.get("group_sequence") or 0) or len(grouped) + 1,
                 "capabilities": [],
+                "capability_count": 0,
+                "state_counts": {"READY": 0, "LOCKED": 0, "PREVIEW": 0},
+                "capability_state_counts": {"allow": 0, "readonly": 0, "deny": 0, "pending": 0, "coming_soon": 0},
             },
         )
         if cap.get("group_label"):
@@ -75,6 +78,15 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
         cap_copy["group_label"] = bucket["label"]
         cap_copy["group_sequence"] = idx + 1
         bucket["capabilities"].append(cap_copy)
+        bucket["capability_count"] = int(bucket.get("capability_count") or 0) + 1
+        state = str(cap_copy.get("state") or "").strip().upper()
+        capability_state = str(cap_copy.get("capability_state") or "").strip().lower()
+        if state in bucket["state_counts"]:
+            bucket["state_counts"][state] = int(bucket["state_counts"].get(state) or 0) + 1
+        if capability_state in bucket["capability_state_counts"]:
+            bucket["capability_state_counts"][capability_state] = (
+                int(bucket["capability_state_counts"].get(capability_state) or 0) + 1
+            )
 
     order_map = {item["key"]: index for index, item in enumerate(DEFAULT_CAPABILITY_GROUPS, start=1)}
     result = list(grouped.values())

@@ -35,6 +35,7 @@ from odoo.addons.smart_core.utils.reason_codes import (
 from odoo.addons.smart_core.utils.contract_governance import (
     apply_contract_governance,
     is_truthy,
+    normalize_capabilities,
     resolve_contract_mode,
 )
 
@@ -1518,7 +1519,7 @@ class SystemInitHandler(BaseIntentHandler):
             "intents": intents,                                                  # ✅ 动态意图（主名）
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
             "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
-            "capabilities": _load_capabilities_for_user(env, user),
+            "capabilities": normalize_capabilities(_load_capabilities_for_user(env, user)),
             "capability_groups": [],
             "preload": [],
             "scenes": [],

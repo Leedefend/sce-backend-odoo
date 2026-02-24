@@ -169,6 +169,37 @@ def main() -> int:
             capability_groups_hud = data_h.get("capability_groups") if isinstance(data_h.get("capability_groups"), list) else []
             row["user_mode"]["system_init"]["capability_group_count"] = len(capability_groups_user)
             row["hud_mode"]["system_init"]["capability_group_count"] = len(capability_groups_hud)
+            for mode_name, groups in (("user", capability_groups_user), ("hud", capability_groups_hud)):
+                for g_idx, group in enumerate(groups):
+                    if not isinstance(group, dict):
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capability_groups[{g_idx}] invalid object",
+                        )
+                        continue
+                    if "capability_count" not in group:
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capability_groups[{g_idx}] missing capability_count",
+                        )
+                    if not isinstance(group.get("state_counts"), dict):
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capability_groups[{g_idx}] missing state_counts",
+                        )
+                    if not isinstance(group.get("capability_state_counts"), dict):
+                        _record_strict_issue(
+                            strict=strict_p4_semantics,
+                            errors=errors,
+                            warnings=warnings,
+                            message=f"{role}.system.init.{mode_name}.capability_groups[{g_idx}] missing capability_state_counts",
+                        )
 
             errors.extend(_check_required_keys(data_u, required_system_init_keys, f"{role}.system.init.user.data"))
             errors.extend(_check_required_keys(data_h, required_system_init_keys, f"{role}.system.init.hud.data"))
