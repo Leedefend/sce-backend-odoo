@@ -28,7 +28,11 @@ def _imports_module(file_text: str, module_name: str) -> bool:
     return False
 
 
-def _imports_forbidden_prefix(file_text: str, forbidden_prefixes: tuple[str, ...]) -> bool:
+def _imports_forbidden_prefix(
+    file_text: str,
+    forbidden_prefixes: tuple[str, ...],
+    allowed_modules: tuple[str, ...],
+) -> bool:
     try:
         tree = ast.parse(file_text)
     except SyntaxError:
@@ -38,17 +42,21 @@ def _imports_forbidden_prefix(file_text: str, forbidden_prefixes: tuple[str, ...
             mod = str(node.module or "")
             for prefix in forbidden_prefixes:
                 if mod == prefix or mod.startswith(f"{prefix}."):
+                    if mod in allowed_modules:
+                        continue
                     return True
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 mod = str(alias.name or "")
                 for prefix in forbidden_prefixes:
                     if mod == prefix or mod.startswith(f"{prefix}."):
+                        if mod in allowed_modules:
+                            continue
                         return True
     return False
 
 
-def _load_policy() -> tuple[Path, str, set[str], tuple[str, ...], tuple[str, ...]]:
+def _load_policy() -> tuple[Path, str, set[str], tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     payload = json.loads(BASELINE_JSON.read_text(encoding="utf-8"))
     provider_file = ROOT / str(payload.get("provider_file") or "").strip()
     provider_module = str(payload.get("provider_module") or "").strip()
@@ -71,18 +79,34 @@ def _load_policy() -> tuple[Path, str, set[str], tuple[str, ...], tuple[str, ...
         )
         if str(item or "").strip()
     )
+    allowed_modules = tuple(
+        str(item or "").strip()
+        for item in (
+            payload.get("allowed_provider_import_modules")
+            if isinstance(payload.get("allowed_provider_import_modules"), list)
+            else []
+        )
+        if str(item or "").strip()
+    )
     if not provider_file.as_posix().strip() or not provider_module:
         raise RuntimeError("invalid provider policy: provider_file/provider_module required")
     if not allowed_importers:
         raise RuntimeError("invalid provider policy: allowed_importers required")
     if not required_symbols:
         raise RuntimeError("invalid provider policy: required_symbols required")
-    return provider_file, provider_module, allowed_importers, required_symbols, forbidden_prefixes
+    return provider_file, provider_module, allowed_importers, required_symbols, forbidden_prefixes, allowed_modules
 
 
 def main() -> int:
     try:
-        provider_file, provider_module, allowed_importers, required_symbols, forbidden_prefixes = _load_policy()
+        (
+            provider_file,
+            provider_module,
+            allowed_importers,
+            required_symbols,
+            forbidden_prefixes,
+            allowed_modules,
+        ) = _load_policy()
     except Exception as exc:
         print("[capability_provider_guard] FAIL")
         print(f"failed to load policy: {exc}")
@@ -96,7 +120,7 @@ def main() -> int:
         for symbol in required_symbols:
             if f"def {symbol}(" not in provider_text:
                 violations.append(f"missing provider symbol: {symbol}")
-        if forbidden_prefixes and _imports_forbidden_prefix(provider_text, forbidden_prefixes):
+        if forbidden_prefixes and _imports_forbidden_prefix(provider_text, forbidden_prefixes, allowed_modules):
             violations.append("capability_provider must not import smart_construction_* modules")
 
     provider_rel = provider_file.relative_to(ROOT).as_posix()
