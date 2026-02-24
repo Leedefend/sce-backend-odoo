@@ -146,6 +146,9 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.contract.assembler.semantic.smoke`
     - artifact: `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback: `artifacts/backend/contract_assembler_semantic_smoke.json`)
     - includes project form density assertions (user mode `project.project/form`: field cap, layout-field coverage, search-filter cap, toolbar/header/smart action caps, hud >= user field surface)
+  - `make verify.contract.assembler.semantic.strict`
+    - strict mode: `SC_P4_SEMANTIC_STRICT=1` to fail on missing P4 semantic fields (`capability_groups`, `capability_state`, `action_groups`, `lifecycle`)
+    - use in strict release windows; keep `semantic.smoke` as non-breaking observability gate in default flow
   - `make verify.project.form.contract.surface.guard`
     - artifact: `/mnt/artifacts/backend/project_form_contract_surface_guard.json` (fallback: `artifacts/backend/project_form_contract_surface_guard.json`)
     - release check: `project.project/form` user profile must keep required business fields, strip technical fields, and remain within density caps

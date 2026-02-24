@@ -53,6 +53,9 @@ status: active
   - `make verify.contract.assembler.semantic.smoke`
     - 产物：`/mnt/artifacts/backend/contract_assembler_semantic_smoke.json`（不可写时回落 `artifacts/backend/contract_assembler_semantic_smoke.json`）
     - 已包含项目表单密度断言（user 模式 `project.project/form`：字段上限、layout 字段覆盖、搜索筛选上限、toolbar/header/smart 动作上限、hud 字段面 >= user）
+  - `make verify.contract.assembler.semantic.strict`
+    - 严格模式：`SC_P4_SEMANTIC_STRICT=1`，对 P4 语义字段缺失（`capability_groups`、`capability_state`、`action_groups`、`lifecycle`）直接失败
+    - 建议在严格发布窗口启用；默认流程维持 `semantic.smoke` 作为非破坏可观测门
   - `make verify.project.form.contract.surface.guard`
     - 产物：`/mnt/artifacts/backend/project_form_contract_surface_guard.json`（不可写时回落 `artifacts/backend/project_form_contract_surface_guard.json`）
     - 发布检查：`project.project/form` user profile 必须保留业务必需字段、剔除技术字段，并满足密度上限
