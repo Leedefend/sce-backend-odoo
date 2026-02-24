@@ -67,6 +67,9 @@ status: active
   - `make verify.capability.core.health.report`
     - 产物：`/mnt/artifacts/backend/capability_core_health_report.json`（不可写时回落 `artifacts/backend/capability_core_health_report.json`）
     - 发布检查：抽样角色在 `system.init`（user+hud）返回的 capability 必须具备有效 `group/state/capability_state` 语义
+  - `make verify.capability.registry.smoke`
+    - 产物：`artifacts/backend/capability_registry_smoke.json`
+    - 发布检查：能力 key 命名 regex、`group_key` 必填、能力总数 `>=30`、角色地板（`pm/finance/executive >=10`、最大角色 `>=20`）以及 `entry_target.scene_key` 可打开性
   - `make verify.scene.contract.semantic.v2.guard`
     - 产物：`/mnt/artifacts/backend/scene_contract_semantic_v2_guard.json`（不可写时回落 `artifacts/backend/scene_contract_semantic_v2_guard.json`）
     - 发布检查：对已声明 v2 的场景严格校验 `scene_meta` 与 `list_profile` 关键字段，同时输出未迁移场景的缺口与覆盖率

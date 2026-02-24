@@ -160,6 +160,9 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.capability.core.health.report`
     - artifact: `/mnt/artifacts/backend/capability_core_health_report.json` (fallback: `artifacts/backend/capability_core_health_report.json`)
     - release check: each sampled role must return capability entries with valid `group/state/capability_state` semantics in `system.init` (user + hud)
+  - `make verify.capability.registry.smoke`
+    - artifact: `artifacts/backend/capability_registry_smoke.json`
+    - release check: capability key naming regex, `group_key` required, capability count `>=30`, role floor (`pm/finance/executive >=10`, max role `>=20`), and `entry_target.scene_key` openability
   - `make verify.scene.contract.semantic.v2.guard`
     - artifact: `/mnt/artifacts/backend/scene_contract_semantic_v2_guard.json` (fallback: `artifacts/backend/scene_contract_semantic_v2_guard.json`)
     - release check: enforces strict v2 semantic keys (`scene_meta` + `list_profile`) on opted-in scenes and reports migration gap/coverage for remaining runtime scenes
