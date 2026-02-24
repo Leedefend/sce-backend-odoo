@@ -26,6 +26,7 @@ from odoo.addons.smart_core.core.capability_provider import (
     build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
+from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.governance.scene_drift_engine import (
     SceneDriftEngine,
     append_resolve_error as drift_append_resolve_error,
@@ -321,144 +322,6 @@ def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, st
 
 def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     return provider_load_scene_contract(env, scene_channel, use_pinned, logger=_logger)
-# 在文件工具函数区追加：
-def _to_xmlid_list(env, maybe_ids_or_xmlids):
-    """
-    输入可能是 [xmlid(str)] 或 [int id] 或混合，统一转 [xmlid(str)]
-    """
-    if not maybe_ids_or_xmlids:
-        return []
-    out = []
-    int_ids = []
-    for g in maybe_ids_or_xmlids:
-        if isinstance(g, str) and "." in g:
-            out.append(g)
-        elif isinstance(g, int):
-            int_ids.append(g)
-    if int_ids:
-        imds = env["ir.model.data"].sudo().search([
-            ("model", "=", "res.groups"),
-            ("res_id", "in", int_ids)
-        ])
-        # 建字典以便 O(1) 查找
-        id2xml = {imd.res_id: f"{imd.module}.{imd.name}" for imd in imds if imd.module and imd.name}
-        for gid in int_ids:
-            if gid in id2xml:
-                out.append(id2xml[gid])
-    # 去重并保持稳定排序
-    return sorted(set(out))
-
-def _normalize_nav_groups(env, nodes):
-    """
-    递归把 nav[*].meta.groups_xmlids 统一成 xmlid(str) 列表
-    """
-    for n in nodes or []:
-        meta = n.get("meta") or {}
-        if "groups_xmlids" in meta and meta["groups_xmlids"]:
-            meta["groups_xmlids"] = _to_xmlid_list(env, meta["groups_xmlids"])
-            n["meta"] = meta
-        if n.get("children"):
-            _normalize_nav_groups(env, n["children"])
-
-def _resolve_action_ids(env, action_xmlids: Dict[str, str]) -> Dict[int, str]:
-    resolved = {}
-    for xmlid, scene_key in action_xmlids.items():
-        try:
-            rec = env.ref(xmlid, raise_if_not_found=False)
-            if rec and rec.id:
-                resolved[rec.id] = scene_key
-        except Exception:
-            continue
-    return resolved
-
-def _normalize_view_mode(raw: str | None) -> str | None:
-    if not raw:
-        return None
-    val = str(raw).strip().lower()
-    if val in {"tree", "list", "kanban"}:
-        return "list"
-    if val in {"form"}:
-        return "form"
-    return val
-
-def _apply_scene_keys(env, nodes):
-    """
-    Inject nav.node.scene_key using priority:
-      menu_xmlid -> action_id -> model/view_mode
-    Also ensure node.xmlid is emitted if menu_xmlid exists.
-    """
-    menu_map = {
-        "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
-        "smart_construction_core.menu_sc_project_initiation": "projects.intake",
-        "smart_construction_core.menu_sc_project_project": "projects.ledger",
-        "smart_construction_core.menu_sc_root": "projects.list",
-        "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
-        "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
-        "smart_construction_core.menu_sc_dictionary": "data.dictionary",
-        "smart_construction_core.menu_payment_request": "finance.payment_requests",
-        "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
-        "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
-        "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
-    }
-    action_xmlid_map = {
-        "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
-        "smart_construction_core.action_project_initiation": "projects.intake",
-        "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
-        "smart_construction_core.action_sc_project_list": "projects.list",
-        "smart_construction_core.action_project_dashboard": "projects.dashboard",
-        "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
-        "smart_construction_core.action_project_dictionary": "data.dictionary",
-        "smart_construction_core.action_payment_request": "finance.payment_requests",
-        "smart_construction_core.action_payment_request_my": "finance.payment_requests",
-        "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
-        "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
-        "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
-    }
-    action_id_map = _resolve_action_ids(env, action_xmlid_map)
-    model_view_map = {
-        ("project.project", "list"): "projects.list",
-        ("project.project", "form"): "projects.intake",
-        ("payment.request", "list"): "finance.payment_requests",
-        ("payment.request", "form"): "finance.payment_requests",
-    }
-
-    for n in nodes or []:
-        meta = n.get("meta") or {}
-        menu_xmlid = meta.get("menu_xmlid") or n.get("xmlid")
-        if menu_xmlid:
-            n["xmlid"] = menu_xmlid
-        scene_key = None
-        if menu_xmlid and menu_xmlid in menu_map:
-            scene_key = menu_map[menu_xmlid]
-        if not scene_key:
-            action_id = meta.get("action_id")
-            if isinstance(action_id, str) and action_id.isdigit():
-                action_id = int(action_id)
-            if action_id in action_id_map:
-                scene_key = action_id_map[action_id]
-        if not scene_key:
-            action_xmlid = meta.get("action_xmlid")
-            if action_xmlid and action_xmlid in action_xmlid_map:
-                scene_key = action_xmlid_map[action_xmlid]
-                meta["scene_key_inferred_from"] = "action_xmlid"
-        if not scene_key:
-            model = meta.get("model")
-            view_mode = meta.get("view_mode") or meta.get("view_type")
-            if not view_mode:
-                view_modes = meta.get("view_modes")
-                if isinstance(view_modes, list) and view_modes:
-                    view_mode = view_modes[0]
-            key = (model, _normalize_view_mode(view_mode)) if model else None
-            if key in model_view_map:
-                scene_key = model_view_map[key]
-        if scene_key:
-            n["scene_key"] = scene_key
-            meta["scene_key"] = scene_key
-            n["meta"] = meta
-        if n.get("children"):
-            _apply_scene_keys(env, n["children"])
-
-
 def _build_scene_health_payload(data: dict, trace_id: str = "", company_id: int | None = None) -> dict:
     data = data or {}
     user = data.get("user") if isinstance(data.get("user"), dict) else {}
@@ -689,9 +552,8 @@ class SystemInitHandler(BaseIntentHandler):
 
         nav_tree_raw = nav_data.get("nav") or []
         nav_tree = _clean_nav(nav_tree_raw)
-        # ✅ 统一 groups_xmlids 口径（字符串 xmlid）
-        _normalize_nav_groups(env, nav_tree)
-        _apply_scene_keys(env, nav_tree)
+        nav_adapter = OdooNavAdapter()
+        nav_adapter.enrich(env, nav_tree)
         nav_fp = _fingerprint({"scene": scene, "nav": nav_tree})
         if nav_versions and nav_versions.get("root_filtered_fallback"):
             _logger.warning(
