@@ -99,6 +99,9 @@ def main() -> int:
     scene_capability_matrix = _load_json(backend_dir / "scene_capability_matrix_report.json") or _load_json(
         local_artifacts / "backend" / "scene_capability_matrix_report.json"
     )
+    scene_contract_semantic_v2 = _load_json(backend_dir / "scene_contract_semantic_v2_guard.json") or _load_json(
+        local_artifacts / "backend" / "scene_contract_semantic_v2_guard.json"
+    )
 
     checks: list[dict] = []
 
@@ -200,6 +203,21 @@ def main() -> int:
             "source": "artifacts/backend/scene_capability_matrix_report.json",
         }
     )
+    checks.append(
+        {
+            "name": "scene_contract_semantic_v2",
+            "ok": bool(scene_contract_semantic_v2.get("ok") is True),
+            "error_count": _safe_int((scene_contract_semantic_v2.get("summary") or {}).get("error_count"), 0),
+            "gap_count": _safe_int((scene_contract_semantic_v2.get("summary") or {}).get("warning_count"), 0),
+            "v2_enforced_scene_count": _safe_int(
+                (scene_contract_semantic_v2.get("summary") or {}).get("v2_enforced_scene_count"), 0
+            ),
+            "v2_coverage_ratio": _safe_float(
+                (scene_contract_semantic_v2.get("summary") or {}).get("v2_coverage_ratio"), 0.0
+            ),
+            "source": "artifacts/backend/scene_contract_semantic_v2_guard.json",
+        }
+    )
 
     checks = sorted(checks, key=lambda item: str(item.get("name") or ""))
     failed = sorted([item["name"] for item in checks if item.get("ok") is not True])
@@ -209,6 +227,7 @@ def main() -> int:
     alignment_row = next((item for item in checks if item.get("name") == "scene_catalog_runtime_alignment"), {})
     boundary_import_row = next((item for item in checks if item.get("name") == "boundary_import_report"), {})
     load_view_row = next((item for item in checks if item.get("name") == "load_view_access_contract"), {})
+    semantic_v2_row = next((item for item in checks if item.get("name") == "scene_contract_semantic_v2"), {})
     alignment_probe_login = str(alignment_row.get("probe_login") or "").strip()
     alignment_probe_source = str(alignment_row.get("probe_source") or "").strip()
     boundary_import_warning_count = _safe_int(boundary_import_row.get("warning_count"), 0)
@@ -216,6 +235,8 @@ def main() -> int:
     load_view_allowed_model = str(load_view_row.get("allowed_model") or "").strip()
     load_view_forbidden_status = _safe_int(load_view_row.get("forbidden_status"), 0)
     load_view_forbidden_error_code = str(load_view_row.get("forbidden_error_code") or "").strip()
+    semantic_v2_coverage_ratio = _safe_float(semantic_v2_row.get("v2_coverage_ratio"), 0.0)
+    semantic_v2_enforced_scene_count = _safe_int(semantic_v2_row.get("v2_enforced_scene_count"), 0)
     report = {
         "ok": not failed,
         "summary": {
@@ -233,6 +254,8 @@ def main() -> int:
             "load_view_allowed_model": load_view_allowed_model,
             "load_view_forbidden_status": load_view_forbidden_status,
             "load_view_forbidden_error_code": load_view_forbidden_error_code,
+            "semantic_v2_enforced_scene_count": semantic_v2_enforced_scene_count,
+            "semantic_v2_coverage_ratio": semantic_v2_coverage_ratio,
             "failed_checks": failed,
             "warning_checks": warnings,
             "artifacts_dir": str(backend_dir),
@@ -259,6 +282,8 @@ def main() -> int:
         f"- load_view_allowed_model: {report['summary']['load_view_allowed_model'] or '-'}",
         f"- load_view_forbidden_status: {report['summary']['load_view_forbidden_status']}",
         f"- load_view_forbidden_error_code: {report['summary']['load_view_forbidden_error_code'] or '-'}",
+        f"- semantic_v2_enforced_scene_count: {report['summary']['semantic_v2_enforced_scene_count']}",
+        f"- semantic_v2_coverage_ratio: {report['summary']['semantic_v2_coverage_ratio']}",
         "",
         "## Checks",
         "",

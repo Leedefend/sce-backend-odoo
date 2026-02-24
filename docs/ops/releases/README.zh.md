@@ -64,6 +64,9 @@ status: active
   - `make verify.scene.capability.matrix.report`
     - 产物：`/mnt/artifacts/backend/scene_capability_matrix_report.json`（不可写时回落 `artifacts/backend/scene_capability_matrix_report.json`）
     - 发布检查：输出全量 scene/capability 矩阵，并报告 `scene_without_binding_count`、`unused_capability_count`、`missing_capability_ref_count`
+  - `make verify.scene.contract.semantic.v2.guard`
+    - 产物：`/mnt/artifacts/backend/scene_contract_semantic_v2_guard.json`（不可写时回落 `artifacts/backend/scene_contract_semantic_v2_guard.json`）
+    - 发布检查：对已声明 v2 的场景严格校验 `scene_meta` 与 `list_profile` 关键字段，同时输出未迁移场景的缺口与覆盖率
   - `make verify.boundary.import_guard`
     - 产物：`/mnt/artifacts/backend/boundary_import_guard_report.json`（不可写时回落 `artifacts/backend/boundary_import_guard_report.json`）
     - 发布检查：平台/业务/demo 分层之间不得出现禁用跨层 import 或禁用 manifest 依赖
