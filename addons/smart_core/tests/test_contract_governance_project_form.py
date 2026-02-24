@@ -51,6 +51,27 @@ def _sample_payload():
             {"key": "obj_action_view_tasks_任务", "label": "任务", "kind": "object", "level": "smart"},
             {"key": "project.ir_cron_rating_project_ir_actions_server", "label": "项目：发送评级", "kind": "server", "level": "toolbar"},
         ],
+        "scenes": [
+            {
+                "code": "projects.ledger",
+                "name": "项目台账",
+                "is_default": True,
+                "access": {
+                    "allowed": True,
+                    "required_capabilities": ["project.read"],
+                },
+                "tiles": [
+                    {"key": "project.overview", "title": "项目概览"},
+                    {"key": "project.workflow", "title": "进入下一阶段"},
+                ],
+                "list_profile": {
+                    "columns": ["name", "stage_id", "end_date"],
+                    "hidden_columns": ["message_needaction"],
+                    "row_primary": "name",
+                    "row_secondary": "stage_id",
+                },
+            }
+        ],
     }
 
 
@@ -105,6 +126,22 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("message_ids", fields)
         toolbar_header = ((out.get("toolbar") or {}).get("header") or [])
         self.assertGreaterEqual(len(toolbar_header), 1)
+        scenes = out.get("scenes") or []
+        self.assertIsInstance(scenes, list)
+        if scenes:
+            first_scene = scenes[0]
+            self.assertIn("scene_meta", first_scene)
+            self.assertIn("list_profile", first_scene)
+            scene_meta = first_scene.get("scene_meta") or {}
+            self.assertIn("purpose", scene_meta)
+            self.assertIn("core_action", scene_meta)
+            self.assertIn("priority_actions", scene_meta)
+            self.assertIn("role_relevance_score", scene_meta)
+            list_profile = first_scene.get("list_profile") or {}
+            self.assertIn("primary_field", list_profile)
+            self.assertIn("status_field", list_profile)
+            self.assertIn("urgency_score", list_profile)
+            self.assertIn("highlight_rule", list_profile)
 
 
 if __name__ == "__main__":

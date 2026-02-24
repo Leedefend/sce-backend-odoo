@@ -102,3 +102,19 @@ class TestV1IntentSmoke(HttpCase):
             self.assertIn("sequence", first_group)
             self.assertIn("capabilities", first_group)
             self.assertIsInstance(first_group.get("capabilities"), list)
+        scenes = data.get("data", {}).get("scenes") or []
+        self.assertIsInstance(scenes, list)
+        if scenes:
+            first_scene = scenes[0]
+            self.assertIn("scene_meta", first_scene)
+            self.assertIn("list_profile", first_scene)
+            scene_meta = first_scene.get("scene_meta") or {}
+            self.assertIn("purpose", scene_meta)
+            self.assertIn("core_action", scene_meta)
+            self.assertIn("priority_actions", scene_meta)
+            self.assertIn("role_relevance_score", scene_meta)
+            list_profile = first_scene.get("list_profile") or {}
+            self.assertIn("primary_field", list_profile)
+            self.assertIn("status_field", list_profile)
+            self.assertIn("urgency_score", list_profile)
+            self.assertIn("highlight_rule", list_profile)
