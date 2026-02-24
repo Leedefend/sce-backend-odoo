@@ -29,6 +29,8 @@ def build_evidence(
     role_capability_prod_like_report: dict,
     contract_assembler_semantic_report: dict,
     runtime_surface_dashboard_report: dict,
+    scene_capability_matrix_report: dict,
+    capability_core_health_report: dict,
     boundary_import_report: dict,
     load_view_access_contract_report: dict,
     backend_architecture_full_report: dict,
@@ -135,6 +137,31 @@ def build_evidence(
             ),
             "report": "artifacts/backend/runtime_surface_dashboard_report.json",
         },
+        "scene_capability_matrix": {
+            "ok": bool(scene_capability_matrix_report.get("ok", False)),
+            "scene_count": int((((scene_capability_matrix_report.get("summary") or {}).get("scene_count")) or 0)),
+            "capability_count": int((((scene_capability_matrix_report.get("summary") or {}).get("capability_count")) or 0)),
+            "scene_without_binding_count": int(
+                (((scene_capability_matrix_report.get("summary") or {}).get("scene_without_binding_count")) or 0)
+            ),
+            "unused_capability_count": int(
+                (((scene_capability_matrix_report.get("summary") or {}).get("unused_capability_count")) or 0)
+            ),
+            "missing_capability_ref_count": int(
+                (((scene_capability_matrix_report.get("summary") or {}).get("missing_capability_ref_count")) or 0)
+            ),
+            "report": "artifacts/backend/scene_capability_matrix_report.json",
+        },
+        "capability_core_health": {
+            "ok": bool(capability_core_health_report.get("ok", False)),
+            "role_sample_count": int((((capability_core_health_report.get("summary") or {}).get("role_sample_count")) or 0)),
+            "login_failure_count": int(
+                (((capability_core_health_report.get("summary") or {}).get("login_failure_count")) or 0)
+            ),
+            "error_count": int((((capability_core_health_report.get("summary") or {}).get("error_count")) or 0)),
+            "warning_count": int((((capability_core_health_report.get("summary") or {}).get("warning_count")) or 0)),
+            "report": "artifacts/backend/capability_core_health_report.json",
+        },
         "boundary_import_report": {
             "ok": bool(boundary_import_report.get("ok", False)),
             "warning_count": int((((boundary_import_report.get("summary") or {}).get("warning_count")) or 0)),
@@ -185,6 +212,8 @@ def to_markdown(evidence: dict) -> str:
     p = evidence["role_capability_prod_like"]
     c = evidence["contract_assembler_semantic"]
     r = evidence["runtime_surface_dashboard"]
+    scm = evidence["scene_capability_matrix"]
+    cch = evidence["capability_core_health"]
     bi = evidence["boundary_import_report"]
     lv = evidence["load_view_access_contract"]
     a2 = evidence["backend_architecture_full"]
@@ -251,6 +280,23 @@ def to_markdown(evidence: dict) -> str:
         f"- catalog_runtime_ratio: {r['catalog_runtime_ratio']}",
         f"- report: `{r['report']}`",
         "",
+        "## Scene Capability Matrix",
+        f"- ok: {scm['ok']}",
+        f"- scene_count: {scm['scene_count']}",
+        f"- capability_count: {scm['capability_count']}",
+        f"- scene_without_binding_count: {scm['scene_without_binding_count']}",
+        f"- unused_capability_count: {scm['unused_capability_count']}",
+        f"- missing_capability_ref_count: {scm['missing_capability_ref_count']}",
+        f"- report: `{scm['report']}`",
+        "",
+        "## Capability Core Health",
+        f"- ok: {cch['ok']}",
+        f"- role_sample_count: {cch['role_sample_count']}",
+        f"- login_failure_count: {cch['login_failure_count']}",
+        f"- error_count: {cch['error_count']}",
+        f"- warning_count: {cch['warning_count']}",
+        f"- report: `{cch['report']}`",
+        "",
         "## Boundary Import Report",
         f"- ok: {bi['ok']}",
         f"- warning_count: {bi['warning_count']}",
@@ -304,6 +350,8 @@ def main() -> int:
     parser.add_argument("--role-capability-prod-like-report", default="artifacts/backend/role_capability_floor_prod_like.json")
     parser.add_argument("--contract-assembler-semantic-report", default="artifacts/backend/contract_assembler_semantic_smoke.json")
     parser.add_argument("--runtime-surface-dashboard-report", default="artifacts/backend/runtime_surface_dashboard_report.json")
+    parser.add_argument("--scene-capability-matrix-report", default="artifacts/backend/scene_capability_matrix_report.json")
+    parser.add_argument("--capability-core-health-report", default="artifacts/backend/capability_core_health_report.json")
     parser.add_argument("--boundary-import-report", default="artifacts/backend/boundary_import_guard_report.json")
     parser.add_argument("--load-view-access-contract-report", default="artifacts/backend/load_view_access_contract_guard.json")
     parser.add_argument("--backend-architecture-full-report", default="artifacts/backend/backend_architecture_full_report.json")
@@ -321,6 +369,8 @@ def main() -> int:
     role_capability_prod_like_report = load_json_optional(Path(args.role_capability_prod_like_report), {})
     contract_assembler_semantic_report = load_json_optional(Path(args.contract_assembler_semantic_report), {})
     runtime_surface_dashboard_report = load_json_optional(Path(args.runtime_surface_dashboard_report), {})
+    scene_capability_matrix_report = load_json_optional(Path(args.scene_capability_matrix_report), {})
+    capability_core_health_report = load_json_optional(Path(args.capability_core_health_report), {})
     boundary_import_report = load_json_optional(Path(args.boundary_import_report), {})
     load_view_access_contract_report = load_json_optional(Path(args.load_view_access_contract_report), {})
     backend_architecture_full_report = load_json_optional(Path(args.backend_architecture_full_report), {})
@@ -344,6 +394,10 @@ def main() -> int:
         raise SystemExit("contract assembler semantic report must be object")
     if not isinstance(runtime_surface_dashboard_report, dict):
         raise SystemExit("runtime surface dashboard report must be object")
+    if not isinstance(scene_capability_matrix_report, dict):
+        raise SystemExit("scene capability matrix report must be object")
+    if not isinstance(capability_core_health_report, dict):
+        raise SystemExit("capability core health report must be object")
     if not isinstance(load_view_access_contract_report, dict):
         raise SystemExit("load view access contract report must be object")
     if not isinstance(backend_architecture_full_report, dict):
@@ -361,6 +415,8 @@ def main() -> int:
         role_capability_prod_like_report,
         contract_assembler_semantic_report,
         runtime_surface_dashboard_report,
+        scene_capability_matrix_report,
+        capability_core_health_report,
         boundary_import_report,
         load_view_access_contract_report,
         backend_architecture_full_report,

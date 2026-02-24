@@ -154,6 +154,15 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - release check: `project.project/form` user profile must keep required business fields, strip technical fields, and remain within density caps
   - `make verify.runtime.surface.dashboard.report`
     - artifact: `/mnt/artifacts/backend/runtime_surface_dashboard_report.json` (fallback: `artifacts/backend/runtime_surface_dashboard_report.json`)
+  - `make verify.scene.capability.matrix.report`
+    - artifact: `/mnt/artifacts/backend/scene_capability_matrix_report.json` (fallback: `artifacts/backend/scene_capability_matrix_report.json`)
+    - release check: outputs full scene/capability matrix and reports `scene_without_binding_count`, `unused_capability_count`, `missing_capability_ref_count`
+  - `make verify.capability.core.health.report`
+    - artifact: `/mnt/artifacts/backend/capability_core_health_report.json` (fallback: `artifacts/backend/capability_core_health_report.json`)
+    - release check: each sampled role must return capability entries with valid `group/state/capability_state` semantics in `system.init` (user + hud)
+  - `make verify.scene.contract.semantic.v2.guard`
+    - artifact: `/mnt/artifacts/backend/scene_contract_semantic_v2_guard.json` (fallback: `artifacts/backend/scene_contract_semantic_v2_guard.json`)
+    - release check: enforces strict v2 semantic keys (`scene_meta` + `list_profile`) on opted-in scenes and reports migration gap/coverage for remaining runtime scenes
   - `make verify.boundary.import_guard`
     - artifact: `/mnt/artifacts/backend/boundary_import_guard_report.json` (fallback: `artifacts/backend/boundary_import_guard_report.json`)
     - release check: no forbidden cross-layer imports and no forbidden manifest depends between platform/business/demo tiers

@@ -20,6 +20,10 @@ _USER_MODE_STRIP_KEYS = {
 _USER_CAPABILITY_KEYS = {
     "key",
     "name",
+    "group_key",
+    "group_label",
+    "group_icon",
+    "group_sequence",
     "ui_label",
     "ui_hint",
     "intent",
@@ -48,6 +52,7 @@ _USER_SCENE_KEYS = {
     "required_capabilities",
     "breadcrumbs",
     "list_profile",
+    "scene_meta",
     "filters",
     "default_sort",
     "access",
@@ -135,6 +140,17 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "workflow": "流程推进",
     "drilldown": "业务查看",
     "other": "更多操作",
+}
+
+_CAPABILITY_GROUP_DEFAULTS = {
+    "project_management": {"label": "项目管理", "icon": "briefcase"},
+    "contract_management": {"label": "合同管理", "icon": "file-text"},
+    "cost_management": {"label": "成本管理", "icon": "calculator"},
+    "finance_management": {"label": "财务管理", "icon": "wallet"},
+    "material_management": {"label": "物资管理", "icon": "boxes"},
+    "governance": {"label": "治理配置", "icon": "shield"},
+    "analytics": {"label": "经营分析", "icon": "chart"},
+    "others": {"label": "其他能力", "icon": "grid"},
 }
 
 
@@ -252,6 +268,58 @@ def is_internal_or_smoke(item: dict) -> bool:
 
 
 def normalize_capabilities(capabilities: list) -> list[dict]:
+    def _normalize_capability_status(value: Any) -> str:
+        status = _safe_text(value).lower()
+        if status in {"ga", "beta", "alpha"}:
+            return status
+        if status in {"active", "enabled", "ready"}:
+            return "ga"
+        if status in {"preview", "pilot", "pending"}:
+            return "beta"
+        if status in {"disabled", "inactive", "blocked"}:
+            return "alpha"
+        return "ga"
+
+    def _infer_capability_group_key(capability_key: str) -> str:
+        key = _safe_text(capability_key).lower()
+        if not key:
+            return "others"
+        if key.startswith(("project.", "scene.project", "wbs.", "progress.", "tender.")):
+            return "project_management"
+        if key.startswith(("contract.", "settlement.")):
+            return "contract_management"
+        if key.startswith(("cost.", "budget.", "boq.")):
+            return "cost_management"
+        if key.startswith(("finance.", "payment.", "treasury.")):
+            return "finance_management"
+        if key.startswith(("material.", "purchase.", "stock.")):
+            return "material_management"
+        if key.startswith(("usage.", "report.", "dashboard.", "analytics.")):
+            return "analytics"
+        if key.startswith(("scene.", "portal.", "config.", "permission.", "subscription.", "pack.")):
+            return "governance"
+        return "others"
+
+    def _normalize_capability_state(value: Any) -> str:
+        state = _safe_text(value).lower()
+        if state in {"allow", "readonly", "deny", "pending", "coming_soon"}:
+            return state
+        return ""
+
+    def _derive_capability_state(status: str, state: str, tags: list[str], reason_code: str) -> str:
+        if state:
+            return state
+        tag_set = {str(tag or "").strip().lower() for tag in tags if str(tag or "").strip()}
+        if "readonly" in tag_set or "read_only" in tag_set:
+            return "readonly"
+        if reason_code in {"PERMISSION_DENIED", "ACCESS_DENIED", "FORBIDDEN"}:
+            return "deny"
+        if status == "alpha":
+            return "coming_soon"
+        if status == "beta":
+            return "pending"
+        return "allow"
+
     out: list[dict] = []
     for cap in capabilities or []:
         if not isinstance(cap, dict):
@@ -260,8 +328,41 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
         item["key"] = _safe_text(item.get("key"))
         item["name"] = _safe_text(item.get("name"), item.get("key") or "未命名能力")
         item["ui_label"] = _safe_text(item.get("ui_label"), item.get("name") or item.get("key") or "未命名能力")
-        item["status"] = _safe_text(item.get("status"), "active")
+        item["status"] = _normalize_capability_status(item.get("status"))
+        item["group_key"] = _safe_text(item.get("group_key"), _infer_capability_group_key(item.get("key")))
+        group_meta = _CAPABILITY_GROUP_DEFAULTS.get(item["group_key"], _CAPABILITY_GROUP_DEFAULTS["others"])
+        item["group_label"] = _safe_text(item.get("group_label"), group_meta.get("label") or item["group_key"])
+        item["group_icon"] = _safe_text(item.get("group_icon"), group_meta.get("icon") or "")
+        try:
+            item["group_sequence"] = int(item.get("group_sequence") or 0)
+        except Exception:
+            item["group_sequence"] = 0
         item["tags"] = _normalized_tags_for_item(item)
+        state = _normalize_capability_state(item.get("capability_state"))
+        reason_code = _safe_text(item.get("reason_code")).upper()
+        item["capability_state"] = _derive_capability_state(
+            status=item["status"],
+            state=state,
+            tags=item["tags"],
+            reason_code=reason_code,
+        )
+        item["state"] = _safe_text(item.get("state")).upper()
+        if item["state"] not in {"READY", "LOCKED", "PREVIEW"}:
+            if item["capability_state"] in {"deny"}:
+                item["state"] = "LOCKED"
+            elif item["capability_state"] in {"pending", "coming_soon"}:
+                item["state"] = "PREVIEW"
+            else:
+                item["state"] = "READY"
+        reason = _safe_text(item.get("capability_state_reason"))
+        if not reason:
+            if item["capability_state"] == "readonly":
+                reason = "当前能力为只读模式"
+            elif item["capability_state"] == "pending":
+                reason = "能力处于试运行阶段"
+            elif item["capability_state"] == "coming_soon":
+                reason = "能力尚在建设中，即将开放"
+        item["capability_state_reason"] = reason
         out.append(item)
     return out
 
@@ -325,6 +426,73 @@ def _as_dict(value: Any) -> dict:
 
 def _safe_lower(value: Any) -> str:
     return _safe_text(value).lower()
+
+
+def _normalize_scene_list_profile(item: dict) -> dict:
+    raw = item.get("list_profile")
+    profile = dict(raw) if isinstance(raw, dict) else {}
+    columns = profile.get("columns") if isinstance(profile.get("columns"), list) else []
+    hidden = profile.get("hidden_columns") if isinstance(profile.get("hidden_columns"), list) else []
+    row_primary = _safe_text(profile.get("row_primary"))
+    row_secondary = _safe_text(profile.get("row_secondary"))
+    primary_field = _safe_text(profile.get("primary_field"), row_primary or (columns[0] if columns else "name"))
+    status_field = _safe_text(profile.get("status_field"), "lifecycle_state")
+    urgency_score = int(profile.get("urgency_score") or 0)
+    highlight_rule = profile.get("highlight_rule") if isinstance(profile.get("highlight_rule"), dict) else {}
+    if not highlight_rule:
+        highlight_rule = {
+            "overdue": {"field": "end_date", "operator": "lt_today", "level": "danger"},
+            "at_risk": {"field": status_field, "operator": "in", "value": ["paused", "closing"], "level": "warning"},
+        }
+    profile["columns"] = columns
+    profile["hidden_columns"] = sorted({str(col).strip() for col in hidden if str(col).strip()})
+    profile["row_primary"] = row_primary
+    profile["row_secondary"] = row_secondary
+    profile["primary_field"] = primary_field
+    profile["status_field"] = status_field
+    profile["urgency_score"] = urgency_score
+    profile["highlight_rule"] = highlight_rule
+    return profile
+
+
+def _derive_scene_meta(item: dict) -> dict:
+    code = _safe_text(item.get("code") or item.get("key")).lower()
+    purpose = "业务工作"
+    if code.startswith("projects.") or "project" in code:
+        purpose = "项目推进"
+    elif code.startswith("finance.") or "payment" in code:
+        purpose = "资金与审批"
+    elif code.startswith("contracts.") or "contract" in code:
+        purpose = "合同履约"
+
+    access = item.get("access") if isinstance(item.get("access"), dict) else {}
+    required_caps = access.get("required_capabilities") if isinstance(access.get("required_capabilities"), list) else []
+    is_allowed = bool(access.get("allowed", True))
+    is_default = bool(item.get("is_default"))
+    base_score = 80
+    if is_default:
+        base_score += 10
+    if not is_allowed:
+        base_score -= 30
+    base_score -= min(30, len(required_caps) * 5)
+    role_relevance_score = max(0, min(100, base_score))
+
+    tiles = item.get("tiles") if isinstance(item.get("tiles"), list) else []
+    action_labels: list[str] = []
+    for tile in tiles:
+        if not isinstance(tile, dict):
+            continue
+        label = _safe_text(tile.get("title") or tile.get("subtitle") or tile.get("key"))
+        if label and label not in action_labels:
+            action_labels.append(label)
+    core_action = action_labels[0] if action_labels else "进入场景"
+    priority_actions = action_labels[:3]
+    return {
+        "purpose": purpose,
+        "core_action": core_action,
+        "priority_actions": priority_actions,
+        "role_relevance_score": role_relevance_score,
+    }
 
 
 def _is_project_form_contract(data: dict) -> bool:
@@ -645,6 +813,8 @@ def normalize_scenes(scenes: list) -> list[dict]:
         item["code"] = code or item.get("code")
         item["key"] = _safe_text(item.get("key"), code)
         item["name"] = _safe_text(item.get("name"), code or "未命名场景")
+        item["list_profile"] = _normalize_scene_list_profile(item)
+        item["scene_meta"] = _derive_scene_meta(item)
         item["tags"] = _normalized_tags_for_item(item)
         out.append(item)
     return out
