@@ -8,6 +8,25 @@ from ..view.universal_parser import UniversalViewSemanticParser
 class LoadModelViewHandler(BaseIntentHandler):
     INTENT_TYPE = "load_view"
     DESCRIPTION = "加载模型视图结构"
+    _SYSTEM_MODEL_BLOCKLIST = {
+        "ir.ui.view",
+        "ir.model",
+        "ir.model.fields",
+        "ir.model.access",
+        "ir.rule",
+        "ir.actions.actions",
+        "ir.actions.act_window",
+        "ir.ui.menu",
+        "ir.config_parameter",
+        "res.users",
+        "res.groups",
+    }
+
+    def _is_system_admin(self) -> bool:
+        try:
+            return bool(self.env.user.has_group("base.group_system"))
+        except Exception:
+            return False
 
     def _parse_view_id(self, raw):
         if raw in (None, "", False):
@@ -43,10 +62,11 @@ class LoadModelViewHandler(BaseIntentHandler):
                 "error": {"code": "BAD_REQUEST", "message": "缺少必要参数 model 或 view_type"},
                 "code": 400,
             }
-        if model_name == "ir.ui.view":
+        # 系统模型只允许系统管理员读取，业务角色统一走受控意图输出。
+        if model_name in self._SYSTEM_MODEL_BLOCKLIST and not self._is_system_admin():
             return {
                 "ok": False,
-                "error": {"code": "PERMISSION_DENIED", "message": "不允许直接读取技术模型视图"},
+                "error": {"code": "PERMISSION_DENIED", "message": "不允许直接读取系统模型视图"},
                 "code": 403,
             }
 

@@ -148,6 +148,31 @@ def _build_scene_trace_meta(data: dict, scene_diagnostics: dict | None, elapsed_
     }
 
 
+def _build_capability_surface_summary(capabilities: List[dict], capability_groups: List[dict]) -> dict:
+    summary = {
+        "capability_count": 0,
+        "group_count": 0,
+        "state_counts": {"READY": 0, "LOCKED": 0, "PREVIEW": 0},
+        "capability_state_counts": {"allow": 0, "readonly": 0, "deny": 0, "pending": 0, "coming_soon": 0},
+    }
+    caps = capabilities if isinstance(capabilities, list) else []
+    groups = capability_groups if isinstance(capability_groups, list) else []
+    summary["capability_count"] = len(caps)
+    summary["group_count"] = len(groups)
+    for cap in caps:
+        if not isinstance(cap, dict):
+            continue
+        state = str(cap.get("state") or "").strip().upper()
+        capability_state = str(cap.get("capability_state") or "").strip().lower()
+        if state in summary["state_counts"]:
+            summary["state_counts"][state] = int(summary["state_counts"].get(state) or 0) + 1
+        if capability_state in summary["capability_state_counts"]:
+            summary["capability_state_counts"][capability_state] = (
+                int(summary["capability_state_counts"].get(capability_state) or 0) + 1
+            )
+    return summary
+
+
 def _walk_nav_nodes(nodes):
     for node in nodes or []:
         if isinstance(node, dict):
@@ -1665,6 +1690,10 @@ class SystemInitHandler(BaseIntentHandler):
         )
         data = apply_contract_governance(data, contract_mode)
         data["capability_groups"] = provider_build_capability_groups(data.get("capabilities") or [])
+        data["capability_surface_summary"] = _build_capability_surface_summary(
+            data.get("capabilities") or [],
+            data.get("capability_groups") or [],
+        )
         post_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
         post_governance_capability_count = (
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
