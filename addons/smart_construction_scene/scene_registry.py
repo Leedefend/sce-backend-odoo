@@ -63,7 +63,51 @@ def _normalize_scene(scene, drift=None, source="registry"):
 def _apply_scene_defaults(scene, drift=None, source="registry"):
     code = scene.get("code") or scene.get("key") or ""
     if code == "projects.intake":
+        required_caps = scene.get("required_capabilities")
+        if not isinstance(required_caps, list) or not [str(x).strip() for x in required_caps if str(x).strip()]:
+            scene["required_capabilities"] = ["project.board.open"]
+            if source == "db":
+                _append_drift(
+                    drift,
+                    scene_key=code,
+                    kind="fallback_override",
+                    fields=["required_capabilities"],
+                    severity="warn",
+                )
         target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
+        if not str(target.get("model") or "").strip():
+            target["model"] = "project.project"
+            if source == "db":
+                _append_drift(
+                    drift,
+                    scene_key=code,
+                    kind="fallback_override",
+                    fields=["target.model"],
+                    severity="warn",
+                )
+        if not str(target.get("view_type") or "").strip():
+            target["view_type"] = "form"
+            if source == "db":
+                _append_drift(
+                    drift,
+                    scene_key=code,
+                    kind="fallback_override",
+                    fields=["target.view_type"],
+                    severity="warn",
+                )
+        route = str(target.get("route") or "").strip()
+        if "TARGET_MISSING" in route:
+            # 历史导出可能遗留 workbench 占位路由，强制收敛到稳定语义路由。
+            target["route"] = "/s/projects.intake"
+            scene["target"] = target
+            if source == "db":
+                _append_drift(
+                    drift,
+                    scene_key=code,
+                    kind="fallback_override",
+                    fields=["target.route"],
+                    severity="warn",
+                )
         if not (
             target.get("menu_xmlid")
             or target.get("menu_id")

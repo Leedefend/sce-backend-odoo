@@ -4,7 +4,7 @@
         <!-- Capabilities -->
         <record id="sc_cap_project_work" model="sc.capability">
             <field name="sequence">10</field>
-            <field name="key">project.work</field>
+            <field name="key">project.board.open</field>
             <field name="name">项目工作</field>
             <field name="group_id" ref="smart_construction_core.sc_cap_group_project_management"/>
             <field name="ui_label">项目工作</field>
@@ -18,7 +18,7 @@
 
         <record id="sc_cap_capability_matrix" model="sc.capability">
             <field name="sequence">20</field>
-            <field name="key">capability.matrix</field>
+            <field name="key">governance.capability.matrix</field>
             <field name="name">能力矩阵</field>
             <field name="group_id" ref="smart_construction_core.sc_cap_group_governance"/>
             <field name="ui_label">能力矩阵</field>
@@ -31,7 +31,7 @@
 
         <record id="sc_cap_contract_work" model="sc.capability">
             <field name="sequence">30</field>
-            <field name="key">contract.work</field>
+            <field name="key">contract.center.open</field>
             <field name="name">合同工作</field>
             <field name="group_id" ref="smart_construction_core.sc_cap_group_contract_management"/>
             <field name="ui_label">合同工作</field>
@@ -45,7 +45,7 @@
 
         <record id="sc_cap_cost_work" model="sc.capability">
             <field name="sequence">40</field>
-            <field name="key">cost.work</field>
+            <field name="key">cost.ledger.open</field>
             <field name="name">成本工作</field>
             <field name="group_id" ref="smart_construction_core.sc_cap_group_cost_management"/>
             <field name="ui_label">成本工作</field>
@@ -59,7 +59,7 @@
 
         <record id="sc_cap_finance_work" model="sc.capability">
             <field name="sequence">50</field>
-            <field name="key">finance.work</field>
+            <field name="key">finance.payment_request.list</field>
             <field name="name">财务工作</field>
             <field name="group_id" ref="smart_construction_core.sc_cap_group_finance_management"/>
             <field name="ui_label">财务工作</field>

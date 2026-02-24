@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import re
+
 from odoo import api, models, fields, _
 from odoo.exceptions import UserError
+
+CAPABILITY_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 
 
 class ScCapabilityGroup(models.Model):
@@ -309,6 +313,18 @@ class ScCapability(models.Model):
                     "detail": {"capability_key": cap.key, "capability_id": cap.id},
                 })
             seen_keys[cap.key] = cap.id
+            if not CAPABILITY_KEY_RE.match(str(cap.key or "").strip()):
+                issues.append({
+                    "code": "KEY_FORMAT_INVALID",
+                    "message": _("Capability key does not match naming convention."),
+                    "detail": {"capability_key": cap.key},
+                })
+            if not cap.group_id:
+                issues.append({
+                    "code": "GROUP_KEY_REQUIRED",
+                    "message": _("Capability group is required."),
+                    "detail": {"capability_key": cap.key},
+                })
 
             if not cap.intent:
                 issues.append({
