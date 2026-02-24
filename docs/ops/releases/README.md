@@ -157,6 +157,13 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.scene.capability.matrix.report`
     - artifact: `/mnt/artifacts/backend/scene_capability_matrix_report.json` (fallback: `artifacts/backend/scene_capability_matrix_report.json`)
     - release check: outputs full scene/capability matrix and reports `scene_without_binding_count`, `unused_capability_count`, `missing_capability_ref_count`
+  - `make verify.release.capability.audit`
+    - artifacts:
+      - `/mnt/artifacts/backend/release_capability_report.json` (fallback: `artifacts/backend/release_capability_report.json`)
+      - `/mnt/artifacts/backend/release_capability_top20_fix_backlog.json` (fallback: `artifacts/backend/release_capability_top20_fix_backlog.json`)
+    - release check: runs PM/Finance/Executive key journeys (3 each), exports intent trace chain, runtime capability coverage matrix, scene openability audit, system-model ACL probe, and Top-20 fix backlog
+  - `make verify.release.capability.audit.schema.guard`
+    - release check: enforces deterministic report structure for `release_capability_report` and `release_capability_top20_fix_backlog`
   - `make verify.capability.core.health.report`
     - artifact: `/mnt/artifacts/backend/capability_core_health_report.json` (fallback: `artifacts/backend/capability_core_health_report.json`)
     - release check: each sampled role must return capability entries with valid `group/state/capability_state` semantics in `system.init` (user + hud)

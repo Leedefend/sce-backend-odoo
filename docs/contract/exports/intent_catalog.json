@@ -1748,7 +1748,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 8,
+      "test_refs": 12,
       "request_schema_hint": [
         "model",
         "view_id",

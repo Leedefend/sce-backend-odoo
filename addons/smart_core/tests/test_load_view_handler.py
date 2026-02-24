@@ -49,13 +49,24 @@ class _DummyModel:
 
 
 class _DummyEnv:
-    def __init__(self, mapping):
+    def __init__(self, mapping, *, user=None):
         self._mapping = dict(mapping)
+        self.user = user
 
     def __getitem__(self, model_name):
         if model_name not in self._mapping:
             raise KeyError(model_name)
         return self._mapping[model_name]
+
+
+class _DummyUser:
+    def __init__(self, is_system=False):
+        self._is_system = bool(is_system)
+
+    def has_group(self, group_xmlid):
+        if group_xmlid == "base.group_system":
+            return self._is_system
+        return False
 
 
 class TestLoadViewHandler(unittest.TestCase):
@@ -114,6 +125,33 @@ class TestLoadViewHandler(unittest.TestCase):
         self.assertEqual(result.get("code"), 400)
         self.assertEqual((result.get("error") or {}).get("code"), "BAD_REQUEST")
         parser_cls.assert_not_called()
+
+    @patch("addons.smart_core.handlers.load_view.UniversalViewSemanticParser")
+    def test_load_view_blocks_system_model_for_non_admin(self, parser_cls):
+        env = _DummyEnv({}, user=_DummyUser(is_system=False))
+        su_env = _DummyEnv({})
+        handler = self._make_handler(env, su_env, {"model": "res.users", "view_type": "form"})
+        result = handler.run()
+        self.assertFalse(result.get("ok"), result)
+        self.assertEqual(result.get("code"), 403)
+        self.assertEqual((result.get("error") or {}).get("code"), "PERMISSION_DENIED")
+        parser_cls.assert_not_called()
+
+    @patch("addons.smart_core.handlers.load_view.UniversalViewSemanticParser")
+    def test_load_view_allows_system_model_for_admin(self, parser_cls):
+        user_model = _DummyModel()
+        su_model = _DummyModel()
+        view_model = _DummyViewModel(default_view=_DummyViewRecord(8, "res.users", "form"))
+        env = _DummyEnv({"res.users": user_model}, user=_DummyUser(is_system=True))
+        su_env = _DummyEnv({"res.users": su_model, "ir.ui.view": view_model})
+        parser_cls.return_value.parse.return_value = {"layout": {"groups": []}}
+
+        handler = self._make_handler(env, su_env, {"model": "res.users", "view_type": "form"})
+        result = handler.run()
+
+        self.assertTrue(result.get("ok"), result)
+        self.assertEqual(result.get("data", {}).get("view_id"), 8)
+        parser_cls.assert_called_once()
 
 
 if __name__ == "__main__":
