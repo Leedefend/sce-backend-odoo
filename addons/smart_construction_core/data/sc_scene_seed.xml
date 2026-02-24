@@ -6,6 +6,7 @@
             <field name="sequence">10</field>
             <field name="key">project.work</field>
             <field name="name">项目工作</field>
+            <field name="group_id" ref="smart_construction_core.sc_cap_group_project_management"/>
             <field name="ui_label">项目工作</field>
             <field name="ui_hint">项目看板与概览入口</field>
             <field name="intent">ui.contract</field>
@@ -19,6 +20,7 @@
             <field name="sequence">20</field>
             <field name="key">capability.matrix</field>
             <field name="name">能力矩阵</field>
+            <field name="group_id" ref="smart_construction_core.sc_cap_group_governance"/>
             <field name="ui_label">能力矩阵</field>
             <field name="ui_hint">查看角色可用能力</field>
             <field name="intent">ui.contract</field>
@@ -31,6 +33,7 @@
             <field name="sequence">30</field>
             <field name="key">contract.work</field>
             <field name="name">合同工作</field>
+            <field name="group_id" ref="smart_construction_core.sc_cap_group_contract_management"/>
             <field name="ui_label">合同工作</field>
             <field name="ui_hint">合同台账与合同清单</field>
             <field name="intent">ui.contract</field>
@@ -44,6 +47,7 @@
             <field name="sequence">40</field>
             <field name="key">cost.work</field>
             <field name="name">成本工作</field>
+            <field name="group_id" ref="smart_construction_core.sc_cap_group_cost_management"/>
             <field name="ui_label">成本工作</field>
             <field name="ui_hint">成本台账与预算入口</field>
             <field name="intent">ui.contract</field>
@@ -57,6 +61,7 @@
             <field name="sequence">50</field>
             <field name="key">finance.work</field>
             <field name="name">财务工作</field>
+            <field name="group_id" ref="smart_construction_core.sc_cap_group_finance_management"/>
             <field name="ui_label">财务工作</field>
             <field name="ui_hint">付款申请与财务台账</field>
             <field name="intent">ui.contract</field>
