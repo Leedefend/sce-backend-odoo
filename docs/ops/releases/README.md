@@ -157,6 +157,9 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.scene.capability.matrix.report`
     - artifact: `/mnt/artifacts/backend/scene_capability_matrix_report.json` (fallback: `artifacts/backend/scene_capability_matrix_report.json`)
     - release check: outputs full scene/capability matrix and reports `scene_without_binding_count`, `unused_capability_count`, `missing_capability_ref_count`
+  - `make verify.capability.core.health.report`
+    - artifact: `/mnt/artifacts/backend/capability_core_health_report.json` (fallback: `artifacts/backend/capability_core_health_report.json`)
+    - release check: each sampled role must return capability entries with valid `group/state/capability_state` semantics in `system.init` (user + hud)
   - `make verify.scene.contract.semantic.v2.guard`
     - artifact: `/mnt/artifacts/backend/scene_contract_semantic_v2_guard.json` (fallback: `artifacts/backend/scene_contract_semantic_v2_guard.json`)
     - release check: enforces strict v2 semantic keys (`scene_meta` + `list_profile`) on opted-in scenes and reports migration gap/coverage for remaining runtime scenes

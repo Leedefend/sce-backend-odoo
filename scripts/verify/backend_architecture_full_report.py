@@ -99,6 +99,9 @@ def main() -> int:
     scene_capability_matrix = _load_json(backend_dir / "scene_capability_matrix_report.json") or _load_json(
         local_artifacts / "backend" / "scene_capability_matrix_report.json"
     )
+    capability_core_health = _load_json(backend_dir / "capability_core_health_report.json") or _load_json(
+        local_artifacts / "backend" / "capability_core_health_report.json"
+    )
     scene_contract_semantic_v2 = _load_json(backend_dir / "scene_contract_semantic_v2_guard.json") or _load_json(
         local_artifacts / "backend" / "scene_contract_semantic_v2_guard.json"
     )
@@ -205,6 +208,16 @@ def main() -> int:
     )
     checks.append(
         {
+            "name": "capability_core_health",
+            "ok": bool(capability_core_health.get("ok") is True),
+            "error_count": _safe_int((capability_core_health.get("summary") or {}).get("error_count"), 0),
+            "role_sample_count": _safe_int((capability_core_health.get("summary") or {}).get("role_sample_count"), 0),
+            "login_failure_count": _safe_int((capability_core_health.get("summary") or {}).get("login_failure_count"), 0),
+            "source": "artifacts/backend/capability_core_health_report.json",
+        }
+    )
+    checks.append(
+        {
             "name": "scene_contract_semantic_v2",
             "ok": bool(scene_contract_semantic_v2.get("ok") is True),
             "error_count": _safe_int((scene_contract_semantic_v2.get("summary") or {}).get("error_count"), 0),
@@ -227,6 +240,7 @@ def main() -> int:
     alignment_row = next((item for item in checks if item.get("name") == "scene_catalog_runtime_alignment"), {})
     boundary_import_row = next((item for item in checks if item.get("name") == "boundary_import_report"), {})
     load_view_row = next((item for item in checks if item.get("name") == "load_view_access_contract"), {})
+    capability_health_row = next((item for item in checks if item.get("name") == "capability_core_health"), {})
     semantic_v2_row = next((item for item in checks if item.get("name") == "scene_contract_semantic_v2"), {})
     alignment_probe_login = str(alignment_row.get("probe_login") or "").strip()
     alignment_probe_source = str(alignment_row.get("probe_source") or "").strip()
@@ -235,6 +249,8 @@ def main() -> int:
     load_view_allowed_model = str(load_view_row.get("allowed_model") or "").strip()
     load_view_forbidden_status = _safe_int(load_view_row.get("forbidden_status"), 0)
     load_view_forbidden_error_code = str(load_view_row.get("forbidden_error_code") or "").strip()
+    capability_health_role_sample_count = _safe_int(capability_health_row.get("role_sample_count"), 0)
+    capability_health_login_failure_count = _safe_int(capability_health_row.get("login_failure_count"), 0)
     semantic_v2_coverage_ratio = _safe_float(semantic_v2_row.get("v2_coverage_ratio"), 0.0)
     semantic_v2_enforced_scene_count = _safe_int(semantic_v2_row.get("v2_enforced_scene_count"), 0)
     report = {
@@ -254,6 +270,8 @@ def main() -> int:
             "load_view_allowed_model": load_view_allowed_model,
             "load_view_forbidden_status": load_view_forbidden_status,
             "load_view_forbidden_error_code": load_view_forbidden_error_code,
+            "capability_health_role_sample_count": capability_health_role_sample_count,
+            "capability_health_login_failure_count": capability_health_login_failure_count,
             "semantic_v2_enforced_scene_count": semantic_v2_enforced_scene_count,
             "semantic_v2_coverage_ratio": semantic_v2_coverage_ratio,
             "failed_checks": failed,
@@ -282,6 +300,8 @@ def main() -> int:
         f"- load_view_allowed_model: {report['summary']['load_view_allowed_model'] or '-'}",
         f"- load_view_forbidden_status: {report['summary']['load_view_forbidden_status']}",
         f"- load_view_forbidden_error_code: {report['summary']['load_view_forbidden_error_code'] or '-'}",
+        f"- capability_health_role_sample_count: {report['summary']['capability_health_role_sample_count']}",
+        f"- capability_health_login_failure_count: {report['summary']['capability_health_login_failure_count']}",
         f"- semantic_v2_enforced_scene_count: {report['summary']['semantic_v2_enforced_scene_count']}",
         f"- semantic_v2_coverage_ratio: {report['summary']['semantic_v2_coverage_ratio']}",
         "",
