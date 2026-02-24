@@ -9,6 +9,7 @@ from odoo.addons.smart_core.utils.reason_codes import (
     REASON_PERMISSION_DENIED,
     failure_meta_for_reason,
 )
+from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
 
 
 class SceneNormalizer:
@@ -58,18 +59,16 @@ class SceneNormalizer:
 
 
 def _append_resolve_error(resolve_errors, *, scene_key, kind, code, ref=None, message=None, severity=None, field=None):
-    entry = {
-        "scene_key": scene_key or "",
-        "kind": kind,
-        "code": code,
-        "severity": severity or "non_critical",
-        "message": message or "",
-    }
-    if ref:
-        entry["ref"] = ref
-    if field:
-        entry["field"] = field
-    resolve_errors.append(entry)
+    drift_append_resolve_error(
+        resolve_errors,
+        scene_key=scene_key,
+        kind=kind,
+        code=code,
+        ref=ref,
+        message=message,
+        severity=severity,
+        field=field,
+    )
 
 
 def _normalize_view_mode(raw: str | None) -> str | None:
