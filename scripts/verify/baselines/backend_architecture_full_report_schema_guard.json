@@ -8,7 +8,8 @@
     "boundary_import_report",
     "controller_boundary_report",
     "scene_catalog_runtime_alignment",
-    "load_view_access_contract"
+    "load_view_access_contract",
+    "scene_capability_matrix"
   ],
-  "min_check_count": 9
+  "min_check_count": 10
 }
