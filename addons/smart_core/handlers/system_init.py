@@ -32,6 +32,7 @@ from odoo.addons.smart_core.governance.scene_drift_engine import (
     append_resolve_error as drift_append_resolve_error,
     is_critical_drift_warn as drift_is_critical_drift_warn,
 )
+from odoo.addons.smart_core.governance.capability_surface_engine import CapabilitySurfaceEngine
 from odoo.addons.smart_core.governance.scene_normalizer import SceneNormalizer
 from odoo.addons.smart_core.identity.identity_resolver import IdentityResolver
 from odoo.addons.smart_core.runtime.auto_degrade_engine import AutoDegradeEngine
@@ -112,31 +113,6 @@ def _build_scene_trace_meta(data: dict, scene_diagnostics: dict | None, elapsed_
         "governance": governance,
         "governance_applied": governance,
     }
-
-
-def _build_capability_surface_summary(capabilities: List[dict], capability_groups: List[dict]) -> dict:
-    summary = {
-        "capability_count": 0,
-        "group_count": 0,
-        "state_counts": {"READY": 0, "LOCKED": 0, "PREVIEW": 0},
-        "capability_state_counts": {"allow": 0, "readonly": 0, "deny": 0, "pending": 0, "coming_soon": 0},
-    }
-    caps = capabilities if isinstance(capabilities, list) else []
-    groups = capability_groups if isinstance(capability_groups, list) else []
-    summary["capability_count"] = len(caps)
-    summary["group_count"] = len(groups)
-    for cap in caps:
-        if not isinstance(cap, dict):
-            continue
-        state = str(cap.get("state") or "").strip().upper()
-        capability_state = str(cap.get("capability_state") or "").strip().lower()
-        if state in summary["state_counts"]:
-            summary["state_counts"][state] = int(summary["state_counts"].get(state) or 0) + 1
-        if capability_state in summary["capability_state_counts"]:
-            summary["capability_state_counts"][capability_state] = (
-                int(summary["capability_state_counts"].get(capability_state) or 0) + 1
-            )
-    return summary
 
 
 def _load_capabilities_for_user(env, user) -> List[dict]:
@@ -524,6 +500,7 @@ class SystemInitHandler(BaseIntentHandler):
         scene_normalizer = SceneNormalizer()
         scene_drift_engine = SceneDriftEngine()
         auto_degrade_engine = AutoDegradeEngine()
+        capability_surface_engine = CapabilitySurfaceEngine()
         scene_normalizer.append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
@@ -655,7 +632,7 @@ class SystemInitHandler(BaseIntentHandler):
         )
         data = apply_contract_governance(data, contract_mode)
         data["capability_groups"] = provider_build_capability_groups(data.get("capabilities") or [])
-        data["capability_surface_summary"] = _build_capability_surface_summary(
+        data["capability_surface_summary"] = capability_surface_engine.build_summary(
             data.get("capabilities") or [],
             data.get("capability_groups") or [],
         )
