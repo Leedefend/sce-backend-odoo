@@ -11,5 +11,8 @@
     "odoo.addons.smart_construction_core",
     "odoo.addons.smart_construction_demo",
     "odoo.addons.smart_construction_seed"
+  ],
+  "allowed_provider_import_modules": [
+    "odoo.addons.smart_construction_core.services.capability_registry"
   ]
 }

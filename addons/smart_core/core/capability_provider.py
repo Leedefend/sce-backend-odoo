@@ -104,6 +104,18 @@ def build_capability_groups(capabilities: List[dict]) -> List[dict]:
 
 def load_capabilities_for_user(env, user) -> List[dict]:
     try:
+        from odoo.addons.smart_construction_core.services.capability_registry import (
+            list_capabilities_for_user as registry_list_capabilities_for_user,
+        )
+
+        registry_caps = registry_list_capabilities_for_user(env, user)
+        if isinstance(registry_caps, list) and registry_caps:
+            return registry_caps
+    except Exception:
+        # Keep backward compatibility: fall back to DB-backed capability catalog.
+        pass
+
+    try:
         cap_model = env["sc.capability"].sudo()
     except Exception:
         return []
