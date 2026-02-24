@@ -96,6 +96,9 @@ def main() -> int:
     load_view_access = _load_json(backend_dir / "load_view_access_contract_guard.json") or _load_json(
         local_artifacts / "backend" / "load_view_access_contract_guard.json"
     )
+    scene_capability_matrix = _load_json(backend_dir / "scene_capability_matrix_report.json") or _load_json(
+        local_artifacts / "backend" / "scene_capability_matrix_report.json"
+    )
 
     checks: list[dict] = []
 
@@ -181,6 +184,20 @@ def main() -> int:
             "forbidden_status": _safe_int((load_view_access.get("summary") or {}).get("forbidden_status"), 0),
             "forbidden_error_code": str((load_view_access.get("summary") or {}).get("forbidden_error_code") or "").strip(),
             "source": "artifacts/backend/load_view_access_contract_guard.json",
+        }
+    )
+    checks.append(
+        {
+            "name": "scene_capability_matrix",
+            "ok": bool(scene_capability_matrix.get("ok") is True),
+            "error_count": _safe_int((scene_capability_matrix.get("summary") or {}).get("error_count"), 0),
+            "scene_without_binding_count": _safe_int(
+                (scene_capability_matrix.get("summary") or {}).get("scene_without_binding_count"), 0
+            ),
+            "unused_capability_count": _safe_int(
+                (scene_capability_matrix.get("summary") or {}).get("unused_capability_count"), 0
+            ),
+            "source": "artifacts/backend/scene_capability_matrix_report.json",
         }
     )
 

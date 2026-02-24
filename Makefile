@@ -1402,7 +1402,7 @@ verify.backend.evidence.manifest.schema.guard: guard.prod.forbid verify.backend.
 verify.backend.evidence.manifest.guard: guard.prod.forbid verify.backend.evidence.manifest.schema.guard
 	@python3 scripts/verify/backend_evidence_manifest_guard.py
 
-verify.phase_next.evidence.bundle: guard.prod.forbid verify.role.capability_floor.prod_like verify.role.capability_floor.prod_like.schema.guard verify.load_view.access.contract.guard verify.contract.assembler.semantic.smoke verify.contract.assembler.semantic.schema.guard verify.project.form.contract.surface.guard verify.runtime.surface.dashboard.report verify.runtime.surface.dashboard.schema.guard
+verify.phase_next.evidence.bundle: guard.prod.forbid verify.role.capability_floor.prod_like verify.role.capability_floor.prod_like.schema.guard verify.load_view.access.contract.guard verify.contract.assembler.semantic.smoke verify.contract.assembler.semantic.schema.guard verify.project.form.contract.surface.guard verify.runtime.surface.dashboard.report verify.runtime.surface.dashboard.schema.guard verify.scene.capability.matrix.schema.guard
 	@echo "[OK] verify.phase_next.evidence.bundle done"
 
 verify.phase_next.evidence.bundle.strict: guard.prod.forbid verify.phase_next.evidence.bundle verify.contract.assembler.semantic.strict verify.runtime.surface.dashboard.strict.guard verify.backend.architecture.full.report.guard
@@ -1590,6 +1590,12 @@ verify.contract.governance.coverage: guard.prod.forbid
 
 verify.scene_capability.contract.guard: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/scene_capability_contract_guard.py
+
+verify.scene.capability.matrix.report: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/scene_capability_matrix_report.py
+
+verify.scene.capability.matrix.schema.guard: guard.prod.forbid verify.scene.capability.matrix.report
+	@python3 scripts/verify/scene_capability_matrix_report_schema_guard.py
 
 verify.contract.governance.brief: guard.prod.forbid
 	@python3 scripts/verify/contract_governance_brief.py

@@ -61,6 +61,9 @@ status: active
     - 发布检查：`project.project/form` user profile 必须保留业务必需字段、剔除技术字段，并满足密度上限
   - `make verify.runtime.surface.dashboard.report`
     - 产物：`/mnt/artifacts/backend/runtime_surface_dashboard_report.json`（不可写时回落 `artifacts/backend/runtime_surface_dashboard_report.json`）
+  - `make verify.scene.capability.matrix.report`
+    - 产物：`/mnt/artifacts/backend/scene_capability_matrix_report.json`（不可写时回落 `artifacts/backend/scene_capability_matrix_report.json`）
+    - 发布检查：输出全量 scene/capability 矩阵，并报告 `scene_without_binding_count`、`unused_capability_count`、`missing_capability_ref_count`
   - `make verify.boundary.import_guard`
     - 产物：`/mnt/artifacts/backend/boundary_import_guard_report.json`（不可写时回落 `artifacts/backend/boundary_import_guard_report.json`）
     - 发布检查：平台/业务/demo 分层之间不得出现禁用跨层 import 或禁用 manifest 依赖
