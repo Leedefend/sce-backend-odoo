@@ -33,6 +33,7 @@ from odoo.addons.smart_core.governance.scene_drift_engine import (
     is_critical_drift_warn as drift_is_critical_drift_warn,
 )
 from odoo.addons.smart_core.governance.scene_normalizer import SceneNormalizer
+from odoo.addons.smart_core.identity.identity_resolver import IdentityResolver
 from odoo.addons.smart_core.runtime.auto_degrade_engine import AutoDegradeEngine
 from odoo.addons.smart_core.utils.reason_codes import (
     REASON_OK,
@@ -51,43 +52,6 @@ _logger = logging.getLogger(__name__)
 # Contract/API version markers for client compatibility
 CONTRACT_VERSION = "v0.1"
 API_VERSION = "v1"
-ROLE_SURFACE_MAP = {
-    "owner": {
-        "label": "Owner",
-        "landing_scene_candidates": ["projects.list", "projects.intake"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_project_center",
-            "smart_construction_core.menu_sc_contract_center",
-        ],
-    },
-    "pm": {
-        "label": "Project Manager",
-        "landing_scene_candidates": ["projects.ledger", "projects.list", "projects.intake"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_project_center",
-            "smart_construction_core.menu_sc_contract_center",
-            "smart_construction_core.menu_sc_cost_center",
-        ],
-    },
-    "finance": {
-        "label": "Finance",
-        "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_finance_center",
-            "smart_construction_core.menu_sc_settlement_center",
-            "smart_construction_core.menu_payment_request",
-        ],
-    },
-    "executive": {
-        "label": "Executive",
-        "landing_scene_candidates": ["projects.intake", "projects.list", "projects.ledger"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_root",
-            "smart_construction_core.menu_sc_projection_root",
-            "smart_construction_core.menu_sc_project_center",
-        ],
-    },
-}
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
 
@@ -99,11 +63,6 @@ def _diagnostics_enabled(env) -> bool:
         return env.user.has_group("base.group_system")
     except Exception:
         return False
-
-def _user_group_xmlids(user) -> set:
-    """把用户组转为 xmlid 集合（与菜单过滤口径一致）"""
-    ext_map = user.groups_id.sudo().get_external_id()  # {id: 'module.xmlid' or False}
-    return {xml for xml in ext_map.values() if xml}
 
 def _to_group_xmlid(env, g) -> str | None:
     """把 group 标识（xmlid 或 int id 或 res.groups 记录）统一转 xmlid"""
@@ -178,102 +137,6 @@ def _build_capability_surface_summary(capabilities: List[dict], capability_group
                 int(summary["capability_state_counts"].get(capability_state) or 0) + 1
             )
     return summary
-
-
-def _walk_nav_nodes(nodes):
-    for node in nodes or []:
-        if isinstance(node, dict):
-            yield node
-            children = node.get("children")
-            if isinstance(children, list):
-                for child in _walk_nav_nodes(children):
-                    yield child
-
-
-def _index_nav_by_xmlid(nodes) -> Dict[str, dict]:
-    indexed = {}
-    for node in _walk_nav_nodes(nodes):
-        xmlid = node.get("xmlid") or (node.get("meta") or {}).get("menu_xmlid")
-        if xmlid and xmlid not in indexed:
-            indexed[xmlid] = node
-    return indexed
-
-
-def _resolve_role_code(user_xmlids: set) -> str:
-    if {
-        "base.group_system",
-        "smart_construction_core.group_sc_super_admin",
-        "smart_construction_core.group_sc_cap_config_admin",
-        "smart_construction_core.group_sc_business_full",
-        "smart_construction_custom.group_sc_role_executive",
-    } & user_xmlids:
-        return "executive"
-    if {
-        "smart_construction_custom.group_sc_role_finance",
-        "smart_construction_custom.group_sc_role_payment_read",
-        "smart_construction_custom.group_sc_role_payment_user",
-        "smart_construction_custom.group_sc_role_payment_manager",
-        "smart_construction_core.group_sc_cap_finance_read",
-        "smart_construction_core.group_sc_cap_finance_user",
-        "smart_construction_core.group_sc_cap_finance_manager",
-    } & user_xmlids:
-        return "finance"
-    if {
-        "smart_construction_custom.group_sc_role_pm",
-        "smart_construction_custom.group_sc_role_project_user",
-        "smart_construction_custom.group_sc_role_project_manager",
-        "smart_construction_core.group_sc_cap_project_user",
-        "smart_construction_core.group_sc_cap_project_manager",
-    } & user_xmlids:
-        return "pm"
-    return "owner"
-
-
-def _pick_landing_scene(scene_candidates: List[str], scene_keys: set) -> str:
-    for candidate in scene_candidates:
-        if candidate in scene_keys:
-            return candidate
-    return "projects.list"
-
-
-def _build_role_surface(user_xmlids: set, nav_tree: list, scene_keys: set) -> dict:
-    role_code = _resolve_role_code(user_xmlids)
-    role_meta = ROLE_SURFACE_MAP.get(role_code) or ROLE_SURFACE_MAP["owner"]
-    scene_candidates = list(role_meta.get("landing_scene_candidates") or [])
-    menu_candidates = list(role_meta.get("menu_xmlids") or [])
-    landing_scene_key = _pick_landing_scene(scene_candidates, scene_keys)
-    nav_index = _index_nav_by_xmlid(nav_tree)
-    landing_menu_xmlid = ""
-    landing_menu_id = None
-    for xmlid in menu_candidates:
-        node = nav_index.get(xmlid)
-        if not node:
-            continue
-        landing_menu_xmlid = xmlid
-        landing_menu_id = node.get("menu_id") or node.get("id")
-        break
-    return {
-        "role_code": role_code,
-        "role_label": role_meta.get("label") or role_code,
-        "landing_scene_key": landing_scene_key,
-        "landing_menu_xmlid": landing_menu_xmlid,
-        "landing_menu_id": landing_menu_id,
-        "landing_path": f"/s/{landing_scene_key}",
-        "scene_candidates": scene_candidates,
-        "menu_xmlids": menu_candidates,
-    }
-
-
-def _build_role_surface_map_payload() -> Dict[str, dict]:
-    payload = {}
-    for role_code, role_meta in ROLE_SURFACE_MAP.items():
-        payload[role_code] = {
-            "role_code": role_code,
-            "role_label": role_meta.get("label") or role_code,
-            "scene_candidates": list(role_meta.get("landing_scene_candidates") or []),
-            "menu_xmlids": list(role_meta.get("menu_xmlids") or []),
-        }
-    return payload
 
 
 def _load_capabilities_for_user(env, user) -> List[dict]:
@@ -398,7 +261,7 @@ def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
       - intents: 只包含“主名”（INTENT_TYPE）的有序列表
       - intents_meta: 含版本与别名，供前端/调试可选使用
     """
-    user_xmlids = _user_group_xmlids(user)
+    user_xmlids = IdentityResolver().user_group_xmlids(user)
     intents: List[str] = []
     meta: Dict[str, dict] = {}
 
@@ -531,7 +394,8 @@ class SystemInitHandler(BaseIntentHandler):
         scene = params.get("scene") or "web"
 
         user = env.user
-        user_groups_xmlids = _user_group_xmlids(user)
+        identity_resolver = IdentityResolver()
+        user_groups_xmlids = identity_resolver.user_group_xmlids(user)
 
         user_dict = {
             "id": user.id,
@@ -820,8 +684,8 @@ class SystemInitHandler(BaseIntentHandler):
             for s in scenes_payload
             if isinstance(s, dict) and (s.get("code") or s.get("key"))
         }
-        data["role_surface"] = _build_role_surface(user_groups_xmlids, nav_tree, scene_keys_latest)
-        data["role_surface_map"] = _build_role_surface_map_payload()
+        data["role_surface"] = identity_resolver.build_role_surface(user_groups_xmlids, nav_tree, scene_keys_latest)
+        data["role_surface_map"] = identity_resolver.build_role_surface_map_payload()
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 
