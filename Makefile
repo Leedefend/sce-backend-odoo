@@ -1485,7 +1485,7 @@ verify.capability.schema: guard.prod.forbid verify.scene_capability.contract.gua
 verify.scene.schema: guard.prod.forbid verify.scene.definition.semantics verify.scene.catalog.source.guard verify.scene.contract.shape
 	@echo "[OK] verify.scene.schema done"
 
-verify.backend.architecture.full: guard.prod.forbid verify.intent.router.purity verify.baseline.policy_integrity.guard verify.boundary.guard verify.contract.envelope verify.mode.filter verify.capability.schema verify.scene.schema verify.seed.demo.isolation verify.scene.catalog.governance.guard verify.load_view.access.contract.guard verify.capability.provider.guard verify.capability.registry.smoke verify.release.capability.audit verify.phase_next.evidence.bundle verify.business.capability_baseline.guard verify.contract.snapshot verify.contract.governance.coverage verify.contract.evidence.guard verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke
+verify.backend.architecture.full: guard.prod.forbid verify.intent.router.purity verify.baseline.policy_integrity.guard verify.boundary.guard verify.contract.envelope verify.mode.filter verify.capability.schema verify.scene.schema verify.seed.demo.isolation verify.scene.catalog.governance.guard verify.load_view.access.contract.guard verify.capability.provider.guard verify.capability.registry.smoke verify.release.capability.audit.schema.guard verify.phase_next.evidence.bundle verify.business.capability_baseline.guard verify.contract.snapshot verify.contract.governance.coverage verify.contract.evidence.guard verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke
 	@if [ "$${SC_PHASE_NEXT_STRICT:-0}" = "1" ]; then \
 	  $(MAKE) --no-print-directory verify.phase_next.evidence.bundle.strict; \
 	else \
@@ -1611,6 +1611,9 @@ verify.scene.capability.matrix.schema.guard: guard.prod.forbid verify.scene.capa
 
 verify.release.capability.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/release_capability_audit.py
+
+verify.release.capability.audit.schema.guard: guard.prod.forbid verify.release.capability.audit
+	@python3 scripts/verify/release_capability_audit_schema_guard.py
 
 verify.contract.governance.brief: guard.prod.forbid
 	@python3 scripts/verify/contract_governance_brief.py
