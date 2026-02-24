@@ -26,6 +26,7 @@ from odoo.addons.smart_core.core.capability_provider import (
     build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
+from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.governance.scene_drift_engine import (
     SceneDriftEngine,
@@ -99,21 +100,6 @@ def _fingerprint(obj: dict) -> str:
     """稳定指纹（用于导航/顶层 ETag 计算）"""
     payload = json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.md5(payload.encode("utf-8")).hexdigest()
-
-def _build_scene_trace_meta(data: dict, scene_diagnostics: dict | None, elapsed_ms: int) -> dict:
-    diagnostics = scene_diagnostics if isinstance(scene_diagnostics, dict) else {}
-    governance = diagnostics.get("governance")
-    return {
-        "latency_ms": int(elapsed_ms),
-        "scene_source": diagnostics.get("loaded_from") or "unknown",
-        "scene_contract_ref": data.get("scene_contract_ref") or "unknown",
-        "scene_channel": data.get("scene_channel") or "stable",
-        "channel_selector": diagnostics.get("channel_selector") or "default",
-        "channel_source_ref": diagnostics.get("channel_source_ref") or "default",
-        "governance": governance,
-        "governance_applied": governance,
-    }
-
 
 def _load_capabilities_for_user(env, user) -> List[dict]:
     return provider_load_capabilities_for_user(env, user)
@@ -501,6 +487,7 @@ class SystemInitHandler(BaseIntentHandler):
         scene_drift_engine = SceneDriftEngine()
         auto_degrade_engine = AutoDegradeEngine()
         capability_surface_engine = CapabilitySurfaceEngine()
+        contract_assembler = ContractAssembler()
         scene_normalizer.append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
@@ -670,17 +657,18 @@ class SystemInitHandler(BaseIntentHandler):
         etags["nav"] = nav_fp
 
         elapsed_ms = int((time.time() - ts0) * 1000)
-        scene_trace_meta = _build_scene_trace_meta(data, scene_diagnostics, elapsed_ms)
-        meta = {
-            "elapsed_ms": elapsed_ms,
-            "parts": {"nav": format_versions(nav_versions), **parts_version},
-            "etags": etags,
-            "intent": self.INTENT_TYPE,
-            "contract_version": CONTRACT_VERSION,
-            "api_version": API_VERSION,
-            "contract_mode": contract_mode,
-            "scene_trace": scene_trace_meta,
-        }
+        scene_trace_meta = contract_assembler.build_scene_trace_meta(data, scene_diagnostics, elapsed_ms)
+        meta = contract_assembler.build_meta(
+            elapsed_ms=elapsed_ms,
+            nav_versions=format_versions(nav_versions),
+            parts_version=parts_version,
+            etags=etags,
+            intent_type=self.INTENT_TYPE,
+            contract_version=CONTRACT_VERSION,
+            api_version=API_VERSION,
+            contract_mode=contract_mode,
+            scene_trace_meta=scene_trace_meta,
+        )
         if contract_mode == "hud":
             data["hud"] = {
                 "trace_id": trace_id,
@@ -693,20 +681,12 @@ class SystemInitHandler(BaseIntentHandler):
             data["diagnostic"] = diagnostic_info
 
         # 顶层 ETag：纳入用户、导航指纹、默认路由、特性开关、可用意图
-        top_etag = stable_etag({
-            "user": data["user"],
-            "nav_fp": nav_fp,
-            "default_route": data["default_route"],
-            "feature_flags": data["feature_flags"],
-            "intents": data["intents"],
-            "scenes": data.get("scenes"),
-            "scene_channel": data.get("scene_channel"),
-            "scene_contract_ref": data.get("scene_contract_ref"),
-            "capabilities": data.get("capabilities"),
-            "capability_groups": data.get("capability_groups"),
-            "contract_mode": contract_mode,
-            "contract_version": CONTRACT_VERSION,
-            "api_version": API_VERSION,
-        })
+        top_etag = contract_assembler.build_top_etag(
+            data,
+            nav_fp=nav_fp,
+            contract_mode=contract_mode,
+            contract_version=CONTRACT_VERSION,
+            api_version=API_VERSION,
+        )
 
         return {"status": "success", "data": data, "meta": {**meta, "etag": top_etag}, "ok": True}
