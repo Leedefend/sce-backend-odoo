@@ -188,6 +188,7 @@ def main() -> int:
     failed = sorted([item["name"] for item in checks if item.get("ok") is not True])
     warnings = sorted([item["name"] for item in checks if _safe_int(item.get("warning_count"), 0) > 0])
     business_row = next((item for item in checks if item.get("name") == "business_capability_baseline"), {})
+    semantic_warning_count = _safe_int((semantic_smoke.get("summary") or {}).get("warning_count"), 0)
     alignment_row = next((item for item in checks if item.get("name") == "scene_catalog_runtime_alignment"), {})
     boundary_import_row = next((item for item in checks if item.get("name") == "boundary_import_report"), {})
     load_view_row = next((item for item in checks if item.get("name") == "load_view_access_contract"), {})
@@ -207,6 +208,7 @@ def main() -> int:
             "business_required_intent_count": _safe_int(business_row.get("required_intent_count"), 0),
             "business_required_role_count": _safe_int(business_row.get("required_role_count"), 0),
             "business_catalog_runtime_ratio": _safe_float(business_row.get("catalog_runtime_ratio"), 0.0),
+            "semantic_warning_count": semantic_warning_count,
             "alignment_probe_login": alignment_probe_login,
             "alignment_probe_source": alignment_probe_source,
             "boundary_import_warning_count": boundary_import_warning_count,
@@ -232,6 +234,7 @@ def main() -> int:
         f"- business_required_intent_count: {report['summary']['business_required_intent_count']}",
         f"- business_required_role_count: {report['summary']['business_required_role_count']}",
         f"- business_catalog_runtime_ratio: {report['summary']['business_catalog_runtime_ratio']}",
+        f"- semantic_warning_count: {report['summary']['semantic_warning_count']}",
         f"- alignment_probe_login: {report['summary']['alignment_probe_login'] or '-'}",
         f"- alignment_probe_source: {report['summary']['alignment_probe_source'] or '-'}",
         f"- boundary_import_warning_count: {report['summary']['boundary_import_warning_count']}",

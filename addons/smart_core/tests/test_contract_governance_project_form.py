@@ -81,6 +81,18 @@ class TestProjectFormGovernance(unittest.TestCase):
         buttons = out.get("buttons") or []
         self.assertTrue(all(str(btn.get("kind", "")).lower() != "server" for btn in buttons if isinstance(btn, dict)))
         self.assertTrue(all("评分" not in str(btn.get("label", "")) for btn in buttons if isinstance(btn, dict)))
+        action_groups = out.get("action_groups") or []
+        self.assertIsInstance(action_groups, list)
+        if action_groups:
+            first_group = action_groups[0]
+            self.assertIn("key", first_group)
+            self.assertIn("label", first_group)
+            self.assertIn("actions", first_group)
+            self.assertLessEqual(len(first_group.get("actions") or []), 5)
+        lifecycle = out.get("lifecycle") or {}
+        self.assertIsInstance(lifecycle, dict)
+        self.assertIn("state_field", lifecycle)
+        self.assertIn("allowed_transitions", lifecycle)
         filters = ((out.get("search") or {}).get("filters")) or []
         self.assertLessEqual(len(filters), 8)
 

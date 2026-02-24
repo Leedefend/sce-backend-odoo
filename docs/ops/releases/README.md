@@ -129,6 +129,11 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
     - form save must normalize payload by contract field types and submit diff-only writable fields
     - record form runtime must normalize `views.form.layout` node arrays into renderer layout and keep field coverage aligned with contract `fields` (no silent field drop from partial layout nodes)
     - legacy model pages (`ModelFormPage`/`ModelListPage`) should only act as compatibility shells and must delegate to contract-driven runtime
+- P4 contract semantics baseline (productized convergence):
+  - `system.init` must include grouped capability payload (`capability_groups`) and stable grouped ordering
+  - `system.init` capability/tile entries must expose semantic `capability_state` + `capability_state_reason`
+  - `ui.contract` project form (user mode) must expose governed `action_groups` with overflow buckets (not flat action flood)
+  - `ui.contract` project form (user mode) must expose lifecycle summary (`current_state/allowed_transitions/blockers/progress_percent`)
 - Backend evidence & observability expansion (Phase Next):
   - `make verify.load_view.access.contract.guard`
     - artifact: `/mnt/artifacts/backend/load_view_access_contract_guard.json` (fallback: `artifacts/backend/load_view_access_contract_guard.json`)
@@ -141,6 +146,9 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - `make verify.contract.assembler.semantic.smoke`
     - artifact: `/mnt/artifacts/backend/contract_assembler_semantic_smoke.json` (fallback: `artifacts/backend/contract_assembler_semantic_smoke.json`)
     - includes project form density assertions (user mode `project.project/form`: field cap, layout-field coverage, search-filter cap, toolbar/header/smart action caps, hud >= user field surface)
+  - `make verify.contract.assembler.semantic.strict`
+    - strict mode: `SC_P4_SEMANTIC_STRICT=1` to fail on missing P4 semantic fields (`capability_groups`, `capability_state`, `action_groups`, `lifecycle`)
+    - use in strict release windows; keep `semantic.smoke` as non-breaking observability gate in default flow
   - `make verify.project.form.contract.surface.guard`
     - artifact: `/mnt/artifacts/backend/project_form_contract_surface_guard.json` (fallback: `artifacts/backend/project_form_contract_surface_guard.json`)
     - release check: `project.project/form` user profile must keep required business fields, strip technical fields, and remain within density caps

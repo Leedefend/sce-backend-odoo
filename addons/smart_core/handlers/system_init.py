@@ -24,6 +24,7 @@ from odoo.addons.smart_core.core.scene_provider import (
     resolve_scene_channel as provider_resolve_scene_channel,
 )
 from odoo.addons.smart_core.core.capability_provider import (
+    build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
 from odoo.addons.smart_core.utils.reason_codes import (
@@ -1027,10 +1028,28 @@ def _normalize_tile_state(value) -> str:
     return ""
 
 
+def _normalize_capability_state(value) -> str:
+    state = str(value or "").strip().lower()
+    if state in {"allow", "readonly", "deny", "pending", "coming_soon"}:
+        return state
+    return ""
+
+
 def _derive_tile_state(status: str, allowed) -> str:
     if isinstance(allowed, bool):
         return "READY" if allowed else "LOCKED"
     return "READY" if status == "ga" else "PREVIEW"
+
+
+def _derive_capability_state(*, status: str, allowed) -> str:
+    if isinstance(allowed, bool) and not allowed:
+        return "deny"
+    normalized = _normalize_tile_status(status)
+    if normalized == "alpha":
+        return "coming_soon"
+    if normalized == "beta":
+        return "pending"
+    return "allow"
 
 
 def _normalize_scene_tiles(scenes, capabilities, warnings):
@@ -1044,6 +1063,8 @@ def _normalize_scene_tiles(scenes, capabilities, warnings):
         cap_map[cap_key] = {
             "status": _normalize_tile_status(capability.get("status")),
             "state": _normalize_tile_state(capability.get("state")),
+            "capability_state": _normalize_capability_state(capability.get("capability_state")),
+            "capability_state_reason": str(capability.get("capability_state_reason") or "").strip(),
             "reason_code": str(capability.get("reason_code") or "").strip(),
             "reason": str(capability.get("reason") or "").strip(),
         }
@@ -1062,17 +1083,25 @@ def _normalize_scene_tiles(scenes, capabilities, warnings):
             cap_meta = cap_map.get(key) if key else None
             status = _normalize_tile_status(tile.get("status"))
             state = _normalize_tile_state(tile.get("state"))
+            capability_state = _normalize_capability_state(tile.get("capability_state"))
             if not status and cap_meta:
                 status = cap_meta.get("status") or ""
             if not state and cap_meta:
                 state = cap_meta.get("state") or ""
+            if not capability_state and cap_meta:
+                capability_state = cap_meta.get("capability_state") or ""
             if not state:
                 state = _derive_tile_state(status or "ga", tile.get("allowed"))
             if not status:
                 status = "ga" if state == "READY" else "alpha"
+            if not capability_state:
+                capability_state = _derive_capability_state(status=status, allowed=tile.get("allowed"))
             tile["status"] = status
             tile["state"] = state
+            tile["capability_state"] = capability_state
             if cap_meta:
+                if not tile.get("capability_state_reason") and cap_meta.get("capability_state_reason"):
+                    tile["capability_state_reason"] = cap_meta.get("capability_state_reason")
                 if not tile.get("reason_code") and cap_meta.get("reason_code"):
                     tile["reason_code"] = cap_meta.get("reason_code")
                 if not tile.get("reason") and cap_meta.get("reason"):
@@ -1490,6 +1519,7 @@ class SystemInitHandler(BaseIntentHandler):
             "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
             "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
             "capabilities": _load_capabilities_for_user(env, user),
+            "capability_groups": [],
             "preload": [],
             "scenes": [],
             "scene_version": "v1",
@@ -1633,6 +1663,7 @@ class SystemInitHandler(BaseIntentHandler):
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
         )
         data = apply_contract_governance(data, contract_mode)
+        data["capability_groups"] = provider_build_capability_groups(data.get("capabilities") or [])
         post_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
         post_governance_capability_count = (
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
@@ -1700,6 +1731,7 @@ class SystemInitHandler(BaseIntentHandler):
             "scene_channel": data.get("scene_channel"),
             "scene_contract_ref": data.get("scene_contract_ref"),
             "capabilities": data.get("capabilities"),
+            "capability_groups": data.get("capability_groups"),
             "contract_mode": contract_mode,
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
