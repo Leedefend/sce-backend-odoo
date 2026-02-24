@@ -38,6 +38,8 @@ def main() -> int:
         "require_contract_assembler_semantic_ok": True,
         "require_scene_capability_matrix_ok": True,
         "max_scene_capability_matrix_error_count": 0,
+        "require_capability_core_health_ok": True,
+        "max_capability_core_health_error_count": 0,
         "require_backend_architecture_full_ok": True,
         "max_backend_architecture_failed_check_count": 0,
         "require_backend_evidence_manifest_ok": True,
@@ -70,6 +72,7 @@ def main() -> int:
         "contract_assembler_semantic",
         "runtime_surface_dashboard",
         "scene_capability_matrix",
+        "capability_core_health",
         "boundary_import_report",
         "load_view_access_contract",
         "backend_architecture_full",
@@ -139,6 +142,17 @@ def main() -> int:
         errors.append(
             "scene_capability_matrix.missing_capability_ref_count must be <= "
             f"{max_scene_matrix_errors}"
+        )
+    capability_core_health = payload.get("capability_core_health") if isinstance(payload.get("capability_core_health"), dict) else {}
+    if not isinstance(capability_core_health.get("ok"), bool):
+        errors.append("capability_core_health.ok must be bool")
+    if bool(policy.get("require_capability_core_health_ok", True)) and not bool(capability_core_health.get("ok")):
+        errors.append("capability_core_health.ok must be true under baseline policy")
+    max_capability_core_health_errors = int(policy.get("max_capability_core_health_error_count", 0) or 0)
+    if int(capability_core_health.get("error_count") or 0) > max_capability_core_health_errors:
+        errors.append(
+            "capability_core_health.error_count must be <= "
+            f"{max_capability_core_health_errors}"
         )
 
     backend_full = payload.get("backend_architecture_full") if isinstance(payload.get("backend_architecture_full"), dict) else {}
