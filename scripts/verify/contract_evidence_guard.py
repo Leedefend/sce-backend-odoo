@@ -36,6 +36,8 @@ def main() -> int:
         "require_business_capability_ok": True,
         "require_prod_like_ok": True,
         "require_contract_assembler_semantic_ok": True,
+        "require_scene_capability_matrix_ok": True,
+        "max_scene_capability_matrix_error_count": 0,
         "require_backend_architecture_full_ok": True,
         "max_backend_architecture_failed_check_count": 0,
         "require_backend_evidence_manifest_ok": True,
@@ -67,6 +69,7 @@ def main() -> int:
         "role_capability_prod_like",
         "contract_assembler_semantic",
         "runtime_surface_dashboard",
+        "scene_capability_matrix",
         "boundary_import_report",
         "load_view_access_contract",
         "backend_architecture_full",
@@ -125,6 +128,17 @@ def main() -> int:
         errors.append(
             "contract_assembler_semantic.error_count must be <= "
             f"{max_semantic_errors}"
+        )
+    scene_capability_matrix = payload.get("scene_capability_matrix") if isinstance(payload.get("scene_capability_matrix"), dict) else {}
+    if not isinstance(scene_capability_matrix.get("ok"), bool):
+        errors.append("scene_capability_matrix.ok must be bool")
+    if bool(policy.get("require_scene_capability_matrix_ok", True)) and not bool(scene_capability_matrix.get("ok")):
+        errors.append("scene_capability_matrix.ok must be true under baseline policy")
+    max_scene_matrix_errors = int(policy.get("max_scene_capability_matrix_error_count", 0) or 0)
+    if int(scene_capability_matrix.get("missing_capability_ref_count") or 0) > max_scene_matrix_errors:
+        errors.append(
+            "scene_capability_matrix.missing_capability_ref_count must be <= "
+            f"{max_scene_matrix_errors}"
         )
 
     backend_full = payload.get("backend_architecture_full") if isinstance(payload.get("backend_architecture_full"), dict) else {}

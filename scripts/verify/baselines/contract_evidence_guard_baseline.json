@@ -7,6 +7,8 @@
   "min_scene_catalog_runtime_ratio": 0.01,
   "min_prod_like_fixture_count": 6,
   "max_contract_assembler_semantic_error_count": 0,
+  "require_scene_capability_matrix_ok": true,
+  "max_scene_capability_matrix_error_count": 0,
   "max_backend_architecture_failed_check_count": 0,
   "max_backend_evidence_manifest_missing_count": 0,
   "require_boundary_import_report_ok": true,
