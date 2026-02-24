@@ -25,6 +25,7 @@ from . import test_p0_finance_ui_gate
 from . import test_p0_finance_aggregate_gate
 from . import test_sidebar_menu_visibility_audit
 from . import test_capability_lint_gate
+from . import test_capability_registry_service
 from . import test_capability_contract_backend
 from . import test_api_data_batch_contract_backend
 from . import test_api_data_write_unlink_idempotency_backend
