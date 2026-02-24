@@ -5,16 +5,15 @@ import time
 import json
 import hashlib
 import os
-from typing import Iterable, Dict, List, Tuple
+from typing import Dict, List
 
-from odoo import api, fields, SUPERUSER_ID
+from odoo import api, SUPERUSER_ID
 
 from ..core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.app_config_engine.utils.misc import stable_etag, format_versions
-from odoo.addons.smart_core.core.handler_registry import HANDLER_REGISTRY
 from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
 from odoo.addons.smart_core.core.scene_provider import (
     load_scene_contract as provider_load_scene_contract,
@@ -27,11 +26,11 @@ from odoo.addons.smart_core.core.capability_provider import (
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
 from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
+from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.governance.scene_drift_engine import (
     SceneDriftEngine,
     append_resolve_error as drift_append_resolve_error,
-    is_critical_drift_warn as drift_is_critical_drift_warn,
 )
 from odoo.addons.smart_core.governance.capability_surface_engine import CapabilitySurfaceEngine
 from odoo.addons.smart_core.governance.scene_normalizer import SceneNormalizer
@@ -65,36 +64,6 @@ def _diagnostics_enabled(env) -> bool:
         return env.user.has_group("base.group_system")
     except Exception:
         return False
-
-def _to_group_xmlid(env, g) -> str | None:
-    """把 group 标识（xmlid 或 int id 或 res.groups 记录）统一转 xmlid"""
-    if not g:
-        return None
-    if isinstance(g, str):
-        # 允许直接是 xmlid（module.name）
-        return g if "." in g else None
-    if isinstance(g, int):
-        imd = env["ir.model.data"].sudo().search([("model", "=", "res.groups"), ("res_id", "=", g)], limit=1)
-        return f"{imd.module}.{imd.name}" if imd and imd.module and imd.name else None
-    if getattr(g, "_name", None) == "res.groups":
-        imd = env["ir.model.data"].sudo().search([("model", "=", "res.groups"), ("res_id", "=", g.id)], limit=1)
-        return f"{imd.module}.{imd.name}" if imd and imd.module and imd.name else None
-    return None
-
-def _normalize_required_groups(env, required: Iterable) -> List[str]:
-    """把 handler.REQUIRED_GROUPS 规范成 xmlid 列表（空=对所有登录用户开放）"""
-    if not required:
-        return []
-    out = []
-    for r in required:
-        xmlid = _to_group_xmlid(env, r)
-        if xmlid:
-            out.append(xmlid)
-    return out
-
-def _has_required_groups(user_xmlids: set, required_xmlids: Iterable[str]) -> bool:
-    req = set(required_xmlids or [])
-    return (not req) or req.issubset(user_xmlids)
 
 def _fingerprint(obj: dict) -> str:
     """稳定指纹（用于导航/顶层 ETag 计算）"""
@@ -147,122 +116,11 @@ def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, st
 
 def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     return provider_load_scene_contract(env, scene_channel, use_pinned, logger=_logger)
-def _build_scene_health_payload(data: dict, trace_id: str = "", company_id: int | None = None) -> dict:
-    data = data or {}
-    user = data.get("user") if isinstance(data.get("user"), dict) else {}
-    diag = data.get("scene_diagnostics") if isinstance(data.get("scene_diagnostics"), dict) else {}
-    resolve_errors = diag.get("resolve_errors") if isinstance(diag.get("resolve_errors"), list) else []
-    drift = diag.get("drift") if isinstance(diag.get("drift"), list) else []
-    normalize_warnings = diag.get("normalize_warnings") if isinstance(diag.get("normalize_warnings"), list) else []
-
-    critical_resolve_errors = [
-        entry for entry in resolve_errors
-        if isinstance(entry, dict) and str(entry.get("severity") or "").strip().lower() == "critical"
-    ]
-    critical_drift_warn = [entry for entry in drift if drift_is_critical_drift_warn(entry)]
-
-    debt = []
-    for entry in resolve_errors:
-        if not isinstance(entry, dict):
-            continue
-        severity = str(entry.get("severity") or "").strip().lower()
-        if severity != "critical":
-            debt.append({"type": "resolve_error", **entry})
-    for entry in drift:
-        if not isinstance(entry, dict):
-            continue
-        if not drift_is_critical_drift_warn(entry):
-            debt.append({"type": "drift", **entry})
-    for entry in normalize_warnings:
-        if isinstance(entry, dict):
-            debt.append({"type": "normalize_warning", **entry})
-
-    resolved_company_id = company_id
-    if resolved_company_id is None:
-        raw_company_id = user.get("company_id") if isinstance(user, dict) else None
-        try:
-            resolved_company_id = int(raw_company_id) if raw_company_id else None
-        except Exception:
-            resolved_company_id = None
-
-    return {
-        "company_id": resolved_company_id,
-        "scene_channel": data.get("scene_channel"),
-        "rollback_active": bool(diag.get("rollback_active")),
-        "scene_version": data.get("scene_version"),
-        "schema_version": data.get("schema_version"),
-        "contract_ref": data.get("scene_contract_ref"),
-        "summary": {
-            "critical_resolve_errors_count": len(critical_resolve_errors),
-            "critical_drift_warn_count": len(critical_drift_warn),
-            "non_critical_debt_count": len(debt),
-        },
-        "details": {
-            "resolve_errors": resolve_errors,
-            "drift": drift,
-            "debt": debt,
-        },
-        "auto_degrade": diag.get("auto_degrade") if isinstance(diag.get("auto_degrade"), dict) else {
-            "triggered": False,
-            "reason_codes": [],
-            "action_taken": "none",
-        },
-        "last_updated_at": fields.Datetime.now(),
-        "trace_id": trace_id or "",
-    }
 
 
 def _merge_missing_scenes_from_registry(env, scenes, warnings):
     return provider_merge_missing_scenes_from_registry(env, scenes, warnings)
 
-
-def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
-    """
-    从 HANDLER_REGISTRY 动态收集可用意图（按权限过滤）。
-    返回：
-      - intents: 只包含“主名”（INTENT_TYPE）的有序列表
-      - intents_meta: 含版本与别名，供前端/调试可选使用
-    """
-    user_xmlids = IdentityResolver().user_group_xmlids(user)
-    intents: List[str] = []
-    meta: Dict[str, dict] = {}
-
-    # 遍历注册表（支持别名注册到同一类）
-    for name, cls in HANDLER_REGISTRY.items():
-        primary = getattr(cls, "INTENT_TYPE", None) or name
-        version = getattr(cls, "VERSION", None)
-        required = _normalize_required_groups(env, getattr(cls, "REQUIRED_GROUPS", []) or [])
-        enabled = getattr(cls, "IS_ENABLED", True)
-        aliases = []
-        try:
-            aliases = list(getattr(cls, "ALIASES") or [])
-        except Exception:
-            aliases = []
-
-        # 仅按“主名”去重与授权（别名只进 meta，不重复入列）
-        if not enabled:
-            continue
-        if not _has_required_groups(user_xmlids, required):
-            continue
-        if primary in intents:
-            # 已收录主名，补齐 meta 即可
-            if primary in meta:
-                meta[primary].setdefault("aliases", [])
-                meta[primary]["aliases"] = sorted(set((meta[primary]["aliases"] or []) + aliases))
-            continue
-
-        intents.append(primary)
-        m = {}
-        if version:
-            m["version"] = version
-        if aliases:
-            m["aliases"] = aliases
-        if required:
-            m["required_groups"] = required  # 已是 xmlid
-        meta[primary] = m
-
-    intents.sort()
-    return intents, meta
 
 # ===================== Handler =====================
 
@@ -396,7 +254,7 @@ class SystemInitHandler(BaseIntentHandler):
         )
 
         # -------- 2.5) 可用意图（动态生成，严格基于注册+权限）--------
-        intents, intents_meta = collect_available_intents(env, user)
+        intents, intents_meta = IntentSurfaceBuilder().collect(env, user)
 
         # -------- 3) 首页契约（无数据 | 仅算指纹，不直接塞入 preload）--------
         home_contract = None
