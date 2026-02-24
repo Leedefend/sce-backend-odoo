@@ -1,30 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from .capability_registry import build_capability_matrix_for_user
+
 
 class CapabilityMatrixService:
     def __init__(self, env):
         self.env = env
 
     def build_matrix(self):
-        sections = []
-        for section in self._registry():
-            items = []
-            for item in section.get("items", []):
-                resolved = self._resolve_item(item)
-                items.append(resolved)
-            items = [item for item in items if item.get("allowed")]
-            if not items:
-                continue
-            items.sort(key=lambda item: (item.get("order", 1000), item.get("key", "")))
-            sections.append(
-                {
-                    "key": section.get("key"),
-                    "label": section.get("label"),
-                    "items": items,
-                }
-            )
-        return {"sections": sections}
+        return build_capability_matrix_for_user(self.env, self.env.user)
 
     def _resolve_item(self, item):
         menu_xmlid = item.get("menu_xmlid")
