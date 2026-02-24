@@ -27,6 +27,11 @@ from odoo.addons.smart_core.core.capability_provider import (
     build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
+from odoo.addons.smart_core.governance.scene_drift_engine import (
+    SceneDriftEngine,
+    append_resolve_error as drift_append_resolve_error,
+    is_critical_drift_warn as drift_is_critical_drift_warn,
+)
 from odoo.addons.smart_core.governance.scene_normalizer import SceneNormalizer
 from odoo.addons.smart_core.utils.reason_codes import (
     REASON_OK,
@@ -454,27 +459,6 @@ def _apply_scene_keys(env, nodes):
             _apply_scene_keys(env, n["children"])
 
 
-CRITICAL_SCENES = {
-    "projects.list",
-    "projects.ledger",
-}
-
-
-def _scene_severity(scene_key: str | None) -> str:
-    if scene_key and scene_key in CRITICAL_SCENES:
-        return "critical"
-    return "non_critical"
-
-
-def _is_critical_drift_warn(entry: dict) -> bool:
-    if not isinstance(entry, dict):
-        return False
-    if str(entry.get("severity") or "").strip().lower() != "warn":
-        return False
-    scene_key = entry.get("scene_key")
-    return scene_key in CRITICAL_SCENES
-
-
 def _build_scene_health_payload(data: dict, trace_id: str = "", company_id: int | None = None) -> dict:
     data = data or {}
     user = data.get("user") if isinstance(data.get("user"), dict) else {}
@@ -487,7 +471,7 @@ def _build_scene_health_payload(data: dict, trace_id: str = "", company_id: int 
         entry for entry in resolve_errors
         if isinstance(entry, dict) and str(entry.get("severity") or "").strip().lower() == "critical"
     ]
-    critical_drift_warn = [entry for entry in drift if _is_critical_drift_warn(entry)]
+    critical_drift_warn = [entry for entry in drift if drift_is_critical_drift_warn(entry)]
 
     debt = []
     for entry in resolve_errors:
@@ -499,7 +483,7 @@ def _build_scene_health_payload(data: dict, trace_id: str = "", company_id: int 
     for entry in drift:
         if not isinstance(entry, dict):
             continue
-        if not _is_critical_drift_warn(entry):
+        if not drift_is_critical_drift_warn(entry):
             debt.append({"type": "drift", **entry})
     for entry in normalize_warnings:
         if isinstance(entry, dict):
@@ -752,7 +736,7 @@ def _evaluate_auto_degrade(env, *, user, scene_channel: str, diagnostics: dict, 
             if isinstance(entry, dict) and str(entry.get("severity") or "").strip().lower() == "critical"
         ]
     )
-    critical_drift_warn_count = len([entry for entry in drift if _is_critical_drift_warn(entry)])
+    critical_drift_warn_count = len([entry for entry in drift if drift_is_critical_drift_warn(entry)])
     result["pre_counts"] = {
         "critical_resolve_errors_count": critical_resolve_errors_count,
         "critical_drift_warn_count": critical_drift_warn_count,
@@ -800,21 +784,6 @@ def _evaluate_auto_degrade(env, *, user, scene_channel: str, diagnostics: dict, 
     result["action_taken"] = action
     result["notifications"] = notify_result
     return result
-
-
-def _append_resolve_error(resolve_errors, *, scene_key, kind, code, ref=None, message=None, severity=None, field=None):
-    entry = {
-        "scene_key": scene_key or "",
-        "kind": kind,
-        "code": code,
-        "severity": severity or _scene_severity(scene_key),
-        "message": message or "",
-    }
-    if ref:
-        entry["ref"] = ref
-    if field:
-        entry["field"] = field
-    resolve_errors.append(entry)
 
 
 def _merge_missing_scenes_from_registry(env, scenes, warnings):
@@ -1089,6 +1058,7 @@ class SystemInitHandler(BaseIntentHandler):
             "timings": {},
         }
         scene_normalizer = SceneNormalizer()
+        scene_drift_engine = SceneDriftEngine()
         scene_normalizer.append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
@@ -1147,11 +1117,12 @@ class SystemInitHandler(BaseIntentHandler):
             scene_diagnostics,
             nav_targets=nav_targets,
         )
+        scene_drift_engine.evaluate(scenes_payload, scene_diagnostics)
         scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
 
         # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
         if is_truthy(params.get("scene_inject_critical_error")) and _diagnostics_enabled(env):
-            _append_resolve_error(
+            drift_append_resolve_error(
                 scene_diagnostics["resolve_errors"],
                 scene_key="projects.list",
                 kind="target",
@@ -1209,6 +1180,7 @@ class SystemInitHandler(BaseIntentHandler):
                     scene_diagnostics,
                     nav_targets=nav_targets,
                 )
+                scene_drift_engine.evaluate(data["scenes"], scene_diagnostics)
                 scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload
