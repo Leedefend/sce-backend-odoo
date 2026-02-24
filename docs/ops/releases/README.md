@@ -162,6 +162,8 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
       - `/mnt/artifacts/backend/release_capability_report.json` (fallback: `artifacts/backend/release_capability_report.json`)
       - `/mnt/artifacts/backend/release_capability_top20_fix_backlog.json` (fallback: `artifacts/backend/release_capability_top20_fix_backlog.json`)
     - release check: runs PM/Finance/Executive key journeys (3 each), exports intent trace chain, runtime capability coverage matrix, scene openability audit, system-model ACL probe, and Top-20 fix backlog
+  - `make verify.release.capability.audit.schema.guard`
+    - release check: enforces deterministic report structure for `release_capability_report` and `release_capability_top20_fix_backlog`
   - `make verify.capability.core.health.report`
     - artifact: `/mnt/artifacts/backend/capability_core_health_report.json` (fallback: `artifacts/backend/capability_core_health_report.json`)
     - release check: each sampled role must return capability entries with valid `group/state/capability_state` semantics in `system.init` (user + hud)

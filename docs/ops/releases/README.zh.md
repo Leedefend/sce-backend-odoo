@@ -69,6 +69,8 @@ status: active
       - `/mnt/artifacts/backend/release_capability_report.json`（不可写时回落 `artifacts/backend/release_capability_report.json`）
       - `/mnt/artifacts/backend/release_capability_top20_fix_backlog.json`（不可写时回落 `artifacts/backend/release_capability_top20_fix_backlog.json`）
     - 发布检查：按 PM/Finance/Executive 各 3 条关键旅程执行审计，导出 intent trace 链路、runtime capability 覆盖矩阵、scene 可打开性审计、系统模型 ACL 探测与 Top-20 修复 backlog
+  - `make verify.release.capability.audit.schema.guard`
+    - 发布检查：约束 `release_capability_report` 与 `release_capability_top20_fix_backlog` 报告结构稳定可对比
   - `make verify.capability.core.health.report`
     - 产物：`/mnt/artifacts/backend/capability_core_health_report.json`（不可写时回落 `artifacts/backend/capability_core_health_report.json`）
     - 发布检查：抽样角色在 `system.init`（user+hud）返回的 capability 必须具备有效 `group/state/capability_state` 语义
