@@ -1,0 +1,21 @@
+{
+  "max_unallowlisted": 0,
+  "allowlist": [
+    {
+      "source": "addons/smart_core/handlers/execute_button.py",
+      "intents": [
+        "execute_button"
+      ],
+      "max_sudo_calls": 3,
+      "reason": "follow-up activity creation queries framework models and activities under controlled explicit_check path"
+    },
+    {
+      "source": "addons/smart_construction_core/handlers/usage_track.py",
+      "intents": [
+        "usage.track"
+      ],
+      "max_sudo_calls": 1,
+      "reason": "usage counters are append-only telemetry and require stable cross-role write path"
+    }
+  ]
+}

@@ -1514,6 +1514,10 @@ verify.scene.governance.smoke: guard.prod.forbid
 verify.intent.write.smoke: guard.prod.forbid
 	@python3 scripts/verify/intent_write_smoke.py
 
+.PHONY: verify.intent.write.runtime.smoke
+verify.intent.write.runtime.smoke: guard.prod.forbid
+	@python3 scripts/verify/intent_write_runtime_smoke.py
+
 .PHONY: verify.intent.permission.matrix.report
 verify.intent.permission.matrix.report: guard.prod.forbid
 	@python3 scripts/verify/intent_permission_matrix_report.py
@@ -1521,6 +1525,10 @@ verify.intent.permission.matrix.report: guard.prod.forbid
 .PHONY: verify.intent.permission.matrix.guard
 verify.intent.permission.matrix.guard: guard.prod.forbid verify.intent.permission.matrix.report
 	@python3 scripts/verify/intent_permission_matrix_guard.py
+
+.PHONY: verify.intent.write.sudo.guard
+verify.intent.write.sudo.guard: guard.prod.forbid verify.intent.permission.matrix.report
+	@python3 scripts/verify/write_intent_sudo_guard.py
 
 verify.capability.orphan.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/capability_orphan_report.py
@@ -1530,6 +1538,8 @@ verify.platform.security.ready: guard.prod.forbid \
 	verify.intent.write.guard \
 	verify.intent.acl.mode \
 	verify.intent.write.smoke \
+	verify.intent.write.runtime.smoke \
+	verify.intent.write.sudo.guard \
 	verify.scene.governance.smoke \
 	verify.intent.permission.matrix.guard
 	@echo "[OK] verify.platform.security.ready done"
