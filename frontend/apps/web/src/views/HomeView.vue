@@ -16,6 +16,9 @@
         <p v-if="bundleDefaultDashboardLabel" class="bundle-line">
           默认驾驶舱：{{ bundleDefaultDashboardLabel }}
         </p>
+        <p v-if="showLicenseUpgradeHint" class="license-hint">
+          检测到部分能力受 License 限制（当前 {{ licenseLevelLabel }}），可升级后解锁更多入口。
+        </p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
@@ -621,6 +624,14 @@ const entries = computed<CapabilityEntry[]>(() => {
     });
   });
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
+});
+
+const showLicenseUpgradeHint = computed(() => {
+  const level = licenseLevelLabel.value.toLowerCase();
+  if (!level || level === 'enterprise') return false;
+  return entries.value.some(
+    (entry) => entry.reasonCode.toUpperCase() === 'FEATURE_DISABLED' || entry.capabilityState === 'deny',
+  );
 });
 
 function suggestionEntryScore(entry: CapabilityEntry) {
@@ -1339,6 +1350,16 @@ function highlightParts(raw: string) {
   margin: 6px 0 0;
   font-size: 12px;
   color: #475569;
+}
+
+.license-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 4px 8px;
 }
 
 .hud-line {
