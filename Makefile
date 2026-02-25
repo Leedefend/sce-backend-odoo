@@ -1512,6 +1512,9 @@ verify.capability.scene.matrix.report: guard.prod.forbid
 verify.intent.execution.path.report: guard.prod.forbid verify.intent.permission.matrix.report
 	@python3 scripts/verify/intent_execution_path_report.py
 
+verify.platform.kernel.baseline: guard.prod.forbid verify.intent.layered.catalog
+	@python3 scripts/verify/platform_kernel_baseline_guard.py
+
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
 
@@ -1570,6 +1573,11 @@ verify.platform.kernel.ready: guard.prod.forbid \
 	verify.etag.validation.report \
 	verify.intent.capability.matrix.report \
 	verify.scene.intent.matrix.report \
+	verify.intent.orphan.report \
+	verify.capability.scene.matrix.report \
+	verify.scene.intent.consistency \
+	verify.intent.execution.path.report \
+	verify.platform.kernel.baseline \
 	verify.capability.orphan.report
 	@echo "[OK] verify.platform.kernel.ready done"
 

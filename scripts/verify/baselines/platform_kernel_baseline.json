@@ -1,0 +1,11 @@
+{
+  "intent_count": 50,
+  "write_intent_count": 20,
+  "capability_count": 42,
+  "scene_count": 24,
+  "layer_distribution": {
+    "core": 10,
+    "domain": 32,
+    "governance": 8
+  }
+}
