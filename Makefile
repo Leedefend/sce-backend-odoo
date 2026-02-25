@@ -1473,8 +1473,12 @@ verify.seed.demo.isolation: guard.prod.forbid verify.scene.provider.guard verify
 verify.boundary.guard: guard.prod.forbid verify.scene.contract_path.gate
 	@echo "[OK] verify.boundary.guard done"
 
+.PHONY: verify.system_init.runtime_context.stability
 verify.system_init.snapshot_equivalence: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/system_init_snapshot_equivalence.py
+
+verify.system_init.runtime_context.stability: guard.prod.forbid
+	@$(RUN_ENV) python3 scripts/verify/system_init_runtime_context_stability.py
 
 verify.contract.snapshot: guard.prod.forbid verify.scene.contract.shape verify.contract.ordering.smoke verify.contract.catalog.determinism verify.system_init.snapshot_equivalence
 	@echo "[OK] verify.contract.snapshot done"
@@ -1488,7 +1492,7 @@ verify.capability.schema: guard.prod.forbid verify.scene_capability.contract.gua
 verify.scene.schema: guard.prod.forbid verify.scene.definition.semantics verify.scene.catalog.source.guard verify.scene.contract.shape
 	@echo "[OK] verify.scene.schema done"
 
-verify.backend.architecture.full: guard.prod.forbid verify.intent.router.purity verify.baseline.policy_integrity.guard verify.boundary.guard verify.contract.envelope verify.mode.filter verify.capability.schema verify.scene.schema verify.seed.demo.isolation verify.scene.catalog.governance.guard verify.load_view.access.contract.guard verify.capability.provider.guard verify.capability.registry.smoke verify.release.capability.audit.schema.guard verify.phase_next.evidence.bundle verify.business.capability_baseline.guard verify.contract.snapshot verify.contract.governance.coverage verify.contract.evidence.guard verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke
+verify.backend.architecture.full: guard.prod.forbid verify.intent.router.purity verify.baseline.policy_integrity.guard verify.boundary.guard verify.contract.envelope verify.mode.filter verify.capability.schema verify.scene.schema verify.seed.demo.isolation verify.scene.catalog.governance.guard verify.load_view.access.contract.guard verify.capability.provider.guard verify.capability.registry.smoke verify.release.capability.audit.schema.guard verify.phase_next.evidence.bundle verify.business.capability_baseline.guard verify.contract.snapshot verify.system_init.runtime_context.stability verify.contract.governance.coverage verify.contract.evidence.guard verify.scene.hud.trace.smoke verify.scene.meta.trace.smoke
 	@if [ "$${SC_PHASE_NEXT_STRICT:-0}" = "1" ]; then \
 	  $(MAKE) --no-print-directory verify.phase_next.evidence.bundle.strict; \
 	else \
