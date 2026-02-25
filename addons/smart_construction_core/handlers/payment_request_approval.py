@@ -35,14 +35,20 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
     ACTION_METHOD = ""
     ACTION_NAME = ""
 
-    def _assert_finance_approver(self):
+    def _assert_required_groups(self):
         user = self.env.user
         if not user:
-            raise AccessError("PERMISSION_DENIED: missing finance approver group")
-        if user.has_group("smart_core.group_sc_finance_approver") or user.has_group("base.group_system"):
+            raise AccessError("PERMISSION_DENIED: missing required group")
+        if user.has_group("base.group_system"):
             return
-        if not user.has_group("smart_core.group_sc_finance_approver"):
-            raise AccessError("PERMISSION_DENIED: missing finance approver group")
+        required = [str(x).strip() for x in (getattr(self, "REQUIRED_GROUPS", []) or []) if str(x).strip()]
+        for xmlid in required:
+            try:
+                if user.has_group(xmlid):
+                    return
+            except Exception:
+                continue
+        raise AccessError("PERMISSION_DENIED: missing required group")
 
     def _extract_reason(self, params: dict) -> str:
         for key in ("reason", "reject_reason", "note", "comment"):
@@ -192,7 +198,7 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
         return success_data
 
     def handle(self, payload=None, ctx=None):
-        self._assert_finance_approver()
+        self._assert_required_groups()
         params = payload or self.params or {}
         if isinstance(params, dict) and isinstance(params.get("params"), dict):
             # Intent router passes payload envelope: {intent, params, context}
@@ -360,6 +366,7 @@ class PaymentRequestSubmitHandler(_BasePaymentApprovalHandler):
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_SUBMIT_INTENT"
     ACTION_METHOD = "action_submit"
     ACTION_NAME = "submit"
+    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_finance_user", "smart_core.group_sc_finance_approver"]
 
 
 class PaymentRequestApproveHandler(_BasePaymentApprovalHandler):
@@ -395,3 +402,4 @@ class PaymentRequestDoneHandler(_BasePaymentApprovalHandler):
     AUDIT_EVENT_CODE = "PAYMENT_REQUEST_DONE_INTENT"
     ACTION_METHOD = "action_done"
     ACTION_NAME = "done"
+    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_finance_manager", "smart_core.group_sc_finance_approver"]

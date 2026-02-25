@@ -1578,6 +1578,46 @@ verify.complexity.guard: guard.prod.forbid
 export.product.documentation: guard.prod.forbid
 	@python3 scripts/verify/export_product_documentation.py
 
+verify.product.tier.coverage: guard.prod.forbid
+	@python3 scripts/verify/product_tier_coverage.py
+
+seed.delivery.minimum: guard.prod.forbid
+	@python3 scripts/verify/seed_delivery_minimum.py
+
+verify.delivery.business.success.ready: guard.prod.forbid seed.delivery.minimum
+	@python3 scripts/verify/delivery_business_success_ready.py
+
+verify.product.surface.clean: guard.prod.forbid verify.product.capability.matrix.ready
+	@echo "[OK] verify.product.surface.clean done"
+
+verify.product.complexity.bound: guard.prod.forbid verify.complexity.guard
+	@echo "[OK] verify.product.complexity.bound done"
+
+verify.product.bundle.isolation: guard.prod.forbid verify.bundle.installation.ready
+	@echo "[OK] verify.product.bundle.isolation done"
+
+verify.product.tier.enforcement: guard.prod.forbid verify.product.tier.coverage
+	@echo "[OK] verify.product.tier.enforcement done"
+
+verify.ui.product.stability: guard.prod.forbid verify.ui.surface.stability.ready
+	@echo "[OK] verify.ui.product.stability done"
+
+verify.delivery.reproducible: guard.prod.forbid verify.delivery.business.success.ready
+	@echo "[OK] verify.delivery.reproducible done"
+
+verify.product.sla.baseline: guard.prod.forbid verify.platform.performance.smoke
+	@echo "[OK] verify.product.sla.baseline done"
+
+verify.product.release.ready: guard.prod.forbid \
+	verify.product.surface.clean \
+	verify.product.complexity.bound \
+	verify.product.bundle.isolation \
+	verify.product.tier.enforcement \
+	verify.ui.product.stability \
+	verify.delivery.reproducible \
+	verify.product.sla.baseline
+	@echo "[OK] verify.product.release.ready done"
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 
@@ -1629,12 +1669,12 @@ verify.platform.governance.ready: guard.prod.forbid \
 	@echo "[OK] verify.platform.governance.ready done"
 
 verify.productization.ready: guard.prod.forbid \
-	verify.product.capability.matrix.ready \
-	verify.bundle.installation.ready \
-	verify.product.tier.ready \
-	verify.ui.surface.stability.ready \
-	verify.delivery.simulation.ready \
-	verify.complexity.guard \
+	verify.product.surface.clean \
+	verify.product.bundle.isolation \
+	verify.product.tier.enforcement \
+	verify.ui.product.stability \
+	verify.delivery.reproducible \
+	verify.product.complexity.bound \
 	verify.platform.governance.ready
 	@echo "[OK] verify.productization.ready done"
 
