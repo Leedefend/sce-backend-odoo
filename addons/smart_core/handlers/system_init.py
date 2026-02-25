@@ -28,6 +28,7 @@ from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCo
 from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
+from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import (
@@ -45,7 +46,6 @@ from odoo.addons.smart_core.utils.reason_codes import (
 )
 from odoo.addons.smart_core.utils.contract_governance import (
     apply_contract_governance,
-    is_truthy,
     normalize_capabilities,
     resolve_contract_mode,
 )
@@ -81,10 +81,11 @@ def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, st
 def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     return provider_load_scene_contract(env, scene_channel, use_pinned, logger=_logger)
 
+def _load_scenes_from_db_or_fallback(env, drift):
+    return provider_load_scenes_from_db_or_fallback(env, drift=drift, logger=_logger)
 
 def _merge_missing_scenes_from_registry(env, scenes, warnings):
     return provider_merge_missing_scenes_from_registry(env, scenes, warnings)
-
 
 # ===================== Handler =====================
 
@@ -240,121 +241,26 @@ class SystemInitHandler(BaseIntentHandler):
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
         _merge_extension_facts(data)
 
-        # Scene orchestration source (contract export or smart_construction_scene)
-        contract_payload, contract_ref = _load_scene_contract(env, scene_channel, rollback_active)
-        data["scene_contract_ref"] = contract_ref
-        if rollback_active:
-            scene_diagnostics["rollback_ref"] = contract_ref
-        if contract_payload:
-            data["scenes"] = contract_payload.get("scenes") or []
-            data["scene_version"] = contract_payload.get("scene_version") or data.get("scene_version")
-            data["schema_version"] = contract_payload.get("schema_version") or data.get("schema_version")
-            scene_diagnostics["scene_version"] = data.get("scene_version")
-            scene_diagnostics["schema_version"] = data.get("schema_version")
-            scene_diagnostics["loaded_from"] = "contract"
-            data["scenes"] = _merge_missing_scenes_from_registry(env, data.get("scenes"), scene_diagnostics["normalize_warnings"])
-        else:
-            t_load_start = time.time()
-            scene_source = provider_load_scenes_from_db_or_fallback(
-                env,
-                drift=scene_diagnostics["drift"],
-                logger=_logger,
-            )
-            scene_diagnostics["loaded_from"] = scene_source.get("loaded_from") or "fallback"
-            scene_diagnostics["timings"]["load_ms"] = int((time.time() - t_load_start) * 1000)
-            scenes_payload = scene_source.get("scenes") if isinstance(scene_source.get("scenes"), list) else []
-            if scenes_payload:
-                data["scenes"] = scenes_payload
-                data["scene_version"] = scene_source.get("scene_version") or data.get("scene_version")
-                data["schema_version"] = scene_source.get("schema_version") or data.get("schema_version")
-                scene_diagnostics["scene_version"] = data.get("scene_version")
-                scene_diagnostics["schema_version"] = data.get("schema_version")
-
-        scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
-        t_norm_start = time.time()
-        scene_normalizer.normalize_structure(
-            scenes_payload,
-            nav_tree,
-            data.get("capabilities"),
-            scene_diagnostics,
+        scene_runtime_orchestrator = SceneRuntimeOrchestrator(logger=_logger)
+        data, scene_channel, rollback_active, scene_diagnostics = scene_runtime_orchestrator.execute(
+            env=env,
+            user=user,
+            params=params,
+            data=data,
+            nav_tree=nav_tree,
+            scene_channel=scene_channel,
+            rollback_active=rollback_active,
+            trace_id=trace_id,
+            scene_normalizer=scene_normalizer,
+            scene_drift_engine=scene_drift_engine,
+            auto_degrade_engine=auto_degrade_engine,
+            diagnostics_collector=diagnostics_collector,
+            scene_diagnostics=scene_diagnostics,
+            load_scene_contract_fn=_load_scene_contract,
+            load_scenes_fallback_fn=_load_scenes_from_db_or_fallback,
+            merge_missing_scenes_fn=_merge_missing_scenes_from_registry,
+            append_resolve_error_fn=drift_append_resolve_error,
         )
-        scene_diagnostics["timings"]["normalize_ms"] = int((time.time() - t_norm_start) * 1000)
-        nav_targets = scene_normalizer.index_nav_scene_targets(nav_tree)
-        t_resolve_start = time.time()
-        scene_normalizer.resolve_targets(
-            env,
-            scenes_payload,
-            nav_tree,
-            scene_diagnostics,
-            nav_targets=nav_targets,
-        )
-        scene_drift_engine.evaluate(scenes_payload, scene_diagnostics)
-        scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
-
-        # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
-        if is_truthy(params.get("scene_inject_critical_error")) and diagnostics_collector.diagnostics_enabled(env):
-            drift_append_resolve_error(
-                scene_diagnostics["resolve_errors"],
-                scene_key="projects.list",
-                kind="target",
-                code="TEST_CRITICAL_INJECTED",
-                ref="smart_construction_scene.test.injected",
-                message="injected critical resolve error for auto-degrade smoke",
-                severity="critical",
-            )
-
-        auto_degrade = auto_degrade_engine.evaluate(
-            env,
-            scene_diagnostics,
-            user,
-            trace_id,
-            scene_channel,
-        )
-        scene_diagnostics["auto_degrade"] = auto_degrade
-        if auto_degrade.get("triggered"):
-            action_taken = auto_degrade.get("action_taken") or "rollback_pinned"
-            scene_channel = "stable"
-            rollback_active = action_taken == "rollback_pinned"
-            data["scene_channel"] = scene_channel
-            data["scene_contract_ref"] = "stable/PINNED.json" if rollback_active else "stable/LATEST.json"
-            scene_diagnostics["rollback_active"] = bool(rollback_active)
-            scene_diagnostics["rollback_ref"] = data["scene_contract_ref"] if rollback_active else None
-
-            degraded_payload, degraded_ref = _load_scene_contract(env, scene_channel, rollback_active)
-            data["scene_contract_ref"] = degraded_ref
-            if rollback_active:
-                scene_diagnostics["rollback_ref"] = degraded_ref
-            if degraded_payload:
-                data["scenes"] = degraded_payload.get("scenes") or []
-                data["scene_version"] = degraded_payload.get("scene_version") or data.get("scene_version")
-                data["schema_version"] = degraded_payload.get("schema_version") or data.get("schema_version")
-                scene_diagnostics["scene_version"] = data.get("scene_version")
-                scene_diagnostics["schema_version"] = data.get("schema_version")
-                scene_diagnostics["loaded_from"] = "contract"
-                scene_diagnostics["resolve_errors"] = []
-                scene_diagnostics["drift"] = []
-                scene_diagnostics["normalize_warnings"] = []
-                data["scenes"] = _merge_missing_scenes_from_registry(env, data.get("scenes"), scene_diagnostics["normalize_warnings"])
-                t_norm2 = time.time()
-                scene_normalizer.normalize_structure(
-                    data["scenes"],
-                    nav_tree,
-                    data.get("capabilities"),
-                    scene_diagnostics,
-                )
-                scene_diagnostics["timings"]["normalize_after_degrade_ms"] = int((time.time() - t_norm2) * 1000)
-                t_resolve2 = time.time()
-                scene_normalizer.resolve_targets(
-                    env,
-                    data["scenes"],
-                    nav_tree,
-                    scene_diagnostics,
-                    nav_targets=nav_targets,
-                )
-                scene_drift_engine.evaluate(data["scenes"], scene_diagnostics)
-                scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
-        scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
-        data["scenes"] = scenes_payload
         pre_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
         pre_governance_capability_count = (
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
