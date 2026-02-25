@@ -1510,6 +1510,10 @@ verify.scene.drift.smoke.report: guard.prod.forbid
 verify.scene.governance.smoke: guard.prod.forbid
 	@python3 scripts/verify/scene_governance_smoke.py
 
+.PHONY: verify.intent.write.smoke
+verify.intent.write.smoke: guard.prod.forbid
+	@python3 scripts/verify/intent_write_smoke.py
+
 verify.capability.orphan.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/capability_orphan_report.py
 
