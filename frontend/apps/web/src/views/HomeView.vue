@@ -123,6 +123,26 @@
           即将开放 {{ stateCounts.PREVIEW }}
         </button>
       </div>
+      <div class="state-filters">
+        <button :class="{ active: capabilityStateFilter === 'ALL' }" @click="capabilityStateFilter = 'ALL'">
+          能力语义：全部
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'allow' }" @click="capabilityStateFilter = 'allow'">
+          可用 {{ capabilityStateCounts.allow }}
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'readonly' }" @click="capabilityStateFilter = 'readonly'">
+          只读 {{ capabilityStateCounts.readonly }}
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'deny' }" @click="capabilityStateFilter = 'deny'">
+          禁止 {{ capabilityStateCounts.deny }}
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'pending' }" @click="capabilityStateFilter = 'pending'">
+          待开放 {{ capabilityStateCounts.pending }}
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'coming_soon' }" @click="capabilityStateFilter = 'coming_soon'">
+          建设中 {{ capabilityStateCounts.coming_soon }}
+        </button>
+      </div>
       <p v-if="readyOnly" class="filter-tip">已启用“仅显示可进入能力”，暂不可用与即将开放不会展示。</p>
       <div v-if="lockedReasonOptions.length" class="reason-filters">
         <button :class="{ active: lockReasonFilter === 'ALL' }" @click="lockReasonFilter = 'ALL'">
@@ -296,6 +316,7 @@ const session = useSessionStore();
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
 const stateFilter = ref<'ALL' | EntryState>('ALL');
+const capabilityStateFilter = ref<'ALL' | 'allow' | 'readonly' | 'deny' | 'pending' | 'coming_soon'>('ALL');
 const readyOnly = ref(false);
 const lockReasonFilter = ref('ALL');
 const collapsedSceneKeys = ref<string[]>([]);
@@ -656,8 +677,12 @@ const searchedEntries = computed<CapabilityEntry[]>(() => {
 });
 
 const tabBaseEntries = computed<CapabilityEntry[]>(() => {
-  if (lockReasonFilter.value === 'ALL') return searchedEntries.value;
-  return searchedEntries.value.filter((entry) => {
+  const filteredByCapabilityState =
+    capabilityStateFilter.value === 'ALL'
+      ? searchedEntries.value
+      : searchedEntries.value.filter((entry) => entry.capabilityState === capabilityStateFilter.value);
+  if (lockReasonFilter.value === 'ALL') return filteredByCapabilityState;
+  return filteredByCapabilityState.filter((entry) => {
     if (entry.state !== 'LOCKED') return false;
     return String(entry.reasonCode || '').toUpperCase() === lockReasonFilter.value;
   });
@@ -668,6 +693,7 @@ const filteredEntries = computed<CapabilityEntry[]>(() => {
     if (readyOnly.value && entry.state !== 'READY') return false;
     const matchesState = stateFilter.value === 'ALL' ? true : entry.state === stateFilter.value;
     if (!matchesState) return false;
+    if (capabilityStateFilter.value !== 'ALL' && entry.capabilityState !== capabilityStateFilter.value) return false;
     if (lockReasonFilter.value !== 'ALL') {
       if (entry.state !== 'LOCKED') return false;
       if (String(entry.reasonCode || '').toUpperCase() !== lockReasonFilter.value) return false;
@@ -688,9 +714,18 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
+const capabilityStateCounts = computed(() => {
+  const counts = { allow: 0, readonly: 0, deny: 0, pending: 0, coming_soon: 0 };
+  for (const entry of searchedEntries.value) {
+    const key = entry.capabilityState as keyof typeof counts;
+    if (key in counts) counts[key] += 1;
+  }
+  return counts;
+});
 const resultSummaryText = computed(() => {
   const parts = [`当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`];
   if (stateFilter.value !== 'ALL') parts.push(`状态：${stateLabel(stateFilter.value)}`);
+  if (capabilityStateFilter.value !== 'ALL') parts.push(`能力语义：${capabilityStateLabel(capabilityStateFilter.value)}`);
   if (lockReasonFilter.value !== 'ALL') parts.push(`原因：${lockReasonLabel(lockReasonFilter.value)}`);
   return parts.join(' · ');
 });
@@ -711,6 +746,9 @@ const activeFilterChips = computed<FilterChip[]>(() => {
   if (keyword) chips.push({ key: 'search', label: `搜索：${keyword}` });
   if (readyOnly.value) chips.push({ key: 'ready-only', label: '仅显示可进入' });
   if (stateFilter.value !== 'ALL') chips.push({ key: 'state', label: `状态：${stateLabel(stateFilter.value)}` });
+  if (capabilityStateFilter.value !== 'ALL') {
+    chips.push({ key: 'capability-state', label: `能力语义：${capabilityStateLabel(capabilityStateFilter.value)}` });
+  }
   if (lockReasonFilter.value !== 'ALL') {
     chips.push({ key: 'reason', label: `锁定原因：${lockReasonLabel(lockReasonFilter.value)}` });
   }
@@ -929,10 +967,17 @@ function toggleEmptyHelp() {
 }
 
 function clearSearchAndFilters() {
-  const hadFilters = Boolean(searchText.value.trim() || readyOnly.value || stateFilter.value !== 'ALL' || lockReasonFilter.value !== 'ALL');
+  const hadFilters = Boolean(
+    searchText.value.trim()
+      || readyOnly.value
+      || stateFilter.value !== 'ALL'
+      || capabilityStateFilter.value !== 'ALL'
+      || lockReasonFilter.value !== 'ALL',
+  );
   searchText.value = '';
   readyOnly.value = false;
   stateFilter.value = 'ALL';
+  capabilityStateFilter.value = 'ALL';
   lockReasonFilter.value = 'ALL';
   if (hadFilters) {
     void trackUsageEvent('workspace.filter_clear_all', { source: 'workspace.home' }).catch(() => {});
@@ -947,6 +992,7 @@ function showAllCapabilities() {
   const wasReadyOnly = readyOnly.value;
   readyOnly.value = false;
   stateFilter.value = 'ALL';
+  capabilityStateFilter.value = 'ALL';
   if (wasReadyOnly) {
     void trackUsageEvent('workspace.ready_only.recover', { from: 'empty_state' }).catch(() => {});
   }
@@ -960,6 +1006,7 @@ function clearFilterChip(key: string) {
   if (key === 'search') searchText.value = '';
   if (key === 'ready-only') readyOnly.value = false;
   if (key === 'state') stateFilter.value = 'ALL';
+  if (key === 'capability-state') capabilityStateFilter.value = 'ALL';
   if (key === 'reason') lockReasonFilter.value = 'ALL';
   void trackUsageEvent('workspace.filter_chip_clear', { filter_key: key }).catch(() => {});
 }
@@ -1082,11 +1129,20 @@ onMounted(() => {
   try {
     const raw = window.localStorage.getItem(homeFilterStorageKey.value);
     if (raw) {
-      const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string; lock_reason_filter?: string };
+      const parsed = JSON.parse(raw) as {
+        ready_only?: boolean;
+        state_filter?: string;
+        capability_state_filter?: string;
+        lock_reason_filter?: string;
+      };
       readyOnly.value = Boolean(parsed?.ready_only);
       const state = String(parsed?.state_filter || '').toUpperCase();
       if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
         stateFilter.value = state;
+      }
+      const capabilityState = String(parsed?.capability_state_filter || '').toLowerCase();
+      if (capabilityState === 'all' || capabilityState === 'allow' || capabilityState === 'readonly' || capabilityState === 'deny' || capabilityState === 'pending' || capabilityState === 'coming_soon') {
+        capabilityStateFilter.value = capabilityState === 'all' ? 'ALL' : capabilityState;
       }
       const lockReason = String(parsed?.lock_reason_filter || '').toUpperCase();
       if (lockReason) {
@@ -1130,13 +1186,14 @@ watch(collapsedSceneKeys, () => {
   }
 });
 
-watch([readyOnly, stateFilter, lockReasonFilter], () => {
+watch([readyOnly, stateFilter, capabilityStateFilter, lockReasonFilter], () => {
   try {
     window.localStorage.setItem(
       homeFilterStorageKey.value,
       JSON.stringify({
         ready_only: readyOnly.value,
         state_filter: stateFilter.value,
+        capability_state_filter: capabilityStateFilter.value.toLowerCase(),
         lock_reason_filter: lockReasonFilter.value,
       }),
     );
@@ -1167,16 +1224,18 @@ watch(recentEntryKeys, () => {
 watch(readyOnly, (next) => {
   if (!next) return;
   stateFilter.value = 'READY';
+  capabilityStateFilter.value = 'ALL';
   lockReasonFilter.value = 'ALL';
 });
 
-watch([readyOnly, stateFilter, lockReasonFilter], () => {
-  const signature = `${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${lockReasonFilter.value}`;
+watch([readyOnly, stateFilter, capabilityStateFilter, lockReasonFilter], () => {
+  const signature = `${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${capabilityStateFilter.value}:${lockReasonFilter.value}`;
   if (signature === lastTrackedFilterSignature.value) return;
   lastTrackedFilterSignature.value = signature;
   void trackUsageEvent('workspace.filter_change', {
     ready_only: readyOnly.value,
     state_filter: stateFilter.value,
+    capability_state_filter: capabilityStateFilter.value,
     lock_reason_filter: lockReasonFilter.value,
   }).catch(() => {});
 });
@@ -1198,16 +1257,17 @@ watch(searchText, (next) => {
   void trackUsageEvent('workspace.search', { query }).catch(() => {});
 });
 
-watch([filteredEntries, entries, readyOnly, lockReasonFilter, stateFilter, searchText], () => {
+watch([filteredEntries, entries, readyOnly, lockReasonFilter, capabilityStateFilter, stateFilter, searchText], () => {
   const reason = emptyStateReason.value;
   if (!reason) return;
-  const signature = `${reason}:${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${lockReasonFilter.value}:${searchText.value.trim()}`;
+  const signature = `${reason}:${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${capabilityStateFilter.value}:${lockReasonFilter.value}:${searchText.value.trim()}`;
   if (signature === lastTrackedEmptySignature.value) return;
   lastTrackedEmptySignature.value = signature;
   void trackUsageEvent('workspace.empty_state', {
     reason,
     ready_only: readyOnly.value,
     state_filter: stateFilter.value,
+    capability_state_filter: capabilityStateFilter.value,
     lock_reason_filter: lockReasonFilter.value,
     search: searchText.value.trim(),
   }).catch(() => {});
