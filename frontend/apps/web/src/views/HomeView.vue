@@ -195,6 +195,7 @@
             <span>{{ group.sceneTitle }}</span>
             <span class="scene-count">{{ group.items.length }}</span>
           </button>
+          <p v-if="group.sceneSummary" class="scene-summary">{{ group.sceneSummary }}</p>
         </header>
         <div
           v-if="!collapsedSceneSet.has(group.sceneKey)"
@@ -722,23 +723,42 @@ const groupedEntries = computed(() => {
     .map((key) => filteredByRecent.get(key))
     .filter((entry): entry is CapabilityEntry => Boolean(entry));
   const recentKeySet = new Set(recentItems.map((item) => item.recentKey));
-  const map = new Map<string, { sceneKey: string; sceneTitle: string; items: CapabilityEntry[] }>();
+  const map = new Map<
+    string,
+    { sceneKey: string; sceneTitle: string; sceneSummary: string; items: CapabilityEntry[] }
+  >();
+  const sceneSetMap = new Map<string, Set<string>>();
   filteredEntries.value.forEach((entry) => {
     if (recentKeySet.has(entry.recentKey)) return;
-    const current = map.get(entry.sceneKey);
+    const bucketKey = entry.groupKey || entry.sceneKey;
+    const bucketTitle = entry.groupLabel || entry.sceneTitle;
+    const current = map.get(bucketKey);
     if (current) {
       current.items.push(entry);
+      const scenes = sceneSetMap.get(bucketKey) || new Set<string>();
+      scenes.add(entry.sceneTitle);
+      sceneSetMap.set(bucketKey, scenes);
       return;
     }
-    map.set(entry.sceneKey, {
-      sceneKey: entry.sceneKey,
-      sceneTitle: entry.sceneTitle,
+    map.set(bucketKey, {
+      sceneKey: bucketKey,
+      sceneTitle: bucketTitle,
+      sceneSummary: '',
       items: [entry],
     });
+    sceneSetMap.set(bucketKey, new Set([entry.sceneTitle]));
   });
-  const grouped = Array.from(map.values()).sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
+  const grouped = Array.from(map.values())
+    .map((group) => {
+      const scenes = Array.from(sceneSetMap.get(group.sceneKey) || []);
+      return {
+        ...group,
+        sceneSummary: scenes.length > 1 ? `覆盖场景：${scenes.slice(0, 3).join('、')}${scenes.length > 3 ? '…' : ''}` : '',
+      };
+    })
+    .sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
   if (!recentItems.length) return grouped;
-  return [{ sceneKey: '__recent__', sceneTitle: '最近使用', items: recentItems }, ...grouped];
+  return [{ sceneKey: '__recent__', sceneTitle: '最近使用', sceneSummary: '', items: recentItems }, ...grouped];
 });
 const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group.sceneKey === '__recent__'));
 
@@ -1665,6 +1685,11 @@ function highlightParts(raw: string) {
 
 .scene-group-header {
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .scene-toggle {
@@ -1684,6 +1709,12 @@ function highlightParts(raw: string) {
   color: #1d4ed8;
   padding: 2px 8px;
   font-size: 12px;
+}
+
+.scene-summary {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .cards {
