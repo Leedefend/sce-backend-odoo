@@ -1521,6 +1521,15 @@ verify.intent.permission.matrix.report: guard.prod.forbid
 verify.capability.orphan.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/capability_orphan_report.py
 
+.PHONY: verify.platform.security.ready
+verify.platform.security.ready: guard.prod.forbid \
+	verify.intent.write.guard \
+	verify.intent.acl.mode \
+	verify.intent.write.smoke \
+	verify.scene.governance.smoke \
+	verify.intent.permission.matrix.report
+	@echo "[OK] verify.platform.security.ready done"
+
 verify.platform.kernel.ready: guard.prod.forbid \
 	verify.capability.provider.guard \
 	verify.capability.registry.smoke \
