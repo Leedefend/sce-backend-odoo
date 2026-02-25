@@ -5,17 +5,15 @@ import time
 import json
 import hashlib
 import os
-from datetime import datetime, timedelta
-from typing import Iterable, Dict, List, Tuple
+from typing import Dict, List
 
-from odoo import api, fields, SUPERUSER_ID
+from odoo import api, SUPERUSER_ID
 
 from ..core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
 from odoo.addons.smart_core.app_config_engine.utils.misc import stable_etag, format_versions
-from odoo.addons.smart_core.core.handler_registry import HANDLER_REGISTRY
 from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
 from odoo.addons.smart_core.core.scene_provider import (
     load_scene_contract as provider_load_scene_contract,
@@ -27,6 +25,17 @@ from odoo.addons.smart_core.core.capability_provider import (
     build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
+from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
+from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
+from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
+from odoo.addons.smart_core.governance.scene_drift_engine import (
+    SceneDriftEngine,
+    append_resolve_error as drift_append_resolve_error,
+)
+from odoo.addons.smart_core.governance.capability_surface_engine import CapabilitySurfaceEngine
+from odoo.addons.smart_core.governance.scene_normalizer import SceneNormalizer
+from odoo.addons.smart_core.identity.identity_resolver import IdentityResolver
+from odoo.addons.smart_core.runtime.auto_degrade_engine import AutoDegradeEngine
 from odoo.addons.smart_core.utils.reason_codes import (
     REASON_OK,
     REASON_PERMISSION_DENIED,
@@ -44,43 +53,6 @@ _logger = logging.getLogger(__name__)
 # Contract/API version markers for client compatibility
 CONTRACT_VERSION = "v0.1"
 API_VERSION = "v1"
-ROLE_SURFACE_MAP = {
-    "owner": {
-        "label": "Owner",
-        "landing_scene_candidates": ["projects.list", "projects.intake"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_project_center",
-            "smart_construction_core.menu_sc_contract_center",
-        ],
-    },
-    "pm": {
-        "label": "Project Manager",
-        "landing_scene_candidates": ["projects.ledger", "projects.list", "projects.intake"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_project_center",
-            "smart_construction_core.menu_sc_contract_center",
-            "smart_construction_core.menu_sc_cost_center",
-        ],
-    },
-    "finance": {
-        "label": "Finance",
-        "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_finance_center",
-            "smart_construction_core.menu_sc_settlement_center",
-            "smart_construction_core.menu_payment_request",
-        ],
-    },
-    "executive": {
-        "label": "Executive",
-        "landing_scene_candidates": ["projects.intake", "projects.list", "projects.ledger"],
-        "menu_xmlids": [
-            "smart_construction_core.menu_sc_root",
-            "smart_construction_core.menu_sc_projection_root",
-            "smart_construction_core.menu_sc_project_center",
-        ],
-    },
-}
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
 
@@ -93,181 +65,10 @@ def _diagnostics_enabled(env) -> bool:
     except Exception:
         return False
 
-def _user_group_xmlids(user) -> set:
-    """把用户组转为 xmlid 集合（与菜单过滤口径一致）"""
-    ext_map = user.groups_id.sudo().get_external_id()  # {id: 'module.xmlid' or False}
-    return {xml for xml in ext_map.values() if xml}
-
-def _to_group_xmlid(env, g) -> str | None:
-    """把 group 标识（xmlid 或 int id 或 res.groups 记录）统一转 xmlid"""
-    if not g:
-        return None
-    if isinstance(g, str):
-        # 允许直接是 xmlid（module.name）
-        return g if "." in g else None
-    if isinstance(g, int):
-        imd = env["ir.model.data"].sudo().search([("model", "=", "res.groups"), ("res_id", "=", g)], limit=1)
-        return f"{imd.module}.{imd.name}" if imd and imd.module and imd.name else None
-    if getattr(g, "_name", None) == "res.groups":
-        imd = env["ir.model.data"].sudo().search([("model", "=", "res.groups"), ("res_id", "=", g.id)], limit=1)
-        return f"{imd.module}.{imd.name}" if imd and imd.module and imd.name else None
-    return None
-
-def _normalize_required_groups(env, required: Iterable) -> List[str]:
-    """把 handler.REQUIRED_GROUPS 规范成 xmlid 列表（空=对所有登录用户开放）"""
-    if not required:
-        return []
-    out = []
-    for r in required:
-        xmlid = _to_group_xmlid(env, r)
-        if xmlid:
-            out.append(xmlid)
-    return out
-
-def _has_required_groups(user_xmlids: set, required_xmlids: Iterable[str]) -> bool:
-    req = set(required_xmlids or [])
-    return (not req) or req.issubset(user_xmlids)
-
 def _fingerprint(obj: dict) -> str:
     """稳定指纹（用于导航/顶层 ETag 计算）"""
     payload = json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.md5(payload.encode("utf-8")).hexdigest()
-
-def _build_scene_trace_meta(data: dict, scene_diagnostics: dict | None, elapsed_ms: int) -> dict:
-    diagnostics = scene_diagnostics if isinstance(scene_diagnostics, dict) else {}
-    governance = diagnostics.get("governance")
-    return {
-        "latency_ms": int(elapsed_ms),
-        "scene_source": diagnostics.get("loaded_from") or "unknown",
-        "scene_contract_ref": data.get("scene_contract_ref") or "unknown",
-        "scene_channel": data.get("scene_channel") or "stable",
-        "channel_selector": diagnostics.get("channel_selector") or "default",
-        "channel_source_ref": diagnostics.get("channel_source_ref") or "default",
-        "governance": governance,
-        "governance_applied": governance,
-    }
-
-
-def _build_capability_surface_summary(capabilities: List[dict], capability_groups: List[dict]) -> dict:
-    summary = {
-        "capability_count": 0,
-        "group_count": 0,
-        "state_counts": {"READY": 0, "LOCKED": 0, "PREVIEW": 0},
-        "capability_state_counts": {"allow": 0, "readonly": 0, "deny": 0, "pending": 0, "coming_soon": 0},
-    }
-    caps = capabilities if isinstance(capabilities, list) else []
-    groups = capability_groups if isinstance(capability_groups, list) else []
-    summary["capability_count"] = len(caps)
-    summary["group_count"] = len(groups)
-    for cap in caps:
-        if not isinstance(cap, dict):
-            continue
-        state = str(cap.get("state") or "").strip().upper()
-        capability_state = str(cap.get("capability_state") or "").strip().lower()
-        if state in summary["state_counts"]:
-            summary["state_counts"][state] = int(summary["state_counts"].get(state) or 0) + 1
-        if capability_state in summary["capability_state_counts"]:
-            summary["capability_state_counts"][capability_state] = (
-                int(summary["capability_state_counts"].get(capability_state) or 0) + 1
-            )
-    return summary
-
-
-def _walk_nav_nodes(nodes):
-    for node in nodes or []:
-        if isinstance(node, dict):
-            yield node
-            children = node.get("children")
-            if isinstance(children, list):
-                for child in _walk_nav_nodes(children):
-                    yield child
-
-
-def _index_nav_by_xmlid(nodes) -> Dict[str, dict]:
-    indexed = {}
-    for node in _walk_nav_nodes(nodes):
-        xmlid = node.get("xmlid") or (node.get("meta") or {}).get("menu_xmlid")
-        if xmlid and xmlid not in indexed:
-            indexed[xmlid] = node
-    return indexed
-
-
-def _resolve_role_code(user_xmlids: set) -> str:
-    if {
-        "base.group_system",
-        "smart_construction_core.group_sc_super_admin",
-        "smart_construction_core.group_sc_cap_config_admin",
-        "smart_construction_core.group_sc_business_full",
-        "smart_construction_custom.group_sc_role_executive",
-    } & user_xmlids:
-        return "executive"
-    if {
-        "smart_construction_custom.group_sc_role_finance",
-        "smart_construction_custom.group_sc_role_payment_read",
-        "smart_construction_custom.group_sc_role_payment_user",
-        "smart_construction_custom.group_sc_role_payment_manager",
-        "smart_construction_core.group_sc_cap_finance_read",
-        "smart_construction_core.group_sc_cap_finance_user",
-        "smart_construction_core.group_sc_cap_finance_manager",
-    } & user_xmlids:
-        return "finance"
-    if {
-        "smart_construction_custom.group_sc_role_pm",
-        "smart_construction_custom.group_sc_role_project_user",
-        "smart_construction_custom.group_sc_role_project_manager",
-        "smart_construction_core.group_sc_cap_project_user",
-        "smart_construction_core.group_sc_cap_project_manager",
-    } & user_xmlids:
-        return "pm"
-    return "owner"
-
-
-def _pick_landing_scene(scene_candidates: List[str], scene_keys: set) -> str:
-    for candidate in scene_candidates:
-        if candidate in scene_keys:
-            return candidate
-    return "projects.list"
-
-
-def _build_role_surface(user_xmlids: set, nav_tree: list, scene_keys: set) -> dict:
-    role_code = _resolve_role_code(user_xmlids)
-    role_meta = ROLE_SURFACE_MAP.get(role_code) or ROLE_SURFACE_MAP["owner"]
-    scene_candidates = list(role_meta.get("landing_scene_candidates") or [])
-    menu_candidates = list(role_meta.get("menu_xmlids") or [])
-    landing_scene_key = _pick_landing_scene(scene_candidates, scene_keys)
-    nav_index = _index_nav_by_xmlid(nav_tree)
-    landing_menu_xmlid = ""
-    landing_menu_id = None
-    for xmlid in menu_candidates:
-        node = nav_index.get(xmlid)
-        if not node:
-            continue
-        landing_menu_xmlid = xmlid
-        landing_menu_id = node.get("menu_id") or node.get("id")
-        break
-    return {
-        "role_code": role_code,
-        "role_label": role_meta.get("label") or role_code,
-        "landing_scene_key": landing_scene_key,
-        "landing_menu_xmlid": landing_menu_xmlid,
-        "landing_menu_id": landing_menu_id,
-        "landing_path": f"/s/{landing_scene_key}",
-        "scene_candidates": scene_candidates,
-        "menu_xmlids": menu_candidates,
-    }
-
-
-def _build_role_surface_map_payload() -> Dict[str, dict]:
-    payload = {}
-    for role_code, role_meta in ROLE_SURFACE_MAP.items():
-        payload[role_code] = {
-            "role_code": role_code,
-            "role_label": role_meta.get("label") or role_code,
-            "scene_candidates": list(role_meta.get("landing_scene_candidates") or []),
-            "menu_xmlids": list(role_meta.get("menu_xmlids") or []),
-        }
-    return payload
-
 
 def _load_capabilities_for_user(env, user) -> List[dict]:
     return provider_load_capabilities_for_user(env, user)
@@ -315,1042 +116,11 @@ def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, st
 
 def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     return provider_load_scene_contract(env, scene_channel, use_pinned, logger=_logger)
-# 在文件工具函数区追加：
-def _to_xmlid_list(env, maybe_ids_or_xmlids):
-    """
-    输入可能是 [xmlid(str)] 或 [int id] 或混合，统一转 [xmlid(str)]
-    """
-    if not maybe_ids_or_xmlids:
-        return []
-    out = []
-    int_ids = []
-    for g in maybe_ids_or_xmlids:
-        if isinstance(g, str) and "." in g:
-            out.append(g)
-        elif isinstance(g, int):
-            int_ids.append(g)
-    if int_ids:
-        imds = env["ir.model.data"].sudo().search([
-            ("model", "=", "res.groups"),
-            ("res_id", "in", int_ids)
-        ])
-        # 建字典以便 O(1) 查找
-        id2xml = {imd.res_id: f"{imd.module}.{imd.name}" for imd in imds if imd.module and imd.name}
-        for gid in int_ids:
-            if gid in id2xml:
-                out.append(id2xml[gid])
-    # 去重并保持稳定排序
-    return sorted(set(out))
-
-def _normalize_nav_groups(env, nodes):
-    """
-    递归把 nav[*].meta.groups_xmlids 统一成 xmlid(str) 列表
-    """
-    for n in nodes or []:
-        meta = n.get("meta") or {}
-        if "groups_xmlids" in meta and meta["groups_xmlids"]:
-            meta["groups_xmlids"] = _to_xmlid_list(env, meta["groups_xmlids"])
-            n["meta"] = meta
-        if n.get("children"):
-            _normalize_nav_groups(env, n["children"])
-
-def _resolve_action_ids(env, action_xmlids: Dict[str, str]) -> Dict[int, str]:
-    resolved = {}
-    for xmlid, scene_key in action_xmlids.items():
-        try:
-            rec = env.ref(xmlid, raise_if_not_found=False)
-            if rec and rec.id:
-                resolved[rec.id] = scene_key
-        except Exception:
-            continue
-    return resolved
-
-def _normalize_view_mode(raw: str | None) -> str | None:
-    if not raw:
-        return None
-    val = str(raw).strip().lower()
-    if val in {"tree", "list", "kanban"}:
-        return "list"
-    if val in {"form"}:
-        return "form"
-    return val
-
-def _apply_scene_keys(env, nodes):
-    """
-    Inject nav.node.scene_key using priority:
-      menu_xmlid -> action_id -> model/view_mode
-    Also ensure node.xmlid is emitted if menu_xmlid exists.
-    """
-    menu_map = {
-        "smart_construction_demo.menu_sc_project_list_showcase": "projects.list",
-        "smart_construction_core.menu_sc_project_initiation": "projects.intake",
-        "smart_construction_core.menu_sc_project_project": "projects.ledger",
-        "smart_construction_core.menu_sc_root": "projects.list",
-        "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
-        "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
-        "smart_construction_core.menu_sc_dictionary": "data.dictionary",
-        "smart_construction_core.menu_payment_request": "finance.payment_requests",
-        "smart_construction_portal.menu_sc_portal_lifecycle": "portal.lifecycle",
-        "smart_construction_portal.menu_sc_portal_capability_matrix": "portal.capability_matrix",
-        "smart_construction_portal.menu_sc_portal_dashboard": "portal.dashboard",
-    }
-    action_xmlid_map = {
-        "smart_construction_demo.action_sc_project_list_showcase": "projects.list",
-        "smart_construction_core.action_project_initiation": "projects.intake",
-        "smart_construction_core.action_sc_project_kanban_lifecycle": "projects.ledger",
-        "smart_construction_core.action_sc_project_list": "projects.list",
-        "smart_construction_core.action_project_dashboard": "projects.dashboard",
-        "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
-        "smart_construction_core.action_project_dictionary": "data.dictionary",
-        "smart_construction_core.action_payment_request": "finance.payment_requests",
-        "smart_construction_core.action_payment_request_my": "finance.payment_requests",
-        "smart_construction_portal.action_sc_portal_lifecycle": "portal.lifecycle",
-        "smart_construction_portal.action_sc_portal_capability_matrix": "portal.capability_matrix",
-        "smart_construction_portal.action_sc_portal_dashboard": "portal.dashboard",
-    }
-    action_id_map = _resolve_action_ids(env, action_xmlid_map)
-    model_view_map = {
-        ("project.project", "list"): "projects.list",
-        ("project.project", "form"): "projects.intake",
-        ("payment.request", "list"): "finance.payment_requests",
-        ("payment.request", "form"): "finance.payment_requests",
-    }
-
-    for n in nodes or []:
-        meta = n.get("meta") or {}
-        menu_xmlid = meta.get("menu_xmlid") or n.get("xmlid")
-        if menu_xmlid:
-            n["xmlid"] = menu_xmlid
-        scene_key = None
-        if menu_xmlid and menu_xmlid in menu_map:
-            scene_key = menu_map[menu_xmlid]
-        if not scene_key:
-            action_id = meta.get("action_id")
-            if isinstance(action_id, str) and action_id.isdigit():
-                action_id = int(action_id)
-            if action_id in action_id_map:
-                scene_key = action_id_map[action_id]
-        if not scene_key:
-            action_xmlid = meta.get("action_xmlid")
-            if action_xmlid and action_xmlid in action_xmlid_map:
-                scene_key = action_xmlid_map[action_xmlid]
-                meta["scene_key_inferred_from"] = "action_xmlid"
-        if not scene_key:
-            model = meta.get("model")
-            view_mode = meta.get("view_mode") or meta.get("view_type")
-            if not view_mode:
-                view_modes = meta.get("view_modes")
-                if isinstance(view_modes, list) and view_modes:
-                    view_mode = view_modes[0]
-            key = (model, _normalize_view_mode(view_mode)) if model else None
-            if key in model_view_map:
-                scene_key = model_view_map[key]
-        if scene_key:
-            n["scene_key"] = scene_key
-            meta["scene_key"] = scene_key
-            n["meta"] = meta
-        if n.get("children"):
-            _apply_scene_keys(env, n["children"])
-
-
-def _append_inferred_scene_warnings(nodes, scene_keys: set, warnings: list):
-    if warnings is None:
-        return
-    def walk(items):
-        for node in items or []:
-            meta = node.get("meta") or {}
-            if meta.get("scene_key_inferred_from") == "action_xmlid":
-                scene_key = node.get("scene_key") or meta.get("scene_key")
-                if scene_key and scene_key not in scene_keys:
-                    warnings.append({
-                        "code": "SCENEKEY_INFERRED_NOT_FOUND",
-                        "severity": "warn",
-                        "scene_key": scene_key,
-                        "message": "scene_key inferred from action_xmlid but not found in registry",
-                        "field": "scene_key",
-                        "reason": "inferred_scene_missing",
-                        "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
-                        "action_xmlid": meta.get("action_xmlid"),
-                    })
-            if node.get("children"):
-                walk(node.get("children"))
-    walk(nodes)
-
-
-def _resolve_action_id(env, xmlid: str | None) -> int | None:
-    if not xmlid:
-        return None
-    try:
-        rec = env.ref(xmlid, raise_if_not_found=False)
-        if rec and rec.id:
-            return int(rec.id)
-    except Exception:
-        return None
-    return None
-
-
-def _resolve_xmlid(env, xmlid: str | None) -> int | None:
-    return _resolve_action_id(env, xmlid)
-
-
-CRITICAL_SCENES = {
-    "projects.list",
-    "projects.ledger",
-}
-
-
-def _scene_severity(scene_key: str | None) -> str:
-    if scene_key and scene_key in CRITICAL_SCENES:
-        return "critical"
-    return "non_critical"
-
-
-def _is_critical_drift_warn(entry: dict) -> bool:
-    if not isinstance(entry, dict):
-        return False
-    if str(entry.get("severity") or "").strip().lower() != "warn":
-        return False
-    scene_key = entry.get("scene_key")
-    return scene_key in CRITICAL_SCENES
-
-
-def _build_scene_health_payload(data: dict, trace_id: str = "", company_id: int | None = None) -> dict:
-    data = data or {}
-    user = data.get("user") if isinstance(data.get("user"), dict) else {}
-    diag = data.get("scene_diagnostics") if isinstance(data.get("scene_diagnostics"), dict) else {}
-    resolve_errors = diag.get("resolve_errors") if isinstance(diag.get("resolve_errors"), list) else []
-    drift = diag.get("drift") if isinstance(diag.get("drift"), list) else []
-    normalize_warnings = diag.get("normalize_warnings") if isinstance(diag.get("normalize_warnings"), list) else []
-
-    critical_resolve_errors = [
-        entry for entry in resolve_errors
-        if isinstance(entry, dict) and str(entry.get("severity") or "").strip().lower() == "critical"
-    ]
-    critical_drift_warn = [entry for entry in drift if _is_critical_drift_warn(entry)]
-
-    debt = []
-    for entry in resolve_errors:
-        if not isinstance(entry, dict):
-            continue
-        severity = str(entry.get("severity") or "").strip().lower()
-        if severity != "critical":
-            debt.append({"type": "resolve_error", **entry})
-    for entry in drift:
-        if not isinstance(entry, dict):
-            continue
-        if not _is_critical_drift_warn(entry):
-            debt.append({"type": "drift", **entry})
-    for entry in normalize_warnings:
-        if isinstance(entry, dict):
-            debt.append({"type": "normalize_warning", **entry})
-
-    resolved_company_id = company_id
-    if resolved_company_id is None:
-        raw_company_id = user.get("company_id") if isinstance(user, dict) else None
-        try:
-            resolved_company_id = int(raw_company_id) if raw_company_id else None
-        except Exception:
-            resolved_company_id = None
-
-    return {
-        "company_id": resolved_company_id,
-        "scene_channel": data.get("scene_channel"),
-        "rollback_active": bool(diag.get("rollback_active")),
-        "scene_version": data.get("scene_version"),
-        "schema_version": data.get("schema_version"),
-        "contract_ref": data.get("scene_contract_ref"),
-        "summary": {
-            "critical_resolve_errors_count": len(critical_resolve_errors),
-            "critical_drift_warn_count": len(critical_drift_warn),
-            "non_critical_debt_count": len(debt),
-        },
-        "details": {
-            "resolve_errors": resolve_errors,
-            "drift": drift,
-            "debt": debt,
-        },
-        "auto_degrade": diag.get("auto_degrade") if isinstance(diag.get("auto_degrade"), dict) else {
-            "triggered": False,
-            "reason_codes": [],
-            "action_taken": "none",
-        },
-        "last_updated_at": fields.Datetime.now(),
-        "trace_id": trace_id or "",
-    }
-
-
-def _get_auto_degrade_policy(env) -> dict:
-    defaults = {
-        "enabled": True,
-        "critical_threshold_resolve_errors": 1,
-        "critical_threshold_drift_warn": 1,
-        "action": "rollback_pinned",
-    }
-    try:
-        config = env["ir.config_parameter"].sudo()
-    except Exception:
-        return defaults
-
-    def _get_int(name: str, fallback: int) -> int:
-        try:
-            raw = config.get_param(name)
-            return int(raw) if raw not in (None, "") else fallback
-        except Exception:
-            return fallback
-
-    enabled_raw = config.get_param("sc.scene.auto_degrade.enabled")
-    enabled = defaults["enabled"] if enabled_raw in (None, "") else is_truthy(enabled_raw)
-    action = (config.get_param("sc.scene.auto_degrade.action") or defaults["action"]).strip().lower()
-    if action not in {"rollback_pinned", "stable_latest"}:
-        action = defaults["action"]
-
-    return {
-        "enabled": enabled,
-        "critical_threshold_resolve_errors": max(1, _get_int("sc.scene.auto_degrade.critical_threshold.resolve_errors", 1)),
-        "critical_threshold_drift_warn": max(1, _get_int("sc.scene.auto_degrade.critical_threshold.drift_warn", 1)),
-        "action": action,
-    }
-
-
-def _get_auto_degrade_notify_policy(env) -> dict:
-    defaults = {
-        "enabled": True,
-        "channels": ["internal"],
-    }
-    try:
-        config = env["ir.config_parameter"].sudo()
-    except Exception:
-        return defaults
-
-    enabled_raw = config.get_param("sc.scene.auto_degrade.notify.enabled")
-    enabled = defaults["enabled"] if enabled_raw in (None, "") else is_truthy(enabled_raw)
-    raw_channels = (config.get_param("sc.scene.auto_degrade.notify.channels") or "internal").strip().lower()
-    allowed = {"email", "internal", "webhook"}
-    channels = [item.strip() for item in raw_channels.split(",") if item.strip() in allowed]
-    if not channels:
-        channels = ["internal"]
-    return {"enabled": enabled, "channels": channels}
-
-
-def _notify_auto_degrade(env, *, user, trace_id: str, reason_codes: list, action_taken: str, from_channel: str, to_channel: str):
-    policy = _get_auto_degrade_notify_policy(env)
-    if not policy.get("enabled"):
-        return {"sent": False, "channels": [], "trace_id": trace_id or ""}
-
-    sent_channels = []
-    message_payload = {
-        "trace_id": trace_id or "",
-        "reason_codes": list(reason_codes or []),
-        "action_taken": action_taken,
-        "from_channel": from_channel,
-        "to_channel": to_channel,
-        "company_id": user.company_id.id if user and user.company_id else None,
-        "suggestion": "Please review scene targets and resolve critical drift/resolve errors.",
-    }
-    body = (
-        "Auto-degrade triggered.\n"
-        f"trace_id={message_payload['trace_id']}\n"
-        f"action_taken={action_taken}\n"
-        f"from={from_channel} to={to_channel}\n"
-        f"reason_codes={','.join(message_payload['reason_codes']) or '-'}"
-    )
-
-    for channel in policy.get("channels") or []:
-        if channel == "internal":
-            try:
-                env["sc.audit.log"].sudo().write_event(
-                    event_code="SCENE_AUTO_DEGRADE_NOTIFY",
-                    model="system.init",
-                    res_id=0,
-                    action="auto_degrade_notify_internal",
-                    after={"channel": "internal", **message_payload},
-                    reason="auto degrade internal notification",
-                    trace_id=trace_id or "",
-                    company_id=message_payload["company_id"],
-                )
-                sent_channels.append("internal")
-            except Exception:
-                pass
-        elif channel == "email":
-            try:
-                partner = user.partner_id if user else None
-                email_to = partner.email if partner and partner.email else None
-                if email_to:
-                    Mail = env["mail.mail"].sudo()
-                    Mail.create({
-                        "subject": "[Scene] Auto-degrade triggered",
-                        "body_html": body.replace("\n", "<br/>"),
-                        "email_to": email_to,
-                    })
-                    sent_channels.append("email")
-            except Exception:
-                pass
-        elif channel == "webhook":
-            try:
-                env["sc.audit.log"].sudo().write_event(
-                    event_code="SCENE_AUTO_DEGRADE_NOTIFY",
-                    model="system.init",
-                    res_id=0,
-                    action="auto_degrade_notify_webhook_pending",
-                    after={"channel": "webhook", **message_payload},
-                    reason="auto degrade webhook notification placeholder",
-                    trace_id=trace_id or "",
-                    company_id=message_payload["company_id"],
-                )
-                sent_channels.append("webhook")
-            except Exception:
-                pass
-
-    return {"sent": bool(sent_channels), "channels": sent_channels, "trace_id": trace_id or ""}
-
-
-def _log_auto_degrade_once(env, *, trace_id: str, user, from_channel: str, to_channel: str, reason_codes: list, action_taken: str):
-    try:
-        Log = env["sc.scene.governance.log"].sudo()
-        now = datetime.utcnow()
-        window_start = fields.Datetime.to_string(now - timedelta(minutes=1))
-        domain = [
-            ("action", "=", "auto_degrade_triggered"),
-            ("created_at", ">=", window_start),
-        ]
-        if trace_id:
-            domain.append(("trace_id", "=", trace_id))
-        if Log.search_count(domain):
-            return
-        Log.create({
-            "action": "auto_degrade_triggered",
-            "actor_id": user.id if user and user.id else None,
-            "company_id": user.company_id.id if user and user.company_id else None,
-            "from_channel": from_channel,
-            "to_channel": to_channel,
-            "reason": "auto degrade triggered by scene diagnostics",
-            "trace_id": trace_id or "",
-            "payload_json": {
-                "reason_codes": list(reason_codes or []),
-                "action_taken": action_taken,
-            },
-            "created_at": fields.Datetime.now(),
-        })
-        return
-    except Exception:
-        pass
-
-    # fallback: if scene governance model is unavailable, keep audit evidence in core audit log
-    try:
-        Audit = env["sc.audit.log"].sudo()
-        now = datetime.utcnow()
-        window_start = fields.Datetime.to_string(now - timedelta(minutes=1))
-        domain = [
-            ("event_code", "=", "SCENE_AUTO_DEGRADE_TRIGGERED"),
-            ("ts", ">=", window_start),
-        ]
-        if trace_id:
-            domain.append(("trace_id", "=", trace_id))
-        if Audit.search_count(domain):
-            return
-        Audit.write_event(
-            event_code="SCENE_AUTO_DEGRADE_TRIGGERED",
-            model="system.init",
-            res_id=0,
-            action="auto_degrade_triggered",
-            after={
-                "from_channel": from_channel,
-                "to_channel": to_channel,
-                "reason_codes": list(reason_codes or []),
-                "action_taken": action_taken,
-            },
-            reason="auto degrade triggered by scene diagnostics",
-            trace_id=trace_id or "",
-            company_id=user.company_id.id if user and user.company_id else None,
-        )
-    except Exception:
-        return
-
-
-def _evaluate_auto_degrade(env, *, user, scene_channel: str, diagnostics: dict, trace_id: str) -> dict:
-    policy = _get_auto_degrade_policy(env)
-    result = {
-        "triggered": False,
-        "reason_codes": [],
-        "action_taken": "none",
-        "notifications": {"sent": False, "channels": []},
-        "policy": policy,
-        "pre_counts": {
-            "critical_resolve_errors_count": 0,
-            "critical_drift_warn_count": 0,
-        },
-    }
-    if not policy.get("enabled"):
-        return result
-
-    resolve_errors = diagnostics.get("resolve_errors") if isinstance(diagnostics.get("resolve_errors"), list) else []
-    drift = diagnostics.get("drift") if isinstance(diagnostics.get("drift"), list) else []
-    critical_resolve_errors_count = len(
-        [
-            entry for entry in resolve_errors
-            if isinstance(entry, dict) and str(entry.get("severity") or "").strip().lower() == "critical"
-        ]
-    )
-    critical_drift_warn_count = len([entry for entry in drift if _is_critical_drift_warn(entry)])
-    result["pre_counts"] = {
-        "critical_resolve_errors_count": critical_resolve_errors_count,
-        "critical_drift_warn_count": critical_drift_warn_count,
-    }
-
-    reason_codes = []
-    if critical_resolve_errors_count >= int(policy.get("critical_threshold_resolve_errors") or 1):
-        reason_codes.append("critical_resolve_errors")
-    if critical_drift_warn_count >= int(policy.get("critical_threshold_drift_warn") or 1):
-        reason_codes.append("critical_drift_warn")
-    if not reason_codes:
-        return result
-
-    action = policy.get("action") or "rollback_pinned"
-    to_channel = "stable"
-    rollback_active = action == "rollback_pinned"
-    try:
-        config = env["ir.config_parameter"].sudo()
-        config.set_param("sc.scene.rollback", "1" if rollback_active else "0")
-        config.set_param("sc.scene.use_pinned", "1" if rollback_active else "0")
-    except Exception:
-        pass
-
-    _log_auto_degrade_once(
-        env,
-        trace_id=trace_id,
-        user=user,
-        from_channel=scene_channel,
-        to_channel=to_channel,
-        reason_codes=reason_codes,
-        action_taken=action,
-    )
-    notify_result = _notify_auto_degrade(
-        env,
-        user=user,
-        trace_id=trace_id,
-        reason_codes=reason_codes,
-        action_taken=action,
-        from_channel=scene_channel,
-        to_channel=to_channel,
-    )
-
-    result["triggered"] = True
-    result["reason_codes"] = reason_codes
-    result["action_taken"] = action
-    result["notifications"] = notify_result
-    return result
-
-
-def _append_resolve_error(resolve_errors, *, scene_key, kind, code, ref=None, message=None, severity=None, field=None):
-    entry = {
-        "scene_key": scene_key or "",
-        "kind": kind,
-        "code": code,
-        "severity": severity or _scene_severity(scene_key),
-        "message": message or "",
-    }
-    if ref:
-        entry["ref"] = ref
-    if field:
-        entry["field"] = field
-    resolve_errors.append(entry)
-
-
-def _index_nav_scene_targets(nodes):
-    targets = {}
-    def walk(items):
-        for node in items or []:
-            meta = node.get("meta") or {}
-            scene_key = node.get("scene_key") or meta.get("scene_key")
-            if scene_key:
-                targets[scene_key] = {
-                    "menu_id": node.get("menu_id") or node.get("id"),
-                    "action_id": meta.get("action_id"),
-                    "model": meta.get("model"),
-                    "view_mode": meta.get("view_mode") or meta.get("view_type"),
-                }
-            if node.get("children"):
-                walk(node["children"])
-    walk(nodes)
-    return targets
-
-
-def _append_act_url_deprecations(nodes, warnings):
-    if warnings is None:
-        return
-    def walk(items):
-        for node in items or []:
-            meta = node.get("meta") or {}
-            action_type = str(meta.get("action_type") or "").strip().lower()
-            scene_key = node.get("scene_key") or meta.get("scene_key")
-            if action_type == "ir.actions.act_url" and scene_key:
-                warnings.append({
-                    "code": "ACT_URL_LEGACY",
-                    "severity": "info",
-                    "scene_key": scene_key,
-                    "message": "act_url menu resolved via scene_key (legacy action type)",
-                    "field": "action_type",
-                    "reason": "legacy_act_url",
-                    "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
-                })
-            if action_type == "ir.actions.act_url" and not scene_key:
-                warnings.append({
-                    "code": "ACT_URL_MISSING_SCENE",
-                    "severity": "warn",
-                    "scene_key": "",
-                    "message": "act_url menu missing scene_key mapping",
-                    "field": "scene_key",
-                    "reason": "legacy_act_url_missing_scene",
-                    "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
-                })
-            if node.get("children"):
-                walk(node.get("children"))
-    walk(nodes)
-
-
-def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
-    for scene in scenes:
-        scene_key = scene.get("code") or scene.get("key")
-        if not scene_key:
-            continue
-        target = scene.get("target") or {}
-        route = target.get("route")
-        route_is_missing_fallback = isinstance(route, str) and "TARGET_MISSING" in route
-        action_xmlid = target.get("action_xmlid") or target.get("actionXmlid")
-        menu_xmlid = target.get("menu_xmlid") or target.get("menuXmlid")
-        if action_xmlid and not target.get("action_id"):
-            action_id = _resolve_xmlid(env, action_xmlid)
-            if action_id:
-                target["action_id"] = action_id
-            else:
-                _append_resolve_error(
-                    resolve_errors,
-                    scene_key=scene_key,
-                    kind="target",
-                    code="XMLID_NOT_FOUND",
-                    ref=action_xmlid,
-                    field="action_xmlid",
-                    message="action_xmlid not found",
-                )
-        if menu_xmlid and not target.get("menu_id"):
-            menu_id = _resolve_xmlid(env, menu_xmlid)
-            if menu_id:
-                target["menu_id"] = menu_id
-            else:
-                _append_resolve_error(
-                    resolve_errors,
-                    scene_key=scene_key,
-                    kind="target",
-                    code="XMLID_NOT_FOUND",
-                    ref=menu_xmlid,
-                    field="menu_xmlid",
-                    message="menu_xmlid not found",
-                )
-        if "action_xmlid" in target:
-            target.pop("action_xmlid", None)
-        if "actionXmlid" in target:
-            target.pop("actionXmlid", None)
-        if "menu_xmlid" in target:
-            target.pop("menu_xmlid", None)
-        if "menuXmlid" in target:
-            target.pop("menuXmlid", None)
-        if target.get("action_id") or target.get("model") or (target.get("route") and not route_is_missing_fallback):
-            scene["target"] = target
-            continue
-        nav = nav_targets.get(scene_key) or {}
-        resolved = {}
-        if nav.get("action_id"):
-            resolved["action_id"] = nav.get("action_id")
-        elif nav.get("model"):
-            resolved["model"] = nav.get("model")
-            if nav.get("view_mode"):
-                resolved["view_mode"] = nav.get("view_mode")
-        if nav.get("menu_id"):
-            resolved["menu_id"] = nav.get("menu_id")
-        if resolved:
-            scene["target"] = resolved
-        else:
-            semantic_fallback = f"/s/{scene_key}"
-            if route_is_missing_fallback:
-                # Replace legacy workbench fallback with semantic scene route.
-                scene["target"] = {"route": semantic_fallback}
-                _append_resolve_error(
-                    resolve_errors,
-                    scene_key=scene_key,
-                    kind="target",
-                    code="MISSING_TARGET",
-                    ref=semantic_fallback,
-                    field="target",
-                    message="target missing; semantic fallback route applied",
-                )
-            else:
-                scene["target"] = {"route": semantic_fallback}
-                _append_resolve_error(
-                    resolve_errors,
-                    scene_key=scene_key,
-                    kind="target",
-                    code="MISSING_TARGET",
-                    ref=semantic_fallback,
-                    field="target",
-                    message="target missing; semantic fallback route applied",
-                )
-    return scenes
-
-
-def _normalize_scene_layouts(scenes, warnings):
-    for scene in scenes:
-        scene_key = scene.get("code") or scene.get("key") or ""
-        layout = scene.get("layout")
-        if not isinstance(layout, dict):
-            warnings.append({
-                "code": "LAYOUT_MISSING_OR_INVALID",
-                "severity": "non_critical",
-                "scene_key": scene_key,
-                "message": "layout missing or invalid; no defaults applied",
-                "field": "layout",
-                "reason": "missing_or_invalid",
-            })
-            continue
-    return scenes
-
-
-def _to_string_list(value) -> List[str]:
-    if not isinstance(value, list):
-        return []
-    out = []
-    for item in value:
-        text = str(item or "").strip()
-        if text:
-            out.append(text)
-    return sorted(set(out))
-
-
-def _to_bool(value, default: bool) -> bool:
-    if value is None:
-        return default
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        text = value.strip().lower()
-        if text in {"1", "true", "yes", "y", "on"}:
-            return True
-        if text in {"0", "false", "no", "n", "off"}:
-            return False
-        return default
-    return bool(value)
-
-
-def _normalize_tile_status(value) -> str:
-    status = str(value or "").strip().lower()
-    if status in {"ga", "beta", "alpha"}:
-        return status
-    return ""
-
-
-def _normalize_tile_state(value) -> str:
-    state = str(value or "").strip().upper()
-    if state in {"READY", "LOCKED", "PREVIEW"}:
-        return state
-    return ""
-
-
-def _normalize_capability_state(value) -> str:
-    state = str(value or "").strip().lower()
-    if state in {"allow", "readonly", "deny", "pending", "coming_soon"}:
-        return state
-    return ""
-
-
-def _derive_tile_state(status: str, allowed) -> str:
-    if isinstance(allowed, bool):
-        return "READY" if allowed else "LOCKED"
-    return "READY" if status == "ga" else "PREVIEW"
-
-
-def _derive_capability_state(*, status: str, allowed) -> str:
-    if isinstance(allowed, bool) and not allowed:
-        return "deny"
-    normalized = _normalize_tile_status(status)
-    if normalized == "alpha":
-        return "coming_soon"
-    if normalized == "beta":
-        return "pending"
-    return "allow"
-
-
-def _normalize_scene_tiles(scenes, capabilities, warnings):
-    cap_map: Dict[str, dict] = {}
-    for capability in capabilities or []:
-        if not isinstance(capability, dict):
-            continue
-        cap_key = str(capability.get("key") or "").strip()
-        if not cap_key:
-            continue
-        cap_map[cap_key] = {
-            "status": _normalize_tile_status(capability.get("status")),
-            "state": _normalize_tile_state(capability.get("state")),
-            "capability_state": _normalize_capability_state(capability.get("capability_state")),
-            "capability_state_reason": str(capability.get("capability_state_reason") or "").strip(),
-            "reason_code": str(capability.get("reason_code") or "").strip(),
-            "reason": str(capability.get("reason") or "").strip(),
-        }
-
-    for scene in scenes or []:
-        if not isinstance(scene, dict):
-            continue
-        scene_key = scene.get("code") or scene.get("key") or ""
-        tiles = scene.get("tiles")
-        if not isinstance(tiles, list):
-            continue
-        for tile in tiles:
-            if not isinstance(tile, dict):
-                continue
-            key = str(tile.get("key") or "").strip()
-            cap_meta = cap_map.get(key) if key else None
-            status = _normalize_tile_status(tile.get("status"))
-            state = _normalize_tile_state(tile.get("state"))
-            capability_state = _normalize_capability_state(tile.get("capability_state"))
-            if not status and cap_meta:
-                status = cap_meta.get("status") or ""
-            if not state and cap_meta:
-                state = cap_meta.get("state") or ""
-            if not capability_state and cap_meta:
-                capability_state = cap_meta.get("capability_state") or ""
-            if not state:
-                state = _derive_tile_state(status or "ga", tile.get("allowed"))
-            if not status:
-                status = "ga" if state == "READY" else "alpha"
-            if not capability_state:
-                capability_state = _derive_capability_state(status=status, allowed=tile.get("allowed"))
-            tile["status"] = status
-            tile["state"] = state
-            tile["capability_state"] = capability_state
-            if cap_meta:
-                if not tile.get("capability_state_reason") and cap_meta.get("capability_state_reason"):
-                    tile["capability_state_reason"] = cap_meta.get("capability_state_reason")
-                if not tile.get("reason_code") and cap_meta.get("reason_code"):
-                    tile["reason_code"] = cap_meta.get("reason_code")
-                if not tile.get("reason") and cap_meta.get("reason"):
-                    tile["reason"] = cap_meta.get("reason")
-            if not key:
-                warnings.append({
-                    "code": "TILE_KEY_MISSING",
-                    "severity": "non_critical",
-                    "scene_key": scene_key,
-                    "message": "tile key missing; state/status defaults applied",
-                    "field": "tiles.key",
-                    "reason": "missing_key",
-                })
-    return scenes
-
-
-def _normalize_scene_accesses(scenes, warnings):
-    for scene in scenes:
-        if not isinstance(scene, dict):
-            continue
-        scene_key = scene.get("code") or scene.get("key") or ""
-        raw_access = scene.get("access")
-        if raw_access is None:
-            access = {}
-        elif isinstance(raw_access, dict):
-            access = dict(raw_access)
-        else:
-            warnings.append({
-                "code": "ACCESS_INVALID",
-                "severity": "non_critical",
-                "scene_key": scene_key,
-                "message": "access should be object; fallback access defaults applied",
-                "field": "access",
-                "reason": "invalid_type",
-            })
-            access = {}
-
-        tile_caps = []
-        for tile in scene.get("tiles") or []:
-            if not isinstance(tile, dict):
-                continue
-            tile_caps.extend(_to_string_list(tile.get("required_capabilities")))
-
-        caps = sorted(set(
-            _to_string_list(scene.get("required_capabilities"))
-            + _to_string_list(access.get("required_capabilities"))
-            + tile_caps
-        ))
-
-        visible = _to_bool(access.get("visible"), True)
-        if "allowed" in access:
-            allowed = _to_bool(access.get("allowed"), visible)
-        else:
-            # access clause exists but no explicit allow/deny => keep visible default
-            allowed = visible
-        has_access_clause = bool(caps)
-        reason_code = str(access.get("reason_code") or "").strip().upper()
-        if not reason_code:
-            reason_code = REASON_OK if allowed else REASON_PERMISSION_DENIED
-        suggested_action = str(access.get("suggested_action") or "").strip()
-        if not suggested_action and reason_code != REASON_OK:
-            suggested_action = str(failure_meta_for_reason(reason_code).get("suggested_action") or "")
-
-        scene["access"] = {
-            "visible": visible,
-            "allowed": allowed,
-            "reason_code": reason_code,
-            "suggested_action": suggested_action,
-            "required_capabilities": caps,
-            "required_capabilities_count": len(caps),
-            "has_access_clause": has_access_clause,
-        }
-
-    return scenes
-
-
-
-def _build_scene_target_maps(scenes):
-    menu_id_map: Dict[int, str] = {}
-    action_id_map: Dict[int, str] = {}
-    model_view_map: Dict[Tuple[str, str | None], str] = {}
-    for scene in scenes or []:
-        if not isinstance(scene, dict):
-            continue
-        scene_key = str(scene.get("code") or scene.get("key") or "").strip()
-        if not scene_key:
-            continue
-        target = scene.get("target")
-        if not isinstance(target, dict):
-            continue
-        menu_id = target.get("menu_id")
-        action_id = target.get("action_id")
-        model = str(target.get("model") or "").strip()
-        view_mode = _normalize_view_mode(target.get("view_mode") or target.get("view_type"))
-
-        if isinstance(menu_id, int) and menu_id > 0:
-            menu_id_map.setdefault(menu_id, scene_key)
-        if isinstance(action_id, int) and action_id > 0:
-            action_id_map.setdefault(action_id, scene_key)
-        if model:
-            model_view_map.setdefault((model, view_mode), scene_key)
-    return menu_id_map, action_id_map, model_view_map
-
-
-def _sync_nav_scene_keys(nav_tree, scenes, warnings):
-    scene_keys = {
-        str(scene.get("code") or scene.get("key") or "").strip()
-        for scene in scenes or []
-        if isinstance(scene, dict)
-    }
-    scene_keys = {key for key in scene_keys if key}
-    if not scene_keys:
-        return
-
-    menu_id_map, action_id_map, model_view_map = _build_scene_target_maps(scenes)
-
-    def walk(nodes):
-        for node in nodes or []:
-            if not isinstance(node, dict):
-                continue
-            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
-            node_scene_key = str(node.get("scene_key") or "").strip()
-            meta_scene_key = str(meta.get("scene_key") or "").strip()
-            scene_key = node_scene_key or meta_scene_key
-            if scene_key and scene_key not in scene_keys:
-                warnings.append({
-                    "code": "NAV_SCENEKEY_INVALID",
-                    "severity": "warn",
-                    "scene_key": scene_key,
-                    "message": "nav scene_key not found in scenes payload; fallback to menu/action routing",
-                    "field": "nav.scene_key",
-                    "reason": "scene_not_in_registry",
-                    "menu_xmlid": node.get("xmlid") or meta.get("menu_xmlid"),
-                })
-                node.pop("scene_key", None)
-                meta.pop("scene_key", None)
-                scene_key = ""
-
-            if not scene_key:
-                menu_id = node.get("menu_id") or node.get("id")
-                action_id = meta.get("action_id")
-                if isinstance(action_id, str) and action_id.isdigit():
-                    action_id = int(action_id)
-                if isinstance(menu_id, str) and menu_id.isdigit():
-                    menu_id = int(menu_id)
-                model = str(meta.get("model") or "").strip()
-                view_mode = _normalize_view_mode(meta.get("view_mode") or meta.get("view_type"))
-                if not view_mode:
-                    view_modes = meta.get("view_modes")
-                    if isinstance(view_modes, list) and view_modes:
-                        view_mode = _normalize_view_mode(view_modes[0])
-
-                if isinstance(menu_id, int) and menu_id in menu_id_map:
-                    scene_key = menu_id_map[menu_id]
-                elif isinstance(action_id, int) and action_id in action_id_map:
-                    scene_key = action_id_map[action_id]
-                elif model and (model, view_mode) in model_view_map:
-                    scene_key = model_view_map[(model, view_mode)]
-                elif model and (model, None) in model_view_map:
-                    scene_key = model_view_map[(model, None)]
-
-            if scene_key and scene_key in scene_keys:
-                node["scene_key"] = scene_key
-                meta["scene_key"] = scene_key
-                node["meta"] = meta
-
-            if node.get("children"):
-                walk(node.get("children"))
-
-    walk(nav_tree)
 
 
 def _merge_missing_scenes_from_registry(env, scenes, warnings):
     return provider_merge_missing_scenes_from_registry(env, scenes, warnings)
 
-
-def collect_available_intents(env, user) -> Tuple[List[str], Dict[str, dict]]:
-    """
-    从 HANDLER_REGISTRY 动态收集可用意图（按权限过滤）。
-    返回：
-      - intents: 只包含“主名”（INTENT_TYPE）的有序列表
-      - intents_meta: 含版本与别名，供前端/调试可选使用
-    """
-    user_xmlids = _user_group_xmlids(user)
-    intents: List[str] = []
-    meta: Dict[str, dict] = {}
-
-    # 遍历注册表（支持别名注册到同一类）
-    for name, cls in HANDLER_REGISTRY.items():
-        primary = getattr(cls, "INTENT_TYPE", None) or name
-        version = getattr(cls, "VERSION", None)
-        required = _normalize_required_groups(env, getattr(cls, "REQUIRED_GROUPS", []) or [])
-        enabled = getattr(cls, "IS_ENABLED", True)
-        aliases = []
-        try:
-            aliases = list(getattr(cls, "ALIASES") or [])
-        except Exception:
-            aliases = []
-
-        # 仅按“主名”去重与授权（别名只进 meta，不重复入列）
-        if not enabled:
-            continue
-        if not _has_required_groups(user_xmlids, required):
-            continue
-        if primary in intents:
-            # 已收录主名，补齐 meta 即可
-            if primary in meta:
-                meta[primary].setdefault("aliases", [])
-                meta[primary]["aliases"] = sorted(set((meta[primary]["aliases"] or []) + aliases))
-            continue
-
-        intents.append(primary)
-        m = {}
-        if version:
-            m["version"] = version
-        if aliases:
-            m["aliases"] = aliases
-        if required:
-            m["required_groups"] = required  # 已是 xmlid
-        meta[primary] = m
-
-    intents.sort()
-    return intents, meta
 
 # ===================== Handler =====================
 
@@ -1444,7 +214,8 @@ class SystemInitHandler(BaseIntentHandler):
         scene = params.get("scene") or "web"
 
         user = env.user
-        user_groups_xmlids = _user_group_xmlids(user)
+        identity_resolver = IdentityResolver()
+        user_groups_xmlids = identity_resolver.user_group_xmlids(user)
 
         user_dict = {
             "id": user.id,
@@ -1465,9 +236,8 @@ class SystemInitHandler(BaseIntentHandler):
 
         nav_tree_raw = nav_data.get("nav") or []
         nav_tree = _clean_nav(nav_tree_raw)
-        # ✅ 统一 groups_xmlids 口径（字符串 xmlid）
-        _normalize_nav_groups(env, nav_tree)
-        _apply_scene_keys(env, nav_tree)
+        nav_adapter = OdooNavAdapter()
+        nav_adapter.enrich(env, nav_tree)
         nav_fp = _fingerprint({"scene": scene, "nav": nav_tree})
         if nav_versions and nav_versions.get("root_filtered_fallback"):
             _logger.warning(
@@ -1484,7 +254,7 @@ class SystemInitHandler(BaseIntentHandler):
         )
 
         # -------- 2.5) 可用意图（动态生成，严格基于注册+权限）--------
-        intents, intents_meta = collect_available_intents(env, user)
+        intents, intents_meta = IntentSurfaceBuilder().collect(env, user)
 
         # -------- 3) 首页契约（无数据 | 仅算指纹，不直接塞入 preload）--------
         home_contract = None
@@ -1571,7 +341,12 @@ class SystemInitHandler(BaseIntentHandler):
             "auto_degrade": {"triggered": False, "reason_codes": [], "action_taken": "none"},
             "timings": {},
         }
-        _append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
+        scene_normalizer = SceneNormalizer()
+        scene_drift_engine = SceneDriftEngine()
+        auto_degrade_engine = AutoDegradeEngine()
+        capability_surface_engine = CapabilitySurfaceEngine()
+        contract_assembler = ContractAssembler()
+        scene_normalizer.append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
         if preload_items:
@@ -1612,26 +387,29 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["schema_version"] = data.get("schema_version")
 
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
-        scene_keys = {
-            (s.get("code") or s.get("key"))
-            for s in scenes_payload
-            if isinstance(s, dict) and (s.get("code") or s.get("key"))
-        }
         t_norm_start = time.time()
-        _append_inferred_scene_warnings(nav_tree, scene_keys, scene_diagnostics["normalize_warnings"])
-        _normalize_scene_layouts(scenes_payload, scene_diagnostics["normalize_warnings"])
-        _normalize_scene_accesses(scenes_payload, scene_diagnostics["normalize_warnings"])
-        _normalize_scene_tiles(scenes_payload, data.get("capabilities"), scene_diagnostics["normalize_warnings"])
+        scene_normalizer.normalize_structure(
+            scenes_payload,
+            nav_tree,
+            data.get("capabilities"),
+            scene_diagnostics,
+        )
         scene_diagnostics["timings"]["normalize_ms"] = int((time.time() - t_norm_start) * 1000)
-        nav_targets = _index_nav_scene_targets(nav_tree)
+        nav_targets = scene_normalizer.index_nav_scene_targets(nav_tree)
         t_resolve_start = time.time()
-        _normalize_scene_targets(env, scenes_payload, nav_targets, scene_diagnostics["resolve_errors"])
-        _sync_nav_scene_keys(nav_tree, scenes_payload, scene_diagnostics["normalize_warnings"])
+        scene_normalizer.resolve_targets(
+            env,
+            scenes_payload,
+            nav_tree,
+            scene_diagnostics,
+            nav_targets=nav_targets,
+        )
+        scene_drift_engine.evaluate(scenes_payload, scene_diagnostics)
         scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
 
         # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
         if is_truthy(params.get("scene_inject_critical_error")) and _diagnostics_enabled(env):
-            _append_resolve_error(
+            drift_append_resolve_error(
                 scene_diagnostics["resolve_errors"],
                 scene_key="projects.list",
                 kind="target",
@@ -1641,12 +419,12 @@ class SystemInitHandler(BaseIntentHandler):
                 severity="critical",
             )
 
-        auto_degrade = _evaluate_auto_degrade(
+        auto_degrade = auto_degrade_engine.evaluate(
             env,
-            user=user,
-            scene_channel=scene_channel,
-            diagnostics=scene_diagnostics,
-            trace_id=trace_id,
+            scene_diagnostics,
+            user,
+            trace_id,
+            scene_channel,
         )
         scene_diagnostics["auto_degrade"] = auto_degrade
         if auto_degrade.get("triggered"):
@@ -1674,13 +452,22 @@ class SystemInitHandler(BaseIntentHandler):
                 scene_diagnostics["normalize_warnings"] = []
                 data["scenes"] = _merge_missing_scenes_from_registry(env, data.get("scenes"), scene_diagnostics["normalize_warnings"])
                 t_norm2 = time.time()
-                _normalize_scene_layouts(data["scenes"], scene_diagnostics["normalize_warnings"])
-                _normalize_scene_accesses(data["scenes"], scene_diagnostics["normalize_warnings"])
-                _normalize_scene_tiles(data["scenes"], data.get("capabilities"), scene_diagnostics["normalize_warnings"])
+                scene_normalizer.normalize_structure(
+                    data["scenes"],
+                    nav_tree,
+                    data.get("capabilities"),
+                    scene_diagnostics,
+                )
                 scene_diagnostics["timings"]["normalize_after_degrade_ms"] = int((time.time() - t_norm2) * 1000)
                 t_resolve2 = time.time()
-                _normalize_scene_targets(env, data["scenes"], nav_targets, scene_diagnostics["resolve_errors"])
-                _sync_nav_scene_keys(nav_tree, data["scenes"], scene_diagnostics["normalize_warnings"])
+                scene_normalizer.resolve_targets(
+                    env,
+                    data["scenes"],
+                    nav_tree,
+                    scene_diagnostics,
+                    nav_targets=nav_targets,
+                )
+                scene_drift_engine.evaluate(data["scenes"], scene_diagnostics)
                 scene_diagnostics["timings"]["resolve_after_degrade_ms"] = int((time.time() - t_resolve2) * 1000)
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload
@@ -1690,7 +477,7 @@ class SystemInitHandler(BaseIntentHandler):
         )
         data = apply_contract_governance(data, contract_mode)
         data["capability_groups"] = provider_build_capability_groups(data.get("capabilities") or [])
-        data["capability_surface_summary"] = _build_capability_surface_summary(
+        data["capability_surface_summary"] = capability_surface_engine.build_summary(
             data.get("capabilities") or [],
             data.get("capability_groups") or [],
         )
@@ -1719,8 +506,8 @@ class SystemInitHandler(BaseIntentHandler):
             for s in scenes_payload
             if isinstance(s, dict) and (s.get("code") or s.get("key"))
         }
-        data["role_surface"] = _build_role_surface(user_groups_xmlids, nav_tree, scene_keys_latest)
-        data["role_surface_map"] = _build_role_surface_map_payload()
+        data["role_surface"] = identity_resolver.build_role_surface(user_groups_xmlids, nav_tree, scene_keys_latest)
+        data["role_surface_map"] = identity_resolver.build_role_surface_map_payload()
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 
@@ -1728,17 +515,18 @@ class SystemInitHandler(BaseIntentHandler):
         etags["nav"] = nav_fp
 
         elapsed_ms = int((time.time() - ts0) * 1000)
-        scene_trace_meta = _build_scene_trace_meta(data, scene_diagnostics, elapsed_ms)
-        meta = {
-            "elapsed_ms": elapsed_ms,
-            "parts": {"nav": format_versions(nav_versions), **parts_version},
-            "etags": etags,
-            "intent": self.INTENT_TYPE,
-            "contract_version": CONTRACT_VERSION,
-            "api_version": API_VERSION,
-            "contract_mode": contract_mode,
-            "scene_trace": scene_trace_meta,
-        }
+        scene_trace_meta = contract_assembler.build_scene_trace_meta(data, scene_diagnostics, elapsed_ms)
+        meta = contract_assembler.build_meta(
+            elapsed_ms=elapsed_ms,
+            nav_versions=format_versions(nav_versions),
+            parts_version=parts_version,
+            etags=etags,
+            intent_type=self.INTENT_TYPE,
+            contract_version=CONTRACT_VERSION,
+            api_version=API_VERSION,
+            contract_mode=contract_mode,
+            scene_trace_meta=scene_trace_meta,
+        )
         if contract_mode == "hud":
             data["hud"] = {
                 "trace_id": trace_id,
@@ -1751,20 +539,12 @@ class SystemInitHandler(BaseIntentHandler):
             data["diagnostic"] = diagnostic_info
 
         # 顶层 ETag：纳入用户、导航指纹、默认路由、特性开关、可用意图
-        top_etag = stable_etag({
-            "user": data["user"],
-            "nav_fp": nav_fp,
-            "default_route": data["default_route"],
-            "feature_flags": data["feature_flags"],
-            "intents": data["intents"],
-            "scenes": data.get("scenes"),
-            "scene_channel": data.get("scene_channel"),
-            "scene_contract_ref": data.get("scene_contract_ref"),
-            "capabilities": data.get("capabilities"),
-            "capability_groups": data.get("capability_groups"),
-            "contract_mode": contract_mode,
-            "contract_version": CONTRACT_VERSION,
-            "api_version": API_VERSION,
-        })
+        top_etag = contract_assembler.build_top_etag(
+            data,
+            nav_fp=nav_fp,
+            contract_mode=contract_mode,
+            contract_version=CONTRACT_VERSION,
+            api_version=API_VERSION,
+        )
 
         return {"status": "success", "data": data, "meta": {**meta, "etag": top_etag}, "ok": True}
