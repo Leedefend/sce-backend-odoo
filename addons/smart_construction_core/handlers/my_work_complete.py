@@ -32,6 +32,7 @@ class MyWorkCompleteHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "single complete keeps lightweight behavior while batch intent owns replay contract"
 
     def handle(self, payload=None, ctx=None):
@@ -81,6 +82,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     AUDIT_MAX_PAYLOAD_BYTES = 16 * 1024
     AUDIT_IDS_SAMPLE_LIMIT = 20

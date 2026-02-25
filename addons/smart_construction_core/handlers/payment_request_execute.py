@@ -24,6 +24,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["smart_core.group_sc_finance_approver"]
+    ACL_MODE = "explicit_check"
 
     _ACTION_TO_HANDLER = {
         "submit": PaymentRequestSubmitHandler,

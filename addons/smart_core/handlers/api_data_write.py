@@ -44,6 +44,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
     VERSION = "0.6.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     IDEMPOTENCY_EVENT_CODE = "API_DATA_WRITE"
 

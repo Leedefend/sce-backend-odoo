@@ -40,6 +40,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
     VERSION = "0.1.0"
     ETAG_ENABLED = False
     REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    ACL_MODE = "explicit_check"
 
     ACTION_MAP = {
         "archive": {"active": False},

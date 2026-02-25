@@ -1487,6 +1487,10 @@ verify.intent.capability.matrix.report: guard.prod.forbid
 verify.intent.write.guard: guard.prod.forbid
 	@python3 addons/smart_core/tools/intent_write_guard.py
 
+.PHONY: verify.intent.acl.mode
+verify.intent.acl.mode: guard.prod.forbid
+	@python3 addons/smart_core/tools/intent_acl_mode_guard.py
+
 verify.write_intent.permission.audit: guard.prod.forbid
 	@python3 scripts/verify/write_intent_permission_audit.py
 
