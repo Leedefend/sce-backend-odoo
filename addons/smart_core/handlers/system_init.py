@@ -18,6 +18,7 @@ from odoo.addons.smart_core.core.scene_provider import (
     resolve_scene_channel as provider_resolve_scene_channel,
 )
 from odoo.addons.smart_core.core.capability_provider import (
+    build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
 from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
