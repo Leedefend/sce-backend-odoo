@@ -30,6 +30,7 @@ from odoo.addons.smart_core.core.system_init_diagnostics_helper import SystemIni
 from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
 from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
 from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
+from odoo.addons.smart_core.core.system_init_response_meta_builder import SystemInitResponseMetaBuilder
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
@@ -261,8 +262,10 @@ class SystemInitHandler(BaseIntentHandler):
         etags["nav"] = nav_fp
 
         elapsed_ms = int((time.time() - ts0) * 1000)
-        scene_trace_meta = contract_assembler.build_scene_trace_meta(data, scene_diagnostics, elapsed_ms)
-        meta = contract_assembler.build_meta(
+        scene_trace_meta, meta_with_etag = SystemInitResponseMetaBuilder.build(
+            contract_assembler=contract_assembler,
+            data=data,
+            scene_diagnostics=scene_diagnostics,
             elapsed_ms=elapsed_ms,
             nav_versions=format_versions(nav_versions),
             parts_version=parts_version,
@@ -271,7 +274,7 @@ class SystemInitHandler(BaseIntentHandler):
             contract_version=CONTRACT_VERSION,
             api_version=API_VERSION,
             contract_mode=contract_mode,
-            scene_trace_meta=scene_trace_meta,
+            nav_fp=nav_fp,
         )
         if contract_mode == "hud":
             SystemInitPayloadBuilder.attach_hud(
@@ -284,13 +287,4 @@ class SystemInitHandler(BaseIntentHandler):
         if diag_enabled and diagnostic_info is not None and contract_mode == "hud":
             SystemInitPayloadBuilder.attach_diagnostic(data, diagnostic_info)
 
-        # 顶层 ETag：纳入用户、导航指纹、默认路由、特性开关、可用意图
-        top_etag = contract_assembler.build_top_etag(
-            data,
-            nav_fp=nav_fp,
-            contract_mode=contract_mode,
-            contract_version=CONTRACT_VERSION,
-            api_version=API_VERSION,
-        )
-
-        return {"status": "success", "data": data, "meta": {**meta, "etag": top_etag}, "ok": True}
+        return {"status": "success", "data": data, "meta": meta_with_etag, "ok": True}
