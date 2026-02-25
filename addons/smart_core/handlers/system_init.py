@@ -27,6 +27,7 @@ from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuil
 from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
 from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCollector
 from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
+from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import (
@@ -251,18 +252,12 @@ class SystemInitHandler(BaseIntentHandler):
             "ext_facts": {},
         }
         scene_diagnostics = {
-            "schema_version": data.get("schema_version"),
-            "scene_version": data.get("scene_version"),
-            "loaded_from": None,
-            "normalize_warnings": [],
-            "resolve_errors": [],
-            "drift": [],
-            "rollback_active": bool(rollback_active),
-            "rollback_ref": None,
-            "channel_selector": channel_selector,
-            "channel_source_ref": channel_source_ref,
-            "auto_degrade": {"triggered": False, "reason_codes": [], "action_taken": "none"},
-            "timings": {},
+            **SceneDiagnosticsBuilder.initial(
+                data,
+                rollback_active=rollback_active,
+                channel_selector=channel_selector,
+                channel_source_ref=channel_source_ref,
+            ),
         }
         scene_normalizer = SceneNormalizer()
         scene_drift_engine = SceneDriftEngine()
@@ -408,21 +403,13 @@ class SystemInitHandler(BaseIntentHandler):
         post_governance_capability_count = (
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
         )
-        scene_diagnostics["governance"] = {
-            "contract_mode": contract_mode,
-            "before": {
-                "scene_count": pre_governance_scene_count,
-                "capability_count": pre_governance_capability_count,
-            },
-            "after": {
-                "scene_count": post_governance_scene_count,
-                "capability_count": post_governance_capability_count,
-            },
-            "filtered": {
-                "scene_count": max(0, pre_governance_scene_count - post_governance_scene_count),
-                "capability_count": max(0, pre_governance_capability_count - post_governance_capability_count),
-            },
-        }
+        scene_diagnostics["governance"] = SceneDiagnosticsBuilder.governance(
+            contract_mode=contract_mode,
+            before_scene_count=pre_governance_scene_count,
+            before_capability_count=pre_governance_capability_count,
+            after_scene_count=post_governance_scene_count,
+            after_capability_count=post_governance_capability_count,
+        )
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
         scene_keys_latest = {
             (s.get("code") or s.get("key"))
