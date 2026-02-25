@@ -1506,6 +1506,10 @@ verify.auto_degrade.smoke.report: guard.prod.forbid
 verify.scene.drift.smoke.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/scene_drift_smoke_report.py
 
+.PHONY: verify.scene.governance.smoke
+verify.scene.governance.smoke: guard.prod.forbid
+	@python3 scripts/verify/scene_governance_smoke.py
+
 verify.capability.orphan.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/capability_orphan_report.py
 
