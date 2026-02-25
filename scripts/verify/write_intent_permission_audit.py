@@ -115,9 +115,12 @@ def _audit_one(intent: str, loc: IntentLocation | None) -> dict:
         risk_level = "high"
         notes.append("sudo usage without explicit ACL guard in file")
     if not loc.required_groups:
-        if risk_level == "low":
-            risk_level = "medium"
-        notes.append("REQUIRED_GROUPS not explicitly defined")
+        if has_acl_guard and not unguarded_sudo_lines:
+            notes.append("REQUIRED_GROUPS not explicitly defined (relying on model ACL)")
+        else:
+            if risk_level == "low":
+                risk_level = "medium"
+            notes.append("REQUIRED_GROUPS not explicitly defined")
     if has_permission_check_intent:
         notes.append("contains permission.check usage")
     if not notes:
