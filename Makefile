@@ -1542,6 +1542,21 @@ verify.intent.concurrent.smoke: guard.prod.forbid
 verify.kernel.immutable.guard: guard.prod.forbid
 	@python3 scripts/verify/kernel_immutable_guard.py
 
+verify.kernel.freeze.guard: guard.prod.forbid
+	@python3 scripts/verify/kernel_freeze_guard.py
+
+verify.intent.public.surface.ready: guard.prod.forbid
+	@python3 scripts/verify/intent_public_surface_ready_report.py
+
+verify.platform.sla.guard: guard.prod.forbid
+	@python3 scripts/verify/platform_sla_guard.py
+
+verify.multi_tenant.evolution.smoke: guard.prod.forbid
+	@python3 scripts/verify/multi_tenant_evolution_smoke.py
+
+verify.contract.version.evolution.drill: guard.prod.forbid
+	@python3 scripts/verify/contract_version_evolution_drill.py
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 
@@ -1582,6 +1597,15 @@ verify.platform.stability.ready: guard.prod.forbid \
 	verify.kernel.immutable.guard \
 	verify.platform.reusability.ready
 	@echo "[OK] verify.platform.stability.ready done"
+
+verify.platform.governance.ready: guard.prod.forbid \
+	verify.kernel.freeze.guard \
+	verify.intent.public.surface.ready \
+	verify.platform.sla.guard \
+	verify.multi_tenant.evolution.smoke \
+	verify.contract.version.evolution.drill \
+	verify.platform.stability.ready
+	@echo "[OK] verify.platform.governance.ready done"
 
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py

@@ -1,0 +1,65 @@
+{
+  "version": "v1",
+  "updated_at": "2026-02-25",
+  "public_intents": [
+    {
+      "key": "platform.bootstrap",
+      "layer": "core",
+      "purpose": "app bootstrap and shell init",
+      "internal_intents": ["session.bootstrap", "system.init"]
+    },
+    {
+      "key": "platform.contract.resolve",
+      "layer": "core",
+      "purpose": "contract resolution for view/scene",
+      "internal_intents": ["ui.contract", "load_view", "load_metadata", "load_contract"]
+    },
+    {
+      "key": "platform.data.read",
+      "layer": "core",
+      "purpose": "read/query data",
+      "internal_intents": ["api.data"]
+    },
+    {
+      "key": "platform.data.write",
+      "layer": "core",
+      "purpose": "generic write channel",
+      "internal_intents": ["api.data.create", "api.data.unlink", "api.data.batch"]
+    },
+    {
+      "key": "platform.record.action",
+      "layer": "core",
+      "purpose": "execute model button action",
+      "internal_intents": ["execute_button"]
+    },
+    {
+      "key": "payment.request.transition",
+      "layer": "domain",
+      "purpose": "payment request lifecycle transition",
+      "internal_intents": [
+        "payment.request.submit",
+        "payment.request.approve",
+        "payment.request.reject",
+        "payment.request.done",
+        "payment.request.execute"
+      ]
+    },
+    {
+      "key": "owner.payment.request.transition",
+      "layer": "domain",
+      "purpose": "owner payment request transition",
+      "internal_intents": ["owner.payment.request.submit", "owner.payment.request.approve"]
+    },
+    {
+      "key": "scene.lifecycle.governance",
+      "layer": "governance",
+      "purpose": "scene governance transitions",
+      "internal_intents": [
+        "scene.governance.set_channel",
+        "scene.governance.rollback",
+        "scene.governance.pin_stable",
+        "scene.governance.export_contract"
+      ]
+    }
+  ]
+}
