@@ -54,6 +54,8 @@ def main() -> int:
         "capabilityStateFilter",
         "capabilityStateCounts",
         "capability_state_filter",
+        "const bucketKey = entry.groupKey || entry.sceneKey;",
+        "openBundleDashboard(",
         "licenseLevelLabel",
         "bundleNameLabel",
         "capabilityGroupCards",
