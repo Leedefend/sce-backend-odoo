@@ -19,6 +19,7 @@
 
     # 安全文件先占位，后续可逐步加 ACL/参数
     "data": [
+        "security/groups.xml",
         "security/smart_core_security.xml",
         "security/ir.model.access.csv"
         # 可选：默认参数/开关

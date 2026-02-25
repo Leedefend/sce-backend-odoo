@@ -1,11 +1,17 @@
 # smart_core/core/base_handler.py
 # -*- coding: utf-8 -*-
 import logging
+import re
 from typing import Any, Dict, Optional
 from odoo import api, SUPERUSER_ID
+from odoo.exceptions import AccessError
 import  inspect
 
 _logger = logging.getLogger(__name__)
+_WRITE_INTENT_PATTERN = re.compile(
+    r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
+    re.IGNORECASE,
+)
 
 class BaseIntentHandler:
     """
@@ -61,6 +67,35 @@ class BaseIntentHandler:
         # 留空默认放行；你的系统里若有统一中间件可不用这里
         return True
 
+    def is_write(self) -> bool:
+        intent = str(getattr(self, "INTENT_TYPE", "") or "")
+        non_idempotent = bool(str(getattr(self, "NON_IDEMPOTENT_ALLOWED", "") or "").strip())
+        return bool(_WRITE_INTENT_PATTERN.search(intent)) or non_idempotent
+
+    def enforce_required_groups(self):
+        required = getattr(self, "REQUIRED_GROUPS", []) or []
+        required_xmlids = [str(x).strip() for x in required if str(x).strip()]
+        if not required_xmlids:
+            raise AccessError(f"PERMISSION_DENIED: write intent requires REQUIRED_GROUPS ({self.__class__.__name__})")
+        user = self.env.user
+        missing = []
+        for xmlid in required_xmlids:
+            try:
+                if user.has_group(xmlid):
+                    continue
+            except Exception:
+                pass
+            missing.append(xmlid)
+        if not missing:
+            return True
+        raise AccessError(
+            "PERMISSION_DENIED: missing required groups [{}] for intent {} (required=[{}])".format(
+                ", ".join(missing),
+                str(getattr(self, "INTENT_TYPE", "") or self.__class__.__name__),
+                ", ".join(required_xmlids),
+            )
+        )
+
     # ---- 统一执行入口 ----
     def run(self, payload: Optional[Dict[str, Any]] = None, ctx: Optional[Dict[str, Any]] = None):
         """
@@ -81,6 +116,8 @@ class BaseIntentHandler:
 
         # 权限（可选）
         self._check_permissions()
+        if self.is_write():
+            self.enforce_required_groups()
 
         # ---- 智能适配调用 ----
         try:

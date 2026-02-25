@@ -39,6 +39,8 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
     DESCRIPTION = "Portal Shell minimal unlink intent"
     VERSION = "0.1.0"
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    ACL_MODE = "explicit_check"
     IDEMPOTENCY_WINDOW_SECONDS = 120
     IDEMPOTENCY_EVENT_CODE = "API_DATA_UNLINK"
 
@@ -77,7 +79,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         if not Audit:
             return
         try:
-            Audit.sudo().write_event(
+            Audit.write_event(
                 event_code=self.IDEMPOTENCY_EVENT_CODE,
                 model=model,
                 res_id=0,

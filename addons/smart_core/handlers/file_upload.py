@@ -24,6 +24,8 @@ class FileUploadHandler(BaseIntentHandler):
     DESCRIPTION = "Portal Shell file upload intent"
     VERSION = "0.1.0"
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    ACL_MODE = "explicit_check"
 
     ALLOWED_MODELS = {"project.project", "project.task"}
     MAX_BYTES = 5 * 1024 * 1024
