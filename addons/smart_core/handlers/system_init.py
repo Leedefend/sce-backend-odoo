@@ -20,9 +20,9 @@ from odoo.addons.smart_core.core.scene_provider import (
 from odoo.addons.smart_core.core.capability_provider import (
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
-from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
 from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
 from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
+from odoo.addons.smart_core.core.system_init_components_factory import SystemInitComponentsFactory
 from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCollector
 from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
@@ -35,14 +35,8 @@ from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeO
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
-from odoo.addons.smart_core.governance.scene_drift_engine import (
-    SceneDriftEngine,
-    append_resolve_error as drift_append_resolve_error,
-)
-from odoo.addons.smart_core.governance.capability_surface_engine import CapabilitySurfaceEngine
-from odoo.addons.smart_core.governance.scene_normalizer import SceneNormalizer
+from odoo.addons.smart_core.governance.scene_drift_engine import append_resolve_error as drift_append_resolve_error
 from odoo.addons.smart_core.identity.identity_resolver import IdentityResolver
-from odoo.addons.smart_core.runtime.auto_degrade_engine import AutoDegradeEngine
 from odoo.addons.smart_core.utils.reason_codes import (
     REASON_OK,
     REASON_PERMISSION_DENIED,
@@ -212,11 +206,12 @@ class SystemInitHandler(BaseIntentHandler):
                 channel_source_ref=channel_source_ref,
             ),
         }
-        scene_normalizer = SceneNormalizer()
-        scene_drift_engine = SceneDriftEngine()
-        auto_degrade_engine = AutoDegradeEngine()
-        capability_surface_engine = CapabilitySurfaceEngine()
-        contract_assembler = ContractAssembler()
+        components = SystemInitComponentsFactory.create()
+        scene_normalizer = components["scene_normalizer"]
+        scene_drift_engine = components["scene_drift_engine"]
+        auto_degrade_engine = components["auto_degrade_engine"]
+        capability_surface_engine = components["capability_surface_engine"]
+        contract_assembler = components["contract_assembler"]
         scene_normalizer.append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
         if home_contract:
             data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
