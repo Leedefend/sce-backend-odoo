@@ -1,0 +1,155 @@
+{
+  "version": "v1.0",
+  "generated_on": "2026-02-25",
+  "capabilities": [
+    {
+      "name": "项目立项管理",
+      "product_key": "product.project.initiation",
+      "intents": ["system.init", "ui.contract", "api.data.create"],
+      "scenes": ["projects.intake", "projects.list"],
+      "roles": ["pm", "executive"],
+      "sla": "P1",
+      "industry_scope": "construction"
+    },
+    {
+      "name": "项目执行管理",
+      "product_key": "product.project.execution",
+      "intents": ["execute_button", "api.data.batch"],
+      "scenes": ["projects.ledger", "projects.dashboard"],
+      "roles": ["pm"],
+      "sla": "P1",
+      "industry_scope": "construction"
+    },
+    {
+      "name": "任务协同与看板",
+      "product_key": "product.task.collaboration",
+      "intents": ["execute_button", "ui.contract"],
+      "scenes": ["projects.list", "projects.dashboard"],
+      "roles": ["pm", "owner"],
+      "sla": "P2",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "进度与成本监控",
+      "product_key": "product.cost.progress",
+      "intents": ["api.data", "ui.contract"],
+      "scenes": ["cost.project_progress", "cost.project_cost_ledger"],
+      "roles": ["pm", "finance", "executive"],
+      "sla": "P1",
+      "industry_scope": "construction"
+    },
+    {
+      "name": "合同管理",
+      "product_key": "product.contract.management",
+      "intents": ["api.data", "ui.contract"],
+      "scenes": ["projects.ledger", "finance.center"],
+      "roles": ["pm", "finance"],
+      "sla": "P1",
+      "industry_scope": "construction"
+    },
+    {
+      "name": "支付申请提交",
+      "product_key": "product.payment.submit",
+      "intents": ["payment.request.submit", "api.data.create"],
+      "scenes": ["finance.payment_requests", "owner.payment.center"],
+      "roles": ["finance", "owner"],
+      "sla": "P1",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "支付审批与执行",
+      "product_key": "product.payment.approval",
+      "intents": [
+        "payment.request.approve",
+        "payment.request.reject",
+        "payment.request.execute",
+        "owner.payment.request.approve"
+      ],
+      "scenes": ["finance.payment_requests", "owner.payment.center"],
+      "roles": ["finance", "executive"],
+      "sla": "P0",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "经营分析报表",
+      "product_key": "product.analytics.reporting",
+      "intents": ["api.data", "ui.contract"],
+      "scenes": ["finance.operating_metrics", "owner.report.overview"],
+      "roles": ["executive", "owner"],
+      "sla": "P1",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "风险清单管理",
+      "product_key": "product.risk.management",
+      "intents": ["owner.risk.list", "api.data"],
+      "scenes": ["owner.projects.list", "portal.lifecycle"],
+      "roles": ["pm", "owner", "executive"],
+      "sla": "P2",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "业主项目视图",
+      "product_key": "product.owner.project_view",
+      "intents": ["owner.projects.list", "owner.projects.detail"],
+      "scenes": ["owner.projects.list", "owner.dashboard"],
+      "roles": ["owner"],
+      "sla": "P2",
+      "industry_scope": "owner"
+    },
+    {
+      "name": "业主审批中心",
+      "product_key": "product.owner.approval",
+      "intents": ["owner.approval.center", "owner.payment.request.submit", "owner.payment.request.approve"],
+      "scenes": ["owner.report.overview", "owner.payment.center"],
+      "roles": ["owner", "executive"],
+      "sla": "P1",
+      "industry_scope": "owner"
+    },
+    {
+      "name": "权限与组织治理",
+      "product_key": "product.governance.identity",
+      "intents": ["permission.check", "scene.governance.set_channel"],
+      "scenes": ["portal.capability_matrix", "portal.dashboard"],
+      "roles": ["admin", "executive"],
+      "sla": "P1",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "场景发布与回滚",
+      "product_key": "product.governance.scene_ops",
+      "intents": ["scene.governance.pin_stable", "scene.governance.rollback", "scene.package.import"],
+      "scenes": ["portal.dashboard", "portal.capability_matrix"],
+      "roles": ["admin"],
+      "sla": "P0",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "文件与资料协同",
+      "product_key": "product.document.collaboration",
+      "intents": ["file.upload", "file.download", "chatter.post"],
+      "scenes": ["projects.ledger", "owner.projects.list"],
+      "roles": ["pm", "owner", "finance"],
+      "sla": "P2",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "工作台与导航中心",
+      "product_key": "product.workspace.navigation",
+      "intents": ["app.catalog", "app.nav", "app.open"],
+      "scenes": ["portal.dashboard", "projects.dashboard"],
+      "roles": ["pm", "finance", "executive", "owner"],
+      "sla": "P2",
+      "industry_scope": "cross"
+    },
+    {
+      "name": "合同契约兼容治理",
+      "product_key": "product.contract.compatibility",
+      "intents": ["ui.contract", "meta.describe_model"],
+      "scenes": ["projects.intake", "owner.dashboard"],
+      "roles": ["admin", "pm"],
+      "sla": "P1",
+      "industry_scope": "cross"
+    }
+  ]
+}
