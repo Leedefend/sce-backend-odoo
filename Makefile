@@ -1521,6 +1521,9 @@ verify.owner.industry.isolation: guard.prod.forbid
 verify.owner.intent.non_intrusion: guard.prod.forbid
 	@python3 scripts/verify/owner_intent_non_intrusion_guard.py
 
+verify.capability.isolation.report: guard.prod.forbid
+	@python3 scripts/verify/capability_isolation_report.py
+
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
 
