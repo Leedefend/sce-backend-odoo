@@ -40,6 +40,14 @@
   - Verifies scene/capability sequence determinism across repeated `system.init` calls.
 - `make verify.contract.catalog.determinism`
   - Verifies contract catalog exports are deterministic across repeated generations.
+- `make verify.system_init.runtime_context.stability`
+  - Verifies `system.init` RuntimeContext stability across three paths:
+    - user mode
+    - hud mode
+    - hud mode with critical injected path (`scene_inject_critical_error=1`)
+  - Artifacts:
+    - `artifacts/backend/system_init_runtime_context_stability.json`
+    - `artifacts/backend/system_init_runtime_context_stability.md`
 - `make verify.contract.envelope`
   - Aggregates envelope consistency checks (`ok/data/meta`) across intent and contract API paths.
 - `make verify.contract.envelope.guard`
@@ -47,7 +55,7 @@
 - `make verify.baseline.policy_integrity.guard`
   - Verifies required governance policy baseline JSON files exist and are valid objects.
 - `make verify.backend.architecture.full`
-  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + governance coverage + HUD trace smokes).
+  - One-command backend governance gate (boundary + envelope + mode + scene/capability schema + seed/demo isolation + catalog/runtime alignment + prod-like role fixtures + assembler semantic smoke + runtime surface dashboard report + snapshot determinism + RuntimeContext stability + governance coverage + HUD trace smokes).
   - Optional strict runtime-surface warning gate: `SC_RUNTIME_SURFACE_STRICT=1 make verify.backend.architecture.full`.
   - Optional strict phase-next aggregate gate: `SC_PHASE_NEXT_STRICT=1 make verify.backend.architecture.full`.
   - Always emits consolidated summary artifacts:
