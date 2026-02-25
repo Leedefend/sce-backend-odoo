@@ -26,6 +26,7 @@ from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
 from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCollector
 from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
+from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
@@ -141,15 +142,7 @@ class SystemInitHandler(BaseIntentHandler):
         user = env.user
         identity_resolver = IdentityResolver()
         user_groups_xmlids = identity_resolver.user_group_xmlids(user)
-
-        user_dict = {
-            "id": user.id,
-            "name": user.name,
-            "groups_xmlids": list(user_groups_xmlids),
-            "lang": user.lang,
-            "tz": user.tz,
-            "company_id": user.company_id.id if user.company_id else None,
-        }
+        user_dict = SystemInitIdentityPayload.build(user, user_groups_xmlids)
 
         # -------- 2) 导航（净化 + 指纹）--------
         p_nav = {"subject": "nav", "scene": scene}
