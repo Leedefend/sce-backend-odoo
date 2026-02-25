@@ -3,172 +3,172 @@
 - scene_count: 164
 - scene_with_capability_binding: 19
 
-| scene_key | read intents | write intents | execute intents | capability_refs |
-|---|---|---|---|---:|
-| cost.budget_alloc | - | - | - | 0 |
-| cost.cost_compare | - | - | - | 0 |
-| cost.profit_compare | ui.contract | - | - | 1 |
-| cost.project_boq | ui.contract | - | - | 2 |
-| cost.project_budget | ui.contract | - | - | 1 |
-| cost.project_cost_ledger | ui.contract | - | - | 1 |
-| cost.project_progress | ui.contract | - | - | 1 |
-| data.dictionary | - | - | - | 0 |
-| default | ui.contract | - | - | 5 |
-| default__pkg1 | - | - | - | 0 |
-| default__pkg10 | - | - | - | 0 |
-| default__pkg11 | - | - | - | 0 |
-| default__pkg12 | - | - | - | 0 |
-| default__pkg13 | - | - | - | 0 |
-| default__pkg14 | - | - | - | 0 |
-| default__pkg15 | - | - | - | 0 |
-| default__pkg16 | - | - | - | 0 |
-| default__pkg17 | - | - | - | 0 |
-| default__pkg18 | - | - | - | 0 |
-| default__pkg19 | - | - | - | 0 |
-| default__pkg2 | - | - | - | 0 |
-| default__pkg20 | - | - | - | 0 |
-| default__pkg21 | - | - | - | 0 |
-| default__pkg22 | - | - | - | 0 |
-| default__pkg23 | - | - | - | 0 |
-| default__pkg24 | - | - | - | 0 |
-| default__pkg25 | - | - | - | 0 |
-| default__pkg26 | - | - | - | 0 |
-| default__pkg27 | - | - | - | 0 |
-| default__pkg28 | - | - | - | 0 |
-| default__pkg3 | - | - | - | 0 |
-| default__pkg4 | - | - | - | 0 |
-| default__pkg5 | - | - | - | 0 |
-| default__pkg6 | - | - | - | 0 |
-| default__pkg7 | - | - | - | 0 |
-| default__pkg8 | - | - | - | 0 |
-| default__pkg9 | - | - | - | 0 |
-| finance.center | ui.contract | - | - | 3 |
-| finance.operating_metrics | ui.contract | - | - | 3 |
-| finance.payment_ledger | ui.contract | - | - | 1 |
-| finance.payment_requests | ui.contract | - | - | 2 |
-| finance.settlement_orders | ui.contract | - | - | 2 |
-| finance.treasury_ledger | ui.contract | - | - | 1 |
-| portal.capability_matrix | ui.contract | - | - | 2 |
-| portal.dashboard | ui.contract | - | - | 2 |
-| portal.lifecycle | ui.contract | - | - | 3 |
-| projects.dashboard | ui.contract | - | - | 2 |
-| projects.dashboard_showcase | - | - | - | 0 |
-| projects.intake | ui.contract | - | - | 1 |
-| projects.intake__pkg1 | - | - | - | 0 |
-| projects.intake__pkg10 | - | - | - | 0 |
-| projects.intake__pkg11 | - | - | - | 0 |
-| projects.intake__pkg12 | - | - | - | 0 |
-| projects.intake__pkg13 | - | - | - | 0 |
-| projects.intake__pkg14 | - | - | - | 0 |
-| projects.intake__pkg15 | - | - | - | 0 |
-| projects.intake__pkg16 | - | - | - | 0 |
-| projects.intake__pkg17 | - | - | - | 0 |
-| projects.intake__pkg18 | - | - | - | 0 |
-| projects.intake__pkg19 | - | - | - | 0 |
-| projects.intake__pkg2 | - | - | - | 0 |
-| projects.intake__pkg20 | - | - | - | 0 |
-| projects.intake__pkg21 | - | - | - | 0 |
-| projects.intake__pkg22 | - | - | - | 0 |
-| projects.intake__pkg23 | - | - | - | 0 |
-| projects.intake__pkg24 | - | - | - | 0 |
-| projects.intake__pkg25 | - | - | - | 0 |
-| projects.intake__pkg26 | - | - | - | 0 |
-| projects.intake__pkg27 | - | - | - | 0 |
-| projects.intake__pkg28 | - | - | - | 0 |
-| projects.intake__pkg3 | - | - | - | 0 |
-| projects.intake__pkg4 | - | - | - | 0 |
-| projects.intake__pkg5 | - | - | - | 0 |
-| projects.intake__pkg6 | - | - | - | 0 |
-| projects.intake__pkg7 | - | - | - | 0 |
-| projects.intake__pkg8 | - | - | - | 0 |
-| projects.intake__pkg9 | - | - | - | 0 |
-| projects.ledger | ui.contract | - | - | 11 |
-| projects.ledger__pkg1 | - | - | - | 0 |
-| projects.ledger__pkg10 | - | - | - | 0 |
-| projects.ledger__pkg11 | - | - | - | 0 |
-| projects.ledger__pkg12 | - | - | - | 0 |
-| projects.ledger__pkg13 | - | - | - | 0 |
-| projects.ledger__pkg14 | - | - | - | 0 |
-| projects.ledger__pkg15 | - | - | - | 0 |
-| projects.ledger__pkg16 | - | - | - | 0 |
-| projects.ledger__pkg17 | - | - | - | 0 |
-| projects.ledger__pkg18 | - | - | - | 0 |
-| projects.ledger__pkg19 | - | - | - | 0 |
-| projects.ledger__pkg2 | - | - | - | 0 |
-| projects.ledger__pkg20 | - | - | - | 0 |
-| projects.ledger__pkg21 | - | - | - | 0 |
-| projects.ledger__pkg22 | - | - | - | 0 |
-| projects.ledger__pkg23 | - | - | - | 0 |
-| projects.ledger__pkg24 | - | - | - | 0 |
-| projects.ledger__pkg25 | - | - | - | 0 |
-| projects.ledger__pkg26 | - | - | - | 0 |
-| projects.ledger__pkg27 | - | - | - | 0 |
-| projects.ledger__pkg28 | - | - | - | 0 |
-| projects.ledger__pkg3 | - | - | - | 0 |
-| projects.ledger__pkg4 | - | - | - | 0 |
-| projects.ledger__pkg5 | - | - | - | 0 |
-| projects.ledger__pkg6 | - | - | - | 0 |
-| projects.ledger__pkg7 | - | - | - | 0 |
-| projects.ledger__pkg8 | - | - | - | 0 |
-| projects.ledger__pkg9 | - | - | - | 0 |
-| projects.list | ui.contract | - | - | 3 |
-| projects.list__pkg1 | - | - | - | 0 |
-| projects.list__pkg10 | - | - | - | 0 |
-| projects.list__pkg11 | - | - | - | 0 |
-| projects.list__pkg12 | - | - | - | 0 |
-| projects.list__pkg13 | - | - | - | 0 |
-| projects.list__pkg14 | - | - | - | 0 |
-| projects.list__pkg15 | - | - | - | 0 |
-| projects.list__pkg16 | - | - | - | 0 |
-| projects.list__pkg17 | - | - | - | 0 |
-| projects.list__pkg18 | - | - | - | 0 |
-| projects.list__pkg19 | - | - | - | 0 |
-| projects.list__pkg2 | - | - | - | 0 |
-| projects.list__pkg20 | - | - | - | 0 |
-| projects.list__pkg21 | - | - | - | 0 |
-| projects.list__pkg22 | - | - | - | 0 |
-| projects.list__pkg23 | - | - | - | 0 |
-| projects.list__pkg24 | - | - | - | 0 |
-| projects.list__pkg25 | - | - | - | 0 |
-| projects.list__pkg26 | - | - | - | 0 |
-| projects.list__pkg27 | - | - | - | 0 |
-| projects.list__pkg28 | - | - | - | 0 |
-| projects.list__pkg3 | - | - | - | 0 |
-| projects.list__pkg4 | - | - | - | 0 |
-| projects.list__pkg5 | - | - | - | 0 |
-| projects.list__pkg6 | - | - | - | 0 |
-| projects.list__pkg7 | - | - | - | 0 |
-| projects.list__pkg8 | - | - | - | 0 |
-| projects.list__pkg9 | - | - | - | 0 |
-| scene_smoke_default | - | - | - | 0 |
-| scene_smoke_default__pkg1 | - | - | - | 0 |
-| scene_smoke_default__pkg10 | - | - | - | 0 |
-| scene_smoke_default__pkg11 | - | - | - | 0 |
-| scene_smoke_default__pkg12 | - | - | - | 0 |
-| scene_smoke_default__pkg13 | - | - | - | 0 |
-| scene_smoke_default__pkg14 | - | - | - | 0 |
-| scene_smoke_default__pkg15 | - | - | - | 0 |
-| scene_smoke_default__pkg16 | - | - | - | 0 |
-| scene_smoke_default__pkg17 | - | - | - | 0 |
-| scene_smoke_default__pkg18 | - | - | - | 0 |
-| scene_smoke_default__pkg19 | - | - | - | 0 |
-| scene_smoke_default__pkg2 | - | - | - | 0 |
-| scene_smoke_default__pkg20 | - | - | - | 0 |
-| scene_smoke_default__pkg21 | - | - | - | 0 |
-| scene_smoke_default__pkg22 | - | - | - | 0 |
-| scene_smoke_default__pkg23 | - | - | - | 0 |
-| scene_smoke_default__pkg24 | - | - | - | 0 |
-| scene_smoke_default__pkg25 | - | - | - | 0 |
-| scene_smoke_default__pkg26 | - | - | - | 0 |
-| scene_smoke_default__pkg27 | - | - | - | 0 |
-| scene_smoke_default__pkg28 | - | - | - | 0 |
-| scene_smoke_default__pkg3 | - | - | - | 0 |
-| scene_smoke_default__pkg4 | - | - | - | 0 |
-| scene_smoke_default__pkg5 | - | - | - | 0 |
-| scene_smoke_default__pkg6 | - | - | - | 0 |
-| scene_smoke_default__pkg7 | - | - | - | 0 |
-| scene_smoke_default__pkg8 | - | - | - | 0 |
-| scene_smoke_default__pkg9 | - | - | - | 0 |
+| scene_key | read intents | write intents | execute intents | 未覆盖 intent | 孤立 scene | capability_refs |
+|---|---|---|---|---|---:|---:|
+| cost.budget_alloc | - | - | - | - | Y | 0 |
+| cost.cost_compare | - | - | - | - | Y | 0 |
+| cost.profit_compare | ui.contract | - | - | - | N | 1 |
+| cost.project_boq | ui.contract | - | - | - | N | 2 |
+| cost.project_budget | ui.contract | - | - | - | N | 1 |
+| cost.project_cost_ledger | ui.contract | - | - | - | N | 1 |
+| cost.project_progress | ui.contract | - | - | - | N | 1 |
+| data.dictionary | - | - | - | - | Y | 0 |
+| default | ui.contract | - | - | - | N | 5 |
+| default__pkg1 | - | - | - | - | Y | 0 |
+| default__pkg10 | - | - | - | - | Y | 0 |
+| default__pkg11 | - | - | - | - | Y | 0 |
+| default__pkg12 | - | - | - | - | Y | 0 |
+| default__pkg13 | - | - | - | - | Y | 0 |
+| default__pkg14 | - | - | - | - | Y | 0 |
+| default__pkg15 | - | - | - | - | Y | 0 |
+| default__pkg16 | - | - | - | - | Y | 0 |
+| default__pkg17 | - | - | - | - | Y | 0 |
+| default__pkg18 | - | - | - | - | Y | 0 |
+| default__pkg19 | - | - | - | - | Y | 0 |
+| default__pkg2 | - | - | - | - | Y | 0 |
+| default__pkg20 | - | - | - | - | Y | 0 |
+| default__pkg21 | - | - | - | - | Y | 0 |
+| default__pkg22 | - | - | - | - | Y | 0 |
+| default__pkg23 | - | - | - | - | Y | 0 |
+| default__pkg24 | - | - | - | - | Y | 0 |
+| default__pkg25 | - | - | - | - | Y | 0 |
+| default__pkg26 | - | - | - | - | Y | 0 |
+| default__pkg27 | - | - | - | - | Y | 0 |
+| default__pkg28 | - | - | - | - | Y | 0 |
+| default__pkg3 | - | - | - | - | Y | 0 |
+| default__pkg4 | - | - | - | - | Y | 0 |
+| default__pkg5 | - | - | - | - | Y | 0 |
+| default__pkg6 | - | - | - | - | Y | 0 |
+| default__pkg7 | - | - | - | - | Y | 0 |
+| default__pkg8 | - | - | - | - | Y | 0 |
+| default__pkg9 | - | - | - | - | Y | 0 |
+| finance.center | ui.contract | - | - | - | N | 3 |
+| finance.operating_metrics | ui.contract | - | - | - | N | 3 |
+| finance.payment_ledger | ui.contract | - | - | - | N | 1 |
+| finance.payment_requests | ui.contract | - | - | - | N | 2 |
+| finance.settlement_orders | ui.contract | - | - | - | N | 2 |
+| finance.treasury_ledger | ui.contract | - | - | - | N | 1 |
+| portal.capability_matrix | ui.contract | - | - | - | N | 2 |
+| portal.dashboard | ui.contract | - | - | - | N | 2 |
+| portal.lifecycle | ui.contract | - | - | - | N | 3 |
+| projects.dashboard | ui.contract | - | - | - | N | 2 |
+| projects.dashboard_showcase | - | - | - | - | Y | 0 |
+| projects.intake | ui.contract | - | - | - | N | 1 |
+| projects.intake__pkg1 | - | - | - | - | Y | 0 |
+| projects.intake__pkg10 | - | - | - | - | Y | 0 |
+| projects.intake__pkg11 | - | - | - | - | Y | 0 |
+| projects.intake__pkg12 | - | - | - | - | Y | 0 |
+| projects.intake__pkg13 | - | - | - | - | Y | 0 |
+| projects.intake__pkg14 | - | - | - | - | Y | 0 |
+| projects.intake__pkg15 | - | - | - | - | Y | 0 |
+| projects.intake__pkg16 | - | - | - | - | Y | 0 |
+| projects.intake__pkg17 | - | - | - | - | Y | 0 |
+| projects.intake__pkg18 | - | - | - | - | Y | 0 |
+| projects.intake__pkg19 | - | - | - | - | Y | 0 |
+| projects.intake__pkg2 | - | - | - | - | Y | 0 |
+| projects.intake__pkg20 | - | - | - | - | Y | 0 |
+| projects.intake__pkg21 | - | - | - | - | Y | 0 |
+| projects.intake__pkg22 | - | - | - | - | Y | 0 |
+| projects.intake__pkg23 | - | - | - | - | Y | 0 |
+| projects.intake__pkg24 | - | - | - | - | Y | 0 |
+| projects.intake__pkg25 | - | - | - | - | Y | 0 |
+| projects.intake__pkg26 | - | - | - | - | Y | 0 |
+| projects.intake__pkg27 | - | - | - | - | Y | 0 |
+| projects.intake__pkg28 | - | - | - | - | Y | 0 |
+| projects.intake__pkg3 | - | - | - | - | Y | 0 |
+| projects.intake__pkg4 | - | - | - | - | Y | 0 |
+| projects.intake__pkg5 | - | - | - | - | Y | 0 |
+| projects.intake__pkg6 | - | - | - | - | Y | 0 |
+| projects.intake__pkg7 | - | - | - | - | Y | 0 |
+| projects.intake__pkg8 | - | - | - | - | Y | 0 |
+| projects.intake__pkg9 | - | - | - | - | Y | 0 |
+| projects.ledger | ui.contract | - | - | - | N | 11 |
+| projects.ledger__pkg1 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg10 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg11 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg12 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg13 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg14 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg15 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg16 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg17 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg18 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg19 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg2 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg20 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg21 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg22 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg23 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg24 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg25 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg26 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg27 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg28 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg3 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg4 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg5 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg6 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg7 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg8 | - | - | - | - | Y | 0 |
+| projects.ledger__pkg9 | - | - | - | - | Y | 0 |
+| projects.list | ui.contract | - | - | - | N | 3 |
+| projects.list__pkg1 | - | - | - | - | Y | 0 |
+| projects.list__pkg10 | - | - | - | - | Y | 0 |
+| projects.list__pkg11 | - | - | - | - | Y | 0 |
+| projects.list__pkg12 | - | - | - | - | Y | 0 |
+| projects.list__pkg13 | - | - | - | - | Y | 0 |
+| projects.list__pkg14 | - | - | - | - | Y | 0 |
+| projects.list__pkg15 | - | - | - | - | Y | 0 |
+| projects.list__pkg16 | - | - | - | - | Y | 0 |
+| projects.list__pkg17 | - | - | - | - | Y | 0 |
+| projects.list__pkg18 | - | - | - | - | Y | 0 |
+| projects.list__pkg19 | - | - | - | - | Y | 0 |
+| projects.list__pkg2 | - | - | - | - | Y | 0 |
+| projects.list__pkg20 | - | - | - | - | Y | 0 |
+| projects.list__pkg21 | - | - | - | - | Y | 0 |
+| projects.list__pkg22 | - | - | - | - | Y | 0 |
+| projects.list__pkg23 | - | - | - | - | Y | 0 |
+| projects.list__pkg24 | - | - | - | - | Y | 0 |
+| projects.list__pkg25 | - | - | - | - | Y | 0 |
+| projects.list__pkg26 | - | - | - | - | Y | 0 |
+| projects.list__pkg27 | - | - | - | - | Y | 0 |
+| projects.list__pkg28 | - | - | - | - | Y | 0 |
+| projects.list__pkg3 | - | - | - | - | Y | 0 |
+| projects.list__pkg4 | - | - | - | - | Y | 0 |
+| projects.list__pkg5 | - | - | - | - | Y | 0 |
+| projects.list__pkg6 | - | - | - | - | Y | 0 |
+| projects.list__pkg7 | - | - | - | - | Y | 0 |
+| projects.list__pkg8 | - | - | - | - | Y | 0 |
+| projects.list__pkg9 | - | - | - | - | Y | 0 |
+| scene_smoke_default | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg1 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg10 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg11 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg12 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg13 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg14 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg15 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg16 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg17 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg18 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg19 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg2 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg20 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg21 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg22 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg23 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg24 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg25 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg26 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg27 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg28 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg3 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg4 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg5 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg6 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg7 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg8 | - | - | - | - | Y | 0 |
+| scene_smoke_default__pkg9 | - | - | - | - | Y | 0 |
 
 ## Orphan Intents
 
@@ -369,3 +369,29 @@
 - `scene_smoke_default__pkg7`
 - `scene_smoke_default__pkg8`
 - `scene_smoke_default__pkg9`
+
+## No Write/Execute Scenes
+
+- `cost.profit_compare`
+- `cost.project_boq`
+- `cost.project_budget`
+- `cost.project_cost_ledger`
+- `cost.project_progress`
+- `default`
+- `finance.center`
+- `finance.operating_metrics`
+- `finance.payment_ledger`
+- `finance.payment_requests`
+- `finance.settlement_orders`
+- `finance.treasury_ledger`
+- `portal.capability_matrix`
+- `portal.dashboard`
+- `portal.lifecycle`
+- `projects.dashboard`
+- `projects.intake`
+- `projects.ledger`
+- `projects.list`
+
+## Scene Missing Intent Refs
+
+- none
