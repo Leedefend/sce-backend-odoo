@@ -688,7 +688,9 @@
     {
       "intent_type": "usage.export.csv",
       "class_name": "UsageExportCsvHandler",
-      "required_groups": [],
+      "required_groups": [
+        "base.group_user"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,

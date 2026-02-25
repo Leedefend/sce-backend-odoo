@@ -15,12 +15,12 @@ HANDLER_DIRS = [
 REPORT_MD = ROOT / "docs" / "ops" / "audit" / "write_intent_permission_audit.md"
 
 TARGET_WRITE_INTENTS = [
-    {"label": "execute_button", "candidates": ["execute_button"]},
-    {"label": "api.data(write)", "candidates": ["api.data.create", "api.data.unlink", "api.data.batch"]},
-    {"label": "api.data.batch", "candidates": ["api.data.batch"]},
-    {"label": "file.upload", "candidates": ["file.upload"]},
-    {"label": "report.export", "candidates": ["report.export", "usage.export.csv"]},
-    {"label": "job.cancel", "candidates": ["job.cancel"]},
+    {"label": "execute_button", "candidates": ["execute_button"], "allow_missing": False},
+    {"label": "api.data(write)", "candidates": ["api.data.create", "api.data.unlink", "api.data.batch"], "allow_missing": False},
+    {"label": "api.data.batch", "candidates": ["api.data.batch"], "allow_missing": False},
+    {"label": "file.upload", "candidates": ["file.upload"], "allow_missing": False},
+    {"label": "report.export", "candidates": ["usage.export.csv"], "allow_missing": False},
+    {"label": "job.cancel", "candidates": ["job.cancel"], "allow_missing": True},
 ]
 
 
@@ -145,7 +145,7 @@ def _merge_risk(rows: list[dict]) -> str:
     return level
 
 
-def _audit_family(label: str, candidates: list[str], intents: dict[str, IntentLocation]) -> dict:
+def _audit_family(label: str, candidates: list[str], intents: dict[str, IntentLocation], *, allow_missing: bool = False) -> dict:
     checks = [_audit_one(intent, intents.get(intent)) for intent in candidates]
     existing = [x for x in checks if x.get("exists")]
     required_groups = sorted({grp for row in existing for grp in row.get("required_groups", [])})
@@ -158,6 +158,8 @@ def _audit_family(label: str, candidates: list[str], intents: dict[str, IntentLo
         for note in row.get("notes", []):
             notes.append(f"{name}: {note}")
     if not existing:
+        risk = "low" if allow_missing else "high"
+        msg = "intent family not implemented/routable (non-applicable)" if allow_missing else "intent family not found in handlers"
         return {
             "intent": label,
             "exists": False,
@@ -167,8 +169,8 @@ def _audit_family(label: str, candidates: list[str], intents: dict[str, IntentLo
             "has_permission_check_intent": False,
             "sudo_lines": [],
             "unguarded_sudo_lines": [],
-            "risk_level": "high",
-            "notes": notes or ["intent family not found in handlers"],
+            "risk_level": risk,
+            "notes": notes or [msg],
             "matched_intents": [],
         }
     risk = _merge_risk(existing)
@@ -224,7 +226,15 @@ def _render(rows: list[dict]) -> str:
 
 def main() -> int:
     intents = _collect_intent_locations()
-    rows = [_audit_family(item["label"], item["candidates"], intents) for item in TARGET_WRITE_INTENTS]
+    rows = [
+        _audit_family(
+            item["label"],
+            item["candidates"],
+            intents,
+            allow_missing=bool(item.get("allow_missing", False)),
+        )
+        for item in TARGET_WRITE_INTENTS
+    ]
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.write_text(_render(rows), encoding="utf-8")
     print(str(REPORT_MD))

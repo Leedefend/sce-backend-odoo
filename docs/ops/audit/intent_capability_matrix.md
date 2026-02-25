@@ -57,7 +57,7 @@
 | ui.contract | 0 | Y | Y | N | N | Y | N | addons/smart_core/handlers/ui_contract.py |
 | ui.contract.enhanced | 0 | N | Y | N | N | N | N | addons/smart_core/handlers/enhanced_ui_contract.py |
 | ui.contract.model.view | 0 | N | Y | N | N | N | N | addons/smart_core/handlers/enhanced_ui_contract.py |
-| usage.export.csv | 0 | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_export_csv.py |
+| usage.export.csv | 1 | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_export_csv.py |
 | usage.report | 0 | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_report.py |
 | usage.track | 0 | N | Y | N | Y | N | Y | addons/smart_construction_core/handlers/usage_track.py |
 

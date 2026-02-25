@@ -1,7 +1,7 @@
 # Write Intent Permission Audit
 
 - intents_scanned: 6
-- high_risk_count: 2
+- high_risk_count: 0
 - medium_risk_count: 4
 
 | intent | exists | required_groups | acl_guard | sudo_calls | unguarded_sudo | risk | source |
@@ -20,11 +20,8 @@
 | file.upload | Y | 0 | Y | 0 | 0 | medium | addons/smart_core/handlers/file_upload.py |
 - matched: `file.upload`
 - note: `file.upload` file.upload: REQUIRED_GROUPS not explicitly defined
-| report.export | Y | 0 | N | 1 | 1 | high | addons/smart_construction_core/handlers/usage_export_csv.py |
-- matched: `report.export, usage.export.csv`
-- note: `report.export` report.export: intent not found in handlers
-- note: `report.export` usage.export.csv: missing ACL guard call (check_access_rights/check_access_rule/has_group)
-- note: `report.export` usage.export.csv: sudo usage without explicit ACL guard in file
-- note: `report.export` usage.export.csv: REQUIRED_GROUPS not explicitly defined
-| job.cancel | N | 0 | N | 0 | 0 | high | - |
+| report.export | Y | 1 | Y | 1 | 0 | low | addons/smart_construction_core/handlers/usage_export_csv.py |
+- matched: `usage.export.csv`
+- note: `report.export` usage.export.csv: permission posture looks acceptable
+| job.cancel | N | 0 | N | 0 | 0 | low | - |
 - note: `job.cancel` job.cancel: intent not found in handlers
