@@ -1527,6 +1527,30 @@ verify.capability.isolation.report: guard.prod.forbid
 verify.owner.scene.independent.deploy: guard.prod.forbid
 	@python3 scripts/verify/owner_scene_independent_deploy_report.py
 
+verify.platform.distribution.report: guard.prod.forbid
+	@python3 scripts/verify/platform_distribution_ready_report.py
+
+verify.platform.distribution.ready: guard.prod.forbid \
+	verify.owner.industry.isolation \
+	verify.owner.intent.non_intrusion \
+	verify.capability.isolation.report \
+	verify.owner.scene.independent.deploy \
+	verify.platform.distribution.report
+	@echo "[OK] verify.platform.distribution.ready done"
+
+verify.contract.compat: guard.prod.forbid
+	@python3 scripts/verify/contract_compat_report.py
+
+verify.platform.performance.smoke: guard.prod.forbid
+	@python3 scripts/verify/platform_performance_smoke.py
+
+verify.platform.maturity.ready: guard.prod.forbid \
+	verify.platform.distribution.ready \
+	verify.contract.compat \
+	verify.platform.performance.smoke \
+	verify.platform.kernel.ready
+	@echo "[OK] verify.platform.maturity.ready done"
+
 verify.platform.reusability.ready: guard.prod.forbid \
 	verify.owner.industry.isolation \
 	verify.owner.intent.non_intrusion \
