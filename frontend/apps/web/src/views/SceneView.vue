@@ -20,6 +20,7 @@
       :message="forbiddenCopy.message"
       :hint="forbiddenCopy.hint"
       variant="forbidden_capability"
+      :on-retry="goWorkbench"
     />
   </section>
 </template>
@@ -82,6 +83,13 @@ function buildPortalBridgeUrl(url: string) {
     bridge.searchParams.set('db', config.odooDb);
   }
   return bridge.toString();
+}
+
+function goWorkbench() {
+  router.replace({
+    name: 'workbench',
+    query: { reason: ErrorCodes.CAPABILITY_MISSING, scene: String(route.params.sceneKey || '') },
+  }).catch(() => {});
 }
 
 function resolveRecordId(targetRecord: unknown) {
