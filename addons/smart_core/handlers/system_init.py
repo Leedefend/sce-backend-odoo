@@ -27,6 +27,7 @@ from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCo
 from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
 from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
+from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
 from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
@@ -146,11 +147,7 @@ class SystemInitHandler(BaseIntentHandler):
         user_dict = SystemInitIdentityPayload.build(user, user_groups_xmlids)
 
         # -------- 2) 导航（净化 + 指纹）--------
-        p_nav = {"subject": "nav", "scene": scene}
-        if params.get("root_xmlid"):
-            p_nav["root_xmlid"] = params.get("root_xmlid")
-        if params.get("root_menu_id"):
-            p_nav["root_menu_id"] = params.get("root_menu_id")
+        p_nav = SystemInitNavRequestBuilder.build(params, scene)
         nav_data, nav_versions = NavDispatcher(env, su_env).build_nav(p_nav)
 
         nav_tree_raw = nav_data.get("nav") or []
