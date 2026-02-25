@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import logging
 import time
-import os
 from typing import Dict, List
 
 from odoo import api, SUPERUSER_ID
@@ -27,6 +26,7 @@ from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
 from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
 from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
 from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCollector
+from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import (
@@ -117,22 +117,8 @@ class SystemInitHandler(BaseIntentHandler):
 
         scene_channel, channel_selector, channel_source_ref = _resolve_scene_channel(env, env.user, params)
         diagnostics_collector = RequestDiagnosticsCollector()
-        pinned_param = params.get("scene_use_pinned") if isinstance(params, dict) else None
-        rollback_param = params.get("scene_rollback") if isinstance(params, dict) else None
-        try:
-            rollback_active = bool(self.get_bool("scene_use_pinned", False) or self.get_bool("scene_rollback", False))
-        except Exception:
-            rollback_active = is_truthy(pinned_param) or is_truthy(rollback_param)
-        if pinned_param is not None and str(pinned_param).strip() not in {"", "0", "false", "no", "off"}:
-            rollback_active = True
-        try:
-            config = env["ir.config_parameter"].sudo()
-            rollback_active = rollback_active or is_truthy(config.get_param("sc.scene.use_pinned")) or                 is_truthy(config.get_param("sc.scene.rollback"))
-        except Exception:
-            pass
-        rollback_active = rollback_active or is_truthy(os.environ.get("SCENE_USE_PINNED")) or             is_truthy(os.environ.get("SCENE_ROLLBACK"))
-        if rollback_active:
-            scene_channel = "stable"
+        scene_channel_policy = SceneChannelPolicy()
+        scene_channel, rollback_active = scene_channel_policy.resolve(env, params, scene_channel)
         
         diag_enabled = diagnostics_collector.diagnostics_enabled(self.env)
         diagnostic_info = None
