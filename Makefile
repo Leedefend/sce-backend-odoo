@@ -1509,6 +1509,9 @@ verify.intent.orphan.report: guard.prod.forbid
 verify.capability.scene.matrix.report: guard.prod.forbid
 	@python3 scripts/verify/capability_scene_matrix_report.py
 
+verify.intent.execution.path.report: guard.prod.forbid verify.intent.permission.matrix.report
+	@python3 scripts/verify/intent_execution_path_report.py
+
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
 
