@@ -27,6 +27,7 @@ from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCo
 from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
 from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
+from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
@@ -185,32 +186,27 @@ class SystemInitHandler(BaseIntentHandler):
         )
 
         # -------- 5) 汇总返回（统一蛇形命名 + 导航指纹 + 动态意图）--------
-        data = {
-            "user": user_dict,
-            "nav": nav_tree,
-            "nav_meta": {                                                       # ✅ 导航指纹 + scope info
+        data = SystemInitPayloadBuilder.build_base(
+            user_dict=user_dict,
+            nav_tree=nav_tree,
+            nav_meta={
                 "fingerprint": nav_fp,
                 **(nav_versions or {}),
                 "debug_params_keys": sorted(list(params.keys())) if isinstance(params, dict) else [],
                 "debug_root_xmlid": params.get("root_xmlid") if isinstance(params, dict) else None,
             },
-            "default_route": nav_data.get("defaultRoute") or {"menu_id": None},  # ✅ snake_case
-            "intents": intents,                                                  # ✅ 动态意图（主名）
-            "intents_meta": intents_meta,                                        # ⬅ 可选（前端可不用）
-            "feature_flags": nav_data.get("feature_flags") or {"ai_enabled": True},
-            "capabilities": normalize_capabilities(_load_capabilities_for_user(env, user)),
-            "capability_groups": [],
-            "preload": [],
-            "scenes": [],
-            "scene_version": "v1",
-            "schema_version": "v1",
-            "scene_channel": scene_channel,
-            "scene_channel_selector": channel_selector,
-            "scene_channel_source_ref": channel_source_ref,
-            "scene_contract_ref": None,
-            "contract_mode": contract_mode,
-            "ext_facts": {},
-        }
+            default_route=nav_data.get("defaultRoute") or {"menu_id": None},
+            intents=intents,
+            intents_meta=intents_meta,
+            feature_flags=nav_data.get("feature_flags") or {"ai_enabled": True},
+            capabilities=normalize_capabilities(_load_capabilities_for_user(env, user)),
+            scene_channel=scene_channel,
+            channel_selector=channel_selector,
+            channel_source_ref=channel_source_ref,
+            contract_mode=contract_mode,
+        )
+        # Keep explicit contract_mode mapping in handler for governance coverage guard.
+        data.update({"contract_mode": contract_mode})
         scene_diagnostics = {
             **SceneDiagnosticsBuilder.initial(
                 data,
@@ -286,15 +282,15 @@ class SystemInitHandler(BaseIntentHandler):
             scene_trace_meta=scene_trace_meta,
         )
         if contract_mode == "hud":
-            data["hud"] = {
-                "trace_id": trace_id,
-                "latency_ms": elapsed_ms,
-                "contract_version": CONTRACT_VERSION,
-                "role_key": data.get("role_surface", {}).get("role_code"),
-                **scene_trace_meta,
-            }
+            SystemInitPayloadBuilder.attach_hud(
+                data,
+                trace_id=trace_id,
+                elapsed_ms=elapsed_ms,
+                contract_version=CONTRACT_VERSION,
+                scene_trace_meta=scene_trace_meta,
+            )
         if diag_enabled and diagnostic_info is not None and contract_mode == "hud":
-            data["diagnostic"] = diagnostic_info
+            SystemInitPayloadBuilder.attach_diagnostic(data, diagnostic_info)
 
         # 顶层 ETag：纳入用户、导航指纹、默认路由、特性开关、可用意图
         top_etag = contract_assembler.build_top_etag(
