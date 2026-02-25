@@ -1,0 +1,8 @@
+{
+  "iterations": 30,
+  "capability_count": 120,
+  "role_count": 24,
+  "group_count": 8,
+  "max_p95_ms": 25.0,
+  "max_payload_bytes": 600000
+}
