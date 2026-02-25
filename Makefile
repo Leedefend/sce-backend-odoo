@@ -1483,6 +1483,9 @@ verify.system_init.runtime_context.stability: guard.prod.forbid
 verify.intent.capability.matrix.report: guard.prod.forbid
 	@python3 scripts/verify/intent_capability_matrix_report.py
 
+verify.intent.layered.catalog: guard.prod.forbid verify.intent.capability.matrix.report
+	@python3 scripts/verify/intent_layered_catalog_report.py
+
 .PHONY: verify.intent.write.guard
 verify.intent.write.guard: guard.prod.forbid
 	@python3 addons/smart_core/tools/intent_write_guard.py
@@ -1496,6 +1499,21 @@ verify.write_intent.permission.audit: guard.prod.forbid
 
 verify.scene.intent.matrix.report: guard.prod.forbid
 	@python3 scripts/verify/scene_intent_matrix_report.py
+
+verify.scene.intent.consistency: guard.prod.forbid verify.intent.layered.catalog
+	@python3 scripts/verify/scene_intent_consistency_guard.py
+
+verify.intent.orphan.report: guard.prod.forbid
+	@python3 scripts/verify/intent_orphan_report.py
+
+verify.capability.scene.matrix.report: guard.prod.forbid
+	@python3 scripts/verify/capability_scene_matrix_report.py
+
+verify.intent.execution.path.report: guard.prod.forbid verify.intent.permission.matrix.report
+	@python3 scripts/verify/intent_execution_path_report.py
+
+verify.platform.kernel.baseline: guard.prod.forbid verify.intent.layered.catalog
+	@python3 scripts/verify/platform_kernel_baseline_guard.py
 
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
@@ -1555,6 +1573,11 @@ verify.platform.kernel.ready: guard.prod.forbid \
 	verify.etag.validation.report \
 	verify.intent.capability.matrix.report \
 	verify.scene.intent.matrix.report \
+	verify.intent.orphan.report \
+	verify.capability.scene.matrix.report \
+	verify.scene.intent.consistency \
+	verify.intent.execution.path.report \
+	verify.platform.kernel.baseline \
 	verify.capability.orphan.report
 	@echo "[OK] verify.platform.kernel.ready done"
 

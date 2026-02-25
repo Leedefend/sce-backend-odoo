@@ -45,6 +45,8 @@ class HandlerIntent:
     non_idempotent_allowed: bool
     source: str
     is_write_operation: bool
+    acl_mode: str
+    layer: str
     orm_used: bool
     may_trigger_sudo: bool
     has_test_file: bool
@@ -70,6 +72,7 @@ def _find_handlers(path: Path) -> list[HandlerIntent]:
         required_groups: list[str] = []
         etag_enabled = False
         non_idempotent_allowed = False
+        acl_mode = ""
         for stmt in node.body:
             if not isinstance(stmt, ast.Assign):
                 continue
@@ -86,9 +89,12 @@ def _find_handlers(path: Path) -> list[HandlerIntent]:
                     etag_enabled = bool(value)
                 elif name == "NON_IDEMPOTENT_ALLOWED":
                     non_idempotent_allowed = bool(str(value or "").strip())
+                elif name == "ACL_MODE" and isinstance(value, str):
+                    acl_mode = value.strip()
         if not intent_type:
             continue
         is_write = bool(WRITE_HINT_PATTERN.search(intent_type)) or non_idempotent_allowed
+        layer = _layer_for_intent(intent_type)
         out.append(
             HandlerIntent(
                 intent_type=intent_type,
@@ -99,6 +105,8 @@ def _find_handlers(path: Path) -> list[HandlerIntent]:
                 non_idempotent_allowed=non_idempotent_allowed,
                 source=str(path.relative_to(ROOT)),
                 is_write_operation=is_write,
+                acl_mode=acl_mode,
+                layer=layer,
                 orm_used=bool(ORM_CALL_PATTERN.search(text)),
                 may_trigger_sudo=bool(SUDO_PATTERN.search(text)),
                 has_test_file=False,
@@ -107,6 +115,19 @@ def _find_handlers(path: Path) -> list[HandlerIntent]:
             )
         )
     return out
+
+
+def _layer_for_intent(intent_type: str) -> str:
+    low = str(intent_type or "").strip().lower()
+    if (
+        low in {"system.init", "ui.contract", "api.data", "execute_button", "permission.check"}
+        or low.startswith("file.")
+        or low.startswith("api.data.")
+    ):
+        return "core"
+    if low.startswith("scene.governance.") or low.startswith("scene.package."):
+        return "governance"
+    return "domain"
 
 
 def _collect_make_targets() -> dict[str, str]:
@@ -207,14 +228,16 @@ def _render_markdown(rows: list[HandlerIntent]) -> str:
         "",
         "## Matrix",
         "",
-        "| intent_type | required_groups | etag_enabled | has_test | has_smoke_target | is_write | orm_used | may_sudo | source |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---|",
+        "| intent_type | layer | required_groups | acl_mode | etag_enabled | has_test | has_smoke_target | is_write | orm_used | may_sudo | source |",
+        "|---|---|---:|---|---:|---:|---:|---:|---:|---:|---|",
     ]
     for row in sorted(rows, key=lambda x: x.intent_type):
         lines.append(
-            "| {intent} | {groups} | {etag} | {test} | {smoke} | {write} | {orm} | {sudo} | {src} |".format(
+            "| {intent} | {layer} | {groups} | {acl_mode} | {etag} | {test} | {smoke} | {write} | {orm} | {sudo} | {src} |".format(
                 intent=row.intent_type,
+                layer=row.layer,
                 groups=len(row.required_groups),
+                acl_mode=row.acl_mode or "-",
                 etag="Y" if row.etag_enabled else "N",
                 test="Y" if row.has_test_file else "N",
                 smoke="Y" if row.has_smoke_make_target else "N",
@@ -268,6 +291,9 @@ def main() -> int:
                 "has_smoke_make_target": r.has_smoke_make_target,
                 "smoke_make_targets": r.smoke_make_targets,
                 "is_write_operation": r.is_write_operation,
+                "is_write": r.is_write_operation,
+                "acl_mode": r.acl_mode,
+                "layer": r.layer,
                 "orm_used": r.orm_used,
                 "may_trigger_sudo": r.may_trigger_sudo,
                 "source": r.source,

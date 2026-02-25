@@ -173,30 +173,39 @@ def main() -> int:
     known_intents = {str(x.get("intent_type") or "").strip() for x in (enriched.get("intents") or []) if isinstance(x, dict)}
     known_intents.discard("")
 
+    missing_intent_refs_by_scene: dict[str, list[str]] = {}
     lines = [
         "# Scene Intent Matrix",
         "",
         f"- scene_count: {len(scene_codes)}",
         f"- scene_with_capability_binding: {sum(1 for k in scene_codes if scene_caps.get(k))}",
         "",
-        "| scene_key | read intents | write intents | execute intents | capability_refs |",
-        "|---|---|---|---|---:|",
+        "| scene_key | read intents | write intents | execute intents | 未覆盖 intent | 孤立 scene | capability_refs |",
+        "|---|---|---|---|---|---:|---:|",
     ]
 
     used_intents: set[str] = set()
     uncovered_scenes: list[str] = []
+    no_write_scenes: list[str] = []
     for scene_key in sorted(scene_codes):
         refs = sorted(scene_caps.get(scene_key) or [])
         intents = sorted({cap_intent.get(cap, "ui.contract") for cap in refs})
         read = sorted(x for x in intents if _intent_bucket(x) == "read")
         write = sorted(x for x in intents if _intent_bucket(x) == "write")
         execute = sorted(x for x in intents if _intent_bucket(x) == "execute")
+        missing_intents = sorted(x for x in intents if x not in known_intents)
         if not intents:
             uncovered_scenes.append(scene_key)
+        if intents and not write and not execute:
+            no_write_scenes.append(scene_key)
+        if missing_intents:
+            missing_intent_refs_by_scene[scene_key] = missing_intents
         used_intents.update(intents)
         lines.append(
             f"| {scene_key} | {', '.join(read) if read else '-'} | "
-            f"{', '.join(write) if write else '-'} | {', '.join(execute) if execute else '-'} | {len(refs)} |"
+            f"{', '.join(write) if write else '-'} | {', '.join(execute) if execute else '-'} | "
+            f"{', '.join(missing_intents) if missing_intents else '-'} | "
+            f"{'Y' if not intents else 'N'} | {len(refs)} |"
         )
 
     orphan_intents = sorted(known_intents - used_intents)
@@ -211,6 +220,20 @@ def main() -> int:
     if uncovered_scenes:
         for scene in uncovered_scenes:
             lines.append(f"- `{scene}`")
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## No Write/Execute Scenes", ""])
+    if no_write_scenes:
+        for scene in sorted(no_write_scenes):
+            lines.append(f"- `{scene}`")
+    else:
+        lines.append("- none")
+
+    lines.extend(["", "## Scene Missing Intent Refs", ""])
+    if missing_intent_refs_by_scene:
+        for scene in sorted(missing_intent_refs_by_scene.keys()):
+            lines.append(f"- `{scene}`: {', '.join(missing_intent_refs_by_scene[scene])}")
     else:
         lines.append("- none")
 
