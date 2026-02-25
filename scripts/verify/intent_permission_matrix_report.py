@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +21,7 @@ TEST_DIRS = [
     ROOT / "scripts" / "verify",
 ]
 REPORT_MD = ROOT / "docs" / "ops" / "audit" / "intent_permission_matrix.md"
+ARTIFACT_JSON = ROOT / "artifacts" / "backend" / "intent_permission_matrix.json"
 WRITE_HINT_PATTERN = re.compile(
     r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
     re.IGNORECASE,
@@ -160,7 +162,34 @@ def main() -> int:
 
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.write_text(_render(rows), encoding="utf-8")
+    ARTIFACT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    ARTIFACT_JSON.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "intent_count": len(rows),
+                    "write_intent_count": len([r for r in rows if r.is_write]),
+                },
+                "rows": [
+                    {
+                        "intent": r.intent,
+                        "source": r.source,
+                        "is_write": bool(r.is_write),
+                        "required_groups": list(r.required_groups or []),
+                        "acl_mode": str(r.acl_mode or ""),
+                        "smoke": bool(r.smoke),
+                        "has_test": bool(r.has_test),
+                    }
+                    for r in rows
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     print(str(REPORT_MD))
+    print(str(ARTIFACT_JSON))
     print("[intent_permission_matrix_report] PASS")
     return 0
 
