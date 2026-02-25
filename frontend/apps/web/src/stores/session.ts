@@ -24,6 +24,41 @@ export type RoleSurfaceMap = Record<string, {
   menu_xmlids?: string[];
 }>;
 
+export interface CapabilityGroup {
+  key: string;
+  label: string;
+  icon: string;
+  sequence: number;
+  capability_count: number;
+  state_counts: Record<string, number>;
+  capability_state_counts: Record<string, number>;
+}
+
+export interface CapabilityRuntimeMeta {
+  key: string;
+  label: string;
+  state: string;
+  capability_state: string;
+  reason: string;
+  reason_code: string;
+  group_key: string;
+  group_label: string;
+}
+
+export interface ProductFacts {
+  license: {
+    level: string;
+    tiers: string[];
+  } | null;
+  bundle: {
+    name: string;
+    scenes: string[];
+    capabilities: string[];
+    recommended_roles: string[];
+    default_dashboard: string;
+  } | null;
+}
+
 export interface SessionState {
   token: string | null;
   user: AppInitResponse['user'] | null;
@@ -35,6 +70,9 @@ export interface SessionState {
   sceneVersion: string | null;
   roleSurface: RoleSurface | null;
   roleSurfaceMap: RoleSurfaceMap;
+  capabilityCatalog: Record<string, CapabilityRuntimeMeta>;
+  capabilityGroups: CapabilityGroup[];
+  productFacts: ProductFacts;
   lastTraceId: string;
   lastIntent: string;
   lastLatencyMs: number | null;
@@ -46,7 +84,7 @@ export interface SessionState {
   initMeta: AppInitResponse['meta'] | null;
 }
 
-const STORAGE_KEY = 'sc_frontend_session_v0_2';
+const STORAGE_KEY = 'sc_frontend_session_v0_3';
 
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
@@ -60,6 +98,12 @@ export const useSessionStore = defineStore('session', {
     sceneVersion: null,
     roleSurface: null,
     roleSurfaceMap: {},
+    capabilityCatalog: {},
+    capabilityGroups: [],
+    productFacts: {
+      license: null,
+      bundle: null,
+    },
     lastTraceId: '',
     lastIntent: '',
     lastLatencyMs: null,
@@ -89,6 +133,9 @@ export const useSessionStore = defineStore('session', {
           this.sceneVersion = parsed.sceneVersion ?? null;
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
+          this.capabilityCatalog = parsed.capabilityCatalog ?? {};
+          this.capabilityGroups = parsed.capabilityGroups ?? [];
+          this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
           if (this.scenes.length) {
             setSceneRegistry(this.scenes);
           }
@@ -121,6 +168,9 @@ export const useSessionStore = defineStore('session', {
       this.sceneVersion = null;
       this.roleSurface = null;
       this.roleSurfaceMap = {};
+      this.capabilityCatalog = {};
+      this.capabilityGroups = [];
+      this.productFacts = { license: null, bundle: null };
       setSceneRegistry([]);
       this.lastTraceId = '';
       this.lastIntent = '';
@@ -169,6 +219,9 @@ export const useSessionStore = defineStore('session', {
         sceneVersion: this.sceneVersion,
         roleSurface: this.roleSurface,
         roleSurfaceMap: this.roleSurfaceMap,
+        capabilityCatalog: this.capabilityCatalog,
+        capabilityGroups: this.capabilityGroups,
+        productFacts: this.productFacts,
         lastTraceId: this.lastTraceId,
         lastIntent: this.lastIntent,
         lastLatencyMs: this.lastLatencyMs,
@@ -287,6 +340,37 @@ export const useSessionStore = defineStore('session', {
       this.capabilities = rawCapabilities
         .map((cap) => (typeof cap === 'string' ? cap : cap?.key || ''))
         .filter((cap) => typeof cap === 'string' && cap.length > 0);
+      this.capabilityCatalog = rawCapabilities.reduce<Record<string, CapabilityRuntimeMeta>>((acc, item) => {
+        if (!item || typeof item === 'string') {
+          if (typeof item === 'string' && item.trim()) {
+            const key = item.trim();
+            acc[key] = {
+              key,
+              label: key,
+              state: 'READY',
+              capability_state: 'allow',
+              reason: '',
+              reason_code: '',
+              group_key: '',
+              group_label: '',
+            };
+          }
+          return acc;
+        }
+        const key = String(item.key || '').trim();
+        if (!key) return acc;
+        acc[key] = {
+          key,
+          label: String(item.label || key),
+          state: String(item.state || '').toUpperCase() || '',
+          capability_state: String(item.capability_state || '').toLowerCase() || '',
+          reason: String(item.reason || ''),
+          reason_code: String(item.reason_code || ''),
+          group_key: String(item.group_key || ''),
+          group_label: String(item.group_label || ''),
+        };
+        return acc;
+      }, {});
       this.scenes = ((result as AppInitResponse & { scenes?: Scene[] }).scenes ?? []).filter(Boolean);
       this.sceneVersion = (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).scene_version ?? (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).sceneVersion ?? null;
       const roleSurfaceRaw = (result as AppInitResponse & { role_surface?: Partial<RoleSurface> }).role_surface ?? {};
@@ -301,6 +385,56 @@ export const useSessionStore = defineStore('session', {
         menu_xmlids: Array.isArray(roleSurfaceRaw.menu_xmlids) ? roleSurfaceRaw.menu_xmlids.map((item) => String(item || '')).filter(Boolean) : [],
       };
       this.roleSurfaceMap = ((result as AppInitResponse & { role_surface_map?: RoleSurfaceMap }).role_surface_map ?? {});
+      const rawCapabilityGroups = (result as AppInitResponse & { capability_groups?: unknown[] }).capability_groups ?? [];
+      this.capabilityGroups = rawCapabilityGroups
+        .map((raw) => {
+          const item = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {};
+          const stateCounts = (item.state_counts && typeof item.state_counts === 'object')
+            ? (item.state_counts as Record<string, number>)
+            : {};
+          const capabilityStateCounts = (item.capability_state_counts && typeof item.capability_state_counts === 'object')
+            ? (item.capability_state_counts as Record<string, number>)
+            : {};
+          return {
+            key: String(item.key || ''),
+            label: String(item.label || item.key || ''),
+            icon: String(item.icon || ''),
+            sequence: Number(item.sequence || 0),
+            capability_count: Number(item.capability_count || 0),
+            state_counts: stateCounts,
+            capability_state_counts: capabilityStateCounts,
+          };
+        })
+        .filter((item) => item.key.length > 0);
+      const extFacts = (result as AppInitResponse & { ext_facts?: Record<string, unknown> }).ext_facts ?? {};
+      const productFacts = (extFacts.product && typeof extFacts.product === 'object')
+        ? (extFacts.product as Record<string, unknown>)
+        : {};
+      const rawLicense = (productFacts.license && typeof productFacts.license === 'object')
+        ? (productFacts.license as Record<string, unknown>)
+        : {};
+      const rawBundle = (productFacts.bundle && typeof productFacts.bundle === 'object')
+        ? (productFacts.bundle as Record<string, unknown>)
+        : {};
+      this.productFacts = {
+        license: Object.keys(rawLicense).length
+          ? {
+              level: String(rawLicense.level || ''),
+              tiers: Array.isArray(rawLicense.tiers) ? rawLicense.tiers.map((item) => String(item || '')).filter(Boolean) : [],
+            }
+          : null,
+        bundle: Object.keys(rawBundle).length
+          ? {
+              name: String(rawBundle.name || ''),
+              scenes: Array.isArray(rawBundle.scenes) ? rawBundle.scenes.map((item) => String(item || '')).filter(Boolean) : [],
+              capabilities: Array.isArray(rawBundle.capabilities) ? rawBundle.capabilities.map((item) => String(item || '')).filter(Boolean) : [],
+              recommended_roles: Array.isArray(rawBundle.recommended_roles)
+                ? rawBundle.recommended_roles.map((item) => String(item || '')).filter(Boolean)
+                : [],
+              default_dashboard: String(rawBundle.default_dashboard || ''),
+            }
+          : null,
+      };
       setSceneRegistry(this.scenes);
       this.initMeta = {
         ...(result.meta ?? {}),

@@ -14,6 +14,14 @@
       :suggested-action="error?.suggestedAction"
       variant="error"
     />
+    <StatusPanel
+      v-else-if="status === 'forbidden'"
+      :title="forbiddenCopy.title"
+      :message="forbiddenCopy.message"
+      :hint="forbiddenCopy.hint"
+      variant="forbidden_capability"
+      :on-retry="goWorkbench"
+    />
   </section>
 </template>
 
@@ -35,9 +43,14 @@ import type { NavNode } from '@sc/schema';
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
-const status = ref<'loading' | 'error' | 'idle'>('loading');
+const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, '场景加载失败'));
+const forbiddenCopy = ref({
+  title: '能力未开通',
+  message: '当前角色无法进入该场景。',
+  hint: '',
+});
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -72,6 +85,13 @@ function buildPortalBridgeUrl(url: string) {
   return bridge.toString();
 }
 
+function goWorkbench() {
+  router.replace({
+    name: 'workbench',
+    query: { reason: ErrorCodes.CAPABILITY_MISSING, scene: String(route.params.sceneKey || '') },
+  }).catch(() => {});
+}
+
 function resolveRecordId(targetRecord: unknown) {
   if (typeof targetRecord === 'string' && targetRecord.startsWith(':')) {
     const key = targetRecord.slice(1);
@@ -97,10 +117,25 @@ async function resolveScene() {
 
   const policy = evaluateCapabilityPolicy({ required: scene.capabilities || [], available: session.capabilities });
   if (policy.state !== 'enabled') {
-    await router.replace({
-      name: 'workbench',
-      query: { reason: ErrorCodes.CAPABILITY_MISSING },
-    });
+    const missing = Array.isArray(policy.missing) ? policy.missing : [];
+    const details = missing
+      .map((key) => {
+        const meta = session.capabilityCatalog[key];
+        if (!meta) return key;
+        const reason = String(meta.reason || '').trim();
+        if (!reason) return meta.label || key;
+        return `${meta.label || key}（${reason}）`;
+      })
+      .slice(0, 4);
+    const level = String(session.productFacts.license?.level || '').trim();
+    forbiddenCopy.value = {
+      title: policy.state === 'disabled_permission' ? '权限不足' : '能力未开通',
+      message: details.length
+        ? `缺少能力：${details.join('、')}`
+        : '当前角色能力范围不包含该场景所需能力。',
+      hint: level && level !== 'enterprise' ? `当前 License：${level}，可联系管理员评估升级或开通。` : '可联系管理员开通对应能力。',
+    };
+    status.value = 'forbidden';
     return;
   }
   void trackSceneOpen(sceneKey).catch(() => {});
