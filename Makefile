@@ -1483,6 +1483,10 @@ verify.system_init.runtime_context.stability: guard.prod.forbid
 verify.intent.capability.matrix.report: guard.prod.forbid
 	@python3 scripts/verify/intent_capability_matrix_report.py
 
+.PHONY: verify.intent.write.guard
+verify.intent.write.guard: guard.prod.forbid
+	@python3 addons/smart_core/tools/intent_write_guard.py
+
 verify.write_intent.permission.audit: guard.prod.forbid
 	@python3 scripts/verify/write_intent_permission_audit.py
 
