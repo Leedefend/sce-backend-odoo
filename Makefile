@@ -1286,6 +1286,10 @@ verify.frontend.contract_record_layout.guard: guard.prod.forbid
 verify.frontend.product.contract_consumption.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_product_contract_consumption_guard.py
 
+.PHONY: verify.frontend.home_suggestion_semantics.guard
+verify.frontend.home_suggestion_semantics.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_home_suggestion_semantics_guard.py
+
 .PHONY: verify.frontend.product.ready
 verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.contract_runtime.guard \
@@ -1294,6 +1298,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.contract_query_context.guard \
 	verify.frontend.contract_record_layout.guard \
 	verify.frontend.product.contract_consumption.guard \
+	verify.frontend.home_suggestion_semantics.guard \
 	verify.frontend_api \
 	verify.ui.product.stability
 	@echo "[OK] verify.frontend.product.ready done"
