@@ -79,7 +79,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
         if not Audit:
             return
         try:
-            Audit.sudo().write_event(
+            Audit.write_event(
                 event_code=self.IDEMPOTENCY_EVENT_CODE,
                 model=model,
                 res_id=0,

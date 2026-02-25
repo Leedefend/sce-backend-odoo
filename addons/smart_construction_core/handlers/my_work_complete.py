@@ -167,7 +167,7 @@ class MyWorkCompleteBatchHandler(BaseIntentHandler):
                 trace_id=trace_id,
                 duration_ms=duration_ms,
             )
-            Audit.sudo().write_event(
+            Audit.write_event(
                 event_code="MY_WORK_COMPLETE_BATCH",
                 model="mail.activity",
                 res_id=0,

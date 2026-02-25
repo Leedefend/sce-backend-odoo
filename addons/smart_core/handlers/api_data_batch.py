@@ -144,7 +144,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if not Audit:
             return
         try:
-            Audit.sudo().write_event(
+            Audit.write_event(
                 event_code="API_DATA_BATCH",
                 model=model,
                 res_id=0,
