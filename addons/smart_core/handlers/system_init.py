@@ -18,7 +18,6 @@ from odoo.addons.smart_core.core.scene_provider import (
     resolve_scene_channel as provider_resolve_scene_channel,
 )
 from odoo.addons.smart_core.core.capability_provider import (
-    build_capability_groups as provider_build_capability_groups,
     load_capabilities_for_user as provider_load_capabilities_for_user,
 )
 from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
@@ -29,6 +28,7 @@ from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
+from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import (
@@ -261,35 +261,18 @@ class SystemInitHandler(BaseIntentHandler):
             merge_missing_scenes_fn=_merge_missing_scenes_from_registry,
             append_resolve_error_fn=drift_append_resolve_error,
         )
-        pre_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
-        pre_governance_capability_count = (
-            len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
-        )
-        data = apply_contract_governance(data, contract_mode)
-        data["capability_groups"] = provider_build_capability_groups(data.get("capabilities") or [])
-        data["capability_surface_summary"] = capability_surface_engine.build_summary(
-            data.get("capabilities") or [],
-            data.get("capability_groups") or [],
-        )
-        post_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
-        post_governance_capability_count = (
-            len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
-        )
-        scene_diagnostics["governance"] = SceneDiagnosticsBuilder.governance(
+        data, scene_diagnostics = SystemInitSurfaceBuilder.apply(
+            data=data,
             contract_mode=contract_mode,
-            before_scene_count=pre_governance_scene_count,
-            before_capability_count=pre_governance_capability_count,
-            after_scene_count=post_governance_scene_count,
-            after_capability_count=post_governance_capability_count,
+            scene_diagnostics=scene_diagnostics,
+            capability_surface_engine=capability_surface_engine,
+            identity_resolver=identity_resolver,
+            user_groups_xmlids=user_groups_xmlids,
+            nav_tree=nav_tree,
+            scene_diagnostics_builder=SceneDiagnosticsBuilder,
+            build_capability_groups_fn=provider_build_capability_groups,
+            apply_contract_governance_fn=apply_contract_governance,
         )
-        scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else []
-        scene_keys_latest = {
-            (s.get("code") or s.get("key"))
-            for s in scenes_payload
-            if isinstance(s, dict) and (s.get("code") or s.get("key"))
-        }
-        data["role_surface"] = identity_resolver.build_role_surface(user_groups_xmlids, nav_tree, scene_keys_latest)
-        data["role_surface_map"] = identity_resolver.build_role_surface_map_payload()
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 
