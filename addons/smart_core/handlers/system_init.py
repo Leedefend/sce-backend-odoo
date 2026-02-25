@@ -33,6 +33,7 @@ from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPa
 from odoo.addons.smart_core.core.system_init_response_meta_builder import SystemInitResponseMetaBuilder
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
+from odoo.addons.smart_core.core.system_init_runtime_context import SystemInitRuntimeContext
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
@@ -220,8 +221,7 @@ class SystemInitHandler(BaseIntentHandler):
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)
         _merge_extension_facts(data)
 
-        scene_runtime_orchestrator = SceneRuntimeOrchestrator(logger=_logger)
-        data, scene_channel, rollback_active, scene_diagnostics = scene_runtime_orchestrator.execute(
+        runtime_ctx = SystemInitRuntimeContext(
             env=env,
             user=user,
             params=params,
@@ -230,9 +230,6 @@ class SystemInitHandler(BaseIntentHandler):
             scene_channel=scene_channel,
             rollback_active=rollback_active,
             trace_id=trace_id,
-            scene_normalizer=scene_normalizer,
-            scene_drift_engine=scene_drift_engine,
-            auto_degrade_engine=auto_degrade_engine,
             diagnostics_collector=diagnostics_collector,
             scene_diagnostics=scene_diagnostics,
             load_scene_contract_fn=_load_scene_contract,
@@ -240,6 +237,17 @@ class SystemInitHandler(BaseIntentHandler):
             merge_missing_scenes_fn=_merge_missing_scenes_from_registry,
             append_resolve_error_fn=drift_append_resolve_error,
         )
+        scene_runtime_orchestrator = SceneRuntimeOrchestrator(logger=_logger)
+        runtime_ctx = scene_runtime_orchestrator.execute(
+            runtime_ctx=runtime_ctx,
+            scene_normalizer=scene_normalizer,
+            scene_drift_engine=scene_drift_engine,
+            auto_degrade_engine=auto_degrade_engine,
+        )
+        data = runtime_ctx.data
+        scene_channel = runtime_ctx.scene_channel
+        rollback_active = runtime_ctx.rollback_active
+        scene_diagnostics = runtime_ctx.scene_diagnostics
         data, scene_diagnostics = SystemInitSurfaceBuilder.apply(
             data=data,
             contract_mode=contract_mode,

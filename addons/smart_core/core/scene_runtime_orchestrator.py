@@ -13,24 +13,26 @@ class SceneRuntimeOrchestrator:
     def execute(
         self,
         *,
-        env,
-        user,
-        params: dict,
-        data: dict,
-        nav_tree: list,
-        scene_channel: str,
-        rollback_active: bool,
-        trace_id: str,
+        runtime_ctx,
         scene_normalizer,
         scene_drift_engine,
         auto_degrade_engine,
-        diagnostics_collector,
-        scene_diagnostics: dict,
-        load_scene_contract_fn,
-        load_scenes_fallback_fn,
-        merge_missing_scenes_fn,
-        append_resolve_error_fn,
-    ) -> tuple[dict, str, bool, dict]:
+    ):
+        env = runtime_ctx.env
+        user = runtime_ctx.user
+        params = runtime_ctx.params
+        data = runtime_ctx.data
+        nav_tree = runtime_ctx.nav_tree
+        scene_channel = runtime_ctx.scene_channel
+        rollback_active = runtime_ctx.rollback_active
+        trace_id = runtime_ctx.trace_id
+        diagnostics_collector = runtime_ctx.diagnostics_collector
+        scene_diagnostics = runtime_ctx.scene_diagnostics
+        load_scene_contract_fn = runtime_ctx.load_scene_contract_fn
+        load_scenes_fallback_fn = runtime_ctx.load_scenes_fallback_fn
+        merge_missing_scenes_fn = runtime_ctx.merge_missing_scenes_fn
+        append_resolve_error_fn = runtime_ctx.append_resolve_error_fn
+
         contract_payload, contract_ref = load_scene_contract_fn(env, scene_channel, rollback_active)
         data["scene_contract_ref"] = contract_ref
         if rollback_active:
@@ -145,4 +147,8 @@ class SceneRuntimeOrchestrator:
 
         scenes_payload = data.get("scenes") if isinstance(data.get("scenes"), list) else scenes_payload
         data["scenes"] = scenes_payload
-        return data, scene_channel, rollback_active, scene_diagnostics
+        runtime_ctx.data = data
+        runtime_ctx.scene_channel = scene_channel
+        runtime_ctx.rollback_active = rollback_active
+        runtime_ctx.scene_diagnostics = scene_diagnostics
+        return runtime_ctx
