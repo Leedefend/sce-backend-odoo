@@ -9,6 +9,7 @@ from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_UNSUPPORTED_BUTTON_TYPE,
     failure_meta_for_reason,
 )
+from odoo.exceptions import AccessError
 
 from .payment_request_approval import (
     PaymentRequestApproveHandler,
@@ -23,6 +24,8 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
     DESCRIPTION = "Execute payment request semantic action via one intent"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["smart_core.group_sc_finance_approver"]
+    ACL_MODE = "explicit_check"
 
     _ACTION_TO_HANDLER = {
         "submit": PaymentRequestSubmitHandler,
@@ -30,6 +33,15 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
         "reject": PaymentRequestRejectHandler,
         "done": PaymentRequestDoneHandler,
     }
+
+    def _assert_finance_approver(self):
+        user = self.env.user
+        if not user:
+            raise AccessError("PERMISSION_DENIED: missing finance approver group")
+        if user.has_group("smart_core.group_sc_finance_approver") or user.has_group("base.group_system"):
+            return
+        if not user.has_group("smart_core.group_sc_finance_approver"):
+            raise AccessError("PERMISSION_DENIED: missing finance approver group")
 
     def _trace_id(self) -> str:
         if isinstance(self.context, dict):
@@ -57,6 +69,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
         }
 
     def handle(self, payload=None, ctx=None):
+        self._assert_finance_approver()
         params = payload or self.params or {}
         if isinstance(params, dict) and isinstance(params.get("params"), dict):
             params = params.get("params") or {}
