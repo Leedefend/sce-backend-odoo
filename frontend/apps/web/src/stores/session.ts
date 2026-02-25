@@ -34,6 +34,17 @@ export interface CapabilityGroup {
   capability_state_counts: Record<string, number>;
 }
 
+export interface CapabilityRuntimeMeta {
+  key: string;
+  label: string;
+  state: string;
+  capability_state: string;
+  reason: string;
+  reason_code: string;
+  group_key: string;
+  group_label: string;
+}
+
 export interface ProductFacts {
   license: {
     level: string;
@@ -59,6 +70,7 @@ export interface SessionState {
   sceneVersion: string | null;
   roleSurface: RoleSurface | null;
   roleSurfaceMap: RoleSurfaceMap;
+  capabilityCatalog: Record<string, CapabilityRuntimeMeta>;
   capabilityGroups: CapabilityGroup[];
   productFacts: ProductFacts;
   lastTraceId: string;
@@ -86,6 +98,7 @@ export const useSessionStore = defineStore('session', {
     sceneVersion: null,
     roleSurface: null,
     roleSurfaceMap: {},
+    capabilityCatalog: {},
     capabilityGroups: [],
     productFacts: {
       license: null,
@@ -120,6 +133,7 @@ export const useSessionStore = defineStore('session', {
           this.sceneVersion = parsed.sceneVersion ?? null;
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
+          this.capabilityCatalog = parsed.capabilityCatalog ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
           this.productFacts = parsed.productFacts ?? { license: null, bundle: null };
           if (this.scenes.length) {
@@ -154,6 +168,7 @@ export const useSessionStore = defineStore('session', {
       this.sceneVersion = null;
       this.roleSurface = null;
       this.roleSurfaceMap = {};
+      this.capabilityCatalog = {};
       this.capabilityGroups = [];
       this.productFacts = { license: null, bundle: null };
       setSceneRegistry([]);
@@ -204,6 +219,7 @@ export const useSessionStore = defineStore('session', {
         sceneVersion: this.sceneVersion,
         roleSurface: this.roleSurface,
         roleSurfaceMap: this.roleSurfaceMap,
+        capabilityCatalog: this.capabilityCatalog,
         capabilityGroups: this.capabilityGroups,
         productFacts: this.productFacts,
         lastTraceId: this.lastTraceId,
@@ -324,6 +340,37 @@ export const useSessionStore = defineStore('session', {
       this.capabilities = rawCapabilities
         .map((cap) => (typeof cap === 'string' ? cap : cap?.key || ''))
         .filter((cap) => typeof cap === 'string' && cap.length > 0);
+      this.capabilityCatalog = rawCapabilities.reduce<Record<string, CapabilityRuntimeMeta>>((acc, item) => {
+        if (!item || typeof item === 'string') {
+          if (typeof item === 'string' && item.trim()) {
+            const key = item.trim();
+            acc[key] = {
+              key,
+              label: key,
+              state: 'READY',
+              capability_state: 'allow',
+              reason: '',
+              reason_code: '',
+              group_key: '',
+              group_label: '',
+            };
+          }
+          return acc;
+        }
+        const key = String(item.key || '').trim();
+        if (!key) return acc;
+        acc[key] = {
+          key,
+          label: String(item.label || key),
+          state: String(item.state || '').toUpperCase() || '',
+          capability_state: String(item.capability_state || '').toLowerCase() || '',
+          reason: String(item.reason || ''),
+          reason_code: String(item.reason_code || ''),
+          group_key: String(item.group_key || ''),
+          group_label: String(item.group_label || ''),
+        };
+        return acc;
+      }, {});
       this.scenes = ((result as AppInitResponse & { scenes?: Scene[] }).scenes ?? []).filter(Boolean);
       this.sceneVersion = (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).scene_version ?? (result as AppInitResponse & { scene_version?: string; sceneVersion?: string }).sceneVersion ?? null;
       const roleSurfaceRaw = (result as AppInitResponse & { role_surface?: Partial<RoleSurface> }).role_surface ?? {};

@@ -213,6 +213,9 @@
                     <span :class="{ hit: part.hit }">{{ part.text }}</span>
                   </template>
                 </span>
+                <span v-if="entry.capabilityState && entry.capabilityState !== 'allow'" class="state capability-state">
+                  {{ capabilityStateLabel(entry.capabilityState) }}
+                </span>
                 <span v-if="entry.state !== 'READY'" class="state">{{ stateLabel(entry.state) }}</span>
               </p>
               <p class="subtitle" :title="entry.reason || entry.subtitle">
@@ -243,7 +246,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSessionStore } from '../stores/session';
+import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 import { readWorkspaceContext } from '../app/workspaceContext';
@@ -262,6 +265,7 @@ type CapabilityEntry = {
   sequence: number;
   status: string;
   state: EntryState;
+  capabilityState: string;
   reason: string;
   reasonCode: string;
   tags: string[];
@@ -470,8 +474,36 @@ function mapState(rawState: string | undefined, status: string, allowed?: unknow
   return status === 'ga' ? 'READY' : 'PREVIEW';
 }
 
+function mapCapabilityStateToEntryState(capabilityState: string): EntryState {
+  const state = String(capabilityState || '').toLowerCase();
+  if (state === 'allow' || state === 'readonly') return 'READY';
+  if (state === 'pending' || state === 'coming_soon') return 'PREVIEW';
+  if (state === 'deny') return 'LOCKED';
+  return 'READY';
+}
+
+function normalizeEntryWithCapabilityMeta(
+  entry: Pick<CapabilityEntry, 'state' | 'capabilityState' | 'reason' | 'reasonCode'>,
+  meta: CapabilityRuntimeMeta | undefined,
+) {
+  if (!meta) return entry;
+  let state = entry.state;
+  if (meta.state === 'READY' || meta.state === 'LOCKED' || meta.state === 'PREVIEW') {
+    state = meta.state;
+  } else if (meta.capability_state) {
+    state = mapCapabilityStateToEntryState(meta.capability_state);
+  }
+  return {
+    state,
+    capabilityState: String(meta.capability_state || entry.capabilityState || '').toLowerCase(),
+    reason: String(entry.reason || meta.reason || ''),
+    reasonCode: String(entry.reasonCode || meta.reason_code || ''),
+  };
+}
+
 const entries = computed<CapabilityEntry[]>(() => {
   const list: CapabilityEntry[] = [];
+  const capabilityCatalog = session.capabilityCatalog || {};
   session.scenes.forEach((scene, sceneIndex) => {
     const sceneKey = asText(scene.key);
     if (!sceneKey) return;
@@ -480,7 +512,11 @@ const entries = computed<CapabilityEntry[]>(() => {
     tiles.forEach((tile, tileIndex) => {
       const key = asText(tile.key);
       if (!key) return;
-      const title = asText((tile as { title?: string }).title) || (isHudEnabled.value ? key : `能力 ${sceneIndex + 1}-${tileIndex + 1}`);
+      const capabilityMeta = capabilityCatalog[key];
+      const title =
+        asText((tile as { title?: string }).title) ||
+        asText(capabilityMeta?.label) ||
+        (isHudEnabled.value ? key : `能力 ${sceneIndex + 1}-${tileIndex + 1}`);
       if (
         !isHudEnabled.value &&
         isInternalEntry({
@@ -498,6 +534,15 @@ const entries = computed<CapabilityEntry[]>(() => {
       const reason = String((tile as { reason?: string }).reason || '');
       const reasonCode = String((tile as { reason_code?: string }).reason_code || '');
       const state = mapState((tile as { state?: string }).state, rawStatus, (tile as { allowed?: unknown }).allowed);
+      const normalizedByMeta = normalizeEntryWithCapabilityMeta(
+        {
+          state,
+          capabilityState: '',
+          reason,
+          reasonCode,
+        },
+        capabilityMeta,
+      );
       const payload = ((tile as { payload?: unknown }).payload || {}) as Record<string, unknown>;
       const route = asText((tile as { route?: unknown }).route);
       const contextQuery = normalizeContextQuery(payload.context_query || payload.query || payload.context);
@@ -511,9 +556,10 @@ const entries = computed<CapabilityEntry[]>(() => {
         sceneTitle,
         sequence: Number((tile as { sequence?: number }).sequence ?? 9999),
         status,
-        state,
-        reason,
-        reasonCode,
+        state: normalizedByMeta.state,
+        capabilityState: normalizedByMeta.capabilityState,
+        reason: normalizedByMeta.reason,
+        reasonCode: normalizedByMeta.reasonCode,
         route,
         targetActionId: toPositiveInt(payload.action_id),
         targetMenuId: toPositiveInt(payload.menu_id),
@@ -708,7 +754,18 @@ function lockReasonLabel(reasonCode: string) {
   if (code === 'ROLE_SCOPE_MISMATCH') return '角色范围不匹配';
   if (code === 'CAPABILITY_SCOPE_MISSING') return '缺少前置能力';
   if (code === 'CAPABILITY_SCOPE_CYCLE') return '能力依赖异常';
+  if (code === 'COMING_SOON') return '能力建设中';
+  if (code === 'PENDING_APPROVAL') return '待审批开放';
   return '当前不可用';
+}
+
+function capabilityStateLabel(state: string) {
+  const normalized = String(state || '').toLowerCase();
+  if (normalized === 'readonly') return '只读';
+  if (normalized === 'deny') return '禁止';
+  if (normalized === 'pending') return '待开放';
+  if (normalized === 'coming_soon') return '建设中';
+  return '可用';
 }
 
 function stateLabel(state: EntryState) {
@@ -724,6 +781,7 @@ function canEnter(entry: CapabilityEntry) {
 function actionLabel(entry: CapabilityEntry) {
   if (entry.state === 'LOCKED') return '暂不可用';
   if (entry.state === 'PREVIEW') return '即将开放';
+  if (entry.capabilityState === 'readonly') return '只读进入';
   return '进入';
 }
 
@@ -1634,6 +1692,12 @@ function highlightParts(raw: string) {
   border-radius: 999px;
   padding: 2px 8px;
   border: 1px solid currentColor;
+}
+
+.capability-state {
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  background: #eff6ff;
 }
 
 .subtitle {

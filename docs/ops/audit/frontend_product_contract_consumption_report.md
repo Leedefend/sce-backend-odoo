@@ -9,3 +9,4 @@
 - ext_facts.product.license: `consumed`
 - ext_facts.product.bundle: `consumed`
 - home_product_surface: `rendered`
+- capability_metadata_state_reason: `consumed`

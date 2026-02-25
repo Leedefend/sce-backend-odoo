@@ -33,6 +33,8 @@ def main() -> int:
 
     required_session_tokens = [
         "capability_groups",
+        "capabilityCatalog",
+        "this.capabilityCatalog = rawCapabilities.reduce",
         "this.capabilityGroups = rawCapabilityGroups",
         "const extFacts =",
         "const productFacts =",
@@ -43,6 +45,9 @@ def main() -> int:
     required_home_tokens = [
         "const productFacts = computed(() => session.productFacts);",
         "const capabilityGroups = computed(() => session.capabilityGroups);",
+        "const capabilityCatalog = session.capabilityCatalog || {};",
+        "normalizeEntryWithCapabilityMeta(",
+        "capabilityStateLabel(",
         "licenseLevelLabel",
         "bundleNameLabel",
         "capabilityGroupCards",
@@ -66,6 +71,7 @@ def main() -> int:
                 "ext_facts.product.license": "consumed" if ok_session else "missing",
                 "ext_facts.product.bundle": "consumed" if ok_session else "missing",
                 "home_product_surface": "rendered" if ok_home else "missing",
+                "capability_metadata_state_reason": "consumed" if ok_session and ok_home else "missing",
             },
         },
         "errors": errors,
