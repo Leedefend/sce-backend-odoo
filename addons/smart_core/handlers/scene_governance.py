@@ -17,7 +17,7 @@ def _service(env, user):
 
 
 class _BaseSceneGovernanceHandler(BaseIntentHandler):
-    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_config_admin"]
+    REQUIRED_GROUPS = ["smart_core.group_sc_scene_admin"]
 
     def _params(self, payload):
         params = (payload or {}).get("params") if isinstance(payload, dict) else payload

@@ -20,6 +20,7 @@ from ..utils.reason_codes import (
 class ChatterPostHandler(BaseIntentHandler):
     INTENT_TYPE = "chatter.post"
     DESCRIPTION = "Post a chatter message (mail.thread)"
+    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
     NON_IDEMPOTENT_ALLOWED = "message_post appends chatter history and should not replay"
 
     def handle(self, payload=None, ctx=None):

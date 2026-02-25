@@ -7,6 +7,7 @@ class SystemPingConstructionHandler(BaseIntentHandler):
     DESCRIPTION = "Construction demo ping (extension loader)"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
 
     def handle(self):
         return {

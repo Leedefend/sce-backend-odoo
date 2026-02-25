@@ -32,14 +32,42 @@ def _iter_handler_classes():
             continue
         for path in sorted(handler_dir.glob("*.py")):
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-            for node in tree.body:
-                if isinstance(node, ast.ClassDef):
-                    yield path, node
+            class_defs = [node for node in tree.body if isinstance(node, ast.ClassDef)]
+            if class_defs:
+                yield path, class_defs
 
 
-def _extract_handler_meta(path: Path, cls: ast.ClassDef):
+def _class_attr_literal(cls: ast.ClassDef, attr_name: str):
+    for stmt in cls.body:
+        if not isinstance(stmt, ast.Assign):
+            continue
+        for target in stmt.targets:
+            if isinstance(target, ast.Name) and target.id == attr_name:
+                return _literal(stmt.value)
+    return None
+
+
+def _resolve_required_groups(class_map: dict[str, ast.ClassDef], cls: ast.ClassDef, visited: set[str] | None = None) -> list[str]:
+    visited = visited or set()
+    if cls.name in visited:
+        return []
+    visited.add(cls.name)
+    value = _class_attr_literal(cls, "REQUIRED_GROUPS")
+    if isinstance(value, list):
+        return [str(x).strip() for x in value if str(x).strip()]
+    for base in cls.bases:
+        if isinstance(base, ast.Name):
+            base_cls = class_map.get(base.id)
+            if base_cls is not None:
+                inherited = _resolve_required_groups(class_map, base_cls, visited=visited)
+                if inherited:
+                    return inherited
+    return []
+
+
+def _extract_handler_meta(path: Path, cls: ast.ClassDef, class_map: dict[str, ast.ClassDef]):
     intent_type = ""
-    required_groups: list[str] = []
+    required_groups: list[str] = _resolve_required_groups(class_map, cls)
     non_idempotent_allowed = False
     for stmt in cls.body:
         if not isinstance(stmt, ast.Assign):
@@ -71,17 +99,19 @@ def main() -> int:
     violations = []
     scanned = 0
     write_count = 0
-    for path, cls in _iter_handler_classes():
-        meta = _extract_handler_meta(path, cls)
-        if not meta:
-            continue
-        scanned += 1
-        if not meta["is_write"]:
-            continue
-        write_count += 1
-        if meta["required_groups"]:
-            continue
-        violations.append(meta)
+    for path, classes in _iter_handler_classes():
+        class_map = {cls.name: cls for cls in classes}
+        for cls in classes:
+            meta = _extract_handler_meta(path, cls, class_map)
+            if not meta:
+                continue
+            scanned += 1
+            if not meta["is_write"]:
+                continue
+            write_count += 1
+            if meta["required_groups"]:
+                continue
+            violations.append(meta)
 
     print(f"[intent_write_guard] scanned_handlers={scanned} write_handlers={write_count} violations={len(violations)}")
     if not violations:

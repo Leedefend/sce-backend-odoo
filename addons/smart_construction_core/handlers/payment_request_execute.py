@@ -23,6 +23,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
     DESCRIPTION = "Execute payment request semantic action via one intent"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["smart_core.group_sc_finance_approver"]
 
     _ACTION_TO_HANDLER = {
         "submit": PaymentRequestSubmitHandler,

@@ -39,6 +39,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
     DESCRIPTION = "Batch update with per-record result details"
     VERSION = "0.1.0"
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
 
     ACTION_MAP = {
         "archive": {"active": False},

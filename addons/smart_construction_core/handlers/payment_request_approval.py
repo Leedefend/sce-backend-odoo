@@ -28,6 +28,7 @@ from odoo.exceptions import AccessError, UserError
 
 class _BasePaymentApprovalHandler(BaseIntentHandler):
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["smart_core.group_sc_finance_approver"]
     IDEMPOTENCY_WINDOW_SECONDS = 120
     AUDIT_EVENT_CODE = ""
     ACTION_METHOD = ""
