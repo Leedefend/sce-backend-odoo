@@ -214,10 +214,7 @@ class SystemInitHandler(BaseIntentHandler):
         capability_surface_engine = components["capability_surface_engine"]
         contract_assembler = components["contract_assembler"]
         scene_normalizer.append_act_url_deprecations(nav_tree, scene_diagnostics["normalize_warnings"])
-        if home_contract:
-            data["preload"].append({"key": "home", "etag": etags.get("home")})   # ✅ 轻量化 preload
-        if preload_items:
-            data["preload"].extend(preload_items)
+        SystemInitPayloadBuilder.attach_preload(data, home_contract, etags, preload_items)
 
         # 扩展模块可附加场景/能力等（不影响主流程）
         run_extension_hooks(env, "smart_core_extend_system_init", data, env, user)

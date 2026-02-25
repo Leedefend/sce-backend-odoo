@@ -54,3 +54,10 @@ class SystemInitPayloadBuilder:
     @staticmethod
     def attach_diagnostic(data: dict, diagnostic_info: dict) -> None:
         data["diagnostic"] = diagnostic_info
+
+    @staticmethod
+    def attach_preload(data: dict, home_contract, etags: dict, preload_items: list) -> None:
+        if home_contract:
+            data["preload"].append({"key": "home", "etag": etags.get("home")})
+        if preload_items:
+            data["preload"].extend(preload_items)
