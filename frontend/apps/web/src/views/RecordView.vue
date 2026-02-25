@@ -4,6 +4,7 @@
       <div>
         <h2>{{ title }}</h2>
         <p class="meta">{{ subtitle }}</p>
+        <p v-if="readonlyHint" class="meta readonly-hint">{{ readonlyHint }}</p>
         <p v-if="actionFeedback" class="meta action-feedback" :class="{ error: !actionFeedback.success }">
           {{ actionFeedback.message }} <span class="code">({{ actionFeedback.reasonCode }})</span>
         </p>
@@ -198,6 +199,15 @@ const recordTitle = ref<string | null>(null);
 const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
 const subtitle = computed(() => (status.value === 'editing' ? 'Editing contract fields' : 'Record details'));
 const canEdit = computed(() => contractWriteAllowed.value);
+const readonlyHint = computed(() => {
+  if (canEdit.value) return '';
+  const level = String(session.productFacts.license?.level || '').trim();
+  const bundle = String(session.productFacts.bundle?.name || '').trim();
+  if (level && level !== 'enterprise') {
+    return `当前为只读模式（License: ${level}${bundle ? `, Bundle: ${bundle}` : ''}）。如需编辑权限请联系管理员。`;
+  }
+  return '当前记录处于只读模式，请联系管理员开通写权限。';
+});
 const actionContext = computed(() => {
   const fromQuery = Number(route.query.action_id || 0);
   if (Number.isFinite(fromQuery) && fromQuery > 0) return { id: fromQuery, source: 'query' as const };
@@ -307,7 +317,21 @@ function buttonState(btn: ViewButton) {
 }
 
 function buttonTooltip(btn: ViewButton) {
-  return capabilityTooltip(buttonState(btn));
+  const policy = buttonState(btn);
+  if (policy.state === 'disabled_capability' && Array.isArray(policy.missing) && policy.missing.length) {
+    const details = policy.missing
+      .map((key) => {
+        const meta = session.capabilityCatalog[key];
+        if (!meta) return key;
+        const reason = String(meta.reason || '').trim();
+        return reason ? `${meta.label || key}（${reason}）` : meta.label || key;
+      })
+      .slice(0, 4);
+    const level = String(session.productFacts.license?.level || '').trim();
+    const suffix = level && level !== 'enterprise' ? `；当前 License: ${level}` : '';
+    return `缺少能力：${details.join('、')}${suffix}`;
+  }
+  return capabilityTooltip(policy);
 }
 
 async function load() {
@@ -847,6 +871,15 @@ onMounted(load);
 .meta {
   color: #64748b;
   font-size: 14px;
+}
+
+.readonly-hint {
+  margin-top: 6px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 6px 10px;
 }
 
 .action-feedback {
