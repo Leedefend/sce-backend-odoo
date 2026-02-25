@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.exceptions import AccessError
 
 from .usage_report import build_usage_report_data
 
@@ -11,8 +12,10 @@ class UsageExportCsvHandler(BaseIntentHandler):
     DESCRIPTION = "Export usage analytics csv from backend"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
+    REQUIRED_GROUPS = ["base.group_user"]
 
     def handle(self, payload=None, ctx=None):
+        self._assert_access()
         params = payload or self.params or {}
         export_filtered_only = _as_bool(params.get("export_filtered_only"), default=True)
         hidden_reason = str(params.get("hidden_reason") or "ALL").strip()
@@ -32,6 +35,17 @@ class UsageExportCsvHandler(BaseIntentHandler):
             "data": {"filename": filename, "content": csv_text},
             "meta": {"intent": self.INTENT_TYPE},
         }
+
+    def _assert_access(self):
+        user = self.env.user
+        if not user or not user.has_group("base.group_user"):
+            raise AccessError("Only internal users can export usage analytics.")
+        usage_model = self.env.get("sc.usage.counter")
+        if usage_model is not None:
+            usage_model.check_access_rights("read", raise_exception=True)
+        capability_model = self.env.get("sc.capability")
+        if capability_model is not None:
+            capability_model.check_access_rights("read", raise_exception=True)
 
 
 def build_usage_csv(*, report, visibility, export_filtered_only=True, hidden_reason="ALL"):

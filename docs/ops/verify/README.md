@@ -61,6 +61,8 @@
   - Always emits consolidated summary artifacts:
     - `artifacts/backend/backend_architecture_full_report.json`
     - `artifacts/backend/backend_architecture_full_report.md`
+- `make verify.platform.kernel.ready`
+  - Release-focused kernel closure gate (capability provider/registry + intent envelope smoke + write permission audit + auto-degrade smoke + scene drift smoke + ETag validation + intent/scene/capability audit reports).
   - Includes backend evidence manifest guard for release-critical artifact integrity.
 - `make verify.backend.architecture.full.report`
   - Generates consolidated backend architecture evidence summary from phase-next and governance artifacts.

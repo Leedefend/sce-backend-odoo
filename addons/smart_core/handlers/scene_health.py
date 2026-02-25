@@ -3,7 +3,8 @@ import time
 from datetime import datetime
 
 from ..core.base_handler import BaseIntentHandler
-from .system_init import SystemInitHandler, _build_scene_health_payload
+from ..governance.scene_drift_engine import build_scene_health_payload
+from .system_init import SystemInitHandler
 
 
 class SceneHealthHandler(BaseIntentHandler):
@@ -84,7 +85,7 @@ class SceneHealthHandler(BaseIntentHandler):
             trace_id = str((self.context or {}).get("trace_id") or "")
         except Exception:
             trace_id = ""
-        data = _build_scene_health_payload(init_data, trace_id=trace_id, company_id=company_id)
+        data = build_scene_health_payload(init_data, trace_id=trace_id, company_id=company_id)
         mode = str(params.get("mode") or "summary").strip().lower()
         if mode not in {"summary", "full"}:
             mode = "summary"
