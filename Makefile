@@ -1518,6 +1518,9 @@ verify.platform.kernel.baseline: guard.prod.forbid verify.intent.layered.catalog
 verify.owner.industry.isolation: guard.prod.forbid
 	@python3 scripts/verify/owner_industry_isolation_probe.py
 
+verify.owner.intent.non_intrusion: guard.prod.forbid
+	@python3 scripts/verify/owner_intent_non_intrusion_guard.py
+
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
 
