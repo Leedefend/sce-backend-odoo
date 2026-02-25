@@ -26,6 +26,7 @@ from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
 from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCollector
 from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
+from odoo.addons.smart_core.core.system_init_diagnostics_helper import SystemInitDiagnosticsHelper
 from odoo.addons.smart_core.core.system_init_identity_payload import SystemInitIdentityPayload
 from odoo.addons.smart_core.core.system_init_nav_request_builder import SystemInitNavRequestBuilder
 from odoo.addons.smart_core.core.system_init_payload_builder import SystemInitPayloadBuilder
@@ -124,16 +125,15 @@ class SystemInitHandler(BaseIntentHandler):
         diagnostics_collector = RequestDiagnosticsCollector()
         scene_channel_policy = SceneChannelPolicy()
         scene_channel, rollback_active = scene_channel_policy.resolve(env, params, scene_channel)
-        
-        diag_enabled = diagnostics_collector.diagnostics_enabled(self.env)
-        diagnostic_info = None
+        diag_enabled, diagnostic_info = SystemInitDiagnosticsHelper.collect(diagnostics_collector, self.env, params)
         if diag_enabled:
-            diagnostic_info = diagnostics_collector.collect_system_init(self.env, params)
-
-            _logger.info("[B1] system.init 诊断信息: %s", diagnostic_info)
-            _logger.info("[system_init][debug] params: %s", params)
-            _logger.info("[system_init][debug] self.params: %s", getattr(self, "params", {}))
-            _logger.info("[system_init][debug] self.env.cr.dbname: %s", self.env.cr.dbname)
+            SystemInitDiagnosticsHelper.log_debug(
+                _logger,
+                self.env,
+                params,
+                diagnostic_info,
+                self_params=getattr(self, "params", {}),
+            )
 
         # 如果 finalize_contract 内部不读 ORM，可用 env；若会读，推荐 su_env
         cs = ContractService(su_env)
