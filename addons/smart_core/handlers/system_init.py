@@ -34,6 +34,7 @@ from odoo.addons.smart_core.core.system_init_response_meta_builder import System
 from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
 from odoo.addons.smart_core.core.system_init_runtime_context import SystemInitRuntimeContext
+from odoo.addons.smart_core.core.system_init_surface_context import SystemInitSurfaceContext
 from odoo.addons.smart_core.core.system_init_surface_builder import SystemInitSurfaceBuilder
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
@@ -248,7 +249,7 @@ class SystemInitHandler(BaseIntentHandler):
         scene_channel = runtime_ctx.scene_channel
         rollback_active = runtime_ctx.rollback_active
         scene_diagnostics = runtime_ctx.scene_diagnostics
-        data, scene_diagnostics = SystemInitSurfaceBuilder.apply(
+        surface_ctx = SystemInitSurfaceContext(
             data=data,
             contract_mode=contract_mode,
             scene_diagnostics=scene_diagnostics,
@@ -260,6 +261,7 @@ class SystemInitHandler(BaseIntentHandler):
             build_capability_groups_fn=provider_build_capability_groups,
             apply_contract_governance_fn=apply_contract_governance,
         )
+        data, scene_diagnostics = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 

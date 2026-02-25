@@ -3,19 +3,18 @@ from __future__ import annotations
 
 class SystemInitSurfaceBuilder:
     @staticmethod
-    def apply(
-        *,
-        data: dict,
-        contract_mode: str,
-        scene_diagnostics: dict,
-        capability_surface_engine,
-        identity_resolver,
-        user_groups_xmlids: list,
-        nav_tree: list,
-        scene_diagnostics_builder,
-        build_capability_groups_fn,
-        apply_contract_governance_fn,
-    ) -> tuple[dict, dict]:
+    def apply(*, surface_ctx) -> tuple[dict, dict]:
+        data = surface_ctx.data
+        contract_mode = surface_ctx.contract_mode
+        scene_diagnostics = surface_ctx.scene_diagnostics
+        capability_surface_engine = surface_ctx.capability_surface_engine
+        identity_resolver = surface_ctx.identity_resolver
+        user_groups_xmlids = surface_ctx.user_groups_xmlids
+        nav_tree = surface_ctx.nav_tree
+        scene_diagnostics_builder = surface_ctx.scene_diagnostics_builder
+        build_capability_groups_fn = surface_ctx.build_capability_groups_fn
+        apply_contract_governance_fn = surface_ctx.apply_contract_governance_fn
+
         pre_governance_scene_count = len(data.get("scenes") or []) if isinstance(data.get("scenes"), list) else 0
         pre_governance_capability_count = (
             len(data.get("capabilities") or []) if isinstance(data.get("capabilities"), list) else 0
