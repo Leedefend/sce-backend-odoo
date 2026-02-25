@@ -1500,6 +1500,9 @@ verify.write_intent.permission.audit: guard.prod.forbid
 verify.scene.intent.matrix.report: guard.prod.forbid
 	@python3 scripts/verify/scene_intent_matrix_report.py
 
+verify.scene.intent.consistency: guard.prod.forbid verify.intent.layered.catalog
+	@python3 scripts/verify/scene_intent_consistency_guard.py
+
 verify.intent.orphan.report: guard.prod.forbid
 	@python3 scripts/verify/intent_orphan_report.py
 
