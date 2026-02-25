@@ -13,6 +13,28 @@ def list_owner_scenes() -> list[dict]:
             ],
         },
         {
+            "code": "owner.projects.list",
+            "name": "业主项目列表",
+            "target": {"scene_key": "owner.projects.list", "route": "/workbench?scene=owner.projects.list"},
+            "tiles": [
+                {
+                    "key": "owner.projects.list",
+                    "label": "项目列表",
+                    "required_capabilities": ["owner.projects.list"],
+                },
+                {
+                    "key": "owner.projects.detail",
+                    "label": "项目详情",
+                    "required_capabilities": ["owner.projects.detail"],
+                },
+                {
+                    "key": "owner.risk.list",
+                    "label": "风险清单",
+                    "required_capabilities": ["owner.risk.list"],
+                },
+            ],
+        },
+        {
             "code": "owner.payment.center",
             "name": "业主付款中心",
             "target": {"scene_key": "owner.payment.center", "route": "/workbench?scene=owner.payment.center"},
@@ -29,5 +51,21 @@ def list_owner_scenes() -> list[dict]:
                 },
             ],
         },
+        {
+            "code": "owner.report.overview",
+            "name": "业主经营总览",
+            "target": {"scene_key": "owner.report.overview", "route": "/workbench?scene=owner.report.overview"},
+            "tiles": [
+                {
+                    "key": "owner.report.overview",
+                    "label": "经营总览",
+                    "required_capabilities": ["owner.report.overview"],
+                },
+                {
+                    "key": "owner.approval.center",
+                    "label": "审批中心",
+                    "required_capabilities": ["owner.approval.center"],
+                },
+            ],
+        },
     ]
-
