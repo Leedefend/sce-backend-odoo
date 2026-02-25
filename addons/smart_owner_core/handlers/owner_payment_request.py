@@ -26,6 +26,23 @@ class _BaseOwnerPaymentRequestHandler(BaseIntentHandler):
         }
 
 
+class _BaseOwnerReadHandler(BaseIntentHandler):
+    ETAG_ENABLED = False
+    ACL_MODE = "explicit_check"
+    REQUIRED_GROUPS = []
+
+    def _response(self, action: str) -> dict:
+        return {
+            "ok": True,
+            "data": {
+                "accepted": True,
+                "domain": "owner",
+                "action": action,
+            },
+            "meta": {"intent": self.INTENT_TYPE, "domain": "owner"},
+        }
+
+
 class OwnerPaymentRequestSubmitHandler(_BaseOwnerPaymentRequestHandler):
     INTENT_TYPE = "owner.payment.request.submit"
     DESCRIPTION = "Submit owner payment request"
@@ -44,3 +61,56 @@ class OwnerPaymentRequestApproveHandler(_BaseOwnerPaymentRequestHandler):
     def handle(self, payload=None, ctx=None):
         return self._build_response("approve")
 
+
+class OwnerDashboardOpenHandler(_BaseOwnerReadHandler):
+    INTENT_TYPE = "owner.dashboard.open"
+    DESCRIPTION = "Open owner dashboard"
+    VERSION = "0.1.0"
+
+    def handle(self, payload=None, ctx=None):
+        return self._response("dashboard_open")
+
+
+class OwnerProjectsListHandler(_BaseOwnerReadHandler):
+    INTENT_TYPE = "owner.projects.list"
+    DESCRIPTION = "List owner projects"
+    VERSION = "0.1.0"
+
+    def handle(self, payload=None, ctx=None):
+        return self._response("projects_list")
+
+
+class OwnerProjectsDetailHandler(_BaseOwnerReadHandler):
+    INTENT_TYPE = "owner.projects.detail"
+    DESCRIPTION = "View owner project detail"
+    VERSION = "0.1.0"
+
+    def handle(self, payload=None, ctx=None):
+        return self._response("projects_detail")
+
+
+class OwnerRiskListHandler(_BaseOwnerReadHandler):
+    INTENT_TYPE = "owner.risk.list"
+    DESCRIPTION = "List owner risks"
+    VERSION = "0.1.0"
+
+    def handle(self, payload=None, ctx=None):
+        return self._response("risk_list")
+
+
+class OwnerReportOverviewHandler(_BaseOwnerReadHandler):
+    INTENT_TYPE = "owner.report.overview"
+    DESCRIPTION = "Open owner report overview"
+    VERSION = "0.1.0"
+
+    def handle(self, payload=None, ctx=None):
+        return self._response("report_overview")
+
+
+class OwnerApprovalCenterHandler(_BaseOwnerReadHandler):
+    INTENT_TYPE = "owner.approval.center"
+    DESCRIPTION = "Open owner approval center"
+    VERSION = "0.1.0"
+
+    def handle(self, payload=None, ctx=None):
+        return self._response("approval_center")

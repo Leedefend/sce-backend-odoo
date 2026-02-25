@@ -13,8 +13,14 @@ def smart_core_register(registry):
     """Register owner-domain intents into Smart Core registry."""
     try:
         from odoo.addons.smart_owner_core.handlers.owner_payment_request import (
+            OwnerApprovalCenterHandler,
+            OwnerDashboardOpenHandler,
             OwnerPaymentRequestApproveHandler,
             OwnerPaymentRequestSubmitHandler,
+            OwnerProjectsDetailHandler,
+            OwnerProjectsListHandler,
+            OwnerReportOverviewHandler,
+            OwnerRiskListHandler,
         )
     except Exception as exc:
         _logger.warning("[smart_owner_core] intent import failed: %s", exc)
@@ -22,6 +28,12 @@ def smart_core_register(registry):
 
     registry["owner.payment.request.submit"] = OwnerPaymentRequestSubmitHandler
     registry["owner.payment.request.approve"] = OwnerPaymentRequestApproveHandler
+    registry["owner.dashboard.open"] = OwnerDashboardOpenHandler
+    registry["owner.projects.list"] = OwnerProjectsListHandler
+    registry["owner.projects.detail"] = OwnerProjectsDetailHandler
+    registry["owner.risk.list"] = OwnerRiskListHandler
+    registry["owner.report.overview"] = OwnerReportOverviewHandler
+    registry["owner.approval.center"] = OwnerApprovalCenterHandler
 
 
 def smart_core_extend_system_init(data, env, user):
@@ -49,4 +61,3 @@ def smart_core_extend_system_init(data, env, user):
         data["capability_count"] = len(owner_caps)
     except Exception as exc:
         _logger.warning("[smart_owner_core] system_init extension failed: %s", exc)
-
