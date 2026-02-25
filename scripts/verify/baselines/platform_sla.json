@@ -1,0 +1,13 @@
+{
+  "iterations": 6,
+  "max_p95_ms": {
+    "system.init": 8000,
+    "ui.contract": 5000,
+    "execute_button": 3000
+  },
+  "max_payload_bytes": {
+    "system.init": 3500000,
+    "ui.contract": 3500000,
+    "execute_button": 600000
+  }
+}
