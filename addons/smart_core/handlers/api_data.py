@@ -11,14 +11,21 @@ from ast import literal_eval
 import base64
 import csv
 import io
+import hashlib
+import json
 from datetime import datetime
 
 from odoo.tools.safe_eval import safe_eval
 from odoo.exceptions import AccessError
+from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
 
 _logger = logging.getLogger(__name__)
+
+
+def _json(o):
+    return json.dumps(o, ensure_ascii=False, default=str, separators=(",", ":"))
 
 
 class ApiDataHandler(BaseIntentHandler):
@@ -31,6 +38,27 @@ class ApiDataHandler(BaseIntentHandler):
 
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}}
+
+    def _read_if_none_match(self, p: Dict[str, Any]) -> str:
+        if_none_match = str(self._dig(p, "if_none_match", "") or "").strip().strip('"')
+        if if_none_match:
+            return if_none_match
+        try:
+            return str((request.httprequest.headers.get("If-None-Match") or "")).strip().strip('"')
+        except Exception:
+            return ""
+
+    def _build_etag(self, *, model: str, op: str, ctx: Dict[str, Any], data: Dict[str, Any], meta: Dict[str, Any]) -> str:
+        src = {
+            "model": model,
+            "op": op,
+            "uid": int(getattr(self.env, "uid", 0) or 0),
+            "lang": str(ctx.get("lang") or ""),
+            "allowed_company_ids": list(ctx.get("allowed_company_ids") or []),
+            "meta": meta,
+            "data": data,
+        }
+        return hashlib.sha1(_json(src).encode("utf-8")).hexdigest()
 
     def _collect_params(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         merged: Dict[str, Any] = {}
@@ -242,15 +270,16 @@ class ApiDataHandler(BaseIntentHandler):
             context = {}
         if "active_test" not in context:
             context["active_test"] = self._get_bool(p, "active_test", False)
+        if_none_match = self._read_if_none_match(p)
 
         use_sudo = self._get_bool(p, "sudo", False)
 
         if op == "list":
-            return self._op_list(model, p, context, use_sudo)
+            return self._with_etag_if_match(self._op_list(model, p, context, use_sudo), model, op, context, if_none_match)
         elif op == "read":
-            return self._op_read(model, p, context, use_sudo)
+            return self._with_etag_if_match(self._op_read(model, p, context, use_sudo), model, op, context, if_none_match)
         elif op in ("count", "search_count"):
-            return self._op_count(model, p, context, use_sudo)
+            return self._with_etag_if_match(self._op_count(model, p, context, use_sudo), model, op, context, if_none_match)
         elif op in ("create",):
             return self._op_create(model, p, context, use_sudo)
         elif op in ("write",):
@@ -259,6 +288,19 @@ class ApiDataHandler(BaseIntentHandler):
             return self._op_export_csv(model, p, context, use_sudo)
         else:
             return self._err(400, f"不支持的操作: {op}")
+
+    def _with_etag_if_match(self, result, model: str, op: str, ctx: Dict[str, Any], if_none_match: str):
+        if not isinstance(result, tuple) or len(result) != 2:
+            return result
+        data, meta = result
+        if not isinstance(data, dict) or not isinstance(meta, dict):
+            return result
+        etag = self._build_etag(model=model, op=op, ctx=ctx, data=data, meta=meta)
+        meta_out = dict(meta)
+        meta_out["etag"] = etag
+        if if_none_match and if_none_match == etag:
+            return {"ok": True, "data": None, "meta": {"op": op, "model": model, "etag": etag}, "code": 304}
+        return data, meta_out
 
     # ----------------- 操作实现 -----------------
 
