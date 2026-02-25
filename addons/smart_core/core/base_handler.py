@@ -78,16 +78,21 @@ class BaseIntentHandler:
         if not required_xmlids:
             raise AccessError(f"PERMISSION_DENIED: write intent requires REQUIRED_GROUPS ({self.__class__.__name__})")
         user = self.env.user
+        missing = []
         for xmlid in required_xmlids:
             try:
                 if user.has_group(xmlid):
-                    return True
+                    continue
             except Exception:
-                continue
+                pass
+            missing.append(xmlid)
+        if not missing:
+            return True
         raise AccessError(
-            "PERMISSION_DENIED: missing required groups [{}] for intent {}".format(
-                ", ".join(required_xmlids),
+            "PERMISSION_DENIED: missing required groups [{}] for intent {} (required=[{}])".format(
+                ", ".join(missing),
                 str(getattr(self, "INTENT_TYPE", "") or self.__class__.__name__),
+                ", ".join(required_xmlids),
             )
         )
 

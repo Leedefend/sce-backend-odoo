@@ -1531,6 +1531,7 @@ verify.platform.security.ready: guard.prod.forbid \
 	@echo "[OK] verify.platform.security.ready done"
 
 verify.platform.kernel.ready: guard.prod.forbid \
+	verify.platform.security.ready \
 	verify.capability.provider.guard \
 	verify.capability.registry.smoke \
 	verify.contract.envelope \
