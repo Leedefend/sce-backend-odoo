@@ -345,7 +345,7 @@ class SystemInitHandler(BaseIntentHandler):
         scene_diagnostics["timings"]["resolve_ms"] = int((time.time() - t_resolve_start) * 1000)
 
         # dev/test 下允许注入 critical 诊断，供 system-bound auto-degrade smoke 使用
-        if is_truthy(params.get("scene_inject_critical_error")) and _diagnostics_enabled(env):
+        if is_truthy(params.get("scene_inject_critical_error")) and diagnostics_collector.diagnostics_enabled(env):
             drift_append_resolve_error(
                 scene_diagnostics["resolve_errors"],
                 scene_key="projects.list",
