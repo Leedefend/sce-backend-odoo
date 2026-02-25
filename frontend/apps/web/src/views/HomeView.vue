@@ -15,6 +15,7 @@
         </p>
         <p v-if="bundleDefaultDashboardLabel" class="bundle-line">
           默认驾驶舱：{{ bundleDefaultDashboardLabel }}
+          <button class="inline-link" @click="openBundleDashboard">进入默认驾驶舱</button>
         </p>
         <p v-if="showLicenseUpgradeHint" class="license-hint">
           检测到部分能力受 License 限制（当前 {{ licenseLevelLabel }}），可升级后解锁更多入口。
@@ -947,6 +948,17 @@ function openRoleLanding() {
     from: 'workspace.home',
   }).catch(() => {});
   router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value }).catch(() => {});
+}
+
+function openBundleDashboard() {
+  const dashboardScene = bundleDefaultDashboardLabel.value;
+  if (!dashboardScene) return;
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'bundle_default_dashboard',
+    scene_key: dashboardScene,
+    from: 'workspace.home',
+  }).catch(() => {});
+  router.push({ path: `/s/${dashboardScene}`, query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToMyWork() {
