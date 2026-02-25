@@ -2,15 +2,14 @@
 # -*- coding: utf-8 -*-
 import logging
 import time
-from typing import Dict, List
+from typing import List
 
 from odoo import api, SUPERUSER_ID
 
 from ..core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
-from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher import ActionDispatcher
-from odoo.addons.smart_core.app_config_engine.utils.misc import stable_etag, format_versions
+from odoo.addons.smart_core.app_config_engine.utils.misc import format_versions
 from odoo.addons.smart_core.core.extension_loader import run_extension_hooks
 from odoo.addons.smart_core.core.scene_provider import (
     load_scene_contract as provider_load_scene_contract,
@@ -28,6 +27,7 @@ from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
 from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCollector
 from odoo.addons.smart_core.core.scene_channel_policy import SceneChannelPolicy
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
+from odoo.addons.smart_core.core.system_init_preload_builder import SystemInitPreloadBuilder
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import (
@@ -180,49 +180,15 @@ class SystemInitHandler(BaseIntentHandler):
         # -------- 2.5) 可用意图（动态生成，严格基于注册+权限）--------
         intents, intents_meta = IntentSurfaceBuilder().collect(env, user)
 
-        # -------- 3) 首页契约（无数据 | 仅算指纹，不直接塞入 preload）--------
-        home_contract = None
-        etags: Dict[str, str] = {}
-        parts_version: Dict[str, str] = {}
-
-        if default_home_action:
-            try:
-                p_home = {"subject": "action", "action_id": default_home_action, "with_data": False}
-                home_data, home_versions = ActionDispatcher(env, su_env).dispatch(p_home)
-                fixed = cs.finalize_contract({
-                    "ok": True,
-                    "data": home_data,
-                    "meta": {"subject": "action", "version": format_versions(home_versions)}
-                })
-                home_contract = fixed.get("data")
-                parts_version["home"] = format_versions(home_versions)
-                etags["home"] = stable_etag(home_contract)
-            except Exception as e:
-                _logger.warning("system.init home preload failed: action=%s, err=%s", default_home_action, e)
-
-        # -------- 4) 可选预取（仅结构指纹，不回传整包契约）--------
-        preload_items = []
-        want_preload = bool(params.get("with_preload", True))
-        preload_actions = params.get("preload_actions") or []
-
-        if want_preload and preload_actions:
-            for act in preload_actions:
-                try:
-                    p_pre = {"subject": "action", "action_id": act, "with_data": False}
-                    pre_data, pre_versions = ActionDispatcher(env, su_env).dispatch(p_pre)
-                    fixed = cs.finalize_contract({
-                        "ok": True,
-                        "data": pre_data,
-                        "meta": {"subject": "action", "version": format_versions(pre_versions)}
-                    })
-                    contract = fixed.get("data")
-                    e = stable_etag(contract)
-                    preload_items.append({"key": act, "etag": e})  # ✅ 仅返回 etag
-                    parts_version[act] = format_versions(pre_versions)
-                    etags[act] = e
-                except Exception as e:
-                    _logger.warning("system.init preload failed: action=%s, err=%s", act, e)
-                    continue
+        # -------- 3/4) 首页契约 + 可选预取（仅 etag，不回传整包契约）--------
+        preload_builder = SystemInitPreloadBuilder()
+        home_contract, preload_items, etags, parts_version = preload_builder.build(
+            env=env,
+            su_env=su_env,
+            params=params,
+            default_home_action=default_home_action,
+            contract_service=cs,
+        )
 
         # -------- 5) 汇总返回（统一蛇形命名 + 导航指纹 + 动态意图）--------
         data = {
