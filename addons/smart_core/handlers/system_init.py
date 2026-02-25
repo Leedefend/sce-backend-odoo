@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 import logging
 import time
-import json
-import hashlib
 import os
 from typing import Dict, List
 
@@ -27,7 +25,9 @@ from odoo.addons.smart_core.core.capability_provider import (
 )
 from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
 from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
+from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
+from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import (
     SceneDriftEngine,
     append_resolve_error as drift_append_resolve_error,
@@ -65,11 +65,6 @@ def _diagnostics_enabled(env) -> bool:
     except Exception:
         return False
 
-def _fingerprint(obj: dict) -> str:
-    """稳定指纹（用于导航/顶层 ETag 计算）"""
-    payload = json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    return hashlib.md5(payload.encode("utf-8")).hexdigest()
-
 def _load_capabilities_for_user(env, user) -> List[dict]:
     return provider_load_capabilities_for_user(env, user)
 
@@ -85,21 +80,6 @@ def _merge_extension_facts(data: dict) -> None:
         for key in ("entitlements", "usage"):
             if key in core_facts and key not in data:
                 data[key] = core_facts.get(key)
-
-def _is_menu_node(node: dict) -> bool:
-    """仅保留真正菜单节点（有 menu_id 或有 children 的分组）"""
-    return bool(node.get("menu_id") or node.get("children"))
-
-def _clean_nav(nodes: list) -> list:
-    """去除“sig:*”等非菜单节点，递归清洗"""
-    cleaned = []
-    for n in nodes or []:
-        if not _is_menu_node(n):
-            continue
-        c = dict(n)
-        c["children"] = _clean_nav(n.get("children") or [])
-        cleaned.append(c)
-    return cleaned
 
 def _get_request_header(name: str) -> str | None:
     try:
@@ -235,10 +215,10 @@ class SystemInitHandler(BaseIntentHandler):
         nav_data, nav_versions = NavDispatcher(env, su_env).build_nav(p_nav)
 
         nav_tree_raw = nav_data.get("nav") or []
-        nav_tree = _clean_nav(nav_tree_raw)
+        nav_tree = NavTreeCleaner().clean(nav_tree_raw)
         nav_adapter = OdooNavAdapter()
         nav_adapter.enrich(env, nav_tree)
-        nav_fp = _fingerprint({"scene": scene, "nav": nav_tree})
+        nav_fp = stable_fingerprint({"scene": scene, "nav": nav_tree})
         if nav_versions and nav_versions.get("root_filtered_fallback"):
             _logger.warning(
                 "NAV_ROOT_FILTERED_FALLBACK_USED uid=%s root_xmlid=%s trace=%s",
