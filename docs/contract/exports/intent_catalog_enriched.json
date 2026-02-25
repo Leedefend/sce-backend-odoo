@@ -11,6 +11,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "core",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/api_data.py"
@@ -18,40 +21,55 @@
     {
       "intent_type": "api.data.batch",
       "class_name": "ApiDataBatchHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "core",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/api_data_batch.py"
     },
     {
       "intent_type": "api.data.create",
       "class_name": "ApiDataWriteHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "core",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/api_data_write.py"
     },
     {
       "intent_type": "api.data.unlink",
       "class_name": "ApiDataUnlinkHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "core",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/api_data_unlink.py"
     },
     {
@@ -63,6 +81,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/app_catalog.py"
@@ -76,6 +97,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/app_nav.py"
@@ -89,6 +113,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/app_open.py"
@@ -102,6 +129,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/login.py"
@@ -115,6 +145,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/capability_describe.py"
@@ -128,6 +161,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/capability_visibility_report.py"
@@ -135,12 +171,17 @@
     {
       "intent_type": "chatter.post",
       "class_name": "ChatterPostHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/chatter_post.py"
@@ -154,6 +195,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/chatter_timeline.py"
@@ -161,7 +205,9 @@
     {
       "intent_type": "execute_button",
       "class_name": "ExecuteButtonHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": true,
@@ -170,6 +216,9 @@
         "verify.portal.execute_button_smoke.container"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "core",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/execute_button.py"
@@ -183,6 +232,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "core",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/file_download.py"
@@ -190,7 +242,9 @@
     {
       "intent_type": "file.upload",
       "class_name": "FileUploadHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": true,
@@ -198,6 +252,9 @@
         "verify.portal.file_upload_smoke.container"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "core",
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/file_upload.py"
@@ -211,6 +268,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/load_contract.py"
@@ -224,6 +284,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/load_metadata.py"
@@ -240,6 +303,9 @@
         "verify.portal.load_view_smoke.container"
       ],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/load_view.py"
@@ -253,6 +319,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/login.py"
@@ -266,6 +335,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/meta_describe.py"
@@ -273,27 +345,37 @@
     {
       "intent_type": "my.work.complete",
       "class_name": "MyWorkCompleteHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/my_work_complete.py"
     },
     {
       "intent_type": "my.work.complete_batch",
       "class_name": "MyWorkCompleteBatchHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/my_work_complete.py"
     },
     {
@@ -305,6 +387,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/my_work_summary.py"
@@ -323,8 +408,11 @@
         "verify.portal.payment_request_approval_smoke.container"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/payment_request_approval.py"
     },
     {
@@ -336,6 +424,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/payment_request_available_actions.py"
@@ -354,19 +445,27 @@
         "verify.portal.payment_request_approval_smoke.container"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/payment_request_approval.py"
     },
     {
       "intent_type": "payment.request.execute",
       "class_name": "PaymentRequestExecuteHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_finance_approver"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/payment_request_execute.py"
@@ -385,8 +484,11 @@
         "verify.portal.payment_request_approval_smoke.container"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/payment_request_approval.py"
     },
     {
@@ -403,8 +505,11 @@
         "verify.portal.payment_request_approval_smoke.container"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
-      "may_trigger_sudo": true,
+      "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/payment_request_approval.py"
     },
     {
@@ -416,6 +521,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "core",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/permission_check.py"
@@ -429,6 +537,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/enhanced_sample_handler.py"
@@ -442,9 +553,13 @@
       "has_smoke_make_target": true,
       "smoke_make_targets": [
         "verify.portal.scene_governance_action_smoke.container",
-        "verify.portal.scene_governance_action_strict.container"
+        "verify.portal.scene_governance_action_strict.container",
+        "verify.scene.governance.smoke"
       ],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "governance",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_governance.py"
@@ -458,9 +573,13 @@
       "has_smoke_make_target": true,
       "smoke_make_targets": [
         "verify.portal.scene_governance_action_smoke.container",
-        "verify.portal.scene_governance_action_strict.container"
+        "verify.portal.scene_governance_action_strict.container",
+        "verify.scene.governance.smoke"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "governance",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_governance.py"
@@ -474,9 +593,13 @@
       "has_smoke_make_target": true,
       "smoke_make_targets": [
         "verify.portal.scene_governance_action_smoke.container",
-        "verify.portal.scene_governance_action_strict.container"
+        "verify.portal.scene_governance_action_strict.container",
+        "verify.scene.governance.smoke"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "governance",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_governance.py"
@@ -490,9 +613,13 @@
       "has_smoke_make_target": true,
       "smoke_make_targets": [
         "verify.portal.scene_governance_action_smoke.container",
-        "verify.portal.scene_governance_action_strict.container"
+        "verify.portal.scene_governance_action_strict.container",
+        "verify.scene.governance.smoke"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "governance",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_governance.py"
@@ -509,6 +636,9 @@
         "verify.portal.scene_health_pagination_smoke.container"
       ],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_health.py"
@@ -528,6 +658,9 @@
         "verify.portal.scene_package_ui_smoke.container"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "governance",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_package.py"
@@ -547,6 +680,9 @@
         "verify.portal.scene_package_ui_smoke.container"
       ],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "governance",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_package.py"
@@ -566,6 +702,9 @@
         "verify.portal.scene_package_ui_smoke.container"
       ],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "",
+      "layer": "governance",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_package.py"
@@ -585,6 +724,9 @@
         "verify.portal.scene_package_ui_smoke.container"
       ],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "governance",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_package.py"
@@ -600,6 +742,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/scene_packages_installed.py"
@@ -613,6 +758,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_core/handlers/session_bootstrap.py"
@@ -629,6 +777,9 @@
         "verify.system_init.snapshot_equivalence"
       ],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "core",
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/system_init.py"
@@ -636,12 +787,17 @@
     {
       "intent_type": "system.ping.construction",
       "class_name": "SystemPingConstructionHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "record_rule",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/system_ping_construction.py"
@@ -655,6 +811,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "core",
       "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/ui_contract.py"
@@ -668,6 +827,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/enhanced_ui_contract.py"
@@ -681,6 +843,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/enhanced_ui_contract.py"
@@ -696,6 +861,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/usage_export_csv.py"
@@ -709,6 +877,9 @@
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": false,
+      "is_write": false,
+      "acl_mode": "",
+      "layer": "domain",
       "orm_used": true,
       "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/usage_report.py"
@@ -716,12 +887,17 @@
     {
       "intent_type": "usage.track",
       "class_name": "UsageTrackHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_core.group_sc_data_operator"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
       "smoke_make_targets": [],
       "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
       "orm_used": false,
       "may_trigger_sudo": true,
       "source": "addons/smart_construction_core/handlers/usage_track.py"
