@@ -26,6 +26,7 @@ from odoo.addons.smart_core.core.capability_provider import (
 from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
 from odoo.addons.smart_core.core.intent_surface_builder import IntentSurfaceBuilder
 from odoo.addons.smart_core.core.hash_utils import stable_fingerprint
+from odoo.addons.smart_core.core.request_diagnostics import RequestDiagnosticsCollector
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.governance.scene_drift_engine import (
@@ -56,15 +57,6 @@ API_VERSION = "v1"
 
 # ===================== 工具函数（权限 / 指纹 / 导航净化） =====================
 
-def _diagnostics_enabled(env) -> bool:
-    env_flag = (os.environ.get("ENV") or "").lower()
-    if env_flag in {"dev", "test", "local"}:
-        return True
-    try:
-        return env.user.has_group("base.group_system")
-    except Exception:
-        return False
-
 def _load_capabilities_for_user(env, user) -> List[dict]:
     return provider_load_capabilities_for_user(env, user)
 
@@ -81,18 +73,9 @@ def _merge_extension_facts(data: dict) -> None:
             if key in core_facts and key not in data:
                 data[key] = core_facts.get(key)
 
-def _get_request_header(name: str) -> str | None:
-    try:
-        from odoo import http
-        request = http.request
-        if not request or not request.httprequest:
-            return None
-        return request.httprequest.headers.get(name)
-    except Exception:
-        return None
-
 def _resolve_scene_channel(env, user, params: dict | None) -> tuple[str, str, str]:
-    return provider_resolve_scene_channel(env, user, params, get_header=_get_request_header)
+    collector = RequestDiagnosticsCollector()
+    return provider_resolve_scene_channel(env, user, params, get_header=collector.get_request_header)
 
 def _load_scene_contract(env, scene_channel: str, use_pinned: bool) -> tuple[dict | None, str]:
     return provider_load_scene_contract(env, scene_channel, use_pinned, logger=_logger)
@@ -133,6 +116,7 @@ class SystemInitHandler(BaseIntentHandler):
         su_env = self.su_env or api.Environment(env.cr, SUPERUSER_ID, dict(env.context or {}))
 
         scene_channel, channel_selector, channel_source_ref = _resolve_scene_channel(env, env.user, params)
+        diagnostics_collector = RequestDiagnosticsCollector()
         pinned_param = params.get("scene_use_pinned") if isinstance(params, dict) else None
         rollback_param = params.get("scene_rollback") if isinstance(params, dict) else None
         try:
@@ -150,37 +134,10 @@ class SystemInitHandler(BaseIntentHandler):
         if rollback_active:
             scene_channel = "stable"
         
-        diag_enabled = _diagnostics_enabled(self.env)
+        diag_enabled = diagnostics_collector.diagnostics_enabled(self.env)
         diagnostic_info = None
         if diag_enabled:
-            # 收集请求头信息（白名单）
-            try:
-                from odoo import http
-                request = http.request
-                headers = request.httprequest.headers
-                x_odoo_db = headers.get("X-Odoo-DB")
-                x_db = headers.get("X-DB")
-                authorization = headers.get("Authorization")
-            except Exception:
-                x_odoo_db = None
-                x_db = None
-                authorization = None
-
-            diagnostic_info = {
-                "effective_db": self.env.cr.dbname if hasattr(self.env, "cr") and self.env.cr else "unknown",
-                "db_source": "env_cr",
-                "header_x_odoo_db": x_odoo_db,
-                "header_x_db": x_db,
-                "has_authorization": bool(authorization),
-                "effective_root_xmlid": params.get("root_xmlid") if isinstance(params, dict) else None,
-                "root_source": "params" if params and params.get("root_xmlid") else "default",
-                "uid": self.env.uid,
-                "login": self.env.user.login if hasattr(self.env, "user") else "unknown",
-                "params_keys": list(params.keys()) if isinstance(params, dict) else [],
-                "scene_channel_param": params.get("scene_channel") if isinstance(params, dict) else None,
-                "scene_use_pinned_param": params.get("scene_use_pinned") if isinstance(params, dict) else None,
-                "scene_rollback_param": params.get("scene_rollback") if isinstance(params, dict) else None,
-            }
+            diagnostic_info = diagnostics_collector.collect_system_init(self.env, params)
 
             _logger.info("[B1] system.init 诊断信息: %s", diagnostic_info)
             _logger.info("[system_init][debug] params: %s", params)
