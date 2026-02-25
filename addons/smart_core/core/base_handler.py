@@ -78,6 +78,11 @@ class BaseIntentHandler:
         if not required_xmlids:
             raise AccessError(f"PERMISSION_DENIED: write intent requires REQUIRED_GROUPS ({self.__class__.__name__})")
         user = self.env.user
+        try:
+            if user and user.has_group("base.group_system"):
+                return True
+        except Exception:
+            pass
         missing = []
         for xmlid in required_xmlids:
             try:

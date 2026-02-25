@@ -24,7 +24,11 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
     DESCRIPTION = "Execute payment request semantic action via one intent"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_sc_finance_approver"]
+    REQUIRED_GROUPS = [
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_core.group_sc_finance_approver",
+        "smart_construction_core.group_sc_cap_finance_manager",
+    ]
     ACL_MODE = "explicit_check"
 
     _ACTION_TO_HANDLER = {
@@ -34,14 +38,20 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
         "done": PaymentRequestDoneHandler,
     }
 
-    def _assert_finance_approver(self):
+    def _assert_required_groups(self):
         user = self.env.user
         if not user:
-            raise AccessError("PERMISSION_DENIED: missing finance approver group")
-        if user.has_group("smart_core.group_sc_finance_approver") or user.has_group("base.group_system"):
+            raise AccessError("PERMISSION_DENIED: missing required group")
+        if user.has_group("base.group_system"):
             return
-        if not user.has_group("smart_core.group_sc_finance_approver"):
-            raise AccessError("PERMISSION_DENIED: missing finance approver group")
+        required = [str(x).strip() for x in (getattr(self, "REQUIRED_GROUPS", []) or []) if str(x).strip()]
+        for xmlid in required:
+            try:
+                if user.has_group(xmlid):
+                    return
+            except Exception:
+                continue
+        raise AccessError("PERMISSION_DENIED: missing required group")
 
     def _trace_id(self) -> str:
         if isinstance(self.context, dict):
@@ -69,7 +79,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
         }
 
     def handle(self, payload=None, ctx=None):
-        self._assert_finance_approver()
+        self._assert_required_groups()
         params = payload or self.params or {}
         if isinstance(params, dict) and isinstance(params.get("params"), dict):
             params = params.get("params") or {}
@@ -94,7 +104,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
             delegated_params["request_id"] = f"pay_req_exec_{action}_{uuid4().hex[:8]}"
 
         delegated = handler_cls(self.env, payload=delegated_params, request=self.request)
-        result = delegated.handle(payload=delegated_params, ctx=ctx)
+        result = delegated.run(payload=delegated_params, ctx=ctx)
         if not isinstance(result, dict):
             return self._error(message="unexpected delegate response", trace_id=trace_id, code=500)
 
