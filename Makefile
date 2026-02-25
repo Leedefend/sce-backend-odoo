@@ -1515,6 +1515,9 @@ verify.intent.execution.path.report: guard.prod.forbid verify.intent.permission.
 verify.platform.kernel.baseline: guard.prod.forbid verify.intent.layered.catalog
 	@python3 scripts/verify/platform_kernel_baseline_guard.py
 
+verify.owner.industry.isolation: guard.prod.forbid
+	@python3 scripts/verify/owner_industry_isolation_probe.py
+
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
 
