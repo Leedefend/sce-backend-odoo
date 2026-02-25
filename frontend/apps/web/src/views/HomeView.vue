@@ -8,6 +8,18 @@
           当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingLabel }}
           <button class="inline-link" @click="openRoleLanding">进入工作台</button>
         </p>
+        <p class="product-line">
+          <span class="product-pill">License: {{ licenseLevelLabel }}</span>
+          <span class="product-pill">Bundle: {{ bundleNameLabel }}</span>
+          <span class="product-pill">Capability Groups: {{ capabilityGroupCount }}</span>
+        </p>
+        <p v-if="bundleDefaultDashboardLabel" class="bundle-line">
+          默认驾驶舱：{{ bundleDefaultDashboardLabel }}
+          <button class="inline-link" @click="openBundleDashboard">进入默认驾驶舱</button>
+        </p>
+        <p v-if="showLicenseUpgradeHint" class="license-hint">
+          检测到部分能力受 License 限制（当前 {{ licenseLevelLabel }}），可升级后解锁更多入口。
+        </p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
@@ -47,6 +59,22 @@
           <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
             {{ item.ready === false ? '即将开放' : '立即进入' }}
           </button>
+        </article>
+      </div>
+    </section>
+
+    <section v-if="capabilityGroupCards.length" class="group-overview" aria-label="能力分组概览">
+      <header class="group-overview-header">
+        <h3>能力分组</h3>
+        <p>按契约分组展示能力状态，默认只显示前 8 组。</p>
+      </header>
+      <div class="group-overview-grid">
+        <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card">
+          <p class="group-title">{{ group.label }}</p>
+          <p class="group-meta">能力数 {{ group.capabilityCount }}</p>
+          <p class="group-meta">
+            可用 {{ group.allowCount }} · 只读 {{ group.readonlyCount }} · 禁用 {{ group.denyCount }}
+          </p>
         </article>
       </div>
     </section>
@@ -97,6 +125,26 @@
           @click="stateFilter = 'PREVIEW'"
         >
           即将开放 {{ stateCounts.PREVIEW }}
+        </button>
+      </div>
+      <div class="state-filters">
+        <button :class="{ active: capabilityStateFilter === 'ALL' }" @click="capabilityStateFilter = 'ALL'">
+          能力语义：全部
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'allow' }" @click="capabilityStateFilter = 'allow'">
+          可用 {{ capabilityStateCounts.allow }}
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'readonly' }" @click="capabilityStateFilter = 'readonly'">
+          只读 {{ capabilityStateCounts.readonly }}
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'deny' }" @click="capabilityStateFilter = 'deny'">
+          禁止 {{ capabilityStateCounts.deny }}
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'pending' }" @click="capabilityStateFilter = 'pending'">
+          待开放 {{ capabilityStateCounts.pending }}
+        </button>
+        <button :class="{ active: capabilityStateFilter === 'coming_soon' }" @click="capabilityStateFilter = 'coming_soon'">
+          建设中 {{ capabilityStateCounts.coming_soon }}
         </button>
       </div>
       <p v-if="readyOnly" class="filter-tip">已启用“仅显示可进入能力”，暂不可用与即将开放不会展示。</p>
@@ -171,6 +219,7 @@
             <span>{{ group.sceneTitle }}</span>
             <span class="scene-count">{{ group.items.length }}</span>
           </button>
+          <p v-if="group.sceneSummary" class="scene-summary">{{ group.sceneSummary }}</p>
         </header>
         <div
           v-if="!collapsedSceneSet.has(group.sceneKey)"
@@ -188,6 +237,9 @@
                   <template v-for="(part, index) in highlightParts(entry.title)" :key="`title-${entry.id}-${index}`">
                     <span :class="{ hit: part.hit }">{{ part.text }}</span>
                   </template>
+                </span>
+                <span v-if="entry.capabilityState && entry.capabilityState !== 'allow'" class="state capability-state">
+                  {{ capabilityStateLabel(entry.capabilityState) }}
                 </span>
                 <span v-if="entry.state !== 'READY'" class="state">{{ stateLabel(entry.state) }}</span>
               </p>
@@ -219,7 +271,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSessionStore } from '../stores/session';
+import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 import { readWorkspaceContext } from '../app/workspaceContext';
@@ -238,6 +290,9 @@ type CapabilityEntry = {
   sequence: number;
   status: string;
   state: EntryState;
+  capabilityState: string;
+  groupKey: string;
+  groupLabel: string;
   reason: string;
   reasonCode: string;
   tags: string[];
@@ -265,6 +320,7 @@ const session = useSessionStore();
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
 const stateFilter = ref<'ALL' | EntryState>('ALL');
+const capabilityStateFilter = ref<'ALL' | 'allow' | 'readonly' | 'deny' | 'pending' | 'coming_soon'>('ALL');
 const readyOnly = ref(false);
 const lockReasonFilter = ref('ALL');
 const collapsedSceneKeys = ref<string[]>([]);
@@ -284,7 +340,20 @@ const isAdmin = computed(() => {
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
 });
 const roleSurface = computed(() => session.roleSurface);
+const productFacts = computed(() => session.productFacts);
+const capabilityGroups = computed(() => session.capabilityGroups);
 const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
+const licenseLevelLabel = computed(() => {
+  const level = asText(productFacts.value?.license?.level).toLowerCase();
+  if (!level) return 'N/A';
+  if (level === 'community') return 'Community';
+  if (level === 'pro') return 'Pro';
+  if (level === 'enterprise') return 'Enterprise';
+  return level;
+});
+const bundleNameLabel = computed(() => asText(productFacts.value?.bundle?.name) || 'default');
+const bundleDefaultDashboardLabel = computed(() => asText(productFacts.value?.bundle?.default_dashboard));
+const capabilityGroupCount = computed(() => capabilityGroups.value.length);
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
   const normalized = raw.toLowerCase();
@@ -300,6 +369,35 @@ const sceneTitleMap = computed(() => {
     if (!key) continue;
     map.set(key, resolveSceneTitle(scene));
   }
+  return map;
+});
+const capabilityGroupCards = computed(() => {
+  return capabilityGroups.value
+    .slice()
+    .sort((a, b) => a.sequence - b.sequence)
+    .slice(0, 8)
+    .map((group) => ({
+      key: group.key,
+      label: group.label || group.key,
+      capabilityCount: Number(group.capability_count || 0),
+      allowCount: Number(group.capability_state_counts?.allow || 0),
+      readonlyCount: Number(group.capability_state_counts?.readonly || 0),
+      denyCount: Number(group.capability_state_counts?.deny || 0),
+    }));
+});
+const capabilityGroupScoreMap = computed(() => {
+  const map = new Map<string, number>();
+  capabilityGroups.value.forEach((group) => {
+    const key = String(group.key || '').trim();
+    if (!key) return;
+    const ready = Number(group.state_counts?.READY || 0);
+    const preview = Number(group.state_counts?.PREVIEW || 0);
+    const locked = Number(group.state_counts?.LOCKED || 0);
+    const total = Math.max(Number(group.capability_count || 0), 1);
+    const readiness = (ready + preview * 0.4 - locked * 0.2) / total;
+    const scaleBoost = Math.min(total, 12) * 0.05;
+    map.set(key, readiness + scaleBoost);
+  });
   return map;
 });
 const defaultSceneKey = computed(() => {
@@ -419,8 +517,36 @@ function mapState(rawState: string | undefined, status: string, allowed?: unknow
   return status === 'ga' ? 'READY' : 'PREVIEW';
 }
 
+function mapCapabilityStateToEntryState(capabilityState: string): EntryState {
+  const state = String(capabilityState || '').toLowerCase();
+  if (state === 'allow' || state === 'readonly') return 'READY';
+  if (state === 'pending' || state === 'coming_soon') return 'PREVIEW';
+  if (state === 'deny') return 'LOCKED';
+  return 'READY';
+}
+
+function normalizeEntryWithCapabilityMeta(
+  entry: Pick<CapabilityEntry, 'state' | 'capabilityState' | 'reason' | 'reasonCode'>,
+  meta: CapabilityRuntimeMeta | undefined,
+) {
+  if (!meta) return entry;
+  let state = entry.state;
+  if (meta.state === 'READY' || meta.state === 'LOCKED' || meta.state === 'PREVIEW') {
+    state = meta.state;
+  } else if (meta.capability_state) {
+    state = mapCapabilityStateToEntryState(meta.capability_state);
+  }
+  return {
+    state,
+    capabilityState: String(meta.capability_state || entry.capabilityState || '').toLowerCase(),
+    reason: String(entry.reason || meta.reason || ''),
+    reasonCode: String(entry.reasonCode || meta.reason_code || ''),
+  };
+}
+
 const entries = computed<CapabilityEntry[]>(() => {
   const list: CapabilityEntry[] = [];
+  const capabilityCatalog = session.capabilityCatalog || {};
   session.scenes.forEach((scene, sceneIndex) => {
     const sceneKey = asText(scene.key);
     if (!sceneKey) return;
@@ -429,7 +555,11 @@ const entries = computed<CapabilityEntry[]>(() => {
     tiles.forEach((tile, tileIndex) => {
       const key = asText(tile.key);
       if (!key) return;
-      const title = asText((tile as { title?: string }).title) || (isHudEnabled.value ? key : `能力 ${sceneIndex + 1}-${tileIndex + 1}`);
+      const capabilityMeta = capabilityCatalog[key];
+      const title =
+        asText((tile as { title?: string }).title) ||
+        asText(capabilityMeta?.label) ||
+        (isHudEnabled.value ? key : `能力 ${sceneIndex + 1}-${tileIndex + 1}`);
       if (
         !isHudEnabled.value &&
         isInternalEntry({
@@ -447,6 +577,15 @@ const entries = computed<CapabilityEntry[]>(() => {
       const reason = String((tile as { reason?: string }).reason || '');
       const reasonCode = String((tile as { reason_code?: string }).reason_code || '');
       const state = mapState((tile as { state?: string }).state, rawStatus, (tile as { allowed?: unknown }).allowed);
+      const normalizedByMeta = normalizeEntryWithCapabilityMeta(
+        {
+          state,
+          capabilityState: '',
+          reason,
+          reasonCode,
+        },
+        capabilityMeta,
+      );
       const payload = ((tile as { payload?: unknown }).payload || {}) as Record<string, unknown>;
       const route = asText((tile as { route?: unknown }).route);
       const contextQuery = normalizeContextQuery(payload.context_query || payload.query || payload.context);
@@ -460,9 +599,12 @@ const entries = computed<CapabilityEntry[]>(() => {
         sceneTitle,
         sequence: Number((tile as { sequence?: number }).sequence ?? 9999),
         status,
-        state,
-        reason,
-        reasonCode,
+        state: normalizedByMeta.state,
+        capabilityState: normalizedByMeta.capabilityState,
+        groupKey: String(capabilityMeta?.group_key || ''),
+        groupLabel: String(capabilityMeta?.group_label || ''),
+        reason: normalizedByMeta.reason,
+        reasonCode: normalizedByMeta.reasonCode,
         route,
         targetActionId: toPositiveInt(payload.action_id),
         targetMenuId: toPositiveInt(payload.menu_id),
@@ -485,8 +627,32 @@ const entries = computed<CapabilityEntry[]>(() => {
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
 });
 
+const showLicenseUpgradeHint = computed(() => {
+  const level = licenseLevelLabel.value.toLowerCase();
+  if (!level || level === 'enterprise') return false;
+  return entries.value.some(
+    (entry) => entry.reasonCode.toUpperCase() === 'FEATURE_DISABLED' || entry.capabilityState === 'deny',
+  );
+});
+
+function suggestionEntryScore(entry: CapabilityEntry) {
+  const pendingCount = resolveSuggestionCount(entry.sceneKey) || 0;
+  const hasUrgentTag = entry.tags.includes('urgent');
+  const groupScore = capabilityGroupScoreMap.value.get(entry.groupKey) || 0;
+  let stateBase = 0;
+  if (entry.state === 'READY') stateBase = 3;
+  else if (entry.state === 'PREVIEW') stateBase = 1;
+  else stateBase = -1;
+  if (entry.capabilityState === 'readonly') stateBase += 0.5;
+  if (entry.capabilityState === 'deny') stateBase -= 1;
+  return stateBase + (hasUrgentTag ? 2 : 0) + Math.min(pendingCount, 10) * 0.35 + groupScore;
+}
+
 const todaySuggestions = computed<SuggestionItem[]>(() => {
-  const source = entries.value.slice(0, 6);
+  const source = entries.value
+    .slice()
+    .sort((a, b) => suggestionEntryScore(b) - suggestionEntryScore(a) || a.sequence - b.sequence)
+    .slice(0, 8);
   const picked = source.slice(0, 3);
   return picked.map((entry) => {
     const count = resolveSuggestionCount(entry.sceneKey);
@@ -523,8 +689,12 @@ const searchedEntries = computed<CapabilityEntry[]>(() => {
 });
 
 const tabBaseEntries = computed<CapabilityEntry[]>(() => {
-  if (lockReasonFilter.value === 'ALL') return searchedEntries.value;
-  return searchedEntries.value.filter((entry) => {
+  const filteredByCapabilityState =
+    capabilityStateFilter.value === 'ALL'
+      ? searchedEntries.value
+      : searchedEntries.value.filter((entry) => entry.capabilityState === capabilityStateFilter.value);
+  if (lockReasonFilter.value === 'ALL') return filteredByCapabilityState;
+  return filteredByCapabilityState.filter((entry) => {
     if (entry.state !== 'LOCKED') return false;
     return String(entry.reasonCode || '').toUpperCase() === lockReasonFilter.value;
   });
@@ -535,6 +705,7 @@ const filteredEntries = computed<CapabilityEntry[]>(() => {
     if (readyOnly.value && entry.state !== 'READY') return false;
     const matchesState = stateFilter.value === 'ALL' ? true : entry.state === stateFilter.value;
     if (!matchesState) return false;
+    if (capabilityStateFilter.value !== 'ALL' && entry.capabilityState !== capabilityStateFilter.value) return false;
     if (lockReasonFilter.value !== 'ALL') {
       if (entry.state !== 'LOCKED') return false;
       if (String(entry.reasonCode || '').toUpperCase() !== lockReasonFilter.value) return false;
@@ -555,9 +726,18 @@ const stateCounts = computed(() => {
 });
 
 const allCount = computed(() => (readyOnly.value ? stateCounts.value.READY : tabBaseEntries.value.length));
+const capabilityStateCounts = computed(() => {
+  const counts = { allow: 0, readonly: 0, deny: 0, pending: 0, coming_soon: 0 };
+  for (const entry of searchedEntries.value) {
+    const key = entry.capabilityState as keyof typeof counts;
+    if (key in counts) counts[key] += 1;
+  }
+  return counts;
+});
 const resultSummaryText = computed(() => {
   const parts = [`当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`];
   if (stateFilter.value !== 'ALL') parts.push(`状态：${stateLabel(stateFilter.value)}`);
+  if (capabilityStateFilter.value !== 'ALL') parts.push(`能力语义：${capabilityStateLabel(capabilityStateFilter.value)}`);
   if (lockReasonFilter.value !== 'ALL') parts.push(`原因：${lockReasonLabel(lockReasonFilter.value)}`);
   return parts.join(' · ');
 });
@@ -578,6 +758,9 @@ const activeFilterChips = computed<FilterChip[]>(() => {
   if (keyword) chips.push({ key: 'search', label: `搜索：${keyword}` });
   if (readyOnly.value) chips.push({ key: 'ready-only', label: '仅显示可进入' });
   if (stateFilter.value !== 'ALL') chips.push({ key: 'state', label: `状态：${stateLabel(stateFilter.value)}` });
+  if (capabilityStateFilter.value !== 'ALL') {
+    chips.push({ key: 'capability-state', label: `能力语义：${capabilityStateLabel(capabilityStateFilter.value)}` });
+  }
   if (lockReasonFilter.value !== 'ALL') {
     chips.push({ key: 'reason', label: `锁定原因：${lockReasonLabel(lockReasonFilter.value)}` });
   }
@@ -590,23 +773,42 @@ const groupedEntries = computed(() => {
     .map((key) => filteredByRecent.get(key))
     .filter((entry): entry is CapabilityEntry => Boolean(entry));
   const recentKeySet = new Set(recentItems.map((item) => item.recentKey));
-  const map = new Map<string, { sceneKey: string; sceneTitle: string; items: CapabilityEntry[] }>();
+  const map = new Map<
+    string,
+    { sceneKey: string; sceneTitle: string; sceneSummary: string; items: CapabilityEntry[] }
+  >();
+  const sceneSetMap = new Map<string, Set<string>>();
   filteredEntries.value.forEach((entry) => {
     if (recentKeySet.has(entry.recentKey)) return;
-    const current = map.get(entry.sceneKey);
+    const bucketKey = entry.groupKey || entry.sceneKey;
+    const bucketTitle = entry.groupLabel || entry.sceneTitle;
+    const current = map.get(bucketKey);
     if (current) {
       current.items.push(entry);
+      const scenes = sceneSetMap.get(bucketKey) || new Set<string>();
+      scenes.add(entry.sceneTitle);
+      sceneSetMap.set(bucketKey, scenes);
       return;
     }
-    map.set(entry.sceneKey, {
-      sceneKey: entry.sceneKey,
-      sceneTitle: entry.sceneTitle,
+    map.set(bucketKey, {
+      sceneKey: bucketKey,
+      sceneTitle: bucketTitle,
+      sceneSummary: '',
       items: [entry],
     });
+    sceneSetMap.set(bucketKey, new Set([entry.sceneTitle]));
   });
-  const grouped = Array.from(map.values()).sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
+  const grouped = Array.from(map.values())
+    .map((group) => {
+      const scenes = Array.from(sceneSetMap.get(group.sceneKey) || []);
+      return {
+        ...group,
+        sceneSummary: scenes.length > 1 ? `覆盖场景：${scenes.slice(0, 3).join('、')}${scenes.length > 3 ? '…' : ''}` : '',
+      };
+    })
+    .sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
   if (!recentItems.length) return grouped;
-  return [{ sceneKey: '__recent__', sceneTitle: '最近使用', items: recentItems }, ...grouped];
+  return [{ sceneKey: '__recent__', sceneTitle: '最近使用', sceneSummary: '', items: recentItems }, ...grouped];
 });
 const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group.sceneKey === '__recent__'));
 
@@ -657,7 +859,18 @@ function lockReasonLabel(reasonCode: string) {
   if (code === 'ROLE_SCOPE_MISMATCH') return '角色范围不匹配';
   if (code === 'CAPABILITY_SCOPE_MISSING') return '缺少前置能力';
   if (code === 'CAPABILITY_SCOPE_CYCLE') return '能力依赖异常';
+  if (code === 'COMING_SOON') return '能力建设中';
+  if (code === 'PENDING_APPROVAL') return '待审批开放';
   return '当前不可用';
+}
+
+function capabilityStateLabel(state: string) {
+  const normalized = String(state || '').toLowerCase();
+  if (normalized === 'readonly') return '只读';
+  if (normalized === 'deny') return '禁止';
+  if (normalized === 'pending') return '待开放';
+  if (normalized === 'coming_soon') return '建设中';
+  return '可用';
 }
 
 function stateLabel(state: EntryState) {
@@ -673,6 +886,7 @@ function canEnter(entry: CapabilityEntry) {
 function actionLabel(entry: CapabilityEntry) {
   if (entry.state === 'LOCKED') return '暂不可用';
   if (entry.state === 'PREVIEW') return '即将开放';
+  if (entry.capabilityState === 'readonly') return '只读进入';
   return '进入';
 }
 
@@ -736,6 +950,17 @@ function openRoleLanding() {
   router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value }).catch(() => {});
 }
 
+function openBundleDashboard() {
+  const dashboardScene = bundleDefaultDashboardLabel.value;
+  if (!dashboardScene) return;
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'bundle_default_dashboard',
+    scene_key: dashboardScene,
+    from: 'workspace.home',
+  }).catch(() => {});
+  router.push({ path: `/s/${dashboardScene}`, query: workspaceContextQuery.value }).catch(() => {});
+}
+
 function goToMyWork() {
   void trackUsageEvent('workspace.nav_click', {
     target: 'my_work',
@@ -765,10 +990,17 @@ function toggleEmptyHelp() {
 }
 
 function clearSearchAndFilters() {
-  const hadFilters = Boolean(searchText.value.trim() || readyOnly.value || stateFilter.value !== 'ALL' || lockReasonFilter.value !== 'ALL');
+  const hadFilters = Boolean(
+    searchText.value.trim()
+      || readyOnly.value
+      || stateFilter.value !== 'ALL'
+      || capabilityStateFilter.value !== 'ALL'
+      || lockReasonFilter.value !== 'ALL',
+  );
   searchText.value = '';
   readyOnly.value = false;
   stateFilter.value = 'ALL';
+  capabilityStateFilter.value = 'ALL';
   lockReasonFilter.value = 'ALL';
   if (hadFilters) {
     void trackUsageEvent('workspace.filter_clear_all', { source: 'workspace.home' }).catch(() => {});
@@ -783,6 +1015,7 @@ function showAllCapabilities() {
   const wasReadyOnly = readyOnly.value;
   readyOnly.value = false;
   stateFilter.value = 'ALL';
+  capabilityStateFilter.value = 'ALL';
   if (wasReadyOnly) {
     void trackUsageEvent('workspace.ready_only.recover', { from: 'empty_state' }).catch(() => {});
   }
@@ -796,6 +1029,7 @@ function clearFilterChip(key: string) {
   if (key === 'search') searchText.value = '';
   if (key === 'ready-only') readyOnly.value = false;
   if (key === 'state') stateFilter.value = 'ALL';
+  if (key === 'capability-state') capabilityStateFilter.value = 'ALL';
   if (key === 'reason') lockReasonFilter.value = 'ALL';
   void trackUsageEvent('workspace.filter_chip_clear', { filter_key: key }).catch(() => {});
 }
@@ -918,11 +1152,20 @@ onMounted(() => {
   try {
     const raw = window.localStorage.getItem(homeFilterStorageKey.value);
     if (raw) {
-      const parsed = JSON.parse(raw) as { ready_only?: boolean; state_filter?: string; lock_reason_filter?: string };
+      const parsed = JSON.parse(raw) as {
+        ready_only?: boolean;
+        state_filter?: string;
+        capability_state_filter?: string;
+        lock_reason_filter?: string;
+      };
       readyOnly.value = Boolean(parsed?.ready_only);
       const state = String(parsed?.state_filter || '').toUpperCase();
       if (state === 'ALL' || state === 'READY' || state === 'LOCKED' || state === 'PREVIEW') {
         stateFilter.value = state;
+      }
+      const capabilityState = String(parsed?.capability_state_filter || '').toLowerCase();
+      if (capabilityState === 'all' || capabilityState === 'allow' || capabilityState === 'readonly' || capabilityState === 'deny' || capabilityState === 'pending' || capabilityState === 'coming_soon') {
+        capabilityStateFilter.value = capabilityState === 'all' ? 'ALL' : capabilityState;
       }
       const lockReason = String(parsed?.lock_reason_filter || '').toUpperCase();
       if (lockReason) {
@@ -966,13 +1209,14 @@ watch(collapsedSceneKeys, () => {
   }
 });
 
-watch([readyOnly, stateFilter, lockReasonFilter], () => {
+watch([readyOnly, stateFilter, capabilityStateFilter, lockReasonFilter], () => {
   try {
     window.localStorage.setItem(
       homeFilterStorageKey.value,
       JSON.stringify({
         ready_only: readyOnly.value,
         state_filter: stateFilter.value,
+        capability_state_filter: capabilityStateFilter.value.toLowerCase(),
         lock_reason_filter: lockReasonFilter.value,
       }),
     );
@@ -1003,16 +1247,18 @@ watch(recentEntryKeys, () => {
 watch(readyOnly, (next) => {
   if (!next) return;
   stateFilter.value = 'READY';
+  capabilityStateFilter.value = 'ALL';
   lockReasonFilter.value = 'ALL';
 });
 
-watch([readyOnly, stateFilter, lockReasonFilter], () => {
-  const signature = `${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${lockReasonFilter.value}`;
+watch([readyOnly, stateFilter, capabilityStateFilter, lockReasonFilter], () => {
+  const signature = `${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${capabilityStateFilter.value}:${lockReasonFilter.value}`;
   if (signature === lastTrackedFilterSignature.value) return;
   lastTrackedFilterSignature.value = signature;
   void trackUsageEvent('workspace.filter_change', {
     ready_only: readyOnly.value,
     state_filter: stateFilter.value,
+    capability_state_filter: capabilityStateFilter.value,
     lock_reason_filter: lockReasonFilter.value,
   }).catch(() => {});
 });
@@ -1034,16 +1280,17 @@ watch(searchText, (next) => {
   void trackUsageEvent('workspace.search', { query }).catch(() => {});
 });
 
-watch([filteredEntries, entries, readyOnly, lockReasonFilter, stateFilter, searchText], () => {
+watch([filteredEntries, entries, readyOnly, lockReasonFilter, capabilityStateFilter, stateFilter, searchText], () => {
   const reason = emptyStateReason.value;
   if (!reason) return;
-  const signature = `${reason}:${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${lockReasonFilter.value}:${searchText.value.trim()}`;
+  const signature = `${reason}:${readyOnly.value ? '1' : '0'}:${stateFilter.value}:${capabilityStateFilter.value}:${lockReasonFilter.value}:${searchText.value.trim()}`;
   if (signature === lastTrackedEmptySignature.value) return;
   lastTrackedEmptySignature.value = signature;
   void trackUsageEvent('workspace.empty_state', {
     reason,
     ready_only: readyOnly.value,
     state_filter: stateFilter.value,
+    capability_state_filter: capabilityStateFilter.value,
     lock_reason_filter: lockReasonFilter.value,
     search: searchText.value.trim(),
   }).catch(() => {});
@@ -1093,6 +1340,38 @@ function highlightParts(raw: string) {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.product-line {
+  margin: 8px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-pill {
+  font-size: 11px;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  padding: 2px 8px;
+}
+
+.bundle-line {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.license-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 4px 8px;
 }
 
 .hud-line {
@@ -1245,6 +1524,52 @@ function highlightParts(raw: string) {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.group-overview {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.group-overview-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.group-overview-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.group-overview-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.group-card {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.group-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.group-meta {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #475569;
 }
 
 .today-card {
@@ -1453,6 +1778,11 @@ function highlightParts(raw: string) {
 
 .scene-group-header {
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .scene-toggle {
@@ -1472,6 +1802,12 @@ function highlightParts(raw: string) {
   color: #1d4ed8;
   padding: 2px 8px;
   font-size: 12px;
+}
+
+.scene-summary {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .cards {
@@ -1515,6 +1851,12 @@ function highlightParts(raw: string) {
   border-radius: 999px;
   padding: 2px 8px;
   border: 1px solid currentColor;
+}
+
+.capability-state {
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  background: #eff6ff;
 }
 
 .subtitle {

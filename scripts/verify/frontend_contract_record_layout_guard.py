@@ -10,8 +10,7 @@ REQUIRED_TOKENS = [
     "function extractFieldOrder(contract: ActionContract)",
     "const direct = contract.views?.form?.layout || [];",
     "const fallback = Array.isArray(contract.views?.form?.fields)",
-    "Object.keys(fields)",
-    "const merged = normalizeUniqueFields([...normalized, ...fallback, ...Object.keys(fields)]);",
+    "const merged = normalizeUniqueFields([...normalized, ...fallback]);",
 ]
 
 
