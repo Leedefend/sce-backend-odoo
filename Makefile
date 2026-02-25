@@ -1282,6 +1282,26 @@ verify.frontend.contract_query_context.guard: guard.prod.forbid
 verify.frontend.contract_record_layout.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_contract_record_layout_guard.py
 
+.PHONY: verify.frontend.product.contract_consumption.guard
+verify.frontend.product.contract_consumption.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_product_contract_consumption_guard.py
+
+.PHONY: verify.frontend.product.ready
+verify.frontend.product.ready: guard.prod.forbid \
+	verify.frontend.contract_runtime.guard \
+	verify.frontend.contract_route.guard \
+	verify.frontend.contract_normalized_fields.guard \
+	verify.frontend.contract_query_context.guard \
+	verify.frontend.contract_record_layout.guard \
+	verify.frontend.product.contract_consumption.guard \
+	verify.frontend_api \
+	verify.ui.product.stability
+	@echo "[OK] verify.frontend.product.ready done"
+
+.PHONY: verify.product.fullstack.ready
+verify.product.fullstack.ready: guard.prod.forbid verify.product.release.ready verify.frontend.product.ready
+	@echo "[OK] verify.product.fullstack.ready done"
+
 verify.scene.legacy_endpoint.guard: guard.prod.forbid
 	@python3 scripts/verify/legacy_scene_endpoint_guard.py
 

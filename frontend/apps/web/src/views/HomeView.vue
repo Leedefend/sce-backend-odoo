@@ -8,6 +8,14 @@
           当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingLabel }}
           <button class="inline-link" @click="openRoleLanding">进入工作台</button>
         </p>
+        <p class="product-line">
+          <span class="product-pill">License: {{ licenseLevelLabel }}</span>
+          <span class="product-pill">Bundle: {{ bundleNameLabel }}</span>
+          <span class="product-pill">Capability Groups: {{ capabilityGroupCount }}</span>
+        </p>
+        <p v-if="bundleDefaultDashboardLabel" class="bundle-line">
+          默认驾驶舱：{{ bundleDefaultDashboardLabel }}
+        </p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
@@ -47,6 +55,22 @@
           <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
             {{ item.ready === false ? '即将开放' : '立即进入' }}
           </button>
+        </article>
+      </div>
+    </section>
+
+    <section v-if="capabilityGroupCards.length" class="group-overview" aria-label="能力分组概览">
+      <header class="group-overview-header">
+        <h3>能力分组</h3>
+        <p>按契约分组展示能力状态，默认只显示前 8 组。</p>
+      </header>
+      <div class="group-overview-grid">
+        <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card">
+          <p class="group-title">{{ group.label }}</p>
+          <p class="group-meta">能力数 {{ group.capabilityCount }}</p>
+          <p class="group-meta">
+            可用 {{ group.allowCount }} · 只读 {{ group.readonlyCount }} · 禁用 {{ group.denyCount }}
+          </p>
         </article>
       </div>
     </section>
@@ -284,7 +308,20 @@ const isAdmin = computed(() => {
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
 });
 const roleSurface = computed(() => session.roleSurface);
+const productFacts = computed(() => session.productFacts);
+const capabilityGroups = computed(() => session.capabilityGroups);
 const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
+const licenseLevelLabel = computed(() => {
+  const level = asText(productFacts.value?.license?.level).toLowerCase();
+  if (!level) return 'N/A';
+  if (level === 'community') return 'Community';
+  if (level === 'pro') return 'Pro';
+  if (level === 'enterprise') return 'Enterprise';
+  return level;
+});
+const bundleNameLabel = computed(() => asText(productFacts.value?.bundle?.name) || 'default');
+const bundleDefaultDashboardLabel = computed(() => asText(productFacts.value?.bundle?.default_dashboard));
+const capabilityGroupCount = computed(() => capabilityGroups.value.length);
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
   const normalized = raw.toLowerCase();
@@ -301,6 +338,20 @@ const sceneTitleMap = computed(() => {
     map.set(key, resolveSceneTitle(scene));
   }
   return map;
+});
+const capabilityGroupCards = computed(() => {
+  return capabilityGroups.value
+    .slice()
+    .sort((a, b) => a.sequence - b.sequence)
+    .slice(0, 8)
+    .map((group) => ({
+      key: group.key,
+      label: group.label || group.key,
+      capabilityCount: Number(group.capability_count || 0),
+      allowCount: Number(group.capability_state_counts?.allow || 0),
+      readonlyCount: Number(group.capability_state_counts?.readonly || 0),
+      denyCount: Number(group.capability_state_counts?.deny || 0),
+    }));
 });
 const defaultSceneKey = computed(() => {
   const first = session.scenes.find((scene) => asText(scene.key));
@@ -1095,6 +1146,28 @@ function highlightParts(raw: string) {
   gap: 10px;
 }
 
+.product-line {
+  margin: 8px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-pill {
+  font-size: 11px;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  padding: 2px 8px;
+}
+
+.bundle-line {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
 .hud-line {
   margin: 6px 0 0;
   color: #64748b;
@@ -1245,6 +1318,52 @@ function highlightParts(raw: string) {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.group-overview {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.group-overview-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.group-overview-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.group-overview-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.group-card {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.group-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.group-meta {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #475569;
 }
 
 .today-card {

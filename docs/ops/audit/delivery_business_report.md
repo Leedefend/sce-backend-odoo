@@ -6,18 +6,18 @@
 
 | step_name | intent_used | actor_login | http_status | business_state_after | latency_ms | ok |
 |---|---|---|---:|---|---:|---|
-| system.init |  | admin | 200 | ok | 2199.1 | True |
-| ui.contract |  | admin | 200 | ok | 257.85 | True |
-| execute_button |  | admin | 200 | DRY_RUN | 28.53 | True |
-| payment.submit | payment.request.submit | demo_role_finance | 403 | unknown | 31.45 | False |
-| payment.submit | payment.request.submit | sc_fx_finance | 403 | unknown | 31.72 | False |
-| payment.submit | payment.request.submit | admin | 403 | PERMISSION_DENIED | 44.68 | False |
-| payment.submit | owner.payment.request.submit | demo_role_finance | 403 | unknown | 25.61 | False |
-| payment.submit | owner.payment.request.submit | sc_fx_finance | 403 | unknown | 25.81 | False |
-| payment.submit | owner.payment.request.submit | admin | 200 | ok | 25.94 | True |
-| payment.approve | owner.payment.request.approve | demo_role_finance | 403 | unknown | 23.59 | False |
-| payment.approve | owner.payment.request.approve | sc_fx_finance | 403 | unknown | 25.82 | False |
-| payment.approve | owner.payment.request.approve | admin | 200 | ok | 23.61 | True |
+| system.init |  | admin | 200 | ok | 2058.4 | True |
+| ui.contract |  | admin | 200 | ok | 347.07 | True |
+| execute_button |  | admin | 200 | DRY_RUN | 39.71 | True |
+| payment.submit | payment.request.submit | demo_role_finance | 403 | unknown | 32.92 | False |
+| payment.submit | payment.request.submit | sc_fx_finance | 403 | unknown | 29.81 | False |
+| payment.submit | payment.request.submit | admin | 403 | PERMISSION_DENIED | 51.42 | False |
+| payment.submit | owner.payment.request.submit | demo_role_finance | 403 | unknown | 28.98 | False |
+| payment.submit | owner.payment.request.submit | sc_fx_finance | 403 | unknown | 27.46 | False |
+| payment.submit | owner.payment.request.submit | admin | 200 | ok | 30.3 | True |
+| payment.approve | owner.payment.request.approve | demo_role_finance | 403 | unknown | 29.47 | False |
+| payment.approve | owner.payment.request.approve | sc_fx_finance | 403 | unknown | 27.65 | False |
+| payment.approve | owner.payment.request.approve | admin | 200 | ok | 26.62 | True |
 
 ## Errors
 

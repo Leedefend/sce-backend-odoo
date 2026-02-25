@@ -78,6 +78,42 @@ export interface NavMeta {
 }
 
 export interface AppInitResponse {
+  capabilities?: Array<string | {
+    key?: string;
+    label?: string;
+    state?: string;
+    capability_state?: string;
+    reason?: string;
+    reason_code?: string;
+    group_key?: string;
+    group_label?: string;
+  }>;
+  capability_groups?: Array<{
+    key?: string;
+    label?: string;
+    icon?: string;
+    sequence?: number;
+    capability_count?: number;
+    state_counts?: Record<string, number>;
+    capability_state_counts?: Record<string, number>;
+    capabilities?: Array<Record<string, unknown>>;
+  }>;
+  ext_facts?: {
+    product?: {
+      license?: {
+        level?: string;
+        tiers?: string[];
+      };
+      bundle?: {
+        name?: string;
+        scenes?: string[];
+        capabilities?: string[];
+        recommended_roles?: string[];
+        default_dashboard?: string;
+      };
+    };
+    [key: string]: unknown;
+  };
   role_surface?: {
     role_code?: string;
     role_label?: string;
