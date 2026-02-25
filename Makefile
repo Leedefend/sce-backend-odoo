@@ -1524,6 +1524,17 @@ verify.owner.intent.non_intrusion: guard.prod.forbid
 verify.capability.isolation.report: guard.prod.forbid
 	@python3 scripts/verify/capability_isolation_report.py
 
+verify.owner.scene.independent.deploy: guard.prod.forbid
+	@python3 scripts/verify/owner_scene_independent_deploy_report.py
+
+verify.platform.reusability.ready: guard.prod.forbid \
+	verify.owner.industry.isolation \
+	verify.owner.intent.non_intrusion \
+	verify.capability.isolation.report \
+	verify.owner.scene.independent.deploy \
+	verify.platform.kernel.ready
+	@echo "[OK] verify.platform.reusability.ready done"
+
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
 
