@@ -1527,6 +1527,21 @@ verify.capability.isolation.report: guard.prod.forbid
 verify.owner.scene.independent.deploy: guard.prod.forbid
 	@python3 scripts/verify/owner_scene_independent_deploy_report.py
 
+verify.platform.multi_domain.ready: guard.prod.forbid
+	@python3 scripts/verify/platform_multi_domain_ready_report.py
+
+verify.scene.conflict.stress: guard.prod.forbid
+	@python3 scripts/verify/scene_conflict_stress_report.py
+
+verify.capability.scale.stress: guard.prod.forbid
+	@python3 scripts/verify/capability_scale_stress_report.py
+
+verify.intent.concurrent.smoke: guard.prod.forbid
+	@python3 scripts/verify/intent_concurrent_smoke_report.py
+
+verify.kernel.immutable.guard: guard.prod.forbid
+	@python3 scripts/verify/kernel_immutable_guard.py
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 
@@ -1558,6 +1573,15 @@ verify.platform.reusability.ready: guard.prod.forbid \
 	verify.owner.scene.independent.deploy \
 	verify.platform.kernel.ready
 	@echo "[OK] verify.platform.reusability.ready done"
+
+verify.platform.stability.ready: guard.prod.forbid \
+	verify.platform.multi_domain.ready \
+	verify.scene.conflict.stress \
+	verify.capability.scale.stress \
+	verify.intent.concurrent.smoke \
+	verify.kernel.immutable.guard \
+	verify.platform.reusability.ready
+	@echo "[OK] verify.platform.stability.ready done"
 
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
