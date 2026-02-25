@@ -266,6 +266,8 @@ type CapabilityEntry = {
   status: string;
   state: EntryState;
   capabilityState: string;
+  groupKey: string;
+  groupLabel: string;
   reason: string;
   reasonCode: string;
   tags: string[];
@@ -356,6 +358,21 @@ const capabilityGroupCards = computed(() => {
       readonlyCount: Number(group.capability_state_counts?.readonly || 0),
       denyCount: Number(group.capability_state_counts?.deny || 0),
     }));
+});
+const capabilityGroupScoreMap = computed(() => {
+  const map = new Map<string, number>();
+  capabilityGroups.value.forEach((group) => {
+    const key = String(group.key || '').trim();
+    if (!key) return;
+    const ready = Number(group.state_counts?.READY || 0);
+    const preview = Number(group.state_counts?.PREVIEW || 0);
+    const locked = Number(group.state_counts?.LOCKED || 0);
+    const total = Math.max(Number(group.capability_count || 0), 1);
+    const readiness = (ready + preview * 0.4 - locked * 0.2) / total;
+    const scaleBoost = Math.min(total, 12) * 0.05;
+    map.set(key, readiness + scaleBoost);
+  });
+  return map;
 });
 const defaultSceneKey = computed(() => {
   const first = session.scenes.find((scene) => asText(scene.key));
@@ -558,6 +575,8 @@ const entries = computed<CapabilityEntry[]>(() => {
         status,
         state: normalizedByMeta.state,
         capabilityState: normalizedByMeta.capabilityState,
+        groupKey: String(capabilityMeta?.group_key || ''),
+        groupLabel: String(capabilityMeta?.group_label || ''),
         reason: normalizedByMeta.reason,
         reasonCode: normalizedByMeta.reasonCode,
         route,
@@ -582,8 +601,24 @@ const entries = computed<CapabilityEntry[]>(() => {
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
 });
 
+function suggestionEntryScore(entry: CapabilityEntry) {
+  const pendingCount = resolveSuggestionCount(entry.sceneKey) || 0;
+  const hasUrgentTag = entry.tags.includes('urgent');
+  const groupScore = capabilityGroupScoreMap.value.get(entry.groupKey) || 0;
+  let stateBase = 0;
+  if (entry.state === 'READY') stateBase = 3;
+  else if (entry.state === 'PREVIEW') stateBase = 1;
+  else stateBase = -1;
+  if (entry.capabilityState === 'readonly') stateBase += 0.5;
+  if (entry.capabilityState === 'deny') stateBase -= 1;
+  return stateBase + (hasUrgentTag ? 2 : 0) + Math.min(pendingCount, 10) * 0.35 + groupScore;
+}
+
 const todaySuggestions = computed<SuggestionItem[]>(() => {
-  const source = entries.value.slice(0, 6);
+  const source = entries.value
+    .slice()
+    .sort((a, b) => suggestionEntryScore(b) - suggestionEntryScore(a) || a.sequence - b.sequence)
+    .slice(0, 8);
   const picked = source.slice(0, 3);
   return picked.map((entry) => {
     const count = resolveSuggestionCount(entry.sceneKey);
