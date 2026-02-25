@@ -35,6 +35,15 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
     ACTION_METHOD = ""
     ACTION_NAME = ""
 
+    def _assert_finance_approver(self):
+        user = self.env.user
+        if not user:
+            raise AccessError("PERMISSION_DENIED: missing finance approver group")
+        if user.has_group("smart_core.group_sc_finance_approver") or user.has_group("base.group_system"):
+            return
+        if not user.has_group("smart_core.group_sc_finance_approver"):
+            raise AccessError("PERMISSION_DENIED: missing finance approver group")
+
     def _extract_reason(self, params: dict) -> str:
         for key in ("reason", "reject_reason", "note", "comment"):
             value = str((params or {}).get(key) or "").strip()
@@ -143,7 +152,7 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
         if not Audit:
             return
         try:
-            Audit.sudo().write_event(
+            Audit.write_event(
                 event_code=self.AUDIT_EVENT_CODE,
                 model="payment.request",
                 res_id=int(payment_request_id or 0),
@@ -183,6 +192,7 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
         return success_data
 
     def handle(self, payload=None, ctx=None):
+        self._assert_finance_approver()
         params = payload or self.params or {}
         if isinstance(params, dict) and isinstance(params.get("params"), dict):
             # Intent router passes payload envelope: {intent, params, context}
