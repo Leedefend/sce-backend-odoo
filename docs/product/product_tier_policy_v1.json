@@ -1,0 +1,10 @@
+{
+  "version": "v1.0",
+  "levels": ["community", "pro", "enterprise"],
+  "gating_rules": [
+    {"prefix": "analytics.", "min_level": "pro"},
+    {"prefix": "finance.", "min_level": "pro"},
+    {"prefix": "governance.", "min_level": "pro"},
+    {"prefix": "owner.", "min_level": "enterprise"}
+  ]
+}

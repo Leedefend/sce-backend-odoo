@@ -1557,6 +1557,27 @@ verify.multi_tenant.evolution.smoke: guard.prod.forbid
 verify.contract.version.evolution.drill: guard.prod.forbid
 	@python3 scripts/verify/contract_version_evolution_drill.py
 
+verify.product.capability.matrix.ready: guard.prod.forbid
+	@python3 scripts/verify/product_capability_matrix_ready.py
+
+verify.bundle.installation.ready: guard.prod.forbid
+	@python3 scripts/verify/bundle_installation_ready.py
+
+verify.product.tier.ready: guard.prod.forbid
+	@python3 scripts/verify/product_tier_ready.py
+
+verify.ui.surface.stability.ready: guard.prod.forbid
+	@python3 scripts/verify/ui_surface_stability_ready.py
+
+verify.delivery.simulation.ready: guard.prod.forbid
+	@python3 scripts/verify/delivery_simulation_ready.py
+
+verify.complexity.guard: guard.prod.forbid
+	@python3 scripts/verify/complexity_guard.py
+
+export.product.documentation: guard.prod.forbid
+	@python3 scripts/verify/export_product_documentation.py
+
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
 
@@ -1606,6 +1627,16 @@ verify.platform.governance.ready: guard.prod.forbid \
 	verify.contract.version.evolution.drill \
 	verify.platform.stability.ready
 	@echo "[OK] verify.platform.governance.ready done"
+
+verify.productization.ready: guard.prod.forbid \
+	verify.product.capability.matrix.ready \
+	verify.bundle.installation.ready \
+	verify.product.tier.ready \
+	verify.ui.surface.stability.ready \
+	verify.delivery.simulation.ready \
+	verify.complexity.guard \
+	verify.platform.governance.ready
+	@echo "[OK] verify.productization.ready done"
 
 verify.etag.validation.report: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/verify/etag_validation_report.py
