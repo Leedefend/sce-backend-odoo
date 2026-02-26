@@ -30,7 +30,7 @@ def main() -> int:
     governance_tokens = [
         'data["field_policies"] = _build_form_field_policies(data)',
         'data["action_policies"] = _build_form_action_policies(data)',
-        'data["validation_rules"] = _build_form_validation_rules(data)',
+        'data["validation_rules"] = _build_form_validation_rules(data, contract_mode)',
         '"required_fields": required_fields[:12]',
         '"required_capabilities"',
         '"required_groups"',

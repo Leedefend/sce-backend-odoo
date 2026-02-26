@@ -208,6 +208,8 @@ class TestProjectFormGovernance(unittest.TestCase):
         validation_rules = out.get("validation_rules") or []
         self.assertIsInstance(validation_rules, list)
         self.assertTrue(any((rule or {}).get("code") == "REQUIRED" for rule in validation_rules if isinstance(rule, dict)))
+        sql_rule = next((rule for rule in validation_rules if isinstance(rule, dict) and rule.get("code") == "SQL_CHECK"), {})
+        self.assertNotIn("expr", sql_rule)
         capabilities = out.get("capabilities") or []
         self.assertEqual(len(capabilities), 3)
         for cap in capabilities:
@@ -256,6 +258,14 @@ class TestProjectFormGovernance(unittest.TestCase):
             self.assertIn("highlight_rule", list_profile)
         capabilities = out.get("capabilities") or []
         self.assertEqual(len(capabilities), 3)
+        sql_rules = [rule for rule in (out.get("validation_rules") or []) if isinstance(rule, dict) and rule.get("code") == "SQL_CHECK"]
+        if sql_rules:
+            self.assertIn("expr", sql_rules[0])
+        if capabilities:
+            ordered_keys = list(capabilities[0].keys())
+            self.assertGreaterEqual(len(ordered_keys), 5)
+            self.assertEqual(ordered_keys[0], "key")
+            self.assertEqual(ordered_keys[1], "name")
         for cap in capabilities:
             self.assertIn("group_key", cap)
             self.assertIn("group_label", cap)

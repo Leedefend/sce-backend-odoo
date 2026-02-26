@@ -17,7 +17,7 @@ _USER_MODE_STRIP_KEYS = {
     "res_id",
     "id",
 }
-_USER_CAPABILITY_KEYS = {
+_USER_CAPABILITY_KEYS = (
     "key",
     "name",
     "group_key",
@@ -36,8 +36,8 @@ _USER_CAPABILITY_KEYS = {
     "version",
     "tags",
     "default_payload",
-}
-_USER_SCENE_KEYS = {
+)
+_USER_SCENE_KEYS = (
     "code",
     "key",
     "name",
@@ -60,8 +60,8 @@ _USER_SCENE_KEYS = {
     "state",
     "version",
     "tags",
-}
-_USER_SCENE_TARGET_KEYS = {
+)
+_USER_SCENE_TARGET_KEYS = (
     "route",
     "action_id",
     "menu_id",
@@ -69,8 +69,8 @@ _USER_SCENE_TARGET_KEYS = {
     "view_mode",
     "view_type",
     "record_id",
-}
-_USER_SCENE_TILE_KEYS = {
+)
+_USER_SCENE_TILE_KEYS = (
     "key",
     "title",
     "subtitle",
@@ -89,15 +89,15 @@ _USER_SCENE_TILE_KEYS = {
     "requiredCapabilities",
     "allowed",
     "tags",
-}
-_USER_SCENE_ACCESS_KEYS = {
+)
+_USER_SCENE_ACCESS_KEYS = (
     "allowed",
     "state",
     "reason_code",
     "reason",
     "required_capabilities",
     "suggested_action",
-}
+)
 
 _PROJECT_FORM_PRIMARY_FIELDS = [
     "name",
@@ -408,7 +408,7 @@ def _strip_user_mode_fields(obj: Any) -> Any:
     return out
 
 
-def _pick_fields(raw: dict, allowed_keys: set[str]) -> dict:
+def _pick_fields(raw: dict, allowed_keys: tuple[str, ...] | list[str]) -> dict:
     out: dict[str, Any] = {}
     for key in allowed_keys:
         if key in raw:
@@ -700,9 +700,6 @@ def _action_priority(action: dict) -> int:
 def _is_noisy_project_action(action: dict) -> bool:
     key = _safe_lower(action.get("key"))
     label = _safe_lower(action.get("label"))
-    kind = _safe_lower(action.get("kind"))
-    if kind == "server":
-        return True
     if not label and not key:
         return True
     if label.isdigit():
@@ -1025,14 +1022,14 @@ def _annotate_form_actions(data: dict) -> None:
         row["visible_profiles"] = profiles or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
 
 
-def _apply_form_render_semantics(data: dict) -> None:
+def _apply_form_render_semantics(data: dict, contract_mode: str) -> None:
     if not _is_form_contract(data):
         return
     data["render_profile"] = _resolve_render_profile(data)
     data["hide_filters_on_create"] = True
     _apply_form_field_groups(data)
     _annotate_form_actions(data)
-    _apply_form_policy_contract(data)
+    _apply_form_policy_contract(data, contract_mode)
 
 
 def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
@@ -1310,7 +1307,7 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
     return policies
 
 
-def _build_form_validation_rules(data: dict) -> list[dict[str, Any]]:
+def _build_form_validation_rules(data: dict, contract_mode: str) -> list[dict[str, Any]]:
     rules: list[dict[str, Any]] = []
     fields_map = _as_dict(data.get("fields"))
     for name, descriptor_raw in fields_map.items():
@@ -1336,35 +1333,61 @@ def _build_form_validation_rules(data: dict) -> list[dict[str, Any]]:
         definition = _safe_text(row.get("definition"))
         if not message and not definition:
             continue
-        rules.append(
-            {
-                "code": "SQL_CHECK",
-                "name": _safe_text(row.get("name")),
-                "expr": definition,
-                "message": message or definition,
-            }
-        )
+        item = {
+            "code": "SQL_CHECK",
+            "name": _safe_text(row.get("name")),
+            "message": message or definition,
+        }
+        if contract_mode == "hud":
+            item["expr"] = definition
+        rules.append(item)
     return rules
 
 
-def _apply_form_policy_contract(data: dict) -> None:
+def _apply_form_policy_contract(data: dict, contract_mode: str) -> None:
     data["field_policies"] = _build_form_field_policies(data)
     data["action_policies"] = _build_form_action_policies(data)
-    data["validation_rules"] = _build_form_validation_rules(data)
+    data["validation_rules"] = _build_form_validation_rules(data, contract_mode)
 
 
-def _canonicalize_contract_keys(obj: Any) -> Any:
+def _canonicalize_contract_keys(
+    obj: Any,
+    *,
+    path: str = "$",
+    conflicts: list[dict[str, Any]] | None = None,
+) -> Any:
+    conflicts = conflicts if isinstance(conflicts, list) else []
     if isinstance(obj, list):
-        return [_canonicalize_contract_keys(item) for item in obj]
+        return [
+            _canonicalize_contract_keys(item, path=f"{path}[{idx}]", conflicts=conflicts)
+            for idx, item in enumerate(obj)
+        ]
     if not isinstance(obj, dict):
         return obj
     out: dict[str, Any] = {}
+    source_keys: dict[str, str] = {}
     for raw_key, raw_val in obj.items():
         key = str(raw_key)
         canonical = _CONTRACT_KEY_CANONICAL_MAP.get(key, key)
-        if canonical in out:
+        normalized_val = _canonicalize_contract_keys(raw_val, path=f"{path}.{canonical}", conflicts=conflicts)
+        if canonical not in out:
+            out[canonical] = normalized_val
+            source_keys[canonical] = key
             continue
-        out[canonical] = _canonicalize_contract_keys(raw_val)
+        previous = source_keys.get(canonical, canonical)
+        snake_preferred = canonical
+        should_replace = key == snake_preferred and previous != snake_preferred
+        conflicts.append(
+            {
+                "path": f"{path}.{canonical}",
+                "canonical": canonical,
+                "kept_from": key if should_replace else previous,
+                "dropped_from": previous if should_replace else key,
+            }
+        )
+        if should_replace:
+            out[canonical] = normalized_val
+            source_keys[canonical] = key
     return out
 
 
@@ -1392,15 +1415,32 @@ def register_contract_domain_override(
     _DOMAIN_OVERRIDE_REGISTRY.sort(key=lambda item: int(item.get("priority") or 100))
 
 
-def _apply_domain_overrides(data: dict, contract_mode: str) -> None:
+def _append_governance_diagnostic(data: dict, key: str, value: Any) -> None:
+    diagnostic = data.get("diagnostic")
+    if not isinstance(diagnostic, dict):
+        diagnostic = {}
+    diagnostic[key] = value
+    data["diagnostic"] = diagnostic
+
+
+def _apply_domain_overrides(data: dict, contract_mode: str) -> list[dict[str, Any]]:
+    failures: list[dict[str, Any]] = []
     for row in _DOMAIN_OVERRIDE_REGISTRY:
         handler = row.get("handler")
         if not callable(handler):
             continue
         try:
             handler(data, contract_mode)
-        except Exception:
+        except Exception as exc:
+            failures.append(
+                {
+                    "name": _safe_text(row.get("name")),
+                    "error_type": exc.__class__.__name__,
+                    "message": _safe_text(str(exc))[:240],
+                }
+            )
             continue
+    return failures
 
 
 def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
@@ -1432,9 +1472,8 @@ def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:
 
 
 def _apply_semantic_governance(data: dict, contract_mode: str) -> None:
-    _ = contract_mode
     if _is_form_contract(data):
-        _apply_form_render_semantics(data)
+        _apply_form_render_semantics(data, contract_mode)
 
 
 def normalize_scenes(scenes: list) -> list[dict]:
@@ -1463,7 +1502,9 @@ def apply_contract_governance(
     if not isinstance(data, dict):
         return data
 
-    data = _canonicalize_contract_keys(data)
+    pipeline = ["canonicalize", "sanitize", "semantic", "domain_overrides", "inject_mode"]
+    key_conflicts: list[dict[str, Any]] = []
+    data = _canonicalize_contract_keys(data, conflicts=key_conflicts)
 
     nested_payload = data.get("data")
     if isinstance(nested_payload, dict):
@@ -1471,8 +1512,14 @@ def apply_contract_governance(
 
     _apply_sanitize_governance(data, contract_mode)
     _apply_semantic_governance(data, contract_mode)
-    _apply_domain_overrides(data, contract_mode)
+    override_failures = _apply_domain_overrides(data, contract_mode)
 
     if inject_contract_mode:
         data["contract_mode"] = contract_mode
+    if contract_mode == "hud":
+        if key_conflicts:
+            _append_governance_diagnostic(data, "contract_key_conflicts", key_conflicts)
+        if override_failures:
+            _append_governance_diagnostic(data, "domain_override_failures", override_failures)
+        _append_governance_diagnostic(data, "governance_pipeline", pipeline)
     return data
