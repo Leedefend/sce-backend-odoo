@@ -1302,8 +1302,12 @@ verify.frontend.scene_record_semantics.guard: guard.prod.forbid
 verify.render.semantic.ready: guard.prod.forbid
 	@python3 scripts/verify/render_semantic_ready_guard.py
 
+.PHONY: verify.contract.governance.determinism.guard
+verify.contract.governance.determinism.guard: guard.prod.forbid
+	@python3 scripts/verify/contract_governance_determinism_guard.py
+
 .PHONY: verify.render.policy.ready
-verify.render.policy.ready: guard.prod.forbid
+verify.render.policy.ready: guard.prod.forbid verify.contract.governance.determinism.guard
 	@python3 scripts/verify/render_policy_ready_guard.py
 
 .PHONY: verify.frontend.product.ready
