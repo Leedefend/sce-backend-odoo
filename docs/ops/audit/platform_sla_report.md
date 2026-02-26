@@ -7,9 +7,9 @@
 
 | intent | p95_ms | p95_limit | max_payload_bytes | payload_limit | statuses |
 |---|---:|---:|---:|---:|---|
-| system.init | 2494.86 | 8000.00 | 246062 | 3500000 | 200 |
-| ui.contract | 360.65 | 5000.00 | 81935 | 3500000 | 200 |
-| execute_button | 32.98 | 3000.00 | 574 | 600000 | 404 |
+| system.init | 1962.27 | 8000.00 | 246080 | 3500000 | 200 |
+| ui.contract | 295.72 | 5000.00 | 128080 | 3500000 | 200 |
+| execute_button | 27.87 | 3000.00 | 574 | 600000 | 404 |
 
 ## Errors
 

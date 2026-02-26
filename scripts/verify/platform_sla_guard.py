@@ -58,6 +58,20 @@ def _call(intent_url: str, token: str, intent: str, params: dict) -> tuple[int, 
     return status, (payload if isinstance(payload, dict) else {}), elapsed_ms
 
 
+def _classify_status(intent: str, status: int) -> str:
+    if 200 <= status < 300:
+        return "state_transition" if intent == "execute_button" else "normal"
+    if status == 403:
+        return "permission_guard"
+    if status == 404:
+        return "fallback"
+    if status in (410, 451):
+        return "deprecated"
+    if 400 <= status < 500:
+        return "fallback"
+    return "system_error"
+
+
 def main() -> int:
     baseline = _load_baseline()
     iterations = int(baseline.get("iterations") or 6)
@@ -97,11 +111,14 @@ def main() -> int:
             times: list[float] = []
             sizes: list[int] = []
             statuses: list[int] = []
+            status_breakdown: dict[str, int] = {}
             for _ in range(iterations):
                 status, payload, elapsed = _call(intent_url, token, intent, params)
                 statuses.append(int(status))
                 times.append(elapsed)
                 sizes.append(len(json.dumps(payload, ensure_ascii=False).encode("utf-8")))
+                kind = _classify_status(intent, int(status))
+                status_breakdown[kind] = status_breakdown.get(kind, 0) + 1
                 if status >= 500:
                     errors.append(f"{intent} returns 5xx: {status}")
             p95 = _p95(times)
@@ -121,6 +138,12 @@ def main() -> int:
                     "p95_ms": round(p95, 2),
                     "max_payload_bytes": max_size,
                     "statuses": sorted(set(statuses)),
+                    "status_classification": (
+                        "fallback"
+                        if intent == "execute_button" and 404 in statuses
+                        else ("normal" if all(200 <= s < 300 for s in statuses) else "mixed")
+                    ),
+                    "status_breakdown": status_breakdown,
                     "p95_limit": p95_limit,
                     "payload_limit": size_limit,
                 }
@@ -133,6 +156,7 @@ def main() -> int:
             "target_count": len(rows),
             "error_count": len(errors),
             "warning_count": len(warnings),
+            "classified_row_count": len([x for x in rows if str(x.get("status_classification") or "").strip()]),
         },
         "rows": rows,
         "errors": errors,

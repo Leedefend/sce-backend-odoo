@@ -2756,7 +2756,7 @@
       "aliases": [],
       "stability": "stable",
       "has_idempotency_window": false,
-      "test_refs": 83,
+      "test_refs": 90,
       "request_schema_hint": [
         "company_id",
         "database",
@@ -11797,14 +11797,8 @@
       "test_refs": 2,
       "request_schema_hint": [
         "home_action_id",
-        "preload_actions",
-        "root_menu_id",
         "root_xmlid",
         "scene",
-        "scene_channel",
-        "scene_inject_critical_error",
-        "scene_rollback",
-        "scene_use_pinned",
         "with_preload"
       ],
       "response_data_schema_hint": [
@@ -12566,6 +12560,47 @@
         }
       ],
       "inferred_example": null
+    },
+    {
+      "intent": "telemetry.track",
+      "owner": {
+        "module": "addons/smart_construction_core/handlers/telemetry_track.py",
+        "class": "TelemetryTrackHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "event_type"
+      ],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "event_type"
+          ],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "event_type"
+        ],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
     },
     {
       "intent": "ui.contract",

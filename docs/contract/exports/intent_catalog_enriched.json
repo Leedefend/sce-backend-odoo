@@ -1,6 +1,6 @@
 {
   "source": "intent_capability_matrix_report",
-  "intent_count": 50,
+  "intent_count": 51,
   "intents": [
     {
       "intent_type": "api.data",
@@ -434,7 +434,10 @@
     {
       "intent_type": "payment.request.done",
       "class_name": "PaymentRequestDoneHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_core.group_sc_finance_approver"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": true,
@@ -456,7 +459,9 @@
       "intent_type": "payment.request.execute",
       "class_name": "PaymentRequestExecuteHandler",
       "required_groups": [
-        "smart_core.group_sc_finance_approver"
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_core.group_sc_finance_approver",
+        "smart_construction_core.group_sc_cap_finance_manager"
       ],
       "etag_enabled": false,
       "has_test_file": true,
@@ -494,7 +499,10 @@
     {
       "intent_type": "payment.request.submit",
       "class_name": "PaymentRequestSubmitHandler",
-      "required_groups": [],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_core.group_sc_finance_approver"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": true,
@@ -801,6 +809,22 @@
       "orm_used": false,
       "may_trigger_sudo": false,
       "source": "addons/smart_construction_core/handlers/system_ping_construction.py"
+    },
+    {
+      "intent_type": "telemetry.track",
+      "class_name": "TelemetryTrackHandler",
+      "required_groups": [],
+      "etag_enabled": false,
+      "has_test_file": true,
+      "has_smoke_make_target": false,
+      "smoke_make_targets": [],
+      "is_write_operation": true,
+      "is_write": true,
+      "acl_mode": "explicit_check",
+      "layer": "domain",
+      "orm_used": false,
+      "may_trigger_sudo": false,
+      "source": "addons/smart_construction_core/handlers/telemetry_track.py"
     },
     {
       "intent_type": "ui.contract",
