@@ -5,10 +5,12 @@
 - capability_series_points: 7
 - intent_heatmap_count: 6
 - role_distribution_count: 6
+- role_intent_heatmap_count: 9
+- history_day_count: 1
 - error_count: 0
 - warning_count: 0
 
-## Scene Count (7d)
+## Scene Count
 
 - 2026-02-20: null
 - 2026-02-21: null
@@ -18,7 +20,7 @@
 - 2026-02-25: 164
 - 2026-02-26: null
 
-## Capability Usage (7d)
+## Capability Usage
 
 - 2026-02-20: null
 - 2026-02-21: null
@@ -36,3 +38,15 @@
 - load_view: 1 (probe)
 - my.work.summary: 1 (probe)
 - usage.report: 1 (probe)
+
+## Role Intent Heatmap
+
+- executive -> system.init: 1
+- executive -> ui.contract: 1
+- executive -> usage.report: 1
+- finance -> load_view: 1
+- finance -> system.init: 1
+- finance -> ui.contract: 1
+- pm -> my.work.summary: 1
+- pm -> system.init: 1
+- pm -> ui.contract: 1
