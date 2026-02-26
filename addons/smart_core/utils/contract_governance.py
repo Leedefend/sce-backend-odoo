@@ -168,6 +168,11 @@ _FORM_ACTION_READONLY_KEYWORDS = (
     "open",
     "view",
 )
+_FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
+_FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
+_FORM_DISABLED_REASON_LIFECYCLE = "当前生命周期状态不允许该操作"
+_FORM_DISABLED_REASON_GROUP = "当前角色组不满足执行条件"
+_FORM_DISABLED_REASON_ROLE = "当前角色不满足执行条件"
 
 _CAPABILITY_GROUP_DEFAULTS = {
     "project_management": {"label": "项目管理", "icon": "briefcase"},
@@ -1076,6 +1081,74 @@ def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
     return policies
 
 
+def _default_action_policy(semantic: str, visible_profiles: list[str], required_fields: list[str]) -> dict[str, Any]:
+    policy = {
+        "visible_profiles": visible_profiles or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+        "enabled_when": {},
+        "disabled_reason": "",
+        "semantic": semantic,
+    }
+    if semantic == "primary_action":
+        policy["enabled_when"] = {
+            "required_fields": required_fields[:12],
+            "profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+            "conditions": [],
+        }
+        policy["disabled_reason"] = _FORM_PRIMARY_DISABLED_REASON
+    return policy
+
+
+def _merge_policy_constraints(
+    policy: dict[str, Any],
+    *,
+    required_capabilities: list[str],
+    lifecycle_field: str,
+    lifecycle_blocked_states: list[str],
+    required_groups: list[str],
+    required_roles: list[str],
+) -> None:
+    enabled_when = policy.get("enabled_when")
+    if not isinstance(enabled_when, dict):
+        enabled_when = {}
+
+    if required_capabilities:
+        enabled_when["required_capabilities"] = required_capabilities
+        if not policy.get("disabled_reason"):
+            policy["disabled_reason"] = _FORM_DISABLED_REASON_CAPABILITY
+    if lifecycle_field and lifecycle_blocked_states:
+        enabled_when["lifecycle"] = {"field": lifecycle_field, "disallow_states": lifecycle_blocked_states}
+        if not policy.get("disabled_reason"):
+            policy["disabled_reason"] = _FORM_DISABLED_REASON_LIFECYCLE
+    if required_groups:
+        enabled_when["required_groups"] = required_groups
+        if not policy.get("disabled_reason"):
+            policy["disabled_reason"] = _FORM_DISABLED_REASON_GROUP
+    if required_roles:
+        enabled_when["required_roles"] = required_roles
+        if not policy.get("disabled_reason"):
+            policy["disabled_reason"] = _FORM_DISABLED_REASON_ROLE
+    policy["enabled_when"] = enabled_when
+
+
+def _append_primary_action_conditions(policy: dict[str, Any], fields_map: dict[str, Any]) -> None:
+    if _safe_text(policy.get("semantic")) != "primary_action":
+        return
+    enabled_when = policy.get("enabled_when")
+    if not isinstance(enabled_when, dict):
+        enabled_when = {"conditions": []}
+    conditions = enabled_when.get("conditions")
+    if not isinstance(conditions, list):
+        conditions = []
+    if "phase_key" in fields_map:
+        conditions.append({"source": "record", "field": "phase_key", "op": "not_in", "value": ["archive"]})
+    if "stage_id" in fields_map:
+        conditions.append({"source": "record", "field": "stage_id", "op": "truthy"})
+    enabled_when["conditions"] = conditions
+    if conditions:
+        enabled_when["condition_expr"] = {"op": "and", "items": [item for item in conditions if isinstance(item, dict)]}
+    policy["enabled_when"] = enabled_when
+
+
 def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
     required_fields: list[str] = []
     for name, policy in (_build_form_field_policies(data) or {}).items():
@@ -1104,28 +1177,6 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
             merged = f"{key} {label}"
             if any(token in merged for token in ("close", "closed", "done", "archive", "竣工", "关闭", "归档")):
                 lifecycle_blocked_states.append(_safe_text(row[0]))
-    def _ensure_enabled_when(policy_obj: dict[str, Any]) -> dict[str, Any]:
-        enabled_when = policy_obj.get("enabled_when")
-        if not isinstance(enabled_when, dict):
-            enabled_when = {}
-        return enabled_when
-
-    def _push_condition(enabled_when: dict[str, Any], condition: dict[str, Any]) -> None:
-        conditions = enabled_when.get("conditions")
-        if not isinstance(conditions, list):
-            conditions = []
-        conditions.append(condition)
-        enabled_when["conditions"] = conditions
-
-    def _sync_condition_expr(enabled_when: dict[str, Any]) -> None:
-        conditions = enabled_when.get("conditions")
-        if not isinstance(conditions, list) or not conditions:
-            return
-        enabled_when["condition_expr"] = {
-            "op": "and",
-            "items": [item for item in conditions if isinstance(item, dict)],
-        }
-
     for row in buttons:
         if not isinstance(row, dict):
             continue
@@ -1139,12 +1190,7 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
             for item in visible_profiles
             if _safe_text(item).lower() in _RENDER_PROFILES
         ]
-        policy = {
-            "visible_profiles": normalized_visible or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-            "enabled_when": {},
-            "disabled_reason": "",
-            "semantic": semantic,
-        }
+        policy = _default_action_policy(semantic, normalized_visible, required_fields)
         row_groups = row.get("groups_xmlids") if isinstance(row.get("groups_xmlids"), list) else []
         required_groups = [
             _safe_text(item)
@@ -1165,67 +1211,15 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
             for item in (required_capabilities if isinstance(required_capabilities, list) else [])
             if _safe_text(item)
         ]
-        if semantic == "primary_action":
-            policy["enabled_when"] = {
-                "required_fields": required_fields[:12],
-                "profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-                "conditions": [],
-            }
-            policy["disabled_reason"] = "请先完成必填字段后再执行主操作"
-        if required_capabilities:
-            enabled_when = _ensure_enabled_when(policy)
-            enabled_when["required_capabilities"] = required_capabilities
-            policy["enabled_when"] = enabled_when
-            if not policy["disabled_reason"]:
-                policy["disabled_reason"] = "缺少执行该操作所需能力"
-        if lifecycle_field and lifecycle_blocked_states:
-            enabled_when = _ensure_enabled_when(policy)
-            enabled_when["lifecycle"] = {
-                "field": lifecycle_field,
-                "disallow_states": lifecycle_blocked_states,
-            }
-            policy["enabled_when"] = enabled_when
-            if not policy["disabled_reason"]:
-                policy["disabled_reason"] = "当前生命周期状态不允许该操作"
-        if required_groups:
-            enabled_when = _ensure_enabled_when(policy)
-            enabled_when["required_groups"] = required_groups
-            policy["enabled_when"] = enabled_when
-            if not policy["disabled_reason"]:
-                policy["disabled_reason"] = "当前角色组不满足执行条件"
-        if required_roles:
-            enabled_when = _ensure_enabled_when(policy)
-            enabled_when["required_roles"] = required_roles
-            policy["enabled_when"] = enabled_when
-            if not policy["disabled_reason"]:
-                policy["disabled_reason"] = "当前角色不满足执行条件"
-        if semantic == "primary_action":
-            enabled_when = _ensure_enabled_when(policy)
-            if "phase_key" in fields_map:
-                _push_condition(
-                    enabled_when,
-                    {
-                        "source": "record",
-                        "field": "phase_key",
-                        "op": "not_in",
-                        "value": ["archive"],
-                    }
-                )
-            if "stage_id" in fields_map:
-                _push_condition(
-                    enabled_when,
-                    {
-                        "source": "record",
-                        "field": "stage_id",
-                        "op": "truthy",
-                    }
-                )
-            _sync_condition_expr(enabled_when)
-            policy["enabled_when"] = enabled_when
-        else:
-            enabled_when = _ensure_enabled_when(policy)
-            _sync_condition_expr(enabled_when)
-            policy["enabled_when"] = enabled_when
+        _merge_policy_constraints(
+            policy,
+            required_capabilities=required_capabilities,
+            lifecycle_field=lifecycle_field,
+            lifecycle_blocked_states=lifecycle_blocked_states,
+            required_groups=required_groups,
+            required_roles=required_roles,
+        )
+        _append_primary_action_conditions(policy, fields_map)
         policies[key] = policy
     return policies
 
