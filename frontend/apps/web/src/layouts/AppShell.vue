@@ -121,7 +121,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
-import { isHudEnabled } from '../config/debug';
+import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { parseSceneKeyFromQuery } from '../app/routeQuery';
 import type { NavNode } from '@sc/schema';
 import {
@@ -228,6 +228,7 @@ const menuLabel = computed(() => {
 });
 
 const hudEnabled = computed(() => isHudEnabled(route));
+const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 
 function resolveActionBusinessTitle(action: unknown) {
   const source = asDict(action);
@@ -275,7 +276,7 @@ const pageTitle = computed(() => {
 });
 
 provide('pageTitle', pageTitle);
-const showHud = hudEnabled;
+const showHud = computed(() => hudEnabled.value && !isDeliveryMode.value);
 const latestSuggestedAction = computed(() => {
   const stamp = suggestedActionStamp.value;
   void stamp;
@@ -423,7 +424,9 @@ const breadcrumb = computed(() => {
   return crumbs;
 });
 
-const showRefresh = computed(() => import.meta.env.DEV || localStorage.getItem('DEBUG_INTENT') === '1');
+const showRefresh = computed(
+  () => !isDeliveryMode.value && (import.meta.env.DEV || localStorage.getItem('DEBUG_INTENT') === '1'),
+);
 
 const activeMenuId = computed(() => {
   if (route.name === 'menu') {
