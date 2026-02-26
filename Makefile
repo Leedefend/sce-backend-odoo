@@ -1691,6 +1691,14 @@ verify.delivery.simulation.ready: guard.prod.forbid
 verify.product.delivery.gap: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_gap_report.py
 
+.PHONY: verify.product.delivery.v1.map
+verify.product.delivery.v1.map: guard.prod.forbid
+	@python3 scripts/verify/module_scene_capability_map_report.py
+
+.PHONY: verify.phasea.a0a1
+verify.phasea.a0a1: guard.prod.forbid verify.product.delivery.v1.map
+	@echo "[OK] verify.phasea.a0a1 done"
+
 .PHONY: verify.product.delivery.freshness
 verify.product.delivery.freshness: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_freshness_guard.py

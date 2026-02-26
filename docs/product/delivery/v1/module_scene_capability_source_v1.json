@@ -1,0 +1,192 @@
+{
+  "version": "v1",
+  "delivery_scope": {
+    "scene_keys": [
+      "default",
+      "data.dictionary",
+      "portal.capability_matrix",
+      "portal.dashboard",
+      "portal.lifecycle",
+      "projects.dashboard",
+      "projects.dashboard_showcase",
+      "projects.intake",
+      "projects.ledger",
+      "projects.list",
+      "finance.center",
+      "finance.operating_metrics",
+      "finance.payment_ledger",
+      "finance.payment_requests",
+      "finance.settlement_orders",
+      "finance.treasury_ledger",
+      "cost.budget_alloc",
+      "cost.cost_compare",
+      "cost.profit_compare",
+      "cost.project_boq",
+      "cost.project_budget",
+      "cost.project_cost_ledger",
+      "cost.project_progress"
+    ]
+  },
+  "modules": [
+    {
+      "module_key": "project_initiation_ledger",
+      "module_name": "项目立项与台账",
+      "target_roles": ["pm", "purchase_manager"],
+      "core_value": "完成项目立项、台账建立与基础资料归档。",
+      "entry_scenes": ["projects.intake", "projects.list", "projects.ledger"],
+      "menu_hints": ["projects.intake", "projects.list", "projects.ledger"],
+      "models": ["project.project"],
+      "capabilities": [
+        "project.initiation.enter",
+        "project.list.open",
+        "project.structure.manage",
+        "project.document.open",
+        "project.lifecycle.open",
+        "workspace.project.watch"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "project_execution_collab",
+      "module_name": "项目执行与任务协同",
+      "target_roles": ["pm"],
+      "core_value": "跟踪项目执行进度、风险与周报，推动日常协同。",
+      "entry_scenes": ["projects.dashboard", "projects.dashboard_showcase"],
+      "menu_hints": ["projects.dashboard"],
+      "models": ["project.task", "project.project"],
+      "capabilities": [
+        "project.dashboard.open",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open",
+        "workspace.today.focus",
+        "project.risk.list"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "purchase_material_collab",
+      "module_name": "采购与物资协同",
+      "target_roles": ["purchase_manager", "pm"],
+      "core_value": "实现物资计划、采购执行与项目侧协同跟踪。",
+      "entry_scenes": ["cost.project_boq"],
+      "menu_hints": ["cost.project_boq"],
+      "models": ["material.plan", "purchase.order"],
+      "capabilities": [
+        "material.catalog.open",
+        "material.procurement.list",
+        "cost.boq.manage",
+        "project.document.open"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "payment_request_approval",
+      "module_name": "付款申请与审批",
+      "target_roles": ["finance", "pm"],
+      "core_value": "完成付款申请发起、审批中心处理与异常识别。",
+      "entry_scenes": ["finance.payment_requests", "finance.center"],
+      "menu_hints": ["finance.payment_requests", "finance.center"],
+      "models": ["payment.request"],
+      "capabilities": [
+        "finance.payment_request.list",
+        "finance.payment_request.form",
+        "finance.approval.center",
+        "finance.exception.monitor"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "funding_settlement_ledger",
+      "module_name": "资金与结算台账",
+      "target_roles": ["finance"],
+      "core_value": "沉淀支付、资金、结算全链路台账并支持对账。",
+      "entry_scenes": ["finance.payment_ledger", "finance.treasury_ledger", "finance.settlement_orders"],
+      "menu_hints": ["finance.payment_ledger", "finance.treasury_ledger"],
+      "models": ["account.payment", "settlement.order"],
+      "capabilities": [
+        "finance.ledger.payment",
+        "finance.ledger.treasury",
+        "finance.settlement.order",
+        "finance.plan.funding",
+        "finance.invoice.list"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "cost_budget_profit",
+      "module_name": "成本预算与利润分析",
+      "target_roles": ["pm", "finance"],
+      "core_value": "覆盖预算、成本、利润与进度关联分析。",
+      "entry_scenes": [
+        "cost.project_budget",
+        "cost.budget_alloc",
+        "cost.project_cost_ledger",
+        "cost.cost_compare",
+        "cost.profit_compare",
+        "cost.project_progress"
+      ],
+      "menu_hints": ["cost.project_budget", "cost.project_cost_ledger"],
+      "models": ["project.budget", "project.cost.ledger"],
+      "capabilities": [
+        "cost.budget.manage",
+        "cost.progress.report",
+        "cost.profit.compare",
+        "cost.ledger.open"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "executive_dashboard",
+      "module_name": "经营指标与领导看板",
+      "target_roles": ["executive"],
+      "core_value": "为管理层提供经营指标、项目全局与异常洞察。",
+      "entry_scenes": ["finance.operating_metrics", "portal.dashboard"],
+      "menu_hints": ["portal.dashboard", "finance.operating_metrics"],
+      "models": ["operating.metrics"],
+      "capabilities": [
+        "finance.metrics.operating",
+        "analytics.dashboard.executive",
+        "analytics.project.focus",
+        "analytics.exception.list"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "lifecycle_governance",
+      "module_name": "生命周期与治理审计",
+      "target_roles": ["admin", "executive"],
+      "core_value": "保障能力矩阵、生命周期治理与审计可追溯。",
+      "entry_scenes": ["portal.lifecycle", "portal.capability_matrix"],
+      "menu_hints": ["portal.lifecycle", "portal.capability_matrix"],
+      "models": ["capability.registry", "scene.registry"],
+      "capabilities": [
+        "governance.capability.matrix",
+        "governance.runtime.audit",
+        "governance.scene.openability",
+        "analytics.lifecycle.monitor",
+        "contract.settlement.audit"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "masterdata_workspace",
+      "module_name": "主数据与工作台",
+      "target_roles": ["pm", "finance", "purchase_manager", "executive"],
+      "core_value": "统一字典配置、默认工作台入口与基础数据管理。",
+      "entry_scenes": ["data.dictionary", "default"],
+      "menu_hints": ["data.dictionary", "default"],
+      "models": ["ir.model.data", "res.users"],
+      "capabilities": [
+        "contract.center.open",
+        "contract.income.track",
+        "contract.expense.track",
+        "project.lifecycle.transition"
+      ],
+      "in_scope": true
+    }
+  ],
+  "out_of_scope": [
+    "scene_smoke_default"
+  ]
+}
