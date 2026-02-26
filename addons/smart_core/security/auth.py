@@ -51,7 +51,7 @@ def get_token_exp_seconds():
         pass
     return DEFAULT_EXP_SECONDS
 
-def generate_token(user_id, token_version: int | None = None):
+def generate_token(user_id, token_version: int | None = None, db: str | None = None):
     now = int(time.time())
     exp = now + get_token_exp_seconds()
     payload = {
@@ -62,6 +62,8 @@ def generate_token(user_id, token_version: int | None = None):
     }
     if token_version is not None:
         payload["token_version"] = int(token_version)
+    if db:
+        payload["db"] = str(db).strip()
     return jwt.encode(payload, _get_secret_key(), algorithm=ALGORITHM)
 
 def decode_token(token):
@@ -91,11 +93,17 @@ def get_user_from_token():
         token = auth_header.split(" ")[-1]
         payload = decode_token(token)
         user_id = payload.get("user_id")
-        user = request.env["res.users"].sudo().browse(user_id)
-        if not user.exists():
-            raise AccessDenied("Token 中指定的用户不存在")
-        # token_version 校验：用于撤销/踢下线
-        current_version = int(getattr(user, "token_version", 0) or 0)
+        token_db = str(payload.get("db") or "").strip()
+        db_name = token_db or getattr(getattr(request, "session", None), "db", None) or getattr(request, "db", None)
+        if not db_name:
+            raise AccessDenied("Token 缺少数据库信息")
+        registry = Registry(db_name)
+        with registry.cursor() as cr:
+            env = api.Environment(cr, SUPERUSER_ID, {})
+            user = env["res.users"].sudo().browse(user_id)
+            if not user.exists():
+                raise AccessDenied("Token 中指定的用户不存在")
+            current_version = int(getattr(user, "token_version", 0) or 0)
         token_version = int(payload.get("token_version") or 0)
         if token_version != current_version:
             raise AccessDenied("Token 已撤销")
@@ -153,4 +161,5 @@ def authenticate_user(login, password, db: str | None = None):
             "id": user_record.id,
             "login": user_record.login,
             "name": user_record.name,
+            "db": db,
         }

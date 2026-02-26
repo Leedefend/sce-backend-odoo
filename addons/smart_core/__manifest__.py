@@ -19,8 +19,9 @@
 
     # 安全文件先占位，后续可逐步加 ACL/参数
     "data": [
-        "security/groups.xml",
+        # group_smart_core_admin must be loaded before groups.xml implied_ids refs.
         "security/smart_core_security.xml",
+        "security/groups.xml",
         "security/ir.model.access.csv"
         # 可选：默认参数/开关
         # "data/smart_core_params.xml",
