@@ -1613,6 +1613,51 @@ verify.contract.version.evolution.drill: guard.prod.forbid
 verify.product.capability.matrix.ready: guard.prod.forbid
 	@python3 scripts/verify/product_capability_matrix_ready.py
 
+.PHONY: verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report verify.phasex.p1
+verify.capability.asset.map: guard.prod.forbid
+	@python3 scripts/verify/capability_asset_map_report.py
+
+verify.scene.compression.model: guard.prod.forbid
+	@python3 scripts/verify/scene_compression_model_report.py
+
+verify.button.semantic.report: guard.prod.forbid
+	@python3 scripts/verify/button_semantic_report.py
+
+verify.phasex.p1: guard.prod.forbid verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report
+	@echo "[OK] verify.phasex.p1 done"
+
+.PHONY: verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report verify.phasex.p2
+verify.role.capability.diff.report: guard.prod.forbid
+	@python3 scripts/verify/role_capability_diff_report.py
+
+verify.runtime.trend.report: guard.prod.forbid
+	@python3 scripts/verify/runtime_trend_report.py
+
+verify.catalog.runtime.explain.report: guard.prod.forbid
+	@python3 scripts/verify/catalog_runtime_explain_report.py
+
+verify.phasex.p2: guard.prod.forbid verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report
+	@echo "[OK] verify.phasex.p2 done"
+
+.PHONY: verify.semantic.behavior.guard.report
+verify.semantic.behavior.guard.report: guard.prod.forbid
+	@python3 scripts/verify/semantic_behavior_guard_report.py
+
+.PHONY: verify.product.capability.matrix.v2.report
+verify.product.capability.matrix.v2.report: guard.prod.forbid
+	@python3 scripts/verify/product_capability_matrix_v2_report.py
+
+.PHONY: verify.system.stability.stress.regression
+verify.system.stability.stress.regression: guard.prod.forbid
+	@python3 scripts/verify/system_stability_stress_regression.py
+
+.PHONY: verify.sprint.week1.audit.report verify.sprint.week2.final.report
+verify.sprint.week1.audit.report: guard.prod.forbid
+	@python3 scripts/verify/sprint_week1_audit_report.py
+
+verify.sprint.week2.final.report: guard.prod.forbid
+	@python3 scripts/verify/sprint_week2_final_report.py
+
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
 

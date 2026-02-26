@@ -1,0 +1,41 @@
+{
+  "version": "v1",
+  "cases": {
+    "execute_button_dry_run": {
+      "source": "docs/contract/snapshots/execute_button_intent_dry_run_pm.json",
+      "semantic": {
+        "status": "success",
+        "success": true,
+        "reason_code": "DRY_RUN",
+        "type": "dry_run",
+        "method": "write",
+        "button_type": "object"
+      },
+      "fingerprint": "a1b5fdaa32f1db49"
+    },
+    "portal_execute_button_not_allowed": {
+      "source": "docs/contract/snapshots/portal_execute_button_not_allowed.json",
+      "semantic": {
+        "allowed": false,
+        "error_code": "not_allowed",
+        "target_model": "project.project",
+        "target_method": "action_sc_project_manage"
+      },
+      "fingerprint": "42e478ef39c2e86b"
+    },
+    "system_init_admin": {
+      "source": "docs/contract/snapshots/system_init_intent_admin.json",
+      "semantic": {
+        "capability_count": 1,
+        "intent_count": 38,
+        "feature_flag_keys": [
+          "ai_enabled"
+        ],
+        "default_route_keys": [
+          "menu_id"
+        ]
+      },
+      "fingerprint": "c3c71a784029d165"
+    }
+  }
+}
