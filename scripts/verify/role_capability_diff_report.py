@@ -115,6 +115,20 @@ def main() -> int:
             "source_login": "sc_fx_executive",
             "business_explanation": "覆盖经营分析、治理审计与跨域决策能力。",
         },
+        {
+            "profile_key": "schedule_engineer",
+            "profile_name": "计划工程师",
+            "mapped_archetype": "pm",
+            "source_login": "sc_fx_pm",
+            "business_explanation": "聚焦进度编排、任务推进和项目生命周期节奏控制。",
+        },
+        {
+            "profile_key": "quality_supervisor",
+            "profile_name": "质量主管",
+            "mapped_archetype": "cost_user",
+            "source_login": "sc_fx_cost_user",
+            "business_explanation": "关注质量风险、过程审计与问题整改闭环。",
+        },
     ]
 
     profile_rows: list[dict] = []
@@ -204,6 +218,7 @@ def main() -> int:
         },
         "summary": {
             "profile_count": len(profile_rows),
+            "role_sample_count": len(profile_rows),
             "system_init_ok_count": sum(1 for x in profile_rows if x["system_init_ok"]),
             "ui_contract_ok_count": sum(1 for x in profile_rows if x["ui_contract_ok"]),
             "over_authorized_profile_count": len(over_authorized_profiles),

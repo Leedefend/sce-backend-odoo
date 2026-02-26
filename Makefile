@@ -1651,6 +1651,13 @@ verify.product.capability.matrix.v2.report: guard.prod.forbid
 verify.system.stability.stress.regression: guard.prod.forbid
 	@python3 scripts/verify/system_stability_stress_regression.py
 
+.PHONY: verify.sprint.week1.audit.report verify.sprint.week2.final.report
+verify.sprint.week1.audit.report: guard.prod.forbid
+	@python3 scripts/verify/sprint_week1_audit_report.py
+
+verify.sprint.week2.final.report: guard.prod.forbid
+	@python3 scripts/verify/sprint_week2_final_report.py
+
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
 

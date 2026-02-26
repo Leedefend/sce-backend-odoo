@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCENE_CAPABILITY_MATRIX_JSON = ROOT / "artifacts" / "backend" / "scene_capability_matrix_report.json"
 REPORT_JSON = ROOT / "artifacts" / "backend" / "scene_domain_mapping.json"
+REPORT_JSON_ALIAS = ROOT / "artifacts" / "backend" / "scene_domain_map.json"
 REPORT_MD = ROOT / "docs" / "product" / "scene_compression_model_v1.md"
 
 PKG_SUFFIX_RE = re.compile(r"__pkg\d+$")
@@ -114,6 +115,8 @@ def main() -> int:
 
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     REPORT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    REPORT_JSON_ALIAS.parent.mkdir(parents=True, exist_ok=True)
+    REPORT_JSON_ALIAS.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     lines = [
         "# Scene Compression Model v1",
@@ -150,6 +153,7 @@ def main() -> int:
 
     print(str(REPORT_MD))
     print(str(REPORT_JSON))
+    print(str(REPORT_JSON_ALIAS))
     if errors:
         print("[scene_compression_model_report] FAIL")
         return 2
@@ -159,4 +163,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
