@@ -141,6 +141,12 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "drilldown": "业务查看",
     "other": "更多操作",
 }
+_USER_SURFACE_ACTION_GROUP_LABELS = {
+    "basic": "基础操作",
+    "workflow": "流程推进",
+    "drilldown": "业务查看",
+    "other": "更多操作",
+}
 _USER_SURFACE_NOISE_MARKERS = (
     "demo",
     "showcase",
@@ -521,6 +527,44 @@ def _is_noisy_action_row(row: dict) -> bool:
     return _contains_noise_marker(key, label, row.get("name"), row.get("xml_id"))
 
 
+def _classify_user_surface_action_group(action: dict) -> str:
+    key = _safe_lower(action.get("key"))
+    label = _safe_lower(action.get("label"))
+    merged = f"{key} {label}"
+    if any(marker in merged for marker in ("提交", "审批", "transition", "workflow", "lifecycle", "阶段")):
+        return "workflow"
+    if any(marker in merged for marker in ("查看", "open", "dashboard", "看板", "列表", "台账")):
+        return "drilldown"
+    if any(marker in merged for marker in ("创建", "保存", "新增", "submit", "create", "save")):
+        return "basic"
+    return "other"
+
+
+def _build_user_surface_action_groups(rows: list[dict]) -> list[dict]:
+    grouped: dict[str, list[dict]] = {"basic": [], "workflow": [], "drilldown": [], "other": []}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        grouped.setdefault(_classify_user_surface_action_group(row), []).append(row)
+    result: list[dict] = []
+    for key in ("basic", "workflow", "drilldown", "other"):
+        actions = grouped.get(key) or []
+        if not actions:
+            continue
+        primary = actions[:_PROJECT_FORM_ACTION_GROUP_LIMIT]
+        overflow = actions[_PROJECT_FORM_ACTION_GROUP_LIMIT:]
+        result.append(
+            {
+                "key": key,
+                "label": _USER_SURFACE_ACTION_GROUP_LABELS.get(key, key),
+                "actions": primary,
+                "overflow_actions": overflow,
+                "overflow_count": len(overflow),
+            }
+        )
+    return result
+
+
 def _sanitize_user_action_rows(rows: Any, max_count: int = _USER_SURFACE_ACTION_MAX) -> list[dict]:
     if not isinstance(rows, list):
         return []
@@ -543,14 +587,19 @@ def _sanitize_user_action_rows(rows: Any, max_count: int = _USER_SURFACE_ACTION_
 
 def _apply_user_surface_noise_reduction(data: dict) -> None:
     _sanitize_user_search_filters(data)
+    action_rows: list[dict] = []
     if isinstance(data.get("buttons"), list):
         data["buttons"] = _sanitize_user_action_rows(data.get("buttons"))
+        action_rows.extend(data["buttons"])
     toolbar = _as_dict(data.get("toolbar"))
     if toolbar:
         for section in ("header", "sidebar", "footer"):
             if isinstance(toolbar.get(section), list):
                 toolbar[section] = _sanitize_user_action_rows(toolbar.get(section), max_count=4)
+                action_rows.extend(toolbar[section])
         data["toolbar"] = toolbar
+    if action_rows and not isinstance(data.get("action_groups"), list):
+        data["action_groups"] = _build_user_surface_action_groups(action_rows)
 
 
 def _normalize_scene_list_profile(item: dict) -> dict:
