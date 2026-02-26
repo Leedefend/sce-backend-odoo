@@ -116,6 +116,37 @@ def _sample_payload():
     }
 
 
+def _sample_list_payload():
+    return {
+        "head": {"model": "project.project", "view_type": "tree"},
+        "search": {
+            "filters": [
+                {"key": "activities_today", "label": "今日活动"},
+                {"key": "296", "label": "296"},
+                {"key": "demo_filter", "label": "项目（演示）"},
+                {"key": "in_progress", "label": "进行中"},
+                {"key": "manager", "label": "项目管理员"},
+                {"key": "recent", "label": "最近活动"},
+                {"key": "archived", "label": "已存档"},
+                {"key": "tags", "label": "标签"},
+                {"key": "status", "label": "状态"},
+                {"key": "date_end", "label": "结束日期"},
+            ]
+        },
+        "buttons": [
+            {"key": "open_tasks", "label": "查看任务", "kind": "open"},
+            {"key": "project_update_all_action", "label": "project_update_all_action", "kind": "object"},
+            {"key": "296", "label": "296", "kind": "open"},
+        ],
+        "toolbar": {
+            "header": [
+                {"key": "smart_construction_demo.action_sc_project_list_showcase", "label": "项目列表（演示）", "kind": "open"},
+                {"key": "smart_construction_core.action_sc_project_list", "label": "项目列表", "kind": "open"},
+            ]
+        },
+    }
+
+
 class TestProjectFormGovernance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -271,6 +302,36 @@ class TestProjectFormGovernance(unittest.TestCase):
             self.assertIn("group_label", cap)
             self.assertIn("group_icon", cap)
             self.assertIn("group_sequence", cap)
+
+    def test_user_mode_list_surface_filters_noisy_contract_items(self):
+        data = _sample_list_payload()
+        out = apply_contract_governance(data, "user")
+
+        filters = ((out.get("search") or {}).get("filters")) or []
+        self.assertLessEqual(len(filters), 8)
+        filter_keys = [str(item.get("key")) for item in filters if isinstance(item, dict)]
+        self.assertNotIn("296", filter_keys)
+        self.assertNotIn("demo_filter", filter_keys)
+
+        buttons = out.get("buttons") or []
+        button_keys = [str(item.get("key")) for item in buttons if isinstance(item, dict)]
+        self.assertIn("open_tasks", button_keys)
+        self.assertNotIn("296", button_keys)
+        self.assertNotIn("project_update_all_action", button_keys)
+
+        toolbar_header = ((out.get("toolbar") or {}).get("header")) or []
+        toolbar_keys = [str(item.get("key")) for item in toolbar_header if isinstance(item, dict)]
+        self.assertNotIn("smart_construction_demo.action_sc_project_list_showcase", toolbar_keys)
+        self.assertIn("smart_construction_core.action_sc_project_list", toolbar_keys)
+        groups = out.get("action_groups") or []
+        self.assertIsInstance(groups, list)
+        if groups:
+            self.assertIn("key", groups[0])
+            self.assertIn("actions", groups[0])
+        surface_policies = out.get("surface_policies") or {}
+        self.assertIsInstance(surface_policies, dict)
+        self.assertGreaterEqual(int(surface_policies.get("filters_primary_max", 0)), 0)
+        self.assertGreaterEqual(int(surface_policies.get("actions_primary_max", 0)), 0)
 
 
 if __name__ == "__main__":
