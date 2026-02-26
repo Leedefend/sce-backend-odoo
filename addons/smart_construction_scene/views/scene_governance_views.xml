@@ -70,8 +70,8 @@
       <form string="Scene Governance Action">
         <group>
           <field name="action"/>
-          <field name="company_id" attrs="{'invisible':[('action','!=','switch_channel')], 'required':[('action','=','switch_channel')] }"/>
-          <field name="channel" attrs="{'invisible':[('action','in',['pin_stable','rollback'])]}"/>
+          <field name="company_id" invisible="action != 'switch_channel'" required="action == 'switch_channel'"/>
+          <field name="channel" invisible="action in ['pin_stable', 'rollback']"/>
           <field name="reason"/>
         </group>
         <footer>
