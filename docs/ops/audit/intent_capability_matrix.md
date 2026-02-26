@@ -1,10 +1,10 @@
 # Intent Capability Matrix Audit
 
-- intent_count: 50
+- intent_count: 51
 - missing_test_count: 0
-- missing_smoke_target_count: 33
-- write_without_required_groups_count: 9
-- write_without_acl_hint_count: 14
+- missing_smoke_target_count: 34
+- write_without_required_groups_count: 8
+- write_without_acl_hint_count: 15
 
 ## Matrix
 
@@ -35,10 +35,10 @@
 | my.work.summary | domain | 0 | - | N | Y | N | N | Y | N | addons/smart_construction_core/handlers/my_work_summary.py |
 | payment.request.approve | domain | 0 | - | N | Y | Y | Y | Y | N | addons/smart_construction_core/handlers/payment_request_approval.py |
 | payment.request.available_actions | domain | 0 | - | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/payment_request_available_actions.py |
-| payment.request.done | domain | 0 | - | N | Y | Y | Y | Y | N | addons/smart_construction_core/handlers/payment_request_approval.py |
-| payment.request.execute | domain | 1 | explicit_check | N | Y | N | Y | N | N | addons/smart_construction_core/handlers/payment_request_execute.py |
+| payment.request.done | domain | 2 | - | N | Y | Y | Y | Y | N | addons/smart_construction_core/handlers/payment_request_approval.py |
+| payment.request.execute | domain | 3 | explicit_check | N | Y | N | Y | N | N | addons/smart_construction_core/handlers/payment_request_execute.py |
 | payment.request.reject | domain | 0 | - | N | Y | Y | Y | Y | N | addons/smart_construction_core/handlers/payment_request_approval.py |
-| payment.request.submit | domain | 0 | - | N | Y | Y | Y | Y | N | addons/smart_construction_core/handlers/payment_request_approval.py |
+| payment.request.submit | domain | 2 | - | N | Y | Y | Y | Y | N | addons/smart_construction_core/handlers/payment_request_approval.py |
 | permission.check | core | 0 | - | N | Y | N | N | Y | Y | addons/smart_core/handlers/permission_check.py |
 | sample.enhanced | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/enhanced_sample_handler.py |
 | scene.governance.export_contract | governance | 0 | - | N | Y | Y | N | N | N | addons/smart_core/handlers/scene_governance.py |
@@ -54,6 +54,7 @@
 | session.bootstrap | domain | 0 | - | N | Y | N | N | Y | Y | addons/smart_core/handlers/session_bootstrap.py |
 | system.init | core | 0 | - | Y | Y | Y | N | Y | N | addons/smart_core/handlers/system_init.py |
 | system.ping.construction | domain | 1 | record_rule | N | Y | N | Y | N | N | addons/smart_construction_core/handlers/system_ping_construction.py |
+| telemetry.track | domain | 0 | explicit_check | N | Y | N | Y | N | N | addons/smart_construction_core/handlers/telemetry_track.py |
 | ui.contract | core | 0 | - | Y | Y | N | N | Y | N | addons/smart_core/handlers/ui_contract.py |
 | ui.contract.enhanced | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/enhanced_ui_contract.py |
 | ui.contract.model.view | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/enhanced_ui_contract.py |
@@ -94,6 +95,7 @@
 - `scene.packages.installed` (addons/smart_core/handlers/scene_packages_installed.py)
 - `session.bootstrap` (addons/smart_core/handlers/session_bootstrap.py)
 - `system.ping.construction` (addons/smart_construction_core/handlers/system_ping_construction.py)
+- `telemetry.track` (addons/smart_construction_core/handlers/telemetry_track.py)
 - `ui.contract` (addons/smart_core/handlers/ui_contract.py)
 - `ui.contract.enhanced` (addons/smart_core/handlers/enhanced_ui_contract.py)
 - `ui.contract.model.view` (addons/smart_core/handlers/enhanced_ui_contract.py)
@@ -104,14 +106,13 @@
 ## Write Intents Without REQUIRED_GROUPS
 
 - `payment.request.approve` (addons/smart_construction_core/handlers/payment_request_approval.py)
-- `payment.request.done` (addons/smart_construction_core/handlers/payment_request_approval.py)
 - `payment.request.reject` (addons/smart_construction_core/handlers/payment_request_approval.py)
-- `payment.request.submit` (addons/smart_construction_core/handlers/payment_request_approval.py)
 - `scene.governance.pin_stable` (addons/smart_core/handlers/scene_governance.py)
 - `scene.governance.rollback` (addons/smart_core/handlers/scene_governance.py)
 - `scene.governance.set_channel` (addons/smart_core/handlers/scene_governance.py)
 - `scene.package.dry_run_import` (addons/smart_core/handlers/scene_package.py)
 - `scene.package.import` (addons/smart_core/handlers/scene_package.py)
+- `telemetry.track` (addons/smart_construction_core/handlers/telemetry_track.py)
 
 ## Write Intents Without ACL Guard Hints
 
@@ -128,4 +129,5 @@
 - `scene.package.dry_run_import` (addons/smart_core/handlers/scene_package.py)
 - `scene.package.import` (addons/smart_core/handlers/scene_package.py)
 - `system.ping.construction` (addons/smart_construction_core/handlers/system_ping_construction.py)
+- `telemetry.track` (addons/smart_construction_core/handlers/telemetry_track.py)
 - `usage.track` (addons/smart_construction_core/handlers/usage_track.py)
