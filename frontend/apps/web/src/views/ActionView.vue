@@ -354,6 +354,19 @@ const hudEntries = computed(() => [
   { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
 ]);
+const userSurfaceNoiseMarkers = ['demo', 'showcase', 'smoke', 'internal', 'ir_cron', 'project_update_all_action'];
+function hasNoiseMarker(...values: unknown[]): boolean {
+  const merged = values
+    .map((value) => String(value || '').trim().toLowerCase())
+    .filter(Boolean)
+    .join(' ');
+  if (!merged) return false;
+  return userSurfaceNoiseMarkers.some((token) => merged.includes(token));
+}
+function isNumericToken(value: unknown): boolean {
+  const text = String(value || '').trim();
+  return text.length > 0 && /^\d+$/.test(text);
+}
 const contractFilterChips = computed<ContractFilterChip[]>(() => {
   const rows = actionContract.value?.search?.filters;
   if (!Array.isArray(rows)) return [];
@@ -362,28 +375,38 @@ const contractFilterChips = computed<ContractFilterChip[]>(() => {
       const key = String(row?.key || '').trim();
       const label = String(row?.label || row?.key || '').trim();
       if (!key || !label) return null;
+      if (isNumericToken(key) || isNumericToken(label)) return null;
+      if (hasNoiseMarker(key, label, row?.domain_raw, row?.context_raw)) return null;
       const domain = Array.isArray(row?.domain) ? row.domain : [];
       const domainRaw = String(row?.domain_raw || '').trim();
       const contextRaw = String(row?.context_raw || '').trim();
       const context = parseContractContextRaw(row?.context_raw);
       return { key, label, domain, domainRaw, context, contextRaw };
     })
-    .filter((item): item is ContractFilterChip => Boolean(item));
+    .filter((item): item is ContractFilterChip => Boolean(item))
+    .slice(0, 8);
 });
 const contractActionButtons = computed<ContractActionButton[]>(() => {
   const contract = actionContract.value;
   if (!contract) return [];
   const merged: Array<Record<string, unknown>> = [];
-  if (Array.isArray(contract.buttons)) merged.push(...(contract.buttons as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
+  const contractButtons = Array.isArray(contract.buttons) ? (contract.buttons as Array<Record<string, unknown>>) : [];
+  if (contractButtons.length) {
+    merged.push(...contractButtons);
+  } else {
+    if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
+  }
   const userGroups = session.user?.groups_xmlids || [];
   const dedup = new Set<string>();
   return merged
     .map((row) => {
       const key = String(row.key || '').trim();
       if (!key || dedup.has(key)) return null;
+      const rawLabel = String(row.label || key).trim();
+      if (!rawLabel || isNumericToken(key) || isNumericToken(rawLabel)) return null;
+      if (hasNoiseMarker(key, rawLabel, row.name, row.xml_id)) return null;
       dedup.add(key);
       const payload = parseContractContextRaw(row.payload);
       const kind = normalizeActionKind(row.kind);
@@ -407,7 +430,7 @@ const contractActionButtons = computed<ContractActionButton[]>(() => {
         : '权限不足';
       return {
         key,
-        label: String(row.label || key),
+        label: rawLabel,
         kind,
         actionId,
         methodName,
@@ -421,7 +444,8 @@ const contractActionButtons = computed<ContractActionButton[]>(() => {
         hint,
       };
     })
-    .filter((item): item is ContractActionButton => Boolean(item));
+    .filter((item): item is ContractActionButton => Boolean(item))
+    .slice(0, 8);
 });
 const contractColumnLabels = computed<Record<string, string>>(() => {
   const rows = actionContract.value?.fields || {};

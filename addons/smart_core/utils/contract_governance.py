@@ -141,6 +141,16 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "drilldown": "业务查看",
     "other": "更多操作",
 }
+_USER_SURFACE_NOISE_MARKERS = (
+    "demo",
+    "showcase",
+    "smoke",
+    "internal",
+    "ir_cron",
+    "project_update_all_action",
+)
+_USER_SURFACE_FILTER_MAX = 8
+_USER_SURFACE_ACTION_MAX = 8
 _RENDER_PROFILE_CREATE = "create"
 _RENDER_PROFILE_EDIT = "edit"
 _RENDER_PROFILE_READONLY = "readonly"
@@ -454,6 +464,93 @@ def _as_dict(value: Any) -> dict:
 
 def _safe_lower(value: Any) -> str:
     return _safe_text(value).lower()
+
+
+def _is_numeric_token(value: Any) -> bool:
+    text = _safe_text(value)
+    return bool(text) and text.isdigit()
+
+
+def _contains_noise_marker(*values: Any) -> bool:
+    merged = " ".join(_safe_lower(item) for item in values if _safe_text(item))
+    if not merged:
+        return False
+    return any(marker in merged for marker in _USER_SURFACE_NOISE_MARKERS)
+
+
+def _is_noisy_filter_row(row: dict) -> bool:
+    key = _safe_text(row.get("key"))
+    label = _safe_text(row.get("label") or key)
+    if not key or not label:
+        return True
+    if _is_numeric_token(key) or _is_numeric_token(label):
+        return True
+    return _contains_noise_marker(key, label, row.get("domain_raw"), row.get("context_raw"))
+
+
+def _sanitize_user_search_filters(data: dict) -> None:
+    search = _as_dict(data.get("search"))
+    rows = search.get("filters")
+    if not isinstance(rows, list):
+        return
+    out: list[dict] = []
+    seen: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if _is_noisy_filter_row(row):
+            continue
+        key = _safe_text(row.get("key"))
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(row)
+        if len(out) >= _USER_SURFACE_FILTER_MAX:
+            break
+    search["filters"] = out
+    data["search"] = search
+
+
+def _is_noisy_action_row(row: dict) -> bool:
+    key = _safe_text(row.get("key"))
+    label = _safe_text(row.get("label") or key)
+    if not key or not label:
+        return True
+    if _is_numeric_token(key) or _is_numeric_token(label):
+        return True
+    return _contains_noise_marker(key, label, row.get("name"), row.get("xml_id"))
+
+
+def _sanitize_user_action_rows(rows: Any, max_count: int = _USER_SURFACE_ACTION_MAX) -> list[dict]:
+    if not isinstance(rows, list):
+        return []
+    out: list[dict] = []
+    seen: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if _is_noisy_action_row(row):
+            continue
+        key = _safe_text(row.get("key"))
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(row)
+        if len(out) >= max_count:
+            break
+    return out
+
+
+def _apply_user_surface_noise_reduction(data: dict) -> None:
+    _sanitize_user_search_filters(data)
+    if isinstance(data.get("buttons"), list):
+        data["buttons"] = _sanitize_user_action_rows(data.get("buttons"))
+    toolbar = _as_dict(data.get("toolbar"))
+    if toolbar:
+        for section in ("header", "sidebar", "footer"):
+            if isinstance(toolbar.get(section), list):
+                toolbar[section] = _sanitize_user_action_rows(toolbar.get(section), max_count=4)
+        data["toolbar"] = toolbar
 
 
 def _normalize_scene_list_profile(item: dict) -> dict:
@@ -1469,6 +1566,8 @@ def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:
     if contract_mode != "hud":
         for key in _NON_HUD_STRIP_KEYS:
             data.pop(key, None)
+    if contract_mode == "user":
+        _apply_user_surface_noise_reduction(data)
 
 
 def _apply_semantic_governance(data: dict, contract_mode: str) -> None:
