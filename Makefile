@@ -1647,6 +1647,10 @@ verify.semantic.behavior.guard.report: guard.prod.forbid
 verify.product.capability.matrix.v2.report: guard.prod.forbid
 	@python3 scripts/verify/product_capability_matrix_v2_report.py
 
+.PHONY: verify.system.stability.stress.regression
+verify.system.stability.stress.regression: guard.prod.forbid
+	@python3 scripts/verify/system_stability_stress_regression.py
+
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
 
