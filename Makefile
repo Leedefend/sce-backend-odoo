@@ -1302,6 +1302,10 @@ verify.frontend.scene_record_semantics.guard: guard.prod.forbid
 verify.render.semantic.ready: guard.prod.forbid
 	@python3 scripts/verify/render_semantic_ready_guard.py
 
+.PHONY: verify.render.policy.ready
+verify.render.policy.ready: guard.prod.forbid
+	@python3 scripts/verify/render_policy_ready_guard.py
+
 .PHONY: verify.frontend.product.ready
 verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.contract_runtime.guard \
@@ -1313,6 +1317,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.home_suggestion_semantics.guard \
 	verify.frontend.scene_record_semantics.guard \
 	verify.render.semantic.ready \
+	verify.render.policy.ready \
 	verify.frontend_api \
 	verify.ui.product.stability
 	@echo "[OK] verify.frontend.product.ready done"
