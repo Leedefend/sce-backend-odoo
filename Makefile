@@ -1707,6 +1707,10 @@ verify.product.delivery.journeys: guard.prod.forbid
 verify.product.delivery.roles: guard.prod.forbid
 	@python3 scripts/verify/role_capability_profiles_export.py
 
+.PHONY: verify.product.delivery.menu
+verify.product.delivery.menu: guard.prod.forbid
+	@python3 scripts/verify/delivery_menu_tree_report.py
+
 .PHONY: verify.product.delivery.freshness
 verify.product.delivery.freshness: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_freshness_guard.py

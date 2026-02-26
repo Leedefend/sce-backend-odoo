@@ -1,0 +1,65 @@
+{
+  "version": "v1",
+  "menu_tree": [
+    {
+      "menu_key": "project_delivery",
+      "menu_name": "项目交付",
+      "entries": [
+        "projects.intake",
+        "projects.list",
+        "projects.dashboard",
+        "projects.ledger"
+      ]
+    },
+    {
+      "menu_key": "finance_control",
+      "menu_name": "财务管控",
+      "entries": [
+        "finance.center",
+        "finance.payment_requests",
+        "finance.payment_ledger",
+        "finance.treasury_ledger",
+        "finance.settlement_orders"
+      ]
+    },
+    {
+      "menu_key": "cost_purchase",
+      "menu_name": "成本与采购",
+      "entries": [
+        "cost.project_boq",
+        "cost.project_budget",
+        "cost.project_cost_ledger",
+        "cost.cost_compare",
+        "cost.profit_compare",
+        "cost.project_progress"
+      ]
+    },
+    {
+      "menu_key": "exec_insight",
+      "menu_name": "经营洞察",
+      "entries": [
+        "portal.dashboard",
+        "finance.operating_metrics",
+        "projects.dashboard_showcase"
+      ]
+    },
+    {
+      "menu_key": "governance_config",
+      "menu_name": "治理与配置",
+      "entries": [
+        "portal.lifecycle",
+        "portal.capability_matrix",
+        "data.dictionary",
+        "default"
+      ]
+    }
+  ],
+  "hidden_for_delivery_roles": [
+    "scene_smoke_default",
+    "cost.budget_alloc"
+  ],
+  "visibility_tags": {
+    "hidden_for_delivery_roles": "internal_only",
+    "default_visible": "delivery_visible"
+  }
+}
