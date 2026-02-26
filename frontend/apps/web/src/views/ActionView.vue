@@ -4,11 +4,11 @@
       <p>已应用推荐筛选：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
       <button class="clear-btn" @click="clearRoutePreset">清除推荐</button>
     </section>
-    <section v-if="contractFilterChips.length" class="contract-block">
-      <p class="contract-label">契约筛选</p>
+    <section v-if="contractPrimaryFilterChips.length || contractOverflowFilterChips.length" class="contract-block">
+      <p class="contract-label">快速筛选</p>
       <div class="contract-chips">
         <button
-          v-for="chip in contractFilterChips"
+          v-for="chip in contractPrimaryFilterChips"
           :key="`contract-filter-${chip.key}`"
           class="contract-chip"
           :class="{ active: activeContractFilterKey === chip.key }"
@@ -25,13 +25,33 @@
         >
           清除
         </button>
+        <button
+          v-if="contractOverflowFilterChips.length"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="showMoreContractFilters = !showMoreContractFilters"
+        >
+          {{ showMoreContractFilters ? '收起更多筛选' : `更多筛选 (${contractOverflowFilterChips.length})` }}
+        </button>
+      </div>
+      <div v-if="showMoreContractFilters && contractOverflowFilterChips.length" class="contract-chips">
+        <button
+          v-for="chip in contractOverflowFilterChips"
+          :key="`contract-filter-overflow-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeContractFilterKey === chip.key }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applyContractFilter(chip.key)"
+        >
+          {{ chip.label }}
+        </button>
       </div>
     </section>
-    <section v-if="contractActionButtons.length" class="contract-block">
-      <p class="contract-label">契约动作</p>
+    <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
+      <p class="contract-label">快捷操作</p>
       <div class="contract-chips">
         <button
-          v-for="btn in contractActionButtons"
+          v-for="btn in contractPrimaryActions"
           :key="`contract-action-${btn.key}`"
           class="contract-chip"
           :disabled="!btn.enabled || status === 'loading' || batchBusy"
@@ -40,6 +60,35 @@
         >
           {{ btn.label }}
         </button>
+        <button
+          v-if="contractOverflowActions.length"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="showMoreContractActions = !showMoreContractActions"
+        >
+          {{ showMoreContractActions ? '收起更多操作' : `更多操作 (${contractOverflowActions.length})` }}
+        </button>
+      </div>
+      <div v-if="showMoreContractActions && contractOverflowActionGroups.length" class="contract-groups">
+        <section
+          v-for="group in contractOverflowActionGroups"
+          :key="`contract-group-${group.key}`"
+          class="contract-group"
+        >
+          <p class="contract-group-label">{{ group.label }}</p>
+          <div class="contract-chips">
+            <button
+              v-for="btn in group.actions"
+              :key="`contract-group-action-${group.key}-${btn.key}`"
+              class="contract-chip"
+              :disabled="!btn.enabled || status === 'loading' || batchBusy"
+              :title="btn.hint"
+              @click="runContractAction(btn)"
+            >
+              {{ btn.label }}
+            </button>
+          </div>
+        </section>
       </div>
     </section>
     <KanbanPage
@@ -227,6 +276,19 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     columnsSchema?: ContractColumnSchema[];
   };
   fields?: Record<string, unknown>;
+  buttons?: Array<Record<string, unknown>>;
+  action_groups?: ContractActionGroupRaw[];
+  toolbar?: {
+    header?: Array<Record<string, unknown>>;
+    sidebar?: Array<Record<string, unknown>>;
+    footer?: Array<Record<string, unknown>>;
+  };
+  surface_policies?: {
+    filters_primary_max?: number;
+    actions_primary_max?: number;
+    filters_max?: number;
+    actions_max?: number;
+  };
   model?: string;
   head?: { model?: string };
   data?: {
@@ -275,6 +337,13 @@ type ContractActionButton = {
   enabled: boolean;
   hint: string;
 };
+type ContractActionGroupRaw = {
+  key?: string;
+  label?: string;
+  actions?: Array<Record<string, unknown>>;
+  overflow_actions?: Array<Record<string, unknown>>;
+  overflow_count?: number;
+};
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
@@ -290,6 +359,8 @@ const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
 const activeContractFilterKey = ref('');
 const contractLimit = ref(40);
+const showMoreContractActions = ref(false);
+const showMoreContractFilters = ref(false);
 const viewMode = computed(() => {
   if (contractViewType.value === 'kanban') return 'kanban';
   if (contractViewType.value === 'list' || contractViewType.value === 'tree') return 'tree';
@@ -354,6 +425,19 @@ const hudEntries = computed(() => [
   { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
 ]);
+const userSurfaceNoiseMarkers = ['demo', 'showcase', 'smoke', 'internal', 'ir_cron', 'project_update_all_action'];
+function hasNoiseMarker(...values: unknown[]): boolean {
+  const merged = values
+    .map((value) => String(value || '').trim().toLowerCase())
+    .filter(Boolean)
+    .join(' ');
+  if (!merged) return false;
+  return userSurfaceNoiseMarkers.some((token) => merged.includes(token));
+}
+function isNumericToken(value: unknown): boolean {
+  const text = String(value || '').trim();
+  return text.length > 0 && /^\d+$/.test(text);
+}
 const contractFilterChips = computed<ContractFilterChip[]>(() => {
   const rows = actionContract.value?.search?.filters;
   if (!Array.isArray(rows)) return [];
@@ -362,66 +446,165 @@ const contractFilterChips = computed<ContractFilterChip[]>(() => {
       const key = String(row?.key || '').trim();
       const label = String(row?.label || row?.key || '').trim();
       if (!key || !label) return null;
+      if (isNumericToken(key) || isNumericToken(label)) return null;
+      if (hasNoiseMarker(key, label, row?.domain_raw, row?.context_raw)) return null;
       const domain = Array.isArray(row?.domain) ? row.domain : [];
       const domainRaw = String(row?.domain_raw || '').trim();
       const contextRaw = String(row?.context_raw || '').trim();
       const context = parseContractContextRaw(row?.context_raw);
       return { key, label, domain, domainRaw, context, contextRaw };
     })
-    .filter((item): item is ContractFilterChip => Boolean(item));
+    .filter((item): item is ContractFilterChip => Boolean(item))
+    .slice(0, 8);
 });
+const filterPrimaryBudget = computed(() => {
+  const raw = Number(actionContract.value?.surface_policies?.filters_primary_max ?? 5);
+  if (!Number.isFinite(raw) || raw < 0) return 5;
+  return Math.floor(raw);
+});
+const contractPrimaryFilterChips = computed<ContractFilterChip[]>(() =>
+  contractFilterChips.value.slice(0, filterPrimaryBudget.value),
+);
+const contractOverflowFilterChips = computed<ContractFilterChip[]>(() =>
+  contractFilterChips.value.slice(filterPrimaryBudget.value),
+);
+function toContractActionButton(
+  row: Record<string, unknown>,
+  dedup: Set<string>,
+): ContractActionButton | null {
+  const key = String(row.key || '').trim();
+  if (!key || dedup.has(key)) return null;
+  const rawLabel = String(row.label || key).trim();
+  if (!rawLabel || isNumericToken(key) || isNumericToken(rawLabel)) return null;
+  if (hasNoiseMarker(key, rawLabel, row.name, row.xml_id)) return null;
+  dedup.add(key);
+  const payload = parseContractContextRaw(row.payload);
+  const kind = normalizeActionKind(row.kind);
+  const actionId = toPositiveInt(payload.action_id) ?? toPositiveInt(payload.ref);
+  const methodName = detectObjectMethodFromActionKey(key, String(payload.method || '').trim());
+  const selectionRaw = String(row.selection || 'none').toLowerCase();
+  const selection: ContractActionSelection =
+    selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
+  const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
+  const userGroups = session.user?.groups_xmlids || [];
+  const allowedByGroup = !groups.length || groups.some((group) => userGroups.includes(group));
+  const selectedCount = selectedIds.value.length;
+  const enabledBySelection =
+    selection === 'none' ? true : selection === 'single' ? selectedCount === 1 : selectedCount > 0;
+  const enabled = allowedByGroup && enabledBySelection;
+  const hint = allowedByGroup
+    ? enabledBySelection
+      ? ''
+      : selection === 'single'
+        ? '请选择 1 条记录'
+        : '请先选择记录'
+    : '权限不足';
+  return {
+    key,
+    label: rawLabel,
+    kind,
+    actionId,
+    methodName,
+    model: String(row.target_model || row.model || resolvedModelRef.value || model.value || '').trim(),
+    target: String(payload.target || '').trim(),
+    url: String(payload.url || '').trim(),
+    selection,
+    context: parseContractContextRaw(payload.context_raw),
+    domainRaw: String(payload.domain_raw || '').trim(),
+    enabled,
+    hint,
+  };
+}
 const contractActionButtons = computed<ContractActionButton[]>(() => {
   const contract = actionContract.value;
   if (!contract) return [];
   const merged: Array<Record<string, unknown>> = [];
-  if (Array.isArray(contract.buttons)) merged.push(...(contract.buttons as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
-  const userGroups = session.user?.groups_xmlids || [];
+  const contractButtons = Array.isArray(contract.buttons) ? (contract.buttons as Array<Record<string, unknown>>) : [];
+  if (contractButtons.length) {
+    merged.push(...contractButtons);
+  } else {
+    if (Array.isArray(contract.toolbar?.header)) merged.push(...(contract.toolbar?.header as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.toolbar?.sidebar)) merged.push(...(contract.toolbar?.sidebar as Array<Record<string, unknown>>));
+    if (Array.isArray(contract.toolbar?.footer)) merged.push(...(contract.toolbar?.footer as Array<Record<string, unknown>>));
+  }
   const dedup = new Set<string>();
   return merged
-    .map((row) => {
-      const key = String(row.key || '').trim();
-      if (!key || dedup.has(key)) return null;
-      dedup.add(key);
-      const payload = parseContractContextRaw(row.payload);
-      const kind = normalizeActionKind(row.kind);
-      const actionId = toPositiveInt(payload.action_id) ?? toPositiveInt(payload.ref);
-      const methodName = detectObjectMethodFromActionKey(key, String(payload.method || '').trim());
-      const selectionRaw = String(row.selection || 'none').toLowerCase();
-      const selection: ContractActionSelection =
-        selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
-      const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
-      const allowedByGroup = !groups.length || groups.some((group) => userGroups.includes(group));
-      const selectedCount = selectedIds.value.length;
-      const enabledBySelection =
-        selection === 'none' ? true : selection === 'single' ? selectedCount === 1 : selectedCount > 0;
-      const enabled = allowedByGroup && enabledBySelection;
-      const hint = allowedByGroup
-        ? enabledBySelection
-          ? ''
-          : selection === 'single'
-            ? '请选择 1 条记录'
-            : '请先选择记录'
-        : '权限不足';
-      return {
-        key,
-        label: String(row.label || key),
-        kind,
-        actionId,
-        methodName,
-        model: String(row.target_model || row.model || resolvedModelRef.value || model.value || '').trim(),
-        target: String(payload.target || '').trim(),
-        url: String(payload.url || '').trim(),
-        selection,
-        context: parseContractContextRaw(payload.context_raw),
-        domainRaw: String(payload.domain_raw || '').trim(),
-        enabled,
-        hint,
-      };
-    })
-    .filter((item): item is ContractActionButton => Boolean(item));
+    .map((row) => toContractActionButton(row, dedup))
+    .filter((item): item is ContractActionButton => Boolean(item))
+    .slice(0, 8);
+});
+const actionPrimaryBudget = computed(() => {
+  const raw = Number(actionContract.value?.surface_policies?.actions_primary_max ?? 4);
+  if (!Number.isFinite(raw) || raw < 0) return 4;
+  return Math.floor(raw);
+});
+const contractActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
+  const contract = actionContract.value;
+  const all = contractActionButtons.value;
+  if (!all.length) return [];
+  const map = new Map(all.map((item) => [item.key, item]));
+  const groupsRaw = Array.isArray(contract?.action_groups) ? (contract?.action_groups as ContractActionGroupRaw[]) : [];
+  const grouped: Array<{ key: string; label: string; actions: ContractActionButton[] }> = [];
+  const used = new Set<string>();
+  for (const row of groupsRaw) {
+    const groupKey = String(row?.key || '').trim();
+    if (!groupKey) continue;
+    const rows = Array.isArray(row?.actions) ? row.actions : [];
+    const actions: ContractActionButton[] = [];
+    for (const item of rows) {
+      const key = String(item?.key || '').trim();
+      if (!key || used.has(key)) continue;
+      const resolved = map.get(key);
+      if (!resolved) continue;
+      used.add(key);
+      actions.push(resolved);
+    }
+    if (actions.length) {
+      grouped.push({ key: groupKey, label: String(row?.label || groupKey), actions });
+    }
+  }
+  if (!grouped.length) {
+    const basic = all.filter((item) => /创建|保存|submit|create|save/i.test(item.label));
+    const workflow = all.filter((item) => /阶段|审批|workflow|transition/i.test(item.label));
+    const drilldown = all.filter((item) => /查看|列表|看板|open|view/i.test(item.label));
+    const other = all.filter((item) => !basic.includes(item) && !workflow.includes(item) && !drilldown.includes(item));
+    if (basic.length) grouped.push({ key: 'basic', label: '基础操作', actions: basic });
+    if (workflow.length) grouped.push({ key: 'workflow', label: '流程推进', actions: workflow });
+    if (drilldown.length) grouped.push({ key: 'drilldown', label: '业务查看', actions: drilldown });
+    if (other.length) grouped.push({ key: 'other', label: '更多操作', actions: other });
+  }
+  return grouped;
+});
+const contractPrimaryActions = computed<ContractActionButton[]>(() => {
+  const groups = contractActionGroups.value;
+  if (!groups.length) return contractActionButtons.value.slice(0, actionPrimaryBudget.value);
+  const primaryGroupOrder = ['basic', 'workflow', 'drilldown'];
+  const merged: ContractActionButton[] = [];
+  for (const key of primaryGroupOrder) {
+    const group = groups.find((item) => item.key === key);
+    if (!group) continue;
+    for (const action of group.actions) {
+      if (merged.some((item) => item.key === action.key)) continue;
+      merged.push(action);
+      if (merged.length >= actionPrimaryBudget.value) return merged;
+    }
+  }
+  return merged.slice(0, actionPrimaryBudget.value);
+});
+const contractOverflowActions = computed<ContractActionButton[]>(() => {
+  const primaryKeys = new Set(contractPrimaryActions.value.map((item) => item.key));
+  return contractActionButtons.value.filter((item) => !primaryKeys.has(item.key));
+});
+const contractOverflowActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
+  const primaryKeys = new Set(contractPrimaryActions.value.map((item) => item.key));
+  const groups = contractActionGroups.value;
+  const out: Array<{ key: string; label: string; actions: ContractActionButton[] }> = [];
+  for (const group of groups) {
+    const actions = group.actions.filter((item) => !primaryKeys.has(item.key));
+    if (!actions.length) continue;
+    out.push({ key: group.key, label: group.label, actions });
+  }
+  return out;
 });
 const contractColumnLabels = computed<Record<string, string>>(() => {
   const rows = actionContract.value?.fields || {};
@@ -520,6 +703,7 @@ function clearRoutePreset() {
 function applyContractFilter(key: string) {
   if (!key) return;
   activeContractFilterKey.value = key;
+  showMoreContractFilters.value = false;
   clearSelection();
   const query = { ...(route.query as Record<string, unknown>), preset_filter: key };
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
@@ -528,6 +712,7 @@ function applyContractFilter(key: string) {
 
 function clearContractFilter() {
   activeContractFilterKey.value = '';
+  showMoreContractFilters.value = false;
   clearSelection();
   const query = { ...(route.query as Record<string, unknown>) };
   delete query.preset_filter;
@@ -1031,6 +1216,7 @@ async function loadAssigneeOptions() {
 }
 
 async function load() {
+  showMoreContractActions.value = false;
   status.value = 'loading';
   clearError();
   traceId.value = '';
@@ -1619,6 +1805,22 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.contract-groups {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-group {
+  display: grid;
+  gap: 6px;
+}
+
+.contract-group-label {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .contract-chip {

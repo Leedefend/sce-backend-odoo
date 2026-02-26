@@ -358,6 +358,13 @@ export interface ActionContract {
     footer?: Array<Record<string, unknown>>;
   };
   buttons?: Array<Record<string, unknown>>;
+  action_groups?: Array<{
+    key?: string;
+    label?: string;
+    actions?: Array<Record<string, unknown>>;
+    overflow_actions?: Array<Record<string, unknown>>;
+    overflow_count?: number;
+  }>;
   permissions?: {
     rules?: Record<string, { mode?: string; clauses?: Array<Record<string, unknown>> }>;
     perms_by_group?: Record<string, { read?: boolean; write?: boolean; create?: boolean; unlink?: boolean }>;
