@@ -4,11 +4,11 @@
       <p>已应用推荐筛选：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
       <button class="clear-btn" @click="clearRoutePreset">清除推荐</button>
     </section>
-    <section v-if="contractFilterChips.length" class="contract-block">
-      <p class="contract-label">契约筛选</p>
+    <section v-if="contractPrimaryFilterChips.length || contractOverflowFilterChips.length" class="contract-block">
+      <p class="contract-label">快速筛选</p>
       <div class="contract-chips">
         <button
-          v-for="chip in contractFilterChips"
+          v-for="chip in contractPrimaryFilterChips"
           :key="`contract-filter-${chip.key}`"
           class="contract-chip"
           :class="{ active: activeContractFilterKey === chip.key }"
@@ -24,6 +24,26 @@
           @click="clearContractFilter"
         >
           清除
+        </button>
+        <button
+          v-if="contractOverflowFilterChips.length"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="showMoreContractFilters = !showMoreContractFilters"
+        >
+          {{ showMoreContractFilters ? '收起更多筛选' : `更多筛选 (${contractOverflowFilterChips.length})` }}
+        </button>
+      </div>
+      <div v-if="showMoreContractFilters && contractOverflowFilterChips.length" class="contract-chips">
+        <button
+          v-for="chip in contractOverflowFilterChips"
+          :key="`contract-filter-overflow-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeContractFilterKey === chip.key }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applyContractFilter(chip.key)"
+        >
+          {{ chip.label }}
         </button>
       </div>
     </section>
@@ -334,6 +354,7 @@ const resolvedModelRef = ref('');
 const activeContractFilterKey = ref('');
 const contractLimit = ref(40);
 const showMoreContractActions = ref(false);
+const showMoreContractFilters = ref(false);
 const viewMode = computed(() => {
   if (contractViewType.value === 'kanban') return 'kanban';
   if (contractViewType.value === 'list' || contractViewType.value === 'tree') return 'tree';
@@ -431,6 +452,19 @@ const contractFilterChips = computed<ContractFilterChip[]>(() => {
     .filter((item): item is ContractFilterChip => Boolean(item))
     .slice(0, 8);
 });
+const roleFilterBudget = computed(() => {
+  const role = runtimeRoleCode.value;
+  if (!role) return 5;
+  if (role.includes('executive') || role.includes('owner')) return 4;
+  if (role.includes('pm') || role.includes('project')) return 6;
+  return 5;
+});
+const contractPrimaryFilterChips = computed<ContractFilterChip[]>(() =>
+  contractFilterChips.value.slice(0, roleFilterBudget.value),
+);
+const contractOverflowFilterChips = computed<ContractFilterChip[]>(() =>
+  contractFilterChips.value.slice(roleFilterBudget.value),
+);
 function toContractActionButton(
   row: Record<string, unknown>,
   dedup: Set<string>,
