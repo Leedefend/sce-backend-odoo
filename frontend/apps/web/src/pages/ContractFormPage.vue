@@ -172,6 +172,7 @@ import {
 import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -296,6 +297,10 @@ const contractMetaLine = computed(() => {
 });
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');
+const policyContext = computed(() => ({
+  profile: renderProfile.value,
+  formData: formData as Record<string, unknown>,
+}));
 
 const warnings = computed(() => {
   const rows = contract.value?.warnings;
@@ -388,17 +393,16 @@ const contractActions = computed<ContractAction[]>(() => {
     const domainRaw = String(payload.domain_raw || '').trim();
     const target = String(payload.target || '').trim();
     const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
-    const semantic = String(row.semantic || '').trim().toLowerCase() || 'secondary';
     const visibleProfiles = (
       Array.isArray(row.visible_profiles) ? row.visible_profiles : ['create', 'edit']
     )
       .map((item) => String(item || '').trim().toLowerCase())
       .filter((item): item is 'create' | 'edit' | 'readonly' => item === 'create' || item === 'edit' || item === 'readonly');
-    const profileAllowed = !visibleProfiles.length || visibleProfiles.includes(renderProfile.value);
-    if (!profileAllowed) continue;
+    const policy = evaluateActionPolicy(contract.value, key, policyContext.value);
+    if (!policy.visible) continue;
     const byGroup = hasGroupAccess(groups);
     const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
-    const enabled = byGroup && (!needRecord || Boolean(recordId.value));
+    const enabled = policy.enabled && byGroup && (!needRecord || Boolean(recordId.value));
     out.push({
       key,
       label: String(row.label || key),
@@ -412,8 +416,10 @@ const contractActions = computed<ContractAction[]>(() => {
       target,
       url: String(payload.url || '').trim(),
       enabled,
-      hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
-      semantic,
+      hint: byGroup
+        ? (needRecord && !recordId.value ? 'requires record id' : policy.reason)
+        : 'permission denied',
+      semantic: policy.semantic,
       visibleProfiles,
     });
   }
@@ -489,13 +495,23 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) continue;
     used.add(name);
     const descriptor = fieldMap[name];
+    const resolved = evaluateFieldPolicy(
+      contract.value,
+      name,
+      {
+        required: Boolean(descriptor?.required),
+        readonly: Boolean(descriptor?.readonly),
+      },
+      policyContext.value,
+    );
+    if (!resolved.visible) continue;
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(descriptor?.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(descriptor?.required),
+      readonly: Boolean(resolved.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(resolved.required),
       descriptor,
     });
   }
@@ -504,13 +520,23 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (used.has(name)) return;
     const groups = fieldGroups[name]?.groups_xmlids;
     if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
+    const resolved = evaluateFieldPolicy(
+      contract.value,
+      name,
+      {
+        required: Boolean(descriptor?.required),
+        readonly: Boolean(descriptor?.readonly),
+      },
+      policyContext.value,
+    );
+    if (!resolved.visible) return;
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(descriptor?.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(descriptor?.required),
+      readonly: Boolean(resolved.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(resolved.required),
       descriptor,
     });
   });
@@ -785,6 +811,11 @@ async function saveRecord() {
     fieldLabels: labels,
     values: editableMap,
   });
+  const policyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
+  if (policyIssues.length) {
+    validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
+    return;
+  }
   if (issues.length) {
     validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
     return;

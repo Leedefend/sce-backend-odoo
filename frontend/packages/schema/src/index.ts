@@ -278,6 +278,30 @@ export interface ActionContract {
     collapsed_by_default?: boolean;
     fields?: string[];
   }>;
+  field_policies?: Record<
+    string,
+    {
+      visible_profiles?: string[];
+      required_profiles?: string[];
+      readonly_profiles?: string[];
+      source_required?: boolean;
+      source_readonly?: boolean;
+      group?: string;
+    }
+  >;
+  action_policies?: Record<
+    string,
+    {
+      visible_profiles?: string[];
+      enabled_when?: {
+        profiles?: string[];
+        required_fields?: string[];
+      };
+      disabled_reason?: string;
+      semantic?: string;
+    }
+  >;
+  validation_rules?: Array<Record<string, unknown>>;
   meta?: Record<string, unknown>;
   head?: {
     title?: string;
