@@ -297,9 +297,27 @@ const contractMetaLine = computed(() => {
 });
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');
+const runtimeCapabilities = computed(() => {
+  const out = new Set<string>();
+  (session.capabilities || []).forEach((key) => {
+    const normalized = String(key || '').trim();
+    if (normalized) out.add(normalized);
+  });
+  const catalog = session.capabilityCatalog || {};
+  Object.values(catalog).forEach((meta) => {
+    const key = String(meta?.key || '').trim();
+    if (!key) return;
+    const state = String(meta?.state || '').trim().toUpperCase();
+    const capState = String(meta?.capability_state || '').trim().toLowerCase();
+    if (state === 'LOCKED' || capState === 'deny') return;
+    out.add(key);
+  });
+  return out;
+});
 const policyContext = computed(() => ({
   profile: renderProfile.value,
   formData: formData as Record<string, unknown>,
+  capabilities: runtimeCapabilities.value,
 }));
 
 const warnings = computed(() => {

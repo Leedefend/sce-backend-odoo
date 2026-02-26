@@ -296,6 +296,11 @@ export interface ActionContract {
       enabled_when?: {
         profiles?: string[];
         required_fields?: string[];
+        required_capabilities?: string[];
+        lifecycle?: {
+          field?: string;
+          disallow_states?: string[];
+        };
       };
       disabled_reason?: string;
       semantic?: string;

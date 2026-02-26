@@ -15,6 +15,11 @@ type ActionPolicy = {
   enabled_when?: {
     profiles?: string[];
     required_fields?: string[];
+    required_capabilities?: string[];
+    lifecycle?: {
+      field?: string;
+      disallow_states?: string[];
+    };
   };
   disabled_reason?: string;
   semantic?: string;
@@ -23,6 +28,7 @@ type ActionPolicy = {
 type PolicyContext = {
   profile: RenderProfile;
   formData: Record<string, unknown>;
+  capabilities: Set<string>;
 };
 
 function hasProfile(list: unknown, profile: RenderProfile): boolean {
@@ -87,6 +93,26 @@ export function evaluateActionPolicy(
   if (requiredFields.length) {
     const missing = requiredFields.filter((name) => isEmpty(ctx.formData[name]));
     if (missing.length) enabled = false;
+  }
+  const requiredCapabilities = Array.isArray(enabledWhen.required_capabilities)
+    ? enabledWhen.required_capabilities.map((x) => String(x || '').trim()).filter(Boolean)
+    : [];
+  if (requiredCapabilities.length) {
+    const missingCaps = requiredCapabilities.filter((key) => !ctx.capabilities.has(key));
+    if (missingCaps.length) enabled = false;
+  }
+  const lifecycle = enabledWhen.lifecycle;
+  if (lifecycle && typeof lifecycle === 'object') {
+    const field = String(lifecycle.field || '').trim();
+    const disallowStates = Array.isArray(lifecycle.disallow_states)
+      ? lifecycle.disallow_states.map((x) => String(x || '').trim()).filter(Boolean)
+      : [];
+    if (field && disallowStates.length) {
+      const current = String(ctx.formData[field] || '').trim();
+      if (current && disallowStates.includes(current)) {
+        enabled = false;
+      }
+    }
   }
   return {
     visible: true,

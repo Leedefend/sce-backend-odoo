@@ -1088,6 +1088,22 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
     buttons = data.get("buttons")
     if not isinstance(buttons, list):
         return policies
+    lifecycle_field = ""
+    lifecycle_blocked_states: list[str] = []
+    fields_map = _as_dict(data.get("fields"))
+    lifecycle_desc = _as_dict(fields_map.get("lifecycle_state"))
+    if lifecycle_desc:
+        lifecycle_field = "lifecycle_state"
+        selection = lifecycle_desc.get("selection")
+        rows = selection if isinstance(selection, list) else []
+        for row in rows:
+            if not isinstance(row, (list, tuple)) or len(row) < 2:
+                continue
+            key = _safe_text(row[0]).lower()
+            label = _safe_text(row[1]).lower()
+            merged = f"{key} {label}"
+            if any(token in merged for token in ("close", "closed", "done", "archive", "竣工", "关闭", "归档")):
+                lifecycle_blocked_states.append(_safe_text(row[0]))
     for row in buttons:
         if not isinstance(row, dict):
             continue
@@ -1107,12 +1123,39 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
             "disabled_reason": "",
             "semantic": semantic,
         }
+        required_capabilities = row.get("required_capabilities")
+        if not isinstance(required_capabilities, list):
+            required_capabilities = row.get("capabilities")
+        required_capabilities = [
+            _safe_text(item)
+            for item in (required_capabilities if isinstance(required_capabilities, list) else [])
+            if _safe_text(item)
+        ]
         if semantic == "primary_action":
             policy["enabled_when"] = {
                 "required_fields": required_fields[:12],
                 "profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
             }
             policy["disabled_reason"] = "请先完成必填字段后再执行主操作"
+        if required_capabilities:
+            enabled_when = policy.get("enabled_when")
+            if not isinstance(enabled_when, dict):
+                enabled_when = {}
+            enabled_when["required_capabilities"] = required_capabilities
+            policy["enabled_when"] = enabled_when
+            if not policy["disabled_reason"]:
+                policy["disabled_reason"] = "缺少执行该操作所需能力"
+        if lifecycle_field and lifecycle_blocked_states:
+            enabled_when = policy.get("enabled_when")
+            if not isinstance(enabled_when, dict):
+                enabled_when = {}
+            enabled_when["lifecycle"] = {
+                "field": lifecycle_field,
+                "disallow_states": lifecycle_blocked_states,
+            }
+            policy["enabled_when"] = enabled_when
+            if not policy["disabled_reason"]:
+                policy["disabled_reason"] = "当前生命周期状态不允许该操作"
         policies[key] = policy
     return policies
 

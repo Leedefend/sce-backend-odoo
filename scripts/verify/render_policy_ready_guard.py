@@ -32,6 +32,8 @@ def main() -> int:
         'data["action_policies"] = _build_form_action_policies(data)',
         'data["validation_rules"] = _build_form_validation_rules(data)',
         '"required_fields": required_fields[:12]',
+        '"required_capabilities"',
+        '"lifecycle"',
         '"code": "REQUIRED"',
     ]
     for token in governance_tokens:
@@ -43,6 +45,8 @@ def main() -> int:
         "export function evaluateActionPolicy(",
         "export function collectPolicyValidationErrors(",
         "required_fields",
+        "required_capabilities",
+        "lifecycle",
         "visible_profiles",
         "required_profiles",
         "readonly_profiles",
@@ -55,6 +59,7 @@ def main() -> int:
         "evaluateFieldPolicy(",
         "evaluateActionPolicy(contract.value, key, policyContext.value)",
         "collectPolicyValidationErrors(contract.value, policyContext.value)",
+        "capabilities: runtimeCapabilities.value",
     ]
     for token in form_tokens:
         if token not in form_text:
