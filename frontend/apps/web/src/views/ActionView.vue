@@ -69,9 +69,9 @@
           {{ showMoreContractActions ? '收起更多操作' : `更多操作 (${contractOverflowActions.length})` }}
         </button>
       </div>
-      <div v-if="showMoreContractActions && contractActionGroups.length" class="contract-groups">
+      <div v-if="showMoreContractActions && contractOverflowActionGroups.length" class="contract-groups">
         <section
-          v-for="group in contractActionGroups"
+          v-for="group in contractOverflowActionGroups"
           :key="`contract-group-${group.key}`"
           class="contract-group"
         >
@@ -595,6 +595,17 @@ const contractOverflowActions = computed<ContractActionButton[]>(() => {
   const primaryKeys = new Set(contractPrimaryActions.value.map((item) => item.key));
   return contractActionButtons.value.filter((item) => !primaryKeys.has(item.key));
 });
+const contractOverflowActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
+  const primaryKeys = new Set(contractPrimaryActions.value.map((item) => item.key));
+  const groups = contractActionGroups.value;
+  const out: Array<{ key: string; label: string; actions: ContractActionButton[] }> = [];
+  for (const group of groups) {
+    const actions = group.actions.filter((item) => !primaryKeys.has(item.key));
+    if (!actions.length) continue;
+    out.push({ key: group.key, label: group.label, actions });
+  }
+  return out;
+});
 const contractColumnLabels = computed<Record<string, string>>(() => {
   const rows = actionContract.value?.fields || {};
   return Object.entries(rows).reduce<Record<string, string>>((acc, [name, descriptor]) => {
@@ -692,6 +703,7 @@ function clearRoutePreset() {
 function applyContractFilter(key: string) {
   if (!key) return;
   activeContractFilterKey.value = key;
+  showMoreContractFilters.value = false;
   clearSelection();
   const query = { ...(route.query as Record<string, unknown>), preset_filter: key };
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
@@ -700,6 +712,7 @@ function applyContractFilter(key: string) {
 
 function clearContractFilter() {
   activeContractFilterKey.value = '';
+  showMoreContractFilters.value = false;
   clearSelection();
   const query = { ...(route.query as Record<string, unknown>) };
   delete query.preset_filter;
@@ -1203,6 +1216,7 @@ async function loadAssigneeOptions() {
 }
 
 async function load() {
+  showMoreContractActions.value = false;
   status.value = 'loading';
   clearError();
   traceId.value = '';
