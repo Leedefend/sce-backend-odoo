@@ -1691,6 +1691,43 @@ verify.delivery.simulation.ready: guard.prod.forbid
 verify.product.delivery.gap: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_gap_report.py
 
+.PHONY: verify.product.delivery.v1.map
+verify.product.delivery.v1.map: guard.prod.forbid
+	@python3 scripts/verify/module_scene_capability_map_report.py
+
+.PHONY: verify.phasea.a0a1
+verify.phasea.a0a1: guard.prod.forbid verify.product.delivery.v1.map
+	@echo "[OK] verify.phasea.a0a1 done"
+
+.PHONY: verify.product.delivery.journeys
+verify.product.delivery.journeys: guard.prod.forbid
+	@python3 scripts/verify/delivery_user_journey_guard.py
+
+.PHONY: verify.product.delivery.roles
+verify.product.delivery.roles: guard.prod.forbid
+	@python3 scripts/verify/role_capability_profiles_export.py
+	@python3 scripts/verify/role_home_openability_report.py
+
+.PHONY: verify.product.delivery.role_home_openability
+verify.product.delivery.role_home_openability: guard.prod.forbid
+	@python3 scripts/verify/role_home_openability_report.py
+
+.PHONY: verify.product.delivery.visibility
+verify.product.delivery.visibility: guard.prod.forbid
+	@python3 scripts/verify/visibility_filter_verification.py
+
+.PHONY: verify.product.delivery.demo_data
+verify.product.delivery.demo_data: guard.prod.forbid
+	@python3 scripts/verify/demo_data_presence_report.py
+
+.PHONY: verify.product.delivery.execute_button_whitelist
+verify.product.delivery.execute_button_whitelist: guard.prod.forbid
+	@python3 scripts/verify/execute_button_whitelist_verification.py
+
+.PHONY: verify.product.delivery.menu
+verify.product.delivery.menu: guard.prod.forbid
+	@python3 scripts/verify/delivery_menu_tree_report.py
+
 .PHONY: verify.product.delivery.freshness
 verify.product.delivery.freshness: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_freshness_guard.py

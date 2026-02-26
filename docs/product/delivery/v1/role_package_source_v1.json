@@ -1,0 +1,115 @@
+{
+  "version": "v1",
+  "roles": [
+    {
+      "role_key": "pm",
+      "role_name": "项目经理",
+      "responsibility": "负责项目立项、执行推进、跨部门协同。",
+      "probe_login": "sc_fx_pm",
+      "default_scene": "projects.dashboard",
+      "visible_modules": [
+        "project_initiation_ledger",
+        "project_execution_collab",
+        "purchase_material_collab",
+        "payment_request_approval",
+        "cost_budget_profit",
+        "masterdata_workspace"
+      ],
+      "hidden_modules": [
+        "funding_settlement_ledger",
+        "executive_dashboard",
+        "lifecycle_governance"
+      ]
+    },
+    {
+      "role_key": "finance",
+      "role_name": "财务经理",
+      "responsibility": "负责付款审批、台账核对与资金结算。",
+      "probe_login": "sc_fx_finance",
+      "default_scene": "finance.center",
+      "visible_modules": [
+        "payment_request_approval",
+        "funding_settlement_ledger",
+        "cost_budget_profit",
+        "masterdata_workspace"
+      ],
+      "hidden_modules": [
+        "project_execution_collab",
+        "purchase_material_collab",
+        "executive_dashboard"
+      ]
+    },
+    {
+      "role_key": "purchase_manager",
+      "role_name": "采购经理",
+      "responsibility": "负责采购执行、物资协同与项目侧对接。",
+      "probe_login": "sc_fx_material_user",
+      "default_scene": "cost.project_boq",
+      "visible_modules": [
+        "project_initiation_ledger",
+        "purchase_material_collab",
+        "cost_budget_profit",
+        "masterdata_workspace"
+      ],
+      "hidden_modules": [
+        "payment_request_approval",
+        "funding_settlement_ledger",
+        "executive_dashboard",
+        "lifecycle_governance"
+      ]
+    },
+    {
+      "role_key": "executive",
+      "role_name": "老板/领导",
+      "responsibility": "关注经营指标、关键项目状态与风险。",
+      "probe_login": "sc_fx_executive",
+      "default_scene": "portal.dashboard",
+      "visible_modules": [
+        "executive_dashboard",
+        "lifecycle_governance",
+        "masterdata_workspace"
+      ],
+      "hidden_modules": [
+        "purchase_material_collab",
+        "payment_request_approval",
+        "funding_settlement_ledger"
+      ]
+    },
+    {
+      "role_key": "admin",
+      "role_name": "系统管理员",
+      "responsibility": "负责角色、入口、治理与故障处理。",
+      "probe_login": "sc_fx_contract_admin",
+      "default_scene": "portal.capability_matrix",
+      "visible_modules": [
+        "project_initiation_ledger",
+        "project_execution_collab",
+        "purchase_material_collab",
+        "payment_request_approval",
+        "funding_settlement_ledger",
+        "cost_budget_profit",
+        "executive_dashboard",
+        "lifecycle_governance",
+        "masterdata_workspace"
+      ],
+      "hidden_modules": []
+    },
+    {
+      "role_key": "ops",
+      "role_name": "运营专员",
+      "responsibility": "负责日常数据维护、流程跟单与问题反馈。",
+      "probe_login": "sc_fx_cost_user",
+      "default_scene": "projects.list",
+      "visible_modules": [
+        "project_initiation_ledger",
+        "payment_request_approval",
+        "masterdata_workspace"
+      ],
+      "hidden_modules": [
+        "funding_settlement_ledger",
+        "executive_dashboard",
+        "lifecycle_governance"
+      ]
+    }
+  ]
+}
