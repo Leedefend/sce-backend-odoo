@@ -1613,6 +1613,19 @@ verify.contract.version.evolution.drill: guard.prod.forbid
 verify.product.capability.matrix.ready: guard.prod.forbid
 	@python3 scripts/verify/product_capability_matrix_ready.py
 
+.PHONY: verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report verify.phasex.p1
+verify.capability.asset.map: guard.prod.forbid
+	@python3 scripts/verify/capability_asset_map_report.py
+
+verify.scene.compression.model: guard.prod.forbid
+	@python3 scripts/verify/scene_compression_model_report.py
+
+verify.button.semantic.report: guard.prod.forbid
+	@python3 scripts/verify/button_semantic_report.py
+
+verify.phasex.p1: guard.prod.forbid verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report
+	@echo "[OK] verify.phasex.p1 done"
+
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
 
