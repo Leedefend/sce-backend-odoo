@@ -41,40 +41,86 @@ ROLE_SURFACE_MAP = {
     },
 }
 
+ROLE_GROUPS_EXPLICIT = {
+    "executive": {
+        "smart_construction_custom.group_sc_role_executive",
+        "smart_construction_core.group_sc_super_admin",
+        "smart_construction_core.group_sc_cap_config_admin",
+        "base.group_system",
+    },
+    "pm": {
+        "smart_construction_custom.group_sc_role_pm",
+        "smart_construction_custom.group_sc_role_project_manager",
+        "smart_construction_custom.group_sc_role_project_user",
+        "smart_construction_core.group_sc_role_project_manager",
+    },
+    "finance": {
+        "smart_construction_custom.group_sc_role_finance",
+        "smart_construction_custom.group_sc_role_payment_manager",
+        "smart_construction_custom.group_sc_role_payment_user",
+        "smart_construction_custom.group_sc_role_payment_read",
+        "smart_construction_core.group_sc_role_finance_manager",
+        "smart_construction_core.group_sc_role_finance_user",
+    },
+}
+
+ROLE_GROUPS_CAPABILITY_FALLBACK = {
+    "pm": {
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_project_user",
+    },
+    "finance": {
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_cap_finance_manager",
+    },
+}
+
+ROLE_PRECEDENCE = ("executive", "pm", "finance")
+
 
 class IdentityResolver:
     def user_group_xmlids(self, user) -> set:
         ext_map = user.groups_id.sudo().get_external_id()
         return {xml for xml in ext_map.values() if xml}
 
+    def resolve_role_code_with_evidence(self, user_xmlids: set) -> tuple[str, dict]:
+        explicit_hits: Dict[str, List[str]] = {}
+        for role in ROLE_PRECEDENCE:
+            hits = sorted((ROLE_GROUPS_EXPLICIT.get(role) or set()) & user_xmlids)
+            if hits:
+                explicit_hits[role] = hits
+        for role in ROLE_PRECEDENCE:
+            hits = explicit_hits.get(role) or []
+            if hits:
+                evidence = {
+                    "source": "explicit",
+                    "matched_groups": hits,
+                }
+                if len(explicit_hits) > 1:
+                    evidence["candidate_roles"] = sorted(explicit_hits.keys())
+                return role, evidence
+
+        capability_hits: Dict[str, List[str]] = {}
+        for role in ("pm", "finance"):
+            hits = sorted((ROLE_GROUPS_CAPABILITY_FALLBACK.get(role) or set()) & user_xmlids)
+            if hits:
+                capability_hits[role] = hits
+        for role in ("pm", "finance"):
+            hits = capability_hits.get(role) or []
+            if hits:
+                evidence = {
+                    "source": "capability_fallback",
+                    "matched_groups": hits,
+                }
+                if len(capability_hits) > 1:
+                    evidence["candidate_roles"] = sorted(capability_hits.keys())
+                return role, evidence
+
+        return "owner", {"source": "default_owner", "matched_groups": []}
+
     def resolve_role_code(self, user_xmlids: set) -> str:
-        if {
-            "base.group_system",
-            "smart_construction_core.group_sc_super_admin",
-            "smart_construction_core.group_sc_cap_config_admin",
-            "smart_construction_core.group_sc_business_full",
-            "smart_construction_custom.group_sc_role_executive",
-        } & user_xmlids:
-            return "executive"
-        if {
-            "smart_construction_custom.group_sc_role_finance",
-            "smart_construction_custom.group_sc_role_payment_read",
-            "smart_construction_custom.group_sc_role_payment_user",
-            "smart_construction_custom.group_sc_role_payment_manager",
-            "smart_construction_core.group_sc_cap_finance_read",
-            "smart_construction_core.group_sc_cap_finance_user",
-            "smart_construction_core.group_sc_cap_finance_manager",
-        } & user_xmlids:
-            return "finance"
-        if {
-            "smart_construction_custom.group_sc_role_pm",
-            "smart_construction_custom.group_sc_role_project_user",
-            "smart_construction_custom.group_sc_role_project_manager",
-            "smart_construction_core.group_sc_cap_project_user",
-            "smart_construction_core.group_sc_cap_project_manager",
-        } & user_xmlids:
-            return "pm"
-        return "owner"
+        role_code, _ = self.resolve_role_code_with_evidence(user_xmlids)
+        return role_code
 
     def _pick_landing_scene(self, scene_candidates: List[str], scene_keys: set) -> str:
         for candidate in scene_candidates:
@@ -100,7 +146,7 @@ class IdentityResolver:
         return indexed
 
     def build_role_surface(self, user_xmlids: set, nav_tree: list, scene_keys: set) -> dict:
-        role_code = self.resolve_role_code(user_xmlids)
+        role_code, role_evidence = self.resolve_role_code_with_evidence(user_xmlids)
         role_meta = ROLE_SURFACE_MAP.get(role_code) or ROLE_SURFACE_MAP["owner"]
         scene_candidates = list(role_meta.get("landing_scene_candidates") or [])
         menu_candidates = list(role_meta.get("menu_xmlids") or [])
@@ -118,6 +164,7 @@ class IdentityResolver:
         return {
             "role_code": role_code,
             "role_label": role_meta.get("label") or role_code,
+            "role_evidence": role_evidence,
             "landing_scene_key": landing_scene_key,
             "landing_menu_xmlid": landing_menu_xmlid,
             "landing_menu_id": landing_menu_id,
@@ -140,8 +187,10 @@ class IdentityResolver:
     def resolve(self, env):
         user = env.user
         groups = self.user_group_xmlids(user)
+        role_code, role_evidence = self.resolve_role_code_with_evidence(groups)
         return {
             "user_id": user.id,
             "groups_xmlids": sorted(groups),
-            "role_code": self.resolve_role_code(groups),
+            "role_code": role_code,
+            "role_evidence": role_evidence,
         }
