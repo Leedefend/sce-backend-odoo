@@ -173,6 +173,8 @@ _FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
 _FORM_DISABLED_REASON_LIFECYCLE = "当前生命周期状态不允许该操作"
 _FORM_DISABLED_REASON_GROUP = "当前角色组不满足执行条件"
 _FORM_DISABLED_REASON_ROLE = "当前角色不满足执行条件"
+_FORM_SCENE_PROFILE_DEFAULT = "generic.form"
+_FORM_SCENE_PROFILE_PROJECT = "project.form"
 
 _CAPABILITY_GROUP_DEFAULTS = {
     "project_management": {"label": "项目管理", "icon": "briefcase"},
@@ -1098,6 +1100,84 @@ def _default_action_policy(semantic: str, visible_profiles: list[str], required_
     return policy
 
 
+def _resolve_form_scene_profile(data: dict) -> str:
+    return _FORM_SCENE_PROFILE_PROJECT if _is_project_form_contract(data) else _FORM_SCENE_PROFILE_DEFAULT
+
+
+def _resolve_action_policy_template_keys(
+    *,
+    scene_profile: str,
+    semantic: str,
+    required_capabilities: list[str],
+    required_groups: list[str],
+    required_roles: list[str],
+    lifecycle_field: str,
+    lifecycle_blocked_states: list[str],
+) -> list[str]:
+    keys: list[str] = []
+    if semantic == "primary_action":
+        keys.append("base.primary")
+    else:
+        keys.append("base.secondary")
+    if required_capabilities or required_groups or required_roles or (lifecycle_field and lifecycle_blocked_states):
+        keys.append("constraint.access")
+    if scene_profile == _FORM_SCENE_PROFILE_PROJECT and semantic == "primary_action":
+        keys.append("scene.project.form.primary")
+    return keys
+
+
+def _apply_action_policy_templates(
+    policy: dict[str, Any],
+    template_keys: list[str],
+    *,
+    required_fields: list[str],
+    required_capabilities: list[str],
+    lifecycle_field: str,
+    lifecycle_blocked_states: list[str],
+    required_groups: list[str],
+    required_roles: list[str],
+    fields_map: dict[str, Any],
+) -> None:
+    def _apply_base_primary() -> None:
+        base = _default_action_policy("primary_action", policy.get("visible_profiles") or [], required_fields)
+        policy["enabled_when"] = base.get("enabled_when") or {}
+        policy["disabled_reason"] = base.get("disabled_reason") or policy.get("disabled_reason") or ""
+        policy["semantic"] = "primary_action"
+
+    def _apply_base_secondary() -> None:
+        base = _default_action_policy(
+            _safe_text(policy.get("semantic"), "secondary"),
+            policy.get("visible_profiles") or [],
+            required_fields,
+        )
+        policy["enabled_when"] = base.get("enabled_when") or {}
+        policy["disabled_reason"] = base.get("disabled_reason") or policy.get("disabled_reason") or ""
+
+    def _apply_constraint_access() -> None:
+        _merge_policy_constraints(
+            policy,
+            required_capabilities=required_capabilities,
+            lifecycle_field=lifecycle_field,
+            lifecycle_blocked_states=lifecycle_blocked_states,
+            required_groups=required_groups,
+            required_roles=required_roles,
+        )
+
+    def _apply_scene_project_primary() -> None:
+        _append_primary_action_conditions(policy, fields_map)
+
+    template_registry = {
+        "base.primary": _apply_base_primary,
+        "base.secondary": _apply_base_secondary,
+        "constraint.access": _apply_constraint_access,
+        "scene.project.form.primary": _apply_scene_project_primary,
+    }
+    for key in template_keys:
+        runner = template_registry.get(key)
+        if callable(runner):
+            runner()
+
+
 def _merge_policy_constraints(
     policy: dict[str, Any],
     *,
@@ -1164,6 +1244,7 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
     lifecycle_field = ""
     lifecycle_blocked_states: list[str] = []
     fields_map = _as_dict(data.get("fields"))
+    scene_profile = _resolve_form_scene_profile(data)
     lifecycle_desc = _as_dict(fields_map.get("lifecycle_state"))
     if lifecycle_desc:
         lifecycle_field = "lifecycle_state"
@@ -1211,15 +1292,26 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
             for item in (required_capabilities if isinstance(required_capabilities, list) else [])
             if _safe_text(item)
         ]
-        _merge_policy_constraints(
+        template_keys = _resolve_action_policy_template_keys(
+            scene_profile=scene_profile,
+            semantic=semantic,
+            required_capabilities=required_capabilities,
+            required_groups=required_groups,
+            required_roles=required_roles,
+            lifecycle_field=lifecycle_field,
+            lifecycle_blocked_states=lifecycle_blocked_states,
+        )
+        _apply_action_policy_templates(
             policy,
+            template_keys,
+            required_fields=required_fields,
             required_capabilities=required_capabilities,
             lifecycle_field=lifecycle_field,
             lifecycle_blocked_states=lifecycle_blocked_states,
             required_groups=required_groups,
             required_roles=required_roles,
+            fields_map=fields_map,
         )
-        _append_primary_action_conditions(policy, fields_map)
         policies[key] = policy
     return policies
 
