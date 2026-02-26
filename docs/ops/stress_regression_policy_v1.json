@@ -1,0 +1,31 @@
+{
+  "version": "v1",
+  "relative_thresholds": {
+    "warn_factor": 1.05,
+    "fail_factor": 1.1
+  },
+  "absolute_thresholds_ms": {
+    "default": {
+      "warn": 20,
+      "fail": 40
+    },
+    "system.init": {
+      "warn": 80,
+      "fail": 150
+    },
+    "ui.contract": {
+      "warn": 15,
+      "fail": 30
+    },
+    "execute_button": {
+      "warn": 5,
+      "fail": 10
+    }
+  },
+  "absolute_floor_ms": {
+    "execute_button": {
+      "warn": 60,
+      "fail": 80
+    }
+  }
+}

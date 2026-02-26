@@ -13,6 +13,7 @@ from python_http_smoke_utils import get_base_url, http_post_json
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE_JSON = ROOT / "artifacts" / "backend" / "platform_sla_report.json"
+POLICY_JSON = ROOT / "docs" / "ops" / "stress_regression_policy_v1.json"
 REPORT_MD = ROOT / "docs" / "ops" / "audit" / "system_stability_stress_regression_report.md"
 REPORT_JSON = ROOT / "artifacts" / "backend" / "system_stability_stress_regression_report.json"
 
@@ -60,26 +61,39 @@ def _call(intent_url: str, token: str, intent: str, params: dict) -> tuple[int, 
     return status, payload if isinstance(payload, dict) else {}, elapsed_ms
 
 
-def _thresholds(intent: str, baseline_p95: float) -> tuple[float, float]:
-    rel_warn = float(os.getenv("STRESS_WARN_REL_FACTOR") or 1.05)
-    rel_fail = float(os.getenv("STRESS_FAIL_REL_FACTOR") or 1.10)
-    abs_warn_defaults = {"system.init": 80.0, "ui.contract": 15.0, "execute_button": 5.0}
-    abs_fail_defaults = {"system.init": 150.0, "ui.contract": 30.0, "execute_button": 10.0}
-    abs_warn = float(os.getenv(f"STRESS_WARN_ABS_{intent.upper().replace('.', '_')}") or abs_warn_defaults.get(intent, 20.0))
-    abs_fail = float(os.getenv(f"STRESS_FAIL_ABS_{intent.upper().replace('.', '_')}") or abs_fail_defaults.get(intent, 40.0))
+def _thresholds(intent: str, baseline_p95: float, policy: dict) -> tuple[float, float]:
+    rel = policy.get("relative_thresholds") if isinstance(policy.get("relative_thresholds"), dict) else {}
+    rel_warn = float(os.getenv("STRESS_WARN_REL_FACTOR") or rel.get("warn_factor") or 1.05)
+    rel_fail = float(os.getenv("STRESS_FAIL_REL_FACTOR") or rel.get("fail_factor") or 1.10)
+    abs_all = policy.get("absolute_thresholds_ms") if isinstance(policy.get("absolute_thresholds_ms"), dict) else {}
+    abs_default = abs_all.get("default") if isinstance(abs_all.get("default"), dict) else {}
+    abs_intent = abs_all.get(intent) if isinstance(abs_all.get(intent), dict) else {}
+    abs_warn = float(
+        os.getenv(f"STRESS_WARN_ABS_{intent.upper().replace('.', '_')}")
+        or abs_intent.get("warn")
+        or abs_default.get("warn")
+        or 20.0
+    )
+    abs_fail = float(
+        os.getenv(f"STRESS_FAIL_ABS_{intent.upper().replace('.', '_')}")
+        or abs_intent.get("fail")
+        or abs_default.get("fail")
+        or 40.0
+    )
     warn_th = max(baseline_p95 * rel_warn, baseline_p95 + abs_warn)
     fail_th = max(baseline_p95 * rel_fail, baseline_p95 + abs_fail)
-    if intent == "execute_button":
-        # Absolute threshold prevents tiny baselines from over-sensitive fail decisions.
-        warn_th = max(warn_th, 60.0)
-        fail_th = max(fail_th, 80.0)
+    floor_cfg_all = policy.get("absolute_floor_ms") if isinstance(policy.get("absolute_floor_ms"), dict) else {}
+    floor_cfg = floor_cfg_all.get(intent) if isinstance(floor_cfg_all.get(intent), dict) else {}
+    if floor_cfg:
+        warn_th = max(warn_th, float(floor_cfg.get("warn") or warn_th))
+        fail_th = max(fail_th, float(floor_cfg.get("fail") or fail_th))
     return warn_th, fail_th
 
 
-def _grade_round(intent: str, p95_ms: float, baseline_p95: float) -> tuple[str, float, float]:
+def _grade_round(intent: str, p95_ms: float, baseline_p95: float, policy: dict) -> tuple[str, float, float]:
     if baseline_p95 <= 0:
         return "warn", 0.0, 0.0
-    warn_th, fail_th = _thresholds(intent, baseline_p95)
+    warn_th, fail_th = _thresholds(intent, baseline_p95, policy)
     if p95_ms > fail_th:
         return "fail", warn_th, fail_th
     if p95_ms > warn_th:
@@ -109,6 +123,10 @@ def main() -> int:
     execute_res_id = int(os.getenv("STRESS_EXECUTE_RES_ID") or 4)
 
     baseline = _load_json(BASELINE_JSON)
+    policy = _load_json(POLICY_JSON)
+    policy_version = str(policy.get("version") or "unknown")
+    if not policy:
+        warnings.append(f"missing policy file: {POLICY_JSON.relative_to(ROOT).as_posix()}")
     baseline_rows = baseline.get("rows") if isinstance(baseline.get("rows"), list) else []
     baseline_p95 = {
         str(row.get("intent") or "").strip(): float(row.get("p95_ms") or 0.0)
@@ -167,7 +185,7 @@ def main() -> int:
                 avg = (sum(times) / len(times)) if times else 0.0
                 var = statistics.pvariance(times) if len(times) > 1 else 0.0
                 non_2xx = len([x for x in statuses if x < 200 or x >= 300])
-                grade, warn_th, fail_th = _grade_round(intent, p95, baseline_value)
+                grade, warn_th, fail_th = _grade_round(intent, p95, baseline_value, policy)
                 round_rows.append(
                     {
                         "round": round_index,
@@ -262,6 +280,10 @@ def main() -> int:
             "STRESS_EXECUTE_METHOD": execute_method,
             "STRESS_EXECUTE_RES_ID": execute_res_id,
         },
+        "policy": {
+            "path": POLICY_JSON.relative_to(ROOT).as_posix(),
+            "version": policy_version,
+        },
         "rows": rows,
         "errors": errors,
         "warnings": warnings,
@@ -278,6 +300,7 @@ def main() -> int:
         f"- rounds: {rounds}",
         f"- warmup_per_round: {warmup_count}",
         f"- fail_rounds_required: {fail_rounds_required}",
+        f"- policy_version: {policy_version}",
         f"- error_count: {payload['summary']['error_count']}",
         f"- warning_count: {payload['summary']['warning_count']}",
         "",

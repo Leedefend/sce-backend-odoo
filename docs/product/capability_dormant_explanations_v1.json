@@ -1,0 +1,12 @@
+{
+  "version": "v1",
+  "entries": [
+    {
+      "capability_key": "cost.ledger.open",
+      "status": "isolated",
+      "business_reason": "Only exposed under explicit cost-ledger navigation path; current runtime role pack does not include this path in READY state.",
+      "governance_action": "Keep capability structurally registered and monitor runtime scene activation trend in weekly audit.",
+      "owner_role": "cost_controller"
+    }
+  ]
+}

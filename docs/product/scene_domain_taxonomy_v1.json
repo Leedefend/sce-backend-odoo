@@ -1,0 +1,74 @@
+{
+  "version": "v1",
+  "max_domain_count": 25,
+  "domains": [
+    {
+      "key": "project_execution",
+      "label": "Project Execution",
+      "description": "Project intake, list, ledger, and dashboard execution surfaces."
+    },
+    {
+      "key": "finance_operations",
+      "label": "Finance Operations",
+      "description": "Payment, treasury, settlement, and operating finance surfaces."
+    },
+    {
+      "key": "cost_control",
+      "label": "Cost Control",
+      "description": "Budget, BOQ, cost ledger, and profitability analysis surfaces."
+    },
+    {
+      "key": "portal_governance",
+      "label": "Portal Governance",
+      "description": "Capability matrix, dashboard, and lifecycle governance surfaces."
+    },
+    {
+      "key": "workspace_shell",
+      "label": "Workspace Shell",
+      "description": "Default workspace shell and smoke-default shells."
+    },
+    {
+      "key": "data_foundation",
+      "label": "Data Foundation",
+      "description": "Dictionary and base metadata surfaces."
+    }
+  ],
+  "rules": [
+    {
+      "match_type": "prefix",
+      "pattern": "projects.",
+      "domain": "project_execution"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "finance.",
+      "domain": "finance_operations"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "cost.",
+      "domain": "cost_control"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "portal.",
+      "domain": "portal_governance"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "data.",
+      "domain": "data_foundation"
+    },
+    {
+      "match_type": "exact",
+      "pattern": "default",
+      "domain": "workspace_shell"
+    },
+    {
+      "match_type": "contains",
+      "pattern": "default",
+      "domain": "workspace_shell"
+    }
+  ],
+  "fallback_domain": "misc_domain"
+}

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -88,25 +89,42 @@ def main() -> int:
 
     baseline = _load_json(BASELINE_JSON)
     baseline_cases = baseline.get("cases") if isinstance(baseline.get("cases"), dict) else {}
+    baseline_version = str(baseline.get("version") or "") if isinstance(baseline, dict) else ""
+    baseline_age_days = None
+    if BASELINE_JSON.exists():
+        baseline_age_days = int(
+            (datetime.now(timezone.utc).timestamp() - BASELINE_JSON.stat().st_mtime) // 86400
+        )
 
     if os.getenv("SEMANTIC_BEHAVIOR_BOOTSTRAP") == "1":
         BASELINE_JSON.parent.mkdir(parents=True, exist_ok=True)
+        now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         BASELINE_JSON.write_text(
-            json.dumps({"version": "v1", "cases": observed}, ensure_ascii=False, indent=2) + "\n",
+            json.dumps({"version": "v1", "meta": {"generated_at": now_iso}, "cases": observed}, ensure_ascii=False, indent=2)
+            + "\n",
             encoding="utf-8",
         )
         warnings.append("baseline bootstrapped from current observed semantics")
         baseline_cases = {k: v for k, v in observed.items()}
+        baseline_version = "v1"
+        baseline_age_days = 0
 
     if not baseline_cases:
         errors.append(f"missing baseline: {BASELINE_JSON.relative_to(ROOT).as_posix()}")
+    if baseline_version and baseline_version != "v1":
+        warnings.append(f"unexpected_baseline_version={baseline_version}")
+    max_age_days = max(1, int(os.getenv("SEMANTIC_BEHAVIOR_BASELINE_MAX_AGE_DAYS", "30")))
+    if baseline_age_days is not None and baseline_age_days > max_age_days:
+        warnings.append(f"baseline_age_days={baseline_age_days} (> {max_age_days})")
 
     drift_items = []
+    missing_baseline_cases = []
     for key, row in observed.items():
         baseline_row = baseline_cases.get(key) if isinstance(baseline_cases.get(key), dict) else {}
         baseline_fp = str(baseline_row.get("fingerprint") or "")
         current_fp = str(row.get("fingerprint") or "")
         if not baseline_fp:
+            missing_baseline_cases.append(key)
             drift_items.append({"case": key, "type": "baseline_missing", "current_fingerprint": current_fp})
             continue
         if baseline_fp != current_fp:
@@ -129,6 +147,9 @@ def main() -> int:
         "summary": {
             "case_count": len(observed),
             "drift_count": len(drift_items),
+            "baseline_missing_case_count": len(missing_baseline_cases),
+            "baseline_version": baseline_version or "unknown",
+            "baseline_age_days": baseline_age_days,
             "error_count": len(errors),
             "warning_count": len(warnings),
         },
@@ -175,4 +196,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
