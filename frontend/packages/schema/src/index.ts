@@ -268,6 +268,7 @@ export interface LoadViewRequest {
 }
 
 export interface ActionContract {
+  visible_fields?: string[];
   render_profile?: 'create' | 'edit' | 'readonly';
   hide_filters_on_create?: boolean;
   field_groups?: Array<{

@@ -827,6 +827,7 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     selected_set = set(selected)
     fields_map = _as_dict(data.get("fields"))
     data["fields"] = {name: fields_map.get(name) for name in selected if name in fields_map}
+    data["visible_fields"] = selected
 
     permissions = _as_dict(data.get("permissions"))
     field_groups = _as_dict(permissions.get("field_groups"))
@@ -834,7 +835,6 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
         permissions["field_groups"] = {name: val for name, val in field_groups.items() if name in selected_set}
     data["permissions"] = permissions
 
-    _filter_project_form_layout(data, selected_set)
     _govern_project_form_actions(data)
     _govern_project_form_search(data)
     _build_project_lifecycle_summary(data)

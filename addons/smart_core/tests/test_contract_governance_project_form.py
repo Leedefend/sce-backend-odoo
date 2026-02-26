@@ -139,12 +139,15 @@ class TestProjectFormGovernance(unittest.TestCase):
 
         layout = ((out.get("views") or {}).get("form") or {}).get("layout") or []
         layout_field_names = [item.get("name") for item in layout if isinstance(item, dict) and item.get("type") == "field"]
-        self.assertNotIn("create_uid", layout_field_names)
-        self.assertNotIn("message_ids", layout_field_names)
-        self.assertIn("name", layout_field_names)
-        # layout should cover selected field surface, not only original sparse field nodes
-        self.assertIn("manager_id", layout_field_names)
-        self.assertIn("budget_total", layout_field_names)
+        self.assertIn("create_uid", layout_field_names)
+        self.assertIn("message_ids", layout_field_names)
+        visible_fields = out.get("visible_fields") or []
+        self.assertIsInstance(visible_fields, list)
+        self.assertIn("name", visible_fields)
+        self.assertIn("manager_id", visible_fields)
+        self.assertIn("budget_total", visible_fields)
+        self.assertNotIn("create_uid", visible_fields)
+        self.assertNotIn("message_ids", visible_fields)
 
         toolbar_header = ((out.get("toolbar") or {}).get("header") or [])
         self.assertEqual(toolbar_header, [])

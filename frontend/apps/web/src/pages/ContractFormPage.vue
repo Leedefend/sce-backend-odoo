@@ -493,8 +493,14 @@ const coreFieldNames = computed<string[]>(() => semanticFieldGroups.value.core?.
 const advancedFieldNames = computed<string[]>(() => semanticFieldGroups.value.advanced?.fields || []);
 const coreFieldsLabel = computed(() => semanticFieldGroups.value.core?.label || '');
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
+const contractVisibleFields = computed<string[]>(() => {
+  const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
+  return rows.map((name) => String(name || '').trim()).filter(Boolean);
+});
 
 function isFieldVisible(name: string) {
+  const visible = contractVisibleFields.value;
+  if (visible.length && !visible.includes(name)) return false;
   const core = coreFieldNames.value;
   const advanced = advancedFieldNames.value;
   if (!core.length && !advanced.length) return true;
@@ -524,6 +530,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) continue;
     used.add(name);
     const descriptor = fieldMap[name];
+    if (!descriptor) continue;
     const resolved = evaluateFieldPolicy(
       contract.value,
       name,

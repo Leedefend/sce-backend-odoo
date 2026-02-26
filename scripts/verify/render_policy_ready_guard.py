@@ -71,6 +71,7 @@ def main() -> int:
         "capabilities: runtimeCapabilities.value",
         "userGroups: runtimeUserGroups.value",
         "roleCode: runtimeRoleCode.value",
+        "contractVisibleFields",
     ]
     for token in form_tokens:
         if token not in form_text:
