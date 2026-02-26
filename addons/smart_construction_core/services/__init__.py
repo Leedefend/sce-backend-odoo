@@ -8,3 +8,4 @@ from . import capability_registry
 from . import capability_matrix_service
 from . import portal_dashboard_service
 from . import portal_execute_button_service
+from . import contract_governance_overrides

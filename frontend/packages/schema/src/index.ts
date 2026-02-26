@@ -268,6 +268,62 @@ export interface LoadViewRequest {
 }
 
 export interface ActionContract {
+  visible_fields?: string[];
+  render_profile?: 'create' | 'edit' | 'readonly';
+  hide_filters_on_create?: boolean;
+  field_groups?: Array<{
+    name?: string;
+    label?: string;
+    priority?: number;
+    collapsible?: boolean;
+    collapsed_by_default?: boolean;
+    fields?: string[];
+  }>;
+  field_policies?: Record<
+    string,
+    {
+      visible_profiles?: string[];
+      required_profiles?: string[];
+      readonly_profiles?: string[];
+      source_required?: boolean;
+      source_readonly?: boolean;
+      group?: string;
+    }
+  >;
+  action_policies?: Record<
+    string,
+    {
+      visible_profiles?: string[];
+      enabled_when?: {
+        profiles?: string[];
+        required_fields?: string[];
+        required_capabilities?: string[];
+        required_groups?: string[];
+        required_roles?: string[];
+        conditions?: Array<{
+          source?: string;
+          field?: string;
+          op?: string;
+          value?: unknown;
+        }>;
+        condition_expr?: {
+          op?: string;
+          source?: string;
+          field?: string;
+          value?: unknown;
+          items?: Array<Record<string, unknown>>;
+          item?: Record<string, unknown>;
+        };
+        lifecycle?: {
+          field?: string;
+          disallow_states?: string[];
+        };
+      };
+      disabled_reason?: string;
+      semantic?: string;
+    }
+  >;
+  validation_rules?: Array<Record<string, unknown>>;
   meta?: Record<string, unknown>;
   head?: {
     title?: string;

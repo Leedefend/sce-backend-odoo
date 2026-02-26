@@ -10,19 +10,23 @@
         <button
           v-for="action in headerActions"
           :key="`hdr-${action.key}`"
-          class="ghost"
+          :class="action.semantic === 'primary_action' ? 'primary' : 'ghost'"
           :disabled="busy || !action.enabled"
           :title="action.hint"
           @click="runAction(action)"
         >
           {{ action.label }}
         </button>
-        <button class="primary" :disabled="busy || !canSave || (Boolean(recordId) && !hasChanges)" @click="saveRecord">
+        <button
+          :class="hasPrimaryHeaderAction ? 'ghost' : 'primary'"
+          :disabled="busy || !canSave || (Boolean(recordId) && !hasChanges)"
+          @click="saveRecord"
+        >
           {{ busy && busyKind === 'save' ? 'Saving...' : 'Save' }}
         </button>
-        <button class="ghost" :disabled="busy || !contract" @click="copyContractJson">Copy Contract</button>
-        <button class="ghost" :disabled="busy || !contract" @click="exportContractJson">Export Contract</button>
-        <button class="ghost" :disabled="busy" @click="reload">Reload</button>
+        <button v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="copyContractJson">Copy Contract</button>
+        <button v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="exportContractJson">Export Contract</button>
+        <button v-if="showDebugActions" class="ghost" :disabled="busy" @click="reload">Reload</button>
       </div>
     </header>
 
@@ -53,7 +57,7 @@
         </div>
       </section>
 
-      <section v-if="searchFilters.length" class="block">
+      <section v-if="showSearchFilters && searchFilters.length" class="block">
         <h3>Search Filters</h3>
         <div class="chips">
           <button
@@ -73,10 +77,11 @@
         <p v-if="validationErrors.length" class="validation-error">
           {{ validationErrors.join('；') }}
         </p>
+        <div v-if="coreFieldsLabel" class="layout-divider">{{ coreFieldsLabel }}</div>
         <template v-for="node in layoutNodes" :key="node.key">
           <div v-if="node.kind === 'header'" class="layout-divider">Header</div>
           <div v-else-if="node.kind === 'sheet'" class="layout-divider">Sheet</div>
-          <div v-else-if="node.kind === 'field'" class="field">
+          <div v-else-if="node.kind === 'field' && isFieldVisible(node.name)" class="field">
             <label class="label">{{ node.label }}<span v-if="node.required" class="required">*</span></label>
             <template v-if="node.readonly">
               <FieldValue :value="formData[node.name]" :field="node.descriptor" />
@@ -114,6 +119,11 @@
             </template>
           </div>
         </template>
+        <div v-if="hasAdvancedFields" class="layout-divider advanced-toggle">
+          <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
+            {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
+          </button>
+        </div>
       </section>
 
       <section v-if="bodyActions.length" class="block">
@@ -162,6 +172,7 @@ import {
 import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -180,6 +191,8 @@ type ContractAction = {
   url: string;
   enabled: boolean;
   hint: string;
+  semantic: string;
+  visibleProfiles: Array<'create' | 'edit' | 'readonly'>;
 };
 
 type LayoutNode = {
@@ -205,6 +218,7 @@ const contractMeta = ref<Record<string, unknown> | null>(null);
 const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const formData = reactive<Record<string, unknown>>({});
+const advancedExpanded = ref(false);
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
@@ -224,6 +238,15 @@ const recordId = computed(() => {
 const recordIdDisplay = computed(() => (recordId.value ? String(recordId.value) : 'new'));
 const showHud = computed(() => isHudEnabled(route));
 const busy = computed(() => busyKind.value !== null);
+
+const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
+  const profile = String(contract.value?.render_profile || '').trim().toLowerCase();
+  if (profile === 'readonly') return 'readonly';
+  if (profile === 'edit') return 'edit';
+  if (profile === 'create') return 'create';
+  if (!canSave.value) return 'readonly';
+  return recordId.value ? 'edit' : 'create';
+});
 
 const rights = computed(() => {
   const head = contract.value?.head?.permissions;
@@ -270,8 +293,43 @@ const contractMetaLine = computed(() => {
   const viewType = String(contract.value.head?.view_type || contract.value.view_type || '-');
   const filters = Array.isArray(contract.value.search?.filters) ? contract.value.search.filters.length : 0;
   const transitions = Array.isArray(contract.value.workflow?.transitions) ? contract.value.workflow.transitions.length : 0;
-  return `mode=${mode} · view_type=${viewType} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
+  return `mode=${mode} · view_type=${viewType} · profile=${renderProfile.value} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
 });
+
+const showDebugActions = computed(() => renderProfile.value !== 'create');
+const runtimeUserGroups = computed(() => {
+  const out = new Set<string>();
+  (session.user?.groups_xmlids || []).forEach((group) => {
+    const normalized = String(group || '').trim();
+    if (normalized) out.add(normalized);
+  });
+  return out;
+});
+const runtimeRoleCode = computed(() => String(session.roleSurface?.role_code || '').trim().toLowerCase());
+const runtimeCapabilities = computed(() => {
+  const out = new Set<string>();
+  (session.capabilities || []).forEach((key) => {
+    const normalized = String(key || '').trim();
+    if (normalized) out.add(normalized);
+  });
+  const catalog = session.capabilityCatalog || {};
+  Object.values(catalog).forEach((meta) => {
+    const key = String(meta?.key || '').trim();
+    if (!key) return;
+    const state = String(meta?.state || '').trim().toUpperCase();
+    const capState = String(meta?.capability_state || '').trim().toLowerCase();
+    if (state === 'LOCKED' || capState === 'deny') return;
+    out.add(key);
+  });
+  return out;
+});
+const policyContext = computed(() => ({
+  profile: renderProfile.value,
+  formData: formData as Record<string, unknown>,
+  capabilities: runtimeCapabilities.value,
+  userGroups: runtimeUserGroups.value,
+  roleCode: runtimeRoleCode.value,
+}));
 
 const warnings = computed(() => {
   const rows = contract.value?.warnings;
@@ -321,6 +379,12 @@ const searchFilters = computed(() => {
     .filter((row) => row.key && row.label);
 });
 
+const showSearchFilters = computed(() => {
+  if (!contract.value) return true;
+  if (renderProfile.value !== 'create') return true;
+  return !Boolean(contract.value.hide_filters_on_create);
+});
+
 function hasGroupAccess(groupsXmlids?: string[]) {
   if (!Array.isArray(groupsXmlids) || !groupsXmlids.length) return true;
   const userGroups = session.user?.groups_xmlids || [];
@@ -358,9 +422,16 @@ const contractActions = computed<ContractAction[]>(() => {
     const domainRaw = String(payload.domain_raw || '').trim();
     const target = String(payload.target || '').trim();
     const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
+    const visibleProfiles = (
+      Array.isArray(row.visible_profiles) ? row.visible_profiles : ['create', 'edit']
+    )
+      .map((item) => String(item || '').trim().toLowerCase())
+      .filter((item): item is 'create' | 'edit' | 'readonly' => item === 'create' || item === 'edit' || item === 'readonly');
+    const policy = evaluateActionPolicy(contract.value, key, policyContext.value);
+    if (!policy.visible) continue;
     const byGroup = hasGroupAccess(groups);
     const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
-    const enabled = byGroup && (!needRecord || Boolean(recordId.value));
+    const enabled = policy.enabled && byGroup && (!needRecord || Boolean(recordId.value));
     out.push({
       key,
       label: String(row.label || key),
@@ -374,7 +445,11 @@ const contractActions = computed<ContractAction[]>(() => {
       target,
       url: String(payload.url || '').trim(),
       enabled,
-      hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
+      hint: byGroup
+        ? (needRecord && !recordId.value ? 'requires record id' : policy.reason)
+        : 'permission denied',
+      semantic: policy.semantic,
+      visibleProfiles,
     });
   }
   return out.sort((a, b) => {
@@ -386,6 +461,53 @@ const contractActions = computed<ContractAction[]>(() => {
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
 const bodyActions = computed(() => contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar'));
+const hasPrimaryHeaderAction = computed(() => headerActions.value.some((item) => item.semantic === 'primary_action'));
+
+type SemanticFieldGroup = {
+  name: string;
+  label: string;
+  collapsible: boolean;
+  fields: string[];
+};
+
+const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
+  const raw = Array.isArray(contract.value?.field_groups) ? contract.value?.field_groups : [];
+  const out: Record<string, SemanticFieldGroup> = {};
+  for (const item of raw || []) {
+    if (!item || typeof item !== 'object') continue;
+    const row = item as Record<string, unknown>;
+    const key = String(row.name || '').trim().toLowerCase();
+    if (!key) continue;
+    const fields = Array.isArray(row.fields) ? row.fields.map((f) => String(f || '').trim()).filter(Boolean) : [];
+    out[key] = {
+      name: key,
+      label: String(row.label || (key === 'core' ? '核心信息' : '高级信息')).trim(),
+      collapsible: Boolean(row.collapsible),
+      fields,
+    };
+  }
+  return out;
+});
+
+const coreFieldNames = computed<string[]>(() => semanticFieldGroups.value.core?.fields || []);
+const advancedFieldNames = computed<string[]>(() => semanticFieldGroups.value.advanced?.fields || []);
+const coreFieldsLabel = computed(() => semanticFieldGroups.value.core?.label || '');
+const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
+const contractVisibleFields = computed<string[]>(() => {
+  const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
+  return rows.map((name) => String(name || '').trim()).filter(Boolean);
+});
+
+function isFieldVisible(name: string) {
+  const visible = contractVisibleFields.value;
+  if (visible.length && !visible.includes(name)) return false;
+  const core = coreFieldNames.value;
+  const advanced = advancedFieldNames.value;
+  if (!core.length && !advanced.length) return true;
+  if (core.includes(name)) return true;
+  if (advanced.includes(name)) return advancedExpanded.value;
+  return renderProfile.value !== 'create';
+}
 
 const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldMap = contract.value?.fields || {};
@@ -408,13 +530,24 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) continue;
     used.add(name);
     const descriptor = fieldMap[name];
+    if (!descriptor) continue;
+    const resolved = evaluateFieldPolicy(
+      contract.value,
+      name,
+      {
+        required: Boolean(descriptor?.required),
+        readonly: Boolean(descriptor?.readonly),
+      },
+      policyContext.value,
+    );
+    if (!resolved.visible) continue;
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(descriptor?.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(descriptor?.required),
+      readonly: Boolean(resolved.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(resolved.required),
       descriptor,
     });
   }
@@ -423,13 +556,23 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (used.has(name)) return;
     const groups = fieldGroups[name]?.groups_xmlids;
     if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
+    const resolved = evaluateFieldPolicy(
+      contract.value,
+      name,
+      {
+        required: Boolean(descriptor?.required),
+        readonly: Boolean(descriptor?.readonly),
+      },
+      policyContext.value,
+    );
+    if (!resolved.visible) return;
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(descriptor?.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(descriptor?.required),
+      readonly: Boolean(resolved.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(resolved.required),
       descriptor,
     });
   });
@@ -528,6 +671,7 @@ const hudEntries = computed(() => [
   { label: 'record_id', value: recordIdDisplay.value },
   { label: 'contract_loaded', value: Boolean(contract.value) },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
+  { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
   { label: 'layout_nodes', value: layoutNodes.value.length },
   { label: 'writable_fields', value: writableFieldCount.value },
@@ -540,12 +684,16 @@ async function loadContract() {
   if (!actionId.value) {
     throw new Error('missing action_id');
   }
-  const response = await loadActionContractRaw(actionId.value);
+  const response = await loadActionContractRaw(actionId.value, {
+    recordId: recordId.value,
+    renderProfile: recordId.value ? 'edit' : 'create',
+  });
   if (!response?.data || typeof response.data !== 'object') {
     throw new Error('empty contract');
   }
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
+  advancedExpanded.value = renderProfile.value !== 'create';
 }
 
 async function loadRecord() {
@@ -699,6 +847,11 @@ async function saveRecord() {
     fieldLabels: labels,
     values: editableMap,
   });
+  const policyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
+  if (policyIssues.length) {
+    validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
+    return;
+  }
   if (issues.length) {
     validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
     return;
@@ -878,6 +1031,14 @@ reload();
   color: #475569;
   border-bottom: 1px dashed #cbd5e1;
   padding-bottom: 4px;
+}
+
+.layout-divider.advanced-toggle {
+  display: flex;
+  justify-content: flex-start;
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-top: 2px;
 }
 
 .field {

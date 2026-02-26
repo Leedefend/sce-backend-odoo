@@ -160,6 +160,7 @@ class UiContractHandler(BaseIntentHandler):
             return res
 
         data, meta = (res if isinstance(res, tuple) else (res or {}, {}))
+        data = self._inject_render_hints(data or {}, p)
         data = apply_contract_governance(data or {}, contract_mode, inject_contract_mode=False)
         meta = _normalize_meta(meta)
         etag = self._make_etag(meta=meta, ctx=ctx, op=op, p=p, contract_mode=contract_mode)
@@ -178,6 +179,34 @@ class UiContractHandler(BaseIntentHandler):
                          "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
                          "contract_mode": contract_mode})
         return {"ok": True, "data": data or {}, "meta": meta_out}
+
+    def _inject_render_hints(self, data: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(data, dict):
+            return data
+        form_view = (
+            str((data.get("head") or {}).get("view_type") or data.get("view_type") or "").strip().lower() == "form"
+            or isinstance(((data.get("views") or {}).get("form")), dict)
+        )
+        if not form_view:
+            return data
+        render_profile = str(self._get_param(payload, "render_profile") or "").strip().lower()
+        if render_profile in {"create", "edit", "readonly"}:
+            data["render_profile"] = render_profile
+            return data
+        raw_record = self._get_param(payload, "record_id", "recordId", "res_id", "resId")
+        record_id = None
+        try:
+            if raw_record is not None and str(raw_record).strip():
+                record_id = int(raw_record)
+        except Exception:
+            record_id = None
+        if record_id and record_id > 0:
+            data["res_id"] = record_id
+            head = data.get("head")
+            if isinstance(head, dict) and not head.get("res_id"):
+                head["res_id"] = record_id
+                data["head"] = head
+        return data
 
     # ---------------- op 实现 ----------------
     def _op_nav(self, ctx):
