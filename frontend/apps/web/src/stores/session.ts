@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import type { AppInitResponse, LoginResponse, NavMeta, NavNode } from '@sc/schema';
 import { intentRequest } from '../api/intents';
 import { ApiError } from '../api/client';
+import { config } from '../config';
 import { setSceneRegistry } from '../app/resolvers/sceneRegistry';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
@@ -242,7 +243,7 @@ export const useSessionStore = defineStore('session', {
     async login(username: string, password: string) {
       const result = await intentRequest<LoginResponse>({
         intent: 'login',
-        params: { login: username, password },
+        params: { login: username, password, db: config.odooDb || 'sc_demo' },
       });
       this.token = result.token;
       sessionStorage.setItem('sc_auth_token', result.token);
