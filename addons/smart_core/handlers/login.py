@@ -3,7 +3,9 @@ import logging
 import time
 from typing import Dict, Any, Optional
 
+from odoo import SUPERUSER_ID, api
 from odoo.http import request
+from odoo.modules.registry import Registry
 from ..core.base_handler import BaseIntentHandler
 from ..security.auth import authenticate_user, generate_token, get_token_exp_seconds, get_user_from_token
 from ..core.handler_registry import HANDLER_REGISTRY  # 全局注册表
@@ -41,6 +43,26 @@ def _company_ids(user) -> Dict[str, Any]:
         return {"company_id": None, "allowed_company_ids": []}
 
 
+def _load_user_profile(db_name: str, user_id: int) -> Dict[str, Any]:
+    """Read user profile from the authenticated DB to avoid cross-db env drift."""
+    registry = Registry(db_name)
+    with registry.cursor() as cr:
+        env = api.Environment(cr, SUPERUSER_ID, {})
+        user = env["res.users"].sudo().browse(int(user_id))
+        if not user.exists():
+            raise RuntimeError(f"user not found in db={db_name}: {user_id}")
+        return {
+            "id": user.id,
+            "name": user.name,
+            "login": user.login,
+            "groups": _user_groups_xmlids(user),
+            "lang": user.lang,
+            "tz": user.tz or "Asia/Shanghai",
+            **_company_ids(user),
+            "token_version": int(getattr(user, "token_version", 0) or 0),
+        }
+
+
 class LoginHandler(BaseIntentHandler):
     """
     用户登录处理器
@@ -74,14 +96,18 @@ class LoginHandler(BaseIntentHandler):
             return self.err(401, "用户名或密码错误")
 
         user_id = int(user_dict["id"])
-
-        # 3) 汇总用户信息（sudo 只用于读取自身静态资料）
-        env = _safe_env()
-        user = env["res.users"].sudo().browse(user_id)
+        auth_db = (user_dict.get("db") or db or "").strip()
+        if not auth_db:
+            return self.err(400, "缺少数据库参数")
+        try:
+            profile = _load_user_profile(auth_db, user_id)
+        except Exception as e:
+            _logger.info("Login profile load failed for %s on %s: %s", login, auth_db, e)
+            return self.err(401, "用户名或密码错误")
 
         # 4) 生成访问令牌（JWT/HMAC 等）
-        token_version = int(getattr(user, "token_version", 0) or 0)
-        token = generate_token(user_id, token_version=token_version)
+        token_version = int(profile.get("token_version") or 0)
+        token = generate_token(user_id, token_version=token_version, db=auth_db)
         token_type = "Bearer"
         expires_at = int(time.time()) + get_token_exp_seconds()
 
@@ -89,28 +115,26 @@ class LoginHandler(BaseIntentHandler):
         if want_company_id:
             try:
                 want_company_id = int(want_company_id)
-                if want_company_id in user.company_ids.ids:
+                if want_company_id in (profile.get("allowed_company_ids") or []):
                     # 注意：这里只返回信息，不在服务器端持久化切公司，
                     # 具体上下文切换应由前端后续请求带上下文或单独意图处理
                     pass
             except Exception:
                 pass
 
-        groups_xmlids = _user_groups_xmlids(user)
-        comp = _company_ids(user)
-
         data = {
             "token": token,
             "token_type": token_type,
             "expires_at": expires_at,
             "user": {
-                "id": user.id,
-                "name": user.name,
-                "login": user.login,
-                "groups": groups_xmlids,
-                "lang": user.lang,
-                "tz": user.tz or "Asia/Shanghai",
-                **comp,
+                "id": profile["id"],
+                "name": profile["name"],
+                "login": profile["login"],
+                "groups": profile["groups"],
+                "lang": profile["lang"],
+                "tz": profile["tz"],
+                "company_id": profile["company_id"],
+                "allowed_company_ids": profile["allowed_company_ids"],
             },
             # 与前端契约保持：预留 system/intents 占位
             "system": {
