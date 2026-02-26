@@ -1,0 +1,54 @@
+{
+  "version": "v1",
+  "required_reports": [
+    {
+      "id": "bundle_installation",
+      "path": "artifacts/backend/bundle_installation_report.json",
+      "require_ok": true
+    },
+    {
+      "id": "product_tier_policy",
+      "path": "artifacts/backend/product_tier_report.json",
+      "require_ok": true
+    },
+    {
+      "id": "product_tier_coverage",
+      "path": "artifacts/backend/product_tier_coverage_report.json",
+      "require_ok": true
+    },
+    {
+      "id": "ui_surface_stability",
+      "path": "artifacts/backend/ui_surface_stability_report.json",
+      "require_ok": true
+    },
+    {
+      "id": "delivery_business",
+      "path": "artifacts/backend/delivery_business_report.json",
+      "require_ok": true
+    },
+    {
+      "id": "product_performance",
+      "path": "artifacts/backend/platform_performance_smoke.json",
+      "require_ok": true
+    },
+    {
+      "id": "phasex_operating_summary",
+      "path": "artifacts/backend/phasex_operating_summary_report.json",
+      "require_ok": true
+    }
+  ],
+  "required_docs": [
+    {
+      "id": "delivery_playbook",
+      "path": "docs/product/delivery_playbook_v1.md"
+    },
+    {
+      "id": "product_capability_matrix_v2",
+      "path": "docs/product/product_capability_matrix_v2.md"
+    },
+    {
+      "id": "performance_baseline_governance",
+      "path": "docs/ops/audit/performance_baseline_governance.md"
+    }
+  ]
+}

@@ -1687,6 +1687,10 @@ verify.ui.surface.stability.ready: guard.prod.forbid
 verify.delivery.simulation.ready: guard.prod.forbid
 	@python3 scripts/verify/delivery_simulation_ready.py
 
+.PHONY: verify.product.delivery.gap
+verify.product.delivery.gap: guard.prod.forbid
+	@python3 scripts/verify/product_delivery_gap_report.py
+
 verify.complexity.guard: guard.prod.forbid
 	@python3 scripts/verify/complexity_guard.py
 
