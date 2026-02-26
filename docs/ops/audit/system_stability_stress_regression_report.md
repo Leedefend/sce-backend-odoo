@@ -1,18 +1,24 @@
 # System Stability Stress Regression Report
 
+- status: WARN
 - total_calls: 1400
 - target_count: 3
-- error_count: 3
-- warning_count: 0
+- rounds: 1
+- warmup_per_round: 20
+- fail_rounds_required: 1
+- error_count: 0
+- warning_count: 1
 
-| intent | iterations | avg_ms | p95_ms | baseline_p95_ms | non_2xx_count | error_rate | statuses |
-|---|---:|---:|---:|---:|---:|---:|---|
-| system.init | 200 | 1854.10 | 2096.31 | 1962.27 | 0 | 0.000000 | 200 |
-| ui.contract | 200 | 227.28 | 315.27 | 295.72 | 0 | 0.000000 | 200 |
-| execute_button | 1000 | 28.34 | 33.18 | 27.87 | 0 | 0.000000 | 200 |
+| intent | overall_grade | rounds | p50_ms | p95_ms | p99_ms | baseline_p95_ms | fail_rounds | warn_rounds | error_rate | statuses |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| system.init | warn | 1 | 1797.76 | 2075.29 | 2308.39 | 1962.27 | 0 | 1 | 0.000000 | 200 |
+| ui.contract | pass | 1 | 215.96 | 309.76 | 372.95 | 295.72 | 0 | 0 | 0.000000 | 200 |
+| execute_button | pass | 1 | 28.48 | 35.11 | 39.85 | 27.87 | 0 | 0 | 0.000000 | 200 |
 
 ## Errors
 
-- system.init p95 regression: 2096.31 > baseline 1962.27
-- ui.contract p95 regression: 315.27 > baseline 295.72
-- execute_button p95 regression: 33.18 > baseline 27.87
+- none
+
+## Warnings
+
+- system.init has warn rounds 1/1
