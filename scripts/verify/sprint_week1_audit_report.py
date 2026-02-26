@@ -11,6 +11,7 @@ CAP_USAGE_JSON = ROOT / "artifacts" / "backend" / "capability_usage_matrix.json"
 SCENE_DOMAIN_JSON = ROOT / "artifacts" / "backend" / "scene_domain_map.json"
 BUTTON_SEM_JSON = ROOT / "artifacts" / "backend" / "button_semantic_report.json"
 ROLE_DIFF_JSON = ROOT / "artifacts" / "backend" / "role_capability_diff_report.json"
+DORMANT_EXPLAIN_GUARD_JSON = ROOT / "artifacts" / "backend" / "capability_dormant_explain_guard_report.json"
 
 REPORT_JSON = ROOT / "artifacts" / "backend" / "sprint_week1_audit_report.json"
 REPORT_MD = ROOT / "docs" / "ops" / "audit" / "sprint_week1_audit_report.md"
@@ -34,6 +35,7 @@ def main() -> int:
     scene_domain = _load(SCENE_DOMAIN_JSON)
     button_sem = _load(BUTTON_SEM_JSON)
     role_diff = _load(ROLE_DIFF_JSON)
+    dormant_guard = _load(DORMANT_EXPLAIN_GUARD_JSON)
 
     dormant_count = int(((cap_usage.get("summary") or {}).get("isolated_count")) or 0)
     structural_only = int(((cap_usage.get("summary") or {}).get("structural_only_count")) or 0)
@@ -43,12 +45,14 @@ def main() -> int:
     unclassified_404 = int(((button_sem.get("summary") or {}).get("unclassified_404_count")) or 0)
     unassigned_scene = int(((scene_domain.get("summary") or {}).get("unassigned_scene_count")) or 0)
     role_samples = int(((role_diff.get("summary") or {}).get("role_sample_count")) or ((role_diff.get("summary") or {}).get("profile_count")) or 0)
+    dormant_missing_explain = int(((dormant_guard.get("summary") or {}).get("missing_explanation_count")) or 0)
 
     checks = {
         "orphan_capability_eq_0": orphan_count == 0,
         "unclassified_404_eq_0": unclassified_404 == 0,
         "all_scene_assigned": unassigned_scene == 0,
         "role_sample_ge_8": role_samples >= 8,
+        "dormant_explained": dormant_missing_explain == 0,
     }
     if not checks["orphan_capability_eq_0"]:
         errors.append(f"orphan_capability_count={orphan_count}")
@@ -58,6 +62,8 @@ def main() -> int:
         errors.append(f"unassigned_scene_count={unassigned_scene}")
     if not checks["role_sample_ge_8"]:
         errors.append(f"role_sample_count={role_samples} (<8)")
+    if not checks["dormant_explained"]:
+        errors.append(f"dormant_missing_explanation_count={dormant_missing_explain}")
 
     payload = {
         "ok": len(errors) == 0,
@@ -67,6 +73,7 @@ def main() -> int:
             "unclassified_404_count": unclassified_404,
             "unassigned_scene_count": unassigned_scene,
             "role_sample_count": role_samples,
+            "dormant_missing_explanation_count": dormant_missing_explain,
             "error_count": len(errors),
             "warning_count": len(warnings),
         },
@@ -85,6 +92,7 @@ def main() -> int:
         f"- unclassified_404_count: {unclassified_404}",
         f"- unassigned_scene_count: {unassigned_scene}",
         f"- role_sample_count: {role_samples}",
+        f"- dormant_missing_explanation_count: {dormant_missing_explain}",
         f"- error_count: {len(errors)}",
         "",
         "## Checks",

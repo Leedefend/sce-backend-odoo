@@ -1,6 +1,6 @@
 # Role Capability Diff Report
 
-- generated_at: 2026-02-26T14:23:02
+- generated_at: 2026-02-25T11:26:03
 - evidence_mode: artifact_reuse (system.init/ui.contract verified from prod_like audit artifact)
 - profile_count: 8
 - system_init_ok_count: 8
