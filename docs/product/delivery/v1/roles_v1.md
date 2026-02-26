@@ -16,3 +16,7 @@
 ## Delivery Rule
 - 交付环境只下发本表角色包。
 - 每个角色必须有默认首页 scene，且可通过 `ui.contract` 正常渲染。
+
+## Evidence
+- 默认首页可打开性证据：`artifacts/product/role_home_openability_report.json`
+- 审计视图：`docs/ops/audit/role_home_openability_report.md`

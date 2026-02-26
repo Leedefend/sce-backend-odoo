@@ -1720,6 +1720,10 @@ verify.product.delivery.visibility: guard.prod.forbid
 verify.product.delivery.demo_data: guard.prod.forbid
 	@python3 scripts/verify/demo_data_presence_report.py
 
+.PHONY: verify.product.delivery.execute_button_whitelist
+verify.product.delivery.execute_button_whitelist: guard.prod.forbid
+	@python3 scripts/verify/execute_button_whitelist_verification.py
+
 .PHONY: verify.product.delivery.menu
 verify.product.delivery.menu: guard.prod.forbid
 	@python3 scripts/verify/delivery_menu_tree_report.py
