@@ -141,6 +141,33 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "drilldown": "业务查看",
     "other": "更多操作",
 }
+_RENDER_PROFILE_CREATE = "create"
+_RENDER_PROFILE_EDIT = "edit"
+_RENDER_PROFILE_READONLY = "readonly"
+_RENDER_PROFILES = {
+    _RENDER_PROFILE_CREATE,
+    _RENDER_PROFILE_EDIT,
+    _RENDER_PROFILE_READONLY,
+}
+_FORM_CORE_FIELD_MAX = 8
+_FORM_ACTION_PRIMARY_KEYWORDS = (
+    "提交",
+    "保存",
+    "创建",
+    "确认",
+    "进入下一阶段",
+    "approve",
+    "submit",
+    "save",
+    "create",
+    "confirm",
+)
+_FORM_ACTION_READONLY_KEYWORDS = (
+    "查看",
+    "打开",
+    "open",
+    "view",
+)
 
 _CAPABILITY_GROUP_DEFAULTS = {
     "project_management": {"label": "项目管理", "icon": "briefcase"},
@@ -512,6 +539,15 @@ def _is_project_form_contract(data: dict) -> bool:
     return model == "project.project" and view_type == "form"
 
 
+def _is_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if view_type == "form":
+        return True
+    return isinstance(views.get("form"), dict)
+
+
 def _is_technical_field(name: str, descriptor: dict) -> bool:
     low = _safe_lower(name)
     if not low:
@@ -803,6 +839,200 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     _build_project_lifecycle_summary(data)
 
 
+def _to_bool(value: Any, fallback: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return fallback
+    lowered = str(value).strip().lower()
+    if lowered in {"1", "true", "yes", "y", "on"}:
+        return True
+    if lowered in {"0", "false", "no", "n", "off"}:
+        return False
+    return fallback
+
+
+def _resolve_render_profile(data: dict) -> str:
+    explicit = _safe_text(data.get("render_profile")).lower()
+    if explicit in _RENDER_PROFILES:
+        return explicit
+    head = _as_dict(data.get("head"))
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if view_type and "form" not in view_type:
+        return _RENDER_PROFILE_EDIT
+    effective = _as_dict(_as_dict(data.get("permissions")).get("effective")).get("rights")
+    effective_rights = _as_dict(effective)
+    head_permissions = _as_dict(head.get("permissions"))
+    can_write = _to_bool(
+        effective_rights.get("write", head_permissions.get("write")),
+        fallback=True,
+    )
+    can_create = _to_bool(
+        effective_rights.get("create", head_permissions.get("create")),
+        fallback=True,
+    )
+    if not can_write and not can_create:
+        return _RENDER_PROFILE_READONLY
+    has_record = bool(
+        data.get("res_id")
+        or head.get("res_id")
+        or data.get("id")
+    )
+    return _RENDER_PROFILE_EDIT if has_record else _RENDER_PROFILE_CREATE
+
+
+def _iter_field_order(data: dict) -> list[str]:
+    ordered: list[str] = []
+    form = _as_dict(_as_dict(data.get("views")).get("form"))
+    layout = form.get("layout")
+    for node in layout if isinstance(layout, list) else []:
+        if not isinstance(node, dict):
+            continue
+        if _safe_lower(node.get("type")) != "field":
+            continue
+        name = _safe_text(node.get("name"))
+        if name and name not in ordered:
+            ordered.append(name)
+    for name in (_as_dict(data.get("fields")) or {}).keys():
+        if name not in ordered:
+            ordered.append(name)
+    return ordered
+
+
+def _derive_form_core_fields(data: dict) -> list[str]:
+    fields_map = _as_dict(data.get("fields"))
+    ordered = _iter_field_order(data)
+    core: list[str] = []
+
+    def _push(name: str) -> None:
+        if not name or name in core:
+            return
+        descriptor = _as_dict(fields_map.get(name))
+        if not descriptor:
+            return
+        if _is_technical_field(name, descriptor):
+            return
+        core.append(name)
+
+    for name in ordered:
+        descriptor = _as_dict(fields_map.get(name))
+        if not descriptor:
+            continue
+        required = _to_bool(descriptor.get("required"), fallback=False)
+        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        if required and not readonly:
+            _push(name)
+        if len(core) >= _FORM_CORE_FIELD_MAX:
+            break
+
+    if len(core) < _FORM_CORE_FIELD_MAX:
+        for preferred in ("name", "display_name"):
+            _push(preferred)
+            if len(core) >= _FORM_CORE_FIELD_MAX:
+                break
+
+    if len(core) < _FORM_CORE_FIELD_MAX:
+        for name in ordered:
+            _push(name)
+            if len(core) >= _FORM_CORE_FIELD_MAX:
+                break
+    return core[:_FORM_CORE_FIELD_MAX]
+
+
+def _apply_form_field_groups(data: dict) -> None:
+    if not _is_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    if not fields_map:
+        return
+    core_fields = _derive_form_core_fields(data)
+    core_set = set(core_fields)
+    advanced_fields = [
+        name
+        for name in _iter_field_order(data)
+        if name in fields_map and name not in core_set
+    ]
+    data["field_groups"] = [
+        {
+            "name": "core",
+            "label": "核心信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": core_fields,
+        },
+        {
+            "name": "advanced",
+            "label": "高级信息",
+            "priority": 2,
+            "collapsible": True,
+            "collapsed_by_default": True,
+            "fields": advanced_fields,
+        },
+    ]
+
+
+def _infer_action_semantic(action: dict) -> str:
+    label = _safe_lower(action.get("label"))
+    key = _safe_lower(action.get("key"))
+    merged = f"{label} {key}"
+    if any(keyword in merged for keyword in _FORM_ACTION_PRIMARY_KEYWORDS):
+        return "primary_action"
+    if any(keyword in merged for keyword in ("删除", "停用", "archive", "unlink", "删除")):
+        return "danger"
+    return "secondary"
+
+
+def _infer_visible_profiles(action: dict) -> list[str]:
+    label = _safe_lower(action.get("label"))
+    key = _safe_lower(action.get("key"))
+    merged = f"{label} {key}"
+    if any(keyword in merged for keyword in ("创建", "提交", "create", "submit")):
+        return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+    if any(keyword in merged for keyword in ("编辑", "修改", "edit", "write")):
+        return [_RENDER_PROFILE_EDIT]
+    if any(keyword in merged for keyword in _FORM_ACTION_READONLY_KEYWORDS):
+        return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+    return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+
+
+def _annotate_form_actions(data: dict) -> None:
+    if not _is_form_contract(data):
+        return
+    buttons = data.get("buttons")
+    if not isinstance(buttons, list):
+        return
+    primary_assigned = False
+    for row in buttons:
+        if not isinstance(row, dict):
+            continue
+        semantic = _safe_text(row.get("semantic")).lower() or _infer_action_semantic(row)
+        if semantic == "primary_action":
+            if primary_assigned:
+                semantic = "secondary"
+            else:
+                primary_assigned = True
+        row["semantic"] = semantic
+        raw_profiles = row.get("visible_profiles")
+        if isinstance(raw_profiles, list) and raw_profiles:
+            profiles = [
+                _safe_text(item).lower()
+                for item in raw_profiles
+                if _safe_text(item).lower() in _RENDER_PROFILES
+            ]
+        else:
+            profiles = _infer_visible_profiles(row)
+        row["visible_profiles"] = profiles or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+
+
+def _apply_form_render_semantics(data: dict) -> None:
+    if not _is_form_contract(data):
+        return
+    data["render_profile"] = _resolve_render_profile(data)
+    data["hide_filters_on_create"] = True
+    _apply_form_field_groups(data)
+    _annotate_form_actions(data)
+
+
 def normalize_scenes(scenes: list) -> list[dict]:
     out: list[dict] = []
     for scene in scenes or []:
@@ -852,6 +1082,8 @@ def apply_contract_governance(
 
     if contract_mode == "user" and _is_project_form_contract(data):
         _govern_project_form_contract_for_user(data)
+    if _is_form_contract(data):
+        _apply_form_render_semantics(data)
 
     if inject_contract_mode:
         data["contract_mode"] = contract_mode

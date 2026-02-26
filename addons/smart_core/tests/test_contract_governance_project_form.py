@@ -135,6 +135,24 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("allowed_transitions", lifecycle)
         filters = ((out.get("search") or {}).get("filters")) or []
         self.assertLessEqual(len(filters), 8)
+        self.assertEqual(out.get("render_profile"), "create")
+        self.assertTrue(out.get("hide_filters_on_create"))
+        field_groups = out.get("field_groups") or []
+        self.assertIsInstance(field_groups, list)
+        self.assertGreaterEqual(len(field_groups), 2)
+        core_group = next((grp for grp in field_groups if isinstance(grp, dict) and grp.get("name") == "core"), {})
+        self.assertLessEqual(len(core_group.get("fields") or []), 8)
+        self.assertFalse(bool(core_group.get("collapsible")))
+        advanced_group = next((grp for grp in field_groups if isinstance(grp, dict) and grp.get("name") == "advanced"), {})
+        self.assertTrue(bool(advanced_group.get("collapsible")))
+        self.assertTrue(bool(advanced_group.get("collapsed_by_default")))
+        primary_count = sum(1 for btn in buttons if isinstance(btn, dict) and btn.get("semantic") == "primary_action")
+        self.assertLessEqual(primary_count, 1)
+        for btn in buttons:
+            if not isinstance(btn, dict):
+                continue
+            self.assertIn(btn.get("semantic"), {"primary_action", "secondary", "danger"})
+            self.assertIsInstance(btn.get("visible_profiles"), list)
         capabilities = out.get("capabilities") or []
         self.assertEqual(len(capabilities), 3)
         for cap in capabilities:
@@ -158,6 +176,8 @@ class TestProjectFormGovernance(unittest.TestCase):
         fields = out.get("fields") or {}
         self.assertIn("create_uid", fields)
         self.assertIn("message_ids", fields)
+        self.assertEqual(out.get("render_profile"), "create")
+        self.assertTrue(out.get("hide_filters_on_create"))
         toolbar_header = ((out.get("toolbar") or {}).get("header") or [])
         self.assertGreaterEqual(len(toolbar_header), 1)
         scenes = out.get("scenes") or []
