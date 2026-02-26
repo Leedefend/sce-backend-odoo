@@ -187,6 +187,25 @@ _CAPABILITY_GROUP_DEFAULTS = {
     "others": {"label": "其他能力", "icon": "grid"},
 }
 
+_CONTRACT_KEY_CANONICAL_MAP = {
+    "requiredCapabilities": "required_capabilities",
+    "groupsXmlids": "groups_xmlids",
+    "actionId": "action_id",
+    "menuId": "menu_id",
+    "viewType": "view_type",
+    "recordId": "record_id",
+    "reasonCode": "reason_code",
+    "capabilityState": "capability_state",
+    "capabilityStateReason": "capability_state_reason",
+    "defaultPayload": "default_payload",
+    "groupKey": "group_key",
+    "groupLabel": "group_label",
+    "groupIcon": "group_icon",
+    "groupSequence": "group_sequence",
+}
+
+_DOMAIN_OVERRIDE_REGISTRY: list[dict[str, Any]] = []
+
 
 def is_truthy(value: Any) -> bool:
     if value is None:
@@ -234,17 +253,10 @@ def _contains_demo_marker(value: Any) -> bool:
 def _has_demo_semantics(item: dict) -> bool:
     if not isinstance(item, dict):
         return False
-    tags = _parse_tags(item.get("tags"))
-    if any(_contains_demo_marker(tag) for tag in tags):
+    if item.get("is_demo") is True:
         return True
-    for key in ("key", "code", "name", "title", "label", "scene_key"):
-        if _contains_demo_marker(item.get(key)):
-            return True
-    target = item.get("target") if isinstance(item.get("target"), dict) else {}
-    for key in ("menu_xmlid", "action_xmlid", "route"):
-        if _contains_demo_marker(target.get(key)):
-            return True
-    return False
+    tags = _parse_tags(item.get("tags"))
+    return "demo" in tags or "showcase" in tags
 
 
 def _normalized_tags_for_item(item: dict) -> list[str]:
@@ -275,30 +287,12 @@ def _normalized_tags_for_item(item: dict) -> list[str]:
 def is_internal_or_smoke(item: dict) -> bool:
     if not isinstance(item, dict):
         return False
+    if item.get("is_internal") is True or item.get("is_smoke") is True:
+        return True
     tags = _parse_tags(item.get("tags"))
-    key = _safe_text(item.get("key")).lower()
-    code = _safe_text(item.get("code")).lower()
-    name = _safe_text(item.get("name")).lower()
-    target = item.get("target") if isinstance(item.get("target"), dict) else {}
-    target_text = " ".join(
-        [
-            _safe_text(target.get("menu_xmlid")).lower(),
-            _safe_text(target.get("action_xmlid")).lower(),
-            _safe_text(target.get("route")).lower(),
-        ]
-    ).strip()
-    if "internal" in tags or "smoke" in tags or "demo" in tags:
+    if "internal" in tags or "smoke" in tags or "demo" in tags or "showcase" in tags:
         return True
-    if item.get("is_test") or item.get("smoke_test"):
-        return True
-    combined = f"{key} {code} {name} {target_text}"
-    return (
-        "smoke" in combined
-        or "internal" in combined
-        or "showcase" in combined
-        or "demo" in combined
-        or "smart_construction_demo" in combined
-    )
+    return bool(item.get("is_test") or item.get("smoke_test"))
 
 
 def normalize_capabilities(capabilities: list) -> list[dict]:
@@ -408,7 +402,7 @@ def _strip_user_mode_fields(obj: Any) -> Any:
         return obj
     out: dict[str, Any] = {}
     for key, value in obj.items():
-        if str(key or "").strip().lower() in _USER_MODE_STRIP_KEYS:
+        if str(key or "").strip() in _USER_MODE_STRIP_KEYS:
             continue
         out[key] = _strip_user_mode_fields(value)
     return out
@@ -872,11 +866,11 @@ def _resolve_render_profile(data: dict) -> str:
     head_permissions = _as_dict(head.get("permissions"))
     can_write = _to_bool(
         effective_rights.get("write", head_permissions.get("write")),
-        fallback=True,
+        fallback=False,
     )
     can_create = _to_bool(
         effective_rights.get("create", head_permissions.get("create")),
-        fallback=True,
+        fallback=False,
     )
     if not can_write and not can_create:
         return _RENDER_PROFILE_READONLY
@@ -1359,6 +1353,90 @@ def _apply_form_policy_contract(data: dict) -> None:
     data["validation_rules"] = _build_form_validation_rules(data)
 
 
+def _canonicalize_contract_keys(obj: Any) -> Any:
+    if isinstance(obj, list):
+        return [_canonicalize_contract_keys(item) for item in obj]
+    if not isinstance(obj, dict):
+        return obj
+    out: dict[str, Any] = {}
+    for raw_key, raw_val in obj.items():
+        key = str(raw_key)
+        canonical = _CONTRACT_KEY_CANONICAL_MAP.get(key, key)
+        if canonical in out:
+            continue
+        out[canonical] = _canonicalize_contract_keys(raw_val)
+    return out
+
+
+def register_contract_domain_override(
+    name: str,
+    handler: Any,
+    *,
+    priority: int = 100,
+) -> None:
+    if not callable(handler):
+        return
+    normalized_name = _safe_text(name, "unnamed_override")
+    for row in _DOMAIN_OVERRIDE_REGISTRY:
+        if _safe_text(row.get("name")) == normalized_name:
+            row["handler"] = handler
+            row["priority"] = int(priority)
+            return
+    _DOMAIN_OVERRIDE_REGISTRY.append(
+        {
+            "name": normalized_name,
+            "priority": int(priority),
+            "handler": handler,
+        }
+    )
+    _DOMAIN_OVERRIDE_REGISTRY.sort(key=lambda item: int(item.get("priority") or 100))
+
+
+def _apply_domain_overrides(data: dict, contract_mode: str) -> None:
+    for row in _DOMAIN_OVERRIDE_REGISTRY:
+        handler = row.get("handler")
+        if not callable(handler):
+            continue
+        try:
+            handler(data, contract_mode)
+        except Exception:
+            continue
+
+
+def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
+    if contract_mode == "user" and _is_project_form_contract(data):
+        _govern_project_form_contract_for_user(data)
+
+
+def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:
+    if isinstance(data.get("capabilities"), list):
+        capabilities = normalize_capabilities(data.get("capabilities") or [])
+        if contract_mode == "user":
+            capabilities = [item for item in capabilities if not is_internal_or_smoke(item)]
+            capabilities = [item for item in capabilities if not _has_demo_semantics(item)]
+            capabilities = [_sanitize_capability_for_user(item) for item in capabilities]
+        data["capabilities"] = capabilities
+
+    if isinstance(data.get("scenes"), list):
+        scenes = normalize_scenes(data.get("scenes") or [])
+        if contract_mode == "user":
+            scenes = [item for item in scenes if not is_internal_or_smoke(item)]
+            scenes = [item for item in scenes if not _has_demo_semantics(item)]
+            scenes = [_sanitize_scene_for_user(item) for item in scenes]
+            scenes = [item for item in scenes if not _has_demo_semantics(item)]
+        data["scenes"] = scenes
+
+    if contract_mode != "hud":
+        for key in _NON_HUD_STRIP_KEYS:
+            data.pop(key, None)
+
+
+def _apply_semantic_governance(data: dict, contract_mode: str) -> None:
+    _ = contract_mode
+    if _is_form_contract(data):
+        _apply_form_render_semantics(data)
+
+
 def normalize_scenes(scenes: list) -> list[dict]:
     out: list[dict] = []
     for scene in scenes or []:
@@ -1385,35 +1463,16 @@ def apply_contract_governance(
     if not isinstance(data, dict):
         return data
 
+    data = _canonicalize_contract_keys(data)
+
     nested_payload = data.get("data")
     if isinstance(nested_payload, dict):
         data["data"] = apply_contract_governance(nested_payload, contract_mode, inject_contract_mode=False)
 
-    if isinstance(data.get("capabilities"), list):
-        capabilities = normalize_capabilities(data.get("capabilities") or [])
-        if contract_mode == "user":
-            capabilities = [item for item in capabilities if not is_internal_or_smoke(item)]
-            capabilities = [item for item in capabilities if not _has_demo_semantics(item)]
-            capabilities = [_sanitize_capability_for_user(item) for item in capabilities]
-        data["capabilities"] = capabilities
-
-    if isinstance(data.get("scenes"), list):
-        scenes = normalize_scenes(data.get("scenes") or [])
-        if contract_mode == "user":
-            scenes = [item for item in scenes if not is_internal_or_smoke(item)]
-            scenes = [item for item in scenes if not _has_demo_semantics(item)]
-            scenes = [_sanitize_scene_for_user(item) for item in scenes]
-            scenes = [item for item in scenes if not _has_demo_semantics(item)]
-        data["scenes"] = scenes
-
-    if contract_mode == "user" and _is_project_form_contract(data):
-        _govern_project_form_contract_for_user(data)
-    if _is_form_contract(data):
-        _apply_form_render_semantics(data)
+    _apply_sanitize_governance(data, contract_mode)
+    _apply_semantic_governance(data, contract_mode)
+    _apply_domain_overrides(data, contract_mode)
 
     if inject_contract_mode:
         data["contract_mode"] = contract_mode
-    if contract_mode != "hud":
-        for key in _NON_HUD_STRIP_KEYS:
-            data.pop(key, None)
     return data

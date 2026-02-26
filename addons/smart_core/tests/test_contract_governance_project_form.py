@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from ..utils.contract_governance import apply_contract_governance
+from ..utils.contract_governance import (
+    apply_contract_governance,
+    apply_project_form_domain_override,
+    register_contract_domain_override,
+)
 
 
 def _sample_payload():
@@ -113,6 +117,15 @@ def _sample_payload():
 
 
 class TestProjectFormGovernance(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        register_contract_domain_override(
+            "smart_core.tests.project_form",
+            apply_project_form_domain_override,
+            priority=5,
+        )
+
     def test_user_mode_filters_technical_fields_and_noisy_actions(self):
         data = _sample_payload()
         out = apply_contract_governance(data, "user")
