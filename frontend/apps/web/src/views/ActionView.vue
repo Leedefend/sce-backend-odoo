@@ -283,6 +283,12 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     sidebar?: Array<Record<string, unknown>>;
     footer?: Array<Record<string, unknown>>;
   };
+  surface_policies?: {
+    filters_primary_max?: number;
+    actions_primary_max?: number;
+    filters_max?: number;
+    actions_max?: number;
+  };
   model?: string;
   head?: { model?: string };
   data?: {
@@ -432,7 +438,6 @@ function isNumericToken(value: unknown): boolean {
   const text = String(value || '').trim();
   return text.length > 0 && /^\d+$/.test(text);
 }
-const runtimeRoleCode = computed(() => String(session.roleSurface?.role_code || '').trim().toLowerCase());
 const contractFilterChips = computed<ContractFilterChip[]>(() => {
   const rows = actionContract.value?.search?.filters;
   if (!Array.isArray(rows)) return [];
@@ -452,18 +457,16 @@ const contractFilterChips = computed<ContractFilterChip[]>(() => {
     .filter((item): item is ContractFilterChip => Boolean(item))
     .slice(0, 8);
 });
-const roleFilterBudget = computed(() => {
-  const role = runtimeRoleCode.value;
-  if (!role) return 5;
-  if (role.includes('executive') || role.includes('owner')) return 4;
-  if (role.includes('pm') || role.includes('project')) return 6;
-  return 5;
+const filterPrimaryBudget = computed(() => {
+  const raw = Number(actionContract.value?.surface_policies?.filters_primary_max ?? 5);
+  if (!Number.isFinite(raw) || raw < 0) return 5;
+  return Math.floor(raw);
 });
 const contractPrimaryFilterChips = computed<ContractFilterChip[]>(() =>
-  contractFilterChips.value.slice(0, roleFilterBudget.value),
+  contractFilterChips.value.slice(0, filterPrimaryBudget.value),
 );
 const contractOverflowFilterChips = computed<ContractFilterChip[]>(() =>
-  contractFilterChips.value.slice(roleFilterBudget.value),
+  contractFilterChips.value.slice(filterPrimaryBudget.value),
 );
 function toContractActionButton(
   row: Record<string, unknown>,
@@ -530,13 +533,10 @@ const contractActionButtons = computed<ContractActionButton[]>(() => {
     .filter((item): item is ContractActionButton => Boolean(item))
     .slice(0, 8);
 });
-const roleActionBudget = computed(() => {
-  const role = runtimeRoleCode.value;
-  if (!role) return 4;
-  if (role.includes('executive') || role.includes('owner')) return 3;
-  if (role.includes('finance')) return 4;
-  if (role.includes('pm') || role.includes('project')) return 5;
-  return 4;
+const actionPrimaryBudget = computed(() => {
+  const raw = Number(actionContract.value?.surface_policies?.actions_primary_max ?? 4);
+  if (!Number.isFinite(raw) || raw < 0) return 4;
+  return Math.floor(raw);
 });
 const contractActionGroups = computed<Array<{ key: string; label: string; actions: ContractActionButton[] }>>(() => {
   const contract = actionContract.value;
@@ -577,7 +577,7 @@ const contractActionGroups = computed<Array<{ key: string; label: string; action
 });
 const contractPrimaryActions = computed<ContractActionButton[]>(() => {
   const groups = contractActionGroups.value;
-  if (!groups.length) return contractActionButtons.value.slice(0, roleActionBudget.value);
+  if (!groups.length) return contractActionButtons.value.slice(0, actionPrimaryBudget.value);
   const primaryGroupOrder = ['basic', 'workflow', 'drilldown'];
   const merged: ContractActionButton[] = [];
   for (const key of primaryGroupOrder) {
@@ -586,10 +586,10 @@ const contractPrimaryActions = computed<ContractActionButton[]>(() => {
     for (const action of group.actions) {
       if (merged.some((item) => item.key === action.key)) continue;
       merged.push(action);
-      if (merged.length >= roleActionBudget.value) return merged;
+      if (merged.length >= actionPrimaryBudget.value) return merged;
     }
   }
-  return merged.slice(0, roleActionBudget.value);
+  return merged.slice(0, actionPrimaryBudget.value);
 });
 const contractOverflowActions = computed<ContractActionButton[]>(() => {
   const primaryKeys = new Set(contractPrimaryActions.value.map((item) => item.key));
