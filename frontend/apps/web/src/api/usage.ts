@@ -1,8 +1,18 @@
 import { intentRequest } from './intents';
 import type { ContractReasonCode, ContractReasonCount } from './contractTypes';
+import { trackTelemetryEvent } from './telemetry';
+
+const PRODUCT_USAGE_EVENT_TYPES = new Set<string>(['scene_open', 'capability_open']);
 
 export async function trackUsageEvent(eventType: string, extra: Record<string, unknown> = {}) {
   if (!eventType) return;
+  if (eventType.startsWith('workspace.')) {
+    await trackTelemetryEvent(eventType, extra);
+    return;
+  }
+  if (!PRODUCT_USAGE_EVENT_TYPES.has(eventType)) {
+    return;
+  }
   await intentRequest<{ tracked?: string[] }>({
     intent: 'usage.track',
     params: { event_type: eventType, ...extra },
