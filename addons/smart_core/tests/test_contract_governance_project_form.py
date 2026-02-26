@@ -183,6 +183,7 @@ class TestProjectFormGovernance(unittest.TestCase):
         enabled_when = submit_policy.get("enabled_when") if isinstance(submit_policy, dict) else {}
         self.assertIsInstance(enabled_when, dict)
         self.assertIn("conditions", enabled_when)
+        self.assertIsInstance(enabled_when.get("condition_expr"), dict)
         approve_policy = action_policies.get("obj_action_sc_approve_审批") or {}
         approve_enabled = approve_policy.get("enabled_when") if isinstance(approve_policy, dict) else {}
         self.assertIsInstance(approve_enabled, dict)

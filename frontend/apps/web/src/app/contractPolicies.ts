@@ -71,6 +71,44 @@ function compareCondition(actual: unknown, op: string, expected: unknown): boole
   return true;
 }
 
+type RawExpr = Record<string, unknown>;
+
+function evaluateLeafCondition(expr: RawExpr, ctx: PolicyContext): boolean {
+  const source = String(expr.source || 'record').trim().toLowerCase();
+  const field = String(expr.field || '').trim();
+  const op = String(expr.op || '').trim();
+  if (!field || !op) return true;
+  let actual: unknown = undefined;
+  if (source === 'record') {
+    actual = ctx.formData[field];
+  } else if (source === 'context') {
+    if (field === 'role_code') actual = ctx.roleCode;
+    if (field === 'profile') actual = ctx.profile;
+  }
+  return compareCondition(actual, op, expr.value);
+}
+
+function evaluateConditionExpr(expr: unknown, ctx: PolicyContext): boolean {
+  if (!expr || typeof expr !== 'object') return true;
+  const node = expr as RawExpr;
+  const op = String(node.op || '').trim().toLowerCase();
+  if (!op) {
+    return evaluateLeafCondition(node, ctx);
+  }
+  if (op === 'and') {
+    const items = Array.isArray(node.items) ? node.items : [];
+    return items.every((item) => evaluateConditionExpr(item, ctx));
+  }
+  if (op === 'or') {
+    const items = Array.isArray(node.items) ? node.items : [];
+    return items.some((item) => evaluateConditionExpr(item, ctx));
+  }
+  if (op === 'not') {
+    return !evaluateConditionExpr(node.item, ctx);
+  }
+  return evaluateLeafCondition(node, ctx);
+}
+
 export function getFieldPolicy(contract: ActionContract | null, fieldName: string): FieldPolicy {
   const map = (contract?.field_policies || {}) as Record<string, FieldPolicy>;
   return map[fieldName] || {};
@@ -142,24 +180,19 @@ export function evaluateActionPolicy(
       enabled = false;
     }
   }
-  const conditions = Array.isArray(enabledWhen.conditions) ? enabledWhen.conditions : [];
-  for (const row of conditions) {
-    if (!row || typeof row !== 'object') continue;
-    const item = row as Record<string, unknown>;
-    const source = String(item.source || 'record').trim().toLowerCase();
-    const field = String(item.field || '').trim();
-    const op = String(item.op || '').trim();
-    if (!field || !op) continue;
-    let actual: unknown = undefined;
-    if (source === 'record') {
-      actual = ctx.formData[field];
-    } else if (source === 'context') {
-      if (field === 'role_code') actual = ctx.roleCode;
-      if (field === 'profile') actual = ctx.profile;
-    }
-    if (!compareCondition(actual, op, item.value)) {
+  const expr = enabledWhen.condition_expr;
+  if (expr && typeof expr === 'object') {
+    if (!evaluateConditionExpr(expr, ctx)) {
       enabled = false;
-      break;
+    }
+  } else {
+    const conditions = Array.isArray(enabledWhen.conditions) ? enabledWhen.conditions : [];
+    for (const row of conditions) {
+      if (!row || typeof row !== 'object') continue;
+      if (!evaluateConditionExpr(row, ctx)) {
+        enabled = false;
+        break;
+      }
     }
   }
   const lifecycle = enabledWhen.lifecycle;

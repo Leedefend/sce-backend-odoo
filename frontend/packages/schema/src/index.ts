@@ -305,6 +305,14 @@ export interface ActionContract {
           op?: string;
           value?: unknown;
         }>;
+        condition_expr?: {
+          op?: string;
+          source?: string;
+          field?: string;
+          value?: unknown;
+          items?: Array<Record<string, unknown>>;
+          item?: Record<string, unknown>;
+        };
         lifecycle?: {
           field?: string;
           disallow_states?: string[];
