@@ -1123,6 +1123,18 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
             "disabled_reason": "",
             "semantic": semantic,
         }
+        row_groups = row.get("groups_xmlids") if isinstance(row.get("groups_xmlids"), list) else []
+        required_groups = [
+            _safe_text(item)
+            for item in row_groups
+            if _safe_text(item)
+        ]
+        required_roles_raw = row.get("required_roles") if isinstance(row.get("required_roles"), list) else []
+        required_roles = [
+            _safe_text(item).lower()
+            for item in required_roles_raw
+            if _safe_text(item)
+        ]
         required_capabilities = row.get("required_capabilities")
         if not isinstance(required_capabilities, list):
             required_capabilities = row.get("capabilities")
@@ -1135,6 +1147,7 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
             policy["enabled_when"] = {
                 "required_fields": required_fields[:12],
                 "profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+                "conditions": [],
             }
             policy["disabled_reason"] = "请先完成必填字段后再执行主操作"
         if required_capabilities:
@@ -1156,6 +1169,48 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
             policy["enabled_when"] = enabled_when
             if not policy["disabled_reason"]:
                 policy["disabled_reason"] = "当前生命周期状态不允许该操作"
+        if required_groups:
+            enabled_when = policy.get("enabled_when")
+            if not isinstance(enabled_when, dict):
+                enabled_when = {}
+            enabled_when["required_groups"] = required_groups
+            policy["enabled_when"] = enabled_when
+            if not policy["disabled_reason"]:
+                policy["disabled_reason"] = "当前角色组不满足执行条件"
+        if required_roles:
+            enabled_when = policy.get("enabled_when")
+            if not isinstance(enabled_when, dict):
+                enabled_when = {}
+            enabled_when["required_roles"] = required_roles
+            policy["enabled_when"] = enabled_when
+            if not policy["disabled_reason"]:
+                policy["disabled_reason"] = "当前角色不满足执行条件"
+        if semantic == "primary_action":
+            enabled_when = policy.get("enabled_when")
+            if not isinstance(enabled_when, dict):
+                enabled_when = {"conditions": []}
+            conditions = enabled_when.get("conditions")
+            if not isinstance(conditions, list):
+                conditions = []
+            if "phase_key" in fields_map:
+                conditions.append(
+                    {
+                        "source": "record",
+                        "field": "phase_key",
+                        "op": "not_in",
+                        "value": ["archive"],
+                    }
+                )
+            if "stage_id" in fields_map:
+                conditions.append(
+                    {
+                        "source": "record",
+                        "field": "stage_id",
+                        "op": "truthy",
+                    }
+                )
+            enabled_when["conditions"] = conditions
+            policy["enabled_when"] = enabled_when
         policies[key] = policy
     return policies
 

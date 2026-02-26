@@ -18,6 +18,8 @@ def _sample_payload():
                     {"type": "field", "name": "message_ids"},
                     {"type": "field", "name": "budget_total"},
                     {"type": "field", "name": "manager_id"},
+                    {"type": "field", "name": "phase_key"},
+                    {"type": "field", "name": "stage_id"},
                 ]
             }
         },
@@ -26,6 +28,14 @@ def _sample_payload():
             "project_type_id": {"string": "项目类型", "type": "many2one", "required": False, "readonly": False},
             "manager_id": {"string": "项目经理", "type": "many2one", "required": False, "readonly": False},
             "budget_total": {"string": "预算", "type": "monetary", "required": False, "readonly": False},
+            "phase_key": {
+                "string": "项目阶段",
+                "type": "selection",
+                "required": False,
+                "readonly": False,
+                "selection": [["initiation", "立项"], ["archive", "归档"]],
+            },
+            "stage_id": {"string": "阶段", "type": "many2one", "required": False, "readonly": False},
             "create_uid": {"string": "创建人", "type": "many2one", "required": False, "readonly": True},
             "message_ids": {"string": "消息", "type": "one2many", "required": False, "readonly": False},
         },
@@ -47,6 +57,14 @@ def _sample_payload():
         "buttons": [
             {"key": "obj_action_sc_submit_提交立项", "label": "提交立项", "kind": "object", "level": "header"},
             {"key": "obj_action_view_tasks_查看任务", "label": "查看任务", "kind": "object", "level": "header"},
+            {
+                "key": "obj_action_sc_approve_审批",
+                "label": "审批通过",
+                "kind": "object",
+                "level": "header",
+                "groups_xmlids": ["smart_construction_core.group_sc_finance_approver"],
+                "required_roles": ["finance_manager"],
+            },
             {"key": "act_298_设置阶段的评分邮件模版", "label": "设置阶段的评分邮件模版", "kind": "open", "level": "header"},
             {"key": "obj_action_view_tasks_任务", "label": "任务", "kind": "object", "level": "smart"},
             {"key": "project.ir_cron_rating_project_ir_actions_server", "label": "项目：发送评级", "kind": "server", "level": "toolbar"},
@@ -161,6 +179,15 @@ class TestProjectFormGovernance(unittest.TestCase):
         action_policies = out.get("action_policies") or {}
         self.assertIsInstance(action_policies, dict)
         self.assertGreaterEqual(len(action_policies), 1)
+        submit_policy = action_policies.get("obj_action_sc_submit_提交立项") or {}
+        enabled_when = submit_policy.get("enabled_when") if isinstance(submit_policy, dict) else {}
+        self.assertIsInstance(enabled_when, dict)
+        self.assertIn("conditions", enabled_when)
+        approve_policy = action_policies.get("obj_action_sc_approve_审批") or {}
+        approve_enabled = approve_policy.get("enabled_when") if isinstance(approve_policy, dict) else {}
+        self.assertIsInstance(approve_enabled, dict)
+        self.assertIsInstance(approve_enabled.get("required_groups"), list)
+        self.assertIsInstance(approve_enabled.get("required_roles"), list)
         validation_rules = out.get("validation_rules") or []
         self.assertIsInstance(validation_rules, list)
         self.assertTrue(any((rule or {}).get("code") == "REQUIRED" for rule in validation_rules if isinstance(rule, dict)))

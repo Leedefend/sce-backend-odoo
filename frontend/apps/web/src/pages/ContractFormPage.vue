@@ -297,6 +297,15 @@ const contractMetaLine = computed(() => {
 });
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');
+const runtimeUserGroups = computed(() => {
+  const out = new Set<string>();
+  (session.user?.groups_xmlids || []).forEach((group) => {
+    const normalized = String(group || '').trim();
+    if (normalized) out.add(normalized);
+  });
+  return out;
+});
+const runtimeRoleCode = computed(() => String(session.roleSurface?.role_code || '').trim().toLowerCase());
 const runtimeCapabilities = computed(() => {
   const out = new Set<string>();
   (session.capabilities || []).forEach((key) => {
@@ -318,6 +327,8 @@ const policyContext = computed(() => ({
   profile: renderProfile.value,
   formData: formData as Record<string, unknown>,
   capabilities: runtimeCapabilities.value,
+  userGroups: runtimeUserGroups.value,
+  roleCode: runtimeRoleCode.value,
 }));
 
 const warnings = computed(() => {

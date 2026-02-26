@@ -297,6 +297,14 @@ export interface ActionContract {
         profiles?: string[];
         required_fields?: string[];
         required_capabilities?: string[];
+        required_groups?: string[];
+        required_roles?: string[];
+        conditions?: Array<{
+          source?: string;
+          field?: string;
+          op?: string;
+          value?: unknown;
+        }>;
         lifecycle?: {
           field?: string;
           disallow_states?: string[];

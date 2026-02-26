@@ -16,6 +16,14 @@ type ActionPolicy = {
     profiles?: string[];
     required_fields?: string[];
     required_capabilities?: string[];
+    required_groups?: string[];
+    required_roles?: string[];
+    conditions?: Array<{
+      source?: string;
+      field?: string;
+      op?: string;
+      value?: unknown;
+    }>;
     lifecycle?: {
       field?: string;
       disallow_states?: string[];
@@ -29,6 +37,8 @@ type PolicyContext = {
   profile: RenderProfile;
   formData: Record<string, unknown>;
   capabilities: Set<string>;
+  userGroups: Set<string>;
+  roleCode: string;
 };
 
 function hasProfile(list: unknown, profile: RenderProfile): boolean {
@@ -43,6 +53,22 @@ function isEmpty(value: unknown): boolean {
   if (Array.isArray(value)) return value.length === 0;
   if (typeof value === 'number') return Number.isNaN(value);
   return false;
+}
+
+function toNormalizedArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((x) => String(x || '').trim()).filter(Boolean);
+}
+
+function compareCondition(actual: unknown, op: string, expected: unknown): boolean {
+  const normalizedOp = String(op || '').trim().toLowerCase();
+  if (normalizedOp === 'truthy') return !isEmpty(actual);
+  if (normalizedOp === 'falsy') return isEmpty(actual);
+  if (normalizedOp === 'eq') return String(actual ?? '') === String(expected ?? '');
+  if (normalizedOp === 'ne') return String(actual ?? '') !== String(expected ?? '');
+  if (normalizedOp === 'in') return toNormalizedArray(expected).includes(String(actual ?? ''));
+  if (normalizedOp === 'not_in') return !toNormalizedArray(expected).includes(String(actual ?? ''));
+  return true;
 }
 
 export function getFieldPolicy(contract: ActionContract | null, fieldName: string): FieldPolicy {
@@ -100,6 +126,41 @@ export function evaluateActionPolicy(
   if (requiredCapabilities.length) {
     const missingCaps = requiredCapabilities.filter((key) => !ctx.capabilities.has(key));
     if (missingCaps.length) enabled = false;
+  }
+  const requiredGroups = Array.isArray(enabledWhen.required_groups)
+    ? enabledWhen.required_groups.map((x) => String(x || '').trim()).filter(Boolean)
+    : [];
+  if (requiredGroups.length) {
+    const matched = requiredGroups.some((group) => ctx.userGroups.has(group));
+    if (!matched) enabled = false;
+  }
+  const requiredRoles = Array.isArray(enabledWhen.required_roles)
+    ? enabledWhen.required_roles.map((x) => String(x || '').trim().toLowerCase()).filter(Boolean)
+    : [];
+  if (requiredRoles.length) {
+    if (!requiredRoles.includes(String(ctx.roleCode || '').trim().toLowerCase())) {
+      enabled = false;
+    }
+  }
+  const conditions = Array.isArray(enabledWhen.conditions) ? enabledWhen.conditions : [];
+  for (const row of conditions) {
+    if (!row || typeof row !== 'object') continue;
+    const item = row as Record<string, unknown>;
+    const source = String(item.source || 'record').trim().toLowerCase();
+    const field = String(item.field || '').trim();
+    const op = String(item.op || '').trim();
+    if (!field || !op) continue;
+    let actual: unknown = undefined;
+    if (source === 'record') {
+      actual = ctx.formData[field];
+    } else if (source === 'context') {
+      if (field === 'role_code') actual = ctx.roleCode;
+      if (field === 'profile') actual = ctx.profile;
+    }
+    if (!compareCondition(actual, op, item.value)) {
+      enabled = false;
+      break;
+    }
   }
   const lifecycle = enabledWhen.lifecycle;
   if (lifecycle && typeof lifecycle === 'object') {
