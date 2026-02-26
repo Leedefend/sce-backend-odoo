@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 
@@ -68,7 +68,13 @@ def main() -> int:
         if not exists:
             errors.append(f"missing_required_file={rel_path}")
 
-    generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    existing_mtimes = [((ROOT / row["path"]).stat().st_mtime) for row in files if row["exists"]]
+    generated_ts = max(existing_mtimes) if existing_mtimes else 0
+    generated_at = (
+        datetime.fromtimestamp(generated_ts).isoformat(timespec="seconds")
+        if generated_ts > 0
+        else "unknown"
+    )
     payload = {
         "ok": len(errors) == 0,
         "summary": {
