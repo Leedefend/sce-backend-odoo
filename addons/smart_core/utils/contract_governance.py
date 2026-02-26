@@ -1031,6 +1031,133 @@ def _apply_form_render_semantics(data: dict) -> None:
     data["hide_filters_on_create"] = True
     _apply_form_field_groups(data)
     _annotate_form_actions(data)
+    _apply_form_policy_contract(data)
+
+
+def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
+    fields_map = _as_dict(data.get("fields"))
+    core_group = {}
+    advanced_group = {}
+    for item in data.get("field_groups") if isinstance(data.get("field_groups"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        key = _safe_lower(item.get("name"))
+        rows = item.get("fields")
+        if not isinstance(rows, list):
+            continue
+        normalized = [str(name).strip() for name in rows if str(name).strip()]
+        if key == "core":
+            core_group = {name: True for name in normalized}
+        if key == "advanced":
+            advanced_group = {name: True for name in normalized}
+
+    policies: dict[str, dict[str, Any]] = {}
+    for name, descriptor_raw in fields_map.items():
+        descriptor = _as_dict(descriptor_raw)
+        if not descriptor:
+            continue
+        required = _to_bool(descriptor.get("required"), fallback=False)
+        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        visible_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+        if name in advanced_group:
+            visible_profiles = [_RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+        required_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT] if required and not readonly else []
+        readonly_profiles = [_RENDER_PROFILE_READONLY]
+        if readonly:
+            readonly_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+        policies[name] = {
+            "visible_profiles": visible_profiles,
+            "required_profiles": required_profiles,
+            "readonly_profiles": readonly_profiles,
+            "source_required": required,
+            "source_readonly": readonly,
+            "group": "core" if name in core_group else ("advanced" if name in advanced_group else "secondary"),
+        }
+    return policies
+
+
+def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
+    required_fields: list[str] = []
+    for name, policy in (_build_form_field_policies(data) or {}).items():
+        if not isinstance(policy, dict):
+            continue
+        required_profiles = policy.get("required_profiles")
+        if isinstance(required_profiles, list) and required_profiles:
+            required_fields.append(name)
+    policies: dict[str, dict[str, Any]] = {}
+    buttons = data.get("buttons")
+    if not isinstance(buttons, list):
+        return policies
+    for row in buttons:
+        if not isinstance(row, dict):
+            continue
+        key = _safe_text(row.get("key"))
+        if not key:
+            continue
+        semantic = _safe_text(row.get("semantic"), "secondary")
+        visible_profiles = row.get("visible_profiles") if isinstance(row.get("visible_profiles"), list) else []
+        normalized_visible = [
+            _safe_text(item).lower()
+            for item in visible_profiles
+            if _safe_text(item).lower() in _RENDER_PROFILES
+        ]
+        policy = {
+            "visible_profiles": normalized_visible or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+            "enabled_when": {},
+            "disabled_reason": "",
+            "semantic": semantic,
+        }
+        if semantic == "primary_action":
+            policy["enabled_when"] = {
+                "required_fields": required_fields[:12],
+                "profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+            }
+            policy["disabled_reason"] = "请先完成必填字段后再执行主操作"
+        policies[key] = policy
+    return policies
+
+
+def _build_form_validation_rules(data: dict) -> list[dict[str, Any]]:
+    rules: list[dict[str, Any]] = []
+    fields_map = _as_dict(data.get("fields"))
+    for name, descriptor_raw in fields_map.items():
+        descriptor = _as_dict(descriptor_raw)
+        if not descriptor:
+            continue
+        required = _to_bool(descriptor.get("required"), fallback=False)
+        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        if required and not readonly:
+            rules.append(
+                {
+                    "code": "REQUIRED",
+                    "field": name,
+                    "when_profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+                    "message": f"{_safe_text(descriptor.get('string'), name)} 为必填字段",
+                }
+            )
+    record_rules = _as_dict(_as_dict(data.get("validator")).get("record_rules"))
+    for row in record_rules.get("sql_checks") if isinstance(record_rules.get("sql_checks"), list) else []:
+        if not isinstance(row, dict):
+            continue
+        message = _safe_text(row.get("message"))
+        definition = _safe_text(row.get("definition"))
+        if not message and not definition:
+            continue
+        rules.append(
+            {
+                "code": "SQL_CHECK",
+                "name": _safe_text(row.get("name")),
+                "expr": definition,
+                "message": message or definition,
+            }
+        )
+    return rules
+
+
+def _apply_form_policy_contract(data: dict) -> None:
+    data["field_policies"] = _build_form_field_policies(data)
+    data["action_policies"] = _build_form_action_policies(data)
+    data["validation_rules"] = _build_form_validation_rules(data)
 
 
 def normalize_scenes(scenes: list) -> list[dict]:

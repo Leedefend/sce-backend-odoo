@@ -153,6 +153,17 @@ class TestProjectFormGovernance(unittest.TestCase):
                 continue
             self.assertIn(btn.get("semantic"), {"primary_action", "secondary", "danger"})
             self.assertIsInstance(btn.get("visible_profiles"), list)
+        field_policies = out.get("field_policies") or {}
+        self.assertIsInstance(field_policies, dict)
+        self.assertIn("name", field_policies)
+        self.assertIsInstance((field_policies.get("name") or {}).get("visible_profiles"), list)
+        self.assertIsInstance((field_policies.get("name") or {}).get("required_profiles"), list)
+        action_policies = out.get("action_policies") or {}
+        self.assertIsInstance(action_policies, dict)
+        self.assertGreaterEqual(len(action_policies), 1)
+        validation_rules = out.get("validation_rules") or []
+        self.assertIsInstance(validation_rules, list)
+        self.assertTrue(any((rule or {}).get("code") == "REQUIRED" for rule in validation_rules if isinstance(rule, dict)))
         capabilities = out.get("capabilities") or []
         self.assertEqual(len(capabilities), 3)
         for cap in capabilities:
@@ -178,6 +189,9 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("message_ids", fields)
         self.assertEqual(out.get("render_profile"), "create")
         self.assertTrue(out.get("hide_filters_on_create"))
+        self.assertIsInstance(out.get("field_policies"), dict)
+        self.assertIsInstance(out.get("action_policies"), dict)
+        self.assertIsInstance(out.get("validation_rules"), list)
         toolbar_header = ((out.get("toolbar") or {}).get("header") or [])
         self.assertGreaterEqual(len(toolbar_header), 1)
         scenes = out.get("scenes") or []
