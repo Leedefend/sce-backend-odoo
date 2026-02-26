@@ -1699,6 +1699,10 @@ verify.product.delivery.freshness: guard.prod.forbid
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness
 	@echo "[OK] verify.product.delivery.ready done"
 
+.PHONY: export.product.delivery.package
+export.product.delivery.package: guard.prod.forbid
+	@python3 scripts/verify/product_delivery_package_manifest.py
+
 verify.complexity.guard: guard.prod.forbid
 	@python3 scripts/verify/complexity_guard.py
 
