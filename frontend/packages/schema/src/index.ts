@@ -268,6 +268,16 @@ export interface LoadViewRequest {
 }
 
 export interface ActionContract {
+  render_profile?: 'create' | 'edit' | 'readonly';
+  hide_filters_on_create?: boolean;
+  field_groups?: Array<{
+    name?: string;
+    label?: string;
+    priority?: number;
+    collapsible?: boolean;
+    collapsed_by_default?: boolean;
+    fields?: string[];
+  }>;
   meta?: Record<string, unknown>;
   head?: {
     title?: string;

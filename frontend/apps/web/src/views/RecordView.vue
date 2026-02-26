@@ -363,7 +363,10 @@ async function load() {
     if (!actionId.value) {
       throw new Error('missing action_id for contract-driven record view');
     }
-    const actionContract = await loadActionContractRaw(actionId.value);
+    const actionContract = await loadActionContractRaw(actionId.value, {
+      recordId: recordId.value,
+      renderProfile: canEdit.value ? 'edit' : 'readonly',
+    });
     let view: ViewContract | null = null;
     let contractFieldNames: string[] = [];
     if (actionContract?.data && typeof actionContract.data === 'object') {
