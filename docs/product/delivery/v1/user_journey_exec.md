@@ -14,3 +14,10 @@
 ## Permission Notes
 - 领导角色默认只读。
 - 若触发 `PERMISSION_DENIED`，应为预期保护而非错误。
+
+## Demo Data Anchor
+- 推荐指标快照：`OPS-METRIC-DEMO-TODAY`（在 `finance.operating_metrics` 可见）。
+- 推荐项目聚焦样例：`DELIVERY-DEMO-PROJECT-001`（在 `projects.dashboard_showcase` 可见）。
+- 若无数据，最小创建步骤：
+  - 先完成 PM 与财务旅程各 1 次，产生项目与财务数据。
+  - 刷新 `portal.dashboard` 与 `finance.operating_metrics` 校验指标加载。

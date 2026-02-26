@@ -58,6 +58,23 @@
     "scene_smoke_default",
     "cost.budget_alloc"
   ],
+  "delivery_role_keys": [
+    "pm",
+    "finance",
+    "purchase_manager",
+    "executive",
+    "ops"
+  ],
+  "visibility_mechanism": {
+    "scene_tag_field": "visibility_tags",
+    "tag_values": {
+      "delivery_visible": "delivery_visible",
+      "internal_only": "internal_only"
+    },
+    "role_resolution_source": "docs/product/delivery/v1/role_package_source_v1.json:roles[].role_key",
+    "filter_layer": "backend contract service (system.init/ui.contract response shaping)",
+    "frontend_behavior": "frontend renders only filtered entries from contract payload"
+  },
   "visibility_tags": {
     "hidden_for_delivery_roles": "internal_only",
     "default_visible": "delivery_visible"

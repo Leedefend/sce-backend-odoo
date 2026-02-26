@@ -16,3 +16,11 @@
 ## Trace Notes
 - 推荐开启 `?hud=1` 记录关键 `trace_id`。
 - 若出现 404，必须对应白名单或语义可解释路径。
+
+## Demo Data Anchor
+- 推荐样例项目：`DELIVERY-DEMO-PROJECT-001`（对应 `delivery_minimum_seed.project_id`）。
+- 推荐样例任务：`TASK-DEMO-001`、`TASK-DEMO-002`（挂载到样例项目）。
+- 若无数据，最小创建步骤：
+  - 在 `projects.intake` 新建项目并保存。
+  - 在项目下创建至少 2 条任务。
+  - 在 `projects.ledger` 补充台账文档后再走看板步骤。

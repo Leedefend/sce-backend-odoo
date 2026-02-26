@@ -69,6 +69,8 @@ def main() -> int:
                 unknown_scenes.append(f"{key}:{s}")
         if "execute_button" not in text and key in {"pm", "finance", "purchase"}:
             warnings.append(f"{key}: no execute_button step detected")
+        if "## Demo Data Anchor" not in text:
+            errors.append(f"{key}: missing Demo Data Anchor section")
 
         checked.append(
             {

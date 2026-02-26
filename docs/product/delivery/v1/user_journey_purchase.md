@@ -14,3 +14,11 @@
 ## Object Boundary
 - 起点对象：`material.plan` / `project.boq`
 - 终点对象：`purchase.order` / `project.cost.ledger`
+
+## Demo Data Anchor
+- 推荐样例 BOQ：`BOQ-DEMO-001`（绑定 `DELIVERY-DEMO-PROJECT-001`）。
+- 推荐样例采购单：`PO-DEMO-001`（由采购执行动作生成或手工创建）。
+- 若无数据，最小创建步骤：
+  - 在 `cost.project_boq` 录入 1 条物资需求。
+  - 执行一次采购动作（`execute_button`）。
+  - 在 `cost.project_cost_ledger` 验证成本记录已生成。

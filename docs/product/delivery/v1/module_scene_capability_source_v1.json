@@ -18,7 +18,6 @@
       "finance.payment_requests",
       "finance.settlement_orders",
       "finance.treasury_ledger",
-      "cost.budget_alloc",
       "cost.cost_compare",
       "cost.profit_compare",
       "cost.project_boq",
@@ -120,7 +119,6 @@
       "core_value": "覆盖预算、成本、利润与进度关联分析。",
       "entry_scenes": [
         "cost.project_budget",
-        "cost.budget_alloc",
         "cost.project_cost_ledger",
         "cost.cost_compare",
         "cost.profit_compare",

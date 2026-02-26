@@ -16,3 +16,11 @@
 ## Validation Notes
 - 至少验证 1 条审批链路状态变化。
 - `execute_button` 不允许未分类 404。
+
+## Demo Data Anchor
+- 推荐样例付款申请：`PAYREQ-DEMO-001`（对应 `delivery_minimum_seed.payment_request_id`）。
+- 推荐审批角色：`sc_fx_finance`（审批） + `sc_fx_pm`（发起）。
+- 若无数据，最小创建步骤：
+  - 在 `finance.payment_requests` 创建 1 张付款申请。
+  - 在 `finance.center` 完成一次审批动作。
+  - 在 `finance.payment_ledger` 与 `finance.treasury_ledger` 校验状态联动。

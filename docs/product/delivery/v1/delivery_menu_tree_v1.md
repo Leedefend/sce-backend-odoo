@@ -4,6 +4,8 @@
 - first_level_count: 5
 - total_entry_count: 22
 - hidden_count: 2
+- delivery_role_count: 5
+- menu_entry_unmapped_module_count: 0
 - error_count: 0
 
 ## Menu Tree
