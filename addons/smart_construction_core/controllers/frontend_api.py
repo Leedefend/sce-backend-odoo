@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from odoo import http
+from odoo import SUPERUSER_ID, api, http
 from odoo.http import request
+from odoo.modules.registry import Registry
 from odoo.service import db as service_db
 from odoo.addons.smart_core.core.trace import get_trace_id
 from odoo.addons.smart_core.core.exceptions import (
@@ -71,6 +72,19 @@ def _error_resp(code: str, message: str, trace_id: str, details: dict | None = N
         contract_version=DEFAULT_CONTRACT_VERSION,
     )
 
+
+def _load_user_basic(db: str, uid: int) -> dict | None:
+    try:
+        registry = Registry(db)
+        with registry.cursor() as cr:
+            env = api.Environment(cr, SUPERUSER_ID, {})
+            user = env["res.users"].sudo().browse(int(uid))
+            if not user.exists():
+                return None
+            return {"id": user.id, "name": user.name, "login": user.login}
+    except Exception:
+        return None
+
 # ------- 控制器 -------
 
 class FrontendAPI(http.Controller):
@@ -93,13 +107,15 @@ class FrontendAPI(http.Controller):
             if not uid:
                 return _error_resp(AUTH_REQUIRED, '账号或密码错误。', trace_id)
 
-            user = request.env['res.users'].sudo().browse(uid)
+            user = _load_user_basic(db, uid)
+            if not user:
+                return _error_resp(INTERNAL_ERROR, '内部错误', trace_id, {'error': 'user profile load failed'})
             return {
                 'ok': True,
                 'uid': uid,
                 'session_id': request.session.sid,
                 'db': db,
-                'user': {'id': user.id, 'name': user.name, 'login': user.login},
+                'user': user,
                 'meta': _meta(trace_id),
             }
         except Exception as e:
@@ -118,13 +134,16 @@ class FrontendAPI(http.Controller):
         uid = request.session.uid
         if not uid:
             return {'ok': True, 'logged_in': False, 'db': request.session.db or request.db, 'meta': _meta(trace_id)}
-        user = request.env['res.users'].sudo().browse(uid)
+        db = request.session.db or request.db or ""
+        user = _load_user_basic(db, uid) if db else None
+        if not user:
+            return {'ok': True, 'logged_in': False, 'db': db, 'meta': _meta(trace_id)}
         return {
             'ok': True,
             'logged_in': True,
             'uid': uid,
-            'db': request.session.db or request.db,
-            'user': {'id': user.id, 'name': user.name, 'login': user.login},
+            'db': db,
+            'user': user,
             'meta': _meta(trace_id),
         }
 
