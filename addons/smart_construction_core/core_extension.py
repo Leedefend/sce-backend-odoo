@@ -25,6 +25,9 @@ def smart_core_register(registry):
         from odoo.addons.smart_construction_core.handlers.usage_track import (
             UsageTrackHandler,
         )
+        from odoo.addons.smart_construction_core.handlers.telemetry_track import (
+            TelemetryTrackHandler,
+        )
         from odoo.addons.smart_construction_core.handlers.usage_report import (
             UsageReportHandler,
         )
@@ -56,6 +59,7 @@ def smart_core_register(registry):
     registry["my.work.complete"] = MyWorkCompleteHandler
     registry["my.work.complete_batch"] = MyWorkCompleteBatchHandler
     registry["usage.track"] = UsageTrackHandler
+    registry["telemetry.track"] = TelemetryTrackHandler
     registry["usage.report"] = UsageReportHandler
     registry["usage.export.csv"] = UsageExportCsvHandler
     registry["capability.visibility.report"] = CapabilityVisibilityReportHandler
@@ -71,6 +75,7 @@ def smart_core_register(registry):
     _logger.info("[smart_core_register] registered my.work.complete")
     _logger.info("[smart_core_register] registered my.work.complete_batch")
     _logger.info("[smart_core_register] registered usage.track")
+    _logger.info("[smart_core_register] registered telemetry.track")
     _logger.info("[smart_core_register] registered usage.report")
     _logger.info("[smart_core_register] registered usage.export.csv")
     _logger.info("[smart_core_register] registered capability.visibility.report")
