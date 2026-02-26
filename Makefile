@@ -1639,6 +1639,10 @@ verify.catalog.runtime.explain.report: guard.prod.forbid
 verify.phasex.p2: guard.prod.forbid verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report
 	@echo "[OK] verify.phasex.p2 done"
 
+.PHONY: verify.semantic.behavior.guard.report
+verify.semantic.behavior.guard.report: guard.prod.forbid
+	@python3 scripts/verify/semantic_behavior_guard_report.py
+
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
 
