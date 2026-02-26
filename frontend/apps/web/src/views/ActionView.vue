@@ -275,6 +275,13 @@ type ContractActionButton = {
   enabled: boolean;
   hint: string;
 };
+type ContractActionGroupRaw = {
+  key?: string;
+  label?: string;
+  actions?: Array<Record<string, unknown>>;
+  overflow_actions?: Array<Record<string, unknown>>;
+  overflow_count?: number;
+};
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
