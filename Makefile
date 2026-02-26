@@ -1256,6 +1256,10 @@ verify.e2e.ops_batch_smoke: guard.prod.forbid check-compose-project check-compos
 verify.capability.lint: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/capability_lint.sh
 
+.PHONY: verify.usage.product.clean
+verify.usage.product.clean: guard.prod.forbid
+	@python3 scripts/verify/usage_product_clean_guard.py
+
 verify.frontend_api: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/frontend_api_smoke.py
 
@@ -1309,7 +1313,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	@echo "[OK] verify.frontend.product.ready done"
 
 .PHONY: verify.product.fullstack.ready
-verify.product.fullstack.ready: guard.prod.forbid verify.product.release.ready verify.frontend.product.ready
+verify.product.fullstack.ready: guard.prod.forbid verify.product.release.ready verify.usage.product.clean verify.frontend.product.ready
 	@echo "[OK] verify.product.fullstack.ready done"
 
 verify.scene.legacy_endpoint.guard: guard.prod.forbid
