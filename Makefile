@@ -1632,7 +1632,7 @@ verify.capability.dormant.explain.guard: guard.prod.forbid
 verify.phasex.p1: guard.prod.forbid verify.capability.asset.map verify.scene.compression.model verify.scene.domain.taxonomy.guard verify.button.semantic.report verify.capability.dormant.explain.guard
 	@echo "[OK] verify.phasex.p1 done"
 
-.PHONY: verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report verify.phasex.p2
+.PHONY: verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report verify.catalog.runtime.source.rules.guard verify.phasex.p2
 verify.role.capability.diff.report: guard.prod.forbid
 	@python3 scripts/verify/role_capability_diff_report.py
 
@@ -1642,7 +1642,10 @@ verify.runtime.trend.report: guard.prod.forbid
 verify.catalog.runtime.explain.report: guard.prod.forbid
 	@python3 scripts/verify/catalog_runtime_explain_report.py
 
-verify.phasex.p2: guard.prod.forbid verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report
+verify.catalog.runtime.source.rules.guard: guard.prod.forbid
+	@python3 scripts/verify/catalog_runtime_source_rules_guard.py
+
+verify.phasex.p2: guard.prod.forbid verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report verify.catalog.runtime.source.rules.guard
 	@echo "[OK] verify.phasex.p2 done"
 
 .PHONY: verify.semantic.behavior.guard.report
