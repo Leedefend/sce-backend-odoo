@@ -1699,6 +1699,10 @@ verify.product.delivery.v1.map: guard.prod.forbid
 verify.phasea.a0a1: guard.prod.forbid verify.product.delivery.v1.map
 	@echo "[OK] verify.phasea.a0a1 done"
 
+.PHONY: verify.product.delivery.journeys
+verify.product.delivery.journeys: guard.prod.forbid
+	@python3 scripts/verify/delivery_user_journey_guard.py
+
 .PHONY: verify.product.delivery.freshness
 verify.product.delivery.freshness: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_freshness_guard.py

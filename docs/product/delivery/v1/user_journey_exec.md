@@ -1,0 +1,16 @@
+# Executive User Journey V1
+
+## Goal
+老板/领导仅通过只读看板掌握经营与项目风险。
+
+## Journey Steps
+| Step | Entry/Menu | scene_key | intent | Action | Expected Result |
+|---|---|---|---|---|---|
+| 1 | 领导看板 | `portal.dashboard` | `ui.contract` | 打开经营总览看板 | 指标正常渲染 |
+| 2 | 经营指标 | `finance.operating_metrics` | `ui.contract` | 查看指标明细与趋势 | 指标可读且不暴露执行入口 |
+| 3 | 项目聚焦 | `projects.dashboard_showcase` | `ui.contract` | 查看关键项目状态 | 可见关键状态，不含可执行按钮 |
+| 4 | 治理矩阵 | `portal.capability_matrix` | `ui.contract` | 查看能力与入口映射 | 仅可读展示 |
+
+## Permission Notes
+- 领导角色默认只读。
+- 若触发 `PERMISSION_DENIED`，应为预期保护而非错误。
