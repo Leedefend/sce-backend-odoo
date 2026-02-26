@@ -207,7 +207,11 @@ def main() -> int:
                 }
             )
 
-    generated_at = datetime.now().isoformat(timespec="seconds")
+    source_mtime = max(
+        ROLE_FLOOR_JSON.stat().st_mtime if ROLE_FLOOR_JSON.exists() else 0,
+        RELEASE_CAP_JSON.stat().st_mtime if RELEASE_CAP_JSON.exists() else 0,
+    )
+    generated_at = datetime.fromtimestamp(source_mtime).isoformat(timespec="seconds") if source_mtime else "unknown"
     payload = {
         "ok": len(errors) == 0,
         "generated_at": generated_at,
