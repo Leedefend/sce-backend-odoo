@@ -1703,6 +1703,10 @@ verify.phasea.a0a1: guard.prod.forbid verify.product.delivery.v1.map
 verify.product.delivery.journeys: guard.prod.forbid
 	@python3 scripts/verify/delivery_user_journey_guard.py
 
+.PHONY: verify.product.delivery.roles
+verify.product.delivery.roles: guard.prod.forbid
+	@python3 scripts/verify/role_capability_profiles_export.py
+
 .PHONY: verify.product.delivery.freshness
 verify.product.delivery.freshness: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_freshness_guard.py
