@@ -17,7 +17,7 @@ _USER_MODE_STRIP_KEYS = {
     "res_id",
     "id",
 }
-_USER_CAPABILITY_KEYS = {
+_USER_CAPABILITY_KEYS = (
     "key",
     "name",
     "group_key",
@@ -36,8 +36,8 @@ _USER_CAPABILITY_KEYS = {
     "version",
     "tags",
     "default_payload",
-}
-_USER_SCENE_KEYS = {
+)
+_USER_SCENE_KEYS = (
     "code",
     "key",
     "name",
@@ -60,8 +60,8 @@ _USER_SCENE_KEYS = {
     "state",
     "version",
     "tags",
-}
-_USER_SCENE_TARGET_KEYS = {
+)
+_USER_SCENE_TARGET_KEYS = (
     "route",
     "action_id",
     "menu_id",
@@ -69,8 +69,8 @@ _USER_SCENE_TARGET_KEYS = {
     "view_mode",
     "view_type",
     "record_id",
-}
-_USER_SCENE_TILE_KEYS = {
+)
+_USER_SCENE_TILE_KEYS = (
     "key",
     "title",
     "subtitle",
@@ -89,15 +89,15 @@ _USER_SCENE_TILE_KEYS = {
     "requiredCapabilities",
     "allowed",
     "tags",
-}
-_USER_SCENE_ACCESS_KEYS = {
+)
+_USER_SCENE_ACCESS_KEYS = (
     "allowed",
     "state",
     "reason_code",
     "reason",
     "required_capabilities",
     "suggested_action",
-}
+)
 
 _PROJECT_FORM_PRIMARY_FIELDS = [
     "name",
@@ -141,6 +141,40 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "drilldown": "业务查看",
     "other": "更多操作",
 }
+_RENDER_PROFILE_CREATE = "create"
+_RENDER_PROFILE_EDIT = "edit"
+_RENDER_PROFILE_READONLY = "readonly"
+_RENDER_PROFILES = {
+    _RENDER_PROFILE_CREATE,
+    _RENDER_PROFILE_EDIT,
+    _RENDER_PROFILE_READONLY,
+}
+_FORM_CORE_FIELD_MAX = 8
+_FORM_ACTION_PRIMARY_KEYWORDS = (
+    "提交",
+    "保存",
+    "创建",
+    "确认",
+    "进入下一阶段",
+    "approve",
+    "submit",
+    "save",
+    "create",
+    "confirm",
+)
+_FORM_ACTION_READONLY_KEYWORDS = (
+    "查看",
+    "打开",
+    "open",
+    "view",
+)
+_FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
+_FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
+_FORM_DISABLED_REASON_LIFECYCLE = "当前生命周期状态不允许该操作"
+_FORM_DISABLED_REASON_GROUP = "当前角色组不满足执行条件"
+_FORM_DISABLED_REASON_ROLE = "当前角色不满足执行条件"
+_FORM_SCENE_PROFILE_DEFAULT = "generic.form"
+_FORM_SCENE_PROFILE_PROJECT = "project.form"
 
 _CAPABILITY_GROUP_DEFAULTS = {
     "project_management": {"label": "项目管理", "icon": "briefcase"},
@@ -152,6 +186,25 @@ _CAPABILITY_GROUP_DEFAULTS = {
     "analytics": {"label": "经营分析", "icon": "chart"},
     "others": {"label": "其他能力", "icon": "grid"},
 }
+
+_CONTRACT_KEY_CANONICAL_MAP = {
+    "requiredCapabilities": "required_capabilities",
+    "groupsXmlids": "groups_xmlids",
+    "actionId": "action_id",
+    "menuId": "menu_id",
+    "viewType": "view_type",
+    "recordId": "record_id",
+    "reasonCode": "reason_code",
+    "capabilityState": "capability_state",
+    "capabilityStateReason": "capability_state_reason",
+    "defaultPayload": "default_payload",
+    "groupKey": "group_key",
+    "groupLabel": "group_label",
+    "groupIcon": "group_icon",
+    "groupSequence": "group_sequence",
+}
+
+_DOMAIN_OVERRIDE_REGISTRY: list[dict[str, Any]] = []
 
 
 def is_truthy(value: Any) -> bool:
@@ -200,17 +253,10 @@ def _contains_demo_marker(value: Any) -> bool:
 def _has_demo_semantics(item: dict) -> bool:
     if not isinstance(item, dict):
         return False
-    tags = _parse_tags(item.get("tags"))
-    if any(_contains_demo_marker(tag) for tag in tags):
+    if item.get("is_demo") is True:
         return True
-    for key in ("key", "code", "name", "title", "label", "scene_key"):
-        if _contains_demo_marker(item.get(key)):
-            return True
-    target = item.get("target") if isinstance(item.get("target"), dict) else {}
-    for key in ("menu_xmlid", "action_xmlid", "route"):
-        if _contains_demo_marker(target.get(key)):
-            return True
-    return False
+    tags = _parse_tags(item.get("tags"))
+    return "demo" in tags or "showcase" in tags
 
 
 def _normalized_tags_for_item(item: dict) -> list[str]:
@@ -241,30 +287,12 @@ def _normalized_tags_for_item(item: dict) -> list[str]:
 def is_internal_or_smoke(item: dict) -> bool:
     if not isinstance(item, dict):
         return False
+    if item.get("is_internal") is True or item.get("is_smoke") is True:
+        return True
     tags = _parse_tags(item.get("tags"))
-    key = _safe_text(item.get("key")).lower()
-    code = _safe_text(item.get("code")).lower()
-    name = _safe_text(item.get("name")).lower()
-    target = item.get("target") if isinstance(item.get("target"), dict) else {}
-    target_text = " ".join(
-        [
-            _safe_text(target.get("menu_xmlid")).lower(),
-            _safe_text(target.get("action_xmlid")).lower(),
-            _safe_text(target.get("route")).lower(),
-        ]
-    ).strip()
-    if "internal" in tags or "smoke" in tags or "demo" in tags:
+    if "internal" in tags or "smoke" in tags or "demo" in tags or "showcase" in tags:
         return True
-    if item.get("is_test") or item.get("smoke_test"):
-        return True
-    combined = f"{key} {code} {name} {target_text}"
-    return (
-        "smoke" in combined
-        or "internal" in combined
-        or "showcase" in combined
-        or "demo" in combined
-        or "smart_construction_demo" in combined
-    )
+    return bool(item.get("is_test") or item.get("smoke_test"))
 
 
 def normalize_capabilities(capabilities: list) -> list[dict]:
@@ -374,13 +402,13 @@ def _strip_user_mode_fields(obj: Any) -> Any:
         return obj
     out: dict[str, Any] = {}
     for key, value in obj.items():
-        if str(key or "").strip().lower() in _USER_MODE_STRIP_KEYS:
+        if str(key or "").strip() in _USER_MODE_STRIP_KEYS:
             continue
         out[key] = _strip_user_mode_fields(value)
     return out
 
 
-def _pick_fields(raw: dict, allowed_keys: set[str]) -> dict:
+def _pick_fields(raw: dict, allowed_keys: tuple[str, ...] | list[str]) -> dict:
     out: dict[str, Any] = {}
     for key in allowed_keys:
         if key in raw:
@@ -510,6 +538,15 @@ def _is_project_form_contract(data: dict) -> bool:
     if not view_type and isinstance(views.get("form"), dict):
         view_type = "form"
     return model == "project.project" and view_type == "form"
+
+
+def _is_form_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if view_type == "form":
+        return True
+    return isinstance(views.get("form"), dict)
 
 
 def _is_technical_field(name: str, descriptor: dict) -> bool:
@@ -663,9 +700,6 @@ def _action_priority(action: dict) -> int:
 def _is_noisy_project_action(action: dict) -> bool:
     key = _safe_lower(action.get("key"))
     label = _safe_lower(action.get("label"))
-    kind = _safe_lower(action.get("kind"))
-    if kind == "server":
-        return True
     if not label and not key:
         return True
     if label.isdigit():
@@ -790,6 +824,7 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     selected_set = set(selected)
     fields_map = _as_dict(data.get("fields"))
     data["fields"] = {name: fields_map.get(name) for name in selected if name in fields_map}
+    data["visible_fields"] = selected
 
     permissions = _as_dict(data.get("permissions"))
     field_groups = _as_dict(permissions.get("field_groups"))
@@ -797,10 +832,648 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
         permissions["field_groups"] = {name: val for name, val in field_groups.items() if name in selected_set}
     data["permissions"] = permissions
 
-    _filter_project_form_layout(data, selected_set)
     _govern_project_form_actions(data)
     _govern_project_form_search(data)
     _build_project_lifecycle_summary(data)
+
+
+def _to_bool(value: Any, fallback: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return fallback
+    lowered = str(value).strip().lower()
+    if lowered in {"1", "true", "yes", "y", "on"}:
+        return True
+    if lowered in {"0", "false", "no", "n", "off"}:
+        return False
+    return fallback
+
+
+def _resolve_render_profile(data: dict) -> str:
+    explicit = _safe_text(data.get("render_profile")).lower()
+    if explicit in _RENDER_PROFILES:
+        return explicit
+    head = _as_dict(data.get("head"))
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if view_type and "form" not in view_type:
+        return _RENDER_PROFILE_EDIT
+    effective = _as_dict(_as_dict(data.get("permissions")).get("effective")).get("rights")
+    effective_rights = _as_dict(effective)
+    head_permissions = _as_dict(head.get("permissions"))
+    can_write = _to_bool(
+        effective_rights.get("write", head_permissions.get("write")),
+        fallback=False,
+    )
+    can_create = _to_bool(
+        effective_rights.get("create", head_permissions.get("create")),
+        fallback=False,
+    )
+    if not can_write and not can_create:
+        return _RENDER_PROFILE_READONLY
+    has_record = bool(
+        data.get("res_id")
+        or head.get("res_id")
+        or data.get("id")
+    )
+    return _RENDER_PROFILE_EDIT if has_record else _RENDER_PROFILE_CREATE
+
+
+def _iter_field_order(data: dict) -> list[str]:
+    ordered: list[str] = []
+    form = _as_dict(_as_dict(data.get("views")).get("form"))
+    layout = form.get("layout")
+    for node in layout if isinstance(layout, list) else []:
+        if not isinstance(node, dict):
+            continue
+        if _safe_lower(node.get("type")) != "field":
+            continue
+        name = _safe_text(node.get("name"))
+        if name and name not in ordered:
+            ordered.append(name)
+    for name in (_as_dict(data.get("fields")) or {}).keys():
+        if name not in ordered:
+            ordered.append(name)
+    return ordered
+
+
+def _derive_form_core_fields(data: dict) -> list[str]:
+    fields_map = _as_dict(data.get("fields"))
+    ordered = _iter_field_order(data)
+    core: list[str] = []
+
+    def _push(name: str) -> None:
+        if not name or name in core:
+            return
+        descriptor = _as_dict(fields_map.get(name))
+        if not descriptor:
+            return
+        if _is_technical_field(name, descriptor):
+            return
+        core.append(name)
+
+    for name in ordered:
+        descriptor = _as_dict(fields_map.get(name))
+        if not descriptor:
+            continue
+        required = _to_bool(descriptor.get("required"), fallback=False)
+        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        if required and not readonly:
+            _push(name)
+        if len(core) >= _FORM_CORE_FIELD_MAX:
+            break
+
+    if len(core) < _FORM_CORE_FIELD_MAX:
+        for preferred in ("name", "display_name"):
+            _push(preferred)
+            if len(core) >= _FORM_CORE_FIELD_MAX:
+                break
+
+    if len(core) < _FORM_CORE_FIELD_MAX:
+        for name in ordered:
+            _push(name)
+            if len(core) >= _FORM_CORE_FIELD_MAX:
+                break
+    return core[:_FORM_CORE_FIELD_MAX]
+
+
+def _apply_form_field_groups(data: dict) -> None:
+    if not _is_form_contract(data):
+        return
+    fields_map = _as_dict(data.get("fields"))
+    if not fields_map:
+        return
+    core_fields = _derive_form_core_fields(data)
+    core_set = set(core_fields)
+    advanced_fields = [
+        name
+        for name in _iter_field_order(data)
+        if name in fields_map and name not in core_set
+    ]
+    data["field_groups"] = [
+        {
+            "name": "core",
+            "label": "核心信息",
+            "priority": 1,
+            "collapsible": False,
+            "fields": core_fields,
+        },
+        {
+            "name": "advanced",
+            "label": "高级信息",
+            "priority": 2,
+            "collapsible": True,
+            "collapsed_by_default": True,
+            "fields": advanced_fields,
+        },
+    ]
+
+
+def _infer_action_semantic(action: dict) -> str:
+    label = _safe_lower(action.get("label"))
+    key = _safe_lower(action.get("key"))
+    merged = f"{label} {key}"
+    if any(keyword in merged for keyword in _FORM_ACTION_PRIMARY_KEYWORDS):
+        return "primary_action"
+    if any(keyword in merged for keyword in ("删除", "停用", "archive", "unlink", "删除")):
+        return "danger"
+    return "secondary"
+
+
+def _infer_visible_profiles(action: dict) -> list[str]:
+    label = _safe_lower(action.get("label"))
+    key = _safe_lower(action.get("key"))
+    merged = f"{label} {key}"
+    if any(keyword in merged for keyword in ("创建", "提交", "create", "submit")):
+        return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+    if any(keyword in merged for keyword in ("编辑", "修改", "edit", "write")):
+        return [_RENDER_PROFILE_EDIT]
+    if any(keyword in merged for keyword in _FORM_ACTION_READONLY_KEYWORDS):
+        return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+    return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+
+
+def _annotate_form_actions(data: dict) -> None:
+    if not _is_form_contract(data):
+        return
+    buttons = data.get("buttons")
+    if not isinstance(buttons, list):
+        return
+    primary_assigned = False
+    for row in buttons:
+        if not isinstance(row, dict):
+            continue
+        semantic = _safe_text(row.get("semantic")).lower() or _infer_action_semantic(row)
+        if semantic == "primary_action":
+            if primary_assigned:
+                semantic = "secondary"
+            else:
+                primary_assigned = True
+        row["semantic"] = semantic
+        raw_profiles = row.get("visible_profiles")
+        if isinstance(raw_profiles, list) and raw_profiles:
+            profiles = [
+                _safe_text(item).lower()
+                for item in raw_profiles
+                if _safe_text(item).lower() in _RENDER_PROFILES
+            ]
+        else:
+            profiles = _infer_visible_profiles(row)
+        row["visible_profiles"] = profiles or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+
+
+def _apply_form_render_semantics(data: dict, contract_mode: str) -> None:
+    if not _is_form_contract(data):
+        return
+    data["render_profile"] = _resolve_render_profile(data)
+    data["hide_filters_on_create"] = True
+    _apply_form_field_groups(data)
+    _annotate_form_actions(data)
+    _apply_form_policy_contract(data, contract_mode)
+
+
+def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
+    fields_map = _as_dict(data.get("fields"))
+    core_group = {}
+    advanced_group = {}
+    for item in data.get("field_groups") if isinstance(data.get("field_groups"), list) else []:
+        if not isinstance(item, dict):
+            continue
+        key = _safe_lower(item.get("name"))
+        rows = item.get("fields")
+        if not isinstance(rows, list):
+            continue
+        normalized = [str(name).strip() for name in rows if str(name).strip()]
+        if key == "core":
+            core_group = {name: True for name in normalized}
+        if key == "advanced":
+            advanced_group = {name: True for name in normalized}
+
+    policies: dict[str, dict[str, Any]] = {}
+    for name, descriptor_raw in fields_map.items():
+        descriptor = _as_dict(descriptor_raw)
+        if not descriptor:
+            continue
+        required = _to_bool(descriptor.get("required"), fallback=False)
+        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        visible_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+        if name in advanced_group:
+            visible_profiles = [_RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+        required_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT] if required and not readonly else []
+        readonly_profiles = [_RENDER_PROFILE_READONLY]
+        if readonly:
+            readonly_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+        policies[name] = {
+            "visible_profiles": visible_profiles,
+            "required_profiles": required_profiles,
+            "readonly_profiles": readonly_profiles,
+            "source_required": required,
+            "source_readonly": readonly,
+            "group": "core" if name in core_group else ("advanced" if name in advanced_group else "secondary"),
+        }
+    return policies
+
+
+def _default_action_policy(semantic: str, visible_profiles: list[str], required_fields: list[str]) -> dict[str, Any]:
+    policy = {
+        "visible_profiles": visible_profiles or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+        "enabled_when": {},
+        "disabled_reason": "",
+        "semantic": semantic,
+    }
+    if semantic == "primary_action":
+        policy["enabled_when"] = {
+            "required_fields": required_fields[:12],
+            "profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+            "conditions": [],
+        }
+        policy["disabled_reason"] = _FORM_PRIMARY_DISABLED_REASON
+    return policy
+
+
+def _resolve_form_scene_profile(data: dict) -> str:
+    return _FORM_SCENE_PROFILE_PROJECT if _is_project_form_contract(data) else _FORM_SCENE_PROFILE_DEFAULT
+
+
+def _resolve_action_policy_template_keys(
+    *,
+    scene_profile: str,
+    semantic: str,
+    required_capabilities: list[str],
+    required_groups: list[str],
+    required_roles: list[str],
+    lifecycle_field: str,
+    lifecycle_blocked_states: list[str],
+) -> list[str]:
+    keys: list[str] = []
+    if semantic == "primary_action":
+        keys.append("base.primary")
+    else:
+        keys.append("base.secondary")
+    if required_capabilities or required_groups or required_roles or (lifecycle_field and lifecycle_blocked_states):
+        keys.append("constraint.access")
+    if scene_profile == _FORM_SCENE_PROFILE_PROJECT and semantic == "primary_action":
+        keys.append("scene.project.form.primary")
+    return keys
+
+
+def _apply_action_policy_templates(
+    policy: dict[str, Any],
+    template_keys: list[str],
+    *,
+    required_fields: list[str],
+    required_capabilities: list[str],
+    lifecycle_field: str,
+    lifecycle_blocked_states: list[str],
+    required_groups: list[str],
+    required_roles: list[str],
+    fields_map: dict[str, Any],
+) -> None:
+    def _apply_base_primary() -> None:
+        base = _default_action_policy("primary_action", policy.get("visible_profiles") or [], required_fields)
+        policy["enabled_when"] = base.get("enabled_when") or {}
+        policy["disabled_reason"] = base.get("disabled_reason") or policy.get("disabled_reason") or ""
+        policy["semantic"] = "primary_action"
+
+    def _apply_base_secondary() -> None:
+        base = _default_action_policy(
+            _safe_text(policy.get("semantic"), "secondary"),
+            policy.get("visible_profiles") or [],
+            required_fields,
+        )
+        policy["enabled_when"] = base.get("enabled_when") or {}
+        policy["disabled_reason"] = base.get("disabled_reason") or policy.get("disabled_reason") or ""
+
+    def _apply_constraint_access() -> None:
+        _merge_policy_constraints(
+            policy,
+            required_capabilities=required_capabilities,
+            lifecycle_field=lifecycle_field,
+            lifecycle_blocked_states=lifecycle_blocked_states,
+            required_groups=required_groups,
+            required_roles=required_roles,
+        )
+
+    def _apply_scene_project_primary() -> None:
+        _append_primary_action_conditions(policy, fields_map)
+
+    template_registry = {
+        "base.primary": _apply_base_primary,
+        "base.secondary": _apply_base_secondary,
+        "constraint.access": _apply_constraint_access,
+        "scene.project.form.primary": _apply_scene_project_primary,
+    }
+    for key in template_keys:
+        runner = template_registry.get(key)
+        if callable(runner):
+            runner()
+
+
+def _merge_policy_constraints(
+    policy: dict[str, Any],
+    *,
+    required_capabilities: list[str],
+    lifecycle_field: str,
+    lifecycle_blocked_states: list[str],
+    required_groups: list[str],
+    required_roles: list[str],
+) -> None:
+    enabled_when = policy.get("enabled_when")
+    if not isinstance(enabled_when, dict):
+        enabled_when = {}
+
+    if required_capabilities:
+        enabled_when["required_capabilities"] = required_capabilities
+        if not policy.get("disabled_reason"):
+            policy["disabled_reason"] = _FORM_DISABLED_REASON_CAPABILITY
+    if lifecycle_field and lifecycle_blocked_states:
+        enabled_when["lifecycle"] = {"field": lifecycle_field, "disallow_states": lifecycle_blocked_states}
+        if not policy.get("disabled_reason"):
+            policy["disabled_reason"] = _FORM_DISABLED_REASON_LIFECYCLE
+    if required_groups:
+        enabled_when["required_groups"] = required_groups
+        if not policy.get("disabled_reason"):
+            policy["disabled_reason"] = _FORM_DISABLED_REASON_GROUP
+    if required_roles:
+        enabled_when["required_roles"] = required_roles
+        if not policy.get("disabled_reason"):
+            policy["disabled_reason"] = _FORM_DISABLED_REASON_ROLE
+    policy["enabled_when"] = enabled_when
+
+
+def _append_primary_action_conditions(policy: dict[str, Any], fields_map: dict[str, Any]) -> None:
+    if _safe_text(policy.get("semantic")) != "primary_action":
+        return
+    enabled_when = policy.get("enabled_when")
+    if not isinstance(enabled_when, dict):
+        enabled_when = {"conditions": []}
+    conditions = enabled_when.get("conditions")
+    if not isinstance(conditions, list):
+        conditions = []
+    if "phase_key" in fields_map:
+        conditions.append({"source": "record", "field": "phase_key", "op": "not_in", "value": ["archive"]})
+    if "stage_id" in fields_map:
+        conditions.append({"source": "record", "field": "stage_id", "op": "truthy"})
+    enabled_when["conditions"] = conditions
+    if conditions:
+        enabled_when["condition_expr"] = {"op": "and", "items": [item for item in conditions if isinstance(item, dict)]}
+    policy["enabled_when"] = enabled_when
+
+
+def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
+    required_fields: list[str] = []
+    for name, policy in (_build_form_field_policies(data) or {}).items():
+        if not isinstance(policy, dict):
+            continue
+        required_profiles = policy.get("required_profiles")
+        if isinstance(required_profiles, list) and required_profiles:
+            required_fields.append(name)
+    policies: dict[str, dict[str, Any]] = {}
+    buttons = data.get("buttons")
+    if not isinstance(buttons, list):
+        return policies
+    lifecycle_field = ""
+    lifecycle_blocked_states: list[str] = []
+    fields_map = _as_dict(data.get("fields"))
+    scene_profile = _resolve_form_scene_profile(data)
+    lifecycle_desc = _as_dict(fields_map.get("lifecycle_state"))
+    if lifecycle_desc:
+        lifecycle_field = "lifecycle_state"
+        selection = lifecycle_desc.get("selection")
+        rows = selection if isinstance(selection, list) else []
+        for row in rows:
+            if not isinstance(row, (list, tuple)) or len(row) < 2:
+                continue
+            key = _safe_text(row[0]).lower()
+            label = _safe_text(row[1]).lower()
+            merged = f"{key} {label}"
+            if any(token in merged for token in ("close", "closed", "done", "archive", "竣工", "关闭", "归档")):
+                lifecycle_blocked_states.append(_safe_text(row[0]))
+    for row in buttons:
+        if not isinstance(row, dict):
+            continue
+        key = _safe_text(row.get("key"))
+        if not key:
+            continue
+        semantic = _safe_text(row.get("semantic"), "secondary")
+        visible_profiles = row.get("visible_profiles") if isinstance(row.get("visible_profiles"), list) else []
+        normalized_visible = [
+            _safe_text(item).lower()
+            for item in visible_profiles
+            if _safe_text(item).lower() in _RENDER_PROFILES
+        ]
+        policy = _default_action_policy(semantic, normalized_visible, required_fields)
+        row_groups = row.get("groups_xmlids") if isinstance(row.get("groups_xmlids"), list) else []
+        required_groups = [
+            _safe_text(item)
+            for item in row_groups
+            if _safe_text(item)
+        ]
+        required_roles_raw = row.get("required_roles") if isinstance(row.get("required_roles"), list) else []
+        required_roles = [
+            _safe_text(item).lower()
+            for item in required_roles_raw
+            if _safe_text(item)
+        ]
+        required_capabilities = row.get("required_capabilities")
+        if not isinstance(required_capabilities, list):
+            required_capabilities = row.get("capabilities")
+        required_capabilities = [
+            _safe_text(item)
+            for item in (required_capabilities if isinstance(required_capabilities, list) else [])
+            if _safe_text(item)
+        ]
+        template_keys = _resolve_action_policy_template_keys(
+            scene_profile=scene_profile,
+            semantic=semantic,
+            required_capabilities=required_capabilities,
+            required_groups=required_groups,
+            required_roles=required_roles,
+            lifecycle_field=lifecycle_field,
+            lifecycle_blocked_states=lifecycle_blocked_states,
+        )
+        _apply_action_policy_templates(
+            policy,
+            template_keys,
+            required_fields=required_fields,
+            required_capabilities=required_capabilities,
+            lifecycle_field=lifecycle_field,
+            lifecycle_blocked_states=lifecycle_blocked_states,
+            required_groups=required_groups,
+            required_roles=required_roles,
+            fields_map=fields_map,
+        )
+        policies[key] = policy
+    return policies
+
+
+def _build_form_validation_rules(data: dict, contract_mode: str) -> list[dict[str, Any]]:
+    rules: list[dict[str, Any]] = []
+    fields_map = _as_dict(data.get("fields"))
+    for name, descriptor_raw in fields_map.items():
+        descriptor = _as_dict(descriptor_raw)
+        if not descriptor:
+            continue
+        required = _to_bool(descriptor.get("required"), fallback=False)
+        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        if required and not readonly:
+            rules.append(
+                {
+                    "code": "REQUIRED",
+                    "field": name,
+                    "when_profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
+                    "message": f"{_safe_text(descriptor.get('string'), name)} 为必填字段",
+                }
+            )
+    record_rules = _as_dict(_as_dict(data.get("validator")).get("record_rules"))
+    for row in record_rules.get("sql_checks") if isinstance(record_rules.get("sql_checks"), list) else []:
+        if not isinstance(row, dict):
+            continue
+        message = _safe_text(row.get("message"))
+        definition = _safe_text(row.get("definition"))
+        if not message and not definition:
+            continue
+        item = {
+            "code": "SQL_CHECK",
+            "name": _safe_text(row.get("name")),
+            "message": message or definition,
+        }
+        if contract_mode == "hud":
+            item["expr"] = definition
+        rules.append(item)
+    return rules
+
+
+def _apply_form_policy_contract(data: dict, contract_mode: str) -> None:
+    data["field_policies"] = _build_form_field_policies(data)
+    data["action_policies"] = _build_form_action_policies(data)
+    data["validation_rules"] = _build_form_validation_rules(data, contract_mode)
+
+
+def _canonicalize_contract_keys(
+    obj: Any,
+    *,
+    path: str = "$",
+    conflicts: list[dict[str, Any]] | None = None,
+) -> Any:
+    conflicts = conflicts if isinstance(conflicts, list) else []
+    if isinstance(obj, list):
+        return [
+            _canonicalize_contract_keys(item, path=f"{path}[{idx}]", conflicts=conflicts)
+            for idx, item in enumerate(obj)
+        ]
+    if not isinstance(obj, dict):
+        return obj
+    out: dict[str, Any] = {}
+    source_keys: dict[str, str] = {}
+    for raw_key, raw_val in obj.items():
+        key = str(raw_key)
+        canonical = _CONTRACT_KEY_CANONICAL_MAP.get(key, key)
+        normalized_val = _canonicalize_contract_keys(raw_val, path=f"{path}.{canonical}", conflicts=conflicts)
+        if canonical not in out:
+            out[canonical] = normalized_val
+            source_keys[canonical] = key
+            continue
+        previous = source_keys.get(canonical, canonical)
+        snake_preferred = canonical
+        should_replace = key == snake_preferred and previous != snake_preferred
+        conflicts.append(
+            {
+                "path": f"{path}.{canonical}",
+                "canonical": canonical,
+                "kept_from": key if should_replace else previous,
+                "dropped_from": previous if should_replace else key,
+            }
+        )
+        if should_replace:
+            out[canonical] = normalized_val
+            source_keys[canonical] = key
+    return out
+
+
+def register_contract_domain_override(
+    name: str,
+    handler: Any,
+    *,
+    priority: int = 100,
+) -> None:
+    if not callable(handler):
+        return
+    normalized_name = _safe_text(name, "unnamed_override")
+    for row in _DOMAIN_OVERRIDE_REGISTRY:
+        if _safe_text(row.get("name")) == normalized_name:
+            row["handler"] = handler
+            row["priority"] = int(priority)
+            return
+    _DOMAIN_OVERRIDE_REGISTRY.append(
+        {
+            "name": normalized_name,
+            "priority": int(priority),
+            "handler": handler,
+        }
+    )
+    _DOMAIN_OVERRIDE_REGISTRY.sort(key=lambda item: int(item.get("priority") or 100))
+
+
+def _append_governance_diagnostic(data: dict, key: str, value: Any) -> None:
+    diagnostic = data.get("diagnostic")
+    if not isinstance(diagnostic, dict):
+        diagnostic = {}
+    diagnostic[key] = value
+    data["diagnostic"] = diagnostic
+
+
+def _apply_domain_overrides(data: dict, contract_mode: str) -> list[dict[str, Any]]:
+    failures: list[dict[str, Any]] = []
+    for row in _DOMAIN_OVERRIDE_REGISTRY:
+        handler = row.get("handler")
+        if not callable(handler):
+            continue
+        try:
+            handler(data, contract_mode)
+        except Exception as exc:
+            failures.append(
+                {
+                    "name": _safe_text(row.get("name")),
+                    "error_type": exc.__class__.__name__,
+                    "message": _safe_text(str(exc))[:240],
+                }
+            )
+            continue
+    return failures
+
+
+def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
+    if contract_mode == "user" and _is_project_form_contract(data):
+        _govern_project_form_contract_for_user(data)
+
+
+def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:
+    if isinstance(data.get("capabilities"), list):
+        capabilities = normalize_capabilities(data.get("capabilities") or [])
+        if contract_mode == "user":
+            capabilities = [item for item in capabilities if not is_internal_or_smoke(item)]
+            capabilities = [item for item in capabilities if not _has_demo_semantics(item)]
+            capabilities = [_sanitize_capability_for_user(item) for item in capabilities]
+        data["capabilities"] = capabilities
+
+    if isinstance(data.get("scenes"), list):
+        scenes = normalize_scenes(data.get("scenes") or [])
+        if contract_mode == "user":
+            scenes = [item for item in scenes if not is_internal_or_smoke(item)]
+            scenes = [item for item in scenes if not _has_demo_semantics(item)]
+            scenes = [_sanitize_scene_for_user(item) for item in scenes]
+            scenes = [item for item in scenes if not _has_demo_semantics(item)]
+        data["scenes"] = scenes
+
+    if contract_mode != "hud":
+        for key in _NON_HUD_STRIP_KEYS:
+            data.pop(key, None)
+
+
+def _apply_semantic_governance(data: dict, contract_mode: str) -> None:
+    if _is_form_contract(data):
+        _apply_form_render_semantics(data, contract_mode)
 
 
 def normalize_scenes(scenes: list) -> list[dict]:
@@ -829,33 +1502,24 @@ def apply_contract_governance(
     if not isinstance(data, dict):
         return data
 
+    pipeline = ["canonicalize", "sanitize", "semantic", "domain_overrides", "inject_mode"]
+    key_conflicts: list[dict[str, Any]] = []
+    data = _canonicalize_contract_keys(data, conflicts=key_conflicts)
+
     nested_payload = data.get("data")
     if isinstance(nested_payload, dict):
         data["data"] = apply_contract_governance(nested_payload, contract_mode, inject_contract_mode=False)
 
-    if isinstance(data.get("capabilities"), list):
-        capabilities = normalize_capabilities(data.get("capabilities") or [])
-        if contract_mode == "user":
-            capabilities = [item for item in capabilities if not is_internal_or_smoke(item)]
-            capabilities = [item for item in capabilities if not _has_demo_semantics(item)]
-            capabilities = [_sanitize_capability_for_user(item) for item in capabilities]
-        data["capabilities"] = capabilities
-
-    if isinstance(data.get("scenes"), list):
-        scenes = normalize_scenes(data.get("scenes") or [])
-        if contract_mode == "user":
-            scenes = [item for item in scenes if not is_internal_or_smoke(item)]
-            scenes = [item for item in scenes if not _has_demo_semantics(item)]
-            scenes = [_sanitize_scene_for_user(item) for item in scenes]
-            scenes = [item for item in scenes if not _has_demo_semantics(item)]
-        data["scenes"] = scenes
-
-    if contract_mode == "user" and _is_project_form_contract(data):
-        _govern_project_form_contract_for_user(data)
+    _apply_sanitize_governance(data, contract_mode)
+    _apply_semantic_governance(data, contract_mode)
+    override_failures = _apply_domain_overrides(data, contract_mode)
 
     if inject_contract_mode:
         data["contract_mode"] = contract_mode
-    if contract_mode != "hud":
-        for key in _NON_HUD_STRIP_KEYS:
-            data.pop(key, None)
+    if contract_mode == "hud":
+        if key_conflicts:
+            _append_governance_diagnostic(data, "contract_key_conflicts", key_conflicts)
+        if override_failures:
+            _append_governance_diagnostic(data, "domain_override_failures", override_failures)
+        _append_governance_diagnostic(data, "governance_pipeline", pipeline)
     return data
