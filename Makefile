@@ -1712,6 +1712,14 @@ verify.product.delivery.roles: guard.prod.forbid
 verify.product.delivery.role_home_openability: guard.prod.forbid
 	@python3 scripts/verify/role_home_openability_report.py
 
+.PHONY: verify.product.delivery.visibility
+verify.product.delivery.visibility: guard.prod.forbid
+	@python3 scripts/verify/visibility_filter_verification.py
+
+.PHONY: verify.product.delivery.demo_data
+verify.product.delivery.demo_data: guard.prod.forbid
+	@python3 scripts/verify/demo_data_presence_report.py
+
 .PHONY: verify.product.delivery.menu
 verify.product.delivery.menu: guard.prod.forbid
 	@python3 scripts/verify/delivery_menu_tree_report.py
