@@ -323,6 +323,15 @@ class TestProjectFormGovernance(unittest.TestCase):
         toolbar_keys = [str(item.get("key")) for item in toolbar_header if isinstance(item, dict)]
         self.assertNotIn("smart_construction_demo.action_sc_project_list_showcase", toolbar_keys)
         self.assertIn("smart_construction_core.action_sc_project_list", toolbar_keys)
+        groups = out.get("action_groups") or []
+        self.assertIsInstance(groups, list)
+        if groups:
+            self.assertIn("key", groups[0])
+            self.assertIn("actions", groups[0])
+        surface_policies = out.get("surface_policies") or {}
+        self.assertIsInstance(surface_policies, dict)
+        self.assertGreaterEqual(int(surface_policies.get("filters_primary_max", 0)), 0)
+        self.assertGreaterEqual(int(surface_policies.get("actions_primary_max", 0)), 0)
 
 
 if __name__ == "__main__":
