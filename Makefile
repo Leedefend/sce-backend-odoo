@@ -1626,6 +1626,19 @@ verify.button.semantic.report: guard.prod.forbid
 verify.phasex.p1: guard.prod.forbid verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report
 	@echo "[OK] verify.phasex.p1 done"
 
+.PHONY: verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report verify.phasex.p2
+verify.role.capability.diff.report: guard.prod.forbid
+	@python3 scripts/verify/role_capability_diff_report.py
+
+verify.runtime.trend.report: guard.prod.forbid
+	@python3 scripts/verify/runtime_trend_report.py
+
+verify.catalog.runtime.explain.report: guard.prod.forbid
+	@python3 scripts/verify/catalog_runtime_explain_report.py
+
+verify.phasex.p2: guard.prod.forbid verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report
+	@echo "[OK] verify.phasex.p2 done"
+
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
 
