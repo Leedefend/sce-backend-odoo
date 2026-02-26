@@ -157,6 +157,8 @@ _USER_SURFACE_NOISE_MARKERS = (
 )
 _USER_SURFACE_FILTER_MAX = 8
 _USER_SURFACE_ACTION_MAX = 8
+_USER_SURFACE_PRIMARY_FILTER_MAX = 5
+_USER_SURFACE_PRIMARY_ACTION_MAX = 4
 _RENDER_PROFILE_CREATE = "create"
 _RENDER_PROFILE_EDIT = "edit"
 _RENDER_PROFILE_READONLY = "readonly"
@@ -600,6 +602,25 @@ def _apply_user_surface_noise_reduction(data: dict) -> None:
         data["toolbar"] = toolbar
     if action_rows and not isinstance(data.get("action_groups"), list):
         data["action_groups"] = _build_user_surface_action_groups(action_rows)
+
+
+def _apply_user_surface_policies(data: dict) -> None:
+    head = _as_dict(data.get("head"))
+    view_type = _safe_lower(head.get("view_type") or data.get("view_type"))
+    model = _safe_text(head.get("model") or data.get("model"))
+    filters_primary_max = _USER_SURFACE_PRIMARY_FILTER_MAX
+    actions_primary_max = _USER_SURFACE_PRIMARY_ACTION_MAX
+    if view_type in {"form"}:
+        filters_primary_max = 0
+        actions_primary_max = 3
+    if model == "project.project":
+        actions_primary_max = min(actions_primary_max, 3)
+    data["surface_policies"] = {
+        "filters_primary_max": filters_primary_max,
+        "actions_primary_max": actions_primary_max,
+        "filters_max": _USER_SURFACE_FILTER_MAX,
+        "actions_max": _USER_SURFACE_ACTION_MAX,
+    }
 
 
 def _normalize_scene_list_profile(item: dict) -> dict:
@@ -1617,6 +1638,7 @@ def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:
             data.pop(key, None)
     if contract_mode == "user":
         _apply_user_surface_noise_reduction(data)
+        _apply_user_surface_policies(data)
 
 
 def _apply_semantic_governance(data: dict, contract_mode: str) -> None:
