@@ -1668,6 +1668,10 @@ verify.sprint.week1.audit.report: guard.prod.forbid
 verify.sprint.week2.final.report: guard.prod.forbid
 	@python3 scripts/verify/sprint_week2_final_report.py
 
+.PHONY: verify.phasex.operating.summary
+verify.phasex.operating.summary: guard.prod.forbid
+	@python3 scripts/verify/phasex_operating_summary_report.py
+
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
 
