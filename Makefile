@@ -1643,6 +1643,10 @@ verify.phasex.p2: guard.prod.forbid verify.role.capability.diff.report verify.ru
 verify.semantic.behavior.guard.report: guard.prod.forbid
 	@python3 scripts/verify/semantic_behavior_guard_report.py
 
+.PHONY: verify.product.capability.matrix.v2.report
+verify.product.capability.matrix.v2.report: guard.prod.forbid
+	@python3 scripts/verify/product_capability_matrix_v2_report.py
+
 verify.bundle.installation.ready: guard.prod.forbid
 	@python3 scripts/verify/bundle_installation_ready.py
 
