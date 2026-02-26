@@ -1613,7 +1613,7 @@ verify.contract.version.evolution.drill: guard.prod.forbid
 verify.product.capability.matrix.ready: guard.prod.forbid
 	@python3 scripts/verify/product_capability_matrix_ready.py
 
-.PHONY: verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report verify.phasex.p1
+.PHONY: verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report verify.capability.dormant.explain.guard verify.phasex.p1
 verify.capability.asset.map: guard.prod.forbid
 	@python3 scripts/verify/capability_asset_map_report.py
 
@@ -1623,7 +1623,10 @@ verify.scene.compression.model: guard.prod.forbid
 verify.button.semantic.report: guard.prod.forbid
 	@python3 scripts/verify/button_semantic_report.py
 
-verify.phasex.p1: guard.prod.forbid verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report
+verify.capability.dormant.explain.guard: guard.prod.forbid
+	@python3 scripts/verify/capability_dormant_explain_guard.py
+
+verify.phasex.p1: guard.prod.forbid verify.capability.asset.map verify.scene.compression.model verify.button.semantic.report verify.capability.dormant.explain.guard
 	@echo "[OK] verify.phasex.p1 done"
 
 .PHONY: verify.role.capability.diff.report verify.runtime.trend.report verify.catalog.runtime.explain.report verify.phasex.p2
@@ -1653,6 +1656,7 @@ verify.system.stability.stress.regression: guard.prod.forbid
 
 .PHONY: verify.sprint.week1.audit.report verify.sprint.week2.final.report
 verify.sprint.week1.audit.report: guard.prod.forbid
+	@$(MAKE) verify.capability.dormant.explain.guard
 	@python3 scripts/verify/sprint_week1_audit_report.py
 
 verify.sprint.week2.final.report: guard.prod.forbid

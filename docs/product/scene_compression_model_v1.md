@@ -3,8 +3,11 @@
 - objective: compress runtime scenes into product-facing domains (<=25)
 - runtime_scene_count: 164
 - canonical_scene_count: 24
-- domain_count: 7
+- domain_count: 6
+- taxonomy_domain_count: 6
 - unassigned_scene_count: 0
+- unknown_domain_count: 0
+- fallback_domain_scene_count: 0
 - error_count: 0
 - warning_count: 0
 
@@ -12,6 +15,8 @@
 
 - all_scene_assigned: PASS
 - domain_count_le_25: PASS
+- zero_unknown_domain: PASS
+- zero_fallback_domain_scene: PASS
 
 ## Domain Mapping
 
@@ -20,10 +25,9 @@
 | cost_control | 7 | 7 | cost.budget_alloc,cost.cost_compare,cost.profit_compare,cost.project_boq,cost.project_budget,cost.project_cost_ledger,cost.project_progress |
 | data_foundation | 1 | 1 | data.dictionary |
 | finance_operations | 6 | 6 | finance.center,finance.operating_metrics,finance.payment_ledger,finance.payment_requests,finance.settlement_orders,finance.treasury_ledger |
-| misc_domain | 29 | 1 | scene_smoke_default,scene_smoke_default__pkg1,scene_smoke_default__pkg10,scene_smoke_default__pkg11,scene_smoke_default__pkg12,scene_smoke_default__pkg13,scene_smoke_default__pkg14,scene_smoke_default__pkg15 |
 | portal_governance | 3 | 3 | portal.capability_matrix,portal.dashboard,portal.lifecycle |
 | project_execution | 89 | 5 | projects.dashboard,projects.dashboard_showcase,projects.intake,projects.intake__pkg1,projects.intake__pkg10,projects.intake__pkg11,projects.intake__pkg12,projects.intake__pkg13 |
-| workspace_shell | 29 | 1 | default,default__pkg1,default__pkg10,default__pkg11,default__pkg12,default__pkg13,default__pkg14,default__pkg15 |
+| workspace_shell | 58 | 2 | default,default__pkg1,default__pkg10,default__pkg11,default__pkg12,default__pkg13,default__pkg14,default__pkg15 |
 
 ## Scene -> Domain
 
@@ -162,32 +166,32 @@
 - projects.list__pkg7 -> project_execution (canonical=projects.list)
 - projects.list__pkg8 -> project_execution (canonical=projects.list)
 - projects.list__pkg9 -> project_execution (canonical=projects.list)
-- scene_smoke_default -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg1 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg10 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg11 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg12 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg13 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg14 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg15 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg16 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg17 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg18 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg19 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg2 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg20 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg21 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg22 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg23 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg24 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg25 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg26 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg27 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg28 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg3 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg4 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg5 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg6 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg7 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg8 -> misc_domain (canonical=scene_smoke_default)
-- scene_smoke_default__pkg9 -> misc_domain (canonical=scene_smoke_default)
+- scene_smoke_default -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg1 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg10 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg11 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg12 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg13 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg14 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg15 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg16 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg17 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg18 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg19 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg2 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg20 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg21 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg22 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg23 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg24 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg25 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg26 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg27 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg28 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg3 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg4 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg5 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg6 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg7 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg8 -> workspace_shell (canonical=scene_smoke_default)
+- scene_smoke_default__pkg9 -> workspace_shell (canonical=scene_smoke_default)
