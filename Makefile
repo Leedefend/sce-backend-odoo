@@ -1157,7 +1157,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
+.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
 
 fe.install:
 	@pnpm -C frontend install
@@ -1186,6 +1186,9 @@ verify.frontend.modifiers_runtime.guard: guard.prod.forbid
 verify.frontend.onchange_roundtrip.guard: guard.prod.forbid
 	@python3 scripts/verify/onchange_roundtrip_guard.py
 
+verify.frontend.onchange_contract_schema.guard: guard.prod.forbid
+	@python3 scripts/verify/onchange_contract_schema_guard.py
+
 verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/x2many_command_semantic_guard.py
 
@@ -1195,7 +1198,7 @@ verify.frontend.x2many_inline_edit.guard: guard.prod.forbid
 verify.contract.subviews.guard: guard.prod.forbid
 	@python3 scripts/verify/subviews_contract_guard.py
 
-verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.typecheck.strict verify.frontend.build
+verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.typecheck.strict verify.frontend.build
 	@echo "[OK] verify.frontend.quick.gate done"
 
 verify.frontend.suggested_action.contract_guard: guard.prod.forbid
