@@ -1,8 +1,10 @@
 import { intentRequest } from './intents';
 
 export type OnchangeResponse = {
+  schema_version?: string;
   patch?: Record<string, unknown>;
   modifiers_patch?: Record<string, Record<string, unknown>>;
+  line_patches?: Array<Record<string, unknown>>;
   warnings?: Array<{ title?: string; message?: string }>;
   applied_fields?: string[];
 };

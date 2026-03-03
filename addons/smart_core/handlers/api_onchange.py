@@ -11,6 +11,7 @@ from ..core.base_handler import BaseIntentHandler
 class ApiOnchangeHandler(BaseIntentHandler):
     INTENT_TYPE = "api.onchange"
     DESCRIPTION = "Contract-driven onchange roundtrip"
+    VERSION = "1.1.0"
     REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
     ACL_MODE = "explicit_check"
 
@@ -57,6 +58,69 @@ class ApiOnchangeHandler(BaseIntentHandler):
             return {str(key): "1" for key in methods.keys()}
         return {}
 
+    def _normalize_patch(self, env_model, patch_raw: Any) -> Dict[str, Any]:
+        if not isinstance(patch_raw, dict):
+            return {}
+        out: Dict[str, Any] = {}
+        for key, value in patch_raw.items():
+            name = str(key or "").strip()
+            if not name or name not in env_model._fields:
+                continue
+            out[name] = value
+        return out
+
+    def _normalize_domain_patch(self, env_model, domain_raw: Any) -> Dict[str, Any]:
+        if not isinstance(domain_raw, dict):
+            return {}
+        out: Dict[str, Any] = {}
+        for key, value in domain_raw.items():
+            name = str(key or "").strip()
+            if not name or name not in env_model._fields:
+                continue
+            if isinstance(value, list):
+                out[name] = value
+        return out
+
+    def _normalize_modifiers_patch(self, env_model, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:
+        if not isinstance(modifiers_raw, dict):
+            return {}
+        out: Dict[str, Dict[str, Any]] = {}
+        for key, bucket in modifiers_raw.items():
+            name = str(key or "").strip()
+            if not name or name not in env_model._fields:
+                continue
+            if not isinstance(bucket, dict):
+                continue
+            normalized: Dict[str, Any] = {}
+            for marker in ("invisible", "readonly", "required", "domain"):
+                if marker in bucket:
+                    normalized[marker] = bucket.get(marker)
+            if normalized:
+                out[name] = normalized
+        return out
+
+    def _normalize_warning_list(self, warning: Any) -> List[Dict[str, str]]:
+        warnings: List[Dict[str, str]] = []
+        if isinstance(warning, dict):
+            warnings.append(
+                {
+                    "title": str(warning.get("title") or "Onchange warning"),
+                    "message": str(warning.get("message") or ""),
+                }
+            )
+            return warnings
+        if isinstance(warning, list):
+            for item in warning:
+                if not isinstance(item, dict):
+                    continue
+                warnings.append(
+                    {
+                        "title": str(item.get("title") or "Onchange warning"),
+                        "message": str(item.get("message") or ""),
+                    }
+                )
+        return warnings
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
@@ -81,12 +145,14 @@ class ApiOnchangeHandler(BaseIntentHandler):
             return {
                 "ok": True,
                 "data": {
+                    "schema_version": "v1",
                     "patch": {},
                     "modifiers_patch": {},
+                    "line_patches": [],
                     "warnings": [],
                     "applied_fields": [],
                 },
-                "meta": {"model": model},
+                "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
             }
 
         field_onchange = self._build_field_onchange_map(env_model)
@@ -99,29 +165,26 @@ class ApiOnchangeHandler(BaseIntentHandler):
         if not isinstance(onchange_result, dict):
             onchange_result = {}
 
-        patch = onchange_result.get("value") if isinstance(onchange_result.get("value"), dict) else {}
-        domain_patch = onchange_result.get("domain") if isinstance(onchange_result.get("domain"), dict) else {}
-        warning = onchange_result.get("warning") if isinstance(onchange_result.get("warning"), dict) else {}
+        patch = self._normalize_patch(env_model, onchange_result.get("value"))
+        domain_patch = self._normalize_domain_patch(env_model, onchange_result.get("domain"))
+        warnings = self._normalize_warning_list(onchange_result.get("warning"))
 
-        warnings: List[Dict[str, str]] = []
-        if warning:
-            warnings.append(
-                {
-                    "title": str(warning.get("title") or "Onchange warning"),
-                    "message": str(warning.get("message") or ""),
-                }
-            )
-
-        # Domain-only patch can be consumed by frontend modifier engine (as supplemental hints).
-        modifiers_patch = {key: {"domain": value} for key, value in domain_patch.items()}
+        # Prefer backend-supplied modifier patch if exists, then merge domain as supplement.
+        modifiers_patch = self._normalize_modifiers_patch(env_model, onchange_result.get("modifiers_patch"))
+        for field_name, field_domain in domain_patch.items():
+            prev = modifiers_patch.get(field_name, {})
+            prev["domain"] = field_domain
+            modifiers_patch[field_name] = prev
 
         return {
             "ok": True,
             "data": {
+                "schema_version": "v1",
                 "patch": patch,
                 "modifiers_patch": modifiers_patch,
+                "line_patches": [],
                 "warnings": warnings,
                 "applied_fields": changed_fields,
             },
-            "meta": {"model": model},
+            "meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},
         }
