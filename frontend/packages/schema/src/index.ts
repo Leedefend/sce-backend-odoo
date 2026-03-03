@@ -210,6 +210,7 @@ export interface ExecuteButtonResult {
   reason_code?: string;
   res_model?: string;
   res_id?: number;
+  action_id?: number;
   raw_action?: Record<string, unknown>;
   message?: string;
 }
@@ -350,6 +351,7 @@ export interface ActionContract {
       layout?: Array<{ type?: string; name?: string }>;
       fields?: string[];
       order?: string;
+      chatter?: unknown;
     }
   >;
   toolbar?: {
@@ -442,6 +444,7 @@ export interface ViewButton {
   hotkey?: string;
   visible?: boolean;
   level?: string;
+  field?: string;
 }
 
 export interface FieldDescriptor {
@@ -454,6 +457,7 @@ export interface FieldDescriptor {
   selection?: Array<[string, string]>;
   relation?: string;
   relation_field?: string;
+  editable?: boolean;
 }
 
 export interface FormLayout {
