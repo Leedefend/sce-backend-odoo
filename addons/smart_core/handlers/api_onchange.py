@@ -134,7 +134,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
             row_patch = self._normalize_patch(env_model, item.get("patch"))
             row_modifiers = self._normalize_modifiers_patch(env_model, item.get("modifiers_patch"))
             warnings = self._normalize_warning_list(item.get("warnings"))
-            row_state = str(item.get("row_state") or "").strip().lower()
+            row_state = self._normalize_row_state(item, row_patch, warnings)
             normalized: Dict[str, Any] = {
                 "field": field,
                 "row_key": str(item.get("row_key") or "").strip(),
@@ -142,13 +142,39 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 "patch": row_patch,
                 "modifiers_patch": row_modifiers,
                 "warnings": warnings,
-                "row_state": row_state if row_state in ("create", "update", "remove", "keep") else "update",
+                "row_state": row_state,
+                "command_hint": self._command_hint_for_row_state(row_state),
             }
             # keep compatibility for future per-line domain support
             if isinstance(item.get("domain"), list):
                 normalized["domain"] = item.get("domain")
             out.append(normalized)
         return out
+
+    def _normalize_row_state(self, item: Dict[str, Any], row_patch: Dict[str, Any], warnings: List[Dict[str, str]]) -> str:
+        raw = str(item.get("row_state") or "").strip().lower()
+        if raw in ("create", "update", "remove", "keep"):
+            return raw
+        row_id_raw = item.get("row_id")
+        row_id = int(row_id_raw or 0) if str(row_id_raw or "").strip() else 0
+        if row_id <= 0 and row_patch:
+            return "create"
+        if row_id > 0 and row_patch:
+            return "update"
+        if row_id > 0 and not row_patch and not warnings:
+            return "remove"
+        return "keep"
+
+    def _command_hint_for_row_state(self, row_state: str) -> List[int]:
+        # x2many command heads in Odoo semantics:
+        # create -> 0, update -> 1, remove/unlink -> 2/3, keep -> 4/6 (context-dependent)
+        if row_state == "create":
+            return [0]
+        if row_state == "update":
+            return [1]
+        if row_state == "remove":
+            return [2, 3]
+        return [4, 6]
 
     def handle(self, payload=None, ctx=None):
         payload = payload or {}

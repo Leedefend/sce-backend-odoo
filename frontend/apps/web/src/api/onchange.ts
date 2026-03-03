@@ -8,6 +8,7 @@ export type OnchangeLinePatch = {
   modifiers_patch?: Record<string, Record<string, unknown>>;
   warnings?: Array<{ title?: string; message?: string }>;
   row_state?: 'create' | 'update' | 'remove' | 'keep' | string;
+  command_hint?: number[];
   domain?: unknown[];
 };
 

@@ -923,6 +923,13 @@ function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {
       const message = String(warn?.message || warn?.title || '').trim();
       if (message) messages.push(message);
     });
+    const rowState = String(patch.row_state || '').trim().toLowerCase();
+    if (rowState) {
+      messages.push(`联动状态: ${rowState}`);
+    }
+    if (Array.isArray(patch.command_hint) && patch.command_hint.length) {
+      messages.push(`命令提示: ${patch.command_hint.join('/')}`);
+    }
   });
   return Array.from(new Set(messages));
 }
