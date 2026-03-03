@@ -78,6 +78,9 @@
         <p v-if="validationErrors.length" class="validation-error">
           {{ validationErrors.join('；') }}
         </p>
+        <p v-if="onchangeWarnings.length" class="validation-warn">
+          {{ onchangeWarnings.map((item) => item.message || item.title || '').filter(Boolean).join('；') }}
+        </p>
         <div v-if="coreFieldsLabel" class="layout-divider">{{ coreFieldsLabel }}</div>
         <template v-for="node in layoutNodes" :key="node.key">
           <div v-if="showHud && node.kind === 'header'" class="layout-divider">头部</div>
@@ -154,9 +157,10 @@
               </div>
               <input
                 v-else
-                v-model="formData[node.name]"
+                :value="String(formData[node.name] ?? '')"
                 class="input"
                 :type="fieldInputType(fieldType(node.descriptor))"
+                @input="setTextField(node.name, ($event.target as HTMLInputElement).value)"
               />
             </template>
           </div>
@@ -203,6 +207,7 @@ import { isHudEnabled } from '../config/debug';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
+import { triggerOnchange } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
 import {
@@ -215,6 +220,7 @@ import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
+import { buildRuntimeFieldStates } from '../app/modifierEngine';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -270,6 +276,11 @@ const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
 const relationKeywords = reactive<Record<string, string>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
+const onchangeWarnings = ref<Array<{ title?: string; message?: string }>>([]);
+const changedFieldSet = new Set<string>();
+let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
+const applyingOnchangePatch = ref(false);
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
@@ -596,9 +607,26 @@ function relationCreateMode(fieldName: string, descriptor?: FieldDescriptor): 'p
 
 function relationDomain(descriptor?: FieldDescriptor) {
   const entry = relationEntry(descriptor);
+  const out: unknown[] = [];
   const type = String(entry?.defaultVals?.type || '').trim();
-  if (type) return [['type', '=', type]];
-  return undefined;
+  if (type) out.push(['type', '=', type]);
+  return out.length ? out : undefined;
+}
+
+function runtimeRelationDomain(name: string) {
+  const raw = (onchangeModifiersPatch.value?.[name] || {}) as Record<string, unknown>;
+  const domain = raw.domain;
+  if (!Array.isArray(domain)) return [];
+  return domain;
+}
+
+function mergedRelationDomain(name: string, descriptor?: FieldDescriptor) {
+  const base = relationDomain(descriptor);
+  const runtime = runtimeRelationDomain(name);
+  const out: unknown[] = [];
+  if (Array.isArray(base)) out.push(...base);
+  if (Array.isArray(runtime)) out.push(...runtime);
+  return out.length ? out : undefined;
 }
 
 async function queryRelationOptions(name: string, keyword: string) {
@@ -606,7 +634,7 @@ async function queryRelationOptions(name: string, keyword: string) {
   const relation = relationModel(name);
   if (!relation) return;
   const search = String(keyword || '').trim();
-  const domain = relationDomain(descriptor);
+  const domain = mergedRelationDomain(name, descriptor);
   try {
     const listed = await listRecords({
       model: relation,
@@ -661,6 +689,7 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
       const id = Number(created?.id || 0);
       if (Number.isFinite(id) && id > 0) {
         formData[fieldName] = Math.trunc(id);
+        markFieldChanged(fieldName);
         relationKeywords[fieldName] = label;
         await queryRelationOptions(fieldName, label);
       }
@@ -732,7 +761,7 @@ async function loadRelationOptions() {
     if (!['many2one', 'many2many', 'one2many'].includes(type)) return;
     const relation = String((descriptor as Record<string, unknown>).relation || '').trim();
     if (!relation) return;
-    const domain = relationDomain(descriptor as FieldDescriptor);
+    const domain = mergedRelationDomain(name, descriptor as FieldDescriptor);
     try {
       const listed = await listRecords({
         model: relation,
@@ -906,8 +935,27 @@ const contractVisibleFields = computed<string[]>(() => {
   const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
   return rows.map((name) => String(name || '').trim()).filter(Boolean);
 });
+const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
+  const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
+  return formView.field_modifiers || {};
+});
+const runtimeFieldStates = computed(() => {
+  const names = Object.keys(contract.value?.fields || {});
+  return buildRuntimeFieldStates({
+    fieldNames: names,
+    fieldModifiers: fieldModifierMap.value,
+    modifierPatch: onchangeModifiersPatch.value,
+    values: formData as Record<string, unknown>,
+  });
+});
+
+function runtimeState(name: string) {
+  return runtimeFieldStates.value[name] || { invisible: false, readonly: false, required: false };
+}
 
 function isFieldVisible(name: string) {
+  const state = runtimeState(name);
+  if (state.invisible) return false;
   const visible = contractVisibleFields.value;
   if (visible.length && !visible.includes(name)) return false;
   const core = coreFieldNames.value;
@@ -963,13 +1011,14 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       policyContext.value,
     );
     if (!resolved.visible) continue;
+    const state = runtimeState(name);
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(resolved.required),
+      readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(resolved.required || state.required),
       descriptor,
     });
   }
@@ -988,13 +1037,14 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       policyContext.value,
     );
     if (!resolved.visible) return;
+    const state = runtimeState(name);
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(resolved.required),
+      readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(resolved.required || state.required),
       descriptor,
     });
   });
@@ -1063,12 +1113,14 @@ function normalizeFieldValue(name: string, value: unknown) {
 
 function setBooleanField(name: string, checked: boolean) {
   formData[name] = checked;
+  markFieldChanged(name);
 }
 
 function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined, value: string) {
   const normalized = String(value || '').trim();
   if (!normalized) {
     formData[name] = false;
+    markFieldChanged(name);
     return;
   }
   if (normalized === MANY2ONE_CREATE_OPTION) {
@@ -1078,13 +1130,16 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   const id = Number(normalized);
   if (!Number.isFinite(id) || id <= 0) {
     formData[name] = false;
+    markFieldChanged(name);
     return;
   }
   formData[name] = Math.trunc(id);
+  markFieldChanged(name);
 }
 
 function setSelectionField(name: string, value: string) {
   formData[name] = value || false;
+  markFieldChanged(name);
 }
 
 function setRelationMultiField(name: string, target: HTMLSelectElement) {
@@ -1093,6 +1148,92 @@ function setRelationMultiField(name: string, target: HTMLSelectElement) {
     .filter((id) => Number.isFinite(id) && id > 0)
     .map((id) => Math.trunc(id));
   formData[name] = ids;
+  markFieldChanged(name);
+}
+
+function setTextField(name: string, value: string) {
+  formData[name] = value;
+  markFieldChanged(name);
+}
+
+function markFieldChanged(name: string) {
+  const key = String(name || '').trim();
+  if (!key || applyingOnchangePatch.value) return;
+  changedFieldSet.add(key);
+  scheduleOnchange();
+}
+
+function scheduleOnchange() {
+  if (onchangeTimer) clearTimeout(onchangeTimer);
+  onchangeTimer = setTimeout(() => {
+    void runOnchangeRoundtrip();
+  }, 300);
+}
+
+function buildOnchangeValues() {
+  const out: Record<string, unknown> = {};
+  Object.keys(contract.value?.fields || {}).forEach((name) => {
+    out[name] = normalizeFieldValue(name, formData[name]);
+  });
+  if (recordId.value) out.id = recordId.value;
+  return out;
+}
+
+async function runOnchangeRoundtrip() {
+  if (!model.value) return;
+  if (!changedFieldSet.size) return;
+  const changed = Array.from(changedFieldSet);
+  changedFieldSet.clear();
+  try {
+    const response = await triggerOnchange({
+      model: model.value,
+      res_id: recordId.value,
+      values: buildOnchangeValues(),
+      changed_fields: changed,
+      context: pickContractNavQuery(route.query as Record<string, unknown>),
+    });
+    const patch = response?.patch;
+    const modifiersPatch = response?.modifiers_patch;
+    const warnings = Array.isArray(response?.warnings) ? response.warnings : [];
+    onchangeWarnings.value = warnings;
+    if (modifiersPatch && typeof modifiersPatch === 'object') {
+      onchangeModifiersPatch.value = {
+        ...onchangeModifiersPatch.value,
+        ...(modifiersPatch as Record<string, Record<string, unknown>>),
+      };
+      const patchedFields = Object.keys(modifiersPatch as Record<string, Record<string, unknown>>);
+      await Promise.all(
+        patchedFields.map(async (name) => {
+          const descriptor = contract.value?.fields?.[name];
+          const ttype = fieldType(descriptor);
+          if (!['many2one', 'many2many', 'one2many'].includes(ttype)) return;
+          await queryRelationOptions(name, relationKeyword(name));
+        }),
+      );
+    }
+    if (patch && typeof patch === 'object') {
+      applyingOnchangePatch.value = true;
+      Object.entries(patch).forEach(([name, value]) => {
+        if (!(name in (contract.value?.fields || {}))) return;
+        const ttype = fieldType(contract.value?.fields?.[name]);
+        if (ttype === 'many2many' || ttype === 'one2many') {
+          formData[name] = Array.isArray(value) ? value : [];
+        } else if (ttype === 'many2one') {
+          const ids = normalizeRelationIds(value);
+          formData[name] = ids.length ? ids[0] : false;
+        } else if (ttype === 'date') {
+          formData[name] = toDateInputValue(value);
+        } else if (ttype === 'datetime') {
+          formData[name] = toDatetimeInputValue(value);
+        } else {
+          formData[name] = value;
+        }
+      });
+      applyingOnchangePatch.value = false;
+    }
+  } catch {
+    // Onchange is best-effort; keep current values when roundtrip fails.
+  }
 }
 
 function collectWritableValues() {
@@ -1144,6 +1285,7 @@ const hudEntries = computed(() => [
   { label: 'changed_fields', value: changedFieldCount.value },
   { label: 'actions_count', value: contractActions.value.length },
   { label: 'rights', value: `${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}` },
+  { label: 'onchange_warnings', value: onchangeWarnings.value.length },
 ]);
 
 async function loadContract() {
@@ -1183,6 +1325,13 @@ async function loadRecord() {
   Object.keys(relationKeywords).forEach((key) => {
     delete relationKeywords[key];
   });
+  onchangeModifiersPatch.value = {};
+  onchangeWarnings.value = [];
+  changedFieldSet.clear();
+  if (onchangeTimer) {
+    clearTimeout(onchangeTimer);
+    onchangeTimer = null;
+  }
   if (!recordId.value) {
     const context = contract.value?.head?.context;
     const defaults: Record<string, unknown> = {};
@@ -1552,6 +1701,13 @@ watch(
   grid-column: 1 / -1;
   margin: 0;
   color: #b91c1c;
+  font-size: 12px;
+}
+
+.validation-warn {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #92400e;
   font-size: 12px;
 }
 
