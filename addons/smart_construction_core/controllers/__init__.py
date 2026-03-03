@@ -14,4 +14,3 @@ from . import meta_controller
 from . import portal_dashboard_controller
 from . import portal_execute_button_controller
 from . import ui_contract_controller
-from . import my_work_controller
