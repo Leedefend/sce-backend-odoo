@@ -95,23 +95,24 @@
       <header class="risk-header">
         <h3>关键风险</h3>
         <p>10 秒识别整体风险态势。</p>
+        <p class="risk-summary">{{ riskSummaryLine }}</p>
       </header>
       <div class="risk-grid">
-        <article class="risk-card risk-red">
-          <p>严重</p>
+        <article class="risk-card risk-red" :class="{ glow: riskBuckets.red >= 3 }">
+          <p>严重 ⚠</p>
           <strong>{{ riskBuckets.red }}</strong>
         </article>
-        <article class="risk-card risk-amber">
-          <p>关注</p>
+        <article class="risk-card risk-amber" :class="{ glow: riskBuckets.amber >= 4 }">
+          <p>关注 ⏳</p>
           <strong>{{ riskBuckets.amber }}</strong>
         </article>
         <article class="risk-card risk-green">
-          <p>正常</p>
+          <p>正常 ✓</p>
           <strong>{{ riskBuckets.green }}</strong>
         </article>
       </div>
       <div class="risk-trend">
-        <p class="risk-subtitle">风险趋势（近三段）</p>
+        <p class="risk-subtitle">风险趋势（7/30 天）</p>
         <div class="trend-bars">
           <div v-for="(item, idx) in riskTrend" :key="`trend-${idx}`" class="trend-item">
             <span class="trend-label">{{ item.label }}</span>
@@ -124,6 +125,21 @@
         <p class="risk-subtitle">风险来源分布</p>
         <div class="source-tags">
           <span v-for="item in riskSources" :key="`source-${item.label}`" class="source-tag">{{ item.label }} {{ item.count }}</span>
+        </div>
+      </div>
+      <div class="risk-actions">
+        <p class="risk-subtitle">风险待处理清单</p>
+        <div class="risk-action-list">
+          <article v-for="item in riskActionItems" :key="item.id" class="risk-action-item">
+            <p class="risk-action-title">{{ item.title }}</p>
+            <p class="risk-action-desc">{{ item.description }}</p>
+            <div class="risk-action-buttons">
+              <button @click="openRiskAction(item, 'detail')">看详情</button>
+              <button @click="openRiskAction(item, 'assign')">分派</button>
+              <button @click="openRiskAction(item, 'close')">关闭</button>
+              <button @click="openRiskAction(item, 'approve')">发起审批</button>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -446,6 +462,14 @@ type AdviceItem = {
   actionEntryId?: string;
   actionPath?: string;
   actionQuery?: Record<string, string>;
+};
+type RiskActionItem = {
+  id: string;
+  title: string;
+  description: string;
+  sceneKey?: string;
+  path?: string;
+  query?: Record<string, string>;
 };
 type DemoStory = {
   id: string;
@@ -948,15 +972,46 @@ const riskBuckets = computed(() => {
 
 const riskTrend = computed(() => {
   const now = coreValue.value.riskCount;
-  const prev1 = Math.max(0, Math.round(now * 0.9));
-  const prev2 = Math.max(0, Math.round(now * 0.8));
-  const max = Math.max(now, prev1, prev2, 1);
+  const d7 = Math.max(0, Math.round(now * 0.88));
+  const d30 = Math.max(0, Math.round(now * 0.72));
+  const max = Math.max(now, d7, d30, 1);
   return [
-    { label: '前两周', value: prev2, percent: Math.round((prev2 / max) * 100) },
-    { label: '上周', value: prev1, percent: Math.round((prev1 / max) * 100) },
-    { label: '本周', value: now, percent: Math.round((now / max) * 100) },
+    { label: '30天前', value: d30, percent: Math.round((d30 / max) * 100) },
+    { label: '7天前', value: d7, percent: Math.round((d7 / max) * 100) },
+    { label: '当前', value: now, percent: Math.round((now / max) * 100) },
   ];
 });
+const riskSummaryLine = computed(() => {
+  if (riskBuckets.value.red >= 3) return '高风险集中在成本偏差与付款节点，建议今日优先闭环。';
+  if (riskBuckets.value.red >= 1) return '存在高风险项，建议先处理严重项再推进常规工作。';
+  return '当前未出现严重风险，建议保持日常巡检节奏。';
+});
+const riskActionItems = computed<RiskActionItem[]>(() => [
+  {
+    id: 'risk-cost',
+    title: '成本执行偏差超阈值',
+    description: '2 个项目成本执行率 > 85%，需立即核查偏差明细。',
+    sceneKey: 'projects.ledger',
+    path: '/my-work',
+    query: { section: 'todo', source: 'project.risk', search: '成本' },
+  },
+  {
+    id: 'risk-payment',
+    title: '付款节点风险积压',
+    description: '付款审批链路出现积压，影响合同履约与供应商稳定性。',
+    sceneKey: 'finance.payment_requests',
+    path: '/my-work',
+    query: { section: 'todo', search: '付款' },
+  },
+  {
+    id: 'risk-schedule',
+    title: '关键路径进度滞后',
+    description: '关键里程碑滞后超过预警阈值，需明确责任人与纠偏计划。',
+    sceneKey: 'projects.list',
+    path: '/my-work',
+    query: { section: 'todo', source: 'project.task', search: '逾期' },
+  },
+]);
 
 const riskSources = computed(() => {
   return [
@@ -1091,6 +1146,18 @@ function openAdvice(item: AdviceItem) {
 
 function openDemoStory(story: DemoStory) {
   router.push({ path: story.actionPath, query: story.actionQuery || {} }).catch(() => {});
+}
+
+function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'close' | 'approve') {
+  void trackUsageEvent('workspace.risk_action_click', { item_id: item.id, action }).catch(() => {});
+  if (item.sceneKey) {
+    const entry = entries.value.find((candidate) => candidate.sceneKey === item.sceneKey && candidate.state === 'READY');
+    if (entry) {
+      void openScene(entry);
+      return;
+    }
+  }
+  router.push({ path: item.path || '/my-work', query: item.query || { section: 'todo' } }).catch(() => {});
 }
 
 function toggleMode() {
@@ -2107,6 +2174,13 @@ function highlightParts(raw: string) {
   font-size: 12px;
 }
 
+.risk-summary {
+  margin: 4px 0 0;
+  color: #7f1d1d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .risk-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2116,6 +2190,10 @@ function highlightParts(raw: string) {
 .risk-card {
   border-radius: 10px;
   padding: 10px;
+}
+
+.risk-card.glow {
+  box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.18);
 }
 
 .risk-card p {
@@ -2198,6 +2276,51 @@ function highlightParts(raw: string) {
   padding: 3px 8px;
   color: #334155;
   background: #f8fafc;
+}
+
+.risk-actions {
+  margin-top: 10px;
+}
+
+.risk-action-list {
+  display: grid;
+  gap: 8px;
+}
+
+.risk-action-item {
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff7f7;
+  padding: 10px;
+}
+
+.risk-action-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7f1d1d;
+}
+
+.risk-action-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #7c2d12;
+}
+
+.risk-action-buttons {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.risk-action-buttons button {
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #fff;
+  color: #991b1b;
+  padding: 5px 8px;
+  cursor: pointer;
 }
 
 .ops-grid {
