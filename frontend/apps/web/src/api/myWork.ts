@@ -1,4 +1,3 @@
-import { ApiError, apiRequestRaw } from './client';
 import { intentRequest } from './intents';
 import type {
   ContractFailureMeta,
@@ -115,26 +114,10 @@ export async function fetchMyWorkSummary(
     reason_code: options?.reasonCode ?? 'all',
     search: options?.search ?? '',
   };
-  try {
-    const response = await apiRequestRaw<{ ok?: boolean; data?: MyWorkSummaryResponse; error?: { message?: string } }>('/api/my-work', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    });
-    const payload = response.body || {};
-    if (payload.ok && payload.data) {
-      return payload.data;
-    }
-    const message = payload.error?.message || 'my-work api failed';
-    throw new ApiError(message, 500, response.traceId || undefined, { reasonCode: 'MY_WORK_API_FAILED' });
-  } catch (err) {
-    if (err instanceof ApiError && err.status !== 404) {
-      throw err;
-    }
-    return intentRequest<MyWorkSummaryResponse>({
-      intent: 'my.work.summary',
-      params,
-    });
-  }
+  return intentRequest<MyWorkSummaryResponse>({
+    intent: 'my.work.summary',
+    params,
+  });
 }
 
 export type MyWorkCompleteResult = {
