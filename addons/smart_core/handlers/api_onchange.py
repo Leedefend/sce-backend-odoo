@@ -131,8 +131,8 @@ class ApiOnchangeHandler(BaseIntentHandler):
             field = str(item.get("field") or "").strip()
             if not field or field not in env_model._fields:
                 continue
-            row_patch = self._normalize_patch(env_model, item.get("patch"))
-            row_modifiers = self._normalize_modifiers_patch(env_model, item.get("modifiers_patch"))
+            row_patch = self._normalize_line_patch_values(env_model, field, item.get("patch"))
+            row_modifiers = self._normalize_line_patch_modifiers(env_model, field, item.get("modifiers_patch"))
             warnings = self._normalize_warning_list(item.get("warnings"))
             row_state = self._normalize_row_state(item, row_patch, warnings)
             normalized: Dict[str, Any] = {
@@ -149,6 +149,56 @@ class ApiOnchangeHandler(BaseIntentHandler):
             if isinstance(item.get("domain"), list):
                 normalized["domain"] = item.get("domain")
             out.append(normalized)
+        return out
+
+    def _relation_field_names(self, env_model, field_name: str) -> List[str]:
+        field_obj = env_model._fields.get(field_name)
+        if not field_obj:
+            return []
+        ftype = str(getattr(field_obj, "type", "") or "").strip().lower()
+        if ftype not in ("one2many", "many2many"):
+            return []
+        relation = str(getattr(field_obj, "comodel_name", "") or "").strip()
+        if not relation or relation not in self.env:
+            return []
+        try:
+            return list((self.env[relation]._fields or {}).keys())
+        except Exception:
+            return []
+
+    def _normalize_line_patch_values(self, env_model, field_name: str, patch_raw: Any) -> Dict[str, Any]:
+        if not isinstance(patch_raw, dict):
+            return {}
+        allowed = set(self._relation_field_names(env_model, field_name))
+        if not allowed:
+            return {}
+        out: Dict[str, Any] = {}
+        for key, value in patch_raw.items():
+            name = str(key or "").strip()
+            if not name or name not in allowed:
+                continue
+            out[name] = value
+        return out
+
+    def _normalize_line_patch_modifiers(self, env_model, field_name: str, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:
+        if not isinstance(modifiers_raw, dict):
+            return {}
+        allowed = set(self._relation_field_names(env_model, field_name))
+        if not allowed:
+            return {}
+        out: Dict[str, Dict[str, Any]] = {}
+        for key, bucket in modifiers_raw.items():
+            name = str(key or "").strip()
+            if not name or name not in allowed:
+                continue
+            if not isinstance(bucket, dict):
+                continue
+            normalized: Dict[str, Any] = {}
+            for marker in ("invisible", "readonly", "required", "domain"):
+                if marker in bucket:
+                    normalized[marker] = bucket.get(marker)
+            if normalized:
+                out[name] = normalized
         return out
 
     def _normalize_row_state(self, item: Dict[str, Any], row_patch: Dict[str, Any], warnings: List[Dict[str, str]]) -> str:

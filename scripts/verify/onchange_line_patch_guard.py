@@ -28,6 +28,11 @@ def main() -> int:
 
     backend_markers = [
         'def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:',
+        'def _relation_field_names(self, env_model, field_name: str) -> List[str]:',
+        'def _normalize_line_patch_values(self, env_model, field_name: str, patch_raw: Any) -> Dict[str, Any]:',
+        'def _normalize_line_patch_modifiers(self, env_model, field_name: str, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:',
+        'row_patch = self._normalize_line_patch_values(env_model, field, item.get("patch"))',
+        'row_modifiers = self._normalize_line_patch_modifiers(env_model, field, item.get("modifiers_patch"))',
         'def _normalize_row_state(self, item: Dict[str, Any], row_patch: Dict[str, Any], warnings: List[Dict[str, str]]) -> str:',
         'def _command_hint_for_row_state(self, row_state: str) -> List[int]:',
         '"command_hint": self._command_hint_for_row_state(row_state),',
