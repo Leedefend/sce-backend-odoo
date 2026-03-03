@@ -120,8 +120,8 @@
                   >
                     {{ option.label }}
                   </option>
-                  <option v-if="canOpenRelationCreate(node.name, node.descriptor)" :value="MANY2ONE_CREATE_OPTION">
-                    + 新建并维护...
+                  <option v-if="relationCreateMode(node.name, node.descriptor) !== 'none'" :value="MANY2ONE_CREATE_OPTION">
+                    {{ relationCreateMode(node.name, node.descriptor) === 'page' ? '+ 新建并维护...' : '+ 快速新建...' }}
                   </option>
                 </select>
               </div>
@@ -194,13 +194,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { isHudEnabled } from '../config/debug';
-import { loadActionContractRaw } from '../api/contract';
+import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
@@ -215,7 +215,6 @@ import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
-import { findActionNodeByModel } from '../app/menu';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -566,44 +565,48 @@ function relationEntry(descriptor?: FieldDescriptor) {
   const row = entry as Record<string, unknown>;
   const actionId = toPositiveInt(row.action_id);
   const menuId = toPositiveInt(row.menu_id);
+  const createModeRaw = String(row.create_mode || '').trim().toLowerCase();
+  const createMode = createModeRaw === 'page' || createModeRaw === 'quick' ? createModeRaw : 'disabled';
+  const defaultVals = row.default_vals && typeof row.default_vals === 'object' && !Array.isArray(row.default_vals)
+    ? (row.default_vals as Record<string, unknown>)
+    : {};
   return {
     model: String(row.model || '').trim(),
     actionId,
     menuId,
     canCreate: Boolean(row.can_create),
+    createMode,
+    defaultVals,
+    reasonCode: String(row.reason_code || '').trim(),
   };
 }
 
-function inferDictionaryType(fieldName: string) {
-  const key = String(fieldName || '').trim().toLowerCase();
-  if (key === 'project_type_id') return 'project_type';
-  if (key === 'project_category_id') return 'project_category';
-  return '';
-}
-
-function canQuickCreateRelation(fieldName: string, descriptor?: FieldDescriptor) {
-  const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
-  if (relation !== 'sc.dictionary') return false;
-  return Boolean(inferDictionaryType(fieldName));
-}
-
-function canOpenRelationCreate(fieldName: string, descriptor?: FieldDescriptor) {
-  const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
-  if (!relation) return false;
+function canOpenRelationCreatePage(fieldName: string, descriptor?: FieldDescriptor) {
   const entry = relationEntry(descriptor);
-  if (entry?.actionId) return true;
-  if (canQuickCreateRelation(fieldName, descriptor)) return true;
-  return Boolean(findActionNodeByModel(session.menuTree, relation)?.meta?.action_id);
+  return Boolean(entry?.actionId && entry?.createMode === 'page');
+}
+
+function relationCreateMode(fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
+  const entry = relationEntry(descriptor);
+  if (!entry) return 'none';
+  if (entry.createMode === 'page' && entry.actionId) return 'page';
+  if (entry.createMode === 'quick' && entry.canCreate) return 'quick';
+  return 'none';
+}
+
+function relationDomain(descriptor?: FieldDescriptor) {
+  const entry = relationEntry(descriptor);
+  const type = String(entry?.defaultVals?.type || '').trim();
+  if (type) return [['type', '=', type]];
+  return undefined;
 }
 
 async function queryRelationOptions(name: string, keyword: string) {
+  const descriptor = contract.value?.fields?.[name];
   const relation = relationModel(name);
   if (!relation) return;
   const search = String(keyword || '').trim();
-  const dictType = inferDictionaryType(name);
-  const domain = relation === 'sc.dictionary' && dictType
-    ? [['type', '=', dictType]]
-    : undefined;
+  const domain = relationDomain(descriptor);
   try {
     const listed = await listRecords({
       model: relation,
@@ -638,61 +641,90 @@ async function queryRelationOptions(name: string, keyword: string) {
 async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescriptor) {
   const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
   if (!relation) return;
-  const entry = relationEntry(descriptor);
-  const actionNode = !entry?.actionId ? findActionNodeByModel(session.menuTree, relation) : null;
-  const relationActionId = entry?.actionId || toPositiveInt(actionNode?.meta?.action_id);
-  const menuId = entry?.menuId || toPositiveInt(actionNode?.menu_id);
-  if (!relationActionId) {
-    if (canQuickCreateRelation(fieldName, descriptor)) {
-      const dictType = inferDictionaryType(fieldName);
-      const label = String(window.prompt('未配置维护入口，请输入新选项名称') || '').trim();
-      if (!label) return;
-      try {
-        const vals: Record<string, unknown> = { name: label };
-        if (relation === 'sc.dictionary' && dictType) {
-          vals.type = dictType;
-          vals.code = label.toUpperCase().replace(/\\s+/g, '_').slice(0, 60);
-        }
-        const created = await createRecord({ model: relation, vals });
-        const id = Number(created?.id || 0);
-        if (Number.isFinite(id) && id > 0) {
-          formData[fieldName] = Math.trunc(id);
-          relationKeywords[fieldName] = label;
-          await queryRelationOptions(fieldName, label);
-        }
-        return;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : '新建选项失败';
-        validationErrors.value = [message];
-        return;
-      }
-    }
-    validationErrors.value = [`未找到 ${relation} 的表单入口，请联系管理员配置菜单动作`];
+  const mode = relationCreateMode(fieldName, descriptor);
+  if (mode === 'none') {
+    validationErrors.value = [`未找到 ${relation} 的新建入口，请联系管理员配置菜单动作`];
     return;
   }
+  const entry = relationEntry(descriptor);
+  const relationActionId = entry?.actionId || null;
+  const menuId = entry?.menuId || 0;
+  const quickCreate = async () => {
+    const label = String(window.prompt('当前未配置维护页面，请输入新选项名称（快速新建）') || '').trim();
+    if (!label) return;
+    try {
+      const vals: Record<string, unknown> = { ...(entry?.defaultVals || {}), name: label };
+      if (relation === 'sc.dictionary' && typeof vals.type === 'string' && String(vals.type || '').trim()) {
+        vals.code = label.toUpperCase().replace(/\\s+/g, '_').slice(0, 60);
+      }
+      const created = await createRecord({ model: relation, vals });
+      const id = Number(created?.id || 0);
+      if (Number.isFinite(id) && id > 0) {
+        formData[fieldName] = Math.trunc(id);
+        relationKeywords[fieldName] = label;
+        await queryRelationOptions(fieldName, label);
+      }
+      return;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '快速新建失败';
+      validationErrors.value = [message];
+      return;
+    }
+  };
+  if (!relationActionId && mode === 'quick') {
+    await quickCreate();
+    return;
+  }
+  if (!relationActionId) {
+    validationErrors.value = [`未找到 ${relation} 的维护页面入口，请联系管理员配置 action/menu`];
+    return;
+  }
+  const defaultQuery = Object.entries(entry?.defaultVals || {}).reduce<Record<string, unknown>>((acc, [key, value]) => {
+    if (!key) return acc;
+    acc[`default_${key}`] = value;
+    return acc;
+  }, {});
   const nextQuery = pickContractNavQuery(route.query as Record<string, unknown>, {
     action_id: relationActionId,
     menu_id: menuId || undefined,
     view_mode: 'form',
+    ...defaultQuery,
   });
   const returnUrl = `${window.location.pathname}${window.location.search}`;
-  await router.push({
-    name: 'model-form',
-    params: { model: relation, id: 'new' },
-    query: {
-      ...nextQuery,
-      return_url: returnUrl,
-      return_field: fieldName,
-      return_model: model.value,
-      return_action_id: actionId.value || undefined,
-      return_menu_id: Number(route.query.menu_id || 0) || undefined,
-    },
-  });
+  try {
+    await router.push({
+      name: 'model-form',
+      params: { model: relation, id: 'new' },
+      query: {
+        ...nextQuery,
+        return_url: encodeURIComponent(returnUrl),
+        return_field: fieldName,
+        return_model: model.value,
+        return_action_id: actionId.value || undefined,
+        return_menu_id: Number(route.query.menu_id || 0) || undefined,
+      },
+    });
+  } catch (err) {
+    if (relation === 'sc.dictionary' && mode === 'page' && entry?.canCreate && Object.keys(entry?.defaultVals || {}).length) {
+      await quickCreate();
+      return;
+    }
+    validationErrors.value = [err instanceof Error ? err.message : '跳转新建页面失败'];
+  }
 }
 
 async function loadRelationOptions() {
   const fields = contract.value?.fields || {};
-  const entries = Object.entries(fields);
+  const visibleRelationFields = new Set(
+    layoutNodes.value
+      .filter((node) => node.kind === 'field' && isFieldVisible(node.name))
+      .map((node) => node.name),
+  );
+  const entries = Object.entries(fields).filter(([name]) => {
+    if (!visibleRelationFields.size) return true;
+    if (visibleRelationFields.has(name)) return true;
+    return relationIds(name).length > 0;
+  });
   const next: Record<string, RelationOption[]> = {};
   await Promise.all(entries.map(async ([name, descriptor]) => {
     if (!descriptor || typeof descriptor !== 'object') return;
@@ -700,10 +732,7 @@ async function loadRelationOptions() {
     if (!['many2one', 'many2many', 'one2many'].includes(type)) return;
     const relation = String((descriptor as Record<string, unknown>).relation || '').trim();
     if (!relation) return;
-    const dictType = inferDictionaryType(name);
-    const domain = relation === 'sc.dictionary' && dictType
-      ? [['type', '=', dictType]]
-      : undefined;
+    const domain = relationDomain(descriptor as FieldDescriptor);
     try {
       const listed = await listRecords({
         model: relation,
@@ -1044,7 +1073,6 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   }
   if (normalized === MANY2ONE_CREATE_OPTION) {
     void openRelationCreateForm(name, descriptor);
-    formData[name] = false;
     return;
   }
   const id = Number(normalized);
@@ -1084,6 +1112,17 @@ function fieldInputType(ttype?: string) {
   return 'text';
 }
 
+function normalizeRouteDefault(value: unknown) {
+  const raw = Array.isArray(value) ? value[value.length - 1] : value;
+  if (typeof raw !== 'string') return raw;
+  const normalized = raw.trim();
+  if (!normalized) return '';
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(normalized)) return Number(normalized);
+  return normalized;
+}
+
 function resolveNavigationUrl(url: string) {
   const raw = String(url || '').trim();
   if (!raw) return '';
@@ -1108,13 +1147,26 @@ const hudEntries = computed(() => [
 ]);
 
 async function loadContract() {
-  if (!actionId.value) {
-    throw new Error('missing action_id');
+  const profile = recordId.value ? 'edit' : 'create';
+  const currentModel = String(model.value || '').trim();
+  let response: Awaited<ReturnType<typeof loadActionContractRaw>> | null = null;
+  if (actionId.value) {
+    try {
+      response = await loadActionContractRaw(actionId.value, {
+        recordId: recordId.value,
+        renderProfile: profile,
+      });
+    } catch {
+      response = null;
+    }
   }
-  const response = await loadActionContractRaw(actionId.value, {
-    recordId: recordId.value,
-    renderProfile: recordId.value ? 'edit' : 'create',
-  });
+  if (!response && currentModel) {
+    response = await loadModelContractRaw(currentModel, {
+      viewType: 'form',
+      recordId: recordId.value,
+      renderProfile: profile,
+    });
+  }
   if (!response?.data || typeof response.data !== 'object') {
     throw new Error('empty contract');
   }
@@ -1134,9 +1186,14 @@ async function loadRecord() {
   if (!recordId.value) {
     const context = contract.value?.head?.context;
     const defaults: Record<string, unknown> = {};
+    Object.entries(route.query as Record<string, unknown>).forEach(([key, value]) => {
+      if (key.startsWith('default_')) {
+        defaults[key.replace(/^default_/, '')] = normalizeRouteDefault(value);
+      }
+    });
     if (context && typeof context === 'object' && !Array.isArray(context)) {
       Object.entries(context).forEach(([key, value]) => {
-        if (key.startsWith('default_')) {
+        if (key.startsWith('default_') && !(key.replace(/^default_/, '') in defaults)) {
           defaults[key.replace(/^default_/, '')] = value;
         }
       });
@@ -1398,7 +1455,13 @@ function exportContractJson() {
   URL.revokeObjectURL(url);
 }
 
-reload();
+watch(
+  () => `${String(route.params.model || '')}|${String(route.params.id || '')}|${String(route.query.action_id || '')}`,
+  () => {
+    void reload();
+  },
+  { immediate: true },
+);
 </script>
 
 <style scoped>
@@ -1520,10 +1583,6 @@ reload();
 
 .relation-search {
   font-size: 12px;
-}
-
-.relation-create-btn {
-  justify-self: start;
 }
 
 .label {

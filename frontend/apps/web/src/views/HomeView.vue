@@ -1,5 +1,6 @@
 <template>
   <section class="capability-home">
+    <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
     <header class="hero">
       <span v-if="mode === 'demo'" class="demo-badge">DEMO</span>
       <div class="hero-main">
@@ -59,6 +60,7 @@
           <span class="value-state" :class="`state-${metric.level}`">{{ levelLabel(metric.level) }}</span>
           <span>{{ metric.delta }}</span>
         </p>
+        <p class="value-judge">{{ metric.hint }}</p>
       </article>
     </section>
 
@@ -80,20 +82,6 @@
           <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
             {{ item.ready === false ? '即将开放' : todoActionLabel(item.title) }}
           </button>
-        </article>
-      </div>
-    </section>
-
-    <section v-if="mode === 'demo'" class="story-section" aria-label="演示项目故事线">
-      <header class="ops-header">
-        <h3>演示项目故事线</h3>
-        <p>用于讲解成本偏差、审批积压、合同先干后签等关键冲突。</p>
-      </header>
-      <div class="story-grid">
-        <article v-for="story in demoStories" :key="story.id" class="story-card" :class="`story-${story.level}`">
-          <p class="story-title">{{ story.project }} · {{ story.conflict }}</p>
-          <p class="story-desc">{{ story.summary }}</p>
-          <button class="story-btn" @click="openDemoStory(story)">{{ story.actionLabel }}</button>
         </article>
       </div>
     </section>
@@ -151,56 +139,67 @@
       </div>
     </section>
 
-    <section class="ops-section" aria-label="项目经营概览区">
-      <header class="ops-header">
-        <h3>项目经营概览</h3>
-        <p>看得懂、可比较、可判断。</p>
-      </header>
-      <div class="ops-grid">
-        <article class="ops-card">
-          <p>合同额 vs 累计产值</p>
-          <div class="compare-line">
-            <span>合同额</span>
-            <div class="compare-track"><div class="compare-fill contract" :style="{ width: `${opsBars.contract}%` }"></div></div>
-            <strong>{{ formatAmountWan(coreValue.contractAmount) }}</strong>
-          </div>
-          <div class="compare-line">
-            <span>累计产值</span>
-            <div class="compare-track"><div class="compare-fill output" :style="{ width: `${opsBars.output}%` }"></div></div>
-            <strong>{{ formatAmountWan(coreValue.outputValue) }}</strong>
-          </div>
-        </article>
-        <article class="ops-card">
-          <p>成本执行率</p>
-          <h4>{{ opsKpi.costRate }}%</h4>
-          <small>{{ trendText(opsKpi.costRateDelta) }}</small>
-        </article>
-        <article class="ops-card">
-          <p>资金支付比例</p>
-          <h4>{{ opsKpi.paymentRate }}%</h4>
-          <small>{{ trendText(opsKpi.paymentRateDelta) }}</small>
-        </article>
-        <article class="ops-card">
-          <p>本月产值趋势</p>
-          <h4>{{ trendText(opsKpi.outputTrendDelta) }}</h4>
-          <small>基于当前可见业务数据</small>
-        </article>
-      </div>
-    </section>
+    <details v-if="mode === 'demo'" class="secondary-panel demo-story-panel">
+      <summary>演示项目故事线</summary>
+      <section class="story-section" aria-label="演示项目故事线">
+        <div class="story-grid">
+          <article v-for="story in demoStories" :key="story.id" class="story-card" :class="`story-${story.level}`">
+            <p class="story-title">{{ story.project }} · {{ story.conflict }}</p>
+            <p class="story-desc">{{ story.summary }}</p>
+            <button class="story-btn" @click="openDemoStory(story)">{{ story.actionLabel }}</button>
+          </article>
+        </div>
+      </section>
+    </details>
 
-    <section class="advice-section" aria-label="系统建议关注事项">
-      <header class="ops-header">
-        <h3>系统建议关注事项</h3>
-        <p>基于当前数据自动生成的管理提醒。</p>
-      </header>
-      <div class="advice-list">
-        <article v-for="item in systemAdvice" :key="item.id" class="advice-item" :class="`advice-${item.level}`">
-          <p class="advice-title">{{ item.title }}</p>
-          <p class="advice-desc">{{ item.description }}</p>
-          <button v-if="item.actionLabel" class="advice-btn" @click="openAdvice(item)">{{ item.actionLabel }}</button>
-        </article>
-      </div>
-    </section>
+    <details class="secondary-panel">
+      <summary>项目经营概览</summary>
+      <section class="ops-section" aria-label="项目经营概览区">
+        <div class="ops-grid">
+          <article class="ops-card">
+            <p>合同额 vs 累计产值</p>
+            <div class="compare-line">
+              <span>合同额</span>
+              <div class="compare-track"><div class="compare-fill contract" :style="{ width: `${opsBars.contract}%` }"></div></div>
+              <strong>{{ formatAmountWan(coreValue.contractAmount) }}</strong>
+            </div>
+            <div class="compare-line">
+              <span>累计产值</span>
+              <div class="compare-track"><div class="compare-fill output" :style="{ width: `${opsBars.output}%` }"></div></div>
+              <strong>{{ formatAmountWan(coreValue.outputValue) }}</strong>
+            </div>
+          </article>
+          <article class="ops-card">
+            <p>成本执行率</p>
+            <h4>{{ opsKpi.costRate }}%</h4>
+            <small>{{ trendText(opsKpi.costRateDelta) }}</small>
+          </article>
+          <article class="ops-card">
+            <p>资金支付比例</p>
+            <h4>{{ opsKpi.paymentRate }}%</h4>
+            <small>{{ trendText(opsKpi.paymentRateDelta) }}</small>
+          </article>
+          <article class="ops-card">
+            <p>本月产值趋势</p>
+            <h4>{{ trendText(opsKpi.outputTrendDelta) }}</h4>
+            <small>基于当前可见业务数据</small>
+          </article>
+        </div>
+      </section>
+    </details>
+
+    <details class="secondary-panel">
+      <summary>系统建议关注事项</summary>
+      <section class="advice-section" aria-label="系统建议关注事项">
+        <div class="advice-list">
+          <article v-for="item in systemAdvice" :key="item.id" class="advice-item" :class="`advice-${item.level}`">
+            <p class="advice-title">{{ item.title }}</p>
+            <p class="advice-desc">{{ item.description }}</p>
+            <button v-if="item.actionLabel" class="advice-btn" @click="openAdvice(item)">{{ item.actionLabel }}</button>
+          </article>
+        </div>
+      </section>
+    </details>
 
     <section v-if="showGroupOverview" class="group-overview" aria-label="辅助入口区">
       <header class="group-overview-header">
@@ -459,6 +458,7 @@ type CoreMetric = {
   value: string;
   level: MetricLevel;
   delta: string;
+  hint: string;
 };
 type AdviceItem = {
   id: string;
@@ -883,6 +883,7 @@ const coreMetrics = computed<CoreMetric[]>(() => {
       value: formatCompactNumber(coreValue.value.projectCount),
       level: coreValue.value.projectCount > 0 ? 'green' : 'amber',
       delta: '项目规模可见',
+      hint: coreValue.value.projectCount > 0 ? '项目分布已建立，持续关注关键节点。' : '暂无项目数据，请确认权限或数据初始化。',
     },
     {
       key: 'contract',
@@ -890,6 +891,7 @@ const coreMetrics = computed<CoreMetric[]>(() => {
       value: formatAmountWan(coreValue.value.contractAmount),
       level: coreValue.value.contractAmount > 0 ? 'green' : 'amber',
       delta: '合同执行基线',
+      hint: coreValue.value.contractAmount > 0 ? '合同基线已建立，可继续跟踪履约。' : '当前合同金额为 0，建议检查合同台账。',
     },
     {
       key: 'output',
@@ -897,6 +899,7 @@ const coreMetrics = computed<CoreMetric[]>(() => {
       value: formatAmountWan(coreValue.value.outputValue),
       level: coreValue.value.outputValue > 0 ? 'green' : 'amber',
       delta: '当前产值沉淀',
+      hint: coreValue.value.outputValue > 0 ? '产值持续沉淀，可对照合同进度复核。' : '暂无产值沉淀，建议核对产值上报链路。',
     },
     {
       key: 'risk',
@@ -904,6 +907,10 @@ const coreMetrics = computed<CoreMetric[]>(() => {
       value: formatCompactNumber(coreValue.value.riskCount),
       level: resolveMetricLevel(coreValue.value.riskCount, 3, 8),
       delta: '需持续跟进',
+      hint:
+        coreValue.value.riskCount > 0
+          ? `存在 ${formatCompactNumber(coreValue.value.riskCount)} 项风险，优先闭环严重项。`
+          : '当前暂无风险告警，运行平稳。',
     },
     {
       key: 'abnormal',
@@ -911,6 +918,10 @@ const coreMetrics = computed<CoreMetric[]>(() => {
       value: formatCompactNumber(coreValue.value.monthlyAnomalyCount),
       level: resolveMetricLevel(coreValue.value.monthlyAnomalyCount, 4, 10),
       delta: '关注异常闭环',
+      hint:
+        coreValue.value.monthlyAnomalyCount > 0
+          ? '存在异常事项，建议今日完成闭环。'
+          : '本月暂无异常事项，保持日常巡检。',
     },
   ];
 });
@@ -1905,6 +1916,12 @@ function highlightParts(raw: string) {
   gap: 8px;
 }
 
+.value-judge {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
 .value-state {
   border-radius: 999px;
   padding: 2px 8px;
@@ -1935,8 +1952,8 @@ function highlightParts(raw: string) {
   border: 1px solid rgba(15, 23, 42, 0.08);
   position: relative;
   background:
-    radial-gradient(130% 200% at 0% 0%, rgba(14, 116, 144, 0.08), rgba(255, 255, 255, 0) 58%),
-    linear-gradient(135deg, rgba(21, 128, 61, 0.07), rgba(2, 132, 199, 0.1));
+    radial-gradient(120% 180% at 0% 0%, rgba(14, 116, 144, 0.05), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(135deg, rgba(21, 128, 61, 0.04), rgba(2, 132, 199, 0.06));
 }
 
 .hero-main {
@@ -1992,25 +2009,27 @@ function highlightParts(raw: string) {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  opacity: 0.75;
 }
 
 .product-pill {
-  font-size: 11px;
-  color: #0f172a;
-  border: 1px solid #cbd5e1;
+  font-size: 10px;
+  color: #334155;
+  border: 1px solid #dbe4ef;
   border-radius: 999px;
-  background: #fff;
-  padding: 2px 8px;
+  background: #f8fafc;
+  padding: 1px 7px;
 }
 
 .bundle-line {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #475569;
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .partial-data {
@@ -2061,15 +2080,15 @@ function highlightParts(raw: string) {
   border: 1px solid #d1d5db;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 .view-toggle button {
   border: 0;
   background: #f8fafc;
-  color: #1f2937;
-  padding: 7px 11px;
-  font-size: 12px;
+  color: #334155;
+  padding: 6px 10px;
+  font-size: 11px;
   cursor: pointer;
 }
 
@@ -2082,7 +2101,7 @@ function highlightParts(raw: string) {
   border-right: 1px solid #d1d5db !important;
   background: #0f766e !important;
   color: #ffffff !important;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .my-work-btn:hover {
@@ -2091,6 +2110,24 @@ function highlightParts(raw: string) {
 
 .dot {
   color: #94a3b8;
+}
+
+.secondary-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.secondary-panel > summary {
+  cursor: pointer;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.demo-story-panel summary {
+  color: #0f172a;
 }
 
 @media (max-width: 1120px) {

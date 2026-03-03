@@ -1,8 +1,20 @@
 <template>
   <section class="page">
+    <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
     <section v-if="appliedPresetLabel" class="route-preset">
       <p>已应用推荐筛选：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
       <button class="clear-btn" @click="clearRoutePreset">清除推荐</button>
+    </section>
+    <section class="focus-strip">
+      <div>
+        <p class="focus-intent">{{ surfaceIntent.title }}</p>
+        <p class="focus-summary">{{ surfaceIntent.summary }}</p>
+      </div>
+      <div class="focus-actions">
+        <button v-for="item in surfaceIntent.actions" :key="`focus-${item.label}`" class="contract-chip ghost" @click="openFocusAction(item)">
+          {{ item.label }}
+        </button>
+      </div>
     </section>
     <section v-if="contractPrimaryFilterChips.length || contractOverflowFilterChips.length" class="contract-block">
       <p class="contract-label">快速筛选</p>
@@ -152,6 +164,21 @@
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
+    <section v-if="pageStatus === 'empty'" class="empty-next">
+      <p class="empty-next-title">{{ surfaceIntent.emptyTitle }}</p>
+      <p class="empty-next-hint">{{ surfaceIntent.emptyHint }}</p>
+      <p class="empty-next-reason">{{ emptyReasonText }}</p>
+      <div class="focus-actions">
+        <button class="contract-chip primary" @click="openFocusAction(surfaceIntent.primaryAction)">{{ surfaceIntent.primaryAction.label }}</button>
+        <button
+          v-if="surfaceIntent.secondaryAction"
+          class="contract-chip ghost"
+          @click="openFocusAction(surfaceIntent.secondaryAction)"
+        >
+          {{ surfaceIntent.secondaryAction.label }}
+        </button>
+      </div>
+    </section>
 
     <DevContextPanel
       :visible="showHud"
@@ -344,6 +371,20 @@ type ContractActionGroupRaw = {
   overflow_actions?: Array<Record<string, unknown>>;
   overflow_count?: number;
 };
+type FocusNavAction = {
+  label: string;
+  to: string;
+  query?: Record<string, string>;
+};
+type SurfaceIntent = {
+  title: string;
+  summary: string;
+  actions: FocusNavAction[];
+  emptyTitle: string;
+  emptyHint: string;
+  primaryAction: FocusNavAction;
+  secondaryAction?: FocusNavAction;
+};
 
 const actionId = computed(() => Number(route.params.actionId));
 const actionMeta = computed(() => session.currentAction);
@@ -367,12 +408,30 @@ const viewMode = computed(() => {
   return '';
 });
 const sortLabel = computed(() => sortValue.value || 'id asc');
-const sortOptions = computed(() => [
-  { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
-  { label: '更新时间↑ / 名称↑', value: 'write_date asc,name asc' },
-  { label: '名称↑ / 更新时间↓', value: 'name asc,write_date desc' },
-  { label: '名称↓ / 更新时间↓', value: 'name desc,write_date desc' },
-]);
+const surfaceKey = computed(() => `${sceneKey.value} ${model.value} ${pageTitle.value}`.toLowerCase());
+const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
+  const key = surfaceKey.value;
+  if (key.includes('risk') || key.includes('风险')) return 'risk';
+  if (key.includes('contract') || key.includes('合同')) return 'contract';
+  if (key.includes('cost') || key.includes('成本')) return 'cost';
+  if (key.includes('project') || key.includes('项目')) return 'project';
+  return 'generic';
+});
+const sortOptions = computed(() => {
+  if (surfaceKind.value === 'risk' || surfaceKind.value === 'cost') {
+    return [
+      { label: '优先级↓ / 截止日↑', value: 'priority desc,deadline asc,write_date desc' },
+      { label: '截止日↑ / 更新时间↓', value: 'deadline asc,write_date desc' },
+      { label: '更新时间↓ / ID↓', value: 'write_date desc,id desc' },
+    ];
+  }
+  return [
+    { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
+    { label: '更新时间↑ / 名称↑', value: 'write_date asc,name asc' },
+    { label: '名称↑ / 更新时间↓', value: 'name asc,write_date desc' },
+    { label: '名称↓ / 更新时间↓', value: 'name desc,write_date desc' },
+  ];
+});
 const subtitle = computed(() => `${records.value.length} 条记录 · 排序：${sortLabel.value}`);
 const kanbanTitleField = computed(() => {
   const candidates = ['display_name', 'name'];
@@ -392,6 +451,83 @@ const pageTitle = computed(() => {
   const contractTitle = String(actionContract.value?.head?.title || '').trim();
   if (contractTitle) return contractTitle;
   return injectedTitle?.value || actionMeta.value?.name || '工作台';
+});
+const surfaceIntent = computed<SurfaceIntent>(() => {
+  const key = surfaceKey.value;
+  if (key.includes('risk') || key.includes('风险')) {
+    return {
+      title: '风险驾驶舱：先处理严重与逾期风险',
+      summary: '优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。',
+      actions: [
+        { label: '待我处理风险', to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
+        { label: '打开风险场景', to: '/s/projects.dashboard' },
+      ],
+      emptyTitle: '当前暂无风险记录',
+      emptyHint: '建议转到“我的工作”处理风险待办，或进入风险驾驶舱继续巡检。',
+      primaryAction: { label: '处理风险待办', to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
+      secondaryAction: { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+    };
+  }
+  if (key.includes('contract') || key.includes('合同')) {
+    return {
+      title: '合同执行：优先识别付款与变更风险',
+      summary: '先看执行率与付款状态，再进入异常合同处理。',
+      actions: [
+        { label: '处理合同待办', to: '/my-work', query: { section: 'todo', search: '合同' } },
+        { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+      ],
+      emptyTitle: '当前暂无合同记录',
+      emptyHint: '可前往“我的工作”查看合同待办，或进入风险驾驶舱追踪履约风险。',
+      primaryAction: { label: '处理合同待办', to: '/my-work', query: { section: 'todo', search: '合同' } },
+      secondaryAction: { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+    };
+  }
+  if (key.includes('cost') || key.includes('成本')) {
+    return {
+      title: '成本执行：先回答是否超支',
+      summary: '优先关注超支金额与超支项，再下钻到具体偏差来源。',
+      actions: [
+        { label: '处理成本待办', to: '/my-work', query: { section: 'todo', search: '成本' } },
+        { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+      ],
+      emptyTitle: '当前暂无成本记录',
+      emptyHint: '可前往“我的工作”处理成本待办，或进入风险驾驶舱继续巡检。',
+      primaryAction: { label: '处理超支待办', to: '/my-work', query: { section: 'todo', search: '成本' } },
+      secondaryAction: { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+    };
+  }
+  if (key.includes('project') || key.includes('项目')) {
+    return {
+      title: '项目视角：先判断是否可控',
+      summary: '优先查看风险、审批与经营指标，再决定下一步动作。',
+      actions: [
+        { label: '查看项目待办', to: '/my-work', query: { section: 'todo', search: '项目' } },
+        { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+      ],
+      emptyTitle: '当前暂无项目记录',
+      emptyHint: '建议进入“我的工作”处理项目待办，或去风险驾驶舱查看全局状态。',
+      primaryAction: { label: '查看项目待办', to: '/my-work', query: { section: 'todo', search: '项目' } },
+      secondaryAction: { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+    };
+  }
+  return {
+    title: '业务列表：先看状态，再执行动作',
+    summary: '通过快速筛选与快捷操作，优先处理最关键事项。',
+    actions: [
+      { label: '工作台', to: '/' },
+      { label: '我的工作', to: '/my-work' },
+    ],
+    emptyTitle: '当前视图暂无数据',
+    emptyHint: '建议切换到我的工作或风险驾驶舱继续处理。',
+    primaryAction: { label: '去我的工作', to: '/my-work' },
+    secondaryAction: { label: '去风险驾驶舱', to: '/s/projects.dashboard' },
+  };
+});
+const emptyReasonText = computed(() => {
+  if (searchTerm.value.trim() || activeContractFilterKey.value) {
+    return '可能由当前筛选条件导致无数据，建议先清除筛选后重试。';
+  }
+  return '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。';
 });
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
@@ -722,6 +858,29 @@ function clearContractFilter() {
   void load();
 }
 
+function openFocusAction(action: FocusNavAction | string) {
+  const path = typeof action === 'string' ? action : action.to;
+  const query = typeof action === 'string' ? undefined : action.query;
+  router.push({ path, query: query ? { ...resolveWorkspaceContextQuery(), ...query } : undefined }).catch(() => {});
+}
+
+function resolveDefaultSort(contract: ActionContractLoose) {
+  const fieldNames = new Set(Object.keys(contract.fields || {}));
+  const supports = (name: string) => fieldNames.has(name);
+  const segments: string[] = [];
+  if (surfaceKind.value === 'risk') {
+    if (supports('priority')) segments.push('priority desc');
+    if (supports('deadline')) segments.push('deadline asc');
+    if (supports('user_id')) segments.push('user_id asc');
+  } else if (surfaceKind.value === 'cost') {
+    if (supports('priority')) segments.push('priority desc');
+    if (supports('deadline')) segments.push('deadline asc');
+  }
+  if (supports('write_date')) segments.push('write_date desc');
+  segments.push('id desc');
+  return segments.join(',');
+}
+
 function resolveContractFilterDomain() {
   const key = activeContractFilterKey.value;
   if (!key) return [];
@@ -913,6 +1072,70 @@ function extractColumnsFromContract(contract: Awaited<ReturnType<typeof loadActi
     return schema.map((col) => col.name).filter(Boolean) as string[];
   }
   return [];
+}
+
+function convergeColumnsForSurface(rawColumns: string[], fields: Record<string, unknown>) {
+  const normalized = rawColumns.filter(Boolean);
+  if (!normalized.length || surfaceKind.value === 'generic') return normalized;
+
+  const rows = normalized.map((name) => {
+    const descriptor = (fields?.[name] || {}) as { string?: string };
+    const merged = `${name} ${String(descriptor.string || '')}`.toLowerCase();
+    return { name, merged };
+  });
+  const pick = (keywords: string[]) =>
+    rows.filter((row) => keywords.some((kw) => row.merged.includes(kw))).map((row) => row.name);
+
+  const buckets: string[][] = [];
+  if (surfaceKind.value === 'risk') {
+    buckets.push(
+      pick(['title', 'name', '风险', '事项']),
+      pick(['priority', 'severity', '优先级', '严重']),
+      pick(['deadline', 'date_deadline', '截止', '逾期']),
+      pick(['user_id', 'owner', 'assignee', '负责人', '分派']),
+      pick(['state', 'stage', 'status', '状态']),
+      pick(['reason', '原因']),
+    );
+  } else if (surfaceKind.value === 'contract') {
+    buckets.push(
+      pick(['amount_total', 'contract_amount', '金额', '合同额']),
+      pick(['execute', 'execution', 'progress', '执行率']),
+      pick(['paid', 'payment', '付款', '支付']),
+      pick(['risk', '风险', 'alert']),
+      pick(['change', '变更', 'write_date', '最近']),
+      pick(['title', 'name', '合同']),
+    );
+  } else if (surfaceKind.value === 'cost') {
+    buckets.push(
+      pick(['cost', '执行率', 'rate']),
+      pick(['over', 'overrun', '超支', '偏差']),
+      pick(['count', '项数']),
+      pick(['deadline', '截止']),
+      pick(['priority', '优先级']),
+      pick(['title', 'name', '项目']),
+    );
+  } else if (surfaceKind.value === 'project') {
+    buckets.push(
+      pick(['title', 'name', '项目']),
+      pick(['state', 'stage', 'status', '状态', '阶段']),
+      pick(['risk', '风险']),
+      pick(['payment', '付款']),
+      pick(['output', '产值']),
+      pick(['cost', '成本']),
+    );
+  }
+
+  const selected: string[] = [];
+  for (const bucket of buckets) {
+    for (const name of bucket) {
+      if (!selected.includes(name)) selected.push(name);
+    }
+  }
+  for (const name of normalized) {
+    if (selected.length >= 6) break;
+    if (!selected.includes(name)) selected.push(name);
+  }
+  return selected.length ? selected : normalized;
 }
 
 function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContract>>) {
@@ -1271,7 +1494,9 @@ async function load() {
       const viewOrder = typedContract.views?.tree?.order || typedContract.ui_contract?.views?.tree?.order;
       const metaOrder = (meta as ActionMetaLoose | undefined)?.order;
       const order = scene.value?.default_sort || searchOrder || viewOrder || metaOrder;
-      if (typeof order === 'string' && order.trim()) {
+      if (surfaceKind.value !== 'generic') {
+        sortValue.value = resolveDefaultSort(typedContract);
+      } else if (typeof order === 'string' && order.trim()) {
         sortValue.value = order;
       } else {
         sortValue.value = 'id asc';
@@ -1347,7 +1572,7 @@ async function load() {
       });
       return;
     }
-    const contractColumns = extractColumnsFromContract(contract);
+    const contractColumns = convergeColumnsForSurface(extractColumnsFromContract(contract), typedContract.fields || {});
     const kanbanContractFields = extractKanbanFields(contract);
     kanbanFields.value = kanbanContractFields;
     const fieldMap = typedContract.fields || {};
@@ -1778,6 +2003,65 @@ watch(
   gap: 8px;
 }
 
+.focus-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 10px 12px;
+}
+
+.focus-intent {
+  margin: 0;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.focus-summary {
+  margin: 4px 0 0;
+  color: #475569;
+  font-size: 12px;
+}
+
+.focus-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.empty-next {
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.empty-next p {
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+}
+
+.empty-next-title {
+  color: #0f172a !important;
+  font-weight: 700;
+}
+
+.empty-next-hint {
+  color: #334155 !important;
+}
+
+.empty-next-reason {
+  color: #64748b !important;
+  font-size: 12px !important;
+}
+
 .contract-label {
   margin: 0;
   font-size: 13px;
@@ -1822,7 +2106,20 @@ watch(
   background: #eff6ff;
 }
 
+.contract-chip.primary {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
 .contract-chip.ghost {
   border-style: dashed;
+}
+
+@media (max-width: 760px) {
+  .focus-strip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>
