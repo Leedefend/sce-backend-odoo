@@ -31,6 +31,7 @@ def main() -> int:
         '"schema_version": "v1"',
         'def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:',
         '"command_hint": self._command_hint_for_row_state(row_state),',
+        '"reason_code": str(',
         '"line_patches": line_patches,',
         'def _normalize_modifiers_patch(self, env_model, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:',
         'for marker in ("invisible", "readonly", "required", "domain"):',
@@ -43,6 +44,7 @@ def main() -> int:
     frontend_markers = [
         'schema_version?: string;',
         'export type OnchangeLinePatch = {',
+        'reason_code?: string',
         'command_hint?: number[];',
         'line_patches?: OnchangeLinePatch[];',
         "intent: 'api.onchange'",

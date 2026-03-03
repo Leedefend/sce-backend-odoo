@@ -28,6 +28,7 @@ def main() -> int:
 
     backend_markers = [
         'def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:',
+        '"reason_code": str(',
         'def _relation_field_names(self, env_model, field_name: str) -> List[str]:',
         'def _normalize_line_patch_values(self, env_model, field_name: str, patch_raw: Any) -> Dict[str, Any]:',
         'def _normalize_line_patch_modifiers(self, env_model, field_name: str, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:',
@@ -47,6 +48,7 @@ def main() -> int:
         'const onchangeLinePatches = ref<OnchangeLinePatch[]>([]);',
         'function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {',
         'function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {',
+        "messages.push(`原因码: ${reasonCode}`);",
         'const rowState = String(patch.row_state || \'\').trim().toLowerCase();',
         'messages.push(`命令提示: ${patch.command_hint.join(\'/\')}`);',
         'const linePatches = Array.isArray(response?.line_patches) ? response.line_patches : [];',
