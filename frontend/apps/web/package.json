@@ -7,8 +7,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.vue",
+    "lint:src": "eslint src --ext .ts,.vue",
     "typecheck": "vue-tsc --noEmit",
-    "typecheck:strict": "vue-tsc --noEmit -p tsconfig.strict.json"
+    "typecheck:strict": "vue-tsc --noEmit -p tsconfig.strict.json",
+    "gate:quick": "pnpm run typecheck:strict && pnpm run build"
   },
   "dependencies": {
     "vue": "^3.5.6",
