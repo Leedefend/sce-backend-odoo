@@ -164,7 +164,7 @@
                         :key="`${row.key}-${column.name}`"
                         class="o2m-field"
                       >
-                        <span class="meta">{{ column.label }}</span>
+                        <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
                         <input
                           v-if="column.ttype === 'boolean'"
                           class="input-checkbox"
@@ -330,6 +330,7 @@ type One2ManyColumn = {
   name: string;
   label: string;
   ttype: string;
+  required: boolean;
   selection?: Array<[string, string]>;
 };
 
@@ -627,6 +628,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
           name: normalized,
           label: String(descriptor?.string || normalized),
           ttype: fieldType(descriptor) || 'char',
+          required: Boolean(descriptor?.required),
           selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
         });
         return;
@@ -640,6 +642,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
         name: colName,
         label: String(row.label || row.string || descriptor?.string || colName).trim() || colName,
         ttype: fieldType(descriptor) || 'char',
+        required: Boolean(descriptor?.required),
         selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
       });
     });
@@ -650,6 +653,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
       name: 'name',
       label: String(descriptor?.string || '名称'),
       ttype: fieldType(descriptor) || 'char',
+      required: Boolean(descriptor?.required),
       selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
     }];
   }
@@ -813,14 +817,19 @@ function collectOne2manyDraftErrors() {
   Object.entries(one2manyRows).forEach(([fieldName, rows]) => {
     if (!Array.isArray(rows) || !rows.length) return;
     const primary = one2manyPrimaryColumn(fieldName);
+    const columns = one2manyColumns(fieldName);
+    const requiredColumns = columns.filter((column) => column.required);
     const labels = new Set<string>();
     rows.forEach((row, index) => {
       if (row.removed) return;
-      const label = String(row.values?.[primary] ?? '').trim();
-      if (!label) {
-        issues.push(`${fieldName} 第${index + 1}行${primary}不能为空`);
-        return;
-      }
+      requiredColumns.forEach((column) => {
+        const value = row.values?.[column.name];
+        if (isOne2manyEmptyValue(column, value)) {
+          issues.push(`${fieldName} 第${index + 1}行${column.label}不能为空`);
+        }
+      });
+      const label = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
+      if (!label) return;
       const key = label.toLowerCase();
       if (labels.has(key)) {
         issues.push(`${fieldName} 存在重复行值：${label}`);
@@ -830,6 +839,18 @@ function collectOne2manyDraftErrors() {
     });
   });
   return issues;
+}
+
+function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {
+  const ttype = String(column.ttype || '').trim().toLowerCase();
+  if (ttype === 'boolean') return value === false || value === null || value === undefined;
+  if (ttype === 'integer' || ttype === 'float' || ttype === 'monetary') {
+    return value === false || value === null || value === undefined || Number.isNaN(Number(value));
+  }
+  if (ttype === 'date' || ttype === 'datetime' || ttype === 'selection') {
+    return !String(value ?? '').trim() || value === false;
+  }
+  return !String(value ?? '').trim();
 }
 
 function setRelationKeyword(name: string, keyword: string) {

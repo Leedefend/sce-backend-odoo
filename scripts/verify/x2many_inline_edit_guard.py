@@ -46,7 +46,9 @@ def main() -> int:
         'function removeOne2manyRow(fieldName: string, rowKey: string) {',
         'function restoreOne2manyRow(fieldName: string, rowKey: string) {',
         'function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {',
+        'function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {',
         'function collectOne2manyDraftErrors() {',
+        'required: Boolean(descriptor?.required),',
         "return buildOne2manyCommandValue(name, 'write');",
         "out[name] = buildOne2manyCommandValue(name, 'onchange');",
     ]
