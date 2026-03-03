@@ -158,13 +158,22 @@
                 </div>
                 <div class="o2m-list">
                   <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
-                    <input
-                      class="input"
-                      type="text"
-                      :value="row.name"
-                      placeholder="名称"
-                      @input="setOne2manyRowName(node.name, row.key, ($event.target as HTMLInputElement).value)"
-                    />
+                    <div class="o2m-fields">
+                      <label
+                        v-for="column in one2manyColumns(node.name)"
+                        :key="`${row.key}-${column.name}`"
+                        class="o2m-field"
+                      >
+                        <span class="meta">{{ column.label }}</span>
+                        <input
+                          class="input"
+                          type="text"
+                          :value="String(row.values[column.name] ?? '')"
+                          :placeholder="column.label"
+                          @input="setOne2manyRowField(node.name, row.key, column.name, ($event.target as HTMLInputElement).value)"
+                        />
+                      </label>
+                    </div>
                     <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
                   </div>
                 </div>
@@ -179,7 +188,7 @@
                       :disabled="busy"
                       @click="restoreOne2manyRow(node.name, row.key)"
                     >
-                      撤销移除 · {{ row.name || '未命名' }}
+                      撤销移除 · {{ one2manyRowLabel(node.name, row) }}
                     </button>
                   </div>
                 </div>
@@ -295,7 +304,12 @@ type One2ManyInlineRow = {
   isNew: boolean;
   removed: boolean;
   dirty: boolean;
+  values: Record<string, unknown>;
+};
+
+type One2ManyColumn = {
   name: string;
+  label: string;
 };
 
 const route = useRoute();
@@ -556,6 +570,52 @@ function one2manyFieldRows(name: string) {
   return Array.isArray(one2manyRows[name]) ? one2manyRows[name] : [];
 }
 
+function one2manyColumns(name: string): One2ManyColumn[] {
+  const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
+  const fieldSubview = subviews && typeof subviews === 'object'
+    ? (subviews as Record<string, unknown>)[name]
+    : undefined;
+  const tree = fieldSubview && typeof fieldSubview === 'object'
+    ? (fieldSubview as Record<string, unknown>).tree
+    : undefined;
+  const columnsRaw = tree && typeof tree === 'object'
+    ? (tree as Record<string, unknown>).columns
+    : undefined;
+  const out: One2ManyColumn[] = [];
+  if (Array.isArray(columnsRaw)) {
+    columnsRaw.forEach((item) => {
+      if (typeof item === 'string') {
+        const normalized = item.trim();
+        if (!normalized || normalized === 'id') return;
+        out.push({ name: normalized, label: normalized });
+        return;
+      }
+      if (!item || typeof item !== 'object') return;
+      const row = item as Record<string, unknown>;
+      const colName = String(row.name || '').trim();
+      if (!colName || colName === 'id') return;
+      out.push({ name: colName, label: String(row.label || row.string || colName).trim() || colName });
+    });
+  }
+  if (!out.length) {
+    return [{ name: 'name', label: '名称' }];
+  }
+  return out.slice(0, 4);
+}
+
+function one2manyPrimaryColumn(name: string) {
+  const cols = one2manyColumns(name);
+  return cols.length ? cols[0].name : 'name';
+}
+
+function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {
+  const primary = one2manyPrimaryColumn(fieldName);
+  const value = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
+  if (value) return value;
+  if (row.id) return `#${row.id}`;
+  return '未命名';
+}
+
 function visibleOne2manyRows(name: string) {
   return one2manyFieldRows(name).filter((row) => !row.removed);
 }
@@ -577,22 +637,26 @@ function makeOne2manyKey() {
 
 function addOne2manyRow(name: string) {
   const rows = ensureOne2manyRows(name);
+  const primary = one2manyPrimaryColumn(name);
   rows.push({
     key: makeOne2manyKey(),
     id: null,
     isNew: true,
     removed: false,
     dirty: true,
-    name: '',
+    values: { [primary]: '' },
   });
   markFieldChanged(name);
 }
 
-function setOne2manyRowName(fieldName: string, rowKey: string, name: string) {
+function setOne2manyRowField(fieldName: string, rowKey: string, columnName: string, value: string) {
   const rows = ensureOne2manyRows(fieldName);
   const row = rows.find((item) => item.key === rowKey);
   if (!row) return;
-  row.name = name;
+  row.values = {
+    ...(row.values || {}),
+    [columnName]: value,
+  };
   row.dirty = true;
   markFieldChanged(fieldName);
 }
@@ -624,13 +688,17 @@ function initOne2manyRows(name: string, source: unknown) {
   const ids = normalizeRelationIds(source);
   const options = relationOptionsForField(name);
   const optionMap = new Map(options.map((item) => [item.id, item.label]));
+  const primary = one2manyPrimaryColumn(name);
   one2manyRows[name] = ids.map((id) => ({
     key: `o2m_id_${id}`,
     id,
     isNew: false,
     removed: false,
     dirty: false,
-    name: optionMap.get(id) || `#${id}`,
+    values: {
+      [primary]: optionMap.get(id) || `#${id}`,
+      name: optionMap.get(id) || `#${id}`,
+    },
   }));
 }
 
@@ -643,7 +711,7 @@ function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
       isNew: row.isNew,
       removed: row.removed,
       dirty: row.dirty,
-      values: { name: row.name },
+      values: row.values || {},
     })),
     mode,
   });
@@ -653,17 +721,18 @@ function collectOne2manyDraftErrors() {
   const issues: string[] = [];
   Object.entries(one2manyRows).forEach(([fieldName, rows]) => {
     if (!Array.isArray(rows) || !rows.length) return;
+    const primary = one2manyPrimaryColumn(fieldName);
     const labels = new Set<string>();
     rows.forEach((row, index) => {
       if (row.removed) return;
-      const label = String(row.name || '').trim();
+      const label = String(row.values?.[primary] ?? '').trim();
       if (!label) {
-        issues.push(`${fieldName} 第${index + 1}行名称不能为空`);
+        issues.push(`${fieldName} 第${index + 1}行${primary}不能为空`);
         return;
       }
       const key = label.toLowerCase();
       if (labels.has(key)) {
-        issues.push(`${fieldName} 存在重复行名称：${label}`);
+        issues.push(`${fieldName} 存在重复行值：${label}`);
         return;
       }
       labels.add(key);
@@ -1197,7 +1266,7 @@ function comparableFieldValue(name: string, value: unknown) {
       isNew: row.isNew,
       removed: row.removed,
       dirty: row.dirty,
-      name: row.name,
+      values: row.values || {},
     }));
     return JSON.stringify(rows);
   }
@@ -1952,6 +2021,17 @@ watch(
   grid-template-columns: minmax(120px, 1fr) auto;
   gap: 6px;
   align-items: center;
+}
+
+.o2m-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 6px;
+}
+
+.o2m-field {
+  display: grid;
+  gap: 4px;
 }
 
 .o2m-removed {

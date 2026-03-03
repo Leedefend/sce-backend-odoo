@@ -39,10 +39,12 @@ def main() -> int:
 
     form_markers = [
         "v-else-if=\"fieldType(node.descriptor) === 'one2many'\"",
+        'function one2manyColumns(name: string): One2ManyColumn[] {',
         'function addOne2manyRow(name: string) {',
-        'function setOne2manyRowName(fieldName: string, rowKey: string, name: string) {',
+        'function setOne2manyRowField(fieldName: string, rowKey: string, columnName: string, value: string) {',
         'function removeOne2manyRow(fieldName: string, rowKey: string) {',
         'function restoreOne2manyRow(fieldName: string, rowKey: string) {',
+        'function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {',
         'function collectOne2manyDraftErrors() {',
         "return buildOne2manyCommandValue(name, 'write');",
         "out[name] = buildOne2manyCommandValue(name, 'onchange');",
