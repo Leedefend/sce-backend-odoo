@@ -28,6 +28,9 @@ def main() -> int:
 
     backend_markers = [
         'def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:',
+        'def _normalize_row_state(self, item: Dict[str, Any], row_patch: Dict[str, Any], warnings: List[Dict[str, str]]) -> str:',
+        'def _command_hint_for_row_state(self, row_state: str) -> List[int]:',
+        '"command_hint": self._command_hint_for_row_state(row_state),',
         'line_patches = self._normalize_line_patches(env_model, onchange_result.get("line_patches"))',
         '"line_patches": line_patches,',
     ]
@@ -39,6 +42,8 @@ def main() -> int:
         'const onchangeLinePatches = ref<OnchangeLinePatch[]>([]);',
         'function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {',
         'function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {',
+        'const rowState = String(patch.row_state || \'\').trim().toLowerCase();',
+        'messages.push(`命令提示: ${patch.command_hint.join(\'/\')}`);',
         'const linePatches = Array.isArray(response?.line_patches) ? response.line_patches : [];',
         'onchangeLinePatches.value = linePatches;',
         'applyOnchangeLinePatches(linePatches);',
