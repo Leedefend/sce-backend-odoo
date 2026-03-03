@@ -12,6 +12,15 @@ class ApiOnchangeHandler(BaseIntentHandler):
     INTENT_TYPE = "api.onchange"
     DESCRIPTION = "Contract-driven onchange roundtrip"
     VERSION = "1.1.0"
+    ALLOWED_REASON_CODES = {
+        "ONCHANGE_WARNING",
+        "ONCHANGE_WARNING_UNKNOWN",
+        "ROW_REQUIRED_MISSING",
+        "ROW_DOMAIN_RESTRICTED",
+        "ROW_VALUE_INVALID",
+        "ROW_PERMISSION_DENIED",
+        "ROW_CONFLICT",
+    }
     REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
     ACL_MODE = "explicit_check"
 
@@ -106,7 +115,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 {
                     "title": str(warning.get("title") or "Onchange warning"),
                     "message": str(warning.get("message") or ""),
-                    "reason_code": str(warning.get("reason_code") or warning.get("code") or "ONCHANGE_WARNING"),
+                    "reason_code": self._normalize_reason_code(warning.get("reason_code") or warning.get("code")),
                 }
             )
             return warnings
@@ -118,10 +127,19 @@ class ApiOnchangeHandler(BaseIntentHandler):
                     {
                         "title": str(item.get("title") or "Onchange warning"),
                         "message": str(item.get("message") or ""),
-                        "reason_code": str(item.get("reason_code") or item.get("code") or "ONCHANGE_WARNING"),
+                        "reason_code": self._normalize_reason_code(item.get("reason_code") or item.get("code")),
                     }
                 )
         return warnings
+
+    def _normalize_reason_code(self, raw: Any) -> str:
+        text = str(raw or "").strip().upper()
+        if not text:
+            return "ONCHANGE_WARNING"
+        text = text.replace("-", "_")
+        if text in self.ALLOWED_REASON_CODES:
+            return text
+        return "ONCHANGE_WARNING_UNKNOWN"
 
     def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:
         if not isinstance(rows_raw, list):
