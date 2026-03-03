@@ -86,6 +86,16 @@ function asObject(value: unknown): UnknownObject | null {
   return value as UnknownObject;
 }
 
+function resolveApiPath(path: string, dbHeader: string) {
+  const raw = String(path || '').trim() || '/';
+  // Force db query on intent endpoint to avoid multi-db ambiguity.
+  if (!raw.startsWith('/api/v1/intent')) return raw;
+  if (!dbHeader) return raw;
+  const hasDb = /(?:\?|&)db=/.test(raw);
+  if (hasDb) return raw;
+  return `${raw}${raw.includes('?') ? '&' : '?'}db=${encodeURIComponent(dbHeader)}`;
+}
+
 export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) {
   const session = useSessionStore();
   const headers = new Headers(options.headers ?? {});
@@ -96,9 +106,11 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   headers.set('x-trace-id', traceId);
   headers.set('x-tenant', config.tenant);
 
-  // 总是设置X-Odoo-DB头，即使config.odooDb为空也使用默认值
-  const dbHeader = config.odooDb || 'sc_demo';
-  headers.set('X-Odoo-DB', dbHeader);
+  // Delivery hardening: never fallback to sc_demo implicitly.
+  const dbHeader = String(config.odooDb || '').trim();
+  if (dbHeader) {
+    headers.set('X-Odoo-DB', dbHeader);
+  }
 
   if (session.token) {
     headers.set('Authorization', `Bearer ${session.token}`);
@@ -110,9 +122,11 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     new URLSearchParams(window.location.search).get('debug') === '1';
 
   // A2: 网络级别校验 - 针对 app.init 请求
+  const resolvedPath = resolveApiPath(path, dbHeader);
+
   let appInitPayload: AppInitIntentPayload | null = null;
   let isAppInitRequest = false;
-  if (path === '/api/v1/intent' && options.body && typeof options.body === 'string') {
+  if (resolvedPath.startsWith('/api/v1/intent') && options.body && typeof options.body === 'string') {
     try {
       appInitPayload = JSON.parse(options.body) as AppInitIntentPayload;
       isAppInitRequest = appInitPayload?.intent === 'app.init';
@@ -123,7 +137,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
 
   if (isAppInitRequest && debugIntent && appInitPayload) {
     console.group('[A2] app.init 网络诊断快照');
-    console.log('Request URL:', `${config.apiBaseUrl}${path}`);
+    console.log('Request URL:', `${config.apiBaseUrl}${resolvedPath}`);
     console.log('Request Headers:');
     console.log('  Authorization:', headers.has('Authorization') ? '存在' : '不存在');
     console.log('  X-Odoo-DB:', headers.get('X-Odoo-DB'));
@@ -140,7 +154,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
 
   let response: Response;
   try {
-    response = await fetch(`${config.apiBaseUrl}${path}`, {
+    response = await fetch(`${config.apiBaseUrl}${resolvedPath}`, {
       ...options,
       headers,
       // Portal shell authentication is token-based; do not send Odoo session cookies

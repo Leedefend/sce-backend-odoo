@@ -46,6 +46,11 @@ function hasProfile(list: unknown, profile: RenderProfile): boolean {
   return list.map((x) => String(x || '').trim().toLowerCase()).includes(profile);
 }
 
+function matchesProfile(list: unknown, profile: RenderProfile): boolean {
+  if (!Array.isArray(list) || !list.length) return false;
+  return list.map((x) => String(x || '').trim().toLowerCase()).includes(profile);
+}
+
 function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim() === '';
@@ -121,9 +126,13 @@ export function evaluateFieldPolicy(
   ctx: PolicyContext,
 ) {
   const policy = getFieldPolicy(contract, fieldName);
+  const requiredProfiles = policy.required_profiles;
+  const readonlyProfiles = policy.readonly_profiles;
   const visible = hasProfile(policy.visible_profiles, ctx.profile);
-  const required = hasProfile(policy.required_profiles, ctx.profile) || (!!policy.source_required && ctx.profile !== 'readonly');
-  const readonly = hasProfile(policy.readonly_profiles, ctx.profile) || (!!policy.source_readonly && ctx.profile !== 'create');
+  const required = matchesProfile(requiredProfiles, ctx.profile)
+    || (!Array.isArray(requiredProfiles) && !!policy.source_required && ctx.profile !== 'readonly');
+  const readonly = matchesProfile(readonlyProfiles, ctx.profile)
+    || (!Array.isArray(readonlyProfiles) && !!policy.source_readonly && ctx.profile !== 'create');
   return {
     visible,
     required: required && visible,

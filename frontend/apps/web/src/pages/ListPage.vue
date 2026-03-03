@@ -20,7 +20,7 @@
       :on-filter="onFilter"
     />
 
-    <StatusPanel v-if="loading" title="Loading list..." variant="info" />
+    <StatusPanel v-if="loading" title="正在加载列表..." variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -199,7 +199,7 @@ const props = defineProps<{
 const errorCopy = computed(() =>
   resolveErrorCopy(
     props.error || null,
-    props.errorMessage || 'List load failed',
+    props.errorMessage || '列表加载失败',
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));

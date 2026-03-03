@@ -10,7 +10,7 @@ class UsageTrackHandler(BaseIntentHandler):
     DESCRIPTION = "Track scene/capability usage counters"
     VERSION = "1.0.0"
     ETAG_ENABLED = False
-    REQUIRED_GROUPS = ["smart_core.group_sc_data_operator"]
+    REQUIRED_GROUPS = ["base.group_user"]
     ACL_MODE = "explicit_check"
     NON_IDEMPOTENT_ALLOWED = "analytics counters are append-only metrics and intentionally non-replayable"
 
@@ -37,6 +37,9 @@ class UsageTrackHandler(BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         params = payload or self.params or {}
+        if isinstance(params, dict) and isinstance(params.get("params"), dict):
+            # Intent router passes envelope: {intent, params, context}
+            params = params.get("params") or {}
         event_type = str(params.get("event_type") or "").strip().lower()
         scene_key = str(params.get("scene_key") or "").strip()
         capability_key = str(params.get("capability_key") or "").strip()

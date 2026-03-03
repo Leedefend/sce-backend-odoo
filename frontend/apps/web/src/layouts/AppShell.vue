@@ -10,7 +10,7 @@
         <div class="logo">SC</div>
         <div>
           <p class="title">{{ rootTitle }}</p>
-          <p class="subtitle">{{ userName }}</p>
+          <p class="subtitle">{{ sidebarSubtitle }}</p>
         </div>
       </div>
 
@@ -27,7 +27,7 @@
             class="role-menu-item"
             @click="openRoleMenu(menu.id)"
           >
-            {{ menu.label }}
+            {{ normalizeDeliveryText(menu.label) }}
           </button>
         </div>
       </div>
@@ -104,7 +104,7 @@
 
       <DevContextPanel
         :visible="showHud"
-        title="Page Context"
+        title="页面上下文"
         :entries="hudEntries"
         :actions="hudActions"
         :message="hudMessage"
@@ -121,7 +121,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
-import { isHudEnabled } from '../config/debug';
+import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { parseSceneKeyFromQuery } from '../app/routeQuery';
 import type { NavNode } from '@sc/schema';
 import {
@@ -166,14 +166,27 @@ const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
 const menuCount = computed(() => menuNodes.value.length);
 const rootTitle = computed(() => {
   const root = rootNode.value;
-  return root?.title || root?.name || root?.label || '智能工程协作平台';
+  return normalizeDeliveryText(root?.title || root?.name || root?.label || '智能工程协作平台');
 });
 const userName = computed(() => session.user?.name ?? '访客');
+const sidebarSubtitle = computed(() => {
+  if (!isDeliveryMode.value) return userName.value;
+  const raw = String(userName.value || '').trim();
+  if (!raw) return roleLabel.value;
+  if (/fixture|project manager|purchase|executive|admin|finance|ops/i.test(raw)) {
+    return roleLabel.value;
+  }
+  return normalizeDeliveryText(raw);
+});
 const roleLabel = computed(() => {
-  const label = roleSurface.value?.role_label;
-  if (label) return label;
-  const code = roleSurface.value?.role_code || '';
-  return code ? code.toUpperCase() : '负责人';
+  const label = String(roleSurface.value?.role_label || '').trim();
+  const code = String(roleSurface.value?.role_code || '').trim();
+  if (isDeliveryMode.value) {
+    return resolveDeliveryRoleLabel(label, code);
+  }
+  if (label) return normalizeDeliveryText(label);
+  if (code) return normalizeDeliveryText(code.toUpperCase());
+  return '负责人';
 });
 const roleLandingPath = computed(() => session.resolveLandingPath('/'));
 const capabilities = computed(() => session.capabilities);
@@ -214,7 +227,7 @@ const sceneErrorMessage = computed(() => {
     return `${key} (${err.issues.join(', ')})`;
   });
   const suffix = sceneRegistryErrors.length > 3 ? ` +${sceneRegistryErrors.length - 3} more` : '';
-  return `Scene registry validation failed: ${sample.join(' | ')}${suffix}`;
+  return `场景注册校验失败：${sample.join(' | ')}${suffix}`;
 });
 
 const menuLabel = computed(() => {
@@ -228,6 +241,34 @@ const menuLabel = computed(() => {
 });
 
 const hudEnabled = computed(() => isHudEnabled(route));
+const isDeliveryMode = computed(() => isDeliveryModeEnabled());
+
+function normalizeDeliveryText(input: string) {
+  const source = String(input || '').trim();
+  if (!source) return '';
+  return source
+    .replace(/\s*\(\d+\)\s*$/g, '')
+    .replace(/^fixture\s*pm$/i, '项目经理')
+    .replace(/^project\s*manager$/i, '项目经理')
+    .replace(/^purchase\s*manager$/i, '采购经理')
+    .replace(/^finance$/i, '财务主管')
+    .replace(/^executive$/i, '管理层')
+    .replace(/^ops$/i, '运维专员')
+    .replace(/^admin$/i, '系统管理员');
+}
+
+function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
+  const normalizedLabel = normalizeDeliveryText(roleLabelRaw);
+  if (/[^\x00-\x7F]/.test(normalizedLabel) && normalizedLabel) return normalizedLabel;
+  const code = String(roleCodeRaw || '').trim().toLowerCase();
+  if (/pm|project/.test(code)) return '项目经理';
+  if (/finance/.test(code)) return '财务主管';
+  if (/purchase|material/.test(code)) return '采购经理';
+  if (/executive|boss|leader/.test(code)) return '管理层';
+  if (/ops|operation/.test(code)) return '运维专员';
+  if (/admin/.test(code)) return '系统管理员';
+  return normalizedLabel || '负责人';
+}
 
 function resolveActionBusinessTitle(action: unknown) {
   const source = asDict(action);
@@ -275,7 +316,7 @@ const pageTitle = computed(() => {
 });
 
 provide('pageTitle', pageTitle);
-const showHud = hudEnabled;
+const showHud = computed(() => hudEnabled.value && !isDeliveryMode.value);
 const latestSuggestedAction = computed(() => {
   const stamp = suggestedActionStamp.value;
   void stamp;
@@ -423,7 +464,9 @@ const breadcrumb = computed(() => {
   return crumbs;
 });
 
-const showRefresh = computed(() => import.meta.env.DEV || localStorage.getItem('DEBUG_INTENT') === '1');
+const showRefresh = computed(
+  () => !isDeliveryMode.value && (import.meta.env.DEV || localStorage.getItem('DEBUG_INTENT') === '1'),
+);
 
 const activeMenuId = computed(() => {
   if (route.name === 'menu') {

@@ -22,8 +22,14 @@ def _sample_payload():
                     {"type": "field", "name": "message_ids"},
                     {"type": "field", "name": "budget_total"},
                     {"type": "field", "name": "manager_id"},
+                    {"type": "field", "name": "company_id"},
+                    {"type": "field", "name": "analytic_account_id"},
                     {"type": "field", "name": "phase_key"},
                     {"type": "field", "name": "stage_id"},
+                    {"type": "field", "name": "last_update_status"},
+                    {"type": "field", "name": "privacy_visibility"},
+                    {"type": "field", "name": "rating_status"},
+                    {"type": "field", "name": "rating_status_period"},
                 ]
             }
         },
@@ -31,6 +37,8 @@ def _sample_payload():
             "name": {"string": "名称", "type": "char", "required": True, "readonly": False},
             "project_type_id": {"string": "项目类型", "type": "many2one", "required": False, "readonly": False},
             "manager_id": {"string": "项目经理", "type": "many2one", "required": False, "readonly": False},
+            "company_id": {"string": "公司", "type": "many2one", "required": False, "readonly": False},
+            "analytic_account_id": {"string": "分析账户", "type": "many2one", "required": False, "readonly": False},
             "budget_total": {"string": "预算", "type": "monetary", "required": False, "readonly": False},
             "phase_key": {
                 "string": "项目阶段",
@@ -40,6 +48,10 @@ def _sample_payload():
                 "selection": [["initiation", "立项"], ["archive", "归档"]],
             },
             "stage_id": {"string": "阶段", "type": "many2one", "required": False, "readonly": False},
+            "last_update_status": {"string": "最后更新状态", "type": "selection", "required": True, "readonly": False},
+            "privacy_visibility": {"string": "可见性", "type": "selection", "required": True, "readonly": False},
+            "rating_status": {"string": "客户评价状态", "type": "selection", "required": True, "readonly": False},
+            "rating_status_period": {"string": "点评频率", "type": "selection", "required": True, "readonly": False},
             "create_uid": {"string": "创建人", "type": "many2one", "required": False, "readonly": True},
             "message_ids": {"string": "消息", "type": "one2many", "required": False, "readonly": False},
         },
@@ -170,8 +182,10 @@ class TestProjectFormGovernance(unittest.TestCase):
 
         layout = ((out.get("views") or {}).get("form") or {}).get("layout") or []
         layout_field_names = [item.get("name") for item in layout if isinstance(item, dict) and item.get("type") == "field"]
-        self.assertIn("create_uid", layout_field_names)
-        self.assertIn("message_ids", layout_field_names)
+        self.assertGreaterEqual(len(layout_field_names), 1)
+        self.assertEqual(layout_field_names[0], "name")
+        self.assertNotIn("create_uid", layout_field_names)
+        self.assertNotIn("message_ids", layout_field_names)
         visible_fields = out.get("visible_fields") or []
         self.assertIsInstance(visible_fields, list)
         self.assertIn("name", visible_fields)
@@ -223,6 +237,21 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("name", field_policies)
         self.assertIsInstance((field_policies.get("name") or {}).get("visible_profiles"), list)
         self.assertIsInstance((field_policies.get("name") or {}).get("required_profiles"), list)
+        for business_on_create in ("project_type_id", "manager_id", "budget_total"):
+            policy = field_policies.get(business_on_create) or {}
+            self.assertIn("create", policy.get("visible_profiles") or [])
+        for hidden_on_create in (
+            "company_id",
+            "analytic_account_id",
+            "stage_id",
+            "last_update_status",
+            "privacy_visibility",
+            "rating_status",
+            "rating_status_period",
+        ):
+            policy = field_policies.get(hidden_on_create) or {}
+            self.assertNotIn("create", policy.get("visible_profiles") or [])
+            self.assertEqual(policy.get("required_profiles") or [], [])
         action_policies = out.get("action_policies") or {}
         self.assertIsInstance(action_policies, dict)
         self.assertGreaterEqual(len(action_policies), 1)
@@ -239,6 +268,9 @@ class TestProjectFormGovernance(unittest.TestCase):
         validation_rules = out.get("validation_rules") or []
         self.assertIsInstance(validation_rules, list)
         self.assertTrue(any((rule or {}).get("code") == "REQUIRED" for rule in validation_rules if isinstance(rule, dict)))
+        required_rules = [rule for rule in validation_rules if isinstance(rule, dict) and rule.get("code") == "REQUIRED"]
+        required_fields = [str(rule.get("field")) for rule in required_rules]
+        self.assertEqual(required_fields, ["name"])
         sql_rule = next((rule for rule in validation_rules if isinstance(rule, dict) and rule.get("code") == "SQL_CHECK"), {})
         self.assertNotIn("expr", sql_rule)
         capabilities = out.get("capabilities") or []

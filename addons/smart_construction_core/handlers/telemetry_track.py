@@ -15,6 +15,7 @@ class TelemetryTrackHandler(BaseIntentHandler):
     VERSION = "1.0.0"
     ETAG_ENABLED = False
     ACL_MODE = "explicit_check"
+    REQUIRED_GROUPS = ["base.group_user"]
     NON_IDEMPOTENT_ALLOWED = "telemetry stream is append-only and intentionally non-replayable"
 
     def handle(self, payload=None, ctx=None):

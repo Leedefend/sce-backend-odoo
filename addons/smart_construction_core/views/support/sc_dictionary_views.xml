@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_dictionary_tree" model="ir.ui.view">
+        <field name="name">sc.dictionary.tree</field>
+        <field name="model">sc.dictionary</field>
+        <field name="arch" type="xml">
+            <tree string="业务字典" default_order="type, sequence, id">
+                <field name="type"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="sequence"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_dictionary_form" model="ir.ui.view">
+        <field name="name">sc.dictionary.form</field>
+        <field name="model">sc.dictionary</field>
+        <field name="arch" type="xml">
+            <form string="业务字典">
+                <sheet>
+                    <group>
+                        <field name="type"/>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_dictionary_manage" model="ir.actions.act_window">
+        <field name="name">业务字典</field>
+        <field name="res_model">sc.dictionary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[
+            (4, ref('smart_construction_core.group_sc_cap_data_read')),
+            (4, ref('smart_construction_core.group_sc_cap_project_manager')),
+            (4, ref('smart_construction_core.group_sc_cap_config_admin'))
+        ]"/>
+    </record>
+</odoo>

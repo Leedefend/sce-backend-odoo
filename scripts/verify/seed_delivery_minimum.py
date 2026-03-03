@@ -91,6 +91,29 @@ def _ensure_group_membership(intent_url: str, token: str, login: str, group_xmli
         target_group_id = 0
     if target_group_id <= 0:
         return False
+    # 已有组关系时不重复写，避免无谓触发“修改自身权限”限制。
+    status, payload = _intent(
+        intent_url,
+        token,
+        "api.data",
+        {"op": "read", "model": "res.users", "ids": [user_id], "fields": ["id", "groups_id"]},
+    )
+    if status < 400 and payload.get("ok") is True:
+        rows = (((payload.get("data") or {}).get("records")) or [])
+        if rows and isinstance(rows[0], dict):
+            raw_groups = rows[0].get("groups_id") or []
+            group_ids: set[int] = set()
+            if isinstance(raw_groups, list):
+                for item in raw_groups:
+                    if isinstance(item, int):
+                        group_ids.add(item)
+                    elif isinstance(item, (list, tuple)) and item:
+                        try:
+                            group_ids.add(int(item[0]))
+                        except Exception:
+                            continue
+            if target_group_id in group_ids:
+                return True
     status, payload = _intent(
         intent_url,
         token,
@@ -293,15 +316,22 @@ def main() -> int:
     if not tokens:
         errors.append("login failed for seed.delivery.minimum")
     else:
+        admin_token = ""
+        for row in tokens:
+            if str(row.get("login")) == "admin":
+                admin_token = str(row.get("token") or "")
+                break
         for row in tokens:
             actor_login = str(row["login"])
             actor_token = str(row["token"])
+            # admin 给自己改组在 Odoo 常被限制；且 admin 已可作为保底执行账户。
+            if actor_login == "admin":
+                continue
+            grant_token = admin_token or actor_token
             for xmlid in (
-                "smart_core.group_sc_data_operator",
-                "smart_core.group_sc_finance_approver",
                 "smart_construction_core.group_sc_cap_finance_user",
             ):
-                if _ensure_group_membership(intent_url, actor_token, actor_login, xmlid):
+                if _ensure_group_membership(intent_url, grant_token, actor_login, xmlid):
                     continue
                 warnings.append(f"group ensure failed: {xmlid} for {actor_login}")
 

@@ -2,7 +2,7 @@
   <section class="capability-home">
     <header class="hero">
       <div>
-        <h2>能力目录</h2>
+        <h2>工作台</h2>
         <p class="lead">选择你要完成的工作，直接进入场景。</p>
         <p class="role-line">
           当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingLabel }}
@@ -11,14 +11,14 @@
         <p class="product-line">
           <span class="product-pill">License: {{ licenseLevelLabel }}</span>
           <span class="product-pill">Bundle: {{ bundleNameLabel }}</span>
-          <span class="product-pill">Capability Groups: {{ capabilityGroupCount }}</span>
+          <span class="product-pill">模块分组: {{ capabilityGroupCount }}</span>
         </p>
         <p v-if="bundleDefaultDashboardLabel" class="bundle-line">
           默认驾驶舱：{{ bundleDefaultDashboardLabel }}
           <button class="inline-link" @click="openBundleDashboard">进入默认驾驶舱</button>
         </p>
         <p v-if="showLicenseUpgradeHint" class="license-hint">
-          检测到部分能力受 License 限制（当前 {{ licenseLevelLabel }}），可升级后解锁更多入口。
+          检测到部分功能受 License 限制（当前 {{ licenseLevelLabel }}），可升级后解锁更多入口。
         </p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
@@ -63,15 +63,15 @@
       </div>
     </section>
 
-    <section v-if="capabilityGroupCards.length" class="group-overview" aria-label="能力分组概览">
+    <section v-if="showGroupOverview" class="group-overview" aria-label="模块分组概览">
       <header class="group-overview-header">
-        <h3>能力分组</h3>
-        <p>按契约分组展示能力状态，默认只显示前 8 组。</p>
+        <h3>模块分组</h3>
+        <p>按业务分组展示功能状态，默认只显示前 8 组。</p>
       </header>
       <div class="group-overview-grid">
         <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card">
           <p class="group-title">{{ group.label }}</p>
-          <p class="group-meta">能力数 {{ group.capabilityCount }}</p>
+          <p class="group-meta">功能数 {{ group.capabilityCount }}</p>
           <p class="group-meta">
             可用 {{ group.allowCount }} · 只读 {{ group.readonlyCount }} · 禁用 {{ group.denyCount }}
           </p>
@@ -96,14 +96,14 @@
           v-model.trim="searchText"
           class="search-input"
           type="search"
-          placeholder="搜索能力名称或说明"
+          placeholder="搜索功能名称或说明"
         />
         <button v-if="searchText.trim()" class="search-clear-btn" @click="clearSearchText">清空搜索</button>
       </div>
       <p class="result-summary">{{ resultSummaryText }}</p>
       <label class="ready-only">
         <input v-model="readyOnly" type="checkbox" />
-        仅显示可进入能力
+        仅显示可进入功能
       </label>
       <div class="state-filters">
         <button :class="{ active: stateFilter === 'ALL' }" @click="stateFilter = 'ALL'">
@@ -127,9 +127,9 @@
           即将开放 {{ stateCounts.PREVIEW }}
         </button>
       </div>
-      <div class="state-filters">
+      <div v-if="!isDeliveryMode" class="state-filters">
         <button :class="{ active: capabilityStateFilter === 'ALL' }" @click="capabilityStateFilter = 'ALL'">
-          能力语义：全部
+          功能语义：全部
         </button>
         <button :class="{ active: capabilityStateFilter === 'allow' }" @click="capabilityStateFilter = 'allow'">
           可用 {{ capabilityStateCounts.allow }}
@@ -147,7 +147,7 @@
           建设中 {{ capabilityStateCounts.coming_soon }}
         </button>
       </div>
-      <p v-if="readyOnly" class="filter-tip">已启用“仅显示可进入能力”，暂不可用与即将开放不会展示。</p>
+      <p v-if="readyOnly" class="filter-tip">已启用“仅显示可进入功能”，暂不可用与即将开放不会展示。</p>
       <div v-if="lockedReasonOptions.length" class="reason-filters">
         <button :class="{ active: lockReasonFilter === 'ALL' }" @click="lockReasonFilter = 'ALL'">
           锁定原因：全部
@@ -184,20 +184,20 @@
         <p>
           {{
             readyOnlyNoResult
-              ? '当前启用了“仅显示可进入能力”，暂时没有可进入能力。'
+              ? '当前启用了“仅显示可进入功能”，暂时没有可进入功能。'
               : searchKeyword
-                ? `未找到与“${searchKeyword}”相关的能力，请调整筛选条件。`
-                : '未找到相关能力，请调整筛选条件。'
+                ? `未找到与“${searchKeyword}”相关的功能，请调整筛选条件。`
+                : '未找到相关功能，请调整筛选条件。'
           }}
         </p>
         <div class="empty-actions">
           <button v-if="lockReasonFilter !== 'ALL'" class="empty-btn" @click="clearLockReasonFilter">清除锁定原因</button>
-          <button v-if="readyOnlyNoResult" class="empty-btn" @click="showAllCapabilities">显示全部能力</button>
+          <button v-if="readyOnlyNoResult" class="empty-btn" @click="showAllCapabilities">显示全部功能</button>
           <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
         </div>
       </template>
       <template v-else>
-        <p>当前账号暂无可用能力，可能因为角色权限未开通或工作台尚未配置。</p>
+        <p>当前账号暂无可用功能，可能因为角色权限未开通或工作台尚未配置。</p>
         <div class="empty-actions">
           <button v-if="hasRoleSwitch" class="empty-btn" @click="goToMyWork">切换角色</button>
           <button class="empty-btn" @click="goHome">返回首页</button>
@@ -206,7 +206,7 @@
           </button>
         </div>
         <p v-if="showEmptyHelp" class="empty-help">
-          建议先点击“切换角色”确认当前角色；若仍无能力，请联系管理员开通角色权限或配置能力目录。
+          建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置工作台目录。
         </p>
       </template>
     </div>
@@ -275,7 +275,7 @@ import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 import { readWorkspaceContext } from '../app/workspaceContext';
-import { isHudEnabled as resolveHudEnabled } from '../config/debug';
+import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type SuggestionStatus = 'urgent' | 'normal';
@@ -335,6 +335,7 @@ const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
 const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
 const isHudEnabled = computed(() => resolveHudEnabled(route));
+const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
@@ -385,6 +386,7 @@ const capabilityGroupCards = computed(() => {
       denyCount: Number(group.capability_state_counts?.deny || 0),
     }));
 });
+const showGroupOverview = computed(() => !isDeliveryMode.value && capabilityGroupCards.value.length > 0);
 const capabilityGroupScoreMap = computed(() => {
   const map = new Map<string, number>();
   capabilityGroups.value.forEach((group) => {
@@ -415,7 +417,7 @@ const internalTileCount = computed(() => {
     tiles.forEach((tile, tileIndex) => {
       const key = asText(tile.key);
       if (!key) return;
-      const title = asText((tile as { title?: string }).title) || `能力 ${tileIndex + 1}`;
+      const title = asText((tile as { title?: string }).title) || `功能 ${tileIndex + 1}`;
       if (
         isInternalEntry({
           sceneKey,
@@ -487,8 +489,8 @@ function resolveSceneTitle(scene: { title?: unknown; key?: unknown }) {
   const title = asText(scene.title);
   if (title) return title;
   const key = asText(scene.key);
-  if (!key) return '未分类能力';
-  return isHudEnabled.value ? `未分类能力（${key}）` : '未分类能力';
+  if (!key) return '未分类模块';
+  return isHudEnabled.value ? `未分类模块（${key}）` : '未分类模块';
 }
 
 function isInternalEntry(params: {
@@ -559,7 +561,7 @@ const entries = computed<CapabilityEntry[]>(() => {
       const title =
         asText((tile as { title?: string }).title) ||
         asText(capabilityMeta?.label) ||
-        (isHudEnabled.value ? key : `能力 ${sceneIndex + 1}-${tileIndex + 1}`);
+        (isHudEnabled.value ? key : `功能 ${sceneIndex + 1}-${tileIndex + 1}`);
       if (
         !isHudEnabled.value &&
         isInternalEntry({
@@ -660,7 +662,7 @@ const todaySuggestions = computed<SuggestionItem[]>(() => {
     return {
       id: `suggestion-${entry.id}`,
       title: entry.title,
-      description: entry.subtitle || '从契约能力目录进入对应页面',
+      description: entry.subtitle || '从工作台目录进入对应页面',
       count: typeof count === 'number' ? count : undefined,
       status: hasUrgentTag ? 'urgent' : 'normal',
       ready: entry.state === 'READY',
@@ -735,9 +737,11 @@ const capabilityStateCounts = computed(() => {
   return counts;
 });
 const resultSummaryText = computed(() => {
-  const parts = [`当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项能力`];
+  const parts = [`当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项功能`];
   if (stateFilter.value !== 'ALL') parts.push(`状态：${stateLabel(stateFilter.value)}`);
-  if (capabilityStateFilter.value !== 'ALL') parts.push(`能力语义：${capabilityStateLabel(capabilityStateFilter.value)}`);
+  if (!isDeliveryMode.value && capabilityStateFilter.value !== 'ALL') {
+    parts.push(`功能语义：${capabilityStateLabel(capabilityStateFilter.value)}`);
+  }
   if (lockReasonFilter.value !== 'ALL') parts.push(`原因：${lockReasonLabel(lockReasonFilter.value)}`);
   return parts.join(' · ');
 });
@@ -758,8 +762,8 @@ const activeFilterChips = computed<FilterChip[]>(() => {
   if (keyword) chips.push({ key: 'search', label: `搜索：${keyword}` });
   if (readyOnly.value) chips.push({ key: 'ready-only', label: '仅显示可进入' });
   if (stateFilter.value !== 'ALL') chips.push({ key: 'state', label: `状态：${stateLabel(stateFilter.value)}` });
-  if (capabilityStateFilter.value !== 'ALL') {
-    chips.push({ key: 'capability-state', label: `能力语义：${capabilityStateLabel(capabilityStateFilter.value)}` });
+  if (!isDeliveryMode.value && capabilityStateFilter.value !== 'ALL') {
+    chips.push({ key: 'capability-state', label: `功能语义：${capabilityStateLabel(capabilityStateFilter.value)}` });
   }
   if (lockReasonFilter.value !== 'ALL') {
     chips.push({ key: 'reason', label: `锁定原因：${lockReasonLabel(lockReasonFilter.value)}` });
@@ -780,8 +784,8 @@ const groupedEntries = computed(() => {
   const sceneSetMap = new Map<string, Set<string>>();
   filteredEntries.value.forEach((entry) => {
     if (recentKeySet.has(entry.recentKey)) return;
-    const bucketKey = entry.groupKey || entry.sceneKey;
-    const bucketTitle = entry.groupLabel || entry.sceneTitle;
+    const bucketKey = isDeliveryMode.value ? entry.sceneKey : (entry.groupKey || entry.sceneKey);
+    const bucketTitle = isDeliveryMode.value ? entry.sceneTitle : (entry.groupLabel || entry.sceneTitle);
     const current = map.get(bucketKey);
     if (current) {
       current.items.push(entry);
@@ -857,9 +861,9 @@ function lockReasonLabel(reasonCode: string) {
   if (code === 'PERMISSION_DENIED') return '权限不足';
   if (code === 'FEATURE_DISABLED') return '订阅未开通';
   if (code === 'ROLE_SCOPE_MISMATCH') return '角色范围不匹配';
-  if (code === 'CAPABILITY_SCOPE_MISSING') return '缺少前置能力';
-  if (code === 'CAPABILITY_SCOPE_CYCLE') return '能力依赖异常';
-  if (code === 'COMING_SOON') return '能力建设中';
+  if (code === 'CAPABILITY_SCOPE_MISSING') return '缺少前置条件';
+  if (code === 'CAPABILITY_SCOPE_CYCLE') return '功能依赖异常';
+  if (code === 'COMING_SOON') return '功能建设中';
   if (code === 'PENDING_APPROVAL') return '待审批开放';
   return '当前不可用';
 }
@@ -1106,7 +1110,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 function resolveEnterErrorMessage(error: unknown) {
-  const message = asText((error as { message?: unknown })?.message) || '能力入口暂时不可用';
+  const message = asText((error as { message?: unknown })?.message) || '功能入口暂时不可用';
   const lowered = message.toLowerCase();
   const code = lowered.includes('permission')
     ? 'PERMISSION_DENIED'

@@ -92,6 +92,7 @@ def _dispatch(intent: str, params: dict, context: dict):
 
     # 1) 构造 env / su_env（必要时切库）
     env, su_env, extra_cr = _build_envs(params or {}, context or {})
+    dispatch_succeeded = False
     try:
         # 2) 实例化 handler，注入 env/su_env/context/params
         handler = handler_cls(env=env, su_env=su_env, request=request, context=context or {}, payload=params or {})
@@ -110,14 +111,19 @@ def _dispatch(intent: str, params: dict, context: dict):
             handler.uid = env.uid
 
         # 3) 统一把参数传给 run（BaseIntentHandler.run 会转调 handle(payload, ctx)）
-        return handler.run(
+        result = handler.run(
             payload={"intent": intent, "params": params or {}, "context": context or {}},
             ctx=context or {},
         )
+        dispatch_succeeded = True
+        return result
     finally:
-        # 若新开了 cursor，记得关闭
+        # 若新开了 cursor：成功请求要提交，否则关闭时会隐式回滚。
         if extra_cr is not None:
             try:
+                if dispatch_succeeded:
+                    _logger.info("[intent_router] commit extra cursor intent=%s db=%s", intent, env.cr.dbname)
+                    extra_cr.commit()
                 extra_cr.close()
             except Exception:
                 _logger.exception("[intent] close cursor failed (db=%s)", env.cr.dbname)
