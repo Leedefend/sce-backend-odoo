@@ -29,7 +29,8 @@ def main() -> int:
     backend_markers = [
         'VERSION = "1.1.0"',
         '"schema_version": "v1"',
-        '"line_patches": [],',
+        'def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:',
+        '"line_patches": line_patches,',
         'def _normalize_modifiers_patch(self, env_model, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:',
         'for marker in ("invisible", "readonly", "required", "domain"):',
         '"meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},',
@@ -40,7 +41,8 @@ def main() -> int:
 
     frontend_markers = [
         'schema_version?: string;',
-        'line_patches?: Array<Record<string, unknown>>;',
+        'export type OnchangeLinePatch = {',
+        'line_patches?: OnchangeLinePatch[];',
         "intent: 'api.onchange'",
     ]
     for marker in frontend_markers:
