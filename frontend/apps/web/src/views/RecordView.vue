@@ -1,5 +1,6 @@
 <template>
   <section class="page">
+    <!-- Page intent: 判断项目是否可控，先看风险与关键指标，再执行下一步动作。 -->
     <header class="header">
       <div>
         <h2>{{ title }}</h2>
@@ -66,6 +67,29 @@
       <div v-if="editTxState === 'saved'" class="banner success">
         Saved. Changes have been applied.
       </div>
+      <section v-if="showProjectSummary" class="record-l1">
+        <article class="l1-card">
+          <p class="l1-label">项目状态与阶段</p>
+          <p class="l1-value">{{ projectStatusSummary }}</p>
+        </article>
+        <article class="l1-card">
+          <p class="l1-label">关键风险摘要</p>
+          <p class="l1-value">{{ projectRiskSummary }}</p>
+        </article>
+        <article class="l1-card">
+          <p class="l1-label">资金/产值指标</p>
+          <p class="l1-value">{{ projectFinanceSummary }}</p>
+        </article>
+      </section>
+      <section v-if="showProjectSummary" class="record-next">
+        <p class="next-label">下一步动作</p>
+        <div class="next-actions">
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '项目' })">查看待办</button>
+          <button class="ghost" @click="openProjectAction('/s/projects.dashboard')">查看风险</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '合同' })">查看合同</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '成本' })">查看成本</button>
+        </div>
+      </section>
       <div v-if="ribbon" class="ribbon">{{ ribbon.title || 'Ribbon' }}</div>
       <div v-if="statButtons.length" class="stat-buttons">
         <button
@@ -199,6 +223,29 @@ const recordId = computed(() => Number(route.params.id));
 const recordTitle = ref<string | null>(null);
 const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
 const subtitle = computed(() => (status.value === 'editing' ? 'Editing contract fields' : 'Record details'));
+const showProjectSummary = computed(() => {
+  const key = `${model.value} ${title.value}`.toLowerCase();
+  return key.includes('project') || key.includes('项目');
+});
+const projectStatusSummary = computed(() => {
+  const phase = String(recordData.value?.stage_id || recordData.value?.stage || recordData.value?.state || '未配置阶段');
+  const health = String(recordData.value?.status || recordData.value?.health || '');
+  if (health) return `${phase} · ${health}`;
+  return phase;
+});
+const projectRiskSummary = computed(() => {
+  const risk = Number(recordData.value?.risk_count || recordData.value?.warning_count || 0);
+  if (!Number.isFinite(risk) || risk <= 0) return '正常，暂无高风险告警';
+  if (risk >= 3) return `严重，当前高风险 ${risk} 项，需优先闭环`;
+  return `关注，当前风险 ${risk} 项`;
+});
+const projectFinanceSummary = computed(() => {
+  const output = Number(recordData.value?.output_value || recordData.value?.amount_output || 0);
+  const pay = Number(recordData.value?.payment_ratio || recordData.value?.payment_rate || 0);
+  const outputText = Number.isFinite(output) && output > 0 ? `产值 ${output}` : '产值未配置';
+  const payText = Number.isFinite(pay) && pay > 0 ? `付款比 ${pay}%` : '付款比未配置';
+  return `${outputText} · ${payText}`;
+});
 const canEdit = computed(() => contractWriteAllowed.value);
 const readonlyHint = computed(() => {
   if (canEdit.value) return '';
@@ -306,6 +353,10 @@ const hudEntries = computed(() => [
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
+}
+
+function openProjectAction(path: string, query?: Record<string, string>) {
+  router.push({ path, query: query || undefined }).catch(() => {});
 }
 
 function buttonState(btn: ViewButton) {
@@ -936,6 +987,53 @@ onMounted(load);
 .card.editing {
   border: 1px dashed #94a3b8;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+}
+
+.record-l1 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.l1-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.l1-label {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.l1-value {
+  margin: 6px 0 0;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.record-next {
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
+.next-label {
+  margin: 0;
+  font-size: 12px;
+  color: #334155;
+  font-weight: 700;
+}
+
+.next-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .field {
