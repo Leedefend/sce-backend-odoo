@@ -269,6 +269,49 @@ class ContractNormalizer:
                     cfg["layout"] = _coerce_list(cfg["layout"], "views.form.layout", warns)
                     cfg.setdefault("statusbar", {})
                     cfg["statusbar"] = _ensure_dict(cfg["statusbar"], "views.form.statusbar", warns)
+                    cfg.setdefault("subviews", {})
+                    cfg["subviews"] = _ensure_dict(cfg["subviews"], "views.form.subviews", warns)
+                    normalized_subviews = {}
+                    for sub_name, sub_cfg in cfg["subviews"].items():
+                        key = _safe_str(sub_name, "").strip()
+                        if not key:
+                            continue
+                        sub_obj = _ensure_dict(sub_cfg, f"views.form.subviews.{key}", warns)
+                        tree_obj = _ensure_dict(sub_obj.get("tree", {}), f"views.form.subviews.{key}.tree", warns)
+                        columns_raw = _coerce_list(tree_obj.get("columns", []), f"views.form.subviews.{key}.tree.columns", warns)
+                        normalized_columns = []
+                        for col in columns_raw:
+                            if isinstance(col, str):
+                                cname = _safe_str(col, "").strip()
+                                if not cname:
+                                    continue
+                                normalized_columns.append({
+                                    "name": cname,
+                                    "label": cname,
+                                    "ttype": "char",
+                                    "required": False,
+                                    "readonly": False,
+                                    "selection": [],
+                                })
+                                continue
+                            col_obj = _ensure_dict(col, f"views.form.subviews.{key}.tree.columns[]", warns)
+                            cname = _safe_str(col_obj.get("name", ""), "").strip()
+                            if not cname:
+                                continue
+                            normalized_columns.append({
+                                "name": cname,
+                                "label": _safe_str(col_obj.get("label", cname), cname),
+                                "ttype": _safe_str(col_obj.get("ttype", "char"), "char"),
+                                "required": _safe_bool(col_obj.get("required", False), False),
+                                "readonly": _safe_bool(col_obj.get("readonly", False), False),
+                                "selection": _coerce_list(col_obj.get("selection", []), f"views.form.subviews.{key}.tree.columns[{cname}].selection", warns),
+                            })
+                        tree_obj["columns"] = normalized_columns
+                        sub_obj["tree"] = tree_obj
+                        sub_obj["fields"] = _ensure_dict(sub_obj.get("fields", {}), f"views.form.subviews.{key}.fields", warns)
+                        sub_obj["policies"] = _ensure_dict(sub_obj.get("policies", {}), f"views.form.subviews.{key}.policies", warns)
+                        normalized_subviews[key] = sub_obj
+                    cfg["subviews"] = normalized_subviews
                 elif vt == "pivot":
                     cfg.setdefault("measures", [])
                     cfg["measures"] = _ensure_str_list(cfg["measures"], "views.pivot.measures", warns)
