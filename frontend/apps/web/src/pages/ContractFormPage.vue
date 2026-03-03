@@ -221,6 +221,7 @@ import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
+import { buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -333,14 +334,14 @@ const hasChanges = computed(() => {
   const keys = Object.keys(formData);
   return keys.some((key) => {
     if (!isFieldWritable(key)) return false;
-    return normalizeComparable(formData[key]) !== normalizeComparable(originalValues.value[key]);
+    return comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key]);
   });
 });
 const writableFieldCount = computed(() =>
   layoutNodes.value.filter((node) => node.kind === 'field' && !node.readonly).length,
 );
 const changedFieldCount = computed(() =>
-  Object.keys(formData).filter((key) => isFieldWritable(key) && normalizeComparable(formData[key]) !== normalizeComparable(originalValues.value[key])).length,
+  Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
 );
 
 const pageTitle = computed(() => {
@@ -488,43 +489,7 @@ function fromDatetimeInputValue(value: unknown) {
 }
 
 function normalizeRelationIds(value: unknown): number[] {
-  if (value === null || value === undefined || value === false) return [];
-  const out = new Set<number>();
-  const push = (raw: unknown) => {
-    const parsed = Number(raw);
-    if (Number.isFinite(parsed) && parsed > 0) out.add(Math.trunc(parsed));
-  };
-  if (typeof value === 'string') {
-    const raw = value.trim();
-    if (!raw) return [];
-    push(raw);
-    return Array.from(out);
-  }
-  if (typeof value === 'number') {
-    push(value);
-    return Array.from(out);
-  }
-  if (Array.isArray(value)) {
-    value.forEach((item) => {
-      if (typeof item === 'number') {
-        push(item);
-        return;
-      }
-      if (!Array.isArray(item)) return;
-      if (item.length === 2 && typeof item[0] === 'number' && typeof item[1] === 'string') {
-        push(item[0]);
-        return;
-      }
-      if (item[0] === 6 && Array.isArray(item[2])) {
-        (item[2] as unknown[]).forEach((id) => push(id));
-        return;
-      }
-      if (item[0] === 4 && typeof item[1] === 'number') {
-        push(item[1]);
-      }
-    });
-  }
-  return Array.from(out);
+  return extractX2ManyIds(value);
 }
 
 function relationIds(name: string): number[] {
@@ -1053,9 +1018,21 @@ const layoutNodes = computed<LayoutNode[]>(() => {
 });
 
 function normalizeComparable(value: unknown) {
+  if (Array.isArray(value) && value.every((item) => typeof item === 'number')) {
+    return JSON.stringify([...value].sort((a, b) => a - b));
+  }
   if (Array.isArray(value)) return JSON.stringify(value);
   if (value && typeof value === 'object') return JSON.stringify(value);
   return String(value ?? '');
+}
+
+function comparableFieldValue(name: string, value: unknown) {
+  const descriptor = contract.value?.fields?.[name];
+  const ttype = fieldType(descriptor);
+  if (ttype === 'many2many' || ttype === 'one2many') {
+    return JSON.stringify(normalizeRelationIds(value).sort((a, b) => a - b));
+  }
+  return normalizeComparable(value);
 }
 
 function isFieldWritable(name: string) {
@@ -1091,12 +1068,20 @@ function normalizeFieldValue(name: string, value: unknown) {
     return parsed === null ? false : Math.trunc(parsed);
   }
   if (ttype === 'many2many') {
-    const ids = normalizeRelationIds(value);
-    return [[6, 0, ids]];
+    return buildX2ManyCommands({
+      kind: 'many2many',
+      current: value,
+      original: originalValues.value[name],
+      mode: 'write',
+    });
   }
   if (ttype === 'one2many') {
-    const ids = normalizeRelationIds(value);
-    return [[6, 0, ids]];
+    return buildX2ManyCommands({
+      kind: 'one2many',
+      current: value,
+      original: originalValues.value[name],
+      mode: 'write',
+    });
   }
   if (ttype === 'date') {
     const normalized = toDateInputValue(value);
@@ -1173,6 +1158,17 @@ function scheduleOnchange() {
 function buildOnchangeValues() {
   const out: Record<string, unknown> = {};
   Object.keys(contract.value?.fields || {}).forEach((name) => {
+    const descriptor = contract.value?.fields?.[name];
+    const ttype = fieldType(descriptor);
+    if (ttype === 'many2many' || ttype === 'one2many') {
+      out[name] = buildX2ManyCommands({
+        kind: ttype,
+        current: formData[name],
+        original: originalValues.value[name],
+        mode: 'onchange',
+      });
+      return;
+    }
     out[name] = normalizeFieldValue(name, formData[name]);
   });
   if (recordId.value) out.id = recordId.value;
@@ -1240,7 +1236,12 @@ function collectWritableValues() {
   return layoutNodes.value
     .filter((node) => node.kind === 'field' && !node.readonly)
     .reduce<Record<string, unknown>>((acc, node) => {
-      acc[node.name] = normalizeFieldValue(node.name, formData[node.name]);
+      const value = normalizeFieldValue(node.name, formData[node.name]);
+      const ttype = fieldType(node.descriptor);
+      if ((ttype === 'many2many' || ttype === 'one2many') && Array.isArray(value) && !value.length) {
+        return acc;
+      }
+      acc[node.name] = value;
       return acc;
     }, {});
 }
@@ -1378,7 +1379,14 @@ async function loadRecord() {
       }
     });
     originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
-      acc[name] = normalizeFieldValue(name, formData[name]);
+      const value = formData[name];
+      if (Array.isArray(value)) {
+        acc[name] = [...value];
+      } else if (value && typeof value === 'object') {
+        acc[name] = JSON.parse(JSON.stringify(value));
+      } else {
+        acc[name] = value;
+      }
       return acc;
     }, {});
     return;
@@ -1411,7 +1419,14 @@ async function loadRecord() {
     }
   });
   originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
-    acc[name] = normalizeFieldValue(name, formData[name]);
+    const value = formData[name];
+    if (Array.isArray(value)) {
+      acc[name] = [...value];
+    } else if (value && typeof value === 'object') {
+      acc[name] = JSON.parse(JSON.stringify(value));
+    } else {
+      acc[name] = value;
+    }
     return acc;
   }, {});
 }
@@ -1536,7 +1551,14 @@ async function saveRecord() {
         acc[key] = value;
         return acc;
       }
-      if (normalizeComparable(value) !== normalizeComparable(originalValues.value[key])) {
+      const ttype = fieldType(contract.value?.fields?.[key]);
+      if (ttype === 'many2many' || ttype === 'one2many') {
+        if (Array.isArray(value) && value.length) {
+          acc[key] = value;
+        }
+        return acc;
+      }
+      if (comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])) {
         acc[key] = value;
       }
       return acc;
