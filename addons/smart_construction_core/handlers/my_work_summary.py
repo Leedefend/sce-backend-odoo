@@ -10,6 +10,7 @@ from odoo.addons.smart_core.utils.reason_codes import (
     REASON_NO_WORK_ITEMS,
     REASON_OK,
 )
+from odoo.addons.smart_construction_core.services.my_work_aggregate_service import WorkItemAggregateService
 from odoo.exceptions import AccessError
 
 
@@ -28,7 +29,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     STATUS_READY = "READY"
     STATUS_EMPTY = "EMPTY"
     STATUS_FILTER_EMPTY = "FILTER_EMPTY"
-    SORT_FIELDS = {"id", "title", "model", "deadline", "source", "reason_code", "section"}
+    SORT_FIELDS = WorkItemAggregateService.SORT_FIELDS
 
     def _get_model(self, model_name):
         try:
@@ -120,30 +121,15 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return direction if direction in {"asc", "desc"} else "desc"
 
     def _append_items(self, target, section_key, rows):
-        for row in rows:
-            row["section"] = section_key
-            row["section_label"] = self.SECTION_LABELS.get(section_key, section_key)
-            target.append(row)
+        WorkItemAggregateService.append_items(
+            target,
+            section_key=section_key,
+            section_label=self.SECTION_LABELS.get(section_key, section_key),
+            rows=rows,
+        )
 
     def _build_facets(self, items):
-        source_counts = {}
-        reason_counts = {}
-        section_counts = {}
-        for item in items or []:
-            source = str(item.get("source") or "").strip()
-            reason = str(item.get("reason_code") or "").strip()
-            section = str(item.get("section") or "").strip()
-            if source:
-                source_counts[source] = int(source_counts.get(source, 0)) + 1
-            if reason:
-                reason_counts[reason] = int(reason_counts.get(reason, 0)) + 1
-            if section:
-                section_counts[section] = int(section_counts.get(section, 0)) + 1
-        return {
-            "source_counts": _ranked_counts(source_counts),
-            "reason_code_counts": _ranked_counts(reason_counts),
-            "section_counts": _ranked_counts(section_counts),
-        }
+        return WorkItemAggregateService.build_facets(items)
 
     def _normalize_section(self, value):
         section = str(value or "").strip().lower()
@@ -175,48 +161,19 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         }
 
     def _apply_filters(self, items, *, section, source, reason_code, search):
-        result = list(items or [])
-        if section and section != "all":
-            result = [item for item in result if str(item.get("section") or "") == section]
-        if source and source != "all":
-            result = [item for item in result if str(item.get("source") or "") == source]
-        if reason_code and reason_code != "all":
-            result = [item for item in result if str(item.get("reason_code") or "") == reason_code]
-        if search:
-            result = [
-                item
-                for item in result
-                if search in " ".join(
-                    [
-                        str(item.get("title") or ""),
-                        str(item.get("model") or ""),
-                        str(item.get("action_label") or ""),
-                        str(item.get("reason_code") or ""),
-                    ]
-                ).lower()
-            ]
-        return result
-
-    def _sort_value(self, item, sort_by):
-        if sort_by in {"id"}:
-            return int(item.get("id") or 0)
-        text = str(item.get(sort_by) or "").lower()
-        # Keep empty deadlines at the end for ASC and DESC.
-        if sort_by == "deadline":
-            return (text == "", text)
-        return text
+        return WorkItemAggregateService.apply_filters(
+            items,
+            section=section,
+            source=source,
+            reason_code=reason_code,
+            search=search,
+        )
 
     def _apply_sort(self, items, *, sort_by, sort_dir):
-        reverse = sort_dir == "desc"
-        return sorted(list(items or []), key=lambda item: self._sort_value(item, sort_by), reverse=reverse)
+        return WorkItemAggregateService.apply_sort(items, sort_by=sort_by, sort_dir=sort_dir)
 
     def _paginate_items(self, items, *, page, page_size):
-        rows = list(items or [])
-        total = len(rows)
-        total_pages = max(1, (total + page_size - 1) // page_size)
-        safe_page = min(page, total_pages)
-        offset = (safe_page - 1) * page_size
-        return rows[offset : offset + page_size], total_pages, safe_page
+        return WorkItemAggregateService.paginate(items, page=page, page_size=page_size)
 
     def _load_todo_items(self, user, limit):
         Activity = self._get_model("mail.activity")
@@ -240,7 +197,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "source": "mail.activity",
                     "action_label": followup.get("action_label") or "",
                     "action_key": followup.get("action_key") or "",
-                    "reason_code": followup.get("reason_code") or "",
+                    "reason_code": followup.get("reason_code") or "ACTIVITY_PENDING",
+                    "priority": "medium",
                 })
         except Exception:
             return []
@@ -290,6 +248,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "action_label": "审批处理",
                     "action_key": "tier.review.approve",
                     "reason_code": "TIER_REVIEW_PENDING",
+                    "priority": "high",
                 })
         except Exception:
             return []
@@ -337,6 +296,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "action_label": node_name or "流程处理",
                     "action_key": "sc.workflow.approve",
                     "reason_code": "WORKFLOW_PENDING",
+                    "priority": "high",
                 })
         except Exception:
             return []
@@ -373,6 +333,46 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "action_label": "任务处理",
                     "action_key": "project.task.open",
                     "reason_code": "TASK_ASSIGNED",
+                    "priority": "medium",
+                })
+        except Exception:
+            return []
+        return rows
+
+    def _project_risk_domain_for_user(self, user):
+        Project = self._get_model("project.project")
+        if Project is None:
+            return None
+        if "health_state" not in Project._fields:
+            return None
+        base = [("health_state", "in", ["risk", "warn"])]
+        if "user_id" in Project._fields:
+            return base + [("user_id", "=", user.id)]
+        return base
+
+    def _load_project_risk_items(self, user, limit):
+        Project = self._get_model("project.project")
+        domain = self._project_risk_domain_for_user(user)
+        if Project is None or not domain:
+            return []
+        rows = []
+        try:
+            records = Project.search(domain, order="write_date desc, id desc", limit=limit)
+            for rec in records:
+                health_state = str(getattr(rec, "health_state", "") or "").strip().lower()
+                reason_code = "PROJECT_HEALTH_RISK" if health_state == "risk" else "PROJECT_HEALTH_WARN"
+                rows.append({
+                    "id": rec.id,
+                    "title": rec.name or f"project.project#{rec.id}",
+                    "model": "project.project",
+                    "record_id": rec.id,
+                    "deadline": "",
+                    "scene_key": self._scene_for_model("project.project"),
+                    "source": "project.risk",
+                    "action_label": "风险处理",
+                    "action_key": "project.risk.resolve",
+                    "reason_code": reason_code,
+                    "priority": "high" if health_state == "risk" else "medium",
                 })
         except Exception:
             return []
@@ -409,6 +409,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "deadline": "",
                     "scene_key": self._scene_for_model("project.project"),
                     "source": "project.project",
+                    "reason_code": "RESPONSIBLE_OWNER",
+                    "priority": "medium",
                 })
         except Exception:
             return []
@@ -435,6 +437,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "deadline": "",
                     "scene_key": self._scene_for_model(model),
                     "source": "mail.message",
+                    "reason_code": "MENTIONED",
+                    "priority": "low",
                 })
         except Exception:
             return []
@@ -460,6 +464,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "deadline": "",
                     "scene_key": self._scene_for_model(model),
                     "source": "mail.followers",
+                    "reason_code": "FOLLOWING",
+                    "priority": "low",
                 })
         except Exception:
             return []
@@ -494,7 +500,12 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             self._task_domain_for_user(user) or [("id", "=", -1)],
             ["id"],
         )
-        todo_count = int(mail_todo_count + tier_review_count + workflow_todo_count + task_todo_count)
+        risk_todo_count = self._safe_count(
+            "project.project",
+            self._project_risk_domain_for_user(user) or [("id", "=", -1)],
+            ["health_state"],
+        )
+        todo_count = int(mail_todo_count + tier_review_count + workflow_todo_count + task_todo_count + risk_todo_count)
         responsible_count = self._safe_count("project.project", [("user_id", "=", user.id)], ["user_id"])
         mentioned_count = self._safe_count("mail.message", [("partner_ids", "in", partner.id)], ["partner_ids"])
         following_count = self._safe_count("mail.followers", [("partner_id", "=", partner.id)], ["partner_id"])
@@ -504,6 +515,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         self._append_items(items, "todo", self._load_tier_review_items(user, limit_each))
         self._append_items(items, "todo", self._load_workflow_todo_items(user, limit_each))
         self._append_items(items, "todo", self._load_task_items(user, limit_each))
+        self._append_items(items, "todo", self._load_project_risk_items(user, limit_each))
         self._append_items(items, "owned", self._load_owned_items(user, limit_each))
         self._append_items(items, "mentions", self._load_mention_items(partner, limit_each))
         self._append_items(items, "following", self._load_following_items(partner, limit_each))
@@ -574,9 +586,3 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         }
         meta = {"intent": self.INTENT_TYPE}
         return {"ok": True, "data": data, "meta": meta}
-
-
-def _ranked_counts(counter_map):
-    rows = [{"key": key, "count": int(value)} for key, value in (counter_map or {}).items()]
-    rows.sort(key=lambda row: row["count"], reverse=True)
-    return rows

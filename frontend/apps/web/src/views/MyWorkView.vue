@@ -287,6 +287,7 @@
           <option value="deadline">排序：截止日</option>
           <option value="title">排序：事项标题</option>
           <option value="reason_code">排序：原因码</option>
+          <option value="priority">排序：优先级</option>
           <option value="source">排序：来源</option>
         </select>
         <select v-model="sortDir" class="filter-select">
@@ -339,13 +340,14 @@
               <th>模型</th>
               <th>动作</th>
               <th>原因码</th>
+              <th>优先级</th>
               <th>截止日</th>
               <th>入口</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="!filteredItems.length">
-              <td colspan="8" class="empty">{{ summaryStatus?.message || emptyCopy.message }}</td>
+              <td colspan="9" class="empty">{{ summaryStatus?.message || emptyCopy.message }}</td>
             </tr>
             <tr v-for="item in filteredItems" :key="`${item.section || 'all'}-${item.id}`">
               <td class="cell-select">
@@ -362,6 +364,7 @@
               <td>{{ item.model || '-' }}</td>
               <td>{{ item.action_label || '-' }}</td>
               <td>{{ item.reason_code || '-' }}</td>
+              <td>{{ formatPriority(item.priority) }}</td>
               <td>{{ item.deadline || '-' }}</td>
               <td>
                 <button
@@ -606,6 +609,13 @@ function mapRestrictedModelLabel(modelName: string) {
     'mail.followers': '关注记录',
   };
   return mapping[modelName] || modelName;
+}
+
+function formatPriority(priority: string | undefined) {
+  const raw = String(priority || '').trim().toLowerCase();
+  if (raw === 'high') return '高';
+  if (raw === 'low') return '低';
+  return '中';
 }
 
 function setActionFeedback(message: string, isError = false, autoClearMs = 0) {

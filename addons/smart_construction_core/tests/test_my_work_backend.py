@@ -251,6 +251,16 @@ class TestMyWorkBackend(TransactionCase):
         self.assertEqual(handler._normalize_sort_by("unknown"), "id")
         self.assertEqual(handler._normalize_sort_dir("up"), "desc")
 
+    def test_summary_priority_sort(self):
+        handler = MyWorkSummaryHandler(self.env, payload={})
+        rows = [
+            {"id": 1, "priority": "medium"},
+            {"id": 2, "priority": "low"},
+            {"id": 3, "priority": "high"},
+        ]
+        sorted_rows = handler._apply_sort(rows, sort_by="priority", sort_dir="desc")
+        self.assertEqual([item["id"] for item in sorted_rows], [3, 1, 2])
+
     def test_retryable_summary_counts(self):
         summary = _retryable_summary(
             [
