@@ -94,7 +94,7 @@
     <KanbanPage
       v-if="viewMode === 'kanban'"
       :title="pageTitle"
-      :status="status"
+      :status="pageStatus"
       :loading="status === 'loading' || batchBusy"
       :error-message="errorMessage"
       :trace-id="traceId"
@@ -112,7 +112,7 @@
       v-else
       :title="pageTitle"
       :model="model"
-      :status="status"
+      :status="pageStatus"
       :loading="status === 'loading' || batchBusy"
       :error-message="errorMessage"
       :trace-id="traceId"
@@ -256,6 +256,7 @@ type ContractViewBlock = {
 };
 type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
   head?: {
+    model?: string;
     view_type?: string;
     context?: unknown;
     res_id?: number | string;
@@ -290,7 +291,6 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     actions_max?: number;
   };
   model?: string;
-  head?: { model?: string };
   data?: {
     type?: string;
     url?: string;
@@ -385,6 +385,9 @@ const statusLabel = computed(() => {
   if (status.value === 'empty') return '暂无数据';
   return '已就绪';
 });
+const pageStatus = computed<'loading' | 'ok' | 'empty' | 'error'>(() =>
+  status.value === 'idle' ? 'loading' : status.value,
+);
 const pageTitle = computed(() => {
   const contractTitle = String(actionContract.value?.head?.title || '').trim();
   if (contractTitle) return contractTitle;
@@ -619,9 +622,9 @@ function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
 }
 
-function resolveCarryQuery() {
+function resolveCarryQuery(extra?: Record<string, unknown>) {
   return {
-    ...pickContractNavQuery(route.query as Record<string, unknown>),
+    ...pickContractNavQuery(route.query as Record<string, unknown>, extra),
     ...resolveWorkspaceContextQuery(),
   };
 }
@@ -705,7 +708,7 @@ function applyContractFilter(key: string) {
   activeContractFilterKey.value = key;
   showMoreContractFilters.value = false;
   clearSelection();
-  const query = { ...(route.query as Record<string, unknown>), preset_filter: key };
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { preset_filter: key });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
@@ -714,8 +717,7 @@ function clearContractFilter() {
   activeContractFilterKey.value = '';
   showMoreContractFilters.value = false;
   clearSelection();
-  const query = { ...(route.query as Record<string, unknown>) };
-  delete query.preset_filter;
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { preset_filter: undefined });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
@@ -1006,31 +1008,6 @@ function isPortalPath(url: string) {
   return url.startsWith('/portal/');
 }
 
-function resolvePortalBridgeBase() {
-  try {
-    const base = new URL(config.apiBaseUrl);
-    if (base.hostname === 'localhost') {
-      base.hostname = '127.0.0.1';
-    }
-    return base.toString();
-  } catch {
-    return config.apiBaseUrl;
-  }
-}
-
-function buildPortalBridgeUrl(url: string) {
-  const nextPath = url.startsWith('/') ? url : `/${url}`;
-  const bridge = new URL('/portal/bridge', resolvePortalBridgeBase());
-  bridge.searchParams.set('next', nextPath);
-  if (session.token) {
-    bridge.searchParams.set('token', session.token);
-  }
-  if (config.odooDb) {
-    bridge.searchParams.set('db', config.odooDb);
-  }
-  return bridge.toString();
-}
-
 function resolveActionUrl(meta: unknown, contract: unknown) {
   const metaTyped = (meta as { url?: string }) || {};
   const metaUrl = String(metaTyped.url || '').trim();
@@ -1067,15 +1044,21 @@ async function redirectUrlAction(meta: unknown, contract: unknown) {
   const metaTyped = (meta as { target?: string }) || {};
   const typed = contract as ActionContractLoose;
   const target = normalizeUrlTarget(metaTyped.target || typed.data?.target);
+  if (target === 'self' && isPortalPath(url)) {
+    await router.replace({
+      path: '/',
+      query: resolveCarryQuery({
+        menu_id: menuId.value || undefined,
+        action_id: actionId.value || undefined,
+      }),
+    });
+    return true;
+  }
   if (target === 'self' && url.startsWith('/')) {
     if (isShellRoute(url)) {
       await router.replace(url);
     } else {
-      if (isPortalPath(url)) {
-        window.location.assign(buildPortalBridgeUrl(url));
-      } else {
-        window.location.assign(resolveNavigationUrl(url));
-      }
+      window.location.assign(resolveNavigationUrl(url));
     }
     return true;
   }

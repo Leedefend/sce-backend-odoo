@@ -14,11 +14,14 @@ ROLE_SURFACE_MAP = {
     },
     "pm": {
         "label": "Project Manager",
-        "landing_scene_candidates": ["projects.ledger", "projects.list", "projects.intake"],
+        "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
             "smart_construction_core.menu_sc_cost_center",
+        ],
+        "menu_blocklist_xmlids": [
+            "smart_construction_core.menu_sc_project_manage",
         ],
     },
     "finance": {
@@ -150,6 +153,7 @@ class IdentityResolver:
         role_meta = ROLE_SURFACE_MAP.get(role_code) or ROLE_SURFACE_MAP["owner"]
         scene_candidates = list(role_meta.get("landing_scene_candidates") or [])
         menu_candidates = list(role_meta.get("menu_xmlids") or [])
+        menu_blocklist_xmlids = list(role_meta.get("menu_blocklist_xmlids") or [])
         landing_scene_key = self._pick_landing_scene(scene_candidates, scene_keys)
         nav_index = self._index_nav_by_xmlid(nav_tree)
         landing_menu_xmlid = ""
@@ -171,6 +175,7 @@ class IdentityResolver:
             "landing_path": f"/s/{landing_scene_key}",
             "scene_candidates": scene_candidates,
             "menu_xmlids": menu_candidates,
+            "menu_blocklist_xmlids": menu_blocklist_xmlids,
         }
 
     def build_role_surface_map_payload(self) -> Dict[str, dict]:
@@ -181,8 +186,83 @@ class IdentityResolver:
                 "role_label": role_meta.get("label") or role_code,
                 "scene_candidates": list(role_meta.get("landing_scene_candidates") or []),
                 "menu_xmlids": list(role_meta.get("menu_xmlids") or []),
+                "menu_blocklist_xmlids": list(role_meta.get("menu_blocklist_xmlids") or []),
             }
         return payload
+
+    def _node_xmlid(self, node: dict) -> str:
+        if not isinstance(node, dict):
+            return ""
+        xmlid = node.get("xmlid")
+        if isinstance(xmlid, str) and xmlid:
+            return xmlid
+        meta = node.get("meta") or {}
+        meta_xmlid = meta.get("menu_xmlid")
+        if isinstance(meta_xmlid, str) and meta_xmlid:
+            return meta_xmlid
+        return ""
+
+    def filter_nav_for_role_surface(self, nav_tree: list, role_surface: dict) -> list:
+        if not isinstance(nav_tree, list) or not isinstance(role_surface, dict):
+            return nav_tree if isinstance(nav_tree, list) else []
+
+        allow_xmlids = {x for x in (role_surface.get("menu_xmlids") or []) if isinstance(x, str) and x}
+        block_xmlids = {x for x in (role_surface.get("menu_blocklist_xmlids") or []) if isinstance(x, str) and x}
+
+        def walk(node: dict, in_allowed_branch: bool):
+            if not isinstance(node, dict):
+                return None, False
+            xmlid = self._node_xmlid(node)
+            if xmlid and xmlid in block_xmlids:
+                return None, False
+
+            current_allowed = in_allowed_branch or (bool(xmlid) and xmlid in allow_xmlids)
+            has_explicit_allow = bool(xmlid) and xmlid in allow_xmlids
+            kept_children = []
+            has_allowed_descendant = False
+            for child in node.get("children") or []:
+                kept, child_allowed = walk(child, current_allowed)
+                if kept:
+                    kept_children.append(kept)
+                has_allowed_descendant = has_allowed_descendant or child_allowed
+
+            keep_node = True
+            if allow_xmlids:
+                keep_node = current_allowed or has_allowed_descendant
+            if not keep_node:
+                return None, has_allowed_descendant or has_explicit_allow
+
+            out = dict(node)
+            out["children"] = kept_children
+            return out, (has_explicit_allow or has_allowed_descendant or current_allowed)
+
+        filtered = []
+        for node in nav_tree:
+            kept, _ = walk(node, False)
+            if kept:
+                filtered.append(kept)
+        return filtered
+
+    def infer_default_route_from_nav(self, nav_tree: list) -> dict:
+        if not isinstance(nav_tree, list):
+            return {"menu_id": None}
+
+        def dfs(nodes):
+            for node in nodes or []:
+                if not isinstance(node, dict):
+                    continue
+                children = node.get("children") or []
+                if children:
+                    found = dfs(children)
+                    if found:
+                        return found
+                menu_id = node.get("menu_id") or node.get("id")
+                if menu_id:
+                    return menu_id
+            return None
+
+        menu_id = dfs(nav_tree)
+        return {"menu_id": menu_id}
 
     def resolve(self, env):
         user = env.user

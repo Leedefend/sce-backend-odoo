@@ -1,4 +1,6 @@
-type QueryLike = Record<string, unknown>;
+import type { LocationQueryRaw } from 'vue-router';
+
+type QueryLike = LocationQueryRaw;
 
 const SCENE_QUERY_KEYS = ['scene', 'scene_key', 'sceneKey'] as const;
 const WORKBENCH_PATH = '/workbench';

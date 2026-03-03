@@ -4,6 +4,7 @@
       <div>
         <h2>我的工作</h2>
         <p>统一查看待我处理、我负责、@我的、我关注的事项。</p>
+        <p v-if="generatedAtText" class="generated-at">数据更新时间：{{ generatedAtText }}</p>
       </div>
       <div class="actions">
         <button class="secondary" @click="load">刷新</button>
@@ -12,6 +13,10 @@
     <section v-if="appliedPresetLabel" class="route-preset">
       <p>已应用推荐视图：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
       <button class="link-btn mini-btn" @click="clearRoutePreset">清除推荐</button>
+    </section>
+    <section v-if="!loading && !errorText && visibilityNotice" class="visibility-notice">
+      <p class="notice-title">{{ visibilityNotice }}</p>
+      <p v-if="restrictedSourceText" class="notice-detail">受限来源：{{ restrictedSourceText }}</p>
     </section>
 
     <StatusPanel v-if="loading" title="加载我的工作中..." variant="info" />
@@ -301,7 +306,15 @@
           <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">清除预设</button>
         </div>
       </section>
-      <p v-if="summaryStatus?.hint" class="status-hint">{{ summaryStatus.hint }}</p>
+      <p v-if="summaryStatus?.hint && summaryStatus?.state !== 'FILTER_EMPTY'" class="status-hint">{{ summaryStatus.hint }}</p>
+      <section v-if="showFilterEmptyGuide" class="filter-empty-guide">
+        <p class="guide-title">当前筛选条件没有匹配结果</p>
+        <p class="guide-text">建议先恢复推荐视图，或一键清空筛选后重试。</p>
+        <div class="guide-actions">
+          <button class="guide-btn primary" @click="applyRecommendedView">恢复推荐视图</button>
+          <button class="guide-btn" @click="resetFilters">清空筛选</button>
+        </div>
+      </section>
 
       <section v-if="todoSelectionIds.length" class="batch-bar">
         <span>已选 {{ todoSelectionIds.length }} 条待办</span>
@@ -384,7 +397,8 @@ import { trackUsageEvent } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
-import { readWorkspaceContext } from '../app/workspaceContext';
+import { parseWorkspaceEntryContext, readWorkspaceContext } from '../app/workspaceContext';
+import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 
 const router = useRouter();
 const route = useRoute();
@@ -438,6 +452,12 @@ const totalPages = ref(1);
 const sourceFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const reasonFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const summaryStatus = ref<{ state: string; reason_code: string; message: string; hint: string } | null>(null);
+const generatedAt = ref('');
+const summaryVisibility = ref<{
+  partial_data_hidden?: boolean;
+  message?: string;
+  restricted_sources?: Array<{ model: string; readable: boolean; reason: string }>;
+} | null>(null);
 const myWorkFilterStorageKey = 'sc.mywork.filters.v1';
 const myWorkPresetStorageKey = 'sc.mywork.filter_preset.v1';
 const myWorkRetryPanelStorageKey = 'sc.mywork.retry_panel.v1';
@@ -447,6 +467,29 @@ const routeContextSource = ref('');
 const lastTrackedPreset = ref('');
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load my work'));
 const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
+const generatedAtText = computed(() => {
+  const raw = String(generatedAt.value || '').trim();
+  if (!raw) return '';
+  const isoLike = raw.includes('T') ? raw : raw.replace(' ', 'T');
+  const dt = new Date(isoLike);
+  if (Number.isNaN(dt.getTime())) return raw;
+  return dt.toLocaleString();
+});
+const visibilityNotice = computed(() => {
+  if (!summaryVisibility.value?.partial_data_hidden) return '';
+  const base = String(summaryVisibility.value?.message || '部分数据未显示');
+  return `${base}，请联系管理员开通对应权限。`;
+});
+const restrictedSourceText = computed(() => {
+  const rows = Array.isArray(summaryVisibility.value?.restricted_sources)
+    ? summaryVisibility.value?.restricted_sources || []
+    : [];
+  const names = rows
+    .map((item) => mapRestrictedModelLabel(String(item?.model || '').trim()))
+    .filter(Boolean);
+  return names.join(' / ');
+});
+const showFilterEmptyGuide = computed(() => summaryStatus.value?.state === 'FILTER_EMPTY');
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
 const autoQueryDelayMs = 300;
 let autoQueryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -543,6 +586,52 @@ const groupedVisibleRetryItems = computed(() => {
   }
   return Array.from(map.entries()).map(([reasonCode, rows]) => ({ reasonCode, items: rows }));
 });
+let autoSectionAligned = false;
+
+function findRecommendedSectionKey() {
+  const ranked = (summary.value || [])
+    .filter((item) => Number(item.count || 0) > 0)
+    .sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+  return ranked[0]?.key || sections.value[0]?.key || 'todo';
+}
+
+function mapRestrictedModelLabel(modelName: string) {
+  const mapping: Record<string, string> = {
+    'sc.workflow.workitem': '流程待办',
+    'tier.review': '审批复核',
+    'mail.activity': '待办活动',
+    'project.task': '项目任务',
+    'project.project': '项目主数据',
+    'mail.message': '消息提醒',
+    'mail.followers': '关注记录',
+  };
+  return mapping[modelName] || modelName;
+}
+
+function setActionFeedback(message: string, isError = false, autoClearMs = 0) {
+  actionFeedback.value = message;
+  actionFeedbackError.value = isError;
+  if (!isError && autoClearMs > 0) {
+    window.setTimeout(() => {
+      if (actionFeedback.value === message && !actionFeedbackError.value) {
+        actionFeedback.value = '';
+      }
+    }, autoClearMs);
+  }
+}
+
+async function applyRecommendedView() {
+  searchText.value = '';
+  sourceFilter.value = 'ALL';
+  reasonFilter.value = 'ALL';
+  sortBy.value = 'id';
+  sortDir.value = 'desc';
+  pageSize.value = 20;
+  page.value = 1;
+  activeSection.value = findRecommendedSectionKey();
+  setActionFeedback('已恢复推荐视图', false, 3000);
+  await load();
+}
 
 async function load() {
   loading.value = true;
@@ -557,14 +646,16 @@ async function load() {
       sortBy: sortBy.value,
       sortDir: sortDir.value,
       section: activeSection.value || 'all',
-      source: sourceFilter.value,
-      reasonCode: reasonFilter.value,
+      source: sourceFilter.value === 'ALL' ? 'all' : sourceFilter.value,
+      reasonCode: reasonFilter.value === 'ALL' ? 'all' : reasonFilter.value,
       search: searchText.value.trim(),
     });
     sections.value = Array.isArray(data.sections) ? data.sections : [];
     summary.value = Array.isArray(data.summary) ? data.summary : [];
     items.value = Array.isArray(data.items) ? data.items : [];
+    generatedAt.value = String(data.generated_at || '');
     summaryStatus.value = data.status || null;
+    summaryVisibility.value = data.visibility || null;
     page.value = Math.max(1, Number(data.filters?.page || page.value || 1));
     pageSize.value = Math.max(1, Number(data.filters?.page_size || pageSize.value || 20));
     totalPages.value = Math.max(1, Number(data.filters?.total_pages || 1));
@@ -573,12 +664,27 @@ async function load() {
     sourceFacetRows.value = Array.isArray(data.facets?.source_counts) ? data.facets?.source_counts || [] : [];
     reasonFacetRows.value = Array.isArray(data.facets?.reason_code_counts) ? data.facets?.reason_code_counts || [] : [];
     todoSelectionIds.value = [];
+    if (!autoSectionAligned) {
+      const currentCount = Number(summary.value.find((item) => item.key === activeSection.value)?.count || 0);
+      if (currentCount <= 0) {
+        const nextKey = findRecommendedSectionKey();
+        if (nextKey && nextKey !== activeSection.value) {
+          autoSectionAligned = true;
+          activeSection.value = nextKey;
+          page.value = 1;
+          await load();
+          return;
+        }
+      }
+      autoSectionAligned = true;
+    }
     if (sections.value.length && !sections.value.find((sec) => sec.key === activeSection.value)) {
       activeSection.value = sections.value[0].key;
     }
   } catch (err) {
     errorText.value = err instanceof Error ? err.message : '请求失败';
     statusError.value = buildStatusError(err, errorText.value);
+    summaryVisibility.value = null;
   } finally {
     suspendAutoLoad.value = false;
     loading.value = false;
@@ -703,8 +809,29 @@ function resolveWorkspaceContextQuery() {
 }
 
 function openScene(sceneKey: string) {
-  if (!sceneKey) return;
-  router.push({ path: `/s/${sceneKey}`, query: resolveWorkspaceContextQuery() }).catch(() => {});
+  const key = String(sceneKey || '').trim();
+  if (!key) return;
+  const query = resolveWorkspaceContextQuery();
+  const scene = getSceneByKey(key);
+  const target = scene?.target || {};
+  if (typeof target.action_id === 'number' && target.action_id > 0) {
+    router.push({ path: `/a/${target.action_id}`, query: { menu_id: target.menu_id || undefined, ...query } }).catch(() => {});
+    return;
+  }
+  if (target.model && target.record_id) {
+    router
+      .push({
+        path: `/r/${target.model}/${target.record_id}`,
+        query: { menu_id: target.menu_id || undefined, action_id: target.action_id || undefined, ...query },
+      })
+      .catch(() => {});
+    return;
+  }
+  if (target.route && typeof target.route === 'string' && !target.route.startsWith('/portal/')) {
+    router.push({ path: target.route, query }).catch(() => {});
+    return;
+  }
+  router.push({ path: `/s/${key}`, query }).catch(() => {});
 }
 
 function openRecord(item: MyWorkRecordItem) {
@@ -1361,7 +1488,7 @@ function restoreRetryPanelState() {
 function applyRouteOverrides() {
   let changed = false;
   const context = readWorkspaceContext(route.query as Record<string, unknown>);
-  const entryContext = context.entry_context || {};
+  const entryContext = parseWorkspaceEntryContext(context.entry_context);
   const preset = String(context.preset || '').trim();
   const section = String(route.query.section || entryContext.section || '').trim();
   const source = String(route.query.source || entryContext.source || '').trim();
@@ -1526,6 +1653,12 @@ watch(
   color: #334155;
 }
 
+.generated-at {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #475569;
+}
+
 .route-preset {
   display: flex;
   align-items: center;
@@ -1541,6 +1674,25 @@ watch(
   margin: 0;
   color: #1e3a8a;
   font-size: 13px;
+}
+
+.visibility-notice {
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  background: #fffbeb;
+  padding: 10px 12px;
+}
+
+.notice-title {
+  margin: 0;
+  color: #92400e;
+  font-weight: 600;
+}
+
+.notice-detail {
+  margin: 4px 0 0;
+  color: #b45309;
+  font-size: 12px;
 }
 
 .secondary {
@@ -1641,6 +1793,45 @@ watch(
 .status-hint {
   margin: 0;
   color: #475569;
+}
+
+.filter-empty-guide {
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  background: #fff7ed;
+  padding: 12px;
+}
+
+.guide-title {
+  margin: 0;
+  color: #9a3412;
+  font-weight: 700;
+}
+
+.guide-text {
+  margin: 6px 0 0;
+  color: #7c2d12;
+}
+
+.guide-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.guide-btn {
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fff;
+  color: #7c2d12;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.guide-btn.primary {
+  border-color: #fb923c;
+  background: #fed7aa;
+  color: #7c2d12;
 }
 
 .pager {

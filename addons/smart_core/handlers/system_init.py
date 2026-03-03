@@ -263,6 +263,16 @@ class SystemInitHandler(BaseIntentHandler):
             apply_contract_governance_fn=apply_contract_governance,
         )
         data, scene_diagnostics = SystemInitSurfaceBuilder.apply(surface_ctx=surface_ctx)
+        role_surface = data.get("role_surface") if isinstance(data, dict) else {}
+        role_pruned = False
+        if isinstance(role_surface, dict) and isinstance(data.get("nav"), list):
+            pruned_nav = identity_resolver.filter_nav_for_role_surface(data.get("nav") or [], role_surface)
+            role_pruned = pruned_nav != (data.get("nav") or [])
+            data["nav"] = pruned_nav
+            data["default_route"] = identity_resolver.infer_default_route_from_nav(pruned_nav)
+            if isinstance(data.get("nav_meta"), dict):
+                data["nav_meta"]["role_surface_pruned"] = role_pruned
+                data["nav_meta"]["role_surface_code"] = role_surface.get("role_code")
         if contract_mode == "hud":
             data["scene_diagnostics"] = scene_diagnostics
 

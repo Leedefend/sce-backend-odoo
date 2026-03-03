@@ -63,7 +63,7 @@
     />
 
     <section v-else class="card" :class="{ editing: status === 'editing' }">
-      <div v-if="editTx.state === 'saved'" class="banner success">
+      <div v-if="editTxState === 'saved'" class="banner success">
         Saved. Changes have been applied.
       </div>
       <div v-if="ribbon" class="ribbon">{{ ribbon.title || 'Ribbon' }}</div>
@@ -145,7 +145,7 @@ import { downloadFile, fileToBase64, uploadFile } from '../api/files';
 import { loadActionContractRaw } from '../api/contract';
 import { buildRecordRuntimeFromContract } from '../app/contractRecordRuntime';
 import { deriveRecordStatus } from '../app/view_state';
-import type { ViewButton, ViewContract } from '@sc/schema';
+import type { ButtonEffect, ButtonEffectTarget, ViewButton, ViewContract } from '@sc/schema';
 import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -192,6 +192,7 @@ type LayoutNotebookLike = {
   pages?: unknown[];
 };
 const editTx = useEditTx();
+const editTxState = computed(() => editTx.state.value);
 
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
@@ -709,7 +710,7 @@ async function runStatButton(btn: ViewButton) {
   await runHeaderButton(btn);
 }
 
-async function applyButtonEffect(effect: { type: string; target?: Record<string, unknown>; message?: string }) {
+async function applyButtonEffect(effect: ButtonEffect) {
   if (!effect || typeof effect !== 'object') {
     return;
   }
@@ -722,7 +723,7 @@ async function applyButtonEffect(effect: { type: string; target?: Record<string,
     return;
   }
   if (effect.type === 'navigate' && effect.target) {
-    const target = effect.target as { kind?: string; model?: string; id?: number; action_id?: number; url?: string };
+    const target = effect.target as ButtonEffectTarget;
     if (target.kind === 'record' && target.model && target.id) {
       await router.push({
         name: 'record',

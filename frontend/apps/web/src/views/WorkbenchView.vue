@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { ErrorCodes } from '../app/error_codes';
 import { useSessionStore } from '../stores/session';
@@ -167,7 +167,7 @@ const router = useRouter();
 const reason = computed(() => String(route.query.reason || ''));
 const menuId = computed(() => Number(route.query.menu_id || 0) || undefined);
 const actionId = computed(() => Number(route.query.action_id || 0) || undefined);
-const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as Record<string, unknown>));
+const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as LocationQueryRaw));
 const session = useSessionStore();
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
@@ -252,7 +252,7 @@ const panelVariant = computed(() => {
 const firstReachableMenuId = computed(() => findFirstReachableMenuId(session.menuTree));
 
 onMounted(() => {
-  const normalized = normalizeEmbeddedSceneQuery(route.query as Record<string, unknown>);
+  const normalized = normalizeEmbeddedSceneQuery(route.query as LocationQueryRaw);
   if (normalized.changed) {
     router.replace({ path: route.path, query: normalized.query }).catch(() => {});
     return;

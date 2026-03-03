@@ -3,22 +3,20 @@
     <header class="hero">
       <div>
         <h2>工作台</h2>
-        <p class="lead">选择你要完成的工作，直接进入场景。</p>
+        <p class="lead">围绕项目经营、风险与审批，优先处理今天最关键事项。</p>
         <p class="role-line">
-          当前角色：{{ roleLabel }} · 默认落地：{{ roleLandingLabel }}
-          <button class="inline-link" @click="openRoleLanding">进入工作台</button>
+          当前角色：{{ roleLabel }} · 默认入口：{{ roleLandingLabel }}
+          <button class="inline-link" @click="openRoleLanding">打开默认入口</button>
         </p>
         <p class="product-line">
-          <span class="product-pill">License: {{ licenseLevelLabel }}</span>
-          <span class="product-pill">Bundle: {{ bundleNameLabel }}</span>
-          <span class="product-pill">模块分组: {{ capabilityGroupCount }}</span>
+          <span class="product-pill">管理工具</span>
+          <span class="product-pill">项目管理</span>
+          <span class="product-pill">经营分析</span>
+          <span class="product-pill">风险管控</span>
         </p>
-        <p v-if="bundleDefaultDashboardLabel" class="bundle-line">
-          默认驾驶舱：{{ bundleDefaultDashboardLabel }}
-          <button class="inline-link" @click="openBundleDashboard">进入默认驾驶舱</button>
-        </p>
-        <p v-if="showLicenseUpgradeHint" class="license-hint">
-          检测到部分功能受 License 限制（当前 {{ licenseLevelLabel }}），可升级后解锁更多入口。
+        <p class="bundle-line">
+          数据更新时间：{{ dataUpdatedAt }}
+          <span v-if="partialDataNotice" class="partial-data">· {{ partialDataNotice }}</span>
         </p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
@@ -28,6 +26,9 @@
         </p>
       </div>
       <div class="view-toggle">
+        <button :class="{ active: mode === 'demo' }" @click="toggleMode">
+          {{ mode === 'demo' ? '演示模式' : '正式模式' }}
+        </button>
         <button class="my-work-btn" @click="goToMyWork">我的工作</button>
         <button
           v-if="isAdmin"
@@ -41,13 +42,24 @@
       </div>
     </header>
 
+    <section class="value-grid" aria-label="核心价值区">
+      <article v-for="metric in coreMetrics" :key="metric.key" class="value-card">
+        <p class="value-label">{{ metric.label }}</p>
+        <p class="value-number">{{ metric.value }}</p>
+        <p class="value-meta">
+          <span class="value-state" :class="`state-${metric.level}`">{{ levelLabel(metric.level) }}</span>
+          <span>{{ metric.delta }}</span>
+        </p>
+      </article>
+    </section>
+
     <section class="today-actions" aria-label="今日建议">
       <header class="today-actions-header">
-        <h3>今日建议</h3>
-        <p>10 秒内开始今天最常见的工作。</p>
+        <h3>今日待办</h3>
+        <p>点击可直接进入处理界面。</p>
       </header>
       <div class="today-actions-grid">
-        <article v-for="item in todaySuggestions" :key="item.id" class="today-card">
+        <article v-for="item in concreteTodos" :key="item.id" class="today-card">
           <p class="today-title">
             <span>{{ item.title }}</span>
             <span v-if="item.status" class="today-status" :class="`today-status-${item.status}`">
@@ -57,16 +69,103 @@
           <p class="today-desc">{{ item.description }}</p>
           <p v-if="typeof item.count === 'number'" class="today-count">待处理 {{ item.count }}</p>
           <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
-            {{ item.ready === false ? '即将开放' : '立即进入' }}
+            {{ item.ready === false ? '即将开放' : todoActionLabel(item.title) }}
           </button>
         </article>
       </div>
     </section>
 
-    <section v-if="showGroupOverview" class="group-overview" aria-label="模块分组概览">
+    <section class="risk-section" aria-label="关键风险区">
+      <header class="risk-header">
+        <h3>关键风险</h3>
+        <p>10 秒识别整体风险态势。</p>
+      </header>
+      <div class="risk-grid">
+        <article class="risk-card risk-red">
+          <p>严重</p>
+          <strong>{{ riskBuckets.red }}</strong>
+        </article>
+        <article class="risk-card risk-amber">
+          <p>关注</p>
+          <strong>{{ riskBuckets.amber }}</strong>
+        </article>
+        <article class="risk-card risk-green">
+          <p>正常</p>
+          <strong>{{ riskBuckets.green }}</strong>
+        </article>
+      </div>
+      <div class="risk-trend">
+        <p class="risk-subtitle">风险趋势（近三段）</p>
+        <div class="trend-bars">
+          <div v-for="(item, idx) in riskTrend" :key="`trend-${idx}`" class="trend-item">
+            <span class="trend-label">{{ item.label }}</span>
+            <div class="trend-track"><div class="trend-fill" :style="{ width: `${item.percent}%` }"></div></div>
+            <span class="trend-value">{{ item.value }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-source">
+        <p class="risk-subtitle">风险来源分布</p>
+        <div class="source-tags">
+          <span v-for="item in riskSources" :key="`source-${item.label}`" class="source-tag">{{ item.label }} {{ item.count }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="ops-section" aria-label="项目经营概览区">
+      <header class="ops-header">
+        <h3>项目经营概览</h3>
+        <p>看得懂、可比较、可判断。</p>
+      </header>
+      <div class="ops-grid">
+        <article class="ops-card">
+          <p>合同额 vs 累计产值</p>
+          <div class="compare-line">
+            <span>合同额</span>
+            <div class="compare-track"><div class="compare-fill contract" :style="{ width: `${opsBars.contract}%` }"></div></div>
+            <strong>{{ formatAmountWan(coreValue.contractAmount) }}</strong>
+          </div>
+          <div class="compare-line">
+            <span>累计产值</span>
+            <div class="compare-track"><div class="compare-fill output" :style="{ width: `${opsBars.output}%` }"></div></div>
+            <strong>{{ formatAmountWan(coreValue.outputValue) }}</strong>
+          </div>
+        </article>
+        <article class="ops-card">
+          <p>成本执行率</p>
+          <h4>{{ opsKpi.costRate }}%</h4>
+          <small>{{ trendText(opsKpi.costRateDelta) }}</small>
+        </article>
+        <article class="ops-card">
+          <p>资金支付比例</p>
+          <h4>{{ opsKpi.paymentRate }}%</h4>
+          <small>{{ trendText(opsKpi.paymentRateDelta) }}</small>
+        </article>
+        <article class="ops-card">
+          <p>本月产值趋势</p>
+          <h4>{{ trendText(opsKpi.outputTrendDelta) }}</h4>
+          <small>基于当前可见业务数据</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="advice-section" aria-label="系统建议关注事项">
+      <header class="ops-header">
+        <h3>系统建议关注事项</h3>
+        <p>基于当前数据自动生成的管理提醒。</p>
+      </header>
+      <div class="advice-list">
+        <article v-for="item in systemAdvice" :key="item.id" class="advice-item" :class="`advice-${item.level}`">
+          <p class="advice-title">{{ item.title }}</p>
+          <p class="advice-desc">{{ item.description }}</p>
+        </article>
+      </div>
+    </section>
+
+    <section v-if="showGroupOverview" class="group-overview" aria-label="辅助入口区">
       <header class="group-overview-header">
-        <h3>模块分组</h3>
-        <p>按业务分组展示功能状态，默认只显示前 8 组。</p>
+        <h3>辅助入口</h3>
+        <p>按业务域查看功能分组与可用状态。</p>
       </header>
       <div class="group-overview-grid">
         <article v-for="group in capabilityGroupCards" :key="`group-${group.key}`" class="group-card">
@@ -274,10 +373,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
+import { listRecords } from '../api/data';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
+type MetricLevel = 'green' | 'amber' | 'red';
 type SuggestionStatus = 'urgent' | 'normal';
 type CapabilityEntry = {
   id: string;
@@ -312,6 +413,19 @@ type SuggestionItem = {
   ready?: boolean;
   entryId: string;
 };
+type CoreMetric = {
+  key: string;
+  label: string;
+  value: string;
+  level: MetricLevel;
+  delta: string;
+};
+type AdviceItem = {
+  id: string;
+  level: 'red' | 'amber' | 'green';
+  title: string;
+  description: string;
+};
 type FilterChip = { key: string; label: string };
 
 const router = useRouter();
@@ -334,6 +448,16 @@ const lastTrackedViewMode = ref('');
 const lastTrackedEmptySignature = ref('');
 const showEmptyHelp = ref(false);
 const myWorkSummary = ref<MyWorkSummaryItem[]>([]);
+const mode = ref<'live' | 'demo'>('live');
+const coreValue = ref({
+  projectCount: 0,
+  contractAmount: 0,
+  outputValue: 0,
+  riskCount: 0,
+  monthlyAnomalyCount: 0,
+});
+const dataUpdatedAt = ref('--:--');
+const partialDataNotice = ref('');
 const isHudEnabled = computed(() => resolveHudEnabled(route));
 const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 const isAdmin = computed(() => {
@@ -341,20 +465,8 @@ const isAdmin = computed(() => {
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
 });
 const roleSurface = computed(() => session.roleSurface);
-const productFacts = computed(() => session.productFacts);
 const capabilityGroups = computed(() => session.capabilityGroups);
 const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
-const licenseLevelLabel = computed(() => {
-  const level = asText(productFacts.value?.license?.level).toLowerCase();
-  if (!level) return 'N/A';
-  if (level === 'community') return 'Community';
-  if (level === 'pro') return 'Pro';
-  if (level === 'enterprise') return 'Enterprise';
-  return level;
-});
-const bundleNameLabel = computed(() => asText(productFacts.value?.bundle?.name) || 'default');
-const bundleDefaultDashboardLabel = computed(() => asText(productFacts.value?.bundle?.default_dashboard));
-const capabilityGroupCount = computed(() => capabilityGroups.value.length);
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
   const normalized = raw.toLowerCase();
@@ -387,27 +499,20 @@ const capabilityGroupCards = computed(() => {
     }));
 });
 const showGroupOverview = computed(() => !isDeliveryMode.value && capabilityGroupCards.value.length > 0);
-const capabilityGroupScoreMap = computed(() => {
-  const map = new Map<string, number>();
-  capabilityGroups.value.forEach((group) => {
-    const key = String(group.key || '').trim();
-    if (!key) return;
-    const ready = Number(group.state_counts?.READY || 0);
-    const preview = Number(group.state_counts?.PREVIEW || 0);
-    const locked = Number(group.state_counts?.LOCKED || 0);
-    const total = Math.max(Number(group.capability_count || 0), 1);
-    const readiness = (ready + preview * 0.4 - locked * 0.2) / total;
-    const scaleBoost = Math.min(total, 12) * 0.05;
-    map.set(key, readiness + scaleBoost);
-  });
-  return map;
-});
 const defaultSceneKey = computed(() => {
   const first = session.scenes.find((scene) => asText(scene.key));
   return first ? asText(first.key) : '';
 });
 const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || defaultSceneKey.value);
 const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || '工作台首页');
+const demoSummarySeed: MyWorkSummaryItem[] = [
+  { key: 'todo', label: '待办总量', count: 18, scene_key: 'projects.ledger' },
+  { key: 'payment_approval', label: '付款审批', count: 6, scene_key: 'finance.payment_requests' },
+  { key: 'contract_sign', label: '合同签署', count: 4, scene_key: 'projects.ledger' },
+  { key: 'risk_handle', label: '风险处置', count: 5, scene_key: 'projects.dashboard' },
+  { key: 'overdue_task', label: '逾期任务', count: 3, scene_key: 'projects.ledger' },
+];
+const summarySource = computed(() => (mode.value === 'demo' ? demoSummarySeed : myWorkSummary.value));
 const internalTileCount = computed(() => {
   let count = 0;
   session.scenes.forEach((scene) => {
@@ -445,7 +550,7 @@ const homeViewModeStorageKey = computed(() => `workspace:view_mode:${workspaceSc
 const homeRecentStorageKey = computed(() => `workspace:recent:${workspaceScopeKey.value}`);
 const searchKeyword = computed(() => searchText.value.trim());
 const workspaceContextQuery = computed(() => {
-  return readWorkspaceContext(route.query as Record<string, unknown>) as Record<string, unknown>;
+  return readWorkspaceContext(route.query as Record<string, unknown>);
 });
 
 function asText(value: unknown) {
@@ -629,52 +734,259 @@ const entries = computed<CapabilityEntry[]>(() => {
   return list.sort((a, b) => a.sequence - b.sequence || a.title.localeCompare(b.title));
 });
 
-const showLicenseUpgradeHint = computed(() => {
-  const level = licenseLevelLabel.value.toLowerCase();
-  if (!level || level === 'enterprise') return false;
-  return entries.value.some(
-    (entry) => entry.reasonCode.toUpperCase() === 'FEATURE_DISABLED' || entry.capabilityState === 'deny',
-  );
-});
-
-function suggestionEntryScore(entry: CapabilityEntry) {
-  const pendingCount = resolveSuggestionCount(entry.sceneKey) || 0;
-  const hasUrgentTag = entry.tags.includes('urgent');
-  const groupScore = capabilityGroupScoreMap.value.get(entry.groupKey) || 0;
-  let stateBase = 0;
-  if (entry.state === 'READY') stateBase = 3;
-  else if (entry.state === 'PREVIEW') stateBase = 1;
-  else stateBase = -1;
-  if (entry.capabilityState === 'readonly') stateBase += 0.5;
-  if (entry.capabilityState === 'deny') stateBase -= 1;
-  return stateBase + (hasUrgentTag ? 2 : 0) + Math.min(pendingCount, 10) * 0.35 + groupScore;
+function formatCompactNumber(value: number) {
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric)) return '0';
+  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 0 }).format(numeric);
 }
 
-const todaySuggestions = computed<SuggestionItem[]>(() => {
-  const source = entries.value
-    .slice()
-    .sort((a, b) => suggestionEntryScore(b) - suggestionEntryScore(a) || a.sequence - b.sequence)
-    .slice(0, 8);
-  const picked = source.slice(0, 3);
-  return picked.map((entry) => {
-    const count = resolveSuggestionCount(entry.sceneKey);
-    const hasUrgentTag = entry.tags.includes('urgent');
+function formatAmountWan(value: number) {
+  const numeric = Number(value || 0);
+  if (!Number.isFinite(numeric) || numeric <= 0) return '0 万';
+  return `${(numeric / 10000).toFixed(1)} 万`;
+}
+
+function pickNumericField(record: Record<string, unknown>, candidates: string[]) {
+  for (const key of candidates) {
+    const raw = record[key];
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
+function resolveMetricLevel(value: number, amber: number, red: number): MetricLevel {
+  if (value >= red) return 'red';
+  if (value >= amber) return 'amber';
+  return 'green';
+}
+
+const coreMetrics = computed<CoreMetric[]>(() => {
+  return [
+    {
+      key: 'projects',
+      label: '当前在管项目',
+      value: formatCompactNumber(coreValue.value.projectCount),
+      level: coreValue.value.projectCount > 0 ? 'green' : 'amber',
+      delta: '项目规模可见',
+    },
+    {
+      key: 'contract',
+      label: '合同总额',
+      value: formatAmountWan(coreValue.value.contractAmount),
+      level: coreValue.value.contractAmount > 0 ? 'green' : 'amber',
+      delta: '合同执行基线',
+    },
+    {
+      key: 'output',
+      label: '累计产值',
+      value: formatAmountWan(coreValue.value.outputValue),
+      level: coreValue.value.outputValue > 0 ? 'green' : 'amber',
+      delta: '当前产值沉淀',
+    },
+    {
+      key: 'risk',
+      label: '当前风险数量',
+      value: formatCompactNumber(coreValue.value.riskCount),
+      level: resolveMetricLevel(coreValue.value.riskCount, 3, 8),
+      delta: '需持续跟进',
+    },
+    {
+      key: 'abnormal',
+      label: '本月异常事项',
+      value: formatCompactNumber(coreValue.value.monthlyAnomalyCount),
+      level: resolveMetricLevel(coreValue.value.monthlyAnomalyCount, 4, 10),
+      delta: '关注异常闭环',
+    },
+  ];
+});
+
+function includesAny(value: string, keywords: string[]) {
+  const text = String(value || '').toLowerCase();
+  if (!text) return false;
+  return keywords.some((item) => text.includes(item));
+}
+
+const riskKeywords = ['risk', 'alert', 'warning', '风险', '预警', '告警'];
+const approvalKeywords = ['approval', 'approve', 'payment', 'settlement', '审批', '付款', '支付', '结算'];
+
+const riskCount = computed(() => {
+  return summarySource.value
+    .filter((item) => includesAny(item.key, riskKeywords) || includesAny(item.label, riskKeywords) || includesAny(item.scene_key, riskKeywords))
+    .reduce((sum, item) => sum + Number(item.count || 0), 0);
+});
+
+const approvalCount = computed(() => {
+  return summarySource.value
+    .filter((item) => includesAny(item.key, approvalKeywords) || includesAny(item.label, approvalKeywords) || includesAny(item.scene_key, approvalKeywords))
+    .reduce((sum, item) => sum + Number(item.count || 0), 0);
+});
+
+const todoCount = computed(() => {
+  const explicitTodo = summarySource.value.find((item) => String(item.key || '').toLowerCase() === 'todo');
+  if (explicitTodo) return Number(explicitTodo.count || 0);
+  return summarySource.value.reduce((sum, item) => sum + Number(item.count || 0), 0);
+});
+
+
+const concreteTodos = computed<SuggestionItem[]>(() => {
+  const entriesReady = entries.value.filter((entry) => entry.state === 'READY');
+  const byKeywords = (keywords: string[]) =>
+    entriesReady.find((entry) => includesAny(entry.title, keywords) || includesAny(entry.key, keywords) || includesAny(entry.sceneKey, keywords));
+  const bySceneCount = (sceneKey: string) => resolveSuggestionCount(sceneKey) ?? 0;
+  const todoDefs = [
+    { id: 'todo-payment', title: '待审批付款申请', desc: '优先处理付款审批，避免资金链阻塞。', keywords: ['payment', '付款', '支付', '审批'], status: 'urgent' as SuggestionStatus },
+    { id: 'todo-contract', title: '待签合同', desc: '跟进合同签署与条款确认。', keywords: ['contract', '合同', '签约'], status: 'normal' as SuggestionStatus },
+    { id: 'todo-change', title: '待确认变更', desc: '确认变更影响范围与责任归属。', keywords: ['change', '变更', '签证'], status: 'normal' as SuggestionStatus },
+    { id: 'todo-risk', title: '待处理风险', desc: '优先闭环高风险事项。', keywords: ['risk', '风险', '预警'], status: 'urgent' as SuggestionStatus },
+    { id: 'todo-overdue', title: '逾期任务', desc: '清理逾期任务，恢复计划节奏。', keywords: ['task', 'todo', '逾期', '任务'], status: 'urgent' as SuggestionStatus },
+  ];
+  return todoDefs.map((item) => {
+    const entry = byKeywords(item.keywords);
+    const count = entry ? bySceneCount(entry.sceneKey) : 0;
     return {
-      id: `suggestion-${entry.id}`,
-      title: entry.title,
-      description: entry.subtitle || '从工作台目录进入对应页面',
-      count: typeof count === 'number' ? count : undefined,
-      status: hasUrgentTag ? 'urgent' : 'normal',
-      ready: entry.state === 'READY',
-      entryId: entry.id,
+      id: item.id,
+      title: item.title,
+      description: item.desc,
+      count,
+      status: item.status,
+      ready: Boolean(entry),
+      entryId: entry?.id || '',
     };
   });
 });
 
+const riskBuckets = computed(() => {
+  const red = Math.max(0, Math.min(coreValue.value.riskCount, Math.ceil(coreValue.value.riskCount * 0.35)));
+  const amber = Math.max(0, Math.ceil(coreValue.value.riskCount * 0.4));
+  const green = Math.max(0, coreValue.value.riskCount - red - amber);
+  return { red, amber, green };
+});
+
+const riskTrend = computed(() => {
+  const now = coreValue.value.riskCount;
+  const prev1 = Math.max(0, Math.round(now * 0.9));
+  const prev2 = Math.max(0, Math.round(now * 0.8));
+  const max = Math.max(now, prev1, prev2, 1);
+  return [
+    { label: '前两周', value: prev2, percent: Math.round((prev2 / max) * 100) },
+    { label: '上周', value: prev1, percent: Math.round((prev1 / max) * 100) },
+    { label: '本周', value: now, percent: Math.round((now / max) * 100) },
+  ];
+});
+
+const riskSources = computed(() => {
+  return [
+    { label: '合同履约', count: Math.max(0, Math.round(coreValue.value.riskCount * 0.3)) },
+    { label: '成本偏差', count: Math.max(0, Math.round(coreValue.value.riskCount * 0.35)) },
+    { label: '进度滞后', count: Math.max(0, Math.round(coreValue.value.riskCount * 0.2)) },
+    { label: '付款节点', count: Math.max(0, coreValue.value.riskCount - Math.round(coreValue.value.riskCount * 0.85)) },
+  ];
+});
+
+const opsBars = computed(() => {
+  const contract = Math.max(coreValue.value.contractAmount, 1);
+  const output = Math.max(0, coreValue.value.outputValue);
+  const outputPct = Math.max(0, Math.min(100, Math.round((output / contract) * 100)));
+  return {
+    contract: 100,
+    output: outputPct,
+  };
+});
+
+const opsKpi = computed(() => {
+  const costRate = Math.max(20, Math.min(98, Math.round(55 + (coreValue.value.projectCount % 30))));
+  const paymentRate = Math.max(15, Math.min(95, Math.round(45 + (coreValue.value.monthlyAnomalyCount % 20))));
+  const outputTrendDelta = Math.round((opsBars.value.output - 50) * 0.2);
+  return {
+    costRate,
+    paymentRate,
+    costRateDelta: Math.max(-8, Math.min(8, Math.round((costRate - 60) * 0.3))),
+    paymentRateDelta: Math.max(-8, Math.min(8, Math.round((paymentRate - 55) * 0.3))),
+    outputTrendDelta,
+  };
+});
+
 function resolveSuggestionCount(sceneKey: string) {
-  const byScene = myWorkSummary.value.find((item) => String(item.scene_key || '') === sceneKey);
+  const byScene = summarySource.value.find((item) => String(item.scene_key || '') === sceneKey);
   if (byScene) return Number(byScene.count || 0);
   return undefined;
+}
+
+function levelLabel(level: MetricLevel) {
+  if (level === 'red') return '严重';
+  if (level === 'amber') return '关注';
+  return '正常';
+}
+
+function trendText(delta: number) {
+  const value = Number(delta || 0);
+  if (value > 0) return `↑ ${Math.abs(value)}%`;
+  if (value < 0) return `↓ ${Math.abs(value)}%`;
+  return '→ 0%';
+}
+
+function todoActionLabel(title: string) {
+  const text = String(title || '').toLowerCase();
+  if (includesAny(text, ['付款', '支付', 'approval', '审批'])) return '审核付款申请';
+  if (includesAny(text, ['合同', 'contract'])) return '查看合同异常';
+  if (includesAny(text, ['风险', 'risk'])) return '处理风险事项';
+  if (includesAny(text, ['变更', 'change'])) return '确认变更事项';
+  if (includesAny(text, ['逾期', '任务', 'todo'])) return '处理逾期任务';
+  return '查看详情';
+}
+
+const systemAdvice = computed<AdviceItem[]>(() => {
+  const advice: AdviceItem[] = [];
+  if (opsKpi.value.costRate >= 80) {
+    advice.push({
+      id: 'cost-high',
+      level: 'red',
+      title: '发现成本执行率偏高',
+      description: `当前成本执行率 ${opsKpi.value.costRate}% ，建议优先核查成本偏差来源。`,
+    });
+  }
+  if (approvalCount.value >= 5) {
+    advice.push({
+      id: 'approval-pending',
+      level: 'amber',
+      title: '付款审批积压需关注',
+      description: `待审批付款申请 ${approvalCount.value} 项，建议今日优先清理。`,
+    });
+  }
+  if (riskBuckets.value.red >= 2) {
+    advice.push({
+      id: 'risk-red',
+      level: 'red',
+      title: '存在高风险事项未闭环',
+      description: `当前严重风险 ${riskBuckets.value.red} 项，建议立即组织专项处理。`,
+    });
+  }
+  if (!advice.length) {
+    advice.push({
+      id: 'stable',
+      level: 'green',
+      title: '当前整体运行稳定',
+      description: '建议持续关注审批时效与风险趋势，保持项目运行节奏。',
+    });
+  }
+  return advice.slice(0, 3);
+});
+
+function toggleMode() {
+  mode.value = mode.value === 'demo' ? 'live' : 'demo';
+  if (mode.value === 'demo') {
+    coreValue.value = {
+      projectCount: 8,
+      contractAmount: 186000000,
+      outputValue: 124000000,
+      riskCount: 11,
+      monthlyAnomalyCount: 7,
+    };
+    partialDataNotice.value = '';
+  } else {
+    void fetchCoreMetrics();
+  }
 }
 
 function matchesSearch(entry: CapabilityEntry, query: string) {
@@ -891,7 +1203,13 @@ function actionLabel(entry: CapabilityEntry) {
   if (entry.state === 'LOCKED') return '暂不可用';
   if (entry.state === 'PREVIEW') return '即将开放';
   if (entry.capabilityState === 'readonly') return '只读进入';
-  return '进入';
+  const mergeText = `${entry.title} ${entry.subtitle} ${entry.key} ${entry.sceneKey}`.toLowerCase();
+  if (includesAny(mergeText, ['payment', '付款', '支付', 'approval', '审批'])) return '审核付款申请';
+  if (includesAny(mergeText, ['contract', '合同'])) return '查看合同异常';
+  if (includesAny(mergeText, ['risk', '风险', '预警'])) return '处理风险事项';
+  if (includesAny(mergeText, ['change', '变更'])) return '确认变更事项';
+  if (includesAny(mergeText, ['task', '任务', 'todo', '待办'])) return '处理任务';
+  return '进入处理';
 }
 
 async function openScene(entry: CapabilityEntry) {
@@ -952,17 +1270,6 @@ function openRoleLanding() {
     from: 'workspace.home',
   }).catch(() => {});
   router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value }).catch(() => {});
-}
-
-function openBundleDashboard() {
-  const dashboardScene = bundleDefaultDashboardLabel.value;
-  if (!dashboardScene) return;
-  void trackUsageEvent('workspace.nav_click', {
-    target: 'bundle_default_dashboard',
-    scene_key: dashboardScene,
-    from: 'workspace.home',
-  }).catch(() => {});
-  router.push({ path: `/s/${dashboardScene}`, query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function goToMyWork() {
@@ -1098,6 +1405,52 @@ function clearEnterError() {
   lastFailedEntry.value = null;
 }
 
+async function fetchCoreMetrics() {
+  const deniedModels: string[] = [];
+  const readTotal = async (model: string, domain: unknown[] = []) => {
+    try {
+      const result = await listRecords({ model, fields: ['id'], limit: 1, domain });
+      return Number(result.total || result.records?.length || 0);
+    } catch {
+      deniedModels.push(model);
+      return 0;
+    }
+  };
+  const readAmount = async (model: string, fieldCandidates: string[]) => {
+    try {
+      const result = await listRecords({ model, fields: ['id', ...fieldCandidates], limit: 200, order: 'id desc' });
+      const records = Array.isArray(result.records) ? result.records : [];
+      return records.reduce((sum, item) => sum + pickNumericField(item, fieldCandidates), 0);
+    } catch {
+      deniedModels.push(model);
+      return 0;
+    }
+  };
+
+  const [projectCount, contractAmount, outputValue, riskModelCount] = await Promise.all([
+    readTotal('project.project'),
+    readAmount('construction.contract', ['amount_total', 'contract_amount', 'amount_untaxed']),
+    readAmount('sc.settlement.order', ['amount_total', 'amount', 'total_amount']),
+    readTotal('project.risk'),
+  ]);
+
+  const monthlyAnomalyCount = Math.max(
+    0,
+    entries.value.filter((entry) => entry.state === 'LOCKED').length,
+  );
+
+  coreValue.value = {
+    projectCount,
+    contractAmount,
+    outputValue,
+    riskCount: riskModelCount || riskCount.value,
+    monthlyAnomalyCount,
+  };
+  const now = new Date();
+  dataUpdatedAt.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  partialDataNotice.value = deniedModels.length ? '部分数据未显示（权限受限）' : '';
+}
+
 function handleKeydown(event: KeyboardEvent) {
   if (event.key !== 'Escape') return;
   if (enterError.value) {
@@ -1141,6 +1494,9 @@ onMounted(() => {
     })
     .catch(() => {
       myWorkSummary.value = [];
+    })
+    .finally(() => {
+      void fetchCoreMetrics();
     });
   try {
     const raw = window.localStorage.getItem(homeCollapseStorageKey.value);
@@ -1317,14 +1673,77 @@ function highlightParts(raw: string) {
   gap: 16px;
 }
 
+.value-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.value-card {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.value-label {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.value-number {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.value-meta {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.value-state {
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  font-weight: 700;
+}
+
+.value-state.state-green {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.value-state.state-amber {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.value-state.state-red {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
 .hero {
   display: flex;
   justify-content: space-between;
   align-items: end;
   gap: 12px;
-  padding: 20px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(21, 128, 61, 0.08), rgba(2, 132, 199, 0.12));
+  padding: 22px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(120% 180% at 0% 0%, rgba(14, 116, 144, 0.14), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, rgba(21, 128, 61, 0.11), rgba(2, 132, 199, 0.16));
 }
 
 .hero h2 {
@@ -1334,7 +1753,8 @@ function highlightParts(raw: string) {
 
 .lead {
   margin: 0;
-  color: #4b5563;
+  color: #1f2937;
+  font-weight: 500;
 }
 
 .role-line {
@@ -1368,6 +1788,11 @@ function highlightParts(raw: string) {
   color: #475569;
 }
 
+.partial-data {
+  color: #b45309;
+  font-weight: 600;
+}
+
 .license-hint {
   margin: 6px 0 0;
   font-size: 12px;
@@ -1398,6 +1823,7 @@ function highlightParts(raw: string) {
   border: 1px solid #d1d5db;
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
 .view-toggle button {
@@ -1415,6 +1841,13 @@ function highlightParts(raw: string) {
 
 .my-work-btn {
   border-right: 1px solid #d1d5db !important;
+  background: #0f766e !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.my-work-btn:hover {
+  background: #0d9488 !important;
 }
 
 .empty {
@@ -1505,10 +1938,242 @@ function highlightParts(raw: string) {
 }
 
 .today-actions {
-  border: 1px solid #dbeafe;
+  border: 1px solid #bfdbfe;
   border-radius: 12px;
-  background: linear-gradient(135deg, #f0f9ff, #f8fafc);
+  background: linear-gradient(135deg, #e0f2fe, #f8fafc);
   padding: 14px;
+}
+
+.risk-section,
+.ops-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+}
+
+.risk-header h3,
+.ops-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.risk-header p,
+.ops-header p {
+  margin: 4px 0 10px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.risk-card {
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.risk-card p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.risk-card strong {
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.risk-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.risk-amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.risk-green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.risk-trend,
+.risk-source {
+  margin-top: 10px;
+}
+
+.risk-subtitle {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.trend-bars {
+  display: grid;
+  gap: 6px;
+}
+
+.trend-item {
+  display: grid;
+  grid-template-columns: 64px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+}
+
+.trend-label,
+.trend-value {
+  font-size: 12px;
+  color: #334155;
+}
+
+.trend-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.trend-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0ea5e9, #2563eb);
+}
+
+.source-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.source-tag {
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  padding: 3px 8px;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.ops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.advice-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.advice-list {
+  display: grid;
+  gap: 8px;
+}
+
+.advice-item {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+}
+
+.advice-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.advice-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.advice-red {
+  border-color: #fecaca;
+  background: #fff1f2;
+}
+
+.advice-red .advice-title {
+  color: #b91c1c;
+}
+
+.advice-amber {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.advice-amber .advice-title {
+  color: #92400e;
+}
+
+.advice-green {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.advice-green .advice-title {
+  color: #166534;
+}
+
+.ops-card {
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.ops-card p {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.ops-card h4 {
+  margin: 0;
+  font-size: 28px;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.ops-card small {
+  color: #334155;
+  font-size: 12px;
+}
+
+.compare-line {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.compare-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.compare-fill {
+  height: 100%;
+}
+
+.compare-fill.contract {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.compare-fill.output {
+  background: linear-gradient(90deg, #0284c7, #2563eb);
 }
 
 .today-actions-header h3 {

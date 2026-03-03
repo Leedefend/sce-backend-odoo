@@ -66,6 +66,15 @@ export type MyWorkSummaryResponse = {
     reason_code_counts?: Array<{ key: string; count: number }>;
     section_counts?: Array<{ key: string; count: number }>;
   };
+  visibility?: {
+    partial_data_hidden?: boolean;
+    message?: string;
+    restricted_sources?: Array<{
+      model: string;
+      readable: boolean;
+      reason: string;
+    }>;
+  };
 };
 
 export async function fetchMyWorkSummary(
