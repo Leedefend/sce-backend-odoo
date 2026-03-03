@@ -1,6 +1,7 @@
 <template>
   <section class="capability-home">
     <header class="hero">
+      <span v-if="mode === 'demo'" class="demo-badge">DEMO</span>
       <div>
         <h2>工作台</h2>
         <p class="lead">围绕项目经营、风险与审批，优先处理今天最关键事项。</p>
@@ -18,6 +19,7 @@
           数据更新时间：{{ dataUpdatedAt }}
           <span v-if="partialDataNotice" class="partial-data">· {{ partialDataNotice }}</span>
         </p>
+        <p v-if="mode === 'demo'" class="demo-hint">当前为模拟经营数据，仅用于演示推演，不代表真实业务结论。</p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
@@ -71,6 +73,20 @@
           <button class="today-btn" :disabled="item.ready === false" @click="openSuggestion(item)">
             {{ item.ready === false ? '即将开放' : todoActionLabel(item.title) }}
           </button>
+        </article>
+      </div>
+    </section>
+
+    <section v-if="mode === 'demo'" class="story-section" aria-label="演示项目故事线">
+      <header class="ops-header">
+        <h3>演示项目故事线</h3>
+        <p>用于讲解成本偏差、审批积压、合同先干后签等关键冲突。</p>
+      </header>
+      <div class="story-grid">
+        <article v-for="story in demoStories" :key="story.id" class="story-card" :class="`story-${story.level}`">
+          <p class="story-title">{{ story.project }} · {{ story.conflict }}</p>
+          <p class="story-desc">{{ story.summary }}</p>
+          <button class="story-btn" @click="openDemoStory(story)">{{ story.actionLabel }}</button>
         </article>
       </div>
     </section>
@@ -158,6 +174,7 @@
         <article v-for="item in systemAdvice" :key="item.id" class="advice-item" :class="`advice-${item.level}`">
           <p class="advice-title">{{ item.title }}</p>
           <p class="advice-desc">{{ item.description }}</p>
+          <button v-if="item.actionLabel" class="advice-btn" @click="openAdvice(item)">{{ item.actionLabel }}</button>
         </article>
       </div>
     </section>
@@ -425,6 +442,20 @@ type AdviceItem = {
   level: 'red' | 'amber' | 'green';
   title: string;
   description: string;
+  actionLabel?: string;
+  actionEntryId?: string;
+  actionPath?: string;
+  actionQuery?: Record<string, string>;
+};
+type DemoStory = {
+  id: string;
+  project: string;
+  conflict: string;
+  summary: string;
+  level: 'red' | 'amber' | 'green';
+  actionLabel: string;
+  actionPath: string;
+  actionQuery?: Record<string, string>;
 };
 type FilterChip = { key: string; label: string };
 
@@ -513,6 +544,58 @@ const demoSummarySeed: MyWorkSummaryItem[] = [
   { key: 'overdue_task', label: '逾期任务', count: 3, scene_key: 'projects.ledger' },
 ];
 const summarySource = computed(() => (mode.value === 'demo' ? demoSummarySeed : myWorkSummary.value));
+const demoStories = computed<DemoStory[]>(() => [
+  {
+    id: 's1',
+    project: 'A1 产业园',
+    conflict: '合同未签先干',
+    summary: '土建已开工 14 天，主合同未完成法务盖章，存在履约与结算争议风险。',
+    level: 'red',
+    actionLabel: '查看合同闭环',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo', source: 'tier.review', reason: 'TIER_REVIEW_PENDING', search: '合同' },
+  },
+  {
+    id: 's2',
+    project: 'B3 市政综合体',
+    conflict: '付款超预算预警',
+    summary: '本周付款申请累计超预算阈值，审批链条积压，资金风险上行。',
+    level: 'red',
+    actionLabel: '进入付款审批',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo', search: '付款' },
+  },
+  {
+    id: 's3',
+    project: 'C2 物流中心',
+    conflict: '进度滞后 + 成本偏差',
+    summary: '关键里程碑连续延后，成本执行率上升，需启动纠偏方案。',
+    level: 'amber',
+    actionLabel: '处理风险事项',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo', source: 'project.risk', search: '风险' },
+  },
+  {
+    id: 's4',
+    project: 'D5 公建项目',
+    conflict: '变更未确认',
+    summary: '现场签证与合同变更单未闭环，后续产值确认受阻。',
+    level: 'amber',
+    actionLabel: '确认变更任务',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo', source: 'project.task', search: '变更' },
+  },
+  {
+    id: 's5',
+    project: 'E7 住宅配套',
+    conflict: '审批链路断点',
+    summary: '跨部门流程节点无人处理，任务接力断档，存在延期交付风险。',
+    level: 'green',
+    actionLabel: '打开待办链路',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo' },
+  },
+]);
 const internalTileCount = computed(() => {
   let count = 0;
   session.scenes.forEach((scene) => {
@@ -938,28 +1021,45 @@ function todoActionLabel(title: string) {
 
 const systemAdvice = computed<AdviceItem[]>(() => {
   const advice: AdviceItem[] = [];
+  const pickEntry = (keywords: string[]) =>
+    entries.value.find((entry) => includesAny(entry.title, keywords) || includesAny(entry.key, keywords) || includesAny(entry.sceneKey, keywords));
   if (opsKpi.value.costRate >= 80) {
+    const target = pickEntry(['cost', '成本', 'ledger', '项目']);
     advice.push({
       id: 'cost-high',
       level: 'red',
       title: '发现成本执行率偏高',
       description: `当前成本执行率 ${opsKpi.value.costRate}% ，建议优先核查成本偏差来源。`,
+      actionLabel: target ? '进入成本处理' : '打开我的工作',
+      actionEntryId: target?.id,
+      actionPath: target ? undefined : '/my-work',
+      actionQuery: target ? undefined : { section: 'todo', search: '成本' },
     });
   }
   if (approvalCount.value >= 5) {
+    const target = pickEntry(['payment', '付款', '审批', 'finance']);
     advice.push({
       id: 'approval-pending',
       level: 'amber',
       title: '付款审批积压需关注',
       description: `待审批付款申请 ${approvalCount.value} 项，建议今日优先清理。`,
+      actionLabel: target ? '进入付款审批' : '打开我的工作',
+      actionEntryId: target?.id,
+      actionPath: target ? undefined : '/my-work',
+      actionQuery: target ? undefined : { section: 'todo', search: '付款' },
     });
   }
   if (riskBuckets.value.red >= 2) {
+    const target = pickEntry(['risk', '风险', 'warning']);
     advice.push({
       id: 'risk-red',
       level: 'red',
       title: '存在高风险事项未闭环',
       description: `当前严重风险 ${riskBuckets.value.red} 项，建议立即组织专项处理。`,
+      actionLabel: target ? '处理风险事项' : '打开我的工作',
+      actionEntryId: target?.id,
+      actionPath: target ? undefined : '/my-work',
+      actionQuery: target ? undefined : { section: 'todo', source: 'project.risk', search: '风险' },
     });
   }
   if (!advice.length) {
@@ -968,10 +1068,30 @@ const systemAdvice = computed<AdviceItem[]>(() => {
       level: 'green',
       title: '当前整体运行稳定',
       description: '建议持续关注审批时效与风险趋势，保持项目运行节奏。',
+      actionLabel: '查看今日待办',
+      actionPath: '/my-work',
+      actionQuery: { section: 'todo' },
     });
   }
   return advice.slice(0, 3);
 });
+
+function openAdvice(item: AdviceItem) {
+  if (item.actionEntryId) {
+    const entry = entries.value.find((candidate) => candidate.id === item.actionEntryId);
+    if (entry) {
+      void openScene(entry);
+      return;
+    }
+  }
+  const path = String(item.actionPath || '').trim();
+  if (!path) return;
+  router.push({ path, query: item.actionQuery || workspaceContextQuery.value }).catch(() => {});
+}
+
+function openDemoStory(story: DemoStory) {
+  router.push({ path: story.actionPath, query: story.actionQuery || {} }).catch(() => {});
+}
 
 function toggleMode() {
   mode.value = mode.value === 'demo' ? 'live' : 'demo';
@@ -1741,9 +1861,23 @@ function highlightParts(raw: string) {
   padding: 22px;
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.08);
+  position: relative;
   background:
     radial-gradient(120% 180% at 0% 0%, rgba(14, 116, 144, 0.14), rgba(255, 255, 255, 0) 55%),
     linear-gradient(135deg, rgba(21, 128, 61, 0.11), rgba(2, 132, 199, 0.16));
+}
+
+.demo-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background: #b91c1c;
+  color: #fff;
 }
 
 .hero h2 {
@@ -1790,6 +1924,13 @@ function highlightParts(raw: string) {
 
 .partial-data {
   color: #b45309;
+  font-weight: 600;
+}
+
+.demo-hint {
+  margin: 6px 0 0;
+  color: #7f1d1d;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -2077,6 +2218,16 @@ function highlightParts(raw: string) {
   gap: 8px;
 }
 
+.advice-btn {
+  margin-top: 8px;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
 .advice-item {
   border-radius: 10px;
   border: 1px solid #e2e8f0;
@@ -2129,6 +2280,49 @@ function highlightParts(raw: string) {
   padding: 10px;
   display: grid;
   gap: 8px;
+}
+
+.story-section {
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  background: #fffbeb;
+  padding: 14px;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.story-card {
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
+.story-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.story-desc {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.story-btn {
+  margin-top: 8px;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #78350f;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 .ops-card p {
