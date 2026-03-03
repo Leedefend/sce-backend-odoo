@@ -5,6 +5,7 @@
 #   - with_data=True 时返回首屏数据（严格遵循 views.tree.columns 顺序）
 #   - ★ 集成 P0 修复：从原始 <tree> 严格提取 columns，禁用“脏覆盖”，保证可渲染与顺序稳定
 import logging
+import re
 from odoo.http import request
 from ...utils.misc import safe_eval
 from ...utils.view_utils import extract_tree_columns_strict, normalize_cols_safely
@@ -154,7 +155,7 @@ class PageAssembler:
 
         # 4.x) 关系字段维护入口（many2one/many2many/one2many）
         # 由后端契约提供 relation_entry，前端禁止自行猜测 action/menu。
-        self._inject_relation_entry_contract(data)
+        self._inject_relation_entry_contract(data, model)
 
         # 5) 权限契约（★ 关键改造点）
         #    - 用 su_env 生成完整权限聚合
@@ -245,10 +246,11 @@ class PageAssembler:
             data["warnings"] = warnings
         return data, versions
 
-    def _inject_relation_entry_contract(self, data):
+    def _inject_relation_entry_contract(self, data, model_name=""):
         fields = data.get("fields") if isinstance(data, dict) else None
         if not isinstance(fields, dict) or not fields:
             return
+        model_name = str(model_name or "").strip()
         relation_models = set()
         for desc in fields.values():
             if not isinstance(desc, dict):
@@ -260,12 +262,100 @@ class PageAssembler:
         if not relation_models:
             return
         relation_entry_map = self._build_relation_entry_map(relation_models)
-        for desc in fields.values():
+        for field_name, desc in fields.items():
             if not isinstance(desc, dict):
                 continue
             relation = str(desc.get("relation") or "").strip()
             if relation and relation in relation_entry_map:
-                desc["relation_entry"] = dict(relation_entry_map[relation])
+                desc["relation_entry"] = self._build_relation_entry_for_field(
+                    field_name,
+                    desc,
+                    relation_entry_map[relation],
+                    model_name=model_name,
+                )
+
+    def _extract_dictionary_type_from_domain(self, domain_raw):
+        if not domain_raw:
+            return ""
+        domain = domain_raw
+        if isinstance(domain_raw, str):
+            try:
+                domain = safe_eval(domain_raw) if domain_raw.strip().startswith("[") else domain_raw
+            except Exception:
+                domain = domain_raw
+        if isinstance(domain, (list, tuple)):
+            for node in domain:
+                if not isinstance(node, (list, tuple)) or len(node) < 3:
+                    continue
+                left = str(node[0] or "").strip()
+                op = str(node[1] or "").strip()
+                right = node[2]
+                if left == "type" and op == "=" and isinstance(right, str):
+                    return right.strip()
+        if isinstance(domain_raw, str):
+            # fallback for non-evaluable domain strings
+            match = re.search(r"[('\" ]type[)'\" ]\s*,\s*['\"]=['\"]\s*,\s*['\"]([a-zA-Z0-9_]+)['\"]", domain_raw)
+            if match:
+                return str(match.group(1) or "").strip()
+        return ""
+
+    def _extract_field_domain_hint(self, model_name, field_name):
+        model = str(model_name or "").strip()
+        field = str(field_name or "").strip()
+        if not model or not field:
+            return None
+        try:
+            f = self.env[model]._fields.get(field)
+        except Exception:
+            return None
+        if not f:
+            return None
+        domain = getattr(f, "domain", None)
+        if isinstance(domain, (list, tuple, str)):
+            return domain
+        return None
+
+    def _build_relation_entry_for_field(self, field_name, descriptor, base_entry, model_name=""):
+        entry = dict(base_entry or {})
+        relation = str(descriptor.get("relation") or "").strip()
+        can_create = bool(entry.get("can_create"))
+        has_page = bool(entry.get("action_id"))
+        default_vals = {}
+        create_mode = "disabled"
+        reason_code = str(entry.get("reason_code") or "").strip()
+        dict_type = ""
+        if relation == "sc.dictionary":
+            dict_type = self._extract_dictionary_type_from_domain(descriptor.get("domain"))
+            if not dict_type:
+                domain_hint = self._extract_field_domain_hint(model_name, field_name)
+                dict_type = self._extract_dictionary_type_from_domain(domain_hint)
+            if dict_type:
+                default_vals = {"type": dict_type}
+
+        if has_page:
+            create_mode = "page"
+            if can_create:
+                reason_code = reason_code or "PAGE_ENTRY_READY"
+            else:
+                reason_code = reason_code or "PAGE_ENTRY_READONLY"
+        elif can_create and relation == "sc.dictionary":
+            if dict_type:
+                create_mode = "quick"
+                reason_code = "QUICK_CREATE_READY"
+            else:
+                reason_code = reason_code or "DICT_TYPE_UNRESOLVED"
+        else:
+            reason_code = reason_code or "NO_CREATE_ENTRY"
+
+        entry.update(
+            {
+                "field": str(field_name or "").strip(),
+                "create_mode": create_mode,
+                "default_vals": default_vals,
+                "reason_code": reason_code,
+            }
+        )
+        return entry
 
     def _build_relation_entry_map(self, relation_models):
         relation_models = sorted(str(m).strip() for m in (relation_models or []) if str(m).strip())
@@ -444,11 +534,43 @@ class PageAssembler:
         if env is not None and model:
             try:
                 m = env[model]
+                def _resolve_selection(field_obj):
+                    raw = getattr(field_obj, "selection", None)
+                    if isinstance(raw, (list, tuple)):
+                        return list(raw)
+                    if isinstance(raw, str):
+                        method = getattr(m, raw, None)
+                        if callable(method):
+                            try:
+                                resolved = method()
+                                if isinstance(resolved, (list, tuple)):
+                                    return list(resolved)
+                            except Exception:
+                                return []
+                    if callable(raw):
+                        try:
+                            resolved = raw(m)
+                            if isinstance(resolved, (list, tuple)):
+                                return list(resolved)
+                        except Exception:
+                            return []
+                    return []
+
+                def _resolve_domain(field_obj):
+                    raw = getattr(field_obj, "domain", None)
+                    if isinstance(raw, (list, tuple, str)):
+                        return raw
+                    return None
+
                 meta = {
                     k: {
                         "type": getattr(f, "type", None),
                         "string": getattr(f, "string", None) or k,
                         "relation": getattr(f, "comodel_name", None),
+                        "readonly": bool(getattr(f, "readonly", False)),
+                        "required": bool(getattr(f, "required", False)),
+                        "domain": _resolve_domain(f),
+                        "selection": _resolve_selection(f),
                     }
                     for k, f in m._fields.items()
                 }
@@ -462,9 +584,17 @@ class PageAssembler:
                 "name": name,
                 "string": string or (meta.get(name, {}) or {}).get("string") or name,
                 "type": ftype or (meta.get(name, {}) or {}).get("type") or "char",
+                "readonly": bool((meta.get(name, {}) or {}).get("readonly", False)),
+                "required": bool((meta.get(name, {}) or {}).get("required", False)),
             }
             if meta.get(name, {}).get("relation"):
                 info["relation"] = meta[name]["relation"]
+            domain = (meta.get(name, {}) or {}).get("domain")
+            if domain not in (None, ""):
+                info["domain"] = domain
+            selection = (meta.get(name, {}) or {}).get("selection") or []
+            if selection:
+                info["selection"] = selection
             if isinstance(extra, dict):
                 info.update({k: v for k, v in extra.items() if v is not None})
             res[name] = info
@@ -474,18 +604,26 @@ class PageAssembler:
                 name = f.get("name") or f.get("field") or f.get("id")
                 if not name:
                     continue
+                extra = {}
+                if "readonly" in f:
+                    extra["readonly"] = bool(f.get("readonly"))
+                if "required" in f:
+                    extra["required"] = bool(f.get("required"))
+                if "domain" in f:
+                    extra["domain"] = f.get("domain")
+                if "context" in f:
+                    extra["context"] = f.get("context") or {}
+                if "selection" in f:
+                    extra["selection"] = f.get("selection") or []
+                elif "options" in f:
+                    extra["selection"] = f.get("options") or []
+                if "invisible" in f:
+                    extra["invisible"] = f.get("invisible")
                 add_field(
                     name,
                     f.get("label") or f.get("string"),
                     f.get("type"),
-                    {
-                        "readonly": bool(f.get("readonly")),
-                        "required": bool(f.get("required")),
-                        "domain": f.get("domain") or [],
-                        "context": f.get("context") or {},
-                        "selection": f.get("selection") or f.get("options") or [],
-                        "invisible": f.get("invisible"),
-                    },
+                    extra,
                 )
             elif isinstance(f, (list, tuple)) and len(f) >= 1:
                 name = str(f[0]).strip()

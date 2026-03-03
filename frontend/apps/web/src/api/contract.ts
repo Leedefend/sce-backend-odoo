@@ -6,6 +6,10 @@ type LoadActionContractOptions = {
   renderProfile?: 'create' | 'edit' | 'readonly' | null;
 };
 
+type LoadModelContractOptions = LoadActionContractOptions & {
+  viewType?: 'form' | 'tree' | 'kanban';
+};
+
 function buildActionContractParams(actionId: number, options?: LoadActionContractOptions) {
   const params: Record<string, unknown> = { op: 'action_open', action_id: actionId };
   const recordId = Number(options?.recordId || 0);
@@ -30,5 +34,29 @@ export async function loadActionContractRaw(actionId: number, options?: LoadActi
   return intentRequestRaw<ActionContract & Record<string, unknown>>({
     intent: 'ui.contract',
     params: buildActionContractParams(actionId, options),
+  });
+}
+
+function buildModelContractParams(model: string, options?: LoadModelContractOptions) {
+  const params: Record<string, unknown> = {
+    op: 'model',
+    model: String(model || '').trim(),
+    view_type: options?.viewType || 'form',
+  };
+  const recordId = Number(options?.recordId || 0);
+  if (Number.isFinite(recordId) && recordId > 0) {
+    params.record_id = recordId;
+  }
+  const profile = String(options?.renderProfile || '').trim().toLowerCase();
+  if (profile === 'create' || profile === 'edit' || profile === 'readonly') {
+    params.render_profile = profile;
+  }
+  return params;
+}
+
+export async function loadModelContractRaw(model: string, options?: LoadModelContractOptions) {
+  return intentRequestRaw<ActionContract & Record<string, unknown>>({
+    intent: 'ui.contract',
+    params: buildModelContractParams(model, options),
   });
 }

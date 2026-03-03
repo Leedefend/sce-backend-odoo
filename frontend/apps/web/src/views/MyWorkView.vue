@@ -1,23 +1,27 @@
 <template>
   <section class="my-work">
+    <!-- Page intent: 聚合待办并提供可执行入口，默认进入即可开工。 -->
     <header class="hero">
-      <div>
-        <h2>我的工作</h2>
-        <p>统一查看待我处理、我负责、@我的、我关注的事项。</p>
-        <p v-if="generatedAtText" class="generated-at">数据更新时间：{{ generatedAtText }}</p>
+      <div class="hero-main">
+        <div>
+          <h2>我的工作</h2>
+          <p>聚合待办并直接处理，默认从“待我处理”开工。</p>
+        </div>
+        <div class="hero-tools">
+          <button class="secondary" @click="load">刷新</button>
+        </div>
       </div>
-      <div class="actions">
-        <button class="secondary" @click="load">刷新</button>
+      <div v-if="!loading && !errorText && (generatedAtText || appliedPresetLabel || visibilityNotice)" class="hero-context">
+        <span v-if="appliedPresetLabel" class="context-chip">
+          推荐视图：{{ appliedPresetLabel }}<span v-if="routeContextSource">（{{ routeContextSource }}）</span>
+        </span>
+        <button v-if="appliedPresetLabel" class="link-btn mini-btn" @click="clearRoutePreset">清除推荐</button>
+        <span v-if="visibilityNotice" class="context-chip warn">
+          {{ visibilityNotice }}<span v-if="restrictedSourceText">（{{ restrictedSourceText }}）</span>
+        </span>
+        <span v-if="generatedAtText" class="context-chip subtle">更新于 {{ generatedAtText }}</span>
       </div>
     </header>
-    <section v-if="appliedPresetLabel" class="route-preset">
-      <p>已应用推荐视图：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
-      <button class="link-btn mini-btn" @click="clearRoutePreset">清除推荐</button>
-    </section>
-    <section v-if="!loading && !errorText && visibilityNotice" class="visibility-notice">
-      <p class="notice-title">{{ visibilityNotice }}</p>
-      <p v-if="restrictedSourceText" class="notice-detail">受限来源：{{ restrictedSourceText }}</p>
-    </section>
 
     <StatusPanel v-if="loading" title="加载我的工作中..." variant="info" />
     <StatusPanel
@@ -41,26 +45,30 @@
     <p v-if="!loading && !errorText && batchEvidenceText" class="batch-evidence">
       {{ batchEvidenceText }}
     </p>
-    <div v-if="!loading && !errorText && retryFailedIds.length" class="retry-bar">
-      <span>失败待办 {{ retryFailedIds.length }} 条</span>
-      <span v-if="lastBatchExecutionMode" class="meta-chip">模式: {{ lastBatchExecutionMode }}</span>
-      <span v-if="lastBatchReplay" class="meta-chip replay">重放结果</span>
-      <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
-      <button class="link-btn" @click="selectAllFailedItems">选中全部失败项</button>
-      <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
-      <button class="link-btn" @click="selectNonRetryableFailedItems">仅选不可重试项</button>
-      <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
-      <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
-      <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
-      <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
-      <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
-      <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">导出重试 JSON</button>
-      <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">主列表定位失败</button>
-      <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
-      <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
-    </div>
-    <section v-if="!loading && !errorText && retryFailedItems.length" class="retry-details">
-      <p class="retry-title">失败明细</p>
+    <details v-if="!loading && !errorText && retryFailedIds.length" class="retry-panel">
+      <summary class="retry-bar">
+        <span>失败待办 {{ retryFailedIds.length }} 条</span>
+        <span v-if="lastBatchExecutionMode" class="meta-chip">模式: {{ lastBatchExecutionMode }}</span>
+        <span v-if="lastBatchReplay" class="meta-chip replay">重放结果</span>
+        <span class="retry-expand-hint">展开处理</span>
+      </summary>
+      <section v-if="retryFailedItems.length" class="retry-details">
+        <p class="retry-title">失败明细</p>
+        <div class="retry-actions">
+          <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
+          <button class="link-btn" @click="selectAllFailedItems">选中全部失败项</button>
+          <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
+          <button class="link-btn" @click="selectNonRetryableFailedItems">仅选不可重试项</button>
+          <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
+          <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
+          <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
+          <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">导出重试 JSON</button>
+          <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">主列表定位失败</button>
+          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
+          <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
+        </div>
       <details v-if="retryRequestParams" class="retry-request-preview">
         <summary>重试请求预览</summary>
         <div class="retry-note-presets">
@@ -234,11 +242,12 @@
           </ul>
         </div>
       </div>
-    </section>
+      </section>
+    </details>
     <template v-if="!loading && !errorText">
       <section class="summary-grid">
         <article
-          v-for="item in summary"
+          v-for="item in summaryCards"
           :key="item.key"
           class="summary-card"
           :class="{ active: activeSection === item.key }"
@@ -263,48 +272,55 @@
       </section>
 
       <section class="filters">
-        <input
-          v-model.trim="searchText"
-          class="search-input"
-          type="search"
-          placeholder="搜索事项 / 模型 / 动作"
-          @keydown.enter="applyFilters"
-        />
-        <select v-model="sourceFilter" class="filter-select">
-          <option value="ALL">全部来源</option>
-          <option v-for="source in sourceOptions" :key="`src-${source}`" :value="source">
-            {{ source }}
-          </option>
-        </select>
-        <select v-model="reasonFilter" class="filter-select">
-          <option value="ALL">全部原因码</option>
-          <option v-for="reason in reasonOptions" :key="`reason-${reason}`" :value="reason">
-            {{ reason }}
-          </option>
-        </select>
-        <select v-model="sortBy" class="filter-select">
-          <option value="id">排序：ID</option>
-          <option value="deadline">排序：截止日</option>
-          <option value="title">排序：事项标题</option>
-          <option value="reason_code">排序：原因码</option>
-          <option value="priority">排序：优先级</option>
-          <option value="source">排序：来源</option>
-        </select>
-        <select v-model="sortDir" class="filter-select">
-          <option value="desc">降序</option>
-          <option value="asc">升序</option>
-        </select>
-        <select v-model.number="pageSize" class="filter-select">
-          <option :value="10">每页 10</option>
-          <option :value="20">每页 20</option>
-          <option :value="40">每页 40</option>
-        </select>
-        <div class="preset-actions">
-          <button class="link-btn mini-btn" @click="applyFilters">应用筛选</button>
-          <button class="link-btn mini-btn" @click="resetFilters">重置筛选</button>
-          <button class="link-btn mini-btn" @click="saveFilterPreset">保存常用筛选</button>
-          <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">应用常用筛选</button>
-          <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">清除预设</button>
+        <div class="filter-bar">
+          <input
+            v-model.trim="searchText"
+            class="search-input"
+            type="search"
+            placeholder="搜索事项 / 来源 / 动作"
+            @keydown.enter="applyFilters"
+          />
+          <button class="link-btn mini-btn" @click="showAdvancedFilters = !showAdvancedFilters">
+            {{ showAdvancedFilters ? '收起筛选' : '展开筛选' }}
+          </button>
+          <button class="link-btn mini-btn" @click="applyFilters">应用</button>
+          <button class="link-btn mini-btn" @click="resetFilters">重置</button>
+        </div>
+        <div v-if="showAdvancedFilters" class="filter-advanced">
+          <select v-model="sourceFilter" class="filter-select">
+            <option value="ALL">全部来源</option>
+            <option v-for="source in sourceOptions" :key="`src-${source}`" :value="source">
+              {{ source }}
+            </option>
+          </select>
+          <select v-model="reasonFilter" class="filter-select">
+            <option value="ALL">全部原因码</option>
+            <option v-for="reason in reasonOptions" :key="`reason-${reason}`" :value="reason">
+              {{ reason }}
+            </option>
+          </select>
+          <select v-model="sortBy" class="filter-select">
+            <option value="priority">排序：优先级</option>
+            <option value="deadline">排序：截止日</option>
+            <option value="title">排序：事项标题</option>
+            <option value="reason_code">排序：原因码</option>
+            <option value="source">排序：来源</option>
+            <option value="id">排序：ID</option>
+          </select>
+          <select v-model="sortDir" class="filter-select">
+            <option value="desc">降序</option>
+            <option value="asc">升序</option>
+          </select>
+          <select v-model.number="pageSize" class="filter-select">
+            <option :value="10">每页 10</option>
+            <option :value="20">每页 20</option>
+            <option :value="40">每页 40</option>
+          </select>
+          <div class="preset-actions">
+            <button class="link-btn mini-btn" @click="saveFilterPreset">保存常用筛选</button>
+            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">应用常用筛选</button>
+            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">清除预设</button>
+          </div>
         </div>
       </section>
       <p v-if="summaryStatus?.hint && summaryStatus?.state !== 'FILTER_EMPTY'" class="status-hint">{{ summaryStatus.hint }}</p>
@@ -324,6 +340,14 @@
       </section>
 
       <section class="table-wrap">
+        <section v-if="!displayItems.length && !showFilterEmptyGuide" class="empty-guide">
+          <p class="empty-title">{{ summaryStatus?.message || '当前无待处理事项' }}</p>
+          <p class="empty-desc">状态良好。你可以返回工作台查看整体态势，或进入风险驾驶舱继续巡检。</p>
+          <div class="guide-actions">
+            <button class="guide-btn primary" @click="goWorkbench">去工作台</button>
+            <button class="guide-btn" @click="goRiskCockpit">去风险驾驶舱</button>
+          </div>
+        </section>
         <table>
           <thead>
             <tr>
@@ -335,49 +359,41 @@
                   @change="toggleAllTodoSelection($event)"
                 />
               </th>
-              <th>分区</th>
               <th>事项</th>
-              <th>模型</th>
               <th>动作</th>
-              <th>原因码</th>
-              <th>优先级</th>
               <th>截止日</th>
-              <th>入口</th>
+              <th>优先级</th>
+              <th>原因码</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!filteredItems.length">
-              <td colspan="9" class="empty">{{ summaryStatus?.message || emptyCopy.message }}</td>
+            <tr v-if="!displayItems.length">
+              <td colspan="6" class="empty">{{ summaryStatus?.message || emptyCopy.message }}</td>
             </tr>
-            <tr v-for="item in filteredItems" :key="`${item.section || 'all'}-${item.id}`">
+            <tr
+              v-for="item in displayItems"
+              :key="`${item.section || 'all'}-${item.id}`"
+              class="clickable-row"
+              @click="openPrimaryEntry(item)"
+            >
               <td class="cell-select">
                 <input
                   v-if="isCompletableTodo(item)"
                   type="checkbox"
                   :checked="todoSelectionIdSet.has(item.id)"
                   :disabled="loading"
+                  @click.stop
                   @change="toggleTodoSelection(item.id, $event)"
                 />
               </td>
-              <td>{{ item.section_label || '-' }}</td>
-              <td>{{ item.title || '-' }}</td>
-              <td>{{ item.model || '-' }}</td>
-              <td>{{ item.action_label || '-' }}</td>
-              <td>{{ item.reason_code || '-' }}</td>
-              <td>{{ formatPriority(item.priority) }}</td>
-              <td>{{ item.deadline || '-' }}</td>
               <td>
-                <button
-                  v-if="item.section === 'todo' && item.source === 'mail.activity'"
-                  class="link-btn done-btn"
-                  :disabled="loading"
-                  @click="completeItem(item)"
-                >
-                  完成待办
-                </button>
-                <button class="link-btn" @click="openRecord(item)">打开记录</button>
-                <button class="link-btn secondary-btn" @click="openScene(item.scene_key, item.target)">进入场景</button>
+                <div>{{ item.title || '-' }}</div>
+                <small class="item-meta">{{ item.source || '-' }}</small>
               </td>
+              <td>{{ item.action_label || '-' }}</td>
+              <td>{{ item.deadline || '-' }}</td>
+              <td>{{ formatPriority(item.priority) }}</td>
+              <td>{{ item.reason_code || '-' }}</td>
             </tr>
           </tbody>
         </table>
@@ -450,13 +466,15 @@ const actionFeedbackError = ref(false);
 const searchText = ref('');
 const sourceFilter = ref('ALL');
 const reasonFilter = ref('ALL');
-const sortBy = ref('id');
+const sortBy = ref('priority');
 const sortDir = ref<'asc' | 'desc'>('desc');
+const showAdvancedFilters = ref(false);
 const page = ref(1);
 const pageSize = ref(20);
 const totalPages = ref(1);
 const sourceFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const reasonFacetRows = ref<Array<{ key: string; count: number }>>([]);
+const sectionFilteredFacetRows = ref<Array<{ key: string; count: number }>>([]);
 const summaryStatus = ref<{ state: string; reason_code: string; message: string; hint: string } | null>(null);
 const generatedAt = ref('');
 const summaryVisibility = ref<{
@@ -476,8 +494,10 @@ const emptyCopy = computed(() => resolveEmptyCopy('my_work'));
 const generatedAtText = computed(() => {
   const raw = String(generatedAt.value || '').trim();
   if (!raw) return '';
+  const hasZone = /([zZ]|[+\-]\d{2}:?\d{2})$/.test(raw);
   const isoLike = raw.includes('T') ? raw : raw.replace(' ', 'T');
-  const dt = new Date(isoLike);
+  const normalized = hasZone ? isoLike : `${isoLike}Z`;
+  const dt = new Date(normalized);
   if (Number.isNaN(dt.getTime())) return raw;
   return dt.toLocaleString();
 });
@@ -496,6 +516,16 @@ const restrictedSourceText = computed(() => {
   return names.join(' / ');
 });
 const showFilterEmptyGuide = computed(() => summaryStatus.value?.state === 'FILTER_EMPTY');
+const hasScopedFilters = computed(() => Boolean(searchText.value.trim() || sourceFilter.value !== 'ALL' || reasonFilter.value !== 'ALL'));
+const summaryCards = computed(() => {
+  if (!hasScopedFilters.value) return summary.value;
+  const map = new Map<string, number>();
+  sectionFilteredFacetRows.value.forEach((row) => map.set(String(row.key || ''), Number(row.count || 0)));
+  return summary.value.map((row) => ({
+    ...row,
+    count: map.has(String(row.key || '')) ? Number(map.get(String(row.key || '')) || 0) : 0,
+  }));
+});
 const todoSelectionIdSet = computed(() => new Set(todoSelectionIds.value));
 const autoQueryDelayMs = 300;
 let autoQueryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -505,6 +535,24 @@ const filteredItems = computed(() => {
   const section = String(activeSection.value || '').trim();
   if (!section || section === 'all') return items.value;
   return items.value.filter((item) => String(item.section || '').trim() === section);
+});
+const displayItems = computed(() => {
+  const rows = [...filteredItems.value];
+  const priorityScore = (raw: unknown) => {
+    const key = String(raw || '').toLowerCase();
+    if (key === 'high') return 3;
+    if (key === 'medium') return 2;
+    if (key === 'low') return 1;
+    return 0;
+  };
+  rows.sort((a, b) => {
+    const byPriority = priorityScore(b.priority) - priorityScore(a.priority);
+    if (byPriority !== 0) return byPriority;
+    const ad = String(a.deadline || '9999-12-31');
+    const bd = String(b.deadline || '9999-12-31');
+    return ad.localeCompare(bd);
+  });
+  return rows;
 });
 const currentTodoRows = computed(() =>
   filteredItems.value.filter((item) => isCompletableTodo(item)).map((item) => item.id),
@@ -641,7 +689,7 @@ async function applyRecommendedView() {
   searchText.value = '';
   sourceFilter.value = 'ALL';
   reasonFilter.value = 'ALL';
-  sortBy.value = 'id';
+  sortBy.value = 'priority';
   sortDir.value = 'desc';
   pageSize.value = 20;
   page.value = 1;
@@ -676,10 +724,13 @@ async function load() {
     page.value = Math.max(1, Number(data.filters?.page || page.value || 1));
     pageSize.value = Math.max(1, Number(data.filters?.page_size || pageSize.value || 20));
     totalPages.value = Math.max(1, Number(data.filters?.total_pages || 1));
-    sortBy.value = String(data.filters?.sort_by || sortBy.value || 'id');
+    sortBy.value = String(data.filters?.sort_by || sortBy.value || 'priority');
     sortDir.value = (String(data.filters?.sort_dir || sortDir.value || 'desc') === 'asc' ? 'asc' : 'desc');
     sourceFacetRows.value = Array.isArray(data.facets?.source_counts) ? data.facets?.source_counts || [] : [];
     reasonFacetRows.value = Array.isArray(data.facets?.reason_code_counts) ? data.facets?.reason_code_counts || [] : [];
+    sectionFilteredFacetRows.value = Array.isArray(data.facets?.section_counts_filtered)
+      ? data.facets?.section_counts_filtered || []
+      : [];
     todoSelectionIds.value = [];
     if (!autoSectionAligned) {
       const currentCount = Number(summary.value.find((item) => item.key === activeSection.value)?.count || 0);
@@ -805,7 +856,7 @@ function resetFilters() {
   searchText.value = '';
   sourceFilter.value = 'ALL';
   reasonFilter.value = 'ALL';
-  sortBy.value = 'id';
+  sortBy.value = 'priority';
   sortDir.value = 'desc';
   pageSize.value = 20;
   page.value = 1;
@@ -814,6 +865,14 @@ function resetFilters() {
   actionFeedback.value = '筛选条件已重置';
   actionFeedbackError.value = false;
   void load();
+}
+
+function goWorkbench() {
+  router.push({ path: '/' }).catch(() => {});
+}
+
+function goRiskCockpit() {
+  router.push({ path: '/s/projects.dashboard' }).catch(() => {});
 }
 
 function onErrorSuggestedActionExecuted(payload: { action: string; success: boolean }) {
@@ -925,6 +984,11 @@ function openRecord(item: MyWorkRecordItem) {
     return;
   }
   openScene(item.scene_key, target);
+}
+
+function openPrimaryEntry(item: MyWorkRecordItem) {
+  if (!item) return;
+  openScene(item.scene_key, item.target);
 }
 
 function isCompletableTodo(item: MyWorkRecordItem) {
@@ -1680,14 +1744,25 @@ watch(
 }
 
 .hero {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
+  display: grid;
+  gap: 10px;
   padding: 16px;
   border: 1px solid #dbeafe;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(14, 116, 144, 0.1), rgba(37, 99, 235, 0.08));
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.06), rgba(37, 99, 235, 0.05));
+}
+
+.hero-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.hero-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .hero h2 {
@@ -1733,46 +1808,32 @@ watch(
   color: #334155;
 }
 
-.generated-at {
-  margin-top: 6px;
-  font-size: 12px;
-  color: #475569;
-}
-
-.route-preset {
+.hero-context {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
-  background: #eff6ff;
+  gap: 6px;
 }
 
-.route-preset p {
-  margin: 0;
-  color: #1e3a8a;
-  font-size: 13px;
-}
-
-.visibility-notice {
-  border: 1px solid #fcd34d;
-  border-radius: 10px;
-  background: #fffbeb;
-  padding: 10px 12px;
-}
-
-.notice-title {
-  margin: 0;
-  color: #92400e;
-  font-weight: 600;
-}
-
-.notice-detail {
-  margin: 4px 0 0;
-  color: #b45309;
+.context-chip {
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
   font-size: 12px;
+  line-height: 1.2;
+  padding: 4px 10px;
+}
+
+.context-chip.warn {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.context-chip.subtle {
+  border-color: #e2e8f0;
+  color: #64748b;
 }
 
 .secondary {
@@ -1782,6 +1843,17 @@ watch(
   color: #1e3a8a;
   padding: 8px 10px;
   cursor: pointer;
+}
+
+@media (max-width: 780px) {
+  .hero-main {
+    flex-direction: column;
+  }
+
+  .hero-tools {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 .summary-grid {
@@ -1823,8 +1895,20 @@ watch(
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) repeat(5, auto);
   gap: 8px;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) repeat(3, auto);
+  gap: 8px;
+}
+
+.filter-advanced {
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  gap: 8px;
+  align-items: center;
 }
 
 .search-input,
@@ -1862,6 +1946,24 @@ watch(
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
+}
+
+.empty-guide {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.empty-title {
+  margin: 0;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.empty-desc {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 13px;
 }
 
 .batch-bar {
@@ -1924,13 +2026,40 @@ watch(
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
 }
 
-.retry-details {
+.retry-panel {
   border: 1px solid #fecaca;
   border-radius: 8px;
   background: #fff1f2;
+}
+
+.retry-panel > summary {
+  list-style: none;
   padding: 10px 12px;
+}
+
+.retry-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.retry-expand-hint {
+  margin-left: auto;
+  color: #7f1d1d;
+  font-size: 12px;
+}
+
+.retry-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.retry-details {
+  border-top: 1px solid #fecaca;
+  padding: 10px 12px 12px;
 }
 
 .retry-request-preview {
@@ -2047,6 +2176,11 @@ watch(
   font-size: 12px;
 }
 
+.item-meta {
+  color: #64748b;
+  font-size: 12px;
+}
+
 .mini-btn {
   margin-left: 8px;
   padding: 2px 8px;
@@ -2080,6 +2214,14 @@ th {
   text-align: center;
   color: #64748b;
   padding: 20px 0;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #f8fafc;
 }
 
 .link-btn {
