@@ -52,9 +52,12 @@
     </aside>
 
     <section class="content">
-      <header class="topbar" :class="{ 'topbar--compact': activeLayout.header === 'compact' }">
+      <header
+        class="topbar"
+        :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar }"
+      >
         <div>
-          <p class="eyebrow">智能工程协作平台</p>
+          <p v-if="!useMinimalTopbar" class="eyebrow">智能工程协作平台</p>
           <div class="breadcrumb">
             <button
               v-for="(item, index) in breadcrumb"
@@ -67,7 +70,7 @@
               {{ item.label }}
             </button>
           </div>
-          <h1 class="headline">{{ pageTitle }}</h1>
+          <h1 v-if="!useMinimalTopbar" class="headline">{{ pageTitle }}</h1>
         </div>
       </header>
 
@@ -215,6 +218,7 @@ const activeLayout = computed(() => {
   const scene = sceneKey ? getSceneByKey(sceneKey) : null;
   return resolveSceneLayout(scene);
 });
+const useMinimalTopbar = computed(() => route.name === 'workbench' || route.name === 'home');
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
 );
@@ -713,6 +717,32 @@ async function logout() {
 
 .topbar--compact .headline {
   font-size: 20px;
+}
+
+.topbar--minimal {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0 2px;
+}
+
+.topbar--minimal .breadcrumb {
+  margin: 0;
+  gap: 4px;
+}
+
+.topbar--minimal .crumb {
+  padding: 2px 4px;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #94a3b8;
+}
+
+.topbar--minimal .crumb.active {
+  background: transparent;
+  color: #64748b;
+  font-weight: 500;
 }
 
 .eyebrow {
