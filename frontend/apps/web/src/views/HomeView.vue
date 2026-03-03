@@ -2,13 +2,32 @@
   <section class="capability-home">
     <header class="hero">
       <span v-if="mode === 'demo'" class="demo-badge">DEMO</span>
-      <div>
+      <div class="hero-main">
         <h2>工作台</h2>
         <p class="lead">围绕项目经营、风险与审批，优先处理今天最关键事项。</p>
-        <p class="role-line">
-          当前角色：{{ roleLabel }} · 默认入口：{{ roleLandingLabel }}
-          <button class="inline-link" @click="openRoleLanding">打开默认入口</button>
-        </p>
+        <div class="hero-info-row">
+          <p class="role-line">
+            <span>当前角色：{{ roleLabel }}</span>
+            <span class="dot">·</span>
+            <span>默认入口：{{ roleLandingLabel }}</span>
+            <button class="inline-link" @click="openRoleLanding">打开默认入口</button>
+          </p>
+          <div class="view-toggle">
+            <button :class="{ active: mode === 'demo' }" @click="toggleMode">
+              {{ mode === 'demo' ? '演示模式' : '正式模式' }}
+            </button>
+            <button class="my-work-btn" @click="goToMyWork">我的工作</button>
+            <button
+              v-if="isAdmin"
+              class="my-work-btn"
+              @click="goToUsageAnalytics"
+            >
+              使用分析
+            </button>
+            <button :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'">卡片</button>
+            <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">列表</button>
+          </div>
+        </div>
         <p class="product-line">
           <span class="product-pill">管理工具</span>
           <span class="product-pill">项目管理</span>
@@ -16,8 +35,11 @@
           <span class="product-pill">风险管控</span>
         </p>
         <p class="bundle-line">
-          数据更新时间：{{ dataUpdatedAt }}
-          <span v-if="partialDataNotice" class="partial-data">· {{ partialDataNotice }}</span>
+          <span>数据更新时间：{{ dataUpdatedAt }}</span>
+          <span class="dot">·</span>
+          <span :class="partialDataNotice ? 'partial-data' : 'steady-data'">
+            {{ partialDataNotice || '当前运行平稳' }}
+          </span>
         </p>
         <p v-if="mode === 'demo'" class="demo-hint">当前为模拟经营数据，仅用于演示推演，不代表真实业务结论。</p>
         <p v-if="isHudEnabled" class="hud-line">
@@ -26,21 +48,6 @@
         <p v-if="isHudEnabled" class="hud-line">
           HUD: internal_tiles={{ internalTileCount }} · visible_mode=show_all
         </p>
-      </div>
-      <div class="view-toggle">
-        <button :class="{ active: mode === 'demo' }" @click="toggleMode">
-          {{ mode === 'demo' ? '演示模式' : '正式模式' }}
-        </button>
-        <button class="my-work-btn" @click="goToMyWork">我的工作</button>
-        <button
-          v-if="isAdmin"
-          class="my-work-btn"
-          @click="goToUsageAnalytics"
-        >
-          使用分析
-        </button>
-        <button :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'">卡片</button>
-        <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">列表</button>
       </div>
     </header>
 
@@ -1921,17 +1928,20 @@ function highlightParts(raw: string) {
 }
 
 .hero {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
+  display: block;
   gap: 12px;
-  padding: 22px;
+  padding: 14px 16px;
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   position: relative;
   background:
-    radial-gradient(120% 180% at 0% 0%, rgba(14, 116, 144, 0.14), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(135deg, rgba(21, 128, 61, 0.11), rgba(2, 132, 199, 0.16));
+    radial-gradient(130% 200% at 0% 0%, rgba(14, 116, 144, 0.08), rgba(255, 255, 255, 0) 58%),
+    linear-gradient(135deg, rgba(21, 128, 61, 0.07), rgba(2, 132, 199, 0.1));
+}
+
+.hero-main {
+  display: grid;
+  gap: 4px;
 }
 
 .demo-badge {
@@ -1948,30 +1958,40 @@ function highlightParts(raw: string) {
 }
 
 .hero h2 {
-  margin: 0 0 4px;
-  font-size: 24px;
+  margin: 0;
+  font-size: 22px;
 }
 
 .lead {
   margin: 0;
-  color: #1f2937;
+  color: #334155;
   font-weight: 500;
 }
 
+.hero-info-row {
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .role-line {
-  margin: 8px 0 0;
+  margin: 0;
   color: #334155;
   font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .product-line {
-  margin: 8px 0 0;
+  margin: 2px 0 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .product-pill {
@@ -1984,13 +2004,22 @@ function highlightParts(raw: string) {
 }
 
 .bundle-line {
-  margin: 6px 0 0;
+  margin: 2px 0 0;
   font-size: 12px;
   color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .partial-data {
   color: #b45309;
+  font-weight: 600;
+}
+
+.steady-data {
+  color: #166534;
   font-weight: 600;
 }
 
@@ -2028,17 +2057,19 @@ function highlightParts(raw: string) {
 
 .view-toggle {
   display: inline-flex;
+  flex-wrap: wrap;
   border: 1px solid #d1d5db;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
 }
 
 .view-toggle button {
   border: 0;
   background: #f8fafc;
   color: #1f2937;
-  padding: 8px 12px;
+  padding: 7px 11px;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -2056,6 +2087,28 @@ function highlightParts(raw: string) {
 
 .my-work-btn:hover {
   background: #0d9488 !important;
+}
+
+.dot {
+  color: #94a3b8;
+}
+
+@media (max-width: 1120px) {
+  .hero-info-row {
+    align-items: flex-start;
+  }
+  .view-toggle {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    padding: 12px;
+  }
+  .hero h2 {
+    font-size: 20px;
+  }
 }
 
 .empty {
