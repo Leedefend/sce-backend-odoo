@@ -1,6 +1,11 @@
 const appEnv = String(import.meta.env.VITE_APP_ENV ?? 'dev').trim();
 const envDb = String(import.meta.env.VITE_ODOO_DB ?? '').trim();
-const enforcedDb = appEnv === 'delivery' ? 'sc_delivery_local' : '';
+const isLocalHost = typeof window !== 'undefined'
+  ? ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+  : false;
+// Delivery defaults to sc_delivery_local only on non-local hosts.
+// Local dev may run against sc_demo/sc_* databases and must not be hard-bound.
+const enforcedDb = appEnv === 'delivery' && !isLocalHost ? 'sc_delivery_local' : '';
 
 export const config = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8070',

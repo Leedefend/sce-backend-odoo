@@ -1,10 +1,12 @@
+import type { LocationQueryRaw, LocationQueryValueRaw } from 'vue-router';
+
 export type WorkspacePreset = string;
 
 export type WorkspaceContext = {
   preset?: WorkspacePreset | string;
   ctx_source?: string;
   search?: string;
-  entry_context?: WorkspaceEntryContext;
+  entry_context?: string;
 };
 
 export type WorkspaceEntryContext = {
@@ -57,26 +59,50 @@ export function readWorkspaceContext(query: Record<string, unknown>): WorkspaceC
   if (preset) context.preset = preset;
   if (ctxSource) context.ctx_source = ctxSource;
   if (search) context.search = search;
-  if (entryContext) context.entry_context = entryContext;
+  if (entryContext) context.entry_context = JSON.stringify(entryContext);
   return context;
 }
 
 export function mergeWorkspaceContext(
   query: Record<string, unknown>,
   context: WorkspaceContext,
-): Record<string, unknown> {
-  return { ...query, ...context };
+): LocationQueryRaw {
+  const out: LocationQueryRaw = {};
+  Object.entries({ ...query, ...context }).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    if (Array.isArray(value)) {
+      out[key] = value.map((item) => String(item)) as LocationQueryValueRaw[];
+      return;
+    }
+    if (typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string') {
+      out[key] = value;
+      return;
+    }
+    out[key] = JSON.stringify(value);
+  });
+  return out;
 }
 
-export function stripWorkspaceContext(query: Record<string, unknown>): Record<string, unknown> {
-  const next = { ...query };
+export function stripWorkspaceContext(query: Record<string, unknown>): LocationQueryRaw {
+  const next: Record<string, unknown> = { ...query };
   delete next.preset;
   delete next.ctx_source;
   delete next.search;
   delete next.entry_context;
-  return next;
+  return mergeWorkspaceContext({}, next);
 }
 
 export function hasWorkspaceContext(context: WorkspaceContext) {
   return Boolean(context.preset || context.ctx_source || context.search || context.entry_context);
+}
+
+export function parseWorkspaceEntryContext(raw: unknown): WorkspaceEntryContext {
+  if (typeof raw === 'string') {
+    try {
+      return normalizeEntryContext(JSON.parse(raw)) || {};
+    } catch {
+      return {};
+    }
+  }
+  return normalizeEntryContext(raw) || {};
 }

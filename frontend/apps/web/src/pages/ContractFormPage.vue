@@ -1262,13 +1262,13 @@ async function runAction(action: ContractAction) {
           action_id: actionId.value || undefined,
         },
       });
-      const result = response?.result && typeof response.result === 'object' ? (response.result as Record<string, unknown>) : {};
-      const refresh = result.type;
+      const result = response?.result;
+      const refresh = result?.type;
       if (refresh === 'refresh') {
         await reload();
         return;
       }
-      const nextActionId = toPositiveInt(result.action_id);
+      const nextActionId = toPositiveInt(result?.action_id);
       if (nextActionId) {
         await router.push({
           name: 'action',

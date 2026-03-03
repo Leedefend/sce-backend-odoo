@@ -10,6 +10,7 @@ from odoo.addons.smart_core.utils.reason_codes import (
     REASON_NO_WORK_ITEMS,
     REASON_OK,
 )
+from odoo.exceptions import AccessError
 
 
 class MyWorkSummaryHandler(BaseIntentHandler):
@@ -29,9 +30,15 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     STATUS_FILTER_EMPTY = "FILTER_EMPTY"
     SORT_FIELDS = {"id", "title", "model", "deadline", "source", "reason_code", "section"}
 
+    def _get_model(self, model_name):
+        try:
+            return self.env[model_name]
+        except Exception:
+            return None
+
     def _safe_count(self, model_name, domain, required_fields=None):
-        Model = self.env.get(model_name)
-        if not Model:
+        Model = self._get_model(model_name)
+        if Model is None:
             return 0
         fields_ok = all(field in Model._fields for field in (required_fields or []))
         if not fields_ok:
@@ -41,14 +48,54 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         except Exception:
             return 0
 
+    def _read_access_state(self, model_name):
+        Model = self._get_model(model_name)
+        if Model is None:
+            return {"model": model_name, "readable": False, "reason": "MODEL_UNAVAILABLE"}
+        try:
+            if not bool(Model.check_access_rights("read", raise_exception=False)):
+                return {"model": model_name, "readable": False, "reason": "READ_ACCESS_DENIED"}
+            return {"model": model_name, "readable": True, "reason": ""}
+        except AccessError:
+            return {"model": model_name, "readable": False, "reason": "READ_ACCESS_DENIED"}
+        except Exception:
+            return {"model": model_name, "readable": False, "reason": "ACCESS_CHECK_FAILED"}
+
     def _scene_for_model(self, model_name):
         mapping = {
             "project.project": "projects.list",
             "project.task": "projects.list",
+            "payment.request": "finance.payment_requests",
+            "sc.workflow.instance": "projects.list",
             "sale.order": "contracts.list",
             "account.move": "finance.vouchers.list",
         }
         return mapping.get(model_name, "projects.list")
+
+    def _coerce_record_id(self, raw):
+        value = raw
+        if hasattr(value, "id"):
+            value = value.id
+        try:
+            return int(value or 0)
+        except Exception:
+            return 0
+
+    def _safe_record_title(self, model_name, record_id, fallback):
+        model = str(model_name or "").strip()
+        rid = int(record_id or 0)
+        if not model or not rid:
+            return fallback
+        Model = self._get_model(model)
+        if Model is None:
+            return fallback
+        try:
+            rec = Model.browse(rid).exists()
+            if rec:
+                return rec.display_name or fallback
+        except Exception:
+            return fallback
+        return fallback
 
     def _normalize_limit(self, value, default=20, max_value=100):
         try:
@@ -172,8 +219,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return rows[offset : offset + page_size], total_pages, safe_page
 
     def _load_todo_items(self, user, limit):
-        Activity = self.env.get("mail.activity")
-        if not Activity:
+        Activity = self._get_model("mail.activity")
+        if Activity is None:
             return []
         required = ("user_id", "res_model", "res_id")
         if not all(field in Activity._fields for field in required):
@@ -199,6 +246,138 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             return []
         return rows
 
+    def _tier_review_domain(self, user):
+        TierReview = self._get_model("tier.review")
+        if TierReview is None:
+            return None
+        fields_map = TierReview._fields
+        if "status" not in fields_map:
+            return None
+        domain = [("status", "=", "pending")]
+        if "can_review" in fields_map:
+            domain.append(("can_review", "=", True))
+        if "reviewer_ids" in fields_map:
+            domain.append(("reviewer_ids", "in", user.id))
+        elif "reviewer_id" in fields_map:
+            domain.append(("reviewer_id", "=", user.id))
+        else:
+            return None
+        return domain
+
+    def _load_tier_review_items(self, user, limit):
+        TierReview = self._get_model("tier.review")
+        domain = self._tier_review_domain(user)
+        if TierReview is None or not domain:
+            return []
+        required = ("model", "res_id")
+        if not all(field in TierReview._fields for field in required):
+            return []
+        rows = []
+        try:
+            records = TierReview.search(domain, order="id desc", limit=limit)
+            for rec in records:
+                model = str(rec.model or "").strip()
+                record_id = self._coerce_record_id(rec.res_id)
+                fallback = f"{model}#{record_id}" if model and record_id else (rec.name or f"tier.review#{rec.id}")
+                rows.append({
+                    "id": rec.id,
+                    "title": self._safe_record_title(model, record_id, fallback),
+                    "model": model,
+                    "record_id": record_id,
+                    "deadline": "",
+                    "scene_key": self._scene_for_model(model),
+                    "source": "tier.review",
+                    "action_label": "审批处理",
+                    "action_key": "tier.review.approve",
+                    "reason_code": "TIER_REVIEW_PENDING",
+                })
+        except Exception:
+            return []
+        return rows
+
+    def _workflow_todo_domain(self, user):
+        Workitem = self._get_model("sc.workflow.workitem")
+        if Workitem is None:
+            return None
+        required = ("status", "assignee_group_id", "assignee_id")
+        if not all(field in Workitem._fields for field in required):
+            return None
+        return [
+            ("status", "=", "todo"),
+            "|",
+            ("assignee_id", "=", user.id),
+            ("assignee_group_id", "in", user.groups_id.ids),
+        ]
+
+    def _load_workflow_todo_items(self, user, limit):
+        Workitem = self._get_model("sc.workflow.workitem")
+        domain = self._workflow_todo_domain(user)
+        if Workitem is None or not domain:
+            return []
+        required = ("instance_id", "node_id")
+        if not all(field in Workitem._fields for field in required):
+            return []
+        rows = []
+        try:
+            records = Workitem.search(domain, order="created_at desc, id desc", limit=limit)
+            for rec in records:
+                instance = rec.instance_id
+                model = str(getattr(instance, "model_name", "") or "").strip()
+                record_id = self._coerce_record_id(getattr(instance, "res_id", 0))
+                node_name = str(getattr(rec.node_id, "name", "") or "").strip()
+                fallback = f"{instance.name or model} · {node_name or '待审批'}"
+                rows.append({
+                    "id": rec.id,
+                    "title": self._safe_record_title(model, record_id, fallback),
+                    "model": model,
+                    "record_id": record_id,
+                    "deadline": "",
+                    "scene_key": self._scene_for_model(model),
+                    "source": "sc.workflow.workitem",
+                    "action_label": node_name or "流程处理",
+                    "action_key": "sc.workflow.approve",
+                    "reason_code": "WORKFLOW_PENDING",
+                })
+        except Exception:
+            return []
+        return rows
+
+    def _task_domain_for_user(self, user):
+        Task = self._get_model("project.task")
+        if Task is None:
+            return None
+        fields_map = Task._fields
+        if "user_ids" in fields_map:
+            return [("user_ids", "in", user.id)]
+        if "user_id" in fields_map:
+            return [("user_id", "=", user.id)]
+        return None
+
+    def _load_task_items(self, user, limit):
+        Task = self._get_model("project.task")
+        domain = self._task_domain_for_user(user)
+        if Task is None or not domain:
+            return []
+        rows = []
+        try:
+            records = Task.search(domain, order="date_deadline asc, id desc", limit=limit)
+            for rec in records:
+                rows.append({
+                    "id": rec.id,
+                    "title": rec.name or f"project.task#{rec.id}",
+                    "model": "project.task",
+                    "record_id": rec.id,
+                    "deadline": fields.Date.to_string(rec.date_deadline) if getattr(rec, "date_deadline", False) else "",
+                    "scene_key": self._scene_for_model("project.task"),
+                    "source": "project.task",
+                    "action_label": "任务处理",
+                    "action_key": "project.task.open",
+                    "reason_code": "TASK_ASSIGNED",
+                })
+        except Exception:
+            return []
+        return rows
+
     def _parse_followup_note(self, note_text):
         first_line = str(note_text or "").splitlines()[0] if note_text else ""
         if not first_line.startswith("SC_FOLLOWUP"):
@@ -213,8 +392,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return result
 
     def _load_owned_items(self, user, limit):
-        Project = self.env.get("project.project")
-        if not Project:
+        Project = self._get_model("project.project")
+        if Project is None:
             return []
         if not all(field in Project._fields for field in ("user_id", "name")):
             return []
@@ -236,8 +415,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return rows
 
     def _load_mention_items(self, partner, limit):
-        Message = self.env.get("mail.message")
-        if not Message:
+        Message = self._get_model("mail.message")
+        if Message is None:
             return []
         if not all(field in Message._fields for field in ("partner_ids", "model", "res_id")):
             return []
@@ -247,9 +426,10 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             for rec in records:
                 model = rec.model or ""
                 record_id = int(rec.res_id or 0)
+                fallback_title = rec.subject or (rec.record_name or model or ("mail.message#%s" % rec.id))
                 rows.append({
                     "id": rec.id,
-                    "title": rec.subject or (rec.record_name or model or ("mail.message#%s" % rec.id)),
+                    "title": self._safe_record_title(model, record_id, fallback_title),
                     "model": model,
                     "record_id": record_id,
                     "deadline": "",
@@ -261,8 +441,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return rows
 
     def _load_following_items(self, partner, limit):
-        Follower = self.env.get("mail.followers")
-        if not Follower:
+        Follower = self._get_model("mail.followers")
+        if Follower is None:
             return []
         if not all(field in Follower._fields for field in ("partner_id", "res_model", "res_id")):
             return []
@@ -271,11 +451,12 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             records = Follower.search([("partner_id", "=", partner.id)], order="id desc", limit=limit)
             for rec in records:
                 model = rec.res_model or ""
+                record_id = int(rec.res_id or 0)
                 rows.append({
                     "id": rec.id,
-                    "title": model or ("mail.followers#%s" % rec.id),
+                    "title": self._safe_record_title(model, record_id, model or ("mail.followers#%s" % rec.id)),
                     "model": model,
-                    "record_id": int(rec.res_id or 0),
+                    "record_id": record_id,
                     "deadline": "",
                     "scene_key": self._scene_for_model(model),
                     "source": "mail.followers",
@@ -285,7 +466,8 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return rows
 
     def handle(self, payload=None, ctx=None):
-        params = payload or self.params or {}
+        raw_payload = payload or self.params or {}
+        params = raw_payload.get("params") if isinstance(raw_payload, dict) and isinstance(raw_payload.get("params"), dict) else raw_payload
         user = self.env.user
         partner = user.partner_id
         limit = self._normalize_limit(params.get("limit"), default=20, max_value=100)
@@ -300,13 +482,28 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         filter_reason_code = filter_reason_code if filter_reason_code else "all"
         filter_search = self._normalize_text(params.get("search"))
 
-        todo_count = self._safe_count("mail.activity", [("user_id", "=", user.id)], ["user_id"])
+        mail_todo_count = self._safe_count("mail.activity", [("user_id", "=", user.id)], ["user_id"])
+        tier_review_count = self._safe_count("tier.review", self._tier_review_domain(user) or [("id", "=", -1)], ["status"])
+        workflow_todo_count = self._safe_count(
+            "sc.workflow.workitem",
+            self._workflow_todo_domain(user) or [("id", "=", -1)],
+            ["status", "assignee_group_id", "assignee_id"],
+        )
+        task_todo_count = self._safe_count(
+            "project.task",
+            self._task_domain_for_user(user) or [("id", "=", -1)],
+            ["id"],
+        )
+        todo_count = int(mail_todo_count + tier_review_count + workflow_todo_count + task_todo_count)
         responsible_count = self._safe_count("project.project", [("user_id", "=", user.id)], ["user_id"])
         mentioned_count = self._safe_count("mail.message", [("partner_ids", "in", partner.id)], ["partner_ids"])
         following_count = self._safe_count("mail.followers", [("partner_id", "=", partner.id)], ["partner_id"])
 
         items = []
         self._append_items(items, "todo", self._load_todo_items(user, limit_each))
+        self._append_items(items, "todo", self._load_tier_review_items(user, limit_each))
+        self._append_items(items, "todo", self._load_workflow_todo_items(user, limit_each))
+        self._append_items(items, "todo", self._load_task_items(user, limit_each))
         self._append_items(items, "owned", self._load_owned_items(user, limit_each))
         self._append_items(items, "mentions", self._load_mention_items(partner, limit_each))
         self._append_items(items, "following", self._load_following_items(partner, limit_each))
@@ -322,6 +519,23 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         filtered_count = len(items)
         items = self._apply_sort(items, sort_by=sort_by, sort_dir=sort_dir)
         items, total_pages, page = self._paginate_items(items, page=page, page_size=page_size)
+
+        access_models = (
+            "mail.activity",
+            "tier.review",
+            "sc.workflow.workitem",
+            "project.task",
+            "project.project",
+            "mail.message",
+            "mail.followers",
+        )
+        access_states = [self._read_access_state(model_name) for model_name in access_models]
+        restricted = [item for item in access_states if not item.get("readable")]
+        visibility = {
+            "partial_data_hidden": bool(restricted),
+            "restricted_sources": restricted,
+            "message": "部分数据未显示" if restricted else "",
+        }
 
         data = {
             "generated_at": fields.Datetime.now(),
@@ -356,6 +570,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 total_before_filter=total_before_filter,
                 filtered_count=filtered_count,
             ),
+            "visibility": visibility,
         }
         meta = {"intent": self.INTENT_TYPE}
         return {"ok": True, "data": data, "meta": meta}

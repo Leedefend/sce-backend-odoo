@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, provide, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
@@ -208,7 +208,7 @@ const showSceneErrors = computed(() => import.meta.env.DEV && sceneRegistryError
 const sceneRegistryErrors = getSceneRegistryDiagnostics().errors;
 const routeSceneKey = computed(() => {
   const metaSceneKey = route.meta?.sceneKey as string | undefined;
-  return metaSceneKey || parseSceneKeyFromQuery(route.query as Record<string, unknown>);
+  return metaSceneKey || parseSceneKeyFromQuery(route.query as LocationQueryRaw);
 });
 const activeLayout = computed(() => {
   const sceneKey = routeSceneKey.value;
@@ -573,8 +573,8 @@ async function logout() {
 
 .sidebar {
   padding: 24px 18px;
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   border-right: 1px solid rgba(15, 23, 42, 0.08);
   background: rgba(255, 255, 255, 0.75);
@@ -662,11 +662,16 @@ async function logout() {
 .menu {
   overflow: auto;
   padding-right: 4px;
+  padding-top: 0;
   min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
 }
 
 .footer {
-  margin-top: auto;
   display: grid;
   gap: 8px;
 }

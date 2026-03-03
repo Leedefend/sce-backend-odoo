@@ -26,8 +26,8 @@
     <div v-if="editorVisible" class="relational-editor">
       <div class="editor-card">
         <div class="editor-title">{{ editorTitle }}</div>
-        <div v-if="editTx.state === 'saved'" class="editor-banner">Saved.</div>
-        <div v-else-if="editTx.state === 'saving'" class="editor-banner">Saving…</div>
+        <div v-if="editTxState === 'saved'" class="editor-banner">Saved.</div>
+        <div v-else-if="editTxState === 'saving'" class="editor-banner">Saving…</div>
         <label class="editor-label">Name</label>
         <input v-model="draftName" class="editor-input" type="text" />
         <div class="editor-actions">
@@ -70,6 +70,7 @@ const draftName = ref('');
 const saving = ref(false);
 const editorError = ref('');
 const editTx = useEditTx();
+const editTxState = computed(() => editTx.state.value);
 
 const headerLabel = computed(() => (props.model ? props.model : 'Related'));
 const countLabel = computed(() => `${props.ids.length} items`);
