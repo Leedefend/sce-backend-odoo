@@ -42,6 +42,8 @@ def main() -> int:
         'function addOne2manyRow(name: string) {',
         'function setOne2manyRowName(fieldName: string, rowKey: string, name: string) {',
         'function removeOne2manyRow(fieldName: string, rowKey: string) {',
+        'function restoreOne2manyRow(fieldName: string, rowKey: string) {',
+        'function collectOne2manyDraftErrors() {',
         "return buildOne2manyCommandValue(name, 'write');",
         "out[name] = buildOne2manyCommandValue(name, 'onchange');",
     ]

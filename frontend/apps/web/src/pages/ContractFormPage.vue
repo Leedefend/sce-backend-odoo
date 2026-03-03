@@ -168,6 +168,21 @@
                     <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
                   </div>
                 </div>
+                <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
+                  <p class="meta">已移除 {{ removedOne2manyRows(node.name).length }} 行</p>
+                  <div class="chips">
+                    <button
+                      v-for="row in removedOne2manyRows(node.name)"
+                      :key="`rm-${row.key}`"
+                      class="chip-btn"
+                      type="button"
+                      :disabled="busy"
+                      @click="restoreOne2manyRow(node.name, row.key)"
+                    >
+                      撤销移除 · {{ row.name || '未命名' }}
+                    </button>
+                  </div>
+                </div>
               </div>
               <input
                 v-else
@@ -545,6 +560,10 @@ function visibleOne2manyRows(name: string) {
   return one2manyFieldRows(name).filter((row) => !row.removed);
 }
 
+function removedOne2manyRows(name: string) {
+  return one2manyFieldRows(name).filter((row) => row.removed);
+}
+
 function ensureOne2manyRows(name: string) {
   if (!Array.isArray(one2manyRows[name])) {
     one2manyRows[name] = [];
@@ -592,6 +611,15 @@ function removeOne2manyRow(fieldName: string, rowKey: string) {
   markFieldChanged(fieldName);
 }
 
+function restoreOne2manyRow(fieldName: string, rowKey: string) {
+  const rows = ensureOne2manyRows(fieldName);
+  const row = rows.find((item) => item.key === rowKey);
+  if (!row) return;
+  row.removed = false;
+  row.dirty = true;
+  markFieldChanged(fieldName);
+}
+
 function initOne2manyRows(name: string, source: unknown) {
   const ids = normalizeRelationIds(source);
   const options = relationOptionsForField(name);
@@ -619,6 +647,29 @@ function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
     })),
     mode,
   });
+}
+
+function collectOne2manyDraftErrors() {
+  const issues: string[] = [];
+  Object.entries(one2manyRows).forEach(([fieldName, rows]) => {
+    if (!Array.isArray(rows) || !rows.length) return;
+    const labels = new Set<string>();
+    rows.forEach((row, index) => {
+      if (row.removed) return;
+      const label = String(row.name || '').trim();
+      if (!label) {
+        issues.push(`${fieldName} 第${index + 1}行名称不能为空`);
+        return;
+      }
+      const key = label.toLowerCase();
+      if (labels.has(key)) {
+        issues.push(`${fieldName} 存在重复行名称：${label}`);
+        return;
+      }
+      labels.add(key);
+    });
+  });
+  return issues;
 }
 
 function setRelationKeyword(name: string, keyword: string) {
@@ -1648,6 +1699,11 @@ async function openFilter(filterKey: string) {
 async function saveRecord() {
   if (!canSave.value || !model.value) return;
   validationErrors.value = [];
+  const one2manyIssues = collectOne2manyDraftErrors();
+  if (one2manyIssues.length) {
+    validationErrors.value = one2manyIssues.slice(0, 5);
+    return;
+  }
   const editableMap = collectWritableValues();
   const labels = layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
     if (node.kind === 'field') acc[node.name] = node.label || node.name;
@@ -1896,6 +1952,11 @@ watch(
   grid-template-columns: minmax(120px, 1fr) auto;
   gap: 6px;
   align-items: center;
+}
+
+.o2m-removed {
+  display: grid;
+  gap: 4px;
 }
 
 .relation-search {
