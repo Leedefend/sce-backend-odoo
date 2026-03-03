@@ -1,4 +1,11 @@
 export type X2ManyCommand = [number, number, unknown?];
+export type One2ManyInlineDraftRow = {
+  id?: number | null;
+  isNew?: boolean;
+  removed?: boolean;
+  dirty?: boolean;
+  values?: Record<string, unknown>;
+};
 
 type X2ManyKind = 'many2many' | 'one2many';
 
@@ -78,6 +85,51 @@ function diffCommands(kind: X2ManyKind, currentIds: number[], originalIds: numbe
   originalIds.forEach((id) => {
     if (current.has(id)) return;
     commands.push([kind === 'one2many' ? 2 : 3, id]);
+  });
+
+  return commands;
+}
+
+export function buildOne2ManyInlineCommands(params: {
+  original: unknown;
+  draftRows: One2ManyInlineDraftRow[];
+  mode: 'onchange' | 'write';
+}): X2ManyCommand[] {
+  const originalIds = extractX2ManyIds(params.original);
+  const originalSet = new Set(originalIds);
+  const commands: X2ManyCommand[] = [];
+
+  params.draftRows.forEach((row) => {
+    const id = toPositiveInt(row.id);
+    const values = row.values && typeof row.values === 'object' ? row.values : {};
+    if (row.isNew) {
+      if (!row.removed) {
+        commands.push([0, 0, values]);
+      }
+      return;
+    }
+    if (!id) return;
+    if (row.removed) {
+      commands.push([2, id]);
+      return;
+    }
+    if (params.mode === 'write' && row.dirty) {
+      commands.push([1, id, values]);
+      return;
+    }
+    if (params.mode === 'onchange' && (row.dirty || !originalSet.has(id))) {
+      commands.push([1, id, values]);
+    }
+  });
+
+  // Safety net: keep deletions from id-diff in case rows were not expanded in draft layer.
+  const presentIds = new Set(
+    params.draftRows
+      .map((row) => toPositiveInt(row.id))
+      .filter((id): id is number => Number.isFinite(id as number)),
+  );
+  originalIds.forEach((id) => {
+    if (!presentIds.has(id)) commands.push([2, id]);
   });
 
   return commands;

@@ -128,10 +128,7 @@
                   </option>
                 </select>
               </div>
-              <div
-                v-else-if="fieldType(node.descriptor) === 'many2many' || fieldType(node.descriptor) === 'one2many'"
-                class="relation-editor"
-              >
+              <div v-else-if="fieldType(node.descriptor) === 'many2many'" class="relation-editor">
                 <input
                   class="input relation-search"
                   type="text"
@@ -154,6 +151,23 @@
                     {{ option.label }}
                   </option>
                 </select>
+              </div>
+              <div v-else-if="fieldType(node.descriptor) === 'one2many'" class="relation-editor">
+                <div class="o2m-toolbar">
+                  <button class="chip-btn" type="button" :disabled="busy" @click="addOne2manyRow(node.name)">+ 新增行</button>
+                </div>
+                <div class="o2m-list">
+                  <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
+                    <input
+                      class="input"
+                      type="text"
+                      :value="row.name"
+                      placeholder="名称"
+                      @input="setOne2manyRowName(node.name, row.key, ($event.target as HTMLInputElement).value)"
+                    />
+                    <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
+                  </div>
+                </div>
               </div>
               <input
                 v-else
@@ -221,7 +235,7 @@ import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
-import { buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
+import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -260,6 +274,15 @@ type RelationOption = {
   label: string;
 };
 
+type One2ManyInlineRow = {
+  key: string;
+  id: number | null;
+  isNew: boolean;
+  removed: boolean;
+  dirty: boolean;
+  name: string;
+};
+
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
@@ -276,6 +299,7 @@ const formData = reactive<Record<string, unknown>>({});
 const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
 const relationKeywords = reactive<Record<string, string>>({});
+const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
 const onchangeWarnings = ref<Array<{ title?: string; message?: string }>>([]);
@@ -511,6 +535,90 @@ function relationOptionsForField(name: string, descriptor?: FieldDescriptor) {
 
 function relationKeyword(name: string) {
   return String(relationKeywords[name] || '');
+}
+
+function one2manyFieldRows(name: string) {
+  return Array.isArray(one2manyRows[name]) ? one2manyRows[name] : [];
+}
+
+function visibleOne2manyRows(name: string) {
+  return one2manyFieldRows(name).filter((row) => !row.removed);
+}
+
+function ensureOne2manyRows(name: string) {
+  if (!Array.isArray(one2manyRows[name])) {
+    one2manyRows[name] = [];
+  }
+  return one2manyRows[name];
+}
+
+function makeOne2manyKey() {
+  return `o2m_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function addOne2manyRow(name: string) {
+  const rows = ensureOne2manyRows(name);
+  rows.push({
+    key: makeOne2manyKey(),
+    id: null,
+    isNew: true,
+    removed: false,
+    dirty: true,
+    name: '',
+  });
+  markFieldChanged(name);
+}
+
+function setOne2manyRowName(fieldName: string, rowKey: string, name: string) {
+  const rows = ensureOne2manyRows(fieldName);
+  const row = rows.find((item) => item.key === rowKey);
+  if (!row) return;
+  row.name = name;
+  row.dirty = true;
+  markFieldChanged(fieldName);
+}
+
+function removeOne2manyRow(fieldName: string, rowKey: string) {
+  const rows = ensureOne2manyRows(fieldName);
+  const index = rows.findIndex((item) => item.key === rowKey);
+  if (index < 0) return;
+  const row = rows[index];
+  if (row.isNew) {
+    rows.splice(index, 1);
+  } else {
+    row.removed = true;
+    row.dirty = true;
+  }
+  markFieldChanged(fieldName);
+}
+
+function initOne2manyRows(name: string, source: unknown) {
+  const ids = normalizeRelationIds(source);
+  const options = relationOptionsForField(name);
+  const optionMap = new Map(options.map((item) => [item.id, item.label]));
+  one2manyRows[name] = ids.map((id) => ({
+    key: `o2m_id_${id}`,
+    id,
+    isNew: false,
+    removed: false,
+    dirty: false,
+    name: optionMap.get(id) || `#${id}`,
+  }));
+}
+
+function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
+  const rows = one2manyFieldRows(name);
+  return buildOne2ManyInlineCommands({
+    original: originalValues.value[name],
+    draftRows: rows.map((row) => ({
+      id: row.id,
+      isNew: row.isNew,
+      removed: row.removed,
+      dirty: row.dirty,
+      values: { name: row.name },
+    })),
+    mode,
+  });
 }
 
 function setRelationKeyword(name: string, keyword: string) {
@@ -1029,8 +1137,18 @@ function normalizeComparable(value: unknown) {
 function comparableFieldValue(name: string, value: unknown) {
   const descriptor = contract.value?.fields?.[name];
   const ttype = fieldType(descriptor);
-  if (ttype === 'many2many' || ttype === 'one2many') {
+  if (ttype === 'many2many') {
     return JSON.stringify(normalizeRelationIds(value).sort((a, b) => a - b));
+  }
+  if (ttype === 'one2many') {
+    const rows = one2manyFieldRows(name).map((row) => ({
+      id: row.id || 0,
+      isNew: row.isNew,
+      removed: row.removed,
+      dirty: row.dirty,
+      name: row.name,
+    }));
+    return JSON.stringify(rows);
   }
   return normalizeComparable(value);
 }
@@ -1076,12 +1194,7 @@ function normalizeFieldValue(name: string, value: unknown) {
     });
   }
   if (ttype === 'one2many') {
-    return buildX2ManyCommands({
-      kind: 'one2many',
-      current: value,
-      original: originalValues.value[name],
-      mode: 'write',
-    });
+    return buildOne2manyCommandValue(name, 'write');
   }
   if (ttype === 'date') {
     const normalized = toDateInputValue(value);
@@ -1160,13 +1273,17 @@ function buildOnchangeValues() {
   Object.keys(contract.value?.fields || {}).forEach((name) => {
     const descriptor = contract.value?.fields?.[name];
     const ttype = fieldType(descriptor);
-    if (ttype === 'many2many' || ttype === 'one2many') {
+    if (ttype === 'many2many') {
       out[name] = buildX2ManyCommands({
         kind: ttype,
         current: formData[name],
         original: originalValues.value[name],
         mode: 'onchange',
       });
+      return;
+    }
+    if (ttype === 'one2many') {
+      out[name] = buildOne2manyCommandValue(name, 'onchange');
       return;
     }
     out[name] = normalizeFieldValue(name, formData[name]);
@@ -1214,6 +1331,7 @@ async function runOnchangeRoundtrip() {
         const ttype = fieldType(contract.value?.fields?.[name]);
         if (ttype === 'many2many' || ttype === 'one2many') {
           formData[name] = Array.isArray(value) ? value : [];
+          if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
         } else if (ttype === 'many2one') {
           const ids = normalizeRelationIds(value);
           formData[name] = ids.length ? ids[0] : false;
@@ -1326,6 +1444,9 @@ async function loadRecord() {
   Object.keys(relationKeywords).forEach((key) => {
     delete relationKeywords[key];
   });
+  Object.keys(one2manyRows).forEach((key) => {
+    delete one2manyRows[key];
+  });
   onchangeModifiersPatch.value = {};
   onchangeWarnings.value = [];
   changedFieldSet.clear();
@@ -1363,6 +1484,7 @@ async function loadRecord() {
       const incoming = name in defaults ? defaults[name] : '';
       if (ttype === 'many2many' || ttype === 'one2many') {
         formData[name] = Array.isArray(incoming) ? incoming : [];
+        if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
       } else if (ttype === 'many2one') {
         const ids = normalizeRelationIds(incoming);
         formData[name] = ids.length ? ids[0] : false;
@@ -1403,6 +1525,7 @@ async function loadRecord() {
     const incoming = (row as Record<string, unknown>)[name] ?? '';
     if (ttype === 'many2many' || ttype === 'one2many') {
       formData[name] = Array.isArray(incoming) ? incoming : [];
+      if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
     } else if (ttype === 'many2one') {
       const ids = normalizeRelationIds(incoming);
       formData[name] = ids.length ? ids[0] : false;
@@ -1757,6 +1880,22 @@ watch(
 .relation-editor {
   display: grid;
   gap: 6px;
+}
+
+.o2m-toolbar {
+  display: flex;
+}
+
+.o2m-list {
+  display: grid;
+  gap: 6px;
+}
+
+.o2m-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto;
+  gap: 6px;
+  align-items: center;
 }
 
 .relation-search {
