@@ -194,6 +194,9 @@
                       </label>
                     </div>
                     <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
+                    <p v-if="showOne2manyErrors && one2manyRowErrors(node.name, row.key).length" class="o2m-row-error">
+                      {{ one2manyRowErrors(node.name, row.key).join('；') }}
+                    </p>
                   </div>
                 </div>
                 <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
@@ -341,6 +344,7 @@ const session = useSessionStore();
 const status = ref<UiStatus>('loading');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
+const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
@@ -419,6 +423,8 @@ const writableFieldCount = computed(() =>
 const changedFieldCount = computed(() =>
   Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
 );
+
+const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
@@ -812,8 +818,9 @@ function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
   });
 }
 
-function collectOne2manyDraftErrors() {
+function collectOne2manyDraftValidation() {
   const issues: string[] = [];
+  const rowErrors: Record<string, string[]> = {};
   Object.entries(one2manyRows).forEach(([fieldName, rows]) => {
     if (!Array.isArray(rows) || !rows.length) return;
     const primary = one2manyPrimaryColumn(fieldName);
@@ -822,23 +829,31 @@ function collectOne2manyDraftErrors() {
     const labels = new Set<string>();
     rows.forEach((row, index) => {
       if (row.removed) return;
+      const rowKey = `${fieldName}:${row.key}`;
+      const perRow: string[] = [];
       requiredColumns.forEach((column) => {
         const value = row.values?.[column.name];
         if (isOne2manyEmptyValue(column, value)) {
+          perRow.push(`${column.label}不能为空`);
           issues.push(`${fieldName} 第${index + 1}行${column.label}不能为空`);
         }
       });
       const label = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
-      if (!label) return;
-      const key = label.toLowerCase();
-      if (labels.has(key)) {
-        issues.push(`${fieldName} 存在重复行值：${label}`);
-        return;
+      if (label) {
+        const key = label.toLowerCase();
+        if (labels.has(key)) {
+          perRow.push(`主值重复：${label}`);
+          issues.push(`${fieldName} 存在重复行值：${label}`);
+        } else {
+          labels.add(key);
+        }
       }
-      labels.add(key);
+      if (perRow.length) {
+        rowErrors[rowKey] = perRow;
+      }
     });
   });
-  return issues;
+  return { issues, rowErrors };
 }
 
 function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {
@@ -851,6 +866,10 @@ function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {
     return !String(value ?? '').trim() || value === false;
   }
   return !String(value ?? '').trim();
+}
+
+function one2manyRowErrors(fieldName: string, rowKey: string) {
+  return one2manyValidation.value.rowErrors[`${fieldName}:${rowKey}`] || [];
 }
 
 function setRelationKeyword(name: string, keyword: string) {
@@ -1815,6 +1834,7 @@ async function reload() {
   status.value = 'loading';
   errorMessage.value = '';
   validationErrors.value = [];
+  showOne2manyErrors.value = false;
   try {
     await loadContract();
     await loadRelationOptions();
@@ -1905,11 +1925,13 @@ async function openFilter(filterKey: string) {
 async function saveRecord() {
   if (!canSave.value || !model.value) return;
   validationErrors.value = [];
-  const one2manyIssues = collectOne2manyDraftErrors();
+  const one2manyIssues = one2manyValidation.value.issues;
   if (one2manyIssues.length) {
+    showOne2manyErrors.value = true;
     validationErrors.value = one2manyIssues.slice(0, 5);
     return;
   }
+  showOne2manyErrors.value = false;
   const editableMap = collectWritableValues();
   const labels = layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
     if (node.kind === 'field') acc[node.name] = node.label || node.name;
@@ -2174,6 +2196,13 @@ watch(
 .o2m-removed {
   display: grid;
   gap: 4px;
+}
+
+.o2m-row-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #b91c1c;
+  font-size: 12px;
 }
 
 .relation-search {

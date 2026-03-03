@@ -39,6 +39,8 @@ def main() -> int:
 
     form_markers = [
         "v-else-if=\"fieldType(node.descriptor) === 'one2many'\"",
+        'const showOne2manyErrors = ref(false);',
+        'const one2manyValidation = computed(() => collectOne2manyDraftValidation());',
         'function one2manyColumns(name: string): One2ManyColumn[] {',
         'function one2manyColumnInputType(column: One2ManyColumn) {',
         'function addOne2manyRow(name: string) {',
@@ -47,7 +49,8 @@ def main() -> int:
         'function restoreOne2manyRow(fieldName: string, rowKey: string) {',
         'function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {',
         'function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {',
-        'function collectOne2manyDraftErrors() {',
+        'function collectOne2manyDraftValidation() {',
+        'function one2manyRowErrors(fieldName: string, rowKey: string) {',
         'required: Boolean(descriptor?.required),',
         "return buildOne2manyCommandValue(name, 'write');",
         "out[name] = buildOne2manyCommandValue(name, 'onchange');",
