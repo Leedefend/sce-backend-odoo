@@ -607,6 +607,15 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         self._append_items(items, "following", self._load_following_items(partner, limit_each))
         total_before_filter = len(items)
         facets = self._build_facets(items)
+        section_scope_items = self._apply_filters(
+            items,
+            section="all",
+            source=filter_source,
+            reason_code=filter_reason_code,
+            search=filter_search,
+        )
+        filtered_section_counts = self._build_facets(section_scope_items).get("section_counts", [])
+        facets["section_counts_filtered"] = filtered_section_counts
         items = self._apply_filters(
             items,
             section=filter_section,

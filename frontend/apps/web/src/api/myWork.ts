@@ -75,6 +75,7 @@ export type MyWorkSummaryResponse = {
     source_counts?: Array<{ key: string; count: number }>;
     reason_code_counts?: Array<{ key: string; count: number }>;
     section_counts?: Array<{ key: string; count: number }>;
+    section_counts_filtered?: Array<{ key: string; count: number }>;
     priority_counts?: Array<{ key: string; count: number }>;
   };
   visibility?: {
