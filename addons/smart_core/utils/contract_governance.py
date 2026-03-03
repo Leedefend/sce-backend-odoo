@@ -116,6 +116,16 @@ _PROJECT_FORM_PRIMARY_FIELDS = [
     "budget_total",
     "location",
 ]
+_PROJECT_FORM_CREATE_HIDDEN_FIELDS = {
+    "company_id",
+    "analytic_account_id",
+    "lifecycle_state",
+    "stage_id",
+    "last_update_status",
+    "privacy_visibility",
+    "rating_status",
+    "rating_status_period",
+}
 _PROJECT_FORM_FIELD_MAX = 25
 _PROJECT_FORM_HEADER_ACTION_MAX = 3
 _PROJECT_FORM_SMART_ACTION_MAX = 4
@@ -786,12 +796,14 @@ def _pick_project_form_fields(data: dict) -> list[str]:
     return selected[:_PROJECT_FORM_FIELD_MAX]
 
 
-def _filter_project_form_layout(data: dict, selected_fields: set[str]) -> None:
+def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
     views = _as_dict(data.get("views"))
     form = _as_dict(views.get("form"))
     layout = form.get("layout")
     if not isinstance(layout, list):
         return
+    selected_order = [name for name in selected_fields if _safe_text(name)]
+    selected_set = set(selected_order)
     filtered_layout: list[dict] = []
     for node in layout:
         if not isinstance(node, dict):
@@ -799,7 +811,7 @@ def _filter_project_form_layout(data: dict, selected_fields: set[str]) -> None:
         node_type = _safe_lower(node.get("type"))
         if node_type == "field":
             name = _safe_text(node.get("name"))
-            if name and name in selected_fields:
+            if name and name in selected_set:
                 filtered_layout.append(node)
             continue
         filtered_layout.append(node)
@@ -821,11 +833,41 @@ def _filter_project_form_layout(data: dict, selected_fields: set[str]) -> None:
 
     # Ensure filtered layout covers selected user-surface fields, so frontend can render
     # a coherent contract-driven form without falling back to unordered field maps.
-    missing_selected = sorted(name for name in selected_fields if name and name not in existing_field_names)
+    missing_selected = [name for name in selected_order if name and name not in existing_field_names]
     for name in missing_selected:
         filtered_layout.append({"type": "field", "name": name})
 
-    form["layout"] = filtered_layout
+    field_nodes: dict[str, dict] = {}
+    field_seen: list[str] = []
+    for node in filtered_layout:
+        if not isinstance(node, dict) or _safe_lower(node.get("type")) != "field":
+            continue
+        name = _safe_text(node.get("name"))
+        if not name:
+            continue
+        if name not in field_nodes:
+            field_nodes[name] = node
+            field_seen.append(name)
+
+    ordered_field_names: list[str] = []
+    for name in selected_order + field_seen:
+        if name in field_nodes and name not in ordered_field_names:
+            ordered_field_names.append(name)
+    reordered_fields = [field_nodes[name] for name in ordered_field_names]
+
+    rebuilt_layout: list[dict] = []
+    inserted = False
+    for node in filtered_layout:
+        if not isinstance(node, dict) or _safe_lower(node.get("type")) != "field":
+            rebuilt_layout.append(node)
+            continue
+        if not inserted:
+            rebuilt_layout.extend(reordered_fields)
+            inserted = True
+    if not inserted:
+        rebuilt_layout.extend(reordered_fields)
+
+    form["layout"] = rebuilt_layout
     views["form"] = form
     data["views"] = views
 
@@ -992,6 +1034,7 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     fields_map = _as_dict(data.get("fields"))
     data["fields"] = {name: fields_map.get(name) for name in selected if name in fields_map}
     data["visible_fields"] = selected
+    _filter_project_form_layout(data, selected)
 
     permissions = _as_dict(data.get("permissions"))
     field_groups = _as_dict(permissions.get("field_groups"))
@@ -1068,6 +1111,7 @@ def _derive_form_core_fields(data: dict) -> list[str]:
     fields_map = _as_dict(data.get("fields"))
     ordered = _iter_field_order(data)
     core: list[str] = []
+    is_project_form = _is_project_form_contract(data)
 
     def _push(name: str) -> None:
         if not name or name in core:
@@ -1077,7 +1121,16 @@ def _derive_form_core_fields(data: dict) -> list[str]:
             return
         if _is_technical_field(name, descriptor):
             return
+        if is_project_form and name in _PROJECT_FORM_CREATE_HIDDEN_FIELDS:
+            return
         core.append(name)
+
+    # For project create forms, prioritize stable business fields first.
+    if is_project_form:
+        for name in _PROJECT_FORM_PRIMARY_FIELDS:
+            _push(name)
+            if len(core) >= _FORM_CORE_FIELD_MAX:
+                break
 
     for name in ordered:
         descriptor = _as_dict(fields_map.get(name))
@@ -1085,6 +1138,8 @@ def _derive_form_core_fields(data: dict) -> list[str]:
             continue
         required = _to_bool(descriptor.get("required"), fallback=False)
         readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        if is_project_form and name in _PROJECT_FORM_CREATE_HIDDEN_FIELDS:
+            continue
         if required and not readonly:
             _push(name)
         if len(core) >= _FORM_CORE_FIELD_MAX:
@@ -1199,6 +1254,24 @@ def _apply_form_render_semantics(data: dict, contract_mode: str) -> None:
     _apply_form_policy_contract(data, contract_mode)
 
 
+def _resolve_contract_required_fields(data: dict, fields_map: dict[str, Any]) -> list[str]:
+    if _is_project_form_contract(data):
+        descriptor = _as_dict(fields_map.get("name"))
+        if descriptor and not _to_bool(descriptor.get("readonly"), fallback=False):
+            return ["name"]
+        return []
+    required_fields: list[str] = []
+    for name, descriptor_raw in fields_map.items():
+        descriptor = _as_dict(descriptor_raw)
+        if not descriptor:
+            continue
+        required = _to_bool(descriptor.get("required"), fallback=False)
+        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
+        if required and not readonly:
+            required_fields.append(name)
+    return required_fields
+
+
 def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
     fields_map = _as_dict(data.get("fields"))
     core_group = {}
@@ -1217,15 +1290,19 @@ def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
             advanced_group = {name: True for name in normalized}
 
     policies: dict[str, dict[str, Any]] = {}
+    contract_required_fields = set(_resolve_contract_required_fields(data, fields_map))
+    is_project_form = _is_project_form_contract(data)
     for name, descriptor_raw in fields_map.items():
         descriptor = _as_dict(descriptor_raw)
         if not descriptor:
             continue
-        required = _to_bool(descriptor.get("required"), fallback=False)
+        required = name in contract_required_fields
         readonly = _to_bool(descriptor.get("readonly"), fallback=False)
         visible_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
         if name in advanced_group:
             visible_profiles = [_RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+            if is_project_form and name not in _PROJECT_FORM_CREATE_HIDDEN_FIELDS:
+                visible_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
         required_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT] if required and not readonly else []
         readonly_profiles = [_RENDER_PROFILE_READONLY]
         if readonly:
@@ -1238,6 +1315,18 @@ def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
             "source_readonly": readonly,
             "group": "core" if name in core_group else ("advanced" if name in advanced_group else "secondary"),
         }
+        # Project create page should not expose system-derived/status fields to end users.
+        if is_project_form and name in _PROJECT_FORM_CREATE_HIDDEN_FIELDS:
+            policies[name]["visible_profiles"] = [_RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
+            policies[name]["required_profiles"] = []
+            policies[name]["readonly_profiles"] = [
+                _RENDER_PROFILE_CREATE,
+                _RENDER_PROFILE_EDIT,
+                _RENDER_PROFILE_READONLY,
+            ]
+            policies[name]["source_required"] = False
+            policies[name]["source_readonly"] = True
+            policies[name]["group"] = "advanced"
     return policies
 
 
@@ -1388,13 +1477,7 @@ def _append_primary_action_conditions(policy: dict[str, Any], fields_map: dict[s
 
 
 def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
-    required_fields: list[str] = []
-    for name, policy in (_build_form_field_policies(data) or {}).items():
-        if not isinstance(policy, dict):
-            continue
-        required_profiles = policy.get("required_profiles")
-        if isinstance(required_profiles, list) and required_profiles:
-            required_fields.append(name)
+    required_fields = _resolve_contract_required_fields(data, _as_dict(data.get("fields")))
     policies: dict[str, dict[str, Any]] = {}
     buttons = data.get("buttons")
     if not isinstance(buttons, list):
@@ -1477,13 +1560,13 @@ def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
 def _build_form_validation_rules(data: dict, contract_mode: str) -> list[dict[str, Any]]:
     rules: list[dict[str, Any]] = []
     fields_map = _as_dict(data.get("fields"))
-    for name, descriptor_raw in fields_map.items():
-        descriptor = _as_dict(descriptor_raw)
+    required_fields = _resolve_contract_required_fields(data, fields_map)
+    for name in required_fields:
+        descriptor = _as_dict(fields_map.get(name))
         if not descriptor:
             continue
-        required = _to_bool(descriptor.get("required"), fallback=False)
         readonly = _to_bool(descriptor.get("readonly"), fallback=False)
-        if required and not readonly:
+        if not readonly:
             rules.append(
                 {
                     "code": "REQUIRED",

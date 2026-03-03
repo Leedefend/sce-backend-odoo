@@ -5,6 +5,7 @@ from odoo import http
 from odoo.http import request
 import logging, time
 import os
+import re
 from typing import Dict, Any
 
 from werkzeug.exceptions import Unauthorized, Forbidden, BadRequest, NotFound
@@ -39,6 +40,10 @@ INTENT_ALIASES = {
 
 API_VERSION = "v1"
 CONTRACT_VERSION = "v0.1"
+_WRITE_INTENT_RE = re.compile(
+    r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
+    re.IGNORECASE,
+)
 
 def _canon_intent(name: str) -> str:
     return INTENT_ALIASES.get(name or "", name or "")
@@ -106,6 +111,18 @@ def _error_response(code: str, message: str, status: int, trace_id: str, details
     resp = _respond_json(payload, status=status)
     resp.headers["X-Trace-Id"] = trace_id
     return resp
+
+
+def _is_write_request(intent_name: str, params: Dict[str, Any]) -> bool:
+    intent = str(intent_name or "").strip().lower()
+    if not intent:
+        return False
+    if _WRITE_INTENT_RE.search(intent):
+        return True
+    if intent == "api.data":
+        op = str((params or {}).get("op") or "").strip().lower()
+        return op in {"create", "write", "unlink", "delete", "batch"}
+    return False
 
 # ===================== 结果归一化 =====================
 
@@ -361,6 +378,14 @@ class IntentDispatcher(http.Controller):
                 resp = request.make_response("", status=304)
                 resp.headers.update(headers)
                 return resp
+
+            # type='http' 路由不会自动提交事务；写请求成功时必须显式 commit。
+            if isinstance(result, dict) and status < 400 and result.get("ok", True) and _is_write_request(intent_name, params):
+                try:
+                    request.env.cr.commit()
+                except Exception:
+                    _logger.exception("intent commit failed: intent=%s trace=%s", intent_name, trace_id)
+                    return _error_response(INTERNAL_ERROR, "内部错误", 500, trace_id)
 
             return request.make_json_response(result, status=status, headers=headers)
         except AccessDenied:

@@ -1,6 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_sc_dictionary_read,sc.dictionary.read,model_sc_dictionary,smart_construction_core.group_sc_cap_data_read,1,0,0,0
 access_sc_dictionary_admin,sc.dictionary.admin,model_sc_dictionary,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
+access_sc_dictionary_project_manager,sc.dictionary.project.manager,model_sc_dictionary,smart_construction_core.group_sc_cap_project_manager,1,1,1,0
 access_sc_project_document_user,sc.project.document.user,model_sc_project_document,smart_construction_core.group_sc_cap_project_user,1,1,1,0
 access_sc_project_document_manager,sc.project.document.manager,model_sc_project_document,smart_construction_core.group_sc_cap_project_manager,1,1,1,1
 access_sc_project_document_read,sc.project.document.read,model_sc_project_document,smart_construction_core.group_sc_cap_project_read,1,0,0,0
@@ -22,6 +23,8 @@ access_project_task_sc_manager,project.task sc manager,model_project_task,smart_
 access_project_stage_user,project.project.stage.user,model_project_project_stage,smart_construction_core.group_sc_cap_project_read,1,0,0,0
 access_project_stage_project_user,project.project.stage.project.user,model_project_project_stage,smart_construction_core.group_sc_cap_project_user,1,0,0,0
 access_project_stage_manager,project.project.stage.manager,model_project_project_stage,smart_construction_core.group_sc_cap_project_manager,1,1,1,1
+access_ir_actions_act_window_sc_internal_read,ir.actions.act.window.sc.internal.read,base.model_ir_actions_act_window,smart_construction_core.group_sc_internal_user,1,0,0,0
+access_ir_actions_act_window_base_user_read,ir.actions.act.window.base.user.read,base.model_ir_actions_act_window,base.group_user,1,0,0,0
 access_sc_capability_read,sc.capability.read,model_sc_capability,smart_construction_core.group_sc_internal_user,1,0,0,0
 access_sc_capability_admin,sc.capability.admin,model_sc_capability,smart_construction_core.group_sc_cap_config_admin,1,1,1,1
 access_sc_capability_group_read,sc.capability.group.read,model_sc_capability_group,smart_construction_core.group_sc_internal_user,1,0,0,0

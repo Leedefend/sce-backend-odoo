@@ -58,7 +58,7 @@ class ActionResolver:
                     pass
         # d) 从 menu_id 回退
         if menu_id:
-            menu = self.env['ir.ui.menu'].browse(int(menu_id))
+            menu = self.env['ir.ui.menu'].sudo().browse(int(menu_id))
             return menu.action if menu and menu.exists() else None
         return None
 
@@ -66,6 +66,7 @@ class ActionResolver:
         """
         从菜单解析动作（含 server 下钻物化）
         """
+        menu = menu.sudo()
         action = menu.action
         if not action:
             return None

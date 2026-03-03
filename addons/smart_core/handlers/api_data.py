@@ -6,6 +6,7 @@
 # - count: search_count
 
 import logging
+import re
 from typing import Any, Dict, Tuple, List, Optional
 from ast import literal_eval
 import base64
@@ -22,6 +23,7 @@ from odoo.http import request
 from ..core.base_handler import BaseIntentHandler
 
 _logger = logging.getLogger(__name__)
+_NOT_NULL_COLUMN_RE = re.compile(r'null value in column "([^"]+)"', re.IGNORECASE)
 
 
 def _json(o):
@@ -245,6 +247,112 @@ class ApiDataHandler(BaseIntentHandler):
             safe.insert(0, "id")
         return safe
 
+    def _prepare_create_vals(self, env_model, vals: Dict[str, Any]) -> Dict[str, Any]:
+        safe_vals = {k: v for k, v in (vals or {}).items() if k in env_model._fields}
+        if not safe_vals:
+            return {}
+
+        missing_for_default = [
+            name
+            for name in (env_model._fields or {}).keys()
+            if name not in safe_vals and not str(name or "").startswith("__")
+        ]
+        if missing_for_default:
+            try:
+                defaults = env_model.default_get(missing_for_default) or {}
+            except Exception:
+                defaults = {}
+            if isinstance(defaults, dict):
+                for name in missing_for_default:
+                    if name in safe_vals:
+                        continue
+                    if name in defaults and defaults.get(name) is not None:
+                        safe_vals[name] = defaults.get(name)
+
+        self._apply_project_create_fallbacks(env_model, safe_vals)
+        return safe_vals
+
+    def _selection_options(self, env_model, field_name: str) -> List[str]:
+        field = (env_model._fields or {}).get(field_name)
+        if not field:
+            return []
+        try:
+            raw_selection = getattr(field, "selection", [])
+            if callable(raw_selection):
+                raw = raw_selection(env_model.env)
+            elif isinstance(raw_selection, str):
+                resolver = getattr(env_model, raw_selection, None)
+                raw = resolver() if callable(resolver) else []
+            else:
+                raw = raw_selection
+        except Exception:
+            raw = []
+        return [str(item[0]) for item in (raw or []) if isinstance(item, (list, tuple)) and item]
+
+    def _fill_selection_fallback(self, env_model, safe_vals: Dict[str, Any], field_name: str, preferred: str = "") -> bool:
+        if field_name not in env_model._fields:
+            return False
+        current = safe_vals.get(field_name)
+        if current not in (None, ""):
+            return False
+        options = self._selection_options(env_model, field_name)
+        if preferred and preferred in options:
+            safe_vals[field_name] = preferred
+            return True
+        if options:
+            safe_vals[field_name] = options[0]
+            return True
+        return False
+
+    def _apply_project_create_fallbacks(self, env_model, safe_vals: Dict[str, Any]) -> None:
+        if env_model._name != "project.project":
+            return
+        # 交付环境兜底：避免项目创建暴露技术字段导致 NOT NULL 中断
+        self._fill_selection_fallback(env_model, safe_vals, "privacy_visibility", preferred="followers")
+        self._fill_selection_fallback(env_model, safe_vals, "rating_status", preferred="stage")
+        self._fill_selection_fallback(env_model, safe_vals, "last_update_status", preferred="to_define")
+        self._fill_selection_fallback(env_model, safe_vals, "rating_status_period", preferred="monthly")
+        # 交付环境可见性兜底：确保新建项目默认对创建人可见，且落在当前公司域内。
+        if "user_id" in env_model._fields and safe_vals.get("user_id") in (None, False, ""):
+            uid = int(getattr(env_model.env, "uid", 0) or 0)
+            if uid > 0:
+                safe_vals["user_id"] = uid
+        if "company_id" in env_model._fields and safe_vals.get("company_id") in (None, False, ""):
+            try:
+                company = env_model.env.user.company_id
+                if company and company.id:
+                    safe_vals["company_id"] = company.id
+            except Exception:
+                pass
+        if "active" in env_model._fields and safe_vals.get("active") in (None, ""):
+            safe_vals["active"] = True
+
+    def _extract_not_null_column(self, error: Exception) -> str:
+        message = str(error or "")
+        match = _NOT_NULL_COLUMN_RE.search(message)
+        return str(match.group(1) if match else "").strip()
+
+    def _fill_not_null_column_fallback(self, env_model, safe_vals: Dict[str, Any], column: str) -> bool:
+        if not column or column not in env_model._fields:
+            return False
+        field = env_model._fields.get(column)
+        ttype = str(getattr(field, "type", "") or getattr(field, "ttype", "")).strip().lower()
+        if ttype == "selection":
+            return self._fill_selection_fallback(env_model, safe_vals, column)
+        if ttype in {"char", "text", "html"}:
+            safe_vals[column] = ""
+            return True
+        if ttype == "boolean":
+            safe_vals[column] = False
+            return True
+        if ttype in {"float", "monetary"}:
+            safe_vals[column] = 0.0
+            return True
+        if ttype == "integer":
+            safe_vals[column] = 0
+            return True
+        return False
+
     # ----------------- 主处理 -----------------
 
     def handle(self, **kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]] | Dict[str, Any]:
@@ -319,10 +427,14 @@ class ApiDataHandler(BaseIntentHandler):
             if isinstance(parsed_ctx, dict):
                 ctx = {**ctx, **parsed_ctx}
 
-        if (not domain) and domain_raw:
+        if domain_raw:
             parsed_domain = self._safe_eval_with_runtime(domain_raw)
             if isinstance(parsed_domain, list):
-                domain = parsed_domain
+                if not domain:
+                    domain = parsed_domain
+                elif parsed_domain:
+                    # 同时存在 domain 与 domain_raw 时，按 AND 语义合并，确保快捷筛选生效。
+                    domain = parsed_domain + domain
 
         if search_term:
             try:
@@ -418,8 +530,8 @@ class ApiDataHandler(BaseIntentHandler):
         if sudo:
             env_model = env_model.sudo()
 
-        # 过滤非法字段，避免写入不存在字段
-        safe_vals = {k: v for k, v in vals.items() if k in env_model._fields}
+        # 过滤非法字段并补齐后端默认值，避免交付表单必须暴露技术字段
+        safe_vals = self._prepare_create_vals(env_model, vals)
         if not safe_vals:
             return self._err(400, "vals 中无可写字段")
 
@@ -429,8 +541,23 @@ class ApiDataHandler(BaseIntentHandler):
             _logger.warning("create AccessError on %s: %s", model, ae)
             return self._err(403, "无创建权限")
         except Exception as e:
-            _logger.exception("create failed on %s", model)
-            return self._err(500, str(e))
+            column = self._extract_not_null_column(e)
+            if column and safe_vals.get(column) in (None, ""):
+                retry_vals = dict(safe_vals)
+                changed = self._fill_not_null_column_fallback(env_model, retry_vals, column)
+                if changed:
+                    try:
+                        rec = env_model.create(retry_vals)
+                        safe_vals = retry_vals
+                    except Exception:
+                        _logger.exception("create failed on %s (retry column=%s)", model, column)
+                        return self._err(500, str(e))
+                else:
+                    _logger.exception("create failed on %s (unresolved column=%s)", model, column)
+                    return self._err(500, str(e))
+            else:
+                _logger.exception("create failed on %s", model)
+                return self._err(500, str(e))
 
         data = {"id": rec.id}
         meta = {"op": "create", "model": model, "id": rec.id}
