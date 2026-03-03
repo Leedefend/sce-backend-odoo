@@ -364,7 +364,7 @@ const relationKeywords = reactive<Record<string, string>>({});
 const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
-const onchangeWarnings = ref<Array<{ title?: string; message?: string }>>([]);
+const onchangeWarnings = ref<Array<{ title?: string; message?: string; reason_code?: string }>>([]);
 const onchangeLinePatches = ref<OnchangeLinePatch[]>([]);
 const changedFieldSet = new Set<string>();
 let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -922,6 +922,8 @@ function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {
     warns.forEach((warn) => {
       const message = String(warn?.message || warn?.title || '').trim();
       if (message) messages.push(message);
+      const reasonCode = String(warn?.reason_code || '').trim();
+      if (reasonCode) messages.push(`原因码: ${reasonCode}`);
     });
     const rowState = String(patch.row_state || '').trim().toLowerCase();
     if (rowState) {

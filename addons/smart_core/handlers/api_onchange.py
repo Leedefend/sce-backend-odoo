@@ -106,6 +106,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 {
                     "title": str(warning.get("title") or "Onchange warning"),
                     "message": str(warning.get("message") or ""),
+                    "reason_code": str(warning.get("reason_code") or warning.get("code") or "ONCHANGE_WARNING"),
                 }
             )
             return warnings
@@ -117,6 +118,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
                     {
                         "title": str(item.get("title") or "Onchange warning"),
                         "message": str(item.get("message") or ""),
+                        "reason_code": str(item.get("reason_code") or item.get("code") or "ONCHANGE_WARNING"),
                     }
                 )
         return warnings

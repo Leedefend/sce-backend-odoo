@@ -6,7 +6,7 @@ export type OnchangeLinePatch = {
   row_id?: number;
   patch?: Record<string, unknown>;
   modifiers_patch?: Record<string, Record<string, unknown>>;
-  warnings?: Array<{ title?: string; message?: string }>;
+  warnings?: Array<{ title?: string; message?: string; reason_code?: string }>;
   row_state?: 'create' | 'update' | 'remove' | 'keep' | string;
   command_hint?: number[];
   domain?: unknown[];
@@ -17,7 +17,7 @@ export type OnchangeResponse = {
   patch?: Record<string, unknown>;
   modifiers_patch?: Record<string, Record<string, unknown>>;
   line_patches?: OnchangeLinePatch[];
-  warnings?: Array<{ title?: string; message?: string }>;
+  warnings?: Array<{ title?: string; message?: string; reason_code?: string }>;
   applied_fields?: string[];
 };
 
