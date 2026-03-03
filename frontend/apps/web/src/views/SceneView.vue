@@ -37,7 +37,9 @@ import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
+import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
 import type { NavNode } from '@sc/schema';
+import type { SceneTarget } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
 const router = useRouter();
@@ -92,6 +94,50 @@ function resolveRecordId(targetRecord: unknown) {
     }
   }
   return targetRecord;
+}
+
+function resolveVisibleActionTarget(target: SceneTarget) {
+  const actionId = Number(target.action_id || 0);
+  if (actionId > 0) {
+    if (!session.menuTree.length || findActionMeta(session.menuTree, actionId)) {
+      return { actionId, menuId: Number(target.menu_id || 0) || undefined };
+    }
+  }
+
+  const targetMenuId = Number(target.menu_id || 0);
+  if (targetMenuId > 0) {
+    const menuNode = findMenuNode(session.menuTree, targetMenuId);
+    if (menuNode?.meta?.action_id) {
+      return {
+        actionId: menuNode.meta.action_id,
+        menuId: Number(menuNode.menu_id || menuNode.id || targetMenuId) || undefined,
+      };
+    }
+  }
+
+  const menuXmlid = String(target.menu_xmlid || '').trim();
+  if (menuXmlid) {
+    const menuNode = findActionNodeByMenuXmlid(session.menuTree, menuXmlid);
+    if (menuNode?.meta?.action_id) {
+      return {
+        actionId: menuNode.meta.action_id,
+        menuId: Number(menuNode.menu_id || menuNode.id || 0) || undefined,
+      };
+    }
+  }
+
+  const model = String(target.model || '').trim();
+  if (model) {
+    const modelNode = findActionNodeByModel(session.menuTree, model);
+    if (modelNode?.meta?.action_id) {
+      return {
+        actionId: modelNode.meta.action_id,
+        menuId: Number(modelNode.menu_id || modelNode.id || target.menu_id || 0) || undefined,
+      };
+    }
+  }
+
+  return null;
 }
 
 function isSameRouteTarget(targetRoute: string, query: Record<string, unknown>) {
@@ -171,10 +217,11 @@ async function resolveScene() {
         }
       }
       // Workspace scene may still provide action/menu/model targets.
-      if (target.action_id) {
+      const resolvedAction = resolveVisibleActionTarget(target);
+      if (resolvedAction) {
         await router.replace({
-          path: `/a/${target.action_id}`,
-          query: { menu_id: target.menu_id || undefined, ...workspaceContextQuery },
+          path: `/a/${resolvedAction.actionId}`,
+          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
         });
         return;
       }
@@ -191,22 +238,13 @@ async function resolveScene() {
     }
 
     if (layout.kind === 'record') {
-      if (typeof target.menu_xmlid === 'string' && target.menu_xmlid.trim()) {
-        const menuNode = findActionNodeByMenuXmlid(session.menuTree, target.menu_xmlid);
-        if (menuNode?.meta?.action_id) {
-          await router.replace({
-            path: `/a/${menuNode.meta.action_id}`,
-            query: { menu_id: menuNode.menu_id || menuNode.id || undefined, ...workspaceContextQuery },
-          });
-          return;
-        }
-        if (menuNode?.menu_id || menuNode?.id) {
-          await router.replace({
-            path: `/m/${menuNode.menu_id || menuNode.id}`,
-            query: workspaceContextQuery,
-          });
-          return;
-        }
+      const resolvedAction = resolveVisibleActionTarget(target);
+      if (resolvedAction) {
+        await router.replace({
+          path: `/a/${resolvedAction.actionId}`,
+          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
+        });
+        return;
       }
       if (target.model) {
         const recordId = resolveRecordId(target.record_id ?? route.params.id);
@@ -222,7 +260,17 @@ async function resolveScene() {
           return;
         }
       }
-      if (target.action_id) {
+      if (typeof target.menu_xmlid === 'string' && target.menu_xmlid.trim()) {
+        const menuNode = findActionNodeByMenuXmlid(session.menuTree, target.menu_xmlid);
+        if (menuNode?.menu_id || menuNode?.id) {
+          await router.replace({
+            path: `/m/${menuNode.menu_id || menuNode.id}`,
+            query: workspaceContextQuery,
+          });
+          return;
+        }
+      }
+      if (target.action_id && !session.menuTree.length) {
         await router.replace({
           path: `/a/${target.action_id}`,
           query: { menu_id: target.menu_id || undefined, ...workspaceContextQuery },
@@ -232,10 +280,11 @@ async function resolveScene() {
     }
 
     if (layout.kind === 'list' || layout.kind === 'ledger') {
-      if (target.action_id) {
+      const resolvedAction = resolveVisibleActionTarget(target);
+      if (resolvedAction) {
         await router.replace({
-          path: `/a/${target.action_id}`,
-          query: { menu_id: target.menu_id || undefined, ...workspaceContextQuery },
+          path: `/a/${resolvedAction.actionId}`,
+          query: { menu_id: resolvedAction.menuId, ...workspaceContextQuery },
         });
         return;
       }

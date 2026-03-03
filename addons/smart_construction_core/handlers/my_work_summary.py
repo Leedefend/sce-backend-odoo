@@ -31,14 +31,16 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     STATUS_FILTER_EMPTY = "FILTER_EMPTY"
     SORT_FIELDS = WorkItemAggregateService.SORT_FIELDS
 
-    def _get_model(self, model_name):
+    def _get_model(self, model_name, *, sudo=False):
         try:
-            return self.env[model_name]
+            model = self.env[model_name]
+            return model.sudo() if sudo else model
         except Exception:
             return None
 
     def _safe_count(self, model_name, domain, required_fields=None):
-        Model = self._get_model(model_name)
+        # Aggregate counts with sudo while keeping user-scoped domain conditions.
+        Model = self._get_model(model_name, sudo=True)
         if Model is None:
             return 0
         fields_ok = all(field in Model._fields for field in (required_fields or []))
@@ -73,6 +75,58 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         }
         return mapping.get(model_name, "projects.list")
 
+    def _resolve_action_context_for_model(self, model_name):
+        model = str(model_name or "").strip()
+        if not model:
+            return {}
+        cache = getattr(self, "_mw_action_context_cache", None)
+        if cache is None:
+            cache = {}
+            setattr(self, "_mw_action_context_cache", cache)
+        if model in cache:
+            return cache[model]
+        result = {}
+        try:
+            Action = self._get_model("ir.actions.act_window", sudo=True)
+            Menu = self._get_model("ir.ui.menu", sudo=True)
+            if Action is not None:
+                action = Action.search([("res_model", "=", model)], order="id asc", limit=1)
+                if action:
+                    result["action_id"] = int(action.id)
+                    if Menu is not None:
+                        action_ref = "ir.actions.act_window,%s" % action.id
+                        menu = Menu.search([("action", "=", action_ref)], order="id asc", limit=1)
+                        if menu:
+                            result["menu_id"] = int(menu.id)
+        except Exception:
+            result = {}
+        cache[model] = result
+        return result
+
+    def _attach_targets(self, rows):
+        attached = list(rows or [])
+        for row in attached:
+            model = str(row.get("model") or "").strip()
+            record_id = self._coerce_record_id(row.get("record_id"))
+            scene_key = str(row.get("scene_key") or self._scene_for_model(model)).strip() or "projects.list"
+            target = {
+                "kind": "record" if model and record_id else "scene",
+                "scene_key": scene_key,
+            }
+            if model:
+                target["model"] = model
+            if record_id:
+                target["record_id"] = record_id
+            action_ctx = self._resolve_action_context_for_model(model)
+            action_id = int(action_ctx.get("action_id") or 0)
+            menu_id = int(action_ctx.get("menu_id") or 0)
+            if action_id > 0:
+                target["action_id"] = action_id
+            if menu_id > 0:
+                target["menu_id"] = menu_id
+            row["target"] = target
+        return attached
+
     def _coerce_record_id(self, raw):
         value = raw
         if hasattr(value, "id"):
@@ -87,7 +141,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         rid = int(record_id or 0)
         if not model or not rid:
             return fallback
-        Model = self._get_model(model)
+        Model = self._get_model(model, sudo=True)
         if Model is None:
             return fallback
         try:
@@ -138,6 +192,15 @@ class MyWorkSummaryHandler(BaseIntentHandler):
     def _normalize_text(self, value):
         return str(value or "").strip().lower()
 
+    def _or_domain(self, clauses):
+        valid = [clause for clause in (clauses or []) if clause]
+        if not valid:
+            return []
+        if len(valid) == 1:
+            return [valid[0]]
+        # Odoo domain OR: prefix with N-1 "|" operators for N clauses.
+        return (["|"] * (len(valid) - 1)) + valid
+
     def _build_status(self, *, total_before_filter, filtered_count):
         if total_before_filter <= 0:
             return {
@@ -176,7 +239,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return WorkItemAggregateService.paginate(items, page=page, page_size=page_size)
 
     def _load_todo_items(self, user, limit):
-        Activity = self._get_model("mail.activity")
+        Activity = self._get_model("mail.activity", sudo=True)
         if Activity is None:
             return []
         required = ("user_id", "res_model", "res_id")
@@ -202,10 +265,10 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
-        return rows
+        return self._attach_targets(rows)
 
     def _tier_review_domain(self, user):
-        TierReview = self._get_model("tier.review")
+        TierReview = self._get_model("tier.review", sudo=True)
         if TierReview is None:
             return None
         fields_map = TierReview._fields
@@ -223,7 +286,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return domain
 
     def _load_tier_review_items(self, user, limit):
-        TierReview = self._get_model("tier.review")
+        TierReview = self._get_model("tier.review", sudo=True)
         domain = self._tier_review_domain(user)
         if TierReview is None or not domain:
             return []
@@ -252,10 +315,10 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
-        return rows
+        return self._attach_targets(rows)
 
     def _workflow_todo_domain(self, user):
-        Workitem = self._get_model("sc.workflow.workitem")
+        Workitem = self._get_model("sc.workflow.workitem", sudo=True)
         if Workitem is None:
             return None
         required = ("status", "assignee_group_id", "assignee_id")
@@ -269,7 +332,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         ]
 
     def _load_workflow_todo_items(self, user, limit):
-        Workitem = self._get_model("sc.workflow.workitem")
+        Workitem = self._get_model("sc.workflow.workitem", sudo=True)
         domain = self._workflow_todo_domain(user)
         if Workitem is None or not domain:
             return []
@@ -300,10 +363,10 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
-        return rows
+        return self._attach_targets(rows)
 
     def _task_domain_for_user(self, user):
-        Task = self._get_model("project.task")
+        Task = self._get_model("project.task", sudo=True)
         if Task is None:
             return None
         fields_map = Task._fields
@@ -314,7 +377,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return None
 
     def _load_task_items(self, user, limit):
-        Task = self._get_model("project.task")
+        Task = self._get_model("project.task", sudo=True)
         domain = self._task_domain_for_user(user)
         if Task is None or not domain:
             return []
@@ -337,21 +400,36 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
-        return rows
+        return self._attach_targets(rows)
 
     def _project_risk_domain_for_user(self, user):
-        Project = self._get_model("project.project")
+        Project = self._get_model("project.project", sudo=True)
         if Project is None:
             return None
         if "health_state" not in Project._fields:
             return None
         base = [("health_state", "in", ["risk", "warn"])]
-        if "user_id" in Project._fields:
-            return base + [("user_id", "=", user.id)]
-        return base
+        responsible = self._project_responsible_domain(user)
+        return base + responsible if responsible else base
+
+    def _project_responsible_domain(self, user):
+        Project = self._get_model("project.project", sudo=True)
+        if Project is None:
+            return []
+        fields_map = Project._fields
+        clauses = []
+        if "user_id" in fields_map:
+            clauses.append(("user_id", "=", user.id))
+        if "manager_id" in fields_map:
+            clauses.append(("manager_id", "=", user.id))
+        if "cost_manager_id" in fields_map:
+            clauses.append(("cost_manager_id", "=", user.id))
+        if "doc_manager_id" in fields_map:
+            clauses.append(("doc_manager_id", "=", user.id))
+        return self._or_domain(clauses)
 
     def _load_project_risk_items(self, user, limit):
-        Project = self._get_model("project.project")
+        Project = self._get_model("project.project", sudo=True)
         domain = self._project_risk_domain_for_user(user)
         if Project is None or not domain:
             return []
@@ -376,7 +454,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
-        return rows
+        return self._attach_targets(rows)
 
     def _parse_followup_note(self, note_text):
         first_line = str(note_text or "").splitlines()[0] if note_text else ""
@@ -392,14 +470,17 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         return result
 
     def _load_owned_items(self, user, limit):
-        Project = self._get_model("project.project")
+        Project = self._get_model("project.project", sudo=True)
         if Project is None:
             return []
-        if not all(field in Project._fields for field in ("user_id", "name")):
+        if "name" not in Project._fields:
+            return []
+        domain = self._project_responsible_domain(user)
+        if not domain:
             return []
         rows = []
         try:
-            records = Project.search([("user_id", "=", user.id)], order="write_date desc, id desc", limit=limit)
+            records = Project.search(domain, order="write_date desc, id desc", limit=limit)
             for rec in records:
                 rows.append({
                     "id": rec.id,
@@ -414,10 +495,10 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
-        return rows
+        return self._attach_targets(rows)
 
     def _load_mention_items(self, partner, limit):
-        Message = self._get_model("mail.message")
+        Message = self._get_model("mail.message", sudo=True)
         if Message is None:
             return []
         if not all(field in Message._fields for field in ("partner_ids", "model", "res_id")):
@@ -442,10 +523,10 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
-        return rows
+        return self._attach_targets(rows)
 
     def _load_following_items(self, partner, limit):
-        Follower = self._get_model("mail.followers")
+        Follower = self._get_model("mail.followers", sudo=True)
         if Follower is None:
             return []
         if not all(field in Follower._fields for field in ("partner_id", "res_model", "res_id")):
@@ -469,7 +550,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                 })
         except Exception:
             return []
-        return rows
+        return self._attach_targets(rows)
 
     def handle(self, payload=None, ctx=None):
         raw_payload = payload or self.params or {}
@@ -506,7 +587,12 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             ["health_state"],
         )
         todo_count = int(mail_todo_count + tier_review_count + workflow_todo_count + task_todo_count + risk_todo_count)
-        responsible_count = self._safe_count("project.project", [("user_id", "=", user.id)], ["user_id"])
+        project_responsible_domain = self._project_responsible_domain(user)
+        responsible_count = self._safe_count(
+            "project.project",
+            project_responsible_domain or [("id", "=", -1)],
+            ["id"],
+        )
         mentioned_count = self._safe_count("mail.message", [("partner_ids", "in", partner.id)], ["partner_ids"])
         following_count = self._safe_count("mail.followers", [("partner_id", "=", partner.id)], ["partner_id"])
 
@@ -542,7 +628,13 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             "mail.followers",
         )
         access_states = [self._read_access_state(model_name) for model_name in access_models]
-        restricted = [item for item in access_states if not item.get("readable")]
+        restricted = [
+            item
+            for item in access_states
+            if (not item.get("readable"))
+            and str(item.get("reason") or "") != "MODEL_UNAVAILABLE"
+            and str(item.get("model") or "") != "sc.workflow.workitem"
+        ]
         visibility = {
             "partial_data_hidden": bool(restricted),
             "restricted_sources": restricted,

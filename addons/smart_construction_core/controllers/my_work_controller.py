@@ -4,13 +4,15 @@ from __future__ import annotations
 from odoo import http
 from odoo.http import request
 
+from odoo.exceptions import AccessDenied
+from odoo.addons.smart_core.security.auth import get_user_from_token
 from odoo.addons.smart_construction_core.handlers.my_work_summary import MyWorkSummaryHandler
 
-from .api_base import fail_from_exception, ok
+from .api_base import fail, fail_from_exception, ok
 
 
 class MyWorkController(http.Controller):
-    @http.route("/api/my-work", type="http", auth="user", methods=["POST"], csrf=False)
+    @http.route("/api/my-work", type="http", auth="public", methods=["POST"], csrf=False)
     def my_work_summary(self, **params):
         payload = dict(params or {})
         try:
@@ -19,7 +21,9 @@ class MyWorkController(http.Controller):
         except Exception:
             pass
         try:
-            handler = MyWorkSummaryHandler(request.env, request=request, payload={"params": payload})
+            user = get_user_from_token()
+            env = request.env(user=user)
+            handler = MyWorkSummaryHandler(env, request=request, payload={"params": payload})
             result = handler.run(payload={"params": payload}) or {}
             if not isinstance(result, dict):
                 return ok({})
@@ -27,5 +31,7 @@ class MyWorkController(http.Controller):
                 return ok({"status": "error", "message": "my work summary failed"})
             data = result.get("data") if isinstance(result.get("data"), dict) else {}
             return ok(data)
+        except AccessDenied as exc:
+            return fail("AUTH_REQUIRED", str(exc), http_status=401)
         except Exception as exc:
             return fail_from_exception(exc, http_status=500)

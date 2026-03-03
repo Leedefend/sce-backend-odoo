@@ -376,7 +376,7 @@
                   完成待办
                 </button>
                 <button class="link-btn" @click="openRecord(item)">打开记录</button>
-                <button class="link-btn secondary-btn" @click="openScene(item.scene_key)">进入场景</button>
+                <button class="link-btn secondary-btn" @click="openScene(item.scene_key, item.target)">进入场景</button>
               </td>
             </tr>
           </tbody>
@@ -402,9 +402,12 @@ import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedA
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 import { parseWorkspaceEntryContext, readWorkspaceContext } from '../app/workspaceContext';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
+import { findActionMeta, findActionNodeByModel } from '../app/menu';
+import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
 const route = useRoute();
+const session = useSessionStore();
 
 const loading = ref(false);
 const errorText = ref('');
@@ -498,7 +501,11 @@ const autoQueryDelayMs = 300;
 let autoQueryTimer: ReturnType<typeof setTimeout> | null = null;
 const suspendAutoLoad = ref(false);
 
-const filteredItems = computed(() => items.value);
+const filteredItems = computed(() => {
+  const section = String(activeSection.value || '').trim();
+  if (!section || section === 'all') return items.value;
+  return items.value.filter((item) => String(item.section || '').trim() === section);
+});
 const currentTodoRows = computed(() =>
   filteredItems.value.filter((item) => isCompletableTodo(item)).map((item) => item.id),
 );
@@ -703,8 +710,10 @@ async function load() {
 
 function selectSection(key: string) {
   if (!key) return;
+  if (activeSection.value === key) return;
   activeSection.value = key;
   page.value = 1;
+  void load();
 }
 
 function applyFilters() {
@@ -818,21 +827,51 @@ function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
 }
 
-function openScene(sceneKey: string) {
+function resolveRecordActionContext(modelName: string, fallback?: { actionId?: number; menuId?: number }) {
+  const model = String(modelName || '').trim();
+  const fallbackActionId = Number(fallback?.actionId || 0);
+  const fallbackMenuId = Number(fallback?.menuId || 0);
+  if (fallbackActionId > 0) {
+    return {
+      action_id: fallbackActionId,
+      menu_id: fallbackMenuId > 0 ? fallbackMenuId : undefined,
+    };
+  }
+  if (!model) return { action_id: undefined, menu_id: undefined };
+  const node = findActionNodeByModel(session.menuTree || [], model);
+  const actionId = Number(node?.meta?.action_id || 0);
+  const menuId = Number(node?.menu_id || node?.id || 0);
+  return {
+    action_id: actionId > 0 ? actionId : undefined,
+    menu_id: menuId > 0 ? menuId : undefined,
+  };
+}
+
+function openScene(sceneKey: string, directTarget?: MyWorkRecordItem['target']) {
   const key = String(sceneKey || '').trim();
   if (!key) return;
   const query = resolveWorkspaceContextQuery();
   const scene = getSceneByKey(key);
-  const target = scene?.target || {};
-  if (typeof target.action_id === 'number' && target.action_id > 0) {
-    router.push({ path: `/a/${target.action_id}`, query: { menu_id: target.menu_id || undefined, ...query } }).catch(() => {});
+  const target = directTarget || scene?.target || {};
+  const targetActionId = Number(target.action_id || 0);
+  const actionMeta = targetActionId > 0 ? findActionMeta(session.menuTree || [], targetActionId) : null;
+  if (targetActionId > 0 && actionMeta) {
+    router.push({ path: `/a/${targetActionId}`, query: { menu_id: target.menu_id || undefined, ...query } }).catch(() => {});
     return;
   }
   if (target.model && target.record_id) {
+    const context = resolveRecordActionContext(String(target.model || ''), {
+      actionId: Number(target.action_id || 0),
+      menuId: Number(target.menu_id || 0),
+    });
+    if (!context.action_id) {
+      router.push({ path: `/s/${key}`, query }).catch(() => {});
+      return;
+    }
     router
       .push({
         path: `/r/${target.model}/${target.record_id}`,
-        query: { menu_id: target.menu_id || undefined, action_id: target.action_id || undefined, ...query },
+        query: { menu_id: context.menu_id, action_id: context.action_id, ...query },
       })
       .catch(() => {});
     return;
@@ -845,16 +884,47 @@ function openScene(sceneKey: string) {
 }
 
 function openRecord(item: MyWorkRecordItem) {
-  if (item.model && item.record_id) {
+  const target = item.target || {};
+  const targetActionId = Number(target.action_id || 0);
+  if (targetActionId > 0) {
+    if (target.model && target.record_id) {
+      router
+        .push({
+          path: `/r/${target.model}/${target.record_id}`,
+          query: { ...resolveWorkspaceContextQuery(), menu_id: target.menu_id || undefined, action_id: targetActionId },
+        })
+        .catch(() => {});
+      return;
+    }
     router
       .push({
-        path: `/r/${item.model}/${item.record_id}`,
-        query: resolveWorkspaceContextQuery(),
+        path: `/a/${targetActionId}`,
+        query: { ...resolveWorkspaceContextQuery(), menu_id: target.menu_id || undefined },
       })
       .catch(() => {});
     return;
   }
-  openScene(item.scene_key);
+
+  if (item.model && item.record_id) {
+    const scene = getSceneByKey(item.scene_key);
+    const sceneTarget = scene?.target || {};
+    const context = resolveRecordActionContext(String(item.model || ''), {
+      actionId: Number(sceneTarget.action_id || 0),
+      menuId: Number(sceneTarget.menu_id || 0),
+    });
+    if (!context.action_id) {
+      openScene(item.scene_key, target);
+      return;
+    }
+    router
+      .push({
+        path: `/r/${item.model}/${item.record_id}`,
+        query: { ...resolveWorkspaceContextQuery(), menu_id: context.menu_id, action_id: context.action_id },
+      })
+      .catch(() => {});
+    return;
+  }
+  openScene(item.scene_key, target);
 }
 
 function isCompletableTodo(item: MyWorkRecordItem) {

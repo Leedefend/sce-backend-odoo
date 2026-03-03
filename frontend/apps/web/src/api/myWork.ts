@@ -34,6 +34,15 @@ export type MyWorkRecordItem = {
   action_key?: string;
   reason_code?: string;
   priority?: 'high' | 'medium' | 'low' | string;
+  target?: {
+    kind?: 'record' | 'scene' | 'action' | string;
+    scene_key?: string;
+    model?: string;
+    record_id?: number;
+    action_id?: number;
+    menu_id?: number;
+    route?: string;
+  };
 };
 
 export type FailureMeta = ContractFailureMeta;
