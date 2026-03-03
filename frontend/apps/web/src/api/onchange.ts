@@ -1,10 +1,21 @@
 import { intentRequest } from './intents';
 
+export type OnchangeLinePatch = {
+  field: string;
+  row_key?: string;
+  row_id?: number;
+  patch?: Record<string, unknown>;
+  modifiers_patch?: Record<string, Record<string, unknown>>;
+  warnings?: Array<{ title?: string; message?: string }>;
+  row_state?: 'create' | 'update' | 'remove' | 'keep' | string;
+  domain?: unknown[];
+};
+
 export type OnchangeResponse = {
   schema_version?: string;
   patch?: Record<string, unknown>;
   modifiers_patch?: Record<string, Record<string, unknown>>;
-  line_patches?: Array<Record<string, unknown>>;
+  line_patches?: OnchangeLinePatch[];
   warnings?: Array<{ title?: string; message?: string }>;
   applied_fields?: string[];
 };

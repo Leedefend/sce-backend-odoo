@@ -121,6 +121,35 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 )
         return warnings
 
+    def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:
+        if not isinstance(rows_raw, list):
+            return []
+        out: List[Dict[str, Any]] = []
+        for item in rows_raw:
+            if not isinstance(item, dict):
+                continue
+            field = str(item.get("field") or "").strip()
+            if not field or field not in env_model._fields:
+                continue
+            row_patch = self._normalize_patch(env_model, item.get("patch"))
+            row_modifiers = self._normalize_modifiers_patch(env_model, item.get("modifiers_patch"))
+            warnings = self._normalize_warning_list(item.get("warnings"))
+            row_state = str(item.get("row_state") or "").strip().lower()
+            normalized: Dict[str, Any] = {
+                "field": field,
+                "row_key": str(item.get("row_key") or "").strip(),
+                "row_id": int(item.get("row_id") or 0) if str(item.get("row_id") or "").strip() else 0,
+                "patch": row_patch,
+                "modifiers_patch": row_modifiers,
+                "warnings": warnings,
+                "row_state": row_state if row_state in ("create", "update", "remove", "keep") else "update",
+            }
+            # keep compatibility for future per-line domain support
+            if isinstance(item.get("domain"), list):
+                normalized["domain"] = item.get("domain")
+            out.append(normalized)
+        return out
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
@@ -168,6 +197,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
         patch = self._normalize_patch(env_model, onchange_result.get("value"))
         domain_patch = self._normalize_domain_patch(env_model, onchange_result.get("domain"))
         warnings = self._normalize_warning_list(onchange_result.get("warning"))
+        line_patches = self._normalize_line_patches(env_model, onchange_result.get("line_patches"))
 
         # Prefer backend-supplied modifier patch if exists, then merge domain as supplement.
         modifiers_patch = self._normalize_modifiers_patch(env_model, onchange_result.get("modifiers_patch"))
@@ -182,7 +212,7 @@ class ApiOnchangeHandler(BaseIntentHandler):
                 "schema_version": "v1",
                 "patch": patch,
                 "modifiers_patch": modifiers_patch,
-                "line_patches": [],
+                "line_patches": line_patches,
                 "warnings": warnings,
                 "applied_fields": changed_fields,
             },

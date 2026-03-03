@@ -199,6 +199,9 @@
                     <p v-if="showOne2manyErrors && one2manyRowErrors(node.name, row.key).length" class="o2m-row-error">
                       {{ one2manyRowErrors(node.name, row.key).join('；') }}
                     </p>
+                    <p v-if="one2manyRowHints(node.name, row).length" class="o2m-row-hint">
+                      {{ one2manyRowHints(node.name, row).join('；') }}
+                    </p>
                   </div>
                 </div>
                 <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
@@ -270,6 +273,7 @@ import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import { triggerOnchange } from '../api/onchange';
+import type { OnchangeLinePatch } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
 import {
@@ -361,6 +365,7 @@ const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
 const onchangeWarnings = ref<Array<{ title?: string; message?: string }>>([]);
+const onchangeLinePatches = ref<OnchangeLinePatch[]>([]);
 const changedFieldSet = new Set<string>();
 let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
 const applyingOnchangePatch = ref(false);
@@ -903,6 +908,43 @@ function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {
 
 function one2manyRowErrors(fieldName: string, rowKey: string) {
   return one2manyValidation.value.rowErrors[`${fieldName}:${rowKey}`] || [];
+}
+
+function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {
+  const messages: string[] = [];
+  onchangeLinePatches.value.forEach((patch) => {
+    if (String(patch.field || '') !== fieldName) return;
+    const rowKey = String(patch.row_key || '').trim();
+    const rowId = Number(patch.row_id || 0);
+    const matched = (rowKey && rowKey === row.key) || (rowId > 0 && Number(row.id || 0) === rowId);
+    if (!matched) return;
+    const warns = Array.isArray(patch.warnings) ? patch.warnings : [];
+    warns.forEach((warn) => {
+      const message = String(warn?.message || warn?.title || '').trim();
+      if (message) messages.push(message);
+    });
+  });
+  return Array.from(new Set(messages));
+}
+
+function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {
+  if (!Array.isArray(linePatches) || !linePatches.length) return;
+  linePatches.forEach((line) => {
+    const fieldName = String(line.field || '').trim();
+    if (!fieldName) return;
+    const rowKey = String(line.row_key || '').trim();
+    const rowId = Number(line.row_id || 0);
+    const rows = ensureOne2manyRows(fieldName);
+    const row = rows.find((item) => (rowKey && item.key === rowKey) || (rowId > 0 && Number(item.id || 0) === rowId));
+    if (!row) return;
+    const patch = line.patch;
+    if (patch && typeof patch === 'object') {
+      row.values = {
+        ...(row.values || {}),
+        ...(patch as Record<string, unknown>),
+      };
+    }
+  });
 }
 
 function setRelationKeyword(name: string, keyword: string) {
@@ -1616,8 +1658,10 @@ async function runOnchangeRoundtrip() {
     });
     const patch = response?.patch;
     const modifiersPatch = response?.modifiers_patch;
+    const linePatches = Array.isArray(response?.line_patches) ? response.line_patches : [];
     const warnings = Array.isArray(response?.warnings) ? response.warnings : [];
     onchangeWarnings.value = warnings;
+    onchangeLinePatches.value = linePatches;
     if (modifiersPatch && typeof modifiersPatch === 'object') {
       onchangeModifiersPatch.value = {
         ...onchangeModifiersPatch.value,
@@ -1652,6 +1696,11 @@ async function runOnchangeRoundtrip() {
           formData[name] = value;
         }
       });
+      applyingOnchangePatch.value = false;
+    }
+    if (linePatches.length) {
+      applyingOnchangePatch.value = true;
+      applyOnchangeLinePatches(linePatches);
       applyingOnchangePatch.value = false;
     }
   } catch {
@@ -1714,6 +1763,7 @@ const hudEntries = computed(() => [
   { label: 'actions_count', value: contractActions.value.length },
   { label: 'rights', value: `${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}` },
   { label: 'onchange_warnings', value: onchangeWarnings.value.length },
+  { label: 'onchange_line_patches', value: onchangeLinePatches.value.length },
 ]);
 
 async function loadContract() {
@@ -1758,6 +1808,7 @@ async function loadRecord() {
   });
   onchangeModifiersPatch.value = {};
   onchangeWarnings.value = [];
+  onchangeLinePatches.value = [];
   changedFieldSet.clear();
   if (onchangeTimer) {
     clearTimeout(onchangeTimer);
@@ -2249,6 +2300,13 @@ watch(
   grid-column: 1 / -1;
   margin: 0;
   color: #b91c1c;
+  font-size: 12px;
+}
+
+.o2m-row-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #92400e;
   font-size: 12px;
 }
 
