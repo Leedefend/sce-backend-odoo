@@ -1,6 +1,7 @@
 <template>
   <section class="capability-home">
     <header class="hero">
+      <span v-if="mode === 'demo'" class="demo-badge">DEMO</span>
       <div>
         <h2>工作台</h2>
         <p class="lead">围绕项目经营、风险与审批，优先处理今天最关键事项。</p>
@@ -18,6 +19,7 @@
           数据更新时间：{{ dataUpdatedAt }}
           <span v-if="partialDataNotice" class="partial-data">· {{ partialDataNotice }}</span>
         </p>
+        <p v-if="mode === 'demo'" class="demo-hint">当前为模拟经营数据，仅用于演示推演，不代表真实业务结论。</p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
         </p>
@@ -75,27 +77,42 @@
       </div>
     </section>
 
+    <section v-if="mode === 'demo'" class="story-section" aria-label="演示项目故事线">
+      <header class="ops-header">
+        <h3>演示项目故事线</h3>
+        <p>用于讲解成本偏差、审批积压、合同先干后签等关键冲突。</p>
+      </header>
+      <div class="story-grid">
+        <article v-for="story in demoStories" :key="story.id" class="story-card" :class="`story-${story.level}`">
+          <p class="story-title">{{ story.project }} · {{ story.conflict }}</p>
+          <p class="story-desc">{{ story.summary }}</p>
+          <button class="story-btn" @click="openDemoStory(story)">{{ story.actionLabel }}</button>
+        </article>
+      </div>
+    </section>
+
     <section class="risk-section" aria-label="关键风险区">
       <header class="risk-header">
         <h3>关键风险</h3>
         <p>10 秒识别整体风险态势。</p>
+        <p class="risk-summary">{{ riskSummaryLine }}</p>
       </header>
       <div class="risk-grid">
-        <article class="risk-card risk-red">
-          <p>严重</p>
+        <article class="risk-card risk-red" :class="{ glow: riskBuckets.red >= 3 }">
+          <p>严重 ⚠</p>
           <strong>{{ riskBuckets.red }}</strong>
         </article>
-        <article class="risk-card risk-amber">
-          <p>关注</p>
+        <article class="risk-card risk-amber" :class="{ glow: riskBuckets.amber >= 4 }">
+          <p>关注 ⏳</p>
           <strong>{{ riskBuckets.amber }}</strong>
         </article>
         <article class="risk-card risk-green">
-          <p>正常</p>
+          <p>正常 ✓</p>
           <strong>{{ riskBuckets.green }}</strong>
         </article>
       </div>
       <div class="risk-trend">
-        <p class="risk-subtitle">风险趋势（近三段）</p>
+        <p class="risk-subtitle">风险趋势（7/30 天）</p>
         <div class="trend-bars">
           <div v-for="(item, idx) in riskTrend" :key="`trend-${idx}`" class="trend-item">
             <span class="trend-label">{{ item.label }}</span>
@@ -108,6 +125,21 @@
         <p class="risk-subtitle">风险来源分布</p>
         <div class="source-tags">
           <span v-for="item in riskSources" :key="`source-${item.label}`" class="source-tag">{{ item.label }} {{ item.count }}</span>
+        </div>
+      </div>
+      <div class="risk-actions">
+        <p class="risk-subtitle">风险待处理清单</p>
+        <div class="risk-action-list">
+          <article v-for="item in riskActionItems" :key="item.id" class="risk-action-item">
+            <p class="risk-action-title">{{ item.title }}</p>
+            <p class="risk-action-desc">{{ item.description }}</p>
+            <div class="risk-action-buttons">
+              <button @click="openRiskAction(item, 'detail')">看详情</button>
+              <button @click="openRiskAction(item, 'assign')">分派</button>
+              <button @click="openRiskAction(item, 'close')">关闭</button>
+              <button @click="openRiskAction(item, 'approve')">发起审批</button>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -158,6 +190,7 @@
         <article v-for="item in systemAdvice" :key="item.id" class="advice-item" :class="`advice-${item.level}`">
           <p class="advice-title">{{ item.title }}</p>
           <p class="advice-desc">{{ item.description }}</p>
+          <button v-if="item.actionLabel" class="advice-btn" @click="openAdvice(item)">{{ item.actionLabel }}</button>
         </article>
       </div>
     </section>
@@ -425,6 +458,28 @@ type AdviceItem = {
   level: 'red' | 'amber' | 'green';
   title: string;
   description: string;
+  actionLabel?: string;
+  actionEntryId?: string;
+  actionPath?: string;
+  actionQuery?: Record<string, string>;
+};
+type RiskActionItem = {
+  id: string;
+  title: string;
+  description: string;
+  sceneKey?: string;
+  path?: string;
+  query?: Record<string, string>;
+};
+type DemoStory = {
+  id: string;
+  project: string;
+  conflict: string;
+  summary: string;
+  level: 'red' | 'amber' | 'green';
+  actionLabel: string;
+  actionPath: string;
+  actionQuery?: Record<string, string>;
 };
 type FilterChip = { key: string; label: string };
 
@@ -513,6 +568,58 @@ const demoSummarySeed: MyWorkSummaryItem[] = [
   { key: 'overdue_task', label: '逾期任务', count: 3, scene_key: 'projects.ledger' },
 ];
 const summarySource = computed(() => (mode.value === 'demo' ? demoSummarySeed : myWorkSummary.value));
+const demoStories = computed<DemoStory[]>(() => [
+  {
+    id: 's1',
+    project: 'A1 产业园',
+    conflict: '合同未签先干',
+    summary: '土建已开工 14 天，主合同未完成法务盖章，存在履约与结算争议风险。',
+    level: 'red',
+    actionLabel: '查看合同闭环',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo', source: 'tier.review', reason: 'TIER_REVIEW_PENDING', search: '合同' },
+  },
+  {
+    id: 's2',
+    project: 'B3 市政综合体',
+    conflict: '付款超预算预警',
+    summary: '本周付款申请累计超预算阈值，审批链条积压，资金风险上行。',
+    level: 'red',
+    actionLabel: '进入付款审批',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo', search: '付款' },
+  },
+  {
+    id: 's3',
+    project: 'C2 物流中心',
+    conflict: '进度滞后 + 成本偏差',
+    summary: '关键里程碑连续延后，成本执行率上升，需启动纠偏方案。',
+    level: 'amber',
+    actionLabel: '处理风险事项',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo', source: 'project.risk', search: '风险' },
+  },
+  {
+    id: 's4',
+    project: 'D5 公建项目',
+    conflict: '变更未确认',
+    summary: '现场签证与合同变更单未闭环，后续产值确认受阻。',
+    level: 'amber',
+    actionLabel: '确认变更任务',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo', source: 'project.task', search: '变更' },
+  },
+  {
+    id: 's5',
+    project: 'E7 住宅配套',
+    conflict: '审批链路断点',
+    summary: '跨部门流程节点无人处理，任务接力断档，存在延期交付风险。',
+    level: 'green',
+    actionLabel: '打开待办链路',
+    actionPath: '/my-work',
+    actionQuery: { section: 'todo' },
+  },
+]);
 const internalTileCount = computed(() => {
   let count = 0;
   session.scenes.forEach((scene) => {
@@ -865,15 +972,46 @@ const riskBuckets = computed(() => {
 
 const riskTrend = computed(() => {
   const now = coreValue.value.riskCount;
-  const prev1 = Math.max(0, Math.round(now * 0.9));
-  const prev2 = Math.max(0, Math.round(now * 0.8));
-  const max = Math.max(now, prev1, prev2, 1);
+  const d7 = Math.max(0, Math.round(now * 0.88));
+  const d30 = Math.max(0, Math.round(now * 0.72));
+  const max = Math.max(now, d7, d30, 1);
   return [
-    { label: '前两周', value: prev2, percent: Math.round((prev2 / max) * 100) },
-    { label: '上周', value: prev1, percent: Math.round((prev1 / max) * 100) },
-    { label: '本周', value: now, percent: Math.round((now / max) * 100) },
+    { label: '30天前', value: d30, percent: Math.round((d30 / max) * 100) },
+    { label: '7天前', value: d7, percent: Math.round((d7 / max) * 100) },
+    { label: '当前', value: now, percent: Math.round((now / max) * 100) },
   ];
 });
+const riskSummaryLine = computed(() => {
+  if (riskBuckets.value.red >= 3) return '高风险集中在成本偏差与付款节点，建议今日优先闭环。';
+  if (riskBuckets.value.red >= 1) return '存在高风险项，建议先处理严重项再推进常规工作。';
+  return '当前未出现严重风险，建议保持日常巡检节奏。';
+});
+const riskActionItems = computed<RiskActionItem[]>(() => [
+  {
+    id: 'risk-cost',
+    title: '成本执行偏差超阈值',
+    description: '2 个项目成本执行率 > 85%，需立即核查偏差明细。',
+    sceneKey: 'projects.ledger',
+    path: '/my-work',
+    query: { section: 'todo', source: 'project.risk', search: '成本' },
+  },
+  {
+    id: 'risk-payment',
+    title: '付款节点风险积压',
+    description: '付款审批链路出现积压，影响合同履约与供应商稳定性。',
+    sceneKey: 'finance.payment_requests',
+    path: '/my-work',
+    query: { section: 'todo', search: '付款' },
+  },
+  {
+    id: 'risk-schedule',
+    title: '关键路径进度滞后',
+    description: '关键里程碑滞后超过预警阈值，需明确责任人与纠偏计划。',
+    sceneKey: 'projects.list',
+    path: '/my-work',
+    query: { section: 'todo', source: 'project.task', search: '逾期' },
+  },
+]);
 
 const riskSources = computed(() => {
   return [
@@ -938,28 +1076,45 @@ function todoActionLabel(title: string) {
 
 const systemAdvice = computed<AdviceItem[]>(() => {
   const advice: AdviceItem[] = [];
+  const pickEntry = (keywords: string[]) =>
+    entries.value.find((entry) => includesAny(entry.title, keywords) || includesAny(entry.key, keywords) || includesAny(entry.sceneKey, keywords));
   if (opsKpi.value.costRate >= 80) {
+    const target = pickEntry(['cost', '成本', 'ledger', '项目']);
     advice.push({
       id: 'cost-high',
       level: 'red',
       title: '发现成本执行率偏高',
       description: `当前成本执行率 ${opsKpi.value.costRate}% ，建议优先核查成本偏差来源。`,
+      actionLabel: target ? '进入成本处理' : '打开我的工作',
+      actionEntryId: target?.id,
+      actionPath: target ? undefined : '/my-work',
+      actionQuery: target ? undefined : { section: 'todo', search: '成本' },
     });
   }
   if (approvalCount.value >= 5) {
+    const target = pickEntry(['payment', '付款', '审批', 'finance']);
     advice.push({
       id: 'approval-pending',
       level: 'amber',
       title: '付款审批积压需关注',
       description: `待审批付款申请 ${approvalCount.value} 项，建议今日优先清理。`,
+      actionLabel: target ? '进入付款审批' : '打开我的工作',
+      actionEntryId: target?.id,
+      actionPath: target ? undefined : '/my-work',
+      actionQuery: target ? undefined : { section: 'todo', search: '付款' },
     });
   }
   if (riskBuckets.value.red >= 2) {
+    const target = pickEntry(['risk', '风险', 'warning']);
     advice.push({
       id: 'risk-red',
       level: 'red',
       title: '存在高风险事项未闭环',
       description: `当前严重风险 ${riskBuckets.value.red} 项，建议立即组织专项处理。`,
+      actionLabel: target ? '处理风险事项' : '打开我的工作',
+      actionEntryId: target?.id,
+      actionPath: target ? undefined : '/my-work',
+      actionQuery: target ? undefined : { section: 'todo', source: 'project.risk', search: '风险' },
     });
   }
   if (!advice.length) {
@@ -968,10 +1123,42 @@ const systemAdvice = computed<AdviceItem[]>(() => {
       level: 'green',
       title: '当前整体运行稳定',
       description: '建议持续关注审批时效与风险趋势，保持项目运行节奏。',
+      actionLabel: '查看今日待办',
+      actionPath: '/my-work',
+      actionQuery: { section: 'todo' },
     });
   }
   return advice.slice(0, 3);
 });
+
+function openAdvice(item: AdviceItem) {
+  if (item.actionEntryId) {
+    const entry = entries.value.find((candidate) => candidate.id === item.actionEntryId);
+    if (entry) {
+      void openScene(entry);
+      return;
+    }
+  }
+  const path = String(item.actionPath || '').trim();
+  if (!path) return;
+  router.push({ path, query: item.actionQuery || workspaceContextQuery.value }).catch(() => {});
+}
+
+function openDemoStory(story: DemoStory) {
+  router.push({ path: story.actionPath, query: story.actionQuery || {} }).catch(() => {});
+}
+
+function openRiskAction(item: RiskActionItem, action: 'detail' | 'assign' | 'close' | 'approve') {
+  void trackUsageEvent('workspace.risk_action_click', { item_id: item.id, action }).catch(() => {});
+  if (item.sceneKey) {
+    const entry = entries.value.find((candidate) => candidate.sceneKey === item.sceneKey && candidate.state === 'READY');
+    if (entry) {
+      void openScene(entry);
+      return;
+    }
+  }
+  router.push({ path: item.path || '/my-work', query: item.query || { section: 'todo' } }).catch(() => {});
+}
 
 function toggleMode() {
   mode.value = mode.value === 'demo' ? 'live' : 'demo';
@@ -1741,9 +1928,23 @@ function highlightParts(raw: string) {
   padding: 22px;
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.08);
+  position: relative;
   background:
     radial-gradient(120% 180% at 0% 0%, rgba(14, 116, 144, 0.14), rgba(255, 255, 255, 0) 55%),
     linear-gradient(135deg, rgba(21, 128, 61, 0.11), rgba(2, 132, 199, 0.16));
+}
+
+.demo-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background: #b91c1c;
+  color: #fff;
 }
 
 .hero h2 {
@@ -1790,6 +1991,13 @@ function highlightParts(raw: string) {
 
 .partial-data {
   color: #b45309;
+  font-weight: 600;
+}
+
+.demo-hint {
+  margin: 6px 0 0;
+  color: #7f1d1d;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -1966,6 +2174,13 @@ function highlightParts(raw: string) {
   font-size: 12px;
 }
 
+.risk-summary {
+  margin: 4px 0 0;
+  color: #7f1d1d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .risk-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1975,6 +2190,10 @@ function highlightParts(raw: string) {
 .risk-card {
   border-radius: 10px;
   padding: 10px;
+}
+
+.risk-card.glow {
+  box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.18);
 }
 
 .risk-card p {
@@ -2059,6 +2278,51 @@ function highlightParts(raw: string) {
   background: #f8fafc;
 }
 
+.risk-actions {
+  margin-top: 10px;
+}
+
+.risk-action-list {
+  display: grid;
+  gap: 8px;
+}
+
+.risk-action-item {
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff7f7;
+  padding: 10px;
+}
+
+.risk-action-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7f1d1d;
+}
+
+.risk-action-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #7c2d12;
+}
+
+.risk-action-buttons {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.risk-action-buttons button {
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #fff;
+  color: #991b1b;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
 .ops-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -2075,6 +2339,16 @@ function highlightParts(raw: string) {
 .advice-list {
   display: grid;
   gap: 8px;
+}
+
+.advice-btn {
+  margin-top: 8px;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 .advice-item {
@@ -2129,6 +2403,49 @@ function highlightParts(raw: string) {
   padding: 10px;
   display: grid;
   gap: 8px;
+}
+
+.story-section {
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  background: #fffbeb;
+  padding: 14px;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.story-card {
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+}
+
+.story-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.story-desc {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.story-btn {
+  margin-top: 8px;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #78350f;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 .ops-card p {

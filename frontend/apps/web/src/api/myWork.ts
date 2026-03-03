@@ -1,3 +1,4 @@
+import { ApiError, apiRequestRaw } from './client';
 import { intentRequest } from './intents';
 import type {
   ContractFailureMeta,
@@ -32,6 +33,16 @@ export type MyWorkRecordItem = {
   action_label?: string;
   action_key?: string;
   reason_code?: string;
+  priority?: 'high' | 'medium' | 'low' | string;
+  target?: {
+    kind?: 'record' | 'scene' | 'action' | string;
+    scene_key?: string;
+    model?: string;
+    record_id?: number;
+    action_id?: number;
+    menu_id?: number;
+    route?: string;
+  };
 };
 
 export type FailureMeta = ContractFailureMeta;
@@ -65,6 +76,7 @@ export type MyWorkSummaryResponse = {
     source_counts?: Array<{ key: string; count: number }>;
     reason_code_counts?: Array<{ key: string; count: number }>;
     section_counts?: Array<{ key: string; count: number }>;
+    priority_counts?: Array<{ key: string; count: number }>;
   };
   visibility?: {
     partial_data_hidden?: boolean;
@@ -91,21 +103,38 @@ export async function fetchMyWorkSummary(
     search?: string;
   },
 ) {
-  return intentRequest<MyWorkSummaryResponse>({
-    intent: 'my.work.summary',
-    params: {
-      limit,
-      limit_each: limitEach,
-      page: options?.page ?? 1,
-      page_size: options?.pageSize ?? limit,
-      sort_by: options?.sortBy ?? 'id',
-      sort_dir: options?.sortDir ?? 'desc',
-      section: options?.section ?? 'all',
-      source: options?.source ?? 'all',
-      reason_code: options?.reasonCode ?? 'all',
-      search: options?.search ?? '',
-    },
-  });
+  const params = {
+    limit,
+    limit_each: limitEach,
+    page: options?.page ?? 1,
+    page_size: options?.pageSize ?? limit,
+    sort_by: options?.sortBy ?? 'id',
+    sort_dir: options?.sortDir ?? 'desc',
+    section: options?.section ?? 'all',
+    source: options?.source ?? 'all',
+    reason_code: options?.reasonCode ?? 'all',
+    search: options?.search ?? '',
+  };
+  try {
+    const response = await apiRequestRaw<{ ok?: boolean; data?: MyWorkSummaryResponse; error?: { message?: string } }>('/api/my-work', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+    const payload = response.body || {};
+    if (payload.ok && payload.data) {
+      return payload.data;
+    }
+    const message = payload.error?.message || 'my-work api failed';
+    throw new ApiError(message, 500, response.traceId || undefined, { reasonCode: 'MY_WORK_API_FAILED' });
+  } catch (err) {
+    if (err instanceof ApiError && err.status !== 404) {
+      throw err;
+    }
+    return intentRequest<MyWorkSummaryResponse>({
+      intent: 'my.work.summary',
+      params,
+    });
+  }
 }
 
 export type MyWorkCompleteResult = {

@@ -1157,7 +1157,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
+.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
 
 fe.install:
 	@pnpm -C frontend install
@@ -1173,6 +1173,12 @@ verify.frontend.build: guard.prod.forbid
 
 verify.frontend.typecheck.strict: guard.prod.forbid
 	@pnpm -C frontend/apps/web typecheck:strict
+
+verify.frontend.lint.src: guard.prod.forbid
+	@pnpm -C frontend/apps/web lint:src
+
+verify.frontend.quick.gate: guard.prod.forbid verify.frontend.typecheck.strict verify.frontend.build
+	@echo "[OK] verify.frontend.quick.gate done"
 
 verify.frontend.suggested_action.contract_guard: guard.prod.forbid
 	@python3 scripts/verify/suggested_action_contract_guard.py

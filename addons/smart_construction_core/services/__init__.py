@@ -9,3 +9,4 @@ from . import capability_matrix_service
 from . import portal_dashboard_service
 from . import portal_execute_button_service
 from . import contract_governance_overrides
+from . import my_work_aggregate_service
