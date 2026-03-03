@@ -33,31 +33,28 @@ export function validateContractFormData(params: {
   const { contract, fieldLabels, values } = params;
   if (!contract) return [];
   const issues: ValidationIssue[] = [];
-
-  Object.entries(contract.fields || {}).forEach(([name, descriptor]) => {
-    if (!descriptor?.required) return;
-    if (isEmpty(values[name])) {
+  const renderProfile = String(contract.render_profile || '').trim().toLowerCase();
+  const validationRules = Array.isArray(contract.validation_rules)
+    ? (contract.validation_rules as Array<Record<string, unknown>>)
+    : [];
+  const requiredRules = validationRules.filter((rule) => String(rule?.code || '').trim().toUpperCase() === 'REQUIRED');
+  requiredRules.forEach((rule) => {
+    const field = String(rule.field || '').trim();
+    if (!field) return;
+    const whenProfiles = Array.isArray(rule.when_profiles)
+      ? rule.when_profiles.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean)
+      : [];
+    if (whenProfiles.length && renderProfile && !whenProfiles.includes(renderProfile)) return;
+    if (isEmpty(values[field])) {
       issues.push({
         code: 'REQUIRED',
-        message: `必填项未填写: ${fieldLabels[name] || name}`,
+        message: `必填项未填写: ${fieldLabels[field] || field}`,
       });
     }
   });
 
   const validator = contract.validator as Record<string, unknown> | undefined;
   const recordRules = validator?.record_rules as Record<string, unknown> | undefined;
-  const uniqueRules = Array.isArray(recordRules?.unique) ? (recordRules?.unique as Array<Record<string, unknown>>) : [];
-  uniqueRules.forEach((rule) => {
-    const fields = Array.isArray(rule.fields) ? (rule.fields as string[]) : [];
-    if (!fields.length) return;
-    const missing = fields.find((field) => isEmpty(values[field.toLowerCase()]) && isEmpty(values[field]));
-    if (!missing) return;
-    issues.push({
-      code: String(rule.name || 'UNIQUE_PRECHECK'),
-      message: String(rule.message || `${fields.join(',')} 需要填写后才能校验唯一性`),
-    });
-  });
-
   const sqlChecks = Array.isArray(recordRules?.sql_checks) ? (recordRules?.sql_checks as Array<Record<string, unknown>>) : [];
   sqlChecks.forEach((check) => {
     const definition = String(check.definition || '').toLowerCase();
@@ -75,4 +72,3 @@ export function validateContractFormData(params: {
 
   return issues;
 }
-

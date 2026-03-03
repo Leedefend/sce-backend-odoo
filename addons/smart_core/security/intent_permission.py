@@ -60,7 +60,9 @@ def check_intent_permission(ctx):
 
     # ✅ 校验动作权限（如果传入 action_id）
     if action_id:
-        action = env["ir.actions.act_window"].browse(int(action_id))
+        # 动作元数据读取使用 sudo，避免被 ir.actions.* 模型 ACL 拦截。
+        # 最终授权仍基于当前用户组与动作 groups_id 交集判断。
+        action = env["ir.actions.act_window"].sudo().browse(int(action_id))
         if not action.exists():
             raise MissingError(f"动作 {action_id} 不存在")
         # 集合交集判断

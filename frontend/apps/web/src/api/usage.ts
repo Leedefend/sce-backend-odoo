@@ -13,10 +13,18 @@ export async function trackUsageEvent(eventType: string, extra: Record<string, u
   if (!PRODUCT_USAGE_EVENT_TYPES.has(eventType)) {
     return;
   }
-  await intentRequest<{ tracked?: string[] }>({
-    intent: 'usage.track',
-    params: { event_type: eventType, ...extra },
-  });
+  try {
+    await intentRequest<{ tracked?: string[] }>({
+      intent: 'usage.track',
+      params: { event_type: eventType, ...extra },
+    });
+  } catch (err) {
+    // Usage analytics is non-critical in delivery mode; ignore to keep UX stable.
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn('[usage.track] ignored:', err);
+    }
+  }
 }
 
 export async function trackSceneOpen(sceneKey: string) {

@@ -152,6 +152,10 @@ class PageAssembler:
             data["search"] = {}
             versions["search"] = 0
 
+        # 4.x) 关系字段维护入口（many2one/many2many/one2many）
+        # 由后端契约提供 relation_entry，前端禁止自行猜测 action/menu。
+        self._inject_relation_entry_contract(data)
+
         # 5) 权限契约（★ 关键改造点）
         #    - 用 su_env 生成完整权限聚合
         #    - 返回时开启 filter_runtime=True，按“当前用户组”裁剪出 effective.rights/rules
@@ -240,6 +244,99 @@ class PageAssembler:
             data["missing_models"] = missing_models
             data["warnings"] = warnings
         return data, versions
+
+    def _inject_relation_entry_contract(self, data):
+        fields = data.get("fields") if isinstance(data, dict) else None
+        if not isinstance(fields, dict) or not fields:
+            return
+        relation_models = set()
+        for desc in fields.values():
+            if not isinstance(desc, dict):
+                continue
+            ftype = str(desc.get("type") or "").strip().lower()
+            relation = str(desc.get("relation") or "").strip()
+            if ftype in {"many2one", "many2many", "one2many"} and relation:
+                relation_models.add(relation)
+        if not relation_models:
+            return
+        relation_entry_map = self._build_relation_entry_map(relation_models)
+        for desc in fields.values():
+            if not isinstance(desc, dict):
+                continue
+            relation = str(desc.get("relation") or "").strip()
+            if relation and relation in relation_entry_map:
+                desc["relation_entry"] = dict(relation_entry_map[relation])
+
+    def _build_relation_entry_map(self, relation_models):
+        relation_models = sorted(str(m).strip() for m in (relation_models or []) if str(m).strip())
+        if not relation_models:
+            return {}
+        user_group_ids = set(self.env.user.groups_id.ids)
+
+        def _allowed_by_groups(record):
+            group_ids = set(record.groups_id.ids)
+            return not group_ids or bool(group_ids & user_group_ids)
+
+        def _safe_can_create(model_name):
+            try:
+                return bool(self.env[model_name].check_access_rights("create", raise_exception=False))
+            except Exception:
+                return False
+
+        entry_map = {}
+        Act = self.su_env["ir.actions.act_window"]
+        actions = Act.search([("res_model", "in", relation_models)], order="id desc")
+        action_by_model = {}
+        for act in actions:
+            if not _allowed_by_groups(act):
+                continue
+            model_name = str(act.res_model or "").strip()
+            if not model_name or model_name in action_by_model:
+                continue
+            action_by_model[model_name] = act
+
+        action_ids = [act.id for act in action_by_model.values()]
+        menu_by_action = {}
+        if action_ids:
+            action_refs = [f"ir.actions.act_window,{aid}" for aid in action_ids]
+            menus = self.su_env["ir.ui.menu"].search([("action", "in", action_refs)], order="sequence,id")
+            for menu in menus:
+                if not _allowed_by_groups(menu):
+                    continue
+                action_ref = str(menu.action or "").strip()
+                if not action_ref.startswith("ir.actions.act_window,"):
+                    continue
+                try:
+                    aid = int(action_ref.split(",")[1])
+                except Exception:
+                    continue
+                if aid not in menu_by_action:
+                    menu_by_action[aid] = menu.id
+
+        for relation in relation_models:
+            act = action_by_model.get(relation)
+            if act:
+                entry_map[relation] = {
+                    "model": relation,
+                    "action_id": int(act.id),
+                    "menu_id": int(menu_by_action.get(act.id) or 0) or None,
+                    "view_type": "form",
+                    "view_mode": str(act.view_mode or "form"),
+                    "can_create": _safe_can_create(relation),
+                    "source": "backend_contract",
+                }
+                continue
+            entry_map[relation] = {
+                "model": relation,
+                "action_id": None,
+                "menu_id": None,
+                "view_type": "form",
+                "view_mode": "form",
+                "can_create": _safe_can_create(relation),
+                "source": "backend_contract",
+                "reason_code": "NO_VISIBLE_ACTION",
+            }
+        return entry_map
 
     # ---------------- 首屏数据 ----------------
 

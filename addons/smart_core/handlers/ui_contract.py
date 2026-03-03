@@ -227,12 +227,13 @@ class UiContractHandler(BaseIntentHandler):
         except Exception:
             return self._err(400, "缺少或非法的 menu_id")
 
-        Menu = self.env["ir.ui.menu"].with_context(ctx)
+        # 菜单/动作元数据读取使用 sudo，避免 ir.actions.* ACL 对普通交付角色造成误拦截。
+        Menu = self.env["ir.ui.menu"].sudo().with_context(ctx)
         menu = Menu.browse(menu_id)
         if not menu.exists():
             return self._err(404, f"未知菜单: {menu_id}")
 
-        action = menu.action and self.env[menu.action._name].browse(menu.action.id) or None
+        action = menu.action and self.env[menu.action._name].sudo().browse(menu.action.id) or None
         if not action or action._name != "ir.actions.act_window":
             data = {"subject":"menu","menu_id":menu_id,"action":None,"entry":None}
             return data, {"schema_version":"menu-entry-1"}

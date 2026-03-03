@@ -18,8 +18,7 @@
           :title="blockedTitle(node)"
           @click="onSelect(node)"
         >
-          {{ node.title || node.name || node.label || 'Unnamed' }}
-          <span v-if="node.children?.length" class="child-count">({{ node.children.length }})</span>
+          {{ nodeLabel(node) }}
         </button>
       </div>
       <transition name="expand">
@@ -40,6 +39,7 @@ import { computed, ref, onMounted, watchEffect } from 'vue';
 import type { NavNode } from '@sc/schema';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useSessionStore } from '../stores/session';
+import { isDeliveryModeEnabled } from '../config/debug';
 
 const props = defineProps<{ nodes: NavNode[]; activeMenuId?: number; capabilities?: string[] }>();
 const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
@@ -47,6 +47,7 @@ const emit = defineEmits<{ (e: 'select', node: NavNode): void }>();
 const session = useSessionStore();
 const expanded = computed(() => new Set(session.menuExpandedKeys));
 const activeParents = ref<Set<string>>(new Set());
+const isDeliveryMode = isDeliveryModeEnabled();
 
 const sorted = computed(() => {
   return [...props.nodes].sort((a, b) => {
@@ -62,6 +63,21 @@ function toggle(key: string) {
 
 function nodeKey(node: NavNode) {
   return (node as NavNode & { xmlid?: string }).xmlid || node.key || `menu_${node.menu_id || node.id}`;
+}
+
+function nodeLabel(node: NavNode) {
+  const raw = String(node.title || node.name || node.label || 'Unnamed');
+  return raw
+    .replace(/\s*\(\d+\)\s*$/g, '')
+    .replace(/^project\s*manager$/i, '项目经理')
+    .replace(/^purchase\s*manager$/i, '采购经理')
+    .replace(/^fixture\s*pm$/i, '项目经理')
+    .replace(/^finance$/i, '财务主管')
+    .replace(/^executive$/i, '管理层')
+    .replace(/^ops$/i, '运维专员')
+    .replace(/^admin$/i, '系统管理员')
+    .replace(/^workbench$/i, '工作台')
+    .replace(/^dashboard$/i, '看板');
 }
 
 function onSelect(node: NavNode) {
@@ -174,12 +190,6 @@ onMounted(() => {
   background: transparent;
   cursor: pointer;
   color: #64748b;
-}
-
-.child-count {
-  font-size: 12px;
-  color: #64748b;
-  margin-left: 4px;
 }
 
 .label {

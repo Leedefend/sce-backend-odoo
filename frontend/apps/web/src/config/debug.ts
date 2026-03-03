@@ -29,7 +29,19 @@ function extractHudFromSceneQuery(sceneQuery: unknown) {
   return String(nestedParams.get('hud') || '').trim();
 }
 
+export function isDeliveryModeEnabled() {
+  const deliveryFlag = String(import.meta.env.VITE_DELIVERY_MODE || '').trim().toLowerCase();
+  const appEnv = String(import.meta.env.VITE_APP_ENV || '').trim().toLowerCase();
+  const dbName = String(import.meta.env.VITE_ODOO_DB || '').trim().toLowerCase();
+  return (
+    isTruthyHudValue(deliveryFlag) ||
+    appEnv === 'delivery' ||
+    dbName.includes('delivery')
+  );
+}
+
 export function isHudEnabled(route: RouteLocationNormalizedLoaded) {
+  if (isDeliveryModeEnabled()) return false;
   const directHud = firstQueryValue(route.query.hud);
   const nestedHud = extractHudFromSceneQuery(route.query.scene);
   const rawHud =
