@@ -81,14 +81,13 @@ export async function intentRequest<T>(payload: IntentPayload) {
       writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
     });
 
-    // eslint-disable-next-line no-console
-    console.info(`[trace] intent=${payload.intent} status=ok trace=${resolvedTrace}`);
-
     const parsed = parseIntentEnvelope<T>(response.body);
     const envelopeTrace = resolveEnvelopeTraceId(parsed.meta, resolvedTrace);
     if (!parsed.ok) {
       throwEnvelopeError(payload, envelopeTrace, parsed.error);
     }
+    // eslint-disable-next-line no-console
+    console.info(`[trace] intent=${payload.intent} status=ok trace=${envelopeTrace}`);
     return parsed.data;
   } catch (err) {
     const errorTrace = err instanceof ApiError ? err.traceId || traceId : traceId;

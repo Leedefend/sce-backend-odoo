@@ -3,8 +3,8 @@
     <header class="header">
       <div>
         <h1>{{ pageTitle }}</h1>
-        <p class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
-        <p v-if="contractMetaLine" class="meta">{{ contractMetaLine }}</p>
+        <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
+        <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
       </div>
       <div class="actions">
         <button
@@ -18,31 +18,32 @@
           {{ action.label }}
         </button>
         <button
-          :class="hasPrimaryHeaderAction ? 'ghost' : 'primary'"
+          v-if="!hasPrimaryHeaderAction"
+          class="primary"
           :disabled="busy || !canSave || (Boolean(recordId) && !hasChanges)"
           @click="saveRecord"
         >
-          {{ busy && busyKind === 'save' ? 'Saving...' : 'Save' }}
+          {{ busy && busyKind === 'save' ? '保存中...' : '保存' }}
         </button>
-        <button v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="copyContractJson">Copy Contract</button>
-        <button v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="exportContractJson">Export Contract</button>
-        <button v-if="showDebugActions" class="ghost" :disabled="busy" @click="reload">Reload</button>
+        <button v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
+        <button v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
+        <button v-if="showDebugActions" class="ghost" :disabled="busy" @click="reload">重新加载</button>
       </div>
     </header>
 
-    <StatusPanel v-if="status === 'loading'" title="Loading contract form..." variant="info" />
-    <StatusPanel v-else-if="status === 'error'" title="Contract form failed" :message="errorMessage" variant="error" :on-retry="reload" />
+    <StatusPanel v-if="status === 'loading'" title="正在加载页面..." variant="info" />
+    <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
 
     <section v-else class="card">
       <section v-if="warnings.length" class="block warn">
-        <h3>Warnings</h3>
+        <h3>提示信息</h3>
         <ul>
           <li v-for="item in warnings" :key="item">{{ item }}</li>
         </ul>
       </section>
 
       <section v-if="workflowTransitions.length" class="block">
-        <h3>Workflow</h3>
+        <h3>流程操作</h3>
         <div class="chips">
           <button
             v-for="item in workflowTransitions"
@@ -58,7 +59,7 @@
       </section>
 
       <section v-if="showSearchFilters && searchFilters.length" class="block">
-        <h3>Search Filters</h3>
+        <h3>快捷筛选</h3>
         <div class="chips">
           <button
             v-for="item in searchFilters"
@@ -79,42 +80,83 @@
         </p>
         <div v-if="coreFieldsLabel" class="layout-divider">{{ coreFieldsLabel }}</div>
         <template v-for="node in layoutNodes" :key="node.key">
-          <div v-if="node.kind === 'header'" class="layout-divider">Header</div>
-          <div v-else-if="node.kind === 'sheet'" class="layout-divider">Sheet</div>
+          <div v-if="showHud && node.kind === 'header'" class="layout-divider">头部</div>
+          <div v-else-if="showHud && node.kind === 'sheet'" class="layout-divider">主体</div>
           <div v-else-if="node.kind === 'field' && isFieldVisible(node.name)" class="field">
-            <label class="label">{{ node.label }}<span v-if="node.required" class="required">*</span></label>
+            <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
             <template v-if="node.readonly">
               <FieldValue :value="formData[node.name]" :field="node.descriptor" />
             </template>
             <template v-else>
               <input
-                v-if="node.descriptor?.ttype === 'boolean'"
+                v-if="fieldType(node.descriptor) === 'boolean'"
                 :checked="Boolean(formData[node.name])"
                 class="input-checkbox"
                 type="checkbox"
                 @change="setBooleanField(node.name, ($event.target as HTMLInputElement).checked)"
               />
               <select
-                v-else-if="node.descriptor?.ttype === 'selection'"
-                v-model="formData[node.name]"
+                v-else-if="fieldType(node.descriptor) === 'selection'"
+                :value="String(formData[node.name] ?? '')"
                 class="input"
+                @change="setSelectionField(node.name, ($event.target as HTMLSelectElement).value)"
               >
+                <option v-if="!node.required" value="">请选择</option>
                 <option v-for="option in node.descriptor?.selection || []" :key="option[0]" :value="option[0]">
                   {{ option[1] }}
                 </option>
               </select>
-              <input
-                v-else-if="node.descriptor?.ttype === 'many2one'"
-                :value="displayMany2oneValue(node.name)"
-                class="input"
-                type="text"
-                @input="setMany2oneField(node.name, ($event.target as HTMLInputElement).value)"
-              />
+              <div v-else-if="fieldType(node.descriptor) === 'many2one'" class="relation-editor">
+                <select
+                  class="input"
+                  :value="many2oneValue(node.name)"
+                  @change="setMany2oneField(node.name, node.descriptor, ($event.target as HTMLSelectElement).value)"
+                >
+                  <option value="">请选择</option>
+                  <option
+                    v-for="option in relationOptionsForField(node.name, node.descriptor)"
+                    :key="`${node.name}-${option.id}`"
+                    :value="String(option.id)"
+                  >
+                    {{ option.label }}
+                  </option>
+                  <option v-if="canOpenRelationCreate(node.name, node.descriptor)" :value="MANY2ONE_CREATE_OPTION">
+                    + 新建并维护...
+                  </option>
+                </select>
+              </div>
+              <div
+                v-else-if="fieldType(node.descriptor) === 'many2many' || fieldType(node.descriptor) === 'one2many'"
+                class="relation-editor"
+              >
+                <input
+                  class="input relation-search"
+                  type="text"
+                  :value="relationKeyword(node.name)"
+                  placeholder="搜索并多选..."
+                  @input="setRelationKeyword(node.name, ($event.target as HTMLInputElement).value)"
+                />
+                <select
+                  class="input"
+                  multiple
+                  size="6"
+                  :value="relationIds(node.name).map((id) => String(id))"
+                  @change="setRelationMultiField(node.name, $event.target as HTMLSelectElement)"
+                >
+                  <option
+                    v-for="option in filteredRelationOptions(node.name, node.descriptor)"
+                    :key="`${node.name}-${option.id}`"
+                    :value="String(option.id)"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+              </div>
               <input
                 v-else
                 v-model="formData[node.name]"
                 class="input"
-                :type="fieldInputType(node.descriptor?.ttype)"
+                :type="fieldInputType(fieldType(node.descriptor))"
               />
             </template>
           </div>
@@ -127,7 +169,7 @@
       </section>
 
       <section v-if="bodyActions.length" class="block">
-        <h3>Actions</h3>
+        <h3>可执行操作</h3>
         <div class="chips">
           <button
             v-for="action in bodyActions"
@@ -137,7 +179,7 @@
             :title="action.hint"
             @click="runAction(action)"
           >
-            {{ action.label }} · {{ action.kind }}
+            {{ action.label }}<template v-if="showHud"> · {{ action.kind }}</template>
           </button>
         </div>
       </section>
@@ -145,7 +187,7 @@
 
     <DevContextPanel
       :visible="showHud"
-      title="Contract Form HUD"
+      title="表单上下文"
       :entries="hudEntries"
     />
   </main>
@@ -159,7 +201,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { loadActionContractRaw } from '../api/contract';
-import { createRecord, readRecord, writeRecord } from '../api/data';
+import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
@@ -173,9 +215,11 @@ import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
+import { findActionNodeByModel } from '../app/menu';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
+const MANY2ONE_CREATE_OPTION = '__create__';
 
 type ContractAction = {
   key: string;
@@ -205,6 +249,11 @@ type LayoutNode = {
   descriptor?: FieldDescriptor;
 };
 
+type RelationOption = {
+  id: number;
+  label: string;
+};
+
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
@@ -219,6 +268,9 @@ const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const formData = reactive<Record<string, unknown>>({});
 const advancedExpanded = ref(false);
+const relationOptions = ref<Record<string, RelationOption[]>>({});
+const relationKeywords = reactive<Record<string, string>>({});
+const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
@@ -284,7 +336,7 @@ const changedFieldCount = computed(() =>
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
   if (title) return title;
-  return `Contract Form · ${model.value || '-'}`;
+  return model.value ? `业务表单 · ${model.value}` : '业务表单';
 });
 
 const contractMetaLine = computed(() => {
@@ -296,7 +348,7 @@ const contractMetaLine = computed(() => {
   return `mode=${mode} · view_type=${viewType} · profile=${renderProfile.value} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
 });
 
-const showDebugActions = computed(() => renderProfile.value !== 'create');
+const showDebugActions = computed(() => showHud.value && renderProfile.value !== 'create');
 const runtimeUserGroups = computed(() => {
   const out = new Set<string>();
   (session.user?.groups_xmlids || []).forEach((group) => {
@@ -347,7 +399,14 @@ const warnings = computed(() => {
 const workflowTransitions = computed(() => {
   const rows = contract.value?.workflow?.transitions;
   if (!Array.isArray(rows)) return [];
-  return rows.map((row, idx) => {
+  // Create profile only keeps primary create action in header; hide workflow transitions to avoid duplicated semantics.
+  if (renderProfile.value === 'create') return [];
+  const headerActionKeys = new Set(
+    contractActions.value
+      .filter((item) => item.level === 'header' || item.level === 'toolbar')
+      .map((item) => item.key),
+  );
+  const transitions = rows.map((row, idx) => {
     const triggerLabel = String(row.trigger?.label || '').trim();
     const triggerName = String(row.trigger?.name || '').trim();
     const triggerKind = String(row.trigger?.kind || '').trim().toLowerCase();
@@ -363,6 +422,14 @@ const workflowTransitions = computed(() => {
       notes: String(row.notes || ''),
       action,
     };
+  });
+  if (showHud.value) return transitions;
+  return transitions.filter((item) => {
+    const label = String(item.label || '').trim();
+    if (!item.action) return false;
+    if (item.action?.key && headerActionKeys.has(item.action.key)) return false;
+    if (/^\d+$/.test(label)) return false;
+    return true;
   });
 });
 
@@ -384,6 +451,286 @@ const showSearchFilters = computed(() => {
   if (renderProfile.value !== 'create') return true;
   return !Boolean(contract.value.hide_filters_on_create);
 });
+
+function fieldType(descriptor?: FieldDescriptor | null) {
+  return String(descriptor?.ttype || descriptor?.type || '').trim().toLowerCase();
+}
+
+function toDateInputValue(value: unknown) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (raw.length >= 10) return raw.slice(0, 10);
+  return raw;
+}
+
+function toDatetimeInputValue(value: unknown) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const normalized = raw.replace(' ', 'T');
+  return normalized.length >= 16 ? normalized.slice(0, 16) : normalized;
+}
+
+function fromDatetimeInputValue(value: unknown) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return false;
+  const normalized = raw.replace('T', ' ');
+  return normalized.length === 16 ? `${normalized}:00` : normalized;
+}
+
+function normalizeRelationIds(value: unknown): number[] {
+  if (value === null || value === undefined || value === false) return [];
+  const out = new Set<number>();
+  const push = (raw: unknown) => {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed > 0) out.add(Math.trunc(parsed));
+  };
+  if (typeof value === 'string') {
+    const raw = value.trim();
+    if (!raw) return [];
+    push(raw);
+    return Array.from(out);
+  }
+  if (typeof value === 'number') {
+    push(value);
+    return Array.from(out);
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => {
+      if (typeof item === 'number') {
+        push(item);
+        return;
+      }
+      if (!Array.isArray(item)) return;
+      if (item.length === 2 && typeof item[0] === 'number' && typeof item[1] === 'string') {
+        push(item[0]);
+        return;
+      }
+      if (item[0] === 6 && Array.isArray(item[2])) {
+        (item[2] as unknown[]).forEach((id) => push(id));
+        return;
+      }
+      if (item[0] === 4 && typeof item[1] === 'number') {
+        push(item[1]);
+      }
+    });
+  }
+  return Array.from(out);
+}
+
+function relationIds(name: string): number[] {
+  return normalizeRelationIds(formData[name]);
+}
+
+function many2oneValue(name: string) {
+  const ids = relationIds(name);
+  return ids.length ? String(ids[0]) : '';
+}
+
+function relationOptionsForField(name: string, descriptor?: FieldDescriptor) {
+  const rows = relationOptions.value[name];
+  if (Array.isArray(rows) && rows.length) return rows;
+  const ids = relationIds(name);
+  if (!ids.length) return [];
+  return ids.map((id) => ({ id, label: `#${id}` }));
+}
+
+function relationKeyword(name: string) {
+  return String(relationKeywords[name] || '');
+}
+
+function setRelationKeyword(name: string, keyword: string) {
+  relationKeywords[name] = keyword;
+  if (relationQueryTimers[name]) {
+    clearTimeout(relationQueryTimers[name]);
+  }
+  relationQueryTimers[name] = setTimeout(() => {
+    void queryRelationOptions(name, relationKeywords[name] || '');
+  }, 260);
+}
+
+function filteredRelationOptions(name: string, descriptor?: FieldDescriptor) {
+  const rows = relationOptionsForField(name, descriptor);
+  const kw = relationKeyword(name).trim().toLowerCase();
+  if (!kw) return rows;
+  return rows.filter((row) => row.label.toLowerCase().includes(kw) || String(row.id).includes(kw));
+}
+
+function relationModel(name: string) {
+  const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
+  return String(descriptor?.relation || '').trim();
+}
+
+function relationEntry(descriptor?: FieldDescriptor) {
+  const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+  const row = entry as Record<string, unknown>;
+  const actionId = toPositiveInt(row.action_id);
+  const menuId = toPositiveInt(row.menu_id);
+  return {
+    model: String(row.model || '').trim(),
+    actionId,
+    menuId,
+    canCreate: Boolean(row.can_create),
+  };
+}
+
+function inferDictionaryType(fieldName: string) {
+  const key = String(fieldName || '').trim().toLowerCase();
+  if (key === 'project_type_id') return 'project_type';
+  if (key === 'project_category_id') return 'project_category';
+  return '';
+}
+
+function canQuickCreateRelation(fieldName: string, descriptor?: FieldDescriptor) {
+  const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
+  if (relation !== 'sc.dictionary') return false;
+  return Boolean(inferDictionaryType(fieldName));
+}
+
+function canOpenRelationCreate(fieldName: string, descriptor?: FieldDescriptor) {
+  const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
+  if (!relation) return false;
+  const entry = relationEntry(descriptor);
+  if (entry?.actionId) return true;
+  if (canQuickCreateRelation(fieldName, descriptor)) return true;
+  return Boolean(findActionNodeByModel(session.menuTree, relation)?.meta?.action_id);
+}
+
+async function queryRelationOptions(name: string, keyword: string) {
+  const relation = relationModel(name);
+  if (!relation) return;
+  const search = String(keyword || '').trim();
+  const dictType = inferDictionaryType(name);
+  const domain = relation === 'sc.dictionary' && dictType
+    ? [['type', '=', dictType]]
+    : undefined;
+  try {
+    const listed = await listRecords({
+      model: relation,
+      fields: ['id', 'name', 'display_name'],
+      limit: search ? 40 : 80,
+      order: 'id desc',
+      domain,
+      search_term: search || undefined,
+    });
+    const records = Array.isArray(listed?.records) ? listed.records : [];
+    const mapped = records
+      .map((row) => {
+        const id = Number((row as Record<string, unknown>).id);
+        if (!Number.isFinite(id) || id <= 0) return null;
+        const label = String(
+          (row as Record<string, unknown>).display_name
+          || (row as Record<string, unknown>).name
+          || `#${id}`,
+        ).trim();
+        return { id: Math.trunc(id), label };
+      })
+      .filter((item): item is RelationOption => Boolean(item));
+    relationOptions.value = {
+      ...relationOptions.value,
+      [name]: mapped,
+    };
+  } catch {
+    // keep existing options if remote query fails
+  }
+}
+
+async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescriptor) {
+  const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
+  if (!relation) return;
+  const entry = relationEntry(descriptor);
+  const actionNode = !entry?.actionId ? findActionNodeByModel(session.menuTree, relation) : null;
+  const relationActionId = entry?.actionId || toPositiveInt(actionNode?.meta?.action_id);
+  const menuId = entry?.menuId || toPositiveInt(actionNode?.menu_id);
+  if (!relationActionId) {
+    if (canQuickCreateRelation(fieldName, descriptor)) {
+      const dictType = inferDictionaryType(fieldName);
+      const label = String(window.prompt('未配置维护入口，请输入新选项名称') || '').trim();
+      if (!label) return;
+      try {
+        const vals: Record<string, unknown> = { name: label };
+        if (relation === 'sc.dictionary' && dictType) {
+          vals.type = dictType;
+          vals.code = label.toUpperCase().replace(/\\s+/g, '_').slice(0, 60);
+        }
+        const created = await createRecord({ model: relation, vals });
+        const id = Number(created?.id || 0);
+        if (Number.isFinite(id) && id > 0) {
+          formData[fieldName] = Math.trunc(id);
+          relationKeywords[fieldName] = label;
+          await queryRelationOptions(fieldName, label);
+        }
+        return;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : '新建选项失败';
+        validationErrors.value = [message];
+        return;
+      }
+    }
+    validationErrors.value = [`未找到 ${relation} 的表单入口，请联系管理员配置菜单动作`];
+    return;
+  }
+  const nextQuery = pickContractNavQuery(route.query as Record<string, unknown>, {
+    action_id: relationActionId,
+    menu_id: menuId || undefined,
+    view_mode: 'form',
+  });
+  const returnUrl = `${window.location.pathname}${window.location.search}`;
+  await router.push({
+    name: 'model-form',
+    params: { model: relation, id: 'new' },
+    query: {
+      ...nextQuery,
+      return_url: returnUrl,
+      return_field: fieldName,
+      return_model: model.value,
+      return_action_id: actionId.value || undefined,
+      return_menu_id: Number(route.query.menu_id || 0) || undefined,
+    },
+  });
+}
+
+async function loadRelationOptions() {
+  const fields = contract.value?.fields || {};
+  const entries = Object.entries(fields);
+  const next: Record<string, RelationOption[]> = {};
+  await Promise.all(entries.map(async ([name, descriptor]) => {
+    if (!descriptor || typeof descriptor !== 'object') return;
+    const type = fieldType(descriptor);
+    if (!['many2one', 'many2many', 'one2many'].includes(type)) return;
+    const relation = String((descriptor as Record<string, unknown>).relation || '').trim();
+    if (!relation) return;
+    const dictType = inferDictionaryType(name);
+    const domain = relation === 'sc.dictionary' && dictType
+      ? [['type', '=', dictType]]
+      : undefined;
+    try {
+      const listed = await listRecords({
+        model: relation,
+        fields: ['id', 'name', 'display_name'],
+        limit: 80,
+        order: 'id desc',
+        domain,
+      });
+      const records = Array.isArray(listed?.records) ? listed.records : [];
+      next[name] = records
+        .map((row) => {
+          const id = Number((row as Record<string, unknown>).id);
+          if (!Number.isFinite(id) || id <= 0) return null;
+          const label = String(
+            (row as Record<string, unknown>).display_name
+            || (row as Record<string, unknown>).name
+            || `#${id}`,
+          ).trim();
+          return { id: Math.trunc(id), label };
+        })
+        .filter((item): item is RelationOption => Boolean(item));
+    } catch {
+      next[name] = [];
+    }
+  }));
+  relationOptions.value = next;
+}
 
 function hasGroupAccess(groupsXmlids?: string[]) {
   if (!Array.isArray(groupsXmlids) || !groupsXmlids.length) return true;
@@ -493,6 +840,39 @@ const coreFieldNames = computed<string[]>(() => semanticFieldGroups.value.core?.
 const advancedFieldNames = computed<string[]>(() => semanticFieldGroups.value.advanced?.fields || []);
 const coreFieldsLabel = computed(() => semanticFieldGroups.value.core?.label || '');
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
+const policyRequiredFields = computed(() => {
+  const out = new Set<string>();
+  const map = (contract.value?.action_policies || {}) as Record<string, { semantic?: string; enabled_when?: { required_fields?: string[] } }>;
+  Object.values(map).forEach((policy) => {
+    const semantic = String(policy?.semantic || '').trim().toLowerCase();
+    if (semantic !== 'primary_action') return;
+    const requiredFields = Array.isArray(policy?.enabled_when?.required_fields)
+      ? policy.enabled_when?.required_fields
+      : [];
+    requiredFields.forEach((field) => {
+      const normalized = String(field || '').trim();
+      if (normalized) out.add(normalized);
+    });
+  });
+  return out;
+});
+const validationRequiredFields = computed(() => {
+  const out = new Set<string>();
+  const rules = Array.isArray(contract.value?.validation_rules) ? contract.value.validation_rules : [];
+  rules.forEach((rule) => {
+    if (!rule || typeof rule !== 'object') return;
+    const item = rule as Record<string, unknown>;
+    if (String(item.code || '').trim().toUpperCase() !== 'REQUIRED') return;
+    const field = String(item.field || '').trim();
+    if (!field) return;
+    const profiles = Array.isArray(item.when_profiles)
+      ? item.when_profiles.map((p) => String(p || '').trim().toLowerCase())
+      : [];
+    if (profiles.length && !profiles.includes(renderProfile.value)) return;
+    out.add(field);
+  });
+  return out;
+});
 const contractVisibleFields = computed<string[]>(() => {
   const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
   return rows.map((name) => String(name || '').trim()).filter(Boolean);
@@ -507,6 +887,19 @@ function isFieldVisible(name: string) {
   if (core.includes(name)) return true;
   if (advanced.includes(name)) return advancedExpanded.value;
   return renderProfile.value !== 'create';
+}
+
+function shouldShowRequiredMark(node: LayoutNode) {
+  if (node.kind !== 'field' || node.readonly) return false;
+  if (!node.required) return false;
+  if (showHud.value) return true;
+  if (renderProfile.value !== 'create') return true;
+  const policyRequired = policyRequiredFields.value;
+  const validationRequired = validationRequiredFields.value;
+  if (policyRequired.size || validationRequired.size) {
+    return policyRequired.has(node.name) || validationRequired.has(node.name);
+  }
+  return coreFieldNames.value.includes(node.name);
 }
 
 const layoutNodes = computed<LayoutNode[]>(() => {
@@ -600,7 +993,7 @@ function parseNumeric(text: unknown) {
 
 function normalizeFieldValue(name: string, value: unknown) {
   const descriptor = contract.value?.fields?.[name];
-  const ttype = String(descriptor?.ttype || descriptor?.type || '').toLowerCase();
+  const ttype = fieldType(descriptor);
   if (ttype === 'boolean') {
     return Boolean(value);
   }
@@ -618,7 +1011,22 @@ function normalizeFieldValue(name: string, value: unknown) {
     const parsed = parseNumeric(value);
     return parsed === null ? false : Math.trunc(parsed);
   }
-  if (ttype === 'date' || ttype === 'datetime' || ttype === 'char' || ttype === 'text' || ttype === 'html') {
+  if (ttype === 'many2many') {
+    const ids = normalizeRelationIds(value);
+    return [[6, 0, ids]];
+  }
+  if (ttype === 'one2many') {
+    const ids = normalizeRelationIds(value);
+    return [[6, 0, ids]];
+  }
+  if (ttype === 'date') {
+    const normalized = toDateInputValue(value);
+    return normalized || false;
+  }
+  if (ttype === 'datetime') {
+    return fromDatetimeInputValue(value);
+  }
+  if (ttype === 'char' || ttype === 'text' || ttype === 'html') {
     return String(value ?? '');
   }
   return value;
@@ -628,17 +1036,35 @@ function setBooleanField(name: string, checked: boolean) {
   formData[name] = checked;
 }
 
-function setMany2oneField(name: string, text: string) {
-  const parsed = parseNumeric(text);
-  formData[name] = parsed === null ? false : Math.trunc(parsed);
+function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined, value: string) {
+  const normalized = String(value || '').trim();
+  if (!normalized) {
+    formData[name] = false;
+    return;
+  }
+  if (normalized === MANY2ONE_CREATE_OPTION) {
+    void openRelationCreateForm(name, descriptor);
+    formData[name] = false;
+    return;
+  }
+  const id = Number(normalized);
+  if (!Number.isFinite(id) || id <= 0) {
+    formData[name] = false;
+    return;
+  }
+  formData[name] = Math.trunc(id);
 }
 
-function displayMany2oneValue(name: string) {
-  const value = formData[name];
-  if (Array.isArray(value)) {
-    return String(value[0] ?? '');
-  }
-  return String(value ?? '');
+function setSelectionField(name: string, value: string) {
+  formData[name] = value || false;
+}
+
+function setRelationMultiField(name: string, target: HTMLSelectElement) {
+  const ids = Array.from(target.selectedOptions)
+    .map((item) => Number(item.value))
+    .filter((id) => Number.isFinite(id) && id > 0)
+    .map((id) => Math.trunc(id));
+  formData[name] = ids;
 }
 
 function collectWritableValues() {
@@ -651,9 +1077,10 @@ function collectWritableValues() {
 }
 
 function fieldInputType(ttype?: string) {
-  if (ttype === 'integer' || ttype === 'float' || ttype === 'monetary') return 'number';
-  if (ttype === 'date') return 'date';
-  if (ttype === 'datetime') return 'datetime-local';
+  const type = String(ttype || '').toLowerCase();
+  if (type === 'integer' || type === 'float' || type === 'monetary') return 'number';
+  if (type === 'date') return 'date';
+  if (type === 'datetime') return 'datetime-local';
   return 'text';
 }
 
@@ -701,6 +1128,9 @@ async function loadRecord() {
   Object.keys(formData).forEach((key) => {
     delete formData[key];
   });
+  Object.keys(relationKeywords).forEach((key) => {
+    delete relationKeywords[key];
+  });
   if (!recordId.value) {
     const context = contract.value?.head?.context;
     const defaults: Record<string, unknown> = {};
@@ -721,7 +1151,25 @@ async function loadRecord() {
       });
     }
     fieldNames.forEach((name) => {
-      formData[name] = name in defaults ? defaults[name] : '';
+      const descriptor = contract.value?.fields?.[name];
+      const ttype = fieldType(descriptor);
+      const incoming = name in defaults ? defaults[name] : '';
+      if (ttype === 'many2many' || ttype === 'one2many') {
+        formData[name] = Array.isArray(incoming) ? incoming : [];
+      } else if (ttype === 'many2one') {
+        const ids = normalizeRelationIds(incoming);
+        formData[name] = ids.length ? ids[0] : false;
+        const matched = ids.length
+          ? (relationOptions.value[name] || []).find((item) => item.id === ids[0])
+          : null;
+        relationKeywords[name] = matched?.label || '';
+      } else if (ttype === 'date') {
+        formData[name] = toDateInputValue(incoming);
+      } else if (ttype === 'datetime') {
+        formData[name] = toDatetimeInputValue(incoming);
+      } else {
+        formData[name] = incoming;
+      }
     });
     originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
       acc[name] = normalizeFieldValue(name, formData[name]);
@@ -736,7 +1184,25 @@ async function loadRecord() {
   });
   const row = read.records?.[0] || {};
   fieldNames.forEach((name) => {
-    formData[name] = row[name] ?? '';
+    const descriptor = contract.value?.fields?.[name];
+    const ttype = fieldType(descriptor);
+    const incoming = (row as Record<string, unknown>)[name] ?? '';
+    if (ttype === 'many2many' || ttype === 'one2many') {
+      formData[name] = Array.isArray(incoming) ? incoming : [];
+    } else if (ttype === 'many2one') {
+      const ids = normalizeRelationIds(incoming);
+      formData[name] = ids.length ? ids[0] : false;
+      const matched = ids.length
+        ? (relationOptions.value[name] || []).find((item) => item.id === ids[0])
+        : null;
+      relationKeywords[name] = matched?.label || '';
+    } else if (ttype === 'date') {
+      formData[name] = toDateInputValue(incoming);
+    } else if (ttype === 'datetime') {
+      formData[name] = toDatetimeInputValue(incoming);
+    } else {
+      formData[name] = incoming;
+    }
   });
   originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
     acc[name] = normalizeFieldValue(name, formData[name]);
@@ -750,6 +1216,7 @@ async function reload() {
   validationErrors.value = [];
   try {
     await loadContract();
+    await loadRelationOptions();
     await loadRecord();
     status.value = 'ok';
   } catch (err) {
@@ -1046,6 +1513,19 @@ reload();
   gap: 6px;
 }
 
+.relation-editor {
+  display: grid;
+  gap: 6px;
+}
+
+.relation-search {
+  font-size: 12px;
+}
+
+.relation-create-btn {
+  justify-self: start;
+}
+
 .label {
   font-size: 12px;
   color: #334155;
@@ -1061,6 +1541,10 @@ reload();
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 8px 10px;
+}
+
+select.input[multiple] {
+  min-height: 120px;
 }
 
 .input-checkbox {

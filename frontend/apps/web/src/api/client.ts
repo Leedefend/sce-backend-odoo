@@ -106,9 +106,11 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   headers.set('x-trace-id', traceId);
   headers.set('x-tenant', config.tenant);
 
-  // 总是设置X-Odoo-DB头，即使config.odooDb为空也使用默认值
-  const dbHeader = config.odooDb || 'sc_demo';
-  headers.set('X-Odoo-DB', dbHeader);
+  // Delivery hardening: never fallback to sc_demo implicitly.
+  const dbHeader = String(config.odooDb || '').trim();
+  if (dbHeader) {
+    headers.set('X-Odoo-DB', dbHeader);
+  }
 
   if (session.token) {
     headers.set('Authorization', `Bearer ${session.token}`);

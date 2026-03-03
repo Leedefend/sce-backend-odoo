@@ -85,7 +85,10 @@ export interface SessionState {
   initMeta: AppInitResponse['meta'] | null;
 }
 
-const STORAGE_KEY = 'sc_frontend_session_v0_3';
+const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
+const STORAGE_KEY = `sc_frontend_session_v0_3:${DB_SCOPE}`;
+const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
+const TOKEN_STORAGE_KEY_SCOPED = `sc_auth_token:${DB_SCOPE}`;
 
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
@@ -118,7 +121,9 @@ export const useSessionStore = defineStore('session', {
   actions: {
     setToken(token: string) {
       this.token = token;
-      sessionStorage.setItem('sc_auth_token', token);
+      sessionStorage.setItem(TOKEN_STORAGE_KEY_SCOPED, token);
+      // Do not keep cross-db legacy token once db-scoped token is set.
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
     },
     restore() {
       const cached = localStorage.getItem(STORAGE_KEY);
@@ -149,10 +154,12 @@ export const useSessionStore = defineStore('session', {
           // ignore corrupted cache
         }
       }
-      const token = sessionStorage.getItem('sc_auth_token');
+      const token = sessionStorage.getItem(TOKEN_STORAGE_KEY_SCOPED);
       if (token) {
         this.token = token;
       }
+      // Always purge legacy unscoped token to avoid cross-db pollution.
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
       if (this.menuTree.length) {
         this.isReady = true;
         this.initStatus = 'ready';
@@ -179,7 +186,8 @@ export const useSessionStore = defineStore('session', {
       this.lastWriteMode = '';
       this.isReady = false;
       localStorage.removeItem(STORAGE_KEY);
-      sessionStorage.removeItem('sc_auth_token');
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY_SCOPED);
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
     },
     setActionMeta(meta: NavMeta) {
       this.currentAction = meta;
@@ -241,12 +249,12 @@ export const useSessionStore = defineStore('session', {
       this.persist();
     },
     async login(username: string, password: string) {
+      const db = String(config.odooDb || '').trim();
       const result = await intentRequest<LoginResponse>({
         intent: 'login',
-        params: { login: username, password, db: config.odooDb || 'sc_demo' },
+        params: { login: username, password, ...(db ? { db } : {}) },
       });
-      this.token = result.token;
-      sessionStorage.setItem('sc_auth_token', result.token);
+      this.setToken(result.token);
     },
     async logout() {
       try {
