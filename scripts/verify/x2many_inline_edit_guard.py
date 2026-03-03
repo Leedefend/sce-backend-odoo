@@ -48,6 +48,8 @@ def main() -> int:
         'function removeOne2manyRow(fieldName: string, rowKey: string) {',
         'function restoreOne2manyRow(fieldName: string, rowKey: string) {',
         'function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {',
+        'function one2manyRowStateLabel(row: One2ManyInlineRow) {',
+        'function one2manySummary(name: string) {',
         'function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {',
         'function collectOne2manyDraftValidation() {',
         'function one2manyRowErrors(fieldName: string, rowKey: string) {',

@@ -155,9 +155,11 @@
               <div v-else-if="fieldType(node.descriptor) === 'one2many'" class="relation-editor">
                 <div class="o2m-toolbar">
                   <button class="chip-btn" type="button" :disabled="busy" @click="addOne2manyRow(node.name)">+ 新增行</button>
+                  <span v-if="one2manySummary(node.name)" class="o2m-summary">{{ one2manySummary(node.name) }}</span>
                 </div>
                 <div class="o2m-list">
                   <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
+                    <p class="o2m-row-state">{{ one2manyRowStateLabel(row) }}</p>
                     <div class="o2m-fields">
                       <label
                         v-for="column in one2manyColumns(node.name)"
@@ -210,7 +212,7 @@
                       :disabled="busy"
                       @click="restoreOne2manyRow(node.name, row.key)"
                     >
-                      撤销移除 · {{ one2manyRowLabel(node.name, row) }}
+                      撤销移除 · {{ one2manyRowLabel(node.name, row) }} · 待删除
                     </button>
                   </div>
                 </div>
@@ -677,6 +679,37 @@ function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {
   if (value) return value;
   if (row.id) return `#${row.id}`;
   return '未命名';
+}
+
+function one2manyRowStateLabel(row: One2ManyInlineRow) {
+  if (row.removed) return '待删除';
+  if (row.isNew) return '新增';
+  if (row.dirty) return '已修改';
+  return '未变更';
+}
+
+function one2manySummary(name: string) {
+  const rows = one2manyFieldRows(name);
+  if (!rows.length) return '';
+  let created = 0;
+  let updated = 0;
+  let removed = 0;
+  rows.forEach((row) => {
+    if (row.removed) {
+      removed += 1;
+      return;
+    }
+    if (row.isNew) {
+      created += 1;
+      return;
+    }
+    if (row.dirty) updated += 1;
+  });
+  const parts: string[] = [];
+  if (created) parts.push(`新增 ${created}`);
+  if (updated) parts.push(`修改 ${updated}`);
+  if (removed) parts.push(`删除 ${removed}`);
+  return parts.length ? `待提交：${parts.join(' / ')}` : '待提交：无变更';
 }
 
 function visibleOne2manyRows(name: string) {
@@ -2168,6 +2201,13 @@ watch(
 
 .o2m-toolbar {
   display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.o2m-summary {
+  font-size: 12px;
+  color: #475569;
 }
 
 .o2m-list {
@@ -2180,6 +2220,13 @@ watch(
   grid-template-columns: minmax(120px, 1fr) auto;
   gap: 6px;
   align-items: center;
+}
+
+.o2m-row-state {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
 }
 
 .o2m-fields {
