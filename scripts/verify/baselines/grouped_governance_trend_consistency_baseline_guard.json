@@ -1,0 +1,11 @@
+{
+  "require_ok": true,
+  "require_has_previous_aligned": true,
+  "require_delta_types_ok": true,
+  "require_has_previous_pair_bool": true,
+  "require_delta_typed_when_previous": true,
+  "require_report_json_prefix": "artifacts/",
+  "require_report_json_suffix": "grouped_governance_trend_consistency_guard.json",
+  "require_report_md_prefix": "artifacts/",
+  "require_report_md_suffix": "grouped_governance_trend_consistency_guard.md"
+}

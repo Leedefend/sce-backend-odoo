@@ -1,0 +1,18 @@
+{
+  "require_ok": true,
+  "require_contract_governance_coverage_ok": true,
+  "require_grouped_drift_summary_ok": true,
+  "min_governance_coverage_ratio": 1.0,
+  "max_governance_failure_count": 0,
+  "min_grouped_e2e_case_count": 1,
+  "min_grouped_e2e_grouped_rows_case_count": 0,
+  "min_grouped_e2e_max_consistency_score": 0,
+  "require_grouped_export_marker_full_hit": true,
+  "require_trend_delta_when_previous": true,
+  "forbid_coverage_ratio_regression": true,
+  "forbid_governance_failure_count_increase": true,
+  "forbid_grouped_consistency_score_regression": true,
+  "forbid_grouped_e2e_case_count_regression": false,
+  "forbid_grouped_rows_case_count_regression": false,
+  "forbid_grouped_export_marker_hits_regression": false
+}
