@@ -121,7 +121,7 @@
       :on-card-click="handleRowClick"
     />
     <ListPage
-      v-else
+      v-else-if="viewMode === 'tree'"
       :title="pageTitle"
       :model="model"
       :status="pageStatus"
@@ -164,6 +164,26 @@
       :on-clear-selection="clearSelection"
       :on-row-click="handleRowClick"
     />
+    <section v-else class="advanced-view">
+      <header class="advanced-view-head">
+        <h3>{{ advancedViewTitle }}</h3>
+        <p>{{ advancedViewHint }}</p>
+      </header>
+      <div class="advanced-contract">
+        <p class="contract-label">契约摘要</p>
+        <p>view_type={{ contractViewType || '-' }} · mode={{ viewMode || '-' }} · records={{ records.length }}</p>
+      </div>
+      <div v-if="records.length" class="advanced-list">
+        <article v-for="(row, idx) in records.slice(0, 20)" :key="`adv-${idx}-${String(row.id || idx)}`" class="advanced-item">
+          <p class="advanced-item-title">{{ advancedRowTitle(row) }}</p>
+          <p class="advanced-item-meta">{{ advancedRowMeta(row) }}</p>
+        </article>
+      </div>
+      <section v-else class="empty-next">
+        <p class="empty-next-title">{{ surfaceIntent.emptyTitle }}</p>
+        <p class="empty-next-hint">{{ advancedViewHint }}</p>
+      </section>
+    </section>
     <section v-if="pageStatus === 'empty'" class="empty-next">
       <p class="empty-next-title">{{ surfaceIntent.emptyTitle }}</p>
       <p class="empty-next-hint">{{ surfaceIntent.emptyHint }}</p>
@@ -255,6 +275,7 @@ const failedCsvContentB64 = ref('');
 const batchFailedOffset = ref(0);
 const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
+const advancedFields = ref<string[]>([]);
 const lastBatchRequest = ref<{
   model: string;
   ids: number[];
@@ -403,8 +424,15 @@ const contractLimit = ref(40);
 const showMoreContractActions = ref(false);
 const showMoreContractFilters = ref(false);
 const viewMode = computed(() => {
-  if (contractViewType.value === 'kanban') return 'kanban';
-  if (contractViewType.value === 'list' || contractViewType.value === 'tree') return 'tree';
+  const mode = String(contractViewType.value || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .find(Boolean) || '';
+  if (mode === 'kanban') return 'kanban';
+  if (mode === 'list' || mode === 'tree') return 'tree';
+  if (mode === 'pivot' || mode === 'graph' || mode === 'calendar' || mode === 'gantt' || mode === 'activity' || mode === 'dashboard') {
+    return mode;
+  }
   return '';
 });
 const sortLabel = computed(() => sortValue.value || 'id asc');
@@ -447,6 +475,28 @@ const statusLabel = computed(() => {
 const pageStatus = computed<'loading' | 'ok' | 'empty' | 'error'>(() =>
   status.value === 'idle' ? 'loading' : status.value,
 );
+const advancedViewTitle = computed(() => {
+  const labels: Record<string, string> = {
+    pivot: '数据透视视图',
+    graph: '图表视图',
+    calendar: '日历视图',
+    gantt: '甘特视图',
+    activity: '活动视图',
+    dashboard: '仪表板视图',
+  };
+  return labels[viewMode.value] || '高级视图';
+});
+const advancedViewHint = computed(() => {
+  const hints: Record<string, string> = {
+    pivot: '当前为可读降级视图，可查看核心统计记录并继续下钻到列表/表单。',
+    graph: '当前为可读降级视图，可查看核心指标记录并继续下钻到列表/表单。',
+    calendar: '当前为可读降级视图，可查看时间相关记录并继续下钻到列表/表单。',
+    gantt: '当前为可读降级视图，可查看进度相关记录并继续下钻到列表/表单。',
+    activity: '当前为可读降级视图，可查看活动记录并继续下钻到列表/表单。',
+    dashboard: '当前为可读降级视图，可查看关键记录并继续下钻到列表/表单。',
+  };
+  return hints[viewMode.value] || '当前视图使用可读降级渲染。';
+});
 const pageTitle = computed(() => {
   const contractTitle = String(actionContract.value?.head?.title || '').trim();
   if (contractTitle) return contractTitle;
@@ -1150,6 +1200,66 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
   return [];
 }
 
+function extractAdvancedViewFields(contract: Awaited<ReturnType<typeof loadActionContract>>, mode: string) {
+  const typed = contract as ActionContractLoose;
+  const directViews = typed.views as Record<string, unknown> | undefined;
+  const normalizedViews = typed.ui_contract?.views as Record<string, unknown> | undefined;
+  const viewBlock = (directViews?.[mode] || normalizedViews?.[mode]) as Record<string, unknown> | undefined;
+  const fallbackNames = ['name', 'display_name', 'id'];
+  if (mode === 'pivot') {
+    const measures = Array.isArray(viewBlock?.measures) ? viewBlock.measures : [];
+    const dims = Array.isArray(viewBlock?.dimensions) ? viewBlock.dimensions : [];
+    const fields = [...dims, ...measures, ...fallbackNames]
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+    return uniqueFields(fields);
+  }
+  if (mode === 'graph') {
+    const measure = String(viewBlock?.measure || '').trim();
+    const dim = String(viewBlock?.dimension || '').trim();
+    return uniqueFields([dim, measure, ...fallbackNames].filter(Boolean));
+  }
+  if (mode === 'calendar' || mode === 'gantt') {
+    const dateStart = String(viewBlock?.date_start || '').trim();
+    const dateStop = String(viewBlock?.date_stop || '').trim();
+    const fields = [dateStart, dateStop, ...fallbackNames];
+    return uniqueFields(fields.map((item) => String(item || '').trim()).filter(Boolean));
+  }
+  if (mode === 'activity') {
+    const activityField = String(viewBlock?.field || '').trim();
+    return uniqueFields([activityField, ...fallbackNames].filter(Boolean));
+  }
+  if (mode === 'dashboard') {
+    const kpis = Array.isArray(viewBlock?.kpis) ? viewBlock.kpis : [];
+    const cards = Array.isArray(viewBlock?.cards) ? viewBlock.cards : [];
+    const guessed = [...kpis, ...cards]
+      .map((item) => String((item as Record<string, unknown>)?.field || '').trim())
+      .filter(Boolean);
+    return uniqueFields([...guessed, ...fallbackNames]);
+  }
+  return fallbackNames;
+}
+
+function advancedRowTitle(row: Record<string, unknown>) {
+  return String(row.display_name || row.name || row.id || '记录').trim();
+}
+
+function advancedFieldLabel(field: string) {
+  return String(contractColumnLabels.value[field] || field).trim();
+}
+
+function advancedRowMeta(row: Record<string, unknown>) {
+  const preferredKeys = advancedFields.value.length
+    ? advancedFields.value
+    : Object.keys(row);
+  const entries = preferredKeys
+    .filter((key) => key !== 'id' && key !== 'name' && key !== 'display_name' && key in row)
+    .slice(0, 3)
+    .map((key) => `${advancedFieldLabel(key)}: ${String(row[key] ?? '-')}`);
+  if (!entries.length) return '无附加字段';
+  return entries.join(' · ');
+}
+
 function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
   const typed = contract as ActionContractLoose;
   const direct = typed.model;
@@ -1436,6 +1546,7 @@ async function load() {
   records.value = [];
   columns.value = [];
   kanbanFields.value = [];
+  advancedFields.value = [];
   const startedAt = Date.now();
 
   if (!actionId.value) {
@@ -1574,6 +1685,8 @@ async function load() {
     }
     const contractColumns = convergeColumnsForSurface(extractColumnsFromContract(contract), typedContract.fields || {});
     const kanbanContractFields = extractKanbanFields(contract);
+    const advancedContractFields = extractAdvancedViewFields(contract, viewMode.value);
+    advancedFields.value = advancedContractFields;
     kanbanFields.value = kanbanContractFields;
     const fieldMap = typedContract.fields || {};
     hasActiveField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'active' in fieldMap);
@@ -1582,7 +1695,9 @@ async function load() {
     const requestedFields =
       viewMode.value === 'kanban'
         ? kanbanContractFields
-        : resolveRequestedFields(contractColumns, listProfile.value);
+        : viewMode.value === 'tree'
+          ? resolveRequestedFields(contractColumns, listProfile.value)
+          : advancedContractFields;
     if (viewMode.value === 'kanban' && !kanbanContractFields.length) {
       setError(new Error('missing contract fields for kanban view'), 'missing contract fields for kanban view');
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
@@ -2114,6 +2229,68 @@ watch(
 
 .contract-chip.ghost {
   border-style: dashed;
+}
+
+.advanced-view {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.advanced-view-head h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.advanced-view-head p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.advanced-contract {
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  display: grid;
+  gap: 4px;
+}
+
+.advanced-contract p {
+  margin: 0;
+  font-size: 12px;
+  color: #334155;
+}
+
+.advanced-list {
+  display: grid;
+  gap: 8px;
+}
+
+.advanced-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.advanced-item-title {
+  margin: 0;
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.advanced-item-meta {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
 }
 
 @media (max-width: 760px) {

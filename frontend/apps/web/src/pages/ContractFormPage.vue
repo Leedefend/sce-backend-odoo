@@ -78,6 +78,9 @@
         <p v-if="validationErrors.length" class="validation-error">
           {{ validationErrors.join('；') }}
         </p>
+        <p v-if="onchangeWarnings.length" class="validation-warn">
+          {{ onchangeWarnings.map((item) => item.message || item.title || '').filter(Boolean).join('；') }}
+        </p>
         <div v-if="coreFieldsLabel" class="layout-divider">{{ coreFieldsLabel }}</div>
         <template v-for="node in layoutNodes" :key="node.key">
           <div v-if="showHud && node.kind === 'header'" class="layout-divider">头部</div>
@@ -125,10 +128,7 @@
                   </option>
                 </select>
               </div>
-              <div
-                v-else-if="fieldType(node.descriptor) === 'many2many' || fieldType(node.descriptor) === 'one2many'"
-                class="relation-editor"
-              >
+              <div v-else-if="fieldType(node.descriptor) === 'many2many'" class="relation-editor">
                 <input
                   class="input relation-search"
                   type="text"
@@ -152,11 +152,80 @@
                   </option>
                 </select>
               </div>
+              <div v-else-if="fieldType(node.descriptor) === 'one2many'" class="relation-editor">
+                <div class="o2m-toolbar">
+                  <button class="chip-btn" type="button" :disabled="busy" @click="addOne2manyRow(node.name)">+ 新增行</button>
+                  <span v-if="one2manySummary(node.name)" class="o2m-summary">{{ one2manySummary(node.name) }}</span>
+                </div>
+                <div class="o2m-list">
+                  <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
+                    <p class="o2m-row-state">{{ one2manyRowStateLabel(row) }}</p>
+                    <div class="o2m-fields">
+                      <label
+                        v-for="column in one2manyColumns(node.name)"
+                        :key="`${row.key}-${column.name}`"
+                        class="o2m-field"
+                      >
+                        <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
+                        <input
+                          v-if="column.ttype === 'boolean'"
+                          class="input-checkbox"
+                          type="checkbox"
+                          :checked="Boolean(row.values[column.name])"
+                          @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).checked)"
+                        />
+                        <select
+                          v-else-if="column.ttype === 'selection'"
+                          class="input"
+                          :value="String(row.values[column.name] ?? '')"
+                          @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLSelectElement).value)"
+                        >
+                          <option value="">请选择</option>
+                          <option v-for="option in column.selection || []" :key="String(option[0])" :value="String(option[0])">
+                            {{ String(option[1]) }}
+                          </option>
+                        </select>
+                        <input
+                          v-else
+                          class="input"
+                          :type="one2manyColumnInputType(column)"
+                          :value="one2manyColumnDisplayValue(column, row.values[column.name])"
+                          :placeholder="column.label"
+                          @input="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).value)"
+                        />
+                      </label>
+                    </div>
+                    <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
+                    <p v-if="showOne2manyErrors && one2manyRowErrors(node.name, row.key).length" class="o2m-row-error">
+                      {{ one2manyRowErrors(node.name, row.key).join('；') }}
+                    </p>
+                    <p v-if="one2manyRowHints(node.name, row).length" class="o2m-row-hint">
+                      {{ one2manyRowHints(node.name, row).join('；') }}
+                    </p>
+                  </div>
+                </div>
+                <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
+                  <p class="meta">已移除 {{ removedOne2manyRows(node.name).length }} 行</p>
+                  <div class="chips">
+                    <button
+                      v-for="row in removedOne2manyRows(node.name)"
+                      :key="`rm-${row.key}`"
+                      class="chip-btn"
+                      type="button"
+                      :disabled="busy"
+                      @click="restoreOne2manyRow(node.name, row.key)"
+                    >
+                      撤销移除 · {{ one2manyRowLabel(node.name, row) }} · 待删除
+                    </button>
+                  </div>
+                </div>
+              </div>
               <input
                 v-else
-                v-model="formData[node.name]"
+                :value="String(formData[node.name] ?? '')"
                 class="input"
                 :type="fieldInputType(fieldType(node.descriptor))"
+                @input="setTextField(node.name, ($event.target as HTMLInputElement).value)"
               />
             </template>
           </div>
@@ -203,6 +272,8 @@ import { isHudEnabled } from '../config/debug';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { executeButton } from '../api/executeButton';
+import { triggerOnchange } from '../api/onchange';
+import type { OnchangeLinePatch } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
 import {
@@ -215,6 +286,8 @@ import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
+import { buildRuntimeFieldStates } from '../app/modifierEngine';
+import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
@@ -253,6 +326,23 @@ type RelationOption = {
   label: string;
 };
 
+type One2ManyInlineRow = {
+  key: string;
+  id: number | null;
+  isNew: boolean;
+  removed: boolean;
+  dirty: boolean;
+  values: Record<string, unknown>;
+};
+
+type One2ManyColumn = {
+  name: string;
+  label: string;
+  ttype: string;
+  required: boolean;
+  selection?: Array<[string, string]>;
+};
+
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
@@ -260,6 +350,7 @@ const session = useSessionStore();
 const status = ref<UiStatus>('loading');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
+const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
@@ -268,8 +359,16 @@ const originalValues = ref<Record<string, unknown>>({});
 const formData = reactive<Record<string, unknown>>({});
 const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
+const relationFieldDescriptors = ref<Record<string, Record<string, FieldDescriptor>>>({});
 const relationKeywords = reactive<Record<string, string>>({});
+const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
+const onchangeWarnings = ref<Array<{ title?: string; message?: string; reason_code?: string }>>([]);
+const onchangeLinePatches = ref<OnchangeLinePatch[]>([]);
+const changedFieldSet = new Set<string>();
+let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
+const applyingOnchangePatch = ref(false);
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
@@ -322,15 +421,17 @@ const hasChanges = computed(() => {
   const keys = Object.keys(formData);
   return keys.some((key) => {
     if (!isFieldWritable(key)) return false;
-    return normalizeComparable(formData[key]) !== normalizeComparable(originalValues.value[key]);
+    return comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key]);
   });
 });
 const writableFieldCount = computed(() =>
   layoutNodes.value.filter((node) => node.kind === 'field' && !node.readonly).length,
 );
 const changedFieldCount = computed(() =>
-  Object.keys(formData).filter((key) => isFieldWritable(key) && normalizeComparable(formData[key]) !== normalizeComparable(originalValues.value[key])).length,
+  Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
 );
+
+const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
@@ -477,43 +578,7 @@ function fromDatetimeInputValue(value: unknown) {
 }
 
 function normalizeRelationIds(value: unknown): number[] {
-  if (value === null || value === undefined || value === false) return [];
-  const out = new Set<number>();
-  const push = (raw: unknown) => {
-    const parsed = Number(raw);
-    if (Number.isFinite(parsed) && parsed > 0) out.add(Math.trunc(parsed));
-  };
-  if (typeof value === 'string') {
-    const raw = value.trim();
-    if (!raw) return [];
-    push(raw);
-    return Array.from(out);
-  }
-  if (typeof value === 'number') {
-    push(value);
-    return Array.from(out);
-  }
-  if (Array.isArray(value)) {
-    value.forEach((item) => {
-      if (typeof item === 'number') {
-        push(item);
-        return;
-      }
-      if (!Array.isArray(item)) return;
-      if (item.length === 2 && typeof item[0] === 'number' && typeof item[1] === 'string') {
-        push(item[0]);
-        return;
-      }
-      if (item[0] === 6 && Array.isArray(item[2])) {
-        (item[2] as unknown[]).forEach((id) => push(id));
-        return;
-      }
-      if (item[0] === 4 && typeof item[1] === 'number') {
-        push(item[1]);
-      }
-    });
-  }
-  return Array.from(out);
+  return extractX2ManyIds(value);
 }
 
 function relationIds(name: string): number[] {
@@ -535,6 +600,360 @@ function relationOptionsForField(name: string, descriptor?: FieldDescriptor) {
 
 function relationKeyword(name: string) {
   return String(relationKeywords[name] || '');
+}
+
+function one2manyFieldRows(name: string) {
+  return Array.isArray(one2manyRows[name]) ? one2manyRows[name] : [];
+}
+
+function one2manyRelationModel(name: string) {
+  const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
+  return String(descriptor?.relation || '').trim();
+}
+
+function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
+  const model = one2manyRelationModel(fieldName);
+  if (!model) return null;
+  const map = relationFieldDescriptors.value[model] || {};
+  const descriptor = map[column];
+  return descriptor || null;
+}
+
+function one2manyColumns(name: string): One2ManyColumn[] {
+  const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
+  const fieldSubview = subviews && typeof subviews === 'object'
+    ? (subviews as Record<string, unknown>)[name]
+    : undefined;
+  const tree = fieldSubview && typeof fieldSubview === 'object'
+    ? (fieldSubview as Record<string, unknown>).tree
+    : undefined;
+  const columnsRaw = tree && typeof tree === 'object'
+    ? (tree as Record<string, unknown>).columns
+    : undefined;
+  const out: One2ManyColumn[] = [];
+  if (Array.isArray(columnsRaw)) {
+    columnsRaw.forEach((item) => {
+      if (typeof item === 'string') {
+        const normalized = item.trim();
+        if (!normalized || normalized === 'id') return;
+        const descriptor = one2manyRelationFieldDescriptor(name, normalized);
+        out.push({
+          name: normalized,
+          label: String(descriptor?.string || normalized),
+          ttype: fieldType(descriptor) || 'char',
+          required: Boolean(descriptor?.required),
+          selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
+        });
+        return;
+      }
+      if (!item || typeof item !== 'object') return;
+      const row = item as Record<string, unknown>;
+      const colName = String(row.name || '').trim();
+      if (!colName || colName === 'id') return;
+      const descriptor = one2manyRelationFieldDescriptor(name, colName);
+      out.push({
+        name: colName,
+        label: String(row.label || row.string || descriptor?.string || colName).trim() || colName,
+        ttype: fieldType(descriptor) || 'char',
+        required: Boolean(descriptor?.required),
+        selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
+      });
+    });
+  }
+  if (!out.length) {
+    const descriptor = one2manyRelationFieldDescriptor(name, 'name');
+    return [{
+      name: 'name',
+      label: String(descriptor?.string || '名称'),
+      ttype: fieldType(descriptor) || 'char',
+      required: Boolean(descriptor?.required),
+      selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
+    }];
+  }
+  return out.slice(0, 4);
+}
+
+function one2manyPrimaryColumn(name: string) {
+  const cols = one2manyColumns(name);
+  return cols.length ? cols[0].name : 'name';
+}
+
+function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {
+  const primary = one2manyPrimaryColumn(fieldName);
+  const value = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
+  if (value) return value;
+  if (row.id) return `#${row.id}`;
+  return '未命名';
+}
+
+function one2manyRowStateLabel(row: One2ManyInlineRow) {
+  if (row.removed) return '待删除';
+  if (row.isNew) return '新增';
+  if (row.dirty) return '已修改';
+  return '未变更';
+}
+
+function one2manySummary(name: string) {
+  const rows = one2manyFieldRows(name);
+  if (!rows.length) return '';
+  let created = 0;
+  let updated = 0;
+  let removed = 0;
+  rows.forEach((row) => {
+    if (row.removed) {
+      removed += 1;
+      return;
+    }
+    if (row.isNew) {
+      created += 1;
+      return;
+    }
+    if (row.dirty) updated += 1;
+  });
+  const parts: string[] = [];
+  if (created) parts.push(`新增 ${created}`);
+  if (updated) parts.push(`修改 ${updated}`);
+  if (removed) parts.push(`删除 ${removed}`);
+  return parts.length ? `待提交：${parts.join(' / ')}` : '待提交：无变更';
+}
+
+function visibleOne2manyRows(name: string) {
+  return one2manyFieldRows(name).filter((row) => !row.removed);
+}
+
+function removedOne2manyRows(name: string) {
+  return one2manyFieldRows(name).filter((row) => row.removed);
+}
+
+function ensureOne2manyRows(name: string) {
+  if (!Array.isArray(one2manyRows[name])) {
+    one2manyRows[name] = [];
+  }
+  return one2manyRows[name];
+}
+
+function makeOne2manyKey() {
+  return `o2m_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function addOne2manyRow(name: string) {
+  const rows = ensureOne2manyRows(name);
+  const primary = one2manyPrimaryColumn(name);
+  const columns = one2manyColumns(name);
+  const values = columns.reduce<Record<string, unknown>>((acc, column) => {
+    acc[column.name] = column.ttype === 'boolean' ? false : '';
+    return acc;
+  }, {});
+  rows.push({
+    key: makeOne2manyKey(),
+    id: null,
+    isNew: true,
+    removed: false,
+    dirty: true,
+    values: { ...values, [primary]: values[primary] ?? '' },
+  });
+  markFieldChanged(name);
+}
+
+function normalizeOne2manyColumnValue(column: One2ManyColumn, value: unknown) {
+  const ttype = String(column.ttype || '').trim().toLowerCase();
+  if (ttype === 'boolean') return Boolean(value);
+  if (ttype === 'integer') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.trunc(parsed) : false;
+  }
+  if (ttype === 'float' || ttype === 'monetary') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : false;
+  }
+  if (ttype === 'date') return toDateInputValue(value) || false;
+  if (ttype === 'datetime') return fromDatetimeInputValue(value);
+  if (ttype === 'selection') return String(value ?? '').trim() || false;
+  return String(value ?? '');
+}
+
+function setOne2manyRowField(fieldName: string, rowKey: string, column: One2ManyColumn, value: unknown) {
+  const rows = ensureOne2manyRows(fieldName);
+  const row = rows.find((item) => item.key === rowKey);
+  if (!row) return;
+  const normalized = normalizeOne2manyColumnValue(column, value);
+  row.values = {
+    ...(row.values || {}),
+    [column.name]: normalized,
+  };
+  row.dirty = true;
+  markFieldChanged(fieldName);
+}
+
+function one2manyColumnInputType(column: One2ManyColumn) {
+  const ttype = String(column.ttype || '').trim().toLowerCase();
+  if (ttype === 'integer' || ttype === 'float' || ttype === 'monetary') return 'number';
+  if (ttype === 'date') return 'date';
+  if (ttype === 'datetime') return 'datetime-local';
+  return 'text';
+}
+
+function one2manyColumnDisplayValue(column: One2ManyColumn, value: unknown) {
+  const ttype = String(column.ttype || '').trim().toLowerCase();
+  if (ttype === 'date') return toDateInputValue(value);
+  if (ttype === 'datetime') return toDatetimeInputValue(value);
+  return String(value ?? '');
+}
+
+function removeOne2manyRow(fieldName: string, rowKey: string) {
+  const rows = ensureOne2manyRows(fieldName);
+  const index = rows.findIndex((item) => item.key === rowKey);
+  if (index < 0) return;
+  const row = rows[index];
+  if (row.isNew) {
+    rows.splice(index, 1);
+  } else {
+    row.removed = true;
+    row.dirty = true;
+  }
+  markFieldChanged(fieldName);
+}
+
+function restoreOne2manyRow(fieldName: string, rowKey: string) {
+  const rows = ensureOne2manyRows(fieldName);
+  const row = rows.find((item) => item.key === rowKey);
+  if (!row) return;
+  row.removed = false;
+  row.dirty = true;
+  markFieldChanged(fieldName);
+}
+
+function initOne2manyRows(name: string, source: unknown) {
+  const ids = normalizeRelationIds(source);
+  const options = relationOptionsForField(name);
+  const optionMap = new Map(options.map((item) => [item.id, item.label]));
+  const primary = one2manyPrimaryColumn(name);
+  one2manyRows[name] = ids.map((id) => ({
+    key: `o2m_id_${id}`,
+    id,
+    isNew: false,
+    removed: false,
+    dirty: false,
+    values: {
+      [primary]: optionMap.get(id) || `#${id}`,
+      name: optionMap.get(id) || `#${id}`,
+    },
+  }));
+}
+
+function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
+  const rows = one2manyFieldRows(name);
+  return buildOne2ManyInlineCommands({
+    original: originalValues.value[name],
+    draftRows: rows.map((row) => ({
+      id: row.id,
+      isNew: row.isNew,
+      removed: row.removed,
+      dirty: row.dirty,
+      values: row.values || {},
+    })),
+    mode,
+  });
+}
+
+function collectOne2manyDraftValidation() {
+  const issues: string[] = [];
+  const rowErrors: Record<string, string[]> = {};
+  Object.entries(one2manyRows).forEach(([fieldName, rows]) => {
+    if (!Array.isArray(rows) || !rows.length) return;
+    const primary = one2manyPrimaryColumn(fieldName);
+    const columns = one2manyColumns(fieldName);
+    const requiredColumns = columns.filter((column) => column.required);
+    const labels = new Set<string>();
+    rows.forEach((row, index) => {
+      if (row.removed) return;
+      const rowKey = `${fieldName}:${row.key}`;
+      const perRow: string[] = [];
+      requiredColumns.forEach((column) => {
+        const value = row.values?.[column.name];
+        if (isOne2manyEmptyValue(column, value)) {
+          perRow.push(`${column.label}不能为空`);
+          issues.push(`${fieldName} 第${index + 1}行${column.label}不能为空`);
+        }
+      });
+      const label = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
+      if (label) {
+        const key = label.toLowerCase();
+        if (labels.has(key)) {
+          perRow.push(`主值重复：${label}`);
+          issues.push(`${fieldName} 存在重复行值：${label}`);
+        } else {
+          labels.add(key);
+        }
+      }
+      if (perRow.length) {
+        rowErrors[rowKey] = perRow;
+      }
+    });
+  });
+  return { issues, rowErrors };
+}
+
+function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {
+  const ttype = String(column.ttype || '').trim().toLowerCase();
+  if (ttype === 'boolean') return value === false || value === null || value === undefined;
+  if (ttype === 'integer' || ttype === 'float' || ttype === 'monetary') {
+    return value === false || value === null || value === undefined || Number.isNaN(Number(value));
+  }
+  if (ttype === 'date' || ttype === 'datetime' || ttype === 'selection') {
+    return !String(value ?? '').trim() || value === false;
+  }
+  return !String(value ?? '').trim();
+}
+
+function one2manyRowErrors(fieldName: string, rowKey: string) {
+  return one2manyValidation.value.rowErrors[`${fieldName}:${rowKey}`] || [];
+}
+
+function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {
+  const messages: string[] = [];
+  onchangeLinePatches.value.forEach((patch) => {
+    if (String(patch.field || '') !== fieldName) return;
+    const rowKey = String(patch.row_key || '').trim();
+    const rowId = Number(patch.row_id || 0);
+    const matched = (rowKey && rowKey === row.key) || (rowId > 0 && Number(row.id || 0) === rowId);
+    if (!matched) return;
+    const warns = Array.isArray(patch.warnings) ? patch.warnings : [];
+    warns.forEach((warn) => {
+      const message = String(warn?.message || warn?.title || '').trim();
+      if (message) messages.push(message);
+      const reasonCode = String(warn?.reason_code || '').trim();
+      if (reasonCode) messages.push(`原因码: ${reasonCode}`);
+    });
+    const rowState = String(patch.row_state || '').trim().toLowerCase();
+    if (rowState) {
+      messages.push(`联动状态: ${rowState}`);
+    }
+    if (Array.isArray(patch.command_hint) && patch.command_hint.length) {
+      messages.push(`命令提示: ${patch.command_hint.join('/')}`);
+    }
+  });
+  return Array.from(new Set(messages));
+}
+
+function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {
+  if (!Array.isArray(linePatches) || !linePatches.length) return;
+  linePatches.forEach((line) => {
+    const fieldName = String(line.field || '').trim();
+    if (!fieldName) return;
+    const rowKey = String(line.row_key || '').trim();
+    const rowId = Number(line.row_id || 0);
+    const rows = ensureOne2manyRows(fieldName);
+    const row = rows.find((item) => (rowKey && item.key === rowKey) || (rowId > 0 && Number(item.id || 0) === rowId));
+    if (!row) return;
+    const patch = line.patch;
+    if (patch && typeof patch === 'object') {
+      row.values = {
+        ...(row.values || {}),
+        ...(patch as Record<string, unknown>),
+      };
+    }
+  });
 }
 
 function setRelationKeyword(name: string, keyword: string) {
@@ -596,9 +1015,26 @@ function relationCreateMode(fieldName: string, descriptor?: FieldDescriptor): 'p
 
 function relationDomain(descriptor?: FieldDescriptor) {
   const entry = relationEntry(descriptor);
+  const out: unknown[] = [];
   const type = String(entry?.defaultVals?.type || '').trim();
-  if (type) return [['type', '=', type]];
-  return undefined;
+  if (type) out.push(['type', '=', type]);
+  return out.length ? out : undefined;
+}
+
+function runtimeRelationDomain(name: string) {
+  const raw = (onchangeModifiersPatch.value?.[name] || {}) as Record<string, unknown>;
+  const domain = raw.domain;
+  if (!Array.isArray(domain)) return [];
+  return domain;
+}
+
+function mergedRelationDomain(name: string, descriptor?: FieldDescriptor) {
+  const base = relationDomain(descriptor);
+  const runtime = runtimeRelationDomain(name);
+  const out: unknown[] = [];
+  if (Array.isArray(base)) out.push(...base);
+  if (Array.isArray(runtime)) out.push(...runtime);
+  return out.length ? out : undefined;
 }
 
 async function queryRelationOptions(name: string, keyword: string) {
@@ -606,7 +1042,7 @@ async function queryRelationOptions(name: string, keyword: string) {
   const relation = relationModel(name);
   if (!relation) return;
   const search = String(keyword || '').trim();
-  const domain = relationDomain(descriptor);
+  const domain = mergedRelationDomain(name, descriptor);
   try {
     const listed = await listRecords({
       model: relation,
@@ -638,6 +1074,27 @@ async function queryRelationOptions(name: string, keyword: string) {
   }
 }
 
+async function ensureRelationFieldDescriptors(name: string) {
+  const relation = one2manyRelationModel(name);
+  if (!relation) return;
+  if (relationFieldDescriptors.value[relation]) return;
+  try {
+    const response = await loadModelContractRaw(relation, {
+      viewType: 'form',
+      renderProfile: 'edit',
+    });
+    const fields = response?.data?.fields;
+    if (fields && typeof fields === 'object') {
+      relationFieldDescriptors.value = {
+        ...relationFieldDescriptors.value,
+        [relation]: fields as Record<string, FieldDescriptor>,
+      };
+    }
+  } catch {
+    // best effort; fallback to char fields
+  }
+}
+
 async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescriptor) {
   const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
   if (!relation) return;
@@ -661,6 +1118,7 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
       const id = Number(created?.id || 0);
       if (Number.isFinite(id) && id > 0) {
         formData[fieldName] = Math.trunc(id);
+        markFieldChanged(fieldName);
         relationKeywords[fieldName] = label;
         await queryRelationOptions(fieldName, label);
       }
@@ -715,6 +1173,10 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
 
 async function loadRelationOptions() {
   const fields = contract.value?.fields || {};
+  const one2manyNames = Object.entries(fields)
+    .filter(([, descriptor]) => fieldType(descriptor) === 'one2many')
+    .map(([name]) => name);
+  await Promise.all(one2manyNames.map((name) => ensureRelationFieldDescriptors(name)));
   const visibleRelationFields = new Set(
     layoutNodes.value
       .filter((node) => node.kind === 'field' && isFieldVisible(node.name))
@@ -732,7 +1194,7 @@ async function loadRelationOptions() {
     if (!['many2one', 'many2many', 'one2many'].includes(type)) return;
     const relation = String((descriptor as Record<string, unknown>).relation || '').trim();
     if (!relation) return;
-    const domain = relationDomain(descriptor as FieldDescriptor);
+    const domain = mergedRelationDomain(name, descriptor as FieldDescriptor);
     try {
       const listed = await listRecords({
         model: relation,
@@ -906,8 +1368,27 @@ const contractVisibleFields = computed<string[]>(() => {
   const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
   return rows.map((name) => String(name || '').trim()).filter(Boolean);
 });
+const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
+  const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
+  return formView.field_modifiers || {};
+});
+const runtimeFieldStates = computed(() => {
+  const names = Object.keys(contract.value?.fields || {});
+  return buildRuntimeFieldStates({
+    fieldNames: names,
+    fieldModifiers: fieldModifierMap.value,
+    modifierPatch: onchangeModifiersPatch.value,
+    values: formData as Record<string, unknown>,
+  });
+});
+
+function runtimeState(name: string) {
+  return runtimeFieldStates.value[name] || { invisible: false, readonly: false, required: false };
+}
 
 function isFieldVisible(name: string) {
+  const state = runtimeState(name);
+  if (state.invisible) return false;
   const visible = contractVisibleFields.value;
   if (visible.length && !visible.includes(name)) return false;
   const core = coreFieldNames.value;
@@ -963,13 +1444,14 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       policyContext.value,
     );
     if (!resolved.visible) continue;
+    const state = runtimeState(name);
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(resolved.required),
+      readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(resolved.required || state.required),
       descriptor,
     });
   }
@@ -988,13 +1470,14 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       policyContext.value,
     );
     if (!resolved.visible) return;
+    const state = runtimeState(name);
     nodes.push({
       key: `field_${name}`,
       kind: 'field',
       name,
       label: String(descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(resolved.required),
+      readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
+      required: Boolean(resolved.required || state.required),
       descriptor,
     });
   });
@@ -1003,9 +1486,31 @@ const layoutNodes = computed<LayoutNode[]>(() => {
 });
 
 function normalizeComparable(value: unknown) {
+  if (Array.isArray(value) && value.every((item) => typeof item === 'number')) {
+    return JSON.stringify([...value].sort((a, b) => a - b));
+  }
   if (Array.isArray(value)) return JSON.stringify(value);
   if (value && typeof value === 'object') return JSON.stringify(value);
   return String(value ?? '');
+}
+
+function comparableFieldValue(name: string, value: unknown) {
+  const descriptor = contract.value?.fields?.[name];
+  const ttype = fieldType(descriptor);
+  if (ttype === 'many2many') {
+    return JSON.stringify(normalizeRelationIds(value).sort((a, b) => a - b));
+  }
+  if (ttype === 'one2many') {
+    const rows = one2manyFieldRows(name).map((row) => ({
+      id: row.id || 0,
+      isNew: row.isNew,
+      removed: row.removed,
+      dirty: row.dirty,
+      values: row.values || {},
+    }));
+    return JSON.stringify(rows);
+  }
+  return normalizeComparable(value);
 }
 
 function isFieldWritable(name: string) {
@@ -1041,12 +1546,15 @@ function normalizeFieldValue(name: string, value: unknown) {
     return parsed === null ? false : Math.trunc(parsed);
   }
   if (ttype === 'many2many') {
-    const ids = normalizeRelationIds(value);
-    return [[6, 0, ids]];
+    return buildX2ManyCommands({
+      kind: 'many2many',
+      current: value,
+      original: originalValues.value[name],
+      mode: 'write',
+    });
   }
   if (ttype === 'one2many') {
-    const ids = normalizeRelationIds(value);
-    return [[6, 0, ids]];
+    return buildOne2manyCommandValue(name, 'write');
   }
   if (ttype === 'date') {
     const normalized = toDateInputValue(value);
@@ -1063,12 +1571,14 @@ function normalizeFieldValue(name: string, value: unknown) {
 
 function setBooleanField(name: string, checked: boolean) {
   formData[name] = checked;
+  markFieldChanged(name);
 }
 
 function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined, value: string) {
   const normalized = String(value || '').trim();
   if (!normalized) {
     formData[name] = false;
+    markFieldChanged(name);
     return;
   }
   if (normalized === MANY2ONE_CREATE_OPTION) {
@@ -1078,13 +1588,16 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   const id = Number(normalized);
   if (!Number.isFinite(id) || id <= 0) {
     formData[name] = false;
+    markFieldChanged(name);
     return;
   }
   formData[name] = Math.trunc(id);
+  markFieldChanged(name);
 }
 
 function setSelectionField(name: string, value: string) {
   formData[name] = value || false;
+  markFieldChanged(name);
 }
 
 function setRelationMultiField(name: string, target: HTMLSelectElement) {
@@ -1093,13 +1606,127 @@ function setRelationMultiField(name: string, target: HTMLSelectElement) {
     .filter((id) => Number.isFinite(id) && id > 0)
     .map((id) => Math.trunc(id));
   formData[name] = ids;
+  markFieldChanged(name);
+}
+
+function setTextField(name: string, value: string) {
+  formData[name] = value;
+  markFieldChanged(name);
+}
+
+function markFieldChanged(name: string) {
+  const key = String(name || '').trim();
+  if (!key || applyingOnchangePatch.value) return;
+  changedFieldSet.add(key);
+  scheduleOnchange();
+}
+
+function scheduleOnchange() {
+  if (onchangeTimer) clearTimeout(onchangeTimer);
+  onchangeTimer = setTimeout(() => {
+    void runOnchangeRoundtrip();
+  }, 300);
+}
+
+function buildOnchangeValues() {
+  const out: Record<string, unknown> = {};
+  Object.keys(contract.value?.fields || {}).forEach((name) => {
+    const descriptor = contract.value?.fields?.[name];
+    const ttype = fieldType(descriptor);
+    if (ttype === 'many2many') {
+      out[name] = buildX2ManyCommands({
+        kind: ttype,
+        current: formData[name],
+        original: originalValues.value[name],
+        mode: 'onchange',
+      });
+      return;
+    }
+    if (ttype === 'one2many') {
+      out[name] = buildOne2manyCommandValue(name, 'onchange');
+      return;
+    }
+    out[name] = normalizeFieldValue(name, formData[name]);
+  });
+  if (recordId.value) out.id = recordId.value;
+  return out;
+}
+
+async function runOnchangeRoundtrip() {
+  if (!model.value) return;
+  if (!changedFieldSet.size) return;
+  const changed = Array.from(changedFieldSet);
+  changedFieldSet.clear();
+  try {
+    const response = await triggerOnchange({
+      model: model.value,
+      res_id: recordId.value,
+      values: buildOnchangeValues(),
+      changed_fields: changed,
+      context: pickContractNavQuery(route.query as Record<string, unknown>),
+    });
+    const patch = response?.patch;
+    const modifiersPatch = response?.modifiers_patch;
+    const linePatches = Array.isArray(response?.line_patches) ? response.line_patches : [];
+    const warnings = Array.isArray(response?.warnings) ? response.warnings : [];
+    onchangeWarnings.value = warnings;
+    onchangeLinePatches.value = linePatches;
+    if (modifiersPatch && typeof modifiersPatch === 'object') {
+      onchangeModifiersPatch.value = {
+        ...onchangeModifiersPatch.value,
+        ...(modifiersPatch as Record<string, Record<string, unknown>>),
+      };
+      const patchedFields = Object.keys(modifiersPatch as Record<string, Record<string, unknown>>);
+      await Promise.all(
+        patchedFields.map(async (name) => {
+          const descriptor = contract.value?.fields?.[name];
+          const ttype = fieldType(descriptor);
+          if (!['many2one', 'many2many', 'one2many'].includes(ttype)) return;
+          await queryRelationOptions(name, relationKeyword(name));
+        }),
+      );
+    }
+    if (patch && typeof patch === 'object') {
+      applyingOnchangePatch.value = true;
+      Object.entries(patch).forEach(([name, value]) => {
+        if (!(name in (contract.value?.fields || {}))) return;
+        const ttype = fieldType(contract.value?.fields?.[name]);
+        if (ttype === 'many2many' || ttype === 'one2many') {
+          formData[name] = Array.isArray(value) ? value : [];
+          if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
+        } else if (ttype === 'many2one') {
+          const ids = normalizeRelationIds(value);
+          formData[name] = ids.length ? ids[0] : false;
+        } else if (ttype === 'date') {
+          formData[name] = toDateInputValue(value);
+        } else if (ttype === 'datetime') {
+          formData[name] = toDatetimeInputValue(value);
+        } else {
+          formData[name] = value;
+        }
+      });
+      applyingOnchangePatch.value = false;
+    }
+    if (linePatches.length) {
+      applyingOnchangePatch.value = true;
+      applyOnchangeLinePatches(linePatches);
+      applyingOnchangePatch.value = false;
+    }
+  } catch {
+    // Onchange is best-effort; keep current values when roundtrip fails.
+  }
 }
 
 function collectWritableValues() {
   return layoutNodes.value
     .filter((node) => node.kind === 'field' && !node.readonly)
     .reduce<Record<string, unknown>>((acc, node) => {
-      acc[node.name] = normalizeFieldValue(node.name, formData[node.name]);
+      const value = normalizeFieldValue(node.name, formData[node.name]);
+      const ttype = fieldType(node.descriptor);
+      if ((ttype === 'many2many' || ttype === 'one2many') && Array.isArray(value) && !value.length) {
+        return acc;
+      }
+      acc[node.name] = value;
       return acc;
     }, {});
 }
@@ -1144,6 +1771,8 @@ const hudEntries = computed(() => [
   { label: 'changed_fields', value: changedFieldCount.value },
   { label: 'actions_count', value: contractActions.value.length },
   { label: 'rights', value: `${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}` },
+  { label: 'onchange_warnings', value: onchangeWarnings.value.length },
+  { label: 'onchange_line_patches', value: onchangeLinePatches.value.length },
 ]);
 
 async function loadContract() {
@@ -1183,6 +1812,17 @@ async function loadRecord() {
   Object.keys(relationKeywords).forEach((key) => {
     delete relationKeywords[key];
   });
+  Object.keys(one2manyRows).forEach((key) => {
+    delete one2manyRows[key];
+  });
+  onchangeModifiersPatch.value = {};
+  onchangeWarnings.value = [];
+  onchangeLinePatches.value = [];
+  changedFieldSet.clear();
+  if (onchangeTimer) {
+    clearTimeout(onchangeTimer);
+    onchangeTimer = null;
+  }
   if (!recordId.value) {
     const context = contract.value?.head?.context;
     const defaults: Record<string, unknown> = {};
@@ -1213,6 +1853,7 @@ async function loadRecord() {
       const incoming = name in defaults ? defaults[name] : '';
       if (ttype === 'many2many' || ttype === 'one2many') {
         formData[name] = Array.isArray(incoming) ? incoming : [];
+        if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
       } else if (ttype === 'many2one') {
         const ids = normalizeRelationIds(incoming);
         formData[name] = ids.length ? ids[0] : false;
@@ -1229,7 +1870,14 @@ async function loadRecord() {
       }
     });
     originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
-      acc[name] = normalizeFieldValue(name, formData[name]);
+      const value = formData[name];
+      if (Array.isArray(value)) {
+        acc[name] = [...value];
+      } else if (value && typeof value === 'object') {
+        acc[name] = JSON.parse(JSON.stringify(value));
+      } else {
+        acc[name] = value;
+      }
       return acc;
     }, {});
     return;
@@ -1246,6 +1894,7 @@ async function loadRecord() {
     const incoming = (row as Record<string, unknown>)[name] ?? '';
     if (ttype === 'many2many' || ttype === 'one2many') {
       formData[name] = Array.isArray(incoming) ? incoming : [];
+      if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
     } else if (ttype === 'many2one') {
       const ids = normalizeRelationIds(incoming);
       formData[name] = ids.length ? ids[0] : false;
@@ -1262,7 +1911,14 @@ async function loadRecord() {
     }
   });
   originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
-    acc[name] = normalizeFieldValue(name, formData[name]);
+    const value = formData[name];
+    if (Array.isArray(value)) {
+      acc[name] = [...value];
+    } else if (value && typeof value === 'object') {
+      acc[name] = JSON.parse(JSON.stringify(value));
+    } else {
+      acc[name] = value;
+    }
     return acc;
   }, {});
 }
@@ -1271,6 +1927,7 @@ async function reload() {
   status.value = 'loading';
   errorMessage.value = '';
   validationErrors.value = [];
+  showOne2manyErrors.value = false;
   try {
     await loadContract();
     await loadRelationOptions();
@@ -1361,6 +2018,13 @@ async function openFilter(filterKey: string) {
 async function saveRecord() {
   if (!canSave.value || !model.value) return;
   validationErrors.value = [];
+  const one2manyIssues = one2manyValidation.value.issues;
+  if (one2manyIssues.length) {
+    showOne2manyErrors.value = true;
+    validationErrors.value = one2manyIssues.slice(0, 5);
+    return;
+  }
+  showOne2manyErrors.value = false;
   const editableMap = collectWritableValues();
   const labels = layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
     if (node.kind === 'field') acc[node.name] = node.label || node.name;
@@ -1387,7 +2051,14 @@ async function saveRecord() {
         acc[key] = value;
         return acc;
       }
-      if (normalizeComparable(value) !== normalizeComparable(originalValues.value[key])) {
+      const ttype = fieldType(contract.value?.fields?.[key]);
+      if (ttype === 'many2many' || ttype === 'one2many') {
+        if (Array.isArray(value) && value.length) {
+          acc[key] = value;
+        }
+        return acc;
+      }
+      if (comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])) {
         acc[key] = value;
       }
       return acc;
@@ -1555,6 +2226,13 @@ watch(
   font-size: 12px;
 }
 
+.validation-warn {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #92400e;
+  font-size: 12px;
+}
+
 .layout-divider {
   grid-column: 1 / -1;
   font-size: 12px;
@@ -1579,6 +2257,66 @@ watch(
 .relation-editor {
   display: grid;
   gap: 6px;
+}
+
+.o2m-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.o2m-summary {
+  font-size: 12px;
+  color: #475569;
+}
+
+.o2m-list {
+  display: grid;
+  gap: 6px;
+}
+
+.o2m-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.o2m-row-state {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.o2m-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 6px;
+}
+
+.o2m-field {
+  display: grid;
+  gap: 4px;
+}
+
+.o2m-removed {
+  display: grid;
+  gap: 4px;
+}
+
+.o2m-row-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.o2m-row-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #92400e;
+  font-size: 12px;
 }
 
 .relation-search {

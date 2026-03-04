@@ -7,6 +7,10 @@
   - Use `SC_SCENE_OBS_STRICT=1` to additionally enforce strict scene observability evidence during gate runs.
   - Default gate path includes `verify.portal.scene_observability_gate_smoke.container` (structure + preflight smoke + smoke chain).
   - Contract preflight now runs baseline freeze guard by default (`BASELINE_FREEZE_ENFORCE=1`).
+  - Contract preflight now enables strict advanced-view semantic smoke by default (`CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=1`).
+    - Includes `verify.contract.view_type_semantic.strict.smoke` (`VIEW_TYPE_SMOKE_MIN_MODELS=2`).
+    - Temporary rollback for unstable branches:
+      - `make verify.contract.preflight CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0`
   - Contract preflight includes scene runtime boundary gate:
     - `make verify.scene.runtime_boundary.gate`
   - Contract preflight includes legacy contract bundle checks:

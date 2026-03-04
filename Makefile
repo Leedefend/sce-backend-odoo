@@ -75,6 +75,7 @@ SC_GATE_STRICT ?= 1
 SC_SCENE_OBS_STRICT ?= 0
 SCENE_OBSERVABILITY_PREFLIGHT_STRICT ?= 1
 BASELINE_FREEZE_ENFORCE ?= 1
+CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES ?= 1
 BUSINESS_INCREMENT_PROFILE ?= base
 SC_WARN_ACT_URL_LEGACY_MAX ?= 3
 DB_CI        ?= sc_test
@@ -1157,7 +1158,7 @@ branch.cleanup.feature: guard.prod.forbid
 # ======================================================
 # ==================== Frontend ========================
 # ======================================================
-.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
+.PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
 
 fe.install:
 	@pnpm -C frontend install
@@ -1180,7 +1181,34 @@ verify.frontend.lint.src: guard.prod.forbid
 verify.frontend.relation_entry.contract_guard: guard.prod.forbid
 	@python3 scripts/verify/relation_entry_contract_guard.py
 
-verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.typecheck.strict verify.frontend.build
+verify.frontend.modifiers_runtime.guard: guard.prod.forbid
+	@python3 scripts/verify/modifiers_runtime_guard.py
+
+verify.frontend.onchange_roundtrip.guard: guard.prod.forbid
+	@python3 scripts/verify/onchange_roundtrip_guard.py
+
+verify.frontend.onchange_contract_schema.guard: guard.prod.forbid
+	@python3 scripts/verify/onchange_contract_schema_guard.py
+
+verify.frontend.onchange_line_patch.guard: guard.prod.forbid
+	@python3 scripts/verify/onchange_line_patch_guard.py
+
+verify.frontend.x2many_command_semantic.guard: guard.prod.forbid
+	@python3 scripts/verify/x2many_command_semantic_guard.py
+
+verify.frontend.x2many_inline_edit.guard: guard.prod.forbid
+	@python3 scripts/verify/x2many_inline_edit_guard.py
+
+verify.contract.subviews.guard: guard.prod.forbid
+	@python3 scripts/verify/subviews_contract_guard.py
+
+verify.frontend.view_type_render_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/view_type_render_coverage_guard.py
+
+verify.frontend.view_type_contract_semantic.guard: guard.prod.forbid
+	@python3 scripts/verify/view_type_contract_semantic_guard.py
+
+verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.typecheck.strict verify.frontend.build
 	@echo "[OK] verify.frontend.quick.gate done"
 
 verify.frontend.suggested_action.contract_guard: guard.prod.forbid
@@ -2072,6 +2100,13 @@ verify.contract.mode.smoke: guard.prod.forbid check-compose-project check-compos
 verify.contract.api.mode.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/contract_api_mode_smoke.py
 
+.PHONY: verify.contract.view_type_semantic.smoke verify.contract.view_type_semantic.strict.smoke
+verify.contract.view_type_semantic.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/contract_view_type_semantic_smoke.py
+
+verify.contract.view_type_semantic.strict.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) VIEW_TYPE_SMOKE_MIN_MODELS=2 python3 scripts/verify/contract_view_type_semantic_smoke.py
+
 verify.contract.preflight: guard.prod.forbid
 	@if [ "$(BASELINE_FREEZE_ENFORCE)" = "1" ]; then \
 	  $(MAKE) --no-print-directory verify.baseline.freeze_guard; \
@@ -2091,6 +2126,12 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.hud.trace.smoke
 	@$(MAKE) --no-print-directory verify.scene.meta.trace.smoke
 	@$(MAKE) --no-print-directory verify.contract.api.mode.smoke
+	@$(MAKE) --no-print-directory verify.contract.view_type_semantic.smoke
+	@if [ "$(CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES)" = "1" ]; then \
+	  $(MAKE) --no-print-directory verify.contract.view_type_semantic.strict.smoke; \
+	else \
+	  echo "[verify.contract.preflight] CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0: skip strict view-type semantic smoke"; \
+	fi
 	@$(MAKE) --no-print-directory verify.scene.contract.shape
 	@$(MAKE) --no-print-directory contract.evidence.export
 

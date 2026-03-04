@@ -129,6 +129,20 @@ class PageAssembler:
                 mark_missing("app.view.config")
                 _logger.warning("app.view.config missing; fallback view contract for model=%s vt=%s", model, vt)
                 v_contract = {"type": vt}
+            except Exception as e:
+                data["degraded"] = True
+                reason = f"view_contract_fallback:{vt}:{type(e).__name__}"
+                if reason not in warnings:
+                    warnings.append(reason)
+                _logger.warning(
+                    "view contract assemble failed; fallback minimal contract model=%s vt=%s err=%s",
+                    model,
+                    vt,
+                    e,
+                )
+                v_contract = {"type": vt}
+
+            v_contract = self._coerce_view_contract_semantics(vt, v_contract)
 
             if vt == 'tree':
                 # 解析器没产出 columns 时，用严格列兜底
@@ -243,8 +257,46 @@ class PageAssembler:
         if missing_models:
             data["degraded"] = True
             data["missing_models"] = missing_models
+        if warnings:
             data["warnings"] = warnings
         return data, versions
+
+    def _coerce_view_contract_semantics(self, view_type, contract):
+        """标准化高级视图关键语义键，避免前端消费时出现结构漂移。"""
+        vt = str(view_type or "").strip().lower()
+        cfg = dict(contract or {})
+        nested = cfg.get(vt)
+        nested = nested if isinstance(nested, dict) else {}
+
+        if vt == "pivot":
+            measures = cfg.get("measures", nested.get("measures", []))
+            dimensions = cfg.get("dimensions", nested.get("dimensions", []))
+            cfg["measures"] = measures if isinstance(measures, list) else []
+            cfg["dimensions"] = dimensions if isinstance(dimensions, list) else []
+            return cfg
+        if vt == "graph":
+            gtype = cfg.get("type", nested.get("type", nested.get("type_default", "bar")))
+            cfg["type"] = str(gtype or "bar")
+            cfg["measure"] = str(cfg.get("measure", nested.get("measure", "")) or "")
+            cfg["dimension"] = str(cfg.get("dimension", nested.get("dimension", "")) or "")
+            return cfg
+        if vt in ("calendar", "gantt"):
+            date_start = cfg.get("date_start", nested.get("date_start", "date_start"))
+            date_stop = cfg.get("date_stop", nested.get("date_stop", "date_end"))
+            cfg["date_start"] = str(date_start or "date_start")
+            cfg["date_stop"] = str(date_stop or "date_end")
+            return cfg
+        if vt == "activity":
+            field = cfg.get("field", nested.get("field", "res_id"))
+            cfg["field"] = str(field or "res_id")
+            return cfg
+        if vt == "dashboard":
+            cards = cfg.get("cards", nested.get("cards", []))
+            kpis = cfg.get("kpis", nested.get("kpis", []))
+            cfg["cards"] = cards if isinstance(cards, list) else []
+            cfg["kpis"] = kpis if isinstance(kpis, list) else []
+            return cfg
+        return cfg
 
     def _inject_relation_entry_contract(self, data, model_name=""):
         fields = data.get("fields") if isinstance(data, dict) else None

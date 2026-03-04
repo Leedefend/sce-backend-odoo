@@ -6,9 +6,18 @@ import re
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.utils.reason_codes import (
+    REASON_ACTIVITY_PENDING,
     REASON_FILTER_NO_MATCH,
+    REASON_FOLLOWING,
+    REASON_MENTIONED,
     REASON_NO_WORK_ITEMS,
     REASON_OK,
+    REASON_PROJECT_HEALTH_RISK,
+    REASON_PROJECT_HEALTH_WARN,
+    REASON_RESPONSIBLE_OWNER,
+    REASON_TASK_ASSIGNED,
+    REASON_TIER_REVIEW_PENDING,
+    REASON_WORKFLOW_PENDING,
 )
 from odoo.addons.smart_construction_core.services.my_work_aggregate_service import WorkItemAggregateService
 from odoo.exceptions import AccessError
@@ -260,7 +269,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "source": "mail.activity",
                     "action_label": followup.get("action_label") or "",
                     "action_key": followup.get("action_key") or "",
-                    "reason_code": followup.get("reason_code") or "ACTIVITY_PENDING",
+                    "reason_code": followup.get("reason_code") or REASON_ACTIVITY_PENDING,
                     "priority": "medium",
                 })
         except Exception:
@@ -310,7 +319,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "source": "tier.review",
                     "action_label": "审批处理",
                     "action_key": "tier.review.approve",
-                    "reason_code": "TIER_REVIEW_PENDING",
+                    "reason_code": REASON_TIER_REVIEW_PENDING,
                     "priority": "high",
                 })
         except Exception:
@@ -358,7 +367,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "source": "sc.workflow.workitem",
                     "action_label": node_name or "流程处理",
                     "action_key": "sc.workflow.approve",
-                    "reason_code": "WORKFLOW_PENDING",
+                    "reason_code": REASON_WORKFLOW_PENDING,
                     "priority": "high",
                 })
         except Exception:
@@ -395,7 +404,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "source": "project.task",
                     "action_label": "任务处理",
                     "action_key": "project.task.open",
-                    "reason_code": "TASK_ASSIGNED",
+                    "reason_code": REASON_TASK_ASSIGNED,
                     "priority": "medium",
                 })
         except Exception:
@@ -438,7 +447,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             records = Project.search(domain, order="write_date desc, id desc", limit=limit)
             for rec in records:
                 health_state = str(getattr(rec, "health_state", "") or "").strip().lower()
-                reason_code = "PROJECT_HEALTH_RISK" if health_state == "risk" else "PROJECT_HEALTH_WARN"
+                reason_code = REASON_PROJECT_HEALTH_RISK if health_state == "risk" else REASON_PROJECT_HEALTH_WARN
                 rows.append({
                     "id": rec.id,
                     "title": rec.name or f"project.project#{rec.id}",
@@ -490,7 +499,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "deadline": "",
                     "scene_key": self._scene_for_model("project.project"),
                     "source": "project.project",
-                    "reason_code": "RESPONSIBLE_OWNER",
+                    "reason_code": REASON_RESPONSIBLE_OWNER,
                     "priority": "medium",
                 })
         except Exception:
@@ -518,7 +527,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "deadline": "",
                     "scene_key": self._scene_for_model(model),
                     "source": "mail.message",
-                    "reason_code": "MENTIONED",
+                    "reason_code": REASON_MENTIONED,
                     "priority": "low",
                 })
         except Exception:
@@ -545,7 +554,7 @@ class MyWorkSummaryHandler(BaseIntentHandler):
                     "deadline": "",
                     "scene_key": self._scene_for_model(model),
                     "source": "mail.followers",
-                    "reason_code": "FOLLOWING",
+                    "reason_code": REASON_FOLLOWING,
                     "priority": "low",
                 })
         except Exception:
