@@ -666,15 +666,67 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                 info['attachments'] = {'enabled': True}
             return info
 
-        # 小工具：识别 x2many 并构造最小子视图
+        relation_fields_cache = {}
+
+        def _relation_fields(relation_model):
+            model = str(relation_model or '').strip()
+            if not model:
+                return {}
+            if model in relation_fields_cache:
+                return relation_fields_cache[model]
+            try:
+                env_model = self.env[model]
+                fields_map = env_model.fields_get()
+            except Exception:
+                fields_map = {}
+            relation_fields_cache[model] = fields_map if isinstance(fields_map, dict) else {}
+            return relation_fields_cache[model]
+
+        def _infer_tree_columns(meta, relation_meta):
+            # 优先 name/display_name，补充可读的轻量列
+            preferred = ['name', 'display_name', 'code', 'state', 'type']
+            available = [k for k, v in (relation_meta or {}).items() if isinstance(v, dict)]
+            picked = []
+            for col in preferred:
+                if col in available and col not in picked:
+                    picked.append(col)
+            if not picked:
+                for col in available:
+                    ftype = str((relation_meta.get(col) or {}).get('type') or '').strip().lower()
+                    if ftype in ('one2many', 'many2many', 'binary', 'html'):
+                        continue
+                    picked.append(col)
+                    if len(picked) >= 4:
+                        break
+            if not picked:
+                picked = ['display_name']
+
+            out = []
+            for col in picked[:6]:
+                fmeta = relation_meta.get(col) or {}
+                selection = fmeta.get('selection')
+                out.append({
+                    'name': col,
+                    'label': fmeta.get('string') or col,
+                    'ttype': str(fmeta.get('type') or 'char'),
+                    'required': bool(fmeta.get('required')),
+                    'readonly': bool(fmeta.get('readonly')),
+                    'selection': selection if isinstance(selection, list) else [],
+                })
+            return out
+
+        # 小工具：识别 x2many 并构造最小子视图（结构化列契约）
         def _infer_x2many_subviews(fields_meta):
             sub = {}
             for fname, meta in (fields_meta or {}).items():
                 t = meta.get('type')
                 if t in ('one2many', 'many2many'):
+                    relation = str(meta.get('relation') or '').strip()
+                    rel_fields = _relation_fields(relation)
                     sub[fname] = {
-                        'tree': {'columns': ['display_name']},
-                        'policies': {'inline_edit': True, 'can_create': True, 'can_unlink': True}
+                        'tree': {'columns': _infer_tree_columns(meta, rel_fields)},
+                        'fields': rel_fields,
+                        'policies': {'inline_edit': True, 'can_create': True, 'can_unlink': True},
                     }
             return sub
 

@@ -15,6 +15,11 @@ Phase 11 backend core goals are closed:
 
 ## Evidence Index
 
+### Phase 11.2 Follow-up
+- [Phase 11.2 Contract Preflight Strict Rollout](./phase_11_2_contract_preflight_strict_rollout.md)
+  - strict advanced-view semantic smoke enabled by default in `verify.contract.preflight`
+  - preflight blockers cleaned (reason-code drift, legacy token path, role baseline alignment)
+
 ### Gate and CI preflight convergence
 - #315 `ci(gate): enforce contract drift preflight`
 - #316 `gate(full): run contract drift preflight`

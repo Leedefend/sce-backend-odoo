@@ -253,7 +253,7 @@ class ContractNormalizer:
         views = _ensure_dict(views, "views", warns)
 
         # 统一将 tuple -> list；对常见子键做基本兜底
-        for vt in ["tree", "form", "kanban", "pivot", "graph", "calendar", "gantt"]:
+        for vt in ["tree", "form", "kanban", "pivot", "graph", "calendar", "gantt", "activity", "dashboard"]:
             if vt in views and views[vt] is not None:
                 cfg = _ensure_dict(views[vt], f"views.{vt}", warns)
                 if vt == "tree":
@@ -269,6 +269,49 @@ class ContractNormalizer:
                     cfg["layout"] = _coerce_list(cfg["layout"], "views.form.layout", warns)
                     cfg.setdefault("statusbar", {})
                     cfg["statusbar"] = _ensure_dict(cfg["statusbar"], "views.form.statusbar", warns)
+                    cfg.setdefault("subviews", {})
+                    cfg["subviews"] = _ensure_dict(cfg["subviews"], "views.form.subviews", warns)
+                    normalized_subviews = {}
+                    for sub_name, sub_cfg in cfg["subviews"].items():
+                        key = _safe_str(sub_name, "").strip()
+                        if not key:
+                            continue
+                        sub_obj = _ensure_dict(sub_cfg, f"views.form.subviews.{key}", warns)
+                        tree_obj = _ensure_dict(sub_obj.get("tree", {}), f"views.form.subviews.{key}.tree", warns)
+                        columns_raw = _coerce_list(tree_obj.get("columns", []), f"views.form.subviews.{key}.tree.columns", warns)
+                        normalized_columns = []
+                        for col in columns_raw:
+                            if isinstance(col, str):
+                                cname = _safe_str(col, "").strip()
+                                if not cname:
+                                    continue
+                                normalized_columns.append({
+                                    "name": cname,
+                                    "label": cname,
+                                    "ttype": "char",
+                                    "required": False,
+                                    "readonly": False,
+                                    "selection": [],
+                                })
+                                continue
+                            col_obj = _ensure_dict(col, f"views.form.subviews.{key}.tree.columns[]", warns)
+                            cname = _safe_str(col_obj.get("name", ""), "").strip()
+                            if not cname:
+                                continue
+                            normalized_columns.append({
+                                "name": cname,
+                                "label": _safe_str(col_obj.get("label", cname), cname),
+                                "ttype": _safe_str(col_obj.get("ttype", "char"), "char"),
+                                "required": _safe_bool(col_obj.get("required", False), False),
+                                "readonly": _safe_bool(col_obj.get("readonly", False), False),
+                                "selection": _coerce_list(col_obj.get("selection", []), f"views.form.subviews.{key}.tree.columns[{cname}].selection", warns),
+                            })
+                        tree_obj["columns"] = normalized_columns
+                        sub_obj["tree"] = tree_obj
+                        sub_obj["fields"] = _ensure_dict(sub_obj.get("fields", {}), f"views.form.subviews.{key}.fields", warns)
+                        sub_obj["policies"] = _ensure_dict(sub_obj.get("policies", {}), f"views.form.subviews.{key}.policies", warns)
+                        normalized_subviews[key] = sub_obj
+                    cfg["subviews"] = normalized_subviews
                 elif vt == "pivot":
                     cfg.setdefault("measures", [])
                     cfg["measures"] = _ensure_str_list(cfg["measures"], "views.pivot.measures", warns)
@@ -285,6 +328,18 @@ class ContractNormalizer:
                     # 只兜底关键字段名，不做校验
                     cfg.setdefault("date_start", "date_start")
                     cfg.setdefault("date_stop", "date_end")
+                elif vt == "activity":
+                    # 最小可用兜底：主记录字段 + 活动字段
+                    cfg.setdefault("field", "res_id")
+                    cfg["field"] = _safe_str(cfg.get("field"), "res_id")
+                    cfg.setdefault("templates", {})
+                    cfg["templates"] = _ensure_dict(cfg["templates"], "views.activity.templates", warns)
+                elif vt == "dashboard":
+                    # dashboard 在 P1 先做只读语义兜底
+                    cfg.setdefault("cards", [])
+                    cfg["cards"] = _coerce_list(cfg["cards"], "views.dashboard.cards", warns)
+                    cfg.setdefault("kpis", [])
+                    cfg["kpis"] = _coerce_list(cfg["kpis"], "views.dashboard.kpis", warns)
                 views[vt] = cfg
 
         return views

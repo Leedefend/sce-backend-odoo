@@ -107,7 +107,12 @@ def get_user_from_token():
         token_version = int(payload.get("token_version") or 0)
         if token_version != current_version:
             raise AccessDenied("Token 已撤销")
-        return user
+        # Return a user record bound to the current request env/cursor.
+        # The `user` record above was created on a temporary cursor.
+        request_user = request.env["res.users"].sudo().browse(user_id)
+        if not request_user.exists():
+            raise AccessDenied("Token 中指定的用户不存在")
+        return request_user
 
     elif session_uid:
         user = request.env["res.users"].browse(session_uid)

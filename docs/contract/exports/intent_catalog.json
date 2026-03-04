@@ -383,6 +383,59 @@
       "inferred_example": null
     },
     {
+      "intent": "api.onchange",
+      "owner": {
+        "module": "addons/smart_core/handlers/api_onchange.py",
+        "class": "ApiOnchangeHandler"
+      },
+      "aliases": [],
+      "stability": "stable",
+      "has_idempotency_window": false,
+      "test_refs": 0,
+      "request_schema_hint": [
+        "changed",
+        "changed_fields",
+        "context",
+        "model",
+        "values"
+      ],
+      "response_data_schema_hint": [],
+      "error_schema_hint": [],
+      "observed_reason_codes": [],
+      "examples": [
+        {
+          "case": "__inferred__",
+          "snapshot_file": "",
+          "request_keys": [
+            "changed",
+            "changed_fields",
+            "context",
+            "model",
+            "values"
+          ],
+          "response_data_keys": [],
+          "response_error_keys": [],
+          "inferred": true,
+          "source": "handler_params_scan"
+        }
+      ],
+      "inferred_example": {
+        "case": "__inferred__",
+        "snapshot_file": "",
+        "request_keys": [
+          "changed",
+          "changed_fields",
+          "context",
+          "model",
+          "values"
+        ],
+        "response_data_keys": [],
+        "response_error_keys": [],
+        "inferred": true,
+        "source": "handler_params_scan"
+      }
+    },
+    {
       "intent": "app.catalog",
       "owner": {
         "module": "addons/smart_core/handlers/app_catalog.py",
@@ -12976,6 +13029,7 @@
       "request_schema_hint": [
         "capability_key",
         "event_type",
+        "params",
         "scene_key"
       ],
       "response_data_schema_hint": [
