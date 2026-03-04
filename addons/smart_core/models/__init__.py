@@ -2,3 +2,4 @@
 from . import dashboard
 from . import dashboard_widget
 from . import res_users
+from . import app_action_gateway
