@@ -36,6 +36,7 @@ def build_evidence(
     backend_architecture_full_report: dict,
     backend_evidence_manifest_report: dict,
     scene_contract_coverage_report: dict,
+    grouped_signature_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -213,6 +214,20 @@ def build_evidence(
             ),
             "report": "artifacts/scene_contract_coverage_brief.json",
         },
+        "grouped_pagination_contract": {
+            "version": str(grouped_signature_report.get("version") or "").strip(),
+            "route_state_key": str(
+                (((grouped_signature_report.get("grouped_pagination_route_state") or {}).get("key")) or "")
+            ).strip(),
+            "supports_group_key": bool((((grouped_signature_report.get("grouped_contract_fields") or {}).get("group_key")))),
+            "supports_page_has_prev": bool(
+                ((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_has_prev"))
+            ),
+            "supports_page_has_next": bool(
+                ((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_has_next"))
+            ),
+            "report": "scripts/verify/baselines/fe_tree_grouped_signature.json",
+        },
     }
     return evidence
 
@@ -234,6 +249,7 @@ def to_markdown(evidence: dict) -> str:
     a2 = evidence["backend_architecture_full"]
     m2 = evidence["backend_evidence_manifest"]
     scb = evidence["scene_contract_coverage"]
+    gpc = evidence["grouped_pagination_contract"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -351,6 +367,14 @@ def to_markdown(evidence: dict) -> str:
         f"- interaction_ready_ratio: {scb['interaction_ready_ratio']}",
         f"- report: `{scb['report']}`",
         "",
+        "## Grouped Pagination Contract",
+        f"- version: {gpc['version'] or '-'}",
+        f"- route_state_key: {gpc['route_state_key'] or '-'}",
+        f"- supports_group_key: {gpc['supports_group_key']}",
+        f"- supports_page_has_prev: {gpc['supports_page_has_prev']}",
+        f"- supports_page_has_next: {gpc['supports_page_has_next']}",
+        f"- report: `{gpc['report']}`",
+        "",
         "## Top Observed reason_code",
     ]
     top_codes = i.get("top_observed_reason_codes") or []
@@ -381,6 +405,7 @@ def main() -> int:
     parser.add_argument("--backend-architecture-full-report", default="artifacts/backend/backend_architecture_full_report.json")
     parser.add_argument("--backend-evidence-manifest-report", default="artifacts/backend/backend_evidence_manifest.json")
     parser.add_argument("--scene-contract-coverage-report", default="artifacts/scene_contract_coverage_brief.json")
+    parser.add_argument("--grouped-signature-report", default="scripts/verify/baselines/fe_tree_grouped_signature.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -401,6 +426,7 @@ def main() -> int:
     backend_architecture_full_report = load_json_optional(Path(args.backend_architecture_full_report), {})
     backend_evidence_manifest_report = load_json_optional(Path(args.backend_evidence_manifest_report), {})
     scene_contract_coverage_report = load_json_optional(Path(args.scene_contract_coverage_report), {})
+    grouped_signature_report = load_json_optional(Path(args.grouped_signature_report), {})
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -432,6 +458,8 @@ def main() -> int:
         raise SystemExit("backend evidence manifest report must be object")
     if not isinstance(scene_contract_coverage_report, dict):
         raise SystemExit("scene contract coverage report must be object")
+    if not isinstance(grouped_signature_report, dict):
+        raise SystemExit("grouped signature report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -450,6 +478,7 @@ def main() -> int:
         backend_architecture_full_report,
         backend_evidence_manifest_report,
         scene_contract_coverage_report,
+        grouped_signature_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)
