@@ -12,7 +12,8 @@
     "boundary_import_report",
     "load_view_access_contract",
     "backend_architecture_full",
-    "backend_evidence_manifest"
+    "backend_evidence_manifest",
+    "scene_contract_coverage"
   ],
   "required_section_keys": {
     "intent_catalog": [
@@ -76,6 +77,14 @@
       "artifact_count",
       "missing_count",
       "total_size_bytes",
+      "report"
+    ],
+    "scene_contract_coverage": [
+      "ok",
+      "scene_count_actual",
+      "intent_count_actual",
+      "renderable_ratio",
+      "interaction_ready_ratio",
       "report"
     ]
   }

@@ -50,6 +50,16 @@
    - `verify.contract.preflight` 已纳入 `verify.contract.scene_coverage.brief`
    - 预检链路中的 legacy docs 阶段补齐发布文档标记（deprecated/successor/sunset/migration hint），避免非功能性阻塞
 
+7. 证据导出闭环（contract evidence）
+   - `scripts/contract/export_evidence.py` 新增 `scene_contract_coverage` 区块
+   - 导出内容含：
+     - `scene_count_actual`
+     - `intent_count_actual`
+     - `renderable_ratio`
+     - `interaction_ready_ratio`
+   - `verify.contract.evidence.export` 新增依赖：`verify.contract.scene_coverage.brief`
+   - 同步 schema 基线：`scripts/verify/baselines/contract_evidence_schema_guard.json`
+
 ## 验证结果
 
 1. `python3 scripts/verify/grouped_pagination_semantic_guard.py`：通过
@@ -58,6 +68,9 @@
 4. `make verify.portal.tree_view_smoke.container`：通过
 5. `make verify.contract.scene_coverage.brief`：通过
 6. `BASELINE_FREEZE_ENFORCE=0 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 make verify.contract.preflight`：通过
+7. `python3 scripts/contract/export_evidence.py`：通过
+8. `python3 scripts/verify/contract_evidence_schema_guard.py`：通过
+9. `python3 scripts/verify/contract_evidence_guard.py`：通过
 
 ## 变更清单
 
@@ -68,3 +81,5 @@
 5. `docs/ops/assessment/odoo_native_view_contract_gap_iteration_v0_5_mini_progress_2026-03-04.md`
 6. `scripts/verify/scene_contract_coverage_brief.py`
 7. `docs/ops/releases/current/phase_11_2_contract_preflight_strict_rollout.md`
+8. `scripts/contract/export_evidence.py`
+9. `scripts/verify/baselines/contract_evidence_schema_guard.json`
