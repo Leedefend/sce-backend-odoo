@@ -101,6 +101,7 @@ def main() -> int:
             "supports_page_window",
             "request_offset_matches_observed",
             "page_window_matches_range",
+            "consistency_score",
             "response_keys",
         ):
             if key not in row:
@@ -118,6 +119,11 @@ def main() -> int:
                 errors.append(f"e2e grouped_cases[{idx}].{key} must be bool")
         if "response_keys" in row and not isinstance(row.get("response_keys"), list):
             errors.append(f"e2e grouped_cases[{idx}].response_keys must be list")
+        consistency_score = row.get("consistency_score")
+        if not isinstance(consistency_score, int):
+            errors.append(f"e2e grouped_cases[{idx}].consistency_score must be int")
+        elif consistency_score < 0 or consistency_score > 5:
+            errors.append(f"e2e grouped_cases[{idx}].consistency_score must be in [0,5]")
 
         if row.get("status") == "ok" and row.get("has_grouped_rows") is True:
             if row.get("supports_group_key") is not True:

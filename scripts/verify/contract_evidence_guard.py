@@ -62,6 +62,11 @@ def main() -> int:
         "require_grouped_supports_page_has_next": True,
         "require_grouped_supports_page_window": True,
         "require_grouped_window_range_consistency": True,
+        "require_grouped_consistency_ok": True,
+        "min_grouped_consistency_score": 1.0,
+        "require_grouped_drift_summary_ok": True,
+        "min_grouped_drift_e2e_case_count": 1,
+        "require_grouped_drift_export_marker_full_hit": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -91,6 +96,7 @@ def main() -> int:
         "backend_evidence_manifest",
         "scene_contract_coverage",
         "grouped_pagination_contract",
+        "grouped_drift_summary",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -301,6 +307,31 @@ def main() -> int:
             grouped.get("window_range_consistency")
         ):
             errors.append("grouped_pagination_contract.window_range_consistency must be true under baseline policy")
+        if int(grouped.get("consistency_signals_total") or 0) < 1:
+            errors.append("grouped_pagination_contract.consistency_signals_total must be >= 1")
+        if int(grouped.get("consistency_signals_passed") or 0) > int(grouped.get("consistency_signals_total") or 0):
+            errors.append("grouped_pagination_contract.consistency_signals_passed must be <= consistency_signals_total")
+        min_grouped_consistency_score = float(policy.get("min_grouped_consistency_score", 1.0) or 1.0)
+        if float(grouped.get("consistency_score") or 0.0) < min_grouped_consistency_score:
+            errors.append(
+                "grouped_pagination_contract.consistency_score must be >= "
+                f"{min_grouped_consistency_score}"
+            )
+        if bool(policy.get("require_grouped_consistency_ok", True)) and not bool(grouped.get("consistency_ok")):
+            errors.append("grouped_pagination_contract.consistency_ok must be true under baseline policy")
+
+    grouped_drift = payload.get("grouped_drift_summary") if isinstance(payload.get("grouped_drift_summary"), dict) else {}
+    if bool(policy.get("require_grouped_drift_summary_ok", True)) and not bool(grouped_drift.get("ok")):
+        errors.append("grouped_drift_summary.ok must be true under baseline policy")
+    min_grouped_drift_e2e_case_count = int(policy.get("min_grouped_drift_e2e_case_count", 1) or 1)
+    if int(grouped_drift.get("e2e_case_count") or 0) < min_grouped_drift_e2e_case_count:
+        errors.append(
+            "grouped_drift_summary.e2e_case_count must be >= "
+            f"{min_grouped_drift_e2e_case_count}"
+        )
+    if bool(policy.get("require_grouped_drift_export_marker_full_hit", True)):
+        if int(grouped_drift.get("export_marker_hits") or 0) != int(grouped_drift.get("export_marker_total") or 0):
+            errors.append("grouped_drift_summary export markers must be fully hit under baseline policy")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
