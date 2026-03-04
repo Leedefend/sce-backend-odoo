@@ -66,6 +66,7 @@ def main() -> int:
     summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
     trend = report.get("trend") if isinstance(report.get("trend"), dict) else {}
     delta = trend.get("delta") if isinstance(trend.get("delta"), dict) else {}
+    has_previous = bool(trend.get("has_previous"))
 
     if bool(policy.get("require_ok", True)) and not bool(report.get("ok")):
         errors.append("grouped_governance_brief_guard.ok must be true")
@@ -110,18 +111,53 @@ def main() -> int:
 
     if bool(policy.get("forbid_coverage_ratio_regression", True)):
         cov_delta = delta.get("governance_coverage_ratio_delta")
-        if isinstance(cov_delta, (int, float)) and float(cov_delta) < 0:
+        if has_previous and bool(policy.get("require_trend_delta_when_previous", True)) and not isinstance(
+            cov_delta, (int, float)
+        ):
+            errors.append("trend.delta.governance_coverage_ratio_delta must be numeric when has_previous=true")
+        elif isinstance(cov_delta, (int, float)) and float(cov_delta) < 0:
             errors.append("trend.delta.governance_coverage_ratio_delta must be >= 0")
 
     if bool(policy.get("forbid_governance_failure_count_increase", True)):
         failure_delta = delta.get("governance_failure_count")
-        if isinstance(failure_delta, int) and failure_delta > 0:
+        if has_previous and bool(policy.get("require_trend_delta_when_previous", True)) and not isinstance(failure_delta, int):
+            errors.append("trend.delta.governance_failure_count must be int when has_previous=true")
+        elif isinstance(failure_delta, int) and failure_delta > 0:
             errors.append("trend.delta.governance_failure_count must be <= 0")
 
     if bool(policy.get("forbid_grouped_consistency_score_regression", True)):
         consistency_delta = delta.get("grouped_e2e_max_consistency_score")
-        if isinstance(consistency_delta, int) and consistency_delta < 0:
+        if has_previous and bool(policy.get("require_trend_delta_when_previous", True)) and not isinstance(
+            consistency_delta, int
+        ):
+            errors.append("trend.delta.grouped_e2e_max_consistency_score must be int when has_previous=true")
+        elif isinstance(consistency_delta, int) and consistency_delta < 0:
             errors.append("trend.delta.grouped_e2e_max_consistency_score must be >= 0")
+
+    if bool(policy.get("forbid_grouped_e2e_case_count_regression", False)):
+        e2e_case_delta = delta.get("grouped_e2e_case_count")
+        if has_previous and bool(policy.get("require_trend_delta_when_previous", True)) and not isinstance(e2e_case_delta, int):
+            errors.append("trend.delta.grouped_e2e_case_count must be int when has_previous=true")
+        elif isinstance(e2e_case_delta, int) and e2e_case_delta < 0:
+            errors.append("trend.delta.grouped_e2e_case_count must be >= 0")
+
+    if bool(policy.get("forbid_grouped_rows_case_count_regression", False)):
+        grouped_rows_case_delta = delta.get("grouped_e2e_grouped_rows_case_count")
+        if has_previous and bool(policy.get("require_trend_delta_when_previous", True)) and not isinstance(
+            grouped_rows_case_delta, int
+        ):
+            errors.append("trend.delta.grouped_e2e_grouped_rows_case_count must be int when has_previous=true")
+        elif isinstance(grouped_rows_case_delta, int) and grouped_rows_case_delta < 0:
+            errors.append("trend.delta.grouped_e2e_grouped_rows_case_count must be >= 0")
+
+    if bool(policy.get("forbid_grouped_export_marker_hits_regression", False)):
+        marker_hits_delta = delta.get("grouped_export_marker_hits")
+        if has_previous and bool(policy.get("require_trend_delta_when_previous", True)) and not isinstance(
+            marker_hits_delta, int
+        ):
+            errors.append("trend.delta.grouped_export_marker_hits must be int when has_previous=true")
+        elif isinstance(marker_hits_delta, int) and marker_hits_delta < 0:
+            errors.append("trend.delta.grouped_export_marker_hits must be >= 0")
 
     if errors:
         print("[grouped_governance_brief_baseline_guard] FAIL")
