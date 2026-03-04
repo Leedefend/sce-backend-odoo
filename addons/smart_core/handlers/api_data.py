@@ -192,6 +192,64 @@ class ApiDataHandler(BaseIntentHandler):
             return items if len(items) > 1 else items[0]
         return None
 
+    def _primary_group_by_field(self, group_by) -> str:
+        if isinstance(group_by, str):
+            return group_by.strip()
+        if isinstance(group_by, (tuple, list)) and group_by:
+            return str(group_by[0] or "").strip()
+        return ""
+
+    def _selection_label(self, env_model, field_name: str, value):
+        field = env_model._fields.get(field_name)
+        if not field:
+            return str(value)
+        try:
+            selection = field.selection
+            if callable(selection):
+                selection = selection(env_model)
+            pairs = selection or []
+            mapping = {str(key): str(label) for key, label in pairs if key is not None}
+            return mapping.get(str(value), str(value))
+        except Exception:
+            return str(value)
+
+    def _normalize_group_item(self, env_model, field_name: str, value):
+        if isinstance(value, (list, tuple)) and len(value) >= 2:
+            return {"value": value[0], "label": str(value[1])}
+        if value in (False, None):
+            return {"value": None, "label": "未设置"}
+        field = env_model._fields.get(field_name)
+        ftype = str(getattr(field, "type", "") or "").strip().lower() if field else ""
+        if ftype == "selection":
+            return {"value": value, "label": self._selection_label(env_model, field_name, value)}
+        return {"value": value, "label": str(value)}
+
+    def _build_group_summary(self, env_model, domain, group_by, limit: int = 20):
+        field_name = self._primary_group_by_field(group_by)
+        if not field_name:
+            return []
+        if field_name not in env_model._fields:
+            return []
+        try:
+            rows = env_model.read_group(domain or [], [field_name], [field_name], limit=limit, lazy=False)
+        except Exception:
+            _logger.exception("read_group failed model=%s group_by=%s", env_model._name, field_name)
+            return []
+        out = []
+        count_key = f"{field_name}_count"
+        for row in rows or []:
+            normalized = self._normalize_group_item(env_model, field_name, row.get(field_name))
+            out.append(
+                {
+                    "field": field_name,
+                    "value": normalized.get("value"),
+                    "label": normalized.get("label"),
+                    "count": int(row.get(count_key) or row.get("__count") or 0),
+                    "domain": row.get("__domain") if isinstance(row.get("__domain"), list) else [],
+                }
+            )
+        return out
+
     def _safe_eval_with_runtime(self, raw: str):
         if not isinstance(raw, str):
             return None
@@ -491,10 +549,12 @@ class ApiDataHandler(BaseIntentHandler):
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
+        group_summary = self._build_group_summary(env_model, domain, group_by, limit=min(limit or 20, 50))
 
         data = {
             "records": rows,
             "next_offset": offset + len(rows),
+            "group_summary": group_summary,
         }
         if need_total:
             data["total"] = int(total or 0)
