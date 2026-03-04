@@ -174,6 +174,24 @@ class ApiDataHandler(BaseIntentHandler):
                         return []
         return []
 
+    def _normalize_group_by(self, val):
+        if val is None:
+            return None
+        if isinstance(val, str):
+            text = val.strip()
+            if not text:
+                return None
+            if "," in text:
+                items = [part.strip() for part in text.split(",") if part.strip()]
+                return items or None
+            return text
+        if isinstance(val, (tuple, list)):
+            items = [str(part).strip() for part in val if str(part).strip()]
+            if not items:
+                return None
+            return items if len(items) > 1 else items[0]
+        return None
+
     def _safe_eval_with_runtime(self, raw: str):
         if not isinstance(raw, str):
             return None
@@ -420,12 +438,18 @@ class ApiDataHandler(BaseIntentHandler):
         domain = self._normalize_domain(self._dig(p, "domain"))
         domain_raw = self._get_str(p, "domain_raw", "").strip()
         context_raw = self._get_str(p, "context_raw", "").strip()
+        group_by = self._normalize_group_by(self._dig(p, "group_by"))
         search_term = self._get_str(p, "search_term", "").strip()
 
         if context_raw:
             parsed_ctx = self._safe_eval_with_runtime(context_raw)
             if isinstance(parsed_ctx, dict):
                 ctx = {**ctx, **parsed_ctx}
+                if group_by is None:
+                    group_by = self._normalize_group_by(parsed_ctx.get("group_by"))
+
+        if group_by is not None:
+            ctx = {**ctx, "group_by": group_by}
 
         if domain_raw:
             parsed_domain = self._safe_eval_with_runtime(domain_raw)
@@ -485,6 +509,7 @@ class ApiDataHandler(BaseIntentHandler):
             "fields": fields_safe,
             "domain_raw_applied": bool(domain_raw),
             "context_raw_applied": bool(context_raw),
+            "group_by": group_by,
         }
         return data, meta
 
