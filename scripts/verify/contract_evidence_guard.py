@@ -161,6 +161,12 @@ def main() -> int:
         "require_grouped_governance_trend_report_json_suffix": "grouped_governance_trend_consistency_guard.json",
         "require_grouped_governance_trend_report_md_prefix": "artifacts/",
         "require_grouped_governance_trend_report_md_suffix": "grouped_governance_trend_consistency_guard.md",
+        "require_grouped_governance_trend_report_alignment": True,
+        "require_grouped_governance_trend_report_md_alignment": True,
+        "require_grouped_governance_trend_report_md_title": "# Grouped Governance Trend Consistency Guard",
+        "require_grouped_governance_trend_report_pair_consistent": True,
+        "require_grouped_governance_trend_report_pair_same_parent": True,
+        "require_grouped_governance_trend_report_pair_same_stem": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -716,6 +722,48 @@ def main() -> int:
         errors.append("grouped_governance_trend_consistency.report_md must start with " + trend_md_prefix)
     if trend_md_suffix and not trend_report_md.endswith(trend_md_suffix):
         errors.append("grouped_governance_trend_consistency.report_md must end with " + trend_md_suffix)
+    if bool(policy.get("require_grouped_governance_trend_report_alignment", True)):
+        trend_report_path = _to_abs_report_path(grouped_trend.get("report_json"))
+        trend_source_report = _load_json(trend_report_path) if isinstance(trend_report_path, Path) else {}
+        if not trend_source_report:
+            errors.append("grouped_governance_trend_consistency.report_json must point to a readable report")
+        else:
+            trend_source_summary = (
+                trend_source_report.get("summary")
+                if isinstance(trend_source_report.get("summary"), dict)
+                else {}
+            )
+            if bool(grouped_trend.get("ok")) != bool(trend_source_report.get("ok")):
+                errors.append("grouped_governance_trend_consistency.ok must align with source report ok")
+            if bool(grouped_trend.get("has_previous_aligned")) != bool(trend_source_summary.get("has_previous_aligned")):
+                errors.append("grouped_governance_trend_consistency.has_previous_aligned must align with source report")
+            if bool(grouped_trend.get("brief_delta_types_ok")) != bool(trend_source_summary.get("brief_delta_types_ok")):
+                errors.append("grouped_governance_trend_consistency.brief_delta_types_ok must align with source report")
+            if bool(grouped_trend.get("matrix_delta_types_ok")) != bool(trend_source_summary.get("matrix_delta_types_ok")):
+                errors.append("grouped_governance_trend_consistency.matrix_delta_types_ok must align with source report")
+    if bool(policy.get("require_grouped_governance_trend_report_md_alignment", True)):
+        trend_report_md_path = _to_abs_report_path(grouped_trend.get("report_md"))
+        trend_report_md_text = _load_text(trend_report_md_path)
+        if not trend_report_md_text:
+            errors.append("grouped_governance_trend_consistency.report_md must point to a readable markdown report")
+        else:
+            trend_expected_title = str(policy.get("require_grouped_governance_trend_report_md_title") or "").strip()
+            if trend_expected_title and trend_expected_title not in trend_report_md_text:
+                errors.append("grouped_governance_trend_consistency.report_md missing required title")
+    if bool(policy.get("require_grouped_governance_trend_report_pair_consistent", True)):
+        trend_report_json_rel = _to_rel_posix(grouped_trend.get("report_json"))
+        trend_report_md_rel = _to_rel_posix(grouped_trend.get("report_md"))
+        if not trend_report_json_rel or not trend_report_md_rel:
+            errors.append("grouped_governance_trend_consistency.report_json/report_md must both be non-empty")
+        else:
+            trend_json_path = Path(trend_report_json_rel)
+            trend_md_path = Path(trend_report_md_rel)
+            if bool(policy.get("require_grouped_governance_trend_report_pair_same_parent", True)):
+                if trend_json_path.parent.as_posix() != trend_md_path.parent.as_posix():
+                    errors.append("grouped_governance_trend_consistency.report_json/report_md must share same parent")
+            if bool(policy.get("require_grouped_governance_trend_report_pair_same_stem", True)):
+                if trend_json_path.with_suffix("").name != trend_md_path.with_suffix("").name:
+                    errors.append("grouped_governance_trend_consistency.report_json/report_md must share same stem")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

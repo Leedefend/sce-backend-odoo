@@ -87,5 +87,11 @@
   "require_grouped_governance_trend_report_json_prefix": "artifacts/",
   "require_grouped_governance_trend_report_json_suffix": "grouped_governance_trend_consistency_guard.json",
   "require_grouped_governance_trend_report_md_prefix": "artifacts/",
-  "require_grouped_governance_trend_report_md_suffix": "grouped_governance_trend_consistency_guard.md"
+  "require_grouped_governance_trend_report_md_suffix": "grouped_governance_trend_consistency_guard.md",
+  "require_grouped_governance_trend_report_alignment": true,
+  "require_grouped_governance_trend_report_md_alignment": true,
+  "require_grouped_governance_trend_report_md_title": "# Grouped Governance Trend Consistency Guard",
+  "require_grouped_governance_trend_report_pair_consistent": true,
+  "require_grouped_governance_trend_report_pair_same_parent": true,
+  "require_grouped_governance_trend_report_pair_same_stem": true
 }
