@@ -226,6 +226,9 @@ def build_evidence(
             "supports_page_has_next": bool(
                 ((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_has_next"))
             ),
+            "supports_page_window": bool(
+                ((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_window"))
+            ),
             "report": "scripts/verify/baselines/fe_tree_grouped_signature.json",
         },
     }
@@ -373,6 +376,7 @@ def to_markdown(evidence: dict) -> str:
         f"- supports_group_key: {gpc['supports_group_key']}",
         f"- supports_page_has_prev: {gpc['supports_page_has_prev']}",
         f"- supports_page_has_next: {gpc['supports_page_has_next']}",
+        f"- supports_page_window: {gpc['supports_page_window']}",
         f"- report: `{gpc['report']}`",
         "",
         "## Top Observed reason_code",
