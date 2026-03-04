@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 API_DATA = ROOT / "addons/smart_core/handlers/api_data.py"
 ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
 LIST_PAGE = ROOT / "frontend/apps/web/src/pages/ListPage.vue"
+SCHEMA = ROOT / "frontend/packages/schema/src/index.ts"
 
 
 def _read(path: Path) -> str:
@@ -23,6 +24,7 @@ def main() -> int:
         api_data = _read(API_DATA)
         action_view = _read(ACTION_VIEW)
         list_page = _read(LIST_PAGE)
+        schema = _read(SCHEMA)
     except FileNotFoundError as exc:
         print("[FAIL] grouped_rows_runtime_guard")
         print(f"- {exc}")
@@ -107,6 +109,22 @@ def main() -> int:
         if marker not in list_page:
             errors.append(f"list_page missing marker: {marker}")
 
+    schema_markers = [
+        "export interface ApiDataListResult {",
+        "grouped_rows?: Array<{",
+        "group_key?: string;",
+        "page_offset?: number;",
+        "page_limit?: number;",
+        "page_window?: {",
+        "page_has_prev?: boolean;",
+        "page_has_next?: boolean;",
+        "export interface ApiDataListRequest {",
+        "group_page_offsets?: Record<string, number>;",
+    ]
+    for marker in schema_markers:
+        if marker not in schema:
+            errors.append(f"schema missing marker: {marker}")
+
     if errors:
         print("[FAIL] grouped_rows_runtime_guard")
         for line in errors:
@@ -117,6 +135,7 @@ def main() -> int:
     print(f"- api_data: {API_DATA}")
     print(f"- action_view: {ACTION_VIEW}")
     print(f"- list_page: {LIST_PAGE}")
+    print(f"- schema: {SCHEMA}")
     return 0
 
 
