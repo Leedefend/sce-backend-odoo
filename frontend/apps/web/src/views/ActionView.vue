@@ -388,6 +388,11 @@ type GroupedRow = {
   domain?: unknown[];
   pageOffset: number;
   pageLimit: number;
+  pageCurrent?: number;
+  pageTotal?: number;
+  pageRangeStart?: number;
+  pageRangeEnd?: number;
+  pageSyncedFromServer?: boolean;
   loading?: boolean;
 };
 const groupedRows = ref<GroupedRow[]>([]);
@@ -1354,9 +1359,24 @@ async function handleGroupedRowsPageChange(group: {
       order: sortLabel.value,
     });
     const rows = Array.isArray(result.data?.records) ? (result.data.records as Array<Record<string, unknown>>) : [];
+    const nextCurrent = Math.floor(nextOffset / pageLimit) + 1;
+    const nextTotal = Math.max(1, Math.ceil(Number(found.count || 0) / pageLimit));
+    const nextRangeStart = Number(found.count || 0) > 0 ? nextOffset + 1 : 0;
+    const nextRangeEnd = Number(found.count || 0) > 0 ? Math.min(Number(found.count || 0), nextOffset + pageLimit) : 0;
     groupedRows.value = groupedRows.value.map((item) =>
       item.key === group.key
-        ? { ...item, sampleRows: rows, pageOffset: nextOffset, pageLimit, loading: false }
+        ? {
+          ...item,
+          sampleRows: rows,
+          pageOffset: nextOffset,
+          pageLimit,
+          pageCurrent: nextCurrent,
+          pageTotal: nextTotal,
+          pageRangeStart: nextRangeStart,
+          pageRangeEnd: nextRangeEnd,
+          pageSyncedFromServer: true,
+          loading: false,
+        }
         : item,
     );
     groupPageOffsets.value = { ...groupPageOffsets.value, [group.key]: nextOffset };
@@ -1369,7 +1389,10 @@ async function handleGroupedRowsPageChange(group: {
 async function hydrateGroupedRowsByOffset() {
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel) return;
-  const candidates = groupedRows.value.filter((item) => Number(item.pageOffset || 0) > 0);
+  // When backend already returns offset-aligned sample_rows for each group, skip redundant hydration fetches.
+  const candidates = groupedRows.value.filter(
+    (item) => Number(item.pageOffset || 0) > 0 && !item.pageSyncedFromServer,
+  );
   if (!candidates.length) return;
   const keys = new Set(candidates.map((item) => item.key));
   groupedRows.value = groupedRows.value.map((item) => (keys.has(item.key) ? { ...item, loading: true } : item));
@@ -2371,6 +2394,7 @@ async function load() {
       domain_raw: resolveEffectiveFilterDomainRaw(),
       group_by: activeGroupByField.value || undefined,
       group_sample_limit: groupSampleLimit.value,
+      group_page_offsets: groupPageOffsets.value,
       context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
       context_raw: resolveEffectiveRequestContextRaw(),
       limit: contractLimit.value,
@@ -2404,11 +2428,17 @@ async function load() {
           domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
           pageOffset: normalizeGroupPageOffset(
-            Number(groupPageOffsets.value[buildGroupKey(item.field, item.value, label)] || 0),
-            groupSampleLimit.value,
+            Number((item.page_offset ?? groupPageOffsets.value[buildGroupKey(item.field, item.value, label)]) || 0),
+            Number(item.page_limit || groupSampleLimit.value),
             Number(item.count || 0),
           ),
-          pageLimit: groupSampleLimit.value,
+          pageLimit: Math.max(1, Number(item.page_limit || groupSampleLimit.value || 3)),
+          pageCurrent: Number(item.page_current || 0) > 0 ? Number(item.page_current || 0) : undefined,
+          pageTotal: Number(item.page_total || 0) > 0 ? Number(item.page_total || 0) : undefined,
+          pageRangeStart: Number(item.page_range_start || 0) >= 0 ? Number(item.page_range_start || 0) : undefined,
+          pageRangeEnd: Number(item.page_range_end || 0) >= 0 ? Number(item.page_range_end || 0) : undefined,
+          pageSyncedFromServer: Object.prototype.hasOwnProperty.call(item, 'page_offset')
+            || Object.prototype.hasOwnProperty.call(item, 'page_limit'),
           loading: false,
         };
       })

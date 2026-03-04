@@ -15,6 +15,7 @@ import io
 import hashlib
 import json
 from datetime import datetime
+from urllib.parse import unquote
 
 from odoo.tools.safe_eval import safe_eval
 from odoo.exceptions import AccessError
@@ -192,6 +193,53 @@ class ApiDataHandler(BaseIntentHandler):
             return items if len(items) > 1 else items[0]
         return None
 
+    def _build_group_key(self, field_name: str, value: Any) -> str:
+        field_part = str(field_name or "group").strip() or "group"
+        if isinstance(value, (str, int, float, bool)):
+            value_part = str(value)
+        else:
+            try:
+                value_part = json.dumps(value, ensure_ascii=False, default=str)
+            except Exception:
+                value_part = str(value)
+        return f"{field_part}:{value_part}"
+
+    def _normalize_group_page_offsets(self, val) -> Dict[str, int]:
+        out: Dict[str, int] = {}
+        if isinstance(val, dict):
+            for raw_key, raw_offset in val.items():
+                key = str(raw_key or "").strip()
+                if not key:
+                    continue
+                try:
+                    offset = int(raw_offset)
+                except Exception:
+                    continue
+                if offset < 0:
+                    continue
+                out[key] = offset
+            return out
+        if isinstance(val, str):
+            text = val.strip()
+            if not text:
+                return out
+            # 兼容 route 风格: k1:0;k2:3（key 可能经过 encodeURIComponent）
+            for pair in text.split(";"):
+                if ":" not in pair:
+                    continue
+                raw_key, raw_offset = pair.split(":", 1)
+                key = unquote(str(raw_key or "").strip())
+                if not key:
+                    continue
+                try:
+                    offset = int(raw_offset)
+                except Exception:
+                    continue
+                if offset < 0:
+                    continue
+                out[key] = offset
+        return out
+
     def _primary_group_by_field(self, group_by) -> str:
         if isinstance(group_by, str):
             return group_by.strip()
@@ -250,20 +298,41 @@ class ApiDataHandler(BaseIntentHandler):
             )
         return out
 
-    def _build_grouped_rows(self, env_model, domain, group_by, fields_safe: List[str], limit: int = 20, sample_limit: int = 3):
+    def _build_grouped_rows(
+        self,
+        env_model,
+        domain,
+        group_by,
+        fields_safe: List[str],
+        limit: int = 20,
+        sample_limit: int = 3,
+        group_page_offsets: Optional[Dict[str, int]] = None,
+    ):
         summary = self._build_group_summary(env_model, domain, group_by, limit=limit)
         if not summary:
             return []
         row_fields = list(fields_safe or ["id", "name"])
         if "id" not in row_fields:
             row_fields.insert(0, "id")
+        page_offsets = group_page_offsets if isinstance(group_page_offsets, dict) else {}
         out = []
         for item in summary:
             group_domain = item.get("domain") if isinstance(item.get("domain"), list) else []
             if not group_domain:
                 continue
+            count = int(item.get("count") or 0)
+            page_limit = max(1, int(sample_limit or 3))
+            group_key = self._build_group_key(str(item.get("field") or ""), item.get("value"))
+            req_offset = int(page_offsets.get(group_key) or 0)
+            max_offset = max(0, count - page_limit)
+            page_offset = max(0, min(req_offset, max_offset))
+            page_offset = (page_offset // page_limit) * page_limit
+            page_total = max(1, ((count + page_limit - 1) // page_limit))
+            page_current = (page_offset // page_limit) + 1
+            page_range_start = page_offset + 1 if count > 0 else 0
+            page_range_end = min(count, page_offset + page_limit) if count > 0 else 0
             try:
-                group_recs = env_model.search(group_domain, limit=sample_limit or 3)
+                group_recs = env_model.search(group_domain, limit=page_limit, offset=page_offset)
                 sample_rows = group_recs.read(row_fields)
             except Exception:
                 _logger.exception("group sample query failed model=%s group=%s", env_model._name, item.get("label"))
@@ -276,6 +345,12 @@ class ApiDataHandler(BaseIntentHandler):
                     "count": item.get("count"),
                     "domain": group_domain,
                     "sample_rows": sample_rows,
+                    "page_offset": page_offset,
+                    "page_limit": page_limit,
+                    "page_current": page_current,
+                    "page_total": page_total,
+                    "page_range_start": page_range_start,
+                    "page_range_end": page_range_end,
                 }
             )
         return out
@@ -527,6 +602,7 @@ class ApiDataHandler(BaseIntentHandler):
         domain_raw = self._get_str(p, "domain_raw", "").strip()
         context_raw = self._get_str(p, "context_raw", "").strip()
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
+        group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
         search_term = self._get_str(p, "search_term", "").strip()
 
         if context_raw:
@@ -587,6 +663,7 @@ class ApiDataHandler(BaseIntentHandler):
             fields_safe,
             limit=min(limit or 20, 30),
             sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
+            group_page_offsets=group_page_offsets,
         )
 
         data = {

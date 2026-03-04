@@ -24,5 +24,10 @@
   "require_prod_like_ok": true,
   "require_contract_assembler_semantic_ok": true,
   "require_backend_architecture_full_ok": true,
-  "require_backend_evidence_manifest_ok": true
+  "require_backend_evidence_manifest_ok": true,
+  "require_scene_contract_coverage_ok": true,
+  "min_scene_contract_coverage_scene_count_actual": 1,
+  "min_scene_contract_coverage_intent_count_actual": 1,
+  "min_scene_contract_coverage_renderable_ratio": 0.01,
+  "min_scene_contract_coverage_interaction_ready_ratio": 0.01
 }
