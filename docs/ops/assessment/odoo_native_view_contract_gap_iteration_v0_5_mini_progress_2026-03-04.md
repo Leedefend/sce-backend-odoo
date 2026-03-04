@@ -33,12 +33,26 @@
    - `Makefile` 新增目标：`verify.frontend.grouped_pagination_semantic.guard`
    - 已接入 `verify.frontend.quick.gate`
 
+5. 场景覆盖可视化增强（scene/contract）
+   - 新增 `scripts/verify/scene_contract_coverage_brief.py`
+   - 从 `docs/contract/exports/scene_catalog.json` 与 `intent_catalog_enriched.json` 提取覆盖摘要
+   - 产物：
+     - `artifacts/scene_contract_coverage_brief.json`
+     - `artifacts/scene_contract_coverage_brief.md`
+   - 指标包含：
+     - scene/intent 声明与实际数量
+     - renderable/interaction-ready 比率
+     - intent layer 分布（core/domain/governance）
+     - 带 smoke target 的 intent 数、write intent 数、etag intent 数
+   - `Makefile` 新增目标：`verify.contract.scene_coverage.brief`
+
 ## 验证结果
 
 1. `python3 scripts/verify/grouped_pagination_semantic_guard.py`：通过
 2. `python3 scripts/verify/grouped_rows_runtime_guard.py`：通过
 3. `make verify.frontend.quick.gate`：通过
 4. `make verify.portal.tree_view_smoke.container`：通过
+5. `make verify.contract.scene_coverage.brief`：通过
 
 ## 变更清单
 
@@ -47,3 +61,4 @@
 3. `scripts/verify/grouped_pagination_semantic_guard.py`
 4. `Makefile`
 5. `docs/ops/assessment/odoo_native_view_contract_gap_iteration_v0_5_mini_progress_2026-03-04.md`
+6. `scripts/verify/scene_contract_coverage_brief.py`
