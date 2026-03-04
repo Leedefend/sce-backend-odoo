@@ -44,7 +44,12 @@
   "require_grouped_drift_export_marker_full_hit": true,
   "require_grouped_governance_brief_ok": true,
   "min_grouped_governance_coverage_ratio": 1.0,
+  "min_grouped_governance_total_file_count": 1,
+  "min_grouped_governance_covered_file_count": 1,
   "max_grouped_governance_failure_count": 0,
   "min_grouped_governance_e2e_case_count": 1,
-  "require_grouped_governance_export_marker_full_hit": true
+  "require_grouped_governance_coverage_count_consistent": true,
+  "max_grouped_governance_coverage_ratio_delta_abs": 0.000001,
+  "require_grouped_governance_export_marker_full_hit": true,
+  "require_grouped_governance_export_marker_bounds": true
 }
