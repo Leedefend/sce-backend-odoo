@@ -49,6 +49,7 @@ def main() -> int:
             errors.append(f"smoke missing marker: {marker}")
 
     summary = baseline.get("grouped_pagination_semantic_summary") if isinstance(baseline.get("grouped_pagination_semantic_summary"), dict) else {}
+    grouped_contract_fields = baseline.get("grouped_contract_fields") if isinstance(baseline.get("grouped_contract_fields"), dict) else {}
     field_types = summary.get("field_types") if isinstance(summary.get("field_types"), dict) else {}
     consistency = summary.get("consistency") if isinstance(summary.get("consistency"), dict) else {}
     first_group = (
@@ -59,6 +60,12 @@ def main() -> int:
 
     if not summary:
         errors.append("baseline grouped_pagination_semantic_summary must be object")
+    if grouped_contract_fields.get("group_key") is not True:
+        errors.append("baseline grouped_contract_fields.group_key must be true")
+    if grouped_contract_fields.get("page_has_prev") is not True:
+        errors.append("baseline grouped_contract_fields.page_has_prev must be true")
+    if grouped_contract_fields.get("page_has_next") is not True:
+        errors.append("baseline grouped_contract_fields.page_has_next must be true")
     if field_types.get("request_offset_matches_observed") != "boolean":
         errors.append("baseline field_types.request_offset_matches_observed must be 'boolean'")
 

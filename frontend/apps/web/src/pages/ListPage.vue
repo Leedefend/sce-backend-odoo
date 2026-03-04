@@ -308,6 +308,8 @@ const props = defineProps<{
     pageTotal?: number;
     pageRangeStart?: number;
     pageRangeEnd?: number;
+    pageHasPrev?: boolean;
+    pageHasNext?: boolean;
     loading?: boolean;
   }>;
   onOpenGroup?: (group: {
@@ -430,10 +432,16 @@ function resolveGroupPageMeta(group: {
 }
 
 function canGroupPagePrev(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  if (typeof (group as { pageHasPrev?: unknown }).pageHasPrev === 'boolean') {
+    return Boolean((group as { pageHasPrev?: unknown }).pageHasPrev);
+  }
   return resolveGroupPageOffset(group) > 0;
 }
 
 function canGroupPageNext(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  if (typeof (group as { pageHasNext?: unknown }).pageHasNext === 'boolean') {
+    return Boolean((group as { pageHasNext?: unknown }).pageHasNext);
+  }
   const offset = resolveGroupPageOffset(group);
   const limit = resolveGroupPageLimit(group);
   return offset + limit < Number(group.count || 0);
