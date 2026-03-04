@@ -51,5 +51,7 @@
   "require_grouped_governance_coverage_count_consistent": true,
   "max_grouped_governance_coverage_ratio_delta_abs": 0.000001,
   "require_grouped_governance_export_marker_full_hit": true,
-  "require_grouped_governance_export_marker_bounds": true
+  "require_grouped_governance_export_marker_bounds": true,
+  "require_grouped_governance_report_alignment": true,
+  "max_grouped_governance_alignment_ratio_delta_abs": 0.000001
 }
