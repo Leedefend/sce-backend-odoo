@@ -114,7 +114,11 @@ def main() -> int:
         "require_grouped_governance_export_marker_bounds": True,
         "require_grouped_governance_report_alignment": True,
         "max_grouped_governance_alignment_ratio_delta_abs": 0.000001,
+        "require_grouped_governance_report_json_prefix": "artifacts/",
+        "require_grouped_governance_report_json_suffix": "grouped_governance_brief_guard.json",
         "require_grouped_governance_report_md_alignment": True,
+        "require_grouped_governance_report_md_prefix": "artifacts/",
+        "require_grouped_governance_report_md_suffix": "grouped_governance_brief_guard.md",
         "require_grouped_governance_report_md_title": "# Grouped Governance Brief Guard",
     }
     policy_payload = _load_json(BASELINE_JSON)
@@ -446,6 +450,19 @@ def main() -> int:
         if marker_hits > marker_total:
             errors.append("grouped_governance_brief.grouped_export_marker_hits must be <= grouped_export_marker_total")
     if bool(policy.get("require_grouped_governance_report_alignment", True)):
+        report_json_raw = str(grouped_governance.get("report_json") or "").strip()
+        require_report_json_prefix = str(policy.get("require_grouped_governance_report_json_prefix") or "").strip()
+        require_report_json_suffix = str(policy.get("require_grouped_governance_report_json_suffix") or "").strip()
+        if require_report_json_prefix and not report_json_raw.startswith(require_report_json_prefix):
+            errors.append(
+                "grouped_governance_brief.report_json must start with "
+                f"{require_report_json_prefix}"
+            )
+        if require_report_json_suffix and not report_json_raw.endswith(require_report_json_suffix):
+            errors.append(
+                "grouped_governance_brief.report_json must end with "
+                f"{require_report_json_suffix}"
+            )
         report_path = _to_abs_report_path(grouped_governance.get("report_json"))
         source_report = _load_json(report_path) if isinstance(report_path, Path) else {}
         if not source_report:
@@ -476,6 +493,19 @@ def main() -> int:
             if abs(evidence_ratio - source_ratio) > max_align_ratio_delta_abs:
                 errors.append("grouped_governance_brief.governance_coverage_ratio must align with source report")
     if bool(policy.get("require_grouped_governance_report_md_alignment", True)):
+        report_md_raw = str(grouped_governance.get("report_md") or "").strip()
+        require_report_md_prefix = str(policy.get("require_grouped_governance_report_md_prefix") or "").strip()
+        require_report_md_suffix = str(policy.get("require_grouped_governance_report_md_suffix") or "").strip()
+        if require_report_md_prefix and not report_md_raw.startswith(require_report_md_prefix):
+            errors.append(
+                "grouped_governance_brief.report_md must start with "
+                f"{require_report_md_prefix}"
+            )
+        if require_report_md_suffix and not report_md_raw.endswith(require_report_md_suffix):
+            errors.append(
+                "grouped_governance_brief.report_md must end with "
+                f"{require_report_md_suffix}"
+            )
         report_md_path = _to_abs_report_path(grouped_governance.get("report_md"))
         report_md_text = _load_text(report_md_path)
         if not report_md_text:
