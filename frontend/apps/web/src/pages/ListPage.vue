@@ -149,6 +149,14 @@
               >
                 下一页
               </button>
+              <input
+                class="group-page-input"
+                :value="groupJumpPageInput[group.key] || String(groupCurrentPage(group))"
+                :disabled="Boolean(group.loading) || groupTotalPages(group) <= 1"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                @change="onGroupJumpInputChange(group.key, $event)"
+              />
               <button
                 type="button"
                 class="group-page-btn"
@@ -230,7 +238,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import PageToolbar from '../components/page/PageToolbar.vue';
@@ -329,6 +337,7 @@ const emptyCopy = computed(() => resolveEmptyCopy('list'));
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
+const groupJumpPageInput = ref<Record<string, string>>({});
 const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
@@ -443,16 +452,39 @@ function pageGroupNext(group: { key: string; label: string; count: number; domai
 function jumpGroupPage(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
   if (!props.onGroupPageChange) return;
   const totalPages = groupTotalPages(group);
-  const current = groupCurrentPage(group);
-  const raw = window.prompt(`输入页码（1-${totalPages}）`, String(current));
-  if (raw === null) return;
+  const raw = String(groupJumpPageInput.value[group.key] || '').trim();
   const page = Number(raw);
   if (!Number.isFinite(page)) return;
   const normalizedPage = Math.min(Math.max(Math.trunc(page), 1), totalPages);
   const limit = resolveGroupPageLimit(group);
   const offset = (normalizedPage - 1) * limit;
+  groupJumpPageInput.value = { ...groupJumpPageInput.value, [group.key]: String(normalizedPage) };
   props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset, limit });
 }
+
+function onGroupJumpInputChange(groupKey: string, event: Event) {
+  const value = String((event.target as HTMLInputElement | null)?.value || '');
+  groupJumpPageInput.value = { ...groupJumpPageInput.value, [groupKey]: value };
+}
+
+watch(
+  sortedGroupedRows,
+  (rows) => {
+    const next: Record<string, string> = {};
+    rows.forEach((group) => {
+      const key = String(group.key || '').trim();
+      if (!key) return;
+      const existing = groupJumpPageInput.value[key];
+      if (existing && existing.trim()) {
+        next[key] = existing;
+      } else {
+        next[key] = String(groupCurrentPage(group));
+      }
+    });
+    groupJumpPageInput.value = next;
+  },
+  { immediate: true },
+);
 
 function onGroupSampleLimitSelectChange(event: Event) {
   const value = Number((event.target as HTMLSelectElement | null)?.value || 0);
@@ -739,6 +771,15 @@ function columnLabel(col: string) {
 .group-page-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.group-page-input {
+  width: 56px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #0f172a;
 }
 
 .batch-bar {

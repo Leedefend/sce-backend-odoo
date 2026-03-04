@@ -75,6 +75,8 @@ def main() -> int:
         "props.collapsedGroupKeys",
         "props.onGroupPageChange",
         "group-page-btn",
+        "group-page-input",
+        "onGroupJumpInputChange(",
         "groupPageInfoText(",
         "jumpGroupPage(",
         "跳转",
