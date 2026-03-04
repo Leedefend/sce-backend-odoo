@@ -48,6 +48,7 @@
   "grouped_request_keys": [
     "fields",
     "group_by",
+    "group_page_offsets",
     "group_sample_limit",
     "limit",
     "model",
