@@ -35,5 +35,6 @@
   "require_grouped_supports_group_key": true,
   "require_grouped_supports_page_has_prev": true,
   "require_grouped_supports_page_has_next": true,
-  "require_grouped_supports_page_window": true
+  "require_grouped_supports_page_window": true,
+  "require_grouped_window_range_consistency": true
 }

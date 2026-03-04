@@ -95,6 +95,7 @@
       "supports_page_has_prev",
       "supports_page_has_next",
       "supports_page_window",
+      "window_range_consistency",
       "report"
     ]
   }
