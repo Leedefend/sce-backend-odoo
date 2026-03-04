@@ -2099,6 +2099,10 @@ verify.contract.mode.smoke: guard.prod.forbid check-compose-project check-compos
 verify.contract.api.mode.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/contract_api_mode_smoke.py
 
+.PHONY: verify.contract.view_type_semantic.smoke
+verify.contract.view_type_semantic.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) python3 scripts/verify/contract_view_type_semantic_smoke.py
+
 verify.contract.preflight: guard.prod.forbid
 	@if [ "$(BASELINE_FREEZE_ENFORCE)" = "1" ]; then \
 	  $(MAKE) --no-print-directory verify.baseline.freeze_guard; \
@@ -2118,6 +2122,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.hud.trace.smoke
 	@$(MAKE) --no-print-directory verify.scene.meta.trace.smoke
 	@$(MAKE) --no-print-directory verify.contract.api.mode.smoke
+	@$(MAKE) --no-print-directory verify.contract.view_type_semantic.smoke
 	@$(MAKE) --no-print-directory verify.scene.contract.shape
 	@$(MAKE) --no-print-directory contract.evidence.export
 

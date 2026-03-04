@@ -275,6 +275,7 @@ const failedCsvContentB64 = ref('');
 const batchFailedOffset = ref(0);
 const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
+const advancedFields = ref<string[]>([]);
 const lastBatchRequest = ref<{
   model: string;
   ids: number[];
@@ -1243,11 +1244,18 @@ function advancedRowTitle(row: Record<string, unknown>) {
   return String(row.display_name || row.name || row.id || '记录').trim();
 }
 
+function advancedFieldLabel(field: string) {
+  return String(contractColumnLabels.value[field] || field).trim();
+}
+
 function advancedRowMeta(row: Record<string, unknown>) {
-  const entries = Object.entries(row)
-    .filter(([key]) => key !== 'id' && key !== 'name' && key !== 'display_name')
+  const preferredKeys = advancedFields.value.length
+    ? advancedFields.value
+    : Object.keys(row);
+  const entries = preferredKeys
+    .filter((key) => key !== 'id' && key !== 'name' && key !== 'display_name' && key in row)
     .slice(0, 3)
-    .map(([key, value]) => `${key}: ${String(value ?? '-')}`);
+    .map((key) => `${advancedFieldLabel(key)}: ${String(row[key] ?? '-')}`);
   if (!entries.length) return '无附加字段';
   return entries.join(' · ');
 }
@@ -1538,6 +1546,7 @@ async function load() {
   records.value = [];
   columns.value = [];
   kanbanFields.value = [];
+  advancedFields.value = [];
   const startedAt = Date.now();
 
   if (!actionId.value) {
@@ -1677,6 +1686,7 @@ async function load() {
     const contractColumns = convergeColumnsForSurface(extractColumnsFromContract(contract), typedContract.fields || {});
     const kanbanContractFields = extractKanbanFields(contract);
     const advancedContractFields = extractAdvancedViewFields(contract, viewMode.value);
+    advancedFields.value = advancedContractFields;
     kanbanFields.value = kanbanContractFields;
     const fieldMap = typedContract.fields || {};
     hasActiveField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'active' in fieldMap);
