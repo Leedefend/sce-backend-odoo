@@ -30,6 +30,7 @@
    - 每个分组新增“查看全部”入口，触发 `ActionView` 按组 domain 下钻
    - 下钻后保持现有列表语义（过滤、点击、批量操作）不变
    - 新增每组样本条数切换（3/5/8），并通过路由+请求参数同步到 `api.data.group_sample_limit`
+   - 分组排序（asc/desc）与折叠键集合持久化到路由（`group_sort` / `group_collapsed`），刷新后可恢复
 
 ## 当前状态
 
