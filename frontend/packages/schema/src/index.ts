@@ -149,6 +149,13 @@ export interface ApiDataListResult {
   records: Array<Record<string, unknown>>;
   next_offset?: number;
   total?: number;
+  group_summary?: Array<{
+    field?: string;
+    value?: unknown;
+    label?: string;
+    count?: number;
+    domain?: unknown[];
+  }>;
 }
 
 export interface ApiDataListRequest {
@@ -157,6 +164,7 @@ export interface ApiDataListRequest {
   fields?: string[] | '*';
   domain?: unknown[] | string;
   domain_raw?: string;
+  group_by?: string | string[];
   search_term?: string;
   limit?: number;
   offset?: number;

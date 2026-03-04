@@ -59,6 +59,100 @@
         </button>
       </div>
     </section>
+    <section v-if="savedFilterPrimaryChips.length || savedFilterOverflowChips.length" class="contract-block">
+      <p class="contract-label">已保存筛选</p>
+      <div class="contract-chips">
+        <button
+          v-for="chip in savedFilterPrimaryChips"
+          :key="`saved-filter-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeSavedFilterKey === chip.key }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applySavedFilter(chip.key)"
+        >
+          {{ chip.label }}
+        </button>
+        <button
+          v-if="activeSavedFilterKey"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="clearSavedFilter"
+        >
+          清除
+        </button>
+        <button
+          v-if="savedFilterOverflowChips.length"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="showMoreSavedFilters = !showMoreSavedFilters"
+        >
+          {{ showMoreSavedFilters ? '收起更多筛选' : `更多筛选 (${savedFilterOverflowChips.length})` }}
+        </button>
+      </div>
+      <div v-if="showMoreSavedFilters && savedFilterOverflowChips.length" class="contract-chips">
+        <button
+          v-for="chip in savedFilterOverflowChips"
+          :key="`saved-filter-overflow-${chip.key}`"
+          class="contract-chip"
+          :class="{ active: activeSavedFilterKey === chip.key }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applySavedFilter(chip.key)"
+        >
+          {{ chip.label }}
+        </button>
+      </div>
+    </section>
+    <section v-if="groupByPrimaryChips.length || groupByOverflowChips.length" class="contract-block">
+      <p class="contract-label">分组查看</p>
+      <div class="contract-chips">
+        <button
+          v-for="chip in groupByPrimaryChips"
+          :key="`group-by-${chip.field}`"
+          class="contract-chip"
+          :class="{ active: activeGroupByField === chip.field }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applyGroupBy(chip.field)"
+        >
+          {{ chip.label }}
+        </button>
+        <button
+          v-if="activeGroupByField"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="clearGroupBy"
+        >
+          清除
+        </button>
+        <button
+          v-if="groupByOverflowChips.length"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="showMoreGroupBy = !showMoreGroupBy"
+        >
+          {{ showMoreGroupBy ? '收起更多分组' : `更多分组 (${groupByOverflowChips.length})` }}
+        </button>
+      </div>
+      <div v-if="showMoreGroupBy && groupByOverflowChips.length" class="contract-chips">
+        <button
+          v-for="chip in groupByOverflowChips"
+          :key="`group-by-overflow-${chip.field}`"
+          class="contract-chip"
+          :class="{ active: activeGroupByField === chip.field }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applyGroupBy(chip.field)"
+        >
+          {{ chip.label }}
+        </button>
+      </div>
+    </section>
+    <GroupSummaryBar
+      v-if="groupSummaryItems.length"
+      :items="groupSummaryItems"
+      :group-by-label="activeGroupByLabel"
+      :active-key="activeGroupSummaryKey"
+      :on-pick="handleGroupSummaryPick"
+      :on-clear="clearGroupSummaryDrilldown"
+    />
     <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
       <p class="contract-label">快捷操作</p>
       <div class="contract-chips">
@@ -221,6 +315,7 @@ import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
 import KanbanPage from '../pages/KanbanPage.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
+import GroupSummaryBar from '../components/GroupSummaryBar.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
@@ -275,6 +370,9 @@ const failedCsvContentB64 = ref('');
 const batchFailedOffset = ref(0);
 const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
+const groupSummaryItems = ref<GroupSummaryItem[]>([]);
+const activeGroupSummaryKey = ref('');
+const activeGroupSummaryDomain = ref<unknown[]>([]);
 const advancedFields = ref<string[]>([]);
 const lastBatchRequest = ref<{
   model: string;
@@ -369,6 +467,29 @@ type ContractFilterChip = {
   context: Record<string, unknown>;
   contextRaw: string;
 };
+type ContractSavedFilterChip = {
+  key: string;
+  label: string;
+  domain: unknown[];
+  domainRaw: string;
+  context: Record<string, unknown>;
+  contextRaw: string;
+  isDefault: boolean;
+};
+type ContractGroupByChip = {
+  field: string;
+  label: string;
+  isDefault: boolean;
+  context: Record<string, unknown>;
+  contextRaw: string;
+};
+type GroupSummaryItem = {
+  key: string;
+  label: string;
+  count: number;
+  domain: unknown[];
+  value?: unknown;
+};
 type ContractActionSelection = 'none' | 'single' | 'multi';
 type ContractActionButton = {
   key: string;
@@ -420,9 +541,13 @@ const contractDegraded = ref(false);
 const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
 const activeContractFilterKey = ref('');
+const activeSavedFilterKey = ref('');
+const activeGroupByField = ref('');
 const contractLimit = ref(40);
 const showMoreContractActions = ref(false);
 const showMoreContractFilters = ref(false);
+const showMoreSavedFilters = ref(false);
+const showMoreGroupBy = ref(false);
 const viewMode = computed(() => {
   const mode = String(contractViewType.value || '')
     .split(',')
@@ -602,6 +727,8 @@ const hudEntries = computed(() => [
   { label: 'view_mode', value: viewMode.value || '-' },
   { label: 'contract_view_type', value: contractViewType.value || '-' },
   { label: 'contract_filter', value: activeContractFilterKey.value || '-' },
+  { label: 'saved_filter', value: activeSavedFilterKey.value || '-' },
+  { label: 'group_by', value: activeGroupByField.value || '-' },
   { label: 'contract_actions', value: contractActionButtons.value.length },
   { label: 'contract_limit', value: contractLimit.value },
   { label: 'contract_read', value: contractReadAllowed.value },
@@ -657,6 +784,63 @@ const contractPrimaryFilterChips = computed<ContractFilterChip[]>(() =>
 const contractOverflowFilterChips = computed<ContractFilterChip[]>(() =>
   contractFilterChips.value.slice(filterPrimaryBudget.value),
 );
+const contractSavedFilterChips = computed<ContractSavedFilterChip[]>(() => {
+  const rows = actionContract.value?.search?.saved_filters;
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map((row, idx) => {
+      const raw = row as Record<string, unknown>;
+      const key = String(raw.key || raw.name || raw.xmlid || raw.xml_id || `saved_${idx + 1}`).trim();
+      const label = String(raw.label || raw.name || key).trim();
+      if (!key || !label) return null;
+      if (isNumericToken(key) || isNumericToken(label)) return null;
+      if (hasNoiseMarker(key, label, raw.domain_raw, raw.context_raw)) return null;
+      const domain = Array.isArray(raw.domain) ? raw.domain : [];
+      const domainRaw = String(raw.domain_raw || '').trim();
+      const contextRaw = String(raw.context_raw || '').trim();
+      const context = parseContractContextRaw(raw.context_raw);
+      const isDefault = raw.default === true || raw.is_default === true;
+      return { key, label, domain, domainRaw, context, contextRaw, isDefault };
+    })
+    .filter((item): item is ContractSavedFilterChip => Boolean(item))
+    .slice(0, 12);
+});
+const savedFilterPrimaryChips = computed<ContractSavedFilterChip[]>(() =>
+  contractSavedFilterChips.value.slice(0, filterPrimaryBudget.value),
+);
+const savedFilterOverflowChips = computed<ContractSavedFilterChip[]>(() =>
+  contractSavedFilterChips.value.slice(filterPrimaryBudget.value),
+);
+const contractGroupByChips = computed<ContractGroupByChip[]>(() => {
+  const rows = actionContract.value?.search?.group_by;
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map((row) => {
+      const raw = row as Record<string, unknown>;
+      const field = String(raw.field || '').trim();
+      const label = String(raw.label || field).trim();
+      if (!field || !label) return null;
+      if (isNumericToken(field) || isNumericToken(label)) return null;
+      const contextRaw = String(raw.context_raw || '').trim();
+      const context = parseContractContextRaw(contextRaw);
+      const isDefault = raw.default === true || raw.is_default === true;
+      return { field, label, context, contextRaw, isDefault };
+    })
+    .filter((item): item is ContractGroupByChip => Boolean(item))
+    .slice(0, 12);
+});
+const groupByPrimaryChips = computed<ContractGroupByChip[]>(() =>
+  contractGroupByChips.value.slice(0, filterPrimaryBudget.value),
+);
+const groupByOverflowChips = computed<ContractGroupByChip[]>(() =>
+  contractGroupByChips.value.slice(filterPrimaryBudget.value),
+);
+const activeGroupByLabel = computed(() => {
+  const field = activeGroupByField.value;
+  if (!field) return '';
+  const found = contractGroupByChips.value.find((chip) => chip.field === field);
+  return found?.label || field;
+});
 function toContractActionButton(
   row: Record<string, unknown>,
   dedup: Set<string>,
@@ -853,7 +1037,12 @@ function extractActionResId(contract: unknown, routeQuery: Record<string, unknow
 function applyRoutePreset() {
   const preset = String(route.query.preset || '').trim();
   const presetFilter = String(route.query.preset_filter || '').trim();
+  const savedFilter = String(route.query.saved_filter || '').trim();
+  const groupBy = String(route.query.group_by || '').trim();
+  const groupValue = String(route.query.group_value || '').trim();
   const routeSearch = String(route.query.search || '').trim();
+  const routeOrder = String(route.query.order || route.query.sort || '').trim();
+  const routeActiveFilter = String(route.query.active_filter || '').trim();
   const ctxSource = String(route.query.ctx_source || '').trim();
   routeContextSource.value = ctxSource;
   let changed = false;
@@ -866,16 +1055,41 @@ function applyRoutePreset() {
   appliedPresetLabel.value = '';
   if (routeSearch) {
     setIfDiff(searchTerm, routeSearch);
+  } else {
+    setIfDiff(searchTerm, '');
+  }
+  if (routeOrder) {
+    setIfDiff(sortValue, routeOrder);
+  }
+  if (routeActiveFilter === 'all' || routeActiveFilter === 'active' || routeActiveFilter === 'archived') {
+    setIfDiff(filterValue, routeActiveFilter);
   }
   if (!preset && presetFilter) {
     appliedPresetLabel.value = `契约筛选: ${presetFilter}`;
     setIfDiff(searchTerm, routeSearch || presetFilter);
   }
+  if (savedFilter) {
+    appliedPresetLabel.value = appliedPresetLabel.value || `保存筛选: ${savedFilter}`;
+    setIfDiff(activeSavedFilterKey, savedFilter);
+  } else {
+    setIfDiff(activeSavedFilterKey, '');
+  }
+  if (groupBy) {
+    setIfDiff(activeGroupByField, groupBy);
+  } else {
+    setIfDiff(activeGroupByField, '');
+  }
+  if (groupValue && !routeSearch) {
+    setIfDiff(searchTerm, groupValue);
+  } else if (!groupValue) {
+    activeGroupSummaryKey.value = '';
+    activeGroupSummaryDomain.value = [];
+  }
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'action' }).catch(() => {});
   }
-  if (!preset && !presetFilter) {
+  if (!preset && !presetFilter && !savedFilter && !groupBy) {
     lastTrackedPreset.value = '';
   }
   return changed;
@@ -889,6 +1103,16 @@ function clearRoutePreset() {
   router.replace({ name: 'action', params: route.params, query: nextQuery }).catch(() => {});
 }
 
+function syncRouteListState(extra?: Record<string, unknown>) {
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, {
+    search: searchTerm.value.trim() || undefined,
+    order: sortValue.value.trim() || undefined,
+    active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
+    ...extra,
+  });
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+}
+
 function applyContractFilter(key: string) {
   if (!key) return;
   activeContractFilterKey.value = key;
@@ -899,12 +1123,71 @@ function applyContractFilter(key: string) {
   void load();
 }
 
+function applySavedFilter(key: string) {
+  if (!key) return;
+  activeSavedFilterKey.value = key;
+  showMoreSavedFilters.value = false;
+  clearSelection();
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { saved_filter: key });
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
 function clearContractFilter() {
   activeContractFilterKey.value = '';
   showMoreContractFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { preset_filter: undefined });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function clearSavedFilter() {
+  activeSavedFilterKey.value = '';
+  showMoreSavedFilters.value = false;
+  clearSelection();
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { saved_filter: undefined });
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function applyGroupBy(field: string) {
+  if (!field) return;
+  activeGroupByField.value = field;
+  activeGroupSummaryKey.value = '';
+  activeGroupSummaryDomain.value = [];
+  showMoreGroupBy.value = false;
+  clearSelection();
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: field, group_value: undefined });
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function clearGroupBy() {
+  activeGroupByField.value = '';
+  activeGroupSummaryKey.value = '';
+  activeGroupSummaryDomain.value = [];
+  showMoreGroupBy.value = false;
+  clearSelection();
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: undefined, group_value: undefined });
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function handleGroupSummaryPick(item: GroupSummaryItem) {
+  if (!item) return;
+  activeGroupSummaryKey.value = item.key;
+  activeGroupSummaryDomain.value = Array.isArray(item.domain) ? item.domain : [];
+  searchTerm.value = item.label || '';
+  syncRouteListState({ search: searchTerm.value.trim() || undefined, group_value: item.label || undefined });
+  void load();
+}
+
+function clearGroupSummaryDrilldown() {
+  activeGroupSummaryKey.value = '';
+  activeGroupSummaryDomain.value = [];
+  const q = pickContractNavQuery(route.query as Record<string, unknown>, { group_value: undefined });
+  router.replace({ name: 'action', params: route.params, query: q }).catch(() => {});
   void load();
 }
 
@@ -957,6 +1240,79 @@ function resolveContractFilterContextRaw() {
   if (!key) return '';
   const found = contractFilterChips.value.find((chip) => chip.key === key);
   return found?.contextRaw || '';
+}
+
+function resolveSavedFilterDomain() {
+  const key = activeSavedFilterKey.value;
+  if (!key) return [];
+  const found = contractSavedFilterChips.value.find((chip) => chip.key === key);
+  return found?.domain || [];
+}
+
+function resolveSavedFilterDomainRaw() {
+  const key = activeSavedFilterKey.value;
+  if (!key) return '';
+  const found = contractSavedFilterChips.value.find((chip) => chip.key === key);
+  return found?.domainRaw || '';
+}
+
+function resolveSavedFilterContext() {
+  const key = activeSavedFilterKey.value;
+  if (!key) return {};
+  const found = contractSavedFilterChips.value.find((chip) => chip.key === key);
+  return found?.context || {};
+}
+
+function resolveSavedFilterContextRaw() {
+  const key = activeSavedFilterKey.value;
+  if (!key) return '';
+  const found = contractSavedFilterChips.value.find((chip) => chip.key === key);
+  return found?.contextRaw || '';
+}
+
+function resolveEffectiveFilterDomain() {
+  return mergeSceneDomain(
+    mergeSceneDomain(resolveContractFilterDomain(), resolveSavedFilterDomain()),
+    Array.isArray(activeGroupSummaryDomain.value) ? activeGroupSummaryDomain.value : [],
+  );
+}
+
+function resolveEffectiveFilterDomainRaw() {
+  const raw = [resolveContractFilterDomainRaw(), resolveSavedFilterDomainRaw()].filter(Boolean);
+  return raw.join(' && ');
+}
+
+function resolveEffectiveFilterContext() {
+  return { ...resolveContractFilterContext(), ...resolveSavedFilterContext() };
+}
+
+function resolveEffectiveFilterContextRaw() {
+  const raw = [resolveContractFilterContextRaw(), resolveSavedFilterContextRaw()].filter(Boolean);
+  return raw.join(' && ');
+}
+
+function resolveGroupByContext() {
+  const field = activeGroupByField.value;
+  if (!field) return {};
+  const found = contractGroupByChips.value.find((chip) => chip.field === field);
+  return { ...(found?.context || {}), group_by: field };
+}
+
+function resolveGroupByContextRaw() {
+  const field = activeGroupByField.value;
+  if (!field) return '';
+  const found = contractGroupByChips.value.find((chip) => chip.field === field);
+  const raw = [found?.contextRaw || '', `{'group_by': '${field}'}`].filter(Boolean);
+  return raw.join(' && ');
+}
+
+function resolveEffectiveRequestContext() {
+  return { ...resolveEffectiveFilterContext(), ...resolveGroupByContext() };
+}
+
+function resolveEffectiveRequestContextRaw() {
+  const raw = [resolveEffectiveFilterContextRaw(), resolveGroupByContextRaw()].filter(Boolean);
+  return raw.join(' && ');
 }
 
 function mergeContext(base: Record<string, unknown> | string | undefined, extra?: Record<string, unknown>) {
@@ -1533,6 +1889,8 @@ async function loadAssigneeOptions() {
 
 async function load() {
   showMoreContractActions.value = false;
+  showMoreSavedFilters.value = false;
+  showMoreGroupBy.value = false;
   status.value = 'loading';
   clearError();
   traceId.value = '';
@@ -1544,6 +1902,7 @@ async function load() {
   resolvedModelRef.value = '';
   contractLimit.value = 40;
   records.value = [];
+  groupSummaryItems.value = [];
   columns.value = [];
   kanbanFields.value = [];
   advancedFields.value = [];
@@ -1569,6 +1928,8 @@ async function load() {
     const typedContract = contract as ActionContractLoose;
     actionContract.value = typedContract;
     const routeFilter = String(route.query.preset_filter || '').trim();
+    const routeSavedFilter = String(route.query.saved_filter || '').trim();
+    const routeGroupBy = String(route.query.group_by || '').trim();
     if (!activeContractFilterKey.value && routeFilter) {
       activeContractFilterKey.value = routeFilter;
     }
@@ -1578,6 +1939,28 @@ async function load() {
       if (!hasFilter) {
         activeContractFilterKey.value = '';
       }
+    }
+    if (!activeSavedFilterKey.value && routeSavedFilter) {
+      activeSavedFilterKey.value = routeSavedFilter;
+    }
+    if (activeSavedFilterKey.value) {
+      const hasSavedFilter = contractSavedFilterChips.value.some((row) => row.key === activeSavedFilterKey.value);
+      if (!hasSavedFilter) {
+        activeSavedFilterKey.value = '';
+      }
+    } else {
+      const defaultSaved = contractSavedFilterChips.value.find((row) => row.isDefault);
+      if (defaultSaved) activeSavedFilterKey.value = defaultSaved.key;
+    }
+    if (!activeGroupByField.value && routeGroupBy) {
+      activeGroupByField.value = routeGroupBy;
+    }
+    if (activeGroupByField.value) {
+      const hasGroupBy = contractGroupByChips.value.some((item) => item.field === activeGroupByField.value);
+      if (!hasGroupBy) activeGroupByField.value = '';
+    } else {
+      const defaultGroupBy = contractGroupByChips.value.find((item) => item.isDefault);
+      if (defaultGroupBy) activeGroupByField.value = defaultGroupBy.field;
     }
     contractReadAllowed.value = resolveContractReadRight(typedContract);
     contractWarningCount.value = Array.isArray(typedContract.warnings) ? typedContract.warnings.length : 0;
@@ -1711,16 +2094,38 @@ async function load() {
     const result = await listRecordsRaw({
       model: resolvedModel,
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
-      domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveContractFilterDomain())),
-      domain_raw: resolveContractFilterDomainRaw(),
-      context: mergeContext(meta?.context, resolveContractFilterContext()),
-      context_raw: resolveContractFilterContextRaw(),
+      domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
+      domain_raw: resolveEffectiveFilterDomainRaw(),
+      group_by: activeGroupByField.value || undefined,
+      context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
+      context_raw: resolveEffectiveRequestContextRaw(),
       limit: contractLimit.value,
       offset: 0,
       search_term: searchTerm.value.trim() || undefined,
       order: sortLabel.value,
     });
     records.value = result.data?.records ?? [];
+    groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
+      .map((row, idx) => {
+        const item = row as Record<string, unknown>;
+        const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        return {
+          key: `${String(item.field || activeGroupByField.value || 'group')}:${String(item.value ?? label)}:${idx}`,
+          label,
+          count: Number(item.count || 0),
+          domain: Array.isArray(item.domain) ? item.domain : [],
+          value: item.value,
+        };
+      })
+      .filter((item) => item.count >= 0)
+      .slice(0, 12);
+    if (!activeGroupSummaryKey.value) {
+      const routeGroupValue = String(route.query.group_value || '').trim();
+      if (routeGroupValue) {
+        const matched = groupSummaryItems.value.find((item) => item.label === routeGroupValue);
+        if (matched) activeGroupSummaryKey.value = matched.key;
+      }
+    }
     const currentIds = new Set(
       records.value
         .map((row) => {
@@ -1779,17 +2184,20 @@ function reload() {
 
 function handleSearch(value: string) {
   searchTerm.value = value;
+  syncRouteListState();
   load();
 }
 
 function handleSort(value: string) {
   sortValue.value = value;
+  syncRouteListState();
   load();
 }
 
 function handleFilter(value: 'all' | 'active' | 'archived') {
   filterValue.value = value;
   clearSelection();
+  syncRouteListState();
   load();
 }
 
@@ -1873,7 +2281,7 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   try {
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { active: action === 'activate' });
-    const requestContext = mergeContext(actionMeta.value?.context, resolveContractFilterContext());
+    const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
     const result = await batchUpdateRecords({
       model: targetModel,
       ids: selectedIds.value,
@@ -1941,7 +2349,7 @@ async function handleBatchAssign(assigneeId: number) {
   try {
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey('assign', selectedIds.value, { assignee_id: assigneeId });
-    const requestContext = mergeContext(actionMeta.value?.context, resolveContractFilterContext());
+    const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
     const result = await batchUpdateRecords({
       model: targetModel,
       ids: selectedIds.value,
@@ -2008,7 +2416,7 @@ async function exportByBackend(scope: 'selected' | 'all') {
     const domain =
       scope === 'all'
         ? mergeActiveFilter(
-            mergeSceneDomain(mergeSceneDomain(actionMeta.value?.domain, scene.value?.filters), resolveContractFilterDomain()),
+            mergeSceneDomain(mergeSceneDomain(actionMeta.value?.domain, scene.value?.filters), resolveEffectiveFilterDomain()),
           )
         : [];
     const fields = columns.value.length ? ['id', ...columns.value.filter((col) => col !== 'id')] : ['id', 'name'];
@@ -2019,7 +2427,7 @@ async function exportByBackend(scope: 'selected' | 'all') {
       domain,
       order: sortLabel.value,
       limit: scope === 'all' ? 10000 : 5000,
-      context: mergeContext(actionMeta.value?.context, resolveContractFilterContext()),
+      context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()),
     });
     if (!result.content_b64) {
       batchMessage.value = '没有可导出的记录';
