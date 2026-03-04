@@ -102,6 +102,49 @@
         </button>
       </div>
     </section>
+    <section v-if="groupByPrimaryChips.length || groupByOverflowChips.length" class="contract-block">
+      <p class="contract-label">分组查看</p>
+      <div class="contract-chips">
+        <button
+          v-for="chip in groupByPrimaryChips"
+          :key="`group-by-${chip.field}`"
+          class="contract-chip"
+          :class="{ active: activeGroupByField === chip.field }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applyGroupBy(chip.field)"
+        >
+          {{ chip.label }}
+        </button>
+        <button
+          v-if="activeGroupByField"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="clearGroupBy"
+        >
+          清除
+        </button>
+        <button
+          v-if="groupByOverflowChips.length"
+          class="contract-chip ghost"
+          :disabled="status === 'loading' || batchBusy"
+          @click="showMoreGroupBy = !showMoreGroupBy"
+        >
+          {{ showMoreGroupBy ? '收起更多分组' : `更多分组 (${groupByOverflowChips.length})` }}
+        </button>
+      </div>
+      <div v-if="showMoreGroupBy && groupByOverflowChips.length" class="contract-chips">
+        <button
+          v-for="chip in groupByOverflowChips"
+          :key="`group-by-overflow-${chip.field}`"
+          class="contract-chip"
+          :class="{ active: activeGroupByField === chip.field }"
+          :disabled="status === 'loading' || batchBusy"
+          @click="applyGroupBy(chip.field)"
+        >
+          {{ chip.label }}
+        </button>
+      </div>
+    </section>
     <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
       <p class="contract-label">快捷操作</p>
       <div class="contract-chips">
@@ -421,6 +464,13 @@ type ContractSavedFilterChip = {
   contextRaw: string;
   isDefault: boolean;
 };
+type ContractGroupByChip = {
+  field: string;
+  label: string;
+  isDefault: boolean;
+  context: Record<string, unknown>;
+  contextRaw: string;
+};
 type ContractActionSelection = 'none' | 'single' | 'multi';
 type ContractActionButton = {
   key: string;
@@ -473,10 +523,12 @@ const actionContract = ref<ActionContractLoose | null>(null);
 const resolvedModelRef = ref('');
 const activeContractFilterKey = ref('');
 const activeSavedFilterKey = ref('');
+const activeGroupByField = ref('');
 const contractLimit = ref(40);
 const showMoreContractActions = ref(false);
 const showMoreContractFilters = ref(false);
 const showMoreSavedFilters = ref(false);
+const showMoreGroupBy = ref(false);
 const viewMode = computed(() => {
   const mode = String(contractViewType.value || '')
     .split(',')
@@ -657,6 +709,7 @@ const hudEntries = computed(() => [
   { label: 'contract_view_type', value: contractViewType.value || '-' },
   { label: 'contract_filter', value: activeContractFilterKey.value || '-' },
   { label: 'saved_filter', value: activeSavedFilterKey.value || '-' },
+  { label: 'group_by', value: activeGroupByField.value || '-' },
   { label: 'contract_actions', value: contractActionButtons.value.length },
   { label: 'contract_limit', value: contractLimit.value },
   { label: 'contract_read', value: contractReadAllowed.value },
@@ -738,6 +791,30 @@ const savedFilterPrimaryChips = computed<ContractSavedFilterChip[]>(() =>
 );
 const savedFilterOverflowChips = computed<ContractSavedFilterChip[]>(() =>
   contractSavedFilterChips.value.slice(filterPrimaryBudget.value),
+);
+const contractGroupByChips = computed<ContractGroupByChip[]>(() => {
+  const rows = actionContract.value?.search?.group_by;
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map((row) => {
+      const raw = row as Record<string, unknown>;
+      const field = String(raw.field || '').trim();
+      const label = String(raw.label || field).trim();
+      if (!field || !label) return null;
+      if (isNumericToken(field) || isNumericToken(label)) return null;
+      const contextRaw = String(raw.context_raw || '').trim();
+      const context = parseContractContextRaw(contextRaw);
+      const isDefault = raw.default === true || raw.is_default === true;
+      return { field, label, context, contextRaw, isDefault };
+    })
+    .filter((item): item is ContractGroupByChip => Boolean(item))
+    .slice(0, 12);
+});
+const groupByPrimaryChips = computed<ContractGroupByChip[]>(() =>
+  contractGroupByChips.value.slice(0, filterPrimaryBudget.value),
+);
+const groupByOverflowChips = computed<ContractGroupByChip[]>(() =>
+  contractGroupByChips.value.slice(filterPrimaryBudget.value),
 );
 function toContractActionButton(
   row: Record<string, unknown>,
@@ -936,6 +1013,7 @@ function applyRoutePreset() {
   const preset = String(route.query.preset || '').trim();
   const presetFilter = String(route.query.preset_filter || '').trim();
   const savedFilter = String(route.query.saved_filter || '').trim();
+  const groupBy = String(route.query.group_by || '').trim();
   const routeSearch = String(route.query.search || '').trim();
   const ctxSource = String(route.query.ctx_source || '').trim();
   routeContextSource.value = ctxSource;
@@ -960,11 +1038,16 @@ function applyRoutePreset() {
   } else {
     setIfDiff(activeSavedFilterKey, '');
   }
+  if (groupBy) {
+    setIfDiff(activeGroupByField, groupBy);
+  } else {
+    setIfDiff(activeGroupByField, '');
+  }
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'action' }).catch(() => {});
   }
-  if (!preset && !presetFilter && !savedFilter) {
+  if (!preset && !presetFilter && !savedFilter && !groupBy) {
     lastTrackedPreset.value = '';
   }
   return changed;
@@ -1012,6 +1095,25 @@ function clearSavedFilter() {
   showMoreSavedFilters.value = false;
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { saved_filter: undefined });
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function applyGroupBy(field: string) {
+  if (!field) return;
+  activeGroupByField.value = field;
+  showMoreGroupBy.value = false;
+  clearSelection();
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: field });
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function clearGroupBy() {
+  activeGroupByField.value = '';
+  showMoreGroupBy.value = false;
+  clearSelection();
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: undefined });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
@@ -1110,6 +1212,30 @@ function resolveEffectiveFilterContext() {
 
 function resolveEffectiveFilterContextRaw() {
   const raw = [resolveContractFilterContextRaw(), resolveSavedFilterContextRaw()].filter(Boolean);
+  return raw.join(' && ');
+}
+
+function resolveGroupByContext() {
+  const field = activeGroupByField.value;
+  if (!field) return {};
+  const found = contractGroupByChips.value.find((chip) => chip.field === field);
+  return { ...(found?.context || {}), group_by: field };
+}
+
+function resolveGroupByContextRaw() {
+  const field = activeGroupByField.value;
+  if (!field) return '';
+  const found = contractGroupByChips.value.find((chip) => chip.field === field);
+  const raw = [found?.contextRaw || '', `{'group_by': '${field}'}`].filter(Boolean);
+  return raw.join(' && ');
+}
+
+function resolveEffectiveRequestContext() {
+  return { ...resolveEffectiveFilterContext(), ...resolveGroupByContext() };
+}
+
+function resolveEffectiveRequestContextRaw() {
+  const raw = [resolveEffectiveFilterContextRaw(), resolveGroupByContextRaw()].filter(Boolean);
   return raw.join(' && ');
 }
 
@@ -1688,6 +1814,7 @@ async function loadAssigneeOptions() {
 async function load() {
   showMoreContractActions.value = false;
   showMoreSavedFilters.value = false;
+  showMoreGroupBy.value = false;
   status.value = 'loading';
   clearError();
   traceId.value = '';
@@ -1725,6 +1852,7 @@ async function load() {
     actionContract.value = typedContract;
     const routeFilter = String(route.query.preset_filter || '').trim();
     const routeSavedFilter = String(route.query.saved_filter || '').trim();
+    const routeGroupBy = String(route.query.group_by || '').trim();
     if (!activeContractFilterKey.value && routeFilter) {
       activeContractFilterKey.value = routeFilter;
     }
@@ -1746,6 +1874,16 @@ async function load() {
     } else {
       const defaultSaved = contractSavedFilterChips.value.find((row) => row.isDefault);
       if (defaultSaved) activeSavedFilterKey.value = defaultSaved.key;
+    }
+    if (!activeGroupByField.value && routeGroupBy) {
+      activeGroupByField.value = routeGroupBy;
+    }
+    if (activeGroupByField.value) {
+      const hasGroupBy = contractGroupByChips.value.some((item) => item.field === activeGroupByField.value);
+      if (!hasGroupBy) activeGroupByField.value = '';
+    } else {
+      const defaultGroupBy = contractGroupByChips.value.find((item) => item.isDefault);
+      if (defaultGroupBy) activeGroupByField.value = defaultGroupBy.field;
     }
     contractReadAllowed.value = resolveContractReadRight(typedContract);
     contractWarningCount.value = Array.isArray(typedContract.warnings) ? typedContract.warnings.length : 0;
@@ -1881,8 +2019,8 @@ async function load() {
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
       domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
       domain_raw: resolveEffectiveFilterDomainRaw(),
-      context: mergeContext(meta?.context, resolveEffectiveFilterContext()),
-      context_raw: resolveEffectiveFilterContextRaw(),
+      context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
+      context_raw: resolveEffectiveRequestContextRaw(),
       limit: contractLimit.value,
       offset: 0,
       search_term: searchTerm.value.trim() || undefined,
@@ -2041,7 +2179,7 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   try {
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey(action, selectedIds.value, { active: action === 'activate' });
-    const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveFilterContext());
+    const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
     const result = await batchUpdateRecords({
       model: targetModel,
       ids: selectedIds.value,
@@ -2109,7 +2247,7 @@ async function handleBatchAssign(assigneeId: number) {
   try {
     const ifMatchMap = buildIfMatchMap(selectedIds.value);
     const idempotencyKey = buildIdempotencyKey('assign', selectedIds.value, { assignee_id: assigneeId });
-    const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveFilterContext());
+    const requestContext = mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext());
     const result = await batchUpdateRecords({
       model: targetModel,
       ids: selectedIds.value,
@@ -2187,7 +2325,7 @@ async function exportByBackend(scope: 'selected' | 'all') {
       domain,
       order: sortLabel.value,
       limit: scope === 'all' ? 10000 : 5000,
-      context: mergeContext(actionMeta.value?.context, resolveEffectiveFilterContext()),
+      context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()),
     });
     if (!result.content_b64) {
       batchMessage.value = '没有可导出的记录';
