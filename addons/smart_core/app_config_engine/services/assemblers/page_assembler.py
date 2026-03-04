@@ -129,6 +129,18 @@ class PageAssembler:
                 mark_missing("app.view.config")
                 _logger.warning("app.view.config missing; fallback view contract for model=%s vt=%s", model, vt)
                 v_contract = {"type": vt}
+            except Exception as e:
+                data["degraded"] = True
+                reason = f"view_contract_fallback:{vt}:{type(e).__name__}"
+                if reason not in warnings:
+                    warnings.append(reason)
+                _logger.warning(
+                    "view contract assemble failed; fallback minimal contract model=%s vt=%s err=%s",
+                    model,
+                    vt,
+                    e,
+                )
+                v_contract = {"type": vt}
 
             if vt == 'tree':
                 # 解析器没产出 columns 时，用严格列兜底
@@ -243,6 +255,7 @@ class PageAssembler:
         if missing_models:
             data["degraded"] = True
             data["missing_models"] = missing_models
+        if warnings:
             data["warnings"] = warnings
         return data, versions
 
