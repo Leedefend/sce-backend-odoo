@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import PageToolbar from '../components/page/PageToolbar.vue';
@@ -260,6 +260,10 @@ const props = defineProps<{
   }) => void;
   groupSampleLimit?: number;
   onGroupSampleLimitChange?: (limit: number) => void;
+  groupSort?: 'asc' | 'desc';
+  onGroupSortChange?: (next: 'asc' | 'desc') => void;
+  collapsedGroupKeys?: string[];
+  onGroupCollapsedChange?: (keys: string[]) => void;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -271,8 +275,7 @@ const emptyCopy = computed(() => resolveEmptyCopy('list'));
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
-const collapsedGroupKeys = ref<Record<string, boolean>>({});
-const groupSortDesc = ref(true);
+const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
   rows.sort((a, b) => {
@@ -283,24 +286,26 @@ const sortedGroupedRows = computed(() => {
   return rows;
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
+const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 function formatValue(value: unknown) {
   return formatDisplayValue(value);
 }
 
 function toggleGroupCollapsed(key: string) {
-  const current = Boolean(collapsedGroupKeys.value[key]);
-  collapsedGroupKeys.value = {
-    ...collapsedGroupKeys.value,
-    [key]: !current,
-  };
+  if (!props.onGroupCollapsedChange) return;
+  const set = new Set(collapsedSet.value);
+  if (set.has(key)) set.delete(key);
+  else set.add(key);
+  props.onGroupCollapsedChange(Array.from(set));
 }
 
 function isGroupCollapsed(key: string) {
-  return Boolean(collapsedGroupKeys.value[key]);
+  return collapsedSet.value.has(key);
 }
 
 function toggleGroupSort() {
-  groupSortDesc.value = !groupSortDesc.value;
+  if (!props.onGroupSortChange) return;
+  props.onGroupSortChange(groupSortDesc.value ? 'asc' : 'desc');
 }
 
 function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {

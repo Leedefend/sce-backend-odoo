@@ -246,6 +246,10 @@
       :on-open-group="handleOpenGroupedRows"
       :group-sample-limit="groupSampleLimit"
       :on-group-sample-limit-change="handleGroupSampleLimitChange"
+      :group-sort="groupSort"
+      :on-group-sort-change="handleGroupSortChange"
+      :collapsed-group-keys="collapsedGroupKeys"
+      :on-group-collapsed-change="handleGroupCollapsedChange"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
@@ -377,6 +381,8 @@ const batchHasMoreFailures = ref(false);
 const groupSummaryItems = ref<GroupSummaryItem[]>([]);
 const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>>; domain?: unknown[] }>>([]);
 const groupSampleLimit = ref(3);
+const groupSort = ref<'asc' | 'desc'>('desc');
+const collapsedGroupKeys = ref<string[]>([]);
 const activeGroupSummaryKey = ref('');
 const activeGroupSummaryDomain = ref<unknown[]>([]);
 const advancedFields = ref<string[]>([]);
@@ -1047,6 +1053,8 @@ function applyRoutePreset() {
   const groupBy = String(route.query.group_by || '').trim();
   const groupValue = String(route.query.group_value || '').trim();
   const groupSampleLimitRaw = Number(route.query.group_sample_limit || 0);
+  const groupSortRaw = String(route.query.group_sort || '').trim().toLowerCase();
+  const groupCollapsedRaw = String(route.query.group_collapsed || '').trim();
   const routeSearch = String(route.query.search || '').trim();
   const routeOrder = String(route.query.order || route.query.sort || '').trim();
   const routeActiveFilter = String(route.query.active_filter || '').trim();
@@ -1097,6 +1105,15 @@ function applyRoutePreset() {
   } else {
     setIfDiff(groupSampleLimit, 3);
   }
+  if (groupSortRaw === 'asc' || groupSortRaw === 'desc') {
+    setIfDiff(groupSort, groupSortRaw as 'asc' | 'desc');
+  } else {
+    setIfDiff(groupSort, 'desc');
+  }
+  const collapsedList = groupCollapsedRaw
+    ? groupCollapsedRaw.split(',').map((item) => item.trim()).filter(Boolean)
+    : [];
+  setIfDiff(collapsedGroupKeys, collapsedList);
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'action' }).catch(() => {});
@@ -1116,11 +1133,14 @@ function clearRoutePreset() {
 }
 
 function syncRouteListState(extra?: Record<string, unknown>) {
+  const collapsed = collapsedGroupKeys.value.filter(Boolean).join(',');
   const query = pickContractNavQuery(route.query as Record<string, unknown>, {
     search: searchTerm.value.trim() || undefined,
     order: sortValue.value.trim() || undefined,
     active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
     group_sample_limit: groupSampleLimit.value !== 3 ? groupSampleLimit.value : undefined,
+    group_sort: groupSort.value !== 'desc' ? groupSort.value : undefined,
+    group_collapsed: collapsed || undefined,
     ...extra,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
@@ -1218,6 +1238,18 @@ function handleGroupSampleLimitChange(limit: number) {
   groupSampleLimit.value = normalized;
   syncRouteListState({ group_sample_limit: normalized });
   void load();
+}
+
+function handleGroupSortChange(next: 'asc' | 'desc') {
+  groupSort.value = next === 'asc' ? 'asc' : 'desc';
+  syncRouteListState({ group_sort: groupSort.value !== 'desc' ? groupSort.value : undefined });
+}
+
+function handleGroupCollapsedChange(keys: string[]) {
+  collapsedGroupKeys.value = Array.isArray(keys) ? keys.filter(Boolean) : [];
+  syncRouteListState({
+    group_collapsed: collapsedGroupKeys.value.length ? collapsedGroupKeys.value.join(',') : undefined,
+  });
 }
 
 function openFocusAction(action: FocusNavAction | string) {
@@ -1643,6 +1675,14 @@ function advancedRowMeta(row: Record<string, unknown>) {
     .map((key) => `${advancedFieldLabel(key)}: ${String(row[key] ?? '-')}`);
   if (!entries.length) return '无附加字段';
   return entries.join(' · ');
+}
+
+function buildGroupKey(field: unknown, value: unknown, fallback: unknown) {
+  const fieldPart = String(field || activeGroupByField.value || 'group').trim() || 'group';
+  const valuePart = typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? String(value)
+    : JSON.stringify(value ?? fallback);
+  return `${fieldPart}:${valuePart}`;
 }
 
 function resolveModelFromContract(contract: Awaited<ReturnType<typeof loadActionContract>>) {
@@ -2137,11 +2177,11 @@ async function load() {
     });
     records.value = result.data?.records ?? [];
     groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
-      .map((row, idx) => {
+      .map((row) => {
         const item = row as Record<string, unknown>;
         const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
         return {
-          key: `${String(item.field || activeGroupByField.value || 'group')}:${String(item.value ?? label)}:${idx}`,
+          key: buildGroupKey(item.field, item.value, label),
           label,
           count: Number(item.count || 0),
           domain: Array.isArray(item.domain) ? item.domain : [],
@@ -2151,11 +2191,11 @@ async function load() {
       .filter((item) => item.count >= 0)
       .slice(0, 12);
     groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])
-      .map((row, idx) => {
+      .map((row) => {
         const item = row as Record<string, unknown>;
         const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
         return {
-          key: `${String(item.field || activeGroupByField.value || 'group')}:${String(item.value ?? label)}:${idx}`,
+          key: buildGroupKey(item.field, item.value, label),
           label,
           count: Number(item.count || 0),
           domain: Array.isArray(item.domain) ? item.domain : [],
