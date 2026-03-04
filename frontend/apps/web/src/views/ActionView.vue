@@ -1252,6 +1252,36 @@ function handleGroupCollapsedChange(keys: string[]) {
   });
 }
 
+function normalizeGroupedRouteState() {
+  if (!activeGroupByField.value) {
+    if (collapsedGroupKeys.value.length) {
+      collapsedGroupKeys.value = [];
+      syncRouteListState({ group_collapsed: undefined });
+    }
+    return;
+  }
+  const validGroupKeys = new Set(groupedRows.value.map((item) => item.key).filter(Boolean));
+  const normalizedCollapsed = collapsedGroupKeys.value.filter((key) => validGroupKeys.has(key));
+  const collapsedChanged =
+    normalizedCollapsed.length !== collapsedGroupKeys.value.length
+    || normalizedCollapsed.some((key, idx) => key !== collapsedGroupKeys.value[idx]);
+  const routeGroupValue = String(route.query.group_value || '').trim();
+  const groupValueExists = !routeGroupValue
+    || groupedRows.value.some((item) => item.label === routeGroupValue)
+    || groupSummaryItems.value.some((item) => item.label === routeGroupValue);
+  if (!groupValueExists) {
+    activeGroupSummaryKey.value = '';
+    activeGroupSummaryDomain.value = [];
+  }
+  if (!collapsedChanged && groupValueExists) return;
+  collapsedGroupKeys.value = normalizedCollapsed;
+  const nextState: Record<string, unknown> = {
+    group_collapsed: normalizedCollapsed.length ? normalizedCollapsed.join(',') : undefined,
+  };
+  if (!groupValueExists) nextState.group_value = undefined;
+  syncRouteListState(nextState);
+}
+
 function openFocusAction(action: FocusNavAction | string) {
   const path = typeof action === 'string' ? action : action.to;
   const query = typeof action === 'string' ? undefined : action.query;
@@ -2204,6 +2234,7 @@ async function load() {
       })
       .filter((item) => item.sampleRows.length > 0)
       .slice(0, 12);
+    normalizeGroupedRouteState();
     if (!activeGroupSummaryKey.value) {
       const routeGroupValue = String(route.query.group_value || '').trim();
       if (routeGroupValue) {
