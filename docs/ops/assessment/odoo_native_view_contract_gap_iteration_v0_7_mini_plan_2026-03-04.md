@@ -42,3 +42,22 @@
    - `make verify.frontend.quick.gate`
    - `make verify.portal.tree_view_smoke.container`
    - `BASELINE_FREEZE_ENFORCE=0 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 make verify.contract.preflight`
+
+## 本轮进展（2026-03-04）
+
+- [x] 目标 1-7：grouped 契约字段、前端消费、smoke/baseline/guard 全量落地
+- [x] 目标 8：`export_evidence.py` 增加 `grouped_pagination_contract` 摘要
+- [x] 目标 9：本进展文档更新
+- [x] 目标 10：统一回归完成
+
+### 关键提交
+
+1. `29b7580` `feat(grouped-pagination): expose backend page flags and stable group keys`
+2. `d2a89e2` `test(grouped-pagination): lock group key and page flag contract in smoke guards`
+3. `dac4600` `feat(evidence): enforce grouped pagination contract in phase11_1 evidence guards`
+
+### 回归结果
+
+1. `make verify.portal.tree_view_smoke.container` PASS
+2. `make verify.frontend.quick.gate` PASS
+3. `BASELINE_FREEZE_ENFORCE=0 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 make verify.contract.preflight` PASS
