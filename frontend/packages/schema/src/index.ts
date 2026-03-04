@@ -194,6 +194,7 @@ export interface ApiDataListRequest {
   domain_raw?: string;
   group_by?: string | string[];
   group_sample_limit?: number;
+  group_limit?: number;
   group_page_size?: number;
   group_page_offsets?: Record<string, number>;
   search_term?: string;
