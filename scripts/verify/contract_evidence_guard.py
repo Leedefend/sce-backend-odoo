@@ -22,6 +22,22 @@ def _load_json(path: Path) -> dict:
     return payload if isinstance(payload, dict) else {}
 
 
+def _ratio_to_float(raw: object) -> float:
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    if not isinstance(raw, str) or "/" not in raw:
+        return 0.0
+    left, right = raw.split("/", 1)
+    try:
+        left_f = float(left.strip())
+        right_f = float(right.strip())
+    except Exception:
+        return 0.0
+    if right_f <= 0:
+        return 0.0
+    return left_f / right_f
+
+
 def main() -> int:
     policy = {
         "max_errors": 0,
@@ -67,6 +83,11 @@ def main() -> int:
         "require_grouped_drift_summary_ok": True,
         "min_grouped_drift_e2e_case_count": 1,
         "require_grouped_drift_export_marker_full_hit": True,
+        "require_grouped_governance_brief_ok": True,
+        "min_grouped_governance_coverage_ratio": 1.0,
+        "max_grouped_governance_failure_count": 0,
+        "min_grouped_governance_e2e_case_count": 1,
+        "require_grouped_governance_export_marker_full_hit": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -97,6 +118,7 @@ def main() -> int:
         "scene_contract_coverage",
         "grouped_pagination_contract",
         "grouped_drift_summary",
+        "grouped_governance_brief",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -332,6 +354,37 @@ def main() -> int:
     if bool(policy.get("require_grouped_drift_export_marker_full_hit", True)):
         if int(grouped_drift.get("export_marker_hits") or 0) != int(grouped_drift.get("export_marker_total") or 0):
             errors.append("grouped_drift_summary export markers must be fully hit under baseline policy")
+
+    grouped_governance = (
+        payload.get("grouped_governance_brief")
+        if isinstance(payload.get("grouped_governance_brief"), dict)
+        else {}
+    )
+    if bool(policy.get("require_grouped_governance_brief_ok", True)) and not bool(grouped_governance.get("ok")):
+        errors.append("grouped_governance_brief.ok must be true under baseline policy")
+    min_grouped_governance_coverage_ratio = float(policy.get("min_grouped_governance_coverage_ratio", 1.0) or 1.0)
+    if _ratio_to_float(grouped_governance.get("governance_coverage_ratio")) < min_grouped_governance_coverage_ratio:
+        errors.append(
+            "grouped_governance_brief.governance_coverage_ratio must be >= "
+            f"{min_grouped_governance_coverage_ratio}"
+        )
+    max_grouped_governance_failure_count = int(policy.get("max_grouped_governance_failure_count", 0) or 0)
+    if int(grouped_governance.get("governance_failure_count") or 0) > max_grouped_governance_failure_count:
+        errors.append(
+            "grouped_governance_brief.governance_failure_count must be <= "
+            f"{max_grouped_governance_failure_count}"
+        )
+    min_grouped_governance_e2e_case_count = int(policy.get("min_grouped_governance_e2e_case_count", 1) or 1)
+    if int(grouped_governance.get("grouped_e2e_case_count") or 0) < min_grouped_governance_e2e_case_count:
+        errors.append(
+            "grouped_governance_brief.grouped_e2e_case_count must be >= "
+            f"{min_grouped_governance_e2e_case_count}"
+        )
+    if bool(policy.get("require_grouped_governance_export_marker_full_hit", True)):
+        if int(grouped_governance.get("grouped_export_marker_hits") or 0) != int(
+            grouped_governance.get("grouped_export_marker_total") or 0
+        ):
+            errors.append("grouped_governance_brief export markers must be fully hit under baseline policy")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
