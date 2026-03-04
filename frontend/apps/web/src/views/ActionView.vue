@@ -2459,6 +2459,7 @@ async function load() {
           pageHasNext: typeof item.page_has_next === 'boolean' ? Boolean(item.page_has_next) : undefined,
           pageSyncedFromServer: Object.prototype.hasOwnProperty.call(item, 'page_offset')
             || Object.prototype.hasOwnProperty.call(item, 'page_applied_offset')
+            || Object.prototype.hasOwnProperty.call(item, 'page_clamped')
             || Object.prototype.hasOwnProperty.call(item, 'page_limit')
             || Object.prototype.hasOwnProperty.call(item, 'page_size'),
           loading: false,

@@ -164,9 +164,12 @@ export interface ApiDataListResult {
     count?: number;
     domain?: unknown[];
     sample_rows?: Array<Record<string, unknown>>;
+    page_requested_size?: number;
+    page_applied_size?: number;
     page_requested_offset?: number;
     page_applied_offset?: number;
     page_max_offset?: number;
+    page_clamped?: boolean;
     page_offset?: number;
     page_limit?: number;
     page_size?: number;
