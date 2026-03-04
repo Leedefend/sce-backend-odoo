@@ -1,0 +1,5 @@
+{
+  "require_ok": true,
+  "require_has_previous_aligned": true,
+  "require_delta_types_ok": true
+}

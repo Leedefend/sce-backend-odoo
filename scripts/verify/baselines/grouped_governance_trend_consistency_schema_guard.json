@@ -1,0 +1,22 @@
+{
+  "required_top_keys": [
+    "ok",
+    "summary",
+    "policy",
+    "errors",
+    "report"
+  ],
+  "required_summary_keys": [
+    "has_previous_brief",
+    "has_previous_matrix",
+    "has_previous_aligned",
+    "brief_delta_types_ok",
+    "matrix_delta_types_ok",
+    "brief_delta_governance_coverage_ratio",
+    "brief_delta_governance_failure_count",
+    "brief_delta_grouped_e2e_max_consistency_score",
+    "matrix_delta_grouped_governance_brief_policy_count",
+    "matrix_delta_grouped_drift_summary_policy_count",
+    "matrix_delta_contract_evidence_grouped_governance_policy_count"
+  ]
+}
