@@ -339,6 +339,7 @@ class ApiDataHandler(BaseIntentHandler):
                 sample_rows = []
             out.append(
                 {
+                    "group_key": group_key,
                     "field": item.get("field"),
                     "value": item.get("value"),
                     "label": item.get("label"),
@@ -351,6 +352,8 @@ class ApiDataHandler(BaseIntentHandler):
                     "page_total": page_total,
                     "page_range_start": page_range_start,
                     "page_range_end": page_range_end,
+                    "page_has_prev": page_offset > 0,
+                    "page_has_next": (page_offset + page_limit) < count,
                 }
             )
         return out

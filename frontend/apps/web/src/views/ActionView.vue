@@ -392,6 +392,8 @@ type GroupedRow = {
   pageTotal?: number;
   pageRangeStart?: number;
   pageRangeEnd?: number;
+  pageHasPrev?: boolean;
+  pageHasNext?: boolean;
   pageSyncedFromServer?: boolean;
   loading?: boolean;
 };
@@ -1374,6 +1376,8 @@ async function handleGroupedRowsPageChange(group: {
           pageTotal: nextTotal,
           pageRangeStart: nextRangeStart,
           pageRangeEnd: nextRangeEnd,
+          pageHasPrev: nextOffset > 0,
+          pageHasNext: nextOffset + pageLimit < Number(found.count || 0),
           pageSyncedFromServer: true,
           loading: false,
         }
@@ -2421,14 +2425,15 @@ async function load() {
       .map((row) => {
         const item = row as Record<string, unknown>;
         const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        const fallbackKey = buildGroupKey(item.field, item.value, label);
         return {
-          key: buildGroupKey(item.field, item.value, label),
+          key: String(item.group_key || fallbackKey),
           label,
           count: Number(item.count || 0),
           domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
           pageOffset: normalizeGroupPageOffset(
-            Number((item.page_offset ?? groupPageOffsets.value[buildGroupKey(item.field, item.value, label)]) || 0),
+            Number((item.page_offset ?? groupPageOffsets.value[String(item.group_key || fallbackKey)]) || 0),
             Number(item.page_limit || groupSampleLimit.value),
             Number(item.count || 0),
           ),
@@ -2437,6 +2442,8 @@ async function load() {
           pageTotal: Number(item.page_total || 0) > 0 ? Number(item.page_total || 0) : undefined,
           pageRangeStart: Number(item.page_range_start || 0) >= 0 ? Number(item.page_range_start || 0) : undefined,
           pageRangeEnd: Number(item.page_range_end || 0) >= 0 ? Number(item.page_range_end || 0) : undefined,
+          pageHasPrev: typeof item.page_has_prev === 'boolean' ? Boolean(item.page_has_prev) : undefined,
+          pageHasNext: typeof item.page_has_next === 'boolean' ? Boolean(item.page_has_next) : undefined,
           pageSyncedFromServer: Object.prototype.hasOwnProperty.call(item, 'page_offset')
             || Object.prototype.hasOwnProperty.call(item, 'page_limit'),
           loading: false,
