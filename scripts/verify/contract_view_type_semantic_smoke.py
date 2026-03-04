@@ -103,6 +103,17 @@ def _pick_view_types() -> tuple[list[str], list[str]]:
     return required, optional
 
 
+def _pick_min_models() -> int:
+    raw = os.getenv("VIEW_TYPE_SMOKE_MIN_MODELS", "").strip()
+    if not raw:
+        return 1
+    try:
+        value = int(raw)
+    except Exception:
+        return 1
+    return value if value > 0 else 1
+
+
 def main() -> None:
     base_url = get_base_url().rstrip("/")
     intent_url = f"{base_url}/api/v1/intent"
@@ -121,14 +132,15 @@ def main() -> None:
         raise RuntimeError("login response missing token")
 
     models = _pick_models()
+    min_models = _pick_min_models()
     required_view_types, optional_view_types = _pick_view_types()
     all_view_types = [*required_view_types, *optional_view_types]
     debug = os.getenv("VIEW_TYPE_SMOKE_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
-    resolved: dict[str, str] = {}
+    resolved: dict[str, list[str]] = {}
     failures: list[str] = []
     warnings: list[str] = []
     for view_type in all_view_types:
-        matched = False
+        matched_models: list[str] = []
         attempts: list[str] = []
         for model in models:
             status, payload = _post_intent(
@@ -156,11 +168,12 @@ def main() -> None:
             if reason:
                 attempts.append(f"{model}: {reason}")
                 continue
-            resolved[view_type] = model
-            matched = True
-            break
-        if not matched:
-            detail = f"{view_type} -> {'; '.join(attempts[:4])}"
+            matched_models.append(model)
+            if len(matched_models) >= min_models:
+                break
+        resolved[view_type] = matched_models
+        if len(matched_models) < min_models:
+            detail = f"{view_type} -> matched={len(matched_models)}/{min_models}; {'; '.join(attempts[:4])}"
             if view_type in required_view_types:
                 failures.append(detail)
             else:
@@ -170,9 +183,10 @@ def main() -> None:
         raise RuntimeError("[contract_view_type_semantic_smoke] FAIL: " + " | ".join(failures))
 
     print("[contract_view_type_semantic_smoke] PASS")
+    print(f"- min_models_per_view: {min_models}")
     print("- required: " + ", ".join(required_view_types))
     print("- optional: " + ", ".join(optional_view_types))
-    print("- coverage: " + ", ".join(f"{vt}:{resolved.get(vt, '-')}" for vt in all_view_types))
+    print("- coverage: " + ", ".join(f"{vt}:{'|'.join(resolved.get(vt, [])) or '-'}" for vt in all_view_types))
     if warnings:
         print("- warnings:")
         for item in warnings:

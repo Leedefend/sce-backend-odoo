@@ -2099,9 +2099,12 @@ verify.contract.mode.smoke: guard.prod.forbid check-compose-project check-compos
 verify.contract.api.mode.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/contract_api_mode_smoke.py
 
-.PHONY: verify.contract.view_type_semantic.smoke
+.PHONY: verify.contract.view_type_semantic.smoke verify.contract.view_type_semantic.strict.smoke
 verify.contract.view_type_semantic.smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/contract_view_type_semantic_smoke.py
+
+verify.contract.view_type_semantic.strict.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) VIEW_TYPE_SMOKE_MIN_MODELS=2 python3 scripts/verify/contract_view_type_semantic_smoke.py
 
 verify.contract.preflight: guard.prod.forbid
 	@if [ "$(BASELINE_FREEZE_ENFORCE)" = "1" ]; then \
