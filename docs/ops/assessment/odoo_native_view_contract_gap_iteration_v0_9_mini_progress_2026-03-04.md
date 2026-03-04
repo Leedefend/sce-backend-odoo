@@ -18,6 +18,7 @@
 3. `verify.frontend.quick.gate` 已接入上述一致性 guard
 4. contract evidence 新增 `grouped_pagination_contract.window_range_consistency`
 5. contract evidence schema/guard/policy baseline 同步强化该指标
+6. `contract_evidence_guard` 增加 grouped 字段布尔类型校验（类型+语义双重约束）
 
 ## 提交记录
 
@@ -25,6 +26,7 @@
 2. `a387725` test(e2e): upgrade grouped signature to v0.4 capability markers
 3. `c414a8c` test(frontend-gate): add grouped contract consistency guard
 4. `529bebe` feat(evidence): add grouped window-range consistency metric and policy
+5. `feat(evidence)`: enforce grouped evidence boolean type checks
 
 ## 验证结果
 
