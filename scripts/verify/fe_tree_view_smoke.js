@@ -136,6 +136,8 @@ function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, re
   const currentPage = Math.floor(pageOffset / pageLimit) + 1;
   const rangeStart = count > 0 ? pageOffset + 1 : 0;
   const rangeEnd = count > 0 ? Math.min(count, pageOffset + pageLimit) : 0;
+  const offsetAlignedToPageLimit = pageOffset % pageLimit === 0;
+  const requestOffsetMatchesObserved = !firstGroup || normalizedRequestOffset === pageOffset;
   return {
     formulas: {
       page_offset_normalize: 'floor(offset / page_limit) * page_limit',
@@ -151,6 +153,7 @@ function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, re
       range_start: 'number',
       range_end: 'number',
       offset_aligned_to_page_limit: 'boolean',
+      request_offset_matches_observed: 'boolean',
     },
     request: {
       page_limit: pageLimit,
@@ -167,7 +170,12 @@ function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, re
       total_pages: totalPages,
       range_start: rangeStart,
       range_end: rangeEnd,
-      offset_aligned_to_page_limit: pageOffset % pageLimit === 0,
+      offset_aligned_to_page_limit: offsetAlignedToPageLimit,
+    },
+    consistency: {
+      request_offset_matches_observed: requestOffsetMatchesObserved,
+      request_offset_aligned_to_page_limit: normalizedRequestOffset % pageLimit === 0,
+      first_group_offset_aligned_to_page_limit: offsetAlignedToPageLimit,
     },
   };
 }
