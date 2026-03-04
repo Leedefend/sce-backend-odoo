@@ -46,6 +46,7 @@ def main() -> int:
         "function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, requestOffset) {",
         "grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,",
         "grouped_pagination_normalized_offset:",
+        "grouped_page_window_present:",
     ]
     for marker in smoke_markers:
         if marker not in smoke_text:
@@ -58,6 +59,11 @@ def main() -> int:
         baseline = {}
 
     semantic = _expect_dict(baseline.get("grouped_pagination_semantic_summary"), "grouped_pagination_semantic_summary", errors)
+    grouped_contract_fields = _expect_dict(
+        baseline.get("grouped_contract_fields"),
+        "grouped_contract_fields",
+        errors,
+    )
     formulas = _expect_dict(semantic.get("formulas"), "grouped_pagination_semantic_summary.formulas", errors)
     field_types = _expect_dict(semantic.get("field_types"), "grouped_pagination_semantic_summary.field_types", errors)
     request = _expect_dict(semantic.get("request"), "grouped_pagination_semantic_summary.request", errors)
@@ -84,6 +90,9 @@ def main() -> int:
         if value != expected:
             errors.append(f"grouped_pagination_semantic_summary.field_types.{key} must be '{expected}'")
 
+    if grouped_contract_fields.get("page_window") is not True:
+        errors.append("grouped_contract_fields.page_window must be true")
+
     for key in ("page_limit", "request_offset", "normalized_request_offset"):
         _expect_type(request.get(key), int, f"grouped_pagination_semantic_summary.request.{key}", errors)
 
@@ -92,6 +101,12 @@ def main() -> int:
         first_group.get("offset_aligned_to_page_limit"),
         bool,
         "grouped_pagination_semantic_summary.first_group_observation.offset_aligned_to_page_limit",
+        errors,
+    )
+    _expect_type(
+        first_group.get("page_window_matches_range"),
+        bool,
+        "grouped_pagination_semantic_summary.first_group_observation.page_window_matches_range",
         errors,
     )
     for key in (
@@ -103,6 +118,8 @@ def main() -> int:
         "total_pages",
         "range_start",
         "range_end",
+        "page_window_start",
+        "page_window_end",
     ):
         _expect_type(first_group.get(key), int, f"grouped_pagination_semantic_summary.first_group_observation.{key}", errors)
 

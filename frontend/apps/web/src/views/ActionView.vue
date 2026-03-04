@@ -392,6 +392,7 @@ type GroupedRow = {
   pageTotal?: number;
   pageRangeStart?: number;
   pageRangeEnd?: number;
+  pageWindow?: { start?: number; end?: number };
   pageHasPrev?: boolean;
   pageHasNext?: boolean;
   pageSyncedFromServer?: boolean;
@@ -1376,6 +1377,7 @@ async function handleGroupedRowsPageChange(group: {
           pageTotal: nextTotal,
           pageRangeStart: nextRangeStart,
           pageRangeEnd: nextRangeEnd,
+          pageWindow: { start: nextRangeStart, end: nextRangeEnd },
           pageHasPrev: nextOffset > 0,
           pageHasNext: nextOffset + pageLimit < Number(found.count || 0),
           pageSyncedFromServer: true,
@@ -2442,6 +2444,16 @@ async function load() {
           pageTotal: Number(item.page_total || 0) > 0 ? Number(item.page_total || 0) : undefined,
           pageRangeStart: Number(item.page_range_start || 0) >= 0 ? Number(item.page_range_start || 0) : undefined,
           pageRangeEnd: Number(item.page_range_end || 0) >= 0 ? Number(item.page_range_end || 0) : undefined,
+          pageWindow: typeof item.page_window === 'object' && item.page_window !== null
+            ? {
+              start: Number((item.page_window as Record<string, unknown>).start || 0) >= 0
+                ? Number((item.page_window as Record<string, unknown>).start || 0)
+                : undefined,
+              end: Number((item.page_window as Record<string, unknown>).end || 0) >= 0
+                ? Number((item.page_window as Record<string, unknown>).end || 0)
+                : undefined,
+            }
+            : undefined,
           pageHasPrev: typeof item.page_has_prev === 'boolean' ? Boolean(item.page_has_prev) : undefined,
           pageHasNext: typeof item.page_has_next === 'boolean' ? Boolean(item.page_has_next) : undefined,
           pageSyncedFromServer: Object.prototype.hasOwnProperty.call(item, 'page_offset')
