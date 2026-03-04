@@ -66,6 +66,8 @@ def main() -> int:
         errors.append("baseline grouped_contract_fields.page_has_prev must be true")
     if grouped_contract_fields.get("page_has_next") is not True:
         errors.append("baseline grouped_contract_fields.page_has_next must be true")
+    if grouped_contract_fields.get("page_window") is not True:
+        errors.append("baseline grouped_contract_fields.page_window must be true")
     if field_types.get("request_offset_matches_observed") != "boolean":
         errors.append("baseline field_types.request_offset_matches_observed must be 'boolean'")
 
