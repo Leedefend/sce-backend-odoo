@@ -29,7 +29,8 @@ def main() -> int:
         return 1
 
     api_markers = [
-        "def _build_grouped_rows(self, env_model, domain, group_by, fields_safe: List[str], limit: int = 20, sample_limit: int = 3):",
+        "def _build_grouped_rows(",
+        "group_page_offsets: Optional[Dict[str, int]] = None,",
         '"grouped_rows": grouped_rows,',
     ]
     for marker in api_markers:
