@@ -25,6 +25,11 @@
    - 新增 `grouped_rows_runtime_guard`
    - 已接入 `verify.frontend.quick.gate`
 
+5. 分组列表交互增强
+   - `ListPage` 增加分组块排序（按计数升/降）与折叠开关
+   - 每个分组新增“查看全部”入口，触发 `ActionView` 按组 domain 下钻
+   - 下钻后保持现有列表语义（过滤、点击、批量操作）不变
+
 ## 当前状态
 
 - `group_by` 能力链路：
@@ -35,5 +40,5 @@
 ## 下一步建议
 
 1. 将 grouped-list 从“样本记录”升级为“可分页组内记录”
-2. 增加分组排序/折叠状态持久化
+2. 增加分组排序/折叠状态路由持久化
 3. 把 `grouped_rows` 纳入 e2e 场景快照对比
