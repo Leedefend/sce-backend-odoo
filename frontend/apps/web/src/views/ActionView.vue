@@ -388,6 +388,7 @@ type GroupedRow = {
   domain?: unknown[];
   pageOffset: number;
   pageLimit: number;
+  pageSyncedFromServer?: boolean;
   loading?: boolean;
 };
 const groupedRows = ref<GroupedRow[]>([]);
@@ -1356,7 +1357,7 @@ async function handleGroupedRowsPageChange(group: {
     const rows = Array.isArray(result.data?.records) ? (result.data.records as Array<Record<string, unknown>>) : [];
     groupedRows.value = groupedRows.value.map((item) =>
       item.key === group.key
-        ? { ...item, sampleRows: rows, pageOffset: nextOffset, pageLimit, loading: false }
+        ? { ...item, sampleRows: rows, pageOffset: nextOffset, pageLimit, pageSyncedFromServer: true, loading: false }
         : item,
     );
     groupPageOffsets.value = { ...groupPageOffsets.value, [group.key]: nextOffset };
@@ -1369,7 +1370,10 @@ async function handleGroupedRowsPageChange(group: {
 async function hydrateGroupedRowsByOffset() {
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel) return;
-  const candidates = groupedRows.value.filter((item) => Number(item.pageOffset || 0) > 0);
+  // When backend already returns offset-aligned sample_rows for each group, skip redundant hydration fetches.
+  const candidates = groupedRows.value.filter(
+    (item) => Number(item.pageOffset || 0) > 0 && !item.pageSyncedFromServer,
+  );
   if (!candidates.length) return;
   const keys = new Set(candidates.map((item) => item.key));
   groupedRows.value = groupedRows.value.map((item) => (keys.has(item.key) ? { ...item, loading: true } : item));
@@ -2410,6 +2414,8 @@ async function load() {
             Number(item.count || 0),
           ),
           pageLimit: Math.max(1, Number(item.page_limit || groupSampleLimit.value || 3)),
+          pageSyncedFromServer: Object.prototype.hasOwnProperty.call(item, 'page_offset')
+            || Object.prototype.hasOwnProperty.call(item, 'page_limit'),
           loading: false,
         };
       })
