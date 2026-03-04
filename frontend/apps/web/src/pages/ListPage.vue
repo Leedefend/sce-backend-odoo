@@ -97,9 +97,16 @@
       <section v-if="groupedRows.length" class="grouped-table">
         <header class="grouped-toolbar">
           <span>分组结果</span>
-          <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
-            {{ groupSortLabel }}
-          </button>
+          <div class="grouped-toolbar-actions">
+            <select :value="String(groupSampleLimit || 3)" @change="onGroupSampleLimitSelectChange">
+              <option value="3">每组 3 条</option>
+              <option value="5">每组 5 条</option>
+              <option value="8">每组 8 条</option>
+            </select>
+            <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
+              {{ groupSortLabel }}
+            </button>
+          </div>
         </header>
         <article v-for="group in sortedGroupedRows" :key="group.key" class="group-block">
           <header class="group-head">
@@ -251,6 +258,8 @@ const props = defineProps<{
     count: number;
     domain?: unknown[];
   }) => void;
+  groupSampleLimit?: number;
+  onGroupSampleLimitChange?: (limit: number) => void;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -296,6 +305,12 @@ function toggleGroupSort() {
 
 function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {
   props.onOpenGroup?.(group);
+}
+
+function onGroupSampleLimitSelectChange(event: Event) {
+  const value = Number((event.target as HTMLSelectElement | null)?.value || 0);
+  if (!Number.isFinite(value)) return;
+  props.onGroupSampleLimitChange?.(value);
 }
 
 function handleRow(row: Record<string, unknown>) {
@@ -480,6 +495,21 @@ function columnLabel(col: string) {
   color: #0f172a;
   font-size: 13px;
   font-weight: 700;
+}
+
+.grouped-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grouped-toolbar-actions select {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1e3a8a;
+  padding: 2px 10px;
+  font-size: 12px;
 }
 
 .grouped-sort-btn {
