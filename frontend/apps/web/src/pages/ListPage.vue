@@ -140,7 +140,7 @@
               >
                 上一页
               </button>
-              <span>{{ groupPageRangeText(group) }}</span>
+              <span>{{ groupPageInfoText(group) }}</span>
               <button
                 type="button"
                 class="group-page-btn"
@@ -148,6 +148,14 @@
                 @click="pageGroupNext(group)"
               >
                 下一页
+              </button>
+              <button
+                type="button"
+                class="group-page-btn"
+                :disabled="Boolean(group.loading) || groupTotalPages(group) <= 1"
+                @click="jumpGroupPage(group)"
+              >
+                跳转
               </button>
             </div>
             <button
@@ -399,6 +407,22 @@ function groupPageRangeText(group: { count: number; pageOffset?: number; pageLim
   return `${start}-${end} / ${total}`;
 }
 
+function groupTotalPages(group: { count: number; pageLimit?: number }) {
+  const total = Math.max(0, Number(group.count || 0));
+  const limit = Math.max(1, resolveGroupPageLimit(group));
+  return Math.max(1, Math.ceil(total / limit));
+}
+
+function groupCurrentPage(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  const limit = Math.max(1, resolveGroupPageLimit(group));
+  const offset = resolveGroupPageOffset(group);
+  return Math.floor(offset / limit) + 1;
+}
+
+function groupPageInfoText(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  return `第 ${groupCurrentPage(group)} / ${groupTotalPages(group)} 页 · ${groupPageRangeText(group)}`;
+}
+
 function pageGroupPrev(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
   if (!props.onGroupPageChange) return;
   const limit = resolveGroupPageLimit(group);
@@ -414,6 +438,20 @@ function pageGroupNext(group: { key: string; label: string; count: number; domai
   const maxOffset = Math.max(0, Number(group.count || 0) - limit);
   const next = Math.min(maxOffset, offset + limit);
   props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset: next, limit });
+}
+
+function jumpGroupPage(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (!props.onGroupPageChange) return;
+  const totalPages = groupTotalPages(group);
+  const current = groupCurrentPage(group);
+  const raw = window.prompt(`输入页码（1-${totalPages}）`, String(current));
+  if (raw === null) return;
+  const page = Number(raw);
+  if (!Number.isFinite(page)) return;
+  const normalizedPage = Math.min(Math.max(Math.trunc(page), 1), totalPages);
+  const limit = resolveGroupPageLimit(group);
+  const offset = (normalizedPage - 1) * limit;
+  props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset, limit });
 }
 
 function onGroupSampleLimitSelectChange(event: Event) {

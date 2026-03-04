@@ -394,6 +394,7 @@ const groupedRows = ref<GroupedRow[]>([]);
 const groupSampleLimit = ref(3);
 const groupSort = ref<'asc' | 'desc'>('desc');
 const collapsedGroupKeys = ref<string[]>([]);
+const groupPageOffsets = ref<Record<string, number>>({});
 const activeGroupSummaryKey = ref('');
 const activeGroupSummaryDomain = ref<unknown[]>([]);
 const advancedFields = ref<string[]>([]);
@@ -1066,6 +1067,7 @@ function applyRoutePreset() {
   const groupSampleLimitRaw = Number(route.query.group_sample_limit || 0);
   const groupSortRaw = String(route.query.group_sort || '').trim().toLowerCase();
   const groupCollapsedRaw = String(route.query.group_collapsed || '').trim();
+  const groupPageRaw = String(route.query.group_page || '').trim();
   const routeSearch = String(route.query.search || '').trim();
   const routeOrder = String(route.query.order || route.query.sort || '').trim();
   const routeActiveFilter = String(route.query.active_filter || '').trim();
@@ -1125,6 +1127,15 @@ function applyRoutePreset() {
     ? groupCollapsedRaw.split(',').map((item) => item.trim()).filter(Boolean)
     : [];
   setIfDiff(collapsedGroupKeys, collapsedList);
+  const parsedGroupPages = parseGroupPageOffsets(groupPageRaw);
+  const currentGroupPages = groupPageOffsets.value;
+  const sameGroupPageState =
+    Object.keys(parsedGroupPages).length === Object.keys(currentGroupPages).length
+    && Object.entries(parsedGroupPages).every(([key, value]) => currentGroupPages[key] === value);
+  if (!sameGroupPageState) {
+    groupPageOffsets.value = parsedGroupPages;
+    changed = true;
+  }
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'action' }).catch(() => {});
@@ -1145,6 +1156,7 @@ function clearRoutePreset() {
 
 function syncRouteListState(extra?: Record<string, unknown>) {
   const collapsed = collapsedGroupKeys.value.filter(Boolean).join(',');
+  const groupPage = serializeGroupPageOffsets(groupPageOffsets.value);
   const query = pickContractNavQuery(route.query as Record<string, unknown>, {
     search: searchTerm.value.trim() || undefined,
     order: sortValue.value.trim() || undefined,
@@ -1152,9 +1164,32 @@ function syncRouteListState(extra?: Record<string, unknown>) {
     group_sample_limit: groupSampleLimit.value !== 3 ? groupSampleLimit.value : undefined,
     group_sort: groupSort.value !== 'desc' ? groupSort.value : undefined,
     group_collapsed: collapsed || undefined,
+    group_page: groupPage || undefined,
     ...extra,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+}
+
+function parseGroupPageOffsets(raw: string) {
+  const out: Record<string, number> = {};
+  if (!raw) return out;
+  raw.split(';').forEach((pair) => {
+    const [rawKey, rawOffset] = pair.split(':');
+    const key = decodeURIComponent(String(rawKey || '').trim());
+    const offset = Number(rawOffset || 0);
+    if (!key) return;
+    if (!Number.isFinite(offset) || offset < 0) return;
+    out[key] = Math.trunc(offset);
+  });
+  return out;
+}
+
+function serializeGroupPageOffsets(state: Record<string, number>) {
+  return Object.entries(state || {})
+    .filter(([key, offset]) => key && Number.isFinite(offset) && offset >= 0)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([key, offset]) => `${encodeURIComponent(key)}:${Math.trunc(offset)}`)
+    .join(';');
 }
 
 function applyContractFilter(key: string) {
@@ -1200,9 +1235,14 @@ function applyGroupBy(field: string) {
   activeGroupByField.value = field;
   activeGroupSummaryKey.value = '';
   activeGroupSummaryDomain.value = [];
+  groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
-  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: field, group_value: undefined });
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, {
+    group_by: field,
+    group_value: undefined,
+    group_page: undefined,
+  });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
@@ -1211,9 +1251,14 @@ function clearGroupBy() {
   activeGroupByField.value = '';
   activeGroupSummaryKey.value = '';
   activeGroupSummaryDomain.value = [];
+  groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
-  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: undefined, group_value: undefined });
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, {
+    group_by: undefined,
+    group_value: undefined,
+    group_page: undefined,
+  });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
@@ -1247,6 +1292,7 @@ function handleGroupSampleLimitChange(limit: number) {
   const normalized = Number(limit || 0);
   if (!Number.isFinite(normalized) || ![3, 5, 8].includes(normalized)) return;
   groupSampleLimit.value = normalized;
+  groupPageOffsets.value = {};
   syncRouteListState({ group_sample_limit: normalized });
   void load();
 }
@@ -1308,6 +1354,8 @@ async function handleGroupedRowsPageChange(group: {
         ? { ...item, sampleRows: rows, pageOffset: nextOffset, pageLimit, loading: false }
         : item,
     );
+    groupPageOffsets.value = { ...groupPageOffsets.value, [group.key]: nextOffset };
+    syncRouteListState({ group_page: serializeGroupPageOffsets(groupPageOffsets.value) || undefined });
   } catch {
     groupedRows.value = groupedRows.value.map((item) => (item.key === group.key ? { ...item, loading: false } : item));
   }
@@ -1317,7 +1365,11 @@ function normalizeGroupedRouteState() {
   if (!activeGroupByField.value) {
     if (collapsedGroupKeys.value.length) {
       collapsedGroupKeys.value = [];
-      syncRouteListState({ group_collapsed: undefined });
+      syncRouteListState({ group_collapsed: undefined, group_page: undefined });
+    }
+    if (Object.keys(groupPageOffsets.value).length) {
+      groupPageOffsets.value = {};
+      syncRouteListState({ group_page: undefined });
     }
     return;
   }
@@ -1334,13 +1386,27 @@ function normalizeGroupedRouteState() {
     activeGroupSummaryKey.value = '';
     activeGroupSummaryDomain.value = [];
   }
-  if (!collapsedChanged && groupValueExists) return;
+  const normalizedGroupPages = Object.entries(groupPageOffsets.value).reduce<Record<string, number>>((acc, [key, offset]) => {
+    if (!validGroupKeys.has(key)) return acc;
+    const grouped = groupedRows.value.find((item) => item.key === key);
+    if (!grouped) return acc;
+    const pageLimit = Math.max(1, Number(grouped.pageLimit || groupSampleLimit.value || 3));
+    const maxOffset = Math.max(0, Number(grouped.count || 0) - pageLimit);
+    const normalizedOffset = Math.min(Math.max(Math.trunc(Number(offset || 0)), 0), maxOffset);
+    if (normalizedOffset > 0) acc[key] = normalizedOffset;
+    return acc;
+  }, {});
+  const groupPageChanged =
+    Object.keys(normalizedGroupPages).length !== Object.keys(groupPageOffsets.value).length
+    || Object.entries(normalizedGroupPages).some(([key, value]) => groupPageOffsets.value[key] !== value);
   collapsedGroupKeys.value = normalizedCollapsed;
+  groupPageOffsets.value = normalizedGroupPages;
   const nextState: Record<string, unknown> = {
     group_collapsed: normalizedCollapsed.length ? normalizedCollapsed.join(',') : undefined,
+    group_page: serializeGroupPageOffsets(normalizedGroupPages) || undefined,
   };
   if (!groupValueExists) nextState.group_value = undefined;
-  syncRouteListState(nextState);
+  if (collapsedChanged || !groupValueExists || groupPageChanged) syncRouteListState(nextState);
 }
 
 function openFocusAction(action: FocusNavAction | string) {
@@ -2291,7 +2357,7 @@ async function load() {
           count: Number(item.count || 0),
           domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
-          pageOffset: 0,
+          pageOffset: Math.max(0, Math.trunc(Number(groupPageOffsets.value[buildGroupKey(item.field, item.value, label)] || 0))),
           pageLimit: groupSampleLimit.value,
           loading: false,
         };

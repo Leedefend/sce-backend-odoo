@@ -16,6 +16,7 @@ const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET || '';
 const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const MODEL = process.env.MVP_MODEL || 'project.project';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
+const REQUIRE_GROUPED_ROWS = process.env.REQUIRE_GROUPED_ROWS === '1';
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -81,6 +82,28 @@ function pickColumns(contract) {
   return [];
 }
 
+function pickGroupByField(contract) {
+  const search = contract && typeof contract === 'object' ? contract.search : null;
+  const rows = search && typeof search === 'object' && Array.isArray(search.group_by) ? search.group_by : [];
+  for (const row of rows) {
+    if (typeof row === 'string' && row.trim()) return row.trim();
+    if (row && typeof row === 'object') {
+      const field = String(row.field || '').trim();
+      if (field) return field;
+    }
+  }
+  return 'create_uid';
+}
+
+function unwrapIntentData(body) {
+  const rootData = body && typeof body === 'object' ? body.data : null;
+  if (rootData && typeof rootData === 'object' && rootData.data && typeof rootData.data === 'object') {
+    return rootData.data;
+  }
+  if (rootData && typeof rootData === 'object') return rootData;
+  return {};
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -132,7 +155,7 @@ async function main() {
   writeJson(path.join(outDir, 'contract.log'), contractResp);
   assertIntentEnvelope(contractResp, 'ui.contract');
 
-  const contract = contractResp.body.data || {};
+  const contract = unwrapIntentData(contractResp.body);
   const columns = pickColumns(contract);
   summary.push(`columns_count: ${columns.length}`);
   if (!columns.length) {
@@ -148,7 +171,8 @@ async function main() {
   const listResp = await requestJson(intentUrl, listPayload, authHeader);
   writeJson(path.join(outDir, 'list.log'), listResp);
   assertIntentEnvelope(listResp, 'api.data');
-  const records = (listResp.body.data || {}).records || [];
+  const listData = unwrapIntentData(listResp.body);
+  const records = Array.isArray(listData.records) ? listData.records : [];
   if (!records.length) {
     throw new Error('list returned no records');
   }
@@ -159,6 +183,36 @@ async function main() {
     summary.push(`missing_columns_list: ${missing.join(', ')}`);
     writeSummary(summary);
     throw new Error('record missing tree columns');
+  }
+
+  log('api.data.list (grouped rows)');
+  const groupByField = pickGroupByField(contract);
+  const groupedPayload = {
+    intent: 'api.data',
+    params: {
+      op: 'list',
+      model: MODEL,
+      fields: columns,
+      group_by: groupByField,
+      group_sample_limit: 3,
+      limit: 12,
+      offset: 0,
+    },
+  };
+  const groupedResp = await requestJson(intentUrl, groupedPayload, authHeader);
+  writeJson(path.join(outDir, 'grouped.log'), groupedResp);
+  assertIntentEnvelope(groupedResp, 'api.data');
+  const groupedData = unwrapIntentData(groupedResp.body);
+  const groupedRows = Array.isArray(groupedData.grouped_rows) ? groupedData.grouped_rows : [];
+  const groupSummary = Array.isArray(groupedData.group_summary) ? groupedData.group_summary : [];
+  summary.push(`group_by_field: ${groupByField}`);
+  summary.push(`group_summary_count: ${groupSummary.length}`);
+  summary.push(`grouped_rows_count: ${groupedRows.length}`);
+  const hasGroupedPayload = Array.isArray(groupedData.group_summary) && Array.isArray(groupedData.grouped_rows);
+  summary.push(`grouped_payload_present: ${hasGroupedPayload ? 'yes' : 'no'}`);
+  if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
+    writeSummary(summary);
+    throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');
   }
 
   writeSummary(summary);
