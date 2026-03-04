@@ -37,9 +37,10 @@ def main() -> int:
             errors.append(f"api_data missing marker: {marker}")
 
     action_markers = [
-        "const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>> }>>([]);",
+        "const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>>; domain?: unknown[] }>>([]);",
         "groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])",
         ":grouped-rows=\"groupedRows\"",
+        ":on-open-group=\"handleOpenGroupedRows\"",
     ]
     for marker in action_markers:
         if marker not in action_view:
@@ -47,8 +48,10 @@ def main() -> int:
 
     list_markers = [
         "v-if=\"groupedRows.length\" class=\"grouped-table\"",
-        "v-for=\"group in groupedRows\"",
+        "v-for=\"group in sortedGroupedRows\"",
         "sampleRows",
+        "toggleGroupCollapsed(",
+        "grouped-sort-btn",
     ]
     for marker in list_markers:
         if marker not in list_page:
