@@ -250,7 +250,7 @@ const props = defineProps<{
     label: string;
     count: number;
     domain?: unknown[];
-  }>;
+  }) => void;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
