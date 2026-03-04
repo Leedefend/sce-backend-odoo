@@ -43,6 +43,7 @@ def main() -> int:
         "request_offset_matches_observed",
         "request_offset_aligned_to_page_limit",
         "first_group_offset_aligned_to_page_limit",
+        "first_group_page_window_matches_range",
     ]
     for marker in smoke_markers:
         if marker not in smoke_text:
@@ -75,12 +76,15 @@ def main() -> int:
         "request_offset_matches_observed",
         "request_offset_aligned_to_page_limit",
         "first_group_offset_aligned_to_page_limit",
+        "first_group_page_window_matches_range",
     ):
         if not isinstance(consistency.get(key), bool):
             errors.append(f"baseline consistency.{key} must be bool")
 
     if not isinstance(first_group.get("offset_aligned_to_page_limit"), bool):
         errors.append("baseline first_group_observation.offset_aligned_to_page_limit must be bool")
+    if not isinstance(first_group.get("page_window_matches_range"), bool):
+        errors.append("baseline first_group_observation.page_window_matches_range must be bool")
 
     if errors:
         print("[grouped_pagination_semantic_drift_guard] FAIL")

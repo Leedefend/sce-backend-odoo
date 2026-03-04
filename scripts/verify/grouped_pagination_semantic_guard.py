@@ -103,6 +103,12 @@ def main() -> int:
         "grouped_pagination_semantic_summary.first_group_observation.offset_aligned_to_page_limit",
         errors,
     )
+    _expect_type(
+        first_group.get("page_window_matches_range"),
+        bool,
+        "grouped_pagination_semantic_summary.first_group_observation.page_window_matches_range",
+        errors,
+    )
     for key in (
         "count",
         "sample_rows_count",
@@ -112,6 +118,8 @@ def main() -> int:
         "total_pages",
         "range_start",
         "range_end",
+        "page_window_start",
+        "page_window_end",
     ):
         _expect_type(first_group.get(key), int, f"grouped_pagination_semantic_summary.first_group_observation.{key}", errors)
 

@@ -3,6 +3,7 @@
   "grouped_pagination_semantic_summary": {
     "consistency": {
       "first_group_offset_aligned_to_page_limit": true,
+      "first_group_page_window_matches_range": true,
       "request_offset_aligned_to_page_limit": true,
       "request_offset_matches_observed": true
     },
@@ -23,6 +24,9 @@
       "page_limit": 3,
       "page_offset": 0,
       "present": false,
+      "page_window_end": 0,
+      "page_window_matches_range": true,
+      "page_window_start": 0,
       "range_end": 0,
       "range_start": 0,
       "sample_rows_count": 0,
