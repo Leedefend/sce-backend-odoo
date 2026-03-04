@@ -1361,6 +1361,48 @@ async function handleGroupedRowsPageChange(group: {
   }
 }
 
+async function hydrateGroupedRowsByOffset() {
+  const targetModel = resolvedModelRef.value || model.value;
+  if (!targetModel) return;
+  const candidates = groupedRows.value.filter((item) => Number(item.pageOffset || 0) > 0);
+  if (!candidates.length) return;
+  const keys = new Set(candidates.map((item) => item.key));
+  groupedRows.value = groupedRows.value.map((item) => (keys.has(item.key) ? { ...item, loading: true } : item));
+  const fields = resolveGroupedPageFields();
+  const updates = await Promise.all(
+    candidates.map(async (item) => {
+      try {
+        const limit = Math.max(1, Number(item.pageLimit || groupSampleLimit.value || 3));
+        const offset = Math.max(0, Math.trunc(Number(item.pageOffset || 0)));
+        const result = await listRecordsRaw({
+          model: targetModel,
+          fields,
+          domain: Array.isArray(item.domain) ? item.domain : [],
+          context: mergeContext(meta.value?.context, resolveEffectiveRequestContext()),
+          context_raw: resolveEffectiveRequestContextRaw(),
+          limit,
+          offset,
+          order: sortLabel.value,
+        });
+        return {
+          key: item.key,
+          rows: Array.isArray(result.data?.records) ? (result.data.records as Array<Record<string, unknown>>) : [],
+          ok: true,
+        };
+      } catch {
+        return { key: item.key, rows: [] as Array<Record<string, unknown>>, ok: false };
+      }
+    }),
+  );
+  const updateMap = new Map(updates.map((row) => [row.key, row]));
+  groupedRows.value = groupedRows.value.map((item) => {
+    const found = updateMap.get(item.key);
+    if (!found) return item;
+    if (!found.ok) return { ...item, loading: false };
+    return { ...item, sampleRows: found.rows, loading: false };
+  });
+}
+
 function normalizeGroupedRouteState() {
   if (!activeGroupByField.value) {
     if (collapsedGroupKeys.value.length) {
@@ -2365,6 +2407,7 @@ async function load() {
       .filter((item) => item.sampleRows.length > 0)
       .slice(0, 12);
     normalizeGroupedRouteState();
+    void hydrateGroupedRowsByOffset();
     if (!activeGroupSummaryKey.value) {
       const routeGroupValue = String(route.query.group_value || '').trim();
       if (routeGroupValue) {

@@ -55,6 +55,8 @@ def main() -> int:
         "const groupPageRaw = String(route.query.group_page || '').trim();",
         "group_page: groupPage || undefined,",
         "function handleGroupedRowsPageChange(group: {",
+        "async function hydrateGroupedRowsByOffset() {",
+        "void hydrateGroupedRowsByOffset();",
         "function normalizeGroupedRouteState() {",
         "normalizeGroupedRouteState();",
     ]

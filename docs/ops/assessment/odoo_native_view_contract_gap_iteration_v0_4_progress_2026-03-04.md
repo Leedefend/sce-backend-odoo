@@ -17,6 +17,7 @@
    - `ActionView` 新增 `group_page` 路由状态（每组 offset 映射）
    - 分组切换、样本条数切换、无效分组清理时同步归一化 `group_page`
    - 刷新后可恢复每组分页偏移（在有效分组集合内）
+   - 新增基于 `group_page` 的组内数据自动回填，避免“页码恢复但仍显示第一页样本”
 
 3. 治理 guard 增强
    - `grouped_rows_runtime_guard` 增加 `group_page` 相关链路标记
