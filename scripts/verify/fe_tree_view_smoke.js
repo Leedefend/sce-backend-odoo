@@ -115,6 +115,63 @@ function unwrapIntentData(body) {
   return {};
 }
 
+function toSafeInt(value, fallback = 0) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.trunc(parsed);
+}
+
+function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, requestOffset) {
+  const pageLimit = Math.max(1, toSafeInt(requestPageLimit, 3));
+  const requestedOffset = Math.max(0, toSafeInt(requestOffset, 0));
+  const normalizedRequestOffset = Math.floor(requestedOffset / pageLimit) * pageLimit;
+  const firstGroup = Array.isArray(groupedRows) && groupedRows.length > 0 && groupedRows[0] && typeof groupedRows[0] === 'object'
+    ? groupedRows[0]
+    : null;
+  const count = firstGroup ? Math.max(0, toSafeInt(firstGroup.count, 0)) : 0;
+  const sampleRows = firstGroup && Array.isArray(firstGroup.sample_rows) ? firstGroup.sample_rows : [];
+  const groupOffsetRaw = firstGroup ? Math.max(0, toSafeInt(firstGroup.page_offset, normalizedRequestOffset)) : normalizedRequestOffset;
+  const pageOffset = Math.floor(groupOffsetRaw / pageLimit) * pageLimit;
+  const totalPages = Math.max(1, Math.ceil(count / pageLimit));
+  const currentPage = Math.floor(pageOffset / pageLimit) + 1;
+  const rangeStart = count > 0 ? pageOffset + 1 : 0;
+  const rangeEnd = count > 0 ? Math.min(count, pageOffset + pageLimit) : 0;
+  return {
+    formulas: {
+      page_offset_normalize: 'floor(offset / page_limit) * page_limit',
+      current_page: 'floor(page_offset / page_limit) + 1',
+      total_pages: 'max(1, ceil(count / page_limit))',
+      page_range: 'start=page_offset+1,end=min(count,page_offset+page_limit)',
+    },
+    field_types: {
+      page_limit: 'number',
+      page_offset: 'number',
+      current_page: 'number',
+      total_pages: 'number',
+      range_start: 'number',
+      range_end: 'number',
+      offset_aligned_to_page_limit: 'boolean',
+    },
+    request: {
+      page_limit: pageLimit,
+      request_offset: requestedOffset,
+      normalized_request_offset: normalizedRequestOffset,
+    },
+    first_group_observation: {
+      present: Boolean(firstGroup),
+      count,
+      sample_rows_count: sampleRows.length,
+      page_limit: pageLimit,
+      page_offset: pageOffset,
+      current_page: currentPage,
+      total_pages: totalPages,
+      range_start: rangeStart,
+      range_end: rangeEnd,
+      offset_aligned_to_page_limit: pageOffset % pageLimit === 0,
+    },
+  };
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -216,18 +273,26 @@ async function main() {
   const groupedData = unwrapIntentData(groupedResp.body);
   const groupedRows = Array.isArray(groupedData.grouped_rows) ? groupedData.grouped_rows : [];
   const groupSummary = Array.isArray(groupedData.group_summary) ? groupedData.group_summary : [];
+  const groupedPaginationSemanticSummary = buildGroupedPaginationSemanticSummary(
+    groupedRows,
+    groupedPayload.params.group_sample_limit,
+    groupedPayload.params.offset,
+  );
   summary.push(`group_by_field: ${groupByField}`);
   summary.push(`group_summary_count: ${groupSummary.length}`);
   summary.push(`grouped_rows_count: ${groupedRows.length}`);
   const hasGroupedPayload = Array.isArray(groupedData.group_summary) && Array.isArray(groupedData.grouped_rows);
   summary.push(`grouped_payload_present: ${hasGroupedPayload ? 'yes' : 'no'}`);
+  summary.push(`grouped_pagination_normalized_offset: ${groupedPaginationSemanticSummary.request.normalized_request_offset}`);
+  summary.push(`grouped_pagination_first_group_present: ${groupedPaginationSemanticSummary.first_group_observation.present ? 'yes' : 'no'}`);
+  summary.push(`grouped_pagination_first_group_page: ${groupedPaginationSemanticSummary.first_group_observation.current_page}/${groupedPaginationSemanticSummary.first_group_observation.total_pages}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');
   }
 
   const groupedSignature = stable({
-    version: 'v0_4',
+    version: 'v0_5_mini',
     model: MODEL,
     group_by_field: groupByField,
     grouped_payload_present: hasGroupedPayload,
@@ -237,6 +302,7 @@ async function main() {
       key: 'group_page',
       mode: 'per-group offset map',
     },
+    grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,
   });
   writeJson(path.join(outDir, 'grouped_signature.current.json'), groupedSignature);
   if (TREE_GROUPED_SNAPSHOT_UPDATE) {
