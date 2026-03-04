@@ -2371,6 +2371,7 @@ async function load() {
       domain_raw: resolveEffectiveFilterDomainRaw(),
       group_by: activeGroupByField.value || undefined,
       group_sample_limit: groupSampleLimit.value,
+      group_page_offsets: groupPageOffsets.value,
       context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
       context_raw: resolveEffectiveRequestContextRaw(),
       limit: contractLimit.value,
@@ -2404,11 +2405,11 @@ async function load() {
           domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
           pageOffset: normalizeGroupPageOffset(
-            Number(groupPageOffsets.value[buildGroupKey(item.field, item.value, label)] || 0),
-            groupSampleLimit.value,
+            Number((item.page_offset ?? groupPageOffsets.value[buildGroupKey(item.field, item.value, label)]) || 0),
+            Number(item.page_limit || groupSampleLimit.value),
             Number(item.count || 0),
           ),
-          pageLimit: groupSampleLimit.value,
+          pageLimit: Math.max(1, Number(item.page_limit || groupSampleLimit.value || 3)),
           loading: false,
         };
       })

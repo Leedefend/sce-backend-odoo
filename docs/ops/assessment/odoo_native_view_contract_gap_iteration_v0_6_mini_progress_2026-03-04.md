@@ -45,6 +45,16 @@
    - `scripts/verify/contract_evidence_guard.py` 新增 `scene_contract_coverage` 必需段与阈值校验
    - baseline 扩展 `scripts/verify/baselines/contract_evidence_guard_baseline.json`
 
+9. 契约能力增强（grouped 分页服务端语义）
+   - `api.data(list)` 增加 grouped 分页输入能力：`group_page_offsets`
+   - backend grouped_rows 输出新增分页语义字段：
+     - `page_offset` / `page_limit`
+     - `page_current` / `page_total`
+     - `page_range_start` / `page_range_end`
+   - 前端 `ActionView` 列表请求透传 `group_page_offsets`，并优先消费后端 `page_offset/page_limit`
+   - tree smoke grouped 请求新增 `group_page_offsets` 键，基线同步更新
+   - `grouped_rows_runtime_guard` 同步适配后端新签名标记
+
 ## 已完成验证（阶段性）
 
 1. `make verify.contract.scene_coverage.brief`：通过
@@ -56,6 +66,9 @@
 7. `make verify.frontend.grouped_pagination_semantic_drift.guard`：通过
 8. `python3 scripts/contract/export_evidence.py`：通过
 9. `python3 scripts/verify/contract_evidence_guard.py`：通过
+10. `python3 scripts/verify/grouped_rows_runtime_guard.py`：通过
+11. `make verify.portal.tree_view_smoke.container`：通过
+12. `make verify.frontend.quick.gate`：通过
 
 ## 变更清单（当前已落地）
 
@@ -69,3 +82,5 @@
 8. `scripts/verify/contract_evidence_guard.py`
 9. `scripts/verify/baselines/contract_evidence_guard_baseline.json`
 10. `Makefile`
+11. `addons/smart_core/handlers/api_data.py`
+12. `frontend/apps/web/src/views/ActionView.vue`

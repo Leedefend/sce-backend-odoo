@@ -270,6 +270,7 @@ async function main() {
       model: MODEL,
       fields: columns,
       group_by: groupByField,
+      group_page_offsets: {},
       group_sample_limit: 3,
       limit: 12,
       offset: 0,
