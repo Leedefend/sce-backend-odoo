@@ -352,6 +352,10 @@ class ApiDataHandler(BaseIntentHandler):
                     "page_total": page_total,
                     "page_range_start": page_range_start,
                     "page_range_end": page_range_end,
+                    "page_window": {
+                        "start": page_range_start,
+                        "end": page_range_end,
+                    },
                     "page_has_prev": page_offset > 0,
                     "page_has_next": (page_offset + page_limit) < count,
                 }
