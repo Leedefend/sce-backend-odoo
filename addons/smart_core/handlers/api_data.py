@@ -306,6 +306,7 @@ class ApiDataHandler(BaseIntentHandler):
         fields_safe: List[str],
         limit: int = 20,
         sample_limit: int = 3,
+        group_page_size: Optional[int] = None,
         group_page_offsets: Optional[Dict[str, int]] = None,
     ):
         summary = self._build_group_summary(env_model, domain, group_by, limit=limit)
@@ -321,7 +322,8 @@ class ApiDataHandler(BaseIntentHandler):
             if not group_domain:
                 continue
             count = int(item.get("count") or 0)
-            page_limit = max(1, int(sample_limit or 3))
+            requested_page_size = int(group_page_size or sample_limit or 3)
+            page_limit = max(1, requested_page_size)
             group_key = self._build_group_key(str(item.get("field") or ""), item.get("value"))
             req_offset = int(page_offsets.get(group_key) or 0)
             max_offset = max(0, count - page_limit)
@@ -348,6 +350,7 @@ class ApiDataHandler(BaseIntentHandler):
                     "sample_rows": sample_rows,
                     "page_offset": page_offset,
                     "page_limit": page_limit,
+                    "page_size": page_limit,
                     "page_current": page_current,
                     "page_total": page_total,
                     "page_range_start": page_range_start,
@@ -610,6 +613,7 @@ class ApiDataHandler(BaseIntentHandler):
         context_raw = self._get_str(p, "context_raw", "").strip()
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
         group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
+        group_page_size = min(self._get_int(p, "group_page_size", 0), 8)
         search_term = self._get_str(p, "search_term", "").strip()
 
         if context_raw:
@@ -670,6 +674,7 @@ class ApiDataHandler(BaseIntentHandler):
             fields_safe,
             limit=min(limit or 20, 30),
             sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
+            group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
         )
 
@@ -693,6 +698,7 @@ class ApiDataHandler(BaseIntentHandler):
             "domain_raw_applied": bool(domain_raw),
             "context_raw_applied": bool(context_raw),
             "group_by": group_by,
+            "group_page_size": int(group_page_size or 0) or None,
         }
         return data, meta
 
