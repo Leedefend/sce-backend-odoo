@@ -2139,6 +2139,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
 	@$(MAKE) --no-print-directory verify.scene_capability.contract.guard
 	@$(MAKE) --no-print-directory verify.contract.governance.brief
+	@$(MAKE) --no-print-directory verify.contract.scene_coverage.brief
 	@$(MAKE) --no-print-directory verify.contract.mode.smoke
 	@$(MAKE) --no-print-directory verify.contract.ordering.smoke
 	@$(MAKE) --no-print-directory verify.scene.hud.trace.smoke
