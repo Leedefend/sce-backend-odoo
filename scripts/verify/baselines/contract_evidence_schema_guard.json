@@ -15,7 +15,10 @@
     "backend_evidence_manifest",
     "scene_contract_coverage",
     "grouped_pagination_contract",
-    "grouped_drift_summary"
+    "grouped_drift_summary",
+    "grouped_governance_brief",
+    "grouped_governance_policy_matrix",
+    "grouped_governance_trend_consistency"
   ],
   "required_section_keys": {
     "intent_catalog": [
@@ -110,6 +113,44 @@
       "e2e_max_consistency_score",
       "export_marker_hits",
       "export_marker_total",
+      "report_json",
+      "report_md"
+    ],
+    "grouped_governance_brief": [
+      "ok",
+      "governance_coverage_ratio",
+      "governance_covered_file_count",
+      "governance_total_file_count",
+      "governance_failure_count",
+      "grouped_e2e_case_count",
+      "grouped_e2e_grouped_rows_case_count",
+      "grouped_e2e_max_consistency_score",
+      "grouped_export_marker_hits",
+      "grouped_export_marker_total",
+      "has_previous",
+      "delta_governance_coverage_ratio",
+      "delta_governance_failure_count",
+      "delta_grouped_e2e_max_consistency_score",
+      "report_json",
+      "report_md"
+    ],
+    "grouped_governance_policy_matrix": [
+      "ok",
+      "grouped_governance_brief_policy_count",
+      "grouped_drift_summary_policy_count",
+      "contract_evidence_grouped_governance_policy_count",
+      "has_previous",
+      "delta_grouped_governance_brief_policy_count",
+      "delta_grouped_drift_summary_policy_count",
+      "delta_contract_evidence_grouped_governance_policy_count",
+      "report_json",
+      "report_md"
+    ],
+    "grouped_governance_trend_consistency": [
+      "ok",
+      "has_previous_aligned",
+      "brief_delta_types_ok",
+      "matrix_delta_types_ok",
       "report_json",
       "report_md"
     ]

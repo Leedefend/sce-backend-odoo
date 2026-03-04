@@ -22,6 +22,54 @@ def _load_json(path: Path) -> dict:
     return payload if isinstance(payload, dict) else {}
 
 
+def _ratio_to_float(raw: object) -> float:
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    if not isinstance(raw, str) or "/" not in raw:
+        return 0.0
+    left, right = raw.split("/", 1)
+    try:
+        left_f = float(left.strip())
+        right_f = float(right.strip())
+    except Exception:
+        return 0.0
+    if right_f <= 0:
+        return 0.0
+    return left_f / right_f
+
+
+def _to_abs_report_path(raw: object) -> Path | None:
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    path = Path(text)
+    if path.is_absolute():
+        return path
+    return (ROOT / path).resolve()
+
+
+def _load_text(path: Path | None) -> str:
+    if not isinstance(path, Path) or not path.is_file():
+        return ""
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
+
+def _to_rel_posix(raw: object) -> str:
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    path = Path(text)
+    if path.is_absolute():
+        try:
+            path = path.resolve().relative_to(ROOT.resolve())
+        except Exception:
+            return path.as_posix()
+    return path.as_posix()
+
+
 def main() -> int:
     policy = {
         "max_errors": 0,
@@ -67,6 +115,58 @@ def main() -> int:
         "require_grouped_drift_summary_ok": True,
         "min_grouped_drift_e2e_case_count": 1,
         "require_grouped_drift_export_marker_full_hit": True,
+        "require_grouped_governance_brief_ok": True,
+        "min_grouped_governance_coverage_ratio": 1.0,
+        "min_grouped_governance_total_file_count": 1,
+        "min_grouped_governance_covered_file_count": 1,
+        "max_grouped_governance_failure_count": 0,
+        "min_grouped_governance_e2e_case_count": 1,
+        "require_grouped_governance_coverage_count_consistent": True,
+        "max_grouped_governance_coverage_ratio_delta_abs": 0.000001,
+        "require_grouped_governance_export_marker_full_hit": True,
+        "require_grouped_governance_export_marker_bounds": True,
+        "require_grouped_governance_report_alignment": True,
+        "max_grouped_governance_alignment_ratio_delta_abs": 0.000001,
+        "require_grouped_governance_report_json_prefix": "artifacts/",
+        "require_grouped_governance_report_json_suffix": "grouped_governance_brief_guard.json",
+        "require_grouped_governance_report_md_alignment": True,
+        "require_grouped_governance_report_md_prefix": "artifacts/",
+        "require_grouped_governance_report_md_suffix": "grouped_governance_brief_guard.md",
+        "require_grouped_governance_report_md_title": "# Grouped Governance Brief Guard",
+        "require_grouped_governance_report_pair_consistent": True,
+        "require_grouped_governance_report_pair_same_parent": True,
+        "require_grouped_governance_report_pair_same_stem": True,
+        "require_grouped_governance_brief_has_previous_bool": False,
+        "require_grouped_governance_brief_delta_when_previous": False,
+        "forbid_grouped_governance_brief_failure_count_regression": False,
+        "forbid_grouped_governance_brief_consistency_score_regression": False,
+        "require_grouped_governance_policy_matrix_ok": True,
+        "min_grouped_governance_brief_policy_count": 1,
+        "min_grouped_drift_summary_policy_count": 1,
+        "min_contract_evidence_grouped_governance_policy_count": 1,
+        "require_grouped_governance_policy_matrix_report_json_prefix": "artifacts/",
+        "require_grouped_governance_policy_matrix_report_json_suffix": "grouped_governance_policy_matrix.json",
+        "require_grouped_governance_policy_matrix_report_md_prefix": "artifacts/",
+        "require_grouped_governance_policy_matrix_report_md_suffix": "grouped_governance_policy_matrix.md",
+        "require_grouped_governance_policy_matrix_has_previous_bool": False,
+        "require_grouped_governance_policy_matrix_delta_when_previous": False,
+        "forbid_grouped_governance_brief_policy_count_regression": False,
+        "forbid_grouped_drift_summary_policy_count_regression": False,
+        "forbid_contract_evidence_grouped_governance_policy_count_regression": False,
+        "require_grouped_governance_cross_report_trend_consistent": False,
+        "require_grouped_governance_trend_consistency_ok": True,
+        "require_grouped_governance_trend_has_previous_aligned": True,
+        "require_grouped_governance_trend_delta_types_ok": True,
+        "require_grouped_governance_trend_report_json_prefix": "artifacts/",
+        "require_grouped_governance_trend_report_json_suffix": "grouped_governance_trend_consistency_guard.json",
+        "require_grouped_governance_trend_report_md_prefix": "artifacts/",
+        "require_grouped_governance_trend_report_md_suffix": "grouped_governance_trend_consistency_guard.md",
+        "require_grouped_governance_trend_report_alignment": True,
+        "require_grouped_governance_trend_report_md_alignment": True,
+        "require_grouped_governance_trend_report_md_title": "# Grouped Governance Trend Consistency Guard",
+        "require_grouped_governance_trend_report_pair_consistent": True,
+        "require_grouped_governance_trend_report_pair_same_parent": True,
+        "require_grouped_governance_trend_report_pair_same_stem": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -97,6 +197,9 @@ def main() -> int:
         "scene_contract_coverage",
         "grouped_pagination_contract",
         "grouped_drift_summary",
+        "grouped_governance_brief",
+        "grouped_governance_policy_matrix",
+        "grouped_governance_trend_consistency",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -332,6 +435,335 @@ def main() -> int:
     if bool(policy.get("require_grouped_drift_export_marker_full_hit", True)):
         if int(grouped_drift.get("export_marker_hits") or 0) != int(grouped_drift.get("export_marker_total") or 0):
             errors.append("grouped_drift_summary export markers must be fully hit under baseline policy")
+
+    grouped_governance = (
+        payload.get("grouped_governance_brief")
+        if isinstance(payload.get("grouped_governance_brief"), dict)
+        else {}
+    )
+    if bool(policy.get("require_grouped_governance_brief_ok", True)) and not bool(grouped_governance.get("ok")):
+        errors.append("grouped_governance_brief.ok must be true under baseline policy")
+    min_grouped_governance_coverage_ratio = float(policy.get("min_grouped_governance_coverage_ratio", 1.0) or 1.0)
+    if _ratio_to_float(grouped_governance.get("governance_coverage_ratio")) < min_grouped_governance_coverage_ratio:
+        errors.append(
+            "grouped_governance_brief.governance_coverage_ratio must be >= "
+            f"{min_grouped_governance_coverage_ratio}"
+        )
+    min_grouped_governance_total_file_count = int(policy.get("min_grouped_governance_total_file_count", 1) or 1)
+    if int(grouped_governance.get("governance_total_file_count") or 0) < min_grouped_governance_total_file_count:
+        errors.append(
+            "grouped_governance_brief.governance_total_file_count must be >= "
+            f"{min_grouped_governance_total_file_count}"
+        )
+    min_grouped_governance_covered_file_count = int(policy.get("min_grouped_governance_covered_file_count", 1) or 1)
+    if int(grouped_governance.get("governance_covered_file_count") or 0) < min_grouped_governance_covered_file_count:
+        errors.append(
+            "grouped_governance_brief.governance_covered_file_count must be >= "
+            f"{min_grouped_governance_covered_file_count}"
+        )
+    max_grouped_governance_failure_count = int(policy.get("max_grouped_governance_failure_count", 0) or 0)
+    if int(grouped_governance.get("governance_failure_count") or 0) > max_grouped_governance_failure_count:
+        errors.append(
+            "grouped_governance_brief.governance_failure_count must be <= "
+            f"{max_grouped_governance_failure_count}"
+        )
+    min_grouped_governance_e2e_case_count = int(policy.get("min_grouped_governance_e2e_case_count", 1) or 1)
+    if int(grouped_governance.get("grouped_e2e_case_count") or 0) < min_grouped_governance_e2e_case_count:
+        errors.append(
+            "grouped_governance_brief.grouped_e2e_case_count must be >= "
+            f"{min_grouped_governance_e2e_case_count}"
+        )
+    if bool(policy.get("require_grouped_governance_export_marker_full_hit", True)):
+        if int(grouped_governance.get("grouped_export_marker_hits") or 0) != int(
+            grouped_governance.get("grouped_export_marker_total") or 0
+        ):
+            errors.append("grouped_governance_brief export markers must be fully hit under baseline policy")
+    if bool(policy.get("require_grouped_governance_coverage_count_consistent", True)):
+        covered_count = int(grouped_governance.get("governance_covered_file_count") or 0)
+        total_count = int(grouped_governance.get("governance_total_file_count") or 0)
+        if covered_count > total_count:
+            errors.append("grouped_governance_brief.governance_covered_file_count must be <= governance_total_file_count")
+        expected_ratio = (float(covered_count) / float(total_count)) if total_count > 0 else 0.0
+        actual_ratio = _ratio_to_float(grouped_governance.get("governance_coverage_ratio"))
+        max_ratio_delta_abs = float(policy.get("max_grouped_governance_coverage_ratio_delta_abs", 0.000001) or 0.000001)
+        if abs(actual_ratio - expected_ratio) > max_ratio_delta_abs:
+            errors.append(
+                "grouped_governance_brief.governance_coverage_ratio must match "
+                "governance_covered_file_count/governance_total_file_count"
+            )
+    if bool(policy.get("require_grouped_governance_export_marker_bounds", True)):
+        marker_hits = int(grouped_governance.get("grouped_export_marker_hits") or 0)
+        marker_total = int(grouped_governance.get("grouped_export_marker_total") or 0)
+        if marker_total < 1:
+            errors.append("grouped_governance_brief.grouped_export_marker_total must be >= 1")
+        if marker_hits > marker_total:
+            errors.append("grouped_governance_brief.grouped_export_marker_hits must be <= grouped_export_marker_total")
+    if bool(policy.get("require_grouped_governance_report_alignment", True)):
+        report_json_raw = str(grouped_governance.get("report_json") or "").strip()
+        require_report_json_prefix = str(policy.get("require_grouped_governance_report_json_prefix") or "").strip()
+        require_report_json_suffix = str(policy.get("require_grouped_governance_report_json_suffix") or "").strip()
+        if require_report_json_prefix and not report_json_raw.startswith(require_report_json_prefix):
+            errors.append(
+                "grouped_governance_brief.report_json must start with "
+                f"{require_report_json_prefix}"
+            )
+        if require_report_json_suffix and not report_json_raw.endswith(require_report_json_suffix):
+            errors.append(
+                "grouped_governance_brief.report_json must end with "
+                f"{require_report_json_suffix}"
+            )
+        report_path = _to_abs_report_path(grouped_governance.get("report_json"))
+        source_report = _load_json(report_path) if isinstance(report_path, Path) else {}
+        if not source_report:
+            errors.append("grouped_governance_brief.report_json must point to a readable report")
+        else:
+            source_summary = source_report.get("summary") if isinstance(source_report.get("summary"), dict) else {}
+            if bool(grouped_governance.get("ok")) != bool(source_report.get("ok")):
+                errors.append("grouped_governance_brief.ok must align with source report ok")
+            for key in (
+                "governance_covered_file_count",
+                "governance_total_file_count",
+                "governance_failure_count",
+                "grouped_e2e_case_count",
+                "grouped_e2e_grouped_rows_case_count",
+                "grouped_e2e_max_consistency_score",
+                "grouped_export_marker_hits",
+                "grouped_export_marker_total",
+            ):
+                source_v = int(source_summary.get(key) or 0)
+                evidence_v = int(grouped_governance.get(key) or 0)
+                if evidence_v != source_v:
+                    errors.append(f"grouped_governance_brief.{key} must align with source report")
+            source_ratio = _ratio_to_float(source_summary.get("governance_coverage_ratio"))
+            evidence_ratio = _ratio_to_float(grouped_governance.get("governance_coverage_ratio"))
+            max_align_ratio_delta_abs = float(
+                policy.get("max_grouped_governance_alignment_ratio_delta_abs", 0.000001) or 0.000001
+            )
+            if abs(evidence_ratio - source_ratio) > max_align_ratio_delta_abs:
+                errors.append("grouped_governance_brief.governance_coverage_ratio must align with source report")
+    if bool(policy.get("require_grouped_governance_report_md_alignment", True)):
+        report_md_raw = str(grouped_governance.get("report_md") or "").strip()
+        require_report_md_prefix = str(policy.get("require_grouped_governance_report_md_prefix") or "").strip()
+        require_report_md_suffix = str(policy.get("require_grouped_governance_report_md_suffix") or "").strip()
+        if require_report_md_prefix and not report_md_raw.startswith(require_report_md_prefix):
+            errors.append(
+                "grouped_governance_brief.report_md must start with "
+                f"{require_report_md_prefix}"
+            )
+        if require_report_md_suffix and not report_md_raw.endswith(require_report_md_suffix):
+            errors.append(
+                "grouped_governance_brief.report_md must end with "
+                f"{require_report_md_suffix}"
+            )
+        report_md_path = _to_abs_report_path(grouped_governance.get("report_md"))
+        report_md_text = _load_text(report_md_path)
+        if not report_md_text:
+            errors.append("grouped_governance_brief.report_md must point to a readable markdown report")
+        else:
+            expected_title = str(policy.get("require_grouped_governance_report_md_title") or "").strip()
+            if expected_title and expected_title not in report_md_text:
+                errors.append("grouped_governance_brief.report_md missing required governance title")
+    if bool(policy.get("require_grouped_governance_report_pair_consistent", True)):
+        report_json_rel = _to_rel_posix(grouped_governance.get("report_json"))
+        report_md_rel = _to_rel_posix(grouped_governance.get("report_md"))
+        if not report_json_rel or not report_md_rel:
+            errors.append("grouped_governance_brief.report_json/report_md must both be non-empty for pair consistency")
+        else:
+            json_path = Path(report_json_rel)
+            md_path = Path(report_md_rel)
+            if bool(policy.get("require_grouped_governance_report_pair_same_parent", True)):
+                if json_path.parent.as_posix() != md_path.parent.as_posix():
+                    errors.append("grouped_governance_brief.report_json/report_md must share same parent directory")
+            if bool(policy.get("require_grouped_governance_report_pair_same_stem", True)):
+                json_stem = json_path.with_suffix("").name
+                md_stem = md_path.with_suffix("").name
+                if json_stem != md_stem:
+                    errors.append("grouped_governance_brief.report_json/report_md must share same stem")
+    if bool(policy.get("require_grouped_governance_brief_has_previous_bool", True)):
+        if not isinstance(grouped_governance.get("has_previous"), bool):
+            errors.append("grouped_governance_brief.has_previous must be bool")
+    brief_has_previous = bool(grouped_governance.get("has_previous"))
+    delta_brief_cov = grouped_governance.get("delta_governance_coverage_ratio")
+    delta_brief_failure = grouped_governance.get("delta_governance_failure_count")
+    delta_brief_consistency = grouped_governance.get("delta_grouped_e2e_max_consistency_score")
+    if brief_has_previous and bool(policy.get("require_grouped_governance_brief_delta_when_previous", True)):
+        if not isinstance(delta_brief_cov, (int, float)):
+            errors.append("grouped_governance_brief.delta_governance_coverage_ratio must be numeric")
+        if not isinstance(delta_brief_failure, int):
+            errors.append("grouped_governance_brief.delta_governance_failure_count must be int")
+        if not isinstance(delta_brief_consistency, int):
+            errors.append("grouped_governance_brief.delta_grouped_e2e_max_consistency_score must be int")
+    if bool(policy.get("forbid_grouped_governance_brief_failure_count_regression", True)) and isinstance(
+        delta_brief_failure, int
+    ):
+        if delta_brief_failure > 0:
+            errors.append("grouped_governance_brief.delta_governance_failure_count must be <= 0")
+    if bool(policy.get("forbid_grouped_governance_brief_consistency_score_regression", True)) and isinstance(
+        delta_brief_consistency, int
+    ):
+        if delta_brief_consistency < 0:
+            errors.append("grouped_governance_brief.delta_grouped_e2e_max_consistency_score must be >= 0")
+
+    grouped_policy_matrix = (
+        payload.get("grouped_governance_policy_matrix")
+        if isinstance(payload.get("grouped_governance_policy_matrix"), dict)
+        else {}
+    )
+    if bool(policy.get("require_grouped_governance_policy_matrix_ok", True)) and not bool(grouped_policy_matrix.get("ok")):
+        errors.append("grouped_governance_policy_matrix.ok must be true under baseline policy")
+
+    min_brief_policy_count = int(policy.get("min_grouped_governance_brief_policy_count", 1) or 1)
+    if int(grouped_policy_matrix.get("grouped_governance_brief_policy_count") or 0) < min_brief_policy_count:
+        errors.append(
+            "grouped_governance_policy_matrix.grouped_governance_brief_policy_count must be >= "
+            f"{min_brief_policy_count}"
+        )
+    min_drift_policy_count = int(policy.get("min_grouped_drift_summary_policy_count", 1) or 1)
+    if int(grouped_policy_matrix.get("grouped_drift_summary_policy_count") or 0) < min_drift_policy_count:
+        errors.append(
+            "grouped_governance_policy_matrix.grouped_drift_summary_policy_count must be >= "
+            f"{min_drift_policy_count}"
+        )
+    min_evidence_policy_count = int(policy.get("min_contract_evidence_grouped_governance_policy_count", 1) or 1)
+    if int(grouped_policy_matrix.get("contract_evidence_grouped_governance_policy_count") or 0) < min_evidence_policy_count:
+        errors.append(
+            "grouped_governance_policy_matrix.contract_evidence_grouped_governance_policy_count must be >= "
+            f"{min_evidence_policy_count}"
+        )
+
+    matrix_report_json = str(grouped_policy_matrix.get("report_json") or "").strip()
+    matrix_report_md = str(grouped_policy_matrix.get("report_md") or "").strip()
+    required_matrix_json_prefix = str(policy.get("require_grouped_governance_policy_matrix_report_json_prefix") or "").strip()
+    required_matrix_json_suffix = str(policy.get("require_grouped_governance_policy_matrix_report_json_suffix") or "").strip()
+    required_matrix_md_prefix = str(policy.get("require_grouped_governance_policy_matrix_report_md_prefix") or "").strip()
+    required_matrix_md_suffix = str(policy.get("require_grouped_governance_policy_matrix_report_md_suffix") or "").strip()
+    if required_matrix_json_prefix and not matrix_report_json.startswith(required_matrix_json_prefix):
+        errors.append(
+            "grouped_governance_policy_matrix.report_json must start with "
+            f"{required_matrix_json_prefix}"
+        )
+    if required_matrix_json_suffix and not matrix_report_json.endswith(required_matrix_json_suffix):
+        errors.append(
+            "grouped_governance_policy_matrix.report_json must end with "
+            f"{required_matrix_json_suffix}"
+        )
+    if required_matrix_md_prefix and not matrix_report_md.startswith(required_matrix_md_prefix):
+        errors.append(
+            "grouped_governance_policy_matrix.report_md must start with "
+            f"{required_matrix_md_prefix}"
+        )
+    if required_matrix_md_suffix and not matrix_report_md.endswith(required_matrix_md_suffix):
+        errors.append(
+            "grouped_governance_policy_matrix.report_md must end with "
+            f"{required_matrix_md_suffix}"
+        )
+    if bool(policy.get("require_grouped_governance_policy_matrix_has_previous_bool", True)):
+        if not isinstance(grouped_policy_matrix.get("has_previous"), bool):
+            errors.append("grouped_governance_policy_matrix.has_previous must be bool")
+
+    has_previous = bool(grouped_policy_matrix.get("has_previous"))
+    delta_brief = grouped_policy_matrix.get("delta_grouped_governance_brief_policy_count")
+    delta_drift = grouped_policy_matrix.get("delta_grouped_drift_summary_policy_count")
+    delta_evidence = grouped_policy_matrix.get("delta_contract_evidence_grouped_governance_policy_count")
+    if has_previous and bool(policy.get("require_grouped_governance_policy_matrix_delta_when_previous", True)):
+        if not isinstance(delta_brief, int):
+            errors.append("grouped_governance_policy_matrix.delta_grouped_governance_brief_policy_count must be int")
+        if not isinstance(delta_drift, int):
+            errors.append("grouped_governance_policy_matrix.delta_grouped_drift_summary_policy_count must be int")
+        if not isinstance(delta_evidence, int):
+            errors.append("grouped_governance_policy_matrix.delta_contract_evidence_grouped_governance_policy_count must be int")
+    if bool(policy.get("forbid_grouped_governance_brief_policy_count_regression", True)) and isinstance(delta_brief, int):
+        if delta_brief < 0:
+            errors.append("grouped_governance_policy_matrix.delta_grouped_governance_brief_policy_count must be >= 0")
+    if bool(policy.get("forbid_grouped_drift_summary_policy_count_regression", True)) and isinstance(delta_drift, int):
+        if delta_drift < 0:
+            errors.append("grouped_governance_policy_matrix.delta_grouped_drift_summary_policy_count must be >= 0")
+    if bool(policy.get("forbid_contract_evidence_grouped_governance_policy_count_regression", True)) and isinstance(
+        delta_evidence, int
+    ):
+        if delta_evidence < 0:
+            errors.append(
+                "grouped_governance_policy_matrix.delta_contract_evidence_grouped_governance_policy_count must be >= 0"
+            )
+    if bool(policy.get("require_grouped_governance_cross_report_trend_consistent", True)):
+        if isinstance(grouped_governance.get("has_previous"), bool) and isinstance(
+            grouped_policy_matrix.get("has_previous"), bool
+        ):
+            if bool(grouped_governance.get("has_previous")) != bool(grouped_policy_matrix.get("has_previous")):
+                errors.append("grouped_governance_brief.has_previous must align with grouped_governance_policy_matrix.has_previous")
+
+    grouped_trend = (
+        payload.get("grouped_governance_trend_consistency")
+        if isinstance(payload.get("grouped_governance_trend_consistency"), dict)
+        else {}
+    )
+    if bool(policy.get("require_grouped_governance_trend_consistency_ok", True)) and not bool(grouped_trend.get("ok")):
+        errors.append("grouped_governance_trend_consistency.ok must be true under baseline policy")
+    if bool(policy.get("require_grouped_governance_trend_has_previous_aligned", True)) and not bool(
+        grouped_trend.get("has_previous_aligned")
+    ):
+        errors.append("grouped_governance_trend_consistency.has_previous_aligned must be true")
+    if bool(policy.get("require_grouped_governance_trend_delta_types_ok", True)):
+        if not bool(grouped_trend.get("brief_delta_types_ok")):
+            errors.append("grouped_governance_trend_consistency.brief_delta_types_ok must be true")
+        if not bool(grouped_trend.get("matrix_delta_types_ok")):
+            errors.append("grouped_governance_trend_consistency.matrix_delta_types_ok must be true")
+    trend_report_json = str(grouped_trend.get("report_json") or "").strip()
+    trend_report_md = str(grouped_trend.get("report_md") or "").strip()
+    trend_json_prefix = str(policy.get("require_grouped_governance_trend_report_json_prefix") or "").strip()
+    trend_json_suffix = str(policy.get("require_grouped_governance_trend_report_json_suffix") or "").strip()
+    trend_md_prefix = str(policy.get("require_grouped_governance_trend_report_md_prefix") or "").strip()
+    trend_md_suffix = str(policy.get("require_grouped_governance_trend_report_md_suffix") or "").strip()
+    if trend_json_prefix and not trend_report_json.startswith(trend_json_prefix):
+        errors.append("grouped_governance_trend_consistency.report_json must start with " + trend_json_prefix)
+    if trend_json_suffix and not trend_report_json.endswith(trend_json_suffix):
+        errors.append("grouped_governance_trend_consistency.report_json must end with " + trend_json_suffix)
+    if trend_md_prefix and not trend_report_md.startswith(trend_md_prefix):
+        errors.append("grouped_governance_trend_consistency.report_md must start with " + trend_md_prefix)
+    if trend_md_suffix and not trend_report_md.endswith(trend_md_suffix):
+        errors.append("grouped_governance_trend_consistency.report_md must end with " + trend_md_suffix)
+    if bool(policy.get("require_grouped_governance_trend_report_alignment", True)):
+        trend_report_path = _to_abs_report_path(grouped_trend.get("report_json"))
+        trend_source_report = _load_json(trend_report_path) if isinstance(trend_report_path, Path) else {}
+        if not trend_source_report:
+            errors.append("grouped_governance_trend_consistency.report_json must point to a readable report")
+        else:
+            trend_source_summary = (
+                trend_source_report.get("summary")
+                if isinstance(trend_source_report.get("summary"), dict)
+                else {}
+            )
+            if bool(grouped_trend.get("ok")) != bool(trend_source_report.get("ok")):
+                errors.append("grouped_governance_trend_consistency.ok must align with source report ok")
+            if bool(grouped_trend.get("has_previous_aligned")) != bool(trend_source_summary.get("has_previous_aligned")):
+                errors.append("grouped_governance_trend_consistency.has_previous_aligned must align with source report")
+            if bool(grouped_trend.get("brief_delta_types_ok")) != bool(trend_source_summary.get("brief_delta_types_ok")):
+                errors.append("grouped_governance_trend_consistency.brief_delta_types_ok must align with source report")
+            if bool(grouped_trend.get("matrix_delta_types_ok")) != bool(trend_source_summary.get("matrix_delta_types_ok")):
+                errors.append("grouped_governance_trend_consistency.matrix_delta_types_ok must align with source report")
+    if bool(policy.get("require_grouped_governance_trend_report_md_alignment", True)):
+        trend_report_md_path = _to_abs_report_path(grouped_trend.get("report_md"))
+        trend_report_md_text = _load_text(trend_report_md_path)
+        if not trend_report_md_text:
+            errors.append("grouped_governance_trend_consistency.report_md must point to a readable markdown report")
+        else:
+            trend_expected_title = str(policy.get("require_grouped_governance_trend_report_md_title") or "").strip()
+            if trend_expected_title and trend_expected_title not in trend_report_md_text:
+                errors.append("grouped_governance_trend_consistency.report_md missing required title")
+    if bool(policy.get("require_grouped_governance_trend_report_pair_consistent", True)):
+        trend_report_json_rel = _to_rel_posix(grouped_trend.get("report_json"))
+        trend_report_md_rel = _to_rel_posix(grouped_trend.get("report_md"))
+        if not trend_report_json_rel or not trend_report_md_rel:
+            errors.append("grouped_governance_trend_consistency.report_json/report_md must both be non-empty")
+        else:
+            trend_json_path = Path(trend_report_json_rel)
+            trend_md_path = Path(trend_report_md_rel)
+            if bool(policy.get("require_grouped_governance_trend_report_pair_same_parent", True)):
+                if trend_json_path.parent.as_posix() != trend_md_path.parent.as_posix():
+                    errors.append("grouped_governance_trend_consistency.report_json/report_md must share same parent")
+            if bool(policy.get("require_grouped_governance_trend_report_pair_same_stem", True)):
+                if trend_json_path.with_suffix("").name != trend_md_path.with_suffix("").name:
+                    errors.append("grouped_governance_trend_consistency.report_json/report_md must share same stem")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

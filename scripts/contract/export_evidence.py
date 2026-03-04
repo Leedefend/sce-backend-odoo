@@ -38,6 +38,9 @@ def build_evidence(
     scene_contract_coverage_report: dict,
     grouped_signature_report: dict,
     grouped_drift_summary_report: dict,
+    grouped_governance_brief_report: dict,
+    grouped_governance_policy_matrix_report: dict,
+    grouped_governance_trend_consistency_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -261,6 +264,103 @@ def build_evidence(
             "report_json": "artifacts/grouped_drift_summary_guard.json",
             "report_md": "artifacts/grouped_drift_summary_guard.md",
         },
+        "grouped_governance_brief": {
+            "ok": bool(grouped_governance_brief_report.get("ok", False)),
+            "governance_coverage_ratio": str(
+                (((grouped_governance_brief_report.get("summary") or {}).get("governance_coverage_ratio")) or "")
+            ).strip(),
+            "governance_covered_file_count": int(
+                (((grouped_governance_brief_report.get("summary") or {}).get("governance_covered_file_count")) or 0)
+            ),
+            "governance_total_file_count": int(
+                (((grouped_governance_brief_report.get("summary") or {}).get("governance_total_file_count")) or 0)
+            ),
+            "governance_failure_count": int(
+                (((grouped_governance_brief_report.get("summary") or {}).get("governance_failure_count")) or 0)
+            ),
+            "grouped_e2e_case_count": int(
+                (((grouped_governance_brief_report.get("summary") or {}).get("grouped_e2e_case_count")) or 0)
+            ),
+            "grouped_e2e_grouped_rows_case_count": int(
+                (((grouped_governance_brief_report.get("summary") or {}).get("grouped_e2e_grouped_rows_case_count")) or 0)
+            ),
+            "grouped_e2e_max_consistency_score": int(
+                (((grouped_governance_brief_report.get("summary") or {}).get("grouped_e2e_max_consistency_score")) or 0)
+            ),
+            "grouped_export_marker_hits": int(
+                (((grouped_governance_brief_report.get("summary") or {}).get("grouped_export_marker_hits")) or 0)
+            ),
+            "grouped_export_marker_total": int(
+                (((grouped_governance_brief_report.get("summary") or {}).get("grouped_export_marker_total")) or 0)
+            ),
+            "has_previous": bool((grouped_governance_brief_report.get("trend") or {}).get("has_previous")),
+            "delta_governance_coverage_ratio": (
+                ((grouped_governance_brief_report.get("trend") or {}).get("delta") or {}).get(
+                    "governance_coverage_ratio_delta"
+                )
+            ),
+            "delta_governance_failure_count": (
+                ((grouped_governance_brief_report.get("trend") or {}).get("delta") or {}).get(
+                    "governance_failure_count"
+                )
+            ),
+            "delta_grouped_e2e_max_consistency_score": (
+                ((grouped_governance_brief_report.get("trend") or {}).get("delta") or {}).get(
+                    "grouped_e2e_max_consistency_score"
+                )
+            ),
+            "report_json": "artifacts/grouped_governance_brief_guard.json",
+            "report_md": "artifacts/grouped_governance_brief_guard.md",
+        },
+        "grouped_governance_policy_matrix": {
+            "ok": bool(grouped_governance_policy_matrix_report.get("ok", False)),
+            "grouped_governance_brief_policy_count": int(
+                (((grouped_governance_policy_matrix_report.get("summary") or {}).get("grouped_governance_brief_policy_count")) or 0)
+            ),
+            "grouped_drift_summary_policy_count": int(
+                (((grouped_governance_policy_matrix_report.get("summary") or {}).get("grouped_drift_summary_policy_count")) or 0)
+            ),
+            "contract_evidence_grouped_governance_policy_count": int(
+                (
+                    ((grouped_governance_policy_matrix_report.get("summary") or {}).get(
+                        "contract_evidence_grouped_governance_policy_count"
+                    ))
+                    or 0
+                )
+            ),
+            "has_previous": bool((grouped_governance_policy_matrix_report.get("trend") or {}).get("has_previous")),
+            "delta_grouped_governance_brief_policy_count": (
+                ((grouped_governance_policy_matrix_report.get("trend") or {}).get("delta") or {}).get(
+                    "grouped_governance_brief_policy_count"
+                )
+            ),
+            "delta_grouped_drift_summary_policy_count": (
+                ((grouped_governance_policy_matrix_report.get("trend") or {}).get("delta") or {}).get(
+                    "grouped_drift_summary_policy_count"
+                )
+            ),
+            "delta_contract_evidence_grouped_governance_policy_count": (
+                ((grouped_governance_policy_matrix_report.get("trend") or {}).get("delta") or {}).get(
+                    "contract_evidence_grouped_governance_policy_count"
+                )
+            ),
+            "report_json": "artifacts/grouped_governance_policy_matrix.json",
+            "report_md": "artifacts/grouped_governance_policy_matrix.md",
+        },
+        "grouped_governance_trend_consistency": {
+            "ok": bool(grouped_governance_trend_consistency_report.get("ok", False)),
+            "has_previous_aligned": bool(
+                ((grouped_governance_trend_consistency_report.get("summary") or {}).get("has_previous_aligned"))
+            ),
+            "brief_delta_types_ok": bool(
+                ((grouped_governance_trend_consistency_report.get("summary") or {}).get("brief_delta_types_ok"))
+            ),
+            "matrix_delta_types_ok": bool(
+                ((grouped_governance_trend_consistency_report.get("summary") or {}).get("matrix_delta_types_ok"))
+            ),
+            "report_json": "artifacts/grouped_governance_trend_consistency_guard.json",
+            "report_md": "artifacts/grouped_governance_trend_consistency_guard.md",
+        },
     }
     return evidence
 
@@ -284,6 +384,9 @@ def to_markdown(evidence: dict) -> str:
     scb = evidence["scene_contract_coverage"]
     gpc = evidence["grouped_pagination_contract"]
     gds = evidence["grouped_drift_summary"]
+    ggb = evidence["grouped_governance_brief"]
+    ggpm = evidence["grouped_governance_policy_matrix"]
+    ggtc = evidence["grouped_governance_trend_consistency"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -423,6 +526,55 @@ def to_markdown(evidence: dict) -> str:
         f"- report_json: `{gds['report_json']}`",
         f"- report_md: `{gds['report_md']}`",
         "",
+        "## Grouped Governance Brief",
+        f"- ok: {ggb['ok']}",
+        f"- governance_coverage_ratio: {ggb['governance_coverage_ratio'] or '-'}",
+        f"- governance_covered_file_count: {ggb['governance_covered_file_count']}",
+        f"- governance_total_file_count: {ggb['governance_total_file_count']}",
+        f"- governance_failure_count: {ggb['governance_failure_count']}",
+        f"- grouped_e2e_case_count: {ggb['grouped_e2e_case_count']}",
+        f"- grouped_e2e_grouped_rows_case_count: {ggb['grouped_e2e_grouped_rows_case_count']}",
+        f"- grouped_e2e_max_consistency_score: {ggb['grouped_e2e_max_consistency_score']}",
+        f"- grouped_export_marker_hits: {ggb['grouped_export_marker_hits']} / {ggb['grouped_export_marker_total']}",
+        f"- has_previous: {ggb['has_previous']}",
+        f"- delta_governance_coverage_ratio: {ggb['delta_governance_coverage_ratio']}",
+        f"- delta_governance_failure_count: {ggb['delta_governance_failure_count']}",
+        f"- delta_grouped_e2e_max_consistency_score: {ggb['delta_grouped_e2e_max_consistency_score']}",
+        f"- report_json: `{ggb['report_json']}`",
+        f"- report_md: `{ggb['report_md']}`",
+        "",
+        "## Grouped Governance Policy Matrix",
+        f"- ok: {ggpm['ok']}",
+        f"- grouped_governance_brief_policy_count: {ggpm['grouped_governance_brief_policy_count']}",
+        f"- grouped_drift_summary_policy_count: {ggpm['grouped_drift_summary_policy_count']}",
+        (
+            "- contract_evidence_grouped_governance_policy_count: "
+            f"{ggpm['contract_evidence_grouped_governance_policy_count']}"
+        ),
+        f"- has_previous: {ggpm['has_previous']}",
+        (
+            "- delta_grouped_governance_brief_policy_count: "
+            f"{ggpm['delta_grouped_governance_brief_policy_count']}"
+        ),
+        (
+            "- delta_grouped_drift_summary_policy_count: "
+            f"{ggpm['delta_grouped_drift_summary_policy_count']}"
+        ),
+        (
+            "- delta_contract_evidence_grouped_governance_policy_count: "
+            f"{ggpm['delta_contract_evidence_grouped_governance_policy_count']}"
+        ),
+        f"- report_json: `{ggpm['report_json']}`",
+        f"- report_md: `{ggpm['report_md']}`",
+        "",
+        "## Grouped Governance Trend Consistency",
+        f"- ok: {ggtc['ok']}",
+        f"- has_previous_aligned: {ggtc['has_previous_aligned']}",
+        f"- brief_delta_types_ok: {ggtc['brief_delta_types_ok']}",
+        f"- matrix_delta_types_ok: {ggtc['matrix_delta_types_ok']}",
+        f"- report_json: `{ggtc['report_json']}`",
+        f"- report_md: `{ggtc['report_md']}`",
+        "",
         "## Top Observed reason_code",
     ]
     top_codes = i.get("top_observed_reason_codes") or []
@@ -455,6 +607,12 @@ def main() -> int:
     parser.add_argument("--scene-contract-coverage-report", default="artifacts/scene_contract_coverage_brief.json")
     parser.add_argument("--grouped-signature-report", default="scripts/verify/baselines/fe_tree_grouped_signature.json")
     parser.add_argument("--grouped-drift-summary-report", default="artifacts/grouped_drift_summary_guard.json")
+    parser.add_argument("--grouped-governance-brief-report", default="artifacts/grouped_governance_brief_guard.json")
+    parser.add_argument("--grouped-governance-policy-matrix-report", default="artifacts/grouped_governance_policy_matrix.json")
+    parser.add_argument(
+        "--grouped-governance-trend-consistency-report",
+        default="artifacts/grouped_governance_trend_consistency_guard.json",
+    )
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -477,6 +635,11 @@ def main() -> int:
     scene_contract_coverage_report = load_json_optional(Path(args.scene_contract_coverage_report), {})
     grouped_signature_report = load_json_optional(Path(args.grouped_signature_report), {})
     grouped_drift_summary_report = load_json_optional(Path(args.grouped_drift_summary_report), {})
+    grouped_governance_brief_report = load_json_optional(Path(args.grouped_governance_brief_report), {})
+    grouped_governance_policy_matrix_report = load_json_optional(Path(args.grouped_governance_policy_matrix_report), {})
+    grouped_governance_trend_consistency_report = load_json_optional(
+        Path(args.grouped_governance_trend_consistency_report), {}
+    )
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -512,6 +675,12 @@ def main() -> int:
         raise SystemExit("grouped signature report must be object")
     if not isinstance(grouped_drift_summary_report, dict):
         raise SystemExit("grouped drift summary report must be object")
+    if not isinstance(grouped_governance_brief_report, dict):
+        raise SystemExit("grouped governance brief report must be object")
+    if not isinstance(grouped_governance_policy_matrix_report, dict):
+        raise SystemExit("grouped governance policy matrix report must be object")
+    if not isinstance(grouped_governance_trend_consistency_report, dict):
+        raise SystemExit("grouped governance trend consistency report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -532,6 +701,9 @@ def main() -> int:
         scene_contract_coverage_report,
         grouped_signature_report,
         grouped_drift_summary_report,
+        grouped_governance_brief_report,
+        grouped_governance_policy_matrix_report,
+        grouped_governance_trend_consistency_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)
