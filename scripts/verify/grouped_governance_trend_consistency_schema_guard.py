@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sys
+from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -21,6 +22,18 @@ def _load_json(path: Path) -> dict:
     except Exception:
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _type_ok(value: Any, expected: str) -> bool:
+    if expected == "bool":
+        return isinstance(value, bool)
+    if expected == "int":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if expected == "string":
+        return isinstance(value, str) and bool(value.strip())
+    return True
 
 
 def main() -> int:
@@ -40,6 +53,7 @@ def main() -> int:
     required_summary_keys = baseline.get("required_summary_keys") if isinstance(
         baseline.get("required_summary_keys"), list
     ) else []
+    summary_key_types = baseline.get("summary_key_types") if isinstance(baseline.get("summary_key_types"), dict) else {}
     for key in required_top_keys:
         key = str(key).strip()
         if key and key not in report:
@@ -49,6 +63,11 @@ def main() -> int:
         key = str(key).strip()
         if key and key not in summary:
             errors.append(f"missing summary key: {key}")
+    for key, expected in summary_key_types.items():
+        key = str(key).strip()
+        expected = str(expected).strip()
+        if key and key in summary and expected and not _type_ok(summary.get(key), expected):
+            errors.append(f"summary.{key} must be {expected}")
 
     if not isinstance(report.get("ok"), bool):
         errors.append("ok must be bool")
@@ -57,10 +76,24 @@ def main() -> int:
     if not isinstance(report.get("policy"), dict):
         errors.append("policy must be object")
     report_paths = report.get("report") if isinstance(report.get("report"), dict) else {}
-    if not str(report_paths.get("json") or "").strip():
+    report_json = str(report_paths.get("json") or "").strip()
+    report_md = str(report_paths.get("md") or "").strip()
+    if not report_json:
         errors.append("report.json must be non-empty")
-    if not str(report_paths.get("md") or "").strip():
+    if not report_md:
         errors.append("report.md must be non-empty")
+    json_prefix = str(baseline.get("report_json_prefix") or "").strip()
+    json_suffix = str(baseline.get("report_json_suffix") or "").strip()
+    md_prefix = str(baseline.get("report_md_prefix") or "").strip()
+    md_suffix = str(baseline.get("report_md_suffix") or "").strip()
+    if json_prefix and report_json and not report_json.startswith(json_prefix):
+        errors.append("report.json must start with " + json_prefix)
+    if json_suffix and report_json and not report_json.endswith(json_suffix):
+        errors.append("report.json must end with " + json_suffix)
+    if md_prefix and report_md and not report_md.startswith(md_prefix):
+        errors.append("report.md must start with " + md_prefix)
+    if md_suffix and report_md and not report_md.endswith(md_suffix):
+        errors.append("report.md must end with " + md_suffix)
 
     if errors:
         print("[grouped_governance_trend_consistency_schema_guard] FAIL")
