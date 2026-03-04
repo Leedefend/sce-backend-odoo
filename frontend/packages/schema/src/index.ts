@@ -156,6 +156,13 @@ export interface ApiDataListResult {
     count?: number;
     domain?: unknown[];
   }>;
+  group_paging?: {
+    group_by_field?: string | null;
+    group_limit?: number;
+    group_count?: number;
+    page_size?: number;
+    has_group_page_offsets?: boolean;
+  };
   grouped_rows?: Array<{
     group_key?: string;
     field?: string;
