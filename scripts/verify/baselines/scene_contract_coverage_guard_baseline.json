@@ -1,0 +1,22 @@
+{
+  "min_scene_count_actual": 1,
+  "min_intent_count_actual": 1,
+  "min_renderable_ratio": 0.01,
+  "min_interaction_ready_ratio": 0.01,
+  "required_intent_layers": [
+    "core",
+    "domain",
+    "governance"
+  ],
+  "required_topology_keys": {
+    "layout_kind_counts": [
+      "workspace",
+      "list"
+    ],
+    "target_type_counts": [
+      "spa_route"
+    ]
+  },
+  "max_issues_count": 0,
+  "require_ok_true": true
+}
