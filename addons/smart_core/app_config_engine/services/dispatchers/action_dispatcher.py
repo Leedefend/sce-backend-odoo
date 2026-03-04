@@ -17,6 +17,11 @@ class ActionDispatcher:
         self.su_env = su_env
         self.resolver = ActionResolver(env)
 
+    def _resolve_action_gateway(self):
+        if 'app.action.gateway' in self.env:
+            return self.env['app.action.gateway']
+        raise ValueError("缺少 app.action.gateway：operation 执行网关未注册")
+
     def dispatch(self, p):
         subject = p.get('subject')
 
@@ -31,12 +36,12 @@ class ActionDispatcher:
         if subject == 'operation':
             op = (p.get("op") or "").lower()
             if op == 'execute':
-                gw = self.env['app.action.gateway']  # 走用户权限
+                gw = self._resolve_action_gateway()  # 走用户权限
                 res = gw.run_object_method(p["model"], p.get("method"), p.get("record_ids"),
                                            p.get("args"), p.get("kwargs"), p.get("action_key"))
                 return {"result": res}, {"op": 1}
             if op == 'onchange':
-                gw = self.env['app.action.gateway']
+                gw = self._resolve_action_gateway()
                 res = gw.run_onchange(p["model"], p.get("values") or {}, p.get("changed") or {})
                 return {"result": res}, {"op": 1}
             if op == 'validate':
@@ -102,7 +107,7 @@ class ActionDispatcher:
         if atype == 'ir.actions.act_window':
             p['model'] = info.get('res_model') or p.get('model')
             p['view_types'] = PageAssembler.normalize_view_types(info.get('view_mode') or p.get('view_type') or 'tree,form')
-            return PageAssembler(self.env).assemble_page_contract(p, action=info)
+            return PageAssembler(self.env, self.su_env).assemble_page_contract(p, action=info)
         if atype == 'ir.actions.client':
             return ClientUrlReportAssembler(self.env, self.su_env).assemble_client_contract(p, info)
         raise ValueError(f"server 动作返回了不支持的类型：{atype}")
