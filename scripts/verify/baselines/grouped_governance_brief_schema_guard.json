@@ -1,0 +1,37 @@
+{
+  "required_top_keys": [
+    "ok",
+    "generated_at",
+    "inputs",
+    "checks",
+    "summary",
+    "trend",
+    "issues"
+  ],
+  "required_summary_keys": [
+    "governance_coverage_ratio",
+    "governance_covered_file_count",
+    "governance_total_file_count",
+    "governance_failure_count",
+    "grouped_e2e_case_count",
+    "grouped_e2e_grouped_rows_case_count",
+    "grouped_e2e_max_consistency_score",
+    "grouped_export_marker_hits",
+    "grouped_export_marker_total"
+  ],
+  "required_check_keys": [
+    "contract_governance_coverage_ok",
+    "grouped_drift_summary_ok"
+  ],
+  "required_trend_delta_keys": [
+    "governance_coverage_ratio_delta",
+    "governance_covered_file_count",
+    "governance_total_file_count",
+    "governance_failure_count",
+    "grouped_e2e_case_count",
+    "grouped_e2e_grouped_rows_case_count",
+    "grouped_e2e_max_consistency_score",
+    "grouped_export_marker_hits",
+    "grouped_export_marker_total"
+  ]
+}
