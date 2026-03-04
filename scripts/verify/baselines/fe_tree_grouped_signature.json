@@ -1,6 +1,11 @@
 {
   "group_by_field": "message_needaction",
   "grouped_pagination_semantic_summary": {
+    "consistency": {
+      "first_group_offset_aligned_to_page_limit": true,
+      "request_offset_aligned_to_page_limit": true,
+      "request_offset_matches_observed": true
+    },
     "field_types": {
       "current_page": "number",
       "offset_aligned_to_page_limit": "boolean",
@@ -8,6 +13,7 @@
       "page_offset": "number",
       "range_end": "number",
       "range_start": "number",
+      "request_offset_matches_observed": "boolean",
       "total_pages": "number"
     },
     "first_group_observation": {
