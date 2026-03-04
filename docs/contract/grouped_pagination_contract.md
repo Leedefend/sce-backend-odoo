@@ -59,6 +59,11 @@ When grouped behavior drifts across backend/frontend/evidence, follow this order
 5. `python3 scripts/verify/contract_evidence_schema_guard.py`
 6. `python3 scripts/verify/contract_evidence_guard.py`
 
+Drift summary guard emits artifacts for audit:
+
+- `artifacts/grouped_drift_summary_guard.json`
+- `artifacts/grouped_drift_summary_guard.md`
+
 If only e2e snapshot mismatches, re-run:
 
 ```bash
