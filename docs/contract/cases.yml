@@ -678,6 +678,96 @@
     }
   },
   {
+    "case": "project_dashboard_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "project.project",
+    "view_type": "kanban",
+    "action_xmlid": "smart_construction_core.action_project_dashboard",
+    "include_meta": true
+  },
+  {
+    "case": "project_list_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "project.project",
+    "view_type": "tree",
+    "action_xmlid": "smart_construction_core.action_sc_project_list",
+    "include_meta": true
+  },
+  {
+    "case": "contract_list_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "construction.contract",
+    "view_type": "tree",
+    "action_xmlid": "smart_construction_core.action_construction_contract",
+    "include_meta": true
+  },
+  {
+    "case": "contract_income_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "construction.contract",
+    "view_type": "tree",
+    "action_xmlid": "smart_construction_core.action_construction_contract_income",
+    "include_meta": true
+  },
+  {
+    "case": "contract_expense_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "construction.contract",
+    "view_type": "tree",
+    "action_xmlid": "smart_construction_core.action_construction_contract_expense",
+    "include_meta": true
+  },
+  {
+    "case": "cost_ledger_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "project.cost.ledger",
+    "view_type": "tree",
+    "action_xmlid": "smart_construction_core.action_project_cost_ledger",
+    "include_meta": true
+  },
+  {
+    "case": "cost_compare_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "project.cost.ledger",
+    "view_type": "pivot",
+    "action_xmlid": "smart_construction_core.action_project_cost_compare",
+    "include_meta": true
+  },
+  {
+    "case": "payment_request_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "payment.request",
+    "view_type": "tree",
+    "action_xmlid": "smart_construction_core.action_payment_request",
+    "include_meta": true
+  },
+  {
+    "case": "operating_risk_drill_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "payment.request",
+    "view_type": "tree",
+    "action_xmlid": "smart_construction_core.action_sc_operating_drill_overpay_risk_pr",
+    "include_meta": true
+  },
+  {
+    "case": "project_task_all_action_pm",
+    "user": "pm",
+    "op": "action_open",
+    "model": "project.task",
+    "view_type": "tree",
+    "action_xmlid": "project.action_view_all_task",
+    "include_meta": true
+  },
+  {
     "case": "auth_logout_intent_admin",
     "user": "admin",
     "op": "intent.invoke",
