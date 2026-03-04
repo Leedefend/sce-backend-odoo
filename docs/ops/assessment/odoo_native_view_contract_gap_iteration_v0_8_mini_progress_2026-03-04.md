@@ -12,6 +12,7 @@
 5. contract evidence 导出新增 `supports_page_window`
 6. contract evidence schema/evidence guard 增加 `supports_page_window` 强约束
 7. grouped pagination 语义文档补齐并接入 `docs/contract/README.md`
+8. grouped semantic summary 增加 `page_window` 与 `range` 一致性语义，并纳入 drift guard
 
 ## 提交记录
 
@@ -21,6 +22,7 @@
 4. `c42f0a0` feat(evidence): enforce grouped page_window support in contract evidence
 5. `bde463e` test(grouped-pagination): require page_window in semantic guard
 6. `ab21bbd` docs(contract): add grouped pagination contract semantics guide
+7. `9ed95cd` test(grouped-pagination): enforce page_window-range consistency semantics
 
 ## 验证结果
 
