@@ -36,11 +36,23 @@
    - 签名包含分页路由语义标记：`grouped_pagination_route_state.key = group_page`
    - `Makefile` 的 `verify.portal.tree_view_smoke.container` 新增 `TREE_GROUPED_*` 变量透传
 
+6. 收口迭代：分页 offset 页边界归一化
+   - `ActionView` 新增 grouped 分页 offset 归一函数，统一用于：
+     - route 恢复后的 grouped_rows 初始化
+     - 页码切换请求参数
+     - grouped route 状态归一清理
+     - 刷新后的分组分页数据回填
+   - `ListPage` 页码展示侧改为同口径归一（offset 对齐 pageLimit 整数倍），避免异常路由值导致“页码与样本窗口错位”
+
 ## 验证结果
 
 1. `python3 scripts/verify/grouped_rows_runtime_guard.py`：通过
 2. `make verify.frontend.quick.gate`：通过
 3. `make verify.portal.tree_view_smoke.container`：通过
+4. 二次回归（收口迭代后）：
+   - `python3 scripts/verify/grouped_rows_runtime_guard.py`：通过
+   - `make verify.frontend.quick.gate`：通过
+   - `make verify.portal.tree_view_smoke.container`：通过
 
 ## 变更清单
 
@@ -49,3 +61,4 @@
 3. `scripts/verify/grouped_rows_runtime_guard.py`
 4. `scripts/verify/fe_tree_view_smoke.js`
 5. `docs/ops/assessment/odoo_native_view_contract_gap_iteration_v0_4_plan_2026-03-04.md`
+6. `docs/ops/assessment/odoo_native_view_contract_gap_iteration_v0_4_progress_2026-03-04.md`

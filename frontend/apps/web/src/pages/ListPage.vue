@@ -393,7 +393,8 @@ function resolveGroupPageOffset(group: { pageOffset?: number; count: number; pag
   const maxOffset = Math.max(0, Number(group.count || 0) - limit);
   const offsetRaw = Number(group.pageOffset || 0);
   if (!Number.isFinite(offsetRaw)) return 0;
-  return Math.min(Math.max(Math.trunc(offsetRaw), 0), maxOffset);
+  const clamped = Math.min(Math.max(Math.trunc(offsetRaw), 0), maxOffset);
+  return Math.floor(clamped / limit) * limit;
 }
 
 function canGroupPagePrev(group: { count: number; pageOffset?: number; pageLimit?: number }) {
