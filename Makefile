@@ -1251,8 +1251,16 @@ verify.frontend.grouped_governance_brief.schema.guard: guard.prod.forbid verify.
 verify.frontend.grouped_governance_brief.baseline.guard: guard.prod.forbid verify.frontend.grouped_governance_brief.schema.guard
 	@python3 scripts/verify/grouped_governance_brief_baseline_guard.py
 
+.PHONY: verify.frontend.grouped_governance_policy_matrix
+verify.frontend.grouped_governance_policy_matrix: guard.prod.forbid verify.frontend.grouped_governance_brief.baseline.guard
+	@python3 scripts/verify/grouped_governance_policy_matrix.py
+
+.PHONY: verify.frontend.grouped_governance_policy_matrix.schema.guard
+verify.frontend.grouped_governance_policy_matrix.schema.guard: guard.prod.forbid verify.frontend.grouped_governance_policy_matrix
+	@python3 scripts/verify/grouped_governance_policy_matrix_schema_guard.py
+
 .PHONY: verify.grouped.governance.bundle
-verify.grouped.governance.bundle: guard.prod.forbid verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard verify.frontend.grouped_governance_brief.baseline.guard
+verify.grouped.governance.bundle: guard.prod.forbid verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard verify.frontend.grouped_governance_brief.baseline.guard verify.frontend.grouped_governance_policy_matrix.schema.guard
 	@python3 scripts/contract/export_evidence.py
 	@python3 scripts/verify/contract_evidence_schema_guard.py
 	@python3 scripts/verify/contract_evidence_guard.py
