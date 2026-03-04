@@ -8,6 +8,7 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - op: `list`
 - grouped payload keys: `group_summary`, `grouped_rows`
 - routing state key: `group_page` (per-group offset map)
+- request key: `group_page_size` (optional; explicit grouped page size)
 
 ## Grouped Row Fields
 
@@ -22,6 +23,7 @@ Each entry in `grouped_rows` must provide:
 - `sample_rows`: paged sample records
 - `page_offset`: normalized offset (`floor(offset/page_limit)*page_limit`)
 - `page_limit`: effective page size
+- `page_size`: explicit page size alias (equal to `page_limit`, recommended for new clients)
 - `page_current`: 1-based page index
 - `page_total`: total pages (`max(1, ceil(count/page_limit))`)
 - `page_range_start`: 1-based inclusive range start

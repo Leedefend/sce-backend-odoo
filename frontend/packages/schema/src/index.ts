@@ -166,6 +166,7 @@ export interface ApiDataListResult {
     sample_rows?: Array<Record<string, unknown>>;
     page_offset?: number;
     page_limit?: number;
+    page_size?: number;
     page_current?: number;
     page_total?: number;
     page_range_start?: number;
@@ -187,6 +188,7 @@ export interface ApiDataListRequest {
   domain_raw?: string;
   group_by?: string | string[];
   group_sample_limit?: number;
+  group_page_size?: number;
   group_page_offsets?: Record<string, number>;
   search_term?: string;
   limit?: number;
