@@ -42,3 +42,27 @@ make verify.contract.preflight CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0
 ```
 
 This disables only strict advanced-view semantic smoke while keeping the rest of preflight checks unchanged.
+
+## Merge-ready Changelog Snippet
+
+```md
+### Changed
+- Contract preflight now enables strict advanced-view semantic checks by default.
+- `verify.contract.preflight` includes both baseline and strict advanced-view smoke:
+  - `verify.contract.view_type_semantic.smoke` (`min_models=1`)
+  - `verify.contract.view_type_semantic.strict.smoke` (`min_models=2`)
+
+### Fixed
+- Removed hard-coded `reason_code` literals in my-work summary flow by switching to shared constants.
+- Fixed legacy token-auth user binding for `/api/scenes/my` to avoid request-cursor mismatch failures.
+- Aligned scene-capability guard baseline role logins with fixture-standard `sc_fx_*` accounts.
+
+### Docs
+- Added rollout + rollback runbook for strict preflight toggle.
+- Linked Phase 11 closure doc to Phase 11.2 strict rollout note.
+
+### Verification
+- `make verify.contract.preflight` PASS (strict on by default)
+- `make verify.contract.view_type_semantic.strict.smoke` PASS
+- `make verify.scene.legacy_deprecation.smoke` PASS
+```
