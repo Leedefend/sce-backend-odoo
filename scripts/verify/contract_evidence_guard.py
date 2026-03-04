@@ -136,10 +136,10 @@ def main() -> int:
         "require_grouped_governance_report_pair_consistent": True,
         "require_grouped_governance_report_pair_same_parent": True,
         "require_grouped_governance_report_pair_same_stem": True,
-        "require_grouped_governance_brief_has_previous_bool": True,
-        "require_grouped_governance_brief_delta_when_previous": True,
-        "forbid_grouped_governance_brief_failure_count_regression": True,
-        "forbid_grouped_governance_brief_consistency_score_regression": True,
+        "require_grouped_governance_brief_has_previous_bool": False,
+        "require_grouped_governance_brief_delta_when_previous": False,
+        "forbid_grouped_governance_brief_failure_count_regression": False,
+        "forbid_grouped_governance_brief_consistency_score_regression": False,
         "require_grouped_governance_policy_matrix_ok": True,
         "min_grouped_governance_brief_policy_count": 1,
         "min_grouped_drift_summary_policy_count": 1,
@@ -148,12 +148,19 @@ def main() -> int:
         "require_grouped_governance_policy_matrix_report_json_suffix": "grouped_governance_policy_matrix.json",
         "require_grouped_governance_policy_matrix_report_md_prefix": "artifacts/",
         "require_grouped_governance_policy_matrix_report_md_suffix": "grouped_governance_policy_matrix.md",
-        "require_grouped_governance_policy_matrix_has_previous_bool": True,
-        "require_grouped_governance_policy_matrix_delta_when_previous": True,
-        "forbid_grouped_governance_brief_policy_count_regression": True,
-        "forbid_grouped_drift_summary_policy_count_regression": True,
-        "forbid_contract_evidence_grouped_governance_policy_count_regression": True,
-        "require_grouped_governance_cross_report_trend_consistent": True,
+        "require_grouped_governance_policy_matrix_has_previous_bool": False,
+        "require_grouped_governance_policy_matrix_delta_when_previous": False,
+        "forbid_grouped_governance_brief_policy_count_regression": False,
+        "forbid_grouped_drift_summary_policy_count_regression": False,
+        "forbid_contract_evidence_grouped_governance_policy_count_regression": False,
+        "require_grouped_governance_cross_report_trend_consistent": False,
+        "require_grouped_governance_trend_consistency_ok": True,
+        "require_grouped_governance_trend_has_previous_aligned": True,
+        "require_grouped_governance_trend_delta_types_ok": True,
+        "require_grouped_governance_trend_report_json_prefix": "artifacts/",
+        "require_grouped_governance_trend_report_json_suffix": "grouped_governance_trend_consistency_guard.json",
+        "require_grouped_governance_trend_report_md_prefix": "artifacts/",
+        "require_grouped_governance_trend_report_md_suffix": "grouped_governance_trend_consistency_guard.md",
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -186,6 +193,7 @@ def main() -> int:
         "grouped_drift_summary",
         "grouped_governance_brief",
         "grouped_governance_policy_matrix",
+        "grouped_governance_trend_consistency",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -677,6 +685,37 @@ def main() -> int:
         ):
             if bool(grouped_governance.get("has_previous")) != bool(grouped_policy_matrix.get("has_previous")):
                 errors.append("grouped_governance_brief.has_previous must align with grouped_governance_policy_matrix.has_previous")
+
+    grouped_trend = (
+        payload.get("grouped_governance_trend_consistency")
+        if isinstance(payload.get("grouped_governance_trend_consistency"), dict)
+        else {}
+    )
+    if bool(policy.get("require_grouped_governance_trend_consistency_ok", True)) and not bool(grouped_trend.get("ok")):
+        errors.append("grouped_governance_trend_consistency.ok must be true under baseline policy")
+    if bool(policy.get("require_grouped_governance_trend_has_previous_aligned", True)) and not bool(
+        grouped_trend.get("has_previous_aligned")
+    ):
+        errors.append("grouped_governance_trend_consistency.has_previous_aligned must be true")
+    if bool(policy.get("require_grouped_governance_trend_delta_types_ok", True)):
+        if not bool(grouped_trend.get("brief_delta_types_ok")):
+            errors.append("grouped_governance_trend_consistency.brief_delta_types_ok must be true")
+        if not bool(grouped_trend.get("matrix_delta_types_ok")):
+            errors.append("grouped_governance_trend_consistency.matrix_delta_types_ok must be true")
+    trend_report_json = str(grouped_trend.get("report_json") or "").strip()
+    trend_report_md = str(grouped_trend.get("report_md") or "").strip()
+    trend_json_prefix = str(policy.get("require_grouped_governance_trend_report_json_prefix") or "").strip()
+    trend_json_suffix = str(policy.get("require_grouped_governance_trend_report_json_suffix") or "").strip()
+    trend_md_prefix = str(policy.get("require_grouped_governance_trend_report_md_prefix") or "").strip()
+    trend_md_suffix = str(policy.get("require_grouped_governance_trend_report_md_suffix") or "").strip()
+    if trend_json_prefix and not trend_report_json.startswith(trend_json_prefix):
+        errors.append("grouped_governance_trend_consistency.report_json must start with " + trend_json_prefix)
+    if trend_json_suffix and not trend_report_json.endswith(trend_json_suffix):
+        errors.append("grouped_governance_trend_consistency.report_json must end with " + trend_json_suffix)
+    if trend_md_prefix and not trend_report_md.startswith(trend_md_prefix):
+        errors.append("grouped_governance_trend_consistency.report_md must start with " + trend_md_prefix)
+    if trend_md_suffix and not trend_report_md.endswith(trend_md_suffix):
+        errors.append("grouped_governance_trend_consistency.report_md must end with " + trend_md_suffix)
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

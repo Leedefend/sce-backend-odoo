@@ -17,7 +17,8 @@
     "grouped_pagination_contract",
     "grouped_drift_summary",
     "grouped_governance_brief",
-    "grouped_governance_policy_matrix"
+    "grouped_governance_policy_matrix",
+    "grouped_governance_trend_consistency"
   ],
   "required_section_keys": {
     "intent_catalog": [
@@ -142,6 +143,14 @@
       "delta_grouped_governance_brief_policy_count",
       "delta_grouped_drift_summary_policy_count",
       "delta_contract_evidence_grouped_governance_policy_count",
+      "report_json",
+      "report_md"
+    ],
+    "grouped_governance_trend_consistency": [
+      "ok",
+      "has_previous_aligned",
+      "brief_delta_types_ok",
+      "matrix_delta_types_ok",
       "report_json",
       "report_md"
     ]
