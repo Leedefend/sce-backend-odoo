@@ -19,6 +19,7 @@
 8. grouped drift summary guard 新增审计报告输出与基线策略文件
 9. grouped drift summary 新增 schema guard，并接入 quick gate
 10. grouped drift summary 新增 baseline guard（指标阈值治理）并接入 quick gate
+11. phase11_1 evidence 纳入 grouped_drift_summary 分节（schema + guard + policy）
 
 ## 提交记录
 
@@ -29,6 +30,7 @@
 5. `test(frontend-gate)`: report-based grouped drift summary policy baseline
 6. `test(frontend-gate)`: grouped drift summary schema guard in quick gate
 7. `test(frontend-gate)`: grouped drift summary baseline guard in quick gate
+8. `feat(evidence)`: include grouped drift summary section in phase11_1 evidence chain
 
 ## 验证结果
 
