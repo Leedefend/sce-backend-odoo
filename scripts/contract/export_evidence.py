@@ -35,6 +35,7 @@ def build_evidence(
     load_view_access_contract_report: dict,
     backend_architecture_full_report: dict,
     backend_evidence_manifest_report: dict,
+    scene_contract_coverage_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -198,6 +199,20 @@ def build_evidence(
             ),
             "report": "artifacts/backend/backend_evidence_manifest.json",
         },
+        "scene_contract_coverage": {
+            "ok": bool(scene_contract_coverage_report.get("ok", False)),
+            "scene_count_actual": int((((scene_contract_coverage_report.get("metrics") or {}).get("scene_count_actual")) or 0)),
+            "intent_count_actual": int(
+                (((scene_contract_coverage_report.get("metrics") or {}).get("intent_count_actual")) or 0)
+            ),
+            "renderable_ratio": float(
+                (((scene_contract_coverage_report.get("metrics") or {}).get("renderable_ratio")) or 0.0)
+            ),
+            "interaction_ready_ratio": float(
+                (((scene_contract_coverage_report.get("metrics") or {}).get("interaction_ready_ratio")) or 0.0)
+            ),
+            "report": "artifacts/scene_contract_coverage_brief.json",
+        },
     }
     return evidence
 
@@ -218,6 +233,7 @@ def to_markdown(evidence: dict) -> str:
     lv = evidence["load_view_access_contract"]
     a2 = evidence["backend_architecture_full"]
     m2 = evidence["backend_evidence_manifest"]
+    scb = evidence["scene_contract_coverage"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -327,6 +343,14 @@ def to_markdown(evidence: dict) -> str:
         f"- total_size_bytes: {m2['total_size_bytes']}",
         f"- report: `{m2['report']}`",
         "",
+        "## Scene Contract Coverage Brief",
+        f"- ok: {scb['ok']}",
+        f"- scene_count_actual: {scb['scene_count_actual']}",
+        f"- intent_count_actual: {scb['intent_count_actual']}",
+        f"- renderable_ratio: {scb['renderable_ratio']}",
+        f"- interaction_ready_ratio: {scb['interaction_ready_ratio']}",
+        f"- report: `{scb['report']}`",
+        "",
         "## Top Observed reason_code",
     ]
     top_codes = i.get("top_observed_reason_codes") or []
@@ -356,6 +380,7 @@ def main() -> int:
     parser.add_argument("--load-view-access-contract-report", default="artifacts/backend/load_view_access_contract_guard.json")
     parser.add_argument("--backend-architecture-full-report", default="artifacts/backend/backend_architecture_full_report.json")
     parser.add_argument("--backend-evidence-manifest-report", default="artifacts/backend/backend_evidence_manifest.json")
+    parser.add_argument("--scene-contract-coverage-report", default="artifacts/scene_contract_coverage_brief.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -375,6 +400,7 @@ def main() -> int:
     load_view_access_contract_report = load_json_optional(Path(args.load_view_access_contract_report), {})
     backend_architecture_full_report = load_json_optional(Path(args.backend_architecture_full_report), {})
     backend_evidence_manifest_report = load_json_optional(Path(args.backend_evidence_manifest_report), {})
+    scene_contract_coverage_report = load_json_optional(Path(args.scene_contract_coverage_report), {})
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -404,6 +430,8 @@ def main() -> int:
         raise SystemExit("backend architecture full report must be object")
     if not isinstance(backend_evidence_manifest_report, dict):
         raise SystemExit("backend evidence manifest report must be object")
+    if not isinstance(scene_contract_coverage_report, dict):
+        raise SystemExit("scene contract coverage report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -421,6 +449,7 @@ def main() -> int:
         load_view_access_contract_report,
         backend_architecture_full_report,
         backend_evidence_manifest_report,
+        scene_contract_coverage_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)

@@ -1535,7 +1535,7 @@ verify.business.capability_baseline.report.guard: guard.prod.forbid verify.busin
 verify.business.capability_baseline.guard: guard.prod.forbid verify.scene.catalog.runtime_alignment.guard verify.business.core_journey.guard verify.role.capability_floor.guard verify.business.capability_baseline.report.guard
 	@echo "[OK] verify.business.capability_baseline.guard done"
 
-verify.contract.evidence.export: guard.prod.forbid audit.intent.surface verify.scene.contract.shape verify.business.capability_baseline.guard verify.backend.architecture.full.report.schema.guard
+verify.contract.evidence.export: guard.prod.forbid audit.intent.surface verify.scene.contract.shape verify.business.capability_baseline.guard verify.contract.scene_coverage.brief verify.backend.architecture.full.report.schema.guard
 	@python3 scripts/contract/export_evidence.py
 
 verify.contract.evidence.schema.guard: guard.prod.forbid verify.contract.evidence.export
