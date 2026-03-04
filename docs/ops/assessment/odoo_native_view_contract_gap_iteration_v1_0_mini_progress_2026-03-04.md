@@ -17,6 +17,7 @@
 6. contract evidence schema/guard/policy baseline 同步强化上述字段
 7. grouped 契约文档新增 Drift Diagnostics 排障路径
 8. grouped drift summary guard 新增审计报告输出与基线策略文件
+9. grouped drift summary 新增 schema guard，并接入 quick gate
 
 ## 提交记录
 
@@ -25,6 +26,7 @@
 3. `73a43f9` test(frontend-gate): add grouped drift summary guard aggregator
 4. `cf89daa` feat(evidence): add grouped consistency summary score and policy checks
 5. `test(frontend-gate)`: report-based grouped drift summary policy baseline
+6. `test(frontend-gate)`: grouped drift summary schema guard in quick gate
 
 ## 验证结果
 
