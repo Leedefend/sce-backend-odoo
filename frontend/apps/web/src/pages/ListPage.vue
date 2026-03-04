@@ -304,6 +304,10 @@ const props = defineProps<{
     domain?: unknown[];
     pageOffset?: number;
     pageLimit?: number;
+    pageCurrent?: number;
+    pageTotal?: number;
+    pageRangeStart?: number;
+    pageRangeEnd?: number;
     loading?: boolean;
   }>;
   onOpenGroup?: (group: {
@@ -397,6 +401,34 @@ function resolveGroupPageOffset(group: { pageOffset?: number; count: number; pag
   return Math.floor(clamped / limit) * limit;
 }
 
+function resolveGroupPageMeta(group: {
+  count: number;
+  pageOffset?: number;
+  pageLimit?: number;
+  pageCurrent?: number;
+  pageTotal?: number;
+  pageRangeStart?: number;
+  pageRangeEnd?: number;
+}) {
+  const total = Math.max(0, Number(group.count || 0));
+  const limit = Math.max(1, resolveGroupPageLimit(group));
+  const offset = resolveGroupPageOffset(group);
+  const fallbackTotal = Math.max(1, Math.ceil(total / limit));
+  const fallbackCurrent = Math.floor(offset / limit) + 1;
+  const fallbackStart = total > 0 ? offset + 1 : 0;
+  const fallbackEnd = total > 0 ? Math.min(total, offset + limit) : 0;
+  const backendTotal = Math.trunc(Number(group.pageTotal || 0));
+  const backendCurrent = Math.trunc(Number(group.pageCurrent || 0));
+  const backendStart = Math.trunc(Number(group.pageRangeStart || 0));
+  const backendEnd = Math.trunc(Number(group.pageRangeEnd || 0));
+  return {
+    totalPages: backendTotal > 0 ? backendTotal : fallbackTotal,
+    currentPage: backendCurrent > 0 ? backendCurrent : fallbackCurrent,
+    rangeStart: backendStart >= 0 ? backendStart : fallbackStart,
+    rangeEnd: backendEnd >= 0 ? backendEnd : fallbackEnd,
+  };
+}
+
 function canGroupPagePrev(group: { count: number; pageOffset?: number; pageLimit?: number }) {
   return resolveGroupPageOffset(group) > 0;
 }
@@ -410,23 +442,18 @@ function canGroupPageNext(group: { count: number; pageOffset?: number; pageLimit
 function groupPageRangeText(group: { count: number; pageOffset?: number; pageLimit?: number }) {
   const total = Math.max(0, Number(group.count || 0));
   if (!total) return '0 / 0';
-  const offset = resolveGroupPageOffset(group);
-  const limit = resolveGroupPageLimit(group);
-  const start = offset + 1;
-  const end = Math.min(total, offset + limit);
+  const meta = resolveGroupPageMeta(group);
+  const start = meta.rangeStart;
+  const end = meta.rangeEnd;
   return `${start}-${end} / ${total}`;
 }
 
 function groupTotalPages(group: { count: number; pageLimit?: number }) {
-  const total = Math.max(0, Number(group.count || 0));
-  const limit = Math.max(1, resolveGroupPageLimit(group));
-  return Math.max(1, Math.ceil(total / limit));
+  return resolveGroupPageMeta(group).totalPages;
 }
 
 function groupCurrentPage(group: { count: number; pageOffset?: number; pageLimit?: number }) {
-  const limit = Math.max(1, resolveGroupPageLimit(group));
-  const offset = resolveGroupPageOffset(group);
-  return Math.floor(offset / limit) + 1;
+  return resolveGroupPageMeta(group).currentPage;
 }
 
 function groupPageInfoText(group: { count: number; pageOffset?: number; pageLimit?: number }) {
