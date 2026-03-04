@@ -1015,6 +1015,8 @@ function applyRoutePreset() {
   const savedFilter = String(route.query.saved_filter || '').trim();
   const groupBy = String(route.query.group_by || '').trim();
   const routeSearch = String(route.query.search || '').trim();
+  const routeOrder = String(route.query.order || route.query.sort || '').trim();
+  const routeActiveFilter = String(route.query.active_filter || '').trim();
   const ctxSource = String(route.query.ctx_source || '').trim();
   routeContextSource.value = ctxSource;
   let changed = false;
@@ -1027,6 +1029,14 @@ function applyRoutePreset() {
   appliedPresetLabel.value = '';
   if (routeSearch) {
     setIfDiff(searchTerm, routeSearch);
+  } else {
+    setIfDiff(searchTerm, '');
+  }
+  if (routeOrder) {
+    setIfDiff(sortValue, routeOrder);
+  }
+  if (routeActiveFilter === 'all' || routeActiveFilter === 'active' || routeActiveFilter === 'archived') {
+    setIfDiff(filterValue, routeActiveFilter);
   }
   if (!preset && presetFilter) {
     appliedPresetLabel.value = `契约筛选: ${presetFilter}`;
@@ -1059,6 +1069,16 @@ function clearRoutePreset() {
   const nextQuery = stripWorkspaceContext(route.query as Record<string, unknown>);
   void trackUsageEvent('workspace.preset.clear', { view: 'action' }).catch(() => {});
   router.replace({ name: 'action', params: route.params, query: nextQuery }).catch(() => {});
+}
+
+function syncRouteListState(extra?: Record<string, unknown>) {
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, {
+    search: searchTerm.value.trim() || undefined,
+    order: sortValue.value.trim() || undefined,
+    active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
+    ...extra,
+  });
+  router.replace({ name: 'action', params: route.params, query }).catch(() => {});
 }
 
 function applyContractFilter(key: string) {
@@ -2085,17 +2105,20 @@ function reload() {
 
 function handleSearch(value: string) {
   searchTerm.value = value;
+  syncRouteListState();
   load();
 }
 
 function handleSort(value: string) {
   sortValue.value = value;
+  syncRouteListState();
   load();
 }
 
 function handleFilter(value: 'all' | 'active' | 'archived') {
   filterValue.value = value;
   clearSelection();
+  syncRouteListState();
   load();
 }
 
