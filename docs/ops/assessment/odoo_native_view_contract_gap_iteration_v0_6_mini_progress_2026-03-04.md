@@ -55,6 +55,13 @@
    - tree smoke grouped 请求新增 `group_page_offsets` 键，基线同步更新
    - `grouped_rows_runtime_guard` 同步适配后端新签名标记
 
+10. 契约能力增强（减少冗余请求 + UI 语义直连）
+   - `ActionView` 在后端已返回 offset 对齐分页样本时，跳过冗余 `hydrate` 二次补拉
+   - `GroupedRow` 新增并维护后端分页展示语义：
+     - `pageCurrent` / `pageTotal`
+     - `pageRangeStart` / `pageRangeEnd`
+   - `ListPage` 的分页展示优先消费后端 `page_*` 字段，本地推导仅作为兜底
+
 ## 已完成验证（阶段性）
 
 1. `make verify.contract.scene_coverage.brief`：通过
@@ -69,6 +76,10 @@
 10. `python3 scripts/verify/grouped_rows_runtime_guard.py`：通过
 11. `make verify.portal.tree_view_smoke.container`：通过
 12. `make verify.frontend.quick.gate`：通过
+13. 二次能力回归（冗余请求优化 + UI 语义直连）：
+   - `python3 scripts/verify/grouped_rows_runtime_guard.py`：通过
+   - `make verify.portal.tree_view_smoke.container`：通过
+   - `make verify.frontend.quick.gate`：通过
 
 ## 变更清单（当前已落地）
 
@@ -84,3 +95,4 @@
 10. `Makefile`
 11. `addons/smart_core/handlers/api_data.py`
 12. `frontend/apps/web/src/views/ActionView.vue`
+13. `frontend/apps/web/src/pages/ListPage.vue`
