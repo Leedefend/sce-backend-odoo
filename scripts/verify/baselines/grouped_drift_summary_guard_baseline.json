@@ -1,0 +1,10 @@
+{
+  "require_group_key": true,
+  "require_page_has_prev": true,
+  "require_page_has_next": true,
+  "require_page_window": true,
+  "require_window_range_consistency_bool": true,
+  "min_e2e_case_count": 1,
+  "min_e2e_max_consistency_score_when_grouped_rows": 4,
+  "min_export_marker_hits": 5
+}
