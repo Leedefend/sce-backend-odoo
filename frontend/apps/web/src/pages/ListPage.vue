@@ -95,12 +95,29 @@
 
     <section v-if="status === 'ok'" class="table">
       <section v-if="groupedRows.length" class="grouped-table">
-        <article v-for="group in groupedRows" :key="group.key" class="group-block">
+        <header class="grouped-toolbar">
+          <span>分组结果</span>
+          <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
+            {{ groupSortLabel }}
+          </button>
+        </header>
+        <article v-for="group in sortedGroupedRows" :key="group.key" class="group-block">
           <header class="group-head">
+            <button type="button" class="group-toggle" @click="toggleGroupCollapsed(group.key)">
+              {{ isGroupCollapsed(group.key) ? '展开' : '收起' }}
+            </button>
             <p>{{ group.label }}</p>
             <span>{{ group.count }} 条</span>
+            <button
+              v-if="onOpenGroup"
+              type="button"
+              class="group-open-btn"
+              @click="openGroup(group)"
+            >
+              查看全部
+            </button>
           </header>
-          <table>
+          <table v-if="!isGroupCollapsed(group.key)">
             <thead>
               <tr>
                 <th v-for="col in displayedColumns" :key="`group-col-${group.key}-${col}`">{{ columnLabel(col) }}</th>
@@ -163,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import PageToolbar from '../components/page/PageToolbar.vue';
@@ -226,6 +243,13 @@ const props = defineProps<{
     label: string;
     count: number;
     sampleRows: Array<Record<string, unknown>>;
+    domain?: unknown[];
+  }>;
+  onOpenGroup?: (group: {
+    key: string;
+    label: string;
+    count: number;
+    domain?: unknown[];
   }>;
 }>();
 const errorCopy = computed(() =>
@@ -238,8 +262,40 @@ const emptyCopy = computed(() => resolveEmptyCopy('list'));
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
+const collapsedGroupKeys = ref<Record<string, boolean>>({});
+const groupSortDesc = ref(true);
+const sortedGroupedRows = computed(() => {
+  const rows = [...groupedRows.value];
+  rows.sort((a, b) => {
+    const cmp = Number(a.count || 0) - Number(b.count || 0);
+    if (cmp === 0) return String(a.label || '').localeCompare(String(b.label || ''));
+    return groupSortDesc.value ? -cmp : cmp;
+  });
+  return rows;
+});
+const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
 function formatValue(value: unknown) {
   return formatDisplayValue(value);
+}
+
+function toggleGroupCollapsed(key: string) {
+  const current = Boolean(collapsedGroupKeys.value[key]);
+  collapsedGroupKeys.value = {
+    ...collapsedGroupKeys.value,
+    [key]: !current,
+  };
+}
+
+function isGroupCollapsed(key: string) {
+  return Boolean(collapsedGroupKeys.value[key]);
+}
+
+function toggleGroupSort() {
+  groupSortDesc.value = !groupSortDesc.value;
+}
+
+function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {
+  props.onOpenGroup?.(group);
 }
 
 function handleRow(row: Record<string, unknown>) {
@@ -413,6 +469,29 @@ function columnLabel(col: string) {
   background: #f8fafc;
 }
 
+.grouped-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.grouped-toolbar span {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.grouped-sort-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 2px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 .group-block {
   border: 1px solid #dbeafe;
   border-radius: 10px;
@@ -427,6 +506,17 @@ function columnLabel(col: string) {
   gap: 8px;
   padding: 8px 10px;
   border-bottom: 1px solid #dbeafe;
+}
+
+.group-toggle,
+.group-open-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .group-head p {
