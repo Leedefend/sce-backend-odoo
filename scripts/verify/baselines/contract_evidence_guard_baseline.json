@@ -29,5 +29,10 @@
   "min_scene_contract_coverage_scene_count_actual": 1,
   "min_scene_contract_coverage_intent_count_actual": 1,
   "min_scene_contract_coverage_renderable_ratio": 0.01,
-  "min_scene_contract_coverage_interaction_ready_ratio": 0.01
+  "min_scene_contract_coverage_interaction_ready_ratio": 0.01,
+  "require_grouped_pagination_contract_section": true,
+  "require_grouped_pagination_route_state_key": "group_page",
+  "require_grouped_supports_group_key": true,
+  "require_grouped_supports_page_has_prev": true,
+  "require_grouped_supports_page_has_next": true
 }

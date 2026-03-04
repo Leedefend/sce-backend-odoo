@@ -55,6 +55,11 @@ def main() -> int:
         "min_scene_contract_coverage_intent_count_actual": 1,
         "min_scene_contract_coverage_renderable_ratio": 0.0,
         "min_scene_contract_coverage_interaction_ready_ratio": 0.0,
+        "require_grouped_pagination_contract_section": True,
+        "require_grouped_pagination_route_state_key": "group_page",
+        "require_grouped_supports_group_key": True,
+        "require_grouped_supports_page_has_prev": True,
+        "require_grouped_supports_page_has_next": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -83,6 +88,7 @@ def main() -> int:
         "backend_architecture_full",
         "backend_evidence_manifest",
         "scene_contract_coverage",
+        "grouped_pagination_contract",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -254,6 +260,28 @@ def main() -> int:
             "scene_contract_coverage.interaction_ready_ratio must be >= "
             f"{min_scene_cov_interaction_ready_ratio}"
         )
+
+    grouped = payload.get("grouped_pagination_contract") if isinstance(payload.get("grouped_pagination_contract"), dict) else {}
+    if bool(policy.get("require_grouped_pagination_contract_section", True)) and not grouped:
+        errors.append("grouped_pagination_contract section is required under baseline policy")
+    if grouped:
+        route_state_key = str(grouped.get("route_state_key") or "").strip()
+        expected_route_state_key = str(policy.get("require_grouped_pagination_route_state_key") or "").strip()
+        if expected_route_state_key and route_state_key != expected_route_state_key:
+            errors.append(
+                "grouped_pagination_contract.route_state_key must be "
+                f"{expected_route_state_key}, got {route_state_key or '-'}"
+            )
+        if bool(policy.get("require_grouped_supports_group_key", True)) and not bool(grouped.get("supports_group_key")):
+            errors.append("grouped_pagination_contract.supports_group_key must be true under baseline policy")
+        if bool(policy.get("require_grouped_supports_page_has_prev", True)) and not bool(
+            grouped.get("supports_page_has_prev")
+        ):
+            errors.append("grouped_pagination_contract.supports_page_has_prev must be true under baseline policy")
+        if bool(policy.get("require_grouped_supports_page_has_next", True)) and not bool(
+            grouped.get("supports_page_has_next")
+        ):
+            errors.append("grouped_pagination_contract.supports_page_has_next must be true under baseline policy")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

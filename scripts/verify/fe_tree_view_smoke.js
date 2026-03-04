@@ -282,6 +282,11 @@ async function main() {
   const groupedData = unwrapIntentData(groupedResp.body);
   const groupedRows = Array.isArray(groupedData.grouped_rows) ? groupedData.grouped_rows : [];
   const groupSummary = Array.isArray(groupedData.group_summary) ? groupedData.group_summary : [];
+  const firstGroupedRow = groupedRows.length && groupedRows[0] && typeof groupedRows[0] === 'object' ? groupedRows[0] : null;
+  const groupedHasGroupKey = firstGroupedRow ? typeof firstGroupedRow.group_key === 'string' && firstGroupedRow.group_key.length > 0 : true;
+  const groupedHasPageFlags = firstGroupedRow
+    ? typeof firstGroupedRow.page_has_prev === 'boolean' && typeof firstGroupedRow.page_has_next === 'boolean'
+    : true;
   const groupedPaginationSemanticSummary = buildGroupedPaginationSemanticSummary(
     groupedRows,
     groupedPayload.params.group_sample_limit,
@@ -292,6 +297,8 @@ async function main() {
   summary.push(`grouped_rows_count: ${groupedRows.length}`);
   const hasGroupedPayload = Array.isArray(groupedData.group_summary) && Array.isArray(groupedData.grouped_rows);
   summary.push(`grouped_payload_present: ${hasGroupedPayload ? 'yes' : 'no'}`);
+  summary.push(`grouped_group_key_present: ${groupedHasGroupKey ? 'yes' : 'no'}`);
+  summary.push(`grouped_page_flags_present: ${groupedHasPageFlags ? 'yes' : 'no'}`);
   summary.push(`grouped_pagination_normalized_offset: ${groupedPaginationSemanticSummary.request.normalized_request_offset}`);
   summary.push(`grouped_pagination_first_group_present: ${groupedPaginationSemanticSummary.first_group_observation.present ? 'yes' : 'no'}`);
   summary.push(`grouped_pagination_first_group_page: ${groupedPaginationSemanticSummary.first_group_observation.current_page}/${groupedPaginationSemanticSummary.first_group_observation.total_pages}`);
@@ -310,6 +317,11 @@ async function main() {
     grouped_pagination_route_state: {
       key: 'group_page',
       mode: 'per-group offset map',
+    },
+    grouped_contract_fields: {
+      group_key: groupedHasGroupKey,
+      page_has_prev: groupedHasPageFlags,
+      page_has_next: groupedHasPageFlags,
     },
     grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,
   });

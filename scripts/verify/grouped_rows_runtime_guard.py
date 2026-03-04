@@ -31,6 +31,9 @@ def main() -> int:
     api_markers = [
         "def _build_grouped_rows(",
         "group_page_offsets: Optional[Dict[str, int]] = None,",
+        '"group_key": group_key,',
+        '"page_has_prev": page_offset > 0,',
+        '"page_has_next": (page_offset + page_limit) < count,',
         '"grouped_rows": grouped_rows,',
     ]
     for marker in api_markers:
@@ -42,6 +45,9 @@ def main() -> int:
         "const groupedRows = ref<GroupedRow[]>([]);",
         "const groupSampleLimit = ref(3);",
         "groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])",
+        "key: String(item.group_key || fallbackKey),",
+        "pageHasPrev: typeof item.page_has_prev === 'boolean' ? Boolean(item.page_has_prev) : undefined,",
+        "pageHasNext: typeof item.page_has_next === 'boolean' ? Boolean(item.page_has_next) : undefined,",
         "group_sample_limit: groupSampleLimit.value,",
         ":grouped-rows=\"groupedRows\"",
         ":on-open-group=\"handleOpenGroupedRows\"",
@@ -75,6 +81,10 @@ def main() -> int:
         "props.groupSort",
         "props.collapsedGroupKeys",
         "props.onGroupPageChange",
+        "pageHasPrev?: boolean;",
+        "pageHasNext?: boolean;",
+        "typeof (group as { pageHasPrev?: unknown }).pageHasPrev === 'boolean'",
+        "typeof (group as { pageHasNext?: unknown }).pageHasNext === 'boolean'",
         "group-page-btn",
         "group-page-input",
         "onGroupJumpInputChange(",
