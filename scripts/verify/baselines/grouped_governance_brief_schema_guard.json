@@ -19,6 +19,17 @@
     "grouped_export_marker_hits",
     "grouped_export_marker_total"
   ],
+  "summary_key_types": {
+    "governance_coverage_ratio": "string",
+    "governance_covered_file_count": "int",
+    "governance_total_file_count": "int",
+    "governance_failure_count": "int",
+    "grouped_e2e_case_count": "int",
+    "grouped_e2e_grouped_rows_case_count": "int",
+    "grouped_e2e_max_consistency_score": "int",
+    "grouped_export_marker_hits": "int",
+    "grouped_export_marker_total": "int"
+  },
   "required_check_keys": [
     "contract_governance_coverage_ok",
     "grouped_drift_summary_ok"
@@ -33,5 +44,19 @@
     "grouped_e2e_max_consistency_score",
     "grouped_export_marker_hits",
     "grouped_export_marker_total"
-  ]
+  ],
+  "trend_delta_key_types": {
+    "governance_coverage_ratio_delta": "number",
+    "governance_covered_file_count": "int",
+    "governance_total_file_count": "int",
+    "governance_failure_count": "int",
+    "grouped_e2e_case_count": "int",
+    "grouped_e2e_grouped_rows_case_count": "int",
+    "grouped_e2e_max_consistency_score": "int",
+    "grouped_export_marker_hits": "int",
+    "grouped_export_marker_total": "int"
+  },
+  "enforce_trend_delta_types_when_previous": true,
+  "input_contract_governance_coverage_suffix": "artifacts/contract_governance_coverage.json",
+  "input_grouped_drift_summary_suffix": "artifacts/grouped_drift_summary_guard.json"
 }
