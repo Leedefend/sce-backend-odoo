@@ -718,6 +718,8 @@ class ApiDataHandler(BaseIntentHandler):
             "domain_raw_applied": bool(domain_raw),
             "context_raw_applied": bool(context_raw),
             "group_by": group_by,
+            "group_by_field": primary_group_field or None,
+            "group_count": len(group_summary),
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,
         }
