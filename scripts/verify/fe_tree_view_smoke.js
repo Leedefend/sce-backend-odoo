@@ -17,6 +17,9 @@ const BOOTSTRAP_LOGIN = process.env.BOOTSTRAP_LOGIN || '';
 const MODEL = process.env.MVP_MODEL || 'project.project';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const REQUIRE_GROUPED_ROWS = process.env.REQUIRE_GROUPED_ROWS === '1';
+const TREE_GROUPED_SNAPSHOT_UPDATE = process.env.TREE_GROUPED_SNAPSHOT_UPDATE === '1';
+const TREE_GROUPED_BASELINE = process.env.TREE_GROUPED_BASELINE
+  || path.join(__dirname, 'baselines', 'fe_tree_grouped_signature.json');
 
 const now = new Date();
 const ts = now.toISOString().replace(/[-:]/g, '').slice(0, 15);
@@ -34,6 +37,14 @@ function writeJson(file, obj) {
 function writeSummary(lines) {
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, 'summary.md'), lines.join('\n'));
+}
+
+function stable(obj) {
+  if (Array.isArray(obj)) return obj.map(stable);
+  if (!obj || typeof obj !== 'object') return obj;
+  const out = {};
+  for (const key of Object.keys(obj).sort()) out[key] = stable(obj[key]);
+  return out;
 }
 
 function requestJson(url, payload, headers = {}) {
@@ -213,6 +224,37 @@ async function main() {
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');
+  }
+
+  const groupedSignature = stable({
+    version: 'v0_4',
+    model: MODEL,
+    group_by_field: groupByField,
+    grouped_payload_present: hasGroupedPayload,
+    grouped_response_keys: Object.keys(groupedData || {}).sort(),
+    grouped_request_keys: Object.keys(groupedPayload.params || {}).sort(),
+    grouped_pagination_route_state: {
+      key: 'group_page',
+      mode: 'per-group offset map',
+    },
+  });
+  writeJson(path.join(outDir, 'grouped_signature.current.json'), groupedSignature);
+  if (TREE_GROUPED_SNAPSHOT_UPDATE) {
+    fs.mkdirSync(path.dirname(TREE_GROUPED_BASELINE), { recursive: true });
+    fs.writeFileSync(TREE_GROUPED_BASELINE, JSON.stringify(groupedSignature, null, 2));
+    summary.push(`grouped_signature_updated: ${TREE_GROUPED_BASELINE}`);
+  } else {
+    if (!fs.existsSync(TREE_GROUPED_BASELINE)) {
+      writeSummary(summary);
+      throw new Error(`grouped signature baseline missing: ${TREE_GROUPED_BASELINE} (run with TREE_GROUPED_SNAPSHOT_UPDATE=1)`);
+    }
+    const baseline = stable(JSON.parse(fs.readFileSync(TREE_GROUPED_BASELINE, 'utf-8') || '{}'));
+    if (JSON.stringify(baseline) !== JSON.stringify(groupedSignature)) {
+      writeJson(path.join(outDir, 'grouped_signature.baseline.json'), baseline);
+      writeSummary(summary);
+      throw new Error('grouped signature baseline mismatch');
+    }
+    summary.push('grouped_signature_baseline_match: yes');
   }
 
   writeSummary(summary);
