@@ -14,7 +14,8 @@
     "backend_architecture_full",
     "backend_evidence_manifest",
     "scene_contract_coverage",
-    "grouped_pagination_contract"
+    "grouped_pagination_contract",
+    "grouped_drift_summary"
   ],
   "required_section_keys": {
     "intent_catalog": [
@@ -96,7 +97,21 @@
       "supports_page_has_next",
       "supports_page_window",
       "window_range_consistency",
+      "consistency_signals_total",
+      "consistency_signals_passed",
+      "consistency_score",
+      "consistency_ok",
       "report"
+    ],
+    "grouped_drift_summary": [
+      "ok",
+      "e2e_case_count",
+      "e2e_grouped_rows_case_count",
+      "e2e_max_consistency_score",
+      "export_marker_hits",
+      "export_marker_total",
+      "report_json",
+      "report_md"
     ]
   }
 }

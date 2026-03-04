@@ -36,5 +36,10 @@
   "require_grouped_supports_page_has_prev": true,
   "require_grouped_supports_page_has_next": true,
   "require_grouped_supports_page_window": true,
-  "require_grouped_window_range_consistency": true
+  "require_grouped_window_range_consistency": true,
+  "require_grouped_consistency_ok": true,
+  "min_grouped_consistency_score": 1.0,
+  "require_grouped_drift_summary_ok": true,
+  "min_grouped_drift_e2e_case_count": 1,
+  "require_grouped_drift_export_marker_full_hit": true
 }

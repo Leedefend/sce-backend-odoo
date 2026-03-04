@@ -37,6 +37,7 @@ def build_evidence(
     backend_evidence_manifest_report: dict,
     scene_contract_coverage_report: dict,
     grouped_signature_report: dict,
+    grouped_drift_summary_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -65,6 +66,18 @@ def build_evidence(
             for code in codes:
                 if isinstance(code, str) and code.strip():
                     reason_counter[code.strip()] += 1
+
+    grouped_contract_fields = grouped_signature_report.get("grouped_contract_fields") or {}
+    grouped_consistency = ((grouped_signature_report.get("grouped_pagination_semantic_summary") or {}).get("consistency")) or {}
+    grouped_signals = [
+        bool(grouped_contract_fields.get("group_key")),
+        bool(grouped_contract_fields.get("page_has_prev")),
+        bool(grouped_contract_fields.get("page_has_next")),
+        bool(grouped_contract_fields.get("page_window")),
+        bool(grouped_consistency.get("first_group_page_window_matches_range")),
+    ]
+    grouped_signals_total = len(grouped_signals)
+    grouped_signals_passed = sum(1 for item in grouped_signals if item is True)
 
     evidence = {
         "intent_catalog": {
@@ -226,7 +239,27 @@ def build_evidence(
                     "first_group_page_window_matches_range"
                 )
             ),
+            "consistency_signals_total": grouped_signals_total,
+            "consistency_signals_passed": grouped_signals_passed,
+            "consistency_score": round((grouped_signals_passed / grouped_signals_total), 4) if grouped_signals_total else 0.0,
+            "consistency_ok": grouped_signals_passed == grouped_signals_total and grouped_signals_total > 0,
             "report": "scripts/verify/baselines/fe_tree_grouped_signature.json",
+        },
+        "grouped_drift_summary": {
+            "ok": bool(grouped_drift_summary_report.get("ok", False)),
+            "e2e_case_count": int((((grouped_drift_summary_report.get("summary") or {}).get("e2e_case_count")) or 0)),
+            "e2e_grouped_rows_case_count": int(
+                (((grouped_drift_summary_report.get("summary") or {}).get("e2e_grouped_rows_case_count")) or 0)
+            ),
+            "e2e_max_consistency_score": int(
+                (((grouped_drift_summary_report.get("summary") or {}).get("e2e_max_consistency_score")) or 0)
+            ),
+            "export_marker_hits": int((((grouped_drift_summary_report.get("summary") or {}).get("export_marker_hits")) or 0)),
+            "export_marker_total": int(
+                (((grouped_drift_summary_report.get("summary") or {}).get("export_marker_total")) or 0)
+            ),
+            "report_json": "artifacts/grouped_drift_summary_guard.json",
+            "report_md": "artifacts/grouped_drift_summary_guard.md",
         },
     }
     return evidence
@@ -250,6 +283,7 @@ def to_markdown(evidence: dict) -> str:
     m2 = evidence["backend_evidence_manifest"]
     scb = evidence["scene_contract_coverage"]
     gpc = evidence["grouped_pagination_contract"]
+    gds = evidence["grouped_drift_summary"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -375,7 +409,19 @@ def to_markdown(evidence: dict) -> str:
         f"- supports_page_has_next: {gpc['supports_page_has_next']}",
         f"- supports_page_window: {gpc['supports_page_window']}",
         f"- window_range_consistency: {gpc['window_range_consistency']}",
+        f"- consistency_signals_passed: {gpc['consistency_signals_passed']} / {gpc['consistency_signals_total']}",
+        f"- consistency_score: {gpc['consistency_score']}",
+        f"- consistency_ok: {gpc['consistency_ok']}",
         f"- report: `{gpc['report']}`",
+        "",
+        "## Grouped Drift Summary",
+        f"- ok: {gds['ok']}",
+        f"- e2e_case_count: {gds['e2e_case_count']}",
+        f"- e2e_grouped_rows_case_count: {gds['e2e_grouped_rows_case_count']}",
+        f"- e2e_max_consistency_score: {gds['e2e_max_consistency_score']}",
+        f"- export_marker_hits: {gds['export_marker_hits']} / {gds['export_marker_total']}",
+        f"- report_json: `{gds['report_json']}`",
+        f"- report_md: `{gds['report_md']}`",
         "",
         "## Top Observed reason_code",
     ]
@@ -408,6 +454,7 @@ def main() -> int:
     parser.add_argument("--backend-evidence-manifest-report", default="artifacts/backend/backend_evidence_manifest.json")
     parser.add_argument("--scene-contract-coverage-report", default="artifacts/scene_contract_coverage_brief.json")
     parser.add_argument("--grouped-signature-report", default="scripts/verify/baselines/fe_tree_grouped_signature.json")
+    parser.add_argument("--grouped-drift-summary-report", default="artifacts/grouped_drift_summary_guard.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -429,6 +476,7 @@ def main() -> int:
     backend_evidence_manifest_report = load_json_optional(Path(args.backend_evidence_manifest_report), {})
     scene_contract_coverage_report = load_json_optional(Path(args.scene_contract_coverage_report), {})
     grouped_signature_report = load_json_optional(Path(args.grouped_signature_report), {})
+    grouped_drift_summary_report = load_json_optional(Path(args.grouped_drift_summary_report), {})
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -462,6 +510,8 @@ def main() -> int:
         raise SystemExit("scene contract coverage report must be object")
     if not isinstance(grouped_signature_report, dict):
         raise SystemExit("grouped signature report must be object")
+    if not isinstance(grouped_drift_summary_report, dict):
+        raise SystemExit("grouped drift summary report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -481,6 +531,7 @@ def main() -> int:
         backend_evidence_manifest_report,
         scene_contract_coverage_report,
         grouped_signature_report,
+        grouped_drift_summary_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)

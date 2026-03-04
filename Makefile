@@ -1227,10 +1227,29 @@ verify.frontend.grouped_pagination_semantic_drift.guard: guard.prod.forbid
 verify.frontend.grouped_contract_consistency.guard: guard.prod.forbid
 	@python3 scripts/verify/grouped_contract_consistency_guard.py
 
+.PHONY: verify.frontend.grouped_drift_summary.guard
+verify.frontend.grouped_drift_summary.guard: guard.prod.forbid
+	@python3 scripts/verify/grouped_drift_summary_guard.py
+
+.PHONY: verify.frontend.grouped_drift_summary.schema.guard
+verify.frontend.grouped_drift_summary.schema.guard: guard.prod.forbid verify.frontend.grouped_drift_summary.guard
+	@python3 scripts/verify/grouped_drift_summary_schema_guard.py
+
+.PHONY: verify.frontend.grouped_drift_summary.baseline.guard
+verify.frontend.grouped_drift_summary.baseline.guard: guard.prod.forbid verify.frontend.grouped_drift_summary.schema.guard
+	@python3 scripts/verify/grouped_drift_summary_baseline_guard.py
+
+.PHONY: verify.grouped.governance.bundle
+verify.grouped.governance.bundle: guard.prod.forbid verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard
+	@python3 scripts/contract/export_evidence.py
+	@python3 scripts/verify/contract_evidence_schema_guard.py
+	@python3 scripts/verify/contract_evidence_guard.py
+	@echo "[OK] verify.grouped.governance.bundle done"
+
 verify.contract.operation_gateway.guard: guard.prod.forbid
 	@python3 scripts/verify/operation_gateway_contract_guard.py
 
-verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.typecheck.strict verify.frontend.build
+verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard verify.frontend.typecheck.strict verify.frontend.build
 	@echo "[OK] verify.frontend.quick.gate done"
 
 verify.frontend.suggested_action.contract_guard: guard.prod.forbid
@@ -2153,6 +2172,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.contract_path.gate
 	@$(MAKE) --no-print-directory verify.contract.governance.coverage
 	@$(MAKE) --no-print-directory verify.docs.all
+	@$(MAKE) --no-print-directory verify.grouped.governance.bundle
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
 	@$(MAKE) --no-print-directory verify.scene_capability.contract.guard
 	@$(MAKE) --no-print-directory verify.contract.governance.brief

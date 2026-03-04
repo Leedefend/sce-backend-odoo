@@ -215,13 +215,16 @@ def _build_grouped_semantic_signature(data: dict, *, request_page_limit: int, re
         and isinstance(page_window.get("end"), (int, float))
     )
 
-    return {
+    request_offset_matches_observed = (not has_first_group) or (normalized_request_offset == page_offset)
+    signature = {
         "supports_group_key": bool(supports_group_key),
         "supports_page_flags": bool(supports_page_flags),
         "supports_page_window": bool(supports_page_window),
-        "request_offset_matches_observed": (not has_first_group) or (normalized_request_offset == page_offset),
+        "request_offset_matches_observed": bool(request_offset_matches_observed),
         "page_window_matches_range": bool(page_window_matches_range),
     }
+    signature["consistency_score"] = sum(1 for key in signature if signature.get(key) is True)
+    return signature
 
 
 def main():
@@ -340,6 +343,7 @@ def main():
                         "supports_page_window": False,
                         "request_offset_matches_observed": False,
                         "page_window_matches_range": False,
+                        "consistency_score": 0,
                         "response_keys": [],
                     }
                 )
@@ -367,6 +371,7 @@ def main():
                 "supports_page_window": grouped_semantic["supports_page_window"],
                 "request_offset_matches_observed": grouped_semantic["request_offset_matches_observed"],
                 "page_window_matches_range": grouped_semantic["page_window_matches_range"],
+                "consistency_score": grouped_semantic["consistency_score"],
                 "response_keys": sorted(
                     [key for key in ("records", "next_offset", "group_summary", "grouped_rows") if key in data]
                 ),

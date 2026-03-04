@@ -47,3 +47,29 @@ Each entry in `grouped_rows` must provide:
   - `scripts/verify/grouped_pagination_semantic_guard.py`
   - `scripts/verify/grouped_pagination_semantic_drift_guard.py`
 - evidence export: `scripts/contract/export_evidence.py`
+
+## Drift Diagnostics
+
+When grouped behavior drifts across backend/frontend/evidence, follow this order:
+
+1. `python3 scripts/verify/grouped_pagination_semantic_guard.py`
+2. `python3 scripts/verify/grouped_contract_consistency_guard.py`
+3. `python3 scripts/verify/grouped_drift_summary_guard.py`
+4. `python3 scripts/verify/grouped_drift_summary_schema_guard.py`
+5. `python3 scripts/verify/grouped_drift_summary_baseline_guard.py`
+6. `python3 scripts/contract/export_evidence.py`
+7. `python3 scripts/verify/contract_evidence_schema_guard.py`
+8. `python3 scripts/verify/contract_evidence_guard.py`
+
+Drift summary guard emits artifacts for audit:
+
+- `artifacts/grouped_drift_summary_guard.json`
+- `artifacts/grouped_drift_summary_guard.md`
+
+If only e2e snapshot mismatches, re-run:
+
+```bash
+E2E_GROUPED_SNAPSHOT_UPDATE=1 make verify.e2e.contract
+```
+
+Then inspect the generated baseline diff before committing.
