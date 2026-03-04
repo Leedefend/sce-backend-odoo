@@ -388,6 +388,10 @@ type GroupedRow = {
   domain?: unknown[];
   pageOffset: number;
   pageLimit: number;
+  pageCurrent?: number;
+  pageTotal?: number;
+  pageRangeStart?: number;
+  pageRangeEnd?: number;
   pageSyncedFromServer?: boolean;
   loading?: boolean;
 };
@@ -1355,9 +1359,24 @@ async function handleGroupedRowsPageChange(group: {
       order: sortLabel.value,
     });
     const rows = Array.isArray(result.data?.records) ? (result.data.records as Array<Record<string, unknown>>) : [];
+    const nextCurrent = Math.floor(nextOffset / pageLimit) + 1;
+    const nextTotal = Math.max(1, Math.ceil(Number(found.count || 0) / pageLimit));
+    const nextRangeStart = Number(found.count || 0) > 0 ? nextOffset + 1 : 0;
+    const nextRangeEnd = Number(found.count || 0) > 0 ? Math.min(Number(found.count || 0), nextOffset + pageLimit) : 0;
     groupedRows.value = groupedRows.value.map((item) =>
       item.key === group.key
-        ? { ...item, sampleRows: rows, pageOffset: nextOffset, pageLimit, pageSyncedFromServer: true, loading: false }
+        ? {
+          ...item,
+          sampleRows: rows,
+          pageOffset: nextOffset,
+          pageLimit,
+          pageCurrent: nextCurrent,
+          pageTotal: nextTotal,
+          pageRangeStart: nextRangeStart,
+          pageRangeEnd: nextRangeEnd,
+          pageSyncedFromServer: true,
+          loading: false,
+        }
         : item,
     );
     groupPageOffsets.value = { ...groupPageOffsets.value, [group.key]: nextOffset };
@@ -2414,6 +2433,10 @@ async function load() {
             Number(item.count || 0),
           ),
           pageLimit: Math.max(1, Number(item.page_limit || groupSampleLimit.value || 3)),
+          pageCurrent: Number(item.page_current || 0) > 0 ? Number(item.page_current || 0) : undefined,
+          pageTotal: Number(item.page_total || 0) > 0 ? Number(item.page_total || 0) : undefined,
+          pageRangeStart: Number(item.page_range_start || 0) >= 0 ? Number(item.page_range_start || 0) : undefined,
+          pageRangeEnd: Number(item.page_range_end || 0) >= 0 ? Number(item.page_range_end || 0) : undefined,
           pageSyncedFromServer: Object.prototype.hasOwnProperty.call(item, 'page_offset')
             || Object.prototype.hasOwnProperty.call(item, 'page_limit'),
           loading: false,
