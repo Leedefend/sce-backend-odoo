@@ -1201,24 +1201,42 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
 
 function extractAdvancedViewFields(contract: Awaited<ReturnType<typeof loadActionContract>>, mode: string) {
   const typed = contract as ActionContractLoose;
-  const viewBlock = (typed.views as Record<string, unknown> | undefined)?.[mode] as Record<string, unknown> | undefined;
+  const directViews = typed.views as Record<string, unknown> | undefined;
+  const normalizedViews = typed.ui_contract?.views as Record<string, unknown> | undefined;
+  const viewBlock = (directViews?.[mode] || normalizedViews?.[mode]) as Record<string, unknown> | undefined;
+  const fallbackNames = ['name', 'display_name', 'id'];
   if (mode === 'pivot') {
-    const measures = Array.isArray(viewBlock?.measures) ? viewBlock?.measures : [];
-    const dims = Array.isArray(viewBlock?.dimensions) ? viewBlock?.dimensions : [];
-    return [...dims, ...measures].map((item) => String(item || '').trim()).filter(Boolean);
+    const measures = Array.isArray(viewBlock?.measures) ? viewBlock.measures : [];
+    const dims = Array.isArray(viewBlock?.dimensions) ? viewBlock.dimensions : [];
+    const fields = [...dims, ...measures, ...fallbackNames]
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+    return uniqueFields(fields);
   }
   if (mode === 'graph') {
     const measure = String(viewBlock?.measure || '').trim();
     const dim = String(viewBlock?.dimension || '').trim();
-    return [dim, measure].filter(Boolean);
+    return uniqueFields([dim, measure, ...fallbackNames].filter(Boolean));
   }
   if (mode === 'calendar' || mode === 'gantt') {
     const dateStart = String(viewBlock?.date_start || '').trim();
     const dateStop = String(viewBlock?.date_stop || '').trim();
-    const fields = [dateStart, dateStop, 'name', 'display_name'];
-    return fields.map((item) => String(item || '').trim()).filter(Boolean);
+    const fields = [dateStart, dateStop, ...fallbackNames];
+    return uniqueFields(fields.map((item) => String(item || '').trim()).filter(Boolean));
   }
-  return ['name', 'display_name'];
+  if (mode === 'activity') {
+    const activityField = String(viewBlock?.field || '').trim();
+    return uniqueFields([activityField, ...fallbackNames].filter(Boolean));
+  }
+  if (mode === 'dashboard') {
+    const kpis = Array.isArray(viewBlock?.kpis) ? viewBlock.kpis : [];
+    const cards = Array.isArray(viewBlock?.cards) ? viewBlock.cards : [];
+    const guessed = [...kpis, ...cards]
+      .map((item) => String((item as Record<string, unknown>)?.field || '').trim())
+      .filter(Boolean);
+    return uniqueFields([...guessed, ...fallbackNames]);
+  }
+  return fallbackNames;
 }
 
 function advancedRowTitle(row: Record<string, unknown>) {

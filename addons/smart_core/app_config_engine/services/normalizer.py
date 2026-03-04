@@ -253,7 +253,7 @@ class ContractNormalizer:
         views = _ensure_dict(views, "views", warns)
 
         # 统一将 tuple -> list；对常见子键做基本兜底
-        for vt in ["tree", "form", "kanban", "pivot", "graph", "calendar", "gantt"]:
+        for vt in ["tree", "form", "kanban", "pivot", "graph", "calendar", "gantt", "activity", "dashboard"]:
             if vt in views and views[vt] is not None:
                 cfg = _ensure_dict(views[vt], f"views.{vt}", warns)
                 if vt == "tree":
@@ -328,6 +328,18 @@ class ContractNormalizer:
                     # 只兜底关键字段名，不做校验
                     cfg.setdefault("date_start", "date_start")
                     cfg.setdefault("date_stop", "date_end")
+                elif vt == "activity":
+                    # 最小可用兜底：主记录字段 + 活动字段
+                    cfg.setdefault("field", "res_id")
+                    cfg["field"] = _safe_str(cfg.get("field"), "res_id")
+                    cfg.setdefault("templates", {})
+                    cfg["templates"] = _ensure_dict(cfg["templates"], "views.activity.templates", warns)
+                elif vt == "dashboard":
+                    # dashboard 在 P1 先做只读语义兜底
+                    cfg.setdefault("cards", [])
+                    cfg["cards"] = _coerce_list(cfg["cards"], "views.dashboard.cards", warns)
+                    cfg.setdefault("kpis", [])
+                    cfg["kpis"] = _coerce_list(cfg["kpis"], "views.dashboard.kpis", warns)
                 views[vt] = cfg
 
         return views
