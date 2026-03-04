@@ -62,9 +62,12 @@ When grouped behavior drifts across backend/frontend/evidence, follow this order
 8. `python3 scripts/verify/grouped_governance_brief_baseline_guard.py`
 9. `python3 scripts/verify/grouped_governance_policy_matrix.py`
 10. `python3 scripts/verify/grouped_governance_policy_matrix_schema_guard.py`
-11. `python3 scripts/contract/export_evidence.py`
-12. `python3 scripts/verify/contract_evidence_schema_guard.py`
-13. `python3 scripts/verify/contract_evidence_guard.py`
+11. `python3 scripts/verify/grouped_governance_trend_consistency_guard.py`
+12. `python3 scripts/verify/grouped_governance_trend_consistency_schema_guard.py`
+13. `python3 scripts/verify/grouped_governance_trend_consistency_baseline_guard.py`
+14. `python3 scripts/contract/export_evidence.py`
+15. `python3 scripts/verify/contract_evidence_schema_guard.py`
+16. `python3 scripts/verify/contract_evidence_guard.py`
 
 Drift summary guard emits artifacts for audit:
 
@@ -74,6 +77,8 @@ Drift summary guard emits artifacts for audit:
 - `artifacts/grouped_governance_brief_guard.md`
 - `artifacts/grouped_governance_policy_matrix.json`
 - `artifacts/grouped_governance_policy_matrix.md`
+- `artifacts/grouped_governance_trend_consistency_guard.json`
+- `artifacts/grouped_governance_trend_consistency_guard.md`
 
 If only e2e snapshot mismatches, re-run:
 
