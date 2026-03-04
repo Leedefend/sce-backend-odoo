@@ -157,6 +157,7 @@ export interface ApiDataListRequest {
   fields?: string[] | '*';
   domain?: unknown[] | string;
   domain_raw?: string;
+  group_by?: string | string[];
   search_term?: string;
   limit?: number;
   offset?: number;

@@ -2039,6 +2039,7 @@ async function load() {
       fields: requestedFields.length ? requestedFields : ['id', 'name'],
       domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
       domain_raw: resolveEffectiveFilterDomainRaw(),
+      group_by: activeGroupByField.value || undefined,
       context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
       context_raw: resolveEffectiveRequestContextRaw(),
       limit: contractLimit.value,
