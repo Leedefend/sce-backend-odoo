@@ -244,6 +244,8 @@
       :list-profile="listProfile"
       :grouped-rows="groupedRows"
       :on-open-group="handleOpenGroupedRows"
+      :group-sample-limit="groupSampleLimit"
+      :on-group-sample-limit-change="handleGroupSampleLimitChange"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
@@ -374,6 +376,7 @@ const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
 const groupSummaryItems = ref<GroupSummaryItem[]>([]);
 const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>>; domain?: unknown[] }>>([]);
+const groupSampleLimit = ref(3);
 const activeGroupSummaryKey = ref('');
 const activeGroupSummaryDomain = ref<unknown[]>([]);
 const advancedFields = ref<string[]>([]);
@@ -1043,6 +1046,7 @@ function applyRoutePreset() {
   const savedFilter = String(route.query.saved_filter || '').trim();
   const groupBy = String(route.query.group_by || '').trim();
   const groupValue = String(route.query.group_value || '').trim();
+  const groupSampleLimitRaw = Number(route.query.group_sample_limit || 0);
   const routeSearch = String(route.query.search || '').trim();
   const routeOrder = String(route.query.order || route.query.sort || '').trim();
   const routeActiveFilter = String(route.query.active_filter || '').trim();
@@ -1088,6 +1092,11 @@ function applyRoutePreset() {
     activeGroupSummaryKey.value = '';
     activeGroupSummaryDomain.value = [];
   }
+  if (Number.isFinite(groupSampleLimitRaw) && [3, 5, 8].includes(groupSampleLimitRaw)) {
+    setIfDiff(groupSampleLimit, groupSampleLimitRaw);
+  } else {
+    setIfDiff(groupSampleLimit, 3);
+  }
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'action' }).catch(() => {});
@@ -1111,6 +1120,7 @@ function syncRouteListState(extra?: Record<string, unknown>) {
     search: searchTerm.value.trim() || undefined,
     order: sortValue.value.trim() || undefined,
     active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
+    group_sample_limit: groupSampleLimit.value !== 3 ? groupSampleLimit.value : undefined,
     ...extra,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
@@ -1199,6 +1209,14 @@ function clearGroupSummaryDrilldown() {
   activeGroupSummaryDomain.value = [];
   const q = pickContractNavQuery(route.query as Record<string, unknown>, { group_value: undefined });
   router.replace({ name: 'action', params: route.params, query: q }).catch(() => {});
+  void load();
+}
+
+function handleGroupSampleLimitChange(limit: number) {
+  const normalized = Number(limit || 0);
+  if (!Number.isFinite(normalized) || ![3, 5, 8].includes(normalized)) return;
+  groupSampleLimit.value = normalized;
+  syncRouteListState({ group_sample_limit: normalized });
   void load();
 }
 
@@ -2109,6 +2127,7 @@ async function load() {
       domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
       domain_raw: resolveEffectiveFilterDomainRaw(),
       group_by: activeGroupByField.value || undefined,
+      group_sample_limit: groupSampleLimit.value,
       context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
       context_raw: resolveEffectiveRequestContextRaw(),
       limit: contractLimit.value,
