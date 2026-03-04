@@ -28,8 +28,8 @@ def main() -> int:
 
     backend_markers = [
         'def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:',
-        'def _normalize_reason_code(self, raw: Any) -> str:',
-        '"reason_code": self._normalize_reason_code(',
+        'from ..utils.reason_codes import normalize_onchange_reason_code',
+        '"reason_code": normalize_onchange_reason_code(',
         'def _relation_field_names(self, env_model, field_name: str) -> List[str]:',
         'def _normalize_line_patch_values(self, env_model, field_name: str, patch_raw: Any) -> Dict[str, Any]:',
         'def _normalize_line_patch_modifiers(self, env_model, field_name: str, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:',

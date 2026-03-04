@@ -28,12 +28,11 @@ def main() -> int:
 
     backend_markers = [
         'VERSION = "1.1.0"',
-        'ALLOWED_REASON_CODES = {',
-        'def _normalize_reason_code(self, raw: Any) -> str:',
+        'from ..utils.reason_codes import normalize_onchange_reason_code',
         '"schema_version": "v1"',
         'def _normalize_line_patches(self, env_model, rows_raw: Any) -> List[Dict[str, Any]]:',
         '"command_hint": self._command_hint_for_row_state(row_state),',
-        '"reason_code": self._normalize_reason_code(',
+        '"reason_code": normalize_onchange_reason_code(',
         '"line_patches": line_patches,',
         'def _normalize_modifiers_patch(self, env_model, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:',
         'for marker in ("invisible", "readonly", "required", "domain"):',
