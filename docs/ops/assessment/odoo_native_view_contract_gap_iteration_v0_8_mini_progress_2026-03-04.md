@@ -13,6 +13,7 @@
 6. contract evidence schema/evidence guard 增加 `supports_page_window` 强约束
 7. grouped pagination 语义文档补齐并接入 `docs/contract/README.md`
 8. grouped semantic summary 增加 `page_window` 与 `range` 一致性语义，并纳入 drift guard
+9. `@sc/schema` 显式补齐 grouped pagination 字段与 `group_page_offsets` 请求契约，并纳入 runtime guard 检查
 
 ## 提交记录
 
@@ -23,6 +24,7 @@
 5. `bde463e` test(grouped-pagination): require page_window in semantic guard
 6. `ab21bbd` docs(contract): add grouped pagination contract semantics guide
 7. `9ed95cd` test(grouped-pagination): enforce page_window-range consistency semantics
+8. `3d39824` feat(schema): declare grouped pagination fields and request offsets contract
 
 ## 验证结果
 
