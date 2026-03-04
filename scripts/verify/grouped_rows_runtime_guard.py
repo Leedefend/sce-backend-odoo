@@ -38,9 +38,13 @@ def main() -> int:
 
     action_markers = [
         "const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>>; domain?: unknown[] }>>([]);",
+        "const groupSampleLimit = ref(3);",
         "groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])",
+        "group_sample_limit: groupSampleLimit.value,",
         ":grouped-rows=\"groupedRows\"",
         ":on-open-group=\"handleOpenGroupedRows\"",
+        ":group-sample-limit=\"groupSampleLimit\"",
+        ":on-group-sample-limit-change=\"handleGroupSampleLimitChange\"",
     ]
     for marker in action_markers:
         if marker not in action_view:
@@ -52,6 +56,7 @@ def main() -> int:
         "sampleRows",
         "toggleGroupCollapsed(",
         "grouped-sort-btn",
+        "onGroupSampleLimitSelectChange",
     ]
     for marker in list_markers:
         if marker not in list_page:
