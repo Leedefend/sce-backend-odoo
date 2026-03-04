@@ -39,6 +39,7 @@ def build_evidence(
     grouped_signature_report: dict,
     grouped_drift_summary_report: dict,
     grouped_governance_brief_report: dict,
+    grouped_governance_policy_matrix_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -294,6 +295,25 @@ def build_evidence(
             "report_json": "artifacts/grouped_governance_brief_guard.json",
             "report_md": "artifacts/grouped_governance_brief_guard.md",
         },
+        "grouped_governance_policy_matrix": {
+            "ok": bool(grouped_governance_policy_matrix_report.get("ok", False)),
+            "grouped_governance_brief_policy_count": int(
+                (((grouped_governance_policy_matrix_report.get("summary") or {}).get("grouped_governance_brief_policy_count")) or 0)
+            ),
+            "grouped_drift_summary_policy_count": int(
+                (((grouped_governance_policy_matrix_report.get("summary") or {}).get("grouped_drift_summary_policy_count")) or 0)
+            ),
+            "contract_evidence_grouped_governance_policy_count": int(
+                (
+                    ((grouped_governance_policy_matrix_report.get("summary") or {}).get(
+                        "contract_evidence_grouped_governance_policy_count"
+                    ))
+                    or 0
+                )
+            ),
+            "report_json": "artifacts/grouped_governance_policy_matrix.json",
+            "report_md": "artifacts/grouped_governance_policy_matrix.md",
+        },
     }
     return evidence
 
@@ -318,6 +338,7 @@ def to_markdown(evidence: dict) -> str:
     gpc = evidence["grouped_pagination_contract"]
     gds = evidence["grouped_drift_summary"]
     ggb = evidence["grouped_governance_brief"]
+    ggpm = evidence["grouped_governance_policy_matrix"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -470,6 +491,17 @@ def to_markdown(evidence: dict) -> str:
         f"- report_json: `{ggb['report_json']}`",
         f"- report_md: `{ggb['report_md']}`",
         "",
+        "## Grouped Governance Policy Matrix",
+        f"- ok: {ggpm['ok']}",
+        f"- grouped_governance_brief_policy_count: {ggpm['grouped_governance_brief_policy_count']}",
+        f"- grouped_drift_summary_policy_count: {ggpm['grouped_drift_summary_policy_count']}",
+        (
+            "- contract_evidence_grouped_governance_policy_count: "
+            f"{ggpm['contract_evidence_grouped_governance_policy_count']}"
+        ),
+        f"- report_json: `{ggpm['report_json']}`",
+        f"- report_md: `{ggpm['report_md']}`",
+        "",
         "## Top Observed reason_code",
     ]
     top_codes = i.get("top_observed_reason_codes") or []
@@ -503,6 +535,7 @@ def main() -> int:
     parser.add_argument("--grouped-signature-report", default="scripts/verify/baselines/fe_tree_grouped_signature.json")
     parser.add_argument("--grouped-drift-summary-report", default="artifacts/grouped_drift_summary_guard.json")
     parser.add_argument("--grouped-governance-brief-report", default="artifacts/grouped_governance_brief_guard.json")
+    parser.add_argument("--grouped-governance-policy-matrix-report", default="artifacts/grouped_governance_policy_matrix.json")
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -526,6 +559,7 @@ def main() -> int:
     grouped_signature_report = load_json_optional(Path(args.grouped_signature_report), {})
     grouped_drift_summary_report = load_json_optional(Path(args.grouped_drift_summary_report), {})
     grouped_governance_brief_report = load_json_optional(Path(args.grouped_governance_brief_report), {})
+    grouped_governance_policy_matrix_report = load_json_optional(Path(args.grouped_governance_policy_matrix_report), {})
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -563,6 +597,8 @@ def main() -> int:
         raise SystemExit("grouped drift summary report must be object")
     if not isinstance(grouped_governance_brief_report, dict):
         raise SystemExit("grouped governance brief report must be object")
+    if not isinstance(grouped_governance_policy_matrix_report, dict):
+        raise SystemExit("grouped governance policy matrix report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -584,6 +620,7 @@ def main() -> int:
         grouped_signature_report,
         grouped_drift_summary_report,
         grouped_governance_brief_report,
+        grouped_governance_policy_matrix_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)

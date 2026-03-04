@@ -136,6 +136,14 @@ def main() -> int:
         "require_grouped_governance_report_pair_consistent": True,
         "require_grouped_governance_report_pair_same_parent": True,
         "require_grouped_governance_report_pair_same_stem": True,
+        "require_grouped_governance_policy_matrix_ok": True,
+        "min_grouped_governance_brief_policy_count": 1,
+        "min_grouped_drift_summary_policy_count": 1,
+        "min_contract_evidence_grouped_governance_policy_count": 1,
+        "require_grouped_governance_policy_matrix_report_json_prefix": "artifacts/",
+        "require_grouped_governance_policy_matrix_report_json_suffix": "grouped_governance_policy_matrix.json",
+        "require_grouped_governance_policy_matrix_report_md_prefix": "artifacts/",
+        "require_grouped_governance_policy_matrix_report_md_suffix": "grouped_governance_policy_matrix.md",
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -167,6 +175,7 @@ def main() -> int:
         "grouped_pagination_contract",
         "grouped_drift_summary",
         "grouped_governance_brief",
+        "grouped_governance_policy_matrix",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -546,6 +555,60 @@ def main() -> int:
                 md_stem = md_path.with_suffix("").name
                 if json_stem != md_stem:
                     errors.append("grouped_governance_brief.report_json/report_md must share same stem")
+
+    grouped_policy_matrix = (
+        payload.get("grouped_governance_policy_matrix")
+        if isinstance(payload.get("grouped_governance_policy_matrix"), dict)
+        else {}
+    )
+    if bool(policy.get("require_grouped_governance_policy_matrix_ok", True)) and not bool(grouped_policy_matrix.get("ok")):
+        errors.append("grouped_governance_policy_matrix.ok must be true under baseline policy")
+
+    min_brief_policy_count = int(policy.get("min_grouped_governance_brief_policy_count", 1) or 1)
+    if int(grouped_policy_matrix.get("grouped_governance_brief_policy_count") or 0) < min_brief_policy_count:
+        errors.append(
+            "grouped_governance_policy_matrix.grouped_governance_brief_policy_count must be >= "
+            f"{min_brief_policy_count}"
+        )
+    min_drift_policy_count = int(policy.get("min_grouped_drift_summary_policy_count", 1) or 1)
+    if int(grouped_policy_matrix.get("grouped_drift_summary_policy_count") or 0) < min_drift_policy_count:
+        errors.append(
+            "grouped_governance_policy_matrix.grouped_drift_summary_policy_count must be >= "
+            f"{min_drift_policy_count}"
+        )
+    min_evidence_policy_count = int(policy.get("min_contract_evidence_grouped_governance_policy_count", 1) or 1)
+    if int(grouped_policy_matrix.get("contract_evidence_grouped_governance_policy_count") or 0) < min_evidence_policy_count:
+        errors.append(
+            "grouped_governance_policy_matrix.contract_evidence_grouped_governance_policy_count must be >= "
+            f"{min_evidence_policy_count}"
+        )
+
+    matrix_report_json = str(grouped_policy_matrix.get("report_json") or "").strip()
+    matrix_report_md = str(grouped_policy_matrix.get("report_md") or "").strip()
+    required_matrix_json_prefix = str(policy.get("require_grouped_governance_policy_matrix_report_json_prefix") or "").strip()
+    required_matrix_json_suffix = str(policy.get("require_grouped_governance_policy_matrix_report_json_suffix") or "").strip()
+    required_matrix_md_prefix = str(policy.get("require_grouped_governance_policy_matrix_report_md_prefix") or "").strip()
+    required_matrix_md_suffix = str(policy.get("require_grouped_governance_policy_matrix_report_md_suffix") or "").strip()
+    if required_matrix_json_prefix and not matrix_report_json.startswith(required_matrix_json_prefix):
+        errors.append(
+            "grouped_governance_policy_matrix.report_json must start with "
+            f"{required_matrix_json_prefix}"
+        )
+    if required_matrix_json_suffix and not matrix_report_json.endswith(required_matrix_json_suffix):
+        errors.append(
+            "grouped_governance_policy_matrix.report_json must end with "
+            f"{required_matrix_json_suffix}"
+        )
+    if required_matrix_md_prefix and not matrix_report_md.startswith(required_matrix_md_prefix):
+        errors.append(
+            "grouped_governance_policy_matrix.report_md must start with "
+            f"{required_matrix_md_prefix}"
+        )
+    if required_matrix_md_suffix and not matrix_report_md.endswith(required_matrix_md_suffix):
+        errors.append(
+            "grouped_governance_policy_matrix.report_md must end with "
+            f"{required_matrix_md_suffix}"
+        )
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

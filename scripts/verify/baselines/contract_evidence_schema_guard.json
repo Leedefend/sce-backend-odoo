@@ -16,7 +16,8 @@
     "scene_contract_coverage",
     "grouped_pagination_contract",
     "grouped_drift_summary",
-    "grouped_governance_brief"
+    "grouped_governance_brief",
+    "grouped_governance_policy_matrix"
   ],
   "required_section_keys": {
     "intent_catalog": [
@@ -125,6 +126,14 @@
       "grouped_e2e_max_consistency_score",
       "grouped_export_marker_hits",
       "grouped_export_marker_total",
+      "report_json",
+      "report_md"
+    ],
+    "grouped_governance_policy_matrix": [
+      "ok",
+      "grouped_governance_brief_policy_count",
+      "grouped_drift_summary_policy_count",
+      "contract_evidence_grouped_governance_policy_count",
       "report_json",
       "report_md"
     ]
