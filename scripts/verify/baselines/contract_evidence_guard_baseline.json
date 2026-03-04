@@ -34,5 +34,6 @@
   "require_grouped_pagination_route_state_key": "group_page",
   "require_grouped_supports_group_key": true,
   "require_grouped_supports_page_has_prev": true,
-  "require_grouped_supports_page_has_next": true
+  "require_grouped_supports_page_has_next": true,
+  "require_grouped_supports_page_window": true
 }

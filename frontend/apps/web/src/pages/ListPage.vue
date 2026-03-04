@@ -308,6 +308,7 @@ const props = defineProps<{
     pageTotal?: number;
     pageRangeStart?: number;
     pageRangeEnd?: number;
+    pageWindow?: { start?: number; end?: number };
     pageHasPrev?: boolean;
     pageHasNext?: boolean;
     loading?: boolean;
@@ -423,11 +424,14 @@ function resolveGroupPageMeta(group: {
   const backendCurrent = Math.trunc(Number(group.pageCurrent || 0));
   const backendStart = Math.trunc(Number(group.pageRangeStart || 0));
   const backendEnd = Math.trunc(Number(group.pageRangeEnd || 0));
+  const backendWindow = (group as { pageWindow?: { start?: unknown; end?: unknown } }).pageWindow;
+  const backendWindowStart = Math.trunc(Number(backendWindow?.start || 0));
+  const backendWindowEnd = Math.trunc(Number(backendWindow?.end || 0));
   return {
     totalPages: backendTotal > 0 ? backendTotal : fallbackTotal,
     currentPage: backendCurrent > 0 ? backendCurrent : fallbackCurrent,
-    rangeStart: backendStart >= 0 ? backendStart : fallbackStart,
-    rangeEnd: backendEnd >= 0 ? backendEnd : fallbackEnd,
+    rangeStart: backendWindowStart >= 0 ? backendWindowStart : (backendStart >= 0 ? backendStart : fallbackStart),
+    rangeEnd: backendWindowEnd >= 0 ? backendWindowEnd : (backendEnd >= 0 ? backendEnd : fallbackEnd),
   };
 }
 

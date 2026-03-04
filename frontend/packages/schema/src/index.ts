@@ -157,12 +157,25 @@ export interface ApiDataListResult {
     domain?: unknown[];
   }>;
   grouped_rows?: Array<{
+    group_key?: string;
     field?: string;
     value?: unknown;
     label?: string;
     count?: number;
     domain?: unknown[];
     sample_rows?: Array<Record<string, unknown>>;
+    page_offset?: number;
+    page_limit?: number;
+    page_current?: number;
+    page_total?: number;
+    page_range_start?: number;
+    page_range_end?: number;
+    page_window?: {
+      start?: number;
+      end?: number;
+    };
+    page_has_prev?: boolean;
+    page_has_next?: boolean;
   }>;
 }
 
@@ -174,6 +187,7 @@ export interface ApiDataListRequest {
   domain_raw?: string;
   group_by?: string | string[];
   group_sample_limit?: number;
+  group_page_offsets?: Record<string, number>;
   search_term?: string;
   limit?: number;
   offset?: number;
