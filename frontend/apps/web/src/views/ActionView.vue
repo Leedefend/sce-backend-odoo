@@ -2436,7 +2436,7 @@ async function load() {
           domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
           pageOffset: normalizeGroupPageOffset(
-            Number((item.page_offset ?? groupPageOffsets.value[String(item.group_key || fallbackKey)]) || 0),
+            Number((item.page_applied_offset ?? item.page_offset ?? groupPageOffsets.value[String(item.group_key || fallbackKey)]) || 0),
             Number((item.page_size ?? item.page_limit) || groupSampleLimit.value),
             Number(item.count || 0),
           ),
@@ -2458,6 +2458,7 @@ async function load() {
           pageHasPrev: typeof item.page_has_prev === 'boolean' ? Boolean(item.page_has_prev) : undefined,
           pageHasNext: typeof item.page_has_next === 'boolean' ? Boolean(item.page_has_next) : undefined,
           pageSyncedFromServer: Object.prototype.hasOwnProperty.call(item, 'page_offset')
+            || Object.prototype.hasOwnProperty.call(item, 'page_applied_offset')
             || Object.prototype.hasOwnProperty.call(item, 'page_limit')
             || Object.prototype.hasOwnProperty.call(item, 'page_size'),
           loading: false,
