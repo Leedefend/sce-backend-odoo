@@ -1,0 +1,7 @@
+{
+  "require_has_previous_aligned": true,
+  "require_delta_typed_when_previous": true,
+  "forbid_brief_failure_delta_positive": true,
+  "forbid_brief_consistency_delta_negative": true,
+  "forbid_matrix_policy_delta_negative": true
+}
