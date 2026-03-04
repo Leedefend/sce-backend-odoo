@@ -1,0 +1,23 @@
+{
+  "group_by_field": "message_needaction",
+  "grouped_pagination_route_state": {
+    "key": "group_page",
+    "mode": "per-group offset map"
+  },
+  "grouped_payload_present": false,
+  "grouped_request_keys": [
+    "fields",
+    "group_by",
+    "group_sample_limit",
+    "limit",
+    "model",
+    "offset",
+    "op"
+  ],
+  "grouped_response_keys": [
+    "next_offset",
+    "records"
+  ],
+  "model": "project.project",
+  "version": "v0_4"
+}

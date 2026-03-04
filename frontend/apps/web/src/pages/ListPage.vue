@@ -140,7 +140,7 @@
               >
                 上一页
               </button>
-              <span>{{ groupPageRangeText(group) }}</span>
+              <span>{{ groupPageInfoText(group) }}</span>
               <button
                 type="button"
                 class="group-page-btn"
@@ -148,6 +148,22 @@
                 @click="pageGroupNext(group)"
               >
                 下一页
+              </button>
+              <input
+                class="group-page-input"
+                :value="groupJumpPageInput[group.key] || String(groupCurrentPage(group))"
+                :disabled="Boolean(group.loading) || groupTotalPages(group) <= 1"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                @change="onGroupJumpInputChange(group.key, $event)"
+              />
+              <button
+                type="button"
+                class="group-page-btn"
+                :disabled="Boolean(group.loading) || groupTotalPages(group) <= 1"
+                @click="jumpGroupPage(group)"
+              >
+                跳转
               </button>
             </div>
             <button
@@ -222,7 +238,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import PageToolbar from '../components/page/PageToolbar.vue';
@@ -321,6 +337,7 @@ const emptyCopy = computed(() => resolveEmptyCopy('list'));
 const groupedRows = computed(() =>
   Array.isArray(props.groupedRows) ? props.groupedRows : [],
 );
+const groupJumpPageInput = ref<Record<string, string>>({});
 const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
 const sortedGroupedRows = computed(() => {
   const rows = [...groupedRows.value];
@@ -376,7 +393,8 @@ function resolveGroupPageOffset(group: { pageOffset?: number; count: number; pag
   const maxOffset = Math.max(0, Number(group.count || 0) - limit);
   const offsetRaw = Number(group.pageOffset || 0);
   if (!Number.isFinite(offsetRaw)) return 0;
-  return Math.min(Math.max(Math.trunc(offsetRaw), 0), maxOffset);
+  const clamped = Math.min(Math.max(Math.trunc(offsetRaw), 0), maxOffset);
+  return Math.floor(clamped / limit) * limit;
 }
 
 function canGroupPagePrev(group: { count: number; pageOffset?: number; pageLimit?: number }) {
@@ -399,6 +417,22 @@ function groupPageRangeText(group: { count: number; pageOffset?: number; pageLim
   return `${start}-${end} / ${total}`;
 }
 
+function groupTotalPages(group: { count: number; pageLimit?: number }) {
+  const total = Math.max(0, Number(group.count || 0));
+  const limit = Math.max(1, resolveGroupPageLimit(group));
+  return Math.max(1, Math.ceil(total / limit));
+}
+
+function groupCurrentPage(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  const limit = Math.max(1, resolveGroupPageLimit(group));
+  const offset = resolveGroupPageOffset(group);
+  return Math.floor(offset / limit) + 1;
+}
+
+function groupPageInfoText(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  return `第 ${groupCurrentPage(group)} / ${groupTotalPages(group)} 页 · ${groupPageRangeText(group)}`;
+}
+
 function pageGroupPrev(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
   if (!props.onGroupPageChange) return;
   const limit = resolveGroupPageLimit(group);
@@ -415,6 +449,43 @@ function pageGroupNext(group: { key: string; label: string; count: number; domai
   const next = Math.min(maxOffset, offset + limit);
   props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset: next, limit });
 }
+
+function jumpGroupPage(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (!props.onGroupPageChange) return;
+  const totalPages = groupTotalPages(group);
+  const raw = String(groupJumpPageInput.value[group.key] || '').trim();
+  const page = Number(raw);
+  if (!Number.isFinite(page)) return;
+  const normalizedPage = Math.min(Math.max(Math.trunc(page), 1), totalPages);
+  const limit = resolveGroupPageLimit(group);
+  const offset = (normalizedPage - 1) * limit;
+  groupJumpPageInput.value = { ...groupJumpPageInput.value, [group.key]: String(normalizedPage) };
+  props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset, limit });
+}
+
+function onGroupJumpInputChange(groupKey: string, event: Event) {
+  const value = String((event.target as HTMLInputElement | null)?.value || '');
+  groupJumpPageInput.value = { ...groupJumpPageInput.value, [groupKey]: value };
+}
+
+watch(
+  sortedGroupedRows,
+  (rows) => {
+    const next: Record<string, string> = {};
+    rows.forEach((group) => {
+      const key = String(group.key || '').trim();
+      if (!key) return;
+      const existing = groupJumpPageInput.value[key];
+      if (existing && existing.trim()) {
+        next[key] = existing;
+      } else {
+        next[key] = String(groupCurrentPage(group));
+      }
+    });
+    groupJumpPageInput.value = next;
+  },
+  { immediate: true },
+);
 
 function onGroupSampleLimitSelectChange(event: Event) {
   const value = Number((event.target as HTMLSelectElement | null)?.value || 0);
@@ -701,6 +772,15 @@ function columnLabel(col: string) {
 .group-page-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.group-page-input {
+  width: 56px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #0f172a;
 }
 
 .batch-bar {
