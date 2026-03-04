@@ -176,6 +176,54 @@ def _unwrap_intent_data(resp: dict) -> tuple[dict, dict]:
     )
 
 
+def _to_int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+
+def _build_grouped_semantic_signature(data: dict, *, request_page_limit: int, request_offset: int) -> dict:
+    grouped_rows = data.get("grouped_rows") if isinstance(data.get("grouped_rows"), list) else []
+    first_group = grouped_rows[0] if grouped_rows and isinstance(grouped_rows[0], dict) else {}
+    has_first_group = bool(first_group)
+
+    page_limit = max(1, _to_int(first_group.get("page_limit"), request_page_limit))
+    requested_offset = max(0, _to_int(request_offset, 0))
+    normalized_request_offset = (requested_offset // page_limit) * page_limit
+    page_offset = max(0, _to_int(first_group.get("page_offset"), normalized_request_offset))
+    page_offset = (page_offset // page_limit) * page_limit
+
+    count = max(0, _to_int(first_group.get("count"), 0))
+    range_start = page_offset + 1 if count > 0 else 0
+    range_end = min(count, page_offset + page_limit) if count > 0 else 0
+    page_window = first_group.get("page_window") if isinstance(first_group.get("page_window"), dict) else {}
+    page_window_start = max(0, _to_int(page_window.get("start"), _to_int(first_group.get("page_range_start"), range_start)))
+    page_window_end = max(0, _to_int(page_window.get("end"), _to_int(first_group.get("page_range_end"), range_end)))
+    page_window_matches_range = (not has_first_group) or (page_window_start == range_start and page_window_end == range_end)
+
+    supports_group_key = has_first_group and isinstance(first_group.get("group_key"), str) and bool(str(first_group.get("group_key")).strip())
+    supports_page_flags = (
+        has_first_group
+        and isinstance(first_group.get("page_has_prev"), bool)
+        and isinstance(first_group.get("page_has_next"), bool)
+    )
+    supports_page_window = (
+        has_first_group
+        and isinstance(first_group.get("page_window"), dict)
+        and isinstance(page_window.get("start"), (int, float))
+        and isinstance(page_window.get("end"), (int, float))
+    )
+
+    return {
+        "supports_group_key": bool(supports_group_key),
+        "supports_page_flags": bool(supports_page_flags),
+        "supports_page_window": bool(supports_page_window),
+        "request_offset_matches_observed": (not has_first_group) or (normalized_request_offset == page_offset),
+        "page_window_matches_range": bool(page_window_matches_range),
+    }
+
+
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or os.getenv("DB") or ""
@@ -287,12 +335,22 @@ def main():
                         "meta_group_by": None,
                         "has_group_summary": False,
                         "has_grouped_rows": False,
+                        "supports_group_key": False,
+                        "supports_page_flags": False,
+                        "supports_page_window": False,
+                        "request_offset_matches_observed": False,
+                        "page_window_matches_range": False,
                         "response_keys": [],
                     }
                 )
                 continue
             raise RuntimeError(f"grouped api.data failed for {item['case']}: {grouped_resp}")
         data, meta = _unwrap_intent_data(grouped_resp)
+        grouped_semantic = _build_grouped_semantic_signature(
+            data,
+            request_page_limit=int(grouped_payload["params"].get("group_sample_limit") or 3),
+            request_offset=int(grouped_payload["params"].get("offset") or 0),
+        )
         grouped_responses.append({"case": item["case"], "request": grouped_payload, "response": grouped_resp})
         grouped_signature_cases.append(
             {
@@ -304,6 +362,11 @@ def main():
                 "meta_group_by": meta.get("group_by"),
                 "has_group_summary": isinstance(data.get("group_summary"), list),
                 "has_grouped_rows": isinstance(data.get("grouped_rows"), list),
+                "supports_group_key": grouped_semantic["supports_group_key"],
+                "supports_page_flags": grouped_semantic["supports_page_flags"],
+                "supports_page_window": grouped_semantic["supports_page_window"],
+                "request_offset_matches_observed": grouped_semantic["request_offset_matches_observed"],
+                "page_window_matches_range": grouped_semantic["page_window_matches_range"],
                 "response_keys": sorted(
                     [key for key in ("records", "next_offset", "group_summary", "grouped_rows") if key in data]
                 ),
@@ -312,7 +375,7 @@ def main():
 
     grouped_signature = _normalize_obj(
         {
-            "version": "v0.3",
+            "version": "v0.4",
             "grouped_cases": sorted(grouped_signature_cases, key=lambda row: row.get("case") or ""),
         }
     )
