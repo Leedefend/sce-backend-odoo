@@ -131,6 +131,25 @@
             </button>
             <p>{{ group.label }}</p>
             <span>{{ group.count }} 条</span>
+            <div v-if="onGroupPageChange" class="group-page">
+              <button
+                type="button"
+                class="group-page-btn"
+                :disabled="Boolean(group.loading) || !canGroupPagePrev(group)"
+                @click="pageGroupPrev(group)"
+              >
+                上一页
+              </button>
+              <span>{{ groupPageRangeText(group) }}</span>
+              <button
+                type="button"
+                class="group-page-btn"
+                :disabled="Boolean(group.loading) || !canGroupPageNext(group)"
+                @click="pageGroupNext(group)"
+              >
+                下一页
+              </button>
+            </div>
             <button
               v-if="onOpenGroup"
               type="button"
@@ -267,12 +286,23 @@ const props = defineProps<{
     count: number;
     sampleRows: Array<Record<string, unknown>>;
     domain?: unknown[];
+    pageOffset?: number;
+    pageLimit?: number;
+    loading?: boolean;
   }>;
   onOpenGroup?: (group: {
     key: string;
     label: string;
     count: number;
     domain?: unknown[];
+  }) => void;
+  onGroupPageChange?: (group: {
+    key: string;
+    label: string;
+    count: number;
+    domain?: unknown[];
+    offset: number;
+    limit: number;
   }) => void;
   groupSampleLimit?: number;
   onGroupSampleLimitChange?: (limit: number) => void;
@@ -334,6 +364,56 @@ function toggleGroupSort() {
 
 function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {
   props.onOpenGroup?.(group);
+}
+
+function resolveGroupPageLimit(group: { pageLimit?: number }) {
+  const limitRaw = Number(group.pageLimit || props.groupSampleLimit || 3);
+  return Number.isFinite(limitRaw) && limitRaw > 0 ? Math.trunc(limitRaw) : 3;
+}
+
+function resolveGroupPageOffset(group: { pageOffset?: number; count: number; pageLimit?: number }) {
+  const limit = resolveGroupPageLimit(group);
+  const maxOffset = Math.max(0, Number(group.count || 0) - limit);
+  const offsetRaw = Number(group.pageOffset || 0);
+  if (!Number.isFinite(offsetRaw)) return 0;
+  return Math.min(Math.max(Math.trunc(offsetRaw), 0), maxOffset);
+}
+
+function canGroupPagePrev(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  return resolveGroupPageOffset(group) > 0;
+}
+
+function canGroupPageNext(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  const offset = resolveGroupPageOffset(group);
+  const limit = resolveGroupPageLimit(group);
+  return offset + limit < Number(group.count || 0);
+}
+
+function groupPageRangeText(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  const total = Math.max(0, Number(group.count || 0));
+  if (!total) return '0 / 0';
+  const offset = resolveGroupPageOffset(group);
+  const limit = resolveGroupPageLimit(group);
+  const start = offset + 1;
+  const end = Math.min(total, offset + limit);
+  return `${start}-${end} / ${total}`;
+}
+
+function pageGroupPrev(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (!props.onGroupPageChange) return;
+  const limit = resolveGroupPageLimit(group);
+  const offset = resolveGroupPageOffset(group);
+  const next = Math.max(0, offset - limit);
+  props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset: next, limit });
+}
+
+function pageGroupNext(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (!props.onGroupPageChange) return;
+  const limit = resolveGroupPageLimit(group);
+  const offset = resolveGroupPageOffset(group);
+  const maxOffset = Math.max(0, Number(group.count || 0) - limit);
+  const next = Math.min(maxOffset, offset + limit);
+  props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset: next, limit });
 }
 
 function onGroupSampleLimitSelectChange(event: Event) {
@@ -598,6 +678,29 @@ function columnLabel(col: string) {
 .group-head span {
   color: #475569;
   font-size: 12px;
+}
+
+.group-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 12px;
+}
+
+.group-page-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.group-page-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .batch-bar {

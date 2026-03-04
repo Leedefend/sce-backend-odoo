@@ -37,7 +37,8 @@ def main() -> int:
             errors.append(f"api_data missing marker: {marker}")
 
     action_markers = [
-        "const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>>; domain?: unknown[] }>>([]);",
+        "type GroupedRow = {",
+        "const groupedRows = ref<GroupedRow[]>([]);",
         "const groupSampleLimit = ref(3);",
         "groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])",
         "group_sample_limit: groupSampleLimit.value,",
@@ -49,6 +50,8 @@ def main() -> int:
         ":on-group-sort-change=\"handleGroupSortChange\"",
         ":collapsed-group-keys=\"collapsedGroupKeys\"",
         ":on-group-collapsed-change=\"handleGroupCollapsedChange\"",
+        ":on-group-page-change=\"handleGroupedRowsPageChange\"",
+        "function handleGroupedRowsPageChange(group: {",
         "function normalizeGroupedRouteState() {",
         "normalizeGroupedRouteState();",
     ]
@@ -65,6 +68,10 @@ def main() -> int:
         "onGroupSampleLimitSelectChange",
         "props.groupSort",
         "props.collapsedGroupKeys",
+        "props.onGroupPageChange",
+        "group-page-btn",
+        "上一页",
+        "下一页",
         "expandAllGroups()",
         "collapseAllGroups()",
         "全部展开",
