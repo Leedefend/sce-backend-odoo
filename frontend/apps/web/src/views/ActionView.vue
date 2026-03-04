@@ -2400,6 +2400,7 @@ async function load() {
       domain_raw: resolveEffectiveFilterDomainRaw(),
       group_by: activeGroupByField.value || undefined,
       group_sample_limit: groupSampleLimit.value,
+      group_limit: Math.min(50, Math.max(12, Number(contractLimit.value || 0))),
       group_page_size: groupSampleLimit.value,
       group_page_offsets: groupPageOffsets.value,
       context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
