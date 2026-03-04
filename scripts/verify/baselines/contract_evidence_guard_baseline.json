@@ -41,5 +41,10 @@
   "min_grouped_consistency_score": 1.0,
   "require_grouped_drift_summary_ok": true,
   "min_grouped_drift_e2e_case_count": 1,
-  "require_grouped_drift_export_marker_full_hit": true
+  "require_grouped_drift_export_marker_full_hit": true,
+  "require_grouped_governance_brief_ok": true,
+  "min_grouped_governance_coverage_ratio": 1.0,
+  "max_grouped_governance_failure_count": 0,
+  "min_grouped_governance_e2e_case_count": 1,
+  "require_grouped_governance_export_marker_full_hit": true
 }
