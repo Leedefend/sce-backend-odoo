@@ -9,6 +9,7 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - grouped payload keys: `group_summary`, `grouped_rows`
 - routing state key: `group_page` (per-group offset map)
 - request key: `group_page_size` (optional; explicit grouped page size)
+- request key: `group_limit` (optional; max grouped entries returned)
 
 ## Grouped Row Fields
 
@@ -45,6 +46,16 @@ Each entry in `grouped_rows` must provide:
 2. Frontend should prefer `page_window` when present; fallback to legacy range fields otherwise.
 3. `group_key` must be stable for a given `(field, value)` pair to preserve route paging restoration.
 4. `page_has_prev/page_has_next` are authoritative backend semantics; frontend should avoid recomputing when these flags exist.
+
+## Group Paging Summary
+
+`api.data(list)` may include top-level `group_paging`:
+
+- `group_by_field`: resolved primary grouped field
+- `group_limit`: effective grouped result limit
+- `group_count`: grouped entries returned
+- `page_size`: effective grouped page size
+- `has_group_page_offsets`: whether request carried per-group offset map
 
 ## Verification Hooks
 
