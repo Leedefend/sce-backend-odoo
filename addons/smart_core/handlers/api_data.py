@@ -620,6 +620,9 @@ class ApiDataHandler(BaseIntentHandler):
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
         group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
         group_page_size = min(self._get_int(p, "group_page_size", 0), 8)
+        default_group_limit = min(limit or 20, 30)
+        group_limit = self._get_int(p, "group_limit", default_group_limit)
+        group_limit = max(1, min(group_limit, 50))
         search_term = self._get_str(p, "search_term", "").strip()
 
         if context_raw:
@@ -672,13 +675,13 @@ class ApiDataHandler(BaseIntentHandler):
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
-        group_summary = self._build_group_summary(env_model, domain, group_by, limit=min(limit or 20, 50))
+        group_summary = self._build_group_summary(env_model, domain, group_by, limit=group_limit)
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
             group_by,
             fields_safe,
-            limit=min(limit or 20, 30),
+            limit=group_limit,
             sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
             group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
@@ -705,6 +708,7 @@ class ApiDataHandler(BaseIntentHandler):
             "context_raw_applied": bool(context_raw),
             "group_by": group_by,
             "group_page_size": int(group_page_size or 0) or None,
+            "group_limit": group_limit,
         }
         return data, meta
 
