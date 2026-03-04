@@ -98,6 +98,22 @@
         <header class="grouped-toolbar">
           <span>分组结果</span>
           <div class="grouped-toolbar-actions">
+            <button
+              type="button"
+              class="grouped-sort-btn"
+              :disabled="!groupedRows.length || !hasCollapsedGroups"
+              @click="expandAllGroups"
+            >
+              全部展开
+            </button>
+            <button
+              type="button"
+              class="grouped-sort-btn"
+              :disabled="!groupedRows.length || allGroupsCollapsed"
+              @click="collapseAllGroups"
+            >
+              全部收起
+            </button>
             <select :value="String(groupSampleLimit || 3)" @change="onGroupSampleLimitSelectChange">
               <option value="3">每组 3 条</option>
               <option value="5">每组 5 条</option>
@@ -287,6 +303,14 @@ const sortedGroupedRows = computed(() => {
 });
 const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
+const allGroupsCollapsed = computed(() => {
+  if (!sortedGroupedRows.value.length) return false;
+  return sortedGroupedRows.value.every((item) => collapsedSet.value.has(item.key));
+});
+const hasCollapsedGroups = computed(() => {
+  if (!sortedGroupedRows.value.length) return false;
+  return sortedGroupedRows.value.some((item) => collapsedSet.value.has(item.key));
+});
 function formatValue(value: unknown) {
   return formatDisplayValue(value);
 }
@@ -316,6 +340,16 @@ function onGroupSampleLimitSelectChange(event: Event) {
   const value = Number((event.target as HTMLSelectElement | null)?.value || 0);
   if (!Number.isFinite(value)) return;
   props.onGroupSampleLimitChange?.(value);
+}
+
+function collapseAllGroups() {
+  if (!props.onGroupCollapsedChange) return;
+  props.onGroupCollapsedChange(sortedGroupedRows.value.map((item) => item.key));
+}
+
+function expandAllGroups() {
+  if (!props.onGroupCollapsedChange) return;
+  props.onGroupCollapsedChange([]);
 }
 
 function handleRow(row: Record<string, unknown>) {
