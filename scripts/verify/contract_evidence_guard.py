@@ -57,6 +57,19 @@ def _load_text(path: Path | None) -> str:
         return ""
 
 
+def _to_rel_posix(raw: object) -> str:
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    path = Path(text)
+    if path.is_absolute():
+        try:
+            path = path.resolve().relative_to(ROOT.resolve())
+        except Exception:
+            return path.as_posix()
+    return path.as_posix()
+
+
 def main() -> int:
     policy = {
         "max_errors": 0,
@@ -120,6 +133,9 @@ def main() -> int:
         "require_grouped_governance_report_md_prefix": "artifacts/",
         "require_grouped_governance_report_md_suffix": "grouped_governance_brief_guard.md",
         "require_grouped_governance_report_md_title": "# Grouped Governance Brief Guard",
+        "require_grouped_governance_report_pair_consistent": True,
+        "require_grouped_governance_report_pair_same_parent": True,
+        "require_grouped_governance_report_pair_same_stem": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -514,6 +530,22 @@ def main() -> int:
             expected_title = str(policy.get("require_grouped_governance_report_md_title") or "").strip()
             if expected_title and expected_title not in report_md_text:
                 errors.append("grouped_governance_brief.report_md missing required governance title")
+    if bool(policy.get("require_grouped_governance_report_pair_consistent", True)):
+        report_json_rel = _to_rel_posix(grouped_governance.get("report_json"))
+        report_md_rel = _to_rel_posix(grouped_governance.get("report_md"))
+        if not report_json_rel or not report_md_rel:
+            errors.append("grouped_governance_brief.report_json/report_md must both be non-empty for pair consistency")
+        else:
+            json_path = Path(report_json_rel)
+            md_path = Path(report_md_rel)
+            if bool(policy.get("require_grouped_governance_report_pair_same_parent", True)):
+                if json_path.parent.as_posix() != md_path.parent.as_posix():
+                    errors.append("grouped_governance_brief.report_json/report_md must share same parent directory")
+            if bool(policy.get("require_grouped_governance_report_pair_same_stem", True)):
+                json_stem = json_path.with_suffix("").name
+                md_stem = md_path.with_suffix("").name
+                if json_stem != md_stem:
+                    errors.append("grouped_governance_brief.report_json/report_md must share same stem")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

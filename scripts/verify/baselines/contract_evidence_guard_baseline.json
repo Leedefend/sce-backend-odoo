@@ -59,5 +59,8 @@
   "require_grouped_governance_report_md_alignment": true,
   "require_grouped_governance_report_md_prefix": "artifacts/",
   "require_grouped_governance_report_md_suffix": "grouped_governance_brief_guard.md",
-  "require_grouped_governance_report_md_title": "# Grouped Governance Brief Guard"
+  "require_grouped_governance_report_md_title": "# Grouped Governance Brief Guard",
+  "require_grouped_governance_report_pair_consistent": true,
+  "require_grouped_governance_report_pair_same_parent": true,
+  "require_grouped_governance_report_pair_same_stem": true
 }
