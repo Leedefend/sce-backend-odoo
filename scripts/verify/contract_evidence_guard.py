@@ -267,6 +267,15 @@ def main() -> int:
     if bool(policy.get("require_grouped_pagination_contract_section", True)) and not grouped:
         errors.append("grouped_pagination_contract section is required under baseline policy")
     if grouped:
+        for key in (
+            "supports_group_key",
+            "supports_page_has_prev",
+            "supports_page_has_next",
+            "supports_page_window",
+            "window_range_consistency",
+        ):
+            if key in grouped and not isinstance(grouped.get(key), bool):
+                errors.append(f"grouped_pagination_contract.{key} must be bool")
         route_state_key = str(grouped.get("route_state_key") or "").strip()
         expected_route_state_key = str(policy.get("require_grouped_pagination_route_state_key") or "").strip()
         if expected_route_state_key and route_state_key != expected_route_state_key:
