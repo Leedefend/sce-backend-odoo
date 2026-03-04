@@ -2,13 +2,17 @@
   <section v-if="items.length" class="group-summary">
     <header class="group-summary-head">
       <p>分组摘要</p>
-      <span>{{ groupByLabel }}</span>
+      <div class="group-summary-head-actions">
+        <span>{{ groupByLabel }}</span>
+        <button v-if="activeKey" class="clear-btn" @click="onClear?.()">清除下钻</button>
+      </div>
     </header>
     <div class="group-summary-items">
       <button
         v-for="item in items"
         :key="`group-summary-${item.key}`"
         class="group-summary-item"
+        :class="{ active: activeKey === item.key }"
         @click="onPick?.(item)"
       >
         <span class="name">{{ item.label }}</span>
@@ -31,11 +35,15 @@ withDefaults(
   defineProps<{
     items: GroupSummaryItem[];
     groupByLabel?: string;
+    activeKey?: string;
     onPick?: (item: GroupSummaryItem) => void;
+    onClear?: () => void;
   }>(),
   {
     groupByLabel: '',
+    activeKey: '',
     onPick: undefined,
+    onClear: undefined,
   },
 );
 </script>
@@ -55,6 +63,12 @@ withDefaults(
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.group-summary-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .group-summary-head p {
@@ -84,6 +98,21 @@ withDefaults(
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  cursor: pointer;
+}
+
+.group-summary-item.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.clear-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  font-size: 12px;
   cursor: pointer;
 }
 
