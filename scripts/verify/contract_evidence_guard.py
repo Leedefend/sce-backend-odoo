@@ -38,6 +38,16 @@ def _ratio_to_float(raw: object) -> float:
     return left_f / right_f
 
 
+def _to_abs_report_path(raw: object) -> Path | None:
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    path = Path(text)
+    if path.is_absolute():
+        return path
+    return (ROOT / path).resolve()
+
+
 def main() -> int:
     policy = {
         "max_errors": 0,
@@ -93,6 +103,8 @@ def main() -> int:
         "max_grouped_governance_coverage_ratio_delta_abs": 0.000001,
         "require_grouped_governance_export_marker_full_hit": True,
         "require_grouped_governance_export_marker_bounds": True,
+        "require_grouped_governance_report_alignment": True,
+        "max_grouped_governance_alignment_ratio_delta_abs": 0.000001,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -422,6 +434,36 @@ def main() -> int:
             errors.append("grouped_governance_brief.grouped_export_marker_total must be >= 1")
         if marker_hits > marker_total:
             errors.append("grouped_governance_brief.grouped_export_marker_hits must be <= grouped_export_marker_total")
+    if bool(policy.get("require_grouped_governance_report_alignment", True)):
+        report_path = _to_abs_report_path(grouped_governance.get("report_json"))
+        source_report = _load_json(report_path) if isinstance(report_path, Path) else {}
+        if not source_report:
+            errors.append("grouped_governance_brief.report_json must point to a readable report")
+        else:
+            source_summary = source_report.get("summary") if isinstance(source_report.get("summary"), dict) else {}
+            if bool(grouped_governance.get("ok")) != bool(source_report.get("ok")):
+                errors.append("grouped_governance_brief.ok must align with source report ok")
+            for key in (
+                "governance_covered_file_count",
+                "governance_total_file_count",
+                "governance_failure_count",
+                "grouped_e2e_case_count",
+                "grouped_e2e_grouped_rows_case_count",
+                "grouped_e2e_max_consistency_score",
+                "grouped_export_marker_hits",
+                "grouped_export_marker_total",
+            ):
+                source_v = int(source_summary.get(key) or 0)
+                evidence_v = int(grouped_governance.get(key) or 0)
+                if evidence_v != source_v:
+                    errors.append(f"grouped_governance_brief.{key} must align with source report")
+            source_ratio = _ratio_to_float(source_summary.get("governance_coverage_ratio"))
+            evidence_ratio = _ratio_to_float(grouped_governance.get("governance_coverage_ratio"))
+            max_align_ratio_delta_abs = float(
+                policy.get("max_grouped_governance_alignment_ratio_delta_abs", 0.000001) or 0.000001
+            )
+            if abs(evidence_ratio - source_ratio) > max_align_ratio_delta_abs:
+                errors.append("grouped_governance_brief.governance_coverage_ratio must align with source report")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
