@@ -96,3 +96,9 @@ Standalone export:
 ```bash
 make contract.evidence.export
 ```
+
+## Grouped Pagination
+
+Grouped pagination contract semantics and compatibility rules:
+
+- `docs/contract/grouped_pagination_contract.md`
