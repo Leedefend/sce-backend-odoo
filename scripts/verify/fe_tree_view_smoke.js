@@ -130,6 +130,9 @@ function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, re
     : null;
   const count = firstGroup ? Math.max(0, toSafeInt(firstGroup.count, 0)) : 0;
   const sampleRows = firstGroup && Array.isArray(firstGroup.sample_rows) ? firstGroup.sample_rows : [];
+  const pageWindow = firstGroup && firstGroup.page_window && typeof firstGroup.page_window === 'object'
+    ? firstGroup.page_window
+    : null;
   const groupOffsetRaw = firstGroup ? Math.max(0, toSafeInt(firstGroup.page_offset, normalizedRequestOffset)) : normalizedRequestOffset;
   const pageOffset = Math.floor(groupOffsetRaw / pageLimit) * pageLimit;
   const totalPages = Math.max(1, Math.ceil(count / pageLimit));
@@ -138,6 +141,9 @@ function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, re
   const rangeEnd = count > 0 ? Math.min(count, pageOffset + pageLimit) : 0;
   const offsetAlignedToPageLimit = pageOffset % pageLimit === 0;
   const requestOffsetMatchesObserved = !firstGroup || normalizedRequestOffset === pageOffset;
+  const pageWindowStart = pageWindow ? Math.max(0, toSafeInt(pageWindow.start, rangeStart)) : rangeStart;
+  const pageWindowEnd = pageWindow ? Math.max(0, toSafeInt(pageWindow.end, rangeEnd)) : rangeEnd;
+  const pageWindowMatchesRange = !firstGroup || (pageWindowStart === rangeStart && pageWindowEnd === rangeEnd);
   return {
     formulas: {
       page_offset_normalize: 'floor(offset / page_limit) * page_limit',
@@ -170,12 +176,16 @@ function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, re
       total_pages: totalPages,
       range_start: rangeStart,
       range_end: rangeEnd,
+      page_window_start: pageWindowStart,
+      page_window_end: pageWindowEnd,
+      page_window_matches_range: pageWindowMatchesRange,
       offset_aligned_to_page_limit: offsetAlignedToPageLimit,
     },
     consistency: {
       request_offset_matches_observed: requestOffsetMatchesObserved,
       request_offset_aligned_to_page_limit: normalizedRequestOffset % pageLimit === 0,
       first_group_offset_aligned_to_page_limit: offsetAlignedToPageLimit,
+      first_group_page_window_matches_range: pageWindowMatchesRange,
     },
   };
 }
