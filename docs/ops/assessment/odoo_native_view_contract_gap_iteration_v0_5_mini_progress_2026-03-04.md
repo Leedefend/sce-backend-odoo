@@ -46,6 +46,10 @@
      - 带 smoke target 的 intent 数、write intent 数、etag intent 数
    - `Makefile` 新增目标：`verify.contract.scene_coverage.brief`
 
+6. 预检聚合接线（preflight）
+   - `verify.contract.preflight` 已纳入 `verify.contract.scene_coverage.brief`
+   - 预检链路中的 legacy docs 阶段补齐发布文档标记（deprecated/successor/sunset/migration hint），避免非功能性阻塞
+
 ## 验证结果
 
 1. `python3 scripts/verify/grouped_pagination_semantic_guard.py`：通过
@@ -53,6 +57,7 @@
 3. `make verify.frontend.quick.gate`：通过
 4. `make verify.portal.tree_view_smoke.container`：通过
 5. `make verify.contract.scene_coverage.brief`：通过
+6. `BASELINE_FREEZE_ENFORCE=0 CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0 make verify.contract.preflight`：通过
 
 ## 变更清单
 
@@ -62,3 +67,4 @@
 4. `Makefile`
 5. `docs/ops/assessment/odoo_native_view_contract_gap_iteration_v0_5_mini_progress_2026-03-04.md`
 6. `scripts/verify/scene_contract_coverage_brief.py`
+7. `docs/ops/releases/current/phase_11_2_contract_preflight_strict_rollout.md`
