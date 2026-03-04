@@ -4,6 +4,7 @@
     "sources",
     "policy_groups",
     "summary",
+    "trend",
     "errors"
   ],
   "required_policy_groups": [
@@ -17,5 +18,10 @@
     "contract_evidence_grouped_governance_policy_count",
     "report_json",
     "report_md"
+  ],
+  "required_trend_delta_keys": [
+    "grouped_governance_brief_policy_count",
+    "grouped_drift_summary_policy_count",
+    "contract_evidence_grouped_governance_policy_count"
   ]
 }

@@ -40,6 +40,9 @@ def main() -> int:
     required_top_keys = baseline.get("required_top_keys") if isinstance(baseline.get("required_top_keys"), list) else []
     required_summary_keys = baseline.get("required_summary_keys") if isinstance(baseline.get("required_summary_keys"), list) else []
     required_policy_groups = baseline.get("required_policy_groups") if isinstance(baseline.get("required_policy_groups"), list) else []
+    required_trend_delta_keys = baseline.get("required_trend_delta_keys") if isinstance(
+        baseline.get("required_trend_delta_keys"), list
+    ) else []
 
     for key in required_top_keys:
         key = str(key).strip()
@@ -64,6 +67,16 @@ def main() -> int:
         errors.append("errors must be list")
     if not isinstance(report.get("sources"), dict):
         errors.append("sources must be object")
+    trend = report.get("trend") if isinstance(report.get("trend"), dict) else {}
+    delta = trend.get("delta") if isinstance(trend.get("delta"), dict) else {}
+    for key in required_trend_delta_keys:
+        key = str(key).strip()
+        if key and key not in delta:
+            errors.append(f"trend.delta missing key: {key}")
+    if "trend" in report and not isinstance(report.get("trend"), dict):
+        errors.append("trend must be object")
+    if trend and not isinstance(trend.get("has_previous"), bool):
+        errors.append("trend.has_previous must be bool")
 
     if errors:
         print("[grouped_governance_policy_matrix_schema_guard] FAIL")

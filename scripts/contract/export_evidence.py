@@ -311,6 +311,22 @@ def build_evidence(
                     or 0
                 )
             ),
+            "has_previous": bool((grouped_governance_policy_matrix_report.get("trend") or {}).get("has_previous")),
+            "delta_grouped_governance_brief_policy_count": (
+                ((grouped_governance_policy_matrix_report.get("trend") or {}).get("delta") or {}).get(
+                    "grouped_governance_brief_policy_count"
+                )
+            ),
+            "delta_grouped_drift_summary_policy_count": (
+                ((grouped_governance_policy_matrix_report.get("trend") or {}).get("delta") or {}).get(
+                    "grouped_drift_summary_policy_count"
+                )
+            ),
+            "delta_contract_evidence_grouped_governance_policy_count": (
+                ((grouped_governance_policy_matrix_report.get("trend") or {}).get("delta") or {}).get(
+                    "contract_evidence_grouped_governance_policy_count"
+                )
+            ),
             "report_json": "artifacts/grouped_governance_policy_matrix.json",
             "report_md": "artifacts/grouped_governance_policy_matrix.md",
         },
@@ -498,6 +514,19 @@ def to_markdown(evidence: dict) -> str:
         (
             "- contract_evidence_grouped_governance_policy_count: "
             f"{ggpm['contract_evidence_grouped_governance_policy_count']}"
+        ),
+        f"- has_previous: {ggpm['has_previous']}",
+        (
+            "- delta_grouped_governance_brief_policy_count: "
+            f"{ggpm['delta_grouped_governance_brief_policy_count']}"
+        ),
+        (
+            "- delta_grouped_drift_summary_policy_count: "
+            f"{ggpm['delta_grouped_drift_summary_policy_count']}"
+        ),
+        (
+            "- delta_contract_evidence_grouped_governance_policy_count: "
+            f"{ggpm['delta_contract_evidence_grouped_governance_policy_count']}"
         ),
         f"- report_json: `{ggpm['report_json']}`",
         f"- report_md: `{ggpm['report_md']}`",

@@ -70,5 +70,10 @@
   "require_grouped_governance_policy_matrix_report_json_prefix": "artifacts/",
   "require_grouped_governance_policy_matrix_report_json_suffix": "grouped_governance_policy_matrix.json",
   "require_grouped_governance_policy_matrix_report_md_prefix": "artifacts/",
-  "require_grouped_governance_policy_matrix_report_md_suffix": "grouped_governance_policy_matrix.md"
+  "require_grouped_governance_policy_matrix_report_md_suffix": "grouped_governance_policy_matrix.md",
+  "require_grouped_governance_policy_matrix_has_previous_bool": true,
+  "require_grouped_governance_policy_matrix_delta_when_previous": true,
+  "forbid_grouped_governance_brief_policy_count_regression": true,
+  "forbid_grouped_drift_summary_policy_count_regression": true,
+  "forbid_contract_evidence_grouped_governance_policy_count_regression": true
 }
