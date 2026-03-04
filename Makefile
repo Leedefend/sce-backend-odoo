@@ -2126,6 +2126,11 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.meta.trace.smoke
 	@$(MAKE) --no-print-directory verify.contract.api.mode.smoke
 	@$(MAKE) --no-print-directory verify.contract.view_type_semantic.smoke
+	@if [ "$(CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES)" = "1" ]; then \
+	  $(MAKE) --no-print-directory verify.contract.view_type_semantic.strict.smoke; \
+	else \
+	  echo "[verify.contract.preflight] CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=0: skip strict view-type semantic smoke"; \
+	fi
 	@$(MAKE) --no-print-directory verify.scene.contract.shape
 	@$(MAKE) --no-print-directory contract.evidence.export
 
