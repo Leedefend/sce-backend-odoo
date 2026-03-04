@@ -287,6 +287,11 @@ async function main() {
   const groupedHasPageFlags = firstGroupedRow
     ? typeof firstGroupedRow.page_has_prev === 'boolean' && typeof firstGroupedRow.page_has_next === 'boolean'
     : true;
+  const groupedHasPageWindow = firstGroupedRow
+    ? typeof firstGroupedRow.page_window === 'object' && firstGroupedRow.page_window !== null
+      && Number.isFinite(Number(firstGroupedRow.page_window.start))
+      && Number.isFinite(Number(firstGroupedRow.page_window.end))
+    : true;
   const groupedPaginationSemanticSummary = buildGroupedPaginationSemanticSummary(
     groupedRows,
     groupedPayload.params.group_sample_limit,
@@ -299,6 +304,7 @@ async function main() {
   summary.push(`grouped_payload_present: ${hasGroupedPayload ? 'yes' : 'no'}`);
   summary.push(`grouped_group_key_present: ${groupedHasGroupKey ? 'yes' : 'no'}`);
   summary.push(`grouped_page_flags_present: ${groupedHasPageFlags ? 'yes' : 'no'}`);
+  summary.push(`grouped_page_window_present: ${groupedHasPageWindow ? 'yes' : 'no'}`);
   summary.push(`grouped_pagination_normalized_offset: ${groupedPaginationSemanticSummary.request.normalized_request_offset}`);
   summary.push(`grouped_pagination_first_group_present: ${groupedPaginationSemanticSummary.first_group_observation.present ? 'yes' : 'no'}`);
   summary.push(`grouped_pagination_first_group_page: ${groupedPaginationSemanticSummary.first_group_observation.current_page}/${groupedPaginationSemanticSummary.first_group_observation.total_pages}`);
@@ -322,6 +328,7 @@ async function main() {
       group_key: groupedHasGroupKey,
       page_has_prev: groupedHasPageFlags,
       page_has_next: groupedHasPageFlags,
+      page_window: groupedHasPageWindow,
     },
     grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,
   });

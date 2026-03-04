@@ -48,7 +48,8 @@
   "grouped_contract_fields": {
     "group_key": true,
     "page_has_prev": true,
-    "page_has_next": true
+    "page_has_next": true,
+    "page_window": true
   },
   "grouped_request_keys": [
     "fields",
