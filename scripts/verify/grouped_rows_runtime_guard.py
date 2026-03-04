@@ -49,6 +49,8 @@ def main() -> int:
         ":on-group-sort-change=\"handleGroupSortChange\"",
         ":collapsed-group-keys=\"collapsedGroupKeys\"",
         ":on-group-collapsed-change=\"handleGroupCollapsedChange\"",
+        "function normalizeGroupedRouteState() {",
+        "normalizeGroupedRouteState();",
     ]
     for marker in action_markers:
         if marker not in action_view:
@@ -63,6 +65,10 @@ def main() -> int:
         "onGroupSampleLimitSelectChange",
         "props.groupSort",
         "props.collapsedGroupKeys",
+        "expandAllGroups()",
+        "collapseAllGroups()",
+        "全部展开",
+        "全部收起",
     ]
     for marker in list_markers:
         if marker not in list_page:
