@@ -292,6 +292,22 @@ def build_evidence(
             "grouped_export_marker_total": int(
                 (((grouped_governance_brief_report.get("summary") or {}).get("grouped_export_marker_total")) or 0)
             ),
+            "has_previous": bool((grouped_governance_brief_report.get("trend") or {}).get("has_previous")),
+            "delta_governance_coverage_ratio": (
+                ((grouped_governance_brief_report.get("trend") or {}).get("delta") or {}).get(
+                    "governance_coverage_ratio_delta"
+                )
+            ),
+            "delta_governance_failure_count": (
+                ((grouped_governance_brief_report.get("trend") or {}).get("delta") or {}).get(
+                    "governance_failure_count"
+                )
+            ),
+            "delta_grouped_e2e_max_consistency_score": (
+                ((grouped_governance_brief_report.get("trend") or {}).get("delta") or {}).get(
+                    "grouped_e2e_max_consistency_score"
+                )
+            ),
             "report_json": "artifacts/grouped_governance_brief_guard.json",
             "report_md": "artifacts/grouped_governance_brief_guard.md",
         },
@@ -504,6 +520,10 @@ def to_markdown(evidence: dict) -> str:
         f"- grouped_e2e_grouped_rows_case_count: {ggb['grouped_e2e_grouped_rows_case_count']}",
         f"- grouped_e2e_max_consistency_score: {ggb['grouped_e2e_max_consistency_score']}",
         f"- grouped_export_marker_hits: {ggb['grouped_export_marker_hits']} / {ggb['grouped_export_marker_total']}",
+        f"- has_previous: {ggb['has_previous']}",
+        f"- delta_governance_coverage_ratio: {ggb['delta_governance_coverage_ratio']}",
+        f"- delta_governance_failure_count: {ggb['delta_governance_failure_count']}",
+        f"- delta_grouped_e2e_max_consistency_score: {ggb['delta_grouped_e2e_max_consistency_score']}",
         f"- report_json: `{ggb['report_json']}`",
         f"- report_md: `{ggb['report_md']}`",
         "",

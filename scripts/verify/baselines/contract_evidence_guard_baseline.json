@@ -63,6 +63,10 @@
   "require_grouped_governance_report_pair_consistent": true,
   "require_grouped_governance_report_pair_same_parent": true,
   "require_grouped_governance_report_pair_same_stem": true,
+  "require_grouped_governance_brief_has_previous_bool": true,
+  "require_grouped_governance_brief_delta_when_previous": true,
+  "forbid_grouped_governance_brief_failure_count_regression": true,
+  "forbid_grouped_governance_brief_consistency_score_regression": true,
   "require_grouped_governance_policy_matrix_ok": true,
   "min_grouped_governance_brief_policy_count": 1,
   "min_grouped_drift_summary_policy_count": 1,
@@ -75,5 +79,6 @@
   "require_grouped_governance_policy_matrix_delta_when_previous": true,
   "forbid_grouped_governance_brief_policy_count_regression": true,
   "forbid_grouped_drift_summary_policy_count_regression": true,
-  "forbid_contract_evidence_grouped_governance_policy_count_regression": true
+  "forbid_contract_evidence_grouped_governance_policy_count_regression": true,
+  "require_grouped_governance_cross_report_trend_consistent": true
 }

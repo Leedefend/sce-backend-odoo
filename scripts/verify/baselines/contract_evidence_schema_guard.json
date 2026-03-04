@@ -126,6 +126,10 @@
       "grouped_e2e_max_consistency_score",
       "grouped_export_marker_hits",
       "grouped_export_marker_total",
+      "has_previous",
+      "delta_governance_coverage_ratio",
+      "delta_governance_failure_count",
+      "delta_grouped_e2e_max_consistency_score",
       "report_json",
       "report_md"
     ],

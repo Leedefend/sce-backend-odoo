@@ -136,6 +136,10 @@ def main() -> int:
         "require_grouped_governance_report_pair_consistent": True,
         "require_grouped_governance_report_pair_same_parent": True,
         "require_grouped_governance_report_pair_same_stem": True,
+        "require_grouped_governance_brief_has_previous_bool": True,
+        "require_grouped_governance_brief_delta_when_previous": True,
+        "forbid_grouped_governance_brief_failure_count_regression": True,
+        "forbid_grouped_governance_brief_consistency_score_regression": True,
         "require_grouped_governance_policy_matrix_ok": True,
         "min_grouped_governance_brief_policy_count": 1,
         "min_grouped_drift_summary_policy_count": 1,
@@ -149,6 +153,7 @@ def main() -> int:
         "forbid_grouped_governance_brief_policy_count_regression": True,
         "forbid_grouped_drift_summary_policy_count_regression": True,
         "forbid_contract_evidence_grouped_governance_policy_count_regression": True,
+        "require_grouped_governance_cross_report_trend_consistent": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -560,6 +565,30 @@ def main() -> int:
                 md_stem = md_path.with_suffix("").name
                 if json_stem != md_stem:
                     errors.append("grouped_governance_brief.report_json/report_md must share same stem")
+    if bool(policy.get("require_grouped_governance_brief_has_previous_bool", True)):
+        if not isinstance(grouped_governance.get("has_previous"), bool):
+            errors.append("grouped_governance_brief.has_previous must be bool")
+    brief_has_previous = bool(grouped_governance.get("has_previous"))
+    delta_brief_cov = grouped_governance.get("delta_governance_coverage_ratio")
+    delta_brief_failure = grouped_governance.get("delta_governance_failure_count")
+    delta_brief_consistency = grouped_governance.get("delta_grouped_e2e_max_consistency_score")
+    if brief_has_previous and bool(policy.get("require_grouped_governance_brief_delta_when_previous", True)):
+        if not isinstance(delta_brief_cov, (int, float)):
+            errors.append("grouped_governance_brief.delta_governance_coverage_ratio must be numeric")
+        if not isinstance(delta_brief_failure, int):
+            errors.append("grouped_governance_brief.delta_governance_failure_count must be int")
+        if not isinstance(delta_brief_consistency, int):
+            errors.append("grouped_governance_brief.delta_grouped_e2e_max_consistency_score must be int")
+    if bool(policy.get("forbid_grouped_governance_brief_failure_count_regression", True)) and isinstance(
+        delta_brief_failure, int
+    ):
+        if delta_brief_failure > 0:
+            errors.append("grouped_governance_brief.delta_governance_failure_count must be <= 0")
+    if bool(policy.get("forbid_grouped_governance_brief_consistency_score_regression", True)) and isinstance(
+        delta_brief_consistency, int
+    ):
+        if delta_brief_consistency < 0:
+            errors.append("grouped_governance_brief.delta_grouped_e2e_max_consistency_score must be >= 0")
 
     grouped_policy_matrix = (
         payload.get("grouped_governance_policy_matrix")
@@ -642,6 +671,12 @@ def main() -> int:
             errors.append(
                 "grouped_governance_policy_matrix.delta_contract_evidence_grouped_governance_policy_count must be >= 0"
             )
+    if bool(policy.get("require_grouped_governance_cross_report_trend_consistent", True)):
+        if isinstance(grouped_governance.get("has_previous"), bool) and isinstance(
+            grouped_policy_matrix.get("has_previous"), bool
+        ):
+            if bool(grouped_governance.get("has_previous")) != bool(grouped_policy_matrix.get("has_previous")):
+                errors.append("grouped_governance_brief.has_previous must align with grouped_governance_policy_matrix.has_previous")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
