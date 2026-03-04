@@ -1239,6 +1239,13 @@ verify.frontend.grouped_drift_summary.schema.guard: guard.prod.forbid verify.fro
 verify.frontend.grouped_drift_summary.baseline.guard: guard.prod.forbid verify.frontend.grouped_drift_summary.schema.guard
 	@python3 scripts/verify/grouped_drift_summary_baseline_guard.py
 
+.PHONY: verify.grouped.governance.bundle
+verify.grouped.governance.bundle: guard.prod.forbid verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard
+	@python3 scripts/contract/export_evidence.py
+	@python3 scripts/verify/contract_evidence_schema_guard.py
+	@python3 scripts/verify/contract_evidence_guard.py
+	@echo "[OK] verify.grouped.governance.bundle done"
+
 verify.contract.operation_gateway.guard: guard.prod.forbid
 	@python3 scripts/verify/operation_gateway_contract_guard.py
 
@@ -2165,6 +2172,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.contract_path.gate
 	@$(MAKE) --no-print-directory verify.contract.governance.coverage
 	@$(MAKE) --no-print-directory verify.docs.all
+	@$(MAKE) --no-print-directory verify.grouped.governance.bundle
 	@$(MAKE) --no-print-directory audit.intent.surface INTENT_SURFACE_MD="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_MD)" INTENT_SURFACE_JSON="$(CONTRACT_PREFLIGHT_INTENT_SURFACE_JSON)"
 	@$(MAKE) --no-print-directory verify.scene_capability.contract.guard
 	@$(MAKE) --no-print-directory verify.contract.governance.brief
