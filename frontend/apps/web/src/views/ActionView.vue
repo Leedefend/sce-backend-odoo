@@ -243,6 +243,7 @@
       :selected-assignee-id="selectedAssigneeId"
       :list-profile="listProfile"
       :grouped-rows="groupedRows"
+      :on-open-group="handleOpenGroupedRows"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
@@ -372,7 +373,7 @@ const batchFailedOffset = ref(0);
 const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
 const groupSummaryItems = ref<GroupSummaryItem[]>([]);
-const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>> }>>([]);
+const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>>; domain?: unknown[] }>>([]);
 const activeGroupSummaryKey = ref('');
 const activeGroupSummaryDomain = ref<unknown[]>([]);
 const advancedFields = ref<string[]>([]);
@@ -1182,6 +1183,14 @@ function handleGroupSummaryPick(item: GroupSummaryItem) {
   activeGroupSummaryDomain.value = Array.isArray(item.domain) ? item.domain : [];
   searchTerm.value = item.label || '';
   syncRouteListState({ search: searchTerm.value.trim() || undefined, group_value: item.label || undefined });
+  void load();
+}
+
+function handleOpenGroupedRows(group: { key: string; label: string; count: number; domain?: unknown[] }) {
+  activeGroupSummaryKey.value = group.key;
+  activeGroupSummaryDomain.value = Array.isArray(group.domain) ? group.domain : [];
+  searchTerm.value = '';
+  syncRouteListState({ search: undefined, group_value: group.label || undefined });
   void load();
 }
 
@@ -2130,6 +2139,7 @@ async function load() {
           key: `${String(item.field || activeGroupByField.value || 'group')}:${String(item.value ?? label)}:${idx}`,
           label,
           count: Number(item.count || 0),
+          domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
         };
       })
