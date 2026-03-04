@@ -1,0 +1,21 @@
+{
+  "required_top_keys": [
+    "ok",
+    "sources",
+    "policy_groups",
+    "summary",
+    "errors"
+  ],
+  "required_policy_groups": [
+    "grouped_governance_brief",
+    "grouped_drift_summary",
+    "contract_evidence_grouped_governance"
+  ],
+  "required_summary_keys": [
+    "grouped_governance_brief_policy_count",
+    "grouped_drift_summary_policy_count",
+    "contract_evidence_grouped_governance_policy_count",
+    "report_json",
+    "report_md"
+  ]
+}
