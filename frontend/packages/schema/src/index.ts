@@ -156,6 +156,14 @@ export interface ApiDataListResult {
     count?: number;
     domain?: unknown[];
   }>;
+  grouped_rows?: Array<{
+    field?: string;
+    value?: unknown;
+    label?: string;
+    count?: number;
+    domain?: unknown[];
+    sample_rows?: Array<Record<string, unknown>>;
+  }>;
 }
 
 export interface ApiDataListRequest {
