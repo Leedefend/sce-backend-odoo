@@ -94,6 +94,91 @@
     </section>
 
     <section v-if="status === 'ok'" class="table">
+      <section v-if="groupedRows.length" class="grouped-table">
+        <header class="grouped-toolbar">
+          <span>分组结果</span>
+          <div class="grouped-toolbar-actions">
+            <button
+              type="button"
+              class="grouped-sort-btn"
+              :disabled="!groupedRows.length || !hasCollapsedGroups"
+              @click="expandAllGroups"
+            >
+              全部展开
+            </button>
+            <button
+              type="button"
+              class="grouped-sort-btn"
+              :disabled="!groupedRows.length || allGroupsCollapsed"
+              @click="collapseAllGroups"
+            >
+              全部收起
+            </button>
+            <select :value="String(groupSampleLimit || 3)" @change="onGroupSampleLimitSelectChange">
+              <option value="3">每组 3 条</option>
+              <option value="5">每组 5 条</option>
+              <option value="8">每组 8 条</option>
+            </select>
+            <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
+              {{ groupSortLabel }}
+            </button>
+          </div>
+        </header>
+        <article v-for="group in sortedGroupedRows" :key="group.key" class="group-block">
+          <header class="group-head">
+            <button type="button" class="group-toggle" @click="toggleGroupCollapsed(group.key)">
+              {{ isGroupCollapsed(group.key) ? '展开' : '收起' }}
+            </button>
+            <p>{{ group.label }}</p>
+            <span>{{ group.count }} 条</span>
+            <div v-if="onGroupPageChange" class="group-page">
+              <button
+                type="button"
+                class="group-page-btn"
+                :disabled="Boolean(group.loading) || !canGroupPagePrev(group)"
+                @click="pageGroupPrev(group)"
+              >
+                上一页
+              </button>
+              <span>{{ groupPageRangeText(group) }}</span>
+              <button
+                type="button"
+                class="group-page-btn"
+                :disabled="Boolean(group.loading) || !canGroupPageNext(group)"
+                @click="pageGroupNext(group)"
+              >
+                下一页
+              </button>
+            </div>
+            <button
+              v-if="onOpenGroup"
+              type="button"
+              class="group-open-btn"
+              @click="openGroup(group)"
+            >
+              查看全部
+            </button>
+          </header>
+          <table v-if="!isGroupCollapsed(group.key)">
+            <thead>
+              <tr>
+                <th v-for="col in displayedColumns" :key="`group-col-${group.key}-${col}`">{{ columnLabel(col) }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(row, index) in group.sampleRows"
+                :key="`group-row-${group.key}-${String(row.id ?? index)}`"
+                @click="handleRow(row)"
+              >
+                <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
+                  {{ formatValue(row[col]) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
       <table>
         <thead>
           <tr>
@@ -195,6 +280,36 @@ const props = defineProps<{
   showAssign?: boolean;
   assigneeOptions?: Array<{ id: number; name: string }>;
   selectedAssigneeId?: number | null;
+  groupedRows?: Array<{
+    key: string;
+    label: string;
+    count: number;
+    sampleRows: Array<Record<string, unknown>>;
+    domain?: unknown[];
+    pageOffset?: number;
+    pageLimit?: number;
+    loading?: boolean;
+  }>;
+  onOpenGroup?: (group: {
+    key: string;
+    label: string;
+    count: number;
+    domain?: unknown[];
+  }) => void;
+  onGroupPageChange?: (group: {
+    key: string;
+    label: string;
+    count: number;
+    domain?: unknown[];
+    offset: number;
+    limit: number;
+  }) => void;
+  groupSampleLimit?: number;
+  onGroupSampleLimitChange?: (limit: number) => void;
+  groupSort?: 'asc' | 'desc';
+  onGroupSortChange?: (next: 'asc' | 'desc') => void;
+  collapsedGroupKeys?: string[];
+  onGroupCollapsedChange?: (keys: string[]) => void;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -203,8 +318,118 @@ const errorCopy = computed(() =>
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));
+const groupedRows = computed(() =>
+  Array.isArray(props.groupedRows) ? props.groupedRows : [],
+);
+const groupSortDesc = computed(() => (props.groupSort || 'desc') === 'desc');
+const sortedGroupedRows = computed(() => {
+  const rows = [...groupedRows.value];
+  rows.sort((a, b) => {
+    const cmp = Number(a.count || 0) - Number(b.count || 0);
+    if (cmp === 0) return String(a.label || '').localeCompare(String(b.label || ''));
+    return groupSortDesc.value ? -cmp : cmp;
+  });
+  return rows;
+});
+const groupSortLabel = computed(() => (groupSortDesc.value ? '按数量降序' : '按数量升序'));
+const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
+const allGroupsCollapsed = computed(() => {
+  if (!sortedGroupedRows.value.length) return false;
+  return sortedGroupedRows.value.every((item) => collapsedSet.value.has(item.key));
+});
+const hasCollapsedGroups = computed(() => {
+  if (!sortedGroupedRows.value.length) return false;
+  return sortedGroupedRows.value.some((item) => collapsedSet.value.has(item.key));
+});
 function formatValue(value: unknown) {
   return formatDisplayValue(value);
+}
+
+function toggleGroupCollapsed(key: string) {
+  if (!props.onGroupCollapsedChange) return;
+  const set = new Set(collapsedSet.value);
+  if (set.has(key)) set.delete(key);
+  else set.add(key);
+  props.onGroupCollapsedChange(Array.from(set));
+}
+
+function isGroupCollapsed(key: string) {
+  return collapsedSet.value.has(key);
+}
+
+function toggleGroupSort() {
+  if (!props.onGroupSortChange) return;
+  props.onGroupSortChange(groupSortDesc.value ? 'asc' : 'desc');
+}
+
+function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {
+  props.onOpenGroup?.(group);
+}
+
+function resolveGroupPageLimit(group: { pageLimit?: number }) {
+  const limitRaw = Number(group.pageLimit || props.groupSampleLimit || 3);
+  return Number.isFinite(limitRaw) && limitRaw > 0 ? Math.trunc(limitRaw) : 3;
+}
+
+function resolveGroupPageOffset(group: { pageOffset?: number; count: number; pageLimit?: number }) {
+  const limit = resolveGroupPageLimit(group);
+  const maxOffset = Math.max(0, Number(group.count || 0) - limit);
+  const offsetRaw = Number(group.pageOffset || 0);
+  if (!Number.isFinite(offsetRaw)) return 0;
+  return Math.min(Math.max(Math.trunc(offsetRaw), 0), maxOffset);
+}
+
+function canGroupPagePrev(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  return resolveGroupPageOffset(group) > 0;
+}
+
+function canGroupPageNext(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  const offset = resolveGroupPageOffset(group);
+  const limit = resolveGroupPageLimit(group);
+  return offset + limit < Number(group.count || 0);
+}
+
+function groupPageRangeText(group: { count: number; pageOffset?: number; pageLimit?: number }) {
+  const total = Math.max(0, Number(group.count || 0));
+  if (!total) return '0 / 0';
+  const offset = resolveGroupPageOffset(group);
+  const limit = resolveGroupPageLimit(group);
+  const start = offset + 1;
+  const end = Math.min(total, offset + limit);
+  return `${start}-${end} / ${total}`;
+}
+
+function pageGroupPrev(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (!props.onGroupPageChange) return;
+  const limit = resolveGroupPageLimit(group);
+  const offset = resolveGroupPageOffset(group);
+  const next = Math.max(0, offset - limit);
+  props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset: next, limit });
+}
+
+function pageGroupNext(group: { key: string; label: string; count: number; domain?: unknown[]; pageOffset?: number; pageLimit?: number }) {
+  if (!props.onGroupPageChange) return;
+  const limit = resolveGroupPageLimit(group);
+  const offset = resolveGroupPageOffset(group);
+  const maxOffset = Math.max(0, Number(group.count || 0) - limit);
+  const next = Math.min(maxOffset, offset + limit);
+  props.onGroupPageChange({ key: group.key, label: group.label, count: group.count, domain: group.domain, offset: next, limit });
+}
+
+function onGroupSampleLimitSelectChange(event: Event) {
+  const value = Number((event.target as HTMLSelectElement | null)?.value || 0);
+  if (!Number.isFinite(value)) return;
+  props.onGroupSampleLimitChange?.(value);
+}
+
+function collapseAllGroups() {
+  if (!props.onGroupCollapsedChange) return;
+  props.onGroupCollapsedChange(sortedGroupedRows.value.map((item) => item.key));
+}
+
+function expandAllGroups() {
+  if (!props.onGroupCollapsedChange) return;
+  props.onGroupCollapsedChange([]);
 }
 
 function handleRow(row: Record<string, unknown>) {
@@ -368,6 +593,114 @@ function columnLabel(col: string) {
   background: white;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.grouped-table {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.grouped-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.grouped-toolbar span {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.grouped-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grouped-toolbar-actions select {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1e3a8a;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+.grouped-sort-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 2px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.group-block {
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #dbeafe;
+}
+
+.group-toggle,
+.group-open-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.group-head p {
+  margin: 0;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.group-head span {
+  color: #475569;
+  font-size: 12px;
+}
+
+.group-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 12px;
+}
+
+.group-page-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.group-page-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .batch-bar {

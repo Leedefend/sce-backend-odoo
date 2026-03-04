@@ -3,10 +3,14 @@
 import json
 import os
 import time
+from pathlib import Path
 from datetime import datetime
 from http.client import RemoteDisconnected
 from urllib import request as urlrequest
 from urllib.error import HTTPError, URLError
+
+ROOT = Path(__file__).resolve().parents[2]
+GROUPED_SNAPSHOT_BASELINE = ROOT / "scripts" / "verify" / "baselines" / "e2e_grouped_rows_signature.json"
 
 
 def _load_env_value_from_file(env_path: str, key: str) -> str | None:
@@ -145,6 +149,33 @@ def _write_json(path: str, obj: dict):
         json.dump(obj, f, ensure_ascii=False, sort_keys=True, indent=2)
 
 
+def _read_json(path: Path) -> dict:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _write_json_path(path: Path, obj: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, sort_keys=True, indent=2)
+
+
+def _unwrap_intent_data(resp: dict) -> tuple[dict, dict]:
+    payload = resp.get("data")
+    meta = resp.get("meta")
+    if isinstance(payload, dict) and isinstance(payload.get("data"), dict):
+        data_nested = payload.get("data")
+        meta_nested = payload.get("meta")
+        return (
+            data_nested if isinstance(data_nested, dict) else {},
+            meta_nested if isinstance(meta_nested, dict) else (meta if isinstance(meta, dict) else {}),
+        )
+    return (
+        payload if isinstance(payload, dict) else {},
+        meta if isinstance(meta, dict) else {},
+    )
+
+
 def main():
     base_url = _get_base_url()
     db_name = os.getenv("E2E_DB") or os.getenv("DB_NAME") or os.getenv("DB") or ""
@@ -209,6 +240,103 @@ def main():
     if status >= 400 or not data_resp.get("ok"):
         raise RuntimeError(f"api.data failed: {data_resp}")
 
+    # 4.1) api.data grouped_rows across key domains (project/contract/cost/risk)
+    grouped_cases = [
+        {"case": "project_grouped", "model": "project.project", "group_by": "lifecycle_state"},
+        {"case": "contract_grouped", "model": "construction.contract", "group_by": "create_uid"},
+        {"case": "cost_grouped", "model": "project.cost.ledger", "group_by": "create_uid"},
+        {"case": "risk_grouped", "model": "payment.request", "group_by": "create_uid"},
+    ]
+    grouped_responses: list[dict] = []
+    grouped_signature_cases: list[dict] = []
+    for item in grouped_cases:
+        grouped_payload = {
+            "intent": "api.data",
+            "params": {
+                "db": db_name,
+                "op": "list",
+                "model": item["model"],
+                "fields": ["id", "name"],
+                "group_by": item["group_by"],
+                "group_sample_limit": 3,
+                "limit": 12,
+                "offset": 0,
+            },
+        }
+        status, grouped_resp = _http_post_json(intent_url, grouped_payload, headers=auth_header)
+        if status >= 400 or not grouped_resp.get("ok"):
+            err = grouped_resp.get("error") if isinstance(grouped_resp.get("error"), dict) else {}
+            err_code = str(err.get("code") or "")
+            if err_code == "PERMISSION_DENIED":
+                grouped_responses.append(
+                    {
+                        "case": item["case"],
+                        "request": grouped_payload,
+                        "response": grouped_resp,
+                        "skipped": True,
+                        "skip_reason": "PERMISSION_DENIED",
+                    }
+                )
+                grouped_signature_cases.append(
+                    {
+                        "case": item["case"],
+                        "model": item["model"],
+                        "group_by": item["group_by"],
+                        "status": "skipped",
+                        "reason": "PERMISSION_DENIED",
+                        "meta_group_by": None,
+                        "has_group_summary": False,
+                        "has_grouped_rows": False,
+                        "response_keys": [],
+                    }
+                )
+                continue
+            raise RuntimeError(f"grouped api.data failed for {item['case']}: {grouped_resp}")
+        data, meta = _unwrap_intent_data(grouped_resp)
+        grouped_responses.append({"case": item["case"], "request": grouped_payload, "response": grouped_resp})
+        grouped_signature_cases.append(
+            {
+                "case": item["case"],
+                "model": item["model"],
+                "group_by": item["group_by"],
+                "status": "ok",
+                "reason": "",
+                "meta_group_by": meta.get("group_by"),
+                "has_group_summary": isinstance(data.get("group_summary"), list),
+                "has_grouped_rows": isinstance(data.get("grouped_rows"), list),
+                "response_keys": sorted(
+                    [key for key in ("records", "next_offset", "group_summary", "grouped_rows") if key in data]
+                ),
+            }
+        )
+
+    grouped_signature = _normalize_obj(
+        {
+            "version": "v0.3",
+            "grouped_cases": sorted(grouped_signature_cases, key=lambda row: row.get("case") or ""),
+        }
+    )
+    update_grouped_snapshot = os.getenv("E2E_GROUPED_SNAPSHOT_UPDATE") == "1"
+    if update_grouped_snapshot:
+        _write_json_path(GROUPED_SNAPSHOT_BASELINE, grouped_signature)
+        print(f"[e2e] grouped snapshot updated: {GROUPED_SNAPSHOT_BASELINE}")
+    else:
+        if not GROUPED_SNAPSHOT_BASELINE.exists():
+            raise RuntimeError(
+                f"grouped snapshot baseline missing: {GROUPED_SNAPSHOT_BASELINE}. "
+                f"Run with E2E_GROUPED_SNAPSHOT_UPDATE=1 to create baseline."
+            )
+        baseline = _normalize_obj(_read_json(GROUPED_SNAPSHOT_BASELINE))
+        if baseline != grouped_signature:
+            current_path = os.path.join(out_dir, "grouped_signature.current.json")
+            baseline_path = os.path.join(out_dir, "grouped_signature.baseline.json")
+            _write_json(current_path, grouped_signature)
+            _write_json(baseline_path, baseline)
+            raise RuntimeError(
+                "grouped_rows e2e snapshot mismatch "
+                f"(current={current_path}, baseline={baseline_path})"
+            )
+
     # 5) logout and verify revoked token
     status, logout_resp = _http_post_json(
         intent_url, {"intent": "auth.logout", "params": {"db": db_name}}, headers=auth_header
@@ -235,6 +363,8 @@ def main():
         "system_init": init_resp,
         "ui_contract": contract_resp,
         "api_data": data_resp,
+        "api_data_grouped": grouped_responses,
+        "api_data_grouped_signature": grouped_signature,
         "logout": logout_resp,
         "system_init_revoked": init_revoked,
     }
