@@ -48,6 +48,15 @@ def _to_abs_report_path(raw: object) -> Path | None:
     return (ROOT / path).resolve()
 
 
+def _load_text(path: Path | None) -> str:
+    if not isinstance(path, Path) or not path.is_file():
+        return ""
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
+
 def main() -> int:
     policy = {
         "max_errors": 0,
@@ -105,6 +114,8 @@ def main() -> int:
         "require_grouped_governance_export_marker_bounds": True,
         "require_grouped_governance_report_alignment": True,
         "max_grouped_governance_alignment_ratio_delta_abs": 0.000001,
+        "require_grouped_governance_report_md_alignment": True,
+        "require_grouped_governance_report_md_title": "# Grouped Governance Brief Guard",
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -464,6 +475,15 @@ def main() -> int:
             )
             if abs(evidence_ratio - source_ratio) > max_align_ratio_delta_abs:
                 errors.append("grouped_governance_brief.governance_coverage_ratio must align with source report")
+    if bool(policy.get("require_grouped_governance_report_md_alignment", True)):
+        report_md_path = _to_abs_report_path(grouped_governance.get("report_md"))
+        report_md_text = _load_text(report_md_path)
+        if not report_md_text:
+            errors.append("grouped_governance_brief.report_md must point to a readable markdown report")
+        else:
+            expected_title = str(policy.get("require_grouped_governance_report_md_title") or "").strip()
+            if expected_title and expected_title not in report_md_text:
+                errors.append("grouped_governance_brief.report_md missing required governance title")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
