@@ -686,12 +686,23 @@ class ApiDataHandler(BaseIntentHandler):
             group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
         )
+        primary_group_field = self._primary_group_by_field(group_by)
+        effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
+        effective_page_size = effective_page_size if effective_page_size > 0 else min(self._get_int(p, "group_sample_limit", 3), 8)
+        effective_page_size = max(1, int(effective_page_size or 1))
 
         data = {
             "records": rows,
             "next_offset": offset + len(rows),
             "group_summary": group_summary,
             "grouped_rows": grouped_rows,
+            "group_paging": {
+                "group_by_field": primary_group_field or None,
+                "group_limit": group_limit,
+                "group_count": len(group_summary),
+                "page_size": effective_page_size,
+                "has_group_page_offsets": bool(group_page_offsets),
+            },
         }
         if need_total:
             data["total"] = int(total or 0)
