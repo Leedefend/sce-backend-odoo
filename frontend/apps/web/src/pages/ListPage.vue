@@ -94,6 +94,32 @@
     </section>
 
     <section v-if="status === 'ok'" class="table">
+      <section v-if="groupedRows.length" class="grouped-table">
+        <article v-for="group in groupedRows" :key="group.key" class="group-block">
+          <header class="group-head">
+            <p>{{ group.label }}</p>
+            <span>{{ group.count }} 条</span>
+          </header>
+          <table>
+            <thead>
+              <tr>
+                <th v-for="col in displayedColumns" :key="`group-col-${group.key}-${col}`">{{ columnLabel(col) }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(row, index) in group.sampleRows"
+                :key="`group-row-${group.key}-${String(row.id ?? index)}`"
+                @click="handleRow(row)"
+              >
+                <td v-for="col in displayedColumns" :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`">
+                  {{ formatValue(row[col]) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
       <table>
         <thead>
           <tr>
@@ -195,6 +221,12 @@ const props = defineProps<{
   showAssign?: boolean;
   assigneeOptions?: Array<{ id: number; name: string }>;
   selectedAssigneeId?: number | null;
+  groupedRows?: Array<{
+    key: string;
+    label: string;
+    count: number;
+    sampleRows: Array<Record<string, unknown>>;
+  }>;
 }>();
 const errorCopy = computed(() =>
   resolveErrorCopy(
@@ -203,6 +235,9 @@ const errorCopy = computed(() =>
   ),
 );
 const emptyCopy = computed(() => resolveEmptyCopy('list'));
+const groupedRows = computed(() =>
+  Array.isArray(props.groupedRows) ? props.groupedRows : [],
+);
 function formatValue(value: unknown) {
   return formatDisplayValue(value);
 }
@@ -368,6 +403,42 @@ function columnLabel(col: string) {
   background: white;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.grouped-table {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.group-block {
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #dbeafe;
+}
+
+.group-head p {
+  margin: 0;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.group-head span {
+  color: #475569;
+  font-size: 12px;
 }
 
 .batch-bar {

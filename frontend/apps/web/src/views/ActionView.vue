@@ -242,6 +242,7 @@
       :assignee-options="assigneeOptions"
       :selected-assignee-id="selectedAssigneeId"
       :list-profile="listProfile"
+      :grouped-rows="groupedRows"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
@@ -371,6 +372,7 @@ const batchFailedOffset = ref(0);
 const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
 const groupSummaryItems = ref<GroupSummaryItem[]>([]);
+const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>> }>>([]);
 const activeGroupSummaryKey = ref('');
 const activeGroupSummaryDomain = ref<unknown[]>([]);
 const advancedFields = ref<string[]>([]);
@@ -1902,6 +1904,7 @@ async function load() {
   resolvedModelRef.value = '';
   contractLimit.value = 40;
   records.value = [];
+  groupedRows.value = [];
   groupSummaryItems.value = [];
   columns.value = [];
   kanbanFields.value = [];
@@ -2118,6 +2121,19 @@ async function load() {
         };
       })
       .filter((item) => item.count >= 0)
+      .slice(0, 12);
+    groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])
+      .map((row, idx) => {
+        const item = row as Record<string, unknown>;
+        const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        return {
+          key: `${String(item.field || activeGroupByField.value || 'group')}:${String(item.value ?? label)}:${idx}`,
+          label,
+          count: Number(item.count || 0),
+          sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
+        };
+      })
+      .filter((item) => item.sampleRows.length > 0)
       .slice(0, 12);
     if (!activeGroupSummaryKey.value) {
       const routeGroupValue = String(route.query.group_value || '').trim();
