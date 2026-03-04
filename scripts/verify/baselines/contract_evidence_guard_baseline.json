@@ -54,6 +54,10 @@
   "require_grouped_governance_export_marker_bounds": true,
   "require_grouped_governance_report_alignment": true,
   "max_grouped_governance_alignment_ratio_delta_abs": 0.000001,
+  "require_grouped_governance_report_json_prefix": "artifacts/",
+  "require_grouped_governance_report_json_suffix": "grouped_governance_brief_guard.json",
   "require_grouped_governance_report_md_alignment": true,
+  "require_grouped_governance_report_md_prefix": "artifacts/",
+  "require_grouped_governance_report_md_suffix": "grouped_governance_brief_guard.md",
   "require_grouped_governance_report_md_title": "# Grouped Governance Brief Guard"
 }
