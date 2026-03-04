@@ -61,6 +61,7 @@ def main() -> int:
         "require_grouped_supports_page_has_prev": True,
         "require_grouped_supports_page_has_next": True,
         "require_grouped_supports_page_window": True,
+        "require_grouped_window_range_consistency": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -266,6 +267,15 @@ def main() -> int:
     if bool(policy.get("require_grouped_pagination_contract_section", True)) and not grouped:
         errors.append("grouped_pagination_contract section is required under baseline policy")
     if grouped:
+        for key in (
+            "supports_group_key",
+            "supports_page_has_prev",
+            "supports_page_has_next",
+            "supports_page_window",
+            "window_range_consistency",
+        ):
+            if key in grouped and not isinstance(grouped.get(key), bool):
+                errors.append(f"grouped_pagination_contract.{key} must be bool")
         route_state_key = str(grouped.get("route_state_key") or "").strip()
         expected_route_state_key = str(policy.get("require_grouped_pagination_route_state_key") or "").strip()
         if expected_route_state_key and route_state_key != expected_route_state_key:
@@ -287,6 +297,10 @@ def main() -> int:
             grouped.get("supports_page_window")
         ):
             errors.append("grouped_pagination_contract.supports_page_window must be true under baseline policy")
+        if bool(policy.get("require_grouped_window_range_consistency", True)) and not bool(
+            grouped.get("window_range_consistency")
+        ):
+            errors.append("grouped_pagination_contract.window_range_consistency must be true under baseline policy")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

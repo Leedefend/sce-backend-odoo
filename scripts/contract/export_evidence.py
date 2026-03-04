@@ -216,18 +216,15 @@ def build_evidence(
         },
         "grouped_pagination_contract": {
             "version": str(grouped_signature_report.get("version") or "").strip(),
-            "route_state_key": str(
-                (((grouped_signature_report.get("grouped_pagination_route_state") or {}).get("key")) or "")
-            ).strip(),
-            "supports_group_key": bool((((grouped_signature_report.get("grouped_contract_fields") or {}).get("group_key")))),
-            "supports_page_has_prev": bool(
-                ((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_has_prev"))
-            ),
-            "supports_page_has_next": bool(
-                ((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_has_next"))
-            ),
-            "supports_page_window": bool(
-                ((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_window"))
+            "route_state_key": str(((grouped_signature_report.get("grouped_pagination_route_state") or {}).get("key")) or "").strip(),
+            "supports_group_key": bool((grouped_signature_report.get("grouped_contract_fields") or {}).get("group_key")),
+            "supports_page_has_prev": bool((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_has_prev")),
+            "supports_page_has_next": bool((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_has_next")),
+            "supports_page_window": bool((grouped_signature_report.get("grouped_contract_fields") or {}).get("page_window")),
+            "window_range_consistency": bool(
+                ((grouped_signature_report.get("grouped_pagination_semantic_summary") or {}).get("consistency") or {}).get(
+                    "first_group_page_window_matches_range"
+                )
             ),
             "report": "scripts/verify/baselines/fe_tree_grouped_signature.json",
         },
@@ -377,6 +374,7 @@ def to_markdown(evidence: dict) -> str:
         f"- supports_page_has_prev: {gpc['supports_page_has_prev']}",
         f"- supports_page_has_next: {gpc['supports_page_has_next']}",
         f"- supports_page_window: {gpc['supports_page_window']}",
+        f"- window_range_consistency: {gpc['window_range_consistency']}",
         f"- report: `{gpc['report']}`",
         "",
         "## Top Observed reason_code",

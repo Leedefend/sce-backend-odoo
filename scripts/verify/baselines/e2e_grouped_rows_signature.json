@@ -7,20 +7,14 @@
       "has_grouped_rows": false,
       "meta_group_by": null,
       "model": "construction.contract",
+      "page_window_matches_range": false,
       "reason": "PERMISSION_DENIED",
+      "request_offset_matches_observed": false,
       "response_keys": [],
-      "status": "skipped"
-    },
-    {
-      "case": "risk_grouped",
-      "group_by": "create_uid",
-      "has_group_summary": false,
-      "has_grouped_rows": false,
-      "meta_group_by": null,
-      "model": "payment.request",
-      "reason": "PERMISSION_DENIED",
-      "response_keys": [],
-      "status": "skipped"
+      "status": "skipped",
+      "supports_group_key": false,
+      "supports_page_flags": false,
+      "supports_page_window": false
     },
     {
       "case": "cost_grouped",
@@ -29,9 +23,14 @@
       "has_grouped_rows": false,
       "meta_group_by": null,
       "model": "project.cost.ledger",
+      "page_window_matches_range": false,
       "reason": "PERMISSION_DENIED",
+      "request_offset_matches_observed": false,
       "response_keys": [],
-      "status": "skipped"
+      "status": "skipped",
+      "supports_group_key": false,
+      "supports_page_flags": false,
+      "supports_page_window": false
     },
     {
       "case": "project_grouped",
@@ -40,13 +39,34 @@
       "has_grouped_rows": false,
       "meta_group_by": null,
       "model": "project.project",
+      "page_window_matches_range": true,
       "reason": "",
+      "request_offset_matches_observed": true,
       "response_keys": [
         "next_offset",
         "records"
       ],
-      "status": "ok"
+      "status": "ok",
+      "supports_group_key": false,
+      "supports_page_flags": false,
+      "supports_page_window": false
+    },
+    {
+      "case": "risk_grouped",
+      "group_by": "create_uid",
+      "has_group_summary": false,
+      "has_grouped_rows": false,
+      "meta_group_by": null,
+      "model": "payment.request",
+      "page_window_matches_range": false,
+      "reason": "PERMISSION_DENIED",
+      "request_offset_matches_observed": false,
+      "response_keys": [],
+      "status": "skipped",
+      "supports_group_key": false,
+      "supports_page_flags": false,
+      "supports_page_window": false
     }
   ],
-  "version": "v0.3"
+  "version": "v0.4"
 }
