@@ -21,6 +21,9 @@ Each entry in `grouped_rows` must provide:
 - `count`: total rows in group
 - `domain`: group-specific domain
 - `sample_rows`: paged sample records
+- `page_requested_offset`: requested offset from route/client state
+- `page_applied_offset`: backend-normalized offset after clamp/snap
+- `page_max_offset`: max valid offset for current group/page size
 - `page_offset`: normalized offset (`floor(offset/page_limit)*page_limit`)
 - `page_limit`: effective page size
 - `page_size`: explicit page size alias (equal to `page_limit`, recommended for new clients)
