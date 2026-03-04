@@ -45,6 +45,11 @@
     "mode": "per-group offset map"
   },
   "grouped_payload_present": false,
+  "grouped_contract_fields": {
+    "group_key": true,
+    "page_has_prev": true,
+    "page_has_next": true
+  },
   "grouped_request_keys": [
     "fields",
     "group_by",
