@@ -85,9 +85,14 @@ def main() -> int:
         "require_grouped_drift_export_marker_full_hit": True,
         "require_grouped_governance_brief_ok": True,
         "min_grouped_governance_coverage_ratio": 1.0,
+        "min_grouped_governance_total_file_count": 1,
+        "min_grouped_governance_covered_file_count": 1,
         "max_grouped_governance_failure_count": 0,
         "min_grouped_governance_e2e_case_count": 1,
+        "require_grouped_governance_coverage_count_consistent": True,
+        "max_grouped_governance_coverage_ratio_delta_abs": 0.000001,
         "require_grouped_governance_export_marker_full_hit": True,
+        "require_grouped_governance_export_marker_bounds": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -368,6 +373,18 @@ def main() -> int:
             "grouped_governance_brief.governance_coverage_ratio must be >= "
             f"{min_grouped_governance_coverage_ratio}"
         )
+    min_grouped_governance_total_file_count = int(policy.get("min_grouped_governance_total_file_count", 1) or 1)
+    if int(grouped_governance.get("governance_total_file_count") or 0) < min_grouped_governance_total_file_count:
+        errors.append(
+            "grouped_governance_brief.governance_total_file_count must be >= "
+            f"{min_grouped_governance_total_file_count}"
+        )
+    min_grouped_governance_covered_file_count = int(policy.get("min_grouped_governance_covered_file_count", 1) or 1)
+    if int(grouped_governance.get("governance_covered_file_count") or 0) < min_grouped_governance_covered_file_count:
+        errors.append(
+            "grouped_governance_brief.governance_covered_file_count must be >= "
+            f"{min_grouped_governance_covered_file_count}"
+        )
     max_grouped_governance_failure_count = int(policy.get("max_grouped_governance_failure_count", 0) or 0)
     if int(grouped_governance.get("governance_failure_count") or 0) > max_grouped_governance_failure_count:
         errors.append(
@@ -385,6 +402,26 @@ def main() -> int:
             grouped_governance.get("grouped_export_marker_total") or 0
         ):
             errors.append("grouped_governance_brief export markers must be fully hit under baseline policy")
+    if bool(policy.get("require_grouped_governance_coverage_count_consistent", True)):
+        covered_count = int(grouped_governance.get("governance_covered_file_count") or 0)
+        total_count = int(grouped_governance.get("governance_total_file_count") or 0)
+        if covered_count > total_count:
+            errors.append("grouped_governance_brief.governance_covered_file_count must be <= governance_total_file_count")
+        expected_ratio = (float(covered_count) / float(total_count)) if total_count > 0 else 0.0
+        actual_ratio = _ratio_to_float(grouped_governance.get("governance_coverage_ratio"))
+        max_ratio_delta_abs = float(policy.get("max_grouped_governance_coverage_ratio_delta_abs", 0.000001) or 0.000001)
+        if abs(actual_ratio - expected_ratio) > max_ratio_delta_abs:
+            errors.append(
+                "grouped_governance_brief.governance_coverage_ratio must match "
+                "governance_covered_file_count/governance_total_file_count"
+            )
+    if bool(policy.get("require_grouped_governance_export_marker_bounds", True)):
+        marker_hits = int(grouped_governance.get("grouped_export_marker_hits") or 0)
+        marker_total = int(grouped_governance.get("grouped_export_marker_total") or 0)
+        if marker_total < 1:
+            errors.append("grouped_governance_brief.grouped_export_marker_total must be >= 1")
+        if marker_hits > marker_total:
+            errors.append("grouped_governance_brief.grouped_export_marker_hits must be <= grouped_export_marker_total")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
