@@ -250,6 +250,36 @@ class ApiDataHandler(BaseIntentHandler):
             )
         return out
 
+    def _build_grouped_rows(self, env_model, domain, group_by, fields_safe: List[str], limit: int = 20, sample_limit: int = 3):
+        summary = self._build_group_summary(env_model, domain, group_by, limit=limit)
+        if not summary:
+            return []
+        row_fields = list(fields_safe or ["id", "name"])
+        if "id" not in row_fields:
+            row_fields.insert(0, "id")
+        out = []
+        for item in summary:
+            group_domain = item.get("domain") if isinstance(item.get("domain"), list) else []
+            if not group_domain:
+                continue
+            try:
+                group_recs = env_model.search(group_domain, limit=sample_limit or 3)
+                sample_rows = group_recs.read(row_fields)
+            except Exception:
+                _logger.exception("group sample query failed model=%s group=%s", env_model._name, item.get("label"))
+                sample_rows = []
+            out.append(
+                {
+                    "field": item.get("field"),
+                    "value": item.get("value"),
+                    "label": item.get("label"),
+                    "count": item.get("count"),
+                    "domain": group_domain,
+                    "sample_rows": sample_rows,
+                }
+            )
+        return out
+
     def _safe_eval_with_runtime(self, raw: str):
         if not isinstance(raw, str):
             return None
@@ -550,11 +580,20 @@ class ApiDataHandler(BaseIntentHandler):
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
         group_summary = self._build_group_summary(env_model, domain, group_by, limit=min(limit or 20, 50))
+        grouped_rows = self._build_grouped_rows(
+            env_model,
+            domain,
+            group_by,
+            fields_safe,
+            limit=min(limit or 20, 30),
+            sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
+        )
 
         data = {
             "records": rows,
             "next_offset": offset + len(rows),
             "group_summary": group_summary,
+            "grouped_rows": grouped_rows,
         }
         if need_total:
             data["total"] = int(total or 0)

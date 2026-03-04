@@ -1,0 +1,52 @@
+{
+  "grouped_cases": [
+    {
+      "case": "contract_grouped",
+      "group_by": "create_uid",
+      "has_group_summary": false,
+      "has_grouped_rows": false,
+      "meta_group_by": null,
+      "model": "construction.contract",
+      "reason": "PERMISSION_DENIED",
+      "response_keys": [],
+      "status": "skipped"
+    },
+    {
+      "case": "risk_grouped",
+      "group_by": "create_uid",
+      "has_group_summary": false,
+      "has_grouped_rows": false,
+      "meta_group_by": null,
+      "model": "payment.request",
+      "reason": "PERMISSION_DENIED",
+      "response_keys": [],
+      "status": "skipped"
+    },
+    {
+      "case": "cost_grouped",
+      "group_by": "create_uid",
+      "has_group_summary": false,
+      "has_grouped_rows": false,
+      "meta_group_by": null,
+      "model": "project.cost.ledger",
+      "reason": "PERMISSION_DENIED",
+      "response_keys": [],
+      "status": "skipped"
+    },
+    {
+      "case": "project_grouped",
+      "group_by": "lifecycle_state",
+      "has_group_summary": false,
+      "has_grouped_rows": false,
+      "meta_group_by": null,
+      "model": "project.project",
+      "reason": "",
+      "response_keys": [
+        "next_offset",
+        "records"
+      ],
+      "status": "ok"
+    }
+  ],
+  "version": "v0.3"
+}
