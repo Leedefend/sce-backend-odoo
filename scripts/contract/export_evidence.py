@@ -40,6 +40,7 @@ def build_evidence(
     grouped_drift_summary_report: dict,
     grouped_governance_brief_report: dict,
     grouped_governance_policy_matrix_report: dict,
+    grouped_governance_trend_consistency_report: dict,
 ) -> dict:
     intents = intent_catalog.get("intents") or []
     scenes = scene_catalog.get("scenes") or []
@@ -346,6 +347,20 @@ def build_evidence(
             "report_json": "artifacts/grouped_governance_policy_matrix.json",
             "report_md": "artifacts/grouped_governance_policy_matrix.md",
         },
+        "grouped_governance_trend_consistency": {
+            "ok": bool(grouped_governance_trend_consistency_report.get("ok", False)),
+            "has_previous_aligned": bool(
+                ((grouped_governance_trend_consistency_report.get("summary") or {}).get("has_previous_aligned"))
+            ),
+            "brief_delta_types_ok": bool(
+                ((grouped_governance_trend_consistency_report.get("summary") or {}).get("brief_delta_types_ok"))
+            ),
+            "matrix_delta_types_ok": bool(
+                ((grouped_governance_trend_consistency_report.get("summary") or {}).get("matrix_delta_types_ok"))
+            ),
+            "report_json": "artifacts/grouped_governance_trend_consistency_guard.json",
+            "report_md": "artifacts/grouped_governance_trend_consistency_guard.md",
+        },
     }
     return evidence
 
@@ -371,6 +386,7 @@ def to_markdown(evidence: dict) -> str:
     gds = evidence["grouped_drift_summary"]
     ggb = evidence["grouped_governance_brief"]
     ggpm = evidence["grouped_governance_policy_matrix"]
+    ggtc = evidence["grouped_governance_trend_consistency"]
     lines = [
         "# Phase 11.1 Contract Evidence",
         "",
@@ -551,6 +567,14 @@ def to_markdown(evidence: dict) -> str:
         f"- report_json: `{ggpm['report_json']}`",
         f"- report_md: `{ggpm['report_md']}`",
         "",
+        "## Grouped Governance Trend Consistency",
+        f"- ok: {ggtc['ok']}",
+        f"- has_previous_aligned: {ggtc['has_previous_aligned']}",
+        f"- brief_delta_types_ok: {ggtc['brief_delta_types_ok']}",
+        f"- matrix_delta_types_ok: {ggtc['matrix_delta_types_ok']}",
+        f"- report_json: `{ggtc['report_json']}`",
+        f"- report_md: `{ggtc['report_md']}`",
+        "",
         "## Top Observed reason_code",
     ]
     top_codes = i.get("top_observed_reason_codes") or []
@@ -585,6 +609,10 @@ def main() -> int:
     parser.add_argument("--grouped-drift-summary-report", default="artifacts/grouped_drift_summary_guard.json")
     parser.add_argument("--grouped-governance-brief-report", default="artifacts/grouped_governance_brief_guard.json")
     parser.add_argument("--grouped-governance-policy-matrix-report", default="artifacts/grouped_governance_policy_matrix.json")
+    parser.add_argument(
+        "--grouped-governance-trend-consistency-report",
+        default="artifacts/grouped_governance_trend_consistency_guard.json",
+    )
     parser.add_argument("--output-json", default="artifacts/contract/phase11_1_contract_evidence.json")
     parser.add_argument("--output-md", default="artifacts/contract/phase11_1_contract_evidence.md")
     args = parser.parse_args()
@@ -609,6 +637,9 @@ def main() -> int:
     grouped_drift_summary_report = load_json_optional(Path(args.grouped_drift_summary_report), {})
     grouped_governance_brief_report = load_json_optional(Path(args.grouped_governance_brief_report), {})
     grouped_governance_policy_matrix_report = load_json_optional(Path(args.grouped_governance_policy_matrix_report), {})
+    grouped_governance_trend_consistency_report = load_json_optional(
+        Path(args.grouped_governance_trend_consistency_report), {}
+    )
 
     if not isinstance(intent_catalog, dict):
         raise SystemExit("intent catalog must be object")
@@ -648,6 +679,8 @@ def main() -> int:
         raise SystemExit("grouped governance brief report must be object")
     if not isinstance(grouped_governance_policy_matrix_report, dict):
         raise SystemExit("grouped governance policy matrix report must be object")
+    if not isinstance(grouped_governance_trend_consistency_report, dict):
+        raise SystemExit("grouped governance trend consistency report must be object")
 
     evidence = build_evidence(
         intent_catalog,
@@ -670,6 +703,7 @@ def main() -> int:
         grouped_drift_summary_report,
         grouped_governance_brief_report,
         grouped_governance_policy_matrix_report,
+        grouped_governance_trend_consistency_report,
     )
     out_json = Path(args.output_json)
     out_md = Path(args.output_md)
