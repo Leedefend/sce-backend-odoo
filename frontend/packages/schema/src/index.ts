@@ -173,6 +173,7 @@ export interface ApiDataListRequest {
   domain?: unknown[] | string;
   domain_raw?: string;
   group_by?: string | string[];
+  group_sample_limit?: number;
   search_term?: string;
   limit?: number;
   offset?: number;
