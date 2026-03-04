@@ -45,6 +45,10 @@ def main() -> int:
         ":on-open-group=\"handleOpenGroupedRows\"",
         ":group-sample-limit=\"groupSampleLimit\"",
         ":on-group-sample-limit-change=\"handleGroupSampleLimitChange\"",
+        ":group-sort=\"groupSort\"",
+        ":on-group-sort-change=\"handleGroupSortChange\"",
+        ":collapsed-group-keys=\"collapsedGroupKeys\"",
+        ":on-group-collapsed-change=\"handleGroupCollapsedChange\"",
     ]
     for marker in action_markers:
         if marker not in action_view:
@@ -57,6 +61,8 @@ def main() -> int:
         "toggleGroupCollapsed(",
         "grouped-sort-btn",
         "onGroupSampleLimitSelectChange",
+        "props.groupSort",
+        "props.collapsedGroupKeys",
     ]
     for marker in list_markers:
         if marker not in list_page:
