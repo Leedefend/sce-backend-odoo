@@ -50,6 +50,11 @@ def main() -> int:
         "require_load_view_access_ok": True,
         "require_load_view_forbidden_status_403": True,
         "require_load_view_forbidden_error_code": "PERMISSION_DENIED",
+        "require_scene_contract_coverage_ok": True,
+        "min_scene_contract_coverage_scene_count_actual": 1,
+        "min_scene_contract_coverage_intent_count_actual": 1,
+        "min_scene_contract_coverage_renderable_ratio": 0.0,
+        "min_scene_contract_coverage_interaction_ready_ratio": 0.0,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -77,6 +82,7 @@ def main() -> int:
         "load_view_access_contract",
         "backend_architecture_full",
         "backend_evidence_manifest",
+        "scene_contract_coverage",
     ):
         if not isinstance(payload.get(key), dict):
             errors.append(f"missing section: {key}")
@@ -212,6 +218,42 @@ def main() -> int:
                 "load_view_access_contract.forbidden_error_code must be "
                 f"{required_forbidden_code}, got {actual_forbidden_code or '-'}"
             )
+
+    scene_contract_coverage = payload.get("scene_contract_coverage") if isinstance(payload.get("scene_contract_coverage"), dict) else {}
+    if not isinstance(scene_contract_coverage.get("ok"), bool):
+        errors.append("scene_contract_coverage.ok must be bool")
+    if bool(policy.get("require_scene_contract_coverage_ok", True)) and not bool(scene_contract_coverage.get("ok")):
+        errors.append("scene_contract_coverage.ok must be true under baseline policy")
+
+    min_scene_cov_scene_count = int(policy.get("min_scene_contract_coverage_scene_count_actual", 1) or 1)
+    if int(scene_contract_coverage.get("scene_count_actual") or 0) < min_scene_cov_scene_count:
+        errors.append(
+            "scene_contract_coverage.scene_count_actual must be >= "
+            f"{min_scene_cov_scene_count}"
+        )
+
+    min_scene_cov_intent_count = int(policy.get("min_scene_contract_coverage_intent_count_actual", 1) or 1)
+    if int(scene_contract_coverage.get("intent_count_actual") or 0) < min_scene_cov_intent_count:
+        errors.append(
+            "scene_contract_coverage.intent_count_actual must be >= "
+            f"{min_scene_cov_intent_count}"
+        )
+
+    min_scene_cov_renderable_ratio = float(policy.get("min_scene_contract_coverage_renderable_ratio", 0.0) or 0.0)
+    if float(scene_contract_coverage.get("renderable_ratio") or 0.0) < min_scene_cov_renderable_ratio:
+        errors.append(
+            "scene_contract_coverage.renderable_ratio must be >= "
+            f"{min_scene_cov_renderable_ratio}"
+        )
+
+    min_scene_cov_interaction_ready_ratio = float(
+        policy.get("min_scene_contract_coverage_interaction_ready_ratio", 0.0) or 0.0
+    )
+    if float(scene_contract_coverage.get("interaction_ready_ratio") or 0.0) < min_scene_cov_interaction_ready_ratio:
+        errors.append(
+            "scene_contract_coverage.interaction_ready_ratio must be >= "
+            f"{min_scene_cov_interaction_ready_ratio}"
+        )
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
