@@ -250,6 +250,7 @@
       :on-group-sort-change="handleGroupSortChange"
       :collapsed-group-keys="collapsedGroupKeys"
       :on-group-collapsed-change="handleGroupCollapsedChange"
+      :on-group-page-change="handleGroupedRowsPageChange"
       :on-reload="reload"
       :on-search="handleSearch"
       :on-sort="handleSort"
@@ -379,7 +380,17 @@ const batchFailedOffset = ref(0);
 const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
 const groupSummaryItems = ref<GroupSummaryItem[]>([]);
-const groupedRows = ref<Array<{ key: string; label: string; count: number; sampleRows: Array<Record<string, unknown>>; domain?: unknown[] }>>([]);
+type GroupedRow = {
+  key: string;
+  label: string;
+  count: number;
+  sampleRows: Array<Record<string, unknown>>;
+  domain?: unknown[];
+  pageOffset: number;
+  pageLimit: number;
+  loading?: boolean;
+};
+const groupedRows = ref<GroupedRow[]>([]);
 const groupSampleLimit = ref(3);
 const groupSort = ref<'asc' | 'desc'>('desc');
 const collapsedGroupKeys = ref<string[]>([]);
@@ -1250,6 +1261,56 @@ function handleGroupCollapsedChange(keys: string[]) {
   syncRouteListState({
     group_collapsed: collapsedGroupKeys.value.length ? collapsedGroupKeys.value.join(',') : undefined,
   });
+}
+
+function resolveGroupedPageFields() {
+  const requested = resolveRequestedFields(columns.value, listProfile.value);
+  const base = requested.length ? requested : columns.value;
+  const dedup = Array.from(new Set((base.length ? base : ['id', 'name']).map((item) => String(item || '').trim()).filter(Boolean)));
+  if (!dedup.includes('id')) dedup.unshift('id');
+  return dedup;
+}
+
+async function handleGroupedRowsPageChange(group: {
+  key: string;
+  label: string;
+  count: number;
+  domain?: unknown[];
+  offset: number;
+  limit: number;
+}) {
+  if (!group?.key) return;
+  const found = groupedRows.value.find((item) => item.key === group.key);
+  if (!found) return;
+  const pageLimitRaw = Number(group.limit || found.pageLimit || groupSampleLimit.value || 3);
+  const pageLimit = Number.isFinite(pageLimitRaw) && pageLimitRaw > 0 ? Math.min(Math.trunc(pageLimitRaw), 50) : 3;
+  const maxOffset = Math.max(0, Number(found.count || 0) - pageLimit);
+  const offsetRaw = Number(group.offset || 0);
+  const nextOffset = Number.isFinite(offsetRaw) ? Math.min(Math.max(Math.trunc(offsetRaw), 0), maxOffset) : 0;
+  if (nextOffset === found.pageOffset && found.sampleRows.length > 0) return;
+  const targetModel = resolvedModelRef.value || model.value;
+  if (!targetModel) return;
+  groupedRows.value = groupedRows.value.map((item) => (item.key === group.key ? { ...item, loading: true } : item));
+  try {
+    const result = await listRecordsRaw({
+      model: targetModel,
+      fields: resolveGroupedPageFields(),
+      domain: Array.isArray(group.domain) ? group.domain : [],
+      context: mergeContext(meta.value?.context, resolveEffectiveRequestContext()),
+      context_raw: resolveEffectiveRequestContextRaw(),
+      limit: pageLimit,
+      offset: nextOffset,
+      order: sortLabel.value,
+    });
+    const rows = Array.isArray(result.data?.records) ? (result.data.records as Array<Record<string, unknown>>) : [];
+    groupedRows.value = groupedRows.value.map((item) =>
+      item.key === group.key
+        ? { ...item, sampleRows: rows, pageOffset: nextOffset, pageLimit, loading: false }
+        : item,
+    );
+  } catch {
+    groupedRows.value = groupedRows.value.map((item) => (item.key === group.key ? { ...item, loading: false } : item));
+  }
 }
 
 function normalizeGroupedRouteState() {
@@ -2230,6 +2291,9 @@ async function load() {
           count: Number(item.count || 0),
           domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
+          pageOffset: 0,
+          pageLimit: groupSampleLimit.value,
+          loading: false,
         };
       })
       .filter((item) => item.sampleRows.length > 0)
