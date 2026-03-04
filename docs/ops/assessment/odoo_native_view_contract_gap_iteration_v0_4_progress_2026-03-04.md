@@ -27,6 +27,13 @@
    - 增加单层/双层 envelope 兼容解析
    - 默认记录 grouped 覆盖状态；`REQUIRE_GROUPED_ROWS=1` 时启用强断言
 
+5. FE grouped 快照基线（分页状态）
+   - `fe_tree_view_smoke` 增加 grouped signature 产物（`grouped_signature.current.json`）
+   - 新增基线文件：`scripts/verify/baselines/fe_tree_grouped_signature.json`
+   - 默认执行基线对比；`TREE_GROUPED_SNAPSHOT_UPDATE=1` 可更新签名
+   - 签名包含分页路由语义标记：`grouped_pagination_route_state.key = group_page`
+   - `Makefile` 的 `verify.portal.tree_view_smoke.container` 新增 `TREE_GROUPED_*` 变量透传
+
 ## 验证结果
 
 1. `python3 scripts/verify/grouped_rows_runtime_guard.py`：通过
