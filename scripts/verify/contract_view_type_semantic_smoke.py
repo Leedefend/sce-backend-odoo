@@ -8,8 +8,8 @@ from typing import Any
 from intent_smoke_utils import require_ok
 from python_http_smoke_utils import get_base_url, http_post_json
 
-DEFAULT_REQUIRED_VIEW_TYPES = ("pivot", "graph", "calendar", "activity")
-DEFAULT_OPTIONAL_VIEW_TYPES = ("gantt", "dashboard")
+DEFAULT_REQUIRED_VIEW_TYPES = ("pivot", "graph", "calendar", "gantt", "activity", "dashboard")
+DEFAULT_OPTIONAL_VIEW_TYPES: tuple[str, ...] = ()
 
 
 def _extract_data(payload: dict) -> dict:
@@ -22,19 +22,54 @@ def _extract_data(payload: dict) -> dict:
 
 
 def _is_list_like(value: Any) -> bool:
-    return isinstance(value, list)
+    return isinstance(value, (list, tuple))
 
 
 def _validate_view_block(view_type: str, block: dict) -> str | None:
     if not isinstance(block, dict):
         return "view block missing"
-    # 现阶段按“最小语义存在”判定，避免误将契约变体当成失败。
-    # 真正的字段级约束由静态 guard 和后续 schema 版本推进。
-    if block:
+    semantic = block.get(view_type)
+    if isinstance(semantic, dict):
+        merged = dict(semantic)
+        merged.update(block)
+        block = merged
+    if view_type == "pivot":
+        if not _is_list_like(block.get("measures")):
+            return "pivot.measures missing"
+        if not _is_list_like(block.get("dimensions")):
+            return "pivot.dimensions missing"
         return None
-    if view_type in ("pivot", "graph", "calendar", "gantt", "activity", "dashboard"):
-        return f"{view_type} block empty"
-    return "unknown view block"
+    if view_type == "graph":
+        graph_type = str(block.get("type") or block.get("type_default") or "").strip()
+        if not graph_type:
+            return "graph.type missing"
+        if (
+            "measure" not in block
+            and "dimension" not in block
+            and not _is_list_like(block.get("measures"))
+            and not _is_list_like(block.get("dimensions"))
+        ):
+            return "graph measure/dimension missing"
+        return None
+    if view_type in ("calendar", "gantt"):
+        if not str(block.get("date_start") or "").strip():
+            return f"{view_type}.date_start missing"
+        if not str(block.get("date_stop") or "").strip():
+            return f"{view_type}.date_stop missing"
+        return None
+    if view_type == "activity":
+        if not str(block.get("field") or "").strip():
+            return "activity.field missing"
+        return None
+    if view_type == "dashboard":
+        cards = block.get("cards")
+        kpis = block.get("kpis")
+        if not _is_list_like(cards):
+            return "dashboard.cards missing"
+        if not _is_list_like(kpis):
+            return "dashboard.kpis missing"
+        return None
+    return f"{view_type} unsupported"
 
 
 def _post_intent(intent_url: str, token: str, params: dict) -> tuple[int, dict]:
@@ -88,6 +123,7 @@ def main() -> None:
     models = _pick_models()
     required_view_types, optional_view_types = _pick_view_types()
     all_view_types = [*required_view_types, *optional_view_types]
+    debug = os.getenv("VIEW_TYPE_SMOKE_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
     resolved: dict[str, str] = {}
     failures: list[str] = []
     warnings: list[str] = []
@@ -109,6 +145,13 @@ def main() -> None:
             if not isinstance(block, dict):
                 root_block = data.get(view_type)
                 block = root_block if isinstance(root_block, dict) else {}
+            if debug:
+                nested = block.get(view_type) if isinstance(block, dict) else None
+                nested_keys = list(nested.keys())[:12] if isinstance(nested, dict) else []
+                print(
+                    f"[debug] vt={view_type} model={model} views_keys={list(views.keys())[:10]} "
+                    f"block_keys={list(block.keys())[:12] if isinstance(block, dict) else []} nested_keys={nested_keys}"
+                )
             reason = _validate_view_block(view_type, block if isinstance(block, dict) else {})
             if reason:
                 attempts.append(f"{model}: {reason}")
