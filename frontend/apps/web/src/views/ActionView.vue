@@ -1317,6 +1317,13 @@ function resolveGroupedPageFields() {
   return dedup;
 }
 
+function normalizeGroupPageOffset(offset: number, pageLimit: number, totalCount: number) {
+  const limit = Number.isFinite(pageLimit) && pageLimit > 0 ? Math.trunc(pageLimit) : 1;
+  const maxOffset = Math.max(0, Math.trunc(totalCount) - limit);
+  const clamped = Number.isFinite(offset) ? Math.min(Math.max(Math.trunc(offset), 0), maxOffset) : 0;
+  return Math.floor(clamped / limit) * limit;
+}
+
 async function handleGroupedRowsPageChange(group: {
   key: string;
   label: string;
@@ -1330,9 +1337,7 @@ async function handleGroupedRowsPageChange(group: {
   if (!found) return;
   const pageLimitRaw = Number(group.limit || found.pageLimit || groupSampleLimit.value || 3);
   const pageLimit = Number.isFinite(pageLimitRaw) && pageLimitRaw > 0 ? Math.min(Math.trunc(pageLimitRaw), 50) : 3;
-  const maxOffset = Math.max(0, Number(found.count || 0) - pageLimit);
-  const offsetRaw = Number(group.offset || 0);
-  const nextOffset = Number.isFinite(offsetRaw) ? Math.min(Math.max(Math.trunc(offsetRaw), 0), maxOffset) : 0;
+  const nextOffset = normalizeGroupPageOffset(Number(group.offset || 0), pageLimit, Number(found.count || 0));
   if (nextOffset === found.pageOffset && found.sampleRows.length > 0) return;
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel) return;
@@ -1373,7 +1378,7 @@ async function hydrateGroupedRowsByOffset() {
     candidates.map(async (item) => {
       try {
         const limit = Math.max(1, Number(item.pageLimit || groupSampleLimit.value || 3));
-        const offset = Math.max(0, Math.trunc(Number(item.pageOffset || 0)));
+        const offset = normalizeGroupPageOffset(Number(item.pageOffset || 0), limit, Number(item.count || 0));
         const result = await listRecordsRaw({
           model: targetModel,
           fields,
@@ -1433,8 +1438,7 @@ function normalizeGroupedRouteState() {
     const grouped = groupedRows.value.find((item) => item.key === key);
     if (!grouped) return acc;
     const pageLimit = Math.max(1, Number(grouped.pageLimit || groupSampleLimit.value || 3));
-    const maxOffset = Math.max(0, Number(grouped.count || 0) - pageLimit);
-    const normalizedOffset = Math.min(Math.max(Math.trunc(Number(offset || 0)), 0), maxOffset);
+    const normalizedOffset = normalizeGroupPageOffset(Number(offset || 0), pageLimit, Number(grouped.count || 0));
     if (normalizedOffset > 0) acc[key] = normalizedOffset;
     return acc;
   }, {});
@@ -2399,7 +2403,11 @@ async function load() {
           count: Number(item.count || 0),
           domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
-          pageOffset: Math.max(0, Math.trunc(Number(groupPageOffsets.value[buildGroupKey(item.field, item.value, label)] || 0))),
+          pageOffset: normalizeGroupPageOffset(
+            Number(groupPageOffsets.value[buildGroupKey(item.field, item.value, label)] || 0),
+            groupSampleLimit.value,
+            Number(item.count || 0),
+          ),
           pageLimit: groupSampleLimit.value,
           loading: false,
         };
