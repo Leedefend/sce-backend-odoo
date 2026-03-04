@@ -62,6 +62,8 @@ def main() -> int:
         "require_grouped_supports_page_has_next": True,
         "require_grouped_supports_page_window": True,
         "require_grouped_window_range_consistency": True,
+        "require_grouped_consistency_ok": True,
+        "min_grouped_consistency_score": 1.0,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -301,6 +303,18 @@ def main() -> int:
             grouped.get("window_range_consistency")
         ):
             errors.append("grouped_pagination_contract.window_range_consistency must be true under baseline policy")
+        if int(grouped.get("consistency_signals_total") or 0) < 1:
+            errors.append("grouped_pagination_contract.consistency_signals_total must be >= 1")
+        if int(grouped.get("consistency_signals_passed") or 0) > int(grouped.get("consistency_signals_total") or 0):
+            errors.append("grouped_pagination_contract.consistency_signals_passed must be <= consistency_signals_total")
+        min_grouped_consistency_score = float(policy.get("min_grouped_consistency_score", 1.0) or 1.0)
+        if float(grouped.get("consistency_score") or 0.0) < min_grouped_consistency_score:
+            errors.append(
+                "grouped_pagination_contract.consistency_score must be >= "
+                f"{min_grouped_consistency_score}"
+            )
+        if bool(policy.get("require_grouped_consistency_ok", True)) and not bool(grouped.get("consistency_ok")):
+            errors.append("grouped_pagination_contract.consistency_ok must be true under baseline policy")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")

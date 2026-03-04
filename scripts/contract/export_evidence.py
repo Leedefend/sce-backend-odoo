@@ -66,6 +66,18 @@ def build_evidence(
                 if isinstance(code, str) and code.strip():
                     reason_counter[code.strip()] += 1
 
+    grouped_contract_fields = grouped_signature_report.get("grouped_contract_fields") or {}
+    grouped_consistency = ((grouped_signature_report.get("grouped_pagination_semantic_summary") or {}).get("consistency")) or {}
+    grouped_signals = [
+        bool(grouped_contract_fields.get("group_key")),
+        bool(grouped_contract_fields.get("page_has_prev")),
+        bool(grouped_contract_fields.get("page_has_next")),
+        bool(grouped_contract_fields.get("page_window")),
+        bool(grouped_consistency.get("first_group_page_window_matches_range")),
+    ]
+    grouped_signals_total = len(grouped_signals)
+    grouped_signals_passed = sum(1 for item in grouped_signals if item is True)
+
     evidence = {
         "intent_catalog": {
             "intent_count": len(intents),
@@ -226,6 +238,10 @@ def build_evidence(
                     "first_group_page_window_matches_range"
                 )
             ),
+            "consistency_signals_total": grouped_signals_total,
+            "consistency_signals_passed": grouped_signals_passed,
+            "consistency_score": round((grouped_signals_passed / grouped_signals_total), 4) if grouped_signals_total else 0.0,
+            "consistency_ok": grouped_signals_passed == grouped_signals_total and grouped_signals_total > 0,
             "report": "scripts/verify/baselines/fe_tree_grouped_signature.json",
         },
     }
@@ -375,6 +391,9 @@ def to_markdown(evidence: dict) -> str:
         f"- supports_page_has_next: {gpc['supports_page_has_next']}",
         f"- supports_page_window: {gpc['supports_page_window']}",
         f"- window_range_consistency: {gpc['window_range_consistency']}",
+        f"- consistency_signals_passed: {gpc['consistency_signals_passed']} / {gpc['consistency_signals_total']}",
+        f"- consistency_score: {gpc['consistency_score']}",
+        f"- consistency_ok: {gpc['consistency_ok']}",
         f"- report: `{gpc['report']}`",
         "",
         "## Top Observed reason_code",

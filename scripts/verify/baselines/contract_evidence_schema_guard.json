@@ -96,6 +96,10 @@
       "supports_page_has_next",
       "supports_page_window",
       "window_range_consistency",
+      "consistency_signals_total",
+      "consistency_signals_passed",
+      "consistency_score",
+      "consistency_ok",
       "report"
     ]
   }
