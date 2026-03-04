@@ -94,6 +94,7 @@
       "supports_group_key",
       "supports_page_has_prev",
       "supports_page_has_next",
+      "supports_page_window",
       "report"
     ]
   }

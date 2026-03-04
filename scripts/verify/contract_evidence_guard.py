@@ -60,6 +60,7 @@ def main() -> int:
         "require_grouped_supports_group_key": True,
         "require_grouped_supports_page_has_prev": True,
         "require_grouped_supports_page_has_next": True,
+        "require_grouped_supports_page_window": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -282,6 +283,10 @@ def main() -> int:
             grouped.get("supports_page_has_next")
         ):
             errors.append("grouped_pagination_contract.supports_page_has_next must be true under baseline policy")
+        if bool(policy.get("require_grouped_supports_page_window", True)) and not bool(
+            grouped.get("supports_page_window")
+        ):
+            errors.append("grouped_pagination_contract.supports_page_window must be true under baseline policy")
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
