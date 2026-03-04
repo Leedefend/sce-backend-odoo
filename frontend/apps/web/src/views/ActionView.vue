@@ -369,6 +369,7 @@ const batchFailedOffset = ref(0);
 const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
 const groupSummaryItems = ref<GroupSummaryItem[]>([]);
+const activeGroupSummaryDomain = ref<unknown[]>([]);
 const advancedFields = ref<string[]>([]);
 const lastBatchRequest = ref<{
   model: string;
@@ -1035,6 +1036,7 @@ function applyRoutePreset() {
   const presetFilter = String(route.query.preset_filter || '').trim();
   const savedFilter = String(route.query.saved_filter || '').trim();
   const groupBy = String(route.query.group_by || '').trim();
+  const groupValue = String(route.query.group_value || '').trim();
   const routeSearch = String(route.query.search || '').trim();
   const routeOrder = String(route.query.order || route.query.sort || '').trim();
   const routeActiveFilter = String(route.query.active_filter || '').trim();
@@ -1073,6 +1075,11 @@ function applyRoutePreset() {
     setIfDiff(activeGroupByField, groupBy);
   } else {
     setIfDiff(activeGroupByField, '');
+  }
+  if (groupValue && !routeSearch) {
+    setIfDiff(searchTerm, groupValue);
+  } else if (!groupValue) {
+    activeGroupSummaryDomain.value = [];
   }
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
@@ -1143,26 +1150,29 @@ function clearSavedFilter() {
 function applyGroupBy(field: string) {
   if (!field) return;
   activeGroupByField.value = field;
+  activeGroupSummaryDomain.value = [];
   showMoreGroupBy.value = false;
   clearSelection();
-  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: field });
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: field, group_value: undefined });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
 
 function clearGroupBy() {
   activeGroupByField.value = '';
+  activeGroupSummaryDomain.value = [];
   showMoreGroupBy.value = false;
   clearSelection();
-  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: undefined });
+  const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: undefined, group_value: undefined });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
 }
 
 function handleGroupSummaryPick(item: GroupSummaryItem) {
   if (!item) return;
+  activeGroupSummaryDomain.value = Array.isArray(item.domain) ? item.domain : [];
   searchTerm.value = item.label || '';
-  syncRouteListState({ search: searchTerm.value.trim() || undefined });
+  syncRouteListState({ search: searchTerm.value.trim() || undefined, group_value: item.label || undefined });
   void load();
 }
 
@@ -1246,7 +1256,10 @@ function resolveSavedFilterContextRaw() {
 }
 
 function resolveEffectiveFilterDomain() {
-  return mergeSceneDomain(resolveContractFilterDomain(), resolveSavedFilterDomain());
+  return mergeSceneDomain(
+    mergeSceneDomain(resolveContractFilterDomain(), resolveSavedFilterDomain()),
+    Array.isArray(activeGroupSummaryDomain.value) ? activeGroupSummaryDomain.value : [],
+  );
 }
 
 function resolveEffectiveFilterDomainRaw() {
