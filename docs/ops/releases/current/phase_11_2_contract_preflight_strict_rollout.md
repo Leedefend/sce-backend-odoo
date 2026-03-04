@@ -22,6 +22,9 @@ Branch: `feat/interaction-core-p0-v0_1`
 
 3. Legacy scenes endpoint stability
 - Fixed token-auth user binding in `smart_core/security/auth.py` for `/api/scenes/my` legacy path under smoke/preflight checks.
+- `/api/scenes/my` is **deprecated** and retained only for transition compatibility.
+- Successor endpoint: `/api/v1/intent` with migration hint `intent=app.init`.
+- Sunset date for legacy path: `2026-04-30`.
 
 4. Capability baseline alignment
 - Updated `scripts/verify/baselines/scene_capability_contract_guard.json` role logins to fixture-standard `sc_fx_*` accounts.
@@ -32,6 +35,14 @@ Branch: `feat/interaction-core-p0-v0_1`
 - `make verify.contract.preflight CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES=1`: PASS
 - `make verify.contract.view_type_semantic.strict.smoke`: PASS
 - `make verify.scene.legacy_deprecation.smoke`: PASS
+
+## Legacy Deprecation Contract
+
+- Deprecation: `/api/scenes/my` is deprecated and must not be used as primary integration path.
+- Sunset: `2026-04-30`
+- Link: migrate clients to `/api/v1/intent`
+- X-Legacy-Endpoint: `/api/scenes/my`
+- Migration example: `POST /api/v1/intent` with `intent=app.init`
 
 ## Temporary Rollback
 

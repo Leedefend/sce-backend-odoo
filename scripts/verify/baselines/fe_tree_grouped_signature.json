@@ -1,5 +1,39 @@
 {
   "group_by_field": "message_needaction",
+  "grouped_pagination_semantic_summary": {
+    "field_types": {
+      "current_page": "number",
+      "offset_aligned_to_page_limit": "boolean",
+      "page_limit": "number",
+      "page_offset": "number",
+      "range_end": "number",
+      "range_start": "number",
+      "total_pages": "number"
+    },
+    "first_group_observation": {
+      "count": 0,
+      "current_page": 1,
+      "offset_aligned_to_page_limit": true,
+      "page_limit": 3,
+      "page_offset": 0,
+      "present": false,
+      "range_end": 0,
+      "range_start": 0,
+      "sample_rows_count": 0,
+      "total_pages": 1
+    },
+    "formulas": {
+      "current_page": "floor(page_offset / page_limit) + 1",
+      "page_offset_normalize": "floor(offset / page_limit) * page_limit",
+      "page_range": "start=page_offset+1,end=min(count,page_offset+page_limit)",
+      "total_pages": "max(1, ceil(count / page_limit))"
+    },
+    "request": {
+      "normalized_request_offset": 0,
+      "page_limit": 3,
+      "request_offset": 0
+    }
+  },
   "grouped_pagination_route_state": {
     "key": "group_page",
     "mode": "per-group offset map"
@@ -19,5 +53,5 @@
     "records"
   ],
   "model": "project.project",
-  "version": "v0_4"
+  "version": "v0_5_mini"
 }
