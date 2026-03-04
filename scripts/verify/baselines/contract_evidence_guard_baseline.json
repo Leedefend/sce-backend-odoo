@@ -62,5 +62,13 @@
   "require_grouped_governance_report_md_title": "# Grouped Governance Brief Guard",
   "require_grouped_governance_report_pair_consistent": true,
   "require_grouped_governance_report_pair_same_parent": true,
-  "require_grouped_governance_report_pair_same_stem": true
+  "require_grouped_governance_report_pair_same_stem": true,
+  "require_grouped_governance_policy_matrix_ok": true,
+  "min_grouped_governance_brief_policy_count": 1,
+  "min_grouped_drift_summary_policy_count": 1,
+  "min_contract_evidence_grouped_governance_policy_count": 1,
+  "require_grouped_governance_policy_matrix_report_json_prefix": "artifacts/",
+  "require_grouped_governance_policy_matrix_report_json_suffix": "grouped_governance_policy_matrix.json",
+  "require_grouped_governance_policy_matrix_report_md_prefix": "artifacts/",
+  "require_grouped_governance_policy_matrix_report_md_suffix": "grouped_governance_policy_matrix.md"
 }
