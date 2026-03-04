@@ -145,6 +145,12 @@
         </button>
       </div>
     </section>
+    <GroupSummaryBar
+      v-if="groupSummaryItems.length"
+      :items="groupSummaryItems"
+      :group-by-label="activeGroupByLabel"
+      :on-pick="handleGroupSummaryPick"
+    />
     <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
       <p class="contract-label">快捷操作</p>
       <div class="contract-chips">
@@ -307,6 +313,7 @@ import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
 import KanbanPage from '../pages/KanbanPage.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
+import GroupSummaryBar from '../components/GroupSummaryBar.vue';
 import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
@@ -361,6 +368,7 @@ const failedCsvContentB64 = ref('');
 const batchFailedOffset = ref(0);
 const batchFailedLimit = ref(12);
 const batchHasMoreFailures = ref(false);
+const groupSummaryItems = ref<GroupSummaryItem[]>([]);
 const advancedFields = ref<string[]>([]);
 const lastBatchRequest = ref<{
   model: string;
@@ -470,6 +478,13 @@ type ContractGroupByChip = {
   isDefault: boolean;
   context: Record<string, unknown>;
   contextRaw: string;
+};
+type GroupSummaryItem = {
+  key: string;
+  label: string;
+  count: number;
+  domain: unknown[];
+  value?: unknown;
 };
 type ContractActionSelection = 'none' | 'single' | 'multi';
 type ContractActionButton = {
@@ -816,6 +831,12 @@ const groupByPrimaryChips = computed<ContractGroupByChip[]>(() =>
 const groupByOverflowChips = computed<ContractGroupByChip[]>(() =>
   contractGroupByChips.value.slice(filterPrimaryBudget.value),
 );
+const activeGroupByLabel = computed(() => {
+  const field = activeGroupByField.value;
+  if (!field) return '';
+  const found = contractGroupByChips.value.find((chip) => chip.field === field);
+  return found?.label || field;
+});
 function toContractActionButton(
   row: Record<string, unknown>,
   dedup: Set<string>,
@@ -1135,6 +1156,13 @@ function clearGroupBy() {
   clearSelection();
   const query = pickContractNavQuery(route.query as Record<string, unknown>, { group_by: undefined });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
+  void load();
+}
+
+function handleGroupSummaryPick(item: GroupSummaryItem) {
+  if (!item) return;
+  searchTerm.value = item.label || '';
+  syncRouteListState({ search: searchTerm.value.trim() || undefined });
   void load();
 }
 
@@ -1846,6 +1874,7 @@ async function load() {
   resolvedModelRef.value = '';
   contractLimit.value = 40;
   records.value = [];
+  groupSummaryItems.value = [];
   columns.value = [];
   kanbanFields.value = [];
   advancedFields.value = [];
@@ -2048,6 +2077,20 @@ async function load() {
       order: sortLabel.value,
     });
     records.value = result.data?.records ?? [];
+    groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
+      .map((row, idx) => {
+        const item = row as Record<string, unknown>;
+        const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        return {
+          key: `${String(item.field || activeGroupByField.value || 'group')}:${String(item.value ?? label)}:${idx}`,
+          label,
+          count: Number(item.count || 0),
+          domain: Array.isArray(item.domain) ? item.domain : [],
+          value: item.value,
+        };
+      })
+      .filter((item) => item.count >= 0)
+      .slice(0, 12);
     const currentIds = new Set(
       records.value
         .map((row) => {
