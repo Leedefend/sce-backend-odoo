@@ -134,6 +134,10 @@
       "grouped_governance_brief_policy_count",
       "grouped_drift_summary_policy_count",
       "contract_evidence_grouped_governance_policy_count",
+      "has_previous",
+      "delta_grouped_governance_brief_policy_count",
+      "delta_grouped_drift_summary_policy_count",
+      "delta_contract_evidence_grouped_governance_policy_count",
       "report_json",
       "report_md"
     ]

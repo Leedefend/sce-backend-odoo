@@ -144,6 +144,11 @@ def main() -> int:
         "require_grouped_governance_policy_matrix_report_json_suffix": "grouped_governance_policy_matrix.json",
         "require_grouped_governance_policy_matrix_report_md_prefix": "artifacts/",
         "require_grouped_governance_policy_matrix_report_md_suffix": "grouped_governance_policy_matrix.md",
+        "require_grouped_governance_policy_matrix_has_previous_bool": True,
+        "require_grouped_governance_policy_matrix_delta_when_previous": True,
+        "forbid_grouped_governance_brief_policy_count_regression": True,
+        "forbid_grouped_drift_summary_policy_count_regression": True,
+        "forbid_contract_evidence_grouped_governance_policy_count_regression": True,
     }
     policy_payload = _load_json(BASELINE_JSON)
     if policy_payload:
@@ -609,6 +614,34 @@ def main() -> int:
             "grouped_governance_policy_matrix.report_md must end with "
             f"{required_matrix_md_suffix}"
         )
+    if bool(policy.get("require_grouped_governance_policy_matrix_has_previous_bool", True)):
+        if not isinstance(grouped_policy_matrix.get("has_previous"), bool):
+            errors.append("grouped_governance_policy_matrix.has_previous must be bool")
+
+    has_previous = bool(grouped_policy_matrix.get("has_previous"))
+    delta_brief = grouped_policy_matrix.get("delta_grouped_governance_brief_policy_count")
+    delta_drift = grouped_policy_matrix.get("delta_grouped_drift_summary_policy_count")
+    delta_evidence = grouped_policy_matrix.get("delta_contract_evidence_grouped_governance_policy_count")
+    if has_previous and bool(policy.get("require_grouped_governance_policy_matrix_delta_when_previous", True)):
+        if not isinstance(delta_brief, int):
+            errors.append("grouped_governance_policy_matrix.delta_grouped_governance_brief_policy_count must be int")
+        if not isinstance(delta_drift, int):
+            errors.append("grouped_governance_policy_matrix.delta_grouped_drift_summary_policy_count must be int")
+        if not isinstance(delta_evidence, int):
+            errors.append("grouped_governance_policy_matrix.delta_contract_evidence_grouped_governance_policy_count must be int")
+    if bool(policy.get("forbid_grouped_governance_brief_policy_count_regression", True)) and isinstance(delta_brief, int):
+        if delta_brief < 0:
+            errors.append("grouped_governance_policy_matrix.delta_grouped_governance_brief_policy_count must be >= 0")
+    if bool(policy.get("forbid_grouped_drift_summary_policy_count_regression", True)) and isinstance(delta_drift, int):
+        if delta_drift < 0:
+            errors.append("grouped_governance_policy_matrix.delta_grouped_drift_summary_policy_count must be >= 0")
+    if bool(policy.get("forbid_contract_evidence_grouped_governance_policy_count_regression", True)) and isinstance(
+        delta_evidence, int
+    ):
+        if delta_evidence < 0:
+            errors.append(
+                "grouped_governance_policy_matrix.delta_contract_evidence_grouped_governance_policy_count must be >= 0"
+            )
 
     if len(errors) > int(policy.get("max_errors", 0)):
         print("[contract_evidence_guard] FAIL")
