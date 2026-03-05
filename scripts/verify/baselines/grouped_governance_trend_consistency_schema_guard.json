@@ -18,5 +18,22 @@
     "matrix_delta_grouped_governance_brief_policy_count",
     "matrix_delta_grouped_drift_summary_policy_count",
     "matrix_delta_contract_evidence_grouped_governance_policy_count"
-  ]
+  ],
+  "summary_key_types": {
+    "has_previous_brief": "bool",
+    "has_previous_matrix": "bool",
+    "has_previous_aligned": "bool",
+    "brief_delta_types_ok": "bool",
+    "matrix_delta_types_ok": "bool",
+    "brief_delta_governance_coverage_ratio": "number",
+    "brief_delta_governance_failure_count": "int",
+    "brief_delta_grouped_e2e_max_consistency_score": "int",
+    "matrix_delta_grouped_governance_brief_policy_count": "int",
+    "matrix_delta_grouped_drift_summary_policy_count": "int",
+    "matrix_delta_contract_evidence_grouped_governance_policy_count": "int"
+  },
+  "report_json_prefix": "artifacts/",
+  "report_json_suffix": "grouped_governance_trend_consistency_guard.json",
+  "report_md_prefix": "artifacts/",
+  "report_md_suffix": "grouped_governance_trend_consistency_guard.md"
 }

@@ -306,6 +306,7 @@ class ApiDataHandler(BaseIntentHandler):
         fields_safe: List[str],
         limit: int = 20,
         sample_limit: int = 3,
+        group_page_size: Optional[int] = None,
         group_page_offsets: Optional[Dict[str, int]] = None,
     ):
         summary = self._build_group_summary(env_model, domain, group_by, limit=limit)
@@ -321,7 +322,8 @@ class ApiDataHandler(BaseIntentHandler):
             if not group_domain:
                 continue
             count = int(item.get("count") or 0)
-            page_limit = max(1, int(sample_limit or 3))
+            requested_page_size = int(group_page_size or sample_limit or 3)
+            page_limit = max(1, requested_page_size)
             group_key = self._build_group_key(str(item.get("field") or ""), item.get("value"))
             req_offset = int(page_offsets.get(group_key) or 0)
             max_offset = max(0, count - page_limit)
@@ -346,8 +348,15 @@ class ApiDataHandler(BaseIntentHandler):
                     "count": item.get("count"),
                     "domain": group_domain,
                     "sample_rows": sample_rows,
+                    "page_requested_size": requested_page_size,
+                    "page_applied_size": page_limit,
+                    "page_requested_offset": req_offset,
+                    "page_applied_offset": page_offset,
+                    "page_max_offset": max_offset,
+                    "page_clamped": page_offset != req_offset,
                     "page_offset": page_offset,
                     "page_limit": page_limit,
+                    "page_size": page_limit,
                     "page_current": page_current,
                     "page_total": page_total,
                     "page_range_start": page_range_start,
@@ -610,6 +619,10 @@ class ApiDataHandler(BaseIntentHandler):
         context_raw = self._get_str(p, "context_raw", "").strip()
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
         group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
+        group_page_size = min(self._get_int(p, "group_page_size", 0), 8)
+        default_group_limit = min(limit or 20, 30)
+        group_limit = self._get_int(p, "group_limit", default_group_limit)
+        group_limit = max(1, min(group_limit, 50))
         search_term = self._get_str(p, "search_term", "").strip()
 
         if context_raw:
@@ -662,22 +675,34 @@ class ApiDataHandler(BaseIntentHandler):
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
-        group_summary = self._build_group_summary(env_model, domain, group_by, limit=min(limit or 20, 50))
+        group_summary = self._build_group_summary(env_model, domain, group_by, limit=group_limit)
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
             group_by,
             fields_safe,
-            limit=min(limit or 20, 30),
+            limit=group_limit,
             sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
+            group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
         )
+        primary_group_field = self._primary_group_by_field(group_by)
+        effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
+        effective_page_size = effective_page_size if effective_page_size > 0 else min(self._get_int(p, "group_sample_limit", 3), 8)
+        effective_page_size = max(1, int(effective_page_size or 1))
 
         data = {
             "records": rows,
             "next_offset": offset + len(rows),
             "group_summary": group_summary,
             "grouped_rows": grouped_rows,
+            "group_paging": {
+                "group_by_field": primary_group_field or None,
+                "group_limit": group_limit,
+                "group_count": len(group_summary),
+                "page_size": effective_page_size,
+                "has_group_page_offsets": bool(group_page_offsets),
+            },
         }
         if need_total:
             data["total"] = int(total or 0)
@@ -693,6 +718,10 @@ class ApiDataHandler(BaseIntentHandler):
             "domain_raw_applied": bool(domain_raw),
             "context_raw_applied": bool(context_raw),
             "group_by": group_by,
+            "group_by_field": primary_group_field or None,
+            "group_count": len(group_summary),
+            "group_page_size": int(group_page_size or 0) or None,
+            "group_limit": group_limit,
         }
         return data, meta
 

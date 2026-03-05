@@ -8,6 +8,8 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - op: `list`
 - grouped payload keys: `group_summary`, `grouped_rows`
 - routing state key: `group_page` (per-group offset map)
+- request key: `group_page_size` (optional; explicit grouped page size)
+- request key: `group_limit` (optional; max grouped entries returned)
 
 ## Grouped Row Fields
 
@@ -20,8 +22,15 @@ Each entry in `grouped_rows` must provide:
 - `count`: total rows in group
 - `domain`: group-specific domain
 - `sample_rows`: paged sample records
+- `page_requested_size`: requested page size from client (`group_page_size` / fallback sample limit)
+- `page_applied_size`: effective backend page size actually used
+- `page_requested_offset`: requested offset from route/client state
+- `page_applied_offset`: backend-normalized offset after clamp/snap
+- `page_max_offset`: max valid offset for current group/page size
+- `page_clamped`: whether requested offset was clamped/snap-normalized by backend
 - `page_offset`: normalized offset (`floor(offset/page_limit)*page_limit`)
 - `page_limit`: effective page size
+- `page_size`: explicit page size alias (equal to `page_limit`, recommended for new clients)
 - `page_current`: 1-based page index
 - `page_total`: total pages (`max(1, ceil(count/page_limit))`)
 - `page_range_start`: 1-based inclusive range start
@@ -37,6 +46,16 @@ Each entry in `grouped_rows` must provide:
 2. Frontend should prefer `page_window` when present; fallback to legacy range fields otherwise.
 3. `group_key` must be stable for a given `(field, value)` pair to preserve route paging restoration.
 4. `page_has_prev/page_has_next` are authoritative backend semantics; frontend should avoid recomputing when these flags exist.
+
+## Group Paging Summary
+
+`api.data(list)` may include top-level `group_paging`:
+
+- `group_by_field`: resolved primary grouped field
+- `group_limit`: effective grouped result limit
+- `group_count`: grouped entries returned
+- `page_size`: effective grouped page size
+- `has_group_page_offsets`: whether request carried per-group offset map
 
 ## Verification Hooks
 
