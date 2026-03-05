@@ -160,6 +160,7 @@ export interface ApiDataListResult {
   group_paging?: {
     group_by_field?: string | null;
     group_limit?: number;
+    group_offset?: number;
     group_count?: number;
     page_size?: number;
     has_group_page_offsets?: boolean;
@@ -201,6 +202,7 @@ export interface ApiDataListRequest {
   domain?: unknown[] | string;
   domain_raw?: string;
   group_by?: string | string[];
+  group_offset?: number;
   group_sample_limit?: number;
   group_limit?: number;
   group_page_size?: number;
