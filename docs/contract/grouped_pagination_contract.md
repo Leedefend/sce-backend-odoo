@@ -11,6 +11,17 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - request key: `group_page_size` (optional; explicit grouped page size)
 - request key: `group_limit` (optional; max grouped entries returned)
 
+## Group Summary Fields
+
+Each entry in `group_summary` may provide:
+
+- `group_key`: stable identity key for `(field, value)` pair
+- `field`: grouped field name
+- `value`: grouped value
+- `label`: grouped display label
+- `count`: total rows in group
+- `domain`: group-specific domain
+
 ## Grouped Row Fields
 
 Each entry in `grouped_rows` must provide:

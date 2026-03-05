@@ -287,8 +287,10 @@ class ApiDataHandler(BaseIntentHandler):
         count_key = f"{field_name}_count"
         for row in rows or []:
             normalized = self._normalize_group_item(env_model, field_name, row.get(field_name))
+            group_key = self._build_group_key(field_name, normalized.get("value"))
             out.append(
                 {
+                    "group_key": group_key,
                     "field": field_name,
                     "value": normalized.get("value"),
                     "label": normalized.get("label"),

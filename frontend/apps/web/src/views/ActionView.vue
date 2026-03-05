@@ -2415,8 +2415,9 @@ async function load() {
       .map((row) => {
         const item = row as Record<string, unknown>;
         const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        const backendGroupKey = String(item.group_key || '').trim();
         return {
-          key: buildGroupKey(item.field, item.value, label),
+          key: backendGroupKey || buildGroupKey(item.field, item.value, label),
           label,
           count: Number(item.count || 0),
           domain: Array.isArray(item.domain) ? item.domain : [],
