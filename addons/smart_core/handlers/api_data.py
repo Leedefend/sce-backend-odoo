@@ -273,13 +273,18 @@ class ApiDataHandler(BaseIntentHandler):
         return {"value": value, "label": str(value)}
 
     def _build_group_summary(self, env_model, domain, group_by, limit: int = 20):
+        return self._build_group_summary_with_offset(env_model, domain, group_by, limit=limit, offset=0)
+
+    def _build_group_summary_with_offset(self, env_model, domain, group_by, limit: int = 20, offset: int = 0):
         field_name = self._primary_group_by_field(group_by)
         if not field_name:
             return []
         if field_name not in env_model._fields:
             return []
+        limit = max(1, min(int(limit or 20), 50))
+        offset = max(0, int(offset or 0))
         try:
-            rows = env_model.read_group(domain or [], [field_name], [field_name], limit=limit, lazy=False)
+            rows = env_model.read_group(domain or [], [field_name], [field_name], offset=offset, limit=limit, lazy=False)
         except Exception:
             _logger.exception("read_group failed model=%s group_by=%s", env_model._name, field_name)
             return []
@@ -310,8 +315,9 @@ class ApiDataHandler(BaseIntentHandler):
         sample_limit: int = 3,
         group_page_size: Optional[int] = None,
         group_page_offsets: Optional[Dict[str, int]] = None,
+        group_summary: Optional[List[Dict[str, Any]]] = None,
     ):
-        summary = self._build_group_summary(env_model, domain, group_by, limit=limit)
+        summary = group_summary if isinstance(group_summary, list) else self._build_group_summary(env_model, domain, group_by, limit=limit)
         if not summary:
             return []
         row_fields = list(fields_safe or ["id", "name"])
@@ -621,6 +627,7 @@ class ApiDataHandler(BaseIntentHandler):
         context_raw = self._get_str(p, "context_raw", "").strip()
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
         group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
+        group_offset = max(0, self._get_int(p, "group_offset", 0))
         group_page_size = min(self._get_int(p, "group_page_size", 0), 8)
         default_group_limit = min(limit or 20, 30)
         group_limit = self._get_int(p, "group_limit", default_group_limit)
@@ -677,7 +684,7 @@ class ApiDataHandler(BaseIntentHandler):
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
-        group_summary = self._build_group_summary(env_model, domain, group_by, limit=group_limit)
+        group_summary = self._build_group_summary_with_offset(env_model, domain, group_by, limit=group_limit, offset=group_offset)
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
@@ -687,6 +694,7 @@ class ApiDataHandler(BaseIntentHandler):
             sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
             group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
+            group_summary=group_summary,
         )
         primary_group_field = self._primary_group_by_field(group_by)
         effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
@@ -701,6 +709,7 @@ class ApiDataHandler(BaseIntentHandler):
             "group_paging": {
                 "group_by_field": primary_group_field or None,
                 "group_limit": group_limit,
+                "group_offset": group_offset,
                 "group_count": len(group_summary),
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
@@ -724,6 +733,7 @@ class ApiDataHandler(BaseIntentHandler):
             "group_count": len(group_summary),
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,
+            "group_offset": group_offset,
         }
         return data, meta
 

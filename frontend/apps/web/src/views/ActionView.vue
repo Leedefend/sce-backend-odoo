@@ -2399,6 +2399,7 @@ async function load() {
       domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
       domain_raw: resolveEffectiveFilterDomainRaw(),
       group_by: activeGroupByField.value || undefined,
+      group_offset: 0,
       group_sample_limit: groupSampleLimit.value,
       group_limit: Math.min(50, Math.max(12, Number(contractLimit.value || 0))),
       group_page_size: groupSampleLimit.value,
