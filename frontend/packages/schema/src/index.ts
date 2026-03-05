@@ -150,6 +150,7 @@ export interface ApiDataListResult {
   next_offset?: number;
   total?: number;
   group_summary?: Array<{
+    group_key?: string;
     field?: string;
     value?: unknown;
     label?: string;
