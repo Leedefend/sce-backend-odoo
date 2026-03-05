@@ -10,6 +10,7 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - routing state key: `group_page` (per-group offset map)
 - request key: `group_page_size` (optional; explicit grouped page size)
 - request key: `group_limit` (optional; max grouped entries returned)
+- request key: `group_offset` (optional; grouped entries offset)
 
 ## Group Summary Fields
 
@@ -64,6 +65,7 @@ Each entry in `grouped_rows` must provide:
 
 - `group_by_field`: resolved primary grouped field
 - `group_limit`: effective grouped result limit
+- `group_offset`: effective grouped result offset
 - `group_count`: grouped entries returned
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
