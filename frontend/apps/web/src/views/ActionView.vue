@@ -2400,6 +2400,8 @@ async function load() {
       domain_raw: resolveEffectiveFilterDomainRaw(),
       group_by: activeGroupByField.value || undefined,
       group_sample_limit: groupSampleLimit.value,
+      group_limit: Math.min(50, Math.max(12, Number(contractLimit.value || 0))),
+      group_page_size: groupSampleLimit.value,
       group_page_offsets: groupPageOffsets.value,
       context: mergeContext(meta?.context, resolveEffectiveRequestContext()),
       context_raw: resolveEffectiveRequestContextRaw(),
@@ -2426,6 +2428,10 @@ async function load() {
     groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])
       .map((row) => {
         const item = row as Record<string, unknown>;
+        const fallbackPageSize = Number((result.data as Record<string, unknown> | undefined)?.group_paging
+          && typeof (result.data as Record<string, unknown>).group_paging === 'object'
+          ? ((result.data as Record<string, unknown>).group_paging as Record<string, unknown>).page_size
+          : 0) || groupSampleLimit.value || 3;
         const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
         const fallbackKey = buildGroupKey(item.field, item.value, label);
         return {
@@ -2435,11 +2441,11 @@ async function load() {
           domain: Array.isArray(item.domain) ? item.domain : [],
           sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
           pageOffset: normalizeGroupPageOffset(
-            Number((item.page_offset ?? groupPageOffsets.value[String(item.group_key || fallbackKey)]) || 0),
-            Number(item.page_limit || groupSampleLimit.value),
+            Number((item.page_applied_offset ?? item.page_offset ?? groupPageOffsets.value[String(item.group_key || fallbackKey)]) || 0),
+            Number((item.page_size ?? item.page_limit) || fallbackPageSize),
             Number(item.count || 0),
           ),
-          pageLimit: Math.max(1, Number(item.page_limit || groupSampleLimit.value || 3)),
+          pageLimit: Math.max(1, Number((item.page_size ?? item.page_limit) || fallbackPageSize)),
           pageCurrent: Number(item.page_current || 0) > 0 ? Number(item.page_current || 0) : undefined,
           pageTotal: Number(item.page_total || 0) > 0 ? Number(item.page_total || 0) : undefined,
           pageRangeStart: Number(item.page_range_start || 0) >= 0 ? Number(item.page_range_start || 0) : undefined,
@@ -2457,7 +2463,10 @@ async function load() {
           pageHasPrev: typeof item.page_has_prev === 'boolean' ? Boolean(item.page_has_prev) : undefined,
           pageHasNext: typeof item.page_has_next === 'boolean' ? Boolean(item.page_has_next) : undefined,
           pageSyncedFromServer: Object.prototype.hasOwnProperty.call(item, 'page_offset')
-            || Object.prototype.hasOwnProperty.call(item, 'page_limit'),
+            || Object.prototype.hasOwnProperty.call(item, 'page_applied_offset')
+            || Object.prototype.hasOwnProperty.call(item, 'page_clamped')
+            || Object.prototype.hasOwnProperty.call(item, 'page_limit')
+            || Object.prototype.hasOwnProperty.call(item, 'page_size'),
           loading: false,
         };
       })
