@@ -64,6 +64,8 @@ def main() -> int:
         ":on-group-collapsed-change=\"handleGroupCollapsedChange\"",
         ":on-group-page-change=\"handleGroupedRowsPageChange\"",
         "const groupPageOffsets = ref<Record<string, number>>({});",
+        "const groupWindowId = ref('');",
+        "const groupQueryFingerprint = ref('');",
         "const groupPageRaw = String(route.query.group_page || '').trim();",
         "const groupFingerprintRaw = String(route.query.group_fp || '').trim();",
         "group_page: groupPage || undefined,",
