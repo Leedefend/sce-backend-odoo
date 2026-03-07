@@ -70,6 +70,8 @@ Each entry in `grouped_rows` must provide:
 - `group_count`: grouped entries returned
 - `group_total`: grouped entries total count (only when `need_group_total=true`)
 - `has_more`: whether there are more grouped entries after current window
+- `next_group_offset`: next grouped window offset (when `has_more=true`)
+- `prev_group_offset`: previous grouped window offset (when current offset > 0)
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
 
