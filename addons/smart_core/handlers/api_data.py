@@ -783,6 +783,7 @@ class ApiDataHandler(BaseIntentHandler):
             "version": self.GROUP_WINDOW_IDENTITY_VERSION,
             "algo": self.GROUP_WINDOW_IDENTITY_ALGO,
             "key": group_window_identity_key,
+            "window_empty": len(group_summary) <= 0,
             "window_start": group_window_start,
             "window_end": group_window_end,
             "prev_group_offset": prev_group_offset,

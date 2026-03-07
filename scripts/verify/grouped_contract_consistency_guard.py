@@ -58,6 +58,7 @@ def main() -> int:
         "grouped_identity_range_numbers_match_flat",
         "grouped_identity_nav_match_flat",
         "grouped_identity_model_match_request",
+        "grouped_identity_window_empty_match_flat",
     ]
     for marker in smoke_markers:
         if marker not in fe_tree_smoke:
@@ -108,6 +109,8 @@ def main() -> int:
         "identity_total_optional_typed",
         "identity_total_match_flat",
         "identity_model_match_request",
+        "identity_window_empty_typed",
+        "identity_window_empty_match_flat",
         "identity_group_by_match_flat",
         "identity_page_meta_present",
         "identity_page_meta_match_flat",

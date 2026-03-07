@@ -121,6 +121,7 @@ def main() -> int:
         "window_identity_nav_shape",
         "window_identity_group_by_shape",
         "window_identity_model_shape",
+        "window_identity_empty_shape",
     ):
         _expect_type(identity_formulas.get(key), str, f"grouped_identity_summary.formulas.{key}", errors)
 
@@ -216,6 +217,12 @@ def main() -> int:
         errors,
     )
     _expect_type(
+        identity_response.get("window_identity_window_empty"),
+        bool,
+        "grouped_identity_summary.response.window_identity_window_empty",
+        errors,
+    )
+    _expect_type(
         identity_response.get("window_identity_version"),
         str,
         "grouped_identity_summary.response.window_identity_version",
@@ -272,6 +279,8 @@ def main() -> int:
         "identity_total_optional_typed",
         "identity_total_match_flat",
         "identity_model_match_request",
+        "identity_window_empty_typed",
+        "identity_window_empty_match_flat",
         "identity_group_by_match_flat",
         "identity_page_meta_present",
         "identity_page_meta_match_flat",

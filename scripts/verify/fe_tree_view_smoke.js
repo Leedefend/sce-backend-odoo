@@ -227,6 +227,7 @@ function buildGroupedIdentitySummary(groupPaging) {
   const identity = paging.window_identity && typeof paging.window_identity === 'object' ? paging.window_identity : {};
   const identityModel = typeof identity.model === 'string' ? identity.model.trim() : '';
   const identityGroupByField = typeof identity.group_by_field === 'string' ? identity.group_by_field.trim() : '';
+  const identityWindowEmpty = typeof identity.window_empty === 'boolean' ? identity.window_empty : null;
   const windowId = typeof identity.window_id === 'string'
     ? identity.window_id.trim()
     : (typeof paging.window_id === 'string' ? paging.window_id.trim() : '');
@@ -270,6 +271,7 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_nav_shape: 'window_identity prev/next/has_more should align with group_paging',
       window_identity_group_by_shape: 'window_identity.group_by_field should align with group_paging.group_by_field',
       window_identity_model_shape: 'window_identity.model should align with request model',
+      window_identity_empty_shape: 'window_identity.window_empty should align with group_count/window range',
     },
     response: {
       window_id: windowId,
@@ -278,6 +280,7 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_present: Boolean(paging.window_identity && typeof paging.window_identity === 'object'),
       window_identity_model: identityModel,
       window_identity_group_by_field: identityGroupByField,
+      window_identity_window_empty: identityWindowEmpty ?? false,
       window_identity_version: identityVersion,
       window_identity_algo: identityAlgo,
       window_identity_key: identityKey || flatWindowKey,
@@ -333,6 +336,11 @@ function buildGroupedIdentitySummary(groupPaging) {
         || identityGroupByField === String(paging.group_by_field || '').trim()
       ),
       identity_model_match_request: !identityModel || identityModel === String(MODEL || '').trim(),
+      identity_window_empty_typed: identityWindowEmpty !== null,
+      identity_window_empty_match_flat: (
+        identityWindowEmpty === null
+        || identityWindowEmpty === (Math.max(0, toSafeInt(paging.group_count, 0)) <= 0)
+      ),
       identity_page_meta_present: identityPageSize !== null && identityHasGroupPageOffsets !== null,
       identity_page_meta_match_flat: (
         identityPageSize === null || identityPageSize === Math.max(1, toSafeInt(paging.page_size, 1))
@@ -532,6 +540,7 @@ async function main() {
   summary.push(`grouped_identity_window_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_window_numbers_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_total_match_flat: ${groupedIdentitySummary.consistency.identity_total_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_model_match_request: ${groupedIdentitySummary.consistency.identity_model_match_request ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_window_empty_match_flat: ${groupedIdentitySummary.consistency.identity_window_empty_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_group_by_match_flat: ${groupedIdentitySummary.consistency.identity_group_by_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_page_meta_match_flat: ${groupedIdentitySummary.consistency.identity_page_meta_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_present: ${groupedIdentitySummary.consistency.identity_range_numbers_present ? 'yes' : 'no'}`);
