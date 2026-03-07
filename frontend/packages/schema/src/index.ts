@@ -166,6 +166,8 @@ export interface ApiDataListResult {
     has_more?: boolean;
     next_group_offset?: number;
     prev_group_offset?: number;
+    window_start?: number;
+    window_end?: number;
     page_size?: number;
     has_group_page_offsets?: boolean;
   };

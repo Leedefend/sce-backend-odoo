@@ -58,6 +58,8 @@ const props = withDefaults(
     windowOffset?: number;
     windowCount?: number;
     windowTotal?: number;
+    windowStart?: number;
+    windowEnd?: number;
     canPrevWindow?: boolean;
     canNextWindow?: boolean;
     onPick?: (item: GroupSummaryItem) => void;
@@ -71,6 +73,8 @@ const props = withDefaults(
     windowOffset: 0,
     windowCount: 0,
     windowTotal: undefined,
+    windowStart: undefined,
+    windowEnd: undefined,
     canPrevWindow: false,
     canNextWindow: false,
     onPick: undefined,
@@ -84,8 +88,10 @@ const windowInfo = computed(() => {
   const offset = Math.max(0, Math.trunc(Number(props.windowOffset || 0)));
   const count = Math.max(0, Math.trunc(Number(props.windowCount || 0)));
   if (count <= 0) return '';
-  const start = offset + 1;
-  const end = offset + count;
+  const backendStart = Number(props.windowStart);
+  const backendEnd = Number(props.windowEnd);
+  const start = Number.isFinite(backendStart) && backendStart > 0 ? Math.trunc(backendStart) : offset + 1;
+  const end = Number.isFinite(backendEnd) && backendEnd >= start ? Math.trunc(backendEnd) : (offset + count);
   if (Number.isFinite(Number(props.windowTotal)) && Number(props.windowTotal) >= 0) {
     return `${start}-${end} / ${Math.trunc(Number(props.windowTotal))}`;
   }
