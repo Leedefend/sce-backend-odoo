@@ -8,6 +8,7 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - op: `list`
 - grouped payload keys: `group_summary`, `grouped_rows`
 - routing state key: `group_page` (per-group offset map)
+- routing state key: `group_fp` (grouped query fingerprint for window staleness guard)
 - request key: `group_page_size` (optional; explicit grouped page size)
 - request key: `group_limit` (optional; max grouped entries returned)
 - request key: `group_offset` (optional; grouped entries offset)
