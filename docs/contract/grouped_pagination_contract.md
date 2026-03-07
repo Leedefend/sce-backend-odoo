@@ -9,6 +9,7 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - grouped payload keys: `group_summary`, `grouped_rows`
 - routing state key: `group_page` (per-group offset map)
 - routing state key: `group_fp` (grouped query fingerprint for window staleness guard)
+- routing state key: `group_wid` (grouped window identity for window staleness guard)
 - request key: `group_page_size` (optional; explicit grouped page size)
 - request key: `group_limit` (optional; max grouped entries returned)
 - request key: `group_offset` (optional; grouped entries offset)
@@ -61,6 +62,7 @@ Each entry in `grouped_rows` must provide:
 3. `group_key` must be stable for a given `(field, value)` pair to preserve route paging restoration.
 4. `page_has_prev/page_has_next` are authoritative backend semantics; frontend should avoid recomputing when these flags exist.
 5. For grouped window navigation, frontend should prefer `next_group_offset/prev_group_offset` over local offset arithmetic when present.
+6. `group_wid` is route-local state. When it mismatches backend `group_paging.window_id` under non-zero `group_offset`, frontend must reset grouped window state to first window.
 
 ## Group Paging Summary
 
