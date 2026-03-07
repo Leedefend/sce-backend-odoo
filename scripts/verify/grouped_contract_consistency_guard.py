@@ -151,6 +151,8 @@ def main() -> int:
             "supports_window_key",
             "supports_window_identity_model",
             "supports_window_identity_group_by",
+            "supports_window_identity_algo",
+            "supports_window_identity_key_tuple",
             "supports_window_span",
             "window_span_matches_range",
             "request_offset_matches_observed",
@@ -170,6 +172,8 @@ def main() -> int:
             "supports_window_key",
             "supports_window_identity_model",
             "supports_window_identity_group_by",
+            "supports_window_identity_algo",
+            "supports_window_identity_key_tuple",
             "supports_window_span",
             "window_span_matches_range",
             "request_offset_matches_observed",
@@ -182,8 +186,8 @@ def main() -> int:
         consistency_score = row.get("consistency_score")
         if not isinstance(consistency_score, int):
             errors.append(f"e2e grouped_cases[{idx}].consistency_score must be int")
-        elif consistency_score < 0 or consistency_score > 11:
-            errors.append(f"e2e grouped_cases[{idx}].consistency_score must be in [0,11]")
+        elif consistency_score < 0 or consistency_score > 13:
+            errors.append(f"e2e grouped_cases[{idx}].consistency_score must be in [0,13]")
 
         if row.get("status") == "ok" and row.get("has_grouped_rows") is True:
             if row.get("supports_group_key") is not True:
@@ -200,6 +204,10 @@ def main() -> int:
                 errors.append(f"e2e grouped_cases[{idx}] grouped rows present but supports_window_identity_model is not true")
             if row.get("supports_window_identity_group_by") is not True:
                 errors.append(f"e2e grouped_cases[{idx}] grouped rows present but supports_window_identity_group_by is not true")
+            if row.get("supports_window_identity_algo") is not True:
+                errors.append(f"e2e grouped_cases[{idx}] grouped rows present but supports_window_identity_algo is not true")
+            if row.get("supports_window_identity_key_tuple") is not True:
+                errors.append(f"e2e grouped_cases[{idx}] grouped rows present but supports_window_identity_key_tuple is not true")
             if row.get("supports_window_span") is not True:
                 errors.append(f"e2e grouped_cases[{idx}] grouped rows present but supports_window_span is not true")
             if row.get("window_span_matches_range") is not True:
