@@ -18,6 +18,8 @@
       "identity_key_present": false,
       "identity_object_matches_flat": true,
       "identity_object_present": false,
+      "identity_range_numbers_match_flat": true,
+      "identity_range_numbers_present": false,
       "identity_version_present": false,
       "identity_window_numbers_match_flat": true,
       "identity_window_numbers_present": false,
@@ -31,6 +33,7 @@
       "window_identity_key": "window_identity.key must be non-empty and match version/algo/window_id/window_digest tuple",
       "window_identity_meta": "window_identity.version/algo must be non-empty, algo currently sha1",
       "window_identity_object": "window_identity object should be present and match flat fields when both exist",
+      "window_identity_range_shape": "window_identity.window_start/window_end should be non-negative integers and align with group_paging",
       "window_identity_window_shape": "window_identity.group_offset/group_limit/group_count should be non-negative integers and align with group_paging",
       "window_key_flat_compat": "window_key flat field should match window_identity.key when both exist"
     },
@@ -45,6 +48,8 @@
       "window_identity_key": "",
       "window_identity_present": false,
       "window_identity_version": "",
+      "window_identity_window_end": -1,
+      "window_identity_window_start": -1,
       "window_key": ""
     }
   },
