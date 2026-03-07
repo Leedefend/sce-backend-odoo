@@ -76,6 +76,25 @@ function normalizeCategory(category?: string): string {
     .toLowerCase();
 }
 
+function mergeHint(...parts: Array<string | undefined>): string | undefined {
+  const text = parts
+    .map((part) => String(part || '').trim())
+    .filter(Boolean)
+    .join(' ');
+  return text || undefined;
+}
+
+function errorContextHint(err?: StatusError | null): string {
+  const model = String(err?.details?.model || '').trim();
+  const op = String(err?.details?.op || '').trim().toLowerCase();
+  const reasonCode = String(err?.reasonCode || '').trim().toUpperCase();
+  const scope = [model, op].filter(Boolean).join('/');
+  if (!scope && !reasonCode) return '';
+  if (scope && reasonCode) return `Context: ${scope} [${reasonCode}].`;
+  if (scope) return `Context: ${scope}.`;
+  return `Context: [${reasonCode}].`;
+}
+
 function getHint(code?: number | string, kind?: string, errorCategory?: string, retryable?: boolean): string {
   const numericCode = normalizeCode(code);
   const category = normalizeCategory(errorCategory);
@@ -96,109 +115,99 @@ function getHint(code?: number | string, kind?: string, errorCategory?: string, 
   return '';
 }
 
-function permissionContextHint(details?: Record<string, unknown>): string {
-  if (!details) return '';
-  const model = String(details.model || '').trim();
-  const op = String(details.op || '').trim().toLowerCase();
-  if (!model && !op) return '';
-  if (model && op) return `Permission context: ${model} (${op}).`;
-  if (model) return `Permission context: ${model}.`;
-  return `Permission context: op=${op}.`;
-}
-
 export function resolveErrorCopy(err: StatusError | null, fallbackMessage = 'Request failed'): StatusCopy {
   const code = normalizeCode(err?.code);
   const category = normalizeCategory(err?.errorCategory);
   const hint = err?.hint || getHint(err?.code, err?.kind, err?.errorCategory, err?.retryable);
+  const contextHint = errorContextHint(err);
   if (category === 'auth') {
     return {
       title: 'Authentication required',
       message: 'Login state is invalid for this action.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'permission') {
     return {
       title: 'Permission denied',
       message: 'Current role cannot perform this operation.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'validation') {
     return {
       title: 'Invalid request',
       message: 'Request parameters failed backend validation.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'conflict') {
     return {
       title: 'Write conflict',
       message: 'Backend rejected stale data. Reload and retry.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'business') {
     return {
       title: 'Business rule blocked',
       message: 'Operation violates current business constraints.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (category === 'system') {
     return {
       title: 'System exception',
       message: 'Backend failed to process this request.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (err?.kind === 'network' || code === 0) {
     return {
       title: 'Network error',
       message: 'Unable to reach backend service. Please check network or service health.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (code === 401) {
     return {
       title: 'Authentication required',
       message: 'Login session is invalid. Please sign in again.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (code === 403) {
-    const contextHint = permissionContextHint(err?.details);
     return {
       title: 'Permission denied',
       message: 'You do not have permission to perform this action.',
-      hint: [hint, contextHint].filter(Boolean).join(' ') || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (code === 404) {
     return {
       title: 'Resource not found',
       message: 'Requested resource is missing or no longer accessible.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (code === 409) {
     return {
       title: 'Write conflict',
       message: 'Record was updated by someone else. Reload before retrying.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   if (code && code >= 500) {
     return {
       title: 'System exception',
       message: 'Backend failed to process this request. Please retry shortly.',
-      hint: hint || undefined,
+      hint: mergeHint(hint, contextHint),
     };
   }
   return {
     title: 'Request failed',
     message: err?.message || fallbackMessage,
-    hint: hint || undefined,
+    hint: mergeHint(hint, contextHint),
   };
 }
 
