@@ -17,6 +17,8 @@
       "supports_page_flags": false,
       "supports_page_window": false,
       "supports_window_identity": false,
+      "supports_window_identity_group_by": false,
+      "supports_window_identity_model": false,
       "supports_window_key": false,
       "supports_window_span": false,
       "window_span_matches_range": false
@@ -38,6 +40,8 @@
       "supports_page_flags": false,
       "supports_page_window": false,
       "supports_window_identity": false,
+      "supports_window_identity_group_by": false,
+      "supports_window_identity_model": false,
       "supports_window_key": false,
       "supports_window_span": false,
       "window_span_matches_range": false
@@ -59,13 +63,15 @@
       "supports_page_flags": false,
       "supports_page_window": false,
       "supports_window_identity": false,
+      "supports_window_identity_group_by": false,
+      "supports_window_identity_model": false,
       "supports_window_key": false,
       "supports_window_span": false,
       "window_span_matches_range": false
     },
     {
       "case": "project_grouped",
-      "consistency_score": 9,
+      "consistency_score": 11,
       "group_by": "lifecycle_state",
       "has_group_summary": true,
       "has_grouped_rows": true,
@@ -85,6 +91,8 @@
       "supports_page_flags": true,
       "supports_page_window": true,
       "supports_window_identity": true,
+      "supports_window_identity_group_by": true,
+      "supports_window_identity_model": true,
       "supports_window_key": true,
       "supports_window_span": true,
       "window_span_matches_range": true
