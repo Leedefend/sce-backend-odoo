@@ -28,6 +28,7 @@ export async function listRecords(params: {
   search_term?: string;
   context?: Record<string, unknown>;
   context_raw?: string;
+  silentErrors?: boolean;
 }) {
   const payload: ApiDataListRequest = {
     op: 'list',
@@ -51,6 +52,7 @@ export async function listRecords(params: {
   return intentRequest<ApiDataListResult>({
     intent: 'api.data',
     params: payload,
+    silentErrors: Boolean(params.silentErrors),
   });
 }
 

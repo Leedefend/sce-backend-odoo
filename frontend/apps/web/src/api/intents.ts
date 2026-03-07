@@ -8,6 +8,7 @@ export interface IntentPayload {
   params?: unknown;
   context?: Record<string, unknown>;
   meta?: Record<string, unknown>;
+  silentErrors?: boolean;
 }
 
 export interface IntentRawResult<T> {
@@ -98,7 +99,10 @@ export async function intentRequest<T>(payload: IntentPayload) {
       writeMode: payload.intent.includes('write') || payload.intent.includes('create') ? 'write' : 'read',
     });
     // eslint-disable-next-line no-console
-    console.warn(`[trace] intent=${payload.intent} status=error trace=${errorTrace}`);
+    if (!payload.silentErrors) {
+      // eslint-disable-next-line no-console
+      console.warn(`[trace] intent=${payload.intent} status=error trace=${errorTrace}`);
+    }
     throw err;
   }
 }
