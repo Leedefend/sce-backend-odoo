@@ -343,6 +343,7 @@ import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 import { parseContractContextRaw, resolveContractReadRight, resolveContractViewMode } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
+import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
@@ -2959,15 +2960,14 @@ function buildIdempotencyKey(action: string, ids: number[], extra: Record<string
 }
 
 function buildBatchErrorLine(err: unknown, fallback: { model: string; op: string; label: string }) {
+  const issueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
+  const issue = collectErrorContextIssue(issueCounter, err, { model: fallback.model, op: fallback.op });
+  const scope = issueScopeLabel(issue);
+  const reasonText = issue.reasonCode ? `原因=${issue.reasonCode}` : '';
   if (!(err instanceof ApiError)) {
-    return `${fallback.label}失败`;
+    return [fallback.label, scope ? `范围=${scope}` : '', reasonText].filter(Boolean).join(' | ');
   }
-  const reasonCode = String(err.reasonCode || '').trim().toUpperCase();
-  const modelName = String(err.details?.model || fallback.model || '').trim();
-  const opName = String(err.details?.op || fallback.op || '').trim().toLowerCase();
   const hint = resolveSuggestedAction(err.suggestedAction, err.reasonCode, err.retryable);
-  const scope = [modelName, opName].filter(Boolean).join('/');
-  const reasonText = reasonCode ? `原因=${reasonCode}` : '';
   return [fallback.label, scope ? `范围=${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
 }
 
