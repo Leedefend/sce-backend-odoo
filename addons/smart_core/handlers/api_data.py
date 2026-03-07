@@ -684,7 +684,15 @@ class ApiDataHandler(BaseIntentHandler):
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
-        group_summary = self._build_group_summary_with_offset(env_model, domain, group_by, limit=group_limit, offset=group_offset)
+        group_summary_probe = self._build_group_summary_with_offset(
+            env_model,
+            domain,
+            group_by,
+            limit=group_limit + 1,
+            offset=group_offset,
+        )
+        group_has_more = len(group_summary_probe) > group_limit
+        group_summary = group_summary_probe[:group_limit]
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
@@ -711,6 +719,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "group_limit": group_limit,
                 "group_offset": group_offset,
                 "group_count": len(group_summary),
+                "has_more": group_has_more,
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
             },
@@ -731,6 +740,7 @@ class ApiDataHandler(BaseIntentHandler):
             "group_by": group_by,
             "group_by_field": primary_group_field or None,
             "group_count": len(group_summary),
+            "group_has_more": group_has_more,
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,
             "group_offset": group_offset,
