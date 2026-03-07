@@ -190,6 +190,38 @@ function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, re
   };
 }
 
+function buildGroupedOffsetReplaySummary(groupPaging, requestGroupOffset) {
+  const requestOffset = Math.max(0, toSafeInt(requestGroupOffset, 0));
+  const paging = groupPaging && typeof groupPaging === 'object' ? groupPaging : {};
+  const observedOffset = Math.max(0, toSafeInt(paging.group_offset, 0));
+  const nextOffsetRaw = paging.next_group_offset;
+  const prevOffsetRaw = paging.prev_group_offset;
+  const nextOffset = Number.isFinite(Number(nextOffsetRaw)) ? Math.max(0, toSafeInt(nextOffsetRaw, 0)) : null;
+  const prevOffset = Number.isFinite(Number(prevOffsetRaw)) ? Math.max(0, toSafeInt(prevOffsetRaw, 0)) : null;
+  return {
+    formulas: {
+      offset_roundtrip: 'response.group_paging.group_offset == request.group_offset',
+      prev_when_offset_positive: 'request.group_offset>0 -> prev_group_offset is number|null',
+      next_signal_type: 'next_group_offset is number|null',
+    },
+    request: {
+      group_offset: requestOffset,
+    },
+    response: {
+      group_offset: observedOffset,
+      next_group_offset: nextOffset,
+      prev_group_offset: prevOffset,
+      has_more: Boolean(paging.has_more),
+      group_count: Math.max(0, toSafeInt(paging.group_count, 0)),
+    },
+    consistency: {
+      offset_roundtrip_match: requestOffset === observedOffset,
+      prev_signal_typed: requestOffset <= 0 ? prevOffset === null : (prevOffset === null || Number.isInteger(prevOffset)),
+      next_signal_typed: nextOffset === null || Number.isInteger(nextOffset),
+    },
+  };
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -280,6 +312,7 @@ async function main() {
       model: MODEL,
       fields: columns,
       group_by: groupByField,
+      group_offset: 0,
       group_page_offsets: {},
       group_sample_limit: 3,
       limit: 12,
@@ -307,6 +340,32 @@ async function main() {
     groupedPayload.params.group_sample_limit,
     groupedPayload.params.offset,
   );
+  const groupedOffsetPayload = {
+    intent: 'api.data',
+    params: {
+      op: 'list',
+      model: MODEL,
+      fields: columns,
+      group_by: groupByField,
+      group_offset: 5,
+      group_page_offsets: {},
+      group_sample_limit: 3,
+      limit: 12,
+      offset: 0,
+    },
+  };
+  const groupedOffsetResp = await requestJson(intentUrl, groupedOffsetPayload, authHeader);
+  writeJson(path.join(outDir, 'grouped_offset.log'), groupedOffsetResp);
+  assertIntentEnvelope(groupedOffsetResp, 'api.data');
+  const groupedOffsetData = unwrapIntentData(groupedOffsetResp.body);
+  const groupedOffsetPaging =
+    groupedOffsetData && typeof groupedOffsetData.group_paging === 'object'
+      ? groupedOffsetData.group_paging
+      : {};
+  const groupedOffsetReplaySummary = buildGroupedOffsetReplaySummary(
+    groupedOffsetPaging,
+    groupedOffsetPayload.params.group_offset,
+  );
   summary.push(`group_by_field: ${groupByField}`);
   summary.push(`group_summary_count: ${groupSummary.length}`);
   summary.push(`grouped_rows_count: ${groupedRows.length}`);
@@ -318,6 +377,9 @@ async function main() {
   summary.push(`grouped_pagination_normalized_offset: ${groupedPaginationSemanticSummary.request.normalized_request_offset}`);
   summary.push(`grouped_pagination_first_group_present: ${groupedPaginationSemanticSummary.first_group_observation.present ? 'yes' : 'no'}`);
   summary.push(`grouped_pagination_first_group_page: ${groupedPaginationSemanticSummary.first_group_observation.current_page}/${groupedPaginationSemanticSummary.first_group_observation.total_pages}`);
+  summary.push(`grouped_offset_roundtrip_match: ${groupedOffsetReplaySummary.consistency.offset_roundtrip_match ? 'yes' : 'no'}`);
+  summary.push(`grouped_offset_prev_signal_typed: ${groupedOffsetReplaySummary.consistency.prev_signal_typed ? 'yes' : 'no'}`);
+  summary.push(`grouped_offset_next_signal_typed: ${groupedOffsetReplaySummary.consistency.next_signal_typed ? 'yes' : 'no'}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');
@@ -341,6 +403,7 @@ async function main() {
       page_window: groupedHasPageWindow,
     },
     grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,
+    grouped_offset_replay_summary: groupedOffsetReplaySummary,
   });
   writeJson(path.join(outDir, 'grouped_signature.current.json'), groupedSignature);
   if (TREE_GROUPED_SNAPSHOT_UPDATE) {
