@@ -18,6 +18,7 @@
       :error-code="error?.code || errorCode"
       :reason-code="error?.reasonCode"
       :error-category="error?.errorCategory"
+      :error-details="error?.details"
       :retryable="error?.retryable"
       :hint="errorCopy.hint || errorHint"
       :suggested-action="error?.suggestedAction"

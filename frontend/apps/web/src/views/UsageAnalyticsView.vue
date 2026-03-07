@@ -88,6 +88,7 @@
       :error-code="statusError?.code"
       :reason-code="statusError?.reasonCode"
       :error-category="statusError?.errorCategory"
+      :error-details="statusError?.details"
       :retryable="statusError?.retryable"
       :hint="errorCopy.hint"
       :suggested-action="statusError?.suggestedAction"
