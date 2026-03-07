@@ -235,6 +235,15 @@ def _build_grouped_semantic_signature(
     identity_group_by_field = str(window_identity.get("group_by_field") or "").strip()
     supports_window_identity_model = bool(identity_model) and identity_model == str(request_model or "").strip()
     supports_window_identity_group_by = bool(identity_group_by_field) and identity_group_by_field == str(request_group_by or "").strip()
+    identity_version = str(window_identity.get("version") or "").strip()
+    identity_algo = str(window_identity.get("algo") or "").strip().lower()
+    supports_window_identity_algo = bool(identity_algo) and identity_algo == "sha1"
+    identity_window_id = str(window_identity.get("window_id") or group_paging.get("window_id") or "").strip()
+    identity_window_digest = str(window_identity.get("window_digest") or group_paging.get("window_digest") or "").strip()
+    tuple_key_expected = (
+        f"{identity_version or 'v1'}:{identity_algo or 'sha1'}:{identity_window_id or '-'}:{identity_window_digest or '-'}"
+    )
+    supports_window_identity_key_tuple = bool(identity_key or window_key) and (identity_key or window_key) == tuple_key_expected
 
     group_count = max(0, _to_int(group_paging.get("group_count"), 0))
     window_start = max(0, _to_int(group_paging.get("window_start"), 0))
@@ -257,6 +266,8 @@ def _build_grouped_semantic_signature(
         "supports_window_key": bool(supports_window_key),
         "supports_window_identity_model": bool(supports_window_identity_model),
         "supports_window_identity_group_by": bool(supports_window_identity_group_by),
+        "supports_window_identity_algo": bool(supports_window_identity_algo),
+        "supports_window_identity_key_tuple": bool(supports_window_identity_key_tuple),
         "supports_window_span": bool(supports_window_span),
         "window_span_matches_range": bool(window_span_matches_range),
         "request_offset_matches_observed": bool(request_offset_matches_observed),
@@ -384,6 +395,8 @@ def main():
                         "supports_window_key": False,
                         "supports_window_identity_model": False,
                         "supports_window_identity_group_by": False,
+                        "supports_window_identity_algo": False,
+                        "supports_window_identity_key_tuple": False,
                         "supports_window_span": False,
                         "window_span_matches_range": False,
                         "request_offset_matches_observed": False,
@@ -420,6 +433,8 @@ def main():
                 "supports_window_key": grouped_semantic["supports_window_key"],
                 "supports_window_identity_model": grouped_semantic["supports_window_identity_model"],
                 "supports_window_identity_group_by": grouped_semantic["supports_window_identity_group_by"],
+                "supports_window_identity_algo": grouped_semantic["supports_window_identity_algo"],
+                "supports_window_identity_key_tuple": grouped_semantic["supports_window_identity_key_tuple"],
                 "supports_window_span": grouped_semantic["supports_window_span"],
                 "window_span_matches_range": grouped_semantic["window_span_matches_range"],
                 "request_offset_matches_observed": grouped_semantic["request_offset_matches_observed"],
