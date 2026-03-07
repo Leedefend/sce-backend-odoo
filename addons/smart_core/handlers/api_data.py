@@ -775,6 +775,9 @@ class ApiDataHandler(BaseIntentHandler):
         )
         group_window_digest = self._build_group_window_digest(group_window_id, group_summary)
         group_window_identity_key = self._build_group_window_identity_key(group_window_id, group_window_digest)
+        effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
+        effective_page_size = effective_page_size if effective_page_size > 0 else min(self._get_int(p, "group_sample_limit", 3), 8)
+        effective_page_size = max(1, int(effective_page_size or 1))
         group_window_identity = {
             "model": model,
             "group_by_field": primary_group_field or None,
@@ -810,9 +813,6 @@ class ApiDataHandler(BaseIntentHandler):
             group_page_offsets=group_page_offsets,
             group_summary=group_summary,
         )
-        effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
-        effective_page_size = effective_page_size if effective_page_size > 0 else min(self._get_int(p, "group_sample_limit", 3), 8)
-        effective_page_size = max(1, int(effective_page_size or 1))
 
         data = {
             "records": rows,
