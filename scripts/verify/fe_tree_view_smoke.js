@@ -225,6 +225,7 @@ function buildGroupedOffsetReplaySummary(groupPaging, requestGroupOffset) {
 function buildGroupedIdentitySummary(groupPaging) {
   const paging = groupPaging && typeof groupPaging === 'object' ? groupPaging : {};
   const identity = paging.window_identity && typeof paging.window_identity === 'object' ? paging.window_identity : {};
+  const identityGroupByField = typeof identity.group_by_field === 'string' ? identity.group_by_field.trim() : '';
   const windowId = typeof identity.window_id === 'string'
     ? identity.window_id.trim()
     : (typeof paging.window_id === 'string' ? paging.window_id.trim() : '');
@@ -266,12 +267,14 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_page_shape: 'window_identity.page_size/has_group_page_offsets should align with group_paging',
       window_identity_range_shape: 'window_identity.window_start/window_end should be non-negative integers and align with group_paging',
       window_identity_nav_shape: 'window_identity prev/next/has_more should align with group_paging',
+      window_identity_group_by_shape: 'window_identity.group_by_field should align with group_paging.group_by_field',
     },
     response: {
       window_id: windowId,
       query_fingerprint: queryFingerprint,
       window_digest: windowDigest,
       window_identity_present: Boolean(paging.window_identity && typeof paging.window_identity === 'object'),
+      window_identity_group_by_field: identityGroupByField,
       window_identity_version: identityVersion,
       window_identity_algo: identityAlgo,
       window_identity_key: identityKey || flatWindowKey,
@@ -321,6 +324,10 @@ function buildGroupedIdentitySummary(groupPaging) {
       identity_total_match_flat: (
         identityGroupTotal === null
         || identityGroupTotal === (Number.isFinite(Number(paging.group_total)) ? Math.max(0, toSafeInt(paging.group_total, 0)) : null)
+      ),
+      identity_group_by_match_flat: (
+        !identityGroupByField
+        || identityGroupByField === String(paging.group_by_field || '').trim()
       ),
       identity_page_meta_present: identityPageSize !== null && identityHasGroupPageOffsets !== null,
       identity_page_meta_match_flat: (
@@ -520,6 +527,7 @@ async function main() {
   summary.push(`grouped_identity_window_numbers_present: ${groupedIdentitySummary.consistency.identity_window_numbers_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_window_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_window_numbers_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_total_match_flat: ${groupedIdentitySummary.consistency.identity_total_match_flat ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_group_by_match_flat: ${groupedIdentitySummary.consistency.identity_group_by_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_page_meta_match_flat: ${groupedIdentitySummary.consistency.identity_page_meta_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_present: ${groupedIdentitySummary.consistency.identity_range_numbers_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_range_numbers_match_flat ? 'yes' : 'no'}`);
