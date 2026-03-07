@@ -173,6 +173,7 @@ export interface ApiDataListResult {
     window_digest?: string;
     window_key?: string;
     window_identity?: {
+      model?: string;
       group_by_field?: string | null;
       window_id?: string;
       query_fingerprint?: string;
