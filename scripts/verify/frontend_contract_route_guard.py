@@ -26,7 +26,7 @@ def main() -> int:
         "component: ContractFormPage",
         "path: '/r/:model/:id'",
         "name: 'record'",
-        "component: RecordView",
+        "component: ContractFormPage",
     ]
     missing = [token for token in required_tokens if token not in text]
     if missing:
@@ -35,6 +35,7 @@ def main() -> int:
     forbidden_tokens = [
         "component: ModelFormPage",
         "component: ModelListPage",
+        "component: RecordView",
     ]
     found_forbidden = [token for token in forbidden_tokens if token in text]
     if found_forbidden:
