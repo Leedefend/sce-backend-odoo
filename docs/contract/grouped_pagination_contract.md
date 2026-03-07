@@ -59,6 +59,7 @@ Each entry in `grouped_rows` must provide:
 2. Frontend should prefer `page_window` when present; fallback to legacy range fields otherwise.
 3. `group_key` must be stable for a given `(field, value)` pair to preserve route paging restoration.
 4. `page_has_prev/page_has_next` are authoritative backend semantics; frontend should avoid recomputing when these flags exist.
+5. For grouped window navigation, frontend should prefer `next_group_offset/prev_group_offset` over local offset arithmetic when present.
 
 ## Group Paging Summary
 
