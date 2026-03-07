@@ -775,6 +775,7 @@ class ApiDataHandler(BaseIntentHandler):
         group_window_digest = self._build_group_window_digest(group_window_id, group_summary)
         group_window_identity_key = self._build_group_window_identity_key(group_window_id, group_window_digest)
         group_window_identity = {
+            "group_by_field": primary_group_field or None,
             "window_id": group_window_id,
             "query_fingerprint": group_query_fingerprint,
             "window_digest": group_window_digest,

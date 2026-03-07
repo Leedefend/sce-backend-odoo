@@ -119,6 +119,7 @@ def main() -> int:
         "window_identity_page_shape",
         "window_identity_range_shape",
         "window_identity_nav_shape",
+        "window_identity_group_by_shape",
     ):
         _expect_type(identity_formulas.get(key), str, f"grouped_identity_summary.formulas.{key}", errors)
 
@@ -202,6 +203,12 @@ def main() -> int:
         errors,
     )
     _expect_type(
+        identity_response.get("window_identity_group_by_field"),
+        str,
+        "grouped_identity_summary.response.window_identity_group_by_field",
+        errors,
+    )
+    _expect_type(
         identity_response.get("window_identity_version"),
         str,
         "grouped_identity_summary.response.window_identity_version",
@@ -257,6 +264,7 @@ def main() -> int:
         "identity_window_numbers_match_flat",
         "identity_total_optional_typed",
         "identity_total_match_flat",
+        "identity_group_by_match_flat",
         "identity_page_meta_present",
         "identity_page_meta_match_flat",
         "identity_range_numbers_present",
