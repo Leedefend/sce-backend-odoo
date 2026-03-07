@@ -413,6 +413,7 @@ import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 import { listRecords } from '../api/data';
+import { ApiError } from '../api/client';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 
@@ -1611,13 +1612,23 @@ function clearEnterError() {
 }
 
 async function fetchCoreMetrics() {
-  const deniedModels: string[] = [];
+  const deniedModels = new Set<string>();
+  const deniedReasonCodes = new Set<string>();
+  const collectDeniedContext = (fallbackModel: string, error: unknown) => {
+    deniedModels.add(fallbackModel);
+    if (error instanceof ApiError) {
+      const model = String(error.details?.model || '').trim();
+      if (model) deniedModels.add(model);
+      const reasonCode = String(error.reasonCode || '').trim().toUpperCase();
+      if (reasonCode) deniedReasonCodes.add(reasonCode);
+    }
+  };
   const readTotal = async (model: string, domain: unknown[] = []) => {
     try {
       const result = await listRecords({ model, fields: ['id'], limit: 1, domain, silentErrors: true });
       return Number(result.total || result.records?.length || 0);
-    } catch {
-      deniedModels.push(model);
+    } catch (error) {
+      collectDeniedContext(model, error);
       return 0;
     }
   };
@@ -1632,8 +1643,8 @@ async function fetchCoreMetrics() {
       });
       const records = Array.isArray(result.records) ? result.records : [];
       return records.reduce((sum, item) => sum + pickNumericField(item, fieldCandidates), 0);
-    } catch {
-      deniedModels.push(model);
+    } catch (error) {
+      collectDeniedContext(model, error);
       return 0;
     }
   };
@@ -1659,7 +1670,15 @@ async function fetchCoreMetrics() {
   };
   const now = new Date();
   dataUpdatedAt.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  partialDataNotice.value = deniedModels.length ? '部分数据未显示（权限受限）' : '';
+  if (!deniedModels.size) {
+    partialDataNotice.value = '';
+    return;
+  }
+  const modelsText = Array.from(deniedModels).slice(0, 2).join('、');
+  const isPermissionDenied = deniedReasonCodes.has('PERMISSION_DENIED');
+  partialDataNotice.value = isPermissionDenied
+    ? `部分数据未显示（${modelsText} 权限受限）`
+    : `部分数据未显示（${modelsText} 暂不可用）`;
 }
 
 function handleKeydown(event: KeyboardEvent) {
