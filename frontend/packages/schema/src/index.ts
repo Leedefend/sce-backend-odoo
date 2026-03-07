@@ -179,6 +179,8 @@ export interface ApiDataListResult {
       version?: string;
       algo?: string;
       key?: string;
+      window_start?: number;
+      window_end?: number;
       group_offset?: number;
       group_limit?: number;
       group_count?: number;

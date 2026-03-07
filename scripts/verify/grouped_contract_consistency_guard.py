@@ -52,6 +52,7 @@ def main() -> int:
         "grouped_identity_key_matches_tuple",
         "grouped_identity_key_matches_flat",
         "grouped_identity_window_numbers_match_flat",
+        "grouped_identity_range_numbers_match_flat",
     ]
     for marker in smoke_markers:
         if marker not in fe_tree_smoke:
@@ -99,6 +100,8 @@ def main() -> int:
         "identity_key_matches_flat",
         "identity_window_numbers_present",
         "identity_window_numbers_match_flat",
+        "identity_range_numbers_present",
+        "identity_range_numbers_match_flat",
     ):
         if not isinstance(identity_consistency.get(key), bool):
             errors.append(f"fe_tree grouped_identity_summary.consistency.{key} must be bool")
