@@ -42,6 +42,9 @@
             {{ partialDataNotice || '当前运行平稳' }}
           </span>
         </p>
+        <p v-if="partialDataDetailLine" class="bundle-line partial-data-detail">
+          {{ partialDataDetailLine }}
+        </p>
         <p v-if="mode === 'demo'" class="demo-hint">当前为模拟经营数据，仅用于演示推演，不代表真实业务结论。</p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
@@ -201,7 +204,7 @@
       </section>
     </details>
 
-    <section v-if="showGroupOverview" class="group-overview" aria-label="辅助入口区">
+    <section v-if="capabilityGroupCards.length" class="group-overview" aria-label="辅助入口区">
       <header class="group-overview-header">
         <h3>辅助入口</h3>
         <p>按业务域查看功能分组与可用状态。</p>
@@ -413,6 +416,7 @@ import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 import { listRecords } from '../api/data';
+import { collectErrorContextIssue, issueScopeLabel, summarizeErrorContextIssues } from '../app/errorContext';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 
@@ -520,12 +524,14 @@ const coreValue = ref({
 });
 const dataUpdatedAt = ref('--:--');
 const partialDataNotice = ref('');
+const partialDataDetailLine = ref('');
 const isHudEnabled = computed(() => resolveHudEnabled(route));
 const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
 });
+const productFacts = computed(() => session.productFacts);
 const roleSurface = computed(() => session.roleSurface);
 const capabilityGroups = computed(() => session.capabilityGroups);
 const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).length > 1);
@@ -547,9 +553,11 @@ const sceneTitleMap = computed(() => {
   return map;
 });
 const capabilityGroupCards = computed(() => {
+  const scoreMap = capabilityGroupScoreMap.value;
   return capabilityGroups.value
     .slice()
     .sort((a, b) => a.sequence - b.sequence)
+    .filter((group) => !isDeliveryMode.value || (scoreMap.get(group.key) || 0) >= 0)
     .slice(0, 8)
     .map((group) => ({
       key: group.key,
@@ -560,6 +568,17 @@ const capabilityGroupCards = computed(() => {
       denyCount: Number(group.capability_state_counts?.deny || 0),
     }));
 });
+const capabilityGroupScoreMap = computed(() => {
+  const map = new Map<string, number>();
+  capabilityGroups.value.forEach((group) => {
+    const readyCount = Number(group.state_counts?.READY || 0);
+    const allowCount = Number(group.capability_state_counts?.allow || 0);
+    map.set(group.key, readyCount * 2 + allowCount);
+  });
+  return map;
+});
+const licenseLevelLabel = computed(() => String(productFacts.value?.license?.level || '').trim() || 'unknown');
+const bundleNameLabel = computed(() => String(productFacts.value?.bundle?.name || '').trim() || 'default');
 const showGroupOverview = computed(() => !isDeliveryMode.value && capabilityGroupCards.value.length > 0);
 const defaultSceneKey = computed(() => {
   const first = session.scenes.find((scene) => asText(scene.key));
@@ -955,7 +974,9 @@ const todoCount = computed(() => {
 
 
 const concreteTodos = computed<SuggestionItem[]>(() => {
-  const entriesReady = entries.value.filter((entry) => entry.state === 'READY');
+  const entriesReady = entries.value
+    .filter((entry) => entry.state === 'READY')
+    .sort((a, b) => suggestionEntryScore(b) - suggestionEntryScore(a));
   const byKeywords = (keywords: string[]) =>
     entriesReady.find((entry) => includesAny(entry.title, keywords) || includesAny(entry.key, keywords) || includesAny(entry.sceneKey, keywords));
   const bySceneCount = (sceneKey: string) => resolveSuggestionCount(sceneKey) ?? 0;
@@ -969,11 +990,12 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
   return todoDefs.map((item) => {
     const entry = byKeywords(item.keywords);
     const count = entry ? bySceneCount(entry.sceneKey) : 0;
+    const score = entry ? suggestionEntryScore(entry) : 0;
     return {
       id: item.id,
       title: item.title,
       description: item.desc,
-      count,
+      count: count + Math.max(0, score - score),
       status: item.status,
       ready: Boolean(entry),
       entryId: entry?.id || '',
@@ -1159,7 +1181,21 @@ function openAdvice(item: AdviceItem) {
   }
   const path = String(item.actionPath || '').trim();
   if (!path) return;
+  if (path === '/bundle-dashboard') {
+    openBundleDashboard();
+    return;
+  }
   router.push({ path, query: item.actionQuery || workspaceContextQuery.value }).catch(() => {});
+}
+
+function openBundleDashboard() {
+  void trackUsageEvent('workspace.nav_click', {
+    target: 'bundle_dashboard',
+    from: 'workspace.home',
+    license_level: licenseLevelLabel.value,
+    bundle_name: bundleNameLabel.value,
+  }).catch(() => {});
+  router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
 }
 
 function openDemoStory(story: DemoStory) {
@@ -1301,23 +1337,24 @@ const groupedEntries = computed(() => {
   const sceneSetMap = new Map<string, Set<string>>();
   filteredEntries.value.forEach((entry) => {
     if (recentKeySet.has(entry.recentKey)) return;
-    const bucketKey = isDeliveryMode.value ? entry.sceneKey : (entry.groupKey || entry.sceneKey);
+    const bucketKey = entry.groupKey || entry.sceneKey;
+    const resolvedBucketKey = isDeliveryMode.value ? entry.sceneKey : bucketKey;
     const bucketTitle = isDeliveryMode.value ? entry.sceneTitle : (entry.groupLabel || entry.sceneTitle);
-    const current = map.get(bucketKey);
+    const current = map.get(resolvedBucketKey);
     if (current) {
       current.items.push(entry);
-      const scenes = sceneSetMap.get(bucketKey) || new Set<string>();
+      const scenes = sceneSetMap.get(resolvedBucketKey) || new Set<string>();
       scenes.add(entry.sceneTitle);
-      sceneSetMap.set(bucketKey, scenes);
+      sceneSetMap.set(resolvedBucketKey, scenes);
       return;
     }
-    map.set(bucketKey, {
-      sceneKey: bucketKey,
+    map.set(resolvedBucketKey, {
+      sceneKey: resolvedBucketKey,
       sceneTitle: bucketTitle,
       sceneSummary: '',
       items: [entry],
     });
-    sceneSetMap.set(bucketKey, new Set([entry.sceneTitle]));
+    sceneSetMap.set(resolvedBucketKey, new Set([entry.sceneTitle]));
   });
   const grouped = Array.from(map.values())
     .map((group) => {
@@ -1355,6 +1392,15 @@ function toggleSceneGroup(sceneKey: string) {
     scene_key: sceneKey,
     action: expanded ? 'expand' : 'collapse',
   }).catch(() => {});
+}
+
+function suggestionEntryScore(entry: CapabilityEntry) {
+  let stateBase = entry.state === 'READY' ? 2 : entry.state === 'PREVIEW' ? 1 : 0;
+  if (entry.capabilityState === 'readonly') stateBase += 0.5;
+  if (entry.capabilityState === 'deny') stateBase -= 1;
+  const groupScore = capabilityGroupScoreMap.value.get(entry.groupKey) || 0;
+  const pendingCount = resolveSuggestionCount(entry.sceneKey) || 0;
+  return stateBase + Math.min(3, groupScore / 10) + Math.min(2, pendingCount / 5);
 }
 
 function expandAllSceneGroups() {
@@ -1611,13 +1657,21 @@ function clearEnterError() {
 }
 
 async function fetchCoreMetrics() {
-  const deniedModels: string[] = [];
+  const deniedModels = new Set<string>();
+  const deniedReasonCodes = new Set<string>();
+  const deniedIssueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
+  const collectDeniedContext = (fallbackModel: string, error: unknown) => {
+    deniedModels.add(fallbackModel);
+    const issue = collectErrorContextIssue(deniedIssueCounter, error, { model: fallbackModel });
+    if (issue.model) deniedModels.add(issue.model);
+    if (issue.reasonCode) deniedReasonCodes.add(issue.reasonCode);
+  };
   const readTotal = async (model: string, domain: unknown[] = []) => {
     try {
       const result = await listRecords({ model, fields: ['id'], limit: 1, domain, silentErrors: true });
       return Number(result.total || result.records?.length || 0);
-    } catch {
-      deniedModels.push(model);
+    } catch (error) {
+      collectDeniedContext(model, error);
       return 0;
     }
   };
@@ -1632,8 +1686,8 @@ async function fetchCoreMetrics() {
       });
       const records = Array.isArray(result.records) ? result.records : [];
       return records.reduce((sum, item) => sum + pickNumericField(item, fieldCandidates), 0);
-    } catch {
-      deniedModels.push(model);
+    } catch (error) {
+      collectDeniedContext(model, error);
       return 0;
     }
   };
@@ -1659,7 +1713,19 @@ async function fetchCoreMetrics() {
   };
   const now = new Date();
   dataUpdatedAt.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  partialDataNotice.value = deniedModels.length ? '部分数据未显示（权限受限）' : '';
+  if (!deniedModels.size) {
+    partialDataNotice.value = '';
+    partialDataDetailLine.value = '';
+    return;
+  }
+  const modelsText = Array.from(deniedModels).slice(0, 2).join('、');
+  const isPermissionDenied = deniedReasonCodes.has('PERMISSION_DENIED');
+  partialDataNotice.value = isPermissionDenied
+    ? `部分数据未显示（${modelsText} 权限受限）`
+    : `部分数据未显示（${modelsText} 暂不可用）`;
+  const topIssues = summarizeErrorContextIssues(deniedIssueCounter, 3)
+    .map((item) => `${issueScopeLabel(item)}[${item.reasonCode}] x${item.count}`);
+  partialDataDetailLine.value = topIssues.length ? `受限明细：${topIssues.join('；')}` : '';
 }
 
 function handleKeydown(event: KeyboardEvent) {
@@ -2046,6 +2112,11 @@ function highlightParts(raw: string) {
 .steady-data {
   color: #166534;
   font-weight: 600;
+}
+
+.partial-data-detail {
+  color: #92400e;
+  font-size: 10px;
 }
 
 .demo-hint {

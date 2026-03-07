@@ -324,6 +324,7 @@
 import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
+import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -342,6 +343,7 @@ import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
 import { parseContractContextRaw, resolveContractReadRight, resolveContractViewMode } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
+import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
@@ -2313,6 +2315,7 @@ async function loadAssigneeOptions() {
       domain: [['active', '=', true]],
       order: 'name asc',
       limit: 80,
+      silentErrors: true,
     });
     const rows = Array.isArray(result.records) ? result.records : [];
     assigneeOptions.value = rows
@@ -2326,9 +2329,14 @@ async function loadAssigneeOptions() {
     if (selectedAssigneeId.value && !assigneeOptions.value.find((opt) => opt.id === selectedAssigneeId.value)) {
       selectedAssigneeId.value = null;
     }
-  } catch {
+  } catch (error) {
     assigneeOptions.value = [];
     selectedAssigneeId.value = null;
+    if (error instanceof ApiError && String(error.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED') {
+      const model = String(error.details?.model || 'res.users').trim();
+      const op = String(error.details?.op || 'list').trim().toLowerCase();
+      batchMessage.value = `负责人候选加载受限（${model}/${op}）`;
+    }
   }
 }
 
@@ -2951,6 +2959,18 @@ function buildIdempotencyKey(action: string, ids: number[], extra: Record<string
   return `batch:${JSON.stringify(payload)}`;
 }
 
+function buildBatchErrorLine(err: unknown, fallback: { model: string; op: string; label: string }) {
+  const issueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
+  const issue = collectErrorContextIssue(issueCounter, err, { model: fallback.model, op: fallback.op });
+  const scope = issueScopeLabel(issue);
+  const reasonText = issue.reasonCode ? `原因=${issue.reasonCode}` : '';
+  if (!(err instanceof ApiError)) {
+    return [fallback.label, scope ? `范围=${scope}` : '', reasonText].filter(Boolean).join(' | ');
+  }
+  const hint = resolveSuggestedAction(err.suggestedAction, err.reasonCode, err.retryable);
+  return [fallback.label, scope ? `范围=${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
+}
+
 async function handleBatchAction(action: 'archive' | 'activate') {
   batchMessage.value = '';
   batchDetails.value = [];
@@ -3004,7 +3024,13 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   } catch (err) {
     setError(err, 'batch operation failed');
     batchMessage.value = action === 'activate' ? '批量激活失败' : '批量归档失败';
-    batchDetails.value = [];
+    batchDetails.value = [{
+      text: buildBatchErrorLine(err, {
+        model: targetModel,
+        op: action,
+        label: action === 'activate' ? '批量激活' : '批量归档',
+      }),
+    }];
     failedCsvFileName.value = '';
     failedCsvContentB64.value = '';
     batchFailedOffset.value = 0;
@@ -3072,7 +3098,13 @@ async function handleBatchAssign(assigneeId: number) {
   } catch (err) {
     setError(err, 'batch assign failed');
     batchMessage.value = '批量指派失败';
-    batchDetails.value = [];
+    batchDetails.value = [{
+      text: buildBatchErrorLine(err, {
+        model: targetModel,
+        op: 'assign',
+        label: '批量指派',
+      }),
+    }];
     failedCsvFileName.value = '';
     failedCsvContentB64.value = '';
     batchFailedOffset.value = 0;
@@ -3126,6 +3158,13 @@ async function exportByBackend(scope: 'selected' | 'all') {
   } catch (err) {
     setError(err, 'batch export failed');
     batchMessage.value = '批量导出失败';
+    batchDetails.value = [{
+      text: buildBatchErrorLine(err, {
+        model: targetModel,
+        op: 'export_csv',
+        label: '批量导出',
+      }),
+    }];
   } finally {
     batchBusy.value = false;
   }
@@ -3157,6 +3196,13 @@ async function handleLoadMoreFailures() {
     applyBatchFailureArtifacts(result, { append: true });
   } catch (err) {
     setError(err, 'load more failures failed');
+    batchDetails.value = [{
+      text: buildBatchErrorLine(err, {
+        model: req.model,
+        op: req.action,
+        label: '加载更多失败',
+      }),
+    }];
   } finally {
     batchBusy.value = false;
   }

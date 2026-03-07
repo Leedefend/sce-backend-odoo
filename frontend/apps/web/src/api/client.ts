@@ -25,6 +25,7 @@ export class ApiError extends Error {
   errorCategory?: string;
   retryable?: boolean;
   suggestedAction?: string;
+  details?: Record<string, unknown>;
 
   constructor(
     message: string,
@@ -37,6 +38,7 @@ export class ApiError extends Error {
       errorCategory?: string;
       retryable?: boolean;
       suggestedAction?: string;
+      details?: Record<string, unknown>;
     },
   ) {
     super(message);
@@ -49,6 +51,7 @@ export class ApiError extends Error {
     this.errorCategory = options?.errorCategory;
     this.retryable = options?.retryable;
     this.suggestedAction = options?.suggestedAction;
+    this.details = options?.details;
   }
 }
 
@@ -246,6 +249,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     let errorCategory: string | undefined;
     let retryable: boolean | undefined;
     let suggestedAction: string | undefined;
+    let details: Record<string, unknown> | undefined;
     try {
       body = await response.json();
       const payload = body as {
@@ -258,6 +262,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
           error_category?: string;
           retryable?: boolean;
           suggested_action?: string;
+          details?: Record<string, unknown>;
         };
         message?: string;
         code?: string;
@@ -267,6 +272,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
         error_category?: string;
         retryable?: boolean;
         suggested_action?: string;
+        details?: Record<string, unknown>;
       };
       message = payload?.error?.message || payload?.message || message;
       reasonCode = payload?.error?.reason_code || payload?.reason_code || payload?.error?.code || payload?.code;
@@ -280,6 +286,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
           ? payload.retryable
           : undefined;
       suggestedAction = payload?.error?.suggested_action || payload?.suggested_action;
+      details = payload?.error?.details || payload?.details;
       traceIdFromBody = extractTraceIdFromBody(body);
     } catch {
       const text = await response.text();
@@ -295,6 +302,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
       errorCategory,
       retryable,
       suggestedAction,
+      details,
     });
   }
 
