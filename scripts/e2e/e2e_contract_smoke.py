@@ -185,6 +185,12 @@ def _to_int(value, default: int = 0) -> int:
 
 def _build_grouped_semantic_signature(data: dict, *, request_page_limit: int, request_offset: int) -> dict:
     grouped_rows = data.get("grouped_rows") if isinstance(data.get("grouped_rows"), list) else []
+    group_paging = data.get("group_paging") if isinstance(data.get("group_paging"), dict) else {}
+    window_identity = (
+        group_paging.get("window_identity")
+        if isinstance(group_paging.get("window_identity"), dict)
+        else {}
+    )
     first_group = grouped_rows[0] if grouped_rows and isinstance(grouped_rows[0], dict) else {}
     has_first_group = bool(first_group)
 
@@ -214,12 +220,32 @@ def _build_grouped_semantic_signature(data: dict, *, request_page_limit: int, re
         and isinstance(page_window.get("start"), (int, float))
         and isinstance(page_window.get("end"), (int, float))
     )
+    supports_window_identity = isinstance(group_paging.get("window_identity"), dict)
+    window_key = str(group_paging.get("window_key") or "").strip()
+    identity_key = str(window_identity.get("key") or "").strip()
+    supports_window_key = bool(window_key or identity_key)
+
+    group_count = max(0, _to_int(group_paging.get("group_count"), 0))
+    window_start = max(0, _to_int(group_paging.get("window_start"), 0))
+    window_end = max(0, _to_int(group_paging.get("window_end"), 0))
+    identity_window_span = window_identity.get("window_span")
+    has_identity_window_span = isinstance(identity_window_span, (int, float))
+    expected_window_span = max(0, window_end - window_start + 1) if group_count > 0 else 0
+    window_span_matches_range = (
+        (not has_identity_window_span)
+        or (max(0, _to_int(identity_window_span, 0)) == expected_window_span)
+    )
+    supports_window_span = has_identity_window_span and bool(window_span_matches_range)
 
     request_offset_matches_observed = (not has_first_group) or (normalized_request_offset == page_offset)
     signature = {
         "supports_group_key": bool(supports_group_key),
         "supports_page_flags": bool(supports_page_flags),
         "supports_page_window": bool(supports_page_window),
+        "supports_window_identity": bool(supports_window_identity),
+        "supports_window_key": bool(supports_window_key),
+        "supports_window_span": bool(supports_window_span),
+        "window_span_matches_range": bool(window_span_matches_range),
         "request_offset_matches_observed": bool(request_offset_matches_observed),
         "page_window_matches_range": bool(page_window_matches_range),
     }
@@ -341,6 +367,10 @@ def main():
                         "supports_group_key": False,
                         "supports_page_flags": False,
                         "supports_page_window": False,
+                        "supports_window_identity": False,
+                        "supports_window_key": False,
+                        "supports_window_span": False,
+                        "window_span_matches_range": False,
                         "request_offset_matches_observed": False,
                         "page_window_matches_range": False,
                         "consistency_score": 0,
@@ -369,6 +399,10 @@ def main():
                 "supports_group_key": grouped_semantic["supports_group_key"],
                 "supports_page_flags": grouped_semantic["supports_page_flags"],
                 "supports_page_window": grouped_semantic["supports_page_window"],
+                "supports_window_identity": grouped_semantic["supports_window_identity"],
+                "supports_window_key": grouped_semantic["supports_window_key"],
+                "supports_window_span": grouped_semantic["supports_window_span"],
+                "window_span_matches_range": grouped_semantic["window_span_matches_range"],
                 "request_offset_matches_observed": grouped_semantic["request_offset_matches_observed"],
                 "page_window_matches_range": grouped_semantic["page_window_matches_range"],
                 "consistency_score": grouped_semantic["consistency_score"],
