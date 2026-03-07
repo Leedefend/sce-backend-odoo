@@ -365,6 +365,7 @@ def main():
     # 4.1) api.data grouped_rows across key domains (project/contract/cost/risk)
     grouped_cases = [
         {"case": "project_grouped", "model": "project.project", "group_by": "lifecycle_state"},
+        {"case": "task_grouped", "model": "project.task", "group_by": "stage_id"},
         {"case": "contract_grouped", "model": "construction.contract", "group_by": "create_uid"},
         {"case": "cost_grouped", "model": "project.cost.ledger", "group_by": "create_uid"},
         {"case": "risk_grouped", "model": "payment.request", "group_by": "create_uid"},
