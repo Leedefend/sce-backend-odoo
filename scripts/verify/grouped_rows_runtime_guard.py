@@ -39,6 +39,7 @@ def main() -> int:
         '"page_has_prev": page_offset > 0,',
         '"page_has_next": (page_offset + page_limit) < count,',
         '"window_digest": group_window_digest,',
+        '"window_identity": {',
         '"grouped_rows": grouped_rows,',
     ]
     for marker in api_markers:
@@ -80,6 +81,7 @@ def main() -> int:
         "group_fp: activeGroupByField.value && groupQueryFingerprint.value ? groupQueryFingerprint.value : undefined,",
         "group_wid: activeGroupByField.value && groupWindowId.value ? groupWindowId.value : undefined,",
         "group_wdg: activeGroupByField.value && groupWindowDigest.value ? groupWindowDigest.value : undefined,",
+        "const windowIdentity = groupPaging && typeof groupPaging.window_identity === 'object' && groupPaging.window_identity !== null",
         "function handleGroupedRowsPageChange(group: {",
         "async function hydrateGroupedRowsByOffset() {",
         "void hydrateGroupedRowsByOffset();",

@@ -65,6 +65,7 @@ Each entry in `grouped_rows` must provide:
 5. For grouped window navigation, frontend should prefer `next_group_offset/prev_group_offset` over local offset arithmetic when present.
 6. `group_wid` is route-local state. When it mismatches backend `group_paging.window_id` under non-zero `group_offset`, frontend must reset grouped window state to first window.
 7. `group_wdg` is route-local state. When it mismatches backend `group_paging.window_digest` under non-zero `group_offset`, frontend must reset grouped window state to first window.
+8. Frontend should prefer `window_identity` when present; fallback to flat fields (`window_id/query_fingerprint/window_digest`) for compatibility.
 
 ## Group Paging Summary
 
@@ -83,6 +84,7 @@ Each entry in `grouped_rows` must provide:
 - `window_id`: backend window identity for current grouped window
 - `query_fingerprint`: normalized grouped query fingerprint
 - `window_digest`: digest of current grouped window content (`group_key/count` projection)
+- `window_identity`: normalized object form `{window_id, query_fingerprint, window_digest}`
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
 

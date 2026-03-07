@@ -2557,13 +2557,23 @@ async function load() {
       groupPaging && Number.isFinite(Number(groupPaging.group_offset))
         ? Math.max(0, Math.trunc(Number(groupPaging.group_offset)))
         : Math.max(0, Math.trunc(groupWindowOffset.value || 0));
+    const windowIdentity = groupPaging && typeof groupPaging.window_identity === 'object' && groupPaging.window_identity !== null
+      ? (groupPaging.window_identity as Record<string, unknown>)
+      : null;
     groupWindowOffset.value = effectiveGroupOffset;
-    groupWindowId.value = groupPaging && typeof groupPaging.window_id === 'string' ? String(groupPaging.window_id) : '';
+    groupWindowId.value =
+      windowIdentity && typeof windowIdentity.window_id === 'string'
+        ? String(windowIdentity.window_id)
+        : (groupPaging && typeof groupPaging.window_id === 'string' ? String(groupPaging.window_id) : '');
     const responseGroupFingerprint =
-      groupPaging && typeof groupPaging.query_fingerprint === 'string' ? String(groupPaging.query_fingerprint) : '';
+      windowIdentity && typeof windowIdentity.query_fingerprint === 'string'
+        ? String(windowIdentity.query_fingerprint)
+        : (groupPaging && typeof groupPaging.query_fingerprint === 'string' ? String(groupPaging.query_fingerprint) : '');
     groupQueryFingerprint.value = responseGroupFingerprint;
     groupWindowDigest.value =
-      groupPaging && typeof groupPaging.window_digest === 'string' ? String(groupPaging.window_digest) : '';
+      windowIdentity && typeof windowIdentity.window_digest === 'string'
+        ? String(windowIdentity.window_digest)
+        : (groupPaging && typeof groupPaging.window_digest === 'string' ? String(groupPaging.window_digest) : '');
     const routeGroupFingerprint = String(route.query.group_fp || '').trim();
     const routeGroupWindowId = String(route.query.group_wid || '').trim();
     const routeGroupWindowDigest = String(route.query.group_wdg || '').trim();
