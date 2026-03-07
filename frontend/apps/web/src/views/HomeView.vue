@@ -1614,7 +1614,7 @@ async function fetchCoreMetrics() {
   const deniedModels: string[] = [];
   const readTotal = async (model: string, domain: unknown[] = []) => {
     try {
-      const result = await listRecords({ model, fields: ['id'], limit: 1, domain });
+      const result = await listRecords({ model, fields: ['id'], limit: 1, domain, silentErrors: true });
       return Number(result.total || result.records?.length || 0);
     } catch {
       deniedModels.push(model);
@@ -1623,7 +1623,13 @@ async function fetchCoreMetrics() {
   };
   const readAmount = async (model: string, fieldCandidates: string[]) => {
     try {
-      const result = await listRecords({ model, fields: ['id', ...fieldCandidates], limit: 200, order: 'id desc' });
+      const result = await listRecords({
+        model,
+        fields: ['id', ...fieldCandidates],
+        limit: 200,
+        order: 'id desc',
+        silentErrors: true,
+      });
       const records = Array.isArray(result.records) ? result.records : [];
       return records.reduce((sum, item) => sum + pickNumericField(item, fieldCandidates), 0);
     } catch {
