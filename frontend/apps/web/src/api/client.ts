@@ -112,7 +112,18 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     headers.set('X-Odoo-DB', dbHeader);
   }
 
-  if (session.token) {
+  const isIntentEndpoint = String(path || '').trim().startsWith('/api/v1/intent');
+  let isAnonymousIntent = false;
+  if (isIntentEndpoint && options.body && typeof options.body === 'string') {
+    try {
+      const parsed = JSON.parse(options.body) as { intent?: string };
+      const intent = String(parsed?.intent || '').trim();
+      isAnonymousIntent = intent === 'login' || intent === 'auth.login' || intent === 'session.bootstrap' || intent === 'sys.intents';
+    } catch {
+      isAnonymousIntent = false;
+    }
+  }
+  if (session.token && !isAnonymousIntent) {
     headers.set('Authorization', `Bearer ${session.token}`);
   }
 
