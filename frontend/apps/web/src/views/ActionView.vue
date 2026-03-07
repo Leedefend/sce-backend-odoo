@@ -2958,6 +2958,19 @@ function buildIdempotencyKey(action: string, ids: number[], extra: Record<string
   return `batch:${JSON.stringify(payload)}`;
 }
 
+function buildBatchErrorLine(err: unknown, fallback: { model: string; op: string; label: string }) {
+  if (!(err instanceof ApiError)) {
+    return `${fallback.label}失败`;
+  }
+  const reasonCode = String(err.reasonCode || '').trim().toUpperCase();
+  const modelName = String(err.details?.model || fallback.model || '').trim();
+  const opName = String(err.details?.op || fallback.op || '').trim().toLowerCase();
+  const hint = resolveSuggestedAction(err.suggestedAction, err.reasonCode, err.retryable);
+  const scope = [modelName, opName].filter(Boolean).join('/');
+  const reasonText = reasonCode ? `原因=${reasonCode}` : '';
+  return [fallback.label, scope ? `范围=${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
+}
+
 async function handleBatchAction(action: 'archive' | 'activate') {
   batchMessage.value = '';
   batchDetails.value = [];
@@ -3011,7 +3024,13 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   } catch (err) {
     setError(err, 'batch operation failed');
     batchMessage.value = action === 'activate' ? '批量激活失败' : '批量归档失败';
-    batchDetails.value = [];
+    batchDetails.value = [{
+      text: buildBatchErrorLine(err, {
+        model: targetModel,
+        op: action,
+        label: action === 'activate' ? '批量激活' : '批量归档',
+      }),
+    }];
     failedCsvFileName.value = '';
     failedCsvContentB64.value = '';
     batchFailedOffset.value = 0;
@@ -3079,7 +3098,13 @@ async function handleBatchAssign(assigneeId: number) {
   } catch (err) {
     setError(err, 'batch assign failed');
     batchMessage.value = '批量指派失败';
-    batchDetails.value = [];
+    batchDetails.value = [{
+      text: buildBatchErrorLine(err, {
+        model: targetModel,
+        op: 'assign',
+        label: '批量指派',
+      }),
+    }];
     failedCsvFileName.value = '';
     failedCsvContentB64.value = '';
     batchFailedOffset.value = 0;
@@ -3133,6 +3158,13 @@ async function exportByBackend(scope: 'selected' | 'all') {
   } catch (err) {
     setError(err, 'batch export failed');
     batchMessage.value = '批量导出失败';
+    batchDetails.value = [{
+      text: buildBatchErrorLine(err, {
+        model: targetModel,
+        op: 'export_csv',
+        label: '批量导出',
+      }),
+    }];
   } finally {
     batchBusy.value = false;
   }
@@ -3164,6 +3196,13 @@ async function handleLoadMoreFailures() {
     applyBatchFailureArtifacts(result, { append: true });
   } catch (err) {
     setError(err, 'load more failures failed');
+    batchDetails.value = [{
+      text: buildBatchErrorLine(err, {
+        model: req.model,
+        op: req.action,
+        label: '加载更多失败',
+      }),
+    }];
   } finally {
     batchBusy.value = false;
   }
