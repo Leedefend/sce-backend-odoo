@@ -177,6 +177,7 @@ export interface ApiDataListResult {
       window_digest?: string;
       version?: string;
       algo?: string;
+      key?: string;
     };
     page_size?: number;
     has_group_page_offsets?: boolean;

@@ -236,6 +236,7 @@ function buildGroupedIdentitySummary(groupPaging) {
     : (typeof paging.window_digest === 'string' ? paging.window_digest.trim() : '');
   const identityVersion = typeof identity.version === 'string' ? identity.version.trim() : '';
   const identityAlgo = typeof identity.algo === 'string' ? identity.algo.trim().toLowerCase() : '';
+  const identityKey = typeof identity.key === 'string' ? identity.key.trim() : '';
   const flatWindowId = typeof paging.window_id === 'string' ? paging.window_id.trim() : '';
   const flatQueryFingerprint = typeof paging.query_fingerprint === 'string' ? paging.query_fingerprint.trim() : '';
   const flatWindowDigest = typeof paging.window_digest === 'string' ? paging.window_digest.trim() : '';
@@ -246,6 +247,7 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_digest_shape: 'window_digest must be non-empty hex string',
       window_identity_object: 'window_identity object should be present and match flat fields when both exist',
       window_identity_meta: 'window_identity.version/algo must be non-empty, algo currently sha1',
+      window_identity_key: 'window_identity.key must be non-empty and match version/algo/window_id/window_digest tuple',
     },
     response: {
       window_id: windowId,
@@ -254,6 +256,7 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_present: Boolean(paging.window_identity && typeof paging.window_identity === 'object'),
       window_identity_version: identityVersion,
       window_identity_algo: identityAlgo,
+      window_identity_key: identityKey,
     },
     consistency: {
       has_window_id: windowId.length > 0,
@@ -272,6 +275,9 @@ function buildGroupedIdentitySummary(groupPaging) {
       identity_version_present: identityVersion.length > 0,
       identity_algo_present: identityAlgo.length > 0,
       identity_algo_supported: identityAlgo === 'sha1',
+      identity_key_present: identityKey.length > 0,
+      identity_key_matches_tuple: identityKey.length > 0
+        && identityKey === `${identityVersion || 'v1'}:${identityAlgo || 'sha1'}:${windowId || '-'}:${windowDigest || '-'}`,
     },
   };
 }
@@ -444,6 +450,8 @@ async function main() {
   summary.push(`grouped_identity_object_matches_flat: ${groupedIdentitySummary.consistency.identity_object_matches_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_version_present: ${groupedIdentitySummary.consistency.identity_version_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_algo_supported: ${groupedIdentitySummary.consistency.identity_algo_supported ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_key_present: ${groupedIdentitySummary.consistency.identity_key_present ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_key_matches_tuple: ${groupedIdentitySummary.consistency.identity_key_matches_tuple ? 'yes' : 'no'}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');

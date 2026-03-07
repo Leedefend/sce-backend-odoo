@@ -356,6 +356,13 @@ class ApiDataHandler(BaseIntentHandler):
         }
         return hashlib.sha1(_json(payload).encode("utf-8")).hexdigest()
 
+    def _build_group_window_identity_key(self, window_id: str, window_digest: str) -> str:
+        version = str(self.GROUP_WINDOW_IDENTITY_VERSION or "").strip() or "v1"
+        algo = str(self.GROUP_WINDOW_IDENTITY_ALGO or "").strip().lower() or "sha1"
+        wid = str(window_id or "").strip() or "-"
+        wdg = str(window_digest or "").strip() or "-"
+        return f"{version}:{algo}:{wid}:{wdg}"
+
     def _build_grouped_rows(
         self,
         env_model,
@@ -766,6 +773,7 @@ class ApiDataHandler(BaseIntentHandler):
             group_query_fingerprint,
         )
         group_window_digest = self._build_group_window_digest(group_window_id, group_summary)
+        group_window_identity_key = self._build_group_window_identity_key(group_window_id, group_window_digest)
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
@@ -805,6 +813,7 @@ class ApiDataHandler(BaseIntentHandler):
                     "window_digest": group_window_digest,
                     "version": self.GROUP_WINDOW_IDENTITY_VERSION,
                     "algo": self.GROUP_WINDOW_IDENTITY_ALGO,
+                    "key": group_window_identity_key,
                 },
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
@@ -842,6 +851,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "window_digest": group_window_digest,
                 "version": self.GROUP_WINDOW_IDENTITY_VERSION,
                 "algo": self.GROUP_WINDOW_IDENTITY_ALGO,
+                "key": group_window_identity_key,
             },
             "need_group_total": need_group_total,
             "group_page_size": int(group_page_size or 0) or None,

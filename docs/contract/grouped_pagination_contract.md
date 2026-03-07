@@ -11,6 +11,7 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - routing state key: `group_fp` (grouped query fingerprint for window staleness guard)
 - routing state key: `group_wid` (grouped window identity for window staleness guard)
 - routing state key: `group_wdg` (grouped window digest for window content staleness guard)
+- routing state key: `group_wik` (grouped unified window identity key for staleness guard)
 - request key: `group_page_size` (optional; explicit grouped page size)
 - request key: `group_limit` (optional; max grouped entries returned)
 - request key: `group_offset` (optional; grouped entries offset)
@@ -67,6 +68,7 @@ Each entry in `grouped_rows` must provide:
 7. `group_wdg` is route-local state. When it mismatches backend `group_paging.window_digest` under non-zero `group_offset`, frontend must reset grouped window state to first window.
 8. Frontend should prefer `window_identity` when present; fallback to flat fields (`window_id/query_fingerprint/window_digest`) for compatibility.
 9. `window_identity.version/algo` define digest protocol. Clients should treat unknown versions as non-authoritative and fallback to tolerant comparison.
+10. `group_wik` is route-local state. When it mismatches backend `group_paging.window_identity.key` under non-zero `group_offset`, frontend must reset grouped window state to first window.
 
 ## Group Paging Summary
 
@@ -85,7 +87,7 @@ Each entry in `grouped_rows` must provide:
 - `window_id`: backend window identity for current grouped window
 - `query_fingerprint`: normalized grouped query fingerprint
 - `window_digest`: digest of current grouped window content (`group_key/count` projection)
-- `window_identity`: normalized object form `{window_id, query_fingerprint, window_digest, version, algo}`
+- `window_identity`: normalized object form `{window_id, query_fingerprint, window_digest, version, algo, key}`
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
 
