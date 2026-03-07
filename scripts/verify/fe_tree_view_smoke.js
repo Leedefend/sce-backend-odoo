@@ -241,6 +241,8 @@ function buildGroupedIdentitySummary(groupPaging) {
   const identityGroupLimit = Number.isFinite(Number(identity.group_limit)) ? Math.max(0, toSafeInt(identity.group_limit, 0)) : null;
   const identityGroupCount = Number.isFinite(Number(identity.group_count)) ? Math.max(0, toSafeInt(identity.group_count, 0)) : null;
   const identityGroupTotal = Number.isFinite(Number(identity.group_total)) ? Math.max(0, toSafeInt(identity.group_total, 0)) : null;
+  const identityPageSize = Number.isFinite(Number(identity.page_size)) ? Math.max(1, toSafeInt(identity.page_size, 1)) : null;
+  const identityHasGroupPageOffsets = typeof identity.has_group_page_offsets === 'boolean' ? identity.has_group_page_offsets : null;
   const identityWindowStart = Number.isFinite(Number(identity.window_start)) ? Math.max(0, toSafeInt(identity.window_start, 0)) : null;
   const identityWindowEnd = Number.isFinite(Number(identity.window_end)) ? Math.max(0, toSafeInt(identity.window_end, 0)) : null;
   const identityPrevOffset = Number.isFinite(Number(identity.prev_group_offset)) ? Math.max(0, toSafeInt(identity.prev_group_offset, 0)) : null;
@@ -261,6 +263,7 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_key_flat_compat: 'window_key flat field should match window_identity.key when both exist',
       window_identity_window_shape: 'window_identity.group_offset/group_limit/group_count should be non-negative integers and align with group_paging',
       window_identity_total_shape: 'window_identity.group_total should be non-negative integer when present and align with group_paging.group_total',
+      window_identity_page_shape: 'window_identity.page_size/has_group_page_offsets should align with group_paging',
       window_identity_range_shape: 'window_identity.window_start/window_end should be non-negative integers and align with group_paging',
       window_identity_nav_shape: 'window_identity prev/next/has_more should align with group_paging',
     },
@@ -277,6 +280,8 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_group_limit: identityGroupLimit ?? -1,
       window_identity_group_count: identityGroupCount ?? -1,
       window_identity_group_total: identityGroupTotal ?? -1,
+      window_identity_page_size: identityPageSize ?? -1,
+      window_identity_has_group_page_offsets: identityHasGroupPageOffsets ?? false,
       window_identity_window_start: identityWindowStart ?? -1,
       window_identity_window_end: identityWindowEnd ?? -1,
       window_identity_prev_group_offset: identityPrevOffset ?? -1,
@@ -316,6 +321,12 @@ function buildGroupedIdentitySummary(groupPaging) {
       identity_total_match_flat: (
         identityGroupTotal === null
         || identityGroupTotal === (Number.isFinite(Number(paging.group_total)) ? Math.max(0, toSafeInt(paging.group_total, 0)) : null)
+      ),
+      identity_page_meta_present: identityPageSize !== null && identityHasGroupPageOffsets !== null,
+      identity_page_meta_match_flat: (
+        identityPageSize === null || identityPageSize === Math.max(1, toSafeInt(paging.page_size, 1))
+      ) && (
+        identityHasGroupPageOffsets === null || identityHasGroupPageOffsets === Boolean(paging.has_group_page_offsets)
       ),
       identity_range_numbers_present: identityWindowStart !== null && identityWindowEnd !== null,
       identity_range_numbers_match_flat: (
@@ -509,6 +520,7 @@ async function main() {
   summary.push(`grouped_identity_window_numbers_present: ${groupedIdentitySummary.consistency.identity_window_numbers_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_window_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_window_numbers_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_total_match_flat: ${groupedIdentitySummary.consistency.identity_total_match_flat ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_page_meta_match_flat: ${groupedIdentitySummary.consistency.identity_page_meta_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_present: ${groupedIdentitySummary.consistency.identity_range_numbers_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_range_numbers_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_nav_present: ${groupedIdentitySummary.consistency.identity_nav_present ? 'yes' : 'no'}`);

@@ -789,6 +789,8 @@ class ApiDataHandler(BaseIntentHandler):
             "group_offset": group_offset,
             "group_limit": group_limit,
             "group_count": len(group_summary),
+            "page_size": effective_page_size,
+            "has_group_page_offsets": bool(group_page_offsets),
         }
         if group_total is not None:
             group_window_identity["group_total"] = int(group_total)
