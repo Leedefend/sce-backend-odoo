@@ -22,6 +22,7 @@
       "supports_window_identity_key_tuple": false,
       "supports_window_identity_model": false,
       "supports_window_key": false,
+      "supports_window_nav_match": false,
       "supports_window_span": false,
       "window_span_matches_range": false
     },
@@ -47,6 +48,7 @@
       "supports_window_identity_key_tuple": false,
       "supports_window_identity_model": false,
       "supports_window_key": false,
+      "supports_window_nav_match": false,
       "supports_window_span": false,
       "window_span_matches_range": false
     },
@@ -72,12 +74,13 @@
       "supports_window_identity_key_tuple": false,
       "supports_window_identity_model": false,
       "supports_window_key": false,
+      "supports_window_nav_match": false,
       "supports_window_span": false,
       "window_span_matches_range": false
     },
     {
       "case": "project_grouped",
-      "consistency_score": 13,
+      "consistency_score": 14,
       "group_by": "lifecycle_state",
       "has_group_summary": true,
       "has_grouped_rows": true,
@@ -102,6 +105,7 @@
       "supports_window_identity_key_tuple": true,
       "supports_window_identity_model": true,
       "supports_window_key": true,
+      "supports_window_nav_match": true,
       "supports_window_span": true,
       "window_span_matches_range": true
     }
