@@ -150,8 +150,17 @@
       :items="groupSummaryItems"
       :group-by-label="activeGroupByLabel"
       :active-key="activeGroupSummaryKey"
+      :window-offset="groupWindowOffset"
+      :window-count="groupWindowCount"
+      :window-total="groupWindowTotal ?? undefined"
+      :window-start="groupWindowStart ?? undefined"
+      :window-end="groupWindowEnd ?? undefined"
+      :can-prev-window="groupWindowPrevOffset !== null"
+      :can-next-window="groupWindowNextOffset !== null"
       :on-pick="handleGroupSummaryPick"
       :on-clear="clearGroupSummaryDrilldown"
+      :on-prev-window="handleGroupWindowPrev"
+      :on-next-window="handleGroupWindowNext"
     />
     <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
       <p class="contract-label">快捷操作</p>
@@ -405,6 +414,17 @@ const collapsedGroupKeys = ref<string[]>([]);
 const groupPageOffsets = ref<Record<string, number>>({});
 const activeGroupSummaryKey = ref('');
 const activeGroupSummaryDomain = ref<unknown[]>([]);
+const groupWindowOffset = ref(0);
+const groupWindowCount = ref(0);
+const groupWindowTotal = ref<number | null>(null);
+const groupWindowStart = ref<number | null>(null);
+const groupWindowEnd = ref<number | null>(null);
+const groupWindowId = ref('');
+const groupQueryFingerprint = ref('');
+const groupWindowDigest = ref('');
+const groupWindowIdentityKey = ref('');
+const groupWindowPrevOffset = ref<number | null>(null);
+const groupWindowNextOffset = ref<number | null>(null);
 const advancedFields = ref<string[]>([]);
 const lastBatchRequest = ref<{
   model: string;
@@ -761,6 +781,15 @@ const hudEntries = computed(() => [
   { label: 'contract_filter', value: activeContractFilterKey.value || '-' },
   { label: 'saved_filter', value: activeSavedFilterKey.value || '-' },
   { label: 'group_by', value: activeGroupByField.value || '-' },
+  { label: 'group_offset', value: groupWindowOffset.value || 0 },
+  { label: 'group_window_id', value: groupWindowId.value || '-' },
+  { label: 'group_query_fp', value: groupQueryFingerprint.value || '-' },
+  { label: 'group_window_digest', value: groupWindowDigest.value || '-' },
+  { label: 'group_window_identity_key', value: groupWindowIdentityKey.value || '-' },
+  { label: 'route_group_fp', value: String(route.query.group_fp || '').trim() || '-' },
+  { label: 'route_group_wid', value: String(route.query.group_wid || '').trim() || '-' },
+  { label: 'route_group_wdg', value: String(route.query.group_wdg || '').trim() || '-' },
+  { label: 'route_group_wik', value: String(route.query.group_wik || '').trim() || '-' },
   { label: 'contract_actions', value: contractActionButtons.value.length },
   { label: 'contract_limit', value: contractLimit.value },
   { label: 'contract_read', value: contractReadAllowed.value },
@@ -1076,6 +1105,11 @@ function applyRoutePreset() {
   const groupSortRaw = String(route.query.group_sort || '').trim().toLowerCase();
   const groupCollapsedRaw = String(route.query.group_collapsed || '').trim();
   const groupPageRaw = String(route.query.group_page || '').trim();
+  const groupOffsetRaw = Number(route.query.group_offset || 0);
+  const groupFingerprintRaw = String(route.query.group_fp || '').trim();
+  const groupWindowIdRaw = String(route.query.group_wid || '').trim();
+  const groupWindowDigestRaw = String(route.query.group_wdg || '').trim();
+  const groupWindowIdentityKeyRaw = String(route.query.group_wik || '').trim();
   const routeSearch = String(route.query.search || '').trim();
   const routeOrder = String(route.query.order || route.query.sort || '').trim();
   const routeActiveFilter = String(route.query.active_filter || '').trim();
@@ -1114,6 +1148,20 @@ function applyRoutePreset() {
     setIfDiff(activeGroupByField, groupBy);
   } else {
     setIfDiff(activeGroupByField, '');
+    setIfDiff(groupWindowOffset, 0);
+  }
+  if (groupBy) {
+    const normalizedGroupOffset = Number.isFinite(groupOffsetRaw) && groupOffsetRaw > 0 ? Math.trunc(groupOffsetRaw) : 0;
+    setIfDiff(groupWindowOffset, normalizedGroupOffset);
+    setIfDiff(groupQueryFingerprint, groupFingerprintRaw);
+    setIfDiff(groupWindowId, groupWindowIdRaw);
+    setIfDiff(groupWindowDigest, groupWindowDigestRaw);
+    setIfDiff(groupWindowIdentityKey, groupWindowIdentityKeyRaw);
+  } else {
+    setIfDiff(groupQueryFingerprint, '');
+    setIfDiff(groupWindowId, '');
+    setIfDiff(groupWindowDigest, '');
+    setIfDiff(groupWindowIdentityKey, '');
   }
   if (groupValue && !routeSearch) {
     setIfDiff(searchTerm, groupValue);
@@ -1173,6 +1221,11 @@ function syncRouteListState(extra?: Record<string, unknown>) {
     group_sort: groupSort.value !== 'desc' ? groupSort.value : undefined,
     group_collapsed: collapsed || undefined,
     group_page: groupPage || undefined,
+    group_offset: activeGroupByField.value && groupWindowOffset.value > 0 ? groupWindowOffset.value : undefined,
+    group_fp: activeGroupByField.value && groupQueryFingerprint.value ? groupQueryFingerprint.value : undefined,
+    group_wid: activeGroupByField.value && groupWindowId.value ? groupWindowId.value : undefined,
+    group_wdg: activeGroupByField.value && groupWindowDigest.value ? groupWindowDigest.value : undefined,
+    group_wik: activeGroupByField.value && groupWindowIdentityKey.value ? groupWindowIdentityKey.value : undefined,
     ...extra,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
@@ -1243,6 +1296,17 @@ function applyGroupBy(field: string) {
   activeGroupByField.value = field;
   activeGroupSummaryKey.value = '';
   activeGroupSummaryDomain.value = [];
+  groupWindowOffset.value = 0;
+  groupWindowPrevOffset.value = null;
+  groupWindowNextOffset.value = null;
+  groupWindowCount.value = 0;
+  groupWindowTotal.value = null;
+  groupWindowStart.value = null;
+  groupWindowEnd.value = null;
+  groupWindowId.value = '';
+  groupQueryFingerprint.value = '';
+  groupWindowDigest.value = '';
+  groupWindowIdentityKey.value = '';
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -1250,6 +1314,11 @@ function applyGroupBy(field: string) {
     group_by: field,
     group_value: undefined,
     group_page: undefined,
+    group_offset: undefined,
+    group_fp: undefined,
+    group_wid: undefined,
+    group_wdg: undefined,
+    group_wik: undefined,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
@@ -1259,6 +1328,17 @@ function clearGroupBy() {
   activeGroupByField.value = '';
   activeGroupSummaryKey.value = '';
   activeGroupSummaryDomain.value = [];
+  groupWindowOffset.value = 0;
+  groupWindowPrevOffset.value = null;
+  groupWindowNextOffset.value = null;
+  groupWindowCount.value = 0;
+  groupWindowTotal.value = null;
+  groupWindowStart.value = null;
+  groupWindowEnd.value = null;
+  groupWindowId.value = '';
+  groupQueryFingerprint.value = '';
+  groupWindowDigest.value = '';
+  groupWindowIdentityKey.value = '';
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -1266,6 +1346,11 @@ function clearGroupBy() {
     group_by: undefined,
     group_value: undefined,
     group_page: undefined,
+    group_offset: undefined,
+    group_fp: undefined,
+    group_wid: undefined,
+    group_wdg: undefined,
+    group_wik: undefined,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
@@ -1275,24 +1360,74 @@ function handleGroupSummaryPick(item: GroupSummaryItem) {
   if (!item) return;
   activeGroupSummaryKey.value = item.key;
   activeGroupSummaryDomain.value = Array.isArray(item.domain) ? item.domain : [];
+  groupWindowOffset.value = 0;
   searchTerm.value = item.label || '';
-  syncRouteListState({ search: searchTerm.value.trim() || undefined, group_value: item.label || undefined });
+  syncRouteListState({
+    search: searchTerm.value.trim() || undefined,
+    group_value: item.label || undefined,
+    group_offset: undefined,
+    group_fp: undefined,
+    group_wid: undefined,
+    group_wdg: undefined,
+    group_wik: undefined,
+  });
   void load();
 }
 
 function handleOpenGroupedRows(group: { key: string; label: string; count: number; domain?: unknown[] }) {
   activeGroupSummaryKey.value = group.key;
   activeGroupSummaryDomain.value = Array.isArray(group.domain) ? group.domain : [];
+  groupWindowOffset.value = 0;
   searchTerm.value = '';
-  syncRouteListState({ search: undefined, group_value: group.label || undefined });
+  syncRouteListState({
+    search: undefined,
+    group_value: group.label || undefined,
+    group_offset: undefined,
+    group_fp: undefined,
+    group_wid: undefined,
+    group_wdg: undefined,
+    group_wik: undefined,
+  });
   void load();
 }
 
 function clearGroupSummaryDrilldown() {
   activeGroupSummaryKey.value = '';
   activeGroupSummaryDomain.value = [];
-  const q = pickContractNavQuery(route.query as Record<string, unknown>, { group_value: undefined });
+  groupWindowOffset.value = 0;
+  const q = pickContractNavQuery(route.query as Record<string, unknown>, {
+    group_value: undefined,
+    group_offset: undefined,
+    group_fp: undefined,
+    group_wid: undefined,
+    group_wdg: undefined,
+    group_wik: undefined,
+  });
   router.replace({ name: 'action', params: route.params, query: q }).catch(() => {});
+  void load();
+}
+
+function handleGroupWindowPrev() {
+  if (groupWindowPrevOffset.value === null) return;
+  groupWindowOffset.value = Math.max(0, Math.trunc(groupWindowPrevOffset.value));
+  groupWindowId.value = '';
+  groupWindowDigest.value = '';
+  groupWindowIdentityKey.value = '';
+  collapsedGroupKeys.value = [];
+  groupPageOffsets.value = {};
+  syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined, group_wid: undefined, group_wdg: undefined, group_wik: undefined });
+  void load();
+}
+
+function handleGroupWindowNext() {
+  if (groupWindowNextOffset.value === null) return;
+  groupWindowOffset.value = Math.max(0, Math.trunc(groupWindowNextOffset.value));
+  groupWindowId.value = '';
+  groupWindowDigest.value = '';
+  groupWindowIdentityKey.value = '';
+  collapsedGroupKeys.value = [];
+  groupPageOffsets.value = {};
+  syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined, group_wid: undefined, group_wdg: undefined, group_wik: undefined });
   void load();
 }
 
@@ -1300,8 +1435,9 @@ function handleGroupSampleLimitChange(limit: number) {
   const normalized = Number(limit || 0);
   if (!Number.isFinite(normalized) || ![3, 5, 8].includes(normalized)) return;
   groupSampleLimit.value = normalized;
+  groupWindowOffset.value = 0;
   groupPageOffsets.value = {};
-  syncRouteListState({ group_sample_limit: normalized });
+  syncRouteListState({ group_sample_limit: normalized, group_offset: undefined, group_fp: undefined, group_wid: undefined, group_wdg: undefined, group_wik: undefined });
   void load();
 }
 
@@ -1439,13 +1575,17 @@ async function hydrateGroupedRowsByOffset() {
 
 function normalizeGroupedRouteState() {
   if (!activeGroupByField.value) {
+    if (groupWindowOffset.value !== 0) {
+      groupWindowOffset.value = 0;
+      syncRouteListState({ group_offset: undefined });
+    }
     if (collapsedGroupKeys.value.length) {
       collapsedGroupKeys.value = [];
-      syncRouteListState({ group_collapsed: undefined, group_page: undefined });
+      syncRouteListState({ group_collapsed: undefined, group_page: undefined, group_offset: undefined });
     }
     if (Object.keys(groupPageOffsets.value).length) {
       groupPageOffsets.value = {};
-      syncRouteListState({ group_page: undefined });
+      syncRouteListState({ group_page: undefined, group_offset: undefined });
     }
     return;
   }
@@ -1479,9 +1619,13 @@ function normalizeGroupedRouteState() {
   const nextState: Record<string, unknown> = {
     group_collapsed: normalizedCollapsed.length ? normalizedCollapsed.join(',') : undefined,
     group_page: serializeGroupPageOffsets(normalizedGroupPages) || undefined,
+    group_offset: groupWindowOffset.value > 0 ? groupWindowOffset.value : undefined,
   };
   if (!groupValueExists) nextState.group_value = undefined;
-  if (collapsedChanged || !groupValueExists || groupPageChanged) syncRouteListState(nextState);
+  const routeGroupOffset = Number(route.query.group_offset || 0);
+  const currentOffset = Number.isFinite(routeGroupOffset) && routeGroupOffset > 0 ? Math.trunc(routeGroupOffset) : 0;
+  const groupOffsetChanged = currentOffset !== groupWindowOffset.value;
+  if (collapsedChanged || !groupValueExists || groupPageChanged || groupOffsetChanged) syncRouteListState(nextState);
 }
 
 function openFocusAction(action: FocusNavAction | string) {
@@ -2205,6 +2349,16 @@ async function load() {
   records.value = [];
   groupedRows.value = [];
   groupSummaryItems.value = [];
+  groupWindowCount.value = 0;
+  groupWindowTotal.value = null;
+  groupWindowStart.value = null;
+  groupWindowEnd.value = null;
+  groupWindowId.value = '';
+  groupQueryFingerprint.value = '';
+  groupWindowDigest.value = '';
+  groupWindowIdentityKey.value = '';
+  groupWindowPrevOffset.value = null;
+  groupWindowNextOffset.value = null;
   columns.value = [];
   kanbanFields.value = [];
   advancedFields.value = [];
@@ -2399,6 +2553,8 @@ async function load() {
       domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
       domain_raw: resolveEffectiveFilterDomainRaw(),
       group_by: activeGroupByField.value || undefined,
+      group_offset: activeGroupByField.value ? Math.max(0, Math.trunc(groupWindowOffset.value || 0)) : 0,
+      need_group_total: Boolean(activeGroupByField.value),
       group_sample_limit: groupSampleLimit.value,
       group_limit: Math.min(50, Math.max(12, Number(contractLimit.value || 0))),
       group_page_size: groupSampleLimit.value,
@@ -2410,13 +2566,155 @@ async function load() {
       search_term: searchTerm.value.trim() || undefined,
       order: sortLabel.value,
     });
+    const groupPaging =
+      result.data && typeof (result.data as Record<string, unknown>).group_paging === 'object'
+        ? ((result.data as Record<string, unknown>).group_paging as Record<string, unknown>)
+        : null;
+    const effectiveGroupOffset =
+      groupPaging && Number.isFinite(Number(groupPaging.group_offset))
+        ? Math.max(0, Math.trunc(Number(groupPaging.group_offset)))
+        : Math.max(0, Math.trunc(groupWindowOffset.value || 0));
+    const windowIdentity = groupPaging && typeof groupPaging.window_identity === 'object' && groupPaging.window_identity !== null
+      ? (groupPaging.window_identity as Record<string, unknown>)
+      : null;
+    groupWindowOffset.value = effectiveGroupOffset;
+    groupWindowId.value =
+      windowIdentity && typeof windowIdentity.window_id === 'string'
+        ? String(windowIdentity.window_id)
+        : (groupPaging && typeof groupPaging.window_id === 'string' ? String(groupPaging.window_id) : '');
+    const responseGroupFingerprint =
+      windowIdentity && typeof windowIdentity.query_fingerprint === 'string'
+        ? String(windowIdentity.query_fingerprint)
+        : (groupPaging && typeof groupPaging.query_fingerprint === 'string' ? String(groupPaging.query_fingerprint) : '');
+    groupQueryFingerprint.value = responseGroupFingerprint;
+    groupWindowDigest.value =
+      windowIdentity && typeof windowIdentity.window_digest === 'string'
+        ? String(windowIdentity.window_digest)
+        : (groupPaging && typeof groupPaging.window_digest === 'string' ? String(groupPaging.window_digest) : '');
+    groupWindowIdentityKey.value =
+      windowIdentity && typeof windowIdentity.key === 'string'
+        ? String(windowIdentity.key)
+        : (groupPaging && typeof groupPaging.window_key === 'string' ? String(groupPaging.window_key) : '');
+    const routeGroupFingerprint = String(route.query.group_fp || '').trim();
+    const routeGroupWindowId = String(route.query.group_wid || '').trim();
+    const routeGroupWindowDigest = String(route.query.group_wdg || '').trim();
+    const routeGroupWindowIdentityKey = String(route.query.group_wik || '').trim();
+    if (
+      activeGroupByField.value
+      && routeGroupFingerprint
+      && responseGroupFingerprint
+      && routeGroupFingerprint !== responseGroupFingerprint
+      && effectiveGroupOffset > 0
+    ) {
+      // Route window state is stale for current grouped query; reset to first window.
+      groupWindowOffset.value = 0;
+      groupPageOffsets.value = {};
+      collapsedGroupKeys.value = [];
+      syncRouteListState({
+        group_offset: undefined,
+        group_page: undefined,
+        group_collapsed: undefined,
+        group_fp: responseGroupFingerprint,
+        group_wid: undefined,
+        group_wdg: undefined,
+        group_wik: undefined,
+      });
+      return void load();
+    }
+    if (
+      activeGroupByField.value
+      && routeGroupWindowId
+      && groupWindowId.value
+      && routeGroupWindowId !== groupWindowId.value
+      && effectiveGroupOffset > 0
+    ) {
+      groupWindowOffset.value = 0;
+      groupPageOffsets.value = {};
+      collapsedGroupKeys.value = [];
+      syncRouteListState({
+        group_offset: undefined,
+        group_page: undefined,
+        group_collapsed: undefined,
+        group_wid: groupWindowId.value,
+        group_wdg: undefined,
+        group_wik: undefined,
+      });
+      return void load();
+    }
+    if (
+      activeGroupByField.value
+      && routeGroupWindowDigest
+      && groupWindowDigest.value
+      && routeGroupWindowDigest !== groupWindowDigest.value
+      && effectiveGroupOffset > 0
+    ) {
+      groupWindowOffset.value = 0;
+      groupPageOffsets.value = {};
+      collapsedGroupKeys.value = [];
+      syncRouteListState({
+        group_offset: undefined,
+        group_page: undefined,
+        group_collapsed: undefined,
+        group_wdg: groupWindowDigest.value,
+      });
+      return void load();
+    }
+    if (
+      activeGroupByField.value
+      && routeGroupWindowIdentityKey
+      && groupWindowIdentityKey.value
+      && routeGroupWindowIdentityKey !== groupWindowIdentityKey.value
+      && effectiveGroupOffset > 0
+    ) {
+      groupWindowOffset.value = 0;
+      groupPageOffsets.value = {};
+      collapsedGroupKeys.value = [];
+      syncRouteListState({
+        group_offset: undefined,
+        group_page: undefined,
+        group_collapsed: undefined,
+        group_wik: groupWindowIdentityKey.value,
+      });
+      return void load();
+    }
+    if (
+      activeGroupByField.value
+      && responseGroupFingerprint
+      && routeGroupFingerprint !== responseGroupFingerprint
+      && effectiveGroupOffset <= 0
+    ) {
+      syncRouteListState({
+        group_fp: responseGroupFingerprint,
+        group_wid: groupWindowId.value || undefined,
+        group_wdg: groupWindowDigest.value || undefined,
+        group_wik: groupWindowIdentityKey.value || undefined,
+      });
+    } else if (activeGroupByField.value && !responseGroupFingerprint && routeGroupFingerprint) {
+      syncRouteListState({ group_fp: undefined });
+    }
+    if (activeGroupByField.value && routeGroupWindowId !== (groupWindowId.value || '')) {
+      syncRouteListState({ group_wid: groupWindowId.value || undefined });
+    } else if (activeGroupByField.value && !groupWindowId.value && routeGroupWindowId) {
+      syncRouteListState({ group_wid: undefined });
+    }
+    if (activeGroupByField.value && routeGroupWindowDigest !== (groupWindowDigest.value || '')) {
+      syncRouteListState({ group_wdg: groupWindowDigest.value || undefined });
+    } else if (activeGroupByField.value && !groupWindowDigest.value && routeGroupWindowDigest) {
+      syncRouteListState({ group_wdg: undefined });
+    }
+    if (activeGroupByField.value && routeGroupWindowIdentityKey !== (groupWindowIdentityKey.value || '')) {
+      syncRouteListState({ group_wik: groupWindowIdentityKey.value || undefined });
+    } else if (activeGroupByField.value && !groupWindowIdentityKey.value && routeGroupWindowIdentityKey) {
+      syncRouteListState({ group_wik: undefined });
+    }
     records.value = result.data?.records ?? [];
     groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
       .map((row) => {
         const item = row as Record<string, unknown>;
         const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        const backendGroupKey = String(item.group_key || '').trim();
         return {
-          key: buildGroupKey(item.field, item.value, label),
+          key: backendGroupKey || buildGroupKey(item.field, item.value, label),
           label,
           count: Number(item.count || 0),
           domain: Array.isArray(item.domain) ? item.domain : [],
@@ -2425,6 +2723,38 @@ async function load() {
       })
       .filter((item) => item.count >= 0)
       .slice(0, 12);
+    groupWindowCount.value =
+      groupPaging && Number.isFinite(Number(groupPaging.group_count))
+        ? Math.max(0, Math.trunc(Number(groupPaging.group_count)))
+        : groupSummaryItems.value.length;
+    groupWindowStart.value =
+      groupPaging && Number.isFinite(Number(groupPaging.window_start))
+        ? Math.max(0, Math.trunc(Number(groupPaging.window_start)))
+        : groupWindowCount.value > 0
+          ? effectiveGroupOffset + 1
+          : 0;
+    groupWindowEnd.value =
+      groupPaging && Number.isFinite(Number(groupPaging.window_end))
+        ? Math.max(0, Math.trunc(Number(groupPaging.window_end)))
+        : groupWindowCount.value > 0
+          ? effectiveGroupOffset + groupWindowCount.value
+          : 0;
+    groupWindowTotal.value =
+      groupPaging && Number.isFinite(Number(groupPaging.group_total))
+        ? Math.max(0, Math.trunc(Number(groupPaging.group_total)))
+        : null;
+    groupWindowNextOffset.value =
+      groupPaging && Number.isFinite(Number(groupPaging.next_group_offset))
+        ? Math.max(0, Math.trunc(Number(groupPaging.next_group_offset)))
+        : (groupPaging && Boolean(groupPaging.has_more))
+          ? effectiveGroupOffset + Math.max(1, groupSummaryItems.value.length || groupWindowCount.value || 0)
+          : null;
+    groupWindowPrevOffset.value =
+      groupPaging && Number.isFinite(Number(groupPaging.prev_group_offset))
+        ? Math.max(0, Math.trunc(Number(groupPaging.prev_group_offset)))
+        : effectiveGroupOffset > 0
+          ? Math.max(0, effectiveGroupOffset - Math.max(1, groupSummaryItems.value.length || groupWindowCount.value || 1))
+          : null;
     groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])
       .map((row) => {
         const item = row as Record<string, unknown>;
@@ -2539,18 +2869,21 @@ function reload() {
 
 function handleSearch(value: string) {
   searchTerm.value = value;
+  groupWindowOffset.value = 0;
   syncRouteListState();
   load();
 }
 
 function handleSort(value: string) {
   sortValue.value = value;
+  groupWindowOffset.value = 0;
   syncRouteListState();
   load();
 }
 
 function handleFilter(value: 'all' | 'active' | 'archived') {
   filterValue.value = value;
+  groupWindowOffset.value = 0;
   clearSelection();
   syncRouteListState();
   load();

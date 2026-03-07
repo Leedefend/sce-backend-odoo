@@ -44,7 +44,11 @@ def main() -> int:
 
     smoke_markers = [
         "function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, requestOffset) {",
+        "function buildGroupedOffsetReplaySummary(groupPaging, requestGroupOffset) {",
+        "function buildGroupedIdentitySummary(groupPaging) {",
         "grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,",
+        "grouped_offset_replay_summary: groupedOffsetReplaySummary,",
+        "grouped_identity_summary: groupedIdentitySummary,",
         "grouped_pagination_normalized_offset:",
         "grouped_page_window_present:",
     ]
@@ -59,6 +63,16 @@ def main() -> int:
         baseline = {}
 
     semantic = _expect_dict(baseline.get("grouped_pagination_semantic_summary"), "grouped_pagination_semantic_summary", errors)
+    offset_replay = _expect_dict(
+        baseline.get("grouped_offset_replay_summary"),
+        "grouped_offset_replay_summary",
+        errors,
+    )
+    identity_summary = _expect_dict(
+        baseline.get("grouped_identity_summary"),
+        "grouped_identity_summary",
+        errors,
+    )
     grouped_contract_fields = _expect_dict(
         baseline.get("grouped_contract_fields"),
         "grouped_contract_fields",
@@ -72,9 +86,45 @@ def main() -> int:
         "grouped_pagination_semantic_summary.first_group_observation",
         errors,
     )
+    offset_formulas = _expect_dict(offset_replay.get("formulas"), "grouped_offset_replay_summary.formulas", errors)
+    offset_request = _expect_dict(offset_replay.get("request"), "grouped_offset_replay_summary.request", errors)
+    offset_response = _expect_dict(offset_replay.get("response"), "grouped_offset_replay_summary.response", errors)
+    offset_consistency = _expect_dict(
+        offset_replay.get("consistency"),
+        "grouped_offset_replay_summary.consistency",
+        errors,
+    )
+    identity_formulas = _expect_dict(identity_summary.get("formulas"), "grouped_identity_summary.formulas", errors)
+    identity_response = _expect_dict(identity_summary.get("response"), "grouped_identity_summary.response", errors)
+    identity_consistency = _expect_dict(
+        identity_summary.get("consistency"),
+        "grouped_identity_summary.consistency",
+        errors,
+    )
 
     for key in ("page_offset_normalize", "current_page", "total_pages", "page_range"):
         _expect_type(formulas.get(key), str, f"grouped_pagination_semantic_summary.formulas.{key}", errors)
+    for key in ("offset_roundtrip", "prev_when_offset_positive", "next_signal_type"):
+        _expect_type(offset_formulas.get(key), str, f"grouped_offset_replay_summary.formulas.{key}", errors)
+    for key in (
+        "window_id_shape",
+        "query_fingerprint_shape",
+        "window_digest_shape",
+        "window_identity_object",
+        "window_identity_meta",
+        "window_identity_key",
+        "window_key_flat_compat",
+        "window_identity_window_shape",
+        "window_identity_total_shape",
+        "window_identity_page_shape",
+        "window_identity_range_shape",
+        "window_identity_nav_shape",
+        "window_identity_group_by_shape",
+        "window_identity_model_shape",
+        "window_identity_empty_shape",
+        "window_identity_span_shape",
+    ):
+        _expect_type(identity_formulas.get(key), str, f"grouped_identity_summary.formulas.{key}", errors)
 
     expected_field_types = {
         "page_limit": "number",
@@ -95,6 +145,7 @@ def main() -> int:
 
     for key in ("page_limit", "request_offset", "normalized_request_offset"):
         _expect_type(request.get(key), int, f"grouped_pagination_semantic_summary.request.{key}", errors)
+    _expect_type(offset_request.get("group_offset"), int, "grouped_offset_replay_summary.request.group_offset", errors)
 
     _expect_type(first_group.get("present"), bool, "grouped_pagination_semantic_summary.first_group_observation.present", errors)
     _expect_type(
@@ -122,6 +173,127 @@ def main() -> int:
         "page_window_end",
     ):
         _expect_type(first_group.get(key), int, f"grouped_pagination_semantic_summary.first_group_observation.{key}", errors)
+
+    for key in ("group_offset", "group_count"):
+        _expect_type(offset_response.get(key), int, f"grouped_offset_replay_summary.response.{key}", errors)
+    _expect_type(offset_response.get("has_more"), bool, "grouped_offset_replay_summary.response.has_more", errors)
+    _expect_type(
+        offset_response.get("next_group_offset"),
+        (int, type(None)),
+        "grouped_offset_replay_summary.response.next_group_offset",
+        errors,
+    )
+    _expect_type(
+        offset_response.get("prev_group_offset"),
+        (int, type(None)),
+        "grouped_offset_replay_summary.response.prev_group_offset",
+        errors,
+    )
+    for key in ("offset_roundtrip_match", "prev_signal_typed", "next_signal_typed"):
+        _expect_type(offset_consistency.get(key), bool, f"grouped_offset_replay_summary.consistency.{key}", errors)
+    _expect_type(identity_response.get("window_id"), str, "grouped_identity_summary.response.window_id", errors)
+    _expect_type(
+        identity_response.get("query_fingerprint"),
+        str,
+        "grouped_identity_summary.response.query_fingerprint",
+        errors,
+    )
+    _expect_type(identity_response.get("window_digest"), str, "grouped_identity_summary.response.window_digest", errors)
+    _expect_type(
+        identity_response.get("window_identity_present"),
+        bool,
+        "grouped_identity_summary.response.window_identity_present",
+        errors,
+    )
+    _expect_type(
+        identity_response.get("window_identity_model"),
+        str,
+        "grouped_identity_summary.response.window_identity_model",
+        errors,
+    )
+    _expect_type(
+        identity_response.get("window_identity_group_by_field"),
+        str,
+        "grouped_identity_summary.response.window_identity_group_by_field",
+        errors,
+    )
+    _expect_type(
+        identity_response.get("window_identity_window_empty"),
+        bool,
+        "grouped_identity_summary.response.window_identity_window_empty",
+        errors,
+    )
+    _expect_type(
+        identity_response.get("window_identity_version"),
+        str,
+        "grouped_identity_summary.response.window_identity_version",
+        errors,
+    )
+    _expect_type(
+        identity_response.get("window_identity_algo"),
+        str,
+        "grouped_identity_summary.response.window_identity_algo",
+        errors,
+    )
+    _expect_type(
+        identity_response.get("window_identity_key"),
+        str,
+        "grouped_identity_summary.response.window_identity_key",
+        errors,
+    )
+    _expect_type(identity_response.get("window_key"), str, "grouped_identity_summary.response.window_key", errors)
+    for key in (
+        "window_identity_group_offset",
+        "window_identity_group_limit",
+        "window_identity_group_count",
+        "window_identity_group_total",
+        "window_identity_page_size",
+        "window_identity_window_start",
+        "window_identity_window_end",
+        "window_identity_window_span",
+        "window_identity_prev_group_offset",
+        "window_identity_next_group_offset",
+    ):
+        _expect_type(identity_response.get(key), int, f"grouped_identity_summary.response.{key}", errors)
+    _expect_type(
+        identity_response.get("window_identity_has_group_page_offsets"),
+        bool,
+        "grouped_identity_summary.response.window_identity_has_group_page_offsets",
+        errors,
+    )
+    _expect_type(identity_response.get("window_identity_has_more"), bool, "grouped_identity_summary.response.window_identity_has_more", errors)
+    for key in (
+        "has_window_id",
+        "has_query_fingerprint",
+        "query_fingerprint_hex",
+        "has_window_digest",
+        "window_digest_hex",
+        "identity_object_present",
+        "identity_object_matches_flat",
+        "identity_version_present",
+        "identity_algo_present",
+        "identity_algo_supported",
+        "identity_key_present",
+        "identity_key_matches_tuple",
+        "identity_key_matches_flat",
+        "identity_window_numbers_present",
+        "identity_window_numbers_match_flat",
+        "identity_total_optional_typed",
+        "identity_total_match_flat",
+        "identity_model_match_request",
+        "identity_window_empty_typed",
+        "identity_window_empty_match_flat",
+        "identity_group_by_match_flat",
+        "identity_page_meta_present",
+        "identity_page_meta_match_flat",
+        "identity_range_numbers_present",
+        "identity_range_numbers_match_flat",
+        "identity_span_present",
+        "identity_span_match_flat",
+        "identity_nav_present",
+        "identity_nav_match_flat",
+    ):
+        _expect_type(identity_consistency.get(key), bool, f"grouped_identity_summary.consistency.{key}", errors)
 
     if errors:
         print("[FAIL] grouped_pagination_semantic_guard")
