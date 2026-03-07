@@ -150,8 +150,15 @@
       :items="groupSummaryItems"
       :group-by-label="activeGroupByLabel"
       :active-key="activeGroupSummaryKey"
+      :window-offset="groupWindowOffset"
+      :window-count="groupWindowCount"
+      :window-total="groupWindowTotal ?? undefined"
+      :can-prev-window="groupWindowPrevOffset !== null"
+      :can-next-window="groupWindowNextOffset !== null"
       :on-pick="handleGroupSummaryPick"
       :on-clear="clearGroupSummaryDrilldown"
+      :on-prev-window="handleGroupWindowPrev"
+      :on-next-window="handleGroupWindowNext"
     />
     <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
       <p class="contract-label">快捷操作</p>
@@ -405,6 +412,11 @@ const collapsedGroupKeys = ref<string[]>([]);
 const groupPageOffsets = ref<Record<string, number>>({});
 const activeGroupSummaryKey = ref('');
 const activeGroupSummaryDomain = ref<unknown[]>([]);
+const groupWindowOffset = ref(0);
+const groupWindowCount = ref(0);
+const groupWindowTotal = ref<number | null>(null);
+const groupWindowPrevOffset = ref<number | null>(null);
+const groupWindowNextOffset = ref<number | null>(null);
 const advancedFields = ref<string[]>([]);
 const lastBatchRequest = ref<{
   model: string;
@@ -1076,6 +1088,7 @@ function applyRoutePreset() {
   const groupSortRaw = String(route.query.group_sort || '').trim().toLowerCase();
   const groupCollapsedRaw = String(route.query.group_collapsed || '').trim();
   const groupPageRaw = String(route.query.group_page || '').trim();
+  const groupOffsetRaw = Number(route.query.group_offset || 0);
   const routeSearch = String(route.query.search || '').trim();
   const routeOrder = String(route.query.order || route.query.sort || '').trim();
   const routeActiveFilter = String(route.query.active_filter || '').trim();
@@ -1114,6 +1127,11 @@ function applyRoutePreset() {
     setIfDiff(activeGroupByField, groupBy);
   } else {
     setIfDiff(activeGroupByField, '');
+    setIfDiff(groupWindowOffset, 0);
+  }
+  if (groupBy) {
+    const normalizedGroupOffset = Number.isFinite(groupOffsetRaw) && groupOffsetRaw > 0 ? Math.trunc(groupOffsetRaw) : 0;
+    setIfDiff(groupWindowOffset, normalizedGroupOffset);
   }
   if (groupValue && !routeSearch) {
     setIfDiff(searchTerm, groupValue);
@@ -1173,6 +1191,7 @@ function syncRouteListState(extra?: Record<string, unknown>) {
     group_sort: groupSort.value !== 'desc' ? groupSort.value : undefined,
     group_collapsed: collapsed || undefined,
     group_page: groupPage || undefined,
+    group_offset: activeGroupByField.value && groupWindowOffset.value > 0 ? groupWindowOffset.value : undefined,
     ...extra,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
@@ -1243,6 +1262,11 @@ function applyGroupBy(field: string) {
   activeGroupByField.value = field;
   activeGroupSummaryKey.value = '';
   activeGroupSummaryDomain.value = [];
+  groupWindowOffset.value = 0;
+  groupWindowPrevOffset.value = null;
+  groupWindowNextOffset.value = null;
+  groupWindowCount.value = 0;
+  groupWindowTotal.value = null;
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -1250,6 +1274,7 @@ function applyGroupBy(field: string) {
     group_by: field,
     group_value: undefined,
     group_page: undefined,
+    group_offset: undefined,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
@@ -1259,6 +1284,11 @@ function clearGroupBy() {
   activeGroupByField.value = '';
   activeGroupSummaryKey.value = '';
   activeGroupSummaryDomain.value = [];
+  groupWindowOffset.value = 0;
+  groupWindowPrevOffset.value = null;
+  groupWindowNextOffset.value = null;
+  groupWindowCount.value = 0;
+  groupWindowTotal.value = null;
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -1266,6 +1296,7 @@ function clearGroupBy() {
     group_by: undefined,
     group_value: undefined,
     group_page: undefined,
+    group_offset: undefined,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
@@ -1275,24 +1306,45 @@ function handleGroupSummaryPick(item: GroupSummaryItem) {
   if (!item) return;
   activeGroupSummaryKey.value = item.key;
   activeGroupSummaryDomain.value = Array.isArray(item.domain) ? item.domain : [];
+  groupWindowOffset.value = 0;
   searchTerm.value = item.label || '';
-  syncRouteListState({ search: searchTerm.value.trim() || undefined, group_value: item.label || undefined });
+  syncRouteListState({ search: searchTerm.value.trim() || undefined, group_value: item.label || undefined, group_offset: undefined });
   void load();
 }
 
 function handleOpenGroupedRows(group: { key: string; label: string; count: number; domain?: unknown[] }) {
   activeGroupSummaryKey.value = group.key;
   activeGroupSummaryDomain.value = Array.isArray(group.domain) ? group.domain : [];
+  groupWindowOffset.value = 0;
   searchTerm.value = '';
-  syncRouteListState({ search: undefined, group_value: group.label || undefined });
+  syncRouteListState({ search: undefined, group_value: group.label || undefined, group_offset: undefined });
   void load();
 }
 
 function clearGroupSummaryDrilldown() {
   activeGroupSummaryKey.value = '';
   activeGroupSummaryDomain.value = [];
-  const q = pickContractNavQuery(route.query as Record<string, unknown>, { group_value: undefined });
+  groupWindowOffset.value = 0;
+  const q = pickContractNavQuery(route.query as Record<string, unknown>, { group_value: undefined, group_offset: undefined });
   router.replace({ name: 'action', params: route.params, query: q }).catch(() => {});
+  void load();
+}
+
+function handleGroupWindowPrev() {
+  if (groupWindowPrevOffset.value === null) return;
+  groupWindowOffset.value = Math.max(0, Math.trunc(groupWindowPrevOffset.value));
+  collapsedGroupKeys.value = [];
+  groupPageOffsets.value = {};
+  syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined });
+  void load();
+}
+
+function handleGroupWindowNext() {
+  if (groupWindowNextOffset.value === null) return;
+  groupWindowOffset.value = Math.max(0, Math.trunc(groupWindowNextOffset.value));
+  collapsedGroupKeys.value = [];
+  groupPageOffsets.value = {};
+  syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined });
   void load();
 }
 
@@ -1300,8 +1352,9 @@ function handleGroupSampleLimitChange(limit: number) {
   const normalized = Number(limit || 0);
   if (!Number.isFinite(normalized) || ![3, 5, 8].includes(normalized)) return;
   groupSampleLimit.value = normalized;
+  groupWindowOffset.value = 0;
   groupPageOffsets.value = {};
-  syncRouteListState({ group_sample_limit: normalized });
+  syncRouteListState({ group_sample_limit: normalized, group_offset: undefined });
   void load();
 }
 
@@ -1439,13 +1492,17 @@ async function hydrateGroupedRowsByOffset() {
 
 function normalizeGroupedRouteState() {
   if (!activeGroupByField.value) {
+    if (groupWindowOffset.value !== 0) {
+      groupWindowOffset.value = 0;
+      syncRouteListState({ group_offset: undefined });
+    }
     if (collapsedGroupKeys.value.length) {
       collapsedGroupKeys.value = [];
-      syncRouteListState({ group_collapsed: undefined, group_page: undefined });
+      syncRouteListState({ group_collapsed: undefined, group_page: undefined, group_offset: undefined });
     }
     if (Object.keys(groupPageOffsets.value).length) {
       groupPageOffsets.value = {};
-      syncRouteListState({ group_page: undefined });
+      syncRouteListState({ group_page: undefined, group_offset: undefined });
     }
     return;
   }
@@ -1479,9 +1536,13 @@ function normalizeGroupedRouteState() {
   const nextState: Record<string, unknown> = {
     group_collapsed: normalizedCollapsed.length ? normalizedCollapsed.join(',') : undefined,
     group_page: serializeGroupPageOffsets(normalizedGroupPages) || undefined,
+    group_offset: groupWindowOffset.value > 0 ? groupWindowOffset.value : undefined,
   };
   if (!groupValueExists) nextState.group_value = undefined;
-  if (collapsedChanged || !groupValueExists || groupPageChanged) syncRouteListState(nextState);
+  const routeGroupOffset = Number(route.query.group_offset || 0);
+  const currentOffset = Number.isFinite(routeGroupOffset) && routeGroupOffset > 0 ? Math.trunc(routeGroupOffset) : 0;
+  const groupOffsetChanged = currentOffset !== groupWindowOffset.value;
+  if (collapsedChanged || !groupValueExists || groupPageChanged || groupOffsetChanged) syncRouteListState(nextState);
 }
 
 function openFocusAction(action: FocusNavAction | string) {
@@ -2205,6 +2266,10 @@ async function load() {
   records.value = [];
   groupedRows.value = [];
   groupSummaryItems.value = [];
+  groupWindowCount.value = 0;
+  groupWindowTotal.value = null;
+  groupWindowPrevOffset.value = null;
+  groupWindowNextOffset.value = null;
   columns.value = [];
   kanbanFields.value = [];
   advancedFields.value = [];
@@ -2399,7 +2464,7 @@ async function load() {
       domain: mergeActiveFilter(mergeSceneDomain(mergeSceneDomain(meta?.domain, scene.value?.filters), resolveEffectiveFilterDomain())),
       domain_raw: resolveEffectiveFilterDomainRaw(),
       group_by: activeGroupByField.value || undefined,
-      group_offset: 0,
+      group_offset: activeGroupByField.value ? Math.max(0, Math.trunc(groupWindowOffset.value || 0)) : 0,
       need_group_total: Boolean(activeGroupByField.value),
       group_sample_limit: groupSampleLimit.value,
       group_limit: Math.min(50, Math.max(12, Number(contractLimit.value || 0))),
@@ -2412,6 +2477,15 @@ async function load() {
       search_term: searchTerm.value.trim() || undefined,
       order: sortLabel.value,
     });
+    const groupPaging =
+      result.data && typeof (result.data as Record<string, unknown>).group_paging === 'object'
+        ? ((result.data as Record<string, unknown>).group_paging as Record<string, unknown>)
+        : null;
+    const effectiveGroupOffset =
+      groupPaging && Number.isFinite(Number(groupPaging.group_offset))
+        ? Math.max(0, Math.trunc(Number(groupPaging.group_offset)))
+        : Math.max(0, Math.trunc(groupWindowOffset.value || 0));
+    groupWindowOffset.value = effectiveGroupOffset;
     records.value = result.data?.records ?? [];
     groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
       .map((row) => {
@@ -2428,6 +2502,26 @@ async function load() {
       })
       .filter((item) => item.count >= 0)
       .slice(0, 12);
+    groupWindowCount.value =
+      groupPaging && Number.isFinite(Number(groupPaging.group_count))
+        ? Math.max(0, Math.trunc(Number(groupPaging.group_count)))
+        : groupSummaryItems.value.length;
+    groupWindowTotal.value =
+      groupPaging && Number.isFinite(Number(groupPaging.group_total))
+        ? Math.max(0, Math.trunc(Number(groupPaging.group_total)))
+        : null;
+    groupWindowNextOffset.value =
+      groupPaging && Number.isFinite(Number(groupPaging.next_group_offset))
+        ? Math.max(0, Math.trunc(Number(groupPaging.next_group_offset)))
+        : (groupPaging && Boolean(groupPaging.has_more))
+          ? effectiveGroupOffset + Math.max(1, groupSummaryItems.value.length || groupWindowCount.value || 0)
+          : null;
+    groupWindowPrevOffset.value =
+      groupPaging && Number.isFinite(Number(groupPaging.prev_group_offset))
+        ? Math.max(0, Math.trunc(Number(groupPaging.prev_group_offset)))
+        : effectiveGroupOffset > 0
+          ? Math.max(0, effectiveGroupOffset - Math.max(1, groupSummaryItems.value.length || groupWindowCount.value || 1))
+          : null;
     groupedRows.value = (Array.isArray(result.data?.grouped_rows) ? result.data?.grouped_rows : [])
       .map((row) => {
         const item = row as Record<string, unknown>;
@@ -2542,18 +2636,21 @@ function reload() {
 
 function handleSearch(value: string) {
   searchTerm.value = value;
+  groupWindowOffset.value = 0;
   syncRouteListState();
   load();
 }
 
 function handleSort(value: string) {
   sortValue.value = value;
+  groupWindowOffset.value = 0;
   syncRouteListState();
   load();
 }
 
 function handleFilter(value: 'all' | 'active' | 'archived') {
   filterValue.value = value;
+  groupWindowOffset.value = 0;
   clearSelection();
   syncRouteListState();
   load();
