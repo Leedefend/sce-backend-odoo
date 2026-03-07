@@ -80,6 +80,7 @@ Each entry in `grouped_rows` must provide:
 - `window_end`: 1-based grouped window end index (0 when window empty)
 - `window_id`: backend window identity for current grouped window
 - `query_fingerprint`: normalized grouped query fingerprint
+- `window_digest`: digest of current grouped window content (`group_key/count` projection)
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
 

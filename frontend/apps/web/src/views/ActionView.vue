@@ -421,6 +421,7 @@ const groupWindowStart = ref<number | null>(null);
 const groupWindowEnd = ref<number | null>(null);
 const groupWindowId = ref('');
 const groupQueryFingerprint = ref('');
+const groupWindowDigest = ref('');
 const groupWindowPrevOffset = ref<number | null>(null);
 const groupWindowNextOffset = ref<number | null>(null);
 const advancedFields = ref<string[]>([]);
@@ -782,6 +783,7 @@ const hudEntries = computed(() => [
   { label: 'group_offset', value: groupWindowOffset.value || 0 },
   { label: 'group_window_id', value: groupWindowId.value || '-' },
   { label: 'group_query_fp', value: groupQueryFingerprint.value || '-' },
+  { label: 'group_window_digest', value: groupWindowDigest.value || '-' },
   { label: 'route_group_fp', value: String(route.query.group_fp || '').trim() || '-' },
   { label: 'route_group_wid', value: String(route.query.group_wid || '').trim() || '-' },
   { label: 'contract_actions', value: contractActionButtons.value.length },
@@ -1291,6 +1293,7 @@ function applyGroupBy(field: string) {
   groupWindowEnd.value = null;
   groupWindowId.value = '';
   groupQueryFingerprint.value = '';
+  groupWindowDigest.value = '';
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -1319,6 +1322,7 @@ function clearGroupBy() {
   groupWindowEnd.value = null;
   groupWindowId.value = '';
   groupQueryFingerprint.value = '';
+  groupWindowDigest.value = '';
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -1383,6 +1387,7 @@ function handleGroupWindowPrev() {
   if (groupWindowPrevOffset.value === null) return;
   groupWindowOffset.value = Math.max(0, Math.trunc(groupWindowPrevOffset.value));
   groupWindowId.value = '';
+  groupWindowDigest.value = '';
   collapsedGroupKeys.value = [];
   groupPageOffsets.value = {};
   syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined, group_wid: undefined });
@@ -1393,6 +1398,7 @@ function handleGroupWindowNext() {
   if (groupWindowNextOffset.value === null) return;
   groupWindowOffset.value = Math.max(0, Math.trunc(groupWindowNextOffset.value));
   groupWindowId.value = '';
+  groupWindowDigest.value = '';
   collapsedGroupKeys.value = [];
   groupPageOffsets.value = {};
   syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined, group_wid: undefined });
@@ -2323,6 +2329,7 @@ async function load() {
   groupWindowEnd.value = null;
   groupWindowId.value = '';
   groupQueryFingerprint.value = '';
+  groupWindowDigest.value = '';
   groupWindowPrevOffset.value = null;
   groupWindowNextOffset.value = null;
   columns.value = [];
@@ -2545,6 +2552,8 @@ async function load() {
     const responseGroupFingerprint =
       groupPaging && typeof groupPaging.query_fingerprint === 'string' ? String(groupPaging.query_fingerprint) : '';
     groupQueryFingerprint.value = responseGroupFingerprint;
+    groupWindowDigest.value =
+      groupPaging && typeof groupPaging.window_digest === 'string' ? String(groupPaging.window_digest) : '';
     const routeGroupFingerprint = String(route.query.group_fp || '').trim();
     const routeGroupWindowId = String(route.query.group_wid || '').trim();
     if (
