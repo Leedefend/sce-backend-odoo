@@ -116,6 +116,7 @@ def main() -> int:
         "window_key_flat_compat",
         "window_identity_window_shape",
         "window_identity_total_shape",
+        "window_identity_page_shape",
         "window_identity_range_shape",
         "window_identity_nav_shape",
     ):
@@ -224,12 +225,19 @@ def main() -> int:
         "window_identity_group_limit",
         "window_identity_group_count",
         "window_identity_group_total",
+        "window_identity_page_size",
         "window_identity_window_start",
         "window_identity_window_end",
         "window_identity_prev_group_offset",
         "window_identity_next_group_offset",
     ):
         _expect_type(identity_response.get(key), int, f"grouped_identity_summary.response.{key}", errors)
+    _expect_type(
+        identity_response.get("window_identity_has_group_page_offsets"),
+        bool,
+        "grouped_identity_summary.response.window_identity_has_group_page_offsets",
+        errors,
+    )
     _expect_type(identity_response.get("window_identity_has_more"), bool, "grouped_identity_summary.response.window_identity_has_more", errors)
     for key in (
         "has_window_id",
@@ -249,6 +257,8 @@ def main() -> int:
         "identity_window_numbers_match_flat",
         "identity_total_optional_typed",
         "identity_total_match_flat",
+        "identity_page_meta_present",
+        "identity_page_meta_match_flat",
         "identity_range_numbers_present",
         "identity_range_numbers_match_flat",
         "identity_nav_present",

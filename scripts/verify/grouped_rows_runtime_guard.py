@@ -55,6 +55,8 @@ def main() -> int:
         '"group_offset": group_offset,',
         '"group_limit": group_limit,',
         '"group_count": len(group_summary),',
+        '"page_size": effective_page_size,',
+        '"has_group_page_offsets": bool(group_page_offsets),',
         'group_window_identity["group_total"] = int(group_total)',
         '"grouped_rows": grouped_rows,',
     ]
@@ -167,6 +169,8 @@ def main() -> int:
         "group_limit?: number;",
         "group_count?: number;",
         "group_total?: number;",
+        "page_size?: number;",
+        "has_group_page_offsets?: boolean;",
         "page_window?: {",
         "page_has_prev?: boolean;",
         "page_has_next?: boolean;",
