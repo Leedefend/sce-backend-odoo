@@ -183,7 +183,14 @@ def _to_int(value, default: int = 0) -> int:
         return default
 
 
-def _build_grouped_semantic_signature(data: dict, *, request_page_limit: int, request_offset: int) -> dict:
+def _build_grouped_semantic_signature(
+    data: dict,
+    *,
+    request_model: str,
+    request_group_by: str,
+    request_page_limit: int,
+    request_offset: int,
+) -> dict:
     grouped_rows = data.get("grouped_rows") if isinstance(data.get("grouped_rows"), list) else []
     group_paging = data.get("group_paging") if isinstance(data.get("group_paging"), dict) else {}
     window_identity = (
@@ -224,6 +231,10 @@ def _build_grouped_semantic_signature(data: dict, *, request_page_limit: int, re
     window_key = str(group_paging.get("window_key") or "").strip()
     identity_key = str(window_identity.get("key") or "").strip()
     supports_window_key = bool(window_key or identity_key)
+    identity_model = str(window_identity.get("model") or "").strip()
+    identity_group_by_field = str(window_identity.get("group_by_field") or "").strip()
+    supports_window_identity_model = bool(identity_model) and identity_model == str(request_model or "").strip()
+    supports_window_identity_group_by = bool(identity_group_by_field) and identity_group_by_field == str(request_group_by or "").strip()
 
     group_count = max(0, _to_int(group_paging.get("group_count"), 0))
     window_start = max(0, _to_int(group_paging.get("window_start"), 0))
@@ -244,6 +255,8 @@ def _build_grouped_semantic_signature(data: dict, *, request_page_limit: int, re
         "supports_page_window": bool(supports_page_window),
         "supports_window_identity": bool(supports_window_identity),
         "supports_window_key": bool(supports_window_key),
+        "supports_window_identity_model": bool(supports_window_identity_model),
+        "supports_window_identity_group_by": bool(supports_window_identity_group_by),
         "supports_window_span": bool(supports_window_span),
         "window_span_matches_range": bool(window_span_matches_range),
         "request_offset_matches_observed": bool(request_offset_matches_observed),
@@ -369,6 +382,8 @@ def main():
                         "supports_page_window": False,
                         "supports_window_identity": False,
                         "supports_window_key": False,
+                        "supports_window_identity_model": False,
+                        "supports_window_identity_group_by": False,
                         "supports_window_span": False,
                         "window_span_matches_range": False,
                         "request_offset_matches_observed": False,
@@ -382,6 +397,8 @@ def main():
         data, meta = _unwrap_intent_data(grouped_resp)
         grouped_semantic = _build_grouped_semantic_signature(
             data,
+            request_model=item["model"],
+            request_group_by=item["group_by"],
             request_page_limit=int(grouped_payload["params"].get("group_sample_limit") or 3),
             request_offset=int(grouped_payload["params"].get("offset") or 0),
         )
@@ -401,6 +418,8 @@ def main():
                 "supports_page_window": grouped_semantic["supports_page_window"],
                 "supports_window_identity": grouped_semantic["supports_window_identity"],
                 "supports_window_key": grouped_semantic["supports_window_key"],
+                "supports_window_identity_model": grouped_semantic["supports_window_identity_model"],
+                "supports_window_identity_group_by": grouped_semantic["supports_window_identity_group_by"],
                 "supports_window_span": grouped_semantic["supports_window_span"],
                 "window_span_matches_range": grouped_semantic["window_span_matches_range"],
                 "request_offset_matches_observed": grouped_semantic["request_offset_matches_observed"],
