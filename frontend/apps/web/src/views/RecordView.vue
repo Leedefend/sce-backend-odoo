@@ -694,7 +694,19 @@ async function runHeaderButton(btn: ViewButton) {
     return;
   }
   if (state.state === 'disabled_permission') {
-    error.value = { message: 'Permission denied', code: 403, hint: 'Check access rights.' };
+    error.value = {
+      message: 'Permission denied',
+      code: 403,
+      hint: 'Check access rights.',
+      reasonCode: 'PERMISSION_DENIED',
+      errorCategory: 'permission',
+      suggestedAction: 'request_access',
+      details: {
+        intent: 'execute_button',
+        model: model.value || '',
+        op: 'execute',
+      },
+    };
     status.value = 'error';
     return;
   }
