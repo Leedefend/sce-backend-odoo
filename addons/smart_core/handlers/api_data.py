@@ -797,6 +797,11 @@ class ApiDataHandler(BaseIntentHandler):
                 "window_id": group_window_id,
                 "query_fingerprint": group_query_fingerprint,
                 "window_digest": group_window_digest,
+                "window_identity": {
+                    "window_id": group_window_id,
+                    "query_fingerprint": group_query_fingerprint,
+                    "window_digest": group_window_digest,
+                },
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
             },
@@ -827,6 +832,11 @@ class ApiDataHandler(BaseIntentHandler):
             "group_window_id": group_window_id,
             "group_query_fingerprint": group_query_fingerprint,
             "group_window_digest": group_window_digest,
+            "group_window_identity": {
+                "window_id": group_window_id,
+                "query_fingerprint": group_query_fingerprint,
+                "window_digest": group_window_digest,
+            },
             "need_group_total": need_group_total,
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,

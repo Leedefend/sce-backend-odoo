@@ -80,7 +80,15 @@ def main() -> int:
     ):
         if not isinstance(consistency.get(key), bool):
             errors.append(f"fe_tree consistency.{key} must be bool")
-    for key in ("has_window_id", "has_query_fingerprint", "query_fingerprint_hex", "has_window_digest", "window_digest_hex"):
+    for key in (
+        "has_window_id",
+        "has_query_fingerprint",
+        "query_fingerprint_hex",
+        "has_window_digest",
+        "window_digest_hex",
+        "identity_object_present",
+        "identity_object_matches_flat",
+    ):
         if not isinstance(identity_consistency.get(key), bool):
             errors.append(f"fe_tree grouped_identity_summary.consistency.{key} must be bool")
 
