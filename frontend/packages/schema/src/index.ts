@@ -162,6 +162,7 @@ export interface ApiDataListResult {
     group_limit?: number;
     group_offset?: number;
     group_count?: number;
+    group_total?: number;
     has_more?: boolean;
     page_size?: number;
     has_group_page_offsets?: boolean;
@@ -204,6 +205,7 @@ export interface ApiDataListRequest {
   domain_raw?: string;
   group_by?: string | string[];
   group_offset?: number;
+  need_group_total?: boolean;
   group_sample_limit?: number;
   group_limit?: number;
   group_page_size?: number;

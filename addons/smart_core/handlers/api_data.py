@@ -305,6 +305,19 @@ class ApiDataHandler(BaseIntentHandler):
             )
         return out
 
+    def _count_group_total(self, env_model, domain, group_by) -> Optional[int]:
+        field_name = self._primary_group_by_field(group_by)
+        if not field_name:
+            return None
+        if field_name not in env_model._fields:
+            return None
+        try:
+            rows = env_model.read_group(domain or [], [field_name], [field_name], lazy=False)
+        except Exception:
+            _logger.exception("read_group total failed model=%s group_by=%s", env_model._name, field_name)
+            return None
+        return len(rows or [])
+
     def _build_grouped_rows(
         self,
         env_model,
@@ -628,6 +641,7 @@ class ApiDataHandler(BaseIntentHandler):
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
         group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
         group_offset = max(0, self._get_int(p, "group_offset", 0))
+        need_group_total = self._get_bool(p, "need_group_total", False)
         group_page_size = min(self._get_int(p, "group_page_size", 0), 8)
         default_group_limit = min(limit or 20, 30)
         group_limit = self._get_int(p, "group_limit", default_group_limit)
@@ -693,6 +707,7 @@ class ApiDataHandler(BaseIntentHandler):
         )
         group_has_more = len(group_summary_probe) > group_limit
         group_summary = group_summary_probe[:group_limit]
+        group_total = self._count_group_total(env_model, domain, group_by) if need_group_total else None
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
@@ -724,6 +739,8 @@ class ApiDataHandler(BaseIntentHandler):
                 "has_group_page_offsets": bool(group_page_offsets),
             },
         }
+        if group_total is not None and isinstance(data.get("group_paging"), dict):
+            data["group_paging"]["group_total"] = int(group_total)
         if need_total:
             data["total"] = int(total or 0)
 
@@ -741,10 +758,13 @@ class ApiDataHandler(BaseIntentHandler):
             "group_by_field": primary_group_field or None,
             "group_count": len(group_summary),
             "group_has_more": group_has_more,
+            "need_group_total": need_group_total,
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,
             "group_offset": group_offset,
         }
+        if group_total is not None:
+            meta["group_total"] = int(group_total)
         return data, meta
 
     def _op_read(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
