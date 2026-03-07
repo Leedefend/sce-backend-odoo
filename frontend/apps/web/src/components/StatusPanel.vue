@@ -82,9 +82,14 @@ const suggestedActionLabel = computed(() => suggestedActionRuntime.label.value);
 const showHudMeta = computed(() => isHudEnabled(route));
 const errorModel = computed(() => String(props.errorDetails?.model || '').trim());
 const errorOp = computed(() => String(props.errorDetails?.op || '').trim().toLowerCase());
-const compactContext = computed(() =>
-  [errorModel.value, errorOp.value].filter(Boolean).join('/'),
-);
+const compactContext = computed(() => {
+  const scope = [errorModel.value, errorOp.value].filter(Boolean).join('/');
+  const reason = String(props.reasonCode || '').trim().toUpperCase();
+  if (scope && reason) return `${scope} [${reason}]`;
+  if (scope) return scope;
+  if (reason) return `[${reason}]`;
+  return '';
+});
 const userHint = computed(() => {
   if (showHudMeta.value) return '';
   return props.hint || '';
