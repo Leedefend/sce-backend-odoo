@@ -32,11 +32,13 @@ def main() -> int:
 
     api_markers = [
         "def _build_grouped_rows(",
+        "def _build_group_window_digest(self, window_id: str, group_summary: List[Dict[str, Any]]) -> str:",
         "group_page_offsets: Optional[Dict[str, int]] = None,",
         '"group_key": group_key,',
         '"page_window": {',
         '"page_has_prev": page_offset > 0,',
         '"page_has_next": (page_offset + page_limit) < count,',
+        '"window_digest": group_window_digest,',
         '"grouped_rows": grouped_rows,',
     ]
     for marker in api_markers:
@@ -66,6 +68,8 @@ def main() -> int:
         "const groupPageOffsets = ref<Record<string, number>>({});",
         "const groupWindowId = ref('');",
         "const groupQueryFingerprint = ref('');",
+        "const groupWindowDigest = ref('');",
+        "{ label: 'group_window_digest', value: groupWindowDigest.value || '-' },",
         "const groupPageRaw = String(route.query.group_page || '').trim();",
         "const groupFingerprintRaw = String(route.query.group_fp || '').trim();",
         "const groupWindowIdRaw = String(route.query.group_wid || '').trim();",
@@ -122,6 +126,7 @@ def main() -> int:
         "group_key?: string;",
         "page_offset?: number;",
         "page_limit?: number;",
+        "window_digest?: string;",
         "page_window?: {",
         "page_has_prev?: boolean;",
         "page_has_next?: boolean;",

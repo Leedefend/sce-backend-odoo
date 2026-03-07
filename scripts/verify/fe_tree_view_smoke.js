@@ -226,19 +226,24 @@ function buildGroupedIdentitySummary(groupPaging) {
   const paging = groupPaging && typeof groupPaging === 'object' ? groupPaging : {};
   const windowId = typeof paging.window_id === 'string' ? paging.window_id.trim() : '';
   const queryFingerprint = typeof paging.query_fingerprint === 'string' ? paging.query_fingerprint.trim() : '';
+  const windowDigest = typeof paging.window_digest === 'string' ? paging.window_digest.trim() : '';
   return {
     formulas: {
       window_id_shape: 'window_id must be non-empty string for grouped responses',
       query_fingerprint_shape: 'query_fingerprint must be non-empty hex string',
+      window_digest_shape: 'window_digest must be non-empty hex string',
     },
     response: {
       window_id: windowId,
       query_fingerprint: queryFingerprint,
+      window_digest: windowDigest,
     },
     consistency: {
       has_window_id: windowId.length > 0,
       has_query_fingerprint: queryFingerprint.length > 0,
       query_fingerprint_hex: /^[a-f0-9]{40}$/i.test(queryFingerprint),
+      has_window_digest: windowDigest.length > 0,
+      window_digest_hex: /^[a-f0-9]{40}$/i.test(windowDigest),
     },
   };
 }
@@ -405,6 +410,8 @@ async function main() {
   summary.push(`grouped_identity_has_window_id: ${groupedIdentitySummary.consistency.has_window_id ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_has_query_fingerprint: ${groupedIdentitySummary.consistency.has_query_fingerprint ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_query_fingerprint_hex: ${groupedIdentitySummary.consistency.query_fingerprint_hex ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_has_window_digest: ${groupedIdentitySummary.consistency.has_window_digest ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_window_digest_hex: ${groupedIdentitySummary.consistency.window_digest_hex ? 'yes' : 'no'}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');

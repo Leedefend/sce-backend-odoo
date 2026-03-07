@@ -337,6 +337,23 @@ class ApiDataHandler(BaseIntentHandler):
         fp_part = str(fingerprint or "").strip()[:12] or "nofp"
         return f"{field_part}:{offset_part}:{limit_part}:{fp_part}"
 
+    def _build_group_window_digest(self, window_id: str, group_summary: List[Dict[str, Any]]) -> str:
+        normalized = []
+        for item in group_summary or []:
+            if not isinstance(item, dict):
+                continue
+            normalized.append(
+                {
+                    "group_key": str(item.get("group_key") or "").strip(),
+                    "count": int(item.get("count") or 0),
+                }
+            )
+        payload = {
+            "window_id": str(window_id or "").strip(),
+            "groups": normalized,
+        }
+        return hashlib.sha1(_json(payload).encode("utf-8")).hexdigest()
+
     def _build_grouped_rows(
         self,
         env_model,
@@ -746,6 +763,7 @@ class ApiDataHandler(BaseIntentHandler):
             group_limit,
             group_query_fingerprint,
         )
+        group_window_digest = self._build_group_window_digest(group_window_id, group_summary)
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
@@ -778,6 +796,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "window_end": group_window_end,
                 "window_id": group_window_id,
                 "query_fingerprint": group_query_fingerprint,
+                "window_digest": group_window_digest,
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
             },
@@ -807,6 +826,7 @@ class ApiDataHandler(BaseIntentHandler):
             "group_window_end": group_window_end,
             "group_window_id": group_window_id,
             "group_query_fingerprint": group_query_fingerprint,
+            "group_window_digest": group_window_digest,
             "need_group_total": need_group_total,
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,

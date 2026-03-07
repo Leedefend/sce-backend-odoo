@@ -106,7 +106,7 @@ def main() -> int:
         _expect_type(formulas.get(key), str, f"grouped_pagination_semantic_summary.formulas.{key}", errors)
     for key in ("offset_roundtrip", "prev_when_offset_positive", "next_signal_type"):
         _expect_type(offset_formulas.get(key), str, f"grouped_offset_replay_summary.formulas.{key}", errors)
-    for key in ("window_id_shape", "query_fingerprint_shape"):
+    for key in ("window_id_shape", "query_fingerprint_shape", "window_digest_shape"):
         _expect_type(identity_formulas.get(key), str, f"grouped_identity_summary.formulas.{key}", errors)
 
     expected_field_types = {
@@ -181,7 +181,8 @@ def main() -> int:
         "grouped_identity_summary.response.query_fingerprint",
         errors,
     )
-    for key in ("has_window_id", "has_query_fingerprint", "query_fingerprint_hex"):
+    _expect_type(identity_response.get("window_digest"), str, "grouped_identity_summary.response.window_digest", errors)
+    for key in ("has_window_id", "has_query_fingerprint", "query_fingerprint_hex", "has_window_digest", "window_digest_hex"):
         _expect_type(identity_consistency.get(key), bool, f"grouped_identity_summary.consistency.{key}", errors)
 
     if errors:
