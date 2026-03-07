@@ -43,7 +43,7 @@ def main() -> int:
         '"page_has_next": (page_offset + page_limit) < count,',
         '"window_digest": group_window_digest,',
         '"window_key": group_window_identity_key,',
-        '"window_identity": {',
+        '"window_identity": group_window_identity,',
         '"version": self.GROUP_WINDOW_IDENTITY_VERSION,',
         '"algo": self.GROUP_WINDOW_IDENTITY_ALGO,',
         '"key": group_window_identity_key,',
@@ -55,6 +55,7 @@ def main() -> int:
         '"group_offset": group_offset,',
         '"group_limit": group_limit,',
         '"group_count": len(group_summary),',
+        'group_window_identity["group_total"] = int(group_total)',
         '"grouped_rows": grouped_rows,',
     ]
     for marker in api_markers:
@@ -165,6 +166,7 @@ def main() -> int:
         "group_offset?: number;",
         "group_limit?: number;",
         "group_count?: number;",
+        "group_total?: number;",
         "page_window?: {",
         "page_has_prev?: boolean;",
         "page_has_next?: boolean;",
