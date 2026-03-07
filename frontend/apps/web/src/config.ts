@@ -3,9 +3,9 @@ const envDb = String(import.meta.env.VITE_ODOO_DB ?? '').trim();
 const isLocalHost = typeof window !== 'undefined'
   ? ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
   : false;
-// Delivery defaults to sc_delivery_local only on non-local hosts.
-// Local dev may run against sc_demo/sc_* databases and must not be hard-bound.
-const enforcedDb = appEnv === 'delivery' && !isLocalHost ? 'sc_delivery_local' : '';
+// Do not auto-force a db by APP_ENV. Always prefer explicit VITE_ODOO_DB.
+// Auto-forcing may cause token/db mismatch when frontend host is not localhost.
+const enforcedDb = '';
 // For local dev, fallback to sc_demo when db env is not explicitly set.
 const localDefaultDb = !envDb && isLocalHost ? 'sc_demo' : '';
 
