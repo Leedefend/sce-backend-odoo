@@ -234,6 +234,8 @@ function buildGroupedIdentitySummary(groupPaging) {
   const windowDigest = typeof identity.window_digest === 'string'
     ? identity.window_digest.trim()
     : (typeof paging.window_digest === 'string' ? paging.window_digest.trim() : '');
+  const identityVersion = typeof identity.version === 'string' ? identity.version.trim() : '';
+  const identityAlgo = typeof identity.algo === 'string' ? identity.algo.trim().toLowerCase() : '';
   const flatWindowId = typeof paging.window_id === 'string' ? paging.window_id.trim() : '';
   const flatQueryFingerprint = typeof paging.query_fingerprint === 'string' ? paging.query_fingerprint.trim() : '';
   const flatWindowDigest = typeof paging.window_digest === 'string' ? paging.window_digest.trim() : '';
@@ -243,12 +245,15 @@ function buildGroupedIdentitySummary(groupPaging) {
       query_fingerprint_shape: 'query_fingerprint must be non-empty hex string',
       window_digest_shape: 'window_digest must be non-empty hex string',
       window_identity_object: 'window_identity object should be present and match flat fields when both exist',
+      window_identity_meta: 'window_identity.version/algo must be non-empty, algo currently sha1',
     },
     response: {
       window_id: windowId,
       query_fingerprint: queryFingerprint,
       window_digest: windowDigest,
       window_identity_present: Boolean(paging.window_identity && typeof paging.window_identity === 'object'),
+      window_identity_version: identityVersion,
+      window_identity_algo: identityAlgo,
     },
     consistency: {
       has_window_id: windowId.length > 0,
@@ -264,6 +269,9 @@ function buildGroupedIdentitySummary(groupPaging) {
       ) && (
         !flatWindowDigest || flatWindowDigest === windowDigest
       ),
+      identity_version_present: identityVersion.length > 0,
+      identity_algo_present: identityAlgo.length > 0,
+      identity_algo_supported: identityAlgo === 'sha1',
     },
   };
 }
@@ -434,6 +442,8 @@ async function main() {
   summary.push(`grouped_identity_window_digest_hex: ${groupedIdentitySummary.consistency.window_digest_hex ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_object_present: ${groupedIdentitySummary.consistency.identity_object_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_object_matches_flat: ${groupedIdentitySummary.consistency.identity_object_matches_flat ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_version_present: ${groupedIdentitySummary.consistency.identity_version_present ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_algo_supported: ${groupedIdentitySummary.consistency.identity_algo_supported ? 'yes' : 'no'}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');
