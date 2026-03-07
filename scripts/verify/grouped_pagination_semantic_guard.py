@@ -122,6 +122,7 @@ def main() -> int:
         "window_identity_group_by_shape",
         "window_identity_model_shape",
         "window_identity_empty_shape",
+        "window_identity_span_shape",
     ):
         _expect_type(identity_formulas.get(key), str, f"grouped_identity_summary.formulas.{key}", errors)
 
@@ -249,6 +250,7 @@ def main() -> int:
         "window_identity_page_size",
         "window_identity_window_start",
         "window_identity_window_end",
+        "window_identity_window_span",
         "window_identity_prev_group_offset",
         "window_identity_next_group_offset",
     ):
@@ -286,6 +288,8 @@ def main() -> int:
         "identity_page_meta_match_flat",
         "identity_range_numbers_present",
         "identity_range_numbers_match_flat",
+        "identity_span_present",
+        "identity_span_match_flat",
         "identity_nav_present",
         "identity_nav_match_flat",
     ):

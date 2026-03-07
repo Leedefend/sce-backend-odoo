@@ -757,6 +757,7 @@ class ApiDataHandler(BaseIntentHandler):
         prev_group_offset = max(0, group_offset - group_limit) if group_offset > 0 else None
         group_window_start = (group_offset + 1) if group_summary else 0
         group_window_end = (group_offset + len(group_summary)) if group_summary else 0
+        group_window_span = max(0, group_window_end - group_window_start + 1) if group_summary else 0
         primary_group_field = self._primary_group_by_field(group_by)
         group_query_fingerprint = self._build_group_query_fingerprint(
             model,
@@ -786,6 +787,7 @@ class ApiDataHandler(BaseIntentHandler):
             "window_empty": len(group_summary) <= 0,
             "window_start": group_window_start,
             "window_end": group_window_end,
+            "window_span": group_window_span,
             "prev_group_offset": prev_group_offset,
             "next_group_offset": next_group_offset,
             "has_more": group_has_more,

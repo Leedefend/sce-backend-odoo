@@ -184,6 +184,7 @@ export interface ApiDataListResult {
       window_empty?: boolean;
       window_start?: number;
       window_end?: number;
+      window_span?: number;
       prev_group_offset?: number;
       next_group_offset?: number;
       has_more?: boolean;
