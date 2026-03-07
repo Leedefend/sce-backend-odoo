@@ -324,6 +324,7 @@
 import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { batchUpdateRecords, exportRecordsCsv, listRecords, listRecordsRaw } from '../api/data';
+import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
@@ -2313,6 +2314,7 @@ async function loadAssigneeOptions() {
       domain: [['active', '=', true]],
       order: 'name asc',
       limit: 80,
+      silentErrors: true,
     });
     const rows = Array.isArray(result.records) ? result.records : [];
     assigneeOptions.value = rows
@@ -2326,9 +2328,14 @@ async function loadAssigneeOptions() {
     if (selectedAssigneeId.value && !assigneeOptions.value.find((opt) => opt.id === selectedAssigneeId.value)) {
       selectedAssigneeId.value = null;
     }
-  } catch {
+  } catch (error) {
     assigneeOptions.value = [];
     selectedAssigneeId.value = null;
+    if (error instanceof ApiError && String(error.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED') {
+      const model = String(error.details?.model || 'res.users').trim();
+      const op = String(error.details?.op || 'list').trim().toLowerCase();
+      batchMessage.value = `负责人候选加载受限（${model}/${op}）`;
+    }
   }
 }
 
