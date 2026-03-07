@@ -17,6 +17,7 @@ export async function trackUsageEvent(eventType: string, extra: Record<string, u
     await intentRequest<{ tracked?: string[] }>({
       intent: 'usage.track',
       params: { event_type: eventType, ...extra },
+      silentErrors: true,
     });
   } catch (err) {
     // Usage analytics is non-critical in delivery mode; ignore to keep UX stable.

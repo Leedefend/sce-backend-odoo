@@ -6,6 +6,7 @@ export async function trackTelemetryEvent(eventType: string, extra: Record<strin
     await intentRequest<{ event_type?: string }>({
       intent: 'telemetry.track',
       params: { event_type: eventType, ...extra },
+      silentErrors: true,
     });
   } catch (err) {
     // Telemetry is best-effort only and must never block product flows.
