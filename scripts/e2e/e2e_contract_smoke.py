@@ -244,6 +244,26 @@ def _build_grouped_semantic_signature(
         f"{identity_version or 'v1'}:{identity_algo or 'sha1'}:{identity_window_id or '-'}:{identity_window_digest or '-'}"
     )
     supports_window_identity_key_tuple = bool(identity_key or window_key) and (identity_key or window_key) == tuple_key_expected
+    identity_prev_offset = window_identity.get("prev_group_offset")
+    identity_next_offset = window_identity.get("next_group_offset")
+    identity_has_more = window_identity.get("has_more")
+    flat_prev_offset = group_paging.get("prev_group_offset")
+    flat_next_offset = group_paging.get("next_group_offset")
+    flat_has_more = group_paging.get("has_more")
+    supports_window_nav_match = (
+        (
+            identity_prev_offset is None
+            or _to_int(identity_prev_offset, 0) == _to_int(flat_prev_offset, 0)
+        )
+        and (
+            identity_next_offset is None
+            or _to_int(identity_next_offset, 0) == _to_int(flat_next_offset, 0)
+        )
+        and (
+            identity_has_more is None
+            or bool(identity_has_more) == bool(flat_has_more)
+        )
+    )
 
     group_count = max(0, _to_int(group_paging.get("group_count"), 0))
     window_start = max(0, _to_int(group_paging.get("window_start"), 0))
@@ -268,6 +288,7 @@ def _build_grouped_semantic_signature(
         "supports_window_identity_group_by": bool(supports_window_identity_group_by),
         "supports_window_identity_algo": bool(supports_window_identity_algo),
         "supports_window_identity_key_tuple": bool(supports_window_identity_key_tuple),
+        "supports_window_nav_match": bool(supports_window_nav_match),
         "supports_window_span": bool(supports_window_span),
         "window_span_matches_range": bool(window_span_matches_range),
         "request_offset_matches_observed": bool(request_offset_matches_observed),
@@ -397,6 +418,7 @@ def main():
                         "supports_window_identity_group_by": False,
                         "supports_window_identity_algo": False,
                         "supports_window_identity_key_tuple": False,
+                        "supports_window_nav_match": False,
                         "supports_window_span": False,
                         "window_span_matches_range": False,
                         "request_offset_matches_observed": False,
@@ -435,6 +457,7 @@ def main():
                 "supports_window_identity_group_by": grouped_semantic["supports_window_identity_group_by"],
                 "supports_window_identity_algo": grouped_semantic["supports_window_identity_algo"],
                 "supports_window_identity_key_tuple": grouped_semantic["supports_window_identity_key_tuple"],
+                "supports_window_nav_match": grouped_semantic["supports_window_nav_match"],
                 "supports_window_span": grouped_semantic["supports_window_span"],
                 "window_span_matches_range": grouped_semantic["window_span_matches_range"],
                 "request_offset_matches_observed": grouped_semantic["request_offset_matches_observed"],
