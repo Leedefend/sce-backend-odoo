@@ -9,6 +9,7 @@
       :error-code="error?.code"
       :reason-code="error?.reasonCode"
       :error-category="error?.errorCategory"
+      :error-details="error?.details"
       :retryable="error?.retryable"
       :hint="errorCopy.hint"
       :suggested-action="error?.suggestedAction"

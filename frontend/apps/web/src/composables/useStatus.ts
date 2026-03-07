@@ -12,6 +12,7 @@ export interface StatusError {
   retryable?: boolean;
   reasonCode?: string;
   suggestedAction?: string;
+  details?: Record<string, unknown>;
 }
 
 export interface StatusCopy {
@@ -53,6 +54,7 @@ export function buildStatusError(err: unknown, fallbackMessage: string, kind?: s
       retryable: err.retryable,
       reasonCode: err.reasonCode,
       suggestedAction: suggestedAction || undefined,
+      details: err.details,
     };
   }
   const message = err instanceof Error ? err.message : fallbackMessage;
@@ -92,6 +94,16 @@ function getHint(code?: number | string, kind?: string, errorCategory?: string, 
   if (numericCode === 409) return 'Record changed on server. Reload and retry.';
   if (numericCode && numericCode >= 500) return 'Server encountered an exception. Retry later or contact support.';
   return '';
+}
+
+function permissionContextHint(details?: Record<string, unknown>): string {
+  if (!details) return '';
+  const model = String(details.model || '').trim();
+  const op = String(details.op || '').trim().toLowerCase();
+  if (!model && !op) return '';
+  if (model && op) return `Permission context: ${model} (${op}).`;
+  if (model) return `Permission context: ${model}.`;
+  return `Permission context: op=${op}.`;
 }
 
 export function resolveErrorCopy(err: StatusError | null, fallbackMessage = 'Request failed'): StatusCopy {
@@ -155,10 +167,11 @@ export function resolveErrorCopy(err: StatusError | null, fallbackMessage = 'Req
     };
   }
   if (code === 403) {
+    const contextHint = permissionContextHint(err?.details);
     return {
       title: 'Permission denied',
       message: 'You do not have permission to perform this action.',
-      hint: hint || undefined,
+      hint: [hint, contextHint].filter(Boolean).join(' ') || undefined,
     };
   }
   if (code === 404) {

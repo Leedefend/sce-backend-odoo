@@ -8,6 +8,8 @@
       <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
       <p v-if="reasonCode" class="trace">Reason: {{ reasonCode }}</p>
       <p v-if="errorCategory" class="trace">Category: {{ errorCategory }}</p>
+      <p v-if="errorModel" class="trace">Model: {{ errorModel }}</p>
+      <p v-if="errorOp" class="trace">Operation: {{ errorOp }}</p>
       <p v-if="retryable !== undefined" class="trace">Retryable: {{ retryable ? 'yes' : 'no' }}</p>
       <p v-if="hint" class="trace">Hint: {{ hint }}</p>
       <button v-if="traceId" class="trace-copy" @click="copyTrace">Copy trace</button>
@@ -40,6 +42,7 @@ const props = defineProps<{
   errorCode?: number | string | null;
   reasonCode?: string;
   errorCategory?: string;
+  errorDetails?: Record<string, unknown>;
   retryable?: boolean;
   hint?: string;
   suggestedAction?: string;
@@ -74,6 +77,8 @@ const suggestedActionRuntime = useSuggestedAction(
 const canRunSuggestedAction = computed(() => suggestedActionRuntime.canRun.value);
 const suggestedActionLabel = computed(() => suggestedActionRuntime.label.value);
 const showHudMeta = computed(() => isHudEnabled(route));
+const errorModel = computed(() => String(props.errorDetails?.model || '').trim());
+const errorOp = computed(() => String(props.errorDetails?.op || '').trim().toLowerCase());
 const userHint = computed(() => {
   if (showHudMeta.value) return '';
   return props.hint || '';
