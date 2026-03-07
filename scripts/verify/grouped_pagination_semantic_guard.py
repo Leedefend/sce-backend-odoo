@@ -116,6 +116,7 @@ def main() -> int:
         "window_key_flat_compat",
         "window_identity_window_shape",
         "window_identity_range_shape",
+        "window_identity_nav_shape",
     ):
         _expect_type(identity_formulas.get(key), str, f"grouped_identity_summary.formulas.{key}", errors)
 
@@ -223,8 +224,11 @@ def main() -> int:
         "window_identity_group_count",
         "window_identity_window_start",
         "window_identity_window_end",
+        "window_identity_prev_group_offset",
+        "window_identity_next_group_offset",
     ):
         _expect_type(identity_response.get(key), int, f"grouped_identity_summary.response.{key}", errors)
+    _expect_type(identity_response.get("window_identity_has_more"), bool, "grouped_identity_summary.response.window_identity_has_more", errors)
     for key in (
         "has_window_id",
         "has_query_fingerprint",
@@ -243,6 +247,8 @@ def main() -> int:
         "identity_window_numbers_match_flat",
         "identity_range_numbers_present",
         "identity_range_numbers_match_flat",
+        "identity_nav_present",
+        "identity_nav_match_flat",
     ):
         _expect_type(identity_consistency.get(key), bool, f"grouped_identity_summary.consistency.{key}", errors)
 

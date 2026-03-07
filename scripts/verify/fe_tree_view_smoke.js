@@ -242,6 +242,9 @@ function buildGroupedIdentitySummary(groupPaging) {
   const identityGroupCount = Number.isFinite(Number(identity.group_count)) ? Math.max(0, toSafeInt(identity.group_count, 0)) : null;
   const identityWindowStart = Number.isFinite(Number(identity.window_start)) ? Math.max(0, toSafeInt(identity.window_start, 0)) : null;
   const identityWindowEnd = Number.isFinite(Number(identity.window_end)) ? Math.max(0, toSafeInt(identity.window_end, 0)) : null;
+  const identityPrevOffset = Number.isFinite(Number(identity.prev_group_offset)) ? Math.max(0, toSafeInt(identity.prev_group_offset, 0)) : null;
+  const identityNextOffset = Number.isFinite(Number(identity.next_group_offset)) ? Math.max(0, toSafeInt(identity.next_group_offset, 0)) : null;
+  const identityHasMore = typeof identity.has_more === 'boolean' ? identity.has_more : null;
   const flatWindowKey = typeof paging.window_key === 'string' ? paging.window_key.trim() : '';
   const flatWindowId = typeof paging.window_id === 'string' ? paging.window_id.trim() : '';
   const flatQueryFingerprint = typeof paging.query_fingerprint === 'string' ? paging.query_fingerprint.trim() : '';
@@ -257,6 +260,7 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_key_flat_compat: 'window_key flat field should match window_identity.key when both exist',
       window_identity_window_shape: 'window_identity.group_offset/group_limit/group_count should be non-negative integers and align with group_paging',
       window_identity_range_shape: 'window_identity.window_start/window_end should be non-negative integers and align with group_paging',
+      window_identity_nav_shape: 'window_identity prev/next/has_more should align with group_paging',
     },
     response: {
       window_id: windowId,
@@ -272,6 +276,9 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_group_count: identityGroupCount ?? -1,
       window_identity_window_start: identityWindowStart ?? -1,
       window_identity_window_end: identityWindowEnd ?? -1,
+      window_identity_prev_group_offset: identityPrevOffset ?? -1,
+      window_identity_next_group_offset: identityNextOffset ?? -1,
+      window_identity_has_more: identityHasMore ?? false,
     },
     consistency: {
       has_window_id: windowId.length > 0,
@@ -307,6 +314,14 @@ function buildGroupedIdentitySummary(groupPaging) {
         identityWindowStart === null || identityWindowStart === Math.max(0, toSafeInt(paging.window_start, 0))
       ) && (
         identityWindowEnd === null || identityWindowEnd === Math.max(0, toSafeInt(paging.window_end, 0))
+      ),
+      identity_nav_present: identityHasMore !== null,
+      identity_nav_match_flat: (
+        identityPrevOffset === null || identityPrevOffset === (Number.isFinite(Number(paging.prev_group_offset)) ? Math.max(0, toSafeInt(paging.prev_group_offset, 0)) : null)
+      ) && (
+        identityNextOffset === null || identityNextOffset === (Number.isFinite(Number(paging.next_group_offset)) ? Math.max(0, toSafeInt(paging.next_group_offset, 0)) : null)
+      ) && (
+        identityHasMore === null || identityHasMore === Boolean(paging.has_more)
       ),
     },
   };
@@ -487,6 +502,8 @@ async function main() {
   summary.push(`grouped_identity_window_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_window_numbers_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_present: ${groupedIdentitySummary.consistency.identity_range_numbers_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_range_numbers_match_flat ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_nav_present: ${groupedIdentitySummary.consistency.identity_nav_present ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_nav_match_flat: ${groupedIdentitySummary.consistency.identity_nav_match_flat ? 'yes' : 'no'}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');
