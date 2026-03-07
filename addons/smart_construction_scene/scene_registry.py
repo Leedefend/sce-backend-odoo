@@ -243,6 +243,28 @@ def load_scene_configs(env, drift=None):
             },
         },
         {
+            "code": "task.center",
+            "name": "任务中心",
+            "target": {
+                "action_xmlid": "project.action_view_all_task",
+            },
+        },
+        {
+            "code": "contract.center",
+            "name": "合同中心",
+            "target": {
+                "menu_xmlid": "smart_construction_core.menu_sc_contract_center",
+                "action_xmlid": "smart_construction_core.action_construction_contract_my",
+            },
+        },
+        {
+            "code": "risk.monitor",
+            "name": "风险监控",
+            "target": {
+                "action_xmlid": "smart_construction_core.action_sc_operating_drill_overpay_risk_pr",
+            },
+        },
+        {
             "code": "finance.center",
             "name": "财务中心",
             "target": {
