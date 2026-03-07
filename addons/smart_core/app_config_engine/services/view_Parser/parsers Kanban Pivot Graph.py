@@ -20,6 +20,7 @@ class _KanbanPivotGraphParserMixin:
             "default_group_by": None,
             "class_list": [],
             "decorations": [],
+            "fields": [],
         }
         try:
             if not arch:
@@ -49,6 +50,17 @@ class _KanbanPivotGraphParserMixin:
                         "expr_raw": v,
                         "expr": self._safe_eval_expr(v)
                     })
+
+            seen_fields = set()
+            known_fields = set((fields_info or {}).keys())
+            for field_node in root.xpath('.//field[@name]'):
+                fname = (field_node.get('name') or '').strip()
+                if not fname or fname in seen_fields:
+                    continue
+                if known_fields and fname not in known_fields:
+                    continue
+                seen_fields.add(fname)
+                out["fields"].append(fname)
 
             tmpl = root.xpath('.//templates')
             out["template_qweb"] = tmpl and etree.tostring(tmpl[0], encoding='unicode') or None

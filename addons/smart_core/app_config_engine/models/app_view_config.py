@@ -520,7 +520,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
 
         # ======== KANBAN：最小块 + 从 arch 抽取常见属性 ========
         if view_type == 'kanban':
-            kb = {'template_qweb': None, 'quick_create': True, 'stages_field': 'stage_id'}
+            kb = {'template_qweb': None, 'quick_create': True, 'stages_field': 'stage_id', 'fields': []}
             if arch:
                 try:
                     root = ET.fromstring(arch)
@@ -537,6 +537,16 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                     # 带上 js_class 信息，便于前端增强（可选）
                     if root.get('js_class'):
                         kb['js_class'] = root.get('js_class')
+                    known_fields = set((fields_get or {}).keys())
+                    seen_fields = set()
+                    for field_node in root.findall('.//field[@name]'):
+                        fname = (field_node.get('name') or '').strip()
+                        if not fname or fname in seen_fields:
+                            continue
+                        if known_fields and fname not in known_fields:
+                            continue
+                        seen_fields.add(fname)
+                        kb['fields'].append(fname)
                 except Exception as e:
                     _logger.warning('KANBAN fallback: 解析属性失败: %s', e)
             base.update({'kanban': kb})
