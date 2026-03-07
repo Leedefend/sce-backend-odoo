@@ -47,6 +47,9 @@ def main() -> int:
         '"version": self.GROUP_WINDOW_IDENTITY_VERSION,',
         '"algo": self.GROUP_WINDOW_IDENTITY_ALGO,',
         '"key": group_window_identity_key,',
+        '"group_offset": group_offset,',
+        '"group_limit": group_limit,',
+        '"group_count": len(group_summary),',
         '"grouped_rows": grouped_rows,',
     ]
     for marker in api_markers:
@@ -149,6 +152,9 @@ def main() -> int:
         "version?: string;",
         "algo?: string;",
         "key?: string;",
+        "group_offset?: number;",
+        "group_limit?: number;",
+        "group_count?: number;",
         "page_window?: {",
         "page_has_prev?: boolean;",
         "page_has_next?: boolean;",
