@@ -318,6 +318,25 @@ class ApiDataHandler(BaseIntentHandler):
             return None
         return len(rows or [])
 
+    def _build_group_query_fingerprint(self, model: str, domain, group_by, order: str, search_term: str, ctx: Dict[str, Any]) -> str:
+        group_by_norm = self._normalize_group_by(group_by)
+        payload = {
+            "model": str(model or ""),
+            "domain": domain if isinstance(domain, list) else [],
+            "group_by": group_by_norm,
+            "order": str(order or "").strip(),
+            "search_term": str(search_term or "").strip(),
+            "ctx": ctx if isinstance(ctx, dict) else {},
+        }
+        return hashlib.sha1(_json(payload).encode("utf-8")).hexdigest()
+
+    def _build_group_window_id(self, group_field: str, group_offset: int, group_limit: int, fingerprint: str) -> str:
+        field_part = str(group_field or "group").strip() or "group"
+        offset_part = max(0, int(group_offset or 0))
+        limit_part = max(1, int(group_limit or 1))
+        fp_part = str(fingerprint or "").strip()[:12] or "nofp"
+        return f"{field_part}:{offset_part}:{limit_part}:{fp_part}"
+
     def _build_grouped_rows(
         self,
         env_model,
@@ -712,6 +731,21 @@ class ApiDataHandler(BaseIntentHandler):
         prev_group_offset = max(0, group_offset - group_limit) if group_offset > 0 else None
         group_window_start = (group_offset + 1) if group_summary else 0
         group_window_end = (group_offset + len(group_summary)) if group_summary else 0
+        primary_group_field = self._primary_group_by_field(group_by)
+        group_query_fingerprint = self._build_group_query_fingerprint(
+            model,
+            domain,
+            group_by,
+            order,
+            search_term,
+            ctx,
+        )
+        group_window_id = self._build_group_window_id(
+            primary_group_field,
+            group_offset,
+            group_limit,
+            group_query_fingerprint,
+        )
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
@@ -723,7 +757,6 @@ class ApiDataHandler(BaseIntentHandler):
             group_page_offsets=group_page_offsets,
             group_summary=group_summary,
         )
-        primary_group_field = self._primary_group_by_field(group_by)
         effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
         effective_page_size = effective_page_size if effective_page_size > 0 else min(self._get_int(p, "group_sample_limit", 3), 8)
         effective_page_size = max(1, int(effective_page_size or 1))
@@ -743,6 +776,8 @@ class ApiDataHandler(BaseIntentHandler):
                 "prev_group_offset": prev_group_offset,
                 "window_start": group_window_start,
                 "window_end": group_window_end,
+                "window_id": group_window_id,
+                "query_fingerprint": group_query_fingerprint,
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
             },
@@ -770,6 +805,8 @@ class ApiDataHandler(BaseIntentHandler):
             "prev_group_offset": prev_group_offset,
             "group_window_start": group_window_start,
             "group_window_end": group_window_end,
+            "group_window_id": group_window_id,
+            "group_query_fingerprint": group_query_fingerprint,
             "need_group_total": need_group_total,
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,

@@ -419,6 +419,8 @@ const groupWindowCount = ref(0);
 const groupWindowTotal = ref<number | null>(null);
 const groupWindowStart = ref<number | null>(null);
 const groupWindowEnd = ref<number | null>(null);
+const groupWindowId = ref('');
+const groupQueryFingerprint = ref('');
 const groupWindowPrevOffset = ref<number | null>(null);
 const groupWindowNextOffset = ref<number | null>(null);
 const advancedFields = ref<string[]>([]);
@@ -1273,6 +1275,8 @@ function applyGroupBy(field: string) {
   groupWindowTotal.value = null;
   groupWindowStart.value = null;
   groupWindowEnd.value = null;
+  groupWindowId.value = '';
+  groupQueryFingerprint.value = '';
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -1297,6 +1301,8 @@ function clearGroupBy() {
   groupWindowTotal.value = null;
   groupWindowStart.value = null;
   groupWindowEnd.value = null;
+  groupWindowId.value = '';
+  groupQueryFingerprint.value = '';
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -2278,6 +2284,8 @@ async function load() {
   groupWindowTotal.value = null;
   groupWindowStart.value = null;
   groupWindowEnd.value = null;
+  groupWindowId.value = '';
+  groupQueryFingerprint.value = '';
   groupWindowPrevOffset.value = null;
   groupWindowNextOffset.value = null;
   columns.value = [];
@@ -2496,6 +2504,9 @@ async function load() {
         ? Math.max(0, Math.trunc(Number(groupPaging.group_offset)))
         : Math.max(0, Math.trunc(groupWindowOffset.value || 0));
     groupWindowOffset.value = effectiveGroupOffset;
+    groupWindowId.value = groupPaging && typeof groupPaging.window_id === 'string' ? String(groupPaging.window_id) : '';
+    groupQueryFingerprint.value =
+      groupPaging && typeof groupPaging.query_fingerprint === 'string' ? String(groupPaging.query_fingerprint) : '';
     records.value = result.data?.records ?? [];
     groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
       .map((row) => {
