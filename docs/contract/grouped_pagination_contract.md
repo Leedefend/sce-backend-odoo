@@ -11,6 +11,7 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - request key: `group_page_size` (optional; explicit grouped page size)
 - request key: `group_limit` (optional; max grouped entries returned)
 - request key: `group_offset` (optional; grouped entries offset)
+- request key: `need_group_total` (optional; ask backend to return total grouped entries count)
 
 ## Group Summary Fields
 
@@ -67,6 +68,7 @@ Each entry in `grouped_rows` must provide:
 - `group_limit`: effective grouped result limit
 - `group_offset`: effective grouped result offset
 - `group_count`: grouped entries returned
+- `group_total`: grouped entries total count (only when `need_group_total=true`)
 - `has_more`: whether there are more grouped entries after current window
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
