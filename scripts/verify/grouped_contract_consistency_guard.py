@@ -48,6 +48,7 @@ def main() -> int:
         "page_window: groupedHasPageWindow",
         "first_group_page_window_matches_range",
         "grouped_offset_replay_summary: groupedOffsetReplaySummary",
+        "grouped_identity_summary: groupedIdentitySummary",
     ]
     for marker in smoke_markers:
         if marker not in fe_tree_smoke:
@@ -68,7 +69,9 @@ def main() -> int:
             errors.append(f"fe_tree grouped_contract_fields.{key} must be true")
 
     semantic = fe_tree.get("grouped_pagination_semantic_summary") if isinstance(fe_tree.get("grouped_pagination_semantic_summary"), dict) else {}
+    identity = fe_tree.get("grouped_identity_summary") if isinstance(fe_tree.get("grouped_identity_summary"), dict) else {}
     consistency = semantic.get("consistency") if isinstance(semantic.get("consistency"), dict) else {}
+    identity_consistency = identity.get("consistency") if isinstance(identity.get("consistency"), dict) else {}
     for key in (
         "request_offset_matches_observed",
         "request_offset_aligned_to_page_limit",
@@ -77,6 +80,9 @@ def main() -> int:
     ):
         if not isinstance(consistency.get(key), bool):
             errors.append(f"fe_tree consistency.{key} must be bool")
+    for key in ("has_window_id", "has_query_fingerprint", "query_fingerprint_hex"):
+        if not isinstance(identity_consistency.get(key), bool):
+            errors.append(f"fe_tree grouped_identity_summary.consistency.{key} must be bool")
 
     version = str(e2e.get("version") or "").strip()
     if version != "v0.4":
