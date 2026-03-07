@@ -73,6 +73,8 @@ Each entry in `grouped_rows` must provide:
 - `has_more`: whether there are more grouped entries after current window
 - `next_group_offset`: next grouped window offset (when `has_more=true`)
 - `prev_group_offset`: previous grouped window offset (when current offset > 0)
+- `window_start`: 1-based grouped window start index (0 when window empty)
+- `window_end`: 1-based grouped window end index (0 when window empty)
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
 

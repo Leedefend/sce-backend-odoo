@@ -153,6 +153,8 @@
       :window-offset="groupWindowOffset"
       :window-count="groupWindowCount"
       :window-total="groupWindowTotal ?? undefined"
+      :window-start="groupWindowStart ?? undefined"
+      :window-end="groupWindowEnd ?? undefined"
       :can-prev-window="groupWindowPrevOffset !== null"
       :can-next-window="groupWindowNextOffset !== null"
       :on-pick="handleGroupSummaryPick"
@@ -415,6 +417,8 @@ const activeGroupSummaryDomain = ref<unknown[]>([]);
 const groupWindowOffset = ref(0);
 const groupWindowCount = ref(0);
 const groupWindowTotal = ref<number | null>(null);
+const groupWindowStart = ref<number | null>(null);
+const groupWindowEnd = ref<number | null>(null);
 const groupWindowPrevOffset = ref<number | null>(null);
 const groupWindowNextOffset = ref<number | null>(null);
 const advancedFields = ref<string[]>([]);
@@ -1267,6 +1271,8 @@ function applyGroupBy(field: string) {
   groupWindowNextOffset.value = null;
   groupWindowCount.value = 0;
   groupWindowTotal.value = null;
+  groupWindowStart.value = null;
+  groupWindowEnd.value = null;
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -1289,6 +1295,8 @@ function clearGroupBy() {
   groupWindowNextOffset.value = null;
   groupWindowCount.value = 0;
   groupWindowTotal.value = null;
+  groupWindowStart.value = null;
+  groupWindowEnd.value = null;
   groupPageOffsets.value = {};
   showMoreGroupBy.value = false;
   clearSelection();
@@ -2268,6 +2276,8 @@ async function load() {
   groupSummaryItems.value = [];
   groupWindowCount.value = 0;
   groupWindowTotal.value = null;
+  groupWindowStart.value = null;
+  groupWindowEnd.value = null;
   groupWindowPrevOffset.value = null;
   groupWindowNextOffset.value = null;
   columns.value = [];
@@ -2506,6 +2516,18 @@ async function load() {
       groupPaging && Number.isFinite(Number(groupPaging.group_count))
         ? Math.max(0, Math.trunc(Number(groupPaging.group_count)))
         : groupSummaryItems.value.length;
+    groupWindowStart.value =
+      groupPaging && Number.isFinite(Number(groupPaging.window_start))
+        ? Math.max(0, Math.trunc(Number(groupPaging.window_start)))
+        : groupWindowCount.value > 0
+          ? effectiveGroupOffset + 1
+          : 0;
+    groupWindowEnd.value =
+      groupPaging && Number.isFinite(Number(groupPaging.window_end))
+        ? Math.max(0, Math.trunc(Number(groupPaging.window_end)))
+        : groupWindowCount.value > 0
+          ? effectiveGroupOffset + groupWindowCount.value
+          : 0;
     groupWindowTotal.value =
       groupPaging && Number.isFinite(Number(groupPaging.group_total))
         ? Math.max(0, Math.trunc(Number(groupPaging.group_total)))

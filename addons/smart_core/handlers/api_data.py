@@ -710,6 +710,8 @@ class ApiDataHandler(BaseIntentHandler):
         group_total = self._count_group_total(env_model, domain, group_by) if need_group_total else None
         next_group_offset = (group_offset + len(group_summary)) if group_has_more else None
         prev_group_offset = max(0, group_offset - group_limit) if group_offset > 0 else None
+        group_window_start = (group_offset + 1) if group_summary else 0
+        group_window_end = (group_offset + len(group_summary)) if group_summary else 0
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
@@ -739,6 +741,8 @@ class ApiDataHandler(BaseIntentHandler):
                 "has_more": group_has_more,
                 "next_group_offset": next_group_offset,
                 "prev_group_offset": prev_group_offset,
+                "window_start": group_window_start,
+                "window_end": group_window_end,
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
             },
@@ -764,6 +768,8 @@ class ApiDataHandler(BaseIntentHandler):
             "group_has_more": group_has_more,
             "next_group_offset": next_group_offset,
             "prev_group_offset": prev_group_offset,
+            "group_window_start": group_window_start,
+            "group_window_end": group_window_end,
             "need_group_total": need_group_total,
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,
