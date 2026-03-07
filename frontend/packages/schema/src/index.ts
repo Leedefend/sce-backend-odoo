@@ -164,6 +164,8 @@ export interface ApiDataListResult {
     group_count?: number;
     group_total?: number;
     has_more?: boolean;
+    next_group_offset?: number;
+    prev_group_offset?: number;
     page_size?: number;
     has_group_page_offsets?: boolean;
   };
