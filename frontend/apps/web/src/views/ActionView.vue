@@ -783,6 +783,7 @@ const hudEntries = computed(() => [
   { label: 'group_window_id', value: groupWindowId.value || '-' },
   { label: 'group_query_fp', value: groupQueryFingerprint.value || '-' },
   { label: 'route_group_fp', value: String(route.query.group_fp || '').trim() || '-' },
+  { label: 'route_group_wid', value: String(route.query.group_wid || '').trim() || '-' },
   { label: 'contract_actions', value: contractActionButtons.value.length },
   { label: 'contract_limit', value: contractLimit.value },
   { label: 'contract_read', value: contractReadAllowed.value },
@@ -1100,6 +1101,7 @@ function applyRoutePreset() {
   const groupPageRaw = String(route.query.group_page || '').trim();
   const groupOffsetRaw = Number(route.query.group_offset || 0);
   const groupFingerprintRaw = String(route.query.group_fp || '').trim();
+  const groupWindowIdRaw = String(route.query.group_wid || '').trim();
   const routeSearch = String(route.query.search || '').trim();
   const routeOrder = String(route.query.order || route.query.sort || '').trim();
   const routeActiveFilter = String(route.query.active_filter || '').trim();
@@ -1144,8 +1146,10 @@ function applyRoutePreset() {
     const normalizedGroupOffset = Number.isFinite(groupOffsetRaw) && groupOffsetRaw > 0 ? Math.trunc(groupOffsetRaw) : 0;
     setIfDiff(groupWindowOffset, normalizedGroupOffset);
     setIfDiff(groupQueryFingerprint, groupFingerprintRaw);
+    setIfDiff(groupWindowId, groupWindowIdRaw);
   } else {
     setIfDiff(groupQueryFingerprint, '');
+    setIfDiff(groupWindowId, '');
   }
   if (groupValue && !routeSearch) {
     setIfDiff(searchTerm, groupValue);
@@ -1207,6 +1211,7 @@ function syncRouteListState(extra?: Record<string, unknown>) {
     group_page: groupPage || undefined,
     group_offset: activeGroupByField.value && groupWindowOffset.value > 0 ? groupWindowOffset.value : undefined,
     group_fp: activeGroupByField.value && groupQueryFingerprint.value ? groupQueryFingerprint.value : undefined,
+    group_wid: activeGroupByField.value && groupWindowId.value ? groupWindowId.value : undefined,
     ...extra,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
@@ -1295,6 +1300,7 @@ function applyGroupBy(field: string) {
     group_page: undefined,
     group_offset: undefined,
     group_fp: undefined,
+    group_wid: undefined,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
@@ -1322,6 +1328,7 @@ function clearGroupBy() {
     group_page: undefined,
     group_offset: undefined,
     group_fp: undefined,
+    group_wid: undefined,
   });
   router.replace({ name: 'action', params: route.params, query }).catch(() => {});
   void load();
@@ -1338,6 +1345,7 @@ function handleGroupSummaryPick(item: GroupSummaryItem) {
     group_value: item.label || undefined,
     group_offset: undefined,
     group_fp: undefined,
+    group_wid: undefined,
   });
   void load();
 }
@@ -1347,7 +1355,13 @@ function handleOpenGroupedRows(group: { key: string; label: string; count: numbe
   activeGroupSummaryDomain.value = Array.isArray(group.domain) ? group.domain : [];
   groupWindowOffset.value = 0;
   searchTerm.value = '';
-  syncRouteListState({ search: undefined, group_value: group.label || undefined, group_offset: undefined, group_fp: undefined });
+  syncRouteListState({
+    search: undefined,
+    group_value: group.label || undefined,
+    group_offset: undefined,
+    group_fp: undefined,
+    group_wid: undefined,
+  });
   void load();
 }
 
@@ -1359,6 +1373,7 @@ function clearGroupSummaryDrilldown() {
     group_value: undefined,
     group_offset: undefined,
     group_fp: undefined,
+    group_wid: undefined,
   });
   router.replace({ name: 'action', params: route.params, query: q }).catch(() => {});
   void load();
@@ -1367,18 +1382,20 @@ function clearGroupSummaryDrilldown() {
 function handleGroupWindowPrev() {
   if (groupWindowPrevOffset.value === null) return;
   groupWindowOffset.value = Math.max(0, Math.trunc(groupWindowPrevOffset.value));
+  groupWindowId.value = '';
   collapsedGroupKeys.value = [];
   groupPageOffsets.value = {};
-  syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined });
+  syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined, group_wid: undefined });
   void load();
 }
 
 function handleGroupWindowNext() {
   if (groupWindowNextOffset.value === null) return;
   groupWindowOffset.value = Math.max(0, Math.trunc(groupWindowNextOffset.value));
+  groupWindowId.value = '';
   collapsedGroupKeys.value = [];
   groupPageOffsets.value = {};
-  syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined });
+  syncRouteListState({ group_offset: groupWindowOffset.value || undefined, group_collapsed: undefined, group_page: undefined, group_wid: undefined });
   void load();
 }
 
@@ -1388,7 +1405,7 @@ function handleGroupSampleLimitChange(limit: number) {
   groupSampleLimit.value = normalized;
   groupWindowOffset.value = 0;
   groupPageOffsets.value = {};
-  syncRouteListState({ group_sample_limit: normalized, group_offset: undefined, group_fp: undefined });
+  syncRouteListState({ group_sample_limit: normalized, group_offset: undefined, group_fp: undefined, group_wid: undefined });
   void load();
 }
 
@@ -2529,6 +2546,7 @@ async function load() {
       groupPaging && typeof groupPaging.query_fingerprint === 'string' ? String(groupPaging.query_fingerprint) : '';
     groupQueryFingerprint.value = responseGroupFingerprint;
     const routeGroupFingerprint = String(route.query.group_fp || '').trim();
+    const routeGroupWindowId = String(route.query.group_wid || '').trim();
     if (
       activeGroupByField.value
       && routeGroupFingerprint
@@ -2545,6 +2563,25 @@ async function load() {
         group_page: undefined,
         group_collapsed: undefined,
         group_fp: responseGroupFingerprint,
+        group_wid: undefined,
+      });
+      return void load();
+    }
+    if (
+      activeGroupByField.value
+      && routeGroupWindowId
+      && groupWindowId.value
+      && routeGroupWindowId !== groupWindowId.value
+      && effectiveGroupOffset > 0
+    ) {
+      groupWindowOffset.value = 0;
+      groupPageOffsets.value = {};
+      collapsedGroupKeys.value = [];
+      syncRouteListState({
+        group_offset: undefined,
+        group_page: undefined,
+        group_collapsed: undefined,
+        group_wid: groupWindowId.value,
       });
       return void load();
     }
@@ -2554,9 +2591,14 @@ async function load() {
       && routeGroupFingerprint !== responseGroupFingerprint
       && effectiveGroupOffset <= 0
     ) {
-      syncRouteListState({ group_fp: responseGroupFingerprint });
+      syncRouteListState({ group_fp: responseGroupFingerprint, group_wid: groupWindowId.value || undefined });
     } else if (activeGroupByField.value && !responseGroupFingerprint && routeGroupFingerprint) {
       syncRouteListState({ group_fp: undefined });
+    }
+    if (activeGroupByField.value && routeGroupWindowId !== (groupWindowId.value || '')) {
+      syncRouteListState({ group_wid: groupWindowId.value || undefined });
+    } else if (activeGroupByField.value && !groupWindowId.value && routeGroupWindowId) {
+      syncRouteListState({ group_wid: undefined });
     }
     records.value = result.data?.records ?? [];
     groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
