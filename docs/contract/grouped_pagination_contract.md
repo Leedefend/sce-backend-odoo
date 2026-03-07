@@ -88,7 +88,7 @@ Each entry in `grouped_rows` must provide:
 - `query_fingerprint`: normalized grouped query fingerprint
 - `window_digest`: digest of current grouped window content (`group_key/count` projection)
 - `window_key`: flat alias of `window_identity.key` for compatibility
-- `window_identity`: normalized object form `{window_id, query_fingerprint, window_digest, version, algo, key}`
+- `window_identity`: normalized object form `{window_id, query_fingerprint, window_digest, version, algo, key, group_offset, group_limit, group_count}`
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
 

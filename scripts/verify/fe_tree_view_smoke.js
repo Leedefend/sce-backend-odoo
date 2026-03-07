@@ -237,6 +237,9 @@ function buildGroupedIdentitySummary(groupPaging) {
   const identityVersion = typeof identity.version === 'string' ? identity.version.trim() : '';
   const identityAlgo = typeof identity.algo === 'string' ? identity.algo.trim().toLowerCase() : '';
   const identityKey = typeof identity.key === 'string' ? identity.key.trim() : '';
+  const identityGroupOffset = Number.isFinite(Number(identity.group_offset)) ? Math.max(0, toSafeInt(identity.group_offset, 0)) : null;
+  const identityGroupLimit = Number.isFinite(Number(identity.group_limit)) ? Math.max(0, toSafeInt(identity.group_limit, 0)) : null;
+  const identityGroupCount = Number.isFinite(Number(identity.group_count)) ? Math.max(0, toSafeInt(identity.group_count, 0)) : null;
   const flatWindowKey = typeof paging.window_key === 'string' ? paging.window_key.trim() : '';
   const flatWindowId = typeof paging.window_id === 'string' ? paging.window_id.trim() : '';
   const flatQueryFingerprint = typeof paging.query_fingerprint === 'string' ? paging.query_fingerprint.trim() : '';
@@ -250,6 +253,7 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_meta: 'window_identity.version/algo must be non-empty, algo currently sha1',
       window_identity_key: 'window_identity.key must be non-empty and match version/algo/window_id/window_digest tuple',
       window_key_flat_compat: 'window_key flat field should match window_identity.key when both exist',
+      window_identity_window_shape: 'window_identity.group_offset/group_limit/group_count should be non-negative integers and align with group_paging',
     },
     response: {
       window_id: windowId,
@@ -260,6 +264,9 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_algo: identityAlgo,
       window_identity_key: identityKey || flatWindowKey,
       window_key: flatWindowKey,
+      window_identity_group_offset: identityGroupOffset ?? -1,
+      window_identity_group_limit: identityGroupLimit ?? -1,
+      window_identity_group_count: identityGroupCount ?? -1,
     },
     consistency: {
       has_window_id: windowId.length > 0,
@@ -282,6 +289,14 @@ function buildGroupedIdentitySummary(groupPaging) {
       identity_key_matches_tuple: (identityKey || flatWindowKey).length > 0
         && (identityKey || flatWindowKey) === `${identityVersion || 'v1'}:${identityAlgo || 'sha1'}:${windowId || '-'}:${windowDigest || '-'}`,
       identity_key_matches_flat: !flatWindowKey || !identityKey || flatWindowKey === identityKey,
+      identity_window_numbers_present: identityGroupOffset !== null && identityGroupLimit !== null && identityGroupCount !== null,
+      identity_window_numbers_match_flat: (
+        identityGroupOffset === null || identityGroupOffset === Math.max(0, toSafeInt(paging.group_offset, 0))
+      ) && (
+        identityGroupLimit === null || identityGroupLimit === Math.max(0, toSafeInt(paging.group_limit, 0))
+      ) && (
+        identityGroupCount === null || identityGroupCount === Math.max(0, toSafeInt(paging.group_count, 0))
+      ),
     },
   };
 }
@@ -457,6 +472,8 @@ async function main() {
   summary.push(`grouped_identity_key_present: ${groupedIdentitySummary.consistency.identity_key_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_key_matches_tuple: ${groupedIdentitySummary.consistency.identity_key_matches_tuple ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_key_matches_flat: ${groupedIdentitySummary.consistency.identity_key_matches_flat ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_window_numbers_present: ${groupedIdentitySummary.consistency.identity_window_numbers_present ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_window_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_window_numbers_match_flat ? 'yes' : 'no'}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');
