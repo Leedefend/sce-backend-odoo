@@ -416,7 +416,7 @@ import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { fetchMyWorkSummary, type MyWorkSummaryItem } from '../api/myWork';
 import { listRecords } from '../api/data';
-import { ApiError } from '../api/client';
+import { collectErrorContextIssue, issueScopeLabel, summarizeErrorContextIssues } from '../app/errorContext';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 
@@ -1621,34 +1621,9 @@ async function fetchCoreMetrics() {
   const deniedIssueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
   const collectDeniedContext = (fallbackModel: string, error: unknown) => {
     deniedModels.add(fallbackModel);
-    if (error instanceof ApiError) {
-      const model = String(error.details?.model || '').trim();
-      if (model) deniedModels.add(model);
-      const reasonCode = String(error.reasonCode || '').trim().toUpperCase();
-      if (reasonCode) deniedReasonCodes.add(reasonCode);
-      const op = String(error.details?.op || '').trim().toLowerCase();
-      const normalizedModel = model || fallbackModel;
-      const normalizedReason = reasonCode || 'UNKNOWN';
-      const counterKey = `${normalizedModel}|${op}|${normalizedReason}`;
-      const current = deniedIssueCounter.get(counterKey) || {
-        model: normalizedModel,
-        op,
-        reasonCode: normalizedReason,
-        count: 0,
-      };
-      current.count += 1;
-      deniedIssueCounter.set(counterKey, current);
-      return;
-    }
-    const counterKey = `${fallbackModel}||UNKNOWN`;
-    const current = deniedIssueCounter.get(counterKey) || {
-      model: fallbackModel,
-      op: '',
-      reasonCode: 'UNKNOWN',
-      count: 0,
-    };
-    current.count += 1;
-    deniedIssueCounter.set(counterKey, current);
+    const issue = collectErrorContextIssue(deniedIssueCounter, error, { model: fallbackModel });
+    if (issue.model) deniedModels.add(issue.model);
+    if (issue.reasonCode) deniedReasonCodes.add(issue.reasonCode);
   };
   const readTotal = async (model: string, domain: unknown[] = []) => {
     try {
@@ -1707,13 +1682,8 @@ async function fetchCoreMetrics() {
   partialDataNotice.value = isPermissionDenied
     ? `部分数据未显示（${modelsText} 权限受限）`
     : `部分数据未显示（${modelsText} 暂不可用）`;
-  const topIssues = Array.from(deniedIssueCounter.values())
-    .sort((a, b) => b.count - a.count || a.model.localeCompare(b.model))
-    .slice(0, 3)
-    .map((item) => {
-      const scope = [item.model, item.op].filter(Boolean).join('/');
-      return `${scope}[${item.reasonCode}] x${item.count}`;
-    });
+  const topIssues = summarizeErrorContextIssues(deniedIssueCounter, 3)
+    .map((item) => `${issueScopeLabel(item)}[${item.reasonCode}] x${item.count}`);
   partialDataDetailLine.value = topIssues.length ? `受限明细：${topIssues.join('；')}` : '';
 }
 

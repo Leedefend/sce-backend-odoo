@@ -289,6 +289,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { exportUsageCsv, fetchCapabilityVisibilityReport, fetchUsageReport, type CapabilityVisibilityReport, type UsageReport } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
+import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 
 const loading = ref(false);
 const errorText = ref('');
@@ -321,6 +322,14 @@ const filteredHiddenSamples = computed(() => {
 const canExport = computed(() => Boolean(report.value || visibility.value));
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load usage report'));
 
+function resolveContextAwareErrorText(err: unknown, fallback: string) {
+  const counter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
+  const issue = collectErrorContextIssue(counter, err, {});
+  const scope = issueScopeLabel(issue);
+  if (!scope && issue.reasonCode === 'UNKNOWN') return fallback;
+  return `${fallback} (${scope || 'unknown'} / ${issue.reasonCode})`;
+}
+
 async function exportCsv() {
   if (!canExport.value) return;
   try {
@@ -344,7 +353,7 @@ async function exportCsv() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '导出失败';
+    errorText.value = resolveContextAwareErrorText(err, err instanceof Error ? err.message : '导出失败');
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   }
@@ -403,7 +412,7 @@ async function load() {
     report.value = usage;
     visibility.value = vis;
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'Failed to load usage report';
+    errorText.value = resolveContextAwareErrorText(err, err instanceof Error ? err.message : 'Failed to load usage report');
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   } finally {
