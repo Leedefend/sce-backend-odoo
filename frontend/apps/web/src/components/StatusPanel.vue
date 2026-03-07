@@ -3,6 +3,9 @@
     <h2>{{ title }}</h2>
     <p v-if="message">{{ message }}</p>
     <p v-if="variant === 'error' && userHint" class="error-help">{{ userHint }}</p>
+    <p v-if="variant === 'error' && !showHudMeta && compactContext" class="error-context">
+      Context: {{ compactContext }}
+    </p>
     <div v-if="variant === 'error' && showHudMeta" class="error-meta">
       <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
       <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
@@ -79,6 +82,9 @@ const suggestedActionLabel = computed(() => suggestedActionRuntime.label.value);
 const showHudMeta = computed(() => isHudEnabled(route));
 const errorModel = computed(() => String(props.errorDetails?.model || '').trim());
 const errorOp = computed(() => String(props.errorDetails?.op || '').trim().toLowerCase());
+const compactContext = computed(() =>
+  [errorModel.value, errorOp.value].filter(Boolean).join('/'),
+);
 const userHint = computed(() => {
   if (showHudMeta.value) return '';
   return props.hint || '';
@@ -135,6 +141,12 @@ function copyTrace() {
 .error-meta {
   display: grid;
   gap: 4px;
+}
+
+.error-context {
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
 }
 
 .trace {
