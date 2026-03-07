@@ -36,6 +36,8 @@ class ApiDataHandler(BaseIntentHandler):
     DESCRIPTION = "通用数据读取：list/read/count（P0 可用版）"
     VERSION = "2.1.1"
     ETAG_ENABLED = False  # 列表不缓存，避免错判
+    GROUP_WINDOW_IDENTITY_VERSION = "v1"
+    GROUP_WINDOW_IDENTITY_ALGO = "sha1"
 
     # ----------------- 通用取参 -----------------
 
@@ -801,6 +803,8 @@ class ApiDataHandler(BaseIntentHandler):
                     "window_id": group_window_id,
                     "query_fingerprint": group_query_fingerprint,
                     "window_digest": group_window_digest,
+                    "version": self.GROUP_WINDOW_IDENTITY_VERSION,
+                    "algo": self.GROUP_WINDOW_IDENTITY_ALGO,
                 },
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
@@ -836,6 +840,8 @@ class ApiDataHandler(BaseIntentHandler):
                 "window_id": group_window_id,
                 "query_fingerprint": group_query_fingerprint,
                 "window_digest": group_window_digest,
+                "version": self.GROUP_WINDOW_IDENTITY_VERSION,
+                "algo": self.GROUP_WINDOW_IDENTITY_ALGO,
             },
             "need_group_total": need_group_total,
             "group_page_size": int(group_page_size or 0) or None,

@@ -11,8 +11,11 @@
       "has_query_fingerprint": false,
       "has_window_digest": false,
       "has_window_id": false,
+      "identity_algo_present": false,
+      "identity_algo_supported": false,
       "identity_object_matches_flat": true,
       "identity_object_present": false,
+      "identity_version_present": false,
       "query_fingerprint_hex": false,
       "window_digest_hex": false
     },
@@ -20,13 +23,16 @@
       "query_fingerprint_shape": "query_fingerprint must be non-empty hex string",
       "window_digest_shape": "window_digest must be non-empty hex string",
       "window_id_shape": "window_id must be non-empty string for grouped responses",
+      "window_identity_meta": "window_identity.version/algo must be non-empty, algo currently sha1",
       "window_identity_object": "window_identity object should be present and match flat fields when both exist"
     },
     "response": {
       "query_fingerprint": "",
       "window_digest": "",
       "window_id": "",
-      "window_identity_present": false
+      "window_identity_algo": "",
+      "window_identity_present": false,
+      "window_identity_version": ""
     }
   },
   "grouped_offset_replay_summary": {

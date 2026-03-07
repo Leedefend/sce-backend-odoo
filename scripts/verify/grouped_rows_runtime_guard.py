@@ -33,6 +33,8 @@ def main() -> int:
     api_markers = [
         "def _build_grouped_rows(",
         "def _build_group_window_digest(self, window_id: str, group_summary: List[Dict[str, Any]]) -> str:",
+        'GROUP_WINDOW_IDENTITY_VERSION = "v1"',
+        'GROUP_WINDOW_IDENTITY_ALGO = "sha1"',
         "group_page_offsets: Optional[Dict[str, int]] = None,",
         '"group_key": group_key,',
         '"page_window": {',
@@ -40,6 +42,8 @@ def main() -> int:
         '"page_has_next": (page_offset + page_limit) < count,',
         '"window_digest": group_window_digest,',
         '"window_identity": {',
+        '"version": self.GROUP_WINDOW_IDENTITY_VERSION,',
+        '"algo": self.GROUP_WINDOW_IDENTITY_ALGO,',
         '"grouped_rows": grouped_rows,',
     ]
     for marker in api_markers:
@@ -132,6 +136,8 @@ def main() -> int:
         "page_offset?: number;",
         "page_limit?: number;",
         "window_digest?: string;",
+        "version?: string;",
+        "algo?: string;",
         "page_window?: {",
         "page_has_prev?: boolean;",
         "page_has_next?: boolean;",

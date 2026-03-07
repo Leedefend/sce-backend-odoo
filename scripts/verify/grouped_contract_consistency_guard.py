@@ -88,6 +88,9 @@ def main() -> int:
         "window_digest_hex",
         "identity_object_present",
         "identity_object_matches_flat",
+        "identity_version_present",
+        "identity_algo_present",
+        "identity_algo_supported",
     ):
         if not isinstance(identity_consistency.get(key), bool):
             errors.append(f"fe_tree grouped_identity_summary.consistency.{key} must be bool")
