@@ -2533,23 +2533,29 @@ async function load() {
     const contractColumns = convergeColumnsForSurface(extractColumnsFromContract(contract), typedContract.fields || {});
     const kanbanContractFields = extractKanbanFields(contract);
     const advancedContractFields = extractAdvancedViewFields(contract, viewMode.value);
+    const fallbackKanbanFields = resolveRequestedFields(contractColumns, listProfile.value);
+    const effectiveKanbanFields = kanbanContractFields.length
+      ? kanbanContractFields
+      : uniqueFields([...fallbackKanbanFields, 'id', 'name']);
     advancedFields.value = advancedContractFields;
-    kanbanFields.value = kanbanContractFields;
+    kanbanFields.value = effectiveKanbanFields;
     const fieldMap = typedContract.fields || {};
     hasActiveField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'active' in fieldMap);
     hasAssigneeField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'user_id' in fieldMap);
     await loadAssigneeOptions();
+    if (viewMode.value === 'kanban' && !kanbanContractFields.length) {
+      console.warn('[contract] missing kanban fields; fallback to list/profile fields', {
+        actionId: actionId.value,
+        model: resolvedModel,
+        fallbackFieldCount: effectiveKanbanFields.length,
+      });
+    }
     const requestedFields =
       viewMode.value === 'kanban'
-        ? kanbanContractFields
+        ? effectiveKanbanFields
         : viewMode.value === 'tree'
           ? resolveRequestedFields(contractColumns, listProfile.value)
           : advancedContractFields;
-    if (viewMode.value === 'kanban' && !kanbanContractFields.length) {
-      setError(new Error('missing contract fields for kanban view'), 'missing contract fields for kanban view');
-      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
-      return;
-    }
     if (viewMode.value === 'tree' && !contractColumns.length) {
       setError(new Error('missing contract columns for list/tree view'), 'missing contract columns for list/tree view');
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
