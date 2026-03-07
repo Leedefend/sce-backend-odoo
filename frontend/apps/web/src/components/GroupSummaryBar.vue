@@ -3,6 +3,23 @@
     <header class="group-summary-head">
       <p>分组摘要</p>
       <div class="group-summary-head-actions">
+        <span v-if="windowInfo">{{ windowInfo }}</span>
+        <button
+          v-if="onPrevWindow"
+          class="page-btn"
+          :disabled="!canPrevWindow"
+          @click="onPrevWindow?.()"
+        >
+          上一组
+        </button>
+        <button
+          v-if="onNextWindow"
+          class="page-btn"
+          :disabled="!canNextWindow"
+          @click="onNextWindow?.()"
+        >
+          下一组
+        </button>
         <span>{{ groupByLabel }}</span>
         <button v-if="activeKey" class="clear-btn" @click="onClear?.()">清除下钻</button>
       </div>
@@ -23,6 +40,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
 type GroupSummaryItem = {
   key: string;
   label: string;
@@ -31,21 +50,53 @@ type GroupSummaryItem = {
   value?: unknown;
 };
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     items: GroupSummaryItem[];
     groupByLabel?: string;
     activeKey?: string;
+    windowOffset?: number;
+    windowCount?: number;
+    windowTotal?: number;
+    windowStart?: number;
+    windowEnd?: number;
+    canPrevWindow?: boolean;
+    canNextWindow?: boolean;
     onPick?: (item: GroupSummaryItem) => void;
     onClear?: () => void;
+    onPrevWindow?: () => void;
+    onNextWindow?: () => void;
   }>(),
   {
     groupByLabel: '',
     activeKey: '',
+    windowOffset: 0,
+    windowCount: 0,
+    windowTotal: undefined,
+    windowStart: undefined,
+    windowEnd: undefined,
+    canPrevWindow: false,
+    canNextWindow: false,
     onPick: undefined,
     onClear: undefined,
+    onPrevWindow: undefined,
+    onNextWindow: undefined,
   },
 );
+
+const windowInfo = computed(() => {
+  const offset = Math.max(0, Math.trunc(Number(props.windowOffset || 0)));
+  const count = Math.max(0, Math.trunc(Number(props.windowCount || 0)));
+  if (count <= 0) return '';
+  const backendStart = Number(props.windowStart);
+  const backendEnd = Number(props.windowEnd);
+  const start = Number.isFinite(backendStart) && backendStart > 0 ? Math.trunc(backendStart) : offset + 1;
+  const end = Number.isFinite(backendEnd) && backendEnd >= start ? Math.trunc(backendEnd) : (offset + count);
+  if (Number.isFinite(Number(props.windowTotal)) && Number(props.windowTotal) >= 0) {
+    return `${start}-${end} / ${Math.trunc(Number(props.windowTotal))}`;
+  }
+  return `${start}-${end}`;
+});
 </script>
 
 <style scoped>
@@ -114,6 +165,21 @@ withDefaults(
   padding: 2px 8px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.page-btn {
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .group-summary-item .name {

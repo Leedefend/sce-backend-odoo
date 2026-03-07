@@ -150,6 +150,7 @@ export interface ApiDataListResult {
   next_offset?: number;
   total?: number;
   group_summary?: Array<{
+    group_key?: string;
     field?: string;
     value?: unknown;
     label?: string;
@@ -159,7 +160,41 @@ export interface ApiDataListResult {
   group_paging?: {
     group_by_field?: string | null;
     group_limit?: number;
+    group_offset?: number;
     group_count?: number;
+    group_total?: number;
+    has_more?: boolean;
+    next_group_offset?: number;
+    prev_group_offset?: number;
+    window_start?: number;
+    window_end?: number;
+    window_id?: string;
+    query_fingerprint?: string;
+    window_digest?: string;
+    window_key?: string;
+    window_identity?: {
+      model?: string;
+      group_by_field?: string | null;
+      window_id?: string;
+      query_fingerprint?: string;
+      window_digest?: string;
+      version?: string;
+      algo?: string;
+      key?: string;
+      window_empty?: boolean;
+      window_start?: number;
+      window_end?: number;
+      window_span?: number;
+      prev_group_offset?: number;
+      next_group_offset?: number;
+      has_more?: boolean;
+      group_offset?: number;
+      group_limit?: number;
+      group_count?: number;
+      group_total?: number;
+      page_size?: number;
+      has_group_page_offsets?: boolean;
+    };
     page_size?: number;
     has_group_page_offsets?: boolean;
   };
@@ -200,6 +235,8 @@ export interface ApiDataListRequest {
   domain?: unknown[] | string;
   domain_raw?: string;
   group_by?: string | string[];
+  group_offset?: number;
+  need_group_total?: boolean;
   group_sample_limit?: number;
   group_limit?: number;
   group_page_size?: number;

@@ -8,8 +8,25 @@ This document defines the grouped pagination contract exposed by `api.data(list)
 - op: `list`
 - grouped payload keys: `group_summary`, `grouped_rows`
 - routing state key: `group_page` (per-group offset map)
+- routing state key: `group_fp` (grouped query fingerprint for window staleness guard)
+- routing state key: `group_wid` (grouped window identity for window staleness guard)
+- routing state key: `group_wdg` (grouped window digest for window content staleness guard)
+- routing state key: `group_wik` (grouped unified window identity key for staleness guard)
 - request key: `group_page_size` (optional; explicit grouped page size)
 - request key: `group_limit` (optional; max grouped entries returned)
+- request key: `group_offset` (optional; grouped entries offset)
+- request key: `need_group_total` (optional; ask backend to return total grouped entries count)
+
+## Group Summary Fields
+
+Each entry in `group_summary` may provide:
+
+- `group_key`: stable identity key for `(field, value)` pair
+- `field`: grouped field name
+- `value`: grouped value
+- `label`: grouped display label
+- `count`: total rows in group
+- `domain`: group-specific domain
 
 ## Grouped Row Fields
 
@@ -46,6 +63,12 @@ Each entry in `grouped_rows` must provide:
 2. Frontend should prefer `page_window` when present; fallback to legacy range fields otherwise.
 3. `group_key` must be stable for a given `(field, value)` pair to preserve route paging restoration.
 4. `page_has_prev/page_has_next` are authoritative backend semantics; frontend should avoid recomputing when these flags exist.
+5. For grouped window navigation, frontend should prefer `next_group_offset/prev_group_offset` over local offset arithmetic when present.
+6. `group_wid` is route-local state. When it mismatches backend `group_paging.window_id` under non-zero `group_offset`, frontend must reset grouped window state to first window.
+7. `group_wdg` is route-local state. When it mismatches backend `group_paging.window_digest` under non-zero `group_offset`, frontend must reset grouped window state to first window.
+8. Frontend should prefer `window_identity` when present; fallback to flat fields (`window_id/query_fingerprint/window_digest/window_key`) for compatibility.
+9. `window_identity.version/algo` define digest protocol. Clients should treat unknown versions as non-authoritative and fallback to tolerant comparison.
+10. `group_wik` is route-local state. When it mismatches backend `group_paging.window_identity.key` under non-zero `group_offset`, frontend must reset grouped window state to first window.
 
 ## Group Paging Summary
 
@@ -53,7 +76,19 @@ Each entry in `grouped_rows` must provide:
 
 - `group_by_field`: resolved primary grouped field
 - `group_limit`: effective grouped result limit
+- `group_offset`: effective grouped result offset
 - `group_count`: grouped entries returned
+- `group_total`: grouped entries total count (only when `need_group_total=true`)
+- `has_more`: whether there are more grouped entries after current window
+- `next_group_offset`: next grouped window offset (when `has_more=true`)
+- `prev_group_offset`: previous grouped window offset (when current offset > 0)
+- `window_start`: 1-based grouped window start index (0 when window empty)
+- `window_end`: 1-based grouped window end index (0 when window empty)
+- `window_id`: backend window identity for current grouped window
+- `query_fingerprint`: normalized grouped query fingerprint
+- `window_digest`: digest of current grouped window content (`group_key/count` projection)
+- `window_key`: flat alias of `window_identity.key` for compatibility
+- `window_identity`: normalized object form `{model, group_by_field, window_id, query_fingerprint, window_digest, version, algo, key, window_empty, window_start, window_end, window_span, prev_group_offset, next_group_offset, has_more, group_offset, group_limit, group_count, group_total?, page_size, has_group_page_offsets}`
 - `page_size`: effective grouped page size
 - `has_group_page_offsets`: whether request carried per-group offset map
 

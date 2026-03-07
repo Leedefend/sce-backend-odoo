@@ -38,7 +38,11 @@ def main() -> int:
 
     smoke_markers = [
         "function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, requestOffset) {",
+        "function buildGroupedOffsetReplaySummary(groupPaging, requestGroupOffset) {",
+        "function buildGroupedIdentitySummary(groupPaging) {",
         "grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,",
+        "grouped_offset_replay_summary: groupedOffsetReplaySummary,",
+        "grouped_identity_summary: groupedIdentitySummary,",
         "consistency:",
         "request_offset_matches_observed",
         "request_offset_aligned_to_page_limit",
@@ -50,6 +54,8 @@ def main() -> int:
             errors.append(f"smoke missing marker: {marker}")
 
     summary = baseline.get("grouped_pagination_semantic_summary") if isinstance(baseline.get("grouped_pagination_semantic_summary"), dict) else {}
+    offset_replay = baseline.get("grouped_offset_replay_summary") if isinstance(baseline.get("grouped_offset_replay_summary"), dict) else {}
+    identity_summary = baseline.get("grouped_identity_summary") if isinstance(baseline.get("grouped_identity_summary"), dict) else {}
     grouped_contract_fields = baseline.get("grouped_contract_fields") if isinstance(baseline.get("grouped_contract_fields"), dict) else {}
     field_types = summary.get("field_types") if isinstance(summary.get("field_types"), dict) else {}
     consistency = summary.get("consistency") if isinstance(summary.get("consistency"), dict) else {}
@@ -58,6 +64,8 @@ def main() -> int:
         if isinstance(summary.get("first_group_observation"), dict)
         else {}
     )
+    offset_consistency = offset_replay.get("consistency") if isinstance(offset_replay.get("consistency"), dict) else {}
+    identity_consistency = identity_summary.get("consistency") if isinstance(identity_summary.get("consistency"), dict) else {}
 
     if not summary:
         errors.append("baseline grouped_pagination_semantic_summary must be object")
@@ -71,6 +79,10 @@ def main() -> int:
         errors.append("baseline grouped_contract_fields.page_window must be true")
     if field_types.get("request_offset_matches_observed") != "boolean":
         errors.append("baseline field_types.request_offset_matches_observed must be 'boolean'")
+    if not offset_replay:
+        errors.append("baseline grouped_offset_replay_summary must be object")
+    if not identity_summary:
+        errors.append("baseline grouped_identity_summary must be object")
 
     for key in (
         "request_offset_matches_observed",
@@ -85,6 +97,12 @@ def main() -> int:
         errors.append("baseline first_group_observation.offset_aligned_to_page_limit must be bool")
     if not isinstance(first_group.get("page_window_matches_range"), bool):
         errors.append("baseline first_group_observation.page_window_matches_range must be bool")
+    for key in ("offset_roundtrip_match", "prev_signal_typed", "next_signal_typed"):
+        if not isinstance(offset_consistency.get(key), bool):
+            errors.append(f"baseline grouped_offset_replay_summary.consistency.{key} must be bool")
+    for key in ("has_window_id", "has_query_fingerprint", "query_fingerprint_hex"):
+        if not isinstance(identity_consistency.get(key), bool):
+            errors.append(f"baseline grouped_identity_summary.consistency.{key} must be bool")
 
     if errors:
         print("[grouped_pagination_semantic_drift_guard] FAIL")

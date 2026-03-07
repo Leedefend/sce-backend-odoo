@@ -47,6 +47,19 @@ def main() -> int:
         "grouped_contract_fields:",
         "page_window: groupedHasPageWindow",
         "first_group_page_window_matches_range",
+        "grouped_offset_replay_summary: groupedOffsetReplaySummary",
+        "grouped_identity_summary: groupedIdentitySummary",
+        "grouped_identity_key_matches_tuple",
+        "grouped_identity_key_matches_flat",
+        "grouped_identity_window_numbers_match_flat",
+        "grouped_identity_total_match_flat",
+        "grouped_identity_group_by_match_flat",
+        "grouped_identity_page_meta_match_flat",
+        "grouped_identity_range_numbers_match_flat",
+        "grouped_identity_nav_match_flat",
+        "grouped_identity_model_match_request",
+        "grouped_identity_window_empty_match_flat",
+        "grouped_identity_span_match_flat",
     ]
     for marker in smoke_markers:
         if marker not in fe_tree_smoke:
@@ -67,7 +80,9 @@ def main() -> int:
             errors.append(f"fe_tree grouped_contract_fields.{key} must be true")
 
     semantic = fe_tree.get("grouped_pagination_semantic_summary") if isinstance(fe_tree.get("grouped_pagination_semantic_summary"), dict) else {}
+    identity = fe_tree.get("grouped_identity_summary") if isinstance(fe_tree.get("grouped_identity_summary"), dict) else {}
     consistency = semantic.get("consistency") if isinstance(semantic.get("consistency"), dict) else {}
+    identity_consistency = identity.get("consistency") if isinstance(identity.get("consistency"), dict) else {}
     for key in (
         "request_offset_matches_observed",
         "request_offset_aligned_to_page_limit",
@@ -76,6 +91,39 @@ def main() -> int:
     ):
         if not isinstance(consistency.get(key), bool):
             errors.append(f"fe_tree consistency.{key} must be bool")
+    for key in (
+        "has_window_id",
+        "has_query_fingerprint",
+        "query_fingerprint_hex",
+        "has_window_digest",
+        "window_digest_hex",
+        "identity_object_present",
+        "identity_object_matches_flat",
+        "identity_version_present",
+        "identity_algo_present",
+        "identity_algo_supported",
+        "identity_key_present",
+        "identity_key_matches_tuple",
+        "identity_key_matches_flat",
+        "identity_window_numbers_present",
+        "identity_window_numbers_match_flat",
+        "identity_span_present",
+        "identity_span_match_flat",
+        "identity_total_optional_typed",
+        "identity_total_match_flat",
+        "identity_model_match_request",
+        "identity_window_empty_typed",
+        "identity_window_empty_match_flat",
+        "identity_group_by_match_flat",
+        "identity_page_meta_present",
+        "identity_page_meta_match_flat",
+        "identity_range_numbers_present",
+        "identity_range_numbers_match_flat",
+        "identity_nav_present",
+        "identity_nav_match_flat",
+    ):
+        if not isinstance(identity_consistency.get(key), bool):
+            errors.append(f"fe_tree grouped_identity_summary.consistency.{key} must be bool")
 
     version = str(e2e.get("version") or "").strip()
     if version != "v0.4":

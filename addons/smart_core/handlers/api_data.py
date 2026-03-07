@@ -36,6 +36,8 @@ class ApiDataHandler(BaseIntentHandler):
     DESCRIPTION = "通用数据读取：list/read/count（P0 可用版）"
     VERSION = "2.1.1"
     ETAG_ENABLED = False  # 列表不缓存，避免错判
+    GROUP_WINDOW_IDENTITY_VERSION = "v1"
+    GROUP_WINDOW_IDENTITY_ALGO = "sha1"
 
     # ----------------- 通用取参 -----------------
 
@@ -273,13 +275,18 @@ class ApiDataHandler(BaseIntentHandler):
         return {"value": value, "label": str(value)}
 
     def _build_group_summary(self, env_model, domain, group_by, limit: int = 20):
+        return self._build_group_summary_with_offset(env_model, domain, group_by, limit=limit, offset=0)
+
+    def _build_group_summary_with_offset(self, env_model, domain, group_by, limit: int = 20, offset: int = 0):
         field_name = self._primary_group_by_field(group_by)
         if not field_name:
             return []
         if field_name not in env_model._fields:
             return []
+        limit = max(1, min(int(limit or 20), 50))
+        offset = max(0, int(offset or 0))
         try:
-            rows = env_model.read_group(domain or [], [field_name], [field_name], limit=limit, lazy=False)
+            rows = env_model.read_group(domain or [], [field_name], [field_name], offset=offset, limit=limit, lazy=False)
         except Exception:
             _logger.exception("read_group failed model=%s group_by=%s", env_model._name, field_name)
             return []
@@ -287,8 +294,10 @@ class ApiDataHandler(BaseIntentHandler):
         count_key = f"{field_name}_count"
         for row in rows or []:
             normalized = self._normalize_group_item(env_model, field_name, row.get(field_name))
+            group_key = self._build_group_key(field_name, normalized.get("value"))
             out.append(
                 {
+                    "group_key": group_key,
                     "field": field_name,
                     "value": normalized.get("value"),
                     "label": normalized.get("label"),
@@ -297,6 +306,62 @@ class ApiDataHandler(BaseIntentHandler):
                 }
             )
         return out
+
+    def _count_group_total(self, env_model, domain, group_by) -> Optional[int]:
+        field_name = self._primary_group_by_field(group_by)
+        if not field_name:
+            return None
+        if field_name not in env_model._fields:
+            return None
+        try:
+            rows = env_model.read_group(domain or [], [field_name], [field_name], lazy=False)
+        except Exception:
+            _logger.exception("read_group total failed model=%s group_by=%s", env_model._name, field_name)
+            return None
+        return len(rows or [])
+
+    def _build_group_query_fingerprint(self, model: str, domain, group_by, order: str, search_term: str, ctx: Dict[str, Any]) -> str:
+        group_by_norm = self._normalize_group_by(group_by)
+        payload = {
+            "model": str(model or ""),
+            "domain": domain if isinstance(domain, list) else [],
+            "group_by": group_by_norm,
+            "order": str(order or "").strip(),
+            "search_term": str(search_term or "").strip(),
+            "ctx": ctx if isinstance(ctx, dict) else {},
+        }
+        return hashlib.sha1(_json(payload).encode("utf-8")).hexdigest()
+
+    def _build_group_window_id(self, group_field: str, group_offset: int, group_limit: int, fingerprint: str) -> str:
+        field_part = str(group_field or "group").strip() or "group"
+        offset_part = max(0, int(group_offset or 0))
+        limit_part = max(1, int(group_limit or 1))
+        fp_part = str(fingerprint or "").strip()[:12] or "nofp"
+        return f"{field_part}:{offset_part}:{limit_part}:{fp_part}"
+
+    def _build_group_window_digest(self, window_id: str, group_summary: List[Dict[str, Any]]) -> str:
+        normalized = []
+        for item in group_summary or []:
+            if not isinstance(item, dict):
+                continue
+            normalized.append(
+                {
+                    "group_key": str(item.get("group_key") or "").strip(),
+                    "count": int(item.get("count") or 0),
+                }
+            )
+        payload = {
+            "window_id": str(window_id or "").strip(),
+            "groups": normalized,
+        }
+        return hashlib.sha1(_json(payload).encode("utf-8")).hexdigest()
+
+    def _build_group_window_identity_key(self, window_id: str, window_digest: str) -> str:
+        version = str(self.GROUP_WINDOW_IDENTITY_VERSION or "").strip() or "v1"
+        algo = str(self.GROUP_WINDOW_IDENTITY_ALGO or "").strip().lower() or "sha1"
+        wid = str(window_id or "").strip() or "-"
+        wdg = str(window_digest or "").strip() or "-"
+        return f"{version}:{algo}:{wid}:{wdg}"
 
     def _build_grouped_rows(
         self,
@@ -308,8 +373,9 @@ class ApiDataHandler(BaseIntentHandler):
         sample_limit: int = 3,
         group_page_size: Optional[int] = None,
         group_page_offsets: Optional[Dict[str, int]] = None,
+        group_summary: Optional[List[Dict[str, Any]]] = None,
     ):
-        summary = self._build_group_summary(env_model, domain, group_by, limit=limit)
+        summary = group_summary if isinstance(group_summary, list) else self._build_group_summary(env_model, domain, group_by, limit=limit)
         if not summary:
             return []
         row_fields = list(fields_safe or ["id", "name"])
@@ -619,6 +685,8 @@ class ApiDataHandler(BaseIntentHandler):
         context_raw = self._get_str(p, "context_raw", "").strip()
         group_by = self._normalize_group_by(self._dig(p, "group_by"))
         group_page_offsets = self._normalize_group_page_offsets(self._dig(p, "group_page_offsets"))
+        group_offset = max(0, self._get_int(p, "group_offset", 0))
+        need_group_total = self._get_bool(p, "need_group_total", False)
         group_page_size = min(self._get_int(p, "group_page_size", 0), 8)
         default_group_limit = min(limit or 20, 30)
         group_limit = self._get_int(p, "group_limit", default_group_limit)
@@ -675,7 +743,62 @@ class ApiDataHandler(BaseIntentHandler):
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
-        group_summary = self._build_group_summary(env_model, domain, group_by, limit=group_limit)
+        group_summary_probe = self._build_group_summary_with_offset(
+            env_model,
+            domain,
+            group_by,
+            limit=group_limit + 1,
+            offset=group_offset,
+        )
+        group_has_more = len(group_summary_probe) > group_limit
+        group_summary = group_summary_probe[:group_limit]
+        group_total = self._count_group_total(env_model, domain, group_by) if need_group_total else None
+        next_group_offset = (group_offset + len(group_summary)) if group_has_more else None
+        prev_group_offset = max(0, group_offset - group_limit) if group_offset > 0 else None
+        group_window_start = (group_offset + 1) if group_summary else 0
+        group_window_end = (group_offset + len(group_summary)) if group_summary else 0
+        group_window_span = max(0, group_window_end - group_window_start + 1) if group_summary else 0
+        primary_group_field = self._primary_group_by_field(group_by)
+        group_query_fingerprint = self._build_group_query_fingerprint(
+            model,
+            domain,
+            group_by,
+            order,
+            search_term,
+            ctx,
+        )
+        group_window_id = self._build_group_window_id(
+            primary_group_field,
+            group_offset,
+            group_limit,
+            group_query_fingerprint,
+        )
+        group_window_digest = self._build_group_window_digest(group_window_id, group_summary)
+        group_window_identity_key = self._build_group_window_identity_key(group_window_id, group_window_digest)
+        group_window_identity = {
+            "model": model,
+            "group_by_field": primary_group_field or None,
+            "window_id": group_window_id,
+            "query_fingerprint": group_query_fingerprint,
+            "window_digest": group_window_digest,
+            "version": self.GROUP_WINDOW_IDENTITY_VERSION,
+            "algo": self.GROUP_WINDOW_IDENTITY_ALGO,
+            "key": group_window_identity_key,
+            "window_empty": len(group_summary) <= 0,
+            "window_start": group_window_start,
+            "window_end": group_window_end,
+            "window_span": group_window_span,
+            "prev_group_offset": prev_group_offset,
+            "next_group_offset": next_group_offset,
+            "has_more": group_has_more,
+            "group_offset": group_offset,
+            "group_limit": group_limit,
+            "group_count": len(group_summary),
+            "page_size": effective_page_size,
+            "has_group_page_offsets": bool(group_page_offsets),
+        }
+        if group_total is not None:
+            group_window_identity["group_total"] = int(group_total)
         grouped_rows = self._build_grouped_rows(
             env_model,
             domain,
@@ -685,8 +808,8 @@ class ApiDataHandler(BaseIntentHandler):
             sample_limit=min(self._get_int(p, "group_sample_limit", 3), 8),
             group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
+            group_summary=group_summary,
         )
-        primary_group_field = self._primary_group_by_field(group_by)
         effective_page_size = min(self._get_int(p, "group_page_size", 0), 8)
         effective_page_size = effective_page_size if effective_page_size > 0 else min(self._get_int(p, "group_sample_limit", 3), 8)
         effective_page_size = max(1, int(effective_page_size or 1))
@@ -699,11 +822,24 @@ class ApiDataHandler(BaseIntentHandler):
             "group_paging": {
                 "group_by_field": primary_group_field or None,
                 "group_limit": group_limit,
+                "group_offset": group_offset,
                 "group_count": len(group_summary),
+                "has_more": group_has_more,
+                "next_group_offset": next_group_offset,
+                "prev_group_offset": prev_group_offset,
+                "window_start": group_window_start,
+                "window_end": group_window_end,
+                "window_id": group_window_id,
+                "query_fingerprint": group_query_fingerprint,
+                "window_digest": group_window_digest,
+                "window_key": group_window_identity_key,
+                "window_identity": group_window_identity,
                 "page_size": effective_page_size,
                 "has_group_page_offsets": bool(group_page_offsets),
             },
         }
+        if group_total is not None and isinstance(data.get("group_paging"), dict):
+            data["group_paging"]["group_total"] = int(group_total)
         if need_total:
             data["total"] = int(total or 0)
 
@@ -720,9 +856,23 @@ class ApiDataHandler(BaseIntentHandler):
             "group_by": group_by,
             "group_by_field": primary_group_field or None,
             "group_count": len(group_summary),
+            "group_has_more": group_has_more,
+            "next_group_offset": next_group_offset,
+            "prev_group_offset": prev_group_offset,
+            "group_window_start": group_window_start,
+            "group_window_end": group_window_end,
+            "group_window_id": group_window_id,
+            "group_query_fingerprint": group_query_fingerprint,
+            "group_window_digest": group_window_digest,
+            "group_window_key": group_window_identity_key,
+            "group_window_identity": group_window_identity,
+            "need_group_total": need_group_total,
             "group_page_size": int(group_page_size or 0) or None,
             "group_limit": group_limit,
+            "group_offset": group_offset,
         }
+        if group_total is not None:
+            meta["group_total"] = int(group_total)
         return data, meta
 
     def _op_read(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
