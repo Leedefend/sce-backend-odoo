@@ -248,6 +248,7 @@ function buildGroupedIdentitySummary(groupPaging) {
   const identityHasGroupPageOffsets = typeof identity.has_group_page_offsets === 'boolean' ? identity.has_group_page_offsets : null;
   const identityWindowStart = Number.isFinite(Number(identity.window_start)) ? Math.max(0, toSafeInt(identity.window_start, 0)) : null;
   const identityWindowEnd = Number.isFinite(Number(identity.window_end)) ? Math.max(0, toSafeInt(identity.window_end, 0)) : null;
+  const identityWindowSpan = Number.isFinite(Number(identity.window_span)) ? Math.max(0, toSafeInt(identity.window_span, 0)) : null;
   const identityPrevOffset = Number.isFinite(Number(identity.prev_group_offset)) ? Math.max(0, toSafeInt(identity.prev_group_offset, 0)) : null;
   const identityNextOffset = Number.isFinite(Number(identity.next_group_offset)) ? Math.max(0, toSafeInt(identity.next_group_offset, 0)) : null;
   const identityHasMore = typeof identity.has_more === 'boolean' ? identity.has_more : null;
@@ -272,6 +273,7 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_group_by_shape: 'window_identity.group_by_field should align with group_paging.group_by_field',
       window_identity_model_shape: 'window_identity.model should align with request model',
       window_identity_empty_shape: 'window_identity.window_empty should align with group_count/window range',
+      window_identity_span_shape: 'window_identity.window_span should align with window_start/window_end/group_count',
     },
     response: {
       window_id: windowId,
@@ -280,22 +282,23 @@ function buildGroupedIdentitySummary(groupPaging) {
       window_identity_present: Boolean(paging.window_identity && typeof paging.window_identity === 'object'),
       window_identity_model: identityModel,
       window_identity_group_by_field: identityGroupByField,
-      window_identity_window_empty: identityWindowEmpty ?? false,
+      window_identity_window_empty: identityWindowEmpty === null ? false : identityWindowEmpty,
       window_identity_version: identityVersion,
       window_identity_algo: identityAlgo,
       window_identity_key: identityKey || flatWindowKey,
       window_key: flatWindowKey,
-      window_identity_group_offset: identityGroupOffset ?? -1,
-      window_identity_group_limit: identityGroupLimit ?? -1,
-      window_identity_group_count: identityGroupCount ?? -1,
-      window_identity_group_total: identityGroupTotal ?? -1,
-      window_identity_page_size: identityPageSize ?? -1,
-      window_identity_has_group_page_offsets: identityHasGroupPageOffsets ?? false,
-      window_identity_window_start: identityWindowStart ?? -1,
-      window_identity_window_end: identityWindowEnd ?? -1,
-      window_identity_prev_group_offset: identityPrevOffset ?? -1,
-      window_identity_next_group_offset: identityNextOffset ?? -1,
-      window_identity_has_more: identityHasMore ?? false,
+      window_identity_group_offset: identityGroupOffset === null ? -1 : identityGroupOffset,
+      window_identity_group_limit: identityGroupLimit === null ? -1 : identityGroupLimit,
+      window_identity_group_count: identityGroupCount === null ? -1 : identityGroupCount,
+      window_identity_group_total: identityGroupTotal === null ? -1 : identityGroupTotal,
+      window_identity_page_size: identityPageSize === null ? -1 : identityPageSize,
+      window_identity_has_group_page_offsets: identityHasGroupPageOffsets === null ? false : identityHasGroupPageOffsets,
+      window_identity_window_start: identityWindowStart === null ? -1 : identityWindowStart,
+      window_identity_window_end: identityWindowEnd === null ? -1 : identityWindowEnd,
+      window_identity_window_span: identityWindowSpan === null ? -1 : identityWindowSpan,
+      window_identity_prev_group_offset: identityPrevOffset === null ? -1 : identityPrevOffset,
+      window_identity_next_group_offset: identityNextOffset === null ? -1 : identityNextOffset,
+      window_identity_has_more: identityHasMore === null ? false : identityHasMore,
     },
     consistency: {
       has_window_id: windowId.length > 0,
@@ -352,6 +355,15 @@ function buildGroupedIdentitySummary(groupPaging) {
         identityWindowStart === null || identityWindowStart === Math.max(0, toSafeInt(paging.window_start, 0))
       ) && (
         identityWindowEnd === null || identityWindowEnd === Math.max(0, toSafeInt(paging.window_end, 0))
+      ),
+      identity_span_present: identityWindowSpan !== null,
+      identity_span_match_flat: (
+        identityWindowSpan === null
+        || identityWindowSpan === Math.max(0, (
+          (Number.isFinite(Number(paging.window_end)) ? Math.max(0, toSafeInt(paging.window_end, 0)) : 0)
+          - (Number.isFinite(Number(paging.window_start)) ? Math.max(0, toSafeInt(paging.window_start, 0)) : 0)
+          + ((Math.max(0, toSafeInt(paging.group_count, 0)) > 0) ? 1 : 0)
+        ))
       ),
       identity_nav_present: identityHasMore !== null,
       identity_nav_match_flat: (
@@ -545,6 +557,7 @@ async function main() {
   summary.push(`grouped_identity_page_meta_match_flat: ${groupedIdentitySummary.consistency.identity_page_meta_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_present: ${groupedIdentitySummary.consistency.identity_range_numbers_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_range_numbers_match_flat: ${groupedIdentitySummary.consistency.identity_range_numbers_match_flat ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_span_match_flat: ${groupedIdentitySummary.consistency.identity_span_match_flat ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_nav_present: ${groupedIdentitySummary.consistency.identity_nav_present ? 'yes' : 'no'}`);
   summary.push(`grouped_identity_nav_match_flat: ${groupedIdentitySummary.consistency.identity_nav_match_flat ? 'yes' : 'no'}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {

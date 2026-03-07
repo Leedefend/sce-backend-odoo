@@ -26,6 +26,8 @@
       "identity_page_meta_present": false,
       "identity_range_numbers_match_flat": true,
       "identity_range_numbers_present": false,
+      "identity_span_match_flat": true,
+      "identity_span_present": false,
       "identity_total_match_flat": true,
       "identity_total_optional_typed": true,
       "identity_version_present": false,
@@ -49,6 +51,7 @@
       "window_identity_object": "window_identity object should be present and match flat fields when both exist",
       "window_identity_page_shape": "window_identity.page_size/has_group_page_offsets should align with group_paging",
       "window_identity_range_shape": "window_identity.window_start/window_end should be non-negative integers and align with group_paging",
+      "window_identity_span_shape": "window_identity.window_span should align with window_start/window_end/group_count",
       "window_identity_total_shape": "window_identity.group_total should be non-negative integer when present and align with group_paging.group_total",
       "window_identity_window_shape": "window_identity.group_offset/group_limit/group_count should be non-negative integers and align with group_paging",
       "window_key_flat_compat": "window_key flat field should match window_identity.key when both exist"
@@ -74,6 +77,7 @@
       "window_identity_version": "",
       "window_identity_window_empty": false,
       "window_identity_window_end": -1,
+      "window_identity_window_span": -1,
       "window_identity_window_start": -1,
       "window_key": ""
     }
