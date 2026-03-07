@@ -369,8 +369,12 @@ def build_scene_catalog(repo_root: Path, scene_contract_file: Path) -> dict:
         suggested_action = str(access.get("suggested_action") or "")
         has_access_clause = bool(access.get("has_access_clause")) or required_caps > 0
 
-        layout_kind = str(layout.get("kind") or "")
         target_type = infer_target_type(target)
+        layout_kind = str(layout.get("kind") or "").strip()
+        if not layout_kind:
+            # Keep scene catalog shape stable even when runtime rows omit layout.kind.
+            # Route-driven scenes default to workspace; action-driven scenes default to list.
+            layout_kind = "workspace" if target_type == "spa_route" else "list"
         is_renderable = bool(layout_kind) and target_type != "unknown" and len(target.keys()) > 0
         # interaction-ready means scene can be rendered and access does not explicitly deny.
         is_interaction_ready = is_renderable and bool(allowed)

@@ -2215,6 +2215,9 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.scene.meta.trace.smoke
 	@$(MAKE) --no-print-directory verify.contract.api.mode.smoke
 	@$(MAKE) --no-print-directory verify.contract.view_type_semantic.smoke
+	@$(MAKE) --no-print-directory verify.frontend.search_groupby_savedfilters.guard
+	@$(MAKE) --no-print-directory verify.frontend.x2many_command_semantic.guard
+	@$(MAKE) --no-print-directory verify.frontend.view_type_render_coverage.guard
 	@if [ "$(CONTRACT_PREFLIGHT_STRICT_VIEW_TYPES)" = "1" ]; then \
 	  $(MAKE) --no-print-directory verify.contract.view_type_semantic.strict.smoke; \
 	else \

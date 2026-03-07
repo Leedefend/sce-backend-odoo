@@ -11,22 +11,21 @@
   "scene_count": 137,
   "layout_kind_counts": {
     "ledger": 29,
-    "list": 29,
+    "list": 47,
     "record": 29,
-    "unknown": 21,
-    "workspace": 29
+    "workspace": 32
   },
   "target_type_counts": {
     "odoo_action": 77,
     "spa_route": 60
   },
   "renderability": {
-    "renderable_scene_count": 116,
-    "interaction_ready_scene_count": 116,
-    "renderable_ratio": 0.8467,
-    "interaction_ready_ratio": 0.8467,
-    "fully_renderable": false,
-    "fully_interaction_ready": false
+    "renderable_scene_count": 137,
+    "interaction_ready_scene_count": 137,
+    "renderable_ratio": 1.0,
+    "interaction_ready_ratio": 1.0,
+    "fully_renderable": true,
+    "fully_interaction_ready": true
   },
   "scenes": [
     {
@@ -46,7 +45,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -70,8 +69,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -91,7 +90,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -115,8 +114,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -136,7 +135,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -160,8 +159,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -181,7 +180,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -205,8 +204,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -226,7 +225,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -250,8 +249,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -271,7 +270,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -295,8 +294,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -316,7 +315,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -340,8 +339,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -361,7 +360,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -385,8 +384,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -406,7 +405,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -430,8 +429,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -1843,7 +1842,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -1867,8 +1866,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -1888,7 +1887,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -1912,8 +1911,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -1933,7 +1932,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -1957,8 +1956,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -1978,7 +1977,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -2002,8 +2001,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -2023,7 +2022,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -2047,8 +2046,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -2068,7 +2067,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -2092,8 +2091,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -2113,7 +2112,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "workspace",
         "keys": []
       },
       "components": {
@@ -2136,8 +2135,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -2157,7 +2156,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "workspace",
         "keys": []
       },
       "components": {
@@ -2180,8 +2179,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -2201,7 +2200,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "workspace",
         "keys": []
       },
       "components": {
@@ -2224,8 +2223,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -2245,7 +2244,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -2269,8 +2268,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -6525,7 +6524,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -6548,8 +6547,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     },
     {
@@ -6569,7 +6568,7 @@
         "has_access_clause": false
       },
       "layout": {
-        "kind": "",
+        "kind": "list",
         "keys": []
       },
       "components": {
@@ -6592,8 +6591,8 @@
         ]
       },
       "renderability": {
-        "is_renderable": false,
-        "is_interaction_ready": false
+        "is_renderable": true,
+        "is_interaction_ready": true
       }
     }
   ]
