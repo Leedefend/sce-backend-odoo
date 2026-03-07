@@ -42,6 +42,9 @@
             {{ partialDataNotice || '当前运行平稳' }}
           </span>
         </p>
+        <p v-if="partialDataDetailLine" class="bundle-line partial-data-detail">
+          {{ partialDataDetailLine }}
+        </p>
         <p v-if="mode === 'demo'" class="demo-hint">当前为模拟经营数据，仅用于演示推演，不代表真实业务结论。</p>
         <p v-if="isHudEnabled" class="hud-line">
           HUD: role_key={{ roleSurface?.role_code || '-' }} · landing_scene_key={{ roleLandingScene }}
@@ -521,6 +524,7 @@ const coreValue = ref({
 });
 const dataUpdatedAt = ref('--:--');
 const partialDataNotice = ref('');
+const partialDataDetailLine = ref('');
 const isHudEnabled = computed(() => resolveHudEnabled(route));
 const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 const isAdmin = computed(() => {
@@ -1614,6 +1618,7 @@ function clearEnterError() {
 async function fetchCoreMetrics() {
   const deniedModels = new Set<string>();
   const deniedReasonCodes = new Set<string>();
+  const deniedIssueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
   const collectDeniedContext = (fallbackModel: string, error: unknown) => {
     deniedModels.add(fallbackModel);
     if (error instanceof ApiError) {
@@ -1621,7 +1626,29 @@ async function fetchCoreMetrics() {
       if (model) deniedModels.add(model);
       const reasonCode = String(error.reasonCode || '').trim().toUpperCase();
       if (reasonCode) deniedReasonCodes.add(reasonCode);
+      const op = String(error.details?.op || '').trim().toLowerCase();
+      const normalizedModel = model || fallbackModel;
+      const normalizedReason = reasonCode || 'UNKNOWN';
+      const counterKey = `${normalizedModel}|${op}|${normalizedReason}`;
+      const current = deniedIssueCounter.get(counterKey) || {
+        model: normalizedModel,
+        op,
+        reasonCode: normalizedReason,
+        count: 0,
+      };
+      current.count += 1;
+      deniedIssueCounter.set(counterKey, current);
+      return;
     }
+    const counterKey = `${fallbackModel}||UNKNOWN`;
+    const current = deniedIssueCounter.get(counterKey) || {
+      model: fallbackModel,
+      op: '',
+      reasonCode: 'UNKNOWN',
+      count: 0,
+    };
+    current.count += 1;
+    deniedIssueCounter.set(counterKey, current);
   };
   const readTotal = async (model: string, domain: unknown[] = []) => {
     try {
@@ -1672,6 +1699,7 @@ async function fetchCoreMetrics() {
   dataUpdatedAt.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   if (!deniedModels.size) {
     partialDataNotice.value = '';
+    partialDataDetailLine.value = '';
     return;
   }
   const modelsText = Array.from(deniedModels).slice(0, 2).join('、');
@@ -1679,6 +1707,14 @@ async function fetchCoreMetrics() {
   partialDataNotice.value = isPermissionDenied
     ? `部分数据未显示（${modelsText} 权限受限）`
     : `部分数据未显示（${modelsText} 暂不可用）`;
+  const topIssues = Array.from(deniedIssueCounter.values())
+    .sort((a, b) => b.count - a.count || a.model.localeCompare(b.model))
+    .slice(0, 3)
+    .map((item) => {
+      const scope = [item.model, item.op].filter(Boolean).join('/');
+      return `${scope}[${item.reasonCode}] x${item.count}`;
+    });
+  partialDataDetailLine.value = topIssues.length ? `受限明细：${topIssues.join('；')}` : '';
 }
 
 function handleKeydown(event: KeyboardEvent) {
@@ -2065,6 +2101,11 @@ function highlightParts(raw: string) {
 .steady-data {
   color: #166534;
   font-weight: 600;
+}
+
+.partial-data-detail {
+  color: #92400e;
+  font-size: 10px;
 }
 
 .demo-hint {
