@@ -222,6 +222,27 @@ function buildGroupedOffsetReplaySummary(groupPaging, requestGroupOffset) {
   };
 }
 
+function buildGroupedIdentitySummary(groupPaging) {
+  const paging = groupPaging && typeof groupPaging === 'object' ? groupPaging : {};
+  const windowId = typeof paging.window_id === 'string' ? paging.window_id.trim() : '';
+  const queryFingerprint = typeof paging.query_fingerprint === 'string' ? paging.query_fingerprint.trim() : '';
+  return {
+    formulas: {
+      window_id_shape: 'window_id must be non-empty string for grouped responses',
+      query_fingerprint_shape: 'query_fingerprint must be non-empty hex string',
+    },
+    response: {
+      window_id: windowId,
+      query_fingerprint: queryFingerprint,
+    },
+    consistency: {
+      has_window_id: windowId.length > 0,
+      has_query_fingerprint: queryFingerprint.length > 0,
+      query_fingerprint_hex: /^[a-f0-9]{40}$/i.test(queryFingerprint),
+    },
+  };
+}
+
 async function main() {
   if (!DB_NAME) {
     throw new Error('DB_NAME is required (set DB_NAME or E2E_DB)');
@@ -366,6 +387,7 @@ async function main() {
     groupedOffsetPaging,
     groupedOffsetPayload.params.group_offset,
   );
+  const groupedIdentitySummary = buildGroupedIdentitySummary(groupedOffsetPaging);
   summary.push(`group_by_field: ${groupByField}`);
   summary.push(`group_summary_count: ${groupSummary.length}`);
   summary.push(`grouped_rows_count: ${groupedRows.length}`);
@@ -380,6 +402,9 @@ async function main() {
   summary.push(`grouped_offset_roundtrip_match: ${groupedOffsetReplaySummary.consistency.offset_roundtrip_match ? 'yes' : 'no'}`);
   summary.push(`grouped_offset_prev_signal_typed: ${groupedOffsetReplaySummary.consistency.prev_signal_typed ? 'yes' : 'no'}`);
   summary.push(`grouped_offset_next_signal_typed: ${groupedOffsetReplaySummary.consistency.next_signal_typed ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_has_window_id: ${groupedIdentitySummary.consistency.has_window_id ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_has_query_fingerprint: ${groupedIdentitySummary.consistency.has_query_fingerprint ? 'yes' : 'no'}`);
+  summary.push(`grouped_identity_query_fingerprint_hex: ${groupedIdentitySummary.consistency.query_fingerprint_hex ? 'yes' : 'no'}`);
   if (!hasGroupedPayload && REQUIRE_GROUPED_ROWS) {
     writeSummary(summary);
     throw new Error('grouped response missing group_summary/grouped_rows (REQUIRE_GROUPED_ROWS=1)');
@@ -404,6 +429,7 @@ async function main() {
     },
     grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,
     grouped_offset_replay_summary: groupedOffsetReplaySummary,
+    grouped_identity_summary: groupedIdentitySummary,
   });
   writeJson(path.join(outDir, 'grouped_signature.current.json'), groupedSignature);
   if (TREE_GROUPED_SNAPSHOT_UPDATE) {

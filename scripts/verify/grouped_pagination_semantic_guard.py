@@ -45,8 +45,10 @@ def main() -> int:
     smoke_markers = [
         "function buildGroupedPaginationSemanticSummary(groupedRows, requestPageLimit, requestOffset) {",
         "function buildGroupedOffsetReplaySummary(groupPaging, requestGroupOffset) {",
+        "function buildGroupedIdentitySummary(groupPaging) {",
         "grouped_pagination_semantic_summary: groupedPaginationSemanticSummary,",
         "grouped_offset_replay_summary: groupedOffsetReplaySummary,",
+        "grouped_identity_summary: groupedIdentitySummary,",
         "grouped_pagination_normalized_offset:",
         "grouped_page_window_present:",
     ]
@@ -64,6 +66,11 @@ def main() -> int:
     offset_replay = _expect_dict(
         baseline.get("grouped_offset_replay_summary"),
         "grouped_offset_replay_summary",
+        errors,
+    )
+    identity_summary = _expect_dict(
+        baseline.get("grouped_identity_summary"),
+        "grouped_identity_summary",
         errors,
     )
     grouped_contract_fields = _expect_dict(
@@ -87,11 +94,20 @@ def main() -> int:
         "grouped_offset_replay_summary.consistency",
         errors,
     )
+    identity_formulas = _expect_dict(identity_summary.get("formulas"), "grouped_identity_summary.formulas", errors)
+    identity_response = _expect_dict(identity_summary.get("response"), "grouped_identity_summary.response", errors)
+    identity_consistency = _expect_dict(
+        identity_summary.get("consistency"),
+        "grouped_identity_summary.consistency",
+        errors,
+    )
 
     for key in ("page_offset_normalize", "current_page", "total_pages", "page_range"):
         _expect_type(formulas.get(key), str, f"grouped_pagination_semantic_summary.formulas.{key}", errors)
     for key in ("offset_roundtrip", "prev_when_offset_positive", "next_signal_type"):
         _expect_type(offset_formulas.get(key), str, f"grouped_offset_replay_summary.formulas.{key}", errors)
+    for key in ("window_id_shape", "query_fingerprint_shape"):
+        _expect_type(identity_formulas.get(key), str, f"grouped_identity_summary.formulas.{key}", errors)
 
     expected_field_types = {
         "page_limit": "number",
@@ -158,6 +174,15 @@ def main() -> int:
     )
     for key in ("offset_roundtrip_match", "prev_signal_typed", "next_signal_typed"):
         _expect_type(offset_consistency.get(key), bool, f"grouped_offset_replay_summary.consistency.{key}", errors)
+    _expect_type(identity_response.get("window_id"), str, "grouped_identity_summary.response.window_id", errors)
+    _expect_type(
+        identity_response.get("query_fingerprint"),
+        str,
+        "grouped_identity_summary.response.query_fingerprint",
+        errors,
+    )
+    for key in ("has_window_id", "has_query_fingerprint", "query_fingerprint_hex"):
+        _expect_type(identity_consistency.get(key), bool, f"grouped_identity_summary.consistency.{key}", errors)
 
     if errors:
         print("[FAIL] grouped_pagination_semantic_guard")

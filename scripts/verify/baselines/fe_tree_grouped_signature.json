@@ -6,6 +6,21 @@
     "page_has_prev": true,
     "page_window": true
   },
+  "grouped_identity_summary": {
+    "consistency": {
+      "has_query_fingerprint": false,
+      "has_window_id": false,
+      "query_fingerprint_hex": false
+    },
+    "formulas": {
+      "query_fingerprint_shape": "query_fingerprint must be non-empty hex string",
+      "window_id_shape": "window_id must be non-empty string for grouped responses"
+    },
+    "response": {
+      "query_fingerprint": "",
+      "window_id": ""
+    }
+  },
   "grouped_offset_replay_summary": {
     "consistency": {
       "next_signal_typed": true,
