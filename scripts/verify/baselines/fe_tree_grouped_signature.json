@@ -13,6 +13,7 @@
       "has_window_id": false,
       "identity_algo_present": false,
       "identity_algo_supported": false,
+      "identity_key_matches_flat": true,
       "identity_key_matches_tuple": false,
       "identity_key_present": false,
       "identity_object_matches_flat": true,
@@ -27,7 +28,8 @@
       "window_id_shape": "window_id must be non-empty string for grouped responses",
       "window_identity_key": "window_identity.key must be non-empty and match version/algo/window_id/window_digest tuple",
       "window_identity_meta": "window_identity.version/algo must be non-empty, algo currently sha1",
-      "window_identity_object": "window_identity object should be present and match flat fields when both exist"
+      "window_identity_object": "window_identity object should be present and match flat fields when both exist",
+      "window_key_flat_compat": "window_key flat field should match window_identity.key when both exist"
     },
     "response": {
       "query_fingerprint": "",
@@ -36,7 +38,8 @@
       "window_identity_algo": "",
       "window_identity_key": "",
       "window_identity_present": false,
-      "window_identity_version": ""
+      "window_identity_version": "",
+      "window_key": ""
     }
   },
   "grouped_offset_replay_summary": {

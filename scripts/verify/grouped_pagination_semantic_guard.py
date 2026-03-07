@@ -113,6 +113,7 @@ def main() -> int:
         "window_identity_object",
         "window_identity_meta",
         "window_identity_key",
+        "window_key_flat_compat",
     ):
         _expect_type(identity_formulas.get(key), str, f"grouped_identity_summary.formulas.{key}", errors)
 
@@ -213,6 +214,7 @@ def main() -> int:
         "grouped_identity_summary.response.window_identity_key",
         errors,
     )
+    _expect_type(identity_response.get("window_key"), str, "grouped_identity_summary.response.window_key", errors)
     for key in (
         "has_window_id",
         "has_query_fingerprint",
@@ -226,6 +228,7 @@ def main() -> int:
         "identity_algo_supported",
         "identity_key_present",
         "identity_key_matches_tuple",
+        "identity_key_matches_flat",
     ):
         _expect_type(identity_consistency.get(key), bool, f"grouped_identity_summary.consistency.{key}", errors)
 

@@ -171,6 +171,7 @@ export interface ApiDataListResult {
     window_id?: string;
     query_fingerprint?: string;
     window_digest?: string;
+    window_key?: string;
     window_identity?: {
       window_id?: string;
       query_fingerprint?: string;

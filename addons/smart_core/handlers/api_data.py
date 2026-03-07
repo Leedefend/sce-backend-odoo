@@ -807,6 +807,7 @@ class ApiDataHandler(BaseIntentHandler):
                 "window_id": group_window_id,
                 "query_fingerprint": group_query_fingerprint,
                 "window_digest": group_window_digest,
+                "window_key": group_window_identity_key,
                 "window_identity": {
                     "window_id": group_window_id,
                     "query_fingerprint": group_query_fingerprint,
@@ -845,6 +846,7 @@ class ApiDataHandler(BaseIntentHandler):
             "group_window_id": group_window_id,
             "group_query_fingerprint": group_query_fingerprint,
             "group_window_digest": group_window_digest,
+            "group_window_key": group_window_identity_key,
             "group_window_identity": {
                 "window_id": group_window_id,
                 "query_fingerprint": group_query_fingerprint,

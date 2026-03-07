@@ -2594,7 +2594,7 @@ async function load() {
     groupWindowIdentityKey.value =
       windowIdentity && typeof windowIdentity.key === 'string'
         ? String(windowIdentity.key)
-        : '';
+        : (groupPaging && typeof groupPaging.window_key === 'string' ? String(groupPaging.window_key) : '');
     const routeGroupFingerprint = String(route.query.group_fp || '').trim();
     const routeGroupWindowId = String(route.query.group_wid || '').trim();
     const routeGroupWindowDigest = String(route.query.group_wdg || '').trim();

@@ -50,6 +50,7 @@ def main() -> int:
         "grouped_offset_replay_summary: groupedOffsetReplaySummary",
         "grouped_identity_summary: groupedIdentitySummary",
         "grouped_identity_key_matches_tuple",
+        "grouped_identity_key_matches_flat",
     ]
     for marker in smoke_markers:
         if marker not in fe_tree_smoke:
@@ -94,6 +95,7 @@ def main() -> int:
         "identity_algo_supported",
         "identity_key_present",
         "identity_key_matches_tuple",
+        "identity_key_matches_flat",
     ):
         if not isinstance(identity_consistency.get(key), bool):
             errors.append(f"fe_tree grouped_identity_summary.consistency.{key} must be bool")
