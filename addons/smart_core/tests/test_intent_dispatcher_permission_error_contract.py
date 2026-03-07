@@ -26,3 +26,25 @@ class TestIntentDispatcherPermissionErrorContract(TransactionCase):
         self.assertEqual(details.get("reason_code"), REASON_PERMISSION_DENIED)
         self.assertNotIn("model", details)
         self.assertNotIn("op", details)
+
+    def test_api_data_write_permission_error_infers_op_from_intent(self):
+        details = _permission_error_details(
+            "api.data.write",
+            {"model": "project.project"},
+            "forbidden",
+        )
+        self.assertEqual(details.get("intent"), "api.data.write")
+        self.assertEqual(details.get("reason_code"), REASON_PERMISSION_DENIED)
+        self.assertEqual(details.get("model"), "project.project")
+        self.assertEqual(details.get("op"), "write")
+
+    def test_api_data_batch_permission_error_uses_batch_action(self):
+        details = _permission_error_details(
+            "api.data.batch",
+            {"model": "project.project", "action": "archive"},
+            "forbidden",
+        )
+        self.assertEqual(details.get("intent"), "api.data.batch")
+        self.assertEqual(details.get("reason_code"), REASON_PERMISSION_DENIED)
+        self.assertEqual(details.get("model"), "project.project")
+        self.assertEqual(details.get("op"), "batch.archive")
