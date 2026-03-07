@@ -47,6 +47,7 @@ def main() -> int:
         "grouped_contract_fields:",
         "page_window: groupedHasPageWindow",
         "first_group_page_window_matches_range",
+        "grouped_offset_replay_summary: groupedOffsetReplaySummary",
     ]
     for marker in smoke_markers:
         if marker not in fe_tree_smoke:

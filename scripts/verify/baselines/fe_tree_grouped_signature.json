@@ -1,5 +1,37 @@
 {
   "group_by_field": "message_needaction",
+  "grouped_contract_fields": {
+    "group_key": true,
+    "page_has_next": true,
+    "page_has_prev": true,
+    "page_window": true
+  },
+  "grouped_offset_replay_summary": {
+    "consistency": {
+      "next_signal_typed": true,
+      "offset_roundtrip_match": true,
+      "prev_signal_typed": true
+    },
+    "formulas": {
+      "next_signal_type": "next_group_offset is number|null",
+      "offset_roundtrip": "response.group_paging.group_offset == request.group_offset",
+      "prev_when_offset_positive": "request.group_offset>0 -> prev_group_offset is number|null"
+    },
+    "request": {
+      "group_offset": 5
+    },
+    "response": {
+      "group_count": 0,
+      "group_offset": 5,
+      "has_more": false,
+      "next_group_offset": null,
+      "prev_group_offset": null
+    }
+  },
+  "grouped_pagination_route_state": {
+    "key": "group_page",
+    "mode": "per-group offset map"
+  },
   "grouped_pagination_semantic_summary": {
     "consistency": {
       "first_group_offset_aligned_to_page_limit": true,
@@ -23,10 +55,10 @@
       "offset_aligned_to_page_limit": true,
       "page_limit": 3,
       "page_offset": 0,
-      "present": false,
       "page_window_end": 0,
       "page_window_matches_range": true,
       "page_window_start": 0,
+      "present": false,
       "range_end": 0,
       "range_start": 0,
       "sample_rows_count": 0,
@@ -44,20 +76,11 @@
       "request_offset": 0
     }
   },
-  "grouped_pagination_route_state": {
-    "key": "group_page",
-    "mode": "per-group offset map"
-  },
-  "grouped_payload_present": false,
-  "grouped_contract_fields": {
-    "group_key": true,
-    "page_has_prev": true,
-    "page_has_next": true,
-    "page_window": true
-  },
+  "grouped_payload_present": true,
   "grouped_request_keys": [
     "fields",
     "group_by",
+    "group_offset",
     "group_page_offsets",
     "group_sample_limit",
     "limit",
@@ -66,6 +89,9 @@
     "op"
   ],
   "grouped_response_keys": [
+    "group_paging",
+    "group_summary",
+    "grouped_rows",
     "next_offset",
     "records"
   ],
