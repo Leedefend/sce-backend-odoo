@@ -1412,6 +1412,10 @@ verify.list.surface.clean: guard.prod.forbid
 verify.frontend.scene_record_semantics.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_scene_record_semantics_guard.py
 
+.PHONY: verify.frontend.error_context.contract.guard
+verify.frontend.error_context.contract.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_error_context_contract_guard.py
+
 .PHONY: verify.render.semantic.ready
 verify.render.semantic.ready: guard.prod.forbid
 	@python3 scripts/verify/render_semantic_ready_guard.py
@@ -1435,6 +1439,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.home_suggestion_semantics.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
+	verify.frontend.error_context.contract.guard \
 	verify.render.semantic.ready \
 	verify.render.policy.ready \
 	verify.frontend_api \

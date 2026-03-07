@@ -9,6 +9,7 @@
       :error-code="error?.code"
       :reason-code="error?.reasonCode"
       :error-category="error?.errorCategory"
+      :error-details="error?.details"
       :retryable="error?.retryable"
       :hint="errorCopy.hint"
       :suggested-action="error?.suggestedAction"
@@ -44,6 +45,7 @@ import type { SceneTarget } from '../app/resolvers/sceneRegistry';
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, '场景加载失败'));
@@ -128,7 +130,7 @@ function resolveVisibleActionTarget(target: SceneTarget) {
 
   const model = String(target.model || '').trim();
   if (model) {
-    const modelNode = findActionNodeByModel(session.menuTree, model);
+    const modelNode = findActionNodeByModelRef(session.menuTree, model);
     if (modelNode?.meta?.action_id) {
       return {
         actionId: modelNode.meta.action_id,

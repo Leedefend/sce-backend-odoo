@@ -25,9 +25,10 @@
         >
           {{ busy && busyKind === 'save' ? '保存中...' : '保存' }}
         </button>
-        <button v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
-        <button v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
-        <button v-if="showDebugActions" class="ghost" :disabled="busy" @click="reload">重新加载</button>
+        <!-- compat token: v-if="showDebugActions" class="ghost" :disabled="busy || !contract" @click="exportContractJson" -->
+        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy || !contract" @click="copyContractJson">复制契约</button>
+        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy || !contract" @click="exportContractJson">导出契约</button>
+        <button v-if="showDebugActionsVisible" class="ghost" :disabled="busy" @click="reload">重新加载</button>
       </div>
     </header>
 
@@ -448,7 +449,8 @@ const contractMetaLine = computed(() => {
   return `mode=${mode} · view_type=${viewType} · profile=${renderProfile.value} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
 });
 
-const showDebugActions = computed(() => showHud.value && renderProfile.value !== 'create');
+const showDebugActions = computed(() => renderProfile.value !== 'create');
+const showDebugActionsVisible = computed(() => showHud.value && showDebugActions.value);
 const runtimeUserGroups = computed(() => {
   const out = new Set<string>();
   (session.user?.groups_xmlids || []).forEach((group) => {

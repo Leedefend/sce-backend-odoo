@@ -24,6 +24,7 @@ from ..core.exceptions import (
     map_http_status_to_code,
     build_error_envelope,
 )
+from ..utils.reason_codes import REASON_PERMISSION_DENIED, failure_meta_for_reason
 
 _logger = logging.getLogger(__name__)
 
@@ -99,7 +100,14 @@ def _is_anon_req(headers) -> bool:
     v = (headers.get("X-Anonymous-Intent") or "").strip().lower()
     return v in {"1", "true", "yes", "on"}
 
-def _error_response(code: str, message: str, status: int, trace_id: str, details: dict | None = None):
+def _error_response(
+    code: str,
+    message: str,
+    status: int,
+    trace_id: str,
+    details: dict | None = None,
+    error_fields: dict | None = None,
+):
     payload = build_error_envelope(
         code=code,
         message=message,
@@ -108,9 +116,37 @@ def _error_response(code: str, message: str, status: int, trace_id: str, details
         api_version=API_VERSION,
         contract_version=CONTRACT_VERSION,
     )
+    if error_fields and isinstance(payload.get("error"), dict):
+        payload["error"].update(error_fields)
     resp = _respond_json(payload, status=status)
     resp.headers["X-Trace-Id"] = trace_id
     return resp
+
+
+def _permission_error_details(intent_name: str, params: Dict[str, Any], message: str) -> dict:
+    intent = str(intent_name or "").strip().lower()
+    details: Dict[str, Any] = {
+        "intent": str(intent_name or "").strip(),
+        "reason_code": REASON_PERMISSION_DENIED,
+    }
+    if message:
+        details["cause"] = str(message)
+    model = str((params or {}).get("model") or "").strip()
+    op = str((params or {}).get("op") or "").strip().lower()
+    if not op and intent.startswith("api.data."):
+        suffix = intent.split(".", 2)[-1].strip().lower()
+        if suffix:
+            op = suffix
+    if intent == "api.data.batch":
+        batch_action = str((params or {}).get("action") or "").strip().lower()
+        if batch_action:
+            op = f"batch.{batch_action}"
+    if intent == "api.data" or intent.startswith("api.data."):
+        if model:
+            details["model"] = model
+        if op:
+            details["op"] = op
+    return details
 
 
 def _is_write_request(intent_name: str, params: Dict[str, Any]) -> bool:
@@ -180,6 +216,7 @@ class IntentDispatcher(http.Controller):
         headers = request.httprequest.headers
         trace_id = get_trace_id(headers)
         intent_name = None  # 便于异常日志打印
+        params: Dict[str, Any] = {}
 
         try:
             _logger.info(
@@ -396,7 +433,17 @@ class IntentDispatcher(http.Controller):
                 return _error_response("FEATURE_DISABLED", msg, 403, trace_id)
             if msg.startswith("LIMIT_EXCEEDED"):
                 return _error_response("LIMIT_EXCEEDED", msg, 429, trace_id)
-            return _error_response(PERMISSION_DENIED, msg, 403, trace_id)
+            return _error_response(
+                PERMISSION_DENIED,
+                msg,
+                403,
+                trace_id,
+                details=_permission_error_details(intent_name, params, msg),
+                error_fields={
+                    "reason_code": REASON_PERMISSION_DENIED,
+                    **failure_meta_for_reason(REASON_PERMISSION_DENIED),
+                },
+            )
         except MissingError as e:
             return _error_response(INTENT_NOT_FOUND, str(e), 404, trace_id)
         except (BadRequest, Unauthorized, Forbidden, NotFound) as e:
