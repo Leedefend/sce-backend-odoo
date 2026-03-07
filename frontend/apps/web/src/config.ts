@@ -6,6 +6,8 @@ const isLocalHost = typeof window !== 'undefined'
 // Delivery defaults to sc_delivery_local only on non-local hosts.
 // Local dev may run against sc_demo/sc_* databases and must not be hard-bound.
 const enforcedDb = appEnv === 'delivery' && !isLocalHost ? 'sc_delivery_local' : '';
+// For local dev, fallback to sc_demo when db env is not explicitly set.
+const localDefaultDb = !envDb && isLocalHost ? 'sc_demo' : '';
 
 export const config = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8070',
@@ -15,7 +17,7 @@ export const config = {
     .split(',')
     .map((flag: string) => flag.trim())
     .filter(Boolean),
-  odooDb: envDb || enforcedDb,
+  odooDb: envDb || enforcedDb || localDefaultDb,
 };
 
 // C1: 在开发模式下打印环境变量
