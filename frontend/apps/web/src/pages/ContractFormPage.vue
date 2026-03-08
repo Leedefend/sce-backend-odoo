@@ -82,158 +82,158 @@
         <p v-if="onchangeWarnings.length" class="validation-warn">
           {{ onchangeWarnings.map((item) => item.message || item.title || '').filter(Boolean).join('；') }}
         </p>
-        <div v-if="coreFieldsLabel" class="layout-divider">{{ coreFieldsLabel }}</div>
-        <template v-for="node in layoutNodes" :key="node.key">
-          <div v-if="showHud && node.kind === 'header'" class="layout-divider">头部</div>
-          <div v-else-if="showHud && node.kind === 'sheet'" class="layout-divider">主体</div>
-          <div v-else-if="node.kind === 'notebook'" class="layout-divider">{{ node.label || '分组页签' }}</div>
-          <div v-else-if="node.kind === 'page'" class="layout-divider">{{ node.label || '页面分组' }}</div>
-          <div v-else-if="node.kind === 'group' && node.label" class="layout-divider">{{ node.label }}</div>
-          <div v-else-if="node.kind === 'field' && isFieldVisible(node.name)" class="field">
-            <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
-            <template v-if="node.readonly">
-              <FieldValue :value="formData[node.name]" :field="node.descriptor" />
-            </template>
-            <template v-else>
-              <input
-                v-if="fieldType(node.descriptor) === 'boolean'"
-                :checked="Boolean(formData[node.name])"
-                class="input-checkbox"
-                type="checkbox"
-                @change="setBooleanField(node.name, ($event.target as HTMLInputElement).checked)"
-              />
-              <select
-                v-else-if="fieldType(node.descriptor) === 'selection'"
-                :value="String(formData[node.name] ?? '')"
-                class="input"
-                @change="setSelectionField(node.name, ($event.target as HTMLSelectElement).value)"
-              >
-                <option v-if="!node.required" value="">请选择</option>
-                <option v-for="option in node.descriptor?.selection || []" :key="option[0]" :value="option[0]">
-                  {{ option[1] }}
-                </option>
-              </select>
-              <div v-else-if="fieldType(node.descriptor) === 'many2one'" class="relation-editor">
-                <select
-                  class="input"
-                  :value="many2oneValue(node.name)"
-                  @change="setMany2oneField(node.name, node.descriptor, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option value="">请选择</option>
-                  <option
-                    v-for="option in relationOptionsForField(node.name, node.descriptor)"
-                    :key="`${node.name}-${option.id}`"
-                    :value="String(option.id)"
-                  >
-                    {{ option.label }}
-                  </option>
-                  <option v-if="relationCreateMode(node.name, node.descriptor) !== 'none'" :value="MANY2ONE_CREATE_OPTION">
-                    {{ relationCreateMode(node.name, node.descriptor) === 'page' ? '+ 新建并维护...' : '+ 快速新建...' }}
-                  </option>
-                </select>
-              </div>
-              <div v-else-if="fieldType(node.descriptor) === 'many2many'" class="relation-editor">
+        <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
+          当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
+        </p>
+        <section v-for="section in layoutSections" :key="section.key" class="form-section">
+          <h3 class="form-section-title">{{ section.title }}</h3>
+          <div class="form-section-grid">
+            <div v-for="node in section.fields" :key="node.key" class="field">
+              <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
+              <template v-if="node.readonly">
+                <FieldValue :value="formData[node.name]" :field="node.descriptor" />
+              </template>
+              <template v-else>
                 <input
-                  class="input relation-search"
-                  type="text"
-                  :value="relationKeyword(node.name)"
-                  placeholder="搜索并多选..."
-                  @input="setRelationKeyword(node.name, ($event.target as HTMLInputElement).value)"
+                  v-if="fieldType(node.descriptor) === 'boolean'"
+                  :checked="Boolean(formData[node.name])"
+                  class="input-checkbox"
+                  type="checkbox"
+                  @change="setBooleanField(node.name, ($event.target as HTMLInputElement).checked)"
                 />
                 <select
+                  v-else-if="fieldType(node.descriptor) === 'selection'"
+                  :value="inputFieldValue(node.name)"
                   class="input"
-                  multiple
-                  size="6"
-                  :value="relationIds(node.name).map((id) => String(id))"
-                  @change="setRelationMultiField(node.name, $event.target as HTMLSelectElement)"
+                  @change="setSelectionField(node.name, ($event.target as HTMLSelectElement).value)"
                 >
-                  <option
-                    v-for="option in filteredRelationOptions(node.name, node.descriptor)"
-                    :key="`${node.name}-${option.id}`"
-                    :value="String(option.id)"
-                  >
-                    {{ option.label }}
+                  <option v-if="!node.required" value="">请选择</option>
+                  <option v-for="option in node.descriptor?.selection || []" :key="option[0]" :value="option[0]">
+                    {{ option[1] }}
                   </option>
                 </select>
-              </div>
-              <div v-else-if="fieldType(node.descriptor) === 'one2many'" class="relation-editor">
-                <div class="o2m-toolbar">
-                  <button class="chip-btn" type="button" :disabled="busy" @click="addOne2manyRow(node.name)">+ 新增行</button>
-                  <span v-if="one2manySummary(node.name)" class="o2m-summary">{{ one2manySummary(node.name) }}</span>
-                </div>
-                <div class="o2m-list">
-                  <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
-                    <p class="o2m-row-state">{{ one2manyRowStateLabel(row) }}</p>
-                    <div class="o2m-fields">
-                      <label
-                        v-for="column in one2manyColumns(node.name)"
-                        :key="`${row.key}-${column.name}`"
-                        class="o2m-field"
-                      >
-                        <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
-                        <input
-                          v-if="column.ttype === 'boolean'"
-                          class="input-checkbox"
-                          type="checkbox"
-                          :checked="Boolean(row.values[column.name])"
-                          @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).checked)"
-                        />
-                        <select
-                          v-else-if="column.ttype === 'selection'"
-                          class="input"
-                          :value="String(row.values[column.name] ?? '')"
-                          @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLSelectElement).value)"
-                        >
-                          <option value="">请选择</option>
-                          <option v-for="option in column.selection || []" :key="String(option[0])" :value="String(option[0])">
-                            {{ String(option[1]) }}
-                          </option>
-                        </select>
-                        <input
-                          v-else
-                          class="input"
-                          :type="one2manyColumnInputType(column)"
-                          :value="one2manyColumnDisplayValue(column, row.values[column.name])"
-                          :placeholder="column.label"
-                          @input="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).value)"
-                        />
-                      </label>
-                    </div>
-                    <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
-                    <p v-if="showOne2manyErrors && one2manyRowErrors(node.name, row.key).length" class="o2m-row-error">
-                      {{ one2manyRowErrors(node.name, row.key).join('；') }}
-                    </p>
-                    <p v-if="one2manyRowHints(node.name, row).length" class="o2m-row-hint">
-                      {{ one2manyRowHints(node.name, row).join('；') }}
-                    </p>
-                  </div>
-                </div>
-                <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
-                  <p class="meta">已移除 {{ removedOne2manyRows(node.name).length }} 行</p>
-                  <div class="chips">
-                    <button
-                      v-for="row in removedOne2manyRows(node.name)"
-                      :key="`rm-${row.key}`"
-                      class="chip-btn"
-                      type="button"
-                      :disabled="busy"
-                      @click="restoreOne2manyRow(node.name, row.key)"
+                <div v-else-if="fieldType(node.descriptor) === 'many2one'" class="relation-editor">
+                  <select
+                    class="input"
+                    :value="many2oneValue(node.name)"
+                    @change="setMany2oneField(node.name, node.descriptor, ($event.target as HTMLSelectElement).value)"
+                  >
+                    <option value="">请选择</option>
+                    <option
+                      v-for="option in relationOptionsForField(node.name, node.descriptor)"
+                      :key="`${node.name}-${option.id}`"
+                      :value="String(option.id)"
                     >
-                      撤销移除 · {{ one2manyRowLabel(node.name, row) }} · 待删除
-                    </button>
+                      {{ option.label }}
+                    </option>
+                    <option v-if="relationCreateMode(node.name, node.descriptor) !== 'none'" :value="MANY2ONE_CREATE_OPTION">
+                      {{ relationCreateMode(node.name, node.descriptor) === 'page' ? '+ 新建并维护...' : '+ 快速新建...' }}
+                    </option>
+                  </select>
+                </div>
+                <div v-else-if="fieldType(node.descriptor) === 'many2many'" class="relation-editor">
+                  <input
+                    class="input relation-search"
+                    type="text"
+                    :value="relationKeyword(node.name)"
+                    placeholder="搜索并多选..."
+                    @input="setRelationKeyword(node.name, ($event.target as HTMLInputElement).value)"
+                  />
+                  <select
+                    class="input"
+                    multiple
+                    size="6"
+                    :value="relationIds(node.name).map((id) => String(id))"
+                    @change="setRelationMultiField(node.name, $event.target as HTMLSelectElement)"
+                  >
+                    <option
+                      v-for="option in filteredRelationOptions(node.name, node.descriptor)"
+                      :key="`${node.name}-${option.id}`"
+                      :value="String(option.id)"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </div>
+                <div v-else-if="fieldType(node.descriptor) === 'one2many'" class="relation-editor">
+                  <div class="o2m-toolbar">
+                    <button class="chip-btn" type="button" :disabled="busy" @click="addOne2manyRow(node.name)">+ 新增行</button>
+                    <span v-if="one2manySummary(node.name)" class="o2m-summary">{{ one2manySummary(node.name) }}</span>
+                  </div>
+                  <div class="o2m-list">
+                    <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
+                      <p class="o2m-row-state">{{ one2manyRowStateLabel(row) }}</p>
+                      <div class="o2m-fields">
+                        <label
+                          v-for="column in one2manyColumns(node.name)"
+                          :key="`${row.key}-${column.name}`"
+                          class="o2m-field"
+                        >
+                          <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
+                          <input
+                            v-if="column.ttype === 'boolean'"
+                            class="input-checkbox"
+                            type="checkbox"
+                            :checked="Boolean(row.values[column.name])"
+                            @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).checked)"
+                          />
+                          <select
+                            v-else-if="column.ttype === 'selection'"
+                            class="input"
+                            :value="String(row.values[column.name] ?? '')"
+                            @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLSelectElement).value)"
+                          >
+                            <option value="">请选择</option>
+                            <option v-for="option in column.selection || []" :key="String(option[0])" :value="String(option[0])">
+                              {{ String(option[1]) }}
+                            </option>
+                          </select>
+                          <input
+                            v-else
+                            class="input"
+                            :type="one2manyColumnInputType(column)"
+                            :value="one2manyColumnDisplayValue(column, row.values[column.name])"
+                            :placeholder="column.label"
+                            @input="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).value)"
+                          />
+                        </label>
+                      </div>
+                      <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
+                      <p v-if="showOne2manyErrors && one2manyRowErrors(node.name, row.key).length" class="o2m-row-error">
+                        {{ one2manyRowErrors(node.name, row.key).join('；') }}
+                      </p>
+                      <p v-if="one2manyRowHints(node.name, row).length" class="o2m-row-hint">
+                        {{ one2manyRowHints(node.name, row).join('；') }}
+                      </p>
+                    </div>
+                  </div>
+                  <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
+                    <p class="meta">已移除 {{ removedOne2manyRows(node.name).length }} 行</p>
+                    <div class="chips">
+                      <button
+                        v-for="row in removedOne2manyRows(node.name)"
+                        :key="`rm-${row.key}`"
+                        class="chip-btn"
+                        type="button"
+                        :disabled="busy"
+                        @click="restoreOne2manyRow(node.name, row.key)"
+                      >
+                        撤销移除 · {{ one2manyRowLabel(node.name, row) }} · 待删除
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <input
-                v-else
-                :value="String(formData[node.name] ?? '')"
-                class="input"
-                :type="fieldInputType(fieldType(node.descriptor))"
-                @input="setTextField(node.name, ($event.target as HTMLInputElement).value)"
-              />
-            </template>
+                <input
+                  v-else
+                  :value="inputFieldValue(node.name)"
+                  class="input"
+                  :type="fieldInputType(fieldType(node.descriptor))"
+                  @input="setTextField(node.name, ($event.target as HTMLInputElement).value)"
+                />
+              </template>
+            </div>
           </div>
-        </template>
+        </section>
         <div v-if="hasAdvancedFields" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -326,6 +326,13 @@ type LayoutNode = {
   descriptor?: FieldDescriptor;
 };
 
+type LayoutSection = {
+  key: string;
+  title: string;
+  kind: 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
+  fields: LayoutNode[];
+};
+
 type RelationOption = {
   id: number;
   label: string;
@@ -393,6 +400,15 @@ const recordId = computed(() => {
 });
 const recordIdDisplay = computed(() => (recordId.value ? String(recordId.value) : 'new'));
 const showHud = computed(() => isHudEnabled(route));
+const requestedSurface = computed<'user' | 'native' | 'hud'>(() => {
+  const raw = String(route.query.surface || '').trim().toLowerCase();
+  if (raw === 'native' || raw === 'hud' || raw === 'user') return raw;
+  if (showHud.value) return 'hud';
+  return 'user';
+});
+const requestedSourceMode = computed(() => (
+  requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
+));
 const busy = computed(() => busyKind.value !== null);
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
@@ -433,6 +449,9 @@ const hasChanges = computed(() => {
 const writableFieldCount = computed(() =>
   layoutNodes.value.filter((node) => node.kind === 'field' && !node.readonly).length,
 );
+const visibleFieldNodeCount = computed(() =>
+  layoutNodes.value.filter((node) => node.kind === 'field' && isFieldVisible(node.name)).length,
+);
 const changedFieldCount = computed(() =>
   Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
 );
@@ -448,10 +467,11 @@ const pageTitle = computed(() => {
 const contractMetaLine = computed(() => {
   if (!contract.value) return '';
   const mode = String(contractMeta.value?.contract_mode || '-');
+  const surface = String((contract.value as Record<string, unknown>)?.contract_surface || contractMeta.value?.contract_surface || '-');
   const viewType = String(contract.value.head?.view_type || contract.value.view_type || '-');
   const filters = Array.isArray(contract.value.search?.filters) ? contract.value.search.filters.length : 0;
   const transitions = Array.isArray(contract.value.workflow?.transitions) ? contract.value.workflow.transitions.length : 0;
-  return `mode=${mode} · view_type=${viewType} · profile=${renderProfile.value} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
+  return `mode=${mode} · surface=${surface} · view_type=${viewType} · profile=${renderProfile.value} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
 });
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');
@@ -1400,8 +1420,44 @@ const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
   return out;
 });
 
-const coreFieldNames = computed<string[]>(() => semanticFieldGroups.value.core?.fields || []);
-const advancedFieldNames = computed<string[]>(() => semanticFieldGroups.value.advanced?.fields || []);
+const contractFieldSemantics = computed<Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }>>(() => {
+  const out: Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }> = {};
+  const raw = contract.value?.field_semantics;
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    Object.entries(raw as Record<string, unknown>).forEach(([name, value]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+      const row = value as Record<string, unknown>;
+      out[name] = {
+        semantic_type: String(row.semantic_type || '').trim().toLowerCase(),
+        surface_role: String(row.surface_role || '').trim().toLowerCase(),
+        technical: Boolean(row.technical),
+      };
+    });
+  }
+  return out;
+});
+
+function fieldSemanticMeta(name: string) {
+  const fromMap = contractFieldSemantics.value[name];
+  if (fromMap) return fromMap;
+  const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
+  return {
+    semantic_type: String(descriptor?.semantic_type || '').trim().toLowerCase(),
+    surface_role: String(descriptor?.surface_role || '').trim().toLowerCase(),
+    technical: Boolean(descriptor?.technical),
+  };
+}
+
+const coreFieldNames = computed<string[]>(() => {
+  const fromSemantic = Object.keys(contract.value?.fields || {}).filter((name) => fieldSemanticMeta(name).surface_role === 'core');
+  if (fromSemantic.length) return fromSemantic;
+  return semanticFieldGroups.value.core?.fields || [];
+});
+const advancedFieldNames = computed<string[]>(() => {
+  const fromSemantic = Object.keys(contract.value?.fields || {}).filter((name) => fieldSemanticMeta(name).surface_role === 'advanced');
+  if (fromSemantic.length) return fromSemantic;
+  return semanticFieldGroups.value.advanced?.fields || [];
+});
 const coreFieldsLabel = computed(() => semanticFieldGroups.value.core?.label || '');
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
 const policyRequiredFields = computed(() => {
@@ -1460,10 +1516,15 @@ function runtimeState(name: string) {
 }
 
 function isFieldVisible(name: string) {
+  const semantic = fieldSemanticMeta(name);
+  if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
+  if (semantic.surface_role === 'hidden' && !showHud.value) return false;
   const state = runtimeState(name);
   if (state.invisible) return false;
   const visible = contractVisibleFields.value;
   if (visible.length && !visible.includes(name)) return false;
+  if (semantic.surface_role === 'core') return true;
+  if (semantic.surface_role === 'advanced') return advancedExpanded.value;
   const core = coreFieldNames.value;
   const advanced = advancedFieldNames.value;
   const hasCore = core.length > 0;
@@ -1570,6 +1631,54 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   return nodes;
 });
 
+function dividerDefaultLabel(kind: LayoutNode['kind']) {
+  if (kind === 'header') return '头部信息';
+  if (kind === 'sheet') return '主体信息';
+  if (kind === 'notebook') return '分组页签';
+  if (kind === 'page') return '页面分组';
+  if (kind === 'group') return '信息分组';
+  return '基础信息';
+}
+
+const layoutSections = computed<LayoutSection[]>(() => {
+  const sections: LayoutSection[] = [];
+  let index = 0;
+  const createSection = (title: string, kind: LayoutSection['kind']) => ({
+    key: `section_${kind}_${index++}`,
+    title,
+    kind,
+    fields: [],
+  });
+  let current = createSection(coreFieldsLabel.value || '核心信息', 'default');
+
+  for (const node of layoutNodes.value) {
+    if (node.kind === 'field') {
+      current.fields.push(node);
+      continue;
+    }
+    if (current.fields.length) {
+      sections.push(current);
+    }
+    const title = String(node.label || '').trim() || dividerDefaultLabel(node.kind);
+    current = createSection(title, node.kind);
+  }
+
+  if (current.fields.length) {
+    sections.push(current);
+  }
+
+  const visible = sections.filter((section) => section.fields.some((node) => isFieldVisible(node.name)));
+  if (visible.length) return visible;
+  return sections.filter((section) => section.fields.length);
+});
+
+const contractReadiness = computed<FormContractReadiness>(() => {
+  if (!contract.value) {
+    return { usable: false, issues: ['contract not loaded'], fieldCount: 0, layoutFieldCount: 0, visibleCandidateCount: 0 };
+  }
+  return analyzeFormContractReadiness(contract.value, { requirePureFormViewType: false });
+});
+
 function normalizeComparable(value: unknown) {
   if (Array.isArray(value) && value.every((item) => typeof item === 'number')) {
     return JSON.stringify([...value].sort((a, b) => a - b));
@@ -1652,6 +1761,12 @@ function normalizeFieldValue(name: string, value: unknown) {
     return String(value ?? '');
   }
   return value;
+}
+
+function inputFieldValue(name: string) {
+  const raw = formData[name];
+  if (raw === false || raw === null || raw === undefined) return '';
+  return String(raw);
 }
 
 function setBooleanField(name: string, checked: boolean) {
@@ -1848,6 +1963,8 @@ const hudEntries = computed(() => [
   { label: 'action_id', value: actionId.value || '-' },
   { label: 'record_id', value: recordIdDisplay.value },
   { label: 'contract_loaded', value: Boolean(contract.value) },
+  { label: 'contract_ready', value: contractReadiness.value.usable },
+  { label: 'contract_issues', value: contractReadiness.value.issues.length },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
@@ -1860,6 +1977,152 @@ const hudEntries = computed(() => [
   { label: 'onchange_line_patches', value: onchangeLinePatches.value.length },
 ]);
 
+type FormContractReadiness = {
+  usable: boolean;
+  issues: string[];
+  fieldCount: number;
+  layoutFieldCount: number;
+  visibleCandidateCount: number;
+};
+
+function analyzeFormContractReadiness(
+  data: unknown,
+  options?: { requirePureFormViewType?: boolean },
+): FormContractReadiness {
+  const issues: string[] = [];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { usable: false, issues: ['contract payload is not an object'], fieldCount: 0, layoutFieldCount: 0, visibleCandidateCount: 0 };
+  }
+  const row = data as Record<string, unknown>;
+  const requirePureFormViewType = options?.requirePureFormViewType !== false;
+  const collectLayoutFieldNames = (layoutRaw: unknown): Set<string> => {
+    const names = new Set<string>();
+    const walk = (nodeRaw: unknown) => {
+      if (Array.isArray(nodeRaw)) {
+        nodeRaw.forEach((item) => walk(item));
+        return;
+      }
+      if (!nodeRaw || typeof nodeRaw !== 'object') return;
+      const node = nodeRaw as Record<string, unknown>;
+      const kind = String(node.type || '').trim().toLowerCase();
+      if (kind === 'field') {
+        const fieldName = String(node.name || '').trim();
+        if (fieldName) names.add(fieldName);
+      }
+      ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => walk(node[key]));
+    };
+    walk(layoutRaw);
+    return names;
+  };
+
+  const fields = row.fields;
+  const fieldMap = fields && typeof fields === 'object' && !Array.isArray(fields)
+    ? fields as Record<string, unknown>
+    : {};
+  const fieldNames = Object.keys(fieldMap);
+  if (!fieldNames.length) {
+    issues.push('contract.fields is empty');
+  }
+
+  const views = row.views;
+  const formView = views && typeof views === 'object' && !Array.isArray(views)
+    ? (views as Record<string, unknown>).form
+    : undefined;
+  if (!formView || typeof formView !== 'object' || Array.isArray(formView)) {
+    issues.push('contract.views.form is missing');
+  }
+  const layout = formView && typeof formView === 'object' && !Array.isArray(formView)
+    ? (formView as Record<string, unknown>).layout
+    : [];
+  const layoutFieldNames = collectLayoutFieldNames(layout);
+  if (!layoutFieldNames.size) {
+    issues.push('contract.views.form.layout has no field nodes');
+  }
+
+  const head = row.head;
+  const headViewType = head && typeof head === 'object' && !Array.isArray(head)
+    ? String((head as Record<string, unknown>).view_type || '').trim().toLowerCase()
+    : '';
+  const viewType = String(row.view_type || '').trim().toLowerCase();
+  if (requirePureFormViewType) {
+    if (headViewType && headViewType !== 'form') issues.push(`head.view_type is ${headViewType}, expected form`);
+    if (viewType && viewType !== 'form') issues.push(`view_type is ${viewType}, expected form`);
+  }
+
+  const visible = Array.isArray(row.visible_fields)
+    ? row.visible_fields.map((x) => String(x || '').trim()).filter(Boolean)
+    : [];
+  const visibleNameSet = new Set(visible);
+  const groupNames = new Set<string>();
+  const groups = Array.isArray(row.field_groups) ? row.field_groups : [];
+  groups.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    const fieldsRaw = (item as Record<string, unknown>).fields;
+    if (!Array.isArray(fieldsRaw)) return;
+    fieldsRaw.forEach((name) => {
+      const normalized = String(name || '').trim();
+      if (normalized) groupNames.add(normalized);
+    });
+  });
+  const visibleCandidates = fieldNames.filter((name) =>
+    visibleNameSet.has(name) || groupNames.has(name) || layoutFieldNames.has(name),
+  );
+  if (fieldNames.length && !visibleCandidates.length) {
+    issues.push('no visible field candidate from visible_fields/field_groups/layout');
+  }
+
+  return {
+    usable: issues.length === 0,
+    issues,
+    fieldCount: fieldNames.length,
+    layoutFieldCount: layoutFieldNames.size,
+    visibleCandidateCount: visibleCandidates.length,
+  };
+}
+
+function validateSurfaceMarkers(
+  data: unknown,
+  meta: Record<string, unknown> | null,
+  expectedSurface: 'user' | 'native' | 'hud',
+) {
+  const issues: string[] = [];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { ok: false, issues: ['contract payload is not an object'] };
+  }
+  const row = data as Record<string, unknown>;
+  const contractSurface = String(row.contract_surface || '').trim().toLowerCase();
+  const renderMode = String(row.render_mode || '').trim().toLowerCase();
+  const sourceMode = String(row.source_mode || '').trim().toLowerCase();
+  const governedFromNative = row.governed_from_native;
+  const surfaceMapping = row.surface_mapping;
+  const metaSurface = String(meta?.contract_surface || '').trim().toLowerCase();
+
+  if (!contractSurface) issues.push('missing contract_surface');
+  if (!renderMode) issues.push('missing render_mode');
+  if (!sourceMode) issues.push('missing source_mode');
+  if (typeof governedFromNative !== 'boolean') issues.push('missing governed_from_native');
+  if (!surfaceMapping || typeof surfaceMapping !== 'object' || Array.isArray(surfaceMapping)) {
+    issues.push('missing surface_mapping');
+  }
+
+  if (metaSurface && contractSurface && metaSurface !== contractSurface) {
+    issues.push(`meta.contract_surface=${metaSurface} mismatch data.contract_surface=${contractSurface}`);
+  }
+  if (contractSurface && contractSurface !== expectedSurface) {
+    issues.push(`contract_surface=${contractSurface} mismatch expected=${expectedSurface}`);
+  }
+
+  if (contractSurface === 'native') {
+    if (renderMode !== 'native') issues.push(`native surface requires render_mode=native, got ${renderMode || '-'}`);
+    if (governedFromNative !== false) issues.push('native surface requires governed_from_native=false');
+  } else if (contractSurface === 'user' || contractSurface === 'hud') {
+    if (renderMode !== 'governed') issues.push(`governed surface requires render_mode=governed, got ${renderMode || '-'}`);
+    if (governedFromNative !== true) issues.push('governed surface requires governed_from_native=true');
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
 async function loadContract() {
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
@@ -1869,7 +2132,13 @@ async function loadContract() {
       response = await loadActionContractRaw(actionId.value, {
         recordId: recordId.value,
         renderProfile: profile,
+        surface: requestedSurface.value,
+        sourceMode: requestedSourceMode.value,
       });
+      const actionReadiness = analyzeFormContractReadiness(response?.data, { requirePureFormViewType: true });
+      if (!actionReadiness.usable) {
+        response = null;
+      }
     } catch {
       response = null;
     }
@@ -1879,10 +2148,24 @@ async function loadContract() {
       viewType: 'form',
       recordId: recordId.value,
       renderProfile: profile,
+      surface: requestedSurface.value,
+      sourceMode: requestedSourceMode.value,
     });
   }
   if (!response?.data || typeof response.data !== 'object') {
     throw new Error('empty contract');
+  }
+  const markerCheck = validateSurfaceMarkers(
+    response.data,
+    (response.meta as Record<string, unknown> | null) || null,
+    requestedSurface.value,
+  );
+  if (!markerCheck.ok) {
+    throw new Error(`contract surface markers invalid: ${markerCheck.issues.slice(0, 4).join(' | ')}`);
+  }
+  const readiness = analyzeFormContractReadiness(response.data, { requirePureFormViewType: false });
+  if (!readiness.usable) {
+    throw new Error(`contract not renderable: ${readiness.issues.slice(0, 4).join(' | ')}`);
   }
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
@@ -2308,7 +2591,26 @@ watch(
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.form-section {
+  grid-column: 1 / -1;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.form-section-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.form-section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
 }
 
