@@ -82,6 +82,9 @@
         <p v-if="onchangeWarnings.length" class="validation-warn">
           {{ onchangeWarnings.map((item) => item.message || item.title || '').filter(Boolean).join('；') }}
         </p>
+        <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
+          当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
+        </p>
         <div v-if="coreFieldsLabel" class="layout-divider">{{ coreFieldsLabel }}</div>
         <template v-for="node in layoutNodes" :key="node.key">
           <div v-if="showHud && node.kind === 'header'" class="layout-divider">头部</div>
@@ -432,6 +435,9 @@ const hasChanges = computed(() => {
 });
 const writableFieldCount = computed(() =>
   layoutNodes.value.filter((node) => node.kind === 'field' && !node.readonly).length,
+);
+const visibleFieldNodeCount = computed(() =>
+  layoutNodes.value.filter((node) => node.kind === 'field' && isFieldVisible(node.name)).length,
 );
 const changedFieldCount = computed(() =>
   Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length,
