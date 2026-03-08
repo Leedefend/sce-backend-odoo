@@ -1110,6 +1110,60 @@ def _entry_registry_quality_report(
     }
 
 
+def _navigation_entry_registry(
+    scene_entry_registry: dict[str, Any],
+    capability_entry_registry: dict[str, Any],
+) -> dict[str, Any]:
+    scene_entries = scene_entry_registry.get("entries") if isinstance(scene_entry_registry.get("entries"), list) else []
+    capability_entries = capability_entry_registry.get("entries") if isinstance(capability_entry_registry.get("entries"), list) else []
+    entries: list[dict[str, Any]] = []
+
+    for row in scene_entries:
+        scene_key = str((row or {}).get("scene_key") or "").strip()
+        if not scene_key:
+            continue
+        entries.append(
+            {
+                "registry_key": f"nav.scene::{scene_key}",
+                "entry_source": "scene",
+                "scene_key": scene_key,
+                "title": str((row or {}).get("scene_name") or scene_key),
+                "entry_type": str((row or {}).get("entry_type") or "menu"),
+                "status": str((row or {}).get("status") or "ready"),
+                "target_role": (row or {}).get("target_role") or [],
+                "required_capabilities": (row or {}).get("required_capabilities") or [],
+            }
+        )
+
+    for row in capability_entries:
+        cap_key = str((row or {}).get("capability_key") or "").strip()
+        if not cap_key:
+            continue
+        entries.append(
+            {
+                "registry_key": f"nav.capability::{cap_key}",
+                "entry_source": "capability",
+                "capability_key": cap_key,
+                "title": str((row or {}).get("name") or cap_key),
+                "group_key": str((row or {}).get("group_key") or ""),
+                "status": str((row or {}).get("status") or "ready"),
+                "scene_keys": (row or {}).get("scene_keys") or [],
+                "role_scope": (row or {}).get("role_scope") or [],
+            }
+        )
+
+    return {
+        "version": "v1",
+        "generated_on": date.today().isoformat(),
+        "entry_count": len(entries),
+        "entries": sorted(entries, key=lambda x: x["registry_key"]),
+        "source_counts": {
+            "scene": len(scene_entries),
+            "capability": len(capability_entries),
+        },
+    }
+
+
 def main() -> int:
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
     TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -1125,6 +1179,7 @@ def main() -> int:
     capability_scene_mapping = _capability_scene_mapping(capability_catalog, scene_catalog_v2)
     scene_entry_registry_v1 = _scene_entry_registry(scene_catalog_product_v1, capability_scene_mapping)
     capability_entry_registry_v1 = _capability_entry_registry(capability_catalog, capability_scene_mapping)
+    navigation_entry_registry_v1 = _navigation_entry_registry(scene_entry_registry_v1, capability_entry_registry_v1)
     role_scene_matrix = _role_scene_matrix(scene_catalog_v2)
     entry_registry_quality_v1 = _entry_registry_quality_report(
         scene_catalog_product_v1,
@@ -1151,6 +1206,7 @@ def main() -> int:
     _write_json(PRODUCT_DIR / "capability_scene_mapping_v1.json", capability_scene_mapping)
     _write_markdown(PRODUCT_DIR / "capability_scene_mapping_v1.md", _md_capability_scene_mapping(capability_scene_mapping))
     _write_json(PRODUCT_DIR / "capability_entry_registry_v1.json", capability_entry_registry_v1)
+    _write_json(PRODUCT_DIR / "navigation_entry_registry_v1.json", navigation_entry_registry_v1)
     _write_json(PRODUCT_DIR / "entry_registry_quality_report_v1.json", entry_registry_quality_v1)
     _write_markdown(PRODUCT_DIR / "entry_registry_quality_report_v1.md", _md_entry_registry_quality(entry_registry_quality_v1))
 
@@ -1188,6 +1244,7 @@ def main() -> int:
     print("- docs/product/capability_scene_mapping_v1.md")
     print("- docs/product/capability_scene_mapping_v1.json")
     print("- docs/product/capability_entry_registry_v1.json")
+    print("- docs/product/navigation_entry_registry_v1.json")
     print("- docs/product/entry_registry_quality_report_v1.json")
     print("- docs/product/entry_registry_quality_report_v1.md")
     print("- docs/product/role_scene_matrix_v1.md")
