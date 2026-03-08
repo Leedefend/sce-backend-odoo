@@ -150,6 +150,20 @@ def _probe_relation_readable(intent_url: str, token: str, model: str) -> tuple[b
     }
 
 
+def _extract_semantics_map(user_data: dict, user_fields: dict) -> dict:
+    raw = user_data.get("field_semantics")
+    if not isinstance(raw, dict):
+        raw = {}
+    out = {}
+    allowed = set(user_fields.keys())
+    for name, item in raw.items():
+        key = str(name or "").strip()
+        if not key or key not in allowed or not isinstance(item, dict):
+            continue
+        out[key] = item
+    return out
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_JSON)
     if not baseline:
@@ -223,6 +237,42 @@ def main() -> int:
             for rel_model in relation_models:
                 readable, detail = _probe_relation_readable(intent_url, token, rel_model)
                 relation_readability[rel_model] = {"readable": readable, **detail}
+            semantics_map = _extract_semantics_map(user_data, user_fields)
+            allowed_semantic_types = {"business", "technical", "system", "relation", "computed"}
+            allowed_surface_roles = {"core", "advanced", "hidden"}
+            semantic_missing = sorted([name for name in user_fields.keys() if name not in semantics_map])
+            semantic_invalid_type = sorted(
+                [
+                    name
+                    for name, sem in semantics_map.items()
+                    if str(sem.get("semantic_type") or "").strip().lower() not in allowed_semantic_types
+                ]
+            )
+            semantic_invalid_surface = sorted(
+                [
+                    name
+                    for name, sem in semantics_map.items()
+                    if str(sem.get("surface_role") or "").strip().lower() not in allowed_surface_roles
+                ]
+            )
+            technical_fields = sorted(
+                [
+                    name
+                    for name, sem in semantics_map.items()
+                    if bool(sem.get("technical")) or str(sem.get("semantic_type") or "").strip().lower() == "technical"
+                ]
+            )
+            leaked_technical_visible = sorted(
+                [
+                    name
+                    for name in technical_fields
+                    if name in user_visible_field_names
+                    or name in core_group_fields
+                    or name in advanced_group_fields
+                    or name in user_layout_field_names
+                    or str((semantics_map.get(name) or {}).get("surface_role") or "").strip().lower() in {"core", "advanced"}
+                ]
+            )
 
             row["user"] = {
                 "contract_mode": user_meta.get("contract_mode"),
@@ -240,12 +290,24 @@ def main() -> int:
                 "unreadable_relation_model_count": sum(
                     1 for _, detail in relation_readability.items() if not bool(detail.get("readable"))
                 ),
+                "semantic_field_count": len(semantics_map),
+                "semantic_missing_count": len(semantic_missing),
+                "semantic_invalid_type_count": len(semantic_invalid_type),
+                "semantic_invalid_surface_count": len(semantic_invalid_surface),
+                "technical_field_count": len(technical_fields),
+                "technical_visible_leak_count": len(leaked_technical_visible),
             }
             row["hud"] = {
                 "contract_mode": hud_meta.get("contract_mode"),
                 "field_count": len(hud_fields),
             }
             row["user"]["relation_readability"] = relation_readability
+            row["user"]["semantic_summary"] = {
+                "missing": semantic_missing,
+                "invalid_type": semantic_invalid_type,
+                "invalid_surface_role": semantic_invalid_surface,
+                "technical_visible_leak": leaked_technical_visible,
+            }
 
             if row["user"]["contract_mode"] != "user":
                 errors.append(f"{role}.user contract_mode != user")
@@ -294,6 +356,14 @@ def main() -> int:
                 errors.append(
                     f"{role}.user contains unreadable relation models: {', '.join(unreadable_relations)}"
                 )
+            if semantic_missing:
+                errors.append(f"{role}.user semantics missing on fields: {', '.join(semantic_missing[:12])}")
+            if semantic_invalid_type:
+                errors.append(f"{role}.user semantics invalid semantic_type on fields: {', '.join(semantic_invalid_type[:12])}")
+            if semantic_invalid_surface:
+                errors.append(f"{role}.user semantics invalid surface_role on fields: {', '.join(semantic_invalid_surface[:12])}")
+            if leaked_technical_visible:
+                errors.append(f"{role}.user technical fields leaked to user surface: {', '.join(leaked_technical_visible[:12])}")
             if len(hud_fields) < len(user_fields):
                 errors.append(f"{role}.hud field_count={len(hud_fields)} should be >= user={len(user_fields)}")
             row["ok"] = True
