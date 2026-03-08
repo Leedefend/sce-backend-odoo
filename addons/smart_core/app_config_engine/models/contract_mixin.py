@@ -27,8 +27,14 @@ class ContractSchemaMixin(models.AbstractModel):
         return table.get(vt, set())
 
     @api.model
-    def sanitize_contract(self, vt, data):
-        """仅保留白名单键，并回填通用默认结构"""
+    def sanitize_native_contract(self, vt, data):
+        """Native sanitize: only structural safety clone, no policy pruning."""
+        # Keep parser-native keys intact; just return JSON-safe clone.
+        return self.json_clone(data or {})
+
+    @api.model
+    def sanitize_governed_contract(self, vt, data):
+        """Governed sanitize: apply whitelist pruning for user-facing contracts."""
         common = self._allowed_keys_common()
         specific = self._allowed_keys_by_view(vt)
         keep = set(common) | set(specific)
@@ -46,6 +52,14 @@ class ContractSchemaMixin(models.AbstractModel):
         cleaned.setdefault('toolbar', {"header": [], "sidebar": [], "footer": []})
         cleaned.setdefault('search', {"filters": [], "group_by": [], "facets": {"enabled": True}})
         return cleaned
+
+    @api.model
+    def sanitize_contract(self, vt, data, *, surface='governed'):
+        """Compat entrypoint with explicit surface mode."""
+        mode = str(surface or 'governed').strip().lower()
+        if mode == 'native':
+            return self.sanitize_native_contract(vt, data)
+        return self.sanitize_governed_contract(vt, data)
 
     # ---- 深合并策略（dict 递归；list 基于 name 键对齐，否则后者覆盖）----
     @api.model
