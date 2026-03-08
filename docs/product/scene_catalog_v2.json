@@ -12,9 +12,15 @@
         "finance_manager"
       ],
       "business_goal": "合同执行与结算协同",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "contract.center.open",
+        "contract.expense.track",
+        "contract.income.track",
+        "contract.settlement.audit"
+      ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "contracts.monitor",
@@ -25,10 +31,16 @@
         "finance_manager"
       ],
       "business_goal": "合同执行与结算协同",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "contract.center.open",
+        "contract.expense.track",
+        "contract.income.track",
+        "contract.settlement.audit"
+      ],
       "entry_type": "menu",
-      "status": "partial",
-      "alias_of": "contract.center"
+      "status": "ready",
+      "alias_of": "contract.center",
+      "is_product_scene": true
     },
     {
       "scene_key": "cost.budget_alloc",
@@ -39,9 +51,16 @@
         "finance_manager"
       ],
       "business_goal": "成本与预算执行控制",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "cost.boq.manage",
+        "cost.budget.manage",
+        "cost.ledger.open",
+        "cost.profit.compare",
+        "cost.progress.report"
+      ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "cost.control",
@@ -57,7 +76,8 @@
       ],
       "entry_type": "menu",
       "status": "ready",
-      "alias_of": "cost.project_cost_ledger"
+      "alias_of": "cost.project_cost_ledger",
+      "is_product_scene": true
     },
     {
       "scene_key": "cost.cost_compare",
@@ -68,9 +88,16 @@
         "finance_manager"
       ],
       "business_goal": "成本与预算执行控制",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "cost.boq.manage",
+        "cost.budget.manage",
+        "cost.ledger.open",
+        "cost.profit.compare",
+        "cost.progress.report"
+      ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "cost.profit_compare",
@@ -85,7 +112,8 @@
         "cost.profit.compare"
       ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "cost.project_boq",
@@ -101,7 +129,8 @@
         "project.structure.manage"
       ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "cost.project_budget",
@@ -116,7 +145,8 @@
         "cost.budget.manage"
       ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "cost.project_cost_ledger",
@@ -131,7 +161,8 @@
         "cost.ledger.open"
       ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "cost.project_progress",
@@ -146,7 +177,8 @@
         "cost.progress.report"
       ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "data.dictionary",
@@ -156,9 +188,13 @@
         "construction_manager"
       ],
       "business_goal": "业务场景操作入口",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "material.catalog.open",
+        "material.procurement.list"
+      ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "default",
@@ -170,7 +206,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg1",
@@ -182,7 +219,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg10",
@@ -194,7 +232,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg11",
@@ -206,7 +245,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg12",
@@ -218,7 +258,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg13",
@@ -230,7 +271,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg14",
@@ -242,7 +284,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg15",
@@ -254,7 +297,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg16",
@@ -266,7 +310,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg17",
@@ -278,7 +323,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg18",
@@ -290,7 +336,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg19",
@@ -302,7 +349,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg2",
@@ -314,7 +362,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg20",
@@ -326,7 +375,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg21",
@@ -338,7 +388,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg22",
@@ -350,7 +401,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg23",
@@ -362,7 +414,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg24",
@@ -374,7 +427,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg25",
@@ -386,7 +440,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg26",
@@ -398,7 +453,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg27",
@@ -410,7 +466,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg28",
@@ -422,7 +479,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg3",
@@ -434,7 +492,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg4",
@@ -446,7 +505,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg5",
@@ -458,7 +518,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg6",
@@ -470,7 +531,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg7",
@@ -482,7 +544,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg8",
@@ -494,7 +557,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "default__pkg9",
@@ -506,7 +570,8 @@
       "business_goal": "业务场景操作入口",
       "primary_capabilities": [],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "finance.center",
@@ -523,7 +588,8 @@
         "finance.plan.funding"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "finance.operating_metrics",
@@ -540,7 +606,8 @@
         "finance.metrics.operating"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "finance.payment_ledger",
@@ -555,7 +622,8 @@
         "finance.ledger.payment"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "finance.payment_requests",
@@ -571,7 +639,8 @@
         "finance.payment_request.list"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "finance.settlement_orders",
@@ -587,7 +656,8 @@
         "finance.settlement.order"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "finance.treasury_ledger",
@@ -602,7 +672,8 @@
         "finance.ledger.treasury"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "my_work.workspace",
@@ -620,7 +691,8 @@
       ],
       "entry_type": "my_work",
       "status": "ready",
-      "alias_of": "portal.dashboard"
+      "alias_of": "portal.dashboard",
+      "is_product_scene": true
     },
     {
       "scene_key": "payments.approval",
@@ -637,7 +709,8 @@
       ],
       "entry_type": "menu",
       "status": "ready",
-      "alias_of": "finance.payment_requests"
+      "alias_of": "finance.payment_requests",
+      "is_product_scene": true
     },
     {
       "scene_key": "portal.capability_matrix",
@@ -654,7 +727,8 @@
         "governance.scene.openability"
       ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "portal.dashboard",
@@ -671,7 +745,8 @@
         "workspace.today.focus"
       ],
       "entry_type": "home",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "portal.lifecycle",
@@ -689,7 +764,8 @@
         "project.lifecycle.transition"
       ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "projects.dashboard",
@@ -705,7 +781,8 @@
         "project.dashboard.open"
       ],
       "entry_type": "home",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "projects.detail",
@@ -721,7 +798,8 @@
       ],
       "entry_type": "menu",
       "status": "ready",
-      "alias_of": "projects.intake"
+      "alias_of": "projects.intake",
+      "is_product_scene": true
     },
     {
       "scene_key": "projects.execution",
@@ -747,7 +825,8 @@
       ],
       "entry_type": "menu",
       "status": "ready",
-      "alias_of": "projects.ledger"
+      "alias_of": "projects.ledger",
+      "is_product_scene": true
     },
     {
       "scene_key": "projects.intake",
@@ -762,7 +841,8 @@
         "project.initiation.enter"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "projects.intake__pkg1",
@@ -773,9 +853,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg10",
@@ -786,9 +884,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg11",
@@ -799,9 +915,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg12",
@@ -812,9 +946,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg13",
@@ -825,9 +977,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg14",
@@ -838,9 +1008,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg15",
@@ -851,9 +1039,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg16",
@@ -864,9 +1070,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg17",
@@ -877,9 +1101,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg18",
@@ -890,9 +1132,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg19",
@@ -903,9 +1163,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg2",
@@ -916,9 +1194,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg20",
@@ -929,9 +1225,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg21",
@@ -942,9 +1256,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg22",
@@ -955,9 +1287,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg23",
@@ -968,9 +1318,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg24",
@@ -981,9 +1349,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg25",
@@ -994,9 +1380,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg26",
@@ -1007,9 +1411,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg27",
@@ -1020,9 +1442,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg28",
@@ -1033,9 +1473,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg3",
@@ -1046,9 +1504,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg4",
@@ -1059,9 +1535,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg5",
@@ -1072,9 +1566,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg6",
@@ -1085,9 +1597,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg7",
@@ -1098,9 +1628,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg8",
@@ -1111,9 +1659,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.intake__pkg9",
@@ -1124,9 +1690,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger",
@@ -1151,7 +1735,8 @@
         "project.weekly_report.open"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "projects.ledger__pkg1",
@@ -1162,9 +1747,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg10",
@@ -1175,9 +1778,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg11",
@@ -1188,9 +1809,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg12",
@@ -1201,9 +1840,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg13",
@@ -1214,9 +1871,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg14",
@@ -1227,9 +1902,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg15",
@@ -1240,9 +1933,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg16",
@@ -1253,9 +1964,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg17",
@@ -1266,9 +1995,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg18",
@@ -1279,9 +2026,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg19",
@@ -1292,9 +2057,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg2",
@@ -1305,9 +2088,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg20",
@@ -1318,9 +2119,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg21",
@@ -1331,9 +2150,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg22",
@@ -1344,9 +2181,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg23",
@@ -1357,9 +2212,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg24",
@@ -1370,9 +2243,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg25",
@@ -1383,9 +2274,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg26",
@@ -1396,9 +2305,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg27",
@@ -1409,9 +2336,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg28",
@@ -1422,9 +2367,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg3",
@@ -1435,9 +2398,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg4",
@@ -1448,9 +2429,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg5",
@@ -1461,9 +2460,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg6",
@@ -1474,9 +2491,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg7",
@@ -1487,9 +2522,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg8",
@@ -1500,9 +2553,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.ledger__pkg9",
@@ -1513,9 +2584,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list",
@@ -1532,7 +2621,8 @@
         "workspace.project.watch"
       ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "projects.list__pkg1",
@@ -1543,9 +2633,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg10",
@@ -1556,9 +2664,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg11",
@@ -1569,9 +2695,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg12",
@@ -1582,9 +2726,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg13",
@@ -1595,9 +2757,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg14",
@@ -1608,9 +2788,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg15",
@@ -1621,9 +2819,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg16",
@@ -1634,9 +2850,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg17",
@@ -1647,9 +2881,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg18",
@@ -1660,9 +2912,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg19",
@@ -1673,9 +2943,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg2",
@@ -1686,9 +2974,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg20",
@@ -1699,9 +3005,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg21",
@@ -1712,9 +3036,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg22",
@@ -1725,9 +3067,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg23",
@@ -1738,9 +3098,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg24",
@@ -1751,9 +3129,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg25",
@@ -1764,9 +3160,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg26",
@@ -1777,9 +3191,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg27",
@@ -1790,9 +3222,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg28",
@@ -1803,9 +3253,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg3",
@@ -1816,9 +3284,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg4",
@@ -1829,9 +3315,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg5",
@@ -1842,9 +3346,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg6",
@@ -1855,9 +3377,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg7",
@@ -1868,9 +3408,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg8",
@@ -1881,9 +3439,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "projects.list__pkg9",
@@ -1894,9 +3470,27 @@
         "construction_manager"
       ],
       "business_goal": "项目全周期经营与执行管理",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "analytics.dashboard.executive",
+        "analytics.exception.list",
+        "analytics.lifecycle.monitor",
+        "analytics.project.focus",
+        "project.board.open",
+        "project.dashboard.open",
+        "project.document.open",
+        "project.initiation.enter",
+        "project.lifecycle.open",
+        "project.lifecycle.transition",
+        "project.list.open",
+        "project.risk.list",
+        "project.structure.manage",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
       "entry_type": "menu",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": false
     },
     {
       "scene_key": "risk.center",
@@ -1906,10 +3500,16 @@
         "construction_manager"
       ],
       "business_goal": "业务场景操作入口",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "governance.capability.matrix",
+        "governance.runtime.audit",
+        "governance.scene.openability",
+        "project.risk.list"
+      ],
       "entry_type": "menu",
-      "status": "partial",
-      "alias_of": "risk.monitor"
+      "status": "ready",
+      "alias_of": "risk.monitor",
+      "is_product_scene": true
     },
     {
       "scene_key": "risk.monitor",
@@ -1919,9 +3519,15 @@
         "construction_manager"
       ],
       "business_goal": "业务场景操作入口",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "governance.capability.matrix",
+        "governance.runtime.audit",
+        "governance.scene.openability",
+        "project.risk.list"
+      ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     },
     {
       "scene_key": "task.center",
@@ -1931,9 +3537,13 @@
         "construction_manager"
       ],
       "business_goal": "业务场景操作入口",
-      "primary_capabilities": [],
+      "primary_capabilities": [
+        "project.task.board",
+        "project.task.list"
+      ],
       "entry_type": "shortcut",
-      "status": "ready"
+      "status": "ready",
+      "is_product_scene": true
     }
   ]
 }

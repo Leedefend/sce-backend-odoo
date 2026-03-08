@@ -221,6 +221,45 @@ def _entry_type(scene_key: str) -> str:
     return "shortcut"
 
 
+def _capability_keys_by_group(capabilities: list[CapabilityDef]) -> dict[str, list[str]]:
+    grouped: dict[str, list[str]] = defaultdict(list)
+    for cap in capabilities:
+        grouped[cap.group_key].append(cap.key)
+    return {key: sorted(values) for key, values in grouped.items()}
+
+
+def _fallback_scene_capabilities(scene_key: str, grouped: dict[str, list[str]]) -> list[str]:
+    key = str(scene_key or "").strip().lower()
+    if not key:
+        return []
+    if key in {"contracts.monitor", "contract.center"}:
+        return grouped.get("contract_management", [])
+    if key in {"risk.center", "risk.monitor"}:
+        return sorted(
+            set(
+                [
+                    *grouped.get("governance", []),
+                    *[x for x in grouped.get("project_management", []) if ".risk." in x or x.endswith(".risk.list")],
+                ]
+            )
+        )
+    if key in {"my_work.workspace", "portal.dashboard"}:
+        return sorted(set([*grouped.get("others", []), *grouped.get("governance", [])]))
+    if key == "task.center":
+        return [x for x in grouped.get("project_management", []) if ".task." in x]
+    if key == "data.dictionary":
+        return grouped.get("material_management", [])
+    if key.startswith("projects."):
+        return sorted(set([*grouped.get("project_management", []), *grouped.get("analytics", [])]))
+    if key.startswith("finance.") or key.startswith("payments."):
+        return sorted(set([*grouped.get("finance_management", []), *grouped.get("contract_management", [])]))
+    if key.startswith("cost."):
+        return grouped.get("cost_management", [])
+    if key.startswith("contract."):
+        return grouped.get("contract_management", [])
+    return []
+
+
 def _capability_catalog(capabilities: list[CapabilityDef]) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     for cap in capabilities:
@@ -274,6 +313,7 @@ def _scene_catalog_v2(
     scene_rows: list[dict[str, Any]],
     capabilities: list[CapabilityDef],
 ) -> dict[str, Any]:
+    grouped = _capability_keys_by_group(capabilities)
     cap_by_scene: dict[str, list[str]] = defaultdict(list)
     for cap in capabilities:
         cap_by_scene[cap.scene_key].append(cap.key)
@@ -284,6 +324,9 @@ def _scene_catalog_v2(
             continue
         layout = row.get("layout") if isinstance(row.get("layout"), dict) else {}
         renderability = row.get("renderability") if isinstance(row.get("renderability"), dict) else {}
+        primary_caps = sorted(cap_by_scene.get(scene_key, []))
+        if not primary_caps:
+            primary_caps = _fallback_scene_capabilities(scene_key, grouped)
         out_rows.append(
             {
                 "scene_key": scene_key,
@@ -291,11 +334,12 @@ def _scene_catalog_v2(
                 "scene_type": _scene_type(layout.get("kind")),
                 "target_role": _target_role(scene_key),
                 "business_goal": _business_goal(scene_key),
-                "primary_capabilities": sorted(cap_by_scene.get(scene_key, [])),
+                "primary_capabilities": primary_caps,
                 "entry_type": _entry_type(scene_key),
                 "status": "ready"
                 if bool(renderability.get("is_renderable")) and bool(renderability.get("is_interaction_ready"))
                 else "partial",
+                "is_product_scene": _is_product_scene(scene_key),
             }
         )
     existing = {item["scene_key"] for item in out_rows}
@@ -313,6 +357,8 @@ def _scene_catalog_v2(
         if alias_key in existing:
             continue
         alias_caps = sorted(cap_by_scene.get(source_scene, []))
+        if not alias_caps:
+            alias_caps = _fallback_scene_capabilities(alias_key, grouped)
         out_rows.append(
             {
                 "scene_key": alias_key,
@@ -324,6 +370,7 @@ def _scene_catalog_v2(
                 "entry_type": "menu" if alias_key != "my_work.workspace" else "my_work",
                 "status": "ready" if alias_caps else "partial",
                 "alias_of": source_scene,
+                "is_product_scene": True,
             }
         )
     return {
@@ -342,6 +389,11 @@ def _capability_scene_mapping(
     scenes = scene_catalog_v2.get("scenes") if isinstance(scene_catalog_v2.get("scenes"), list) else []
     scene_to_caps: dict[str, list[dict[str, str]]] = defaultdict(list)
     cap_to_scenes: dict[str, list[dict[str, str]]] = defaultdict(list)
+    scene_primary_map = {
+        str(row.get("scene_key") or ""): [str(x) for x in (row.get("primary_capabilities") or []) if str(x)]
+        for row in scenes
+        if isinstance(row, dict)
+    }
     for cap in caps:
         cap_key = str(cap.get("capability_key") or "")
         scene_key = str(cap.get("main_scene") or "")
@@ -351,9 +403,29 @@ def _capability_scene_mapping(
         scene_to_caps[scene_key].append(item)
         cap_to_scenes[cap_key].append({"scene_key": scene_key, "role": "primary"})
 
+    # Add productized/fallback scene mapping from scene catalog definitions.
+    known_cap_keys = {str(cap.get("capability_key") or "") for cap in caps}
+    for scene_key, cap_keys in scene_primary_map.items():
+        for cap_key in cap_keys:
+            if cap_key not in known_cap_keys:
+                continue
+            if cap_key not in {item["capability_key"] for item in scene_to_caps.get(scene_key, [])}:
+                scene_to_caps[scene_key].append({"capability_key": cap_key, "role": "supporting"})
+            if scene_key not in {item["scene_key"] for item in cap_to_scenes.get(cap_key, [])}:
+                cap_to_scenes[cap_key].append({"scene_key": scene_key, "role": "supporting"})
+
     known_scene_keys = {str(row.get("scene_key") or "") for row in scenes}
     orphan_caps = sorted([k for k, v in cap_to_scenes.items() if not v])
     void_scenes = sorted([k for k in known_scene_keys if k and not scene_to_caps.get(k)])
+    product_scene_keys = sorted([k for k in known_scene_keys if _is_product_scene(k)])
+    product_void_scenes = sorted([k for k in product_scene_keys if k not in scene_to_caps])
+
+    mapping_rate_all = round((len(known_scene_keys) - len(void_scenes)) / len(known_scene_keys), 4) if known_scene_keys else 0.0
+    mapping_rate_product = (
+        round((len(product_scene_keys) - len(product_void_scenes)) / len(product_scene_keys), 4)
+        if product_scene_keys
+        else 0.0
+    )
 
     return {
         "version": "v1",
@@ -368,6 +440,21 @@ def _capability_scene_mapping(
         ],
         "orphan_capabilities": orphan_caps,
         "void_scenes": void_scenes,
+        "product_scene_to_capabilities": [
+            {"scene_key": key, "capabilities": sorted(scene_to_caps.get(key, []), key=lambda x: x["capability_key"])}
+            for key in product_scene_keys
+            if scene_to_caps.get(key)
+        ],
+        "product_void_scenes": product_void_scenes,
+        "quality_summary": {
+            "scene_total": len(known_scene_keys),
+            "scene_mapped": len(known_scene_keys) - len(void_scenes),
+            "mapping_rate_all": mapping_rate_all,
+            "product_scene_total": len(product_scene_keys),
+            "product_scene_mapped": len(product_scene_keys) - len(product_void_scenes),
+            "mapping_rate_product": mapping_rate_product,
+            "orphan_capability_count": len(orphan_caps),
+        },
     }
 
 
@@ -530,6 +617,17 @@ def _is_product_scene(scene_key: str) -> bool:
     return True
 
 
+def _product_scene_catalog(scene_catalog_v2: dict[str, Any]) -> dict[str, Any]:
+    rows = scene_catalog_v2.get("scenes") if isinstance(scene_catalog_v2.get("scenes"), list) else []
+    product_rows = [row for row in rows if isinstance(row, dict) and _is_product_scene(str(row.get("scene_key") or ""))]
+    return {
+        "version": "v1",
+        "generated_on": scene_catalog_v2.get("generated_on"),
+        "scene_count": len(product_rows),
+        "scenes": sorted(product_rows, key=lambda x: str(x.get("scene_key") or "")),
+    }
+
+
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -599,12 +697,16 @@ def _md_scene_catalog(payload: dict[str, Any]) -> str:
 
 
 def _md_capability_scene_mapping(payload: dict[str, Any]) -> str:
+    summary = payload.get("quality_summary") if isinstance(payload.get("quality_summary"), dict) else {}
     lines = [
         "# Capability Scene Mapping v1",
         "",
         f"- generated_on: {payload.get('generated_on')}",
         f"- orphan_capabilities: {len(payload.get('orphan_capabilities', []))}",
         f"- void_scenes: {len(payload.get('void_scenes', []))}",
+        f"- product_void_scenes: {len(payload.get('product_void_scenes', []))}",
+        f"- mapping_rate_all: {summary.get('mapping_rate_all', 0)}",
+        f"- mapping_rate_product: {summary.get('mapping_rate_product', 0)}",
         "",
         "## Scene -> Capabilities",
         "",
@@ -621,6 +723,7 @@ def _md_capability_scene_mapping(payload: dict[str, Any]) -> str:
             "",
             f"- orphan_capabilities: {', '.join(payload.get('orphan_capabilities', [])) or 'none'}",
             f"- void_scenes: {', '.join(payload.get('void_scenes', [])[:20]) or 'none'}",
+            f"- product_void_scenes: {', '.join(payload.get('product_void_scenes', [])[:20]) or 'none'}",
         ]
     )
     return "\n".join(lines)
@@ -767,6 +870,80 @@ def _owner_template_md() -> str:
     )
 
 
+def _construction_template_json(role_scene_matrix: dict[str, Any]) -> dict[str, Any]:
+    role_rows = role_scene_matrix.get("roles") if isinstance(role_scene_matrix.get("roles"), list) else []
+    return {
+        "template_key": "construction_enterprise",
+        "version": "v1",
+        "default_roles": ["construction_manager", "project_manager", "finance_manager", "risk_manager"],
+        "default_scenes": [
+            "projects.dashboard",
+            "projects.execution",
+            "projects.detail",
+            "contracts.monitor",
+            "cost.control",
+            "payments.approval",
+            "risk.center",
+            "my_work.workspace",
+        ],
+        "default_capability_groups": [
+            "project_management",
+            "contract_management",
+            "cost_management",
+            "finance_management",
+            "analytics",
+            "governance",
+        ],
+        "home_layout_sections": [
+            "my_work",
+            "core_scenes",
+            "key_risks",
+            "business_dashboard",
+            "capability_shortcuts",
+        ],
+        "role_entry_policy": [
+            {
+                "role_key": row.get("role_key"),
+                "home_scene": row.get("home_scene"),
+                "high_frequency_scenes": row.get("high_frequency_scenes") or [],
+                "disabled_scenes": row.get("disabled_scenes") or [],
+            }
+            for row in role_rows
+            if row.get("role_key") in {"construction_manager", "project_manager", "finance_manager", "risk_manager"}
+        ],
+    }
+
+
+def _owner_template_json() -> dict[str, Any]:
+    return {
+        "template_key": "owner_management_draft",
+        "version": "v1-draft",
+        "capability_groups": [
+            "project_oversight",
+            "contract_execution_monitoring",
+            "investment_control",
+            "payment_approval",
+            "risk_early_warning",
+        ],
+        "home_scenes": [
+            "owner.dashboard",
+            "contracts.monitor",
+            "payments.approval",
+            "risk.center",
+        ],
+        "role_matrix": [
+            {"role_key": "owner_manager", "home_scene": "owner.dashboard", "high_frequency_scenes": ["contracts.monitor", "payments.approval"]},
+            {"role_key": "owner_finance", "home_scene": "payments.approval", "high_frequency_scenes": ["cost.control", "contracts.monitor"]},
+            {"role_key": "owner_exec", "home_scene": "owner.dashboard", "high_frequency_scenes": ["risk.center", "projects.dashboard"]},
+        ],
+        "migration_principles": [
+            "reuse_five_layer_architecture",
+            "reorchestrate_by_capability_and_scene",
+            "consume_governed_surface_only",
+        ],
+    }
+
+
 def main() -> int:
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
     TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -778,6 +955,7 @@ def main() -> int:
     capability_catalog = _capability_catalog(capabilities)
     capability_grouping = _capability_grouping(capabilities)
     scene_catalog_v2 = _scene_catalog_v2(scene_rows, capabilities)
+    scene_catalog_product_v1 = _product_scene_catalog(scene_catalog_v2)
     capability_scene_mapping = _capability_scene_mapping(capability_catalog, scene_catalog_v2)
     role_scene_matrix = _role_scene_matrix(scene_catalog_v2)
     capability_maturity = _capability_maturity(capability_catalog, capability_scene_mapping)
@@ -792,11 +970,13 @@ def main() -> int:
 
     _write_json(PRODUCT_DIR / "scene_catalog_v2.json", scene_catalog_v2)
     _write_markdown(PRODUCT_DIR / "scene_catalog_v2.md", _md_scene_catalog(scene_catalog_v2))
+    _write_json(PRODUCT_DIR / "scene_catalog_product_v1.json", scene_catalog_product_v1)
 
     _write_json(PRODUCT_DIR / "capability_scene_mapping_v1.json", capability_scene_mapping)
     _write_markdown(PRODUCT_DIR / "capability_scene_mapping_v1.md", _md_capability_scene_mapping(capability_scene_mapping))
 
     _write_markdown(PRODUCT_DIR / "role_scene_matrix_v1.md", _md_role_scene_matrix(role_scene_matrix))
+    _write_json(PRODUCT_DIR / "role_scene_matrix_v1.json", role_scene_matrix)
 
     _write_markdown(PRODUCT_DIR / "capability_maturity_matrix_v1.md", _md_capability_maturity(capability_maturity))
     _write_markdown(PRODUCT_DIR / "capability_gap_backlog_v1.md", _md_capability_gap_backlog(capability_gap_backlog))
@@ -805,9 +985,17 @@ def main() -> int:
         TEMPLATE_DIR / "construction_enterprise_template_v1.md",
         _construction_template_md(role_scene_matrix),
     )
+    _write_json(
+        TEMPLATE_DIR / "construction_enterprise_template_v1.json",
+        _construction_template_json(role_scene_matrix),
+    )
     _write_markdown(
         TEMPLATE_DIR / "owner_management_template_draft_v1.md",
         _owner_template_md(),
+    )
+    _write_json(
+        TEMPLATE_DIR / "owner_management_template_draft_v1.json",
+        _owner_template_json(),
     )
 
     print("[capability_productization] generated files:")
@@ -816,13 +1004,17 @@ def main() -> int:
     print("- docs/product/capability_grouping_v1.md")
     print("- docs/product/scene_catalog_v2.md")
     print("- docs/product/scene_catalog_v2.json")
+    print("- docs/product/scene_catalog_product_v1.json")
     print("- docs/product/capability_scene_mapping_v1.md")
     print("- docs/product/capability_scene_mapping_v1.json")
     print("- docs/product/role_scene_matrix_v1.md")
+    print("- docs/product/role_scene_matrix_v1.json")
     print("- docs/product/capability_maturity_matrix_v1.md")
     print("- docs/product/capability_gap_backlog_v1.md")
     print("- docs/product/templates/construction_enterprise_template_v1.md")
+    print("- docs/product/templates/construction_enterprise_template_v1.json")
     print("- docs/product/templates/owner_management_template_draft_v1.md")
+    print("- docs/product/templates/owner_management_template_draft_v1.json")
     return 0
 
 
