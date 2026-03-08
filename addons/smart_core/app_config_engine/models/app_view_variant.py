@@ -82,4 +82,4 @@ class AppViewVariant(models.Model, ContractSchemaMixin):
     def materialize_patch(self, view_type):
         self.ensure_one()
         # 白名单清洗，避免污染
-        return self.sanitize_contract(view_type, self.patch or {})
+        return self.sanitize_governed_contract(view_type, self.patch or {})

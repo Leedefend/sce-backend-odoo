@@ -33,4 +33,4 @@ class AppViewFragment(models.Model, ContractSchemaMixin):
     def materialize(self, view_type):
         """返回白名单清洗后的片段（仅保留该视图可用键）"""
         self.ensure_one()
-        return self.sanitize_contract(view_type, self.contract or {})
+        return self.sanitize_governed_contract(view_type, self.contract or {})
