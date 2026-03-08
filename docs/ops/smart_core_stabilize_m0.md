@@ -25,6 +25,7 @@ Out of scope:
 
 ## Behavior Change Notice
 - `/api/v1/intent` is the single stable entrypoint.
+- Production contract chain uses `ui.contract` only; `ui.contract.enhanced` / `ui.contract.model.view` are legacy non-production intents.
 - `/api/v1/intent_enhanced` is experimental and not guaranteed stable.
 - `/api/v2/intent` returns HTTP 501 with a JSON envelope (explicitly disabled).
 - JWT config:
