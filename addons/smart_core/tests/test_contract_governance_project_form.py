@@ -393,6 +393,8 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIsInstance(surface_policies, dict)
         self.assertGreaterEqual(int(surface_policies.get("filters_primary_max", 0)), 0)
         self.assertGreaterEqual(int(surface_policies.get("actions_primary_max", 0)), 0)
+        self.assertLessEqual(int(surface_policies.get("filters_primary_max", 99)), 4)
+        self.assertLessEqual(int(surface_policies.get("actions_primary_max", 99)), 3)
 
     def test_project_kanban_adds_profile_and_filters_fields(self):
         data = _sample_kanban_payload()

@@ -639,6 +639,7 @@ def _apply_user_surface_policies(data: dict) -> None:
         filters_primary_max = 0
         actions_primary_max = 3
     if model == "project.project":
+        filters_primary_max = min(filters_primary_max, 4)
         actions_primary_max = min(actions_primary_max, 3)
     data["surface_policies"] = {
         "filters_primary_max": filters_primary_max,
