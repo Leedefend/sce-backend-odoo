@@ -159,6 +159,28 @@ def _sample_list_payload():
     }
 
 
+def _sample_kanban_payload():
+    return {
+        "head": {"model": "project.project", "view_type": "kanban"},
+        "views": {
+            "kanban": {
+                "fields": ["name", "manager_id", "stage_id", "end_date", "budget_total", "message_ids"],
+                "template_qweb": None,
+            }
+        },
+        "fields": {
+            "name": {"string": "名称", "type": "char", "required": True, "readonly": False},
+            "project_code": {"string": "项目编号", "type": "char", "required": False, "readonly": False},
+            "manager_id": {"string": "项目经理", "type": "many2one", "required": False, "readonly": False},
+            "stage_id": {"string": "阶段", "type": "many2one", "required": False, "readonly": False},
+            "lifecycle_state": {"string": "生命周期", "type": "selection", "required": False, "readonly": False},
+            "end_date": {"string": "截止日期", "type": "date", "required": False, "readonly": False},
+            "budget_total": {"string": "预算", "type": "monetary", "required": False, "readonly": False},
+            "message_ids": {"string": "消息", "type": "one2many", "required": False, "readonly": False},
+        },
+    }
+
+
 class TestProjectFormGovernance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -193,6 +215,13 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("budget_total", visible_fields)
         self.assertNotIn("create_uid", visible_fields)
         self.assertNotIn("message_ids", visible_fields)
+        form_profile = out.get("form_profile") or {}
+        self.assertIsInstance(form_profile, dict)
+        self.assertIsInstance(form_profile.get("core_fields"), list)
+        self.assertIsInstance(form_profile.get("advanced_fields"), list)
+        self.assertIn("name", form_profile.get("core_fields") or [])
+        view_form_profile = (((out.get("views") or {}).get("form") or {}).get("form_profile")) or {}
+        self.assertEqual(view_form_profile.get("core_fields"), form_profile.get("core_fields"))
 
         toolbar_header = ((out.get("toolbar") or {}).get("header") or [])
         self.assertEqual(toolbar_header, [])
@@ -364,6 +393,26 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIsInstance(surface_policies, dict)
         self.assertGreaterEqual(int(surface_policies.get("filters_primary_max", 0)), 0)
         self.assertGreaterEqual(int(surface_policies.get("actions_primary_max", 0)), 0)
+        self.assertLessEqual(int(surface_policies.get("filters_primary_max", 99)), 4)
+        self.assertLessEqual(int(surface_policies.get("actions_primary_max", 99)), 3)
+
+    def test_project_kanban_adds_profile_and_filters_fields(self):
+        data = _sample_kanban_payload()
+        out = apply_contract_governance(data, "user")
+
+        profile = out.get("kanban_profile") or {}
+        self.assertIsInstance(profile, dict)
+        self.assertIsInstance(profile.get("primary_fields"), list)
+        self.assertIsInstance(profile.get("secondary_fields"), list)
+        self.assertIsInstance(profile.get("status_fields"), list)
+        self.assertTrue(profile.get("title_field"))
+
+        kanban_view = ((out.get("views") or {}).get("kanban")) or {}
+        self.assertEqual((kanban_view.get("kanban_profile") or {}).get("title_field"), profile.get("title_field"))
+        fields = kanban_view.get("fields") or []
+        self.assertIsInstance(fields, list)
+        self.assertIn("name", fields)
+        self.assertNotIn("message_ids", fields)
 
 
 if __name__ == "__main__":
