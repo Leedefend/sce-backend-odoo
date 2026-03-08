@@ -74,6 +74,82 @@ def _request_form_contract(intent_url: str, token: str, contract_mode: str) -> t
     return data, meta
 
 
+def _collect_layout_field_names(layout: object) -> set[str]:
+    out: set[str] = set()
+
+    def walk(node: object) -> None:
+        if isinstance(node, list):
+            for item in node:
+                walk(item)
+            return
+        if not isinstance(node, dict):
+            return
+        kind = str(node.get("type") or "").strip().lower()
+        if kind == "field":
+            name = str(node.get("name") or "").strip()
+            if name:
+                out.add(name)
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            walk(node.get(key))
+
+    walk(layout)
+    return out
+
+
+def _extract_field_group_fields(groups_raw: object) -> tuple[set[str], set[str]]:
+    core: set[str] = set()
+    advanced: set[str] = set()
+    if not isinstance(groups_raw, list):
+        return core, advanced
+    for item in groups_raw:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip().lower()
+        fields = item.get("fields")
+        if not isinstance(fields, list):
+            continue
+        target = core if name == "core" else advanced if name == "advanced" else None
+        if target is None:
+            continue
+        for field in fields:
+            normalized = str(field or "").strip()
+            if normalized:
+                target.add(normalized)
+    return core, advanced
+
+
+def _probe_relation_readable(intent_url: str, token: str, model: str) -> tuple[bool, dict]:
+    status, resp = http_post_json(
+        intent_url,
+        {
+            "intent": "api.data",
+            "params": {
+                "op": "list",
+                "model": model,
+                "fields": ["id", "name", "display_name"],
+                "limit": 1,
+                "offset": 0,
+                "order": "id desc",
+                "domain": [],
+                "domain_raw": "",
+                "context": {},
+                "context_raw": "",
+            },
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    ok = status < 400 and bool(resp.get("ok") is True)
+    meta = resp.get("meta") if isinstance(resp.get("meta"), dict) else {}
+    err = resp.get("error") if isinstance(resp.get("error"), dict) else {}
+    return ok, {
+        "status": status,
+        "ok": bool(resp.get("ok") is True),
+        "trace_id": str(meta.get("trace_id") or ""),
+        "code": str(err.get("code") or ""),
+        "message": str(err.get("message") or ""),
+    }
+
+
 def main() -> int:
     baseline = _load_json(BASELINE_JSON)
     if not baseline:
@@ -128,21 +204,50 @@ def main() -> int:
             user_layout_field_count = len(
                 [x for x in user_layout if isinstance(x, dict) and str(x.get("type") or "").strip().lower() == "field"]
             )
+            user_layout_field_names = _collect_layout_field_names(user_layout)
+            user_visible_fields = user_data.get("visible_fields")
+            user_visible_field_names = (
+                {str(x).strip() for x in user_visible_fields if str(x).strip()} if isinstance(user_visible_fields, list) else set()
+            )
+            user_field_groups_raw = user_data.get("field_groups")
+            core_group_fields, advanced_group_fields = _extract_field_group_fields(user_field_groups_raw)
             user_toolbar_header = (((user_data.get("toolbar") or {}).get("header")) or []) if isinstance(user_data.get("toolbar"), dict) else []
+            relation_models = sorted(
+                {
+                    str((descriptor or {}).get("relation") or "").strip()
+                    for descriptor in user_fields.values()
+                    if isinstance(descriptor, dict)
+                    and str((descriptor or {}).get("ttype") or "").strip().lower() in {"many2one", "many2many", "one2many"}
+                    and str((descriptor or {}).get("relation") or "").strip()
+                }
+            )
+            relation_readability = {}
+            for rel_model in relation_models:
+                readable, detail = _probe_relation_readable(intent_url, token, rel_model)
+                relation_readability[rel_model] = {"readable": readable, **detail}
 
             row["user"] = {
                 "contract_mode": user_meta.get("contract_mode"),
                 "field_count": len(user_fields),
                 "layout_field_count": user_layout_field_count,
+                "layout_field_name_count": len(user_layout_field_names),
                 "header_button_count": len(user_header_buttons),
                 "smart_button_count": len(user_smart_buttons),
                 "search_filter_count": len(user_filters) if isinstance(user_filters, list) else 0,
                 "toolbar_header_count": len(user_toolbar_header) if isinstance(user_toolbar_header, list) else 0,
+                "visible_field_count": len(user_visible_field_names),
+                "core_group_field_count": len(core_group_fields),
+                "advanced_group_field_count": len(advanced_group_fields),
+                "relation_model_count": len(relation_models),
+                "unreadable_relation_model_count": sum(
+                    1 for _, detail in relation_readability.items() if not bool(detail.get("readable"))
+                ),
             }
             row["hud"] = {
                 "contract_mode": hud_meta.get("contract_mode"),
                 "field_count": len(hud_fields),
             }
+            row["user"]["relation_readability"] = relation_readability
 
             if row["user"]["contract_mode"] != "user":
                 errors.append(f"{role}.user contract_mode != user")
@@ -168,12 +273,29 @@ def main() -> int:
                 )
             if row["user"]["toolbar_header_count"] != 0:
                 errors.append(f"{role}.user toolbar.header should be empty")
+            visible_candidate_count = len(user_fields)
+            if user_visible_field_names:
+                visible_candidate_count = len(user_visible_field_names & set(user_fields.keys()))
+            elif core_group_fields or advanced_group_fields:
+                grouped = (core_group_fields | advanced_group_fields) & set(user_fields.keys())
+                visible_candidate_count = len(grouped)
+            elif user_layout_field_names:
+                visible_candidate_count = len(user_layout_field_names & set(user_fields.keys()))
+            if user_fields and visible_candidate_count == 0:
+                errors.append(f"{role}.user has fields but no visible field candidates from visible_fields/field_groups/layout")
             for field in required_user_fields:
                 if field not in user_fields:
                     errors.append(f"{role}.user missing required field `{field}`")
             for field in forbidden_user_fields:
                 if field in user_fields:
                     errors.append(f"{role}.user includes forbidden field `{field}`")
+            unreadable_relations = sorted(
+                [model_name for model_name, detail in relation_readability.items() if not bool(detail.get("readable"))]
+            )
+            if unreadable_relations:
+                errors.append(
+                    f"{role}.user contains unreadable relation models: {', '.join(unreadable_relations)}"
+                )
             if len(hud_fields) < len(user_fields):
                 errors.append(f"{role}.hud field_count={len(hud_fields)} should be >= user={len(user_fields)}")
             row["ok"] = True

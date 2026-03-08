@@ -1223,7 +1223,7 @@ async function loadRelationOptions() {
       .map((node) => node.name),
   );
   const entries = Object.entries(fields).filter(([name]) => {
-    if (!visibleRelationFields.size) return true;
+    if (!visibleRelationFields.size) return relationIds(name).length > 0;
     if (visibleRelationFields.has(name)) return true;
     return relationIds(name).length > 0;
   });
@@ -1466,9 +1466,13 @@ function isFieldVisible(name: string) {
   if (visible.length && !visible.includes(name)) return false;
   const core = coreFieldNames.value;
   const advanced = advancedFieldNames.value;
-  if (!core.length && !advanced.length) return true;
-  if (core.includes(name)) return true;
-  if (advanced.includes(name)) return advancedExpanded.value;
+  const hasCore = core.length > 0;
+  const hasAdvanced = advanced.length > 0;
+  if (!hasCore && !hasAdvanced) return true;
+  if (hasCore && core.includes(name)) return true;
+  if (hasAdvanced && advanced.includes(name)) return advancedExpanded.value;
+  // Some contracts only tag advanced fields; keep non-tagged fields visible in that case.
+  if (!hasCore) return true;
   return renderProfile.value !== 'create';
 }
 
@@ -1882,7 +1886,8 @@ async function loadContract() {
   }
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
-  advancedExpanded.value = renderProfile.value !== 'create';
+  const hasCore = coreFieldNames.value.length > 0;
+  advancedExpanded.value = renderProfile.value !== 'create' || !hasCore;
 }
 
 async function loadRecord() {
