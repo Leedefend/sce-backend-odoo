@@ -8,6 +8,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 SESSION_STORE = ROOT / "frontend/apps/web/src/stores/session.ts"
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
+APP_SHELL = ROOT / "frontend/apps/web/src/layouts/AppShell.vue"
+NAV_REGISTRY = ROOT / "frontend/apps/web/src/app/navigationRegistry.ts"
 REPORT_JSON = ROOT / "artifacts/backend/frontend_product_contract_consumption_report.json"
 REPORT_MD = ROOT / "docs/ops/audit/frontend_product_contract_consumption_report.md"
 
@@ -24,12 +26,18 @@ def _has_all(text: str, tokens: list[str]) -> tuple[bool, list[str]]:
 def main() -> int:
     session_text = _read(SESSION_STORE)
     home_text = _read(HOME_VIEW)
+    shell_text = _read(APP_SHELL)
+    nav_registry_text = _read(NAV_REGISTRY)
     errors: list[str] = []
 
     if not session_text:
         errors.append(f"missing file: {SESSION_STORE.relative_to(ROOT).as_posix()}")
     if not home_text:
         errors.append(f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}")
+    if not shell_text:
+        errors.append(f"missing file: {APP_SHELL.relative_to(ROOT).as_posix()}")
+    if not nav_registry_text:
+        errors.append(f"missing file: {NAV_REGISTRY.relative_to(ROOT).as_posix()}")
 
     required_session_tokens = [
         "capability_groups",
@@ -61,24 +69,47 @@ def main() -> int:
         "capabilityGroupCards",
         "<section v-if=\"capabilityGroupCards.length\" class=\"group-overview\"",
     ]
+    required_shell_tokens = [
+        "buildRuntimeNavigationRegistry(",
+        "entry_source",
+        "nav_entry_total",
+        "nav_scene_entries",
+        "nav_cap_entries",
+    ]
+    required_navigation_registry_tokens = [
+        "export type NavigationEntrySource = 'scene' | 'capability';",
+        "export interface RuntimeNavigationEntry",
+        "export interface RuntimeNavigationRegistry",
+        "export function buildRuntimeNavigationRegistry(",
+        "registryKey: `nav.scene::${sceneKey}`",
+        "registryKey: `nav.capability::${key}`",
+    ]
 
     ok_session, missing_session = _has_all(session_text, required_session_tokens)
     ok_home, missing_home = _has_all(home_text, required_home_tokens)
+    ok_shell, missing_shell = _has_all(shell_text, required_shell_tokens)
+    ok_nav_registry, missing_nav_registry = _has_all(nav_registry_text, required_navigation_registry_tokens)
     if not ok_session:
         errors.extend([f"session.ts missing token: {token}" for token in missing_session])
     if not ok_home:
         errors.extend([f"HomeView.vue missing token: {token}" for token in missing_home])
+    if not ok_shell:
+        errors.extend([f"AppShell.vue missing token: {token}" for token in missing_shell])
+    if not ok_nav_registry:
+        errors.extend([f"navigationRegistry.ts missing token: {token}" for token in missing_nav_registry])
 
     report = {
         "ok": len(errors) == 0,
         "summary": {
-            "checked_files": 2,
+            "checked_files": 4,
             "error_count": len(errors),
             "contract_signals": {
                 "capability_groups": "consumed" if ok_session else "missing",
                 "ext_facts.product.license": "consumed" if ok_session else "missing",
                 "ext_facts.product.bundle": "consumed" if ok_session else "missing",
                 "home_product_surface": "rendered" if ok_home else "missing",
+                "appshell_navigation_hud": "rendered" if ok_shell else "missing",
+                "runtime_navigation_registry": "available" if ok_nav_registry else "missing",
                 "capability_metadata_state_reason": "consumed" if ok_session and ok_home else "missing",
             },
         },

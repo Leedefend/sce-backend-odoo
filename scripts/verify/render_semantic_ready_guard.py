@@ -64,7 +64,7 @@ def main() -> int:
         "if (renderProfile.value !== 'create') return true;",
         "return !Boolean(contract.value.hide_filters_on_create);",
         "const hasPrimaryHeaderAction = computed(() => headerActions.value.some((item) => item.semantic === 'primary_action'));",
-        "advancedExpanded.value = renderProfile.value !== 'create';",
+        "advancedExpanded.value = renderProfile.value !== 'create'",
         "isFieldVisible(node.name)",
         "收起高级信息",
         "展开高级信息",
@@ -82,7 +82,7 @@ def main() -> int:
             "single_primary_action_guard": "primary_assigned = False" in governance_text,
             "create_hide_search_filters": "showSearchFilters" in form_text,
             "create_hide_export_button": "showDebugActions" in form_text and "exportContractJson" in form_text,
-            "advanced_default_collapsed_on_create": "advancedExpanded.value = renderProfile.value !== 'create';" in form_text,
+            "advanced_default_collapsed_on_create": "advancedExpanded.value = renderProfile.value !== 'create'" in form_text,
         },
         "errors": errors,
     }

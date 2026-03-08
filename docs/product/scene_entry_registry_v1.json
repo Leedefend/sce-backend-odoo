@@ -1,0 +1,530 @@
+{
+  "version": "v1",
+  "generated_on": "2026-03-09",
+  "entry_count": 31,
+  "entries": [
+    {
+      "entry_key": "scene::contract.center",
+      "entry_source": "scene",
+      "scene_key": "contract.center",
+      "scene_name": "合同中心",
+      "entry_type": "shortcut",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "contract.center.open",
+        "contract.expense.track",
+        "contract.income.track",
+        "contract.settlement.audit"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::contracts.monitor",
+      "entry_source": "scene",
+      "scene_key": "contracts.monitor",
+      "scene_name": "合同监控",
+      "entry_type": "menu",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "contract.center.open",
+        "contract.expense.track",
+        "contract.income.track",
+        "contract.settlement.audit"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::cost.budget_alloc",
+      "entry_source": "scene",
+      "scene_key": "cost.budget_alloc",
+      "scene_name": "预算分配",
+      "entry_type": "shortcut",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "cost.boq.manage",
+        "cost.budget.manage",
+        "cost.ledger.open",
+        "cost.profit.compare",
+        "cost.progress.report"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::cost.control",
+      "entry_source": "scene",
+      "scene_key": "cost.control",
+      "scene_name": "成本控制",
+      "entry_type": "menu",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "cost.ledger.open"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::cost.cost_compare",
+      "entry_source": "scene",
+      "scene_key": "cost.cost_compare",
+      "scene_name": "成本中心",
+      "entry_type": "shortcut",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "cost.boq.manage",
+        "cost.budget.manage",
+        "cost.ledger.open",
+        "cost.profit.compare",
+        "cost.progress.report"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::cost.profit_compare",
+      "entry_source": "scene",
+      "scene_key": "cost.profit_compare",
+      "scene_name": "盈亏对比",
+      "entry_type": "shortcut",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "cost.profit.compare"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::cost.project_boq",
+      "entry_source": "scene",
+      "scene_key": "cost.project_boq",
+      "scene_name": "工程量清单",
+      "entry_type": "shortcut",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "cost.boq.manage",
+        "project.structure.manage"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::cost.project_budget",
+      "entry_source": "scene",
+      "scene_key": "cost.project_budget",
+      "scene_name": "预算管理",
+      "entry_type": "shortcut",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "cost.budget.manage"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::cost.project_cost_ledger",
+      "entry_source": "scene",
+      "scene_key": "cost.project_cost_ledger",
+      "scene_name": "成本台账",
+      "entry_type": "shortcut",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "cost.ledger.open"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::cost.project_progress",
+      "entry_source": "scene",
+      "scene_key": "cost.project_progress",
+      "scene_name": "进度填报",
+      "entry_type": "shortcut",
+      "target_role": [
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "cost.progress.report"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::data.dictionary",
+      "entry_source": "scene",
+      "scene_key": "data.dictionary",
+      "scene_name": "业务字典",
+      "entry_type": "shortcut",
+      "target_role": [
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "material.catalog.open",
+        "material.procurement.list"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::finance.center",
+      "entry_source": "scene",
+      "scene_key": "finance.center",
+      "scene_name": "财务中心",
+      "entry_type": "menu",
+      "target_role": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "finance.approval.center",
+        "finance.invoice.list",
+        "finance.plan.funding"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::finance.operating_metrics",
+      "entry_source": "scene",
+      "scene_key": "finance.operating_metrics",
+      "scene_name": "经营指标看板",
+      "entry_type": "menu",
+      "target_role": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "analytics.exception.list",
+        "finance.exception.monitor",
+        "finance.metrics.operating"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::finance.payment_ledger",
+      "entry_source": "scene",
+      "scene_key": "finance.payment_ledger",
+      "scene_name": "收付款台账",
+      "entry_type": "menu",
+      "target_role": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "finance.ledger.payment"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::finance.payment_requests",
+      "entry_source": "scene",
+      "scene_key": "finance.payment_requests",
+      "scene_name": "付款收款申请",
+      "entry_type": "menu",
+      "target_role": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "finance.payment_request.form",
+        "finance.payment_request.list"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::finance.settlement_orders",
+      "entry_source": "scene",
+      "scene_key": "finance.settlement_orders",
+      "scene_name": "结算单",
+      "entry_type": "menu",
+      "target_role": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "contract.settlement.audit",
+        "finance.settlement.order"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::finance.treasury_ledger",
+      "entry_source": "scene",
+      "scene_key": "finance.treasury_ledger",
+      "scene_name": "资金台账",
+      "entry_type": "menu",
+      "target_role": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "finance.ledger.treasury"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::my_work.workspace",
+      "entry_source": "scene",
+      "scene_key": "my_work.workspace",
+      "scene_name": "我的工作台",
+      "entry_type": "my_work",
+      "target_role": [
+        "construction_manager",
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "governance.runtime.audit",
+        "workspace.today.focus"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::payments.approval",
+      "entry_source": "scene",
+      "scene_key": "payments.approval",
+      "scene_name": "支付审批",
+      "entry_type": "menu",
+      "target_role": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "finance.payment_request.form",
+        "finance.payment_request.list"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::portal.capability_matrix",
+      "entry_source": "scene",
+      "scene_key": "portal.capability_matrix",
+      "scene_name": "能力矩阵",
+      "entry_type": "shortcut",
+      "target_role": [
+        "construction_manager",
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "governance.capability.matrix",
+        "governance.scene.openability"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::portal.dashboard",
+      "entry_source": "scene",
+      "scene_key": "portal.dashboard",
+      "scene_name": "工作台",
+      "entry_type": "home",
+      "target_role": [
+        "construction_manager",
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "governance.runtime.audit",
+        "workspace.today.focus"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::portal.lifecycle",
+      "entry_source": "scene",
+      "scene_key": "portal.lifecycle",
+      "scene_name": "生命周期驾驶舱",
+      "entry_type": "shortcut",
+      "target_role": [
+        "construction_manager",
+        "project_manager",
+        "finance_manager"
+      ],
+      "required_capabilities": [
+        "analytics.lifecycle.monitor",
+        "project.lifecycle.open",
+        "project.lifecycle.transition"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::projects.dashboard",
+      "entry_source": "scene",
+      "scene_key": "projects.dashboard",
+      "scene_name": "项目驾驶舱",
+      "entry_type": "home",
+      "target_role": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "analytics.dashboard.executive",
+        "project.dashboard.open"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::projects.detail",
+      "entry_source": "scene",
+      "scene_key": "projects.detail",
+      "scene_name": "项目详情",
+      "entry_type": "menu",
+      "target_role": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "project.initiation.enter"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::projects.execution",
+      "entry_source": "scene",
+      "scene_key": "projects.execution",
+      "scene_name": "项目执行",
+      "entry_type": "menu",
+      "target_role": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "contract.center.open",
+        "contract.expense.track",
+        "contract.income.track",
+        "material.catalog.open",
+        "material.procurement.list",
+        "project.board.open",
+        "project.document.open",
+        "project.risk.list",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::projects.intake",
+      "entry_source": "scene",
+      "scene_key": "projects.intake",
+      "scene_name": "项目立项",
+      "entry_type": "menu",
+      "target_role": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "project.initiation.enter"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::projects.ledger",
+      "entry_source": "scene",
+      "scene_key": "projects.ledger",
+      "scene_name": "项目台账（试点）",
+      "entry_type": "menu",
+      "target_role": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "contract.center.open",
+        "contract.expense.track",
+        "contract.income.track",
+        "material.catalog.open",
+        "material.procurement.list",
+        "project.board.open",
+        "project.document.open",
+        "project.risk.list",
+        "project.task.board",
+        "project.task.list",
+        "project.weekly_report.open"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::projects.list",
+      "entry_source": "scene",
+      "scene_key": "projects.list",
+      "scene_name": "项目列表",
+      "entry_type": "menu",
+      "target_role": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "analytics.project.focus",
+        "project.list.open",
+        "workspace.project.watch"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::risk.center",
+      "entry_source": "scene",
+      "scene_key": "risk.center",
+      "scene_name": "风险中心",
+      "entry_type": "menu",
+      "target_role": [
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "governance.capability.matrix",
+        "governance.runtime.audit",
+        "governance.scene.openability",
+        "project.risk.list"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::risk.monitor",
+      "entry_source": "scene",
+      "scene_key": "risk.monitor",
+      "scene_name": "风险监控",
+      "entry_type": "shortcut",
+      "target_role": [
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "governance.capability.matrix",
+        "governance.runtime.audit",
+        "governance.scene.openability",
+        "project.risk.list"
+      ],
+      "status": "ready"
+    },
+    {
+      "entry_key": "scene::task.center",
+      "entry_source": "scene",
+      "scene_key": "task.center",
+      "scene_name": "任务中心",
+      "entry_type": "shortcut",
+      "target_role": [
+        "construction_manager"
+      ],
+      "required_capabilities": [
+        "project.task.board",
+        "project.task.list"
+      ],
+      "status": "ready"
+    }
+  ]
+}

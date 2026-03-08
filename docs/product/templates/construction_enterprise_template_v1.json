@@ -1,0 +1,79 @@
+{
+  "template_key": "construction_enterprise",
+  "version": "v1",
+  "default_roles": [
+    "construction_manager",
+    "project_manager",
+    "finance_manager",
+    "risk_manager"
+  ],
+  "default_scenes": [
+    "projects.dashboard",
+    "projects.execution",
+    "projects.detail",
+    "contracts.monitor",
+    "cost.control",
+    "payments.approval",
+    "risk.center",
+    "my_work.workspace"
+  ],
+  "default_capability_groups": [
+    "project_management",
+    "contract_management",
+    "cost_management",
+    "finance_management",
+    "analytics",
+    "governance"
+  ],
+  "home_layout_sections": [
+    "my_work",
+    "core_scenes",
+    "key_risks",
+    "business_dashboard",
+    "capability_shortcuts"
+  ],
+  "role_entry_policy": [
+    {
+      "role_key": "construction_manager",
+      "home_scene": "projects.dashboard",
+      "high_frequency_scenes": [
+        "projects.dashboard",
+        "contracts.monitor",
+        "cost.control"
+      ],
+      "disabled_scenes": []
+    },
+    {
+      "role_key": "project_manager",
+      "home_scene": "projects.execution",
+      "high_frequency_scenes": [
+        "projects.execution",
+        "projects.detail",
+        "my_work.workspace"
+      ],
+      "disabled_scenes": []
+    },
+    {
+      "role_key": "finance_manager",
+      "home_scene": "payments.approval",
+      "high_frequency_scenes": [
+        "payments.approval",
+        "cost.control",
+        "contracts.monitor"
+      ],
+      "disabled_scenes": []
+    },
+    {
+      "role_key": "risk_manager",
+      "home_scene": "risk.center",
+      "high_frequency_scenes": [
+        "risk.center",
+        "my_work.workspace",
+        "projects.detail"
+      ],
+      "disabled_scenes": [
+        "finance.settlement_orders"
+      ]
+    }
+  ]
+}
