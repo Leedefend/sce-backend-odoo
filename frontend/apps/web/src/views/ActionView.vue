@@ -216,6 +216,9 @@
       :error="error"
       :records="records"
       :fields="kanbanFields"
+      :primary-fields="kanbanPrimaryFields"
+      :secondary-fields="kanbanSecondaryFields"
+      :status-fields="kanbanStatusFields"
       :field-labels="contractColumnLabels"
       :title-field="kanbanTitleField"
       :subtitle="subtitle"
@@ -377,6 +380,10 @@ const sortValue = ref('');
 const filterValue = ref<'all' | 'active' | 'archived'>('all');
 const columns = ref<string[]>([]);
 const kanbanFields = ref<string[]>([]);
+const kanbanPrimaryFields = ref<string[]>([]);
+const kanbanSecondaryFields = ref<string[]>([]);
+const kanbanStatusFields = ref<string[]>([]);
+const kanbanTitleFieldHint = ref('');
 const hasActiveField = ref(false);
 const hasAssigneeField = ref(false);
 const assigneeOptions = ref<Array<{ id: number; name: string }>>([]);
@@ -451,6 +458,13 @@ type ContractViewBlock = {
   columnsSchema?: ContractColumnSchema[];
   columns_schema?: ContractColumnSchema[];
   fields?: string[];
+  kanban_profile?: {
+    title_field?: string;
+    primary_fields?: string[];
+    secondary_fields?: string[];
+    status_fields?: string[];
+    max_meta?: number;
+  };
   model?: string;
   order?: string;
 };
@@ -641,6 +655,9 @@ const sortOptions = computed(() => {
 });
 const subtitle = computed(() => `${records.value.length} 条记录 · 排序：${sortLabel.value}`);
 const kanbanTitleField = computed(() => {
+  if (kanbanTitleFieldHint.value && kanbanFields.value.includes(kanbanTitleFieldHint.value)) {
+    return kanbanTitleFieldHint.value;
+  }
   const candidates = ['display_name', 'name'];
   const found = candidates.find((field) => kanbanFields.value.includes(field));
   return found || kanbanFields.value[0] || 'id';
@@ -1995,6 +2012,21 @@ function extractKanbanFields(contract: Awaited<ReturnType<typeof loadActionContr
   return [];
 }
 
+function extractKanbanProfile(contract: Awaited<ReturnType<typeof loadActionContract>>) {
+  const typed = contract as ActionContractLoose;
+  const directViews = typed.views || typed.ui_contract?.views;
+  const block = directViews?.kanban;
+  const profile = (block?.kanban_profile || {}) as Record<string, unknown>;
+  const normalize = (rows: unknown) =>
+    Array.isArray(rows) ? rows.map((item) => String(item || '').trim()).filter(Boolean) : [];
+  return {
+    titleField: String(profile.title_field || '').trim(),
+    primaryFields: normalize(profile.primary_fields),
+    secondaryFields: normalize(profile.secondary_fields),
+    statusFields: normalize(profile.status_fields),
+  };
+}
+
 function extractAdvancedViewFields(contract: Awaited<ReturnType<typeof loadActionContract>>, mode: string) {
   const typed = contract as ActionContractLoose;
   const directViews = typed.views as Record<string, unknown> | undefined;
@@ -2369,6 +2401,10 @@ async function load() {
   groupWindowNextOffset.value = null;
   columns.value = [];
   kanbanFields.value = [];
+  kanbanPrimaryFields.value = [];
+  kanbanSecondaryFields.value = [];
+  kanbanStatusFields.value = [];
+  kanbanTitleFieldHint.value = '';
   advancedFields.value = [];
   const startedAt = Date.now();
 
@@ -2532,24 +2568,41 @@ async function load() {
     }
     const contractColumns = convergeColumnsForSurface(extractColumnsFromContract(contract), typedContract.fields || {});
     const kanbanContractFields = extractKanbanFields(contract);
+    const kanbanProfile = extractKanbanProfile(contract);
     const advancedContractFields = extractAdvancedViewFields(contract, viewMode.value);
+    const fallbackKanbanFields = resolveRequestedFields(contractColumns, listProfile.value);
+    const effectiveKanbanFields = kanbanContractFields.length
+      ? kanbanContractFields
+      : uniqueFields([...fallbackKanbanFields, 'id', 'name']);
     advancedFields.value = advancedContractFields;
-    kanbanFields.value = kanbanContractFields;
+    kanbanFields.value = effectiveKanbanFields;
+    kanbanTitleFieldHint.value = kanbanProfile.titleField;
+    kanbanPrimaryFields.value = uniqueFields(
+      [...kanbanProfile.primaryFields].filter((name) => effectiveKanbanFields.includes(name)),
+    );
+    kanbanSecondaryFields.value = uniqueFields(
+      [...kanbanProfile.secondaryFields].filter((name) => effectiveKanbanFields.includes(name)),
+    );
+    kanbanStatusFields.value = uniqueFields(
+      [...kanbanProfile.statusFields].filter((name) => effectiveKanbanFields.includes(name)),
+    );
     const fieldMap = typedContract.fields || {};
     hasActiveField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'active' in fieldMap);
     hasAssigneeField.value = Boolean(fieldMap && typeof fieldMap === 'object' && 'user_id' in fieldMap);
     await loadAssigneeOptions();
+    if (viewMode.value === 'kanban' && !kanbanContractFields.length) {
+      console.warn('[contract] missing kanban fields; fallback to list/profile fields', {
+        actionId: actionId.value,
+        model: resolvedModel,
+        fallbackFieldCount: effectiveKanbanFields.length,
+      });
+    }
     const requestedFields =
       viewMode.value === 'kanban'
-        ? kanbanContractFields
+        ? effectiveKanbanFields
         : viewMode.value === 'tree'
           ? resolveRequestedFields(contractColumns, listProfile.value)
           : advancedContractFields;
-    if (viewMode.value === 'kanban' && !kanbanContractFields.length) {
-      setError(new Error('missing contract fields for kanban view'), 'missing contract fields for kanban view');
-      status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });
-      return;
-    }
     if (viewMode.value === 'tree' && !contractColumns.length) {
       setError(new Error('missing contract columns for list/tree view'), 'missing contract columns for list/tree view');
       status.value = deriveListStatus({ error: error.value?.message || '', recordsLength: 0 });

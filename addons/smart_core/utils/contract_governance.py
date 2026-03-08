@@ -151,6 +151,21 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "drilldown": "业务查看",
     "other": "更多操作",
 }
+_PROJECT_KANBAN_PRIMARY_FIELDS = [
+    "name",
+    "project_code",
+    "manager_id",
+]
+_PROJECT_KANBAN_SECONDARY_FIELDS = [
+    "stage_id",
+    "lifecycle_state",
+    "end_date",
+    "budget_total",
+]
+_PROJECT_KANBAN_STATUS_FIELDS = [
+    "lifecycle_state",
+    "stage_id",
+]
 _USER_SURFACE_ACTION_GROUP_LABELS = {
     "basic": "基础操作",
     "workflow": "流程推进",
@@ -624,6 +639,7 @@ def _apply_user_surface_policies(data: dict) -> None:
         filters_primary_max = 0
         actions_primary_max = 3
     if model == "project.project":
+        filters_primary_max = min(filters_primary_max, 4)
         actions_primary_max = min(actions_primary_max, 3)
     data["surface_policies"] = {
         "filters_primary_max": filters_primary_max,
@@ -717,6 +733,23 @@ def _is_project_form_contract(data: dict) -> bool:
     return model == "project.project" and view_type == "form"
 
 
+def _is_project_kanban_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    kanban_view = _as_dict(views.get("kanban"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or kanban_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("kanban"), dict):
+        view_type = "kanban"
+    return model == "project.project" and "kanban" in view_type
+
+
 def _is_form_contract(data: dict) -> bool:
     head = _as_dict(data.get("head"))
     views = _as_dict(data.get("views"))
@@ -754,16 +787,7 @@ def _pick_project_form_fields(data: dict) -> list[str]:
     fields_map = _as_dict(data.get("fields"))
     if not fields_map:
         return []
-    layout = _as_dict(_as_dict(data.get("views")).get("form")).get("layout") or []
-    ordered_fields: list[str] = []
-    for node in layout if isinstance(layout, list) else []:
-        if not isinstance(node, dict):
-            continue
-        if _safe_lower(node.get("type")) != "field":
-            continue
-        name = _safe_text(node.get("name"))
-        if name and name not in ordered_fields:
-            ordered_fields.append(name)
+    ordered_fields = _iter_field_order(data)
 
     selected: list[str] = []
     for name in _PROJECT_FORM_PRIMARY_FIELDS:
@@ -796,78 +820,146 @@ def _pick_project_form_fields(data: dict) -> list[str]:
     return selected[:_PROJECT_FORM_FIELD_MAX]
 
 
+def _govern_project_kanban_contract_for_user(data: dict) -> None:
+    fields_map = _as_dict(data.get("fields"))
+    if not fields_map:
+        return
+
+    available = [name for name in fields_map.keys() if not _is_technical_field(name, _as_dict(fields_map.get(name)))]
+    primary: list[str] = []
+    secondary: list[str] = []
+    status: list[str] = []
+
+    def _pick(target: list[str], name: str) -> None:
+        if name in available and name not in target:
+            target.append(name)
+
+    for name in _PROJECT_KANBAN_PRIMARY_FIELDS:
+        _pick(primary, name)
+    for name in _PROJECT_KANBAN_SECONDARY_FIELDS:
+        _pick(secondary, name)
+    for name in _PROJECT_KANBAN_STATUS_FIELDS:
+        _pick(status, name)
+
+    if not primary:
+        for fallback in ("name", "display_name"):
+            _pick(primary, fallback)
+            if primary:
+                break
+    if len(primary) < 3:
+        for name in available:
+            _pick(primary, name)
+            if len(primary) >= 3:
+                break
+    if len(secondary) < 4:
+        for name in available:
+            if name in primary:
+                continue
+            _pick(secondary, name)
+            if len(secondary) >= 4:
+                break
+    if not status:
+        for name in ("lifecycle_state", "stage_id", "state"):
+            _pick(status, name)
+            if status:
+                break
+
+    selected = [name for name in primary + secondary if name]
+    selected = selected[:8]
+    data["visible_fields"] = selected
+    data["kanban_profile"] = {
+        "title_field": primary[0] if primary else "name",
+        "primary_fields": primary[:3],
+        "secondary_fields": secondary[:4],
+        "status_fields": status[:2],
+        "max_meta": 4,
+    }
+
+    views = _as_dict(data.get("views"))
+    kanban = _as_dict(views.get("kanban"))
+    existing = kanban.get("fields") if isinstance(kanban.get("fields"), list) else []
+    merged_fields: list[str] = []
+    for name in existing + selected:
+        normalized = _safe_text(name)
+        if normalized and normalized in fields_map and normalized not in merged_fields:
+            merged_fields.append(normalized)
+    kanban["fields"] = merged_fields or ["id", "name"]
+    kanban["kanban_profile"] = _as_dict(data.get("kanban_profile"))
+    views["kanban"] = kanban
+    data["views"] = views
+
+
 def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
     views = _as_dict(data.get("views"))
     form = _as_dict(views.get("form"))
     layout = form.get("layout")
     if not isinstance(layout, list):
         return
+
+    def _iter_children(node: dict) -> list[list]:
+        rows: list[list] = []
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            candidate = node.get(key)
+            if isinstance(candidate, list):
+                rows.append(candidate)
+        return rows
+
+    def _collect_layout_field_names(nodes: list, out: list[str]) -> None:
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            node_type = _safe_lower(node.get("type"))
+            if node_type == "field":
+                name = _safe_text(node.get("name"))
+                if name and name not in out:
+                    out.append(name)
+            for children in _iter_children(node):
+                _collect_layout_field_names(children, out)
+
+    def _prune_layout(nodes: list, allowed: set[str]) -> list[dict]:
+        cleaned: list[dict] = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            node_type = _safe_lower(node.get("type"))
+            if node_type == "field":
+                name = _safe_text(node.get("name"))
+                if name and name in allowed:
+                    cleaned.append(node)
+                continue
+            copied = dict(node)
+            keep_node = True
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                raw_children = node.get(key)
+                if not isinstance(raw_children, list):
+                    continue
+                pruned_children = _prune_layout(raw_children, allowed)
+                copied[key] = pruned_children
+                if node_type in {"group", "page", "notebook", "sheet", "header"} and not pruned_children and key in {"children", "tabs", "pages"}:
+                    keep_node = False
+            if keep_node:
+                cleaned.append(copied)
+        return cleaned
+
     selected_order = [name for name in selected_fields if _safe_text(name)]
     selected_set = set(selected_order)
-    filtered_layout: list[dict] = []
-    for node in layout:
-        if not isinstance(node, dict):
-            continue
-        node_type = _safe_lower(node.get("type"))
-        if node_type == "field":
-            name = _safe_text(node.get("name"))
-            if name and name in selected_set:
-                filtered_layout.append(node)
-            continue
-        filtered_layout.append(node)
+    filtered_layout = _prune_layout(layout, selected_set)
 
-    existing_field_names = {
-        _safe_text(item.get("name"))
-        for item in filtered_layout
-        if isinstance(item, dict) and _safe_lower(item.get("type")) == "field"
-    }
+    existing_field_names: list[str] = []
+    _collect_layout_field_names(filtered_layout, existing_field_names)
     if not existing_field_names:
         for name in _PROJECT_FORM_PRIMARY_FIELDS:
             if name in selected_fields:
                 filtered_layout.append({"type": "field", "name": name})
-        existing_field_names = {
-            _safe_text(item.get("name"))
-            for item in filtered_layout
-            if isinstance(item, dict) and _safe_lower(item.get("type")) == "field"
-        }
+        _collect_layout_field_names(filtered_layout, existing_field_names)
 
     # Ensure filtered layout covers selected user-surface fields, so frontend can render
     # a coherent contract-driven form without falling back to unordered field maps.
-    missing_selected = [name for name in selected_order if name and name not in existing_field_names]
+    existing_set = set(existing_field_names)
+    missing_selected = [name for name in selected_order if name and name not in existing_set]
     for name in missing_selected:
         filtered_layout.append({"type": "field", "name": name})
-
-    field_nodes: dict[str, dict] = {}
-    field_seen: list[str] = []
-    for node in filtered_layout:
-        if not isinstance(node, dict) or _safe_lower(node.get("type")) != "field":
-            continue
-        name = _safe_text(node.get("name"))
-        if not name:
-            continue
-        if name not in field_nodes:
-            field_nodes[name] = node
-            field_seen.append(name)
-
-    ordered_field_names: list[str] = []
-    for name in selected_order + field_seen:
-        if name in field_nodes and name not in ordered_field_names:
-            ordered_field_names.append(name)
-    reordered_fields = [field_nodes[name] for name in ordered_field_names]
-
-    rebuilt_layout: list[dict] = []
-    inserted = False
-    for node in filtered_layout:
-        if not isinstance(node, dict) or _safe_lower(node.get("type")) != "field":
-            rebuilt_layout.append(node)
-            continue
-        if not inserted:
-            rebuilt_layout.extend(reordered_fields)
-            inserted = True
-    if not inserted:
-        rebuilt_layout.extend(reordered_fields)
-
-    form["layout"] = rebuilt_layout
+    form["layout"] = filtered_layout
     views["form"] = form
     data["views"] = views
 
@@ -1034,7 +1126,17 @@ def _govern_project_form_contract_for_user(data: dict) -> None:
     fields_map = _as_dict(data.get("fields"))
     data["fields"] = {name: fields_map.get(name) for name in selected if name in fields_map}
     data["visible_fields"] = selected
+    data["form_profile"] = {
+        "core_fields": selected[:8],
+        "advanced_fields": selected[8:],
+        "max_fields": _PROJECT_FORM_FIELD_MAX,
+    }
     _filter_project_form_layout(data, selected)
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["form_profile"] = _as_dict(data.get("form_profile"))
+    views["form"] = form
+    data["views"] = views
 
     permissions = _as_dict(data.get("permissions"))
     field_groups = _as_dict(permissions.get("field_groups"))
@@ -1090,17 +1192,29 @@ def _resolve_render_profile(data: dict) -> str:
 
 
 def _iter_field_order(data: dict) -> list[str]:
+    def _iter_children(node: dict) -> list[list]:
+        rows: list[list] = []
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            candidate = node.get(key)
+            if isinstance(candidate, list):
+                rows.append(candidate)
+        return rows
+
+    def _collect_fields(nodes: list, out: list[str]) -> None:
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            if _safe_lower(node.get("type")) == "field":
+                name = _safe_text(node.get("name"))
+                if name and name not in out:
+                    out.append(name)
+            for children in _iter_children(node):
+                _collect_fields(children, out)
+
     ordered: list[str] = []
     form = _as_dict(_as_dict(data.get("views")).get("form"))
     layout = form.get("layout")
-    for node in layout if isinstance(layout, list) else []:
-        if not isinstance(node, dict):
-            continue
-        if _safe_lower(node.get("type")) != "field":
-            continue
-        name = _safe_text(node.get("name"))
-        if name and name not in ordered:
-            ordered.append(name)
+    _collect_fields(layout if isinstance(layout, list) else [], ordered)
     for name in (_as_dict(data.get("fields")) or {}).keys():
         if name not in ordered:
             ordered.append(name)
@@ -1696,6 +1810,8 @@ def _apply_domain_overrides(data: dict, contract_mode: str) -> list[dict[str, An
 def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
     if contract_mode == "user" and _is_project_form_contract(data):
         _govern_project_form_contract_for_user(data)
+    if contract_mode == "user" and _is_project_kanban_contract(data):
+        _govern_project_kanban_contract_for_user(data)
 
 
 def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:
