@@ -99,6 +99,7 @@ async function load() {
       domain: [['id', 'in', ids]],
       limit: ids.length,
       order: 'id asc',
+      silentErrors: true,
     });
     rows.value = (response.records || []).map((record) => {
       const raw = record as RelationRecordRaw;
