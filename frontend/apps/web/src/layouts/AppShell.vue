@@ -213,6 +213,26 @@ const routeSceneKey = computed(() => {
   const metaSceneKey = route.meta?.sceneKey as string | undefined;
   return metaSceneKey || parseSceneKeyFromQuery(route.query as LocationQueryRaw);
 });
+const routeScene = computed(() => {
+  const key = routeSceneKey.value;
+  if (!key) return null;
+  return getSceneByKey(key);
+});
+const routeSceneCapabilityKeys = computed(() => {
+  const scene = routeScene.value as { capabilities?: unknown } | null;
+  if (!scene || !Array.isArray(scene.capabilities)) return [];
+  return scene.capabilities.map((item) => String(item || "").trim()).filter(Boolean);
+});
+const routeSceneCapabilityGroups = computed(() => {
+  const catalog = session.capabilityCatalog || {};
+  const groups = new Set<string>();
+  routeSceneCapabilityKeys.value.forEach((key) => {
+    const meta = catalog[key];
+    const groupKey = String(meta?.group_key || "").trim();
+    if (groupKey) groups.add(groupKey);
+  });
+  return [...groups];
+});
 const activeLayout = computed(() => {
   const sceneKey = routeSceneKey.value;
   const scene = sceneKey ? getSceneByKey(sceneKey) : null;
@@ -337,6 +357,11 @@ const latestSuggestedActionTs = computed(() => {
 });
 const hudEntries = computed(() => [
   { label: 'scene_key', value: routeSceneKey.value || '-' },
+  { label: 'role_scope', value: String(roleSurface.value?.role_code || '-') },
+  { label: 'requested_surface', value: String(route.query.surface || '-') },
+  { label: 'scene_capability_count', value: routeSceneCapabilityKeys.value.length || 0 },
+  { label: 'scene_capabilities', value: routeSceneCapabilityKeys.value.slice(0, 8).join(',') || '-' },
+  { label: 'scene_capability_groups', value: routeSceneCapabilityGroups.value.join(',') || '-' },
   { label: 'menu_id', value: activeMenuId.value || '-' },
   { label: 'menu_label', value: menuLabel.value || '-' },
   { label: 'route', value: route.fullPath },
