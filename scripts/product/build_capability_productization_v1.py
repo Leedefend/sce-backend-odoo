@@ -833,6 +833,33 @@ def _md_role_navigation_profile(payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _md_navigation_registry_quality(payload: dict[str, Any]) -> str:
+    summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+    issues = payload.get("issues") if isinstance(payload.get("issues"), dict) else {}
+    lines = [
+        "# Navigation Registry Quality Report v1",
+        "",
+        f"- generated_on: {payload.get('generated_on')}",
+        f"- status: {payload.get('status')}",
+        "",
+        "## Summary",
+        "",
+        f"- navigation_entry_total: {summary.get('navigation_entry_total', 0)}",
+        f"- scene_entry_total: {summary.get('scene_entry_total', 0)}",
+        f"- capability_entry_total: {summary.get('capability_entry_total', 0)}",
+        f"- scene_coverage: {summary.get('scene_coverage', 0)}",
+        f"- capability_coverage: {summary.get('capability_coverage', 0)}",
+        "",
+        "## Issues",
+        "",
+        f"- unknown_source_entries: {', '.join(issues.get('unknown_source_entries', [])[:20]) or 'none'}",
+        f"- duplicate_registry_keys: {', '.join(issues.get('duplicate_registry_keys', [])[:20]) or 'none'}",
+        f"- scene_ref_missing: {', '.join(issues.get('scene_ref_missing', [])[:20]) or 'none'}",
+        f"- capability_ref_missing: {', '.join(issues.get('capability_ref_missing', [])[:20]) or 'none'}",
+    ]
+    return "\n".join(lines)
+
+
 def _construction_template_md(role_scene_matrix: dict[str, Any]) -> str:
     return "\n".join(
         [
@@ -1223,6 +1250,73 @@ def _role_navigation_profile(
     }
 
 
+def _navigation_registry_quality_report(
+    navigation_entry_registry: dict[str, Any],
+    scene_catalog_product: dict[str, Any],
+    capability_catalog: dict[str, Any],
+) -> dict[str, Any]:
+    nav_entries = navigation_entry_registry.get("entries") if isinstance(navigation_entry_registry.get("entries"), list) else []
+    scene_rows = scene_catalog_product.get("scenes") if isinstance(scene_catalog_product.get("scenes"), list) else []
+    cap_rows = capability_catalog.get("capabilities") if isinstance(capability_catalog.get("capabilities"), list) else []
+
+    scene_keys = {str((row or {}).get("scene_key") or "").strip() for row in scene_rows if str((row or {}).get("scene_key") or "").strip()}
+    cap_keys = {str((row or {}).get("capability_key") or "").strip() for row in cap_rows if str((row or {}).get("capability_key") or "").strip()}
+
+    scene_entries = [row for row in nav_entries if str((row or {}).get("entry_source") or "") == "scene"]
+    cap_entries = [row for row in nav_entries if str((row or {}).get("entry_source") or "") == "capability"]
+    unknown_source = [str((row or {}).get("registry_key") or "") for row in nav_entries if str((row or {}).get("entry_source") or "") not in {"scene", "capability"}]
+
+    scene_ref_missing = []
+    cap_ref_missing = []
+    duplicate_registry_keys = []
+    seen = set()
+    for row in nav_entries:
+        registry_key = str((row or {}).get("registry_key") or "").strip()
+        if registry_key in seen:
+            duplicate_registry_keys.append(registry_key)
+        seen.add(registry_key)
+        source = str((row or {}).get("entry_source") or "").strip()
+        if source == "scene":
+            sk = str((row or {}).get("scene_key") or "").strip()
+            if not sk or sk not in scene_keys:
+                scene_ref_missing.append(sk or "<empty>")
+        elif source == "capability":
+            ck = str((row or {}).get("capability_key") or "").strip()
+            if not ck or ck not in cap_keys:
+                cap_ref_missing.append(ck or "<empty>")
+
+    scene_covered = {str((row or {}).get("scene_key") or "").strip() for row in scene_entries if str((row or {}).get("scene_key") or "").strip()}
+    cap_covered = {str((row or {}).get("capability_key") or "").strip() for row in cap_entries if str((row or {}).get("capability_key") or "").strip()}
+
+    scene_coverage = round(len(scene_covered) / len(scene_keys), 4) if scene_keys else 0.0
+    capability_coverage = round(len(cap_covered) / len(cap_keys), 4) if cap_keys else 0.0
+
+    status = "pass"
+    if scene_ref_missing or cap_ref_missing or duplicate_registry_keys or unknown_source:
+        status = "fail"
+    elif scene_coverage < 0.95 or capability_coverage < 0.95:
+        status = "warn"
+
+    return {
+        "version": "v1",
+        "generated_on": date.today().isoformat(),
+        "status": status,
+        "summary": {
+            "navigation_entry_total": len(nav_entries),
+            "scene_entry_total": len(scene_entries),
+            "capability_entry_total": len(cap_entries),
+            "scene_coverage": scene_coverage,
+            "capability_coverage": capability_coverage,
+        },
+        "issues": {
+            "unknown_source_entries": sorted(set(unknown_source)),
+            "duplicate_registry_keys": sorted(set(duplicate_registry_keys)),
+            "scene_ref_missing": sorted(set(scene_ref_missing)),
+            "capability_ref_missing": sorted(set(cap_ref_missing)),
+        },
+    }
+
+
 def main() -> int:
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
     TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -1241,6 +1335,11 @@ def main() -> int:
     navigation_entry_registry_v1 = _navigation_entry_registry(scene_entry_registry_v1, capability_entry_registry_v1)
     role_scene_matrix = _role_scene_matrix(scene_catalog_v2)
     role_navigation_profile_v1 = _role_navigation_profile(role_scene_matrix, navigation_entry_registry_v1)
+    navigation_registry_quality_v1 = _navigation_registry_quality_report(
+        navigation_entry_registry_v1,
+        scene_catalog_product_v1,
+        capability_catalog,
+    )
     entry_registry_quality_v1 = _entry_registry_quality_report(
         scene_catalog_product_v1,
         capability_catalog,
@@ -1269,6 +1368,11 @@ def main() -> int:
     _write_json(PRODUCT_DIR / "navigation_entry_registry_v1.json", navigation_entry_registry_v1)
     _write_json(PRODUCT_DIR / "role_navigation_profile_v1.json", role_navigation_profile_v1)
     _write_markdown(PRODUCT_DIR / "role_navigation_profile_v1.md", _md_role_navigation_profile(role_navigation_profile_v1))
+    _write_json(PRODUCT_DIR / "navigation_registry_quality_report_v1.json", navigation_registry_quality_v1)
+    _write_markdown(
+        PRODUCT_DIR / "navigation_registry_quality_report_v1.md",
+        _md_navigation_registry_quality(navigation_registry_quality_v1),
+    )
     _write_json(PRODUCT_DIR / "entry_registry_quality_report_v1.json", entry_registry_quality_v1)
     _write_markdown(PRODUCT_DIR / "entry_registry_quality_report_v1.md", _md_entry_registry_quality(entry_registry_quality_v1))
 
@@ -1309,6 +1413,8 @@ def main() -> int:
     print("- docs/product/navigation_entry_registry_v1.json")
     print("- docs/product/role_navigation_profile_v1.json")
     print("- docs/product/role_navigation_profile_v1.md")
+    print("- docs/product/navigation_registry_quality_report_v1.json")
+    print("- docs/product/navigation_registry_quality_report_v1.md")
     print("- docs/product/entry_registry_quality_report_v1.json")
     print("- docs/product/entry_registry_quality_report_v1.md")
     print("- docs/product/role_scene_matrix_v1.md")
