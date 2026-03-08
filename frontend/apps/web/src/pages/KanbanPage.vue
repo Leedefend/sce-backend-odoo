@@ -41,8 +41,19 @@
         @click="handleCard(row)"
       >
         <h3 class="card-title">{{ formatValue(row[titleField]) || formatValue(row.name) || formatValue(row.display_name) || row.id }}</h3>
+        <div v-if="statusMetaFields.length" class="status-chips">
+          <span v-for="field in statusMetaFields" :key="`status-${field}`" class="status-chip">
+            {{ fieldLabel(field) }}: {{ formatValue(row[field]) }}
+          </span>
+        </div>
+        <dl v-if="primaryMetaFields.length" class="card-meta primary">
+          <div v-for="field in primaryMetaFields" :key="`primary-${field}`" class="meta-row">
+            <dt>{{ fieldLabel(field) }}</dt>
+            <dd>{{ formatValue(row[field]) }}</dd>
+          </div>
+        </dl>
         <dl class="card-meta">
-          <div v-for="field in metaFields" :key="field" class="meta-row">
+          <div v-for="field in secondaryMetaFields" :key="field" class="meta-row">
             <dt>{{ fieldLabel(field) }}</dt>
             <dd>{{ formatValue(row[field]) }}</dd>
           </div>
@@ -70,6 +81,9 @@ const props = defineProps<{
   error?: StatusError | null;
   records: Array<Record<string, unknown>>;
   fields: string[];
+  primaryFields?: string[];
+  secondaryFields?: string[];
+  statusFields?: string[];
   fieldLabels?: Record<string, string>;
   titleField: string;
   onReload: () => void;
@@ -85,7 +99,32 @@ const errorCopy = computed(() =>
 );
 const emptyCopy = computed(() => resolveEmptyCopy('card'));
 
-const metaFields = computed(() => props.fields.filter((field) => field !== props.titleField).slice(0, 4));
+const fallbackMetaFields = computed(() => props.fields.filter((field) => field !== props.titleField));
+const statusMetaFields = computed(() => {
+  const preferred = (props.statusFields || []).filter((field) => field && field !== props.titleField);
+  if (preferred.length) return preferred.slice(0, 2);
+  return [];
+});
+const primaryMetaFields = computed(() => {
+  const preferred = (props.primaryFields || []).filter(
+    (field) => field && field !== props.titleField && !statusMetaFields.value.includes(field),
+  );
+  if (preferred.length) return preferred.slice(0, 2);
+  return fallbackMetaFields.value.filter((field) => !statusMetaFields.value.includes(field)).slice(0, 2);
+});
+const secondaryMetaFields = computed(() => {
+  const preferred = (props.secondaryFields || []).filter(
+    (field) =>
+      field
+      && field !== props.titleField
+      && !statusMetaFields.value.includes(field)
+      && !primaryMetaFields.value.includes(field),
+  );
+  if (preferred.length) return preferred.slice(0, 3);
+  return fallbackMetaFields.value
+    .filter((field) => !statusMetaFields.value.includes(field) && !primaryMetaFields.value.includes(field))
+    .slice(0, 3);
+});
 
 function formatValue(value: unknown) {
   return formatDisplayValue(value);
@@ -129,15 +168,36 @@ function handleCard(row: Record<string, unknown>) {
 }
 
 .card-title {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   font-size: 16px;
   color: #0f172a;
+}
+
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.status-chip {
+  font-size: 11px;
+  line-height: 1;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #ecfeff;
+  border: 1px solid #99f6e4;
+  color: #0f766e;
 }
 
 .card-meta {
   display: grid;
   gap: 6px;
   margin: 0;
+}
+
+.card-meta.primary {
+  margin-bottom: 10px;
 }
 
 .meta-row {
