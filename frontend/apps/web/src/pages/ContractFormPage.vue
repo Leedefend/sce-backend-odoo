@@ -1081,6 +1081,18 @@ function relationModel(name: string) {
   return String(descriptor?.relation || '').trim();
 }
 
+function sanitizeUiErrorMessage(raw: unknown, fallback: string) {
+  const text = String(raw || '').trim();
+  if (!text) return fallback;
+  // Do not expose raw success envelopes as UI errors.
+  if (text.startsWith('{') && text.includes('"ok"') && text.includes('"data"')) {
+    if (text.includes('"ok": true') || text.includes('"records"')) {
+      return fallback;
+    }
+  }
+  return text;
+}
+
 function relationEntry(descriptor?: FieldDescriptor) {
   const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
@@ -1239,7 +1251,7 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
       }
       return;
     } catch (err) {
-      const message = err instanceof Error ? err.message : '快速新建失败';
+      const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '快速新建失败');
       validationErrors.value = [message];
       return;
     }
@@ -1282,7 +1294,7 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
       await quickCreate();
       return;
     }
-    validationErrors.value = [err instanceof Error ? err.message : '跳转新建页面失败'];
+    validationErrors.value = [sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '跳转新建页面失败')];
   }
 }
 
