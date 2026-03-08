@@ -85,158 +85,155 @@
         <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
-        <div v-if="coreFieldsLabel" class="layout-divider">{{ coreFieldsLabel }}</div>
-        <template v-for="node in layoutNodes" :key="node.key">
-          <div v-if="showHud && node.kind === 'header'" class="layout-divider">头部</div>
-          <div v-else-if="showHud && node.kind === 'sheet'" class="layout-divider">主体</div>
-          <div v-else-if="node.kind === 'notebook'" class="layout-divider">{{ node.label || '分组页签' }}</div>
-          <div v-else-if="node.kind === 'page'" class="layout-divider">{{ node.label || '页面分组' }}</div>
-          <div v-else-if="node.kind === 'group' && node.label" class="layout-divider">{{ node.label }}</div>
-          <div v-else-if="node.kind === 'field' && isFieldVisible(node.name)" class="field">
-            <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
-            <template v-if="node.readonly">
-              <FieldValue :value="formData[node.name]" :field="node.descriptor" />
-            </template>
-            <template v-else>
-              <input
-                v-if="fieldType(node.descriptor) === 'boolean'"
-                :checked="Boolean(formData[node.name])"
-                class="input-checkbox"
-                type="checkbox"
-                @change="setBooleanField(node.name, ($event.target as HTMLInputElement).checked)"
-              />
-              <select
-                v-else-if="fieldType(node.descriptor) === 'selection'"
-                :value="inputFieldValue(node.name)"
-                class="input"
-                @change="setSelectionField(node.name, ($event.target as HTMLSelectElement).value)"
-              >
-                <option v-if="!node.required" value="">请选择</option>
-                <option v-for="option in node.descriptor?.selection || []" :key="option[0]" :value="option[0]">
-                  {{ option[1] }}
-                </option>
-              </select>
-              <div v-else-if="fieldType(node.descriptor) === 'many2one'" class="relation-editor">
-                <select
-                  class="input"
-                  :value="many2oneValue(node.name)"
-                  @change="setMany2oneField(node.name, node.descriptor, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option value="">请选择</option>
-                  <option
-                    v-for="option in relationOptionsForField(node.name, node.descriptor)"
-                    :key="`${node.name}-${option.id}`"
-                    :value="String(option.id)"
-                  >
-                    {{ option.label }}
-                  </option>
-                  <option v-if="relationCreateMode(node.name, node.descriptor) !== 'none'" :value="MANY2ONE_CREATE_OPTION">
-                    {{ relationCreateMode(node.name, node.descriptor) === 'page' ? '+ 新建并维护...' : '+ 快速新建...' }}
-                  </option>
-                </select>
-              </div>
-              <div v-else-if="fieldType(node.descriptor) === 'many2many'" class="relation-editor">
+        <section v-for="section in layoutSections" :key="section.key" class="form-section">
+          <h3 class="form-section-title">{{ section.title }}</h3>
+          <div class="form-section-grid">
+            <div v-for="node in section.fields" :key="node.key" class="field">
+              <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
+              <template v-if="node.readonly">
+                <FieldValue :value="formData[node.name]" :field="node.descriptor" />
+              </template>
+              <template v-else>
                 <input
-                  class="input relation-search"
-                  type="text"
-                  :value="relationKeyword(node.name)"
-                  placeholder="搜索并多选..."
-                  @input="setRelationKeyword(node.name, ($event.target as HTMLInputElement).value)"
+                  v-if="fieldType(node.descriptor) === 'boolean'"
+                  :checked="Boolean(formData[node.name])"
+                  class="input-checkbox"
+                  type="checkbox"
+                  @change="setBooleanField(node.name, ($event.target as HTMLInputElement).checked)"
                 />
                 <select
+                  v-else-if="fieldType(node.descriptor) === 'selection'"
+                  :value="inputFieldValue(node.name)"
                   class="input"
-                  multiple
-                  size="6"
-                  :value="relationIds(node.name).map((id) => String(id))"
-                  @change="setRelationMultiField(node.name, $event.target as HTMLSelectElement)"
+                  @change="setSelectionField(node.name, ($event.target as HTMLSelectElement).value)"
                 >
-                  <option
-                    v-for="option in filteredRelationOptions(node.name, node.descriptor)"
-                    :key="`${node.name}-${option.id}`"
-                    :value="String(option.id)"
-                  >
-                    {{ option.label }}
+                  <option v-if="!node.required" value="">请选择</option>
+                  <option v-for="option in node.descriptor?.selection || []" :key="option[0]" :value="option[0]">
+                    {{ option[1] }}
                   </option>
                 </select>
-              </div>
-              <div v-else-if="fieldType(node.descriptor) === 'one2many'" class="relation-editor">
-                <div class="o2m-toolbar">
-                  <button class="chip-btn" type="button" :disabled="busy" @click="addOne2manyRow(node.name)">+ 新增行</button>
-                  <span v-if="one2manySummary(node.name)" class="o2m-summary">{{ one2manySummary(node.name) }}</span>
-                </div>
-                <div class="o2m-list">
-                  <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
-                    <p class="o2m-row-state">{{ one2manyRowStateLabel(row) }}</p>
-                    <div class="o2m-fields">
-                      <label
-                        v-for="column in one2manyColumns(node.name)"
-                        :key="`${row.key}-${column.name}`"
-                        class="o2m-field"
-                      >
-                        <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
-                        <input
-                          v-if="column.ttype === 'boolean'"
-                          class="input-checkbox"
-                          type="checkbox"
-                          :checked="Boolean(row.values[column.name])"
-                          @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).checked)"
-                        />
-                        <select
-                          v-else-if="column.ttype === 'selection'"
-                          class="input"
-                          :value="String(row.values[column.name] ?? '')"
-                          @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLSelectElement).value)"
-                        >
-                          <option value="">请选择</option>
-                          <option v-for="option in column.selection || []" :key="String(option[0])" :value="String(option[0])">
-                            {{ String(option[1]) }}
-                          </option>
-                        </select>
-                        <input
-                          v-else
-                          class="input"
-                          :type="one2manyColumnInputType(column)"
-                          :value="one2manyColumnDisplayValue(column, row.values[column.name])"
-                          :placeholder="column.label"
-                          @input="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).value)"
-                        />
-                      </label>
-                    </div>
-                    <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
-                    <p v-if="showOne2manyErrors && one2manyRowErrors(node.name, row.key).length" class="o2m-row-error">
-                      {{ one2manyRowErrors(node.name, row.key).join('；') }}
-                    </p>
-                    <p v-if="one2manyRowHints(node.name, row).length" class="o2m-row-hint">
-                      {{ one2manyRowHints(node.name, row).join('；') }}
-                    </p>
-                  </div>
-                </div>
-                <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
-                  <p class="meta">已移除 {{ removedOne2manyRows(node.name).length }} 行</p>
-                  <div class="chips">
-                    <button
-                      v-for="row in removedOne2manyRows(node.name)"
-                      :key="`rm-${row.key}`"
-                      class="chip-btn"
-                      type="button"
-                      :disabled="busy"
-                      @click="restoreOne2manyRow(node.name, row.key)"
+                <div v-else-if="fieldType(node.descriptor) === 'many2one'" class="relation-editor">
+                  <select
+                    class="input"
+                    :value="many2oneValue(node.name)"
+                    @change="setMany2oneField(node.name, node.descriptor, ($event.target as HTMLSelectElement).value)"
+                  >
+                    <option value="">请选择</option>
+                    <option
+                      v-for="option in relationOptionsForField(node.name, node.descriptor)"
+                      :key="`${node.name}-${option.id}`"
+                      :value="String(option.id)"
                     >
-                      撤销移除 · {{ one2manyRowLabel(node.name, row) }} · 待删除
-                    </button>
+                      {{ option.label }}
+                    </option>
+                    <option v-if="relationCreateMode(node.name, node.descriptor) !== 'none'" :value="MANY2ONE_CREATE_OPTION">
+                      {{ relationCreateMode(node.name, node.descriptor) === 'page' ? '+ 新建并维护...' : '+ 快速新建...' }}
+                    </option>
+                  </select>
+                </div>
+                <div v-else-if="fieldType(node.descriptor) === 'many2many'" class="relation-editor">
+                  <input
+                    class="input relation-search"
+                    type="text"
+                    :value="relationKeyword(node.name)"
+                    placeholder="搜索并多选..."
+                    @input="setRelationKeyword(node.name, ($event.target as HTMLInputElement).value)"
+                  />
+                  <select
+                    class="input"
+                    multiple
+                    size="6"
+                    :value="relationIds(node.name).map((id) => String(id))"
+                    @change="setRelationMultiField(node.name, $event.target as HTMLSelectElement)"
+                  >
+                    <option
+                      v-for="option in filteredRelationOptions(node.name, node.descriptor)"
+                      :key="`${node.name}-${option.id}`"
+                      :value="String(option.id)"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </div>
+                <div v-else-if="fieldType(node.descriptor) === 'one2many'" class="relation-editor">
+                  <div class="o2m-toolbar">
+                    <button class="chip-btn" type="button" :disabled="busy" @click="addOne2manyRow(node.name)">+ 新增行</button>
+                    <span v-if="one2manySummary(node.name)" class="o2m-summary">{{ one2manySummary(node.name) }}</span>
+                  </div>
+                  <div class="o2m-list">
+                    <div v-for="row in visibleOne2manyRows(node.name)" :key="row.key" class="o2m-row">
+                      <p class="o2m-row-state">{{ one2manyRowStateLabel(row) }}</p>
+                      <div class="o2m-fields">
+                        <label
+                          v-for="column in one2manyColumns(node.name)"
+                          :key="`${row.key}-${column.name}`"
+                          class="o2m-field"
+                        >
+                          <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
+                          <input
+                            v-if="column.ttype === 'boolean'"
+                            class="input-checkbox"
+                            type="checkbox"
+                            :checked="Boolean(row.values[column.name])"
+                            @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).checked)"
+                          />
+                          <select
+                            v-else-if="column.ttype === 'selection'"
+                            class="input"
+                            :value="String(row.values[column.name] ?? '')"
+                            @change="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLSelectElement).value)"
+                          >
+                            <option value="">请选择</option>
+                            <option v-for="option in column.selection || []" :key="String(option[0])" :value="String(option[0])">
+                              {{ String(option[1]) }}
+                            </option>
+                          </select>
+                          <input
+                            v-else
+                            class="input"
+                            :type="one2manyColumnInputType(column)"
+                            :value="one2manyColumnDisplayValue(column, row.values[column.name])"
+                            :placeholder="column.label"
+                            @input="setOne2manyRowField(node.name, row.key, column, ($event.target as HTMLInputElement).value)"
+                          />
+                        </label>
+                      </div>
+                      <button class="ghost" type="button" :disabled="busy" @click="removeOne2manyRow(node.name, row.key)">移除</button>
+                      <p v-if="showOne2manyErrors && one2manyRowErrors(node.name, row.key).length" class="o2m-row-error">
+                        {{ one2manyRowErrors(node.name, row.key).join('；') }}
+                      </p>
+                      <p v-if="one2manyRowHints(node.name, row).length" class="o2m-row-hint">
+                        {{ one2manyRowHints(node.name, row).join('；') }}
+                      </p>
+                    </div>
+                  </div>
+                  <div v-if="removedOne2manyRows(node.name).length" class="o2m-removed">
+                    <p class="meta">已移除 {{ removedOne2manyRows(node.name).length }} 行</p>
+                    <div class="chips">
+                      <button
+                        v-for="row in removedOne2manyRows(node.name)"
+                        :key="`rm-${row.key}`"
+                        class="chip-btn"
+                        type="button"
+                        :disabled="busy"
+                        @click="restoreOne2manyRow(node.name, row.key)"
+                      >
+                        撤销移除 · {{ one2manyRowLabel(node.name, row) }} · 待删除
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <input
-                v-else
-                :value="inputFieldValue(node.name)"
-                class="input"
-                :type="fieldInputType(fieldType(node.descriptor))"
-                @input="setTextField(node.name, ($event.target as HTMLInputElement).value)"
-              />
-            </template>
+                <input
+                  v-else
+                  :value="inputFieldValue(node.name)"
+                  class="input"
+                  :type="fieldInputType(fieldType(node.descriptor))"
+                  @input="setTextField(node.name, ($event.target as HTMLInputElement).value)"
+                />
+              </template>
+            </div>
           </div>
-        </template>
+        </section>
         <div v-if="hasAdvancedFields" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -327,6 +324,13 @@ type LayoutNode = {
   readonly: boolean;
   required: boolean;
   descriptor?: FieldDescriptor;
+};
+
+type LayoutSection = {
+  key: string;
+  title: string;
+  kind: 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
+  fields: LayoutNode[];
 };
 
 type RelationOption = {
@@ -1576,6 +1580,47 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   return nodes;
 });
 
+function dividerDefaultLabel(kind: LayoutNode['kind']) {
+  if (kind === 'header') return '头部信息';
+  if (kind === 'sheet') return '主体信息';
+  if (kind === 'notebook') return '分组页签';
+  if (kind === 'page') return '页面分组';
+  if (kind === 'group') return '信息分组';
+  return '基础信息';
+}
+
+const layoutSections = computed<LayoutSection[]>(() => {
+  const sections: LayoutSection[] = [];
+  let index = 0;
+  const createSection = (title: string, kind: LayoutSection['kind']) => ({
+    key: `section_${kind}_${index++}`,
+    title,
+    kind,
+    fields: [],
+  });
+  let current = createSection(coreFieldsLabel.value || '核心信息', 'default');
+
+  for (const node of layoutNodes.value) {
+    if (node.kind === 'field') {
+      current.fields.push(node);
+      continue;
+    }
+    if (current.fields.length) {
+      sections.push(current);
+    }
+    const title = String(node.label || '').trim() || dividerDefaultLabel(node.kind);
+    current = createSection(title, node.kind);
+  }
+
+  if (current.fields.length) {
+    sections.push(current);
+  }
+
+  const visible = sections.filter((section) => section.fields.some((node) => isFieldVisible(node.name)));
+  if (visible.length) return visible;
+  return sections.filter((section) => section.fields.length);
+});
+
 function normalizeComparable(value: unknown) {
   if (Array.isArray(value) && value.every((item) => typeof item === 'number')) {
     return JSON.stringify([...value].sort((a, b) => a - b));
@@ -2366,7 +2411,26 @@ watch(
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.form-section {
+  grid-column: 1 / -1;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  background: #f8fafc;
+}
+
+.form-section-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.form-section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
 }
 
