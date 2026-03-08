@@ -193,6 +193,13 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("budget_total", visible_fields)
         self.assertNotIn("create_uid", visible_fields)
         self.assertNotIn("message_ids", visible_fields)
+        form_profile = out.get("form_profile") or {}
+        self.assertIsInstance(form_profile, dict)
+        self.assertIsInstance(form_profile.get("core_fields"), list)
+        self.assertIsInstance(form_profile.get("advanced_fields"), list)
+        self.assertIn("name", form_profile.get("core_fields") or [])
+        view_form_profile = (((out.get("views") or {}).get("form") or {}).get("form_profile")) or {}
+        self.assertEqual(view_form_profile.get("core_fields"), form_profile.get("core_fields"))
 
         toolbar_header = ((out.get("toolbar") or {}).get("header") or [])
         self.assertEqual(toolbar_header, [])
