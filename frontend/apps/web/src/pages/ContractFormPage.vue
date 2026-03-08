@@ -275,6 +275,7 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
+import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { triggerOnchange } from '../api/onchange';
 import type { OnchangeLinePatch } from '../api/onchange';
@@ -365,6 +366,7 @@ const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
 const relationFieldDescriptors = ref<Record<string, Record<string, FieldDescriptor>>>({});
 const relationKeywords = reactive<Record<string, string>>({});
+const deniedRelationModels = new Set<string>();
 const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
@@ -1073,6 +1075,7 @@ async function queryRelationOptions(name: string, keyword: string) {
   const descriptor = contract.value?.fields?.[name];
   const relation = relationModel(name);
   if (!relation) return;
+  if (deniedRelationModels.has(relation)) return;
   const search = String(keyword || '').trim();
   const domain = mergedRelationDomain(name, descriptor);
   try {
@@ -1102,7 +1105,11 @@ async function queryRelationOptions(name: string, keyword: string) {
       ...relationOptions.value,
       [name]: mapped,
     };
-  } catch {
+  } catch (err) {
+    if (err instanceof ApiError) {
+      const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';
+      if (denied) deniedRelationModels.add(relation);
+    }
     // keep existing options if remote query fails
   }
 }
@@ -1227,6 +1234,10 @@ async function loadRelationOptions() {
     if (!['many2one', 'many2many', 'one2many'].includes(type)) return;
     const relation = String((descriptor as Record<string, unknown>).relation || '').trim();
     if (!relation) return;
+    if (deniedRelationModels.has(relation)) {
+      next[name] = [];
+      return;
+    }
     const domain = mergedRelationDomain(name, descriptor as FieldDescriptor);
     try {
       const listed = await listRecords({
@@ -1250,7 +1261,11 @@ async function loadRelationOptions() {
           return { id: Math.trunc(id), label };
         })
         .filter((item): item is RelationOption => Boolean(item));
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';
+        if (denied) deniedRelationModels.add(relation);
+      }
       next[name] = [];
     }
   }));
