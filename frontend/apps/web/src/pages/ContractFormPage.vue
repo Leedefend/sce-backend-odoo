@@ -1873,17 +1873,40 @@ function isFormContractUsable(data: unknown) {
   if (!fields || typeof fields !== 'object' || Array.isArray(fields) || !Object.keys(fields as Record<string, unknown>).length) {
     return false;
   }
+  const countLayoutFields = (layoutRaw: unknown): number => {
+    let count = 0;
+    const walk = (nodeRaw: unknown) => {
+      if (Array.isArray(nodeRaw)) {
+        nodeRaw.forEach((item) => walk(item));
+        return;
+      }
+      if (!nodeRaw || typeof nodeRaw !== 'object') return;
+      const node = nodeRaw as Record<string, unknown>;
+      const kind = String(node.type || '').trim().toLowerCase();
+      if (kind === 'field') count += 1;
+      ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => walk(node[key]));
+    };
+    walk(layoutRaw);
+    return count;
+  };
   const views = row.views;
   const formView = views && typeof views === 'object' && !Array.isArray(views)
     ? (views as Record<string, unknown>).form
     : undefined;
-  if (formView && typeof formView === 'object' && !Array.isArray(formView)) return true;
+  if (formView && typeof formView === 'object' && !Array.isArray(formView)) {
+    const layout = (formView as Record<string, unknown>).layout;
+    if (countLayoutFields(layout) <= 0) return false;
+  } else {
+    return false;
+  }
   const head = row.head;
   const headViewType = head && typeof head === 'object' && !Array.isArray(head)
     ? String((head as Record<string, unknown>).view_type || '').trim().toLowerCase()
     : '';
+  if (headViewType && headViewType !== 'form') return false;
   const viewType = String(row.view_type || '').trim().toLowerCase();
-  return headViewType === 'form' || viewType === 'form';
+  if (viewType && viewType !== 'form') return false;
+  return true;
 }
 
 async function loadContract() {
