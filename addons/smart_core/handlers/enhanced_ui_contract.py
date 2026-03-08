@@ -10,8 +10,9 @@ from ..core.middlewares import CachingMiddleware, RequestThrottlingMiddleware
 from typing import Tuple, Dict, Any
 
 class EnhancedUIContractHandler(BaseIntentHandler):
-    """增强的统一契约读取处理程序"""
+    """增强的统一契约读取处理程序（legacy/demo only）"""
     INTENT_TYPE = "ui.contract.enhanced"
+    LEGACY_ONLY = True
     DESCRIPTION = "增强的统一契约读取处理程序"
     VERSION = "2.0.0"
     
@@ -160,8 +161,9 @@ class EnhancedUIContractHandler(BaseIntentHandler):
 
 # 带参数的路由示例处理程序
 class EnhancedModelViewHandler(BaseIntentHandler):
-    """增强的模型视图处理程序"""
+    """增强的模型视图处理程序（legacy/demo only）"""
     INTENT_TYPE = "ui.contract.model.view"
+    LEGACY_ONLY = True
     DESCRIPTION = "增强的模型视图处理程序"
     VERSION = "1.0.0"
     

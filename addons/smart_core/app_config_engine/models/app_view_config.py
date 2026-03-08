@@ -16,6 +16,11 @@ from odoo import models, fields, api, _
 from odoo.exceptions import AccessError
 from odoo.tools.safe_eval import safe_eval
 from .contract_mixin import ContractSchemaMixin
+from odoo.addons.smart_core.app_config_engine.services.native_parse_service import NativeParseService
+from odoo.addons.smart_core.app_config_engine.services.parse_fallback_service import ParseFallbackService
+from odoo.addons.smart_core.app_config_engine.services.contract_governance_filter import (
+    ContractGovernanceFilterService,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -239,26 +244,20 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             force_parser = bool(ctx_flags.get('contract_force_parser'))
             force_fallback = bool(ctx_flags.get('contract_force_fallback'))
 
-            parsed_json = None
-            model_exists = self._model_exists('app.view.parser')
-            _logger.info("VIEW_PARSE_DEBUG: app.view.parser model_exists=%s", model_exists)
-            if not force_fallback and model_exists:
-                try:
-                    parsed_json = self.env['app.view.parser'].sudo().parse_odoo_view(model_name, view_type)
-                    if self._looks_like_parser_wrapper(parsed_json):
-                        _logger.info("VIEW_PARSE_DEBUG: unwrap parser wrapper → %s.%s", model_name, view_type)
-                        parsed_json = self._unwrap_contract_shape(view_type, parsed_json)
-                    _logger.info("VIEW_PARSE_DEBUG: parser_success=%s keys=%s", bool(parsed_json), list((parsed_json or {}).keys()))
-                except Exception as e:
-                    _logger.exception("app.view.parser 解析失败，进入降级：%s.%s, error=%s", model_name, view_type, e)
-
-            # 成功判定 + 强制策略
-            _logger.info("VIEW_PARSE_DEBUG: force_fallback=%s, parsed_ok=%s", force_fallback, self._parsed_ok(view_type, parsed_json))
-            if force_fallback or not self._parsed_ok(view_type, parsed_json):
-                _logger.info("VIEW_PARSE_DEBUG: 使用 Fallback 解析 → %s.%s", model_name, view_type)
-                parsed_json = self._fallback_parse(model_name, view_type, view_data)
-            else:
-                _logger.info("VIEW_PARSE_DEBUG: using app.view.parser for %s.%s", model_name, view_type)
+            parse_service = NativeParseService(self)
+            fallback_service = ParseFallbackService(self)
+            parsed_json = parse_service.parse_with_primary_parser(
+                model_name,
+                view_type,
+                force_fallback=force_fallback,
+            )
+            parsed_json = fallback_service.resolve_parsed_contract(
+                model_name=model_name,
+                view_type=view_type,
+                view_data=view_data,
+                parsed_json=parsed_json,
+                force_fallback=force_fallback,
+            )
 
             # 3) 降级/合并默认排序（tree）
             if view_type == 'tree' and view_data and view_data.get('arch'):
@@ -875,103 +874,12 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
     # ====================== 内部：运行态过滤（按用户组/ACL） ======================
 
     def _runtime_filter(self, parsed, model_name, check_model_acl=False):
-        """
-        运行态裁剪：
-        - 继续保留 toolbar/row_actions/kanban.quick_actions 的过滤
-        - 新增：对 form.layout 节点与 field_modifiers 进行 groups/attrs 裁剪
-        """
-        user_groups = set(self.env.user.groups_id.ids)
-
-        # 包级 groups 拦截
-        if self.groups_id and not (user_groups & set(self.groups_id.ids)):
-            return {
-                'modifiers': {},
-                'toolbar': {'header': [], 'sidebar': [], 'footer': []},
-                'search': {'filters': [], 'group_by': [], 'facets': {'enabled': True}},
-            }
-
-        # 深拷贝
-        vp = json.loads(json.dumps(parsed or {}, ensure_ascii=False))
-
-        # groups 解析
-        def _resolve_groups_xmlids(xmlids):
-            ids = set()
-            for xid in (xmlids or []):
-                try:
-                    rec = self.env.ref(xid, raise_if_not_found=False)
-                    if rec and rec._name == 'res.groups':
-                        ids.add(rec.id)
-                except Exception:
-                    continue
-            return ids
-
-        def _keep_item(item):
-            gids = set(item.get('groups') or [])
-            gids |= _resolve_groups_xmlids(item.get('groups_xmlids'))
-            return (not gids) or bool(gids & user_groups)
-
-        # 过滤列表工具
-        def _filter_list(items):
-            return [x for x in (items or []) if _keep_item(x)]
-
-        # 1) toolbar/行動作/kanban
-        tb = vp.get('toolbar') or {}
-        tb['header'] = _filter_list(tb.get('header'))
-        tb['sidebar'] = _filter_list(tb.get('sidebar'))
-        tb['footer'] = _filter_list(tb.get('footer'))
-        vp['toolbar'] = tb
-
-        if 'row_actions' in vp:
-            vp['row_actions'] = _filter_list(vp.get('row_actions'))
-
-        if isinstance(vp.get('kanban'), dict) and 'quick_actions' in vp['kanban']:
-            vp['kanban']['quick_actions'] = _filter_list(vp['kanban'].get('quick_actions'))
-
-        # 2) form.layout 深入过滤（groups/attrs）
-        def _filter_layout(nodes):
-            kept = []
-            for n in (nodes or []):
-                if not isinstance(n, dict):
-                    continue
-                if not _keep_item(n):
-                    continue
-                # 递归孩子
-                if n.get('children'):
-                    n['children'] = _filter_layout(n['children'])
-                kept.append(n)
-            return kept
-
-        if isinstance(vp.get('layout'), list):
-            vp['layout'] = _filter_layout(vp['layout'])
-
-        # 3) field_modifiers 的组过滤（把用户无权看/用的字段修饰清空或剔除）
-        fmods = vp.get('field_modifiers') or {}
-        clean = {}
-        for fname, mods in fmods.items():
-            if not isinstance(mods, dict):
-                continue
-            gids = set(mods.get('groups') or [])
-            gids |= _resolve_groups_xmlids(mods.get('groups_xmlids'))
-            if gids and not (gids & user_groups):
-                # 无权限看该字段配置 → 丢弃或置空，避免泄露
-                continue
-            clean[fname] = mods
-        vp['field_modifiers'] = clean
-
-        # 4) 可选 ACL 粗校
-        if check_model_acl and model_name in self.env:
-            try:
-                ok = bool(self.env[model_name].check_access_rights('read', raise_exception=False))
-                if not ok:
-                    return {
-                        'modifiers': {},
-                        'toolbar': {'header': [], 'sidebar': [], 'footer': []},
-                        'search': {'filters': [], 'group_by': [], 'facets': {'enabled': True}},
-                    }
-            except Exception:
-                pass
-
-        return vp
+        """Compatibility adapter: governance filtering moved to service layer."""
+        return ContractGovernanceFilterService(self).apply_runtime_filter(
+            parsed,
+            model_name,
+            check_model_acl=check_model_acl,
+        )
 
     # === 聚合：基础 + 碎片 + 变体 → 最终契约（给服务层使用） ===
     def build_final_contract(self, subject=None, action_id=None, menu_id=None, ctx=None, check_model_acl=False):
@@ -987,7 +895,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
 
         # 1) 基础
         base = self.json_clone(self.arch_parsed or {})
-        base = self.sanitize_contract(vt, base)
+        base = self.sanitize_governed_contract(vt, base)
 
         # 2) 碎片
         try:

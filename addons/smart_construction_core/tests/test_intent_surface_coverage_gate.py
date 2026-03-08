@@ -18,8 +18,6 @@ REQUIRED_HIGH_VALUE_INTENTS = [
     "app.open",
     "execute_button",
     "ui.contract",
-    "ui.contract.enhanced",
-    "ui.contract.model.view",
     "capability.describe",
     "scene.health",
     "scene.packages.installed",

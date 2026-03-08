@@ -1540,12 +1540,27 @@ verify.contract.assembler.semantic.schema.guard: guard.prod.forbid verify.contra
 verify.project.form.contract.surface.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/project_form_contract_surface_guard.py
 
-.PHONY: verify.native_surface_integrity_guard verify.governed_surface_policy_guard
+.PHONY: verify.native_surface_integrity_guard verify.governed_surface_policy_guard verify.contract.native_integrity_guard verify.contract.governed_policy_guard verify.contract.surface_mapping_guard verify.contract.parse_boundary.guard verify.contract.production_chain.guard
 verify.native_surface_integrity_guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/native_surface_integrity_guard.py
 
 verify.governed_surface_policy_guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/governed_surface_policy_guard.py
+
+verify.contract.native_integrity_guard: guard.prod.forbid verify.native_surface_integrity_guard
+	@echo "[OK] verify.contract.native_integrity_guard done"
+
+verify.contract.governed_policy_guard: guard.prod.forbid verify.governed_surface_policy_guard
+	@echo "[OK] verify.contract.governed_policy_guard done"
+
+verify.contract.surface_mapping_guard: guard.prod.forbid verify.role.capability_floor.prod_like
+	@python3 scripts/verify/surface_mapping_guard.py
+
+verify.contract.parse_boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/contract_parse_boundary_guard.py
+
+verify.contract.production_chain.guard: guard.prod.forbid
+	@python3 scripts/verify/contract_production_chain_guard.py
 
 verify.runtime.surface.dashboard.report: guard.prod.forbid verify.scene.catalog.runtime_alignment.guard verify.role.capability_floor.prod_like
 	@python3 scripts/verify/runtime_surface_dashboard_report.py
@@ -1632,8 +1647,12 @@ verify.contract.envelope.guard: guard.prod.forbid
 verify.contract.envelope: guard.prod.forbid verify.contract.envelope.guard verify.contract.mode.smoke verify.contract.api.mode.smoke verify.scene_capability.contract.guard
 	@echo "[OK] verify.contract.envelope done"
 
-verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity
+verify.scene.runtime_boundary.gate: guard.prod.forbid verify.boundary.import_guard verify.backend.boundary_guard verify.model.ui_dependency.guard verify.business.shape.guard verify.controller.boundary.guard verify.frontend.intent_channel.guard verify.scene.provider.guard verify.scene.legacy_endpoint.guard verify.intent.router.purity verify.scene.input_boundary.guard
 	@echo "[OK] verify.scene.runtime_boundary.gate done"
+
+.PHONY: verify.scene.input_boundary.guard
+verify.scene.input_boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_input_boundary_guard.py
 
 verify.scene.contract_path.gate: guard.prod.forbid verify.scene.runtime_boundary.gate verify.scene.legacy.bundle
 	@echo "[OK] verify.scene.contract_path.gate done"
@@ -1645,7 +1664,11 @@ verify.seed.demo.isolation: guard.prod.forbid verify.scene.provider.guard verify
 	@echo "[OK] verify.seed.demo.isolation done"
 
 # Unified aliases for CI/operations wording.
-verify.boundary.guard: guard.prod.forbid verify.scene.contract_path.gate
+.PHONY: verify.contract.handler_boundary.guard
+verify.contract.handler_boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/contract_handler_layout_boundary_guard.py
+
+verify.boundary.guard: guard.prod.forbid verify.scene.contract_path.gate verify.contract.handler_boundary.guard
 	@echo "[OK] verify.boundary.guard done"
 
 .PHONY: verify.system_init.runtime_context.stability
@@ -2225,6 +2248,9 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.project.form.contract.surface.guard
 	@$(MAKE) --no-print-directory verify.native_surface_integrity_guard
 	@$(MAKE) --no-print-directory verify.governed_surface_policy_guard
+	@$(MAKE) --no-print-directory verify.contract.surface_mapping_guard
+	@$(MAKE) --no-print-directory verify.contract.parse_boundary.guard
+	@$(MAKE) --no-print-directory verify.contract.production_chain.guard
 	@$(MAKE) --no-print-directory verify.contract.ordering.smoke
 	@$(MAKE) --no-print-directory verify.scene.hud.trace.smoke
 	@$(MAKE) --no-print-directory verify.scene.meta.trace.smoke
