@@ -86,6 +86,9 @@
         <template v-for="node in layoutNodes" :key="node.key">
           <div v-if="showHud && node.kind === 'header'" class="layout-divider">头部</div>
           <div v-else-if="showHud && node.kind === 'sheet'" class="layout-divider">主体</div>
+          <div v-else-if="node.kind === 'notebook'" class="layout-divider">{{ node.label || '分组页签' }}</div>
+          <div v-else-if="node.kind === 'page'" class="layout-divider">{{ node.label || '页面分组' }}</div>
+          <div v-else-if="node.kind === 'group' && node.label" class="layout-divider">{{ node.label }}</div>
           <div v-else-if="node.kind === 'field' && isFieldVisible(node.name)" class="field">
             <label class="label">{{ node.label }}<span v-if="shouldShowRequiredMark(node)" class="required">*</span></label>
             <template v-if="node.readonly">
@@ -314,7 +317,7 @@ type ContractAction = {
 
 type LayoutNode = {
   key: string;
-  kind: 'header' | 'sheet' | 'field';
+  kind: 'header' | 'sheet' | 'group' | 'notebook' | 'page' | 'field';
   name: string;
   label: string;
   readonly: boolean;
@@ -1326,6 +1329,30 @@ const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
       fields,
     };
   }
+  if (!Object.keys(out).length) {
+    const profile = ((contract.value?.views?.form as Record<string, unknown> | undefined)?.form_profile
+      || (contract.value as Record<string, unknown> | undefined)?.form_profile) as Record<string, unknown> | undefined;
+    const core = Array.isArray(profile?.core_fields)
+      ? profile?.core_fields.map((f) => String(f || '').trim()).filter(Boolean)
+      : [];
+    const advanced = Array.isArray(profile?.advanced_fields)
+      ? profile?.advanced_fields.map((f) => String(f || '').trim()).filter(Boolean)
+      : [];
+    if (core.length || advanced.length) {
+      out.core = {
+        name: 'core',
+        label: '核心信息',
+        collapsible: false,
+        fields: core,
+      };
+      out.advanced = {
+        name: 'advanced',
+        label: '高级信息',
+        collapsible: true,
+        fields: advanced,
+      };
+    }
+  }
   return out;
 });
 
@@ -1420,22 +1447,15 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldGroups = contract.value?.permissions?.field_groups || {};
   const used = new Set<string>();
   const nodes: LayoutNode[] = [];
+  const containerKeys = ['children', 'tabs', 'pages', 'nodes', 'items'];
 
-  for (let i = 0; i < order.length; i += 1) {
-    const item = order[i];
-    const kind = String(item?.type || '').trim().toLowerCase();
-    if (kind === 'header' || kind === 'sheet') {
-      nodes.push({ key: `${kind}_${i}`, kind: kind as 'header' | 'sheet', name: '', label: '', readonly: true, required: false });
-      continue;
-    }
-    if (kind !== 'field') continue;
-    const name = String(item?.name || '').trim();
-    if (!name || used.has(name)) continue;
+  function pushField(nameRaw: unknown) {
+    const name = String(nameRaw || '').trim();
+    if (!name || used.has(name)) return;
     const groups = fieldGroups[name]?.groups_xmlids;
-    if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) continue;
-    used.add(name);
+    if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
     const descriptor = fieldMap[name];
-    if (!descriptor) continue;
+    if (!descriptor) return;
     const resolved = evaluateFieldPolicy(
       contract.value,
       name,
@@ -1445,7 +1465,8 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       },
       policyContext.value,
     );
-    if (!resolved.visible) continue;
+    if (!resolved.visible) return;
+    used.add(name);
     const state = runtimeState(name);
     nodes.push({
       key: `field_${name}`,
@@ -1458,31 +1479,45 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     });
   }
 
-  Object.entries(fieldMap).forEach(([name, descriptor]) => {
-    if (used.has(name)) return;
-    const groups = fieldGroups[name]?.groups_xmlids;
-    if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
-    const resolved = evaluateFieldPolicy(
-      contract.value,
-      name,
-      {
-        required: Boolean(descriptor?.required),
-        readonly: Boolean(descriptor?.readonly),
-      },
-      policyContext.value,
-    );
-    if (!resolved.visible) return;
-    const state = runtimeState(name);
-    nodes.push({
-      key: `field_${name}`,
-      kind: 'field',
-      name,
-      label: String(descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || state.readonly || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(resolved.required || state.required),
-      descriptor,
+  function walkLayout(nodeRaw: unknown, parentKey: string) {
+    if (!nodeRaw || typeof nodeRaw !== 'object') return;
+    const node = nodeRaw as Record<string, unknown>;
+    const kind = String(node.type || '').trim().toLowerCase();
+    if (!kind) return;
+    const label = String(node.string || node.label || '').trim();
+    const nodeKey = `${parentKey}_${kind}_${String(node.name || label || nodes.length)}`;
+
+    if (kind === 'header' || kind === 'sheet' || kind === 'group' || kind === 'notebook' || kind === 'page') {
+      nodes.push({
+        key: `layout_${nodeKey}`,
+        kind: kind as LayoutNode['kind'],
+        name: String(node.name || '').trim(),
+        label,
+        readonly: true,
+        required: false,
+      });
+    }
+    if (kind === 'field') {
+      pushField(node.name);
+      return;
+    }
+    containerKeys.forEach((key) => {
+      const children = node[key];
+      if (!Array.isArray(children)) return;
+      children.forEach((child, index) => walkLayout(child, `${nodeKey}_${key}_${index}`));
     });
-  });
+  }
+
+  if (Array.isArray(order)) {
+    order.forEach((item, index) => walkLayout(item, `root_${index}`));
+  }
+  if (!nodes.some((node) => node.kind === 'field')) {
+    const fallback = contractVisibleFields.value.length
+      ? contractVisibleFields.value
+      : [...coreFieldNames.value, ...advancedFieldNames.value];
+    const fallbackFields = fallback.length ? fallback : Object.keys(fieldMap).slice(0, 16);
+    fallbackFields.forEach((name) => pushField(name));
+  }
 
   return nodes;
 });
@@ -2167,6 +2202,9 @@ watch(
   border-radius: 10px;
   padding: 12px;
   background: #fff;
+  max-width: 1360px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .block {
@@ -2217,8 +2255,8 @@ watch(
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
 }
 
 .validation-error {
@@ -2254,6 +2292,7 @@ watch(
 .field {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .relation-editor {
@@ -2340,6 +2379,24 @@ watch(
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 8px 10px;
+  min-height: 36px;
+  width: 100%;
+  font-size: 13px;
+}
+
+@media (max-width: 1280px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .header {
+    flex-direction: column;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 select.input[multiple] {
