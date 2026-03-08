@@ -944,6 +944,81 @@ def _owner_template_json() -> dict[str, Any]:
     }
 
 
+def _scene_entry_registry(
+    scene_catalog_product: dict[str, Any],
+    mapping: dict[str, Any],
+) -> dict[str, Any]:
+    scenes = scene_catalog_product.get("scenes") if isinstance(scene_catalog_product.get("scenes"), list) else []
+    scene_caps_map = {
+        str(row.get("scene_key") or ""): [str(item.get("capability_key") or "") for item in (row.get("capabilities") or [])]
+        for row in (mapping.get("product_scene_to_capabilities") or [])
+        if isinstance(row, dict)
+    }
+    entries: list[dict[str, Any]] = []
+    for scene in scenes:
+        scene_key = str(scene.get("scene_key") or "").strip()
+        if not scene_key:
+            continue
+        caps = [x for x in scene_caps_map.get(scene_key, []) if x]
+        entries.append(
+            {
+                "entry_key": f"scene::{scene_key}",
+                "entry_source": "scene",
+                "scene_key": scene_key,
+                "scene_name": str(scene.get("scene_name") or scene_key),
+                "entry_type": str(scene.get("entry_type") or "menu"),
+                "target_role": scene.get("target_role") or [],
+                "required_capabilities": caps,
+                "status": str(scene.get("status") or "ready"),
+            }
+        )
+    return {
+        "version": "v1",
+        "generated_on": date.today().isoformat(),
+        "entry_count": len(entries),
+        "entries": sorted(entries, key=lambda x: x["entry_key"]),
+    }
+
+
+def _capability_entry_registry(
+    capability_catalog: dict[str, Any],
+    mapping: dict[str, Any],
+) -> dict[str, Any]:
+    cap_to_scenes = {
+        str(row.get("capability_key") or ""): [str(item.get("scene_key") or "") for item in (row.get("scenes") or [])]
+        for row in (mapping.get("capability_to_scenes") or [])
+        if isinstance(row, dict)
+    }
+    entries: list[dict[str, Any]] = []
+    for cap in capability_catalog.get("capabilities", []):
+        cap_key = str(cap.get("capability_key") or "").strip()
+        if not cap_key:
+            continue
+        scene_keys = [x for x in cap_to_scenes.get(cap_key, []) if x and _is_product_scene(x)]
+        primary_scene = str(cap.get("main_scene") or "").strip()
+        if primary_scene and _is_product_scene(primary_scene) and primary_scene not in scene_keys:
+            scene_keys = [primary_scene, *scene_keys]
+        entries.append(
+            {
+                "entry_key": f"capability::{cap_key}",
+                "entry_source": "capability",
+                "capability_key": cap_key,
+                "name": str(cap.get("name") or cap_key),
+                "domain": str(cap.get("domain") or ""),
+                "group_key": str((cap.get("main_menu") or {}).get("group_key") or ""),
+                "scene_keys": sorted(set(scene_keys)),
+                "role_scope": cap.get("role_scope") or [],
+                "status": str(cap.get("status") or "ready"),
+            }
+        )
+    return {
+        "version": "v1",
+        "generated_on": date.today().isoformat(),
+        "entry_count": len(entries),
+        "entries": sorted(entries, key=lambda x: x["entry_key"]),
+    }
+
+
 def main() -> int:
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
     TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -957,6 +1032,8 @@ def main() -> int:
     scene_catalog_v2 = _scene_catalog_v2(scene_rows, capabilities)
     scene_catalog_product_v1 = _product_scene_catalog(scene_catalog_v2)
     capability_scene_mapping = _capability_scene_mapping(capability_catalog, scene_catalog_v2)
+    scene_entry_registry_v1 = _scene_entry_registry(scene_catalog_product_v1, capability_scene_mapping)
+    capability_entry_registry_v1 = _capability_entry_registry(capability_catalog, capability_scene_mapping)
     role_scene_matrix = _role_scene_matrix(scene_catalog_v2)
     capability_maturity = _capability_maturity(capability_catalog, capability_scene_mapping)
     capability_gap_backlog = _capability_gap_backlog(
@@ -971,9 +1048,11 @@ def main() -> int:
     _write_json(PRODUCT_DIR / "scene_catalog_v2.json", scene_catalog_v2)
     _write_markdown(PRODUCT_DIR / "scene_catalog_v2.md", _md_scene_catalog(scene_catalog_v2))
     _write_json(PRODUCT_DIR / "scene_catalog_product_v1.json", scene_catalog_product_v1)
+    _write_json(PRODUCT_DIR / "scene_entry_registry_v1.json", scene_entry_registry_v1)
 
     _write_json(PRODUCT_DIR / "capability_scene_mapping_v1.json", capability_scene_mapping)
     _write_markdown(PRODUCT_DIR / "capability_scene_mapping_v1.md", _md_capability_scene_mapping(capability_scene_mapping))
+    _write_json(PRODUCT_DIR / "capability_entry_registry_v1.json", capability_entry_registry_v1)
 
     _write_markdown(PRODUCT_DIR / "role_scene_matrix_v1.md", _md_role_scene_matrix(role_scene_matrix))
     _write_json(PRODUCT_DIR / "role_scene_matrix_v1.json", role_scene_matrix)
@@ -1005,8 +1084,10 @@ def main() -> int:
     print("- docs/product/scene_catalog_v2.md")
     print("- docs/product/scene_catalog_v2.json")
     print("- docs/product/scene_catalog_product_v1.json")
+    print("- docs/product/scene_entry_registry_v1.json")
     print("- docs/product/capability_scene_mapping_v1.md")
     print("- docs/product/capability_scene_mapping_v1.json")
+    print("- docs/product/capability_entry_registry_v1.json")
     print("- docs/product/role_scene_matrix_v1.md")
     print("- docs/product/role_scene_matrix_v1.json")
     print("- docs/product/capability_maturity_matrix_v1.md")
