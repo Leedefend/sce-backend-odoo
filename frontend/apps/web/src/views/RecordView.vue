@@ -106,6 +106,7 @@
         </button>
       </div>
       <ViewLayoutRenderer
+        v-if="layoutStats.field > 0"
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
         :record="renderRecord"
@@ -115,6 +116,15 @@
         :edit-mode="status === 'editing' ? 'all' : 'none'"
         @update:field="handleFieldUpdate"
       />
+      <section v-else class="fallback-fields">
+        <h3>项目详情</h3>
+        <ul>
+          <li v-for="field in fields" :key="field.name">
+            <span class="fallback-label">{{ field.label }}</span>
+            <span class="fallback-value">{{ formatFieldValue(field.value) }}</span>
+          </li>
+        </ul>
+      </section>
       <section v-if="hasChatter" class="chatter">
         <h3>协作时间线</h3>
         <p v-if="chatterError" class="meta">{{ chatterError }}</p>
@@ -650,6 +660,24 @@ function selectionOptions(fieldName: string) {
   return Array.isArray(descriptor?.selection) ? descriptor.selection : [];
 }
 
+function formatFieldValue(value: unknown) {
+  if (value === null || value === undefined || value === false) return '-';
+  if (Array.isArray(value)) {
+    if (value.length === 2 && typeof value[0] === 'number' && typeof value[1] === 'string') {
+      return String(value[1] || `#${value[0]}`);
+    }
+    return value.map((item) => String(item ?? '')).filter(Boolean).join(', ') || '-';
+  }
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '[object]';
+    }
+  }
+  return String(value);
+}
+
 function fieldInputType(fieldName: string) {
   const descriptor = viewContract.value?.fields?.[fieldName];
   const ttype = descriptor?.ttype || descriptor?.type;
@@ -1121,6 +1149,37 @@ onMounted(load);
 
 .stat-value {
   font-size: 18px;
+}
+
+.fallback-fields {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.fallback-fields ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.fallback-fields li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fallback-label {
+  color: #334155;
+  font-weight: 600;
+}
+
+.fallback-value {
+  color: #0f172a;
+  text-align: right;
 }
 
 .chatter {
