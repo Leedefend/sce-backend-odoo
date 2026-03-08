@@ -201,10 +201,8 @@ def main() -> int:
             ]
             user_filters = (((user_data.get("search") or {}).get("filters")) or []) if isinstance(user_data.get("search"), dict) else []
             user_layout = (((user_data.get("views") or {}).get("form") or {}).get("layout") or []) if isinstance(user_data.get("views"), dict) else []
-            user_layout_field_count = len(
-                [x for x in user_layout if isinstance(x, dict) and str(x.get("type") or "").strip().lower() == "field"]
-            )
             user_layout_field_names = _collect_layout_field_names(user_layout)
+            user_layout_field_count = len(user_layout_field_names)
             user_visible_fields = user_data.get("visible_fields")
             user_visible_field_names = (
                 {str(x).strip() for x in user_visible_fields if str(x).strip()} if isinstance(user_visible_fields, list) else set()
