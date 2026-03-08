@@ -224,64 +224,6 @@ class UiContractHandler(BaseIntentHandler):
                 data["head"] = head
         return data
 
-    def _ensure_project_form_layout_structure(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        if not isinstance(data, dict):
-            return data
-        model = str((data.get("head") or {}).get("model") or data.get("model") or "").strip()
-        view_type = str((data.get("head") or {}).get("view_type") or data.get("view_type") or "").strip().lower()
-        views = data.get("views") if isinstance(data.get("views"), dict) else {}
-        form = views.get("form") if isinstance(views.get("form"), dict) else {}
-        layout = form.get("layout") if isinstance(form.get("layout"), list) else []
-        if model != "project.project" or view_type != "form" or not isinstance(layout, list):
-            return data
-
-        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
-        field_names = [str(name).strip() for name in fields_map.keys() if str(name).strip()]
-        visible_fields = data.get("visible_fields") if isinstance(data.get("visible_fields"), list) else []
-        ordered = [str(name).strip() for name in visible_fields if str(name).strip() in fields_map]
-        if not ordered:
-            ordered = field_names
-
-        profile = data.get("form_profile") if isinstance(data.get("form_profile"), dict) else {}
-        core_raw = profile.get("core_fields") if isinstance(profile.get("core_fields"), list) else []
-        advanced_raw = profile.get("advanced_fields") if isinstance(profile.get("advanced_fields"), list) else []
-        core_fields = [str(name).strip() for name in core_raw if str(name).strip() in ordered]
-        advanced_fields = [str(name).strip() for name in advanced_raw if str(name).strip() in ordered]
-        if not core_fields:
-            core_fields = ordered[: min(8, len(ordered))]
-        if not advanced_fields:
-            advanced_fields = [name for name in ordered if name not in set(core_fields)]
-
-        header_nodes = [node for node in layout if isinstance(node, dict) and str(node.get("type") or "").strip().lower() == "header"]
-        groups = []
-        if core_fields:
-            groups.append({
-                "type": "group",
-                "name": "core_group",
-                "string": "核心信息",
-                "children": [{"type": "field", "name": name} for name in core_fields],
-            })
-        if advanced_fields:
-            groups.append({
-                "type": "group",
-                "name": "advanced_group",
-                "string": "高级信息",
-                "children": [{"type": "field", "name": name} for name in advanced_fields],
-            })
-        if not groups:
-            return data
-        form["layout"] = header_nodes + [{
-            "type": "sheet",
-            "name": "project_form_sheet",
-            "children": groups,
-        }]
-        views["form"] = form
-        data["views"] = views
-        head = data.get("head") if isinstance(data.get("head"), dict) else {}
-        head["view_type"] = "form"
-        data["head"] = head
-        return data
-
     # ---------------- op 实现 ----------------
     def _op_nav(self, ctx):
         data, versions = NavDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).build_nav({
@@ -435,7 +377,6 @@ class UiContractHandler(BaseIntentHandler):
                         head.setdefault("view_type", "form")
                         head["action_id"] = action_id
                         data["head"] = head
-                    data = self._ensure_project_form_layout_structure(data)
                 cs = ContractService(self.env)
                 fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject": "action.form", "action_id": action_id}})
                 return fixed.get("data", {}), {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
