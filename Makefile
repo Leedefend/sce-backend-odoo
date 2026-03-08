@@ -1645,7 +1645,11 @@ verify.seed.demo.isolation: guard.prod.forbid verify.scene.provider.guard verify
 	@echo "[OK] verify.seed.demo.isolation done"
 
 # Unified aliases for CI/operations wording.
-verify.boundary.guard: guard.prod.forbid verify.scene.contract_path.gate
+.PHONY: verify.contract.handler_boundary.guard
+verify.contract.handler_boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/contract_handler_layout_boundary_guard.py
+
+verify.boundary.guard: guard.prod.forbid verify.scene.contract_path.gate verify.contract.handler_boundary.guard
 	@echo "[OK] verify.boundary.guard done"
 
 .PHONY: verify.system_init.runtime_context.stability
