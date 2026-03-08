@@ -1,0 +1,48 @@
+{
+  "template_key": "owner_management_draft",
+  "version": "v1-draft",
+  "capability_groups": [
+    "project_oversight",
+    "contract_execution_monitoring",
+    "investment_control",
+    "payment_approval",
+    "risk_early_warning"
+  ],
+  "home_scenes": [
+    "owner.dashboard",
+    "contracts.monitor",
+    "payments.approval",
+    "risk.center"
+  ],
+  "role_matrix": [
+    {
+      "role_key": "owner_manager",
+      "home_scene": "owner.dashboard",
+      "high_frequency_scenes": [
+        "contracts.monitor",
+        "payments.approval"
+      ]
+    },
+    {
+      "role_key": "owner_finance",
+      "home_scene": "payments.approval",
+      "high_frequency_scenes": [
+        "cost.control",
+        "contracts.monitor"
+      ]
+    },
+    {
+      "role_key": "owner_exec",
+      "home_scene": "owner.dashboard",
+      "high_frequency_scenes": [
+        "risk.center",
+        "projects.dashboard"
+      ]
+    }
+  ],
+  "migration_principles": [
+    "reuse_five_layer_architecture",
+    "reorchestrate_by_capability_and_scene",
+    "consume_governed_surface_only"
+  ]
+}
