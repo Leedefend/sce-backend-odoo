@@ -15,6 +15,7 @@ from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispat
 from odoo.addons.smart_core.utils.contract_governance import (
     apply_contract_governance,
     resolve_contract_mode,
+    resolve_contract_surface,
 )
 
 _logger = logging.getLogger(__name__)
@@ -110,10 +111,12 @@ class UiContractHandler(BaseIntentHandler):
         p = payload or {}
         mode_params: Dict[str, Any] = {}
         for layer in self._collect_layers(p):
-            for key in ("contract_mode", "hud", "debug_hud"):
+            for key in ("contract_mode", "hud", "debug_hud", "contract_surface", "surface", "source_mode"):
                 if key in layer and key not in mode_params:
                     mode_params[key] = layer.get(key)
         contract_mode = resolve_contract_mode(mode_params)
+        contract_surface = resolve_contract_surface(mode_params, contract_mode=contract_mode)
+        source_mode = str(mode_params.get("source_mode") or "").strip()
 
         # 智能推断 op/subject（兼容你的前端请求形状）
         op = (self._get_param(p, "op", "subject") or "").strip().lower()
@@ -161,23 +164,36 @@ class UiContractHandler(BaseIntentHandler):
 
         data, meta = (res if isinstance(res, tuple) else (res or {}, {}))
         data = self._inject_render_hints(data or {}, p)
-        data = apply_contract_governance(data or {}, contract_mode, inject_contract_mode=False)
+        data = apply_contract_governance(
+            data or {},
+            contract_mode,
+            contract_surface=contract_surface,
+            source_mode=source_mode,
+            inject_contract_mode=False,
+        )
         meta = _normalize_meta(meta)
-        etag = self._make_etag(meta=meta, ctx=ctx, op=op, p=p, contract_mode=contract_mode)
+        etag = self._make_etag(
+            meta=meta,
+            ctx=ctx,
+            op=op,
+            p=p,
+            contract_mode=contract_mode,
+            contract_surface=contract_surface,
+        )
 
         if if_none_match and if_none_match == etag and not force_refresh:
             return {"ok": True, "data": None,
                     "meta": {"intent": self.INTENT_TYPE, "op": op, "etag": etag,
                              "version": self.VERSION, "elapsed_ms": int((time.time()-t0)*1000),
                              "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
-                             "contract_mode": contract_mode},
+                             "contract_mode": contract_mode, "contract_surface": contract_surface},
                     "code": 304}
 
         meta_out = dict(meta)
         meta_out.update({"intent": self.INTENT_TYPE, "op": op, "version": self.VERSION,
                          "etag": etag, "elapsed_ms": int((time.time()-t0)*1000),
                          "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
-                         "contract_mode": contract_mode})
+                         "contract_mode": contract_mode, "contract_surface": contract_surface})
         return {"ok": True, "data": data or {}, "meta": meta_out}
 
     def _inject_render_hints(self, data: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -442,7 +458,7 @@ class UiContractHandler(BaseIntentHandler):
         param = (str(param or "")).strip().strip('"')
         return hdr or param
 
-    def _make_etag(self, meta, ctx, op, p, contract_mode="user"):
+    def _make_etag(self, meta, ctx, op, p, contract_mode="user", contract_surface="user"):
         meta = _normalize_meta(meta)
         etag_src = _json({
             "view_hash": meta.get("view_hash"),
@@ -458,6 +474,7 @@ class UiContractHandler(BaseIntentHandler):
             "model": self._get_param(p, "model","model_code","modelCode"),
             "action_id": self._get_param(p, "action_id","actionId"),
             "contract_mode": contract_mode,
+            "contract_surface": contract_surface,
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
         })

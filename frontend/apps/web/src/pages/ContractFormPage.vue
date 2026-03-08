@@ -400,6 +400,15 @@ const recordId = computed(() => {
 });
 const recordIdDisplay = computed(() => (recordId.value ? String(recordId.value) : 'new'));
 const showHud = computed(() => isHudEnabled(route));
+const requestedSurface = computed<'user' | 'native' | 'hud'>(() => {
+  const raw = String(route.query.surface || '').trim().toLowerCase();
+  if (raw === 'native' || raw === 'hud' || raw === 'user') return raw;
+  if (showHud.value) return 'hud';
+  return 'user';
+});
+const requestedSourceMode = computed(() => (
+  requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
+));
 const busy = computed(() => busyKind.value !== null);
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
@@ -458,10 +467,11 @@ const pageTitle = computed(() => {
 const contractMetaLine = computed(() => {
   if (!contract.value) return '';
   const mode = String(contractMeta.value?.contract_mode || '-');
+  const surface = String((contract.value as Record<string, unknown>)?.contract_surface || contractMeta.value?.contract_surface || '-');
   const viewType = String(contract.value.head?.view_type || contract.value.view_type || '-');
   const filters = Array.isArray(contract.value.search?.filters) ? contract.value.search.filters.length : 0;
   const transitions = Array.isArray(contract.value.workflow?.transitions) ? contract.value.workflow.transitions.length : 0;
-  return `mode=${mode} · view_type=${viewType} · profile=${renderProfile.value} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
+  return `mode=${mode} · surface=${surface} · view_type=${viewType} · profile=${renderProfile.value} · filters=${filters} · transitions=${transitions} · rights=${rights.value.read ? 'R' : '-'}${rights.value.write ? 'W' : '-'}${rights.value.create ? 'C' : '-'}${rights.value.unlink ? 'D' : '-'}`;
 });
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');
@@ -2070,6 +2080,49 @@ function analyzeFormContractReadiness(
   };
 }
 
+function validateSurfaceMarkers(
+  data: unknown,
+  meta: Record<string, unknown> | null,
+  expectedSurface: 'user' | 'native' | 'hud',
+) {
+  const issues: string[] = [];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { ok: false, issues: ['contract payload is not an object'] };
+  }
+  const row = data as Record<string, unknown>;
+  const contractSurface = String(row.contract_surface || '').trim().toLowerCase();
+  const renderMode = String(row.render_mode || '').trim().toLowerCase();
+  const sourceMode = String(row.source_mode || '').trim().toLowerCase();
+  const governedFromNative = row.governed_from_native;
+  const surfaceMapping = row.surface_mapping;
+  const metaSurface = String(meta?.contract_surface || '').trim().toLowerCase();
+
+  if (!contractSurface) issues.push('missing contract_surface');
+  if (!renderMode) issues.push('missing render_mode');
+  if (!sourceMode) issues.push('missing source_mode');
+  if (typeof governedFromNative !== 'boolean') issues.push('missing governed_from_native');
+  if (!surfaceMapping || typeof surfaceMapping !== 'object' || Array.isArray(surfaceMapping)) {
+    issues.push('missing surface_mapping');
+  }
+
+  if (metaSurface && contractSurface && metaSurface !== contractSurface) {
+    issues.push(`meta.contract_surface=${metaSurface} mismatch data.contract_surface=${contractSurface}`);
+  }
+  if (contractSurface && contractSurface !== expectedSurface) {
+    issues.push(`contract_surface=${contractSurface} mismatch expected=${expectedSurface}`);
+  }
+
+  if (contractSurface === 'native') {
+    if (renderMode !== 'native') issues.push(`native surface requires render_mode=native, got ${renderMode || '-'}`);
+    if (governedFromNative !== false) issues.push('native surface requires governed_from_native=false');
+  } else if (contractSurface === 'user' || contractSurface === 'hud') {
+    if (renderMode !== 'governed') issues.push(`governed surface requires render_mode=governed, got ${renderMode || '-'}`);
+    if (governedFromNative !== true) issues.push('governed surface requires governed_from_native=true');
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
 async function loadContract() {
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
@@ -2079,6 +2132,8 @@ async function loadContract() {
       response = await loadActionContractRaw(actionId.value, {
         recordId: recordId.value,
         renderProfile: profile,
+        surface: requestedSurface.value,
+        sourceMode: requestedSourceMode.value,
       });
       const actionReadiness = analyzeFormContractReadiness(response?.data, { requirePureFormViewType: true });
       if (!actionReadiness.usable) {
@@ -2093,10 +2148,20 @@ async function loadContract() {
       viewType: 'form',
       recordId: recordId.value,
       renderProfile: profile,
+      surface: requestedSurface.value,
+      sourceMode: requestedSourceMode.value,
     });
   }
   if (!response?.data || typeof response.data !== 'object') {
     throw new Error('empty contract');
+  }
+  const markerCheck = validateSurfaceMarkers(
+    response.data,
+    (response.meta as Record<string, unknown> | null) || null,
+    requestedSurface.value,
+  );
+  if (!markerCheck.ok) {
+    throw new Error(`contract surface markers invalid: ${markerCheck.issues.slice(0, 4).join(' | ')}`);
   }
   const readiness = analyzeFormContractReadiness(response.data, { requirePureFormViewType: false });
   if (!readiness.usable) {

@@ -1540,6 +1540,13 @@ verify.contract.assembler.semantic.schema.guard: guard.prod.forbid verify.contra
 verify.project.form.contract.surface.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/project_form_contract_surface_guard.py
 
+.PHONY: verify.native_surface_integrity_guard verify.governed_surface_policy_guard
+verify.native_surface_integrity_guard: guard.prod.forbid verify.role.capability_floor.prod_like
+	@python3 scripts/verify/native_surface_integrity_guard.py
+
+verify.governed_surface_policy_guard: guard.prod.forbid verify.role.capability_floor.prod_like
+	@python3 scripts/verify/governed_surface_policy_guard.py
+
 verify.runtime.surface.dashboard.report: guard.prod.forbid verify.scene.catalog.runtime_alignment.guard verify.role.capability_floor.prod_like
 	@python3 scripts/verify/runtime_surface_dashboard_report.py
 
@@ -2216,6 +2223,8 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract.scene_coverage.guard
 	@$(MAKE) --no-print-directory verify.contract.mode.smoke
 	@$(MAKE) --no-print-directory verify.project.form.contract.surface.guard
+	@$(MAKE) --no-print-directory verify.native_surface_integrity_guard
+	@$(MAKE) --no-print-directory verify.governed_surface_policy_guard
 	@$(MAKE) --no-print-directory verify.contract.ordering.smoke
 	@$(MAKE) --no-print-directory verify.scene.hud.trace.smoke
 	@$(MAKE) --no-print-directory verify.scene.meta.trace.smoke
