@@ -324,6 +324,47 @@ class UiContractHandler(BaseIntentHandler):
         except Exception:
             return self._err(400, "缺少或非法的 action_id")
 
+        raw_record = self._get_param(p, "record_id", "recordId", "res_id", "resId")
+        record_id = None
+        try:
+            if raw_record is not None and str(raw_record).strip():
+                record_id = int(raw_record)
+        except Exception:
+            record_id = None
+        requested_view_type = (self._get_param(p, "view_type", "viewType") or "").strip().lower()
+        render_profile = str(self._get_param(p, "render_profile", "renderProfile") or "").strip().lower()
+
+        # Detail/intake scene should prefer complete form contract surface.
+        prefer_form_contract = bool(
+            requested_view_type == "form"
+            or (record_id and record_id > 0)
+            or render_profile in {"create", "edit", "readonly"}
+        )
+        if prefer_form_contract:
+            Action = self.env["ir.actions.act_window"].sudo().with_context(ctx)
+            action = Action.browse(action_id)
+            if action.exists() and action.res_model:
+                p_form = {
+                    "subject": "model",
+                    "model": action.res_model,
+                    "view_type": "form",
+                    "with_data": False,
+                }
+                data, versions = ActionDispatcher(
+                    self.env,
+                    api.Environment(self.env.cr, self.env.user.id, ctx),
+                ).dispatch(p_form)
+                if isinstance(data, dict):
+                    data["action_id"] = action_id
+                    head = data.get("head")
+                    if isinstance(head, dict):
+                        head.setdefault("view_type", "form")
+                        head["action_id"] = action_id
+                        data["head"] = head
+                cs = ContractService(self.env)
+                fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject": "action.form", "action_id": action_id}})
+                return fixed.get("data", {}), {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
+
         # 统一服务的 action 分发
         p2 = {"subject":"action","action_id": action_id, "with_data": False}
         data, versions = ActionDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).dispatch(p2)
