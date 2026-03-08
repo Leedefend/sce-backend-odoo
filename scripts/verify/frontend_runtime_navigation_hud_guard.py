@@ -36,6 +36,10 @@ def main() -> int:
         "nav_entry_total",
         "nav_scene_entries",
         "nav_cap_entries",
+        "role_scene_candidates",
+        "role_scene_matched",
+        "role_scene_missing",
+        "role_scene_missing_keys",
     ]
     registry_tokens = [
         "export type NavigationEntrySource = 'scene' | 'capability';",
