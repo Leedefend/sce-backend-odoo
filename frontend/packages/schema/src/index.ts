@@ -353,6 +353,11 @@ export interface LoadViewRequest {
 }
 
 export interface ActionContract {
+  contract_surface?: 'user' | 'native' | 'hud';
+  render_mode?: 'governed' | 'native' | string;
+  source_mode?: string;
+  governed_from_native?: boolean;
+  surface_mapping?: Record<string, unknown>;
   visible_fields?: string[];
   render_profile?: 'create' | 'edit' | 'readonly';
   hide_filters_on_create?: boolean;
