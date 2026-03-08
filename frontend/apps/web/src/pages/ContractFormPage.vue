@@ -1410,8 +1410,44 @@ const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
   return out;
 });
 
-const coreFieldNames = computed<string[]>(() => semanticFieldGroups.value.core?.fields || []);
-const advancedFieldNames = computed<string[]>(() => semanticFieldGroups.value.advanced?.fields || []);
+const contractFieldSemantics = computed<Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }>>(() => {
+  const out: Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }> = {};
+  const raw = contract.value?.field_semantics;
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    Object.entries(raw as Record<string, unknown>).forEach(([name, value]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+      const row = value as Record<string, unknown>;
+      out[name] = {
+        semantic_type: String(row.semantic_type || '').trim().toLowerCase(),
+        surface_role: String(row.surface_role || '').trim().toLowerCase(),
+        technical: Boolean(row.technical),
+      };
+    });
+  }
+  return out;
+});
+
+function fieldSemanticMeta(name: string) {
+  const fromMap = contractFieldSemantics.value[name];
+  if (fromMap) return fromMap;
+  const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
+  return {
+    semantic_type: String(descriptor?.semantic_type || '').trim().toLowerCase(),
+    surface_role: String(descriptor?.surface_role || '').trim().toLowerCase(),
+    technical: Boolean(descriptor?.technical),
+  };
+}
+
+const coreFieldNames = computed<string[]>(() => {
+  const fromSemantic = Object.keys(contract.value?.fields || {}).filter((name) => fieldSemanticMeta(name).surface_role === 'core');
+  if (fromSemantic.length) return fromSemantic;
+  return semanticFieldGroups.value.core?.fields || [];
+});
+const advancedFieldNames = computed<string[]>(() => {
+  const fromSemantic = Object.keys(contract.value?.fields || {}).filter((name) => fieldSemanticMeta(name).surface_role === 'advanced');
+  if (fromSemantic.length) return fromSemantic;
+  return semanticFieldGroups.value.advanced?.fields || [];
+});
 const coreFieldsLabel = computed(() => semanticFieldGroups.value.core?.label || '');
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
 const policyRequiredFields = computed(() => {
@@ -1470,10 +1506,15 @@ function runtimeState(name: string) {
 }
 
 function isFieldVisible(name: string) {
+  const semantic = fieldSemanticMeta(name);
+  if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
+  if (semantic.surface_role === 'hidden' && !showHud.value) return false;
   const state = runtimeState(name);
   if (state.invisible) return false;
   const visible = contractVisibleFields.value;
   if (visible.length && !visible.includes(name)) return false;
+  if (semantic.surface_role === 'core') return true;
+  if (semantic.surface_role === 'advanced') return advancedExpanded.value;
   const core = coreFieldNames.value;
   const advanced = advancedFieldNames.value;
   const hasCore = core.length > 0;
