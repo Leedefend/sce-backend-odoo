@@ -1548,6 +1548,10 @@ verify.contract.assembler.semantic.schema.guard: guard.prod.forbid verify.contra
 verify.project.form.contract.surface.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/project_form_contract_surface_guard.py
 
+.PHONY: verify.relation.access_policy.consistency.audit
+verify.relation.access_policy.consistency.audit: guard.prod.forbid verify.role.capability_floor.prod_like
+	@python3 scripts/verify/relation_access_policy_consistency_audit.py
+
 .PHONY: verify.native_surface_integrity_guard verify.governed_surface_policy_guard verify.contract.native_integrity_guard verify.contract.governed_policy_guard verify.contract.surface_mapping_guard verify.contract.parse_boundary.guard verify.contract.production_chain.guard
 verify.native_surface_integrity_guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/native_surface_integrity_guard.py
@@ -2282,6 +2286,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract.scene_coverage.guard
 	@$(MAKE) --no-print-directory verify.contract.mode.smoke
 	@$(MAKE) --no-print-directory verify.project.form.contract.surface.guard
+	@$(MAKE) --no-print-directory verify.relation.access_policy.consistency.audit
 	@$(MAKE) --no-print-directory verify.native_surface_integrity_guard
 	@$(MAKE) --no-print-directory verify.governed_surface_policy_guard
 	@$(MAKE) --no-print-directory verify.contract.surface_mapping_guard
