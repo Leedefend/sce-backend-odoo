@@ -503,6 +503,22 @@ export interface ActionContract {
   validator?: Record<string, unknown>;
   warnings?: Array<string | Record<string, unknown>>;
   degraded?: boolean;
+  access_policy?: {
+    mode?: 'allow' | 'degrade' | 'block' | string;
+    reason_code?: string;
+    message?: string;
+    policy_source?: string;
+    blocked_fields?: Array<{
+      field?: string;
+      model?: string;
+      reason_code?: string;
+    }>;
+    degraded_fields?: Array<{
+      field?: string;
+      model?: string;
+      reason_code?: string;
+    }>;
+  };
   missing_models?: string[];
   ui_contract_raw?: {
     fields?: Record<string, FieldDescriptor>;
