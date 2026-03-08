@@ -275,6 +275,7 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import { isHudEnabled } from '../config/debug';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
+import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { triggerOnchange } from '../api/onchange';
 import type { OnchangeLinePatch } from '../api/onchange';
@@ -365,6 +366,7 @@ const advancedExpanded = ref(false);
 const relationOptions = ref<Record<string, RelationOption[]>>({});
 const relationFieldDescriptors = ref<Record<string, Record<string, FieldDescriptor>>>({});
 const relationKeywords = reactive<Record<string, string>>({});
+const deniedRelationModels = new Set<string>();
 const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
@@ -601,6 +603,33 @@ function relationOptionsForField(name: string, descriptor?: FieldDescriptor) {
   const ids = relationIds(name);
   if (!ids.length) return [];
   return ids.map((id) => ({ id, label: `#${id}` }));
+}
+
+function parseMany2oneDisplay(value: unknown): RelationOption | null {
+  if (Array.isArray(value)) {
+    const id = Number(value[0]);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    const label = String(value[1] || `#${id}`).trim() || `#${id}`;
+    return { id: Math.trunc(id), label };
+  }
+  if (value && typeof value === 'object') {
+    const row = value as Record<string, unknown>;
+    const id = Number(row.id);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    const label = String(row.display_name || row.name || `#${id}`).trim() || `#${id}`;
+    return { id: Math.trunc(id), label };
+  }
+  return null;
+}
+
+function upsertRelationOption(fieldName: string, option: RelationOption | null) {
+  if (!option) return;
+  const current = Array.isArray(relationOptions.value[fieldName]) ? relationOptions.value[fieldName] : [];
+  if (current.some((item) => item.id === option.id)) return;
+  relationOptions.value = {
+    ...relationOptions.value,
+    [fieldName]: [option, ...current],
+  };
 }
 
 function relationKeyword(name: string) {
@@ -1046,6 +1075,7 @@ async function queryRelationOptions(name: string, keyword: string) {
   const descriptor = contract.value?.fields?.[name];
   const relation = relationModel(name);
   if (!relation) return;
+  if (deniedRelationModels.has(relation)) return;
   const search = String(keyword || '').trim();
   const domain = mergedRelationDomain(name, descriptor);
   try {
@@ -1056,6 +1086,7 @@ async function queryRelationOptions(name: string, keyword: string) {
       order: 'id desc',
       domain,
       search_term: search || undefined,
+      silentErrors: true,
     });
     const records = Array.isArray(listed?.records) ? listed.records : [];
     const mapped = records
@@ -1074,7 +1105,11 @@ async function queryRelationOptions(name: string, keyword: string) {
       ...relationOptions.value,
       [name]: mapped,
     };
-  } catch {
+  } catch (err) {
+    if (err instanceof ApiError) {
+      const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';
+      if (denied) deniedRelationModels.add(relation);
+    }
     // keep existing options if remote query fails
   }
 }
@@ -1199,6 +1234,10 @@ async function loadRelationOptions() {
     if (!['many2one', 'many2many', 'one2many'].includes(type)) return;
     const relation = String((descriptor as Record<string, unknown>).relation || '').trim();
     if (!relation) return;
+    if (deniedRelationModels.has(relation)) {
+      next[name] = [];
+      return;
+    }
     const domain = mergedRelationDomain(name, descriptor as FieldDescriptor);
     try {
       const listed = await listRecords({
@@ -1207,6 +1246,7 @@ async function loadRelationOptions() {
         limit: 80,
         order: 'id desc',
         domain,
+        silentErrors: true,
       });
       const records = Array.isArray(listed?.records) ? listed.records : [];
       next[name] = records
@@ -1221,7 +1261,11 @@ async function loadRelationOptions() {
           return { id: Math.trunc(id), label };
         })
         .filter((item): item is RelationOption => Boolean(item));
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';
+        if (denied) deniedRelationModels.add(relation);
+      }
       next[name] = [];
     }
   }));
@@ -1892,12 +1936,14 @@ async function loadRecord() {
         formData[name] = Array.isArray(incoming) ? incoming : [];
         if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
       } else if (ttype === 'many2one') {
+        const option = parseMany2oneDisplay(incoming);
+        upsertRelationOption(name, option);
         const ids = normalizeRelationIds(incoming);
         formData[name] = ids.length ? ids[0] : false;
         const matched = ids.length
           ? (relationOptions.value[name] || []).find((item) => item.id === ids[0])
           : null;
-        relationKeywords[name] = matched?.label || '';
+        relationKeywords[name] = matched?.label || option?.label || '';
       } else if (ttype === 'date') {
         formData[name] = toDateInputValue(incoming);
       } else if (ttype === 'datetime') {
@@ -1933,12 +1979,14 @@ async function loadRecord() {
       formData[name] = Array.isArray(incoming) ? incoming : [];
       if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
     } else if (ttype === 'many2one') {
+      const option = parseMany2oneDisplay(incoming);
+      upsertRelationOption(name, option);
       const ids = normalizeRelationIds(incoming);
       formData[name] = ids.length ? ids[0] : false;
       const matched = ids.length
         ? (relationOptions.value[name] || []).find((item) => item.id === ids[0])
         : null;
-      relationKeywords[name] = matched?.label || '';
+      relationKeywords[name] = matched?.label || option?.label || '';
     } else if (ttype === 'date') {
       formData[name] = toDateInputValue(incoming);
     } else if (ttype === 'datetime') {
@@ -1967,8 +2015,8 @@ async function reload() {
   showOne2manyErrors.value = false;
   try {
     await loadContract();
-    await loadRelationOptions();
     await loadRecord();
+    await loadRelationOptions();
     status.value = 'ok';
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'load failed';
