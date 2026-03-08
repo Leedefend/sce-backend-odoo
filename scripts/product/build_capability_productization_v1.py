@@ -815,6 +815,24 @@ def _md_entry_registry_quality(payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _md_role_navigation_profile(payload: dict[str, Any]) -> str:
+    lines = [
+        "# Role Navigation Profile v1",
+        "",
+        f"- generated_on: {payload.get('generated_on')}",
+        f"- role_count: {payload.get('role_count', 0)}",
+        f"- missing_role_count: {payload.get('missing_role_count', 0)}",
+        "",
+        "| role_key | home_scene | home_scene_registered | high_frequency_scenes | missing_scenes |",
+        "|---|---|---|---|---|",
+    ]
+    for row in payload.get("roles", []):
+        lines.append(
+            f"| {row.get('role_key','')} | {row.get('home_scene','')} | {str(bool(row.get('home_scene_registered'))).lower()} | {','.join(row.get('high_frequency_scenes') or []) or '-'} | {','.join(row.get('missing_scenes') or []) or '-'} |"
+        )
+    return "\n".join(lines)
+
+
 def _construction_template_md(role_scene_matrix: dict[str, Any]) -> str:
     return "\n".join(
         [
@@ -1164,6 +1182,47 @@ def _navigation_entry_registry(
     }
 
 
+def _role_navigation_profile(
+    role_scene_matrix: dict[str, Any],
+    navigation_entry_registry: dict[str, Any],
+) -> dict[str, Any]:
+    roles = role_scene_matrix.get("roles") if isinstance(role_scene_matrix.get("roles"), list) else []
+    nav_entries = navigation_entry_registry.get("entries") if isinstance(navigation_entry_registry.get("entries"), list) else []
+    nav_scene_keys = {
+        str((row or {}).get("scene_key") or "").strip()
+        for row in nav_entries
+        if str((row or {}).get("entry_source") or "") == "scene"
+    }
+    profiles: list[dict[str, Any]] = []
+    for row in roles:
+        role_key = str((row or {}).get("role_key") or "").strip()
+        home_scene = str((row or {}).get("home_scene") or "").strip()
+        high_frequency = [str(x or "").strip() for x in ((row or {}).get("high_frequency_scenes") or []) if str(x or "").strip()]
+        missing = []
+        if home_scene and home_scene not in nav_scene_keys:
+            missing.append(home_scene)
+        missing.extend([scene for scene in high_frequency if scene not in nav_scene_keys])
+        profiles.append(
+            {
+                "role_key": role_key,
+                "home_scene": home_scene,
+                "home_scene_registered": bool(home_scene and home_scene in nav_scene_keys),
+                "high_frequency_scenes": high_frequency,
+                "registered_high_frequency_scenes": [scene for scene in high_frequency if scene in nav_scene_keys],
+                "missing_scenes": sorted(set(missing)),
+            }
+        )
+    missing_roles = [row["role_key"] for row in profiles if row["missing_scenes"]]
+    return {
+        "version": "v1",
+        "generated_on": date.today().isoformat(),
+        "role_count": len(profiles),
+        "roles": profiles,
+        "missing_role_count": len(missing_roles),
+        "missing_roles": missing_roles,
+    }
+
+
 def main() -> int:
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
     TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -1181,6 +1240,7 @@ def main() -> int:
     capability_entry_registry_v1 = _capability_entry_registry(capability_catalog, capability_scene_mapping)
     navigation_entry_registry_v1 = _navigation_entry_registry(scene_entry_registry_v1, capability_entry_registry_v1)
     role_scene_matrix = _role_scene_matrix(scene_catalog_v2)
+    role_navigation_profile_v1 = _role_navigation_profile(role_scene_matrix, navigation_entry_registry_v1)
     entry_registry_quality_v1 = _entry_registry_quality_report(
         scene_catalog_product_v1,
         capability_catalog,
@@ -1207,6 +1267,8 @@ def main() -> int:
     _write_markdown(PRODUCT_DIR / "capability_scene_mapping_v1.md", _md_capability_scene_mapping(capability_scene_mapping))
     _write_json(PRODUCT_DIR / "capability_entry_registry_v1.json", capability_entry_registry_v1)
     _write_json(PRODUCT_DIR / "navigation_entry_registry_v1.json", navigation_entry_registry_v1)
+    _write_json(PRODUCT_DIR / "role_navigation_profile_v1.json", role_navigation_profile_v1)
+    _write_markdown(PRODUCT_DIR / "role_navigation_profile_v1.md", _md_role_navigation_profile(role_navigation_profile_v1))
     _write_json(PRODUCT_DIR / "entry_registry_quality_report_v1.json", entry_registry_quality_v1)
     _write_markdown(PRODUCT_DIR / "entry_registry_quality_report_v1.md", _md_entry_registry_quality(entry_registry_quality_v1))
 
@@ -1245,6 +1307,8 @@ def main() -> int:
     print("- docs/product/capability_scene_mapping_v1.json")
     print("- docs/product/capability_entry_registry_v1.json")
     print("- docs/product/navigation_entry_registry_v1.json")
+    print("- docs/product/role_navigation_profile_v1.json")
+    print("- docs/product/role_navigation_profile_v1.md")
     print("- docs/product/entry_registry_quality_report_v1.json")
     print("- docs/product/entry_registry_quality_report_v1.md")
     print("- docs/product/role_scene_matrix_v1.md")
