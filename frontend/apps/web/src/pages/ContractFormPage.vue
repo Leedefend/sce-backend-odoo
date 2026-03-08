@@ -1621,6 +1621,13 @@ const layoutSections = computed<LayoutSection[]>(() => {
   return sections.filter((section) => section.fields.length);
 });
 
+const contractReadiness = computed<FormContractReadiness>(() => {
+  if (!contract.value) {
+    return { usable: false, issues: ['contract not loaded'], fieldCount: 0, layoutFieldCount: 0, visibleCandidateCount: 0 };
+  }
+  return analyzeFormContractReadiness(contract.value, { requirePureFormViewType: false });
+});
+
 function normalizeComparable(value: unknown) {
   if (Array.isArray(value) && value.every((item) => typeof item === 'number')) {
     return JSON.stringify([...value].sort((a, b) => a - b));
@@ -1905,6 +1912,8 @@ const hudEntries = computed(() => [
   { label: 'action_id', value: actionId.value || '-' },
   { label: 'record_id', value: recordIdDisplay.value },
   { label: 'contract_loaded', value: Boolean(contract.value) },
+  { label: 'contract_ready', value: contractReadiness.value.usable },
+  { label: 'contract_issues', value: contractReadiness.value.issues.length },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
@@ -1917,15 +1926,26 @@ const hudEntries = computed(() => [
   { label: 'onchange_line_patches', value: onchangeLinePatches.value.length },
 ]);
 
-function isFormContractUsable(data: unknown) {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
-  const row = data as Record<string, unknown>;
-  const fields = row.fields;
-  if (!fields || typeof fields !== 'object' || Array.isArray(fields) || !Object.keys(fields as Record<string, unknown>).length) {
-    return false;
+type FormContractReadiness = {
+  usable: boolean;
+  issues: string[];
+  fieldCount: number;
+  layoutFieldCount: number;
+  visibleCandidateCount: number;
+};
+
+function analyzeFormContractReadiness(
+  data: unknown,
+  options?: { requirePureFormViewType?: boolean },
+): FormContractReadiness {
+  const issues: string[] = [];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { usable: false, issues: ['contract payload is not an object'], fieldCount: 0, layoutFieldCount: 0, visibleCandidateCount: 0 };
   }
-  const countLayoutFields = (layoutRaw: unknown): number => {
-    let count = 0;
+  const row = data as Record<string, unknown>;
+  const requirePureFormViewType = options?.requirePureFormViewType !== false;
+  const collectLayoutFieldNames = (layoutRaw: unknown): Set<string> => {
+    const names = new Set<string>();
     const walk = (nodeRaw: unknown) => {
       if (Array.isArray(nodeRaw)) {
         nodeRaw.forEach((item) => walk(item));
@@ -1934,30 +1954,79 @@ function isFormContractUsable(data: unknown) {
       if (!nodeRaw || typeof nodeRaw !== 'object') return;
       const node = nodeRaw as Record<string, unknown>;
       const kind = String(node.type || '').trim().toLowerCase();
-      if (kind === 'field') count += 1;
+      if (kind === 'field') {
+        const fieldName = String(node.name || '').trim();
+        if (fieldName) names.add(fieldName);
+      }
       ['children', 'tabs', 'pages', 'nodes', 'items'].forEach((key) => walk(node[key]));
     };
     walk(layoutRaw);
-    return count;
+    return names;
   };
+
+  const fields = row.fields;
+  const fieldMap = fields && typeof fields === 'object' && !Array.isArray(fields)
+    ? fields as Record<string, unknown>
+    : {};
+  const fieldNames = Object.keys(fieldMap);
+  if (!fieldNames.length) {
+    issues.push('contract.fields is empty');
+  }
+
   const views = row.views;
   const formView = views && typeof views === 'object' && !Array.isArray(views)
     ? (views as Record<string, unknown>).form
     : undefined;
-  if (formView && typeof formView === 'object' && !Array.isArray(formView)) {
-    const layout = (formView as Record<string, unknown>).layout;
-    if (countLayoutFields(layout) <= 0) return false;
-  } else {
-    return false;
+  if (!formView || typeof formView !== 'object' || Array.isArray(formView)) {
+    issues.push('contract.views.form is missing');
   }
+  const layout = formView && typeof formView === 'object' && !Array.isArray(formView)
+    ? (formView as Record<string, unknown>).layout
+    : [];
+  const layoutFieldNames = collectLayoutFieldNames(layout);
+  if (!layoutFieldNames.size) {
+    issues.push('contract.views.form.layout has no field nodes');
+  }
+
   const head = row.head;
   const headViewType = head && typeof head === 'object' && !Array.isArray(head)
     ? String((head as Record<string, unknown>).view_type || '').trim().toLowerCase()
     : '';
-  if (headViewType && headViewType !== 'form') return false;
   const viewType = String(row.view_type || '').trim().toLowerCase();
-  if (viewType && viewType !== 'form') return false;
-  return true;
+  if (requirePureFormViewType) {
+    if (headViewType && headViewType !== 'form') issues.push(`head.view_type is ${headViewType}, expected form`);
+    if (viewType && viewType !== 'form') issues.push(`view_type is ${viewType}, expected form`);
+  }
+
+  const visible = Array.isArray(row.visible_fields)
+    ? row.visible_fields.map((x) => String(x || '').trim()).filter(Boolean)
+    : [];
+  const visibleNameSet = new Set(visible);
+  const groupNames = new Set<string>();
+  const groups = Array.isArray(row.field_groups) ? row.field_groups : [];
+  groups.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    const fieldsRaw = (item as Record<string, unknown>).fields;
+    if (!Array.isArray(fieldsRaw)) return;
+    fieldsRaw.forEach((name) => {
+      const normalized = String(name || '').trim();
+      if (normalized) groupNames.add(normalized);
+    });
+  });
+  const visibleCandidates = fieldNames.filter((name) =>
+    visibleNameSet.has(name) || groupNames.has(name) || layoutFieldNames.has(name),
+  );
+  if (fieldNames.length && !visibleCandidates.length) {
+    issues.push('no visible field candidate from visible_fields/field_groups/layout');
+  }
+
+  return {
+    usable: issues.length === 0,
+    issues,
+    fieldCount: fieldNames.length,
+    layoutFieldCount: layoutFieldNames.size,
+    visibleCandidateCount: visibleCandidates.length,
+  };
 }
 
 async function loadContract() {
@@ -1970,7 +2039,8 @@ async function loadContract() {
         recordId: recordId.value,
         renderProfile: profile,
       });
-      if (!isFormContractUsable(response?.data)) {
+      const actionReadiness = analyzeFormContractReadiness(response?.data, { requirePureFormViewType: true });
+      if (!actionReadiness.usable) {
         response = null;
       }
     } catch {
@@ -1986,6 +2056,10 @@ async function loadContract() {
   }
   if (!response?.data || typeof response.data !== 'object') {
     throw new Error('empty contract');
+  }
+  const readiness = analyzeFormContractReadiness(response.data, { requirePureFormViewType: false });
+  if (!readiness.usable) {
+    throw new Error(`contract not renderable: ${readiness.issues.slice(0, 4).join(' | ')}`);
   }
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
