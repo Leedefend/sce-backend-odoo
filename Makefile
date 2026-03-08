@@ -2152,6 +2152,16 @@ verify.docs.contract_sync: guard.prod.forbid
 verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync
 	@echo "[OK] verify.docs.all done"
 
+.PHONY: verify.portal.scene_product_filter_guard verify.portal.product_scene_mapping_guard verify.portal.role_home_scene_guard
+verify.portal.scene_product_filter_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_scene_product_filter_guard.py
+
+verify.portal.product_scene_mapping_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_product_scene_mapping_guard.py
+
+verify.portal.role_home_scene_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_role_home_scene_guard.py
+
 verify.boundary.import_guard: guard.prod.forbid
 	@python3 scripts/verify/boundary_import_guard.py
 	@python3 scripts/verify/boundary_import_guard_schema_guard.py
