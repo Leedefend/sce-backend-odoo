@@ -16,6 +16,7 @@ TARGETS = {
     "system_init": ROOT / "addons/smart_core/handlers/system_init.py",
     "ui_contract": ROOT / "addons/smart_core/handlers/ui_contract.py",
     "contract_service": ROOT / "addons/smart_core/app_config_engine/services/contract_service.py",
+    "contract_governance": ROOT / "addons/smart_core/utils/contract_governance.py",
 }
 
 RULES = {
@@ -35,6 +36,14 @@ RULES = {
         r"apply_contract_governance",
         r"stable_etag\(\{\"data\":\s*data,\s*\"contract_mode\":\s*contract_mode\}\)",
         r"\"contract_mode\"\s*:\s*contract_mode",
+    ],
+    "contract_governance": [
+        r"def\s+apply_contract_governance\(",
+        r"data\[\"contract_surface\"\]\s*=\s*normalized_surface",
+        r"data\[\"render_mode\"\]\s*=",
+        r"data\[\"source_mode\"\]\s*=",
+        r"data\[\"governed_from_native\"\]\s*=",
+        r"data\[\"surface_mapping\"\]\s*=",
     ],
 }
 
