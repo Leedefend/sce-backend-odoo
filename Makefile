@@ -1540,7 +1540,7 @@ verify.contract.assembler.semantic.schema.guard: guard.prod.forbid verify.contra
 verify.project.form.contract.surface.guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/project_form_contract_surface_guard.py
 
-.PHONY: verify.native_surface_integrity_guard verify.governed_surface_policy_guard verify.contract.native_integrity_guard verify.contract.governed_policy_guard verify.contract.surface_mapping_guard verify.contract.parse_boundary.guard
+.PHONY: verify.native_surface_integrity_guard verify.governed_surface_policy_guard verify.contract.native_integrity_guard verify.contract.governed_policy_guard verify.contract.surface_mapping_guard verify.contract.parse_boundary.guard verify.contract.production_chain.guard
 verify.native_surface_integrity_guard: guard.prod.forbid verify.role.capability_floor.prod_like
 	@python3 scripts/verify/native_surface_integrity_guard.py
 
@@ -1558,6 +1558,9 @@ verify.contract.surface_mapping_guard: guard.prod.forbid verify.role.capability_
 
 verify.contract.parse_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/contract_parse_boundary_guard.py
+
+verify.contract.production_chain.guard: guard.prod.forbid
+	@python3 scripts/verify/contract_production_chain_guard.py
 
 verify.runtime.surface.dashboard.report: guard.prod.forbid verify.scene.catalog.runtime_alignment.guard verify.role.capability_floor.prod_like
 	@python3 scripts/verify/runtime_surface_dashboard_report.py
@@ -2247,6 +2250,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.governed_surface_policy_guard
 	@$(MAKE) --no-print-directory verify.contract.surface_mapping_guard
 	@$(MAKE) --no-print-directory verify.contract.parse_boundary.guard
+	@$(MAKE) --no-print-directory verify.contract.production_chain.guard
 	@$(MAKE) --no-print-directory verify.contract.ordering.smoke
 	@$(MAKE) --no-print-directory verify.scene.hud.trace.smoke
 	@$(MAKE) --no-print-directory verify.scene.meta.trace.smoke
