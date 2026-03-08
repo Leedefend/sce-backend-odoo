@@ -1,0 +1,773 @@
+{
+  "version": "v1",
+  "generated_on": "2026-03-09",
+  "scene_to_capabilities": [
+    {
+      "scene_key": "cost.profit_compare",
+      "capabilities": [
+        {
+          "capability_key": "cost.profit.compare",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "cost.project_boq",
+      "capabilities": [
+        {
+          "capability_key": "cost.boq.manage",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.structure.manage",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "cost.project_budget",
+      "capabilities": [
+        {
+          "capability_key": "cost.budget.manage",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "cost.project_cost_ledger",
+      "capabilities": [
+        {
+          "capability_key": "cost.ledger.open",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "cost.project_progress",
+      "capabilities": [
+        {
+          "capability_key": "cost.progress.report",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "finance.center",
+      "capabilities": [
+        {
+          "capability_key": "finance.approval.center",
+          "role": "primary"
+        },
+        {
+          "capability_key": "finance.invoice.list",
+          "role": "primary"
+        },
+        {
+          "capability_key": "finance.plan.funding",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "finance.operating_metrics",
+      "capabilities": [
+        {
+          "capability_key": "analytics.exception.list",
+          "role": "primary"
+        },
+        {
+          "capability_key": "finance.exception.monitor",
+          "role": "primary"
+        },
+        {
+          "capability_key": "finance.metrics.operating",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "finance.payment_ledger",
+      "capabilities": [
+        {
+          "capability_key": "finance.ledger.payment",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "finance.payment_requests",
+      "capabilities": [
+        {
+          "capability_key": "finance.payment_request.form",
+          "role": "primary"
+        },
+        {
+          "capability_key": "finance.payment_request.list",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "finance.settlement_orders",
+      "capabilities": [
+        {
+          "capability_key": "contract.settlement.audit",
+          "role": "primary"
+        },
+        {
+          "capability_key": "finance.settlement.order",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "finance.treasury_ledger",
+      "capabilities": [
+        {
+          "capability_key": "finance.ledger.treasury",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "portal.capability_matrix",
+      "capabilities": [
+        {
+          "capability_key": "governance.capability.matrix",
+          "role": "primary"
+        },
+        {
+          "capability_key": "governance.scene.openability",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "portal.dashboard",
+      "capabilities": [
+        {
+          "capability_key": "governance.runtime.audit",
+          "role": "primary"
+        },
+        {
+          "capability_key": "workspace.today.focus",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "portal.lifecycle",
+      "capabilities": [
+        {
+          "capability_key": "analytics.lifecycle.monitor",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.lifecycle.open",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.lifecycle.transition",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "projects.dashboard",
+      "capabilities": [
+        {
+          "capability_key": "analytics.dashboard.executive",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.dashboard.open",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "projects.intake",
+      "capabilities": [
+        {
+          "capability_key": "project.initiation.enter",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "projects.ledger",
+      "capabilities": [
+        {
+          "capability_key": "contract.center.open",
+          "role": "primary"
+        },
+        {
+          "capability_key": "contract.expense.track",
+          "role": "primary"
+        },
+        {
+          "capability_key": "contract.income.track",
+          "role": "primary"
+        },
+        {
+          "capability_key": "material.catalog.open",
+          "role": "primary"
+        },
+        {
+          "capability_key": "material.procurement.list",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.board.open",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.document.open",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.risk.list",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.task.board",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.task.list",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.weekly_report.open",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "scene_key": "projects.list",
+      "capabilities": [
+        {
+          "capability_key": "analytics.project.focus",
+          "role": "primary"
+        },
+        {
+          "capability_key": "project.list.open",
+          "role": "primary"
+        },
+        {
+          "capability_key": "workspace.project.watch",
+          "role": "primary"
+        }
+      ]
+    }
+  ],
+  "capability_to_scenes": [
+    {
+      "capability_key": "analytics.dashboard.executive",
+      "scenes": [
+        {
+          "scene_key": "projects.dashboard",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "analytics.exception.list",
+      "scenes": [
+        {
+          "scene_key": "finance.operating_metrics",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "analytics.lifecycle.monitor",
+      "scenes": [
+        {
+          "scene_key": "portal.lifecycle",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "analytics.project.focus",
+      "scenes": [
+        {
+          "scene_key": "projects.list",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "contract.center.open",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "contract.expense.track",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "contract.income.track",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "contract.settlement.audit",
+      "scenes": [
+        {
+          "scene_key": "finance.settlement_orders",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "cost.boq.manage",
+      "scenes": [
+        {
+          "scene_key": "cost.project_boq",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "cost.budget.manage",
+      "scenes": [
+        {
+          "scene_key": "cost.project_budget",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "cost.ledger.open",
+      "scenes": [
+        {
+          "scene_key": "cost.project_cost_ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "cost.profit.compare",
+      "scenes": [
+        {
+          "scene_key": "cost.profit_compare",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "cost.progress.report",
+      "scenes": [
+        {
+          "scene_key": "cost.project_progress",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.approval.center",
+      "scenes": [
+        {
+          "scene_key": "finance.center",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.exception.monitor",
+      "scenes": [
+        {
+          "scene_key": "finance.operating_metrics",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.invoice.list",
+      "scenes": [
+        {
+          "scene_key": "finance.center",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.ledger.payment",
+      "scenes": [
+        {
+          "scene_key": "finance.payment_ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.ledger.treasury",
+      "scenes": [
+        {
+          "scene_key": "finance.treasury_ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.metrics.operating",
+      "scenes": [
+        {
+          "scene_key": "finance.operating_metrics",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.payment_request.form",
+      "scenes": [
+        {
+          "scene_key": "finance.payment_requests",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.payment_request.list",
+      "scenes": [
+        {
+          "scene_key": "finance.payment_requests",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.plan.funding",
+      "scenes": [
+        {
+          "scene_key": "finance.center",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "finance.settlement.order",
+      "scenes": [
+        {
+          "scene_key": "finance.settlement_orders",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "governance.capability.matrix",
+      "scenes": [
+        {
+          "scene_key": "portal.capability_matrix",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "governance.runtime.audit",
+      "scenes": [
+        {
+          "scene_key": "portal.dashboard",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "governance.scene.openability",
+      "scenes": [
+        {
+          "scene_key": "portal.capability_matrix",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "material.catalog.open",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "material.procurement.list",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.board.open",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.dashboard.open",
+      "scenes": [
+        {
+          "scene_key": "projects.dashboard",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.document.open",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.initiation.enter",
+      "scenes": [
+        {
+          "scene_key": "projects.intake",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.lifecycle.open",
+      "scenes": [
+        {
+          "scene_key": "portal.lifecycle",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.lifecycle.transition",
+      "scenes": [
+        {
+          "scene_key": "portal.lifecycle",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.list.open",
+      "scenes": [
+        {
+          "scene_key": "projects.list",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.risk.list",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.structure.manage",
+      "scenes": [
+        {
+          "scene_key": "cost.project_boq",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.task.board",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.task.list",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "project.weekly_report.open",
+      "scenes": [
+        {
+          "scene_key": "projects.ledger",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "workspace.project.watch",
+      "scenes": [
+        {
+          "scene_key": "projects.list",
+          "role": "primary"
+        }
+      ]
+    },
+    {
+      "capability_key": "workspace.today.focus",
+      "scenes": [
+        {
+          "scene_key": "portal.dashboard",
+          "role": "primary"
+        }
+      ]
+    }
+  ],
+  "orphan_capabilities": [],
+  "void_scenes": [
+    "contract.center",
+    "contracts.monitor",
+    "cost.budget_alloc",
+    "cost.control",
+    "cost.cost_compare",
+    "data.dictionary",
+    "default",
+    "default__pkg1",
+    "default__pkg10",
+    "default__pkg11",
+    "default__pkg12",
+    "default__pkg13",
+    "default__pkg14",
+    "default__pkg15",
+    "default__pkg16",
+    "default__pkg17",
+    "default__pkg18",
+    "default__pkg19",
+    "default__pkg2",
+    "default__pkg20",
+    "default__pkg21",
+    "default__pkg22",
+    "default__pkg23",
+    "default__pkg24",
+    "default__pkg25",
+    "default__pkg26",
+    "default__pkg27",
+    "default__pkg28",
+    "default__pkg3",
+    "default__pkg4",
+    "default__pkg5",
+    "default__pkg6",
+    "default__pkg7",
+    "default__pkg8",
+    "default__pkg9",
+    "my_work.workspace",
+    "payments.approval",
+    "projects.detail",
+    "projects.execution",
+    "projects.intake__pkg1",
+    "projects.intake__pkg10",
+    "projects.intake__pkg11",
+    "projects.intake__pkg12",
+    "projects.intake__pkg13",
+    "projects.intake__pkg14",
+    "projects.intake__pkg15",
+    "projects.intake__pkg16",
+    "projects.intake__pkg17",
+    "projects.intake__pkg18",
+    "projects.intake__pkg19",
+    "projects.intake__pkg2",
+    "projects.intake__pkg20",
+    "projects.intake__pkg21",
+    "projects.intake__pkg22",
+    "projects.intake__pkg23",
+    "projects.intake__pkg24",
+    "projects.intake__pkg25",
+    "projects.intake__pkg26",
+    "projects.intake__pkg27",
+    "projects.intake__pkg28",
+    "projects.intake__pkg3",
+    "projects.intake__pkg4",
+    "projects.intake__pkg5",
+    "projects.intake__pkg6",
+    "projects.intake__pkg7",
+    "projects.intake__pkg8",
+    "projects.intake__pkg9",
+    "projects.ledger__pkg1",
+    "projects.ledger__pkg10",
+    "projects.ledger__pkg11",
+    "projects.ledger__pkg12",
+    "projects.ledger__pkg13",
+    "projects.ledger__pkg14",
+    "projects.ledger__pkg15",
+    "projects.ledger__pkg16",
+    "projects.ledger__pkg17",
+    "projects.ledger__pkg18",
+    "projects.ledger__pkg19",
+    "projects.ledger__pkg2",
+    "projects.ledger__pkg20",
+    "projects.ledger__pkg21",
+    "projects.ledger__pkg22",
+    "projects.ledger__pkg23",
+    "projects.ledger__pkg24",
+    "projects.ledger__pkg25",
+    "projects.ledger__pkg26",
+    "projects.ledger__pkg27",
+    "projects.ledger__pkg28",
+    "projects.ledger__pkg3",
+    "projects.ledger__pkg4",
+    "projects.ledger__pkg5",
+    "projects.ledger__pkg6",
+    "projects.ledger__pkg7",
+    "projects.ledger__pkg8",
+    "projects.ledger__pkg9",
+    "projects.list__pkg1",
+    "projects.list__pkg10",
+    "projects.list__pkg11",
+    "projects.list__pkg12",
+    "projects.list__pkg13",
+    "projects.list__pkg14",
+    "projects.list__pkg15",
+    "projects.list__pkg16",
+    "projects.list__pkg17",
+    "projects.list__pkg18",
+    "projects.list__pkg19",
+    "projects.list__pkg2",
+    "projects.list__pkg20",
+    "projects.list__pkg21",
+    "projects.list__pkg22",
+    "projects.list__pkg23",
+    "projects.list__pkg24",
+    "projects.list__pkg25",
+    "projects.list__pkg26",
+    "projects.list__pkg27",
+    "projects.list__pkg28",
+    "projects.list__pkg3",
+    "projects.list__pkg4",
+    "projects.list__pkg5",
+    "projects.list__pkg6",
+    "projects.list__pkg7",
+    "projects.list__pkg8",
+    "projects.list__pkg9",
+    "risk.center",
+    "risk.monitor",
+    "task.center"
+  ]
+}

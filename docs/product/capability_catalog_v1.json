@@ -1,0 +1,1211 @@
+{
+  "version": "v1",
+  "generated_on": "2026-03-09",
+  "capability_count": 42,
+  "capabilities": [
+    {
+      "capability_key": "analytics.dashboard.executive",
+      "name": "经营驾驶舱",
+      "domain": "dashboard",
+      "description": "高层经营看板",
+      "source_model": "sc.dashboard.metric",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "analytics"
+      },
+      "main_scene": "projects.dashboard",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "analytics.exception.list",
+      "name": "异常列表",
+      "domain": "dashboard",
+      "description": "查看经营与执行异常",
+      "source_model": "sc.dashboard.metric",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "analytics"
+      },
+      "main_scene": "finance.operating_metrics",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "analytics.lifecycle.monitor",
+      "name": "生命周期监控",
+      "domain": "dashboard",
+      "description": "监控生命周期推进效率",
+      "source_model": "sc.dashboard.metric",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "analytics"
+      },
+      "main_scene": "portal.lifecycle",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "analytics.project.focus",
+      "name": "我关注的项目",
+      "domain": "dashboard",
+      "description": "查看重点关注项目",
+      "source_model": "sc.dashboard.metric",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "analytics"
+      },
+      "main_scene": "projects.list",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "contract.center.open",
+      "name": "合同中心",
+      "domain": "contract",
+      "description": "进入合同中心",
+      "source_model": "sc.contract",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "contract_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ]
+    },
+    {
+      "capability_key": "contract.expense.track",
+      "name": "支出合同",
+      "domain": "contract",
+      "description": "查看支出合同与付款",
+      "source_model": "sc.contract",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "contract_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ]
+    },
+    {
+      "capability_key": "contract.income.track",
+      "name": "收入合同",
+      "domain": "contract",
+      "description": "查看收入合同进展",
+      "source_model": "sc.contract",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "contract_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ]
+    },
+    {
+      "capability_key": "contract.settlement.audit",
+      "name": "结算审核",
+      "domain": "contract",
+      "description": "查看结算审核视图",
+      "source_model": "sc.contract",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "contract_management"
+      },
+      "main_scene": "finance.settlement_orders",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_contract_read"
+      ]
+    },
+    {
+      "capability_key": "cost.boq.manage",
+      "name": "工程量清单",
+      "domain": "cost",
+      "description": "进入工程量清单能力",
+      "source_model": "sc.cost.ledger",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "cost_management"
+      },
+      "main_scene": "cost.project_boq",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "cost.budget.manage",
+      "name": "预算管理",
+      "domain": "cost",
+      "description": "进入预算与控制能力",
+      "source_model": "sc.cost.ledger",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "cost_management"
+      },
+      "main_scene": "cost.project_budget",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "cost.ledger.open",
+      "name": "成本台账",
+      "domain": "cost",
+      "description": "进入成本台账",
+      "source_model": "sc.cost.ledger",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "cost_management"
+      },
+      "main_scene": "cost.project_cost_ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_cost_read"
+      ]
+    },
+    {
+      "capability_key": "cost.profit.compare",
+      "name": "盈亏对比",
+      "domain": "cost",
+      "description": "查看盈亏对比分析",
+      "source_model": "sc.cost.ledger",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "cost_management"
+      },
+      "main_scene": "cost.profit_compare",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "cost.progress.report",
+      "name": "进度填报",
+      "domain": "cost",
+      "description": "进入进度填报与对比",
+      "source_model": "sc.cost.ledger",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "cost_management"
+      },
+      "main_scene": "cost.project_progress",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "finance.approval.center",
+      "name": "审批中心入口",
+      "domain": "payment",
+      "description": "进入财务审批工作台",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.center",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "finance.exception.monitor",
+      "name": "财务异常",
+      "domain": "payment",
+      "description": "查看财务异常清单",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.operating_metrics",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "finance.invoice.list",
+      "name": "发票列表",
+      "domain": "payment",
+      "description": "进入发票相关清单",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.center",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "finance.ledger.payment",
+      "name": "收付款台账",
+      "domain": "payment",
+      "description": "查看收付款台账",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.payment_ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "finance.ledger.treasury",
+      "name": "资金台账",
+      "domain": "payment",
+      "description": "查看资金余额与流水",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.treasury_ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "finance.metrics.operating",
+      "name": "经营指标",
+      "domain": "payment",
+      "description": "查看经营指标看板",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.operating_metrics",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "finance.payment_request.form",
+      "name": "付款申请表单",
+      "domain": "payment",
+      "description": "进入付款申请详情与编辑",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.payment_requests",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_finance_read"
+      ]
+    },
+    {
+      "capability_key": "finance.payment_request.list",
+      "name": "付款申请列表",
+      "domain": "payment",
+      "description": "查看付款申请列表",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.payment_requests",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": [
+        "smart_construction_core.group_sc_cap_finance_read"
+      ]
+    },
+    {
+      "capability_key": "finance.plan.funding",
+      "name": "资金计划",
+      "domain": "payment",
+      "description": "查看资金计划与安排",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.center",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "finance.settlement.order",
+      "name": "结算单",
+      "domain": "payment",
+      "description": "查看结算单流程",
+      "source_model": "sc.payment.request",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "finance_management"
+      },
+      "main_scene": "finance.settlement_orders",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "governance.capability.matrix",
+      "name": "能力矩阵",
+      "domain": "workflow",
+      "description": "查看角色能力覆盖",
+      "source_model": "sc.workflow.ticket",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "governance"
+      },
+      "main_scene": "portal.capability_matrix",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "governance.runtime.audit",
+      "name": "运行态审计",
+      "domain": "workflow",
+      "description": "查看运行态治理审计",
+      "source_model": "sc.workflow.ticket",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "governance"
+      },
+      "main_scene": "portal.dashboard",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "governance.scene.openability",
+      "name": "场景可打开性",
+      "domain": "workflow",
+      "description": "查看场景可打开性状态",
+      "source_model": "sc.workflow.ticket",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "governance"
+      },
+      "main_scene": "portal.capability_matrix",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "material.catalog.open",
+      "name": "物资目录",
+      "domain": "dictionary",
+      "description": "查看物资目录与分类",
+      "source_model": "sc.dictionary.item",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "material_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "material.procurement.list",
+      "name": "采购清单",
+      "domain": "dictionary",
+      "description": "查看采购与供应入口",
+      "source_model": "sc.dictionary.item",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "material_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.board.open",
+      "name": "项目看板",
+      "domain": "project",
+      "description": "查看项目看板与状态分布",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "业主",
+        "施工",
+        "通用"
+      ],
+      "required_roles": [
+        "owner_manager",
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.dashboard.open",
+      "name": "项目驾驶舱",
+      "domain": "project",
+      "description": "查看项目核心指标和异常",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.dashboard",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.document.open",
+      "name": "项目文档",
+      "domain": "project",
+      "description": "进入项目文档视图",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.initiation.enter",
+      "name": "项目立项",
+      "domain": "project",
+      "description": "创建并发起项目立项流程",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.intake",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.lifecycle.open",
+      "name": "生命周期视图",
+      "domain": "project",
+      "description": "查看项目生命周期与阻塞项",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "portal.lifecycle",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.lifecycle.transition",
+      "name": "生命周期流转",
+      "domain": "project",
+      "description": "执行项目生命周期流转动作",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "portal.lifecycle",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.list.open",
+      "name": "项目列表",
+      "domain": "project",
+      "description": "查看项目列表与筛选",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.list",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "业主",
+        "施工",
+        "通用"
+      ],
+      "required_roles": [
+        "owner_manager",
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.risk.list",
+      "name": "风险清单",
+      "domain": "project",
+      "description": "查看项目风险清单",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.structure.manage",
+      "name": "执行结构",
+      "domain": "project",
+      "description": "进入执行结构与WBS能力",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "cost.project_boq",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.task.board",
+      "name": "任务看板",
+      "domain": "project",
+      "description": "按状态查看任务推进",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.task.list",
+      "name": "任务列表",
+      "domain": "project",
+      "description": "查看项目任务与待办",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "业主",
+        "施工",
+        "通用"
+      ],
+      "required_roles": [
+        "owner_manager",
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "project.weekly_report.open",
+      "name": "周报入口",
+      "domain": "project",
+      "description": "进入项目周报与周度复盘",
+      "source_model": "project.project",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "project_management"
+      },
+      "main_scene": "projects.ledger",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "施工"
+      ],
+      "required_roles": [
+        "project_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "workspace.project.watch",
+      "name": "我关注的项目",
+      "domain": "workspace",
+      "description": "从工作台进入关注项目",
+      "source_model": "smart_core.workspace",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "others"
+      },
+      "main_scene": "projects.list",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "业主",
+        "施工",
+        "通用"
+      ],
+      "required_roles": [
+        "owner_manager",
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    },
+    {
+      "capability_key": "workspace.today.focus",
+      "name": "今日关键动作",
+      "domain": "workspace",
+      "description": "今日关键动作工作台",
+      "source_model": "smart_core.workspace",
+      "main_action": {
+        "intent": "ui.contract"
+      },
+      "main_menu": {
+        "group_key": "others"
+      },
+      "main_scene": "portal.dashboard",
+      "status": "ready",
+      "surface_support": [
+        "governed",
+        "native",
+        "hud"
+      ],
+      "role_scope": [
+        "业主",
+        "施工",
+        "通用"
+      ],
+      "required_roles": [
+        "owner_manager",
+        "project_manager",
+        "finance_manager",
+        "construction_manager"
+      ],
+      "required_groups": []
+    }
+  ]
+}
