@@ -107,7 +107,7 @@
               />
               <select
                 v-else-if="fieldType(node.descriptor) === 'selection'"
-                :value="String(formData[node.name] ?? '')"
+                :value="inputFieldValue(node.name)"
                 class="input"
                 @change="setSelectionField(node.name, ($event.target as HTMLSelectElement).value)"
               >
@@ -229,7 +229,7 @@
               </div>
               <input
                 v-else
-                :value="String(formData[node.name] ?? '')"
+                :value="inputFieldValue(node.name)"
                 class="input"
                 :type="fieldInputType(fieldType(node.descriptor))"
                 @input="setTextField(node.name, ($event.target as HTMLInputElement).value)"
@@ -1658,6 +1658,12 @@ function normalizeFieldValue(name: string, value: unknown) {
     return String(value ?? '');
   }
   return value;
+}
+
+function inputFieldValue(name: string) {
+  const raw = formData[name];
+  if (raw === false || raw === null || raw === undefined) return '';
+  return String(raw);
 }
 
 function setBooleanField(name: string, checked: boolean) {
