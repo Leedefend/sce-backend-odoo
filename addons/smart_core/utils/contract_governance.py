@@ -151,6 +151,21 @@ _PROJECT_FORM_ACTION_GROUP_LABELS = {
     "drilldown": "业务查看",
     "other": "更多操作",
 }
+_PROJECT_KANBAN_PRIMARY_FIELDS = [
+    "name",
+    "project_code",
+    "manager_id",
+]
+_PROJECT_KANBAN_SECONDARY_FIELDS = [
+    "stage_id",
+    "lifecycle_state",
+    "end_date",
+    "budget_total",
+]
+_PROJECT_KANBAN_STATUS_FIELDS = [
+    "lifecycle_state",
+    "stage_id",
+]
 _USER_SURFACE_ACTION_GROUP_LABELS = {
     "basic": "基础操作",
     "workflow": "流程推进",
@@ -717,6 +732,23 @@ def _is_project_form_contract(data: dict) -> bool:
     return model == "project.project" and view_type == "form"
 
 
+def _is_project_kanban_contract(data: dict) -> bool:
+    head = _as_dict(data.get("head"))
+    views = _as_dict(data.get("views"))
+    kanban_view = _as_dict(views.get("kanban"))
+    permissions = _as_dict(data.get("permissions"))
+    model = _safe_text(
+        head.get("model")
+        or data.get("model")
+        or kanban_view.get("model")
+        or permissions.get("model")
+    )
+    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
+    if not view_type and isinstance(views.get("kanban"), dict):
+        view_type = "kanban"
+    return model == "project.project" and "kanban" in view_type
+
+
 def _is_form_contract(data: dict) -> bool:
     head = _as_dict(data.get("head"))
     views = _as_dict(data.get("views"))
@@ -754,16 +786,7 @@ def _pick_project_form_fields(data: dict) -> list[str]:
     fields_map = _as_dict(data.get("fields"))
     if not fields_map:
         return []
-    layout = _as_dict(_as_dict(data.get("views")).get("form")).get("layout") or []
-    ordered_fields: list[str] = []
-    for node in layout if isinstance(layout, list) else []:
-        if not isinstance(node, dict):
-            continue
-        if _safe_lower(node.get("type")) != "field":
-            continue
-        name = _safe_text(node.get("name"))
-        if name and name not in ordered_fields:
-            ordered_fields.append(name)
+    ordered_fields = _iter_field_order(data)
 
     selected: list[str] = []
     for name in _PROJECT_FORM_PRIMARY_FIELDS:
@@ -794,6 +817,75 @@ def _pick_project_form_fields(data: dict) -> list[str]:
     if "name" in fields_map and "name" not in selected:
         selected.insert(0, "name")
     return selected[:_PROJECT_FORM_FIELD_MAX]
+
+
+def _govern_project_kanban_contract_for_user(data: dict) -> None:
+    fields_map = _as_dict(data.get("fields"))
+    if not fields_map:
+        return
+
+    available = [name for name in fields_map.keys() if not _is_technical_field(name, _as_dict(fields_map.get(name)))]
+    primary: list[str] = []
+    secondary: list[str] = []
+    status: list[str] = []
+
+    def _pick(target: list[str], name: str) -> None:
+        if name in available and name not in target:
+            target.append(name)
+
+    for name in _PROJECT_KANBAN_PRIMARY_FIELDS:
+        _pick(primary, name)
+    for name in _PROJECT_KANBAN_SECONDARY_FIELDS:
+        _pick(secondary, name)
+    for name in _PROJECT_KANBAN_STATUS_FIELDS:
+        _pick(status, name)
+
+    if not primary:
+        for fallback in ("name", "display_name"):
+            _pick(primary, fallback)
+            if primary:
+                break
+    if len(primary) < 3:
+        for name in available:
+            _pick(primary, name)
+            if len(primary) >= 3:
+                break
+    if len(secondary) < 4:
+        for name in available:
+            if name in primary:
+                continue
+            _pick(secondary, name)
+            if len(secondary) >= 4:
+                break
+    if not status:
+        for name in ("lifecycle_state", "stage_id", "state"):
+            _pick(status, name)
+            if status:
+                break
+
+    selected = [name for name in primary + secondary if name]
+    selected = selected[:8]
+    data["visible_fields"] = selected
+    data["kanban_profile"] = {
+        "title_field": primary[0] if primary else "name",
+        "primary_fields": primary[:3],
+        "secondary_fields": secondary[:4],
+        "status_fields": status[:2],
+        "max_meta": 4,
+    }
+
+    views = _as_dict(data.get("views"))
+    kanban = _as_dict(views.get("kanban"))
+    existing = kanban.get("fields") if isinstance(kanban.get("fields"), list) else []
+    merged_fields: list[str] = []
+    for name in existing + selected:
+        normalized = _safe_text(name)
+        if normalized and normalized in fields_map and normalized not in merged_fields:
+            merged_fields.append(normalized)
+    kanban["fields"] = merged_fields or ["id", "name"]
+    kanban["kanban_profile"] = _as_dict(data.get("kanban_profile"))
+    views["kanban"] = kanban
+    data["views"] = views
 
 
 def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
@@ -1717,6 +1809,8 @@ def _apply_domain_overrides(data: dict, contract_mode: str) -> list[dict[str, An
 def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
     if contract_mode == "user" and _is_project_form_contract(data):
         _govern_project_form_contract_for_user(data)
+    if contract_mode == "user" and _is_project_kanban_contract(data):
+        _govern_project_kanban_contract_for_user(data)
 
 
 def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:
