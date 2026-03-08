@@ -603,6 +603,33 @@ function relationOptionsForField(name: string, descriptor?: FieldDescriptor) {
   return ids.map((id) => ({ id, label: `#${id}` }));
 }
 
+function parseMany2oneDisplay(value: unknown): RelationOption | null {
+  if (Array.isArray(value)) {
+    const id = Number(value[0]);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    const label = String(value[1] || `#${id}`).trim() || `#${id}`;
+    return { id: Math.trunc(id), label };
+  }
+  if (value && typeof value === 'object') {
+    const row = value as Record<string, unknown>;
+    const id = Number(row.id);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    const label = String(row.display_name || row.name || `#${id}`).trim() || `#${id}`;
+    return { id: Math.trunc(id), label };
+  }
+  return null;
+}
+
+function upsertRelationOption(fieldName: string, option: RelationOption | null) {
+  if (!option) return;
+  const current = Array.isArray(relationOptions.value[fieldName]) ? relationOptions.value[fieldName] : [];
+  if (current.some((item) => item.id === option.id)) return;
+  relationOptions.value = {
+    ...relationOptions.value,
+    [fieldName]: [option, ...current],
+  };
+}
+
 function relationKeyword(name: string) {
   return String(relationKeywords[name] || '');
 }
@@ -1056,6 +1083,7 @@ async function queryRelationOptions(name: string, keyword: string) {
       order: 'id desc',
       domain,
       search_term: search || undefined,
+      silentErrors: true,
     });
     const records = Array.isArray(listed?.records) ? listed.records : [];
     const mapped = records
@@ -1207,6 +1235,7 @@ async function loadRelationOptions() {
         limit: 80,
         order: 'id desc',
         domain,
+        silentErrors: true,
       });
       const records = Array.isArray(listed?.records) ? listed.records : [];
       next[name] = records
@@ -1892,12 +1921,14 @@ async function loadRecord() {
         formData[name] = Array.isArray(incoming) ? incoming : [];
         if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
       } else if (ttype === 'many2one') {
+        const option = parseMany2oneDisplay(incoming);
+        upsertRelationOption(name, option);
         const ids = normalizeRelationIds(incoming);
         formData[name] = ids.length ? ids[0] : false;
         const matched = ids.length
           ? (relationOptions.value[name] || []).find((item) => item.id === ids[0])
           : null;
-        relationKeywords[name] = matched?.label || '';
+        relationKeywords[name] = matched?.label || option?.label || '';
       } else if (ttype === 'date') {
         formData[name] = toDateInputValue(incoming);
       } else if (ttype === 'datetime') {
@@ -1933,12 +1964,14 @@ async function loadRecord() {
       formData[name] = Array.isArray(incoming) ? incoming : [];
       if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
     } else if (ttype === 'many2one') {
+      const option = parseMany2oneDisplay(incoming);
+      upsertRelationOption(name, option);
       const ids = normalizeRelationIds(incoming);
       formData[name] = ids.length ? ids[0] : false;
       const matched = ids.length
         ? (relationOptions.value[name] || []).find((item) => item.id === ids[0])
         : null;
-      relationKeywords[name] = matched?.label || '';
+      relationKeywords[name] = matched?.label || option?.label || '';
     } else if (ttype === 'date') {
       formData[name] = toDateInputValue(incoming);
     } else if (ttype === 'datetime') {
@@ -1967,8 +2000,8 @@ async function reload() {
   showOne2manyErrors.value = false;
   try {
     await loadContract();
-    await loadRelationOptions();
     await loadRecord();
+    await loadRelationOptions();
     status.value = 'ok';
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'load failed';
