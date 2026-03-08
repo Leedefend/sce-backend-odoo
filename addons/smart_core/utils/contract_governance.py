@@ -959,7 +959,59 @@ def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
     missing_selected = [name for name in selected_order if name and name not in existing_set]
     for name in missing_selected:
         filtered_layout.append({"type": "field", "name": name})
-    form["layout"] = filtered_layout
+    form_profile = _as_dict(data.get("form_profile"))
+    core_raw = form_profile.get("core_fields")
+    advanced_raw = form_profile.get("advanced_fields")
+    core_fields = [
+        _safe_text(name)
+        for name in (core_raw if isinstance(core_raw, list) else [])
+        if _safe_text(name) in selected_set
+    ]
+    advanced_fields = [
+        _safe_text(name)
+        for name in (advanced_raw if isinstance(advanced_raw, list) else [])
+        if _safe_text(name) in selected_set
+    ]
+    field_order = [name for name in selected_order if name in selected_set]
+    if not core_fields and field_order:
+        core_fields = field_order[: min(8, len(field_order))]
+    if not advanced_fields:
+        advanced_fields = [name for name in field_order if name not in set(core_fields)]
+
+    header_nodes: list[dict] = []
+    for node in filtered_layout:
+        if isinstance(node, dict) and _safe_lower(node.get("type")) == "header":
+            header_nodes.append(node)
+
+    grouped_children: list[dict] = []
+    if core_fields:
+        grouped_children.append(
+            {
+                "type": "group",
+                "name": "core_group",
+                "string": "核心信息",
+                "children": [{"type": "field", "name": name} for name in core_fields],
+            }
+        )
+    if advanced_fields:
+        grouped_children.append(
+            {
+                "type": "group",
+                "name": "advanced_group",
+                "string": "高级信息",
+                "children": [{"type": "field", "name": name} for name in advanced_fields],
+            }
+        )
+
+    if grouped_children:
+        sheet_node = {
+            "type": "sheet",
+            "name": "project_form_sheet",
+            "children": grouped_children,
+        }
+        form["layout"] = header_nodes + [sheet_node]
+    else:
+        form["layout"] = filtered_layout
     views["form"] = form
     data["views"] = views
 
