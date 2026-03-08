@@ -901,6 +901,70 @@ def _govern_project_kanban_contract_for_user(data: dict) -> None:
     data["views"] = views
 
 
+def _restructure_project_form_layout(data: dict) -> None:
+    if not _is_project_form_contract(data):
+        return
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    layout = form.get("layout")
+    if not isinstance(layout, list):
+        return
+
+    fields_map = _as_dict(data.get("fields"))
+    field_names = [name for name in fields_map.keys() if _safe_text(name)]
+    visible_fields = data.get("visible_fields") if isinstance(data.get("visible_fields"), list) else []
+    ordered = [str(name).strip() for name in visible_fields if str(name).strip() in fields_map]
+    if not ordered:
+        ordered = field_names
+
+    profile = _as_dict(data.get("form_profile"))
+    core_raw = profile.get("core_fields") if isinstance(profile.get("core_fields"), list) else []
+    advanced_raw = profile.get("advanced_fields") if isinstance(profile.get("advanced_fields"), list) else []
+    core_fields = [str(name).strip() for name in core_raw if str(name).strip() in ordered]
+    advanced_fields = [str(name).strip() for name in advanced_raw if str(name).strip() in ordered]
+    if not core_fields:
+        core_fields = ordered[: min(8, len(ordered))]
+    if not advanced_fields:
+        advanced_fields = [name for name in ordered if name not in set(core_fields)]
+
+    header_nodes = [
+        node
+        for node in layout
+        if isinstance(node, dict) and _safe_lower(node.get("type")) == "header"
+    ]
+    groups = []
+    if core_fields:
+        groups.append(
+            {
+                "type": "group",
+                "name": "core_group",
+                "string": "核心信息",
+                "children": [{"type": "field", "name": name} for name in core_fields],
+            }
+        )
+    if advanced_fields:
+        groups.append(
+            {
+                "type": "group",
+                "name": "advanced_group",
+                "string": "高级信息",
+                "children": [{"type": "field", "name": name} for name in advanced_fields],
+            }
+        )
+    if not groups:
+        return
+
+    form["layout"] = header_nodes + [
+        {
+            "type": "sheet",
+            "name": "project_form_sheet",
+            "children": groups,
+        }
+    ]
+    views["form"] = form
+    data["views"] = views
+
+
 def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
     views = _as_dict(data.get("views"))
     form = _as_dict(views.get("form"))
@@ -1942,6 +2006,8 @@ def _apply_domain_overrides(data: dict, contract_mode: str) -> list[dict[str, An
 
 
 def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
+    if contract_mode in {"user", "hud"} and _is_project_form_contract(data):
+        _restructure_project_form_layout(data)
     if contract_mode == "user" and _is_project_form_contract(data):
         _govern_project_form_contract_for_user(data)
     if contract_mode == "user" and _is_project_kanban_contract(data):
