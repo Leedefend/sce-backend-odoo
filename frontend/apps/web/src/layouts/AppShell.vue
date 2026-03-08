@@ -126,6 +126,7 @@ import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { parseSceneKeyFromQuery } from '../app/routeQuery';
+import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import type { NavNode } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
@@ -341,6 +342,30 @@ const pageTitle = computed(() => {
 
 provide('pageTitle', pageTitle);
 const showHud = computed(() => hudEnabled.value && !isDeliveryMode.value);
+const runtimeNavigationRegistry = computed(() =>
+  buildRuntimeNavigationRegistry({
+    scenes: session.scenes || [],
+    capabilityCatalog: session.capabilityCatalog || {},
+  })
+);
+const currentEntrySource = computed(() => {
+  if (routeSceneKey.value) return 'scene';
+  if (route.name === 'action' || route.name === 'record') return 'capability';
+  return '-';
+});
+const roleSceneCoverage = computed(() => {
+  const candidates = Array.isArray(roleSurface.value?.scene_candidates) ? roleSurface.value?.scene_candidates || [] : [];
+  const normalizedCandidates = candidates.map((item) => String(item || '').trim()).filter(Boolean);
+  const sceneSet = new Set(runtimeNavigationRegistry.value.sceneEntries.map((entry) => String(entry.sceneKey || '').trim()).filter(Boolean));
+  const matched = normalizedCandidates.filter((key) => sceneSet.has(key));
+  const missing = normalizedCandidates.filter((key) => !sceneSet.has(key));
+  return {
+    total: normalizedCandidates.length,
+    matchedCount: matched.length,
+    missingCount: missing.length,
+    missingPreview: missing.slice(0, 6).join(',') || '-',
+  };
+});
 const latestSuggestedAction = computed(() => {
   const stamp = suggestedActionStamp.value;
   void stamp;
@@ -357,6 +382,14 @@ const latestSuggestedActionTs = computed(() => {
 });
 const hudEntries = computed(() => [
   { label: 'scene_key', value: routeSceneKey.value || '-' },
+  { label: 'entry_source', value: currentEntrySource.value },
+  { label: 'nav_entry_total', value: runtimeNavigationRegistry.value.entries.length || 0 },
+  { label: 'nav_scene_entries', value: runtimeNavigationRegistry.value.sceneEntries.length || 0 },
+  { label: 'nav_cap_entries', value: runtimeNavigationRegistry.value.capabilityEntries.length || 0 },
+  { label: 'role_scene_candidates', value: roleSceneCoverage.value.total || 0 },
+  { label: 'role_scene_matched', value: roleSceneCoverage.value.matchedCount || 0 },
+  { label: 'role_scene_missing', value: roleSceneCoverage.value.missingCount || 0 },
+  { label: 'role_scene_missing_keys', value: roleSceneCoverage.value.missingPreview },
   { label: 'role_scope', value: String(roleSurface.value?.role_code || '-') },
   { label: 'requested_surface', value: String(route.query.surface || '-') },
   { label: 'scene_capability_count', value: routeSceneCapabilityKeys.value.length || 0 },

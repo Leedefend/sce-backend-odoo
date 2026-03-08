@@ -1400,6 +1400,10 @@ verify.frontend.contract_record_layout.guard: guard.prod.forbid
 verify.frontend.product.contract_consumption.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_product_contract_consumption_guard.py
 
+.PHONY: verify.frontend.runtime_navigation_hud.guard
+verify.frontend.runtime_navigation_hud.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_runtime_navigation_hud_guard.py
+
 .PHONY: verify.frontend.home_suggestion_semantics.guard
 verify.frontend.home_suggestion_semantics.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_home_suggestion_semantics_guard.py
@@ -1436,6 +1440,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.contract_query_context.guard \
 	verify.frontend.contract_record_layout.guard \
 	verify.frontend.product.contract_consumption.guard \
+	verify.frontend.runtime_navigation_hud.guard \
 	verify.frontend.home_suggestion_semantics.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
@@ -2151,6 +2156,34 @@ verify.docs.contract_sync: guard.prod.forbid
 
 verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync
 	@echo "[OK] verify.docs.all done"
+
+.PHONY: verify.portal.scene_product_filter_guard verify.portal.product_scene_mapping_guard verify.portal.role_home_scene_guard verify.portal.template_schema_guard verify.portal.entry_registry_guard verify.portal.entry_registry_quality_guard verify.portal.navigation_entry_registry_guard verify.portal.role_scene_navigation_guard verify.portal.navigation_registry_quality_guard
+verify.portal.scene_product_filter_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_scene_product_filter_guard.py
+
+verify.portal.product_scene_mapping_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_product_scene_mapping_guard.py
+
+verify.portal.role_home_scene_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_role_home_scene_guard.py
+
+verify.portal.template_schema_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_template_schema_guard.py
+
+verify.portal.entry_registry_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_entry_registry_guard.py
+
+verify.portal.entry_registry_quality_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_entry_registry_quality_guard.py
+
+verify.portal.navigation_entry_registry_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_navigation_entry_registry_guard.py
+
+verify.portal.role_scene_navigation_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_role_scene_navigation_guard.py
+
+verify.portal.navigation_registry_quality_guard: guard.prod.forbid
+	@python3 scripts/verify/portal_navigation_registry_quality_guard.py
 
 verify.boundary.import_guard: guard.prod.forbid
 	@python3 scripts/verify/boundary_import_guard.py
