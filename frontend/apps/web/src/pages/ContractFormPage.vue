@@ -281,6 +281,7 @@ import { triggerOnchange } from '../api/onchange';
 import type { OnchangeLinePatch } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
 import { useSessionStore } from '../stores/session';
+import { ErrorCodes } from '../app/error_codes';
 import {
   detectObjectMethodFromActionKey,
   normalizeActionKind,
@@ -354,6 +355,24 @@ type One2ManyColumn = {
   required: boolean;
   selection?: Array<[string, string]>;
 };
+
+type ContractAccessPolicy = {
+  mode: 'allow' | 'degrade' | 'block';
+  reasonCode: string;
+  message: string;
+  blockedFields: Array<{ field: string; model: string; reasonCode: string }>;
+  degradedFields: Array<{ field: string; model: string; reasonCode: string }>;
+};
+
+class ContractAccessPolicyError extends Error {
+  reasonCode: string;
+
+  constructor(message: string, reasonCode: string) {
+    super(message);
+    this.name = 'ContractAccessPolicyError';
+    this.reasonCode = reasonCode;
+  }
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -521,6 +540,36 @@ const warnings = computed(() => {
     })
     .map((x) => x.trim())
     .filter(Boolean);
+});
+
+const contractAccessPolicy = computed<ContractAccessPolicy>(() => {
+  const raw = (contract.value as Record<string, unknown> | null)?.access_policy;
+  const row = raw && typeof raw === 'object' && !Array.isArray(raw)
+    ? (raw as Record<string, unknown>)
+    : {};
+  const modeRaw = String(row.mode || '').trim().toLowerCase();
+  const mode: 'allow' | 'degrade' | 'block' = modeRaw === 'block' || modeRaw === 'degrade' ? modeRaw : 'allow';
+  const normalizeRows = (value: unknown) => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+        const v = item as Record<string, unknown>;
+        return {
+          field: String(v.field || '').trim(),
+          model: String(v.model || '').trim(),
+          reasonCode: String(v.reason_code || '').trim(),
+        };
+      })
+      .filter((item): item is { field: string; model: string; reasonCode: string } => Boolean(item));
+  };
+  return {
+    mode,
+    reasonCode: String(row.reason_code || '').trim(),
+    message: String(row.message || '').trim(),
+    blockedFields: normalizeRows(row.blocked_fields),
+    degradedFields: normalizeRows(row.degraded_fields),
+  };
 });
 
 const workflowTransitions = computed(() => {
@@ -1047,6 +1096,7 @@ function relationEntry(descriptor?: FieldDescriptor) {
     model: String(row.model || '').trim(),
     actionId,
     menuId,
+    canRead: row.can_read !== false,
     canCreate: Boolean(row.can_create),
     createMode,
     defaultVals,
@@ -1095,6 +1145,11 @@ async function queryRelationOptions(name: string, keyword: string) {
   const descriptor = contract.value?.fields?.[name];
   const relation = relationModel(name);
   if (!relation) return;
+  const entry = relationEntry(descriptor);
+  if (entry && entry.canRead === false) {
+    deniedRelationModels.add(relation);
+    return;
+  }
   if (deniedRelationModels.has(relation)) return;
   const search = String(keyword || '').trim();
   const domain = mergedRelationDomain(name, descriptor);
@@ -1254,6 +1309,12 @@ async function loadRelationOptions() {
     if (!['many2one', 'many2many', 'one2many'].includes(type)) return;
     const relation = String((descriptor as Record<string, unknown>).relation || '').trim();
     if (!relation) return;
+    const entry = relationEntry(descriptor as FieldDescriptor);
+    if (entry && entry.canRead === false) {
+      deniedRelationModels.add(relation);
+      next[name] = [];
+      return;
+    }
     if (deniedRelationModels.has(relation)) {
       next[name] = [];
       return;
@@ -2169,6 +2230,11 @@ async function loadContract() {
   }
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
+  const policy = contractAccessPolicy.value;
+  if (policy.mode === 'block') {
+    const message = policy.message || 'contract access policy blocked this page';
+    throw new ContractAccessPolicyError(message, policy.reasonCode || 'CONTRACT_ACCESS_BLOCKED');
+  }
   const hasCore = coreFieldNames.value.length > 0;
   advancedExpanded.value = renderProfile.value !== 'create' || !hasCore;
 }
@@ -2307,6 +2373,18 @@ async function reload() {
     await loadRelationOptions();
     status.value = 'ok';
   } catch (err) {
+    if (err instanceof ContractAccessPolicyError) {
+      await router.push({
+        name: 'workbench',
+        query: pickContractNavQuery(route.query as Record<string, unknown>, {
+          reason: ErrorCodes.CAPABILITY_MISSING,
+          action_id: actionId.value || undefined,
+          menu_id: Number(route.query.menu_id || 0) || undefined,
+          diag: showHud.value ? (err.reasonCode || 'CONTRACT_ACCESS_BLOCKED') : undefined,
+        }),
+      });
+      return;
+    }
     errorMessage.value = err instanceof Error ? err.message : 'load failed';
     status.value = 'error';
   }

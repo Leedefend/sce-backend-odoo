@@ -1079,6 +1079,24 @@ function resolveCarryQuery(extra?: Record<string, unknown>) {
   };
 }
 
+function resolveWorkbenchQuery(
+  reason: string,
+  payload?: { public?: Record<string, unknown>; diag?: Record<string, unknown> },
+) {
+  return {
+    reason,
+    ...resolveWorkspaceContextQuery(),
+    ...(payload?.public || {}),
+    ...(showHud.value
+      ? {
+          menu_id: menuId.value || undefined,
+          action_id: actionId.value || undefined,
+          ...(payload?.diag || {}),
+        }
+      : {}),
+  };
+}
+
 function resolveActionViewType(_meta: unknown, contract: unknown) {
   const typedContract = contract as ActionContractLoose;
   const fromHead = String(typedContract.head?.view_type || '').trim();
@@ -2198,14 +2216,13 @@ async function redirectUrlAction(meta: unknown, contract: unknown) {
     const contractType = String(typed.data?.type || '').toLowerCase();
     await router.replace({
       name: 'workbench',
-      query: {
-        menu_id: menuId.value || undefined,
-        action_id: actionId.value || undefined,
-        reason: ErrorCodes.ACT_UNSUPPORTED_TYPE,
-        diag: 'act_url_empty',
-        diag_action_type: actionType || undefined,
-        diag_contract_type: contractType || undefined,
-      },
+      query: resolveWorkbenchQuery(ErrorCodes.ACT_UNSUPPORTED_TYPE, {
+        diag: {
+          diag: 'act_url_empty',
+          diag_action_type: actionType || undefined,
+          diag_contract_type: contractType || undefined,
+        },
+      }),
     });
     return true;
   }
@@ -2468,12 +2485,9 @@ async function load() {
     if (!contractReadAllowed.value) {
       await router.replace({
         name: 'workbench',
-        query: {
-          menu_id: menuId.value || undefined,
-          action_id: actionId.value || undefined,
-          reason: ErrorCodes.CAPABILITY_MISSING,
-          diag: 'contract_read_forbidden',
-        },
+        query: resolveWorkbenchQuery(ErrorCodes.CAPABILITY_MISSING, {
+          diag: { diag: 'contract_read_forbidden' },
+        }),
       });
       return;
     }
@@ -2505,12 +2519,9 @@ async function load() {
     if (policy.state !== 'enabled') {
       await router.replace({
         name: 'workbench',
-        query: {
-          menu_id: menuId.value || undefined,
-          action_id: actionId.value || undefined,
-          reason: ErrorCodes.CAPABILITY_MISSING,
-          missing: policy.missing.join(','),
-        },
+        query: resolveWorkbenchQuery(ErrorCodes.CAPABILITY_MISSING, {
+          public: { missing: policy.missing.join(',') || undefined },
+        }),
       });
       return;
     }
@@ -2524,11 +2535,7 @@ async function load() {
       if (isClientAction(meta)) {
         await router.replace({
           name: 'workbench',
-          query: {
-            menu_id: menuId.value || undefined,
-            action_id: actionId.value || undefined,
-            reason: ErrorCodes.ACT_NO_MODEL,
-          },
+          query: resolveWorkbenchQuery(ErrorCodes.ACT_NO_MODEL),
         });
         return;
       }
@@ -2540,16 +2547,15 @@ async function load() {
         const metaUrl = String((meta as ActionMetaLoose | undefined)?.url || '');
         await router.replace({
           name: 'workbench',
-          query: {
-            menu_id: menuId.value || undefined,
-            action_id: actionId.value || undefined,
-            reason: ErrorCodes.ACT_UNSUPPORTED_TYPE,
-            diag: 'non_window_action',
-            diag_action_type: actionType || undefined,
-            diag_contract_type: contractType || undefined,
-            diag_contract_url: contractUrl || undefined,
-            diag_meta_url: metaUrl || undefined,
-          },
+          query: resolveWorkbenchQuery(ErrorCodes.ACT_UNSUPPORTED_TYPE, {
+            diag: {
+              diag: 'non_window_action',
+              diag_action_type: actionType || undefined,
+              diag_contract_type: contractType || undefined,
+              diag_contract_url: contractUrl || undefined,
+              diag_meta_url: metaUrl || undefined,
+            },
+          }),
         });
         return;
       }
