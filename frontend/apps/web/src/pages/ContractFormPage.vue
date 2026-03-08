@@ -1866,6 +1866,26 @@ const hudEntries = computed(() => [
   { label: 'onchange_line_patches', value: onchangeLinePatches.value.length },
 ]);
 
+function isFormContractUsable(data: unknown) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+  const row = data as Record<string, unknown>;
+  const fields = row.fields;
+  if (!fields || typeof fields !== 'object' || Array.isArray(fields) || !Object.keys(fields as Record<string, unknown>).length) {
+    return false;
+  }
+  const views = row.views;
+  const formView = views && typeof views === 'object' && !Array.isArray(views)
+    ? (views as Record<string, unknown>).form
+    : undefined;
+  if (formView && typeof formView === 'object' && !Array.isArray(formView)) return true;
+  const head = row.head;
+  const headViewType = head && typeof head === 'object' && !Array.isArray(head)
+    ? String((head as Record<string, unknown>).view_type || '').trim().toLowerCase()
+    : '';
+  const viewType = String(row.view_type || '').trim().toLowerCase();
+  return headViewType === 'form' || viewType === 'form';
+}
+
 async function loadContract() {
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
@@ -1876,6 +1896,9 @@ async function loadContract() {
         recordId: recordId.value,
         renderProfile: profile,
       });
+      if (!isFormContractUsable(response?.data)) {
+        response = null;
+      }
     } catch {
       response = null;
     }
