@@ -782,6 +782,39 @@ def _md_capability_gap_backlog(payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _md_entry_registry_quality(payload: dict[str, Any]) -> str:
+    summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+    issues = payload.get("issues") if isinstance(payload.get("issues"), dict) else {}
+    lines = [
+        "# Entry Registry Quality Report v1",
+        "",
+        f"- generated_on: {payload.get('generated_on')}",
+        f"- status: {payload.get('status')}",
+        "",
+        "## Summary",
+        "",
+        f"- product_scene_total: {summary.get('product_scene_total', 0)}",
+        f"- scene_entry_total: {summary.get('scene_entry_total', 0)}",
+        f"- scene_entry_coverage: {summary.get('scene_entry_coverage', 0)}",
+        f"- capability_total: {summary.get('capability_total', 0)}",
+        f"- capability_entry_total: {summary.get('capability_entry_total', 0)}",
+        f"- capability_entry_coverage: {summary.get('capability_entry_coverage', 0)}",
+        f"- role_count: {summary.get('role_count', 0)}",
+        "",
+        "## Issues",
+        "",
+        f"- scene_entry_missing: {', '.join(issues.get('scene_entry_missing', [])[:20]) or 'none'}",
+        f"- capability_entry_missing: {', '.join(issues.get('capability_entry_missing', [])[:20]) or 'none'}",
+    ]
+    role_missing = issues.get("role_home_missing", [])
+    if role_missing:
+        role_lines = ", ".join(f"{item.get('role_key')}:{item.get('home_scene')}" for item in role_missing[:10])
+        lines.append(f"- role_home_missing: {role_lines}")
+    else:
+        lines.append("- role_home_missing: none")
+    return "\n".join(lines)
+
+
 def _construction_template_md(role_scene_matrix: dict[str, Any]) -> str:
     return "\n".join(
         [
@@ -1019,6 +1052,64 @@ def _capability_entry_registry(
     }
 
 
+def _entry_registry_quality_report(
+    scene_catalog_product: dict[str, Any],
+    capability_catalog: dict[str, Any],
+    scene_entry_registry: dict[str, Any],
+    capability_entry_registry: dict[str, Any],
+    role_scene_matrix: dict[str, Any],
+) -> dict[str, Any]:
+    product_scenes = scene_catalog_product.get("scenes") if isinstance(scene_catalog_product.get("scenes"), list) else []
+    capabilities = capability_catalog.get("capabilities") if isinstance(capability_catalog.get("capabilities"), list) else []
+    scene_entries = scene_entry_registry.get("entries") if isinstance(scene_entry_registry.get("entries"), list) else []
+    capability_entries = capability_entry_registry.get("entries") if isinstance(capability_entry_registry.get("entries"), list) else []
+    role_rows = role_scene_matrix.get("roles") if isinstance(role_scene_matrix.get("roles"), list) else []
+
+    product_scene_keys = {str((row or {}).get("scene_key") or "").strip() for row in product_scenes if str((row or {}).get("scene_key") or "").strip()}
+    capability_keys = {str((row or {}).get("capability_key") or "").strip() for row in capabilities if str((row or {}).get("capability_key") or "").strip()}
+    scene_entry_keys = {str((row or {}).get("scene_key") or "").strip() for row in scene_entries if str((row or {}).get("scene_key") or "").strip()}
+    capability_entry_keys = {str((row or {}).get("capability_key") or "").strip() for row in capability_entries if str((row or {}).get("capability_key") or "").strip()}
+
+    scene_coverage = round(len(scene_entry_keys & product_scene_keys) / len(product_scene_keys), 4) if product_scene_keys else 0.0
+    capability_coverage = round(len(capability_entry_keys & capability_keys) / len(capability_keys), 4) if capability_keys else 0.0
+
+    scene_entry_missing = sorted(product_scene_keys - scene_entry_keys)
+    capability_entry_missing = sorted(capability_keys - capability_entry_keys)
+
+    role_home_missing = []
+    for role in role_rows:
+        role_key = str((role or {}).get("role_key") or "").strip()
+        home_scene = str((role or {}).get("home_scene") or "").strip()
+        if role_key and home_scene and home_scene not in product_scene_keys:
+            role_home_missing.append({"role_key": role_key, "home_scene": home_scene})
+
+    status = "pass"
+    if scene_entry_missing or capability_entry_missing or role_home_missing:
+        status = "warn"
+    if scene_coverage < 0.95 or capability_coverage < 0.95:
+        status = "fail"
+
+    return {
+        "version": "v1",
+        "generated_on": date.today().isoformat(),
+        "status": status,
+        "summary": {
+            "product_scene_total": len(product_scene_keys),
+            "scene_entry_total": len(scene_entries),
+            "scene_entry_coverage": scene_coverage,
+            "capability_total": len(capability_keys),
+            "capability_entry_total": len(capability_entries),
+            "capability_entry_coverage": capability_coverage,
+            "role_count": len(role_rows),
+        },
+        "issues": {
+            "scene_entry_missing": scene_entry_missing,
+            "capability_entry_missing": capability_entry_missing,
+            "role_home_missing": role_home_missing,
+        },
+    }
+
+
 def main() -> int:
     PRODUCT_DIR.mkdir(parents=True, exist_ok=True)
     TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -1035,6 +1126,13 @@ def main() -> int:
     scene_entry_registry_v1 = _scene_entry_registry(scene_catalog_product_v1, capability_scene_mapping)
     capability_entry_registry_v1 = _capability_entry_registry(capability_catalog, capability_scene_mapping)
     role_scene_matrix = _role_scene_matrix(scene_catalog_v2)
+    entry_registry_quality_v1 = _entry_registry_quality_report(
+        scene_catalog_product_v1,
+        capability_catalog,
+        scene_entry_registry_v1,
+        capability_entry_registry_v1,
+        role_scene_matrix,
+    )
     capability_maturity = _capability_maturity(capability_catalog, capability_scene_mapping)
     capability_gap_backlog = _capability_gap_backlog(
         capability_catalog, scene_catalog_v2, capability_scene_mapping, capability_maturity
@@ -1053,6 +1151,8 @@ def main() -> int:
     _write_json(PRODUCT_DIR / "capability_scene_mapping_v1.json", capability_scene_mapping)
     _write_markdown(PRODUCT_DIR / "capability_scene_mapping_v1.md", _md_capability_scene_mapping(capability_scene_mapping))
     _write_json(PRODUCT_DIR / "capability_entry_registry_v1.json", capability_entry_registry_v1)
+    _write_json(PRODUCT_DIR / "entry_registry_quality_report_v1.json", entry_registry_quality_v1)
+    _write_markdown(PRODUCT_DIR / "entry_registry_quality_report_v1.md", _md_entry_registry_quality(entry_registry_quality_v1))
 
     _write_markdown(PRODUCT_DIR / "role_scene_matrix_v1.md", _md_role_scene_matrix(role_scene_matrix))
     _write_json(PRODUCT_DIR / "role_scene_matrix_v1.json", role_scene_matrix)
@@ -1088,6 +1188,8 @@ def main() -> int:
     print("- docs/product/capability_scene_mapping_v1.md")
     print("- docs/product/capability_scene_mapping_v1.json")
     print("- docs/product/capability_entry_registry_v1.json")
+    print("- docs/product/entry_registry_quality_report_v1.json")
+    print("- docs/product/entry_registry_quality_report_v1.md")
     print("- docs/product/role_scene_matrix_v1.md")
     print("- docs/product/role_scene_matrix_v1.json")
     print("- docs/product/capability_maturity_matrix_v1.md")

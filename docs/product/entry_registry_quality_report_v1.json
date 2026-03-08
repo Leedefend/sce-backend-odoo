@@ -1,0 +1,19 @@
+{
+  "version": "v1",
+  "generated_on": "2026-03-09",
+  "status": "pass",
+  "summary": {
+    "product_scene_total": 31,
+    "scene_entry_total": 31,
+    "scene_entry_coverage": 1.0,
+    "capability_total": 42,
+    "capability_entry_total": 42,
+    "capability_entry_coverage": 1.0,
+    "role_count": 6
+  },
+  "issues": {
+    "scene_entry_missing": [],
+    "capability_entry_missing": [],
+    "role_home_missing": []
+  }
+}
