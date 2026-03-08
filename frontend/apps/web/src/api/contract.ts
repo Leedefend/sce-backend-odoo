@@ -4,6 +4,8 @@ import type { ActionContract } from '@sc/schema';
 type LoadActionContractOptions = {
   recordId?: number | null;
   renderProfile?: 'create' | 'edit' | 'readonly' | null;
+  surface?: 'user' | 'native' | 'hud' | null;
+  sourceMode?: string | null;
 };
 
 type LoadModelContractOptions = LoadActionContractOptions & {
@@ -19,6 +21,18 @@ function buildActionContractParams(actionId: number, options?: LoadActionContrac
   const profile = String(options?.renderProfile || '').trim().toLowerCase();
   if (profile === 'create' || profile === 'edit' || profile === 'readonly') {
     params.render_profile = profile;
+  }
+  const surface = String(options?.surface || '').trim().toLowerCase();
+  if (surface === 'user' || surface === 'native' || surface === 'hud') {
+    params.contract_surface = surface;
+    if (surface === 'hud') {
+      params.contract_mode = 'hud';
+      params.hud = 1;
+    }
+  }
+  const sourceMode = String(options?.sourceMode || '').trim();
+  if (sourceMode) {
+    params.source_mode = sourceMode;
   }
   return params;
 }
@@ -50,6 +64,18 @@ function buildModelContractParams(model: string, options?: LoadModelContractOpti
   const profile = String(options?.renderProfile || '').trim().toLowerCase();
   if (profile === 'create' || profile === 'edit' || profile === 'readonly') {
     params.render_profile = profile;
+  }
+  const surface = String(options?.surface || '').trim().toLowerCase();
+  if (surface === 'user' || surface === 'native' || surface === 'hud') {
+    params.contract_surface = surface;
+    if (surface === 'hud') {
+      params.contract_mode = 'hud';
+      params.hud = 1;
+    }
+  }
+  const sourceMode = String(options?.sourceMode || '').trim();
+  if (sourceMode) {
+    params.source_mode = sourceMode;
   }
   return params;
 }

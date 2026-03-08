@@ -106,6 +106,7 @@
         </button>
       </div>
       <ViewLayoutRenderer
+        v-if="layoutStats.field > 0"
         :layout="viewContract?.layout || {}"
         :fields="viewContract?.fields"
         :record="renderRecord"
@@ -115,6 +116,15 @@
         :edit-mode="status === 'editing' ? 'all' : 'none'"
         @update:field="handleFieldUpdate"
       />
+      <section v-else class="fallback-fields">
+        <h3>项目详情</h3>
+        <ul>
+          <li v-for="field in fields" :key="field.name">
+            <span class="fallback-label">{{ field.label }}</span>
+            <span class="fallback-value">{{ formatFieldValue(field.value) }}</span>
+          </li>
+        </ul>
+      </section>
       <section v-if="hasChatter" class="chatter">
         <h3>协作时间线</h3>
         <p v-if="chatterError" class="meta">{{ chatterError }}</p>
@@ -271,6 +281,15 @@ const actionContext = computed(() => {
 });
 const actionId = computed(() => actionContext.value.id);
 const showHud = computed(() => isHudEnabled(route));
+const requestedSurface = computed<'user' | 'native' | 'hud'>(() => {
+  const raw = String(route.query.surface || '').trim().toLowerCase();
+  if (raw === 'native' || raw === 'hud' || raw === 'user') return raw;
+  if (showHud.value) return 'hud';
+  return 'user';
+});
+const requestedSourceMode = computed(() => (
+  requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
+));
 const session = useSessionStore();
 const userGroups = computed(() => session.user?.groups_xmlids ?? []);
 const statusLabel = computed(() => {
@@ -347,6 +366,8 @@ const hudEntries = computed(() => [
   { label: 'write_mode', value: lastWriteMode.value || '-' },
   { label: 'trace_id', value: traceId.value || lastTraceId.value || '-' },
   { label: 'contract_mode', value: contractMode.value || '-' },
+  { label: 'surface_requested', value: requestedSurface.value },
+  { label: 'source_mode', value: requestedSourceMode.value },
   { label: 'contract_write', value: contractWriteAllowed.value },
   { label: 'latency_ms', value: lastLatencyMs.value ?? '-' },
   { label: 'route', value: route.fullPath },
@@ -387,6 +408,39 @@ function buttonTooltip(btn: ViewButton) {
   return capabilityTooltip(policy);
 }
 
+function validateSurfaceMarkers(
+  data: unknown,
+  meta: Record<string, unknown> | null,
+  expectedSurface: 'user' | 'native' | 'hud',
+) {
+  const issues: string[] = [];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { ok: false, issues: ['contract payload is not an object'] };
+  }
+  const row = data as Record<string, unknown>;
+  const contractSurface = String(row.contract_surface || '').trim().toLowerCase();
+  const renderModeRaw = String(row.render_mode || '').trim().toLowerCase();
+  const sourceMode = String(row.source_mode || '').trim().toLowerCase();
+  const governedFromNative = row.governed_from_native;
+  const surfaceMapping = row.surface_mapping;
+  const metaSurface = String(meta?.contract_surface || '').trim().toLowerCase();
+
+  if (!contractSurface) issues.push('missing contract_surface');
+  if (!renderModeRaw) issues.push('missing render_mode');
+  if (!sourceMode) issues.push('missing source_mode');
+  if (typeof governedFromNative !== 'boolean') issues.push('missing governed_from_native');
+  if (!surfaceMapping || typeof surfaceMapping !== 'object' || Array.isArray(surfaceMapping)) {
+    issues.push('missing surface_mapping');
+  }
+  if (metaSurface && contractSurface && metaSurface !== contractSurface) {
+    issues.push(`meta.contract_surface=${metaSurface} mismatch data.contract_surface=${contractSurface}`);
+  }
+  if (contractSurface && contractSurface !== expectedSurface) {
+    issues.push(`contract_surface=${contractSurface} mismatch expected=${expectedSurface}`);
+  }
+  return { ok: issues.length === 0, issues };
+}
+
 async function load() {
   clearError();
   traceId.value = '';
@@ -419,10 +473,20 @@ async function load() {
     const actionContract = await loadActionContractRaw(actionId.value, {
       recordId: recordId.value,
       renderProfile: canEdit.value ? 'edit' : 'readonly',
+      surface: requestedSurface.value,
+      sourceMode: requestedSourceMode.value,
     });
     let view: ViewContract | null = null;
     let contractFieldNames: string[] = [];
     if (actionContract?.data && typeof actionContract.data === 'object') {
+      const markerCheck = validateSurfaceMarkers(
+        actionContract.data,
+        (actionContract.meta as Record<string, unknown> | null) || null,
+        requestedSurface.value,
+      );
+      if (!markerCheck.ok) {
+        throw new Error(`contract surface markers invalid: ${markerCheck.issues.slice(0, 4).join(' | ')}`);
+      }
       const runtime = buildRecordRuntimeFromContract(actionContract.data);
       view = runtime.view;
       contractFieldNames = runtime.fieldNames;
@@ -648,6 +712,24 @@ function isSelectionField(fieldName: string) {
 function selectionOptions(fieldName: string) {
   const descriptor = viewContract.value?.fields?.[fieldName];
   return Array.isArray(descriptor?.selection) ? descriptor.selection : [];
+}
+
+function formatFieldValue(value: unknown) {
+  if (value === null || value === undefined || value === false) return '-';
+  if (Array.isArray(value)) {
+    if (value.length === 2 && typeof value[0] === 'number' && typeof value[1] === 'string') {
+      return String(value[1] || `#${value[0]}`);
+    }
+    return value.map((item) => String(item ?? '')).filter(Boolean).join(', ') || '-';
+  }
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '[object]';
+    }
+  }
+  return String(value);
 }
 
 function fieldInputType(fieldName: string) {
@@ -1121,6 +1203,37 @@ onMounted(load);
 
 .stat-value {
   font-size: 18px;
+}
+
+.fallback-fields {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.fallback-fields ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.fallback-fields li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fallback-label {
+  color: #334155;
+  font-weight: 600;
+}
+
+.fallback-value {
+  color: #0f172a;
+  text-align: right;
 }
 
 .chatter {

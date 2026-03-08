@@ -15,6 +15,7 @@ from odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispat
 from odoo.addons.smart_core.utils.contract_governance import (
     apply_contract_governance,
     resolve_contract_mode,
+    resolve_contract_surface,
 )
 
 _logger = logging.getLogger(__name__)
@@ -110,10 +111,12 @@ class UiContractHandler(BaseIntentHandler):
         p = payload or {}
         mode_params: Dict[str, Any] = {}
         for layer in self._collect_layers(p):
-            for key in ("contract_mode", "hud", "debug_hud"):
+            for key in ("contract_mode", "hud", "debug_hud", "contract_surface", "surface", "source_mode"):
                 if key in layer and key not in mode_params:
                     mode_params[key] = layer.get(key)
         contract_mode = resolve_contract_mode(mode_params)
+        contract_surface = resolve_contract_surface(mode_params, contract_mode=contract_mode)
+        source_mode = str(mode_params.get("source_mode") or "").strip()
 
         # 智能推断 op/subject（兼容你的前端请求形状）
         op = (self._get_param(p, "op", "subject") or "").strip().lower()
@@ -161,23 +164,36 @@ class UiContractHandler(BaseIntentHandler):
 
         data, meta = (res if isinstance(res, tuple) else (res or {}, {}))
         data = self._inject_render_hints(data or {}, p)
-        data = apply_contract_governance(data or {}, contract_mode, inject_contract_mode=False)
+        data = apply_contract_governance(
+            data or {},
+            contract_mode,
+            contract_surface=contract_surface,
+            source_mode=source_mode,
+            inject_contract_mode=False,
+        )
         meta = _normalize_meta(meta)
-        etag = self._make_etag(meta=meta, ctx=ctx, op=op, p=p, contract_mode=contract_mode)
+        etag = self._make_etag(
+            meta=meta,
+            ctx=ctx,
+            op=op,
+            p=p,
+            contract_mode=contract_mode,
+            contract_surface=contract_surface,
+        )
 
         if if_none_match and if_none_match == etag and not force_refresh:
             return {"ok": True, "data": None,
                     "meta": {"intent": self.INTENT_TYPE, "op": op, "etag": etag,
                              "version": self.VERSION, "elapsed_ms": int((time.time()-t0)*1000),
                              "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
-                             "contract_mode": contract_mode},
+                             "contract_mode": contract_mode, "contract_surface": contract_surface},
                     "code": 304}
 
         meta_out = dict(meta)
         meta_out.update({"intent": self.INTENT_TYPE, "op": op, "version": self.VERSION,
                          "etag": etag, "elapsed_ms": int((time.time()-t0)*1000),
                          "contract_version": CONTRACT_VERSION, "api_version": API_VERSION,
-                         "contract_mode": contract_mode})
+                         "contract_mode": contract_mode, "contract_surface": contract_surface})
         return {"ok": True, "data": data or {}, "meta": meta_out}
 
     def _inject_render_hints(self, data: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -206,6 +222,64 @@ class UiContractHandler(BaseIntentHandler):
             if isinstance(head, dict) and not head.get("res_id"):
                 head["res_id"] = record_id
                 data["head"] = head
+        return data
+
+    def _ensure_project_form_layout_structure(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(data, dict):
+            return data
+        model = str((data.get("head") or {}).get("model") or data.get("model") or "").strip()
+        view_type = str((data.get("head") or {}).get("view_type") or data.get("view_type") or "").strip().lower()
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        layout = form.get("layout") if isinstance(form.get("layout"), list) else []
+        if model != "project.project" or view_type != "form" or not isinstance(layout, list):
+            return data
+
+        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        field_names = [str(name).strip() for name in fields_map.keys() if str(name).strip()]
+        visible_fields = data.get("visible_fields") if isinstance(data.get("visible_fields"), list) else []
+        ordered = [str(name).strip() for name in visible_fields if str(name).strip() in fields_map]
+        if not ordered:
+            ordered = field_names
+
+        profile = data.get("form_profile") if isinstance(data.get("form_profile"), dict) else {}
+        core_raw = profile.get("core_fields") if isinstance(profile.get("core_fields"), list) else []
+        advanced_raw = profile.get("advanced_fields") if isinstance(profile.get("advanced_fields"), list) else []
+        core_fields = [str(name).strip() for name in core_raw if str(name).strip() in ordered]
+        advanced_fields = [str(name).strip() for name in advanced_raw if str(name).strip() in ordered]
+        if not core_fields:
+            core_fields = ordered[: min(8, len(ordered))]
+        if not advanced_fields:
+            advanced_fields = [name for name in ordered if name not in set(core_fields)]
+
+        header_nodes = [node for node in layout if isinstance(node, dict) and str(node.get("type") or "").strip().lower() == "header"]
+        groups = []
+        if core_fields:
+            groups.append({
+                "type": "group",
+                "name": "core_group",
+                "string": "核心信息",
+                "children": [{"type": "field", "name": name} for name in core_fields],
+            })
+        if advanced_fields:
+            groups.append({
+                "type": "group",
+                "name": "advanced_group",
+                "string": "高级信息",
+                "children": [{"type": "field", "name": name} for name in advanced_fields],
+            })
+        if not groups:
+            return data
+        form["layout"] = header_nodes + [{
+            "type": "sheet",
+            "name": "project_form_sheet",
+            "children": groups,
+        }]
+        views["form"] = form
+        data["views"] = views
+        head = data.get("head") if isinstance(data.get("head"), dict) else {}
+        head["view_type"] = "form"
+        data["head"] = head
         return data
 
     # ---------------- op 实现 ----------------
@@ -324,6 +398,48 @@ class UiContractHandler(BaseIntentHandler):
         except Exception:
             return self._err(400, "缺少或非法的 action_id")
 
+        raw_record = self._get_param(p, "record_id", "recordId", "res_id", "resId")
+        record_id = None
+        try:
+            if raw_record is not None and str(raw_record).strip():
+                record_id = int(raw_record)
+        except Exception:
+            record_id = None
+        requested_view_type = (self._get_param(p, "view_type", "viewType") or "").strip().lower()
+        render_profile = str(self._get_param(p, "render_profile", "renderProfile") or "").strip().lower()
+
+        # Detail/intake scene should prefer complete form contract surface.
+        prefer_form_contract = bool(
+            requested_view_type == "form"
+            or (record_id and record_id > 0)
+            or render_profile in {"create", "edit", "readonly"}
+        )
+        if prefer_form_contract:
+            Action = self.env["ir.actions.act_window"].sudo().with_context(ctx)
+            action = Action.browse(action_id)
+            if action.exists() and action.res_model:
+                p_form = {
+                    "subject": "model",
+                    "model": action.res_model,
+                    "view_type": "form",
+                    "with_data": False,
+                }
+                data, versions = ActionDispatcher(
+                    self.env,
+                    api.Environment(self.env.cr, self.env.user.id, ctx),
+                ).dispatch(p_form)
+                if isinstance(data, dict):
+                    data["action_id"] = action_id
+                    head = data.get("head")
+                    if isinstance(head, dict):
+                        head.setdefault("view_type", "form")
+                        head["action_id"] = action_id
+                        data["head"] = head
+                    data = self._ensure_project_form_layout_structure(data)
+                cs = ContractService(self.env)
+                fixed = cs.finalize_contract({"ok": True, "data": data, "meta": {"subject": "action.form", "action_id": action_id}})
+                return fixed.get("data", {}), {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
+
         # 统一服务的 action 分发
         p2 = {"subject":"action","action_id": action_id, "with_data": False}
         data, versions = ActionDispatcher(self.env, api.Environment(self.env.cr, self.env.user.id, ctx)).dispatch(p2)
@@ -342,7 +458,7 @@ class UiContractHandler(BaseIntentHandler):
         param = (str(param or "")).strip().strip('"')
         return hdr or param
 
-    def _make_etag(self, meta, ctx, op, p, contract_mode="user"):
+    def _make_etag(self, meta, ctx, op, p, contract_mode="user", contract_surface="user"):
         meta = _normalize_meta(meta)
         etag_src = _json({
             "view_hash": meta.get("view_hash"),
@@ -358,6 +474,7 @@ class UiContractHandler(BaseIntentHandler):
             "model": self._get_param(p, "model","model_code","modelCode"),
             "action_id": self._get_param(p, "action_id","actionId"),
             "contract_mode": contract_mode,
+            "contract_surface": contract_surface,
             "contract_version": CONTRACT_VERSION,
             "api_version": API_VERSION,
         })
