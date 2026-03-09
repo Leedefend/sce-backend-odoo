@@ -296,12 +296,12 @@ const pageContract = usePageContract('record');
 const pageText = pageContract.text;
 const userGroups = computed(() => session.user?.groups_xmlids ?? []);
 const statusLabel = computed(() => {
-  if (status.value === 'editing') return 'Editing';
-  if (status.value === 'saving') return 'Saving';
-  if (status.value === 'loading') return 'Loading';
-  if (status.value === 'error') return 'Error';
-  if (status.value === 'empty') return 'Empty';
-  return 'Ready';
+  if (status.value === 'editing') return pageText('status_editing', 'Editing');
+  if (status.value === 'saving') return pageText('status_saving', 'Saving');
+  if (status.value === 'loading') return pageText('status_loading', 'Loading');
+  if (status.value === 'error') return pageText('status_error', 'Error');
+  if (status.value === 'empty') return pageText('status_empty', 'Empty');
+  return pageText('status_ready', 'Ready');
 });
 const statusTone = computed(() => {
   if (status.value === 'error') return 'danger';
@@ -556,7 +556,7 @@ async function load() {
       await loadChatter();
     }
   } catch (err) {
-    setError(err, 'failed to load record');
+    setError(err, pageText('error_load_record', 'failed to load record'));
     traceId.value = error.value?.traceId || '';
     lastTraceId.value = error.value?.traceId || '';
     status.value = deriveRecordStatus({ error: error.value?.message || '', fieldsLength: 0 });
@@ -575,7 +575,7 @@ async function loadChatter() {
     });
     timelineEntries.value = Array.isArray(timeline.items) ? timeline.items : [];
   } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : 'Failed to load chatter';
+    chatterError.value = err instanceof Error ? err.message : pageText('chatter_load_failed', 'Failed to load chatter');
     timelineEntries.value = [];
   }
 }
@@ -594,7 +594,7 @@ async function sendChatter() {
     chatterDraft.value = '';
     await loadChatter();
   } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : 'Failed to post chatter message';
+    chatterError.value = err instanceof Error ? err.message : pageText('chatter_post_failed', 'Failed to post chatter message');
   } finally {
     chatterPosting.value = false;
   }
@@ -619,7 +619,7 @@ async function onAttachmentSelected(event: Event) {
     });
     await loadChatter();
   } catch (err) {
-    chatterUploadError.value = err instanceof Error ? err.message : 'Failed to upload file';
+    chatterUploadError.value = err instanceof Error ? err.message : pageText('chatter_upload_failed', 'Failed to upload file');
   } finally {
     chatterUploading.value = false;
     input.value = '';
@@ -643,7 +643,7 @@ async function downloadAttachment(att: { id?: number; name?: string; mimetype?: 
     link.click();
     URL.revokeObjectURL(url);
   } catch (err) {
-    chatterUploadError.value = err instanceof Error ? err.message : 'Failed to download file';
+    chatterUploadError.value = err instanceof Error ? err.message : pageText('chatter_download_failed', 'Failed to download file');
   }
 }
 
@@ -846,7 +846,7 @@ async function runHeaderButton(btn: ViewButton) {
     }
     actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
-    setError(err, 'failed to execute button');
+    setError(err, pageText('error_execute_button', 'failed to execute button'));
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
     actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
@@ -986,7 +986,7 @@ async function save() {
     if (err instanceof ApiError && err.status === 409) {
       setError(err, 'Record changed, reload and retry');
     } else {
-      setError(err, 'failed to save record');
+      setError(err, pageText('error_save_record', 'failed to save record'));
     }
     traceId.value = error.value?.traceId || '';
     lastTraceId.value = error.value?.traceId || '';

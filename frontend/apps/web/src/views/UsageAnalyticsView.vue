@@ -149,7 +149,7 @@
               <tr><th>Scene Key</th><th>Count</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!sceneTop.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-if="!sceneTop.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in sceneTop" :key="item.key">
                 <td>{{ item.key }}</td>
                 <td>{{ item.count }}</td>
@@ -165,7 +165,7 @@
               <tr><th>Capability Key</th><th>Count</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!capabilityTop.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-if="!capabilityTop.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in capabilityTop" :key="item.key">
                 <td>{{ item.key }}</td>
                 <td>{{ item.count }}</td>
@@ -183,7 +183,7 @@
               <tr><th>Date</th><th>Count</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!sceneDaily.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-if="!sceneDaily.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in sceneDaily" :key="item.day">
                 <td>{{ item.day }}</td>
                 <td>{{ item.count }}</td>
@@ -199,7 +199,7 @@
               <tr><th>Date</th><th>Count</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!capabilityDaily.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-if="!capabilityDaily.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in capabilityDaily" :key="item.day">
                 <td>{{ item.day }}</td>
                 <td>{{ item.count }}</td>
@@ -217,7 +217,7 @@
               <tr><th>Reason Code</th><th>Count</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!reasonCounts.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-if="!reasonCounts.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in reasonCounts" :key="item.reason_code">
                 <td>{{ item.reason_code }}</td>
                 <td>{{ item.count }}</td>
@@ -233,7 +233,7 @@
               <tr><th>Key</th><th>Reason</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!filteredHiddenSamples.length"><td colspan="2" class="empty">暂无数据</td></tr>
+              <tr v-if="!filteredHiddenSamples.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in filteredHiddenSamples" :key="item.key">
                 <td>{{ item.key }}</td>
                 <td>{{ item.reason_code || item.reason || '-' }}</td>
@@ -251,7 +251,7 @@
               <tr><th>Role Code</th><th>Scene</th><th>Capability</th><th>Total</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!roleTop.length"><td colspan="4" class="empty">暂无数据</td></tr>
+              <tr v-if="!roleTop.length"><td colspan="4" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in roleTop" :key="`role-top-${item.role_code}`">
                 <td>{{ item.role_code }}</td>
                 <td>{{ item.scene_open_total }}</td>
@@ -269,7 +269,7 @@
               <tr><th>User ID</th><th>Scene</th><th>Capability</th><th>Total</th></tr>
             </thead>
             <tbody>
-              <tr v-if="!userTop.length"><td colspan="4" class="empty">暂无数据</td></tr>
+              <tr v-if="!userTop.length"><td colspan="4" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
               <tr v-for="item in userTop" :key="`user-top-${item.user_id}`">
                 <td>{{ item.user_id }}</td>
                 <td>{{ item.scene_open_total }}</td>
@@ -356,7 +356,7 @@ async function exportCsv() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (err) {
-    errorText.value = resolveContextAwareErrorText(err, err instanceof Error ? err.message : '导出失败');
+    errorText.value = resolveContextAwareErrorText(err, err instanceof Error ? err.message : pageText('error_export_failed', '导出失败'));
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   }
@@ -376,7 +376,7 @@ async function copyExportParams() {
   try {
     await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
   } catch {
-    errorText.value = '复制导出参数失败';
+    errorText.value = pageText('error_copy_export_params_failed', '复制导出参数失败');
   }
 }
 
