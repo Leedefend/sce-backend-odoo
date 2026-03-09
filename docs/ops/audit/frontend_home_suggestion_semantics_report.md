@@ -1,6 +1,6 @@
-# Frontend Home Suggestion Semantics Report
+# Frontend Home Contract Boundary Report
 
 - ok: `True`
-- checked_file: `frontend/apps/web/src/views/HomeView.vue`
-- signal_count: `6`
+- checked_files: `4`
+- contract_boundary: `workspace_home_only`
 - error_count: `0`
