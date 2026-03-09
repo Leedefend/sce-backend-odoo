@@ -5,6 +5,8 @@ export PYTHONUNBUFFERED=1
 DB_NAME=${DB_NAME:-sc_demo}
 ODOO_BASE_URL="${ODOO_BASE_URL:-${BASE_URL:-http://localhost:8069}}"
 BASE_URL="${ODOO_BASE_URL}"
+export ODOO_BASE_URL
+export BASE_URL
 BASE_URL_DEFAULTED=0
 if [ -z "${ODOO_BASE_URL:-}" ] && [ -z "${BASE_URL:-}" ]; then
   BASE_URL_DEFAULTED=1
@@ -119,6 +121,7 @@ BASE = os.environ.get("BASE_URL", "http://localhost:8069")
 DB = os.environ.get("DB_NAME", "sc_demo")
 RPC_TIMEOUT = float(os.environ.get("ROLE_MATRIX_RPC_TIMEOUT", "12"))
 RPC_RETRIES = int(os.environ.get("ROLE_MATRIX_RPC_RETRIES", "2"))
+OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 READ_USER = os.environ.get("READ_USER", "demo_role_project_read")
 READ_PWD = os.environ.get("READ_PWD", "demo")
@@ -150,7 +153,7 @@ def jsonrpc(service, method, args):
     last_err = None
     for _ in range(max(1, RPC_RETRIES + 1)):
         try:
-            with urllib.request.urlopen(req, timeout=RPC_TIMEOUT) as resp:
+            with OPENER.open(req, timeout=RPC_TIMEOUT) as resp:
                 data = json.loads(resp.read().decode())
             if "error" in data:
                 raise RuntimeError(data["error"])
