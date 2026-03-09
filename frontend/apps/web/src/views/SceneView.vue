@@ -98,7 +98,7 @@ function resolveRecordId(targetRecord: unknown) {
   return targetRecord;
 }
 
-function resolveVisibleActionTarget(target: SceneTarget) {
+function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
   const actionId = Number(target.action_id || 0);
   if (actionId > 0) {
     if (!session.menuTree.length || findActionMeta(session.menuTree, actionId)) {
@@ -135,6 +135,17 @@ function resolveVisibleActionTarget(target: SceneTarget) {
       return {
         actionId: modelNode.meta.action_id,
         menuId: Number(modelNode.menu_id || modelNode.id || target.menu_id || 0) || undefined,
+      };
+    }
+  }
+
+  const normalizedSceneKey = String(sceneKey || '').trim();
+  if (normalizedSceneKey) {
+    const sceneNode = findActionNodeBySceneKey(session.menuTree, normalizedSceneKey);
+    if (sceneNode?.meta?.action_id) {
+      return {
+        actionId: sceneNode.meta.action_id,
+        menuId: Number(sceneNode.menu_id || sceneNode.id || 0) || undefined,
       };
     }
   }
@@ -219,7 +230,7 @@ async function resolveScene() {
         }
       }
       // Workspace scene may still provide action/menu/model targets.
-      const resolvedAction = resolveVisibleActionTarget(target);
+      const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
         await router.replace({
           path: `/a/${resolvedAction.actionId}`,
@@ -240,7 +251,7 @@ async function resolveScene() {
     }
 
     if (layout.kind === 'record') {
-      const resolvedAction = resolveVisibleActionTarget(target);
+      const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
         await router.replace({
           path: `/a/${resolvedAction.actionId}`,
@@ -282,7 +293,7 @@ async function resolveScene() {
     }
 
     if (layout.kind === 'list' || layout.kind === 'ledger') {
-      const resolvedAction = resolveVisibleActionTarget(target);
+      const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
         await router.replace({
           path: `/a/${resolvedAction.actionId}`,
@@ -337,6 +348,30 @@ function findActionNodeByMenuXmlid(nodes: NavNode[], menuXmlid: string): NavNode
     for (const node of items) {
       const xmlid = String((node as NavNode & { xmlid?: string }).xmlid || node.meta?.menu_xmlid || '').trim();
       if (xmlid && xmlid === menuXmlid) {
+        return node;
+      }
+      if (node.children?.length) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nodes) || null;
+}
+
+function findActionNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode | null {
+  if (!sceneKey) return null;
+  const wanted = String(sceneKey || '').trim();
+  const walk = (items: NavNode[]): NavNode | null => {
+    for (const node of items) {
+      const nodeSceneKey = String(
+        (node as NavNode & { scene_key?: string; sceneKey?: string }).scene_key
+          || (node as NavNode & { scene_key?: string; sceneKey?: string }).sceneKey
+          || node.meta?.scene_key
+          || '',
+      ).trim();
+      if (nodeSceneKey === wanted && node.meta?.action_id) {
         return node;
       }
       if (node.children?.length) {
