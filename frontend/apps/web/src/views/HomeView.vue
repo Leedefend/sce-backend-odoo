@@ -572,10 +572,17 @@ const workspacePageOrchestrationV1 = computed(() => (
     ? workspaceHome.value.page_orchestration_v1 as Record<string, unknown>
     : {}
 ));
+const workspacePageOrchestrationV1DataSources = computed(() => (
+  workspacePageOrchestrationV1.value.data_sources && typeof workspacePageOrchestrationV1.value.data_sources === 'object'
+    ? workspacePageOrchestrationV1.value.data_sources as Record<string, unknown>
+    : {}
+));
 const orchestrationBlocks = computed(() => {
   const zones = Array.isArray(workspacePageOrchestrationV1.value.zones)
     ? workspacePageOrchestrationV1.value.zones
     : [];
+  const hasV1Zones = zones.length > 0;
+  const dataSources = workspacePageOrchestrationV1DataSources.value;
   const flattenedV1: Record<string, unknown>[] = [];
   zones.forEach((zone) => {
     if (!zone || typeof zone !== 'object') return;
@@ -584,13 +591,21 @@ const orchestrationBlocks = computed(() => {
     const blocks = Array.isArray(zoneRow.blocks) ? zoneRow.blocks : [];
     blocks.forEach((item) => {
       if (!item || typeof item !== 'object') return;
+      const blockRow = item as Record<string, unknown>;
+      const sectionKey = asText(blockRow.section_key);
+      const dataSourceKey = asText(blockRow.data_source);
+      if (!sectionKey || !dataSourceKey) return;
+      const dataSource = dataSources[dataSourceKey];
+      if (!dataSource || typeof dataSource !== 'object') return;
+      const sourceType = asText((dataSource as Record<string, unknown>).source_type);
+      if (!sourceType) return;
       flattenedV1.push({
-        ...item as Record<string, unknown>,
-        zone: asText((item as Record<string, unknown>).zone) || zoneType || 'support',
+        ...blockRow,
+        zone: asText(blockRow.zone) || zoneType || 'support',
       });
     });
   });
-  if (flattenedV1.length) {
+  if (hasV1Zones) {
     return flattenedV1;
   }
   const legacy = Array.isArray(workspacePageOrchestration.value.blocks)
@@ -606,7 +621,7 @@ const roleVariantCode = computed(() => {
     const roleCode = asText((roleVariant as Record<string, unknown>).role_code);
     if (roleCode) return roleCode;
   }
-  const orchestrationPage = workspacePageOrchestration.value.page;
+  const orchestrationPage = workspacePageOrchestrationV1.value.page;
   if (orchestrationPage && typeof orchestrationPage === 'object') {
     return asText((orchestrationPage as Record<string, unknown>).role_code);
   }
