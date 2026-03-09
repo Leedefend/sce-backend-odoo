@@ -1,6 +1,6 @@
 <template>
   <section class="workbench">
-    <header class="header">
+    <header v-if="pageSectionEnabled('header', true)" class="header">
       <div>
         <p v-if="showHud" class="diagnostic">{{ pageText('diagnostic_hint', '诊断页仅用于排查，不作为正式产品界面。') }}</p>
         <h2>{{ pageText('header_title', '页面暂时无法打开') }}</h2>
@@ -18,12 +18,13 @@
     </header>
 
     <StatusPanel
+      v-if="pageSectionEnabled('status_panel', true)"
       :title="pageText('panel_title', '页面暂时无法打开')"
       :message="message"
       :variant="panelVariant"
     />
 
-    <section v-if="showTiles" class="tiles">
+    <section v-if="pageSectionEnabled('tiles', true) && showTiles" class="tiles">
       <button
         v-for="tile in tiles"
         :key="tile.key || tile.title"
@@ -41,7 +42,7 @@
       </button>
     </section>
 
-    <div v-if="showHud" class="details">
+    <div v-if="pageSectionEnabled('hud_details', true) && showHud" class="details">
       <div class="detail">
         <span class="label">{{ pageText('hud_label_reason', '原因') }}</span>
         <span class="value">{{ reasonLabel }}</span>
@@ -172,6 +173,7 @@ const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as LocationQu
 const session = useSessionStore();
 const pageContract = usePageContract('workbench');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
 const lastIntent = computed(() => session.lastIntent || '');

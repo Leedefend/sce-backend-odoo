@@ -10,6 +10,9 @@ SESSION_STORE = ROOT / "frontend/apps/web/src/stores/session.ts"
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
 ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
 RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
+SCENE_VIEW = ROOT / "frontend/apps/web/src/views/SceneView.vue"
+WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
+USAGE_ANALYTICS_VIEW = ROOT / "frontend/apps/web/src/views/UsageAnalyticsView.vue"
 APP_SHELL = ROOT / "frontend/apps/web/src/layouts/AppShell.vue"
 NAV_REGISTRY = ROOT / "frontend/apps/web/src/app/navigationRegistry.ts"
 REPORT_JSON = ROOT / "artifacts/backend/frontend_product_contract_consumption_report.json"
@@ -30,6 +33,9 @@ def main() -> int:
     home_text = _read(HOME_VIEW)
     action_text = _read(ACTION_VIEW)
     record_text = _read(RECORD_VIEW)
+    scene_text = _read(SCENE_VIEW)
+    workbench_text = _read(WORKBENCH_VIEW)
+    usage_analytics_text = _read(USAGE_ANALYTICS_VIEW)
     shell_text = _read(APP_SHELL)
     nav_registry_text = _read(NAV_REGISTRY)
     errors: list[str] = []
@@ -42,6 +48,12 @@ def main() -> int:
         errors.append(f"missing file: {ACTION_VIEW.relative_to(ROOT).as_posix()}")
     if not record_text:
         errors.append(f"missing file: {RECORD_VIEW.relative_to(ROOT).as_posix()}")
+    if not scene_text:
+        errors.append(f"missing file: {SCENE_VIEW.relative_to(ROOT).as_posix()}")
+    if not workbench_text:
+        errors.append(f"missing file: {WORKBENCH_VIEW.relative_to(ROOT).as_posix()}")
+    if not usage_analytics_text:
+        errors.append(f"missing file: {USAGE_ANALYTICS_VIEW.relative_to(ROOT).as_posix()}")
     if not shell_text:
         errors.append(f"missing file: {APP_SHELL.relative_to(ROOT).as_posix()}")
     if not nav_registry_text:
@@ -103,6 +115,28 @@ def main() -> int:
         "pageSectionEnabled('project_summary', true)",
         "pageSectionEnabled('chatter', true)",
     ]
+    required_scene_tokens = [
+        "const pageContract = usePageContract('scene');",
+        "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "pageSectionEnabled('status_loading', true)",
+        "pageSectionEnabled('status_error', true)",
+        "pageSectionEnabled('status_forbidden', true)",
+    ]
+    required_workbench_tokens = [
+        "const pageContract = usePageContract('workbench');",
+        "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "pageSectionEnabled('header', true)",
+        "pageSectionEnabled('status_panel', true)",
+        "pageSectionEnabled('tiles', true)",
+        "pageSectionEnabled('hud_details', true)",
+    ]
+    required_usage_analytics_tokens = [
+        "const pageContract = usePageContract('usage_analytics');",
+        "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "pageSectionEnabled('header', true)",
+        "pageSectionEnabled('tables_top', true)",
+        "pageSectionEnabled('tables_role_user', true)",
+    ]
     required_navigation_registry_tokens = [
         "export type NavigationEntrySource = 'scene' | 'capability';",
         "export interface RuntimeNavigationEntry",
@@ -117,6 +151,9 @@ def main() -> int:
     ok_shell, missing_shell = _has_all(shell_text, required_shell_tokens)
     ok_action, missing_action = _has_all(action_text, required_action_tokens)
     ok_record, missing_record = _has_all(record_text, required_record_tokens)
+    ok_scene, missing_scene = _has_all(scene_text, required_scene_tokens)
+    ok_workbench, missing_workbench = _has_all(workbench_text, required_workbench_tokens)
+    ok_usage_analytics, missing_usage_analytics = _has_all(usage_analytics_text, required_usage_analytics_tokens)
     ok_nav_registry, missing_nav_registry = _has_all(nav_registry_text, required_navigation_registry_tokens)
     if not ok_session:
         errors.extend([f"session.ts missing token: {token}" for token in missing_session])
@@ -128,13 +165,19 @@ def main() -> int:
         errors.extend([f"ActionView.vue missing token: {token}" for token in missing_action])
     if not ok_record:
         errors.extend([f"RecordView.vue missing token: {token}" for token in missing_record])
+    if not ok_scene:
+        errors.extend([f"SceneView.vue missing token: {token}" for token in missing_scene])
+    if not ok_workbench:
+        errors.extend([f"WorkbenchView.vue missing token: {token}" for token in missing_workbench])
+    if not ok_usage_analytics:
+        errors.extend([f"UsageAnalyticsView.vue missing token: {token}" for token in missing_usage_analytics])
     if not ok_nav_registry:
         errors.extend([f"navigationRegistry.ts missing token: {token}" for token in missing_nav_registry])
 
     report = {
         "ok": len(errors) == 0,
         "summary": {
-            "checked_files": 6,
+            "checked_files": 9,
             "error_count": len(errors),
             "contract_signals": {
                 "capability_groups": "consumed" if ok_session else "missing",
@@ -143,6 +186,9 @@ def main() -> int:
                 "home_product_surface": "rendered" if ok_home else "missing",
                 "action_section_governance": "rendered" if ok_action else "missing",
                 "record_section_governance": "rendered" if ok_record else "missing",
+                "scene_section_governance": "rendered" if ok_scene else "missing",
+                "workbench_section_governance": "rendered" if ok_workbench else "missing",
+                "usage_analytics_section_governance": "rendered" if ok_usage_analytics else "missing",
                 "appshell_navigation_hud": "rendered" if ok_shell else "missing",
                 "runtime_navigation_registry": "available" if ok_nav_registry else "missing",
                 "capability_metadata_state_reason": "consumed" if ok_session and ok_home else "missing",

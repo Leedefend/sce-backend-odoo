@@ -150,6 +150,10 @@ def main() -> int:
             "getSceneByKey",
             "evaluateCapabilityPolicy(",
             "resolveVisibleActionTarget(",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('status_loading', true)",
+            "pageSectionEnabled('status_error', true)",
+            "pageSectionEnabled('status_forbidden', true)",
         ],
         "ActionView.vue": [
             "resolveAction(session.menuTree",
@@ -186,6 +190,11 @@ def main() -> int:
             "diagnostic-only surface",
             "当前动作类型暂未在门户壳层支持。",
             "当前账号尚未开通该能力。",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('header', true)",
+            "pageSectionEnabled('status_panel', true)",
+            "pageSectionEnabled('tiles', true)",
+            "pageSectionEnabled('hud_details', true)",
         ],
         "SceneHealthView.vue": [
             "fetchSceneHealth",
@@ -198,6 +207,10 @@ def main() -> int:
         "UsageAnalyticsView.vue": [
             "fetchUsageReport",
             "exportUsageCsv",
+            "pageSectionEnabled(",
+            "pageSectionEnabled('header', true)",
+            "pageSectionEnabled('tables_top', true)",
+            "pageSectionEnabled('tables_role_user', true)",
         ],
     }
     per_view_forbidden = {
@@ -306,6 +319,12 @@ def main() -> int:
                 '"sections": [',
                 '{"key": "quick_filters", "enabled": True}',
                 '{"key": "quick_actions", "enabled": True}',
+                '{"key": "status_loading", "enabled": True}',
+                '{"key": "status_error", "enabled": True}',
+                '{"key": "status_forbidden", "enabled": True}',
+                '{"key": "status_panel", "enabled": True}',
+                '{"key": "tables_top", "enabled": True}',
+                '{"key": "tables_role_user", "enabled": True}',
                 '"record": {',
                 '{"key": "project_summary", "enabled": True}',
                 '{"key": "chatter", "enabled": True}',

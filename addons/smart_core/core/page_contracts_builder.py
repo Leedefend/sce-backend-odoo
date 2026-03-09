@@ -159,6 +159,12 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "workbench": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "header", "enabled": True},
+                    {"key": "status_panel", "enabled": True},
+                    {"key": "tiles", "enabled": True},
+                    {"key": "hud_details", "enabled": True},
+                ],
                 "texts": {
                     "header_title": "页面暂时无法打开",
                     "header_subtitle": "我们已为你保留可继续操作的入口。",
@@ -395,6 +401,11 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "scene": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "status_loading", "enabled": True},
+                    {"key": "status_error", "enabled": True},
+                    {"key": "status_forbidden", "enabled": True},
+                ],
                 "texts": {
                     "loading_title": "正在加载场景...",
                     "error_fallback": "场景加载失败",
@@ -695,6 +706,18 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "usage_analytics": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "header", "enabled": True},
+                    {"key": "status_loading", "enabled": True},
+                    {"key": "status_error", "enabled": True},
+                    {"key": "slice_bar", "enabled": True},
+                    {"key": "summary_usage", "enabled": True},
+                    {"key": "summary_visibility", "enabled": True},
+                    {"key": "tables_top", "enabled": True},
+                    {"key": "tables_daily", "enabled": True},
+                    {"key": "tables_visibility", "enabled": True},
+                    {"key": "tables_role_user", "enabled": True},
+                ],
                 "texts": {
                     "title": "Usage Analytics",
                     "subtitle": "Scene / Capability 使用统计（按公司累计）。",
