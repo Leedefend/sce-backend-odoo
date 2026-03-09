@@ -47,6 +47,7 @@ def main() -> int:
         "session.ts",
         [
             "semantic_protocol?: {",
+            "page_orchestration_v1?: {",
             "page_orchestration?: {",
             "role_variant?: {",
         ],
@@ -57,7 +58,9 @@ def main() -> int:
         "HomeView.vue",
         [
             "const workspacePageOrchestration = computed(() => (",
+            "const workspacePageOrchestrationV1 = computed(() => (",
             "const orchestrationBlocks = computed(() => {",
+            "workspacePageOrchestrationV1.value.zones",
             "const orchestrationSectionOrderMap = computed(() => {",
             "const orchestrationSectionSemanticMap = computed(() => {",
             "const roleVariantCode = computed(() => {",
@@ -78,6 +81,7 @@ def main() -> int:
         "workspace_home_contract_builder.py",
         [
             '"semantic_protocol": {',
+            '"page_orchestration_v1": _build_page_orchestration_v1(role_code)',
             '"page_orchestration": _build_page_orchestration(role_code)',
             '"role_variant": {',
         ],

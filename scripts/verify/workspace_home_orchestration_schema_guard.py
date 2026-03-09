@@ -96,50 +96,91 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
     if progress != REQUIRED_PROGRESS:
         errors.append(f"{role_code}: progress_states mismatch expected={sorted(REQUIRED_PROGRESS)} got={sorted(progress)}")
 
-    orchestration = contract.get("page_orchestration")
-    if not isinstance(orchestration, dict):
-        errors.append(f"{role_code}: missing page_orchestration object")
+    orchestration_v1 = contract.get("page_orchestration_v1")
+    if not isinstance(orchestration_v1, dict):
+        errors.append(f"{role_code}: missing page_orchestration_v1 object")
         return
 
-    page = orchestration.get("page")
-    zones = orchestration.get("zones")
-    blocks = orchestration.get("blocks")
-    role_layout = orchestration.get("role_layout")
+    page = orchestration_v1.get("page")
+    zones = orchestration_v1.get("zones")
+    data_sources = orchestration_v1.get("data_sources")
+    state_schema = orchestration_v1.get("state_schema")
+    action_schema = orchestration_v1.get("action_schema")
+    render_hints = orchestration_v1.get("render_hints")
+    meta = orchestration_v1.get("meta")
     if not isinstance(page, dict):
-        errors.append(f"{role_code}: page_orchestration.page must be object")
+        errors.append(f"{role_code}: page_orchestration_v1.page must be object")
+    if _as_set_list(page.get("audience") if isinstance(page, dict) else []) == set():
+        errors.append(f"{role_code}: page_orchestration_v1.page.audience must be non-empty")
     if not isinstance(zones, list) or not zones:
-        errors.append(f"{role_code}: page_orchestration.zones must be non-empty list")
-    if not isinstance(blocks, list) or not blocks:
-        errors.append(f"{role_code}: page_orchestration.blocks must be non-empty list")
+        errors.append(f"{role_code}: page_orchestration_v1.zones must be non-empty list")
         return
-    if not isinstance(role_layout, dict):
-        errors.append(f"{role_code}: page_orchestration.role_layout must be object")
+    if not isinstance(data_sources, dict) or not data_sources:
+        errors.append(f"{role_code}: page_orchestration_v1.data_sources must be non-empty object")
+    if not isinstance(state_schema, dict):
+        errors.append(f"{role_code}: page_orchestration_v1.state_schema must be object")
+    else:
+        tone_keys = _as_set_list(list((state_schema.get("tones") or {}).keys()))
+        business_state_keys = _as_set_list(list((state_schema.get("business_states") or {}).keys()))
+        if tone_keys != REQUIRED_TONES:
+            errors.append(f"{role_code}: state_schema.tones mismatch expected={sorted(REQUIRED_TONES)} got={sorted(tone_keys)}")
+        if business_state_keys != REQUIRED_PROGRESS:
+            errors.append(
+                f"{role_code}: state_schema.business_states mismatch expected={sorted(REQUIRED_PROGRESS)} got={sorted(business_state_keys)}"
+            )
+    if not isinstance(action_schema, dict) or not isinstance(action_schema.get("actions"), dict):
+        errors.append(f"{role_code}: page_orchestration_v1.action_schema.actions must be object")
+    if not isinstance(render_hints, dict):
+        errors.append(f"{role_code}: page_orchestration_v1.render_hints must be object")
+    if not isinstance(meta, dict):
+        errors.append(f"{role_code}: page_orchestration_v1.meta must be object")
 
     seen_keys: set[str] = set()
-    for idx, block in enumerate(blocks):
-        prefix = f"{role_code}: blocks[{idx}]"
-        if not isinstance(block, dict):
-            errors.append(f"{prefix} must be object")
+    for zone_idx, zone in enumerate(zones):
+        zprefix = f"{role_code}: zones[{zone_idx}]"
+        if not isinstance(zone, dict):
+            errors.append(f"{zprefix} must be object")
             continue
-        key = str(block.get("key") or "").strip()
-        block_type = str(block.get("type") or "").strip()
-        tone = str(block.get("tone") or "").strip()
-        prog = str(block.get("progress") or "").strip()
-        zone = str(block.get("zone") or "").strip()
-        if not key:
-            errors.append(f"{prefix}.key required")
-        elif key in seen_keys:
-            errors.append(f"{prefix}.key duplicate: {key}")
-        else:
-            seen_keys.add(key)
-        if block_type not in REQUIRED_BLOCK_TYPES:
-            errors.append(f"{prefix}.type invalid: {block_type}")
-        if tone not in REQUIRED_TONES:
-            errors.append(f"{prefix}.tone invalid: {tone}")
-        if prog not in REQUIRED_PROGRESS:
-            errors.append(f"{prefix}.progress invalid: {prog}")
-        if zone not in {"primary", "analysis", "support"}:
-            errors.append(f"{prefix}.zone invalid: {zone}")
+        zone_type = str(zone.get("zone_type") or "").strip()
+        if zone_type not in {"hero", "primary", "secondary", "supporting", "sidebar", "footer"}:
+            errors.append(f"{zprefix}.zone_type invalid: {zone_type}")
+        zone_blocks = zone.get("blocks")
+        if not isinstance(zone_blocks, list) or not zone_blocks:
+            errors.append(f"{zprefix}.blocks must be non-empty list")
+            continue
+        for block_idx, block in enumerate(zone_blocks):
+            prefix = f"{zprefix}.blocks[{block_idx}]"
+            if not isinstance(block, dict):
+                errors.append(f"{prefix} must be object")
+                continue
+            key = str(block.get("key") or "").strip()
+            block_type = str(block.get("block_type") or "").strip()
+            tone = str(block.get("tone") or "").strip()
+            prog = str(block.get("progress") or "").strip()
+            section_key = str(block.get("section_key") or "").strip()
+            if not key:
+                errors.append(f"{prefix}.key required")
+            elif key in seen_keys:
+                errors.append(f"{prefix}.key duplicate: {key}")
+            else:
+                seen_keys.add(key)
+            if block_type not in REQUIRED_BLOCK_TYPES:
+                errors.append(f"{prefix}.block_type invalid: {block_type}")
+            if tone not in REQUIRED_TONES:
+                errors.append(f"{prefix}.tone invalid: {tone}")
+            if prog not in REQUIRED_PROGRESS:
+                errors.append(f"{prefix}.progress invalid: {prog}")
+            if not section_key:
+                errors.append(f"{prefix}.section_key required")
+            visibility = block.get("visibility")
+            if not isinstance(visibility, dict):
+                errors.append(f"{prefix}.visibility must be object")
+            elif not isinstance(visibility.get("roles"), list):
+                errors.append(f"{prefix}.visibility.roles must be list")
+
+    orchestration_legacy = contract.get("page_orchestration")
+    if not isinstance(orchestration_legacy, dict):
+        errors.append(f"{role_code}: missing legacy page_orchestration object")
 
 
 def main() -> int:
