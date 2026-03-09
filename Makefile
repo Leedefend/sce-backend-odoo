@@ -1413,6 +1413,10 @@ verify.frontend.runtime_navigation_hud.guard: guard.prod.forbid
 verify.frontend.home_suggestion_semantics.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_home_suggestion_semantics_guard.py
 
+.PHONY: verify.frontend.home_layout_section_coverage.guard
+verify.frontend.home_layout_section_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_home_layout_section_coverage_guard.py
+
 .PHONY: verify.frontend.page_contract_boundary.guard
 verify.frontend.page_contract_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
@@ -1471,6 +1475,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.product.contract_consumption.guard \
 	verify.frontend.runtime_navigation_hud.guard \
 	verify.frontend.home_suggestion_semantics.guard \
+	verify.frontend.home_layout_section_coverage.guard \
 	verify.frontend.page_contract_boundary.guard \
 	verify.frontend.page_contract.sections_coverage.guard \
 	verify.frontend.page_contract.key_consistency.guard \
