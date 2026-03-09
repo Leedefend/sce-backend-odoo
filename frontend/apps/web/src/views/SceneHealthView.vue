@@ -15,7 +15,14 @@
             </option>
           </select>
         </label>
-        <button class="secondary" @click="loadHealth">Refresh</button>
+        <button
+          v-for="action in headerActions"
+          :key="action.key"
+          class="secondary"
+          @click="executeHeaderAction(action.key)"
+        >
+          {{ action.label }}
+        </button>
       </div>
     </header>
 
@@ -133,10 +140,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
 import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import {
   fetchSceneHealth,
   governanceExportContract,
@@ -157,13 +166,22 @@ const companies = ref<Array<{ id: number; name: string }>>([]);
 const targetChannel = ref<SceneChannel>('stable');
 const governanceReason = ref('');
 const governanceTraceId = ref('');
+const router = useRouter();
 const pageContract = usePageContract('scene_health');
 const pageText = pageContract.text;
+const pageActionText = pageContract.actionText;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionOpenDefault = pageContract.sectionOpenDefault;
 const pageSectionTagIs = pageContract.sectionTagIs;
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'health request failed')));
+const headerActions = computed(() => {
+  if (pageGlobalActions.value.length) return pageGlobalActions.value;
+  return [{ key: 'refresh_page', label: pageActionText('refresh_page', 'Refresh'), intent: 'api.data' }];
+});
 
 const autoDegradeLabel = computed(() => {
   const value = health.value?.auto_degrade;
@@ -238,6 +256,26 @@ async function loadHealth() {
     errorTraceId.value = statusError.value.traceId || '';
   } finally {
     loading.value = false;
+  }
+}
+
+async function executeHeaderAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    onRefresh: loadHealth,
+    onFallback: async (key) => {
+      if (key === 'refresh_page') {
+        await loadHealth();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled && actionKey === 'refresh_page') {
+    await loadHealth();
   }
 }
 

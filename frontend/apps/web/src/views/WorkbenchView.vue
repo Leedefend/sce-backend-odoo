@@ -11,9 +11,14 @@
         </p>
       </div>
       <div class="actions">
-        <button class="ghost" @click="goToProjects">{{ pageText('action_go_workbench', '返回工作台') }}</button>
-        <button class="ghost" @click="openFirstReachableMenu">{{ pageText('action_open_menu', '打开菜单') }}</button>
-        <button class="ghost" @click="refresh">{{ pageText('action_refresh', '刷新') }}</button>
+        <button
+          v-for="action in headerActions"
+          :key="action.key"
+          class="ghost"
+          @click="executeWorkbenchAction(action.key)"
+        >
+          {{ action.label }}
+        </button>
       </div>
     </header>
 
@@ -91,6 +96,13 @@
           <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">{{ pageText('action_copy', '复制') }}</button>
         </span>
       </div>
+      <div v-if="showHud" class="detail">
+        <span class="label">{{ pageText('hud_label_data_source', '数据源协议') }}</span>
+        <span class="value">
+          {{ hasStatusPanelDataSource ? pageText('hud_value_ready', '就绪') : pageText('hud_value_missing', '缺失') }}
+          （type={{ statusPanelDataSourceType || pageText('hud_value_na', 'N/A') }}）
+        </span>
+      </div>
     </div>
   </section>
 </template>
@@ -106,6 +118,7 @@ import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPo
 import { hasWorkspaceContext as hasWorkspaceContextValue, readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { normalizeEmbeddedSceneQuery, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import type { NavNode } from '@sc/schema';
 
@@ -174,6 +187,12 @@ const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as LocationQu
 const session = useSessionStore();
 const pageContract = usePageContract('workbench');
 const pageText = pageContract.text;
+const pageActionText = pageContract.actionText;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageHasDataSource = pageContract.hasDataSource;
+const pageDataSourceType = pageContract.dataSourceType;
+const pageGlobalActions = pageContract.globalActions;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
@@ -203,6 +222,18 @@ const scene = computed<Scene | null>(() => {
   );
 });
 const showTiles = computed(() => reason.value === ErrorCodes.CAPABILITY_MISSING && tiles.value.length > 0);
+const statusPanelDataSourceType = computed(() => pageDataSourceType('ds_section_status_panel'));
+const hasStatusPanelDataSource = computed(() => pageHasDataSource('ds_section_status_panel') && statusPanelDataSourceType.value === 'scene_context');
+const headerActions = computed(() => {
+  if (pageGlobalActions.value.length) {
+    return pageGlobalActions.value;
+  }
+  return [
+    { key: 'open_workbench', label: pageActionText('open_workbench', pageText('action_go_workbench', '返回工作台')), intent: 'ui.contract' },
+    { key: 'open_menu', label: pageActionText('open_menu', pageText('action_open_menu', '打开菜单')), intent: 'ui.contract' },
+    { key: 'refresh_page', label: pageActionText('refresh_page', pageText('action_refresh', '刷新')), intent: 'api.data' },
+  ];
+});
 const tiles = computed<EnrichedWorkbenchTile[]>(() => {
   const rawTiles = Array.isArray(scene.value?.tiles) ? (scene.value?.tiles as WorkbenchTile[]) : [];
   if (!Array.isArray(rawTiles)) return [];
@@ -288,6 +319,40 @@ async function openFirstReachableMenu() {
     return;
   }
   await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
+}
+
+async function executeWorkbenchAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: workspaceContextQuery.value,
+    onRefresh: refresh,
+    onOpenMenuFirstReachable: async () => {
+      if (!firstReachableMenuId.value) return false;
+      await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
+      return true;
+    },
+    onFallback: async (key) => {
+      if (key === 'open_workbench') {
+        await goToProjects();
+        return true;
+      }
+      if (key === 'open_menu') {
+        await openFirstReachableMenu();
+        return true;
+      }
+      if (key === 'refresh_page') {
+        refresh();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled && actionKey === 'refresh_page') {
+    refresh();
+  }
 }
 
 async function handleTileClick(tile: EnrichedWorkbenchTile) {

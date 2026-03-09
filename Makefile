@@ -1417,9 +1417,17 @@ verify.frontend.home_suggestion_semantics.guard: guard.prod.forbid
 verify.frontend.home_layout_section_coverage.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_home_layout_section_coverage_guard.py
 
+.PHONY: verify.frontend.home_orchestration_consumption.guard
+verify.frontend.home_orchestration_consumption.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_home_orchestration_consumption_guard.py
+
 .PHONY: verify.workspace_home.sections_schema.guard
 verify.workspace_home.sections_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/workspace_home_sections_schema_guard.py
+
+.PHONY: verify.workspace_home.orchestration_schema.guard
+verify.workspace_home.orchestration_schema.guard: guard.prod.forbid
+	@python3 scripts/verify/workspace_home_orchestration_schema_guard.py
 
 .PHONY: verify.frontend.contract_text_hardcode.guard
 verify.frontend.contract_text_hardcode.guard: guard.prod.forbid
@@ -1445,9 +1453,37 @@ verify.frontend.page_contract.section_tag_coverage.guard: guard.prod.forbid
 verify.frontend.page_contract.section_style_coverage.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_page_contract_section_style_coverage_guard.py
 
+.PHONY: verify.frontend.page_contract.orchestration_consumption.guard
+verify.frontend.page_contract.orchestration_consumption.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py
+
+.PHONY: verify.frontend.page_contract.runtime_universal.guard
+verify.frontend.page_contract.runtime_universal.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_contract_runtime_universal_guard.py
+
 .PHONY: verify.page_contract.sections_schema.guard
 verify.page_contract.sections_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/page_contract_sections_schema_guard.py
+
+.PHONY: verify.page_contract.orchestration_schema.guard
+verify.page_contract.orchestration_schema.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_orchestration_schema_guard.py
+
+.PHONY: verify.page_contract.role_orchestration_variance.guard
+verify.page_contract.role_orchestration_variance.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_role_orchestration_variance_guard.py
+
+.PHONY: verify.page_contract.action_schema_semantics.guard
+verify.page_contract.action_schema_semantics.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_action_schema_semantics_guard.py
+
+.PHONY: verify.page_contract.data_source_semantics.guard
+verify.page_contract.data_source_semantics.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_data_source_semantics_guard.py
+
+.PHONY: verify.orchestration.semantics_registry.guard
+verify.orchestration.semantics_registry.guard: guard.prod.forbid
+	@python3 scripts/verify/orchestration_semantics_registry_guard.py
 
 .PHONY: verify.page_contract.text_key_coverage.guard
 verify.page_contract.text_key_coverage.guard: guard.prod.forbid
@@ -1488,14 +1524,23 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.runtime_navigation_hud.guard \
 	verify.frontend.home_suggestion_semantics.guard \
 	verify.frontend.home_layout_section_coverage.guard \
+	verify.frontend.home_orchestration_consumption.guard \
 	verify.workspace_home.sections_schema.guard \
+	verify.workspace_home.orchestration_schema.guard \
 	verify.frontend.contract_text_hardcode.guard \
 	verify.frontend.page_contract_boundary.guard \
 	verify.frontend.page_contract.sections_coverage.guard \
 	verify.frontend.page_contract.key_consistency.guard \
 	verify.frontend.page_contract.section_tag_coverage.guard \
 	verify.frontend.page_contract.section_style_coverage.guard \
+	verify.frontend.page_contract.orchestration_consumption.guard \
+	verify.frontend.page_contract.runtime_universal.guard \
 	verify.page_contract.sections_schema.guard \
+	verify.page_contract.orchestration_schema.guard \
+	verify.page_contract.role_orchestration_variance.guard \
+	verify.page_contract.action_schema_semantics.guard \
+	verify.page_contract.data_source_semantics.guard \
+	verify.orchestration.semantics_registry.guard \
 	verify.page_contract.text_key_coverage.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
