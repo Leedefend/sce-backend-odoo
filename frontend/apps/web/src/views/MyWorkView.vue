@@ -525,8 +525,8 @@ const generatedAtText = computed(() => {
 });
 const visibilityNotice = computed(() => {
   if (!summaryVisibility.value?.partial_data_hidden) return '';
-  const base = String(summaryVisibility.value?.message || '部分数据未显示');
-  return `${base}，请联系管理员开通对应权限。`;
+  const base = String(summaryVisibility.value?.message || pageText('partial_data_hidden', '部分数据未显示'));
+  return `${base}${pageText('visibility_notice_suffix', '，请联系管理员开通对应权限。')}`;
 });
 const restrictedSourceText = computed(() => {
   const rows = Array.isArray(summaryVisibility.value?.restricted_sources)
@@ -716,7 +716,7 @@ async function applyRecommendedView() {
   pageSize.value = 20;
   page.value = 1;
   activeSection.value = findRecommendedSectionKey();
-  setActionFeedback('已恢复推荐视图', false, 3000);
+  setActionFeedback(pageText('feedback_restore_recommended', '已恢复推荐视图'), false, 3000);
   await load();
 }
 
@@ -824,7 +824,7 @@ function saveFilterPreset() {
       }),
     );
     hasFilterPreset.value = true;
-    actionFeedback.value = '常用筛选已保存';
+    actionFeedback.value = pageText('feedback_save_preset_ok', '常用筛选已保存');
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = pageText('feedback_save_preset_failed', '保存常用筛选失败');
@@ -852,7 +852,7 @@ function applyFilterPreset() {
     if (typeof parsed.sortBy === 'string') sortBy.value = parsed.sortBy;
     if (parsed.sortDir === 'asc' || parsed.sortDir === 'desc') sortDir.value = parsed.sortDir;
     if (typeof parsed.pageSize === 'number' && Number.isFinite(parsed.pageSize) && parsed.pageSize > 0) pageSize.value = parsed.pageSize;
-    actionFeedback.value = '已应用常用筛选';
+    actionFeedback.value = pageText('feedback_apply_preset_ok', '已应用常用筛选');
     actionFeedbackError.value = false;
     page.value = 1;
     void load();
@@ -866,7 +866,7 @@ function clearFilterPreset() {
   try {
     window.localStorage.removeItem(myWorkPresetStorageKey);
     hasFilterPreset.value = false;
-    actionFeedback.value = '已清除常用筛选';
+    actionFeedback.value = pageText('feedback_clear_preset_ok', '已清除常用筛选');
     actionFeedbackError.value = false;
   } catch {
     actionFeedback.value = pageText('feedback_clear_preset_failed', '清除常用筛选失败');
@@ -884,7 +884,7 @@ function resetFilters() {
   page.value = 1;
   const todoSection = sections.value.find((item) => item.key === 'todo');
   activeSection.value = todoSection?.key || sections.value[0]?.key || 'todo';
-  actionFeedback.value = '筛选条件已重置';
+  actionFeedback.value = pageText('feedback_filters_reset', '筛选条件已重置');
   actionFeedbackError.value = false;
   void load();
 }
@@ -899,8 +899,8 @@ function goRiskCockpit() {
 
 function onErrorSuggestedActionExecuted(payload: { action: string; success: boolean }) {
   actionFeedback.value = payload.success
-    ? `已执行建议动作：${payload.action || 'unknown'}`
-    : `建议动作执行失败：${payload.action || 'unknown'}`;
+    ? `${pageText('feedback_suggest_action_ok_prefix', '已执行建议动作：')}${payload.action || 'unknown'}`
+    : `${pageText('feedback_suggest_action_failed_prefix', '建议动作执行失败：')}${payload.action || 'unknown'}`;
   actionFeedbackError.value = !payload.success;
 }
 
@@ -1093,7 +1093,7 @@ function toggleRetryFailedExpanded() {
 function selectRetryFailedItems() {
   const candidateIds = retryRequestParams.value?.retry_ids?.length ? retryRequestParams.value.retry_ids : retryFailedIds.value;
   if (!candidateIds.length) {
-    actionFeedback.value = '当前没有可重试失败项';
+    actionFeedback.value = pageText('feedback_none_retryable', '当前没有可重试失败项');
     actionFeedbackError.value = true;
     return;
   }
@@ -1107,14 +1107,14 @@ function selectAllFailedItems() {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!failedIds.length) {
-    actionFeedback.value = '当前没有失败项可选择';
+    actionFeedback.value = pageText('feedback_none_failed_selectable', '当前没有失败项可选择');
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   failedIds.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `已选中 ${failedIds.length} 条失败项`;
+  actionFeedback.value = `${pageText('feedback_selected_failed_prefix', '已选中 ')}${failedIds.length}${pageText('feedback_selected_failed_suffix', ' 条失败项')}`;
   actionFeedbackError.value = false;
 }
 
@@ -1124,14 +1124,14 @@ function selectRetryableFailedItems() {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!retryableIds.length) {
-    actionFeedback.value = '当前没有可重试失败项';
+    actionFeedback.value = pageText('feedback_none_retryable', '当前没有可重试失败项');
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   retryableIds.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `已选中 ${retryableIds.length} 条可重试失败项`;
+  actionFeedback.value = `${pageText('feedback_selected_failed_prefix', '已选中 ')}${retryableIds.length}${pageText('feedback_selected_retryable_suffix', ' 条可重试失败项')}`;
   actionFeedbackError.value = false;
 }
 
@@ -1141,14 +1141,14 @@ function selectNonRetryableFailedItems() {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!ids.length) {
-    actionFeedback.value = '当前没有不可重试失败项';
+    actionFeedback.value = pageText('feedback_none_non_retryable', '当前没有不可重试失败项');
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   ids.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `已选中 ${ids.length} 条不可重试失败项`;
+  actionFeedback.value = `${pageText('feedback_selected_failed_prefix', '已选中 ')}${ids.length}${pageText('feedback_selected_non_retryable_suffix', ' 条不可重试失败项')}`;
   actionFeedbackError.value = false;
 }
 
@@ -1181,7 +1181,7 @@ function applyReasonFilterFromFailure(reasonCode: string) {
   if (!reasonCode) return;
   reasonFilter.value = reasonCode;
   page.value = 1;
-  actionFeedback.value = `已按失败原因筛选：${reasonCode}`;
+  actionFeedback.value = `${pageText('feedback_filtered_by_reason_prefix', '已按失败原因筛选：')}${reasonCode}`;
   actionFeedbackError.value = false;
   void load();
 }
@@ -1189,7 +1189,7 @@ function applyReasonFilterFromFailure(reasonCode: string) {
 function clearReasonFilterFromFailure() {
   reasonFilter.value = 'ALL';
   page.value = 1;
-  actionFeedback.value = '已清除失败原因筛选';
+  actionFeedback.value = pageText('feedback_cleared_reason_filter', '已清除失败原因筛选');
   actionFeedbackError.value = false;
   void load();
 }
@@ -1239,10 +1239,10 @@ async function copyRetrySummary() {
   if (!summaryText) return;
   try {
     await navigator.clipboard.writeText(summaryText);
-    actionFeedback.value = '失败摘要已复制';
+    actionFeedback.value = pageText('feedback_copy_summary_ok', '失败摘要已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '复制失败，请检查浏览器剪贴板权限';
+    actionFeedback.value = pageText('feedback_copy_failed', '复制失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1252,10 +1252,10 @@ async function copyFailedItemLine(item: { id: number; reason_code: string; messa
   if (!line) return;
   try {
     await navigator.clipboard.writeText(line);
-    actionFeedback.value = `失败项 #${item.id} 已复制`;
+    actionFeedback.value = `${pageText('feedback_copy_item_ok_prefix', '失败项 #')}${item.id}${pageText('feedback_copy_item_ok_suffix', ' 已复制')}`;
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = `复制失败项 #${item.id} 失败`;
+    actionFeedback.value = `${pageText('feedback_copy_item_failed_prefix', '复制失败项 #')}${item.id}${pageText('feedback_copy_item_failed_suffix', ' 失败')}`;
     actionFeedbackError.value = true;
   }
 }
@@ -1265,10 +1265,10 @@ async function copyVisibleRetrySummary() {
   if (!summaryText) return;
   try {
     await navigator.clipboard.writeText(summaryText);
-    actionFeedback.value = '当前视图摘要已复制';
+    actionFeedback.value = pageText('feedback_copy_view_summary_ok', '当前视图摘要已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '复制当前视图摘要失败，请检查浏览器剪贴板权限';
+    actionFeedback.value = pageText('feedback_copy_view_summary_failed', '复制当前视图摘要失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1279,7 +1279,7 @@ function focusFailedInMainList() {
   sourceFilter.value = 'mail.activity';
   reasonFilter.value = retryReasonSummary.value[0]?.reason_code || 'ALL';
   page.value = 1;
-  actionFeedback.value = '已定位到主列表失败待办视图';
+  actionFeedback.value = pageText('feedback_focus_main_failed_view', '已定位到主列表失败待办视图');
   actionFeedbackError.value = false;
   void load();
 }
@@ -1289,10 +1289,10 @@ async function copyRetryRequest() {
   if (!payload) return;
   try {
     await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-    actionFeedback.value = '重试请求已复制';
+    actionFeedback.value = pageText('feedback_copy_retry_request_ok', '重试请求已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '复制重试请求失败，请检查浏览器剪贴板权限';
+    actionFeedback.value = pageText('feedback_copy_retry_request_failed', '复制重试请求失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1313,10 +1313,10 @@ function exportRetryRequestJson() {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(href);
-    actionFeedback.value = '重试请求 JSON 已导出';
+    actionFeedback.value = pageText('feedback_export_retry_json_ok', '重试请求 JSON 已导出');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '导出重试请求 JSON 失败';
+    actionFeedback.value = pageText('feedback_export_retry_json_failed', '导出重试请求 JSON 失败');
     actionFeedbackError.value = true;
   }
 }
@@ -1325,10 +1325,10 @@ async function copyBatchTraceId() {
   if (!lastBatchTraceId.value) return;
   try {
     await navigator.clipboard.writeText(lastBatchTraceId.value);
-    actionFeedback.value = 'trace_id 已复制';
+    actionFeedback.value = pageText('feedback_copy_trace_ok', 'trace_id 已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '复制 trace_id 失败，请检查浏览器剪贴板权限';
+    actionFeedback.value = pageText('feedback_copy_trace_failed', '复制 trace_id 失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1370,10 +1370,10 @@ function exportRetryFailedCsv() {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(href);
-    actionFeedback.value = `失败明细 CSV 已导出（${retryFailedItems.value.length} 条）`;
+    actionFeedback.value = `${pageText('feedback_export_failed_csv_ok_prefix', '失败明细 CSV 已导出（')}${retryFailedItems.value.length}${pageText('feedback_export_failed_csv_ok_suffix', ' 条）')}`;
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '导出失败明细 CSV 失败';
+    actionFeedback.value = pageText('feedback_export_failed_csv_failed', '导出失败明细 CSV 失败');
     actionFeedbackError.value = true;
   }
 }
@@ -1393,13 +1393,15 @@ async function completeItem(item: MyWorkRecordItem) {
       note: 'Completed from my-work UI.',
     });
     const actionHint = resolveSuggestedAction(result.suggested_action, result.reason_code, result.retryable);
-    actionFeedback.value = [result.message || (result.success ? '待办已完成' : '完成待办失败'), actionHint]
+    actionFeedback.value = [result.message || (result.success
+      ? pageText('feedback_todo_done_ok', '待办已完成')
+      : pageText('feedback_todo_done_failed', '完成待办失败')), actionHint]
       .filter(Boolean)
       .join(' | ');
     actionFeedbackError.value = !result.success;
     await load();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '完成待办失败';
+    errorText.value = err instanceof Error ? err.message : pageText('error_complete_todo_failed', '完成待办失败');
     statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
@@ -1408,7 +1410,9 @@ async function completeItem(item: MyWorkRecordItem) {
 
 async function completeSelectedTodos() {
   if (!todoSelectionIds.value.length) return;
-  if (!window.confirm(`确认批量完成 ${todoSelectionIds.value.length} 条待办？`)) return;
+  if (!window.confirm(
+    `${pageText('confirm_batch_complete_prefix', '确认批量完成 ')}${todoSelectionIds.value.length}${pageText('confirm_batch_complete_suffix', ' 条待办？')}`,
+  )) return;
   loading.value = true;
   errorText.value = '';
   statusError.value = null;
@@ -1425,7 +1429,7 @@ async function completeSelectedTodos() {
     applyBatchFeedback(result, '批量完成');
     await load();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '批量完成待办失败';
+    errorText.value = err instanceof Error ? err.message : pageText('error_batch_complete_failed', '批量完成待办失败');
     statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
@@ -1513,7 +1517,7 @@ async function runRetryBatch(
     applyBatchFeedback(result, actionLabel);
     await load();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '重试失败项失败';
+    errorText.value = err instanceof Error ? err.message : pageText('error_retry_failed_items_failed', '重试失败项失败');
     statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
@@ -1668,7 +1672,7 @@ function applyRouteOverrides() {
     changed = true;
   };
 
-  appliedPresetLabel.value = preset ? `预设视图：${preset}` : '';
+  appliedPresetLabel.value = preset ? `${pageText('preset_label_prefix', '预设视图：')}${preset}` : '';
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'my_work' }).catch(() => {});
