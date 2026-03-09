@@ -1421,6 +1421,10 @@ verify.frontend.home_layout_section_coverage.guard: guard.prod.forbid
 verify.workspace_home.sections_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/workspace_home_sections_schema_guard.py
 
+.PHONY: verify.workspace_home.orchestration_schema.guard
+verify.workspace_home.orchestration_schema.guard: guard.prod.forbid
+	@python3 scripts/verify/workspace_home_orchestration_schema_guard.py
+
 .PHONY: verify.frontend.contract_text_hardcode.guard
 verify.frontend.contract_text_hardcode.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_contract_text_hardcode_guard.py
@@ -1489,6 +1493,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.home_suggestion_semantics.guard \
 	verify.frontend.home_layout_section_coverage.guard \
 	verify.workspace_home.sections_schema.guard \
+	verify.workspace_home.orchestration_schema.guard \
 	verify.frontend.contract_text_hardcode.guard \
 	verify.frontend.page_contract_boundary.guard \
 	verify.frontend.page_contract.sections_coverage.guard \
