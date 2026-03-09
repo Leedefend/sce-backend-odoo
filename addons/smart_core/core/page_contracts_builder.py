@@ -256,7 +256,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
     page_type = _normalize_page_type(page_key)
     zone_buckets: Dict[str, Dict[str, Any]] = {}
     data_sources: Dict[str, Dict[str, Any]] = {
-        "ds_sections": {"source_type": "static", "provider": "page_contract.sections"},
+        "ds_sections": {"source_type": "static", "provider": "page_contract.sections", "section_keys": ["_all"]},
     }
     focus_sections = {key: idx + 1 for idx, key in enumerate(_role_focus_sections(role_code, page_key))}
     for idx, section in enumerate(sections):
@@ -293,6 +293,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             "page_key": page_key,
             "section_key": section_key,
             "section_tag": tag,
+            "section_keys": [section_key],
         }
         zone["blocks"].append(
             {
