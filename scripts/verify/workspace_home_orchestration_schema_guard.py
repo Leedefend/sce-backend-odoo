@@ -27,6 +27,11 @@ REQUIRED_PROGRESS = {"overdue", "blocked", "pending", "running", "completed"}
 ALLOWED_DATA_SOURCE_TYPES = {"static", "scene_context", "api.data", "computed", "capability_registry", "role_profile", "mixed"}
 ALLOWED_ACTION_INTENTS = {"ui.contract", "api.data", "execute_button", "file.download"}
 ALLOWED_ACTION_TARGET_KINDS = {"scene.key", "page.refresh", "menu.first_reachable", "route.path"}
+ALLOWED_PAGE_TYPES = {"workspace", "dashboard", "list", "detail", "approval", "monitor", "report", "entry_hub"}
+ALLOWED_LAYOUT_MODES = {"dashboard", "two_column", "single_flow", "focus_task", "monitoring", "entry_grid"}
+ALLOWED_PRIORITY_MODELS = {"role_first", "risk_first", "task_first", "metric_first"}
+ALLOWED_ZONE_TYPES = {"hero", "primary", "secondary", "supporting", "sidebar", "footer"}
+ALLOWED_ZONE_DISPLAY_MODES = {"stack", "grid", "carousel", "tabs", "accordion", "flow"}
 BLOCK_PAYLOAD_KEYS = {
     "hero_metric": {"main_value_field", "label_field", "trend_field", "status_field", "click_action"},
     "metric_row": {"items", "show_trend"},
@@ -125,8 +130,18 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
     meta = orchestration_v1.get("meta")
     if not isinstance(page, dict):
         errors.append(f"{role_code}: page_orchestration_v1.page must be object")
-    if _as_set_list(page.get("audience") if isinstance(page, dict) else []) == set():
-        errors.append(f"{role_code}: page_orchestration_v1.page.audience must be non-empty")
+    if isinstance(page, dict):
+        if _as_set_list(page.get("audience")) == set():
+            errors.append(f"{role_code}: page_orchestration_v1.page.audience must be non-empty")
+        page_type = str(page.get("page_type") or "").strip()
+        layout_mode = str(page.get("layout_mode") or "").strip()
+        priority_model = str(page.get("priority_model") or "").strip()
+        if page_type not in ALLOWED_PAGE_TYPES:
+            errors.append(f"{role_code}: page.page_type invalid: {page_type}")
+        if layout_mode not in ALLOWED_LAYOUT_MODES:
+            errors.append(f"{role_code}: page.layout_mode invalid: {layout_mode}")
+        if priority_model not in ALLOWED_PRIORITY_MODELS:
+            errors.append(f"{role_code}: page.priority_model invalid: {priority_model}")
     if not isinstance(zones, list) or not zones:
         errors.append(f"{role_code}: page_orchestration_v1.zones must be non-empty list")
         return
@@ -177,8 +192,11 @@ def _validate_contract(contract: dict[str, Any], role_code: str, errors: list[st
             errors.append(f"{zprefix} must be object")
             continue
         zone_type = str(zone.get("zone_type") or "").strip()
+        display_mode = str(zone.get("display_mode") or "").strip()
         if zone_type not in {"hero", "primary", "secondary", "supporting", "sidebar", "footer"}:
             errors.append(f"{zprefix}.zone_type invalid: {zone_type}")
+        if display_mode not in ALLOWED_ZONE_DISPLAY_MODES:
+            errors.append(f"{zprefix}.display_mode invalid: {display_mode}")
         zone_blocks = zone.get("blocks")
         if not isinstance(zone_blocks, list) or not zone_blocks:
             errors.append(f"{zprefix}.blocks must be non-empty list")

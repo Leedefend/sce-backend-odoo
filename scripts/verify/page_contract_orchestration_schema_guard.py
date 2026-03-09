@@ -35,6 +35,11 @@ ALLOWED_BLOCK_TYPES = {
 ALLOWED_TONES = {"success", "warning", "danger", "info", "neutral"}
 ALLOWED_PROGRESS = {"overdue", "blocked", "pending", "running", "completed"}
 ALLOWED_DATA_SOURCE_TYPES = {"static", "scene_context", "api.data", "computed", "capability_registry", "role_profile", "mixed"}
+ALLOWED_PAGE_TYPES = {"workspace", "dashboard", "list", "detail", "approval", "monitor", "report", "entry_hub"}
+ALLOWED_LAYOUT_MODES = {"dashboard", "two_column", "single_flow", "focus_task", "monitoring", "entry_grid"}
+ALLOWED_PRIORITY_MODELS = {"role_first", "risk_first", "task_first", "metric_first"}
+ALLOWED_ZONE_TYPES = {"hero", "primary", "secondary", "supporting", "sidebar", "footer"}
+ALLOWED_ZONE_DISPLAY_MODES = {"stack", "grid", "carousel", "tabs", "accordion", "flow"}
 BLOCK_PAYLOAD_KEYS = {
     "hero_metric": {"main_value_field", "label_field", "trend_field", "status_field", "click_action"},
     "metric_row": {"items", "show_trend"},
@@ -84,8 +89,18 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
     page = orch.get("page")
     if not isinstance(page, dict):
         errors.append(f"pages.{page_key}.page_orchestration_v1.page must be object")
-    elif not isinstance(page.get("audience"), list) or not page.get("audience"):
-        errors.append(f"pages.{page_key}.page_orchestration_v1.page.audience must be non-empty list")
+    else:
+        if not isinstance(page.get("audience"), list) or not page.get("audience"):
+            errors.append(f"pages.{page_key}.page_orchestration_v1.page.audience must be non-empty list")
+        page_type = str(page.get("page_type") or "").strip()
+        layout_mode = str(page.get("layout_mode") or "").strip()
+        priority_model = str(page.get("priority_model") or "").strip()
+        if page_type not in ALLOWED_PAGE_TYPES:
+            errors.append(f"pages.{page_key}.page.page_type invalid: {page_type}")
+        if layout_mode not in ALLOWED_LAYOUT_MODES:
+            errors.append(f"pages.{page_key}.page.layout_mode invalid: {layout_mode}")
+        if priority_model not in ALLOWED_PRIORITY_MODELS:
+            errors.append(f"pages.{page_key}.page.priority_model invalid: {priority_model}")
 
     state_schema = orch.get("state_schema")
     if not isinstance(state_schema, dict):
@@ -166,6 +181,12 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
         if not isinstance(zone, dict):
             errors.append(f"{prefix} must be object")
             continue
+        zone_type = str(zone.get("zone_type") or "").strip()
+        display_mode = str(zone.get("display_mode") or "").strip()
+        if zone_type not in ALLOWED_ZONE_TYPES:
+            errors.append(f"{prefix}.zone_type invalid: {zone_type}")
+        if display_mode not in ALLOWED_ZONE_DISPLAY_MODES:
+            errors.append(f"{prefix}.display_mode invalid: {display_mode}")
         if not isinstance(zone.get("blocks"), list):
             errors.append(f"{prefix}.blocks must be list")
             continue
