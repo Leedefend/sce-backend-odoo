@@ -3,11 +3,11 @@
     <header class="header">
       <div>
         <h2>{{ pageText('title', 'Usage Analytics') }}</h2>
-        <p>Scene / Capability 使用统计（按公司累计）。</p>
+        <p>{{ pageText('subtitle', 'Scene / Capability 使用统计（按公司累计）。') }}</p>
       </div>
       <div class="actions">
         <label>
-          Top
+          {{ pageText('label_top', 'Top') }}
           <select v-model="topN" :disabled="loading">
             <option :value="5">5</option>
             <option :value="10">10</option>
@@ -15,67 +15,67 @@
           </select>
         </label>
         <label>
-          趋势范围
+          {{ pageText('label_daily_range', '趋势范围') }}
           <select v-model="dailyRange" :disabled="loading">
-            <option :value="3">最近 3 天</option>
-            <option :value="7">最近 7 天</option>
+            <option :value="3">{{ pageText('option_recent_3_days', '最近 3 天') }}</option>
+            <option :value="7">{{ pageText('option_recent_7_days', '最近 7 天') }}</option>
           </select>
         </label>
         <label>
-          隐藏原因
+          {{ pageText('label_hidden_reason', '隐藏原因') }}
           <select v-model="hiddenReasonFilter" :disabled="loading">
-            <option value="ALL">全部</option>
+            <option value="ALL">{{ pageText('option_all', '全部') }}</option>
             <option v-for="item in reasonCounts" :key="`reason-filter-${item.reason_code}`" :value="item.reason_code">
               {{ item.reason_code }} ({{ item.count }})
             </option>
           </select>
         </label>
         <label>
-          角色切片
+          {{ pageText('label_role_slice', '角色切片') }}
           <select v-model="roleSlice" :disabled="loading">
-            <option value="">全部角色</option>
+            <option value="">{{ pageText('option_all_roles', '全部角色') }}</option>
             <option v-for="code in roleCodeOptions" :key="`role-${code}`" :value="code">
               {{ code }}
             </option>
           </select>
         </label>
         <label>
-          用户切片
+          {{ pageText('label_user_slice', '用户切片') }}
           <input
             v-model.number="userSlice"
             type="number"
             min="0"
             step="1"
-            placeholder="0=全部"
+            :placeholder="pageText('placeholder_user_slice', '0=全部')"
             :disabled="loading"
           />
         </label>
         <label>
-          Scene 前缀
+          {{ pageText('label_scene_prefix', 'Scene 前缀') }}
           <input
             v-model.trim="scenePrefix"
             type="text"
-            placeholder="如 projects."
+            :placeholder="pageText('placeholder_scene_prefix', '如 projects.')"
             :disabled="loading"
           />
         </label>
         <label>
-          Capability 前缀
+          {{ pageText('label_capability_prefix', 'Capability 前缀') }}
           <input
             v-model.trim="capabilityPrefix"
             type="text"
-            placeholder="如 contract."
+            :placeholder="pageText('placeholder_capability_prefix', '如 contract.')"
             :disabled="loading"
           />
         </label>
         <label class="export-scope">
           <input v-model="exportFilteredOnly" type="checkbox" />
-          仅导出当前筛选
+          {{ pageText('label_export_filtered_only', '仅导出当前筛选') }}
         </label>
-        <button class="secondary" :disabled="loading" @click="copyExportParams">复制导出参数</button>
-        <button class="secondary" :disabled="loading" @click="resetFilters">重置筛选</button>
-        <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">导出 CSV</button>
-        <button class="secondary" :disabled="loading" @click="load">刷新</button>
+        <button class="secondary" :disabled="loading" @click="copyExportParams">{{ pageText('action_copy_export_params', '复制导出参数') }}</button>
+        <button class="secondary" :disabled="loading" @click="resetFilters">{{ pageText('action_reset_filters', '重置筛选') }}</button>
+        <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">{{ pageText('action_export_csv', '导出 CSV') }}</button>
+        <button class="secondary" :disabled="loading" @click="load">{{ pageText('action_refresh', '刷新') }}</button>
       </div>
     </header>
 
@@ -98,55 +98,55 @@
 
     <template v-else>
       <section class="slice-bar">
-        <span>窗口：{{ report?.filters?.day_from || '-' }} ~ {{ report?.filters?.day_to || '-' }}</span>
-        <span>角色：{{ report?.filters?.role_code || '全部' }}</span>
-        <span>用户：{{ report?.filters?.user_id || 0 }}</span>
-        <span>Scene 前缀：{{ report?.filters?.scene_key_prefix || '-' }}</span>
-        <span>Capability 前缀：{{ report?.filters?.capability_key_prefix || '-' }}</span>
+        <span>{{ pageText('slice_window_prefix', '窗口：') }}{{ report?.filters?.day_from || '-' }} ~ {{ report?.filters?.day_to || '-' }}</span>
+        <span>{{ pageText('slice_role_prefix', '角色：') }}{{ report?.filters?.role_code || pageText('option_all', '全部') }}</span>
+        <span>{{ pageText('slice_user_prefix', '用户：') }}{{ report?.filters?.user_id || 0 }}</span>
+        <span>{{ pageText('slice_scene_prefix_label', 'Scene 前缀：') }}{{ report?.filters?.scene_key_prefix || '-' }}</span>
+        <span>{{ pageText('slice_capability_prefix_label', 'Capability 前缀：') }}{{ report?.filters?.capability_key_prefix || '-' }}</span>
       </section>
 
       <section class="summary-grid">
         <article class="summary-card">
-          <p class="label">Scene Open Total</p>
+          <p class="label">{{ pageText('summary_scene_open_total', 'Scene Open Total') }}</p>
           <p class="count">{{ report?.totals.scene_open_total ?? 0 }}</p>
         </article>
         <article class="summary-card">
-          <p class="label">Capability Open Total</p>
+          <p class="label">{{ pageText('summary_capability_open_total', 'Capability Open Total') }}</p>
           <p class="count">{{ report?.totals.capability_open_total ?? 0 }}</p>
         </article>
         <article class="summary-card">
-          <p class="label">Generated At</p>
+          <p class="label">{{ pageText('summary_generated_at', 'Generated At') }}</p>
           <p class="count small">{{ report?.generated_at || '-' }}</p>
         </article>
       </section>
 
       <section class="summary-grid">
         <article class="summary-card">
-          <p class="label">Capability Total</p>
+          <p class="label">{{ pageText('summary_capability_total', 'Capability Total') }}</p>
           <p class="count">{{ visibility?.summary.total ?? 0 }}</p>
         </article>
         <article class="summary-card">
-          <p class="label">Visible / Hidden</p>
+          <p class="label">{{ pageText('summary_visible_hidden', 'Visible / Hidden') }}</p>
           <p class="count small">{{ visibility?.summary.visible ?? 0 }} / {{ visibility?.summary.hidden ?? 0 }}</p>
         </article>
         <article class="summary-card">
-          <p class="label">Ready / Preview / Locked</p>
+          <p class="label">{{ pageText('summary_ready_preview_locked', 'Ready / Preview / Locked') }}</p>
           <p class="count small">
             {{ visibility?.summary.ready ?? 0 }} / {{ visibility?.summary.preview ?? 0 }} / {{ visibility?.summary.locked ?? 0 }}
           </p>
         </article>
         <article class="summary-card">
-          <p class="label">Role Codes</p>
+          <p class="label">{{ pageText('summary_role_codes', 'Role Codes') }}</p>
           <p class="count small">{{ (visibility?.role_codes || []).join(', ') || '-' }}</p>
         </article>
       </section>
 
       <section class="tables">
         <article class="table-card">
-          <h3>Top Scenes</h3>
+          <h3>{{ pageText('table_top_scenes', 'Top Scenes') }}</h3>
           <table>
             <thead>
-              <tr><th>Scene Key</th><th>Count</th></tr>
+              <tr><th>{{ pageText('table_scene_key', 'Scene Key') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!sceneTop.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -159,10 +159,10 @@
         </article>
 
         <article class="table-card">
-          <h3>Top Capabilities</h3>
+          <h3>{{ pageText('table_top_capabilities', 'Top Capabilities') }}</h3>
           <table>
             <thead>
-              <tr><th>Capability Key</th><th>Count</th></tr>
+              <tr><th>{{ pageText('table_capability_key', 'Capability Key') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!capabilityTop.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -177,10 +177,10 @@
 
       <section class="tables">
         <article class="table-card">
-          <h3>Scene Open (Last 7 Days)</h3>
+          <h3>{{ pageText('table_scene_open_last_7_days', 'Scene Open (Last 7 Days)') }}</h3>
           <table>
             <thead>
-              <tr><th>Date</th><th>Count</th></tr>
+              <tr><th>{{ pageText('table_date', 'Date') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!sceneDaily.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -193,10 +193,10 @@
         </article>
 
         <article class="table-card">
-          <h3>Capability Open (Last 7 Days)</h3>
+          <h3>{{ pageText('table_capability_open_last_7_days', 'Capability Open (Last 7 Days)') }}</h3>
           <table>
             <thead>
-              <tr><th>Date</th><th>Count</th></tr>
+              <tr><th>{{ pageText('table_date', 'Date') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!capabilityDaily.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -211,10 +211,10 @@
 
       <section class="tables">
         <article class="table-card">
-          <h3>Visibility Reason Counts</h3>
+          <h3>{{ pageText('table_visibility_reason_counts', 'Visibility Reason Counts') }}</h3>
           <table>
             <thead>
-              <tr><th>Reason Code</th><th>Count</th></tr>
+              <tr><th>{{ pageText('table_reason_code', 'Reason Code') }}</th><th>{{ pageText('table_count', 'Count') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!reasonCounts.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -227,10 +227,10 @@
         </article>
 
         <article class="table-card">
-          <h3>Hidden Capability Samples</h3>
+          <h3>{{ pageText('table_hidden_capability_samples', 'Hidden Capability Samples') }}</h3>
           <table>
             <thead>
-              <tr><th>Key</th><th>Reason</th></tr>
+              <tr><th>{{ pageText('table_key', 'Key') }}</th><th>{{ pageText('table_reason', 'Reason') }}</th></tr>
             </thead>
             <tbody>
               <tr v-if="!filteredHiddenSamples.length"><td colspan="2" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -245,10 +245,15 @@
 
       <section class="tables">
         <article class="table-card">
-          <h3>Role Top</h3>
+          <h3>{{ pageText('table_role_top', 'Role Top') }}</h3>
           <table>
             <thead>
-              <tr><th>Role Code</th><th>Scene</th><th>Capability</th><th>Total</th></tr>
+              <tr>
+                <th>{{ pageText('table_role_code', 'Role Code') }}</th>
+                <th>{{ pageText('table_scene', 'Scene') }}</th>
+                <th>{{ pageText('table_capability', 'Capability') }}</th>
+                <th>{{ pageText('table_total', 'Total') }}</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-if="!roleTop.length"><td colspan="4" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -263,10 +268,15 @@
         </article>
 
         <article class="table-card">
-          <h3>User Top</h3>
+          <h3>{{ pageText('table_user_top', 'User Top') }}</h3>
           <table>
             <thead>
-              <tr><th>User ID</th><th>Scene</th><th>Capability</th><th>Total</th></tr>
+              <tr>
+                <th>{{ pageText('table_user_id', 'User ID') }}</th>
+                <th>{{ pageText('table_scene', 'Scene') }}</th>
+                <th>{{ pageText('table_capability', 'Capability') }}</th>
+                <th>{{ pageText('table_total', 'Total') }}</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-if="!userTop.length"><td colspan="4" class="empty">{{ pageText('empty_text', '暂无数据') }}</td></tr>
@@ -415,7 +425,10 @@ async function load() {
     report.value = usage;
     visibility.value = vis;
   } catch (err) {
-    errorText.value = resolveContextAwareErrorText(err, err instanceof Error ? err.message : 'Failed to load usage report');
+    errorText.value = resolveContextAwareErrorText(
+      err,
+      err instanceof Error ? err.message : pageText('error_fallback', 'Failed to load usage report'),
+    );
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   } finally {
