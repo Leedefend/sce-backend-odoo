@@ -1,7 +1,7 @@
 <template>
   <section class="capability-home">
     <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
-    <header v-if="isHomeSectionEnabled('hero') && isHomeSectionTag('hero', 'header')" class="hero" :style="homeSectionStyle('hero')">
+    <header v-if="isHomeSectionEnabled('hero') && isHomeSectionTag('hero', 'header')" class="hero" :class="homeSectionClass('hero')" :style="homeSectionStyle('hero')">
       <div class="hero-main">
         <h2>{{ heroTitle }}</h2>
         <p class="lead">{{ heroLead }}</p>
@@ -50,7 +50,7 @@
       </div>
     </header>
 
-    <section v-if="isHomeSectionEnabled('metrics') && isHomeSectionTag('metrics', 'section')" class="value-grid" :style="homeSectionStyle('metrics')" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
+    <section v-if="isHomeSectionEnabled('metrics') && isHomeSectionTag('metrics', 'section')" class="value-grid" :class="homeSectionClass('metrics')" :style="homeSectionStyle('metrics')" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
       <article v-for="metric in coreMetrics" :key="metric.key" class="value-card" :class="[`tone-${metric.tone || 'neutral'}`, `progress-${metric.progress || 'running'}`]">
         <p class="value-label">{{ metric.label }}</p>
         <p class="value-number">{{ metric.value }}</p>
@@ -62,7 +62,7 @@
       </article>
     </section>
 
-    <section v-if="isHomeSectionEnabled('today_actions') && isHomeSectionTag('today_actions', 'section')" class="today-actions" :style="homeSectionStyle('today_actions')" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
+    <section v-if="isHomeSectionEnabled('today_actions') && isHomeSectionTag('today_actions', 'section')" class="today-actions" :class="homeSectionClass('today_actions')" :style="homeSectionStyle('today_actions')" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
       <header class="today-actions-header">
         <h3>{{ homeLayoutText('today_actions.title', '今日待办') }}</h3>
         <p>{{ homeLayoutText('today_actions.subtitle', '点击可直接进入处理界面。') }}</p>
@@ -84,7 +84,7 @@
       </div>
     </section>
 
-    <section v-if="isHomeSectionEnabled('risk') && isHomeSectionTag('risk', 'section')" class="risk-section" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
+    <section v-if="isHomeSectionEnabled('risk') && isHomeSectionTag('risk', 'section')" class="risk-section" :class="homeSectionClass('risk')" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
       <header class="risk-header">
         <h3>{{ homeLayoutText('risk.title', '关键风险') }}</h3>
         <p>{{ homeLayoutText('risk.subtitle', '10 秒识别整体风险态势。') }}</p>
@@ -137,7 +137,7 @@
       </div>
     </section>
 
-    <details v-if="isHomeSectionEnabled('ops') && isHomeSectionTag('ops', 'details')" class="secondary-panel" :style="homeSectionStyle('ops')" :open="isHomeSectionOpenDefault('ops')">
+    <details v-if="isHomeSectionEnabled('ops') && isHomeSectionTag('ops', 'details')" class="secondary-panel" :class="homeSectionClass('ops')" :style="homeSectionStyle('ops')" :open="isHomeSectionOpenDefault('ops')">
       <summary>{{ homeLayoutText('ops.title', '项目经营概览') }}</summary>
       <section class="ops-section" :aria-label="homeLayoutText('ops.aria_label', '项目经营概览区')">
         <div class="ops-grid">
@@ -173,7 +173,7 @@
       </section>
     </details>
 
-    <details v-if="isHomeSectionEnabled('advice') && isHomeSectionTag('advice', 'details')" class="secondary-panel" :style="homeSectionStyle('advice')" :open="isHomeSectionOpenDefault('advice')">
+    <details v-if="isHomeSectionEnabled('advice') && isHomeSectionTag('advice', 'details')" class="secondary-panel" :class="homeSectionClass('advice')" :style="homeSectionStyle('advice')" :open="isHomeSectionOpenDefault('advice')">
       <summary>{{ homeLayoutText('advice.title', '系统建议关注事项') }}</summary>
       <section class="advice-section" :aria-label="homeLayoutText('advice.aria_label', '系统建议关注事项')">
         <div class="advice-list">
@@ -186,7 +186,7 @@
       </section>
     </details>
 
-    <section v-if="isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length" class="group-overview" :style="homeSectionStyle('group_overview')" :aria-label="homeLayoutText('group_overview.aria_label', '辅助入口区')">
+    <section v-if="isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length" class="group-overview" :class="homeSectionClass('group_overview')" :style="homeSectionStyle('group_overview')" :aria-label="homeLayoutText('group_overview.aria_label', '辅助入口区')">
       <header class="group-overview-header">
         <h3>{{ homeLayoutText('group_overview.title', '辅助入口') }}</h3>
         <p>{{ homeLayoutText('group_overview.subtitle', '按业务域查看功能分组与可用状态。') }}</p>
@@ -202,7 +202,7 @@
       </div>
     </section>
 
-    <section v-if="isHomeSectionEnabled('filters') && isHomeSectionTag('filters', 'section')" class="filters" :style="homeSectionStyle('filters')">
+    <section v-if="isHomeSectionEnabled('filters') && isHomeSectionTag('filters', 'section')" class="filters" :class="homeSectionClass('filters')" :style="homeSectionStyle('filters')">
       <div v-if="enterError" class="status-panel" role="status" aria-live="polite">
         <p class="status-title">{{ pageText('entry_error_title_prefix', '进入失败：') }}{{ enterError.message }}</p>
         <p class="status-detail">{{ enterError.hint }}</p>
@@ -334,7 +334,7 @@
       </template>
     </div>
 
-    <div v-else-if="isHomeSectionEnabled('scene_groups') && isHomeSectionTag('scene_groups', 'div')" class="scene-groups" :style="homeSectionStyle('scene_groups')">
+    <div v-else-if="isHomeSectionEnabled('scene_groups') && isHomeSectionTag('scene_groups', 'div')" class="scene-groups" :class="homeSectionClass('scene_groups')" :style="homeSectionStyle('scene_groups')">
       <section v-for="group in groupedEntries" :key="`scene-${group.sceneKey}`" class="scene-group">
         <header class="scene-group-header">
           <button class="scene-toggle" @click="toggleSceneGroup(group.sceneKey)">
@@ -584,6 +584,24 @@ const orchestrationSectionOrderMap = computed(() => {
   });
   return map;
 });
+const orchestrationSectionSemanticMap = computed(() => {
+  const map = new Map<string, { zone: string; focus: boolean; tone: SemanticTone; progress: SemanticProgress }>();
+  orchestrationBlocks.value.forEach((block) => {
+    const visible = typeof block.visible === 'boolean' ? block.visible : true;
+    if (!visible) return;
+    const sourcePath = asText(block.source_path);
+    if (!sourcePath) return;
+    const sectionKey = sourcePath.split('.')[0] || '';
+    if (!sectionKey || map.has(sectionKey)) return;
+    map.set(sectionKey, {
+      zone: asText(block.zone) || 'support',
+      focus: block.focus === true,
+      tone: normalizeTone(block.tone, 'neutral'),
+      progress: normalizeProgress(block.progress, 'running'),
+    });
+  });
+  return map;
+});
 const homeSectionOrderMap = computed(() => {
   const source = Array.isArray(workspaceLayout.value.sections) ? workspaceLayout.value.sections : [];
   const map = new Map<string, number>();
@@ -732,6 +750,17 @@ function homeSectionStyle(key: string) {
   const order = homeSectionOrderMap.value.get(key);
   if (!order) return {};
   return { order: String(order) };
+}
+
+function homeSectionClass(key: string) {
+  const semantic = orchestrationSectionSemanticMap.value.get(key);
+  if (!semantic) return [];
+  return [
+    `zone-${semantic.zone || 'support'}`,
+    `tone-${semantic.tone}`,
+    `progress-${semantic.progress}`,
+    semantic.focus ? 'is-focus' : 'is-secondary',
+  ];
 }
 
 function asText(value: unknown) {
@@ -2858,5 +2887,25 @@ function highlightParts(raw: string) {
 
 .state-locked .state {
   color: #b91c1c;
+}
+
+.is-focus {
+  box-shadow: 0 0 0 2px rgba(42, 146, 255, 0.28);
+}
+
+.is-secondary {
+  opacity: 0.98;
+}
+
+.zone-primary {
+  border-left: 3px solid #2a92ff;
+}
+
+.zone-analysis {
+  border-left: 3px solid #6b7b8c;
+}
+
+.zone-support {
+  border-left: 3px solid #93a1b0;
 }
 </style>
