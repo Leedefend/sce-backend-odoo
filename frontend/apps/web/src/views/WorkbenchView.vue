@@ -96,6 +96,12 @@
           <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">{{ pageText('action_copy', '复制') }}</button>
         </span>
       </div>
+      <div v-if="showHud" class="detail">
+        <span class="label">{{ pageText('hud_label_data_source', '数据源协议') }}</span>
+        <span class="value">
+          {{ hasStatusPanelDataSource ? pageText('hud_value_ready', '就绪') : pageText('hud_value_missing', '缺失') }}
+        </span>
+      </div>
     </div>
   </section>
 </template>
@@ -183,6 +189,7 @@ const pageText = pageContract.text;
 const pageActionText = pageContract.actionText;
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
+const pageHasDataSource = pageContract.hasDataSource;
 const pageGlobalActions = pageContract.globalActions;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
@@ -213,6 +220,7 @@ const scene = computed<Scene | null>(() => {
   );
 });
 const showTiles = computed(() => reason.value === ErrorCodes.CAPABILITY_MISSING && tiles.value.length > 0);
+const hasStatusPanelDataSource = computed(() => pageHasDataSource('ds_section_status_panel'));
 const headerActions = computed(() => {
   if (pageGlobalActions.value.length) {
     return pageGlobalActions.value;
