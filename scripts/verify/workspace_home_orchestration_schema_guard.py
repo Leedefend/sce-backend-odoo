@@ -10,41 +10,47 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 HOME_BUILDER = ROOT / "addons/smart_core/core/workspace_home_contract_builder.py"
+SEMANTICS = ROOT / "addons/smart_core/core/orchestration_semantics.py"
 
-REQUIRED_BLOCK_TYPES = {
-    "hero_metric",
-    "metric_row",
-    "todo_list",
-    "alert_panel",
-    "progress_summary",
-    "entry_grid",
-    "accordion_group",
-    "record_summary",
-    "activity_feed",
-}
-REQUIRED_TONES = {"success", "warning", "danger", "info", "neutral"}
-REQUIRED_PROGRESS = {"overdue", "blocked", "pending", "running", "completed"}
-ALLOWED_DATA_SOURCE_TYPES = {"static", "scene_context", "api.data", "computed", "capability_registry", "role_profile", "mixed"}
-ALLOWED_ACTION_INTENTS = {"ui.contract", "api.data", "execute_button", "file.download"}
-ALLOWED_ACTION_TARGET_KINDS = {"scene.key", "page.refresh", "menu.first_reachable", "route.path"}
-ALLOWED_PAGE_TYPES = {"workspace", "dashboard", "list", "detail", "approval", "monitor", "report", "entry_hub"}
-ALLOWED_LAYOUT_MODES = {"dashboard", "two_column", "single_flow", "focus_task", "monitoring", "entry_grid"}
-ALLOWED_PRIORITY_MODELS = {"role_first", "risk_first", "task_first", "metric_first"}
-ALLOWED_ZONE_TYPES = {"hero", "primary", "secondary", "supporting", "sidebar", "footer"}
-ALLOWED_ZONE_DISPLAY_MODES = {"stack", "grid", "carousel", "tabs", "accordion", "flow"}
-BLOCK_PAYLOAD_KEYS = {
-    "hero_metric": {"main_value_field", "label_field", "trend_field", "status_field", "click_action"},
-    "metric_row": {"items", "show_trend"},
-    "todo_list": {"item_layout", "fields", "max_items", "sort_by"},
-    "alert_panel": {"alert_level_field", "title_field", "desc_field", "group_by", "max_items", "show_counts"},
-    "progress_summary": {"bars", "show_percentage", "show_target"},
-    "entry_grid": {"entry_source", "group_key", "layout", "show_icon", "show_hint", "entry_action_intent"},
-    "accordion_group": {"mode"},
-    "record_summary": {"tag", "enabled", "open", "style_variant"},
-    "activity_feed": {"stream"},
-}
-COMMON_PAYLOAD_KEYS = {"tag", "enabled", "open"}
-FORBIDDEN_LAYOUT_KEYS = {"left", "top", "width", "height", "x", "y", "color", "background", "font_size"}
+def _load_semantics(path: Path) -> dict[str, Any]:
+    spec = spec_from_file_location("orchestration_semantics_guard_workspace_home", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load module spec: {path}")
+    mod = module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return {
+        "BLOCK_TYPES": set(getattr(mod, "BLOCK_TYPES", ()) or ()),
+        "STATE_TONES": set(getattr(mod, "STATE_TONES", ()) or ()),
+        "PROGRESS_STATES": set(getattr(mod, "PROGRESS_STATES", ()) or ()),
+        "PAGE_TYPES": set(getattr(mod, "PAGE_TYPES", ()) or ()),
+        "LAYOUT_MODES": set(getattr(mod, "LAYOUT_MODES", ()) or ()),
+        "PRIORITY_MODELS": set(getattr(mod, "PRIORITY_MODELS", ()) or ()),
+        "ZONE_TYPES": set(getattr(mod, "ZONE_TYPES", ()) or ()),
+        "ZONE_DISPLAY_MODES": set(getattr(mod, "ZONE_DISPLAY_MODES", ()) or ()),
+        "DATA_SOURCE_TYPES": set(getattr(mod, "DATA_SOURCE_TYPES", ()) or ()),
+        "ACTION_INTENTS": set(getattr(mod, "ACTION_INTENTS", ()) or ()),
+        "ACTION_TARGET_KINDS": set(getattr(mod, "ACTION_TARGET_KINDS", ()) or ()),
+        "BLOCK_PAYLOAD_KEYS": dict(getattr(mod, "BLOCK_PAYLOAD_KEYS", {}) or {}),
+        "COMMON_PAYLOAD_KEYS": set(getattr(mod, "COMMON_PAYLOAD_KEYS", set()) or set()),
+        "FORBIDDEN_LAYOUT_KEYS": set(getattr(mod, "FORBIDDEN_LAYOUT_KEYS", set()) or set()),
+    }
+
+
+_SEM = _load_semantics(SEMANTICS)
+REQUIRED_BLOCK_TYPES = _SEM["BLOCK_TYPES"]
+REQUIRED_TONES = _SEM["STATE_TONES"]
+REQUIRED_PROGRESS = _SEM["PROGRESS_STATES"]
+ALLOWED_DATA_SOURCE_TYPES = _SEM["DATA_SOURCE_TYPES"]
+ALLOWED_ACTION_INTENTS = _SEM["ACTION_INTENTS"]
+ALLOWED_ACTION_TARGET_KINDS = _SEM["ACTION_TARGET_KINDS"]
+ALLOWED_PAGE_TYPES = _SEM["PAGE_TYPES"]
+ALLOWED_LAYOUT_MODES = _SEM["LAYOUT_MODES"]
+ALLOWED_PRIORITY_MODELS = _SEM["PRIORITY_MODELS"]
+ALLOWED_ZONE_TYPES = _SEM["ZONE_TYPES"]
+ALLOWED_ZONE_DISPLAY_MODES = _SEM["ZONE_DISPLAY_MODES"]
+BLOCK_PAYLOAD_KEYS = _SEM["BLOCK_PAYLOAD_KEYS"]
+COMMON_PAYLOAD_KEYS = _SEM["COMMON_PAYLOAD_KEYS"]
+FORBIDDEN_LAYOUT_KEYS = _SEM["FORBIDDEN_LAYOUT_KEYS"]
 
 
 def _scan_forbidden_layout_keys(value: Any, prefix: str, errors: list[str]) -> None:
