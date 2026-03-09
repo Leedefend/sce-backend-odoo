@@ -2,8 +2,11 @@
   <section class="page">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
     <section v-if="appliedPresetLabel" class="route-preset">
-      <p>已应用推荐筛选：{{ appliedPresetLabel }}<span v-if="routeContextSource">（来源：{{ routeContextSource }}）</span></p>
-      <button class="clear-btn" @click="clearRoutePreset">清除推荐</button>
+      <p>
+        {{ pageText('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ appliedPresetLabel }}
+        <span v-if="routeContextSource">（{{ pageText('route_preset_source_prefix', '来源：') }}{{ routeContextSource }}）</span>
+      </p>
+      <button class="clear-btn" @click="clearRoutePreset">{{ pageText('route_preset_clear', '清除推荐') }}</button>
     </section>
     <section class="focus-strip">
       <div>
@@ -17,7 +20,7 @@
       </div>
     </section>
     <section v-if="contractPrimaryFilterChips.length || contractOverflowFilterChips.length" class="contract-block">
-      <p class="contract-label">快速筛选</p>
+      <p class="contract-label">{{ pageText('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
           v-for="chip in contractPrimaryFilterChips"
@@ -35,7 +38,7 @@
           :disabled="status === 'loading' || batchBusy"
           @click="clearContractFilter"
         >
-          清除
+          {{ pageText('chip_action_clear', '清除') }}
         </button>
         <button
           v-if="contractOverflowFilterChips.length"
@@ -43,7 +46,11 @@
           :disabled="status === 'loading' || batchBusy"
           @click="showMoreContractFilters = !showMoreContractFilters"
         >
-          {{ showMoreContractFilters ? '收起更多筛选' : `更多筛选 (${contractOverflowFilterChips.length})` }}
+          {{
+            showMoreContractFilters
+              ? pageText('chip_more_filters_collapse', '收起更多筛选')
+              : `${pageText('chip_more_filters_expand', '更多筛选')} (${contractOverflowFilterChips.length})`
+          }}
         </button>
       </div>
       <div v-if="showMoreContractFilters && contractOverflowFilterChips.length" class="contract-chips">
@@ -60,7 +67,7 @@
       </div>
     </section>
     <section v-if="savedFilterPrimaryChips.length || savedFilterOverflowChips.length" class="contract-block">
-      <p class="contract-label">已保存筛选</p>
+      <p class="contract-label">{{ pageText('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
           v-for="chip in savedFilterPrimaryChips"
@@ -78,7 +85,7 @@
           :disabled="status === 'loading' || batchBusy"
           @click="clearSavedFilter"
         >
-          清除
+          {{ pageText('chip_action_clear', '清除') }}
         </button>
         <button
           v-if="savedFilterOverflowChips.length"
@@ -86,7 +93,11 @@
           :disabled="status === 'loading' || batchBusy"
           @click="showMoreSavedFilters = !showMoreSavedFilters"
         >
-          {{ showMoreSavedFilters ? '收起更多筛选' : `更多筛选 (${savedFilterOverflowChips.length})` }}
+          {{
+            showMoreSavedFilters
+              ? pageText('chip_more_filters_collapse', '收起更多筛选')
+              : `${pageText('chip_more_filters_expand', '更多筛选')} (${savedFilterOverflowChips.length})`
+          }}
         </button>
       </div>
       <div v-if="showMoreSavedFilters && savedFilterOverflowChips.length" class="contract-chips">
@@ -103,7 +114,7 @@
       </div>
     </section>
     <section v-if="groupByPrimaryChips.length || groupByOverflowChips.length" class="contract-block">
-      <p class="contract-label">分组查看</p>
+      <p class="contract-label">{{ pageText('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
           v-for="chip in groupByPrimaryChips"
@@ -121,7 +132,7 @@
           :disabled="status === 'loading' || batchBusy"
           @click="clearGroupBy"
         >
-          清除
+          {{ pageText('chip_action_clear', '清除') }}
         </button>
         <button
           v-if="groupByOverflowChips.length"
@@ -129,7 +140,11 @@
           :disabled="status === 'loading' || batchBusy"
           @click="showMoreGroupBy = !showMoreGroupBy"
         >
-          {{ showMoreGroupBy ? '收起更多分组' : `更多分组 (${groupByOverflowChips.length})` }}
+          {{
+            showMoreGroupBy
+              ? pageText('chip_more_group_collapse', '收起更多分组')
+              : `${pageText('chip_more_group_expand', '更多分组')} (${groupByOverflowChips.length})`
+          }}
         </button>
       </div>
       <div v-if="showMoreGroupBy && groupByOverflowChips.length" class="contract-chips">
@@ -163,7 +178,7 @@
       :on-next-window="handleGroupWindowNext"
     />
     <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
-      <p class="contract-label">快捷操作</p>
+      <p class="contract-label">{{ pageText('label.quick_actions', '快捷操作') }}</p>
       <div class="contract-chips">
         <button
           v-for="btn in contractPrimaryActions"
@@ -181,7 +196,11 @@
           :disabled="status === 'loading' || batchBusy"
           @click="showMoreContractActions = !showMoreContractActions"
         >
-          {{ showMoreContractActions ? '收起更多操作' : `更多操作 (${contractOverflowActions.length})` }}
+          {{
+            showMoreContractActions
+              ? pageText('chip_more_actions_collapse', '收起更多操作')
+              : `${pageText('chip_more_actions_expand', '更多操作')} (${contractOverflowActions.length})`
+          }}
         </button>
       </div>
       <div v-if="showMoreContractActions && contractOverflowActionGroups.length" class="contract-groups">
@@ -285,7 +304,7 @@
         <p>{{ advancedViewHint }}</p>
       </header>
       <div class="advanced-contract">
-        <p class="contract-label">契约摘要</p>
+        <p class="contract-label">{{ pageText('label.contract_summary', '契约摘要') }}</p>
         <p>view_type={{ contractViewType || '-' }} · mode={{ viewMode || '-' }} · records={{ records.length }}</p>
       </div>
       <div v-if="records.length" class="advanced-list">
@@ -355,6 +374,7 @@ import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { usePageContract } from '../app/pageContract';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -375,6 +395,8 @@ function resolveNodeSceneKey(node: NavNode): string {
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const pageContract = usePageContract('action');
+const pageText = pageContract.text;
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');
@@ -636,34 +658,48 @@ const viewMode = computed(() => {
 const sortLabel = computed(() => sortValue.value || 'id asc');
 const effectiveSurfaceModel = computed(() => (resolvedModelRef.value || model.value || '').toLowerCase());
 const surfaceKey = computed(() => `${sceneKey.value} ${effectiveSurfaceModel.value} ${pageTitle.value}`.toLowerCase());
+function keywordList(key: string, fallbackCsv: string) {
+  return String(pageText(key, fallbackCsv) || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+function includesAnyKeyword(text: string, keywords: string[]) {
+  const raw = String(text || '').toLowerCase();
+  if (!raw) return false;
+  return keywords.some((item) => raw.includes(String(item || '').toLowerCase()));
+}
 const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
   const key = surfaceKey.value;
   const sceneKeyText = String(sceneKey.value || '').toLowerCase();
   const modelText = effectiveSurfaceModel.value;
-  if (key.includes('risk') || key.includes('风险')) return 'risk';
-  if (key.includes('contract') || key.includes('合同')) return 'contract';
-  if (key.includes('cost') || key.includes('成本')) return 'cost';
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) return 'risk';
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) return 'contract';
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_cost', 'cost,成本'))) return 'cost';
   if (sceneKeyText.startsWith('projects.') || sceneKeyText.startsWith('project.')) return 'project';
   if (modelText.startsWith('project.') || modelText.startsWith('construction.')) return 'project';
-  if (key.includes('project') || key.includes('项目')) return 'project';
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_project', 'project,项目'))) return 'project';
   return 'generic';
 });
 const sortOptions = computed(() => {
   if (surfaceKind.value === 'risk' || surfaceKind.value === 'cost') {
     return [
-      { label: '优先级↓ / 截止日↑', value: 'priority desc,deadline asc,write_date desc' },
-      { label: '截止日↑ / 更新时间↓', value: 'deadline asc,write_date desc' },
-      { label: '更新时间↓ / ID↓', value: 'write_date desc,id desc' },
+      { label: pageText('sort_option_priority_deadline', '优先级↓ / 截止日↑'), value: 'priority desc,deadline asc,write_date desc' },
+      { label: pageText('sort_option_deadline_updated', '截止日↑ / 更新时间↓'), value: 'deadline asc,write_date desc' },
+      { label: pageText('sort_option_updated_id', '更新时间↓ / ID↓'), value: 'write_date desc,id desc' },
     ];
   }
   return [
-    { label: '更新时间↓ / 名称↑', value: 'write_date desc,name asc' },
-    { label: '更新时间↑ / 名称↑', value: 'write_date asc,name asc' },
-    { label: '名称↑ / 更新时间↓', value: 'name asc,write_date desc' },
-    { label: '名称↓ / 更新时间↓', value: 'name desc,write_date desc' },
+    { label: pageText('sort_option_updated_name_asc', '更新时间↓ / 名称↑'), value: 'write_date desc,name asc' },
+    { label: pageText('sort_option_updated_asc_name_asc', '更新时间↑ / 名称↑'), value: 'write_date asc,name asc' },
+    { label: pageText('sort_option_name_updated', '名称↑ / 更新时间↓'), value: 'name asc,write_date desc' },
+    { label: pageText('sort_option_name_desc_updated', '名称↓ / 更新时间↓'), value: 'name desc,write_date desc' },
   ];
 });
-const subtitle = computed(() => `${records.value.length} 条记录 · 排序：${sortLabel.value}`);
+const subtitle = computed(
+  () =>
+    `${records.value.length}${pageText('subtitle_records_suffix', ' 条记录')} · ${pageText('subtitle_sort_prefix', '排序：')}${sortLabel.value}`,
+);
 const kanbanTitleField = computed(() => {
   if (kanbanTitleFieldHint.value && kanbanFields.value.includes(kanbanTitleFieldHint.value)) {
     return kanbanTitleFieldHint.value;
@@ -673,121 +709,121 @@ const kanbanTitleField = computed(() => {
   return found || kanbanFields.value[0] || 'id';
 });
 const statusLabel = computed(() => {
-  if (status.value === 'loading') return '加载中';
-  if (status.value === 'error') return '加载失败';
-  if (status.value === 'empty') return '暂无数据';
-  return '已就绪';
+  if (status.value === 'loading') return pageText('status_loading', '加载中');
+  if (status.value === 'error') return pageText('status_error', '加载失败');
+  if (status.value === 'empty') return pageText('status_empty', '暂无数据');
+  return pageText('status_ready', '已就绪');
 });
 const pageStatus = computed<'loading' | 'ok' | 'empty' | 'error'>(() =>
   status.value === 'idle' ? 'loading' : status.value,
 );
 const advancedViewTitle = computed(() => {
   const labels: Record<string, string> = {
-    pivot: '数据透视视图',
-    graph: '图表视图',
-    calendar: '日历视图',
-    gantt: '甘特视图',
-    activity: '活动视图',
-    dashboard: '仪表板视图',
+    pivot: pageText('advanced_title_pivot', '数据透视视图'),
+    graph: pageText('advanced_title_graph', '图表视图'),
+    calendar: pageText('advanced_title_calendar', '日历视图'),
+    gantt: pageText('advanced_title_gantt', '甘特视图'),
+    activity: pageText('advanced_title_activity', '活动视图'),
+    dashboard: pageText('advanced_title_dashboard', '仪表板视图'),
   };
-  return labels[viewMode.value] || '高级视图';
+  return labels[viewMode.value] || pageText('advanced_title_default', '高级视图');
 });
 const advancedViewHint = computed(() => {
   const hints: Record<string, string> = {
-    pivot: '当前为可读降级视图，可查看核心统计记录并继续下钻到列表/表单。',
-    graph: '当前为可读降级视图，可查看核心指标记录并继续下钻到列表/表单。',
-    calendar: '当前为可读降级视图，可查看时间相关记录并继续下钻到列表/表单。',
-    gantt: '当前为可读降级视图，可查看进度相关记录并继续下钻到列表/表单。',
-    activity: '当前为可读降级视图，可查看活动记录并继续下钻到列表/表单。',
-    dashboard: '当前为可读降级视图，可查看关键记录并继续下钻到列表/表单。',
+    pivot: pageText('advanced_hint_pivot', '当前为可读降级视图，可查看核心统计记录并继续下钻到列表/表单。'),
+    graph: pageText('advanced_hint_graph', '当前为可读降级视图，可查看核心指标记录并继续下钻到列表/表单。'),
+    calendar: pageText('advanced_hint_calendar', '当前为可读降级视图，可查看时间相关记录并继续下钻到列表/表单。'),
+    gantt: pageText('advanced_hint_gantt', '当前为可读降级视图，可查看进度相关记录并继续下钻到列表/表单。'),
+    activity: pageText('advanced_hint_activity', '当前为可读降级视图，可查看活动记录并继续下钻到列表/表单。'),
+    dashboard: pageText('advanced_hint_dashboard', '当前为可读降级视图，可查看关键记录并继续下钻到列表/表单。'),
   };
-  return hints[viewMode.value] || '当前视图使用可读降级渲染。';
+  return hints[viewMode.value] || pageText('advanced_hint_default', '当前视图使用可读降级渲染。');
 });
 const pageTitle = computed(() => {
   const contractTitle = String(actionContract.value?.head?.title || '').trim();
   if (contractTitle) return contractTitle;
-  return injectedTitle?.value || actionMeta.value?.name || '工作台';
+  return injectedTitle?.value || actionMeta.value?.name || pageText('page_title_fallback', '工作台');
 });
 const surfaceIntent = computed<SurfaceIntent>(() => {
   const key = surfaceKey.value;
-  if (key.includes('risk') || key.includes('风险')) {
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_risk', 'risk,风险'))) {
     return {
-      title: '风险驾驶舱：先处理严重与逾期风险',
-      summary: '优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。',
+      title: pageText('intent_title_risk', '风险驾驶舱：先处理严重与逾期风险'),
+      summary: pageText('intent_summary_risk', '优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。'),
       actions: [
-        { label: '待我处理风险', to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
-        { label: '打开风险场景', to: '/s/projects.dashboard' },
+        { label: pageText('intent_action_risk_todo', '待我处理风险'), to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
+        { label: pageText('intent_action_risk_scene', '打开风险场景'), to: '/s/projects.dashboard' },
       ],
-      emptyTitle: '当前暂无风险记录',
-      emptyHint: '建议转到“我的工作”处理风险待办，或进入风险驾驶舱继续巡检。',
-      primaryAction: { label: '处理风险待办', to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
-      secondaryAction: { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+      emptyTitle: pageText('empty_title_risk', '当前暂无风险记录'),
+      emptyHint: pageText('empty_hint_risk', '建议转到“我的工作”处理风险待办，或进入风险驾驶舱继续巡检。'),
+      primaryAction: { label: pageText('primary_action_risk', '处理风险待办'), to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
+      secondaryAction: { label: pageText('secondary_action_risk', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
-  if (key.includes('contract') || key.includes('合同')) {
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_contract', 'contract,合同'))) {
     return {
-      title: '合同执行：优先识别付款与变更风险',
-      summary: '先看执行率与付款状态，再进入异常合同处理。',
+      title: pageText('intent_title_contract', '合同执行：优先识别付款与变更风险'),
+      summary: pageText('intent_summary_contract', '先看执行率与付款状态，再进入异常合同处理。'),
       actions: [
-        { label: '处理合同待办', to: '/my-work', query: { section: 'todo', search: '合同' } },
-        { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+        { label: pageText('intent_action_contract_todo', '处理合同待办'), to: '/my-work', query: { section: 'todo', search: '合同' } },
+        { label: pageText('intent_action_contract_dashboard', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
       ],
-      emptyTitle: '当前暂无合同记录',
-      emptyHint: '可前往“我的工作”查看合同待办，或进入风险驾驶舱追踪履约风险。',
-      primaryAction: { label: '处理合同待办', to: '/my-work', query: { section: 'todo', search: '合同' } },
-      secondaryAction: { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+      emptyTitle: pageText('empty_title_contract', '当前暂无合同记录'),
+      emptyHint: pageText('empty_hint_contract', '可前往“我的工作”查看合同待办，或进入风险驾驶舱追踪履约风险。'),
+      primaryAction: { label: pageText('primary_action_contract', '处理合同待办'), to: '/my-work', query: { section: 'todo', search: '合同' } },
+      secondaryAction: { label: pageText('secondary_action_contract', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
-  if (key.includes('cost') || key.includes('成本')) {
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_cost', 'cost,成本'))) {
     return {
-      title: '成本执行：先回答是否超支',
-      summary: '优先关注超支金额与超支项，再下钻到具体偏差来源。',
+      title: pageText('intent_title_cost', '成本执行：先回答是否超支'),
+      summary: pageText('intent_summary_cost', '优先关注超支金额与超支项，再下钻到具体偏差来源。'),
       actions: [
-        { label: '处理成本待办', to: '/my-work', query: { section: 'todo', search: '成本' } },
-        { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+        { label: pageText('intent_action_cost_todo', '处理成本待办'), to: '/my-work', query: { section: 'todo', search: '成本' } },
+        { label: pageText('intent_action_cost_dashboard', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
       ],
-      emptyTitle: '当前暂无成本记录',
-      emptyHint: '可前往“我的工作”处理成本待办，或进入风险驾驶舱继续巡检。',
-      primaryAction: { label: '处理超支待办', to: '/my-work', query: { section: 'todo', search: '成本' } },
-      secondaryAction: { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+      emptyTitle: pageText('empty_title_cost', '当前暂无成本记录'),
+      emptyHint: pageText('empty_hint_cost', '可前往“我的工作”处理成本待办，或进入风险驾驶舱继续巡检。'),
+      primaryAction: { label: pageText('primary_action_cost', '处理超支待办'), to: '/my-work', query: { section: 'todo', search: '成本' } },
+      secondaryAction: { label: pageText('secondary_action_cost', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
-  if (key.includes('project') || key.includes('项目')) {
+  if (includesAnyKeyword(key, keywordList('surface_kind_keywords_project', 'project,项目'))) {
     return {
-      title: '项目视角：先判断是否可控',
-      summary: '优先查看风险、审批与经营指标，再决定下一步动作。',
+      title: pageText('intent_title_project', '项目视角：先判断是否可控'),
+      summary: pageText('intent_summary_project', '优先查看风险、审批与经营指标，再决定下一步动作。'),
       actions: [
-        { label: '查看项目待办', to: '/my-work', query: { section: 'todo', search: '项目' } },
-        { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+        { label: pageText('intent_action_project_todo', '查看项目待办'), to: '/my-work', query: { section: 'todo', search: '项目' } },
+        { label: pageText('intent_action_project_dashboard', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
       ],
-      emptyTitle: '当前暂无项目记录',
-      emptyHint: '建议进入“我的工作”处理项目待办，或去风险驾驶舱查看全局状态。',
-      primaryAction: { label: '查看项目待办', to: '/my-work', query: { section: 'todo', search: '项目' } },
-      secondaryAction: { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+      emptyTitle: pageText('empty_title_project', '当前暂无项目记录'),
+      emptyHint: pageText('empty_hint_project', '建议进入“我的工作”处理项目待办，或去风险驾驶舱查看全局状态。'),
+      primaryAction: { label: pageText('primary_action_project', '查看项目待办'), to: '/my-work', query: { section: 'todo', search: '项目' } },
+      secondaryAction: { label: pageText('secondary_action_project', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
   return {
-    title: '业务列表：先看状态，再执行动作',
-    summary: '通过快速筛选与快捷操作，优先处理最关键事项。',
+    title: pageText('intent_title_default', '业务列表：先看状态，再执行动作'),
+    summary: pageText('intent_summary_default', '通过快速筛选与快捷操作，优先处理最关键事项。'),
     actions: [
-      { label: '工作台', to: '/' },
-      { label: '我的工作', to: '/my-work' },
+      { label: pageText('intent_action_default_home', '工作台'), to: '/' },
+      { label: pageText('intent_action_default_my_work', '我的工作'), to: '/my-work' },
     ],
-    emptyTitle: '当前视图暂无数据',
-    emptyHint: '建议切换到我的工作或风险驾驶舱继续处理。',
-    primaryAction: { label: '去我的工作', to: '/my-work' },
-    secondaryAction: { label: '去风险驾驶舱', to: '/s/projects.dashboard' },
+    emptyTitle: pageText('empty_title_default', '当前视图暂无数据'),
+    emptyHint: pageText('empty_hint_default', '建议切换到我的工作或风险驾驶舱继续处理。'),
+    primaryAction: { label: pageText('primary_action_default', '去我的工作'), to: '/my-work' },
+    secondaryAction: { label: pageText('secondary_action_default', '去风险驾驶舱'), to: '/s/projects.dashboard' },
   };
 });
 const emptyReasonText = computed(() => {
   if (searchTerm.value.trim() || activeContractFilterKey.value) {
-    return '可能由当前筛选条件导致无数据，建议先清除筛选后重试。';
+    return pageText('empty_reason_filter', '可能由当前筛选条件导致无数据，建议先清除筛选后重试。');
   }
   const modelText = effectiveSurfaceModel.value;
   if (modelText === 'construction.work.breakdown') {
-    return '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。';
+    return pageText('empty_reason_wbs', '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。');
   }
-  return '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。';
+  return pageText('empty_reason_default', '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。');
 });
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
@@ -963,9 +999,9 @@ function toContractActionButton(
     ? enabledBySelection
       ? ''
       : selection === 'single'
-        ? '请选择 1 条记录'
-        : '请先选择记录'
-    : '权限不足';
+        ? pageText('hint_select_single_record', '请选择 1 条记录')
+        : pageText('hint_select_record_first', '请先选择记录')
+    : pageText('hint_permission_denied', '权限不足');
   return {
     key,
     label: rawLabel,
@@ -1031,14 +1067,17 @@ const contractActionGroups = computed<Array<{ key: string; label: string; action
     }
   }
   if (!grouped.length) {
-    const basic = all.filter((item) => /创建|保存|submit|create|save/i.test(item.label));
-    const workflow = all.filter((item) => /阶段|审批|workflow|transition/i.test(item.label));
-    const drilldown = all.filter((item) => /查看|列表|看板|open|view/i.test(item.label));
+    const basicKeywords = keywordList('group_keywords_basic', '创建,保存,submit,create,save');
+    const workflowKeywords = keywordList('group_keywords_workflow', '阶段,审批,workflow,transition');
+    const drilldownKeywords = keywordList('group_keywords_drilldown', '查看,列表,看板,open,view');
+    const basic = all.filter((item) => includesAnyKeyword(item.label, basicKeywords));
+    const workflow = all.filter((item) => includesAnyKeyword(item.label, workflowKeywords));
+    const drilldown = all.filter((item) => includesAnyKeyword(item.label, drilldownKeywords));
     const other = all.filter((item) => !basic.includes(item) && !workflow.includes(item) && !drilldown.includes(item));
-    if (basic.length) grouped.push({ key: 'basic', label: '基础操作', actions: basic });
-    if (workflow.length) grouped.push({ key: 'workflow', label: '流程推进', actions: workflow });
-    if (drilldown.length) grouped.push({ key: 'drilldown', label: '业务查看', actions: drilldown });
-    if (other.length) grouped.push({ key: 'other', label: '更多操作', actions: other });
+    if (basic.length) grouped.push({ key: 'basic', label: pageText('group_label_basic', '基础操作'), actions: basic });
+    if (workflow.length) grouped.push({ key: 'workflow', label: pageText('group_label_workflow', '流程推进'), actions: workflow });
+    if (drilldown.length) grouped.push({ key: 'drilldown', label: pageText('group_label_drilldown', '业务查看'), actions: drilldown });
+    if (other.length) grouped.push({ key: 'other', label: pageText('group_label_other', '更多操作'), actions: other });
   }
   return grouped;
 });
@@ -1186,11 +1225,11 @@ function applyRoutePreset() {
     setIfDiff(filterValue, routeActiveFilter);
   }
   if (!preset && presetFilter) {
-    appliedPresetLabel.value = `契约筛选: ${presetFilter}`;
+    appliedPresetLabel.value = `${pageText('preset_label_contract_filter_prefix', '契约筛选: ')}${presetFilter}`;
     setIfDiff(searchTerm, routeSearch || presetFilter);
   }
   if (savedFilter) {
-    appliedPresetLabel.value = appliedPresetLabel.value || `保存筛选: ${savedFilter}`;
+    appliedPresetLabel.value = appliedPresetLabel.value || `${pageText('preset_label_saved_filter_prefix', '保存筛选: ')}${savedFilter}`;
     setIfDiff(activeSavedFilterKey, savedFilter);
   } else {
     setIfDiff(activeSavedFilterKey, '');
@@ -1910,7 +1949,11 @@ function applyBatchFailureArtifacts(result: {
   const preview = Array.isArray(result.failed_preview) ? result.failed_preview : [];
   const lines: BatchDetailLine[] = preview.map((item) => {
     const hint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
-    const retryTag = item.retryable === true ? '可重试' : item.retryable === false ? '不可重试' : '';
+    const retryTag = item.retryable === true
+      ? pageText('retry_tag_retryable', '可重试')
+      : item.retryable === false
+        ? pageText('retry_tag_non_retryable', '不可重试')
+        : '';
     const text = [`#${item.id} ${item.reason_code}: ${item.message}`, retryTag, hint].filter(Boolean).join(' | ');
     const action = describeSuggestedAction(item.suggested_action, {
       hasRetryHandler: true,
@@ -1983,39 +2026,39 @@ function convergeColumnsForSurface(rawColumns: string[], fields: Record<string, 
   const buckets: string[][] = [];
   if (surfaceKind.value === 'risk') {
     buckets.push(
-      pick(['title', 'name', '风险', '事项']),
-      pick(['priority', 'severity', '优先级', '严重']),
-      pick(['deadline', 'date_deadline', '截止', '逾期']),
-      pick(['user_id', 'owner', 'assignee', '负责人', '分派']),
-      pick(['state', 'stage', 'status', '状态']),
-      pick(['reason', '原因']),
+      pick(keywordList('columns_risk_bucket_identity', 'title,name,风险,事项')),
+      pick(keywordList('columns_risk_bucket_priority', 'priority,severity,优先级,严重')),
+      pick(keywordList('columns_risk_bucket_deadline', 'deadline,date_deadline,截止,逾期')),
+      pick(keywordList('columns_risk_bucket_owner', 'user_id,owner,assignee,负责人,分派')),
+      pick(keywordList('columns_risk_bucket_state', 'state,stage,status,状态')),
+      pick(keywordList('columns_risk_bucket_reason', 'reason,原因')),
     );
   } else if (surfaceKind.value === 'contract') {
     buckets.push(
-      pick(['amount_total', 'contract_amount', '金额', '合同额']),
-      pick(['execute', 'execution', 'progress', '执行率']),
-      pick(['paid', 'payment', '付款', '支付']),
-      pick(['risk', '风险', 'alert']),
-      pick(['change', '变更', 'write_date', '最近']),
-      pick(['title', 'name', '合同']),
+      pick(keywordList('columns_contract_bucket_amount', 'amount_total,contract_amount,金额,合同额')),
+      pick(keywordList('columns_contract_bucket_execution', 'execute,execution,progress,执行率')),
+      pick(keywordList('columns_contract_bucket_payment', 'paid,payment,付款,支付')),
+      pick(keywordList('columns_contract_bucket_risk', 'risk,风险,alert')),
+      pick(keywordList('columns_contract_bucket_change', 'change,变更,write_date,最近')),
+      pick(keywordList('columns_contract_bucket_identity', 'title,name,合同')),
     );
   } else if (surfaceKind.value === 'cost') {
     buckets.push(
-      pick(['cost', '执行率', 'rate']),
-      pick(['over', 'overrun', '超支', '偏差']),
-      pick(['count', '项数']),
-      pick(['deadline', '截止']),
-      pick(['priority', '优先级']),
-      pick(['title', 'name', '项目']),
+      pick(keywordList('columns_cost_bucket_execution', 'cost,执行率,rate')),
+      pick(keywordList('columns_cost_bucket_overrun', 'over,overrun,超支,偏差')),
+      pick(keywordList('columns_cost_bucket_count', 'count,项数')),
+      pick(keywordList('columns_cost_bucket_deadline', 'deadline,截止')),
+      pick(keywordList('columns_cost_bucket_priority', 'priority,优先级')),
+      pick(keywordList('columns_cost_bucket_identity', 'title,name,项目')),
     );
   } else if (surfaceKind.value === 'project') {
     buckets.push(
-      pick(['title', 'name', '项目']),
-      pick(['state', 'stage', 'status', '状态', '阶段']),
-      pick(['risk', '风险']),
-      pick(['payment', '付款']),
-      pick(['output', '产值']),
-      pick(['cost', '成本']),
+      pick(keywordList('columns_project_bucket_identity', 'title,name,项目')),
+      pick(keywordList('columns_project_bucket_state', 'state,stage,status,状态,阶段')),
+      pick(keywordList('columns_project_bucket_risk', 'risk,风险')),
+      pick(keywordList('columns_project_bucket_payment', 'payment,付款')),
+      pick(keywordList('columns_project_bucket_output', 'output,产值')),
+      pick(keywordList('columns_project_bucket_cost', 'cost,成本')),
     );
   }
 
@@ -2100,7 +2143,7 @@ function extractAdvancedViewFields(contract: Awaited<ReturnType<typeof loadActio
 }
 
 function advancedRowTitle(row: Record<string, unknown>) {
-  return String(row.display_name || row.name || row.id || '记录').trim();
+  return String(row.display_name || row.name || row.id || pageText('advanced_row_title_fallback', '记录')).trim();
 }
 
 function advancedFieldLabel(field: string) {
@@ -2115,7 +2158,7 @@ function advancedRowMeta(row: Record<string, unknown>) {
     .filter((key) => key !== 'id' && key !== 'name' && key !== 'display_name' && key in row)
     .slice(0, 3)
     .map((key) => `${advancedFieldLabel(key)}: ${String(row[key] ?? '-')}`);
-  if (!entries.length) return '无附加字段';
+  if (!entries.length) return pageText('advanced_row_meta_empty', '无附加字段');
   return entries.join(' · ');
 }
 
@@ -2307,23 +2350,26 @@ async function runContractAction(action: ContractActionButton) {
       window.open(navUrl, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
       return;
     }
-    batchMessage.value = '契约动作缺少 action_id，无法打开目标页面';
+    batchMessage.value = pageText('batch_msg_contract_action_missing_action_id', '契约动作缺少 action_id，无法打开目标页面');
     return;
   }
 
   const ids = resolveSelectedIdsForAction(action.selection);
   if (action.selection !== 'none' && !ids.length) {
-    batchMessage.value = action.selection === 'single' ? '请选择 1 条记录后再执行' : '请先选择记录后再执行';
+    batchMessage.value =
+      action.selection === 'single'
+        ? pageText('batch_msg_select_single_before_run', '请选择 1 条记录后再执行')
+        : pageText('batch_msg_select_records_before_run', '请先选择记录后再执行');
     return;
   }
   if (!action.model) {
-    batchMessage.value = '契约动作缺少 model，无法执行';
+    batchMessage.value = pageText('batch_msg_contract_action_missing_model', '契约动作缺少 model，无法执行');
     return;
   }
   const contextRecordId = resolveActionContextRecordId();
   const execIds = ids.length ? ids : contextRecordId ? [contextRecordId] : [];
   if (!execIds.length) {
-    batchMessage.value = '当前动作需要记录上下文，暂不支持无记录执行';
+    batchMessage.value = pageText('batch_msg_action_requires_record_context', '当前动作需要记录上下文，暂不支持无记录执行');
     return;
   }
 
@@ -2356,7 +2402,7 @@ async function runContractAction(action: ContractActionButton) {
         failureCount += 1;
       }
     }
-    batchMessage.value = `契约动作执行完成：成功 ${successCount}，失败 ${failureCount}`;
+    batchMessage.value = `${pageText('batch_msg_contract_action_done_prefix', '契约动作执行完成：成功 ')}${successCount}${pageText('batch_msg_contract_action_done_middle', '，失败 ')}${failureCount}`;
     if (successCount > 0) {
       await load();
     }
@@ -2398,7 +2444,7 @@ async function loadAssigneeOptions() {
     if (error instanceof ApiError && String(error.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED') {
       const model = String(error.details?.model || 'res.users').trim();
       const op = String(error.details?.op || 'list').trim().toLowerCase();
-      batchMessage.value = `负责人候选加载受限（${model}/${op}）`;
+      batchMessage.value = `${pageText('batch_msg_assignee_options_limited_prefix', '负责人候选加载受限（')}${model}/${op}${pageText('batch_msg_assignee_options_limited_suffix', '）')}`;
     }
   }
 }
@@ -2797,7 +2843,8 @@ async function load() {
     groupSummaryItems.value = (Array.isArray(result.data?.group_summary) ? result.data?.group_summary : [])
       .map((row) => {
         const item = row as Record<string, unknown>;
-        const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        const label = String(item.label ?? item.value ?? pageText('group_label_unset', '未设置')).trim()
+          || pageText('group_label_unset', '未设置');
         const backendGroupKey = String(item.group_key || '').trim();
         return {
           key: backendGroupKey || buildGroupKey(item.field, item.value, label),
@@ -2848,7 +2895,8 @@ async function load() {
           && typeof (result.data as Record<string, unknown>).group_paging === 'object'
           ? ((result.data as Record<string, unknown>).group_paging as Record<string, unknown>).page_size
           : 0) || groupSampleLimit.value || 3;
-        const label = String(item.label ?? item.value ?? '未设置').trim() || '未设置';
+        const label = String(item.label ?? item.value ?? pageText('group_label_unset', '未设置')).trim()
+          || pageText('group_label_unset', '未设置');
         const fallbackKey = buildGroupKey(item.field, item.value, label);
         return {
           key: String(item.group_key || fallbackKey),
@@ -3041,12 +3089,12 @@ function buildBatchErrorLine(err: unknown, fallback: { model: string; op: string
   const issueCounter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
   const issue = collectErrorContextIssue(issueCounter, err, { model: fallback.model, op: fallback.op });
   const scope = issueScopeLabel(issue);
-  const reasonText = issue.reasonCode ? `原因=${issue.reasonCode}` : '';
+  const reasonText = issue.reasonCode ? `${pageText('batch_error_reason_prefix', '原因=')}${issue.reasonCode}` : '';
   if (!(err instanceof ApiError)) {
-    return [fallback.label, scope ? `范围=${scope}` : '', reasonText].filter(Boolean).join(' | ');
+    return [fallback.label, scope ? `${pageText('batch_error_scope_prefix', '范围=')}${scope}` : '', reasonText].filter(Boolean).join(' | ');
   }
   const hint = resolveSuggestedAction(err.suggestedAction, err.reasonCode, err.retryable);
-  return [fallback.label, scope ? `范围=${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
+  return [fallback.label, scope ? `${pageText('batch_error_scope_prefix', '范围=')}${scope}` : '', reasonText, hint].filter(Boolean).join(' | ');
 }
 
 async function handleBatchAction(action: 'archive' | 'activate') {
@@ -3060,7 +3108,7 @@ async function handleBatchAction(action: 'archive' | 'activate') {
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel || !selectedIds.value.length) return;
   if (!hasActiveField.value) {
-    batchMessage.value = '当前模型不支持 active 字段，无法批量归档/激活';
+    batchMessage.value = pageText('batch_msg_model_no_active_field', '当前模型不支持 active 字段，无法批量归档/激活');
     return;
   }
   batchBusy.value = true;
@@ -3089,24 +3137,28 @@ async function handleBatchAction(action: 'archive' | 'activate') {
       context: requestContext,
     };
     if (result.idempotent_replay) {
-      batchMessage.value = '批量操作已幂等处理（重复请求被忽略）';
+      batchMessage.value = pageText('batch_msg_idempotent_replay', '批量操作已幂等处理（重复请求被忽略）');
     } else {
-    batchMessage.value =
-      action === 'activate'
-        ? `批量激活完成：成功 ${result.succeeded}，失败 ${result.failed}`
-        : `批量归档完成：成功 ${result.succeeded}，失败 ${result.failed}`;
+      batchMessage.value =
+        action === 'activate'
+          ? `${pageText('batch_msg_activate_done_prefix', '批量激活完成：成功 ')}${result.succeeded}${pageText('batch_msg_done_middle', '，失败 ')}${result.failed}`
+          : `${pageText('batch_msg_archive_done_prefix', '批量归档完成：成功 ')}${result.succeeded}${pageText('batch_msg_done_middle', '，失败 ')}${result.failed}`;
     }
     applyBatchFailureArtifacts(result);
     clearSelection();
     await load();
   } catch (err) {
     setError(err, 'batch operation failed');
-    batchMessage.value = action === 'activate' ? '批量激活失败' : '批量归档失败';
+    batchMessage.value = action === 'activate'
+      ? pageText('batch_msg_activate_failed', '批量激活失败')
+      : pageText('batch_msg_archive_failed', '批量归档失败');
     batchDetails.value = [{
       text: buildBatchErrorLine(err, {
         model: targetModel,
         op: action,
-        label: action === 'activate' ? '批量激活' : '批量归档',
+        label: action === 'activate'
+          ? pageText('batch_label_activate', '批量激活')
+          : pageText('batch_label_archive', '批量归档'),
       }),
     }];
     failedCsvFileName.value = '';
@@ -3130,11 +3182,11 @@ async function handleBatchAssign(assigneeId: number) {
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel || !selectedIds.value.length) return;
   if (!hasAssigneeField.value) {
-    batchMessage.value = '当前模型不支持负责人字段，无法批量指派';
+    batchMessage.value = pageText('batch_msg_model_no_assignee_field', '当前模型不支持负责人字段，无法批量指派');
     return;
   }
   if (!assigneeId) {
-    batchMessage.value = '请先选择负责人';
+    batchMessage.value = pageText('batch_msg_select_assignee_first', '请先选择负责人');
     return;
   }
   batchBusy.value = true;
@@ -3166,21 +3218,21 @@ async function handleBatchAssign(assigneeId: number) {
     };
     const assignee = assigneeOptions.value.find((opt) => opt.id === assigneeId)?.name || `#${assigneeId}`;
     if (result.idempotent_replay) {
-      batchMessage.value = `批量指派给 ${assignee} 已幂等处理（重复请求被忽略）`;
+      batchMessage.value = `${pageText('batch_msg_assign_idempotent_prefix', '批量指派给 ')}${assignee}${pageText('batch_msg_assign_idempotent_suffix', ' 已幂等处理（重复请求被忽略）')}`;
     } else {
-      batchMessage.value = `批量指派给 ${assignee}：成功 ${result.succeeded}，失败 ${result.failed}`;
+      batchMessage.value = `${pageText('batch_msg_assign_done_prefix', '批量指派给 ')}${assignee}${pageText('batch_msg_assign_done_middle', '：成功 ')}${result.succeeded}${pageText('batch_msg_done_middle', '，失败 ')}${result.failed}`;
     }
     applyBatchFailureArtifacts(result);
     clearSelection();
     await load();
   } catch (err) {
     setError(err, 'batch assign failed');
-    batchMessage.value = '批量指派失败';
+    batchMessage.value = pageText('batch_msg_assign_failed', '批量指派失败');
     batchDetails.value = [{
       text: buildBatchErrorLine(err, {
         model: targetModel,
         op: 'assign',
-        label: '批量指派',
+        label: pageText('batch_label_assign', '批量指派'),
       }),
     }];
     failedCsvFileName.value = '';
@@ -3205,7 +3257,7 @@ async function exportByBackend(scope: 'selected' | 'all') {
   const targetModel = resolvedModelRef.value || model.value;
   if (!targetModel) return;
   if (scope === 'selected' && !selectedIds.value.length) {
-    batchMessage.value = '没有可导出的选中记录';
+    batchMessage.value = pageText('batch_msg_no_selected_records_export', '没有可导出的选中记录');
     return;
   }
   batchBusy.value = true;
@@ -3228,19 +3280,19 @@ async function exportByBackend(scope: 'selected' | 'all') {
       context: mergeContext(actionMeta.value?.context, resolveEffectiveRequestContext()),
     });
     if (!result.content_b64) {
-      batchMessage.value = '没有可导出的记录';
+      batchMessage.value = pageText('batch_msg_no_records_export', '没有可导出的记录');
       return;
     }
     downloadCsvBase64(result.file_name, result.mime_type, result.content_b64);
-    batchMessage.value = `已导出 ${result.count} 条记录`;
+    batchMessage.value = `${pageText('batch_msg_export_done_prefix', '已导出 ')}${result.count}${pageText('batch_msg_export_done_suffix', ' 条记录')}`;
   } catch (err) {
     setError(err, 'batch export failed');
-    batchMessage.value = '批量导出失败';
+    batchMessage.value = pageText('batch_msg_export_failed', '批量导出失败');
     batchDetails.value = [{
       text: buildBatchErrorLine(err, {
         model: targetModel,
         op: 'export_csv',
-        label: '批量导出',
+        label: pageText('batch_label_export', '批量导出'),
       }),
     }];
   } finally {
@@ -3278,7 +3330,7 @@ async function handleLoadMoreFailures() {
       text: buildBatchErrorLine(err, {
         model: req.model,
         op: req.action,
-        label: '加载更多失败',
+        label: pageText('batch_label_load_more_failed', '加载更多失败'),
       }),
     }];
   } finally {

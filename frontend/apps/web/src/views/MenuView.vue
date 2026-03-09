@@ -1,15 +1,15 @@
 <template>
   <section class="menu-view">
-    <StatusPanel v-if="loading" title="Resolving menu..." variant="info" />
+    <StatusPanel v-if="loading" :title="pageText('loading_title', 'Resolving menu...')" variant="info" />
     <StatusPanel
       v-else-if="info"
-      title="Menu group"
+      :title="pageText('info_title', 'Menu group')"
       :message="info"
       variant="info"
     />
     <StatusPanel
       v-else-if="error"
-      title="Menu resolve failed"
+      :title="pageText('error_title', 'Menu resolve failed')"
       :message="error"
       variant="error"
     />
@@ -25,6 +25,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { usePageContract } from '../app/pageContract';
 
 const route = useRoute();
 const router = useRouter();
@@ -32,6 +33,8 @@ const session = useSessionStore();
 const error = ref('');
 const info = ref('');
 const loading = ref(true);
+const pageContract = usePageContract('menu');
+const pageText = pageContract.text;
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
@@ -44,7 +47,7 @@ async function resolve() {
   try {
     const menuId = Number(route.params.menuId);
     if (!menuId) {
-      throw new Error('invalid menu id');
+      throw new Error(pageText('error_invalid_menu_id', 'invalid menu id'));
     }
     const result = resolveMenuAction(session.menuTree, menuId);
     if (result.kind === 'leaf') {
@@ -111,12 +114,12 @@ async function resolve() {
       return;
     }
     if (result.kind === 'broken') {
-      error.value = result.reason || 'resolve menu failed';
+      error.value = result.reason || pageText('error_resolve_failed', 'resolve menu failed');
       return;
     }
-    error.value = 'resolve menu failed';
+    error.value = pageText('error_resolve_failed', 'resolve menu failed');
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'resolve menu failed';
+    error.value = err instanceof Error ? err.message : pageText('error_resolve_failed', 'resolve menu failed');
   } finally {
     loading.value = false;
   }

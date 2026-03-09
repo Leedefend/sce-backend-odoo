@@ -1,17 +1,17 @@
 <template>
   <main class="page">
     <section class="card">
-      <h1>Login</h1>
+      <h1>{{ pageText('title', 'Login') }}</h1>
       <form @submit.prevent="onSubmit">
         <label>
-          Username
+          {{ pageText('username_label', 'Username') }}
           <input v-model="username" autocomplete="username" />
         </label>
         <label>
-          Password
+          {{ pageText('password_label', 'Password') }}
           <input v-model="password" type="password" autocomplete="current-password" />
         </label>
-        <button type="submit" :disabled="loading">{{ loading ? 'Signing in...' : 'Sign in' }}</button>
+        <button type="submit" :disabled="loading">{{ loading ? pageText('submit_loading', 'Signing in...') : pageText('submit_idle', 'Sign in') }}</button>
         <p v-if="error" class="error">{{ error }}</p>
       </form>
     </section>
@@ -22,10 +22,13 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
+import { usePageContract } from '../app/pageContract';
 
 const router = useRouter();
 const route = useRoute();
 const session = useSessionStore();
+const pageContract = usePageContract('login');
+const pageText = pageContract.text;
 
 const username = ref('');
 const password = ref('');
@@ -41,7 +44,7 @@ async function onSubmit() {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : session.resolveLandingPath('/');
     await router.push(redirect);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Login failed';
+    error.value = err instanceof Error ? err.message : pageText('error_login_failed', 'Login failed');
   } finally {
     loading.value = false;
   }

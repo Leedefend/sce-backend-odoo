@@ -2,8 +2,8 @@
   <section class="scene-health">
     <header class="header">
       <div>
-        <h2>Scene Health Dashboard</h2>
-        <p>可视化查看场景健康状态与自动降级结果。</p>
+        <h2>{{ pageText('title', 'Scene Health Dashboard') }}</h2>
+        <p>{{ pageText('subtitle', '可视化查看场景健康状态与自动降级结果。') }}</p>
       </div>
       <div class="actions">
         <label>
@@ -19,7 +19,7 @@
       </div>
     </header>
 
-    <StatusPanel v-if="loading" title="Loading scene health..." variant="info" />
+    <StatusPanel v-if="loading" :title="pageText('loading_title', 'Loading scene health...')" variant="info" />
     <StatusPanel
       v-else-if="errorText"
       :title="errorCopy.title"
@@ -114,6 +114,7 @@ import { computed, onMounted, ref } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { intentRequest } from '../api/intents';
 import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
+import { usePageContract } from '../app/pageContract';
 import {
   fetchSceneHealth,
   governanceExportContract,
@@ -134,7 +135,9 @@ const companies = ref<Array<{ id: number; name: string }>>([]);
 const targetChannel = ref<SceneChannel>('stable');
 const governanceReason = ref('');
 const governanceTraceId = ref('');
-const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'health request failed'));
+const pageContract = usePageContract('scene_health');
+const pageText = pageContract.text;
+const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'health request failed')));
 
 const autoDegradeLabel = computed(() => {
   const value = health.value?.auto_degrade;
@@ -204,7 +207,7 @@ async function loadHealth() {
     errorTraceId.value = parsed.trace_id || response.traceId || '';
   } catch (err) {
     health.value = null;
-    errorText.value = err instanceof Error ? err.message : 'health request failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_fallback', 'health request failed');
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   } finally {
@@ -215,7 +218,7 @@ async function loadHealth() {
 async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' | 'export_contract') {
   const reason = governanceReason.value.trim();
   if (!reason) {
-    errorText.value = 'reason is required for governance action';
+    errorText.value = pageText('error_reason_required', 'reason is required for governance action');
     statusError.value = { message: errorText.value };
     return;
   }
@@ -248,7 +251,7 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
     governanceTraceId.value = response.data.trace_id || response.traceId || '';
     await loadHealth();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'governance action failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_governance_failed', 'governance action failed');
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   } finally {

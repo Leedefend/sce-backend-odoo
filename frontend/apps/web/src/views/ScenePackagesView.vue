@@ -2,16 +2,16 @@
   <section class="scene-packages">
     <header class="header">
       <div>
-        <h2>Scene Packages</h2>
-        <p>导入、导出与审阅已安装的 Scene 能力包。</p>
+        <h2>{{ pageText('title', 'Scene Packages') }}</h2>
+        <p>{{ pageText('subtitle', '导入、导出与审阅已安装的 Scene 能力包。') }}</p>
       </div>
       <button class="secondary" :disabled="busy" @click="loadPackages">Refresh</button>
     </header>
 
-    <StatusPanel v-if="busy && !packages.length" title="Loading packages..." variant="info" />
+    <StatusPanel v-if="busy && !packages.length" :title="pageText('loading_title', 'Loading packages...')" variant="info" />
     <StatusPanel
       v-else-if="errorText"
-      title="Package operation failed"
+      :title="pageText('error_title', 'Package operation failed')"
       :message="errorText"
       :trace-id="traceId || undefined"
       variant="error"
@@ -84,6 +84,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import { usePageContract } from '../app/pageContract';
 import {
   scenePackageDryRunImport,
   scenePackageExport,
@@ -107,6 +108,8 @@ const exportVersion = ref('1.0.0');
 const exportChannel = ref<SceneChannel>('stable');
 const exportReason = ref('phase10.6 package export');
 const exportResult = ref<Record<string, unknown> | null>(null);
+const pageContract = usePageContract('scene_packages');
+const pageText = pageContract.text;
 
 function parsePackageJson(): Record<string, unknown> {
   const raw = importText.value.trim();
@@ -128,7 +131,7 @@ async function loadPackages() {
     packages.value = Array.isArray(res.data.items) ? res.data.items : [];
     traceId.value = res.traceId || '';
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'load packages failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_load_failed', 'load packages failed');
     if (err && typeof err === 'object' && 'traceId' in err) {
       traceId.value = String((err as { traceId?: string }).traceId || '');
     }
@@ -147,7 +150,7 @@ async function runDryRun() {
     dryRunResult.value = res.data;
     traceId.value = res.traceId || '';
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'dry-run failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_dry_run_failed', 'dry-run failed');
     if (err && typeof err === 'object' && 'traceId' in err) {
       traceId.value = String((err as { traceId?: string }).traceId || '');
     }
@@ -159,7 +162,7 @@ async function runDryRun() {
 async function runImport() {
   const reason = importReason.value.trim();
   if (!reason) {
-    errorText.value = 'reason is required for import';
+    errorText.value = pageText('error_reason_required', 'reason is required for import');
     return;
   }
   busy.value = true;
@@ -175,7 +178,7 @@ async function runImport() {
     traceId.value = res.traceId || '';
     await loadPackages();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'import failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_import_failed', 'import failed');
     if (err && typeof err === 'object' && 'traceId' in err) {
       traceId.value = String((err as { traceId?: string }).traceId || '');
     }
@@ -198,7 +201,7 @@ async function runExport() {
     exportResult.value = res.data.package;
     traceId.value = res.traceId || '';
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'export failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_export_failed', 'export failed');
     if (err && typeof err === 'object' && 'traceId' in err) {
       traceId.value = String((err as { traceId?: string }).traceId || '');
     }

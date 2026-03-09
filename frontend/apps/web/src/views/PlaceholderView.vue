@@ -1,17 +1,20 @@
 <template>
   <main class="page">
     <section class="card">
-      <h1>Dynamic View Placeholder</h1>
-      <p>Route: {{ route.path }}</p>
-      <p>Params: {{ route.params }}</p>
+      <h1>{{ pageText('title', 'Dynamic View Placeholder') }}</h1>
+      <p>{{ pageText('route_label', 'Route') }}: {{ route.path }}</p>
+      <p>{{ pageText('params_label', 'Params') }}: {{ route.params }}</p>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
+import { usePageContract } from '../app/pageContract';
 
 const route = useRoute();
+const pageContract = usePageContract('placeholder');
+const pageText = pageContract.text;
 </script>
 
 <style scoped>
