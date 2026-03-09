@@ -115,5 +115,19 @@ export function usePageContract(pageKey: string) {
     return fallback;
   }
 
-  return { contract, text, sectionEnabled, sectionStyle, sectionOpenDefault, sectionTagIs, actionText };
+  function actionIntent(key: string, fallback = ''): string {
+    const row = orchestrationActions.value[key];
+    if (!row || typeof row !== 'object') return fallback;
+    const intent = asText((row as Record<string, unknown>).intent);
+    return intent || fallback;
+  }
+
+  function actionTarget(key: string): Record<string, unknown> {
+    const row = orchestrationActions.value[key];
+    if (!row || typeof row !== 'object') return {};
+    const target = (row as Record<string, unknown>).target;
+    return target && typeof target === 'object' ? target as Record<string, unknown> : {};
+  }
+
+  return { contract, text, sectionEnabled, sectionStyle, sectionOpenDefault, sectionTagIs, actionText, actionIntent, actionTarget };
 }
