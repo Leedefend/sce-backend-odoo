@@ -9,6 +9,7 @@ PAGE_CONTRACT_TS = ROOT / "frontend/apps/web/src/app/pageContract.ts"
 PAGE_BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 SCENE_HEALTH_VIEW = ROOT / "frontend/apps/web/src/views/SceneHealthView.vue"
+USAGE_ANALYTICS_VIEW = ROOT / "frontend/apps/web/src/views/UsageAnalyticsView.vue"
 PAGE_ACTION_RUNTIME = ROOT / "frontend/apps/web/src/app/pageContractActionRuntime.ts"
 
 
@@ -34,6 +35,7 @@ def main() -> int:
     page_builder_text = _read(PAGE_BUILDER)
     workbench_text = _read(WORKBENCH_VIEW)
     scene_health_text = _read(SCENE_HEALTH_VIEW)
+    usage_analytics_text = _read(USAGE_ANALYTICS_VIEW)
     action_runtime_text = _read(PAGE_ACTION_RUNTIME)
     errors: list[str] = []
 
@@ -45,6 +47,8 @@ def main() -> int:
         errors.append(f"missing file: {WORKBENCH_VIEW.relative_to(ROOT).as_posix()}")
     if not scene_health_text:
         errors.append(f"missing file: {SCENE_HEALTH_VIEW.relative_to(ROOT).as_posix()}")
+    if not usage_analytics_text:
+        errors.append(f"missing file: {USAGE_ANALYTICS_VIEW.relative_to(ROOT).as_posix()}")
     if not action_runtime_text:
         errors.append(f"missing file: {PAGE_ACTION_RUNTIME.relative_to(ROOT).as_posix()}")
     if errors:
@@ -123,6 +127,23 @@ def main() -> int:
             "async function executeHeaderAction(actionKey: string) {",
             "const handled = await executePageContractAction({",
             "onRefresh: loadHealth,",
+        ],
+        errors,
+    )
+    _expect(
+        usage_analytics_text,
+        "UsageAnalyticsView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+            "onRefresh: load,",
         ],
         errors,
     )

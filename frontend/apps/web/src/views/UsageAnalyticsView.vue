@@ -75,7 +75,15 @@
         <button class="secondary" :disabled="loading" @click="copyExportParams">{{ pageText('action_copy_export_params', '复制导出参数') }}</button>
         <button class="secondary" :disabled="loading" @click="resetFilters">{{ pageText('action_reset_filters', '重置筛选') }}</button>
         <button class="secondary" :disabled="loading || !canExport" @click="exportCsv">{{ pageText('action_export_csv', '导出 CSV') }}</button>
-        <button class="secondary" :disabled="loading" @click="load">{{ pageText('action_refresh', '刷新') }}</button>
+        <button
+          v-for="action in headerActions"
+          :key="action.key"
+          class="secondary"
+          :disabled="loading"
+          @click="executeHeaderAction(action.key)"
+        >
+          {{ action.label }}
+        </button>
       </div>
     </header>
 
@@ -302,11 +310,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { exportUsageCsv, fetchCapabilityVisibilityReport, fetchUsageReport, type CapabilityVisibilityReport, type UsageReport } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 
 const loading = ref(false);
 const errorText = ref('');
@@ -322,8 +332,12 @@ const capabilityPrefix = ref('');
 const exportFilteredOnly = ref(true);
 const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
+const router = useRouter();
 const pageContract = usePageContract('usage_analytics');
 const pageText = pageContract.text;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
@@ -343,6 +357,7 @@ const filteredHiddenSamples = computed(() => {
 });
 const canExport = computed(() => Boolean(report.value || visibility.value));
 const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'Failed to load usage report')));
+const headerActions = computed(() => pageGlobalActions.value);
 
 function resolveContextAwareErrorText(err: unknown, fallback: string) {
   const counter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();
@@ -442,6 +457,26 @@ async function load() {
     errorTraceId.value = statusError.value.traceId || '';
   } finally {
     loading.value = false;
+  }
+}
+
+async function executeHeaderAction(actionKey: string) {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    onRefresh: load,
+    onFallback: async (key) => {
+      if (key === 'refresh_page') {
+        await load();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled && actionKey === 'refresh_page') {
+    await load();
   }
 }
 
