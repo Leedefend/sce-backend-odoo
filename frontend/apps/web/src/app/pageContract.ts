@@ -71,6 +71,12 @@ export function usePageContract(pageKey: string) {
     const raw = contract.value?.actions;
     return raw && typeof raw === 'object' ? raw : {};
   });
+  const orchestrationActions = computed<Record<string, unknown>>(() => {
+    const raw = contract.value?.page_orchestration_v1?.action_schema;
+    if (!raw || typeof raw !== 'object') return {};
+    const actionsRow = (raw as Record<string, unknown>).actions;
+    return actionsRow && typeof actionsRow === 'object' ? actionsRow as Record<string, unknown> : {};
+  });
 
   function text(key: string, fallback: string): string {
     const value = asText(texts.value[key]);
@@ -100,7 +106,13 @@ export function usePageContract(pageKey: string) {
 
   function actionText(key: string, fallback: string): string {
     const value = asText(actions.value[key]);
-    return value || fallback;
+    if (value) return value;
+    const row = orchestrationActions.value[key];
+    if (row && typeof row === 'object') {
+      const label = asText((row as Record<string, unknown>).label);
+      if (label) return label;
+    }
+    return fallback;
   }
 
   return { contract, text, sectionEnabled, sectionStyle, sectionOpenDefault, sectionTagIs, actionText };
