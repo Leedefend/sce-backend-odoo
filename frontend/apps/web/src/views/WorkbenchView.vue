@@ -240,11 +240,11 @@ const message = computed(() => {
     case ErrorCodes.ACT_NO_MODEL:
       return pageText('message_act_no_model', '当前动作对应的是自定义工作区，未绑定数据模型。');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return pageText('message_act_unsupported_type', '当前动作类型暂未在门户壳层支持。');
+      return pageText('message_act_unsupported_type', '');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
       return pageText('message_contract_context_missing', '页面缺少契约必需上下文（例如 action_id）。');
     case ErrorCodes.CAPABILITY_MISSING:
-      return pageText('message_capability_missing', '当前账号尚未开通该能力。');
+      return pageText('message_capability_missing', '');
     default:
       return pageText('message_default', '你可以返回工作台或打开菜单继续操作。');
   }
