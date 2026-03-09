@@ -346,7 +346,10 @@
         </record>
 
         <record id="base.group_system" model="res.groups">
-            <field name="implied_ids" eval="[(4, ref('smart_construction_core.group_sc_task_entry_access'))]"/>
+            <field name="implied_ids" eval="[
+                (4, ref('smart_construction_core.group_sc_task_entry_access')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_read'))
+            ]"/>
         </record>
 
     </data>
