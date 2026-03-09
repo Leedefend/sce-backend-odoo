@@ -34,6 +34,7 @@ ALLOWED_BLOCK_TYPES = {
 }
 ALLOWED_TONES = {"success", "warning", "danger", "info", "neutral"}
 ALLOWED_PROGRESS = {"overdue", "blocked", "pending", "running", "completed"}
+ALLOWED_DATA_SOURCE_TYPES = {"static", "scene_context", "api.data", "computed", "capability_registry", "role_profile", "mixed"}
 
 
 def _fail(errors: list[str]) -> int:
@@ -109,6 +110,23 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             if action_key not in action_registry:
                 errors.append(f"{aprefix}.key not declared in action_schema.actions: {action_key}")
 
+    data_sources = orch.get("data_sources")
+    if not isinstance(data_sources, dict) or not data_sources:
+        errors.append(f"pages.{page_key}.page_orchestration_v1.data_sources must be non-empty object")
+        data_sources = {}
+    else:
+        for ds_key, ds in data_sources.items():
+            dprefix = f"pages.{page_key}.page_orchestration_v1.data_sources.{ds_key}"
+            if not isinstance(ds, dict):
+                errors.append(f"{dprefix} must be object")
+                continue
+            source_type = str(ds.get("source_type") or "").strip()
+            provider = str(ds.get("provider") or "").strip()
+            if source_type not in ALLOWED_DATA_SOURCE_TYPES:
+                errors.append(f"{dprefix}.source_type invalid: {source_type}")
+            if not provider:
+                errors.append(f"{dprefix}.provider must be non-empty string")
+
     zones = orch.get("zones")
     if not isinstance(zones, list) or not zones:
         errors.append(f"pages.{page_key}.page_orchestration_v1.zones must be non-empty list")
@@ -123,6 +141,7 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             section_keys.add(key)
 
     block_section_keys: set[str] = set()
+    block_data_sources: set[str] = set()
     for zidx, zone in enumerate(zones):
         prefix = f"pages.{page_key}.page_orchestration_v1.zones[{zidx}]"
         if not isinstance(zone, dict):
@@ -140,6 +159,7 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             tone = str(block.get("tone") or "").strip()
             progress = str(block.get("progress") or "").strip()
             section_key = str(block.get("section_key") or "").strip()
+            data_source = str(block.get("data_source") or "").strip()
             if block_type not in ALLOWED_BLOCK_TYPES:
                 errors.append(f"{bprefix}.block_type invalid: {block_type}")
             if tone not in ALLOWED_TONES:
@@ -149,6 +169,12 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             if not section_key:
                 errors.append(f"{bprefix}.section_key must be non-empty")
                 continue
+            if not data_source:
+                errors.append(f"{bprefix}.data_source must be non-empty")
+            else:
+                block_data_sources.add(data_source)
+                if data_source not in data_sources:
+                    errors.append(f"{bprefix}.data_source not found in data_sources: {data_source}")
             actions = block.get("actions")
             if actions is not None and not isinstance(actions, list):
                 errors.append(f"{bprefix}.actions must be list when present")
@@ -173,6 +199,10 @@ def _validate_page(page_key: str, page_obj: dict[str, Any], errors: list[str]) -
             errors.append(f"pages.{page_key}: sections missing in orchestration blocks: {', '.join(missing_in_blocks)}")
         if extra_in_blocks:
             errors.append(f"pages.{page_key}: orchestration blocks contain unknown sections: {', '.join(extra_in_blocks)}")
+    if data_sources:
+        unused_data_sources = sorted(set(data_sources.keys()) - block_data_sources - {"ds_sections"})
+        if unused_data_sources:
+            errors.append(f"pages.{page_key}: data_sources unused by blocks: {', '.join(unused_data_sources)}")
 
 
 def main() -> int:

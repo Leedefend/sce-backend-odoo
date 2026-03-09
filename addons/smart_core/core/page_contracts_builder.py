@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import re
 from typing import Any, Dict
 
 
@@ -206,6 +207,14 @@ def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     return _scene_target(page)
 
 
+def _data_source_key(section_key: str) -> str:
+    token = re.sub(r"[^a-z0-9_]+", "_", str(section_key or "").strip().lower())
+    token = re.sub(r"_+", "_", token).strip("_")
+    if not token:
+        token = "section"
+    return f"ds_section_{token}"
+
+
 def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
     key = str(page_key or "").strip().lower()
     if key == "home":
@@ -245,6 +254,9 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
     audience = _page_audience(page_key)
     page_type = _normalize_page_type(page_key)
     zone_buckets: Dict[str, Dict[str, Any]] = {}
+    data_sources: Dict[str, Dict[str, Any]] = {
+        "ds_sections": {"source_type": "static", "provider": "page_contract.sections"},
+    }
     focus_sections = {key: idx + 1 for idx, key in enumerate(_role_focus_sections(role_code, page_key))}
     for idx, section in enumerate(sections):
         if not isinstance(section, dict):
@@ -273,6 +285,14 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             zone_buckets[zone_key] = zone
 
         semantic = _semantic_from_section(page_key, section_key, tag)
+        data_source = _data_source_key(section_key)
+        data_sources[data_source] = {
+            "source_type": "scene_context",
+            "provider": "page_contract.section",
+            "page_key": page_key,
+            "section_key": section_key,
+            "section_tag": tag,
+        }
         zone["blocks"].append(
             {
                 "key": f"{page_key}.{section_key}",
@@ -283,7 +303,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
                 "tone": semantic["tone"],
                 "progress": semantic["progress"] if enabled else "pending",
                 "section_key": section_key,
-                "data_source": "ds_sections",
+                "data_source": data_source,
                 "loading_strategy": "eager" if tag == "header" else "lazy",
                 "refreshable": True,
                 "collapsible": bool(tag == "details"),
@@ -363,9 +383,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code:
             "context": {"role_code": role_code},
         },
         "zones": zones,
-        "data_sources": {
-            "ds_sections": {"source_type": "static", "provider": "page_contract.sections"},
-        },
+        "data_sources": data_sources,
         "state_schema": {
             "tones": {key: {"icon": key} for key in STATE_TONES},
             "business_states": {
@@ -587,6 +605,9 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "hud_label_meta_url": "元信息链接",
                     "hud_label_last_intent": "最近意图",
                     "hud_label_trace_id": "追踪 ID",
+                    "hud_label_data_source": "数据源协议",
+                    "hud_value_ready": "就绪",
+                    "hud_value_missing": "缺失",
                     "hud_value_na": "N/A",
                     "action_copy": "复制",
                     "panel_title": "页面暂时无法打开",

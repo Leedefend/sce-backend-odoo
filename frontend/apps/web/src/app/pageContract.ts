@@ -78,6 +78,10 @@ export function usePageContract(pageKey: string) {
     const actionsRow = (raw as Record<string, unknown>).actions;
     return actionsRow && typeof actionsRow === 'object' ? actionsRow as Record<string, unknown> : {};
   });
+  const orchestrationDataSources = computed<Record<string, unknown>>(() => {
+    const raw = contract.value?.page_orchestration_v1?.data_sources;
+    return raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  });
   const globalActions = computed<GlobalActionConfig[]>(() => {
     const page = contract.value?.page_orchestration_v1?.page;
     if (!page || typeof page !== 'object') return [];
@@ -147,5 +151,27 @@ export function usePageContract(pageKey: string) {
     return target && typeof target === 'object' ? target as Record<string, unknown> : {};
   }
 
-  return { contract, text, sectionEnabled, sectionStyle, sectionOpenDefault, sectionTagIs, actionText, actionIntent, actionTarget, globalActions };
+  function dataSourceSpec(key: string): Record<string, unknown> {
+    const row = orchestrationDataSources.value[key];
+    return row && typeof row === 'object' ? row as Record<string, unknown> : {};
+  }
+
+  function hasDataSource(key: string): boolean {
+    return Object.keys(dataSourceSpec(key)).length > 0;
+  }
+
+  return {
+    contract,
+    text,
+    sectionEnabled,
+    sectionStyle,
+    sectionOpenDefault,
+    sectionTagIs,
+    actionText,
+    actionIntent,
+    actionTarget,
+    dataSourceSpec,
+    hasDataSource,
+    globalActions,
+  };
 }
