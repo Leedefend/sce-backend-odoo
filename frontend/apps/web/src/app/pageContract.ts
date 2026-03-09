@@ -7,6 +7,7 @@ function asText(value: unknown): string {
 
 type SectionTag = 'header' | 'section' | 'details' | 'div' | '';
 type SectionConfig = { enabled: boolean; order: number; tag: SectionTag; open: boolean | null };
+type GlobalActionConfig = { key: string; label: string; intent: string };
 
 export function usePageContract(pageKey: string) {
   const session = useSessionStore();
@@ -77,6 +78,23 @@ export function usePageContract(pageKey: string) {
     const actionsRow = (raw as Record<string, unknown>).actions;
     return actionsRow && typeof actionsRow === 'object' ? actionsRow as Record<string, unknown> : {};
   });
+  const globalActions = computed<GlobalActionConfig[]>(() => {
+    const page = contract.value?.page_orchestration_v1?.page;
+    if (!page || typeof page !== 'object') return [];
+    const raw = (page as Record<string, unknown>).global_actions;
+    if (!Array.isArray(raw)) return [];
+    const result: GlobalActionConfig[] = [];
+    raw.forEach((item) => {
+      if (!item || typeof item !== 'object') return;
+      const row = item as Record<string, unknown>;
+      const key = asText(row.key);
+      if (!key) return;
+      const label = asText(row.label) || actionText(key, key);
+      const intent = asText(row.intent) || actionIntent(key, 'ui.contract');
+      result.push({ key, label, intent });
+    });
+    return result;
+  });
 
   function text(key: string, fallback: string): string {
     const value = asText(texts.value[key]);
@@ -129,5 +147,5 @@ export function usePageContract(pageKey: string) {
     return target && typeof target === 'object' ? target as Record<string, unknown> : {};
   }
 
-  return { contract, text, sectionEnabled, sectionStyle, sectionOpenDefault, sectionTagIs, actionText, actionIntent, actionTarget };
+  return { contract, text, sectionEnabled, sectionStyle, sectionOpenDefault, sectionTagIs, actionText, actionIntent, actionTarget, globalActions };
 }

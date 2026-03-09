@@ -11,9 +11,14 @@
         </p>
       </div>
       <div class="actions">
-        <button class="ghost" @click="goToProjects">{{ pageActionText('open_workbench', pageText('action_go_workbench', '返回工作台')) }}</button>
-        <button class="ghost" @click="openFirstReachableMenu">{{ pageActionText('open_menu', pageText('action_open_menu', '打开菜单')) }}</button>
-        <button class="ghost" @click="refresh">{{ pageActionText('refresh_page', pageText('action_refresh', '刷新')) }}</button>
+        <button
+          v-for="action in headerActions"
+          :key="action.key"
+          class="ghost"
+          @click="executeWorkbenchAction(action.key)"
+        >
+          {{ action.label }}
+        </button>
       </div>
     </header>
 
@@ -175,7 +180,9 @@ const session = useSessionStore();
 const pageContract = usePageContract('workbench');
 const pageText = pageContract.text;
 const pageActionText = pageContract.actionText;
+const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
@@ -205,6 +212,16 @@ const scene = computed<Scene | null>(() => {
   );
 });
 const showTiles = computed(() => reason.value === ErrorCodes.CAPABILITY_MISSING && tiles.value.length > 0);
+const headerActions = computed(() => {
+  if (pageGlobalActions.value.length) {
+    return pageGlobalActions.value;
+  }
+  return [
+    { key: 'open_workbench', label: pageActionText('open_workbench', pageText('action_go_workbench', '返回工作台')), intent: 'ui.contract' },
+    { key: 'open_menu', label: pageActionText('open_menu', pageText('action_open_menu', '打开菜单')), intent: 'ui.contract' },
+    { key: 'refresh_page', label: pageActionText('refresh_page', pageText('action_refresh', '刷新')), intent: 'api.data' },
+  ];
+});
 const tiles = computed<EnrichedWorkbenchTile[]>(() => {
   const rawTiles = Array.isArray(scene.value?.tiles) ? (scene.value?.tiles as WorkbenchTile[]) : [];
   if (!Array.isArray(rawTiles)) return [];
@@ -277,40 +294,50 @@ onMounted(() => {
 });
 
 function refresh() {
-  const target = pageActionTarget('refresh_page');
-  if (String(target.kind || '') === 'page.refresh') {
-    window.location.reload();
-    return;
-  }
   window.location.reload();
 }
 
 async function goToProjects() {
-  const target = pageActionTarget('open_workbench');
-  const scene = String(target.scene_key || '');
-  if (scene) {
-    await router.push({ path: `/s/${scene}`, query: workspaceContextQuery.value });
-    return;
-  }
   await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
 }
 
 async function openFirstReachableMenu() {
-  const target = pageActionTarget('open_menu');
-  if (String(target.kind || '') === 'menu.first_reachable' && firstReachableMenuId.value) {
-    await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
-    return;
-  }
-  const scene = String(target.scene_key || '');
-  if (scene) {
-    await router.push({ path: `/s/${scene}`, query: workspaceContextQuery.value });
-    return;
-  }
   if (firstReachableMenuId.value) {
     await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
     return;
   }
   await router.push({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value });
+}
+
+async function executeWorkbenchAction(actionKey: string) {
+  const intent = pageActionIntent(actionKey, 'ui.contract');
+  const target = pageActionTarget(actionKey);
+  const kind = String(target.kind || '');
+  const scene = String(target.scene_key || '');
+
+  if (kind === 'page.refresh') {
+    refresh();
+    return;
+  }
+  if (kind === 'menu.first_reachable') {
+    await openFirstReachableMenu();
+    return;
+  }
+  if (intent === 'ui.contract' && scene) {
+    await router.push({ path: `/s/${scene}`, query: workspaceContextQuery.value });
+    return;
+  }
+  if (actionKey === 'open_workbench') {
+    await goToProjects();
+    return;
+  }
+  if (actionKey === 'open_menu') {
+    await openFirstReachableMenu();
+    return;
+  }
+  if (actionKey === 'refresh_page') {
+    refresh();
+  }
 }
 
 async function handleTileClick(tile: EnrichedWorkbenchTile) {
