@@ -6,6 +6,15 @@ from typing import Any, Dict
 
 STATE_TONES = ("success", "warning", "danger", "info", "neutral")
 PROGRESS_STATES = ("overdue", "blocked", "pending", "running", "completed")
+SUPPORTED_ROLE_CODES = {"pm", "finance", "owner"}
+
+
+def _normalize_role_code(data: Dict[str, Any]) -> str:
+    role_surface = data.get("role_surface") if isinstance(data.get("role_surface"), dict) else {}
+    role_code = str(role_surface.get("role_code") or "").strip().lower()
+    if role_code in SUPPORTED_ROLE_CODES:
+        return role_code
+    return "owner"
 
 
 def _normalize_page_type(page_key: str) -> str:
@@ -32,6 +41,47 @@ def _page_audience(page_key: str) -> list[str]:
     if key in {"home", "workbench"}:
         return ["project_manager", "finance_manager", "owner", "executive"]
     return ["generic_user"]
+
+
+def _role_section_policy(role_code: str) -> Dict[str, Dict[str, list[str]]]:
+    policies: Dict[str, Dict[str, Dict[str, list[str]]]] = {
+        "pm": {
+            "usage_analytics": {"disable": ["tables_role_user"]},
+            "scene_health": {"disable": ["details_debt"]},
+        },
+        "finance": {
+            "action": {"disable": ["group_view"]},
+            "record": {"disable": ["dev_context"]},
+        },
+        "owner": {
+            "workbench": {"disable": ["hud_details"]},
+            "action": {"disable": ["advanced_view", "dev_context"]},
+            "record": {"disable": ["dev_context"]},
+            "scene_health": {"disable": ["details_drift", "details_debt"]},
+        },
+    }
+    return policies.get(role_code, {})
+
+
+def _apply_role_section_policy(payload: Dict[str, Any], role_code: str) -> None:
+    pages = payload.get("pages") if isinstance(payload.get("pages"), dict) else {}
+    if not isinstance(pages, dict):
+        return
+    policies = _role_section_policy(role_code)
+    if not policies:
+        return
+    for page_key, cfg in policies.items():
+        page = pages.get(page_key) if isinstance(pages.get(page_key), dict) else {}
+        sections = page.get("sections") if isinstance(page.get("sections"), list) else []
+        disable = {str(key).strip() for key in (cfg.get("disable") or []) if str(key).strip()}
+        if not disable:
+            continue
+        for section in sections:
+            if not isinstance(section, dict):
+                continue
+            section_key = str(section.get("key") or "").strip()
+            if section_key in disable:
+                section["enabled"] = False
 
 
 def _zone_from_tag(tag: str) -> Dict[str, str]:
@@ -87,7 +137,7 @@ def _action_templates(section_key: str) -> list[Dict[str, Any]]:
     return []
 
 
-def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[str, Any]:
+def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any], role_code: str) -> Dict[str, Any]:
     sections = page.get("sections") if isinstance(page.get("sections"), list) else []
     title = ""
     texts = page.get("texts") if isinstance(page.get("texts"), dict) else {}
@@ -172,7 +222,7 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[st
             "header": {},
             "global_actions": [],
             "filters": [],
-            "context": {},
+            "context": {"role_code": role_code},
         },
         "zones": zones,
         "data_sources": {
@@ -196,12 +246,14 @@ def _build_page_orchestration_v1(page_key: str, page: Dict[str, Any]) -> Dict[st
             "generated_by": "smart_core.page_contracts_builder",
             "schema_version": "1.0.0",
             "page_key": page_key,
+            "role_variant": role_code,
             "semantic_profile": page_type,
         },
     }
 
 
 def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
+    role_code = _normalize_role_code(_data if isinstance(_data, dict) else {})
     payload = {
         "schema_version": "v1",
         "pages": {
@@ -1017,11 +1069,12 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
         },
     }
+    _apply_role_section_policy(payload, role_code)
     pages = payload.get("pages") if isinstance(payload.get("pages"), dict) else {}
     for key, page in pages.items():
         if not isinstance(page, dict):
             continue
         if isinstance(page.get("page_orchestration_v1"), dict):
             continue
-        page["page_orchestration_v1"] = _build_page_orchestration_v1(str(key), page)
+        page["page_orchestration_v1"] = _build_page_orchestration_v1(str(key), page, role_code)
     return payload
