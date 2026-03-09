@@ -184,6 +184,8 @@ step("role surface users: baseline reads")
 exec_kw(uid_owner, OWNER_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
 exec_kw(uid_finance, FINANCE_PWD, "payment.request", "search_read", [[]], {"limit": 1, "fields": ["id", "name", "state"]})
 exec_kw(uid_executive, EXECUTIVE_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})
+exec_kw(uid_executive, EXECUTIVE_PWD, "sc.settlement.order", "search_read", [[]], {"limit": 1, "fields": ["id", "name", "state"]})
+exec_kw(admin_uid, ADMIN_PWD, "sc.settlement.order", "search_read", [[]], {"limit": 1, "fields": ["id", "name", "state"]})
 
 step("read role: search_read project")
 exec_kw(uid_read, READ_PWD, "project.project", "search_read", [[]], {"limit": 1, "fields": ["id", "name"]})

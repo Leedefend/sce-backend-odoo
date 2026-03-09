@@ -287,7 +287,13 @@ def main() -> int:
 
     db_name = str(os.getenv("E2E_DB") or os.getenv("DB_NAME") or "").strip()
     fixture_password = str(os.getenv("E2E_PROD_LIKE_PASSWORD") or baseline.get("fixture_password") or "prod_like").strip()
-    model = str(os.getenv("RELATION_AUDIT_MODEL") or "project.project").strip() or "project.project"
+    raw_models = str(os.getenv("RELATION_AUDIT_MODELS") or "").strip()
+    if raw_models:
+        models = [m.strip() for m in raw_models.split(",") if m.strip()]
+    else:
+        single = str(os.getenv("RELATION_AUDIT_MODEL") or "").strip()
+        models = [single] if single else ["project.project", "sc.settlement.order"]
+    models = sorted({m for m in models if m})
     max_errors = int(os.getenv("RELATION_AUDIT_MAX_ERRORS") or 0)
 
     base_url = get_base_url()
@@ -304,26 +310,31 @@ def main() -> int:
             continue
         try:
             token = _login_token(intent_url, db_name, login, fixture_password)
-            report, role_errors = _audit_role(intent_url, token, role, login, model)
-            role_reports.append(report)
-            errors.extend(role_errors)
+            for model in models:
+                report, role_errors = _audit_role(intent_url, token, role, login, model)
+                report["model"] = model
+                role_reports.append(report)
+                errors.extend([f"{role}.{model}: {msg}" for msg in role_errors])
         except Exception as exc:
-            role_reports.append(
-                {
-                    "role": role,
-                    "login": login,
-                    "error": str(exc),
-                }
-            )
+            for model in models:
+                role_reports.append(
+                    {
+                        "role": role,
+                        "login": login,
+                        "model": model,
+                        "error": str(exc),
+                    }
+                )
             errors.append(f"{role}: {exc}")
 
     payload = {
         "ok": len(errors) <= max_errors,
         "summary": {
             "role_count": len(role_reports),
+            "model_count": len(models),
             "error_count": len(errors),
             "max_errors": max_errors,
-            "model": model,
+            "models": models,
         },
         "baseline": {
             "fixtures": [{"role": str(x.get("role") or ""), "login": str(x.get("login") or "")} for x in fixtures],
@@ -337,8 +348,9 @@ def main() -> int:
         "# Relation Access Policy Consistency Audit",
         "",
         f"- status: {'PASS' if payload['ok'] else 'FAIL'}",
-        f"- model: {model}",
+        f"- models: {', '.join(models)}",
         f"- role_count: {payload['summary']['role_count']}",
+        f"- model_count: {payload['summary']['model_count']}",
         f"- error_count: {payload['summary']['error_count']}",
         f"- max_errors: {max_errors}",
         "",
@@ -348,9 +360,10 @@ def main() -> int:
     for row in role_reports:
         role = str(row.get("role") or "")
         login = str(row.get("login") or "")
+        model = str(row.get("model") or "")
         mode = str(((row.get("access_policy") or {}).get("mode")) or "-") if isinstance(row, dict) else "-"
         rel_count = int(row.get("relation_field_count") or 0) if isinstance(row, dict) else 0
-        lines.append(f"- {role} ({login}): mode={mode} relation_fields={rel_count}")
+        lines.append(f"- {role} ({login}) model={model}: mode={mode} relation_fields={rel_count}")
     if errors:
         lines.extend(["", "## Errors", ""])
         for item in errors[:500]:

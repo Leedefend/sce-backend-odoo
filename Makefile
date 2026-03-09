@@ -2041,6 +2041,7 @@ verify.capability.orphan.report: guard.prod.forbid
 
 .PHONY: verify.platform.security.ready
 verify.platform.security.ready: guard.prod.forbid \
+	verify.system_group.business_acl.guard \
 	verify.intent.write.guard \
 	verify.intent.acl.mode \
 	verify.intent.write.smoke \
@@ -2049,6 +2050,10 @@ verify.platform.security.ready: guard.prod.forbid \
 	verify.scene.governance.smoke \
 	verify.intent.permission.matrix.guard
 	@echo "[OK] verify.platform.security.ready done"
+
+.PHONY: verify.system_group.business_acl.guard
+verify.system_group.business_acl.guard: guard.prod.forbid
+	@python3 scripts/verify/system_group_business_acl_guard.py
 
 verify.platform.kernel.ready: guard.prod.forbid \
 	verify.platform.security.ready \
@@ -2287,6 +2292,7 @@ verify.contract.preflight: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract.mode.smoke
 	@$(MAKE) --no-print-directory verify.project.form.contract.surface.guard
 	@$(MAKE) --no-print-directory verify.relation.access_policy.consistency.audit
+	@$(MAKE) --no-print-directory verify.system_group.business_acl.guard
 	@$(MAKE) --no-print-directory verify.native_surface_integrity_guard
 	@$(MAKE) --no-print-directory verify.governed_surface_policy_guard
 	@$(MAKE) --no-print-directory verify.contract.surface_mapping_guard
