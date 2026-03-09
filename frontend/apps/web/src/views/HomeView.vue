@@ -644,7 +644,7 @@ function homeLayoutText(key: string, fallback: string) {
 function isHomeSectionEnabled(key: string) {
   const sectionMap = workspaceLayoutSections.value;
   if (!sectionMap.size) return true;
-  return sectionMap.get(key) !== false;
+  return sectionMap.get(key) === true;
 }
 
 function homeSectionStyle(key: string) {
