@@ -1,5 +1,12 @@
 <template>
-  <section class="workbench">
+  <PageRenderer
+    v-if="useUnifiedWorkbenchRenderer"
+    :contract="workbenchOrchestrationContract"
+    :datasets="workbenchOrchestrationDatasets"
+    @action="handleWorkbenchBlockAction"
+  />
+
+  <section v-else class="workbench">
     <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
         <p v-if="showHud" class="diagnostic">{{ pageText('diagnostic_hint', '诊断页仅用于排查，不作为正式产品界面。') }}</p>
@@ -119,6 +126,8 @@ import { hasWorkspaceContext as hasWorkspaceContextValue, readWorkspaceContext, 
 import { normalizeEmbeddedSceneQuery, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import PageRenderer from '../components/page/PageRenderer.vue';
+import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import type { NavNode } from '@sc/schema';
 
@@ -196,6 +205,17 @@ const pageGlobalActions = pageContract.globalActions;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
+const workbenchOrchestrationContract = computed<PageOrchestrationContract>(() => {
+  const contract = pageContract.contract.value?.page_orchestration_v1;
+  return (contract && typeof contract === 'object' ? contract : {}) as PageOrchestrationContract;
+});
+const useUnifiedWorkbenchRenderer = computed(() => {
+  if (asText(route.query.legacy_workbench) === '1') return false;
+  const contract = workbenchOrchestrationContract.value || {};
+  const hasV1 = asText(contract.contract_version) === 'page_orchestration_v1';
+  const zones = Array.isArray(contract.zones) ? contract.zones : [];
+  return hasV1 && zones.length > 0;
+});
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
 const lastIntent = computed(() => session.lastIntent || '');
@@ -224,6 +244,37 @@ const scene = computed<Scene | null>(() => {
 const showTiles = computed(() => reason.value === ErrorCodes.CAPABILITY_MISSING && tiles.value.length > 0);
 const statusPanelDataSourceType = computed(() => pageDataSourceType('ds_section_status_panel'));
 const hasStatusPanelDataSource = computed(() => pageHasDataSource('ds_section_status_panel') && statusPanelDataSourceType.value === 'scene_context');
+const workbenchOrchestrationDatasets = computed<Record<string, unknown>>(() => {
+  const headerSummary = [
+    { key: 'reason', label: pageText('hud_label_reason', '原因'), value: reasonLabel.value, tone: 'info' },
+    { key: 'menu', label: pageText('hud_label_menu', '菜单'), value: menuId.value || pageText('hud_value_na', 'N/A'), tone: 'neutral' },
+    { key: 'action', label: pageText('hud_label_action', '动作'), value: actionId.value || pageText('hud_value_na', 'N/A'), tone: 'neutral' },
+  ];
+  const panelSummary = [
+    { key: 'panel', label: pageText('panel_title', '页面暂时无法打开'), value: message.value || '-', tone: panelVariant.value === 'error' ? 'danger' : 'warning' },
+  ];
+  const tileEntries = tiles.value.map((tile, idx) => ({
+    id: String(tile.key || `tile-${idx + 1}`),
+    key: String(tile.key || `tile-${idx + 1}`),
+    title: String(tile.title || tile.key || `入口 ${idx + 1}`),
+    hint: String(tile.subtitle || ''),
+    scene_key: resolveTileScene(tile),
+    route: String(tile.route || ''),
+    action_key: 'open_scene',
+    tile_key: String(tile.key || ''),
+  }));
+  const hudEntries = [
+    { id: 'route', title: pageText('hud_label_route', '路由'), description: route.fullPath, tone: 'info' },
+    { id: 'trace', title: pageText('hud_label_trace_id', '追踪 ID'), description: lastTraceId.value || pageText('hud_value_na', 'N/A'), tone: 'neutral' },
+    { id: 'intent', title: pageText('hud_label_last_intent', '最近意图'), description: lastIntent.value || pageText('hud_value_na', 'N/A'), tone: 'neutral' },
+  ];
+  return {
+    ds_section_header: headerSummary,
+    ds_section_status_panel: panelSummary,
+    ds_section_tiles: tileEntries,
+    ds_section_hud_details: hudEntries,
+  };
+});
 const headerActions = computed(() => {
   if (pageGlobalActions.value.length) {
     return pageGlobalActions.value;
@@ -394,6 +445,35 @@ async function handleTileClick(tile: EnrichedWorkbenchTile) {
       },
     });
   }
+}
+
+function normalizeItemQuery(item: Record<string, unknown>): LocationQueryRaw {
+  const raw = item.query;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return workspaceContextQuery.value;
+  return { ...workspaceContextQuery.value, ...(raw as Record<string, unknown>) };
+}
+
+async function handleWorkbenchBlockAction(event: PageBlockActionEvent) {
+  const item = event.item && typeof event.item === 'object' ? event.item as Record<string, unknown> : {};
+  const tileKey = asText(item.tile_key || item.key);
+  if (tileKey) {
+    const matchedTile = tiles.value.find((tile) => asText(tile.key) === tileKey);
+    if (matchedTile) {
+      await handleTileClick(matchedTile);
+      return;
+    }
+  }
+  const scene = asText(item.scene_key || item.sceneKey);
+  if (scene) {
+    await router.push({ path: `/s/${scene}`, query: normalizeItemQuery(item) });
+    return;
+  }
+  const path = asText(item.path || item.route);
+  if (path) {
+    await router.push({ path, query: normalizeItemQuery(item) });
+    return;
+  }
+  await executeWorkbenchAction(event.actionKey);
 }
 
 async function copyTrace() {
