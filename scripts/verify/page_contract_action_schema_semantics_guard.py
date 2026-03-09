@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 
 ALLOWED_INTENTS = {"ui.contract", "api.data", "execute_button", "file.download"}
-ALLOWED_TARGET_KINDS = {"page.refresh", "menu.first_reachable", "route.path"}
+ALLOWED_TARGET_KINDS = {"page.refresh", "menu.first_reachable", "route.path", "scene.key"}
 
 
 def _fail(errors: list[str]) -> int:
@@ -56,6 +56,10 @@ def _validate_action(page_key: str, action_key: str, action: Any, errors: list[s
             path = target.get("path")
             if not isinstance(path, str) or not path.startswith("/"):
                 errors.append(f"{prefix}.target.path must be absolute path when kind=route.path")
+        if kind == "scene.key":
+            scene_key = target.get("scene_key")
+            if not isinstance(scene_key, str) or not scene_key.strip():
+                errors.append(f"{prefix}.target.scene_key must be non-empty string when kind=scene.key")
     else:
         if intent == "ui.contract":
             scene_key = target.get("scene_key")
