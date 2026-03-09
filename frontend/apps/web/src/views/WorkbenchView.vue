@@ -111,6 +111,7 @@ import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPo
 import { hasWorkspaceContext as hasWorkspaceContextValue, readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { normalizeEmbeddedSceneQuery, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import type { NavNode } from '@sc/schema';
 
@@ -310,32 +311,35 @@ async function openFirstReachableMenu() {
 }
 
 async function executeWorkbenchAction(actionKey: string) {
-  const intent = pageActionIntent(actionKey, 'ui.contract');
-  const target = pageActionTarget(actionKey);
-  const kind = String(target.kind || '');
-  const scene = String(target.scene_key || '');
-
-  if (kind === 'page.refresh') {
-    refresh();
-    return;
-  }
-  if (kind === 'menu.first_reachable') {
-    await openFirstReachableMenu();
-    return;
-  }
-  if (intent === 'ui.contract' && scene) {
-    await router.push({ path: `/s/${scene}`, query: workspaceContextQuery.value });
-    return;
-  }
-  if (actionKey === 'open_workbench') {
-    await goToProjects();
-    return;
-  }
-  if (actionKey === 'open_menu') {
-    await openFirstReachableMenu();
-    return;
-  }
-  if (actionKey === 'refresh_page') {
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: workspaceContextQuery.value,
+    onRefresh: refresh,
+    onOpenMenuFirstReachable: async () => {
+      if (!firstReachableMenuId.value) return false;
+      await router.push({ path: `/m/${firstReachableMenuId.value}`, query: workspaceContextQuery.value });
+      return true;
+    },
+    onFallback: async (key) => {
+      if (key === 'open_workbench') {
+        await goToProjects();
+        return true;
+      }
+      if (key === 'open_menu') {
+        await openFirstReachableMenu();
+        return true;
+      }
+      if (key === 'refresh_page') {
+        refresh();
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled && actionKey === 'refresh_page') {
     refresh();
   }
 }
