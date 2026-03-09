@@ -1,6 +1,10 @@
 <template>
   <main class="page">
-    <section v-if="pageSectionEnabled('card', true)" class="card" :style="pageSectionStyle('card')">
+    <section
+      v-if="pageSectionEnabled('card', true) && pageSectionTagIs('card', 'section')"
+      class="card"
+      :style="pageSectionStyle('card')"
+    >
       <h1>{{ pageText('title', 'Dynamic View Placeholder') }}</h1>
       <p>{{ pageText('route_label', 'Route') }}: {{ route.path }}</p>
       <p>{{ pageText('params_label', 'Params') }}: {{ route.params }}</p>
@@ -17,6 +21,7 @@ const pageContract = usePageContract('placeholder');
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 </script>
 
 <style scoped>
