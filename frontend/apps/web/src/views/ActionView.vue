@@ -716,70 +716,70 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
   if (key.includes('risk') || key.includes('风险')) {
     return {
       title: pageText('intent_title_risk', '风险驾驶舱：先处理严重与逾期风险'),
-      summary: '优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。',
+      summary: pageText('intent_summary_risk', '优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。'),
       actions: [
-        { label: '待我处理风险', to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
-        { label: '打开风险场景', to: '/s/projects.dashboard' },
+        { label: pageText('intent_action_risk_todo', '待我处理风险'), to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
+        { label: pageText('intent_action_risk_scene', '打开风险场景'), to: '/s/projects.dashboard' },
       ],
-      emptyTitle: '当前暂无风险记录',
-      emptyHint: '建议转到“我的工作”处理风险待办，或进入风险驾驶舱继续巡检。',
-      primaryAction: { label: '处理风险待办', to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
-      secondaryAction: { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+      emptyTitle: pageText('empty_title_risk', '当前暂无风险记录'),
+      emptyHint: pageText('empty_hint_risk', '建议转到“我的工作”处理风险待办，或进入风险驾驶舱继续巡检。'),
+      primaryAction: { label: pageText('primary_action_risk', '处理风险待办'), to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
+      secondaryAction: { label: pageText('secondary_action_risk', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
   if (key.includes('contract') || key.includes('合同')) {
     return {
       title: pageText('intent_title_contract', '合同执行：优先识别付款与变更风险'),
-      summary: '先看执行率与付款状态，再进入异常合同处理。',
+      summary: pageText('intent_summary_contract', '先看执行率与付款状态，再进入异常合同处理。'),
       actions: [
-        { label: '处理合同待办', to: '/my-work', query: { section: 'todo', search: '合同' } },
-        { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+        { label: pageText('intent_action_contract_todo', '处理合同待办'), to: '/my-work', query: { section: 'todo', search: '合同' } },
+        { label: pageText('intent_action_contract_dashboard', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
       ],
-      emptyTitle: '当前暂无合同记录',
-      emptyHint: '可前往“我的工作”查看合同待办，或进入风险驾驶舱追踪履约风险。',
-      primaryAction: { label: '处理合同待办', to: '/my-work', query: { section: 'todo', search: '合同' } },
-      secondaryAction: { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+      emptyTitle: pageText('empty_title_contract', '当前暂无合同记录'),
+      emptyHint: pageText('empty_hint_contract', '可前往“我的工作”查看合同待办，或进入风险驾驶舱追踪履约风险。'),
+      primaryAction: { label: pageText('primary_action_contract', '处理合同待办'), to: '/my-work', query: { section: 'todo', search: '合同' } },
+      secondaryAction: { label: pageText('secondary_action_contract', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
   if (key.includes('cost') || key.includes('成本')) {
     return {
       title: pageText('intent_title_cost', '成本执行：先回答是否超支'),
-      summary: '优先关注超支金额与超支项，再下钻到具体偏差来源。',
+      summary: pageText('intent_summary_cost', '优先关注超支金额与超支项，再下钻到具体偏差来源。'),
       actions: [
-        { label: '处理成本待办', to: '/my-work', query: { section: 'todo', search: '成本' } },
-        { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+        { label: pageText('intent_action_cost_todo', '处理成本待办'), to: '/my-work', query: { section: 'todo', search: '成本' } },
+        { label: pageText('intent_action_cost_dashboard', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
       ],
-      emptyTitle: '当前暂无成本记录',
-      emptyHint: '可前往“我的工作”处理成本待办，或进入风险驾驶舱继续巡检。',
-      primaryAction: { label: '处理超支待办', to: '/my-work', query: { section: 'todo', search: '成本' } },
-      secondaryAction: { label: '查看风险驾驶舱', to: '/s/projects.dashboard' },
+      emptyTitle: pageText('empty_title_cost', '当前暂无成本记录'),
+      emptyHint: pageText('empty_hint_cost', '可前往“我的工作”处理成本待办，或进入风险驾驶舱继续巡检。'),
+      primaryAction: { label: pageText('primary_action_cost', '处理超支待办'), to: '/my-work', query: { section: 'todo', search: '成本' } },
+      secondaryAction: { label: pageText('secondary_action_cost', '查看风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
   if (key.includes('project') || key.includes('项目')) {
     return {
       title: pageText('intent_title_project', '项目视角：先判断是否可控'),
-      summary: '优先查看风险、审批与经营指标，再决定下一步动作。',
+      summary: pageText('intent_summary_project', '优先查看风险、审批与经营指标，再决定下一步动作。'),
       actions: [
-        { label: '查看项目待办', to: '/my-work', query: { section: 'todo', search: '项目' } },
-        { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+        { label: pageText('intent_action_project_todo', '查看项目待办'), to: '/my-work', query: { section: 'todo', search: '项目' } },
+        { label: pageText('intent_action_project_dashboard', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
       ],
-      emptyTitle: '当前暂无项目记录',
-      emptyHint: '建议进入“我的工作”处理项目待办，或去风险驾驶舱查看全局状态。',
-      primaryAction: { label: '查看项目待办', to: '/my-work', query: { section: 'todo', search: '项目' } },
-      secondaryAction: { label: '进入风险驾驶舱', to: '/s/projects.dashboard' },
+      emptyTitle: pageText('empty_title_project', '当前暂无项目记录'),
+      emptyHint: pageText('empty_hint_project', '建议进入“我的工作”处理项目待办，或去风险驾驶舱查看全局状态。'),
+      primaryAction: { label: pageText('primary_action_project', '查看项目待办'), to: '/my-work', query: { section: 'todo', search: '项目' } },
+      secondaryAction: { label: pageText('secondary_action_project', '进入风险驾驶舱'), to: '/s/projects.dashboard' },
     };
   }
   return {
     title: pageText('intent_title_default', '业务列表：先看状态，再执行动作'),
-    summary: '通过快速筛选与快捷操作，优先处理最关键事项。',
+    summary: pageText('intent_summary_default', '通过快速筛选与快捷操作，优先处理最关键事项。'),
     actions: [
-      { label: '工作台', to: '/' },
-      { label: '我的工作', to: '/my-work' },
+      { label: pageText('intent_action_default_home', '工作台'), to: '/' },
+      { label: pageText('intent_action_default_my_work', '我的工作'), to: '/my-work' },
     ],
     emptyTitle: pageText('empty_title_default', '当前视图暂无数据'),
     emptyHint: pageText('empty_hint_default', '建议切换到我的工作或风险驾驶舱继续处理。'),
-    primaryAction: { label: '去我的工作', to: '/my-work' },
-    secondaryAction: { label: '去风险驾驶舱', to: '/s/projects.dashboard' },
+    primaryAction: { label: pageText('primary_action_default', '去我的工作'), to: '/my-work' },
+    secondaryAction: { label: pageText('secondary_action_default', '去风险驾驶舱'), to: '/s/projects.dashboard' },
   };
 });
 const emptyReasonText = computed(() => {
@@ -788,7 +788,7 @@ const emptyReasonText = computed(() => {
   }
   const modelText = effectiveSurfaceModel.value;
   if (modelText === 'construction.work.breakdown') {
-    return '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。';
+    return pageText('empty_reason_wbs', '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。');
   }
   return pageText('empty_reason_default', '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。');
 });
