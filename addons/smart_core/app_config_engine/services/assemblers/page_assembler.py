@@ -260,6 +260,8 @@ class PageAssembler:
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
+        if isinstance(data.get("head"), dict) and isinstance(data.get("access_policy"), dict):
+            data["head"]["access_policy"] = dict(data.get("access_policy") or {})
 
         # 9) with_data：首屏数据（列表/表单）——必须用“当前用户 env”以自动应用记录规则
         if p.get("with_data"):

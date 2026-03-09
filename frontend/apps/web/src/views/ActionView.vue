@@ -344,7 +344,12 @@ import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
 import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
-import { parseContractContextRaw, resolveContractReadRight, resolveContractViewMode } from '../app/contractActionRuntime';
+import {
+  parseContractContextRaw,
+  resolveContractAccessPolicy,
+  resolveContractReadRight,
+  resolveContractViewMode,
+} from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
 import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
@@ -2479,6 +2484,7 @@ async function load() {
       const defaultGroupBy = contractGroupByChips.value.find((item) => item.isDefault);
       if (defaultGroupBy) activeGroupByField.value = defaultGroupBy.field;
     }
+    const accessPolicy = resolveContractAccessPolicy(typedContract);
     contractReadAllowed.value = resolveContractReadRight(typedContract);
     contractWarningCount.value = Array.isArray(typedContract.warnings) ? typedContract.warnings.length : 0;
     contractDegraded.value = Boolean(typedContract.degraded);
@@ -2486,7 +2492,11 @@ async function load() {
       await router.replace({
         name: 'workbench',
         query: resolveWorkbenchQuery(ErrorCodes.CAPABILITY_MISSING, {
-          diag: { diag: 'contract_read_forbidden' },
+          diag: {
+            diag: 'contract_read_forbidden',
+            diag_reason_code: accessPolicy.reasonCode || undefined,
+            diag_access_mode: accessPolicy.mode,
+          },
         }),
       });
       return;
