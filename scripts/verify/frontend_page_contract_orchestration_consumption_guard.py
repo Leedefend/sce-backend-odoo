@@ -9,9 +9,16 @@ PAGE_CONTRACT_TS = ROOT / "frontend/apps/web/src/app/pageContract.ts"
 PAGE_BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 ACTION_TARGET_SCHEMA = ROOT / "addons/smart_core/core/action_target_schema.py"
 WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
+ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
+RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
+SCENE_VIEW = ROOT / "frontend/apps/web/src/views/SceneView.vue"
+LOGIN_VIEW = ROOT / "frontend/apps/web/src/views/LoginView.vue"
+MENU_VIEW = ROOT / "frontend/apps/web/src/views/MenuView.vue"
+PLACEHOLDER_VIEW = ROOT / "frontend/apps/web/src/views/PlaceholderView.vue"
 SCENE_HEALTH_VIEW = ROOT / "frontend/apps/web/src/views/SceneHealthView.vue"
 USAGE_ANALYTICS_VIEW = ROOT / "frontend/apps/web/src/views/UsageAnalyticsView.vue"
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
+MY_WORK_VIEW = ROOT / "frontend/apps/web/src/views/MyWorkView.vue"
 SCENE_PACKAGES_VIEW = ROOT / "frontend/apps/web/src/views/ScenePackagesView.vue"
 PAGE_ACTION_RUNTIME = ROOT / "frontend/apps/web/src/app/pageContractActionRuntime.ts"
 
@@ -38,9 +45,16 @@ def main() -> int:
     page_builder_text = _read(PAGE_BUILDER)
     action_target_schema_text = _read(ACTION_TARGET_SCHEMA)
     workbench_text = _read(WORKBENCH_VIEW)
+    action_view_text = _read(ACTION_VIEW)
+    record_view_text = _read(RECORD_VIEW)
+    scene_view_text = _read(SCENE_VIEW)
+    login_view_text = _read(LOGIN_VIEW)
+    menu_view_text = _read(MENU_VIEW)
+    placeholder_view_text = _read(PLACEHOLDER_VIEW)
     scene_health_text = _read(SCENE_HEALTH_VIEW)
     usage_analytics_text = _read(USAGE_ANALYTICS_VIEW)
     home_text = _read(HOME_VIEW)
+    my_work_text = _read(MY_WORK_VIEW)
     scene_packages_text = _read(SCENE_PACKAGES_VIEW)
     action_runtime_text = _read(PAGE_ACTION_RUNTIME)
     errors: list[str] = []
@@ -51,6 +65,18 @@ def main() -> int:
         errors.append(f"missing file: {PAGE_BUILDER.relative_to(ROOT).as_posix()}")
     if not workbench_text:
         errors.append(f"missing file: {WORKBENCH_VIEW.relative_to(ROOT).as_posix()}")
+    if not action_view_text:
+        errors.append(f"missing file: {ACTION_VIEW.relative_to(ROOT).as_posix()}")
+    if not record_view_text:
+        errors.append(f"missing file: {RECORD_VIEW.relative_to(ROOT).as_posix()}")
+    if not scene_view_text:
+        errors.append(f"missing file: {SCENE_VIEW.relative_to(ROOT).as_posix()}")
+    if not login_view_text:
+        errors.append(f"missing file: {LOGIN_VIEW.relative_to(ROOT).as_posix()}")
+    if not menu_view_text:
+        errors.append(f"missing file: {MENU_VIEW.relative_to(ROOT).as_posix()}")
+    if not placeholder_view_text:
+        errors.append(f"missing file: {PLACEHOLDER_VIEW.relative_to(ROOT).as_posix()}")
     if not action_target_schema_text:
         errors.append(f"missing file: {ACTION_TARGET_SCHEMA.relative_to(ROOT).as_posix()}")
     if not scene_health_text:
@@ -59,6 +85,8 @@ def main() -> int:
         errors.append(f"missing file: {USAGE_ANALYTICS_VIEW.relative_to(ROOT).as_posix()}")
     if not home_text:
         errors.append(f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}")
+    if not my_work_text:
+        errors.append(f"missing file: {MY_WORK_VIEW.relative_to(ROOT).as_posix()}")
     if not scene_packages_text:
         errors.append(f"missing file: {SCENE_PACKAGES_VIEW.relative_to(ROOT).as_posix()}")
     if not action_runtime_text:
@@ -181,6 +209,106 @@ def main() -> int:
         errors,
     )
     _expect(
+        action_view_text,
+        "ActionView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+            "onRefresh: reload,",
+        ],
+        errors,
+    )
+    _expect(
+        login_view_text,
+        "LoginView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+        ],
+        errors,
+    )
+    _expect(
+        menu_view_text,
+        "MenuView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+            "onRefresh: resolve,",
+        ],
+        errors,
+    )
+    _expect(
+        placeholder_view_text,
+        "PlaceholderView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+        ],
+        errors,
+    )
+    _expect(
+        record_view_text,
+        "RecordView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+            "onRefresh: reload,",
+        ],
+        errors,
+    )
+    _expect(
+        scene_view_text,
+        "SceneView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+            "onRefresh: resolveScene,",
+        ],
+        errors,
+    )
+    _expect(
         home_text,
         "HomeView.vue",
         [
@@ -212,6 +340,23 @@ def main() -> int:
             "async function executeHeaderAction(actionKey: string) {",
             "const handled = await executePageContractAction({",
             "onRefresh: loadHealth,",
+        ],
+        errors,
+    )
+    _expect(
+        my_work_text,
+        "MyWorkView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const headerActions = computed(() => pageGlobalActions.value);",
+            "v-for=\"action in headerActions\"",
+            "@click=\"executeHeaderAction(action.key)\"",
+            "async function executeHeaderAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+            "onRefresh: load,",
         ],
         errors,
     )

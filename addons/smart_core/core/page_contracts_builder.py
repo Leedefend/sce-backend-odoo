@@ -239,6 +239,12 @@ def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
             {"key": "open_my_work", "label": "我的工作", "intent": "ui.contract"},
             {"key": "open_usage_analytics", "label": "使用分析", "intent": "ui.contract"},
         ]
+    if key == "my_work":
+        return [
+            {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
+            {"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"},
+            {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
+        ]
     if key == "workbench":
         return [
             {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
@@ -647,6 +653,12 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "my_work": {
                 "schema_version": "v1",
+                "sections": [
+                    {"key": "hero", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "todo_focus", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "retry_panel", "enabled": True, "order": 3, "tag": "details", "open": False},
+                    {"key": "list_main", "enabled": True, "order": 4, "tag": "section"},
+                ],
                 "texts": {
                     "title": "我的工作",
                     "loading_title": "加载我的工作中...",
@@ -805,6 +817,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     "confirm_batch_complete_suffix": " 条待办？",
                     "error_complete_todo_failed": "完成待办失败",
                     "error_batch_complete_failed": "批量完成待办失败",
+                    "enter_error_message_fallback": "功能入口暂时不可用",
                     "feedback_reason_group_no_retry_prefix": "原因组 ",
                     "feedback_reason_group_no_retry_suffix": " 没有可重试项",
                     "feedback_selected_reason_retryable_prefix": "已选中 ",
@@ -882,6 +895,7 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
                     {"key": "dev_context", "enabled": True, "order": 10, "tag": "div"},
                 ],
                 "texts": {
+                    "error_fallback": "操作暂不可用",
                     "status_loading": "加载中",
                     "status_error": "加载失败",
                     "status_empty": "暂无数据",

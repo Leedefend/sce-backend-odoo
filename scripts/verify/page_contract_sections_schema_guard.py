@@ -10,6 +10,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 ALLOWED_TAGS = {"header", "section", "details", "div"}
+SECTIONS_OPTIONAL_PAGES = {"home"}
 
 
 def _fail(errors: list[str]) -> int:
@@ -107,7 +108,7 @@ def main() -> int:
         if not isinstance(page_obj, dict):
             errors.append(f"pages.{page_key} must be object")
             continue
-        if "sections" not in page_obj:
+        if str(page_key) in SECTIONS_OPTIONAL_PAGES and "sections" not in page_obj:
             continue
         checked += 1
         _validate_page_sections(str(page_key), page_obj.get("sections"), errors)
