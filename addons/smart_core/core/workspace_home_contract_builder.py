@@ -41,6 +41,7 @@ BLOCK_TYPES = _SEM.get("BLOCK_TYPES") or (
 STATE_TONES = _SEM.get("STATE_TONES") or ("success", "warning", "danger", "info", "neutral")
 PROGRESS_STATES = _SEM.get("PROGRESS_STATES") or ("overdue", "blocked", "pending", "running", "completed")
 _ACTION_TARGET_RESOLVER = None
+_DATA_PROVIDER_MODULE = None
 
 
 def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
@@ -62,6 +63,24 @@ def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
         pass
     fallback_scene = str(page_key or "").strip().lower() or "portal.dashboard"
     return {"kind": "scene.key", "scene_key": fallback_scene}
+
+
+def _load_data_provider():
+    global _DATA_PROVIDER_MODULE
+    if _DATA_PROVIDER_MODULE is not None:
+        return _DATA_PROVIDER_MODULE
+    provider_path = Path(__file__).with_name("workspace_home_data_provider.py")
+    try:
+        spec = spec_from_file_location("smart_core_workspace_home_data_provider", provider_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("spec unavailable")
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _DATA_PROVIDER_MODULE = module
+        return module
+    except Exception:
+        _DATA_PROVIDER_MODULE = False
+        return None
 
 
 def _to_text(value: Any) -> str:
@@ -141,6 +160,13 @@ def _normalize_role_code(data: Dict[str, Any]) -> str:
 
 
 def _role_focus_config(role_code: str) -> Dict[str, Any]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_role_focus_config", None)
+        if callable(fn):
+            value = fn(role_code)
+            if isinstance(value, dict) and value:
+                return value
     if role_code == "pm":
         return {
             "zone_order": ["primary", "analysis", "support"],
@@ -157,6 +183,109 @@ def _role_focus_config(role_code: str) -> Dict[str, Any]:
     }
 
 
+def _v1_page_profile(role_code: str) -> Dict[str, Any]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_v1_page_profile", None)
+        if callable(fn):
+            value = fn(role_code)
+            if isinstance(value, dict) and value:
+                return value
+    audience_map = {
+        "pm": ["project_manager", "construction_manager"],
+        "finance": ["finance_manager", "construction_manager"],
+        "owner": ["owner", "executive"],
+    }
+    audience = audience_map.get(role_code, ["owner"])
+    priority_model = "task_first" if role_code == "pm" else "metric_first" if role_code == "finance" else "role_first"
+    return {"audience": audience, "priority_model": priority_model, "mobile_priority": ["hero", "today_focus", "analysis"]}
+
+
+def _v1_data_sources() -> Dict[str, Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_v1_data_sources", None)
+        if callable(fn):
+            value = fn()
+            if isinstance(value, dict) and value:
+                return value
+    return {
+        "ds_hero": {"source_type": "computed", "provider": "workspace.hero", "section_keys": ["hero"]},
+        "ds_metrics": {"source_type": "computed", "provider": "workspace.metrics.summary", "section_keys": ["metrics"]},
+        "ds_today_todos": {"source_type": "computed", "provider": "workspace.todo.today", "section_keys": ["today_actions"]},
+        "ds_risk_alerts": {"source_type": "computed", "provider": "workspace.risk.alerts", "section_keys": ["risk"]},
+        "ds_ops_progress": {"source_type": "computed", "provider": "workspace.progress.summary", "section_keys": ["ops"]},
+        "ds_scene_groups": {"source_type": "scene_context", "provider": "workspace.scene.groups", "section_keys": ["scene_groups"]},
+        "ds_capability_groups": {
+            "source_type": "capability_registry",
+            "provider": "workspace.capability.groups",
+            "section_keys": ["group_overview"],
+        },
+        "ds_advice": {"source_type": "computed", "provider": "workspace.advice", "section_keys": ["advice"]},
+        "ds_filters": {"source_type": "static", "provider": "workspace.filters", "section_keys": ["filters"]},
+    }
+
+
+def _v1_state_schema() -> Dict[str, Any]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_v1_state_schema", None)
+        if callable(fn):
+            value = fn()
+            if isinstance(value, dict) and value:
+                return value
+    return {
+        "tones": {
+            "success": {"icon": "check-circle"},
+            "warning": {"icon": "alert-triangle"},
+            "danger": {"icon": "x-circle"},
+            "info": {"icon": "info"},
+            "neutral": {"icon": "dot"},
+        },
+        "business_states": {
+            "pending": {"tone": "warning", "label": "待处理"},
+            "running": {"tone": "info", "label": "进行中"},
+            "blocked": {"tone": "danger", "label": "已阻塞"},
+            "completed": {"tone": "success", "label": "已完成"},
+            "overdue": {"tone": "danger", "label": "已逾期"},
+        },
+    }
+
+
+def _v1_action_schema(role_code: str) -> Dict[str, Any]:
+    specs: Dict[str, Dict[str, str]] = {
+        "open_landing": {"label": "打开默认入口", "intent": "ui.contract"},
+        "open_my_work": {"label": "查看全部", "intent": "ui.contract"},
+        "open_risk_dashboard": {"label": "进入风险驾驶舱", "intent": "ui.contract"},
+        "open_scene": {"label": "进入场景", "intent": "ui.contract"},
+        "refresh": {"label": "刷新", "intent": "api.data"},
+    }
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_v1_action_specs", None)
+        if callable(fn):
+            value = fn()
+            if isinstance(value, dict) and value:
+                specs = value
+
+    actions: Dict[str, Any] = {}
+    for key, spec in specs.items():
+        if not isinstance(spec, dict):
+            continue
+        action_key = _to_text(key)
+        if not action_key:
+            continue
+        label = _to_text(spec.get("label")) or action_key
+        intent = _to_text(spec.get("intent")) or "ui.contract"
+        actions[action_key] = {
+            "label": label,
+            "intent": intent,
+            "target": _shared_action_target(action_key, "portal.dashboard"),
+            "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
+        }
+    return {"actions": actions}
+
+
 def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
     role_cfg = _role_focus_config(role_code)
     zone_order = role_cfg.get("zone_order") if isinstance(role_cfg.get("zone_order"), list) else []
@@ -166,118 +295,132 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
         {"key": "analysis", "label": "分析监控区", "order": zone_rank.get("analysis", 2)},
         {"key": "support", "label": "辅助入口区", "order": zone_rank.get("support", 3)},
     ]
-    blocks = [
-        {
-            "key": "record_overview",
-            "type": "record_summary",
-            "zone": "primary",
-            "order": 1,
-            "source_path": "hero",
-            "visible": True,
-            "tone": "info",
-            "progress": "running",
-        },
-        {
-            "key": "metrics_hero",
-            "type": "hero_metric",
-            "zone": "analysis",
-            "order": 2,
-            "source_path": "metrics",
-            "visible": True,
-            "tone": "neutral",
-            "progress": "running",
-        },
-        {
-            "key": "metrics_kpi",
-            "type": "metric_row",
-            "zone": "analysis",
-            "order": 3,
-            "source_path": "metrics",
-            "visible": True,
-            "tone": "info",
-            "progress": "running",
-        },
-        {
-            "key": "todo_core",
-            "type": "todo_list",
-            "zone": "primary",
-            "order": 4,
-            "source_path": "today_actions",
-            "visible": True,
-            "tone": "warning",
-            "progress": "pending",
-        },
-        {
-            "key": "risk_core",
-            "type": "alert_panel",
-            "zone": "primary",
-            "order": 5,
-            "source_path": "risk",
-            "visible": True,
-            "tone": "danger",
-            "progress": "blocked",
-        },
-        {
-            "key": "ops_progress",
-            "type": "progress_summary",
-            "zone": "analysis",
-            "order": 6,
-            "source_path": "ops",
-            "visible": True,
-            "tone": "info",
-            "progress": "running",
-        },
-        {
-            "key": "entry_grid",
-            "type": "entry_grid",
-            "zone": "support",
-            "order": 7,
-            "source_path": "scene_groups",
-            "visible": True,
-            "tone": "neutral",
-            "progress": "completed",
-        },
-        {
-            "key": "group_grid",
-            "type": "entry_grid",
-            "zone": "support",
-            "order": 8,
-            "source_path": "group_overview",
-            "visible": True,
-            "tone": "neutral",
-            "progress": "completed",
-        },
-        {
-            "key": "advice_fold",
-            "type": "accordion_group",
-            "zone": "support",
-            "order": 9,
-            "source_path": "advice",
-            "visible": True,
-            "tone": "warning",
-            "progress": "pending",
-        },
-        {
-            "key": "filters_fold",
-            "type": "accordion_group",
-            "zone": "support",
-            "order": 10,
-            "source_path": "filters",
-            "visible": role_code != "owner",
-            "tone": "neutral",
-            "progress": "completed",
-        },
-        {
-            "key": "activity_stream",
-            "type": "activity_feed",
-            "zone": "analysis",
-            "order": 11,
-            "source_path": "risk.actions",
-            "visible": True,
-            "tone": "info",
-            "progress": "running",
-        },
-    ]
+    blocks = []
+    provider = _load_data_provider()
+    if provider is not None:
+        zones_fn = getattr(provider, "build_legacy_zones", None)
+        if callable(zones_fn):
+            payload = zones_fn(role_code, zone_rank)
+            if isinstance(payload, list) and payload:
+                zones = payload
+        blocks_fn = getattr(provider, "build_legacy_blocks", None)
+        if callable(blocks_fn):
+            payload = blocks_fn(role_code)
+            if isinstance(payload, list) and payload:
+                blocks = payload
+    if not blocks:
+        blocks = [
+            {
+                "key": "record_overview",
+                "type": "record_summary",
+                "zone": "primary",
+                "order": 1,
+                "source_path": "hero",
+                "visible": True,
+                "tone": "info",
+                "progress": "running",
+            },
+            {
+                "key": "metrics_hero",
+                "type": "hero_metric",
+                "zone": "analysis",
+                "order": 2,
+                "source_path": "metrics",
+                "visible": True,
+                "tone": "neutral",
+                "progress": "running",
+            },
+            {
+                "key": "metrics_kpi",
+                "type": "metric_row",
+                "zone": "analysis",
+                "order": 3,
+                "source_path": "metrics",
+                "visible": True,
+                "tone": "info",
+                "progress": "running",
+            },
+            {
+                "key": "todo_core",
+                "type": "todo_list",
+                "zone": "primary",
+                "order": 4,
+                "source_path": "today_actions",
+                "visible": True,
+                "tone": "warning",
+                "progress": "pending",
+            },
+            {
+                "key": "risk_core",
+                "type": "alert_panel",
+                "zone": "primary",
+                "order": 5,
+                "source_path": "risk",
+                "visible": True,
+                "tone": "danger",
+                "progress": "blocked",
+            },
+            {
+                "key": "ops_progress",
+                "type": "progress_summary",
+                "zone": "analysis",
+                "order": 6,
+                "source_path": "ops",
+                "visible": True,
+                "tone": "info",
+                "progress": "running",
+            },
+            {
+                "key": "entry_grid",
+                "type": "entry_grid",
+                "zone": "support",
+                "order": 7,
+                "source_path": "scene_groups",
+                "visible": True,
+                "tone": "neutral",
+                "progress": "completed",
+            },
+            {
+                "key": "group_grid",
+                "type": "entry_grid",
+                "zone": "support",
+                "order": 8,
+                "source_path": "group_overview",
+                "visible": True,
+                "tone": "neutral",
+                "progress": "completed",
+            },
+            {
+                "key": "advice_fold",
+                "type": "accordion_group",
+                "zone": "support",
+                "order": 9,
+                "source_path": "advice",
+                "visible": True,
+                "tone": "warning",
+                "progress": "pending",
+            },
+            {
+                "key": "filters_fold",
+                "type": "accordion_group",
+                "zone": "support",
+                "order": 10,
+                "source_path": "filters",
+                "visible": role_code != "owner",
+                "tone": "neutral",
+                "progress": "completed",
+            },
+            {
+                "key": "activity_stream",
+                "type": "activity_feed",
+                "zone": "analysis",
+                "order": 11,
+                "source_path": "risk.actions",
+                "visible": True,
+                "tone": "info",
+                "progress": "running",
+            },
+        ]
     focus_blocks = [str(key) for key in role_cfg.get("focus_blocks", []) if _to_text(key)]
     focus_rank = {key: idx + 1 for idx, key in enumerate(focus_blocks)}
 
@@ -313,15 +456,24 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
     role_cfg = _role_focus_config(role_code)
     zone_order = role_cfg.get("zone_order") if isinstance(role_cfg.get("zone_order"), list) else []
     zone_rank = {str(key): idx + 1 for idx, key in enumerate(zone_order)}
-    audience_map = {
-        "pm": ["project_manager", "construction_manager"],
-        "finance": ["finance_manager", "construction_manager"],
-        "owner": ["owner", "executive"],
-    }
-    audience = audience_map.get(role_code, ["owner"])
-    priority_model = "task_first" if role_code == "pm" else "metric_first" if role_code == "finance" else "role_first"
+    profile = _v1_page_profile(role_code)
+    audience = profile.get("audience") if isinstance(profile.get("audience"), list) and profile.get("audience") else ["owner"]
+    priority_model = _to_text(profile.get("priority_model")) or (
+        "task_first" if role_code == "pm" else "metric_first" if role_code == "finance" else "role_first"
+    )
+    mobile_priority = profile.get("mobile_priority") if isinstance(profile.get("mobile_priority"), list) and profile.get("mobile_priority") else ["hero", "today_focus", "analysis"]
 
-    zones: List[Dict[str, Any]] = [
+    zones: List[Dict[str, Any]] = []
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_v1_zones", None)
+        if callable(fn):
+            payload = fn(role_code, audience, zone_rank)
+            if isinstance(payload, list) and payload:
+                zones = payload
+
+    if not zones:
+        zones = [
         {
             "key": "hero",
             "title": "核心关注",
@@ -536,13 +688,20 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                 },
             ],
         },
-    ]
+        ]
 
     v1_focus_map = {
         "pm": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "hero_record_summary"],
         "finance": ["progress_summary_ops", "risk_alert_panel", "metric_row_core", "hero_record_summary"],
         "owner": ["hero_record_summary", "risk_alert_panel", "todo_list_today", "entry_grid_scene"],
     }
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_v1_focus_map", None)
+        if callable(fn):
+            payload = fn()
+            if isinstance(payload, dict) and payload:
+                v1_focus_map = payload
     focus_blocks = {str(key): idx + 1 for idx, key in enumerate(v1_focus_map.get(role_code, []))}
     for zone in zones:
         blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
@@ -575,75 +734,13 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
             "context": {"role_code": role_code},
         },
         "zones": zones,
-        "data_sources": {
-            "ds_hero": {"source_type": "computed", "provider": "workspace.hero", "section_keys": ["hero"]},
-            "ds_metrics": {"source_type": "computed", "provider": "workspace.metrics.summary", "section_keys": ["metrics"]},
-            "ds_today_todos": {"source_type": "computed", "provider": "workspace.todo.today", "section_keys": ["today_actions"]},
-            "ds_risk_alerts": {"source_type": "computed", "provider": "workspace.risk.alerts", "section_keys": ["risk"]},
-            "ds_ops_progress": {"source_type": "computed", "provider": "workspace.progress.summary", "section_keys": ["ops"]},
-            "ds_scene_groups": {"source_type": "scene_context", "provider": "workspace.scene.groups", "section_keys": ["scene_groups"]},
-            "ds_capability_groups": {
-                "source_type": "capability_registry",
-                "provider": "workspace.capability.groups",
-                "section_keys": ["group_overview"],
-            },
-            "ds_advice": {"source_type": "computed", "provider": "workspace.advice", "section_keys": ["advice"]},
-            "ds_filters": {"source_type": "static", "provider": "workspace.filters", "section_keys": ["filters"]},
-        },
-        "state_schema": {
-            "tones": {
-                "success": {"icon": "check-circle"},
-                "warning": {"icon": "alert-triangle"},
-                "danger": {"icon": "x-circle"},
-                "info": {"icon": "info"},
-                "neutral": {"icon": "dot"},
-            },
-            "business_states": {
-                "pending": {"tone": "warning", "label": "待处理"},
-                "running": {"tone": "info", "label": "进行中"},
-                "blocked": {"tone": "danger", "label": "已阻塞"},
-                "completed": {"tone": "success", "label": "已完成"},
-                "overdue": {"tone": "danger", "label": "已逾期"},
-            },
-        },
-        "action_schema": {
-            "actions": {
-                "open_landing": {
-                    "label": "打开默认入口",
-                    "intent": "ui.contract",
-                    "target": _shared_action_target("open_landing", "portal.dashboard"),
-                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
-                },
-                "open_my_work": {
-                    "label": "查看全部",
-                    "intent": "ui.contract",
-                    "target": _shared_action_target("open_my_work", "portal.dashboard"),
-                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
-                },
-                "open_risk_dashboard": {
-                    "label": "进入风险驾驶舱",
-                    "intent": "ui.contract",
-                    "target": _shared_action_target("open_risk_dashboard", "portal.dashboard"),
-                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
-                },
-                "open_scene": {
-                    "label": "进入场景",
-                    "intent": "ui.contract",
-                    "target": _shared_action_target("open_scene", "portal.dashboard"),
-                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
-                },
-                "refresh": {
-                    "label": "刷新",
-                    "intent": "api.data",
-                    "target": _shared_action_target("refresh", "portal.dashboard"),
-                    "visibility": {"roles": [role_code], "capabilities": [], "expr": None},
-                },
-            }
-        },
+        "data_sources": _v1_data_sources(),
+        "state_schema": _v1_state_schema(),
+        "action_schema": _v1_action_schema(role_code),
         "render_hints": {
             "dense_mode": False,
             "preferred_columns": 4,
-            "mobile_priority": ["hero", "today_focus", "analysis"],
+            "mobile_priority": mobile_priority,
             "sticky_header": True,
         },
         "meta": {
@@ -655,6 +752,11 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
 
 
 def _build_today_actions(ready_caps: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_today_actions", None)
+        if callable(fn):
+            return fn(ready_caps)
     actions: List[Dict[str, Any]] = []
     for cap in list(ready_caps)[:6]:
         payload = cap.get("default_payload") if isinstance(cap.get("default_payload"), dict) else {}
@@ -682,6 +784,11 @@ def _build_today_actions(ready_caps: Iterable[Dict[str, Any]]) -> List[Dict[str,
 
 
 def _build_advice_items(locked_caps: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    provider = _load_data_provider()
+    if provider is not None:
+        fn = getattr(provider, "build_advice_items", None)
+        if callable(fn):
+            return fn(locked_caps)
     result: List[Dict[str, Any]] = []
     for cap in list(locked_caps)[:3]:
         reason = _to_text(cap.get("reason")) or "当前账号尚未开通该能力。"

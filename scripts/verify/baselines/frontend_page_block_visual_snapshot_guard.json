@@ -1,0 +1,31 @@
+{
+  "registry_keys": [
+    "BLOCK_REGISTRY",
+    "accordion_group",
+    "activity_feed",
+    "alert",
+    "alert_panel",
+    "blockType",
+    "entry",
+    "entry_grid",
+    "metric",
+    "metric_row",
+    "progress_summary",
+    "record_summary",
+    "todo",
+    "todo_list"
+  ],
+  "block_files": {
+    "frontend/apps/web/src/components/page/blocks/BlockAccordionGroup.vue": "8de14d3805f54b9669ada6bf7d97b860abcb33ad8d9a03664036d31c988a401c",
+    "frontend/apps/web/src/components/page/blocks/BlockActivityFeed.vue": "c5331ad224dea7cb3d05072e9bf3f00ddbdd7d8e864968eb81816487caca6653",
+    "frontend/apps/web/src/components/page/blocks/BlockAlertPanel.vue": "de0de489cec4e4d136ceb41da351069842d5ccf78db7915bb1be3a06b5486a2b",
+    "frontend/apps/web/src/components/page/blocks/BlockEntryGrid.vue": "cfc7c829ba39e991f60eeb5fa0b952490ff955426cba55d34a32d7a5a6d155f0",
+    "frontend/apps/web/src/components/page/blocks/BlockMetricRow.vue": "2ddcbb533f482c77e9b08d5498e69555280cd100a0cfc0e29572a0a27a703019",
+    "frontend/apps/web/src/components/page/blocks/BlockProgressSummary.vue": "f5623d4f493ce2ddbfbccb20e3e72898c8969ea3d9c398bb21f63823cd79f4eb",
+    "frontend/apps/web/src/components/page/blocks/BlockRecordSummary.vue": "7ff2034d59be6f926a2de327ecb5d4cab5a6d44ce0b49064141884e8a59c363e",
+    "frontend/apps/web/src/components/page/blocks/BlockTodoList.vue": "f7ee6e1112516964e57d94758fbb3d2440e3d22a2f3083acc3cf03431bddc303"
+  },
+  "registry_file": {
+    "frontend/apps/web/src/app/pageBlockRegistry.ts": "0bd343686fd35e978c21f658efca1042ee67736b6997aac3c7a7881f21a6c3e1"
+  }
+}

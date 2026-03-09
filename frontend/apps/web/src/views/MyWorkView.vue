@@ -1,5 +1,12 @@
 <template>
-  <section class="my-work">
+  <PageRenderer
+    v-if="useUnifiedMyWorkRenderer"
+    :contract="myWorkOrchestrationContract"
+    :datasets="myWorkOrchestrationDatasets"
+    @action="handleMyWorkBlockAction"
+  />
+
+  <section v-else class="my-work">
     <!-- Page intent: 聚合待办并提供可执行入口，默认进入即可开工。 -->
     <header
       v-if="pageSectionEnabled('hero', true) && pageSectionTagIs('hero', 'header')"
@@ -476,6 +483,8 @@ import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findActionMeta, findActionNodeByModel } from '../app/menu';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import PageRenderer from '../components/page/PageRenderer.vue';
+import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
@@ -490,6 +499,17 @@ const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionOpenDefault = pageContract.sectionOpenDefault;
 const pageSectionTagIs = pageContract.sectionTagIs;
 const pageSectionStyle = pageContract.sectionStyle;
+const myWorkOrchestrationContract = computed<PageOrchestrationContract>(() => {
+  const contract = pageContract.contract.value?.page_orchestration_v1;
+  return (contract && typeof contract === 'object' ? contract : {}) as PageOrchestrationContract;
+});
+const useUnifiedMyWorkRenderer = computed(() => {
+  if (String(route.query.legacy_my_work || '').trim() === '1') return false;
+  const contract = myWorkOrchestrationContract.value || {};
+  const hasV1 = String(contract.contract_version || '') === 'page_orchestration_v1';
+  const zones = Array.isArray(contract.zones) ? contract.zones : [];
+  return hasV1 && zones.length > 0;
+});
 
 const loading = ref(false);
 const errorText = ref('');
@@ -711,6 +731,46 @@ const groupedVisibleRetryItems = computed(() => {
   return Array.from(map.entries()).map(([reasonCode, rows]) => ({ reasonCode, items: rows }));
 });
 const headerActions = computed(() => pageGlobalActions.value);
+const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {
+  const summaryMetrics = summaryCards.value.map((item) => ({
+    key: String(item.key || ''),
+    label: String(item.label || item.key || ''),
+    value: Number(item.count || 0),
+    tone: item.key === activeSection.value ? 'info' : 'neutral',
+  }));
+  const todoRows = displayItems.value.slice(0, 20).map((item) => ({
+    id: item.id,
+    title: String(item.title || '-'),
+    description: `${String(item.source || '-')}${item.deadline ? ` · ${item.deadline}` : ''}`,
+    tone: item.reason_code ? 'warning' : 'info',
+    action_key: 'open_item',
+    entry_id: item.id,
+    scene_key: item.scene_key,
+  }));
+  const sectionEntries = sections.value.map((sec) => ({
+    id: String(sec.key || ''),
+    key: String(sec.key || ''),
+    title: String(sec.label || sec.key || ''),
+    hint: `${pageText('batch_selected_prefix', '已选 ')}${Number(sec.count || 0)}${pageText('batch_selected_suffix', ' 条待办')}`,
+    action_key: 'switch_section',
+    section_key: String(sec.key || ''),
+  }));
+  const retryAlerts = retryFailedItems.value.slice(0, 10).map((item) => ({
+    id: String(item.id),
+    title: `#${item.id} ${item.reason_code || 'UNKNOWN'}`,
+    description: String(item.message || '-'),
+    tone: item.retryable === false ? 'danger' : 'warning',
+    action_key: 'focus_retry_item',
+  }));
+  return {
+    ds_section_hero: summaryMetrics,
+    ds_section_todo_focus: todoRows,
+    ds_section_list_main: todoRows,
+    ds_section_retry_panel: retryAlerts,
+    ds_section_tabs: sectionEntries,
+    ds_section_filters: sectionEntries,
+  };
+});
 let autoSectionAligned = false;
 
 function findRecommendedSectionKey() {
@@ -940,6 +1000,29 @@ function goWorkbench() {
 
 function goRiskCockpit() {
   router.push({ path: '/s/projects.dashboard' }).catch(() => {});
+}
+
+async function handleMyWorkBlockAction(event: PageBlockActionEvent) {
+  const actionKey = String(event.actionKey || '').trim();
+  const item = event.item && typeof event.item === 'object' ? event.item as Record<string, unknown> : {};
+  if (actionKey === 'switch_section') {
+    const sectionKey = String(item.section_key || '').trim();
+    if (sectionKey) {
+      selectSection(sectionKey);
+      return;
+    }
+  }
+  if (actionKey === 'open_item' || actionKey === 'focus_retry_item') {
+    const itemId = Number(item.entry_id || item.id || 0);
+    if (itemId > 0) {
+      const record = items.value.find((row) => row.id === itemId);
+      if (record) {
+        openPrimaryEntry(record);
+        return;
+      }
+    }
+  }
+  await executeHeaderAction(actionKey);
 }
 
 async function executeHeaderAction(actionKey: string) {

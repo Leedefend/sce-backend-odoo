@@ -1429,6 +1429,10 @@ verify.workspace_home.sections_schema.guard: guard.prod.forbid
 verify.workspace_home.orchestration_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/workspace_home_orchestration_schema_guard.py
 
+.PHONY: verify.workspace_home.provider_split.guard
+verify.workspace_home.provider_split.guard: guard.prod.forbid
+	@python3 scripts/verify/workspace_home_provider_split_guard.py
+
 .PHONY: verify.frontend.contract_text_hardcode.guard
 verify.frontend.contract_text_hardcode.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_contract_text_hardcode_guard.py
@@ -1461,6 +1465,42 @@ verify.frontend.page_contract.orchestration_consumption.guard: guard.prod.forbid
 verify.frontend.page_contract.runtime_universal.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_page_contract_runtime_universal_guard.py
 
+.PHONY: verify.frontend.page_block_renderer_smoke
+verify.frontend.page_block_renderer_smoke: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_block_renderer_smoke_guard.py
+
+.PHONY: verify.frontend.page_block_visual_snapshot_guard
+verify.frontend.page_block_visual_snapshot_guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_block_visual_snapshot_guard.py
+
+.PHONY: verify.frontend.portal_dashboard_block_migration
+verify.frontend.portal_dashboard_block_migration: guard.prod.forbid
+	@python3 scripts/verify/frontend_portal_dashboard_block_migration_guard.py
+
+.PHONY: verify.frontend.workbench_block_migration
+verify.frontend.workbench_block_migration: guard.prod.forbid
+	@python3 scripts/verify/frontend_workbench_block_migration_guard.py
+
+.PHONY: verify.frontend.my_work_block_migration
+verify.frontend.my_work_block_migration: guard.prod.forbid
+	@python3 scripts/verify/frontend_my_work_block_migration_guard.py
+
+.PHONY: verify.frontend.page_block_registry_guard
+verify.frontend.page_block_registry_guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_block_registry_guard.py
+
+.PHONY: verify.frontend.page_legacy_renderer_residue_guard
+verify.frontend.page_legacy_renderer_residue_guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_legacy_renderer_residue_guard.py
+
+.PHONY: verify.frontend.page_renderer_default_guard
+verify.frontend.page_renderer_default_guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_renderer_default_guard.py
+
+.PHONY: verify.page_orchestration.target_completion.guard
+verify.page_orchestration.target_completion.guard: guard.prod.forbid
+	@python3 scripts/verify/page_orchestration_target_completion_guard.py
+
 .PHONY: verify.page_contract.sections_schema.guard
 verify.page_contract.sections_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/page_contract_sections_schema_guard.py
@@ -1488,6 +1528,22 @@ verify.orchestration.semantics_registry.guard: guard.prod.forbid
 .PHONY: verify.page_contract.text_key_coverage.guard
 verify.page_contract.text_key_coverage.guard: guard.prod.forbid
 	@python3 scripts/verify/page_contract_text_key_coverage_guard.py
+
+.PHONY: verify.page_contract.provider_split.guard
+verify.page_contract.provider_split.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_provider_split_guard.py
+
+.PHONY: verify.page_contract.semantic_provider_split.guard
+verify.page_contract.semantic_provider_split.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_semantic_provider_split_guard.py
+
+.PHONY: verify.page_contract.strategy_provider_split.guard
+verify.page_contract.strategy_provider_split.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_strategy_provider_split_guard.py
+
+.PHONY: verify.page_contract.role_strategy_provider_split.guard
+verify.page_contract.role_strategy_provider_split.guard: guard.prod.forbid
+	@python3 scripts/verify/page_contract_role_strategy_provider_split_guard.py
 
 .PHONY: verify.list.surface.clean
 verify.list.surface.clean: guard.prod.forbid
@@ -1527,6 +1583,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.home_orchestration_consumption.guard \
 	verify.workspace_home.sections_schema.guard \
 	verify.workspace_home.orchestration_schema.guard \
+	verify.workspace_home.provider_split.guard \
 	verify.frontend.contract_text_hardcode.guard \
 	verify.frontend.page_contract_boundary.guard \
 	verify.frontend.page_contract.sections_coverage.guard \
@@ -1535,6 +1592,15 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.page_contract.section_style_coverage.guard \
 	verify.frontend.page_contract.orchestration_consumption.guard \
 	verify.frontend.page_contract.runtime_universal.guard \
+	verify.frontend.page_block_renderer_smoke \
+	verify.frontend.page_block_visual_snapshot_guard \
+	verify.frontend.portal_dashboard_block_migration \
+	verify.frontend.workbench_block_migration \
+	verify.frontend.my_work_block_migration \
+	verify.frontend.page_block_registry_guard \
+	verify.frontend.page_legacy_renderer_residue_guard \
+	verify.frontend.page_renderer_default_guard \
+	verify.page_orchestration.target_completion.guard \
 	verify.page_contract.sections_schema.guard \
 	verify.page_contract.orchestration_schema.guard \
 	verify.page_contract.role_orchestration_variance.guard \
@@ -1542,6 +1608,10 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.page_contract.data_source_semantics.guard \
 	verify.orchestration.semantics_registry.guard \
 	verify.page_contract.text_key_coverage.guard \
+	verify.page_contract.provider_split.guard \
+	verify.page_contract.semantic_provider_split.guard \
+	verify.page_contract.strategy_provider_split.guard \
+	verify.page_contract.role_strategy_provider_split.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
 	verify.frontend.error_context.contract.guard \
