@@ -17,7 +17,7 @@
       </div>
     </section>
     <section v-if="contractPrimaryFilterChips.length || contractOverflowFilterChips.length" class="contract-block">
-      <p class="contract-label">快速筛选</p>
+      <p class="contract-label">{{ pageText('label.quick_filters', '快速筛选') }}</p>
       <div class="contract-chips">
         <button
           v-for="chip in contractPrimaryFilterChips"
@@ -60,7 +60,7 @@
       </div>
     </section>
     <section v-if="savedFilterPrimaryChips.length || savedFilterOverflowChips.length" class="contract-block">
-      <p class="contract-label">已保存筛选</p>
+      <p class="contract-label">{{ pageText('label.saved_filters', '已保存筛选') }}</p>
       <div class="contract-chips">
         <button
           v-for="chip in savedFilterPrimaryChips"
@@ -103,7 +103,7 @@
       </div>
     </section>
     <section v-if="groupByPrimaryChips.length || groupByOverflowChips.length" class="contract-block">
-      <p class="contract-label">分组查看</p>
+      <p class="contract-label">{{ pageText('label.group_view', '分组查看') }}</p>
       <div class="contract-chips">
         <button
           v-for="chip in groupByPrimaryChips"
@@ -163,7 +163,7 @@
       :on-next-window="handleGroupWindowNext"
     />
     <section v-if="contractPrimaryActions.length || contractOverflowActions.length" class="contract-block">
-      <p class="contract-label">快捷操作</p>
+      <p class="contract-label">{{ pageText('label.quick_actions', '快捷操作') }}</p>
       <div class="contract-chips">
         <button
           v-for="btn in contractPrimaryActions"
@@ -285,7 +285,7 @@
         <p>{{ advancedViewHint }}</p>
       </header>
       <div class="advanced-contract">
-        <p class="contract-label">契约摘要</p>
+        <p class="contract-label">{{ pageText('label.contract_summary', '契约摘要') }}</p>
         <p>view_type={{ contractViewType || '-' }} · mode={{ viewMode || '-' }} · records={{ records.length }}</p>
       </div>
       <div v-if="records.length" class="advanced-list">
@@ -355,6 +355,7 @@ import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
 import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { usePageContract } from '../app/pageContract';
 import type { NavNode } from '@sc/schema';
 
 type NavNodeWithScene = NavNode & {
@@ -375,6 +376,8 @@ function resolveNodeSceneKey(node: NavNode): string {
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const pageContract = usePageContract('action');
+const pageText = pageContract.text;
 
 const status = ref<'idle' | 'loading' | 'ok' | 'empty' | 'error'>('idle');
 const traceId = ref('');

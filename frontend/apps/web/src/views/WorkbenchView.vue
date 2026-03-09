@@ -3,22 +3,22 @@
     <header class="header">
       <div>
         <p v-if="showHud" class="diagnostic">诊断页仅用于排查，不作为正式产品界面。</p>
-        <h2>页面暂时无法打开</h2>
-        <p class="meta">我们已为你保留可继续操作的入口。</p>
+        <h2>{{ pageText('header_title', '页面暂时无法打开') }}</h2>
+        <p class="meta">{{ pageText('header_subtitle', '我们已为你保留可继续操作的入口。') }}</p>
         <p v-if="hasContext" class="context-line">
           推荐上下文：{{ workspaceContextSummary }}
           <button class="ghost mini" @click="clearWorkspaceContext">清除</button>
         </p>
       </div>
       <div class="actions">
-        <button class="ghost" @click="goToProjects">返回工作台</button>
-        <button class="ghost" @click="openFirstReachableMenu">打开菜单</button>
-        <button class="ghost" @click="refresh">刷新</button>
+        <button class="ghost" @click="goToProjects">{{ pageText('action_go_workbench', '返回工作台') }}</button>
+        <button class="ghost" @click="openFirstReachableMenu">{{ pageText('action_open_menu', '打开菜单') }}</button>
+        <button class="ghost" @click="refresh">{{ pageText('action_refresh', '刷新') }}</button>
       </div>
     </header>
 
     <StatusPanel
-      title="页面暂时无法打开"
+      :title="pageText('panel_title', '页面暂时无法打开')"
       :message="message"
       :variant="panelVariant"
     />
@@ -103,6 +103,7 @@ import { isHudEnabled } from '../config/debug';
 import { capabilityTooltip, evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { hasWorkspaceContext as hasWorkspaceContextValue, readWorkspaceContext, stripWorkspaceContext } from '../app/workspaceContext';
 import { normalizeEmbeddedSceneQuery, parseSceneKeyFromQuery } from '../app/routeQuery';
+import { usePageContract } from '../app/pageContract';
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import type { NavNode } from '@sc/schema';
 
@@ -169,6 +170,8 @@ const menuId = computed(() => Number(route.query.menu_id || 0) || undefined);
 const actionId = computed(() => Number(route.query.action_id || 0) || undefined);
 const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as LocationQueryRaw));
 const session = useSessionStore();
+const pageContract = usePageContract('workbench');
+const pageText = pageContract.text;
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
 const lastIntent = computed(() => session.lastIntent || '');
@@ -228,17 +231,17 @@ const reasonLabel = computed(() => {
 const message = computed(() => {
   switch (reason.value) {
     case ErrorCodes.NAV_MENU_NO_ACTION:
-      return '当前菜单是目录，暂时没有可进入的子菜单。';
+      return pageText('message_nav_menu_no_action', '当前菜单是目录，暂时没有可进入的子菜单。');
     case ErrorCodes.ACT_NO_MODEL:
-      return '当前动作对应的是自定义工作区，未绑定数据模型。';
+      return pageText('message_act_no_model', '当前动作对应的是自定义工作区，未绑定数据模型。');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return '当前动作类型暂未在门户壳层支持。';
+      return pageText('message_act_unsupported_type', '当前动作类型暂未在门户壳层支持。');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
-      return '页面缺少契约必需上下文（例如 action_id）。';
+      return pageText('message_contract_context_missing', '页面缺少契约必需上下文（例如 action_id）。');
     case ErrorCodes.CAPABILITY_MISSING:
-      return '当前账号尚未开通该能力。';
+      return pageText('message_capability_missing', '当前账号尚未开通该能力。');
     default:
-      return '你可以返回工作台或打开菜单继续操作。';
+      return pageText('message_default', '你可以返回工作台或打开菜单继续操作。');
   }
 });
 

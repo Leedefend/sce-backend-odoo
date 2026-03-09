@@ -4,7 +4,7 @@
     <header class="hero">
       <div class="hero-main">
         <div>
-          <h2>我的工作</h2>
+          <h2>{{ pageText('title', '我的工作') }}</h2>
           <p>聚合待办并直接处理，默认从“待我处理”开工。</p>
         </div>
         <div class="hero-tools">
@@ -23,7 +23,7 @@
       </div>
     </header>
 
-    <StatusPanel v-if="loading" title="加载我的工作中..." variant="info" />
+    <StatusPanel v-if="loading" :title="pageText('loading_title', '加载我的工作中...')" variant="info" />
     <StatusPanel
       v-else-if="errorText"
       :title="errorCopy.title"
@@ -420,11 +420,14 @@ import { describeSuggestedAction, runSuggestedAction } from '../composables/useS
 import { parseWorkspaceEntryContext, readWorkspaceContext } from '../app/workspaceContext';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findActionMeta, findActionNodeByModel } from '../app/menu';
+import { usePageContract } from '../app/pageContract';
 import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
 const route = useRoute();
 const session = useSessionStore();
+const pageContract = usePageContract('my_work');
+const pageText = pageContract.text;
 
 const loading = ref(false);
 const errorText = ref('');

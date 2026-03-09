@@ -2,7 +2,7 @@
   <section class="usage-analytics">
     <header class="header">
       <div>
-        <h2>Usage Analytics</h2>
+        <h2>{{ pageText('title', 'Usage Analytics') }}</h2>
         <p>Scene / Capability 使用统计（按公司累计）。</p>
       </div>
       <div class="actions">
@@ -79,7 +79,7 @@
       </div>
     </header>
 
-    <StatusPanel v-if="loading" title="Loading usage report..." variant="info" />
+    <StatusPanel v-if="loading" :title="pageText('loading_title', 'Loading usage report...')" variant="info" />
     <StatusPanel
       v-else-if="errorText"
       :title="errorCopy.title"
@@ -290,6 +290,7 @@ import { exportUsageCsv, fetchCapabilityVisibilityReport, fetchUsageReport, type
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import { collectErrorContextIssue, issueScopeLabel } from '../app/errorContext';
+import { usePageContract } from '../app/pageContract';
 
 const loading = ref(false);
 const errorText = ref('');
@@ -305,6 +306,8 @@ const capabilityPrefix = ref('');
 const exportFilteredOnly = ref(true);
 const report = ref<UsageReport | null>(null);
 const visibility = ref<CapabilityVisibilityReport | null>(null);
+const pageContract = usePageContract('usage_analytics');
+const pageText = pageContract.text;
 
 const sceneTop = computed(() => report.value?.scene_top || []);
 const capabilityTop = computed(() => report.value?.capability_top || []);
@@ -320,7 +323,7 @@ const filteredHiddenSamples = computed(() => {
   return hiddenSamples.value.filter((item) => String(item.reason_code || '') === hiddenReasonFilter.value);
 });
 const canExport = computed(() => Boolean(report.value || visibility.value));
-const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || 'Failed to load usage report'));
+const errorCopy = computed(() => resolveErrorCopy(statusError.value, errorText.value || pageText('error_fallback', 'Failed to load usage report')));
 
 function resolveContextAwareErrorText(err: unknown, fallback: string) {
   const counter = new Map<string, { model: string; op: string; reasonCode: string; count: number }>();

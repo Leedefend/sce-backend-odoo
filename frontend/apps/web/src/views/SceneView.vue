@@ -1,6 +1,6 @@
 <template>
   <section class="scene">
-    <StatusPanel v-if="status === 'loading'" title="正在加载场景..." variant="info" />
+    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', '正在加载场景...')" variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -39,16 +39,19 @@ import { trackSceneOpen } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
+import { usePageContract } from '../app/pageContract';
 import type { NavNode } from '@sc/schema';
 import type { SceneTarget } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const pageContract = usePageContract('scene');
+const pageText = pageContract.text;
 const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
-const errorCopy = ref(resolveErrorCopy(null, '场景加载失败'));
+const errorCopy = ref(resolveErrorCopy(null, pageText('error_fallback', '场景加载失败')));
 const forbiddenCopy = ref({
   title: '能力未开通',
   message: '当前角色无法进入该场景。',
@@ -179,7 +182,7 @@ async function resolveScene() {
     const scene = getSceneByKey(sceneKey);
     if (!scene) {
       setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
-      errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
+      errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
       status.value = 'error';
       return;
     }
@@ -333,11 +336,11 @@ async function resolveScene() {
     }
 
     setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
-    errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
+    errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
     status.value = 'error';
   } catch (err) {
     setError(err instanceof Error ? err : new Error('scene resolve failed'), 'scene resolve failed');
-    errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
+    errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
     status.value = 'error';
   }
 }

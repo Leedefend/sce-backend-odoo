@@ -395,6 +395,7 @@ import { useSessionStore, type CapabilityRuntimeMeta } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
+import { usePageContract } from '../app/pageContract';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type MetricLevel = 'green' | 'amber' | 'red';
@@ -464,6 +465,8 @@ type FilterChip = { key: string; label: string };
 const router = useRouter();
 const route = useRoute();
 const session = useSessionStore();
+const pageContract = usePageContract('home');
+const pageTextByPageContract = pageContract.text;
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
 const stateFilter = ref<'ALL' | EntryState>('ALL');
@@ -520,7 +523,7 @@ const workspaceLayoutSections = computed(() => {
 const workspaceHero = computed(() => (workspaceHome.value.hero && typeof workspaceHome.value.hero === 'object'
   ? workspaceHome.value.hero as Record<string, unknown>
   : {}));
-const heroTitle = computed(() => asText(workspaceHero.value.title) || '工作台');
+const heroTitle = computed(() => asText(workspaceHero.value.title) || pageTextByPageContract('title', '工作台'));
 const heroLead = computed(() => asText(workspaceHero.value.lead) || '围绕项目经营、风险与审批，优先处理今天最关键事项。');
 const heroProductTags = computed(() => {
   const raw = Array.isArray(workspaceHero.value.product_tags) ? workspaceHero.value.product_tags : [];
