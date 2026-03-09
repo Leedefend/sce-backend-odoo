@@ -83,6 +83,9 @@ class ActionDispatcher:
 
         # server：先执行物化；若失败 → 诊断契约
         if atype == 'ir.actions.server':
+            mapped = self.resolver.map_server_to_window(info.get('id'), info.get('xml_id'))
+            if mapped:
+                return self._dispatch_resolved(mapped, p)
             materialized = self.resolver.materialize_server_action(info, p)
             if not materialized:
                 return ClientUrlReportAssembler(self.env).assemble_diagnostic_contract(p, info, issue="服务端动作执行失败或未返回可显示的结果")

@@ -132,6 +132,29 @@ class TestRelationEntryContract(unittest.TestCase):
         self.assertEqual(policy.get("reason_code"), "RELATION_READ_FORBIDDEN")
         self.assertEqual(len(policy.get("degraded_fields") or []), 1)
 
+    def test_apply_access_policy_degrades_when_core_relation_targets_system_model(self):
+        data = {
+            "fields": {
+                "name": {"type": "char"},
+                "alias_model_id": {
+                    "type": "many2one",
+                    "relation": "ir.model",
+                    "relation_entry": {"can_read": False, "reason_code": "RELATION_READ_FORBIDDEN"},
+                },
+            },
+            "field_groups": [
+                {"name": "core", "fields": ["name", "alias_model_id"]},
+            ],
+            "warnings": [],
+            "degraded": False,
+        }
+        self.assembler._apply_access_policy(data, model_name="project.project")
+        policy = data.get("access_policy") or {}
+        self.assertEqual(policy.get("mode"), "degrade")
+        self.assertEqual(policy.get("reason_code"), "RELATION_READ_FORBIDDEN")
+        self.assertEqual(len(policy.get("blocked_fields") or []), 0)
+        self.assertEqual(len(policy.get("degraded_fields") or []), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,20 @@ _logger = logging.getLogger(__name__)
 
 
 class PageAssembler:
+    _SYSTEM_RELATION_DEGRADE_MODELS = {
+        "ir.ui.view",
+        "ir.model",
+        "ir.model.fields",
+        "ir.model.access",
+        "ir.rule",
+        "ir.actions.actions",
+        "ir.actions.act_window",
+        "ir.ui.menu",
+        "ir.config_parameter",
+        "res.users",
+        "res.groups",
+    }
+
     def __init__(self, env, su_env=None):
         """
         env:  运行态环境（必须带当前用户，用于 ORM 自动应用记录规则、用户筛选等）
@@ -384,7 +398,11 @@ class PageAssembler:
                     "model": relation,
                     "reason_code": str(relation_entry.get("reason_code") or "RELATION_READ_FORBIDDEN"),
                 }
-                if str(field_name or "").strip() in core_fields:
+                relation_model = str(relation or "").strip().lower()
+                if (
+                    str(field_name or "").strip() in core_fields
+                    and relation_model not in self._SYSTEM_RELATION_DEGRADE_MODELS
+                ):
                     blocked_fields.append(row)
                 else:
                     degraded_fields.append(row)
