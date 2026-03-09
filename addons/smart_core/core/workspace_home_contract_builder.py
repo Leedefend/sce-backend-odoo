@@ -268,6 +268,321 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
     }
 
 
+def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
+    role_cfg = _role_focus_config(role_code)
+    zone_order = role_cfg.get("zone_order") if isinstance(role_cfg.get("zone_order"), list) else []
+    zone_rank = {str(key): idx + 1 for idx, key in enumerate(zone_order)}
+    audience_map = {
+        "pm": ["project_manager", "construction_manager"],
+        "finance": ["finance_manager", "construction_manager"],
+        "owner": ["owner", "executive"],
+    }
+    audience = audience_map.get(role_code, ["owner"])
+    priority_model = "task_first" if role_code == "pm" else "metric_first" if role_code == "finance" else "role_first"
+
+    zones: List[Dict[str, Any]] = [
+        {
+            "key": "hero",
+            "title": "核心关注",
+            "description": "页面主关注区，先看角色和当前态势。",
+            "zone_type": "hero",
+            "display_mode": "grid",
+            "priority": zone_rank.get("primary", 1) * 100,
+            "visibility": {"roles": audience, "capabilities": [], "expr": None},
+            "blocks": [
+                {
+                    "key": "hero_record_summary",
+                    "block_type": "record_summary",
+                    "title": "角色与入口摘要",
+                    "priority": 100,
+                    "importance": "critical",
+                    "tone": "info",
+                    "progress": "running",
+                    "section_key": "hero",
+                    "data_source": "ds_hero",
+                    "loading_strategy": "eager",
+                    "refreshable": True,
+                    "collapsible": False,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [{"key": "open_landing", "label": "打开默认入口", "intent": "ui.contract"}],
+                    "payload": {"style_variant": "default"},
+                }
+            ],
+        },
+        {
+            "key": "today_focus",
+            "title": "今日聚焦",
+            "description": "今日待办与关键风险。",
+            "zone_type": "primary",
+            "display_mode": "stack",
+            "priority": zone_rank.get("primary", 1) * 90,
+            "visibility": {"roles": audience, "capabilities": [], "expr": None},
+            "blocks": [
+                {
+                    "key": "todo_list_today",
+                    "block_type": "todo_list",
+                    "title": "今日待办",
+                    "priority": 95,
+                    "importance": "high",
+                    "tone": "warning",
+                    "progress": "pending",
+                    "section_key": "today_actions",
+                    "data_source": "ds_today_todos",
+                    "loading_strategy": "eager",
+                    "refreshable": True,
+                    "collapsible": False,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [{"key": "open_my_work", "label": "查看全部", "intent": "ui.contract"}],
+                    "payload": {"item_layout": "card", "max_items": 6},
+                },
+                {
+                    "key": "risk_alert_panel",
+                    "block_type": "alert_panel",
+                    "title": "关键风险",
+                    "priority": 90,
+                    "importance": "critical",
+                    "tone": "danger",
+                    "progress": "blocked",
+                    "section_key": "risk",
+                    "data_source": "ds_risk_alerts",
+                    "loading_strategy": "eager",
+                    "refreshable": True,
+                    "collapsible": False,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [{"key": "open_risk_dashboard", "label": "进入风险驾驶舱", "intent": "ui.contract"}],
+                    "payload": {"group_by": "alert_level", "show_counts": True, "max_items": 10},
+                },
+            ],
+        },
+        {
+            "key": "analysis",
+            "title": "经营分析",
+            "description": "关键指标与执行进展。",
+            "zone_type": "secondary",
+            "display_mode": "grid",
+            "priority": zone_rank.get("analysis", 2) * 80,
+            "visibility": {"roles": audience, "capabilities": [], "expr": None},
+            "blocks": [
+                {
+                    "key": "kpi_row_core",
+                    "block_type": "kpi_row",
+                    "title": "关键指标",
+                    "priority": 80,
+                    "importance": "medium",
+                    "tone": "neutral",
+                    "progress": "running",
+                    "section_key": "metrics",
+                    "data_source": "ds_metrics",
+                    "loading_strategy": "eager",
+                    "refreshable": True,
+                    "collapsible": False,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [],
+                    "payload": {"show_trend": True},
+                },
+                {
+                    "key": "progress_group_ops",
+                    "block_type": "progress_group",
+                    "title": "综合进展",
+                    "priority": 70,
+                    "importance": "medium",
+                    "tone": "info",
+                    "progress": "running",
+                    "section_key": "ops",
+                    "data_source": "ds_ops_progress",
+                    "loading_strategy": "lazy",
+                    "refreshable": True,
+                    "collapsible": True,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [],
+                    "payload": {"show_percentage": True},
+                },
+                {
+                    "key": "activity_feed_risk",
+                    "block_type": "activity_feed",
+                    "title": "风险动态",
+                    "priority": 60,
+                    "importance": "medium",
+                    "tone": "info",
+                    "progress": "running",
+                    "section_key": "risk",
+                    "data_source": "ds_risk_alerts",
+                    "loading_strategy": "lazy",
+                    "refreshable": True,
+                    "collapsible": False,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [],
+                    "payload": {"stream": "risk.actions"},
+                },
+            ],
+        },
+        {
+            "key": "quick_entries",
+            "title": "能力入口",
+            "description": "按能力分组快速进入业务场景。",
+            "zone_type": "supporting",
+            "display_mode": "grid",
+            "priority": zone_rank.get("support", 3) * 70,
+            "visibility": {"roles": audience, "capabilities": [], "expr": None},
+            "blocks": [
+                {
+                    "key": "entry_grid_scene",
+                    "block_type": "quick_entry_grid",
+                    "title": "场景入口",
+                    "priority": 65,
+                    "importance": "medium",
+                    "tone": "neutral",
+                    "progress": "completed",
+                    "section_key": "scene_groups",
+                    "data_source": "ds_scene_groups",
+                    "loading_strategy": "lazy",
+                    "refreshable": True,
+                    "collapsible": False,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [{"key": "open_scene", "label": "进入场景", "intent": "ui.contract"}],
+                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
+                },
+                {
+                    "key": "entry_grid_capability",
+                    "block_type": "quick_entry_grid",
+                    "title": "能力分组",
+                    "priority": 60,
+                    "importance": "medium",
+                    "tone": "neutral",
+                    "progress": "completed",
+                    "section_key": "group_overview",
+                    "data_source": "ds_capability_groups",
+                    "loading_strategy": "lazy",
+                    "refreshable": True,
+                    "collapsible": False,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [],
+                    "payload": {"layout": "2x4", "show_icon": True, "show_hint": True},
+                },
+                {
+                    "key": "advice_fold",
+                    "block_type": "fold_section",
+                    "title": "系统建议",
+                    "priority": 55,
+                    "importance": "medium",
+                    "tone": "warning",
+                    "progress": "pending",
+                    "section_key": "advice",
+                    "data_source": "ds_advice",
+                    "loading_strategy": "lazy",
+                    "refreshable": True,
+                    "collapsible": True,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [],
+                    "payload": {"mode": "accordion"},
+                },
+                {
+                    "key": "filters_fold",
+                    "block_type": "fold_section",
+                    "title": "筛选器",
+                    "priority": 50,
+                    "importance": "low",
+                    "tone": "neutral",
+                    "progress": "completed",
+                    "section_key": "filters",
+                    "data_source": "ds_filters",
+                    "loading_strategy": "lazy",
+                    "refreshable": False,
+                    "collapsible": True,
+                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
+                    "actions": [],
+                    "payload": {"mode": "accordion"},
+                },
+            ],
+        },
+    ]
+
+    v1_focus_map = {
+        "pm": ["todo_list_today", "risk_alert_panel", "progress_group_ops", "hero_record_summary"],
+        "finance": ["progress_group_ops", "risk_alert_panel", "kpi_row_core", "hero_record_summary"],
+        "owner": ["hero_record_summary", "risk_alert_panel", "todo_list_today", "entry_grid_scene"],
+    }
+    focus_blocks = {str(key): idx + 1 for idx, key in enumerate(v1_focus_map.get(role_code, []))}
+    for zone in zones:
+        blocks = zone.get("blocks") if isinstance(zone.get("blocks"), list) else []
+        for block in blocks:
+            key = _to_text(block.get("key"))
+            if key in focus_blocks:
+                block["priority"] = 100 + (len(focus_blocks) - focus_blocks[key])
+                block["focus"] = True
+            else:
+                block["focus"] = False
+
+    return {
+        "contract_version": "page_orchestration_v1",
+        "scene_key": "portal.dashboard",
+        "page": {
+            "key": "portal.dashboard",
+            "title": "工作台",
+            "subtitle": "今日运营与执行总览",
+            "page_type": "workspace",
+            "intent": "ui.contract",
+            "scene_key": "portal.dashboard",
+            "layout_mode": "dashboard",
+            "audience": audience,
+            "priority_model": priority_model,
+            "status": "ready",
+            "breadcrumbs": [],
+            "header": {"badges": [{"label": "运行正常", "tone": "success"}]},
+            "global_actions": [{"key": "refresh", "label": "刷新", "intent": "api.data"}],
+            "filters": [],
+            "context": {"role_code": role_code},
+        },
+        "zones": zones,
+        "data_sources": {
+            "ds_hero": {"source_type": "computed", "provider": "workspace.hero"},
+            "ds_metrics": {"source_type": "computed", "provider": "workspace.metrics.summary"},
+            "ds_today_todos": {"source_type": "computed", "provider": "workspace.todo.today"},
+            "ds_risk_alerts": {"source_type": "computed", "provider": "workspace.risk.alerts"},
+            "ds_ops_progress": {"source_type": "computed", "provider": "workspace.progress.summary"},
+            "ds_scene_groups": {"source_type": "scene_context", "provider": "workspace.scene.groups"},
+            "ds_capability_groups": {"source_type": "capability_registry", "provider": "workspace.capability.groups"},
+            "ds_advice": {"source_type": "computed", "provider": "workspace.advice"},
+            "ds_filters": {"source_type": "static", "provider": "workspace.filters"},
+        },
+        "state_schema": {
+            "tones": {
+                "success": {"icon": "check-circle"},
+                "warning": {"icon": "alert-triangle"},
+                "danger": {"icon": "x-circle"},
+                "info": {"icon": "info"},
+                "neutral": {"icon": "dot"},
+            },
+            "business_states": {
+                "pending": {"tone": "warning", "label": "待处理"},
+                "running": {"tone": "info", "label": "进行中"},
+                "blocked": {"tone": "danger", "label": "已阻塞"},
+                "completed": {"tone": "success", "label": "已完成"},
+                "overdue": {"tone": "danger", "label": "已逾期"},
+            },
+        },
+        "action_schema": {
+            "actions": {
+                "open_landing": {"label": "打开默认入口", "intent": "ui.contract", "target": {"scene_key": "portal.dashboard"}},
+                "open_my_work": {"label": "查看全部", "intent": "ui.contract", "target": {"scene_key": "my_work.workspace"}},
+                "open_risk_dashboard": {"label": "进入风险驾驶舱", "intent": "ui.contract", "target": {"scene_key": "projects.dashboard"}},
+                "open_scene": {"label": "进入场景", "intent": "ui.contract", "target": {"scene_key": "projects.list"}},
+            }
+        },
+        "render_hints": {
+            "dense_mode": False,
+            "preferred_columns": 4,
+            "mobile_priority": ["hero", "today_focus", "analysis"],
+            "sticky_header": True,
+        },
+        "meta": {
+            "generated_by": "smart_core.workspace_home_contract_builder",
+            "schema_version": "1.0.0",
+            "role_variant": role_code,
+        },
+    }
+
+
 def _build_today_actions(ready_caps: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
     actions: List[Dict[str, Any]] = []
     for cap in list(ready_caps)[:6]:
@@ -548,6 +863,7 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
             "progress": "running",
         },
         "advice": _build_advice_items(locked_caps),
+        "page_orchestration_v1": _build_page_orchestration_v1(role_code),
         "page_orchestration": _build_page_orchestration(role_code),
         "role_variant": {
             "role_code": role_code,

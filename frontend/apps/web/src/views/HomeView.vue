@@ -549,11 +549,36 @@ const workspacePageOrchestration = computed(() => (
     ? workspaceHome.value.page_orchestration as Record<string, unknown>
     : {}
 ));
+const workspacePageOrchestrationV1 = computed(() => (
+  workspaceHome.value.page_orchestration_v1 && typeof workspaceHome.value.page_orchestration_v1 === 'object'
+    ? workspaceHome.value.page_orchestration_v1 as Record<string, unknown>
+    : {}
+));
 const orchestrationBlocks = computed(() => {
-  const source = Array.isArray(workspacePageOrchestration.value.blocks)
+  const zones = Array.isArray(workspacePageOrchestrationV1.value.zones)
+    ? workspacePageOrchestrationV1.value.zones
+    : [];
+  const flattenedV1: Record<string, unknown>[] = [];
+  zones.forEach((zone) => {
+    if (!zone || typeof zone !== 'object') return;
+    const zoneRow = zone as Record<string, unknown>;
+    const zoneType = asText(zoneRow.zone_type);
+    const blocks = Array.isArray(zoneRow.blocks) ? zoneRow.blocks : [];
+    blocks.forEach((item) => {
+      if (!item || typeof item !== 'object') return;
+      flattenedV1.push({
+        ...item as Record<string, unknown>,
+        zone: asText((item as Record<string, unknown>).zone) || zoneType || 'support',
+      });
+    });
+  });
+  if (flattenedV1.length) {
+    return flattenedV1;
+  }
+  const legacy = Array.isArray(workspacePageOrchestration.value.blocks)
     ? workspacePageOrchestration.value.blocks
     : [];
-  return source
+  return legacy
     .map((item) => (item && typeof item === 'object' ? item as Record<string, unknown> : null))
     .filter((item): item is Record<string, unknown> => Boolean(item));
 });
@@ -575,8 +600,7 @@ const orchestrationSectionOrderMap = computed(() => {
     const visible = typeof block.visible === 'boolean' ? block.visible : true;
     if (!visible) return;
     const sourcePath = asText(block.source_path);
-    if (!sourcePath) return;
-    const sectionKey = sourcePath.split('.')[0] || '';
+    const sectionKey = asText(block.section_key) || (sourcePath ? sourcePath.split('.')[0] || '' : '');
     if (!sectionKey || map.has(sectionKey)) return;
     const orderRaw = Number(block.order);
     const order = Number.isFinite(orderRaw) && orderRaw > 0 ? Math.trunc(orderRaw) : idx + 1;
@@ -590,8 +614,7 @@ const orchestrationSectionSemanticMap = computed(() => {
     const visible = typeof block.visible === 'boolean' ? block.visible : true;
     if (!visible) return;
     const sourcePath = asText(block.source_path);
-    if (!sourcePath) return;
-    const sectionKey = sourcePath.split('.')[0] || '';
+    const sectionKey = asText(block.section_key) || (sourcePath ? sourcePath.split('.')[0] || '' : '');
     if (!sectionKey || map.has(sectionKey)) return;
     map.set(sectionKey, {
       zone: asText(block.zone) || 'support',

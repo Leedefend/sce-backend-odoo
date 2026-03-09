@@ -98,6 +98,17 @@ export interface WorkspaceHomeContract {
       focus_blocks?: string[];
     };
   };
+  page_orchestration_v1?: {
+    contract_version?: string;
+    scene_key?: string;
+    page?: Record<string, unknown>;
+    zones?: Array<Record<string, unknown>>;
+    data_sources?: Record<string, unknown>;
+    state_schema?: Record<string, unknown>;
+    action_schema?: Record<string, unknown>;
+    render_hints?: Record<string, unknown>;
+    meta?: Record<string, unknown>;
+  };
   role_variant?: {
     role_code?: string;
     mode?: string;
