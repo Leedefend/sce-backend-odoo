@@ -11,12 +11,12 @@ from odoo import fields
 
 BLOCK_TYPES = (
     "hero_metric",
-    "kpi_row",
+    "metric_row",
     "todo_list",
     "alert_panel",
-    "progress_group",
-    "quick_entry_grid",
-    "fold_section",
+    "progress_summary",
+    "entry_grid",
+    "accordion_group",
     "record_summary",
     "activity_feed",
 )
@@ -172,7 +172,7 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
         },
         {
             "key": "metrics_kpi",
-            "type": "kpi_row",
+            "type": "metric_row",
             "zone": "analysis",
             "order": 3,
             "source_path": "metrics",
@@ -202,7 +202,7 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
         },
         {
             "key": "ops_progress",
-            "type": "progress_group",
+            "type": "progress_summary",
             "zone": "analysis",
             "order": 6,
             "source_path": "ops",
@@ -212,7 +212,7 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
         },
         {
             "key": "entry_grid",
-            "type": "quick_entry_grid",
+            "type": "entry_grid",
             "zone": "support",
             "order": 7,
             "source_path": "scene_groups",
@@ -222,7 +222,7 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
         },
         {
             "key": "group_grid",
-            "type": "quick_entry_grid",
+            "type": "entry_grid",
             "zone": "support",
             "order": 8,
             "source_path": "group_overview",
@@ -232,7 +232,7 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
         },
         {
             "key": "advice_fold",
-            "type": "fold_section",
+            "type": "accordion_group",
             "zone": "support",
             "order": 9,
             "source_path": "advice",
@@ -242,7 +242,7 @@ def _build_page_orchestration(role_code: str) -> Dict[str, Any]:
         },
         {
             "key": "filters_fold",
-            "type": "fold_section",
+            "type": "accordion_group",
             "zone": "support",
             "order": 10,
             "source_path": "filters",
@@ -388,8 +388,8 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
             "visibility": {"roles": audience, "capabilities": [], "expr": None},
             "blocks": [
                 {
-                    "key": "kpi_row_core",
-                    "block_type": "kpi_row",
+                    "key": "metric_row_core",
+                    "block_type": "metric_row",
                     "title": "关键指标",
                     "priority": 80,
                     "importance": "medium",
@@ -405,8 +405,8 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                     "payload": {"show_trend": True},
                 },
                 {
-                    "key": "progress_group_ops",
-                    "block_type": "progress_group",
+                    "key": "progress_summary_ops",
+                    "block_type": "progress_summary",
                     "title": "综合进展",
                     "priority": 70,
                     "importance": "medium",
@@ -451,7 +451,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
             "blocks": [
                 {
                     "key": "entry_grid_scene",
-                    "block_type": "quick_entry_grid",
+                    "block_type": "entry_grid",
                     "title": "场景入口",
                     "priority": 65,
                     "importance": "medium",
@@ -468,7 +468,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                 },
                 {
                     "key": "entry_grid_capability",
-                    "block_type": "quick_entry_grid",
+                    "block_type": "entry_grid",
                     "title": "能力分组",
                     "priority": 60,
                     "importance": "medium",
@@ -485,7 +485,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                 },
                 {
                     "key": "advice_fold",
-                    "block_type": "fold_section",
+                    "block_type": "accordion_group",
                     "title": "系统建议",
                     "priority": 55,
                     "importance": "medium",
@@ -502,7 +502,7 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
                 },
                 {
                     "key": "filters_fold",
-                    "block_type": "fold_section",
+                    "block_type": "accordion_group",
                     "title": "筛选器",
                     "priority": 50,
                     "importance": "low",
@@ -522,8 +522,8 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
     ]
 
     v1_focus_map = {
-        "pm": ["todo_list_today", "risk_alert_panel", "progress_group_ops", "hero_record_summary"],
-        "finance": ["progress_group_ops", "risk_alert_panel", "kpi_row_core", "hero_record_summary"],
+        "pm": ["todo_list_today", "risk_alert_panel", "progress_summary_ops", "hero_record_summary"],
+        "finance": ["progress_summary_ops", "risk_alert_panel", "metric_row_core", "hero_record_summary"],
         "owner": ["hero_record_summary", "risk_alert_panel", "todo_list_today", "entry_grid_scene"],
     }
     focus_blocks = {str(key): idx + 1 for idx, key in enumerate(v1_focus_map.get(role_code, []))}
