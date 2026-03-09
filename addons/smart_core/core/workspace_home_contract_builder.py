@@ -563,10 +563,15 @@ def _build_page_orchestration_v1(role_code: str) -> Dict[str, Any]:
         },
         "action_schema": {
             "actions": {
-                "open_landing": {"label": "打开默认入口", "intent": "ui.contract", "target": {"scene_key": "portal.dashboard"}},
-                "open_my_work": {"label": "查看全部", "intent": "ui.contract", "target": {"scene_key": "my_work.workspace"}},
-                "open_risk_dashboard": {"label": "进入风险驾驶舱", "intent": "ui.contract", "target": {"scene_key": "projects.dashboard"}},
-                "open_scene": {"label": "进入场景", "intent": "ui.contract", "target": {"scene_key": "projects.list"}},
+                "open_landing": {"label": "打开默认入口", "intent": "ui.contract", "target": {"kind": "scene.key", "scene_key": "portal.dashboard"}},
+                "open_my_work": {"label": "查看全部", "intent": "ui.contract", "target": {"kind": "scene.key", "scene_key": "my_work.workspace"}},
+                "open_risk_dashboard": {
+                    "label": "进入风险驾驶舱",
+                    "intent": "ui.contract",
+                    "target": {"kind": "scene.key", "scene_key": "projects.dashboard"},
+                },
+                "open_scene": {"label": "进入场景", "intent": "ui.contract", "target": {"kind": "scene.key", "scene_key": "projects.list"}},
+                "refresh": {"label": "刷新", "intent": "api.data", "target": {"kind": "page.refresh"}},
             }
         },
         "render_hints": {
