@@ -22,11 +22,11 @@
           {{ buttonLabel(btn) }}
         </button>
         <span class="pill" :class="statusTone">{{ statusLabel }}</span>
-        <button class="ghost" @click="goBack">Back</button>
-        <button v-if="status === 'ok' && canEdit" @click="startEdit">Edit</button>
-        <button v-if="status === 'editing'" @click="save" :disabled="isSaveDisabled">Save</button>
-        <button v-if="status === 'editing'" class="ghost" @click="cancelEdit">Cancel</button>
-        <button class="ghost" @click="reload" :disabled="status === 'loading' || status === 'saving'">Reload</button>
+        <button class="ghost" @click="goBack">{{ pageText('action_back', 'Back') }}</button>
+        <button v-if="status === 'ok' && canEdit" @click="startEdit">{{ pageText('action_edit', 'Edit') }}</button>
+        <button v-if="status === 'editing'" @click="save" :disabled="isSaveDisabled">{{ pageText('action_save', 'Save') }}</button>
+        <button v-if="status === 'editing'" class="ghost" @click="cancelEdit">{{ pageText('action_cancel', 'Cancel') }}</button>
+        <button class="ghost" @click="reload" :disabled="status === 'loading' || status === 'saving'">{{ pageText('action_reload', 'Reload') }}</button>
       </div>
     </header>
 
@@ -91,7 +91,7 @@
           <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '成本' })">{{ pageText('next_action_cost', '查看成本') }}</button>
         </div>
       </section>
-      <div v-if="ribbon" class="ribbon">{{ ribbon.title || 'Ribbon' }}</div>
+      <div v-if="ribbon" class="ribbon">{{ ribbon.title || pageText('ribbon_fallback', 'Ribbon') }}</div>
       <div v-if="statButtons.length" class="stat-buttons">
         <button
           v-for="btn in statButtons"
@@ -153,7 +153,7 @@
                 type="button"
                 @click="downloadAttachment(entry.attachment)"
               >
-                Download
+                {{ pageText('action_download', 'Download') }}
               </button>
             </div>
           </li>
@@ -163,7 +163,7 @@
 
     <DevContextPanel
       :visible="showHud"
-      title="Record Context"
+      :title="pageText('dev_context_title', 'Record Context')"
       :entries="hudEntries"
     />
   </section>
@@ -234,7 +234,11 @@ const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
 const recordTitle = ref<string | null>(null);
 const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
-const subtitle = computed(() => (status.value === 'editing' ? 'Editing contract fields' : 'Record details'));
+const subtitle = computed(() => (
+  status.value === 'editing'
+    ? pageText('subtitle_editing', 'Editing contract fields')
+    : pageText('subtitle_ready', 'Record details')
+));
 const showProjectSummary = computed(() => {
   const key = `${model.value} ${title.value}`.toLowerCase();
   return key.includes('project') || key.includes('项目');

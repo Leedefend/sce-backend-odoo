@@ -172,6 +172,17 @@ def main() -> int:
             "return '→ 0%';",
             "`T-${idx + 1}`",
         ],
+        "RecordView.vue": [
+            ">Back<",
+            ">Edit<",
+            ">Save<",
+            ">Cancel<",
+            ">Reload<",
+            ">Download<",
+            "|| 'Ribbon'",
+            "title=\"Record Context\"",
+            "status.value === 'editing' ? 'Editing contract fields' : 'Record details'",
+        ],
     }
     for name, tokens in per_view_required.items():
         target = VIEWS_DIR / name
