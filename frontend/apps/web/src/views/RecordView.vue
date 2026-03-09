@@ -57,8 +57,8 @@
     />
     <StatusPanel
       v-else-if="renderBlocked"
-      title="View node unsupported"
-      message="Layout nodes are present but renderer support is incomplete."
+      :title="pageText('view_node_unsupported_title', 'View node unsupported')"
+      :message="pageText('view_node_unsupported_message', 'Layout nodes are present but renderer support is incomplete.')"
       error-code="VIEW_NODE_UNSUPPORTED"
       variant="error"
       :on-retry="reload"
@@ -66,29 +66,29 @@
 
     <section v-else class="card" :class="{ editing: status === 'editing' }">
       <div v-if="editTxState === 'saved'" class="banner success">
-        Saved. Changes have been applied.
+        {{ pageText('banner_saved', 'Saved. Changes have been applied.') }}
       </div>
       <section v-if="showProjectSummary" class="record-l1">
         <article class="l1-card">
-          <p class="l1-label">项目状态与阶段</p>
+          <p class="l1-label">{{ pageText('summary_status_stage', '项目状态与阶段') }}</p>
           <p class="l1-value">{{ projectStatusSummary }}</p>
         </article>
         <article class="l1-card">
-          <p class="l1-label">关键风险摘要</p>
+          <p class="l1-label">{{ pageText('summary_risk', '关键风险摘要') }}</p>
           <p class="l1-value">{{ projectRiskSummary }}</p>
         </article>
         <article class="l1-card">
-          <p class="l1-label">资金/产值指标</p>
+          <p class="l1-label">{{ pageText('summary_finance', '资金/产值指标') }}</p>
           <p class="l1-value">{{ projectFinanceSummary }}</p>
         </article>
       </section>
       <section v-if="showProjectSummary" class="record-next">
-        <p class="next-label">下一步动作</p>
+        <p class="next-label">{{ pageText('next_actions_title', '下一步动作') }}</p>
         <div class="next-actions">
-          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '项目' })">查看待办</button>
-          <button class="ghost" @click="openProjectAction('/s/projects.dashboard')">查看风险</button>
-          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '合同' })">查看合同</button>
-          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '成本' })">查看成本</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '项目' })">{{ pageText('next_action_todo', '查看待办') }}</button>
+          <button class="ghost" @click="openProjectAction('/s/projects.dashboard')">{{ pageText('next_action_risk', '查看风险') }}</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '合同' })">{{ pageText('next_action_contract', '查看合同') }}</button>
+          <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '成本' })">{{ pageText('next_action_cost', '查看成本') }}</button>
         </div>
       </section>
       <div v-if="ribbon" class="ribbon">{{ ribbon.title || 'Ribbon' }}</div>
@@ -117,7 +117,7 @@
         @update:field="handleFieldUpdate"
       />
       <section v-else class="fallback-fields">
-        <h3>项目详情</h3>
+        <h3>{{ pageText('fallback_details_title', '项目详情') }}</h3>
         <ul>
           <li v-for="field in fields" :key="field.name">
             <span class="fallback-label">{{ field.label }}</span>
@@ -126,20 +126,20 @@
         </ul>
       </section>
       <section v-if="hasChatter" class="chatter">
-        <h3>协作时间线</h3>
+        <h3>{{ pageText('chatter_title', '协作时间线') }}</h3>
         <p v-if="chatterError" class="meta">{{ chatterError }}</p>
         <div class="chatter-compose">
-          <textarea v-model="chatterDraft" placeholder="输入评论，支持 @同事 ..." />
+          <textarea v-model="chatterDraft" :placeholder="pageText('chatter_input_placeholder', '输入评论，支持 @同事 ...')" />
           <div class="chatter-compose-actions">
             <button :disabled="chatterPosting || !chatterDraft.trim()" @click="sendChatter">
-              {{ chatterPosting ? '发布中...' : '发布评论' }}
+              {{ chatterPosting ? pageText('chatter_posting', '发布中...') : pageText('chatter_post_action', '发布评论') }}
             </button>
             <input type="file" @change="onAttachmentSelected" />
-            <span v-if="chatterUploading" class="meta">上传中…</span>
+            <span v-if="chatterUploading" class="meta">{{ pageText('chatter_uploading', '上传中…') }}</span>
             <span v-if="chatterUploadError" class="meta">{{ chatterUploadError }}</span>
           </div>
         </div>
-        <p v-if="!timelineEntries.length" class="meta">暂无协作记录。</p>
+        <p v-if="!timelineEntries.length" class="meta">{{ pageText('chatter_empty', '暂无协作记录。') }}</p>
         <ul v-else class="timeline-list">
           <li v-for="entry in timelineEntries" :key="entry.key" class="timeline-item">
             <div class="timeline-type" :class="`type-${entry.type}`">{{ entry.typeLabel }}</div>
@@ -240,22 +240,28 @@ const showProjectSummary = computed(() => {
   return key.includes('project') || key.includes('项目');
 });
 const projectStatusSummary = computed(() => {
-  const phase = String(recordData.value?.stage_id || recordData.value?.stage || recordData.value?.state || '未配置阶段');
+  const phase = String(recordData.value?.stage_id || recordData.value?.stage || recordData.value?.state || pageText('project_phase_unset', '未配置阶段'));
   const health = String(recordData.value?.status || recordData.value?.health || '');
   if (health) return `${phase} · ${health}`;
   return phase;
 });
 const projectRiskSummary = computed(() => {
   const risk = Number(recordData.value?.risk_count || recordData.value?.warning_count || 0);
-  if (!Number.isFinite(risk) || risk <= 0) return '正常，暂无高风险告警';
-  if (risk >= 3) return `严重，当前高风险 ${risk} 项，需优先闭环`;
-  return `关注，当前风险 ${risk} 项`;
+  if (!Number.isFinite(risk) || risk <= 0) return pageText('project_risk_ok', '正常，暂无高风险告警');
+  if (risk >= 3) {
+    return `${pageText('project_risk_critical_prefix', '严重，当前高风险 ')}${risk}${pageText('project_risk_critical_suffix', ' 项，需优先闭环')}`;
+  }
+  return `${pageText('project_risk_attention_prefix', '关注，当前风险 ')}${risk}${pageText('project_risk_attention_suffix', ' 项')}`;
 });
 const projectFinanceSummary = computed(() => {
   const output = Number(recordData.value?.output_value || recordData.value?.amount_output || 0);
   const pay = Number(recordData.value?.payment_ratio || recordData.value?.payment_rate || 0);
-  const outputText = Number.isFinite(output) && output > 0 ? `产值 ${output}` : '产值未配置';
-  const payText = Number.isFinite(pay) && pay > 0 ? `付款比 ${pay}%` : '付款比未配置';
+  const outputText = Number.isFinite(output) && output > 0
+    ? `${pageText('project_output_prefix', '产值 ')}${output}`
+    : pageText('project_output_unset', '产值未配置');
+  const payText = Number.isFinite(pay) && pay > 0
+    ? `${pageText('project_pay_prefix', '付款比 ')}${pay}${pageText('project_pay_suffix', '%')}`
+    : pageText('project_pay_unset', '付款比未配置');
   return `${outputText} · ${payText}`;
 });
 const canEdit = computed(() => contractWriteAllowed.value);
@@ -264,9 +270,10 @@ const readonlyHint = computed(() => {
   const level = String(session.productFacts.license?.level || '').trim();
   const bundle = String(session.productFacts.bundle?.name || '').trim();
   if (level && level !== 'enterprise') {
-    return `当前为只读模式（License: ${level}${bundle ? `, Bundle: ${bundle}` : ''}）。如需编辑权限请联系管理员。`;
+    const bundleSegment = bundle ? `${pageText('readonly_hint_license_bundle_sep', ', Bundle: ')}${bundle}` : '';
+    return `${pageText('readonly_hint_license_prefix', '当前为只读模式（License: ')}${level}${bundleSegment}${pageText('readonly_hint_license_suffix', '）。如需编辑权限请联系管理员。')}`;
   }
-  return '当前记录处于只读模式，请联系管理员开通写权限。';
+  return pageText('readonly_hint_default', '当前记录处于只读模式，请联系管理员开通写权限。');
 });
 const actionContext = computed(() => {
   const fromQuery = Number(route.query.action_id || 0);
@@ -405,8 +412,10 @@ function buttonTooltip(btn: ViewButton) {
       })
       .slice(0, 4);
     const level = String(session.productFacts.license?.level || '').trim();
-    const suffix = level && level !== 'enterprise' ? `；当前 License: ${level}` : '';
-    return `缺少能力：${details.join('、')}${suffix}`;
+    const suffix = level && level !== 'enterprise'
+      ? `${pageText('missing_capability_license_prefix', '；当前 License: ')}${level}`
+      : '';
+    return `${pageText('missing_capability_prefix', '缺少能力：')}${details.join(pageText('missing_capability_sep', '、'))}${suffix}`;
   }
   return capabilityTooltip(policy);
 }
@@ -849,7 +858,11 @@ async function runHeaderButton(btn: ViewButton) {
     setError(err, pageText('error_execute_button', 'failed to execute button'));
     status.value = 'error';
     lastLatencyMs.value = Date.now() - startedAt;
-    actionFeedback.value = { message: '操作失败', reasonCode: 'EXECUTE_FAILED', success: false };
+    actionFeedback.value = {
+      message: pageText('action_feedback_failed', '操作失败'),
+      reasonCode: 'EXECUTE_FAILED',
+      success: false,
+    };
   } finally {
     executing.value = null;
   }
