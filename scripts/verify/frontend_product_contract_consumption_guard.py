@@ -58,6 +58,8 @@ def main() -> int:
         "const workspaceLayout = computed(() => (",
         "homeLayoutText(",
         "isHomeSectionEnabled(",
+        "isHomeSectionTag(",
+        "isHomeSectionOpenDefault(",
         "const capabilityCatalog = session.capabilityCatalog || {};",
         "normalizeEntryWithCapabilityMeta(",
         "capabilityStateLabel(",
@@ -72,7 +74,7 @@ def main() -> int:
         "licenseLevelLabel",
         "bundleNameLabel",
         "capabilityGroupCards",
-        "<section v-if=\"isHomeSectionEnabled('group_overview') && capabilityGroupCards.length\" class=\"group-overview\"",
+        "<section v-if=\"isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length\" class=\"group-overview\"",
     ]
     required_shell_tokens = [
         "buildRuntimeNavigationRegistry(",
