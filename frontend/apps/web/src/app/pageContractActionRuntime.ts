@@ -38,6 +38,12 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
     return true;
   }
 
+  if (kind === 'scene.key') {
+    if (!scene) return false;
+    await deps.router.push({ path: `/s/${scene}`, query });
+    return true;
+  }
+
   if (intent === 'ui.contract' && scene) {
     await deps.router.push({ path: `/s/${scene}`, query });
     return true;

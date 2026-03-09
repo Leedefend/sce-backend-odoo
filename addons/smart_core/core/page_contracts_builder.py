@@ -180,27 +180,30 @@ def _action_templates(section_key: str) -> list[Dict[str, Any]]:
 
 
 def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
+    def _scene_target(scene_key: str) -> Dict[str, Any]:
+        return {"kind": "scene.key", "scene_key": scene_key}
+
     key = str(action_key or "").strip().lower()
     page = str(page_key or "").strip().lower()
     if key == "open_risk_dashboard":
-        return {"scene_key": "projects.dashboard"}
+        return _scene_target("projects.dashboard")
     if key == "open_my_work":
-        return {"scene_key": "my_work.workspace"}
+        return _scene_target("my_work.workspace")
     if key == "apply_filters":
-        return {"scene_key": page}
+        return _scene_target(page)
     if key == "open_list":
         if page in {"usage_analytics", "scene_health"}:
-            return {"scene_key": page}
-        return {"scene_key": "projects.list"}
+            return _scene_target(page)
+        return _scene_target("projects.list")
     if key == "open_workbench":
-        return {"scene_key": "portal.dashboard"}
+        return _scene_target("portal.dashboard")
     if key == "open_menu":
         return {"kind": "menu.first_reachable"}
     if key == "refresh_page":
         return {"kind": "page.refresh"}
     if key == "open_usage_analytics":
         return {"kind": "route.path", "path": "/admin/usage-analytics"}
-    return {"scene_key": page}
+    return _scene_target(page)
 
 
 def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
