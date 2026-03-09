@@ -1,13 +1,13 @@
 <template>
   <section class="scene">
     <StatusPanel
-      v-if="pageSectionEnabled('status_loading', true) && status === 'loading'"
+      v-if="pageSectionEnabled('status_loading', true) && pageSectionTagIs('status_loading', 'section') && status === 'loading'"
       :title="pageText('loading_title', '正在加载场景...')"
       variant="info"
       :style="pageSectionStyle('status_loading')"
     />
     <StatusPanel
-      v-else-if="pageSectionEnabled('status_error', true) && status === 'error'"
+      v-else-if="pageSectionEnabled('status_error', true) && pageSectionTagIs('status_error', 'section') && status === 'error'"
       :title="errorCopy.title"
       :message="errorCopy.message"
       :trace-id="error?.traceId"
@@ -22,7 +22,7 @@
       :style="pageSectionStyle('status_error')"
     />
     <StatusPanel
-      v-else-if="pageSectionEnabled('status_forbidden', true) && status === 'forbidden'"
+      v-else-if="pageSectionEnabled('status_forbidden', true) && pageSectionTagIs('status_forbidden', 'section') && status === 'forbidden'"
       :title="forbiddenCopy.title"
       :message="forbiddenCopy.message"
       :hint="forbiddenCopy.hint"
@@ -57,6 +57,7 @@ const pageContract = usePageContract('scene');
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();

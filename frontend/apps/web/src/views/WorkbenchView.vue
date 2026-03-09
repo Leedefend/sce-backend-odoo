@@ -1,6 +1,6 @@
 <template>
   <section class="workbench">
-    <header v-if="pageSectionEnabled('header', true)" class="header" :style="pageSectionStyle('header')">
+    <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
         <p v-if="showHud" class="diagnostic">{{ pageText('diagnostic_hint', '诊断页仅用于排查，不作为正式产品界面。') }}</p>
         <h2>{{ pageText('header_title', '页面暂时无法打开') }}</h2>
@@ -18,14 +18,14 @@
     </header>
 
     <StatusPanel
-      v-if="pageSectionEnabled('status_panel', true)"
+      v-if="pageSectionEnabled('status_panel', true) && pageSectionTagIs('status_panel', 'section')"
       :title="pageText('panel_title', '页面暂时无法打开')"
       :message="message"
       :variant="panelVariant"
       :style="pageSectionStyle('status_panel')"
     />
 
-    <section v-if="pageSectionEnabled('tiles', true) && showTiles" class="tiles" :style="pageSectionStyle('tiles')">
+    <section v-if="pageSectionEnabled('tiles', true) && pageSectionTagIs('tiles', 'section') && showTiles" class="tiles" :style="pageSectionStyle('tiles')">
       <button
         v-for="tile in tiles"
         :key="tile.key || tile.title"
@@ -43,7 +43,7 @@
       </button>
     </section>
 
-    <div v-if="pageSectionEnabled('hud_details', true) && showHud" class="details" :style="pageSectionStyle('hud_details')">
+    <div v-if="pageSectionEnabled('hud_details', true) && pageSectionTagIs('hud_details', 'div') && showHud" class="details" :style="pageSectionStyle('hud_details')">
       <div class="detail">
         <span class="label">{{ pageText('hud_label_reason', '原因') }}</span>
         <span class="value">{{ reasonLabel }}</span>
@@ -176,6 +176,7 @@ const pageContract = usePageContract('workbench');
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
+const pageSectionTagIs = pageContract.sectionTagIs;
 const showHud = computed(() => isHudEnabled(route));
 const lastTraceId = computed(() => session.lastTraceId || '');
 const lastIntent = computed(() => session.lastIntent || '');
