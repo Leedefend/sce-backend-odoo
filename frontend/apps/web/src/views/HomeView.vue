@@ -1713,19 +1713,6 @@ function highlightParts(raw: string) {
   gap: 4px;
 }
 
-.demo-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  background: #b91c1c;
-  color: #fff;
-}
-
 .hero h2 {
   margin: 0;
   font-size: 22px;
@@ -1799,23 +1786,6 @@ function highlightParts(raw: string) {
   font-size: 10px;
 }
 
-.demo-hint {
-  margin: 6px 0 0;
-  color: #7f1d1d;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.license-hint {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-  border-radius: 8px;
-  padding: 4px 8px;
-}
-
 .hud-line {
   margin: 6px 0 0;
   color: #64748b;
@@ -1881,10 +1851,6 @@ function highlightParts(raw: string) {
   color: #334155;
   font-size: 13px;
   font-weight: 600;
-}
-
-.demo-story-panel summary {
-  color: #0f172a;
 }
 
 @media (max-width: 1120px) {
@@ -2250,49 +2216,6 @@ function highlightParts(raw: string) {
   padding: 10px;
   display: grid;
   gap: 8px;
-}
-
-.story-section {
-  border: 1px solid #fde68a;
-  border-radius: 12px;
-  background: #fffbeb;
-  padding: 14px;
-}
-
-.story-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 10px;
-}
-
-.story-card {
-  border: 1px solid #fde68a;
-  border-radius: 10px;
-  padding: 10px;
-  background: #fff;
-}
-
-.story-title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.story-desc {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: #4b5563;
-}
-
-.story-btn {
-  margin-top: 8px;
-  border: 1px solid #f59e0b;
-  border-radius: 8px;
-  background: #fef3c7;
-  color: #78350f;
-  padding: 6px 10px;
-  cursor: pointer;
 }
 
 .ops-card p {
