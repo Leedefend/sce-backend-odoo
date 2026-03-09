@@ -4,26 +4,26 @@
     <header class="hero">
       <div class="hero-main">
         <div>
-          <h2>我的工作</h2>
-          <p>聚合待办并直接处理，默认从“待我处理”开工。</p>
+          <h2>{{ pageText('title', '我的工作') }}</h2>
+          <p>{{ pageText('hero_subtitle', '聚合待办并直接处理，默认从“待我处理”开工。') }}</p>
         </div>
         <div class="hero-tools">
-          <button class="secondary" @click="load">刷新</button>
+          <button class="secondary" @click="load">{{ pageText('action_refresh', '刷新') }}</button>
         </div>
       </div>
       <div v-if="!loading && !errorText && (generatedAtText || appliedPresetLabel || visibilityNotice)" class="hero-context">
         <span v-if="appliedPresetLabel" class="context-chip">
-          推荐视图：{{ appliedPresetLabel }}<span v-if="routeContextSource">（{{ routeContextSource }}）</span>
+          {{ pageText('context_preset_prefix', '推荐视图：') }}{{ appliedPresetLabel }}<span v-if="routeContextSource">（{{ routeContextSource }}）</span>
         </span>
-        <button v-if="appliedPresetLabel" class="link-btn mini-btn" @click="clearRoutePreset">清除推荐</button>
+        <button v-if="appliedPresetLabel" class="link-btn mini-btn" @click="clearRoutePreset">{{ pageText('action_clear_preset', '清除推荐') }}</button>
         <span v-if="visibilityNotice" class="context-chip warn">
           {{ visibilityNotice }}<span v-if="restrictedSourceText">（{{ restrictedSourceText }}）</span>
         </span>
-        <span v-if="generatedAtText" class="context-chip subtle">更新于 {{ generatedAtText }}</span>
+        <span v-if="generatedAtText" class="context-chip subtle">{{ pageText('context_updated_at_prefix', '更新于 ') }}{{ generatedAtText }}</span>
       </div>
     </header>
 
-    <StatusPanel v-if="loading" title="加载我的工作中..." variant="info" />
+    <StatusPanel v-if="loading" :title="pageText('loading_title', '加载我的工作中...')" variant="info" />
     <StatusPanel
       v-else-if="errorText"
       :title="errorCopy.title"
@@ -48,64 +48,82 @@
     </p>
     <details v-if="!loading && !errorText && retryFailedIds.length" class="retry-panel">
       <summary class="retry-bar">
-        <span>失败待办 {{ retryFailedIds.length }} 条</span>
-        <span v-if="lastBatchExecutionMode" class="meta-chip">模式: {{ lastBatchExecutionMode }}</span>
-        <span v-if="lastBatchReplay" class="meta-chip replay">重放结果</span>
-        <span class="retry-expand-hint">展开处理</span>
+        <span>{{ pageText('retry_failed_prefix', '失败待办 ') }}{{ retryFailedIds.length }}{{ pageText('retry_failed_suffix', ' 条') }}</span>
+        <span v-if="lastBatchExecutionMode" class="meta-chip">{{ pageText('retry_mode_prefix', '模式: ') }}{{ lastBatchExecutionMode }}</span>
+        <span v-if="lastBatchReplay" class="meta-chip replay">{{ pageText('retry_replay', '重放结果') }}</span>
+        <span class="retry-expand-hint">{{ pageText('retry_expand_hint', '展开处理') }}</span>
       </summary>
       <section v-if="retryFailedItems.length" class="retry-details">
-        <p class="retry-title">失败明细</p>
+        <p class="retry-title">{{ pageText('retry_title', '失败明细') }}</p>
         <div class="retry-actions">
-          <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
-          <button class="link-btn" @click="selectAllFailedItems">选中全部失败项</button>
-          <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
-          <button class="link-btn" @click="selectNonRetryableFailedItems">仅选不可重试项</button>
-          <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
-          <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
-          <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
-          <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
-          <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
-          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">导出重试 JSON</button>
-          <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">主列表定位失败</button>
-          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
-          <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
+          <button class="link-btn" @click="selectRetryFailedItems">{{ pageText('retry_action_select_failed', '选中失败项') }}</button>
+          <button class="link-btn" @click="selectAllFailedItems">{{ pageText('retry_action_select_all_failed', '选中全部失败项') }}</button>
+          <button class="link-btn" @click="selectRetryableFailedItems">{{ pageText('retry_action_select_retryable_only', '仅选可重试项') }}</button>
+          <button class="link-btn" @click="selectNonRetryableFailedItems">{{ pageText('retry_action_select_non_retryable_only', '仅选不可重试项') }}</button>
+          <button class="link-btn done-btn" @click="retryFailedTodos">{{ pageText('retry_action_retry_failed', '重试失败项') }}</button>
+          <button class="link-btn" @click="copyRetrySummary">{{ pageText('retry_action_copy_summary', '复制失败摘要') }}</button>
+          <button class="link-btn" @click="copyVisibleRetrySummary">{{ pageText('retry_action_copy_current_view', '复制当前视图') }}</button>
+          <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">{{ pageText('retry_action_export_failed_csv', '导出失败 CSV') }}</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">{{ pageText('retry_action_copy_retry_request', '复制重试请求') }}</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">{{ pageText('retry_action_export_retry_json', '导出重试 JSON') }}</button>
+          <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">{{ pageText('retry_action_focus_in_main_list', '主列表定位失败') }}</button>
+          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">{{ pageText('retry_action_copy_trace', '复制 Trace') }}</button>
+          <button class="link-btn secondary-btn" @click="clearRetryFailed">{{ pageText('retry_action_ignore', '忽略') }}</button>
         </div>
       <details v-if="retryRequestParams" class="retry-request-preview">
-        <summary>重试请求预览</summary>
+        <summary>{{ pageText('retry_request_preview_title', '重试请求预览') }}</summary>
         <div class="retry-note-presets">
-          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：网络抖动后重放')">网络抖动</button>
-          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：并发冲突后重放')">并发冲突</button>
-          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：依赖状态已满足')">依赖满足</button>
+          <button
+            type="button"
+            class="link-btn mini-btn"
+            @click="applyRetryNotePreset(pageText('retry_note_template_network', '系统重试：网络抖动后重放'))"
+          >
+            {{ pageText('retry_note_preset_network', '网络抖动') }}
+          </button>
+          <button
+            type="button"
+            class="link-btn mini-btn"
+            @click="applyRetryNotePreset(pageText('retry_note_template_conflict', '系统重试：并发冲突后重放'))"
+          >
+            {{ pageText('retry_note_preset_conflict', '并发冲突') }}
+          </button>
+          <button
+            type="button"
+            class="link-btn mini-btn"
+            @click="applyRetryNotePreset(pageText('retry_note_template_dependency', '系统重试：依赖状态已满足'))"
+          >
+            {{ pageText('retry_note_preset_dependency', '依赖满足') }}
+          </button>
         </div>
         <label class="retry-note-editor">
-          重试备注
+          {{ pageText('retry_note_label', '重试备注') }}
           <textarea
             v-model="retryNoteDraft"
             rows="2"
-            placeholder="可选：补充本次重试说明"
+            :placeholder="pageText('retry_note_placeholder', '可选：补充本次重试说明')"
           />
         </label>
         <pre>{{ retryRequestJson }}</pre>
       </details>
       <p v-if="retryRetryableSummary" class="retry-summary">
-        重试能力：可重试 {{ retryRetryableSummary.retryable }} / 不可重试 {{ retryRetryableSummary.non_retryable }}
+        {{ pageText('retry_capability_prefix', '重试能力：可重试 ') }}{{ retryRetryableSummary.retryable }}{{ pageText('retry_capability_middle', ' / 不可重试 ') }}{{ retryRetryableSummary.non_retryable }}
       </p>
       <p class="retry-summary">
-        当前展示 {{ visibleRetryFailedItems.length }} / {{ retryFilteredItems.length }} 条
+        {{ pageText('retry_visible_prefix', '当前展示 ') }}{{ visibleRetryFailedItems.length }}{{ pageText('retry_visible_middle', ' / ') }}{{ retryFilteredItems.length }}{{ pageText('retry_visible_suffix', ' 条') }}
         <button
           v-if="retryFilteredItems.length > retryPreviewLimit"
           type="button"
           class="link-btn mini-btn"
           @click="toggleRetryFailedExpanded"
         >
-          {{ retryFailedExpanded ? '收起' : '展开全部' }}
+          {{ retryFailedExpanded ? pageText('retry_action_collapse_all', '收起') : pageText('retry_action_expand_all', '展开全部') }}
         </button>
       </p>
       <input
         v-model.trim="retrySearchText"
         class="search-input retry-search"
         type="search"
-        placeholder="筛选失败明细：ID / 原因码 / 消息"
+        :placeholder="pageText('retry_search_placeholder', '筛选失败明细：ID / 原因码 / 消息')"
       />
       <div class="retry-toggle">
         <button
@@ -114,7 +132,7 @@
           :class="{ active: retryFilterMode === 'all' }"
           @click="setRetryFilterMode('all')"
         >
-          全部
+          {{ pageText('retry_filter_all', '全部') }}
         </button>
         <button
           type="button"
@@ -122,7 +140,7 @@
           :class="{ active: retryFilterMode === 'retryable' }"
           @click="setRetryFilterMode('retryable')"
         >
-          仅可重试
+          {{ pageText('retry_filter_retryable_only', '仅可重试') }}
         </button>
         <button
           type="button"
@@ -130,7 +148,7 @@
           :class="{ active: retryFilterMode === 'non_retryable' }"
           @click="setRetryFilterMode('non_retryable')"
         >
-          仅不可重试
+          {{ pageText('retry_filter_non_retryable_only', '仅不可重试') }}
         </button>
         <button
           type="button"
@@ -138,18 +156,18 @@
           :class="{ active: retryGroupByReason }"
           @click="toggleRetryGroupByReason"
         >
-          {{ retryGroupByReason ? '平铺显示' : '按原因分组' }}
+          {{ retryGroupByReason ? pageText('retry_group_mode_flat', '平铺显示') : pageText('retry_group_mode_grouped', '按原因分组') }}
         </button>
         <button
           type="button"
           class="reason-chip"
           @click="resetRetryPanelState"
         >
-          重置面板
+          {{ pageText('retry_action_reset_panel', '重置面板') }}
         </button>
       </div>
       <p v-if="retryReasonSummary.length" class="retry-summary">
-        失败原因分布：
+        {{ pageText('retry_reason_distribution_prefix', '失败原因分布：') }}
         <button
           v-for="item in retryReasonSummary"
           :key="`reason-${item.reason_code}`"
@@ -165,18 +183,18 @@
           class="link-btn mini-btn"
           @click="clearReasonFilterFromFailure"
         >
-          清除失败筛选
+          {{ pageText('retry_action_clear_failed_filter', '清除失败筛选') }}
         </button>
       </p>
       <p v-if="retryFailedGroups.length" class="retry-summary">
-        分组摘要：
+        {{ pageText('retry_group_summary_prefix', '分组摘要：') }}
         <span v-for="group in retryFailedGroups" :key="`group-${group.reason_code}`" class="group-actions">
           <button
             type="button"
             class="reason-chip"
             @click="applyReasonFilterFromFailure(group.reason_code)"
           >
-            {{ group.reason_code }} ({{ group.count }} / 可重试 {{ group.retryable_count }})
+            {{ group.reason_code }} ({{ group.count }} / {{ pageText('retry_group_retryable_prefix', '可重试 ') }}{{ group.retryable_count }})
           </button>
           <button
             type="button"
@@ -184,7 +202,7 @@
             :disabled="!group.retryable_count"
             @click="selectRetryableByReasonGroup(group.reason_code)"
           >
-            选中此组
+            {{ pageText('retry_action_select_group', '选中此组') }}
           </button>
           <button
             type="button"
@@ -192,14 +210,14 @@
             :disabled="!group.retryable_count"
             @click="retryByReasonGroup(group.reason_code)"
           >
-            重试此组
+            {{ pageText('retry_action_retry_group', '重试此组') }}
           </button>
         </span>
       </p>
       <ul v-if="!retryGroupByReason">
         <li v-for="item in visibleRetryFailedItems" :key="`failed-${item.id}`">
           <span class="failed-id">#{{ item.id }}</span>
-          <span class="failed-code">{{ item.reason_code || 'UNKNOWN' }}</span>
+          <span class="failed-code">{{ item.reason_code || pageText('retry_unknown_reason_code', 'UNKNOWN') }}</span>
           <span class="failed-msg">{{ item.message || '-' }}</span>
           <span v-if="resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable)" class="failed-hint">
             {{ resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable) }}
@@ -211,13 +229,13 @@
           >
             {{ failedSuggestedActionLabel(item) }}
           </button>
-          <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">复制单条</button>
+          <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">{{ pageText('retry_action_copy_single', '复制单条') }}</button>
           <button
             v-if="failedItemRecord(item.id)"
             class="link-btn mini-btn"
             @click="openRecord(failedItemRecord(item.id)!)"
           >
-            打开记录
+            {{ pageText('retry_action_open_record', '打开记录') }}
           </button>
         </li>
       </ul>
@@ -238,7 +256,7 @@
               >
                 {{ failedSuggestedActionLabel(item) }}
               </button>
-              <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">复制单条</button>
+              <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">{{ pageText('retry_action_copy_single', '复制单条') }}</button>
             </li>
           </ul>
         </div>
@@ -278,75 +296,75 @@
             v-model.trim="searchText"
             class="search-input"
             type="search"
-            placeholder="搜索事项 / 来源 / 动作"
+            :placeholder="pageText('filter_search_placeholder', '搜索事项 / 来源 / 动作')"
             @keydown.enter="applyFilters"
           />
           <button class="link-btn mini-btn" @click="showAdvancedFilters = !showAdvancedFilters">
-            {{ showAdvancedFilters ? '收起筛选' : '展开筛选' }}
+            {{ showAdvancedFilters ? pageText('action_collapse_filters', '收起筛选') : pageText('action_expand_filters', '展开筛选') }}
           </button>
-          <button class="link-btn mini-btn" @click="applyFilters">应用</button>
-          <button class="link-btn mini-btn" @click="resetFilters">重置</button>
+          <button class="link-btn mini-btn" @click="applyFilters">{{ pageText('action_apply_filters', '应用') }}</button>
+          <button class="link-btn mini-btn" @click="resetFilters">{{ pageText('action_reset_filters', '重置') }}</button>
         </div>
         <div v-if="showAdvancedFilters" class="filter-advanced">
           <select v-model="sourceFilter" class="filter-select">
-            <option value="ALL">全部来源</option>
+            <option value="ALL">{{ pageText('filter_source_all', '全部来源') }}</option>
             <option v-for="source in sourceOptions" :key="`src-${source}`" :value="source">
               {{ source }}
             </option>
           </select>
           <select v-model="reasonFilter" class="filter-select">
-            <option value="ALL">全部原因码</option>
+            <option value="ALL">{{ pageText('filter_reason_all', '全部原因码') }}</option>
             <option v-for="reason in reasonOptions" :key="`reason-${reason}`" :value="reason">
               {{ reason }}
             </option>
           </select>
           <select v-model="sortBy" class="filter-select">
-            <option value="priority">排序：优先级</option>
-            <option value="deadline">排序：截止日</option>
-            <option value="title">排序：事项标题</option>
-            <option value="reason_code">排序：原因码</option>
-            <option value="source">排序：来源</option>
-            <option value="id">排序：ID</option>
+            <option value="priority">{{ pageText('sort_priority', '排序：优先级') }}</option>
+            <option value="deadline">{{ pageText('sort_deadline', '排序：截止日') }}</option>
+            <option value="title">{{ pageText('sort_title', '排序：事项标题') }}</option>
+            <option value="reason_code">{{ pageText('sort_reason_code', '排序：原因码') }}</option>
+            <option value="source">{{ pageText('sort_source', '排序：来源') }}</option>
+            <option value="id">{{ pageText('sort_id', '排序：ID') }}</option>
           </select>
           <select v-model="sortDir" class="filter-select">
-            <option value="desc">降序</option>
-            <option value="asc">升序</option>
+            <option value="desc">{{ pageText('sort_desc', '降序') }}</option>
+            <option value="asc">{{ pageText('sort_asc', '升序') }}</option>
           </select>
           <select v-model.number="pageSize" class="filter-select">
-            <option :value="10">每页 10</option>
-            <option :value="20">每页 20</option>
-            <option :value="40">每页 40</option>
+            <option :value="10">{{ pageText('page_size_10', '每页 10') }}</option>
+            <option :value="20">{{ pageText('page_size_20', '每页 20') }}</option>
+            <option :value="40">{{ pageText('page_size_40', '每页 40') }}</option>
           </select>
           <div class="preset-actions">
-            <button class="link-btn mini-btn" @click="saveFilterPreset">保存常用筛选</button>
-            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">应用常用筛选</button>
-            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">清除预设</button>
+            <button class="link-btn mini-btn" @click="saveFilterPreset">{{ pageText('action_save_preset', '保存常用筛选') }}</button>
+            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="applyFilterPreset">{{ pageText('action_apply_preset', '应用常用筛选') }}</button>
+            <button class="link-btn mini-btn" :disabled="!hasFilterPreset" @click="clearFilterPreset">{{ pageText('action_clear_saved_preset', '清除预设') }}</button>
           </div>
         </div>
       </section>
       <p v-if="summaryStatus?.hint && summaryStatus?.state !== 'FILTER_EMPTY'" class="status-hint">{{ summaryStatus.hint }}</p>
       <section v-if="showFilterEmptyGuide" class="filter-empty-guide">
-        <p class="guide-title">当前筛选条件没有匹配结果</p>
-        <p class="guide-text">建议先恢复推荐视图，或一键清空筛选后重试。</p>
+        <p class="guide-title">{{ pageText('filter_empty_title', '当前筛选条件没有匹配结果') }}</p>
+        <p class="guide-text">{{ pageText('filter_empty_desc', '建议先恢复推荐视图，或一键清空筛选后重试。') }}</p>
         <div class="guide-actions">
-          <button class="guide-btn primary" @click="applyRecommendedView">恢复推荐视图</button>
-          <button class="guide-btn" @click="resetFilters">清空筛选</button>
+          <button class="guide-btn primary" @click="applyRecommendedView">{{ pageText('action_restore_recommended_view', '恢复推荐视图') }}</button>
+          <button class="guide-btn" @click="resetFilters">{{ pageText('action_clear_filters', '清空筛选') }}</button>
         </div>
       </section>
 
       <section v-if="todoSelectionIds.length" class="batch-bar">
-        <span>已选 {{ todoSelectionIds.length }} 条待办</span>
-        <button class="link-btn done-btn" :disabled="loading" @click="completeSelectedTodos">批量完成</button>
-        <button class="link-btn secondary-btn" :disabled="loading" @click="clearTodoSelection">清空</button>
+        <span>{{ pageText('batch_selected_prefix', '已选 ') }}{{ todoSelectionIds.length }}{{ pageText('batch_selected_suffix', ' 条待办') }}</span>
+        <button class="link-btn done-btn" :disabled="loading" @click="completeSelectedTodos">{{ pageText('action_batch_complete', '批量完成') }}</button>
+        <button class="link-btn secondary-btn" :disabled="loading" @click="clearTodoSelection">{{ pageText('action_clear_selection', '清空') }}</button>
       </section>
 
       <section class="table-wrap">
         <section v-if="!displayItems.length && !showFilterEmptyGuide" class="empty-guide">
-          <p class="empty-title">{{ summaryStatus?.message || '当前无待处理事项' }}</p>
-          <p class="empty-desc">状态良好。你可以返回工作台查看整体态势，或进入风险驾驶舱继续巡检。</p>
+          <p class="empty-title">{{ summaryStatus?.message || pageText('empty_title_default', '当前无待处理事项') }}</p>
+          <p class="empty-desc">{{ pageText('empty_desc', '状态良好。你可以返回工作台查看整体态势，或进入风险驾驶舱继续巡检。') }}</p>
           <div class="guide-actions">
-            <button class="guide-btn primary" @click="goWorkbench">去工作台</button>
-            <button class="guide-btn" @click="goRiskCockpit">去风险驾驶舱</button>
+            <button class="guide-btn primary" @click="goWorkbench">{{ pageText('action_go_workbench', '去工作台') }}</button>
+            <button class="guide-btn" @click="goRiskCockpit">{{ pageText('action_go_risk_cockpit', '去风险驾驶舱') }}</button>
           </div>
         </section>
         <table>
@@ -360,11 +378,11 @@
                   @change="toggleAllTodoSelection($event)"
                 />
               </th>
-              <th>事项</th>
-              <th>动作</th>
-              <th>截止日</th>
-              <th>优先级</th>
-              <th>原因码</th>
+              <th>{{ pageText('table_col_item', '事项') }}</th>
+              <th>{{ pageText('table_col_action', '动作') }}</th>
+              <th>{{ pageText('table_col_deadline', '截止日') }}</th>
+              <th>{{ pageText('table_col_priority', '优先级') }}</th>
+              <th>{{ pageText('table_col_reason_code', '原因码') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -401,9 +419,9 @@
       </section>
 
       <section class="pager">
-        <button class="link-btn" :disabled="loading || page <= 1" @click="goToPage(page - 1)">上一页</button>
-        <span>第 {{ page }} / {{ totalPages }} 页</span>
-        <button class="link-btn" :disabled="loading || page >= totalPages" @click="goToPage(page + 1)">下一页</button>
+        <button class="link-btn" :disabled="loading || page <= 1" @click="goToPage(page - 1)">{{ pageText('pager_prev', '上一页') }}</button>
+        <span>{{ pageText('pager_middle_prefix', '第 ') }}{{ page }}{{ pageText('pager_middle_sep', ' / ') }}{{ totalPages }}{{ pageText('pager_middle_suffix', ' 页') }}</span>
+        <button class="link-btn" :disabled="loading || page >= totalPages" @click="goToPage(page + 1)">{{ pageText('pager_next', '下一页') }}</button>
       </section>
     </template>
   </section>
@@ -420,11 +438,14 @@ import { describeSuggestedAction, runSuggestedAction } from '../composables/useS
 import { parseWorkspaceEntryContext, readWorkspaceContext } from '../app/workspaceContext';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findActionMeta, findActionNodeByModel } from '../app/menu';
+import { usePageContract } from '../app/pageContract';
 import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
 const route = useRoute();
 const session = useSessionStore();
+const pageContract = usePageContract('my_work');
+const pageText = pageContract.text;
 
 const loading = ref(false);
 const errorText = ref('');
@@ -504,8 +525,8 @@ const generatedAtText = computed(() => {
 });
 const visibilityNotice = computed(() => {
   if (!summaryVisibility.value?.partial_data_hidden) return '';
-  const base = String(summaryVisibility.value?.message || '部分数据未显示');
-  return `${base}，请联系管理员开通对应权限。`;
+  const base = String(summaryVisibility.value?.message || pageText('partial_data_hidden', '部分数据未显示'));
+  return `${base}${pageText('visibility_notice_suffix', '，请联系管理员开通对应权限。')}`;
 });
 const restrictedSourceText = computed(() => {
   const rows = Array.isArray(summaryVisibility.value?.restricted_sources)
@@ -656,22 +677,22 @@ function findRecommendedSectionKey() {
 
 function mapRestrictedModelLabel(modelName: string) {
   const mapping: Record<string, string> = {
-    'sc.workflow.workitem': '流程待办',
-    'tier.review': '审批复核',
-    'mail.activity': '待办活动',
-    'project.task': '项目任务',
-    'project.project': '项目主数据',
-    'mail.message': '消息提醒',
-    'mail.followers': '关注记录',
+    'sc.workflow.workitem': pageText('model_label_sc_workflow_workitem', '流程待办'),
+    'tier.review': pageText('model_label_tier_review', '审批复核'),
+    'mail.activity': pageText('model_label_mail_activity', '待办活动'),
+    'project.task': pageText('model_label_project_task', '项目任务'),
+    'project.project': pageText('model_label_project_project', '项目主数据'),
+    'mail.message': pageText('model_label_mail_message', '消息提醒'),
+    'mail.followers': pageText('model_label_mail_followers', '关注记录'),
   };
   return mapping[modelName] || modelName;
 }
 
 function formatPriority(priority: string | undefined) {
   const raw = String(priority || '').trim().toLowerCase();
-  if (raw === 'high') return '高';
-  if (raw === 'low') return '低';
-  return '中';
+  if (raw === 'high') return pageText('priority_high', '高');
+  if (raw === 'low') return pageText('priority_low', '低');
+  return pageText('priority_medium', '中');
 }
 
 function setActionFeedback(message: string, isError = false, autoClearMs = 0) {
@@ -695,7 +716,7 @@ async function applyRecommendedView() {
   pageSize.value = 20;
   page.value = 1;
   activeSection.value = findRecommendedSectionKey();
-  setActionFeedback('已恢复推荐视图', false, 3000);
+  setActionFeedback(pageText('feedback_restore_recommended', '已恢复推荐视图'), false, 3000);
   await load();
 }
 
@@ -751,7 +772,7 @@ async function load() {
       activeSection.value = sections.value[0].key;
     }
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '请求失败';
+    errorText.value = err instanceof Error ? err.message : pageText('error_request_failed', '请求失败');
     statusError.value = buildStatusError(err, errorText.value);
     summaryVisibility.value = null;
   } finally {
@@ -803,10 +824,10 @@ function saveFilterPreset() {
       }),
     );
     hasFilterPreset.value = true;
-    actionFeedback.value = '常用筛选已保存';
+    actionFeedback.value = pageText('feedback_save_preset_ok', '常用筛选已保存');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '保存常用筛选失败';
+    actionFeedback.value = pageText('feedback_save_preset_failed', '保存常用筛选失败');
     actionFeedbackError.value = true;
   }
 }
@@ -831,12 +852,12 @@ function applyFilterPreset() {
     if (typeof parsed.sortBy === 'string') sortBy.value = parsed.sortBy;
     if (parsed.sortDir === 'asc' || parsed.sortDir === 'desc') sortDir.value = parsed.sortDir;
     if (typeof parsed.pageSize === 'number' && Number.isFinite(parsed.pageSize) && parsed.pageSize > 0) pageSize.value = parsed.pageSize;
-    actionFeedback.value = '已应用常用筛选';
+    actionFeedback.value = pageText('feedback_apply_preset_ok', '已应用常用筛选');
     actionFeedbackError.value = false;
     page.value = 1;
     void load();
   } catch {
-    actionFeedback.value = '应用常用筛选失败';
+    actionFeedback.value = pageText('feedback_apply_preset_failed', '应用常用筛选失败');
     actionFeedbackError.value = true;
   }
 }
@@ -845,10 +866,10 @@ function clearFilterPreset() {
   try {
     window.localStorage.removeItem(myWorkPresetStorageKey);
     hasFilterPreset.value = false;
-    actionFeedback.value = '已清除常用筛选';
+    actionFeedback.value = pageText('feedback_clear_preset_ok', '已清除常用筛选');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '清除常用筛选失败';
+    actionFeedback.value = pageText('feedback_clear_preset_failed', '清除常用筛选失败');
     actionFeedbackError.value = true;
   }
 }
@@ -863,7 +884,7 @@ function resetFilters() {
   page.value = 1;
   const todoSection = sections.value.find((item) => item.key === 'todo');
   activeSection.value = todoSection?.key || sections.value[0]?.key || 'todo';
-  actionFeedback.value = '筛选条件已重置';
+  actionFeedback.value = pageText('feedback_filters_reset', '筛选条件已重置');
   actionFeedbackError.value = false;
   void load();
 }
@@ -878,8 +899,8 @@ function goRiskCockpit() {
 
 function onErrorSuggestedActionExecuted(payload: { action: string; success: boolean }) {
   actionFeedback.value = payload.success
-    ? `已执行建议动作：${payload.action || 'unknown'}`
-    : `建议动作执行失败：${payload.action || 'unknown'}`;
+    ? `${pageText('feedback_suggest_action_ok_prefix', '已执行建议动作：')}${payload.action || 'unknown'}`
+    : `${pageText('feedback_suggest_action_failed_prefix', '建议动作执行失败：')}${payload.action || 'unknown'}`;
   actionFeedbackError.value = !payload.success;
 }
 
@@ -1072,7 +1093,7 @@ function toggleRetryFailedExpanded() {
 function selectRetryFailedItems() {
   const candidateIds = retryRequestParams.value?.retry_ids?.length ? retryRequestParams.value.retry_ids : retryFailedIds.value;
   if (!candidateIds.length) {
-    actionFeedback.value = '当前没有可重试失败项';
+    actionFeedback.value = pageText('feedback_none_retryable', '当前没有可重试失败项');
     actionFeedbackError.value = true;
     return;
   }
@@ -1086,14 +1107,14 @@ function selectAllFailedItems() {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!failedIds.length) {
-    actionFeedback.value = '当前没有失败项可选择';
+    actionFeedback.value = pageText('feedback_none_failed_selectable', '当前没有失败项可选择');
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   failedIds.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `已选中 ${failedIds.length} 条失败项`;
+  actionFeedback.value = `${pageText('feedback_selected_failed_prefix', '已选中 ')}${failedIds.length}${pageText('feedback_selected_failed_suffix', ' 条失败项')}`;
   actionFeedbackError.value = false;
 }
 
@@ -1103,14 +1124,14 @@ function selectRetryableFailedItems() {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!retryableIds.length) {
-    actionFeedback.value = '当前没有可重试失败项';
+    actionFeedback.value = pageText('feedback_none_retryable', '当前没有可重试失败项');
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   retryableIds.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `已选中 ${retryableIds.length} 条可重试失败项`;
+  actionFeedback.value = `${pageText('feedback_selected_failed_prefix', '已选中 ')}${retryableIds.length}${pageText('feedback_selected_retryable_suffix', ' 条可重试失败项')}`;
   actionFeedbackError.value = false;
 }
 
@@ -1120,14 +1141,14 @@ function selectNonRetryableFailedItems() {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!ids.length) {
-    actionFeedback.value = '当前没有不可重试失败项';
+    actionFeedback.value = pageText('feedback_none_non_retryable', '当前没有不可重试失败项');
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   ids.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `已选中 ${ids.length} 条不可重试失败项`;
+  actionFeedback.value = `${pageText('feedback_selected_failed_prefix', '已选中 ')}${ids.length}${pageText('feedback_selected_non_retryable_suffix', ' 条不可重试失败项')}`;
   actionFeedbackError.value = false;
 }
 
@@ -1160,7 +1181,7 @@ function applyReasonFilterFromFailure(reasonCode: string) {
   if (!reasonCode) return;
   reasonFilter.value = reasonCode;
   page.value = 1;
-  actionFeedback.value = `已按失败原因筛选：${reasonCode}`;
+  actionFeedback.value = `${pageText('feedback_filtered_by_reason_prefix', '已按失败原因筛选：')}${reasonCode}`;
   actionFeedbackError.value = false;
   void load();
 }
@@ -1168,15 +1189,19 @@ function applyReasonFilterFromFailure(reasonCode: string) {
 function clearReasonFilterFromFailure() {
   reasonFilter.value = 'ALL';
   page.value = 1;
-  actionFeedback.value = '已清除失败原因筛选';
+  actionFeedback.value = pageText('feedback_cleared_reason_filter', '已清除失败原因筛选');
   actionFeedbackError.value = false;
   void load();
 }
 
 function formatFailedItemText(item: { id: number; reason_code: string; message: string; retryable?: boolean; suggested_action?: string }) {
   const actionHint = resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable);
-  const retryTag = item.retryable === true ? '可重试' : item.retryable === false ? '不可重试' : '';
-  return [`#${item.id} ${item.reason_code || 'UNKNOWN'} ${item.message || '-'}`, retryTag, actionHint]
+  const retryTag = item.retryable === true
+    ? pageText('retry_tag_retryable', '可重试')
+    : item.retryable === false
+      ? pageText('retry_tag_non_retryable', '不可重试')
+      : '';
+  return [`#${item.id} ${item.reason_code || pageText('retry_unknown_reason_code', 'UNKNOWN')} ${item.message || '-'}`, retryTag, actionHint]
     .filter(Boolean)
     .join(' | ');
 }
@@ -1185,16 +1210,18 @@ function buildRetrySummaryText() {
   if (!retryFailedItems.value.length) return '';
   const reasons = retryFailedGroups.value.length
     ? retryFailedGroups.value
-        .map((item) => `${item.reason_code} x ${item.count} (可重试 ${item.retryable_count})`)
+        .map((item) =>
+          `${item.reason_code}${pageText('retry_summary_group_count_sep', ' x ')}${item.count}${pageText('retry_summary_group_retryable_left', ' (')}${pageText('retry_group_retryable_prefix', '可重试 ')}${item.retryable_count}${pageText('retry_summary_group_retryable_right', ')')}`,
+        )
         .join('; ')
     : retryReasonSummary.value
-    .map((item) => `${item.reason_code} x ${item.count}`)
+    .map((item) => `${item.reason_code}${pageText('retry_summary_group_count_sep', ' x ')}${item.count}`)
     .join('; ');
   const lines = retryFailedItems.value.map((item) => formatFailedItemText(item));
   return [
-    `失败待办 ${retryFailedIds.value.length} 条`,
-    reasons ? `原因分布: ${reasons}` : '',
-    typeof todoRemaining.value === 'number' ? `剩余待办: ${todoRemaining.value}` : '',
+    `${pageText('retry_summary_header_prefix', '失败待办 ')}${retryFailedIds.value.length}${pageText('retry_summary_header_suffix', ' 条')}`,
+    reasons ? `${pageText('retry_summary_reason_dist_prefix', '原因分布: ')}${reasons}` : '',
+    typeof todoRemaining.value === 'number' ? `${pageText('retry_summary_remaining_prefix', '剩余待办: ')}${todoRemaining.value}` : '',
     ...lines,
   ]
     .filter(Boolean)
@@ -1204,9 +1231,9 @@ function buildRetrySummaryText() {
 function buildVisibleRetrySummaryText() {
   const lines = visibleRetryFailedItems.value.map((item) => formatFailedItemText(item));
   return [
-    `筛选模式: ${retryFilterMode.value}`,
-    `显示模式: ${retryGroupByReason.value ? 'grouped' : 'flat'}`,
-    `当前视图条目: ${visibleRetryFailedItems.value.length}`,
+    `${pageText('retry_visible_mode_prefix', '筛选模式: ')}${retryFilterMode.value}`,
+    `${pageText('retry_visible_display_prefix', '显示模式: ')}${retryGroupByReason.value ? pageText('retry_visible_display_grouped', 'grouped') : pageText('retry_visible_display_flat', 'flat')}`,
+    `${pageText('retry_visible_items_prefix', '当前视图条目: ')}${visibleRetryFailedItems.value.length}`,
     ...lines,
   ]
     .filter(Boolean)
@@ -1218,10 +1245,10 @@ async function copyRetrySummary() {
   if (!summaryText) return;
   try {
     await navigator.clipboard.writeText(summaryText);
-    actionFeedback.value = '失败摘要已复制';
+    actionFeedback.value = pageText('feedback_copy_summary_ok', '失败摘要已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '复制失败，请检查浏览器剪贴板权限';
+    actionFeedback.value = pageText('feedback_copy_failed', '复制失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1231,10 +1258,10 @@ async function copyFailedItemLine(item: { id: number; reason_code: string; messa
   if (!line) return;
   try {
     await navigator.clipboard.writeText(line);
-    actionFeedback.value = `失败项 #${item.id} 已复制`;
+    actionFeedback.value = `${pageText('feedback_copy_item_ok_prefix', '失败项 #')}${item.id}${pageText('feedback_copy_item_ok_suffix', ' 已复制')}`;
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = `复制失败项 #${item.id} 失败`;
+    actionFeedback.value = `${pageText('feedback_copy_item_failed_prefix', '复制失败项 #')}${item.id}${pageText('feedback_copy_item_failed_suffix', ' 失败')}`;
     actionFeedbackError.value = true;
   }
 }
@@ -1244,10 +1271,10 @@ async function copyVisibleRetrySummary() {
   if (!summaryText) return;
   try {
     await navigator.clipboard.writeText(summaryText);
-    actionFeedback.value = '当前视图摘要已复制';
+    actionFeedback.value = pageText('feedback_copy_view_summary_ok', '当前视图摘要已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '复制当前视图摘要失败，请检查浏览器剪贴板权限';
+    actionFeedback.value = pageText('feedback_copy_view_summary_failed', '复制当前视图摘要失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1258,7 +1285,7 @@ function focusFailedInMainList() {
   sourceFilter.value = 'mail.activity';
   reasonFilter.value = retryReasonSummary.value[0]?.reason_code || 'ALL';
   page.value = 1;
-  actionFeedback.value = '已定位到主列表失败待办视图';
+  actionFeedback.value = pageText('feedback_focus_main_failed_view', '已定位到主列表失败待办视图');
   actionFeedbackError.value = false;
   void load();
 }
@@ -1268,10 +1295,10 @@ async function copyRetryRequest() {
   if (!payload) return;
   try {
     await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-    actionFeedback.value = '重试请求已复制';
+    actionFeedback.value = pageText('feedback_copy_retry_request_ok', '重试请求已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '复制重试请求失败，请检查浏览器剪贴板权限';
+    actionFeedback.value = pageText('feedback_copy_retry_request_failed', '复制重试请求失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1292,10 +1319,10 @@ function exportRetryRequestJson() {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(href);
-    actionFeedback.value = '重试请求 JSON 已导出';
+    actionFeedback.value = pageText('feedback_export_retry_json_ok', '重试请求 JSON 已导出');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '导出重试请求 JSON 失败';
+    actionFeedback.value = pageText('feedback_export_retry_json_failed', '导出重试请求 JSON 失败');
     actionFeedbackError.value = true;
   }
 }
@@ -1304,10 +1331,10 @@ async function copyBatchTraceId() {
   if (!lastBatchTraceId.value) return;
   try {
     await navigator.clipboard.writeText(lastBatchTraceId.value);
-    actionFeedback.value = 'trace_id 已复制';
+    actionFeedback.value = pageText('feedback_copy_trace_ok', 'trace_id 已复制');
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '复制 trace_id 失败，请检查浏览器剪贴板权限';
+    actionFeedback.value = pageText('feedback_copy_trace_failed', '复制 trace_id 失败，请检查浏览器剪贴板权限');
     actionFeedbackError.value = true;
   }
 }
@@ -1349,10 +1376,10 @@ function exportRetryFailedCsv() {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(href);
-    actionFeedback.value = `失败明细 CSV 已导出（${retryFailedItems.value.length} 条）`;
+    actionFeedback.value = `${pageText('feedback_export_failed_csv_ok_prefix', '失败明细 CSV 已导出（')}${retryFailedItems.value.length}${pageText('feedback_export_failed_csv_ok_suffix', ' 条）')}`;
     actionFeedbackError.value = false;
   } catch {
-    actionFeedback.value = '导出失败明细 CSV 失败';
+    actionFeedback.value = pageText('feedback_export_failed_csv_failed', '导出失败明细 CSV 失败');
     actionFeedbackError.value = true;
   }
 }
@@ -1372,13 +1399,15 @@ async function completeItem(item: MyWorkRecordItem) {
       note: 'Completed from my-work UI.',
     });
     const actionHint = resolveSuggestedAction(result.suggested_action, result.reason_code, result.retryable);
-    actionFeedback.value = [result.message || (result.success ? '待办已完成' : '完成待办失败'), actionHint]
+    actionFeedback.value = [result.message || (result.success
+      ? pageText('feedback_todo_done_ok', '待办已完成')
+      : pageText('feedback_todo_done_failed', '完成待办失败')), actionHint]
       .filter(Boolean)
       .join(' | ');
     actionFeedbackError.value = !result.success;
     await load();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '完成待办失败';
+    errorText.value = err instanceof Error ? err.message : pageText('error_complete_todo_failed', '完成待办失败');
     statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
@@ -1387,7 +1416,9 @@ async function completeItem(item: MyWorkRecordItem) {
 
 async function completeSelectedTodos() {
   if (!todoSelectionIds.value.length) return;
-  if (!window.confirm(`确认批量完成 ${todoSelectionIds.value.length} 条待办？`)) return;
+  if (!window.confirm(
+    `${pageText('confirm_batch_complete_prefix', '确认批量完成 ')}${todoSelectionIds.value.length}${pageText('confirm_batch_complete_suffix', ' 条待办？')}`,
+  )) return;
   loading.value = true;
   errorText.value = '';
   statusError.value = null;
@@ -1401,10 +1432,10 @@ async function completeSelectedTodos() {
       note: 'Completed from my-work batch action.',
       request_id: buildBatchRequestId('mw_batch_ui'),
     });
-    applyBatchFeedback(result, '批量完成');
+    applyBatchFeedback(result, pageText('batch_action_complete', '批量完成'));
     await load();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '批量完成待办失败';
+    errorText.value = err instanceof Error ? err.message : pageText('error_batch_complete_failed', '批量完成待办失败');
     statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
@@ -1419,7 +1450,7 @@ async function retryFailedTodos() {
     resolveRetryNote('Retry failed items from my-work.'),
     retryRequestParams.value?.request_id || buildBatchRequestId('mw_retry_ui'),
     retryRequestParams.value?.source || 'mail.activity',
-    '重试',
+    pageText('batch_action_retry', '重试'),
   );
 }
 
@@ -1429,7 +1460,7 @@ async function retryByReasonGroup(reasonCode: string) {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!ids.length) {
-    actionFeedback.value = `原因组 ${reasonCode} 没有可重试项`;
+    actionFeedback.value = `${pageText('feedback_reason_group_no_retry_prefix', '原因组 ')}${reasonCode}${pageText('feedback_reason_group_no_retry_suffix', ' 没有可重试项')}`;
     actionFeedbackError.value = true;
     return;
   }
@@ -1438,7 +1469,7 @@ async function retryByReasonGroup(reasonCode: string) {
     resolveRetryNote(`Retry failed group ${reasonCode} from my-work.`),
     buildBatchRequestId('mw_retry_group'),
     retryRequestParams.value?.source || 'mail.activity',
-    `重试(${reasonCode})`,
+    `${pageText('batch_action_retry_group_left', '重试(')}${reasonCode}${pageText('batch_action_retry_group_right', ')')}`,
   );
 }
 
@@ -1460,14 +1491,14 @@ function selectRetryableByReasonGroup(reasonCode: string) {
     .map((item) => Number(item.id))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (!ids.length) {
-    actionFeedback.value = `原因组 ${reasonCode} 没有可重试项`;
+    actionFeedback.value = `${pageText('feedback_reason_group_no_retry_prefix', '原因组 ')}${reasonCode}${pageText('feedback_reason_group_no_retry_suffix', ' 没有可重试项')}`;
     actionFeedbackError.value = true;
     return;
   }
   const merged = new Set(todoSelectionIds.value);
   ids.forEach((id) => merged.add(id));
   todoSelectionIds.value = Array.from(merged).sort((a, b) => a - b);
-  actionFeedback.value = `已选中 ${ids.length} 条 ${reasonCode} 可重试项`;
+  actionFeedback.value = `${pageText('feedback_selected_reason_retryable_prefix', '已选中 ')}${ids.length}${pageText('feedback_selected_reason_retryable_middle', ' 条 ')}${reasonCode}${pageText('feedback_selected_reason_retryable_suffix', ' 可重试项')}`;
   actionFeedbackError.value = false;
 }
 
@@ -1492,7 +1523,7 @@ async function runRetryBatch(
     applyBatchFeedback(result, actionLabel);
     await load();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : '重试失败项失败';
+    errorText.value = err instanceof Error ? err.message : pageText('error_retry_failed_items_failed', '重试失败项失败');
     statusError.value = buildStatusError(err, errorText.value);
   } finally {
     loading.value = false;
@@ -1567,18 +1598,18 @@ function applyBatchFeedback(
       .slice(0, 3)
       .map((item) => formatFailedItemText(item))
       .join('；');
-    actionFeedback.value = `${actionLabel}部分失败：${result.done_count} 成功，${result.failed_count} 失败${
-      failedPreview ? `（${failedPreview}）` : ''
-    }${typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''}${
-      lastBatchReplay.value ? `，命中重放#${lastReplayAuditId.value || 0}` : ''
+    actionFeedback.value = `${actionLabel}${pageText('batch_feedback_partial_suffix', '部分失败：')}${result.done_count}${pageText('batch_feedback_success_count_suffix', ' 成功，')}${result.failed_count}${pageText('batch_feedback_failed_count_suffix', ' 失败')}${
+      failedPreview ? `${pageText('batch_feedback_preview_left', '（')}${failedPreview}${pageText('batch_feedback_preview_right', '）')}` : ''
+    }${typeof todoRemaining.value === 'number' ? `${pageText('batch_feedback_remaining_prefix', '，剩余待办 ')}${todoRemaining.value}${pageText('batch_feedback_remaining_suffix', ' 条')}` : ''}${
+      lastBatchReplay.value ? `${pageText('batch_feedback_replay_prefix', '，命中重放#')}${lastReplayAuditId.value || 0}` : ''
     }`;
     actionFeedbackError.value = true;
     return;
   }
 
-  actionFeedback.value = `${actionLabel}成功：${result.done_count} 条${
-    typeof todoRemaining.value === 'number' ? `，剩余待办 ${todoRemaining.value} 条` : ''
-  }${lastBatchReplay.value ? `，命中重放#${lastReplayAuditId.value || 0}` : ''}`;
+  actionFeedback.value = `${actionLabel}${pageText('batch_feedback_success_suffix', '成功：')}${result.done_count}${pageText('batch_feedback_done_suffix', ' 条')}${
+    typeof todoRemaining.value === 'number' ? `${pageText('batch_feedback_remaining_prefix', '，剩余待办 ')}${todoRemaining.value}${pageText('batch_feedback_remaining_suffix', ' 条')}` : ''
+  }${lastBatchReplay.value ? `${pageText('batch_feedback_replay_prefix', '，命中重放#')}${lastReplayAuditId.value || 0}` : ''}`;
   actionFeedbackError.value = false;
 }
 
@@ -1647,7 +1678,7 @@ function applyRouteOverrides() {
     changed = true;
   };
 
-  appliedPresetLabel.value = preset ? `预设视图：${preset}` : '';
+  appliedPresetLabel.value = preset ? `${pageText('preset_label_prefix', '预设视图：')}${preset}` : '';
   if (preset && preset !== lastTrackedPreset.value) {
     lastTrackedPreset.value = preset;
     void trackUsageEvent('workspace.preset.apply', { preset, view: 'my_work' }).catch(() => {});

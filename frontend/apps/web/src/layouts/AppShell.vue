@@ -177,9 +177,6 @@ const sidebarSubtitle = computed(() => {
   if (!isDeliveryMode.value) return userName.value;
   const raw = String(userName.value || '').trim();
   if (!raw) return roleLabel.value;
-  if (/fixture|project manager|purchase|executive|admin|finance|ops/i.test(raw)) {
-    return roleLabel.value;
-  }
   return normalizeDeliveryText(raw);
 });
 const roleLabel = computed(() => {
@@ -273,7 +270,6 @@ function normalizeDeliveryText(input: string) {
   if (!source) return '';
   return source
     .replace(/\s*\(\d+\)\s*$/g, '')
-    .replace(/^fixture\s*pm$/i, '项目经理')
     .replace(/^project\s*manager$/i, '项目经理')
     .replace(/^purchase\s*manager$/i, '采购经理')
     .replace(/^finance$/i, '财务主管')

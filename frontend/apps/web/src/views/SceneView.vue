@@ -1,6 +1,6 @@
 <template>
   <section class="scene">
-    <StatusPanel v-if="status === 'loading'" title="正在加载场景..." variant="info" />
+    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', '正在加载场景...')" variant="info" />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -39,19 +39,22 @@ import { trackSceneOpen } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
+import { usePageContract } from '../app/pageContract';
 import type { NavNode } from '@sc/schema';
 import type { SceneTarget } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const pageContract = usePageContract('scene');
+const pageText = pageContract.text;
 const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
-const errorCopy = ref(resolveErrorCopy(null, '场景加载失败'));
+const errorCopy = ref(resolveErrorCopy(null, pageText('error_fallback', '场景加载失败')));
 const forbiddenCopy = ref({
-  title: '能力未开通',
-  message: '当前角色无法进入该场景。',
+  title: pageText('forbidden_title', '能力未开通'),
+  message: pageText('forbidden_message', '当前角色无法进入该场景。'),
   hint: '',
 });
 
@@ -179,7 +182,7 @@ async function resolveScene() {
     const scene = getSceneByKey(sceneKey);
     if (!scene) {
       setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
-      errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
+      errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
       status.value = 'error';
       return;
     }
@@ -193,16 +196,21 @@ async function resolveScene() {
           if (!meta) return key;
           const reason = String(meta.reason || '').trim();
           if (!reason) return meta.label || key;
-          return `${meta.label || key}（${reason}）`;
+          return `${meta.label || key}${pageText('forbidden_detail_reason_left', '（')}${reason}${pageText('forbidden_detail_reason_right', '）')}`;
         })
         .slice(0, 4);
       const level = String(session.productFacts.license?.level || '').trim();
       forbiddenCopy.value = {
-        title: policy.state === 'disabled_permission' ? '权限不足' : '能力未开通',
+        title:
+          policy.state === 'disabled_permission'
+            ? pageText('forbidden_title_permission', '权限不足')
+            : pageText('forbidden_title', '能力未开通'),
         message: details.length
-          ? `缺少能力：${details.join('、')}`
-          : '当前角色能力范围不包含该场景所需能力。',
-        hint: level && level !== 'enterprise' ? `当前 License：${level}，可联系管理员评估升级或开通。` : '可联系管理员开通对应能力。',
+          ? `${pageText('forbidden_message_missing_prefix', '缺少能力：')}${details.join(pageText('forbidden_message_missing_sep', '、'))}`
+          : pageText('forbidden_message_scope_missing', '当前角色能力范围不包含该场景所需能力。'),
+        hint: level && level !== 'enterprise'
+          ? `${pageText('forbidden_hint_license_prefix', '当前 License：')}${level}${pageText('forbidden_hint_license_suffix', '，可联系管理员评估升级或开通。')}`
+          : pageText('forbidden_hint_default', '可联系管理员开通对应能力。'),
       };
       status.value = 'forbidden';
       return;
@@ -332,12 +340,19 @@ async function resolveScene() {
       }
     }
 
-    setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
-    errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
+    setError(
+      new Error(pageText('error_scene_target_unsupported', 'scene target unsupported')),
+      pageText('error_scene_target_unsupported', 'scene target unsupported'),
+      ErrorCodes.SCENE_KIND_UNSUPPORTED,
+    );
+    errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
     status.value = 'error';
   } catch (err) {
-    setError(err instanceof Error ? err : new Error('scene resolve failed'), 'scene resolve failed');
-    errorCopy.value = resolveErrorCopy(error.value, '场景加载失败');
+    setError(
+      err instanceof Error ? err : new Error(pageText('error_scene_resolve_failed', 'scene resolve failed')),
+      pageText('error_scene_resolve_failed', 'scene resolve failed'),
+    );
+    errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
     status.value = 'error';
   }
 }

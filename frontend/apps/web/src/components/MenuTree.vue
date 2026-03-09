@@ -71,7 +71,6 @@ function nodeLabel(node: NavNode) {
     .replace(/\s*\(\d+\)\s*$/g, '')
     .replace(/^project\s*manager$/i, '项目经理')
     .replace(/^purchase\s*manager$/i, '采购经理')
-    .replace(/^fixture\s*pm$/i, '项目经理')
     .replace(/^finance$/i, '财务主管')
     .replace(/^executive$/i, '管理层')
     .replace(/^ops$/i, '运维专员')

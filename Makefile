@@ -955,6 +955,8 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	  exit 2; \
 	fi
 	@$(MAKE) --no-print-directory verify.contract.preflight
+	@$(MAKE) --no-print-directory verify.frontend.home_suggestion_semantics.guard
+	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 	@KEEP_TEST_CONTAINER=1 $(MAKE) test TEST_TAGS=sc_gate BD=$(DB_NAME)
 	@$(MAKE) verify.demo BD=$(DB_NAME)
 	@if [ "$(SC_GATE_STRICT)" != "0" ]; then \
@@ -1411,6 +1413,10 @@ verify.frontend.runtime_navigation_hud.guard: guard.prod.forbid
 verify.frontend.home_suggestion_semantics.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_home_suggestion_semantics_guard.py
 
+.PHONY: verify.frontend.page_contract_boundary.guard
+verify.frontend.page_contract_boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
+
 .PHONY: verify.list.surface.clean
 verify.list.surface.clean: guard.prod.forbid
 	@python3 scripts/verify/list_surface_clean_guard.py
@@ -1445,6 +1451,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.product.contract_consumption.guard \
 	verify.frontend.runtime_navigation_hud.guard \
 	verify.frontend.home_suggestion_semantics.guard \
+	verify.frontend.page_contract_boundary.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
 	verify.frontend.error_context.contract.guard \
@@ -2345,6 +2352,8 @@ policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-c
 # CI preflight: fail-fast on contract drift before heavier test suites.
 ci.preflight.contract: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.contract.preflight
+	@$(MAKE) --no-print-directory verify.frontend.home_suggestion_semantics.guard
+	@$(MAKE) --no-print-directory verify.frontend.page_contract_boundary.guard
 
 # 只跑守门：权限/绕过（最快定位安全回归）
 ci.gate: guard.prod.forbid ci.preflight.contract
