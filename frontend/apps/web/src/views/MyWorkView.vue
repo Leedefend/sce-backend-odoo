@@ -71,41 +71,59 @@
           <button class="link-btn secondary-btn" @click="clearRetryFailed">{{ pageText('retry_action_ignore', '忽略') }}</button>
         </div>
       <details v-if="retryRequestParams" class="retry-request-preview">
-        <summary>重试请求预览</summary>
+        <summary>{{ pageText('retry_request_preview_title', '重试请求预览') }}</summary>
         <div class="retry-note-presets">
-          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：网络抖动后重放')">网络抖动</button>
-          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：并发冲突后重放')">并发冲突</button>
-          <button type="button" class="link-btn mini-btn" @click="applyRetryNotePreset('系统重试：依赖状态已满足')">依赖满足</button>
+          <button
+            type="button"
+            class="link-btn mini-btn"
+            @click="applyRetryNotePreset(pageText('retry_note_template_network', '系统重试：网络抖动后重放'))"
+          >
+            {{ pageText('retry_note_preset_network', '网络抖动') }}
+          </button>
+          <button
+            type="button"
+            class="link-btn mini-btn"
+            @click="applyRetryNotePreset(pageText('retry_note_template_conflict', '系统重试：并发冲突后重放'))"
+          >
+            {{ pageText('retry_note_preset_conflict', '并发冲突') }}
+          </button>
+          <button
+            type="button"
+            class="link-btn mini-btn"
+            @click="applyRetryNotePreset(pageText('retry_note_template_dependency', '系统重试：依赖状态已满足'))"
+          >
+            {{ pageText('retry_note_preset_dependency', '依赖满足') }}
+          </button>
         </div>
         <label class="retry-note-editor">
-          重试备注
+          {{ pageText('retry_note_label', '重试备注') }}
           <textarea
             v-model="retryNoteDraft"
             rows="2"
-            placeholder="可选：补充本次重试说明"
+            :placeholder="pageText('retry_note_placeholder', '可选：补充本次重试说明')"
           />
         </label>
         <pre>{{ retryRequestJson }}</pre>
       </details>
       <p v-if="retryRetryableSummary" class="retry-summary">
-        重试能力：可重试 {{ retryRetryableSummary.retryable }} / 不可重试 {{ retryRetryableSummary.non_retryable }}
+        {{ pageText('retry_capability_prefix', '重试能力：可重试 ') }}{{ retryRetryableSummary.retryable }}{{ pageText('retry_capability_middle', ' / 不可重试 ') }}{{ retryRetryableSummary.non_retryable }}
       </p>
       <p class="retry-summary">
-        当前展示 {{ visibleRetryFailedItems.length }} / {{ retryFilteredItems.length }} 条
+        {{ pageText('retry_visible_prefix', '当前展示 ') }}{{ visibleRetryFailedItems.length }}{{ pageText('retry_visible_middle', ' / ') }}{{ retryFilteredItems.length }}{{ pageText('retry_visible_suffix', ' 条') }}
         <button
           v-if="retryFilteredItems.length > retryPreviewLimit"
           type="button"
           class="link-btn mini-btn"
           @click="toggleRetryFailedExpanded"
         >
-          {{ retryFailedExpanded ? '收起' : '展开全部' }}
+          {{ retryFailedExpanded ? pageText('retry_action_collapse_all', '收起') : pageText('retry_action_expand_all', '展开全部') }}
         </button>
       </p>
       <input
         v-model.trim="retrySearchText"
         class="search-input retry-search"
         type="search"
-        placeholder="筛选失败明细：ID / 原因码 / 消息"
+        :placeholder="pageText('retry_search_placeholder', '筛选失败明细：ID / 原因码 / 消息')"
       />
       <div class="retry-toggle">
         <button
@@ -114,7 +132,7 @@
           :class="{ active: retryFilterMode === 'all' }"
           @click="setRetryFilterMode('all')"
         >
-          全部
+          {{ pageText('retry_filter_all', '全部') }}
         </button>
         <button
           type="button"
@@ -122,7 +140,7 @@
           :class="{ active: retryFilterMode === 'retryable' }"
           @click="setRetryFilterMode('retryable')"
         >
-          仅可重试
+          {{ pageText('retry_filter_retryable_only', '仅可重试') }}
         </button>
         <button
           type="button"
@@ -130,7 +148,7 @@
           :class="{ active: retryFilterMode === 'non_retryable' }"
           @click="setRetryFilterMode('non_retryable')"
         >
-          仅不可重试
+          {{ pageText('retry_filter_non_retryable_only', '仅不可重试') }}
         </button>
         <button
           type="button"
@@ -138,18 +156,18 @@
           :class="{ active: retryGroupByReason }"
           @click="toggleRetryGroupByReason"
         >
-          {{ retryGroupByReason ? '平铺显示' : '按原因分组' }}
+          {{ retryGroupByReason ? pageText('retry_group_mode_flat', '平铺显示') : pageText('retry_group_mode_grouped', '按原因分组') }}
         </button>
         <button
           type="button"
           class="reason-chip"
           @click="resetRetryPanelState"
         >
-          重置面板
+          {{ pageText('retry_action_reset_panel', '重置面板') }}
         </button>
       </div>
       <p v-if="retryReasonSummary.length" class="retry-summary">
-        失败原因分布：
+        {{ pageText('retry_reason_distribution_prefix', '失败原因分布：') }}
         <button
           v-for="item in retryReasonSummary"
           :key="`reason-${item.reason_code}`"
@@ -165,18 +183,18 @@
           class="link-btn mini-btn"
           @click="clearReasonFilterFromFailure"
         >
-          清除失败筛选
+          {{ pageText('retry_action_clear_failed_filter', '清除失败筛选') }}
         </button>
       </p>
       <p v-if="retryFailedGroups.length" class="retry-summary">
-        分组摘要：
+        {{ pageText('retry_group_summary_prefix', '分组摘要：') }}
         <span v-for="group in retryFailedGroups" :key="`group-${group.reason_code}`" class="group-actions">
           <button
             type="button"
             class="reason-chip"
             @click="applyReasonFilterFromFailure(group.reason_code)"
           >
-            {{ group.reason_code }} ({{ group.count }} / 可重试 {{ group.retryable_count }})
+            {{ group.reason_code }} ({{ group.count }} / {{ pageText('retry_group_retryable_prefix', '可重试 ') }}{{ group.retryable_count }})
           </button>
           <button
             type="button"
@@ -184,7 +202,7 @@
             :disabled="!group.retryable_count"
             @click="selectRetryableByReasonGroup(group.reason_code)"
           >
-            选中此组
+            {{ pageText('retry_action_select_group', '选中此组') }}
           </button>
           <button
             type="button"
@@ -192,14 +210,14 @@
             :disabled="!group.retryable_count"
             @click="retryByReasonGroup(group.reason_code)"
           >
-            重试此组
+            {{ pageText('retry_action_retry_group', '重试此组') }}
           </button>
         </span>
       </p>
       <ul v-if="!retryGroupByReason">
         <li v-for="item in visibleRetryFailedItems" :key="`failed-${item.id}`">
           <span class="failed-id">#{{ item.id }}</span>
-          <span class="failed-code">{{ item.reason_code || 'UNKNOWN' }}</span>
+          <span class="failed-code">{{ item.reason_code || pageText('retry_unknown_reason_code', 'UNKNOWN') }}</span>
           <span class="failed-msg">{{ item.message || '-' }}</span>
           <span v-if="resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable)" class="failed-hint">
             {{ resolveSuggestedAction(item.suggested_action, item.reason_code, item.retryable) }}
@@ -211,13 +229,13 @@
           >
             {{ failedSuggestedActionLabel(item) }}
           </button>
-          <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">复制单条</button>
+          <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">{{ pageText('retry_action_copy_single', '复制单条') }}</button>
           <button
             v-if="failedItemRecord(item.id)"
             class="link-btn mini-btn"
             @click="openRecord(failedItemRecord(item.id)!)"
           >
-            打开记录
+            {{ pageText('retry_action_open_record', '打开记录') }}
           </button>
         </li>
       </ul>
@@ -238,7 +256,7 @@
               >
                 {{ failedSuggestedActionLabel(item) }}
               </button>
-              <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">复制单条</button>
+              <button class="link-btn mini-btn" @click="copyFailedItemLine(item)">{{ pageText('retry_action_copy_single', '复制单条') }}</button>
             </li>
           </ul>
         </div>
