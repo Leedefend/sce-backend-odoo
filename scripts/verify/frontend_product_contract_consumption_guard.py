@@ -53,6 +53,9 @@ def main() -> int:
     required_home_tokens = [
         "const productFacts = computed(() => session.productFacts);",
         "const capabilityGroups = computed(() => session.capabilityGroups);",
+        "const workspaceLayout = computed(() => (",
+        "homeLayoutText(",
+        "isHomeSectionEnabled(",
         "const capabilityCatalog = session.capabilityCatalog || {};",
         "normalizeEntryWithCapabilityMeta(",
         "capabilityStateLabel(",
@@ -67,7 +70,7 @@ def main() -> int:
         "licenseLevelLabel",
         "bundleNameLabel",
         "capabilityGroupCards",
-        "<section v-if=\"capabilityGroupCards.length\" class=\"group-overview\"",
+        "<section v-if=\"isHomeSectionEnabled('group_overview') && capabilityGroupCards.length\" class=\"group-overview\"",
     ]
     required_shell_tokens = [
         "buildRuntimeNavigationRegistry(",

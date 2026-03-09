@@ -36,6 +36,9 @@ def main() -> int:
 
     required_home_tokens = [
         "const workspaceHome = computed(() => (session.workspaceHome || {}) as Record<string, unknown>);",
+        "workspaceHome.value.layout",
+        "homeLayoutText(",
+        "isHomeSectionEnabled(",
         "Array.isArray(workspaceHome.value.metrics)",
         "Array.isArray(workspaceHome.value.today_actions)",
         "workspaceHome.value.risk",
@@ -59,6 +62,10 @@ def main() -> int:
         "data[\"workspace_home\"] = build_workspace_home_contract(data)",
     ]
     required_builder_tokens = [
+        "\"layout\":",
+        "\"sections\":",
+        "\"texts\":",
+        "\"actions\":",
         "\"metrics\":",
         "\"today_actions\":",
         "\"risk\":",

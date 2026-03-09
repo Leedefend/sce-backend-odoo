@@ -112,6 +112,9 @@ def main() -> int:
         ],
         "HomeView.vue": [
             "session.workspaceHome",
+            "workspaceHome.value.layout",
+            "homeLayoutText(",
+            "isHomeSectionEnabled(",
             "Array.isArray(workspaceHome.value.metrics)",
             "Array.isArray(workspaceHome.value.today_actions)",
         ],
