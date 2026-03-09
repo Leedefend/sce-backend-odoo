@@ -126,18 +126,21 @@ def main() -> int:
     required_action_tokens = [
         "const pageContract = usePageContract('action');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('quick_filters', true)",
         "pageSectionEnabled('quick_actions', true)",
     ]
     required_record_tokens = [
         "const pageContract = usePageContract('record');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('project_summary', true)",
         "pageSectionEnabled('chatter', true)",
     ]
     required_scene_tokens = [
         "const pageContract = usePageContract('scene');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('status_loading', true)",
         "pageSectionEnabled('status_error', true)",
         "pageSectionEnabled('status_forbidden', true)",
@@ -145,6 +148,7 @@ def main() -> int:
     required_workbench_tokens = [
         "const pageContract = usePageContract('workbench');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('header', true)",
         "pageSectionEnabled('status_panel', true)",
         "pageSectionEnabled('tiles', true)",
@@ -153,6 +157,7 @@ def main() -> int:
     required_usage_analytics_tokens = [
         "const pageContract = usePageContract('usage_analytics');",
         "const pageSectionEnabled = pageContract.sectionEnabled;",
+        "const pageSectionStyle = pageContract.sectionStyle;",
         "pageSectionEnabled('header', true)",
         "pageSectionEnabled('tables_top', true)",
         "pageSectionEnabled('tables_role_user', true)",

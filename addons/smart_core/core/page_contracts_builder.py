@@ -173,10 +173,10 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "workbench": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "header", "enabled": True},
-                    {"key": "status_panel", "enabled": True},
-                    {"key": "tiles", "enabled": True},
-                    {"key": "hud_details", "enabled": True},
+                    {"key": "header", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "status_panel", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "tiles", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "hud_details", "enabled": True, "order": 4, "tag": "div"},
                 ],
                 "texts": {
                     "header_title": "页面暂时无法打开",
@@ -415,9 +415,9 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "scene": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "status_loading", "enabled": True},
-                    {"key": "status_error", "enabled": True},
-                    {"key": "status_forbidden", "enabled": True},
+                    {"key": "status_loading", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_forbidden", "enabled": True, "order": 3, "tag": "section"},
                 ],
                 "texts": {
                     "loading_title": "正在加载场景...",
@@ -440,16 +440,16 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "action": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "route_preset", "enabled": True},
-                    {"key": "focus_strip", "enabled": True},
-                    {"key": "quick_filters", "enabled": True},
-                    {"key": "saved_filters", "enabled": True},
-                    {"key": "group_view", "enabled": True},
-                    {"key": "group_summary", "enabled": True},
-                    {"key": "quick_actions", "enabled": True},
-                    {"key": "advanced_view", "enabled": True},
-                    {"key": "empty_next", "enabled": True},
-                    {"key": "dev_context", "enabled": True},
+                    {"key": "route_preset", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "focus_strip", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "quick_filters", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "saved_filters", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "group_view", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "group_summary", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "quick_actions", "enabled": True, "order": 7, "tag": "section"},
+                    {"key": "advanced_view", "enabled": True, "order": 8, "tag": "section"},
+                    {"key": "empty_next", "enabled": True, "order": 9, "tag": "section"},
+                    {"key": "dev_context", "enabled": True, "order": 10, "tag": "div"},
                 ],
                 "texts": {
                     "status_loading": "加载中",
@@ -618,13 +618,13 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "record": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "save_banner", "enabled": True},
-                    {"key": "project_summary", "enabled": True},
-                    {"key": "next_actions", "enabled": True},
-                    {"key": "stat_buttons", "enabled": True},
-                    {"key": "details_fallback", "enabled": True},
-                    {"key": "chatter", "enabled": True},
-                    {"key": "dev_context", "enabled": True},
+                    {"key": "save_banner", "enabled": True, "order": 1, "tag": "section"},
+                    {"key": "project_summary", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "next_actions", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "stat_buttons", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "details_fallback", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "chatter", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "dev_context", "enabled": True, "order": 7, "tag": "div"},
                 ],
                 "texts": {
                     "loading_title": "Loading record...",
@@ -741,16 +741,16 @@ def build_page_contracts(_data: Dict[str, Any]) -> Dict[str, Any]:
             "usage_analytics": {
                 "schema_version": "v1",
                 "sections": [
-                    {"key": "header", "enabled": True},
-                    {"key": "status_loading", "enabled": True},
-                    {"key": "status_error", "enabled": True},
-                    {"key": "slice_bar", "enabled": True},
-                    {"key": "summary_usage", "enabled": True},
-                    {"key": "summary_visibility", "enabled": True},
-                    {"key": "tables_top", "enabled": True},
-                    {"key": "tables_daily", "enabled": True},
-                    {"key": "tables_visibility", "enabled": True},
-                    {"key": "tables_role_user", "enabled": True},
+                    {"key": "header", "enabled": True, "order": 1, "tag": "header"},
+                    {"key": "status_loading", "enabled": True, "order": 2, "tag": "section"},
+                    {"key": "status_error", "enabled": True, "order": 3, "tag": "section"},
+                    {"key": "slice_bar", "enabled": True, "order": 4, "tag": "section"},
+                    {"key": "summary_usage", "enabled": True, "order": 5, "tag": "section"},
+                    {"key": "summary_visibility", "enabled": True, "order": 6, "tag": "section"},
+                    {"key": "tables_top", "enabled": True, "order": 7, "tag": "section"},
+                    {"key": "tables_daily", "enabled": True, "order": 8, "tag": "section"},
+                    {"key": "tables_visibility", "enabled": True, "order": 9, "tag": "section"},
+                    {"key": "tables_role_user", "enabled": True, "order": 10, "tag": "section"},
                 ],
                 "texts": {
                     "title": "Usage Analytics",

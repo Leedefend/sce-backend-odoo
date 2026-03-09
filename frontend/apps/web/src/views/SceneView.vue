@@ -4,6 +4,7 @@
       v-if="pageSectionEnabled('status_loading', true) && status === 'loading'"
       :title="pageText('loading_title', '正在加载场景...')"
       variant="info"
+      :style="pageSectionStyle('status_loading')"
     />
     <StatusPanel
       v-else-if="pageSectionEnabled('status_error', true) && status === 'error'"
@@ -18,6 +19,7 @@
       :hint="errorCopy.hint"
       :suggested-action="error?.suggestedAction"
       variant="error"
+      :style="pageSectionStyle('status_error')"
     />
     <StatusPanel
       v-else-if="pageSectionEnabled('status_forbidden', true) && status === 'forbidden'"
@@ -26,6 +28,7 @@
       :hint="forbiddenCopy.hint"
       variant="forbidden_capability"
       :on-retry="() => goWorkbench(ErrorCodes.CAPABILITY_MISSING)"
+      :style="pageSectionStyle('status_forbidden')"
     />
   </section>
 </template>
@@ -53,6 +56,7 @@ const session = useSessionStore();
 const pageContract = usePageContract('scene');
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
 const findActionNodeByModelRef = findActionNodeByModel;
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
