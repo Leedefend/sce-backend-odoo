@@ -1,7 +1,7 @@
 <template>
   <section class="capability-home">
     <!-- Page intent: 优先处理风险与审批，快速判断经营状态并进入下一步动作。 -->
-    <header v-if="isHomeSectionEnabled('hero')" class="hero">
+    <header v-if="isHomeSectionEnabled('hero')" class="hero" :style="homeSectionStyle('hero')">
       <div class="hero-main">
         <h2>{{ heroTitle }}</h2>
         <p class="lead">{{ heroLead }}</p>
@@ -47,7 +47,7 @@
       </div>
     </header>
 
-    <section v-if="isHomeSectionEnabled('metrics')" class="value-grid" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
+    <section v-if="isHomeSectionEnabled('metrics')" class="value-grid" :style="homeSectionStyle('metrics')" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
       <article v-for="metric in coreMetrics" :key="metric.key" class="value-card">
         <p class="value-label">{{ metric.label }}</p>
         <p class="value-number">{{ metric.value }}</p>
@@ -59,7 +59,7 @@
       </article>
     </section>
 
-    <section v-if="isHomeSectionEnabled('today_actions')" class="today-actions" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
+    <section v-if="isHomeSectionEnabled('today_actions')" class="today-actions" :style="homeSectionStyle('today_actions')" :aria-label="homeLayoutText('today_actions.aria_label', '今日建议')">
       <header class="today-actions-header">
         <h3>{{ homeLayoutText('today_actions.title', '今日待办') }}</h3>
         <p>{{ homeLayoutText('today_actions.subtitle', '点击可直接进入处理界面。') }}</p>
@@ -81,7 +81,7 @@
       </div>
     </section>
 
-    <section v-if="isHomeSectionEnabled('risk')" class="risk-section" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
+    <section v-if="isHomeSectionEnabled('risk')" class="risk-section" :style="homeSectionStyle('risk')" :aria-label="homeLayoutText('risk.aria_label', '关键风险区')">
       <header class="risk-header">
         <h3>{{ homeLayoutText('risk.title', '关键风险') }}</h3>
         <p>{{ homeLayoutText('risk.subtitle', '10 秒识别整体风险态势。') }}</p>
@@ -134,7 +134,7 @@
       </div>
     </section>
 
-    <details v-if="isHomeSectionEnabled('ops')" class="secondary-panel">
+    <details v-if="isHomeSectionEnabled('ops')" class="secondary-panel" :style="homeSectionStyle('ops')">
       <summary>{{ homeLayoutText('ops.title', '项目经营概览') }}</summary>
       <section class="ops-section" :aria-label="homeLayoutText('ops.aria_label', '项目经营概览区')">
         <div class="ops-grid">
@@ -170,7 +170,7 @@
       </section>
     </details>
 
-    <details v-if="isHomeSectionEnabled('advice')" class="secondary-panel">
+    <details v-if="isHomeSectionEnabled('advice')" class="secondary-panel" :style="homeSectionStyle('advice')">
       <summary>{{ homeLayoutText('advice.title', '系统建议关注事项') }}</summary>
       <section class="advice-section" :aria-label="homeLayoutText('advice.aria_label', '系统建议关注事项')">
         <div class="advice-list">
@@ -183,7 +183,7 @@
       </section>
     </details>
 
-    <section v-if="isHomeSectionEnabled('group_overview') && capabilityGroupCards.length" class="group-overview" :aria-label="homeLayoutText('group_overview.aria_label', '辅助入口区')">
+    <section v-if="isHomeSectionEnabled('group_overview') && capabilityGroupCards.length" class="group-overview" :style="homeSectionStyle('group_overview')" :aria-label="homeLayoutText('group_overview.aria_label', '辅助入口区')">
       <header class="group-overview-header">
         <h3>{{ homeLayoutText('group_overview.title', '辅助入口') }}</h3>
         <p>{{ homeLayoutText('group_overview.subtitle', '按业务域查看功能分组与可用状态。') }}</p>
@@ -199,7 +199,7 @@
       </div>
     </section>
 
-    <section v-if="isHomeSectionEnabled('filters')" class="filters">
+    <section v-if="isHomeSectionEnabled('filters')" class="filters" :style="homeSectionStyle('filters')">
       <div v-if="enterError" class="status-panel" role="status" aria-live="polite">
         <p class="status-title">{{ pageText('entry_error_title_prefix', '进入失败：') }}{{ enterError.message }}</p>
         <p class="status-detail">{{ enterError.hint }}</p>
@@ -331,7 +331,7 @@
       </template>
     </div>
 
-    <div v-else-if="isHomeSectionEnabled('scene_groups')" class="scene-groups">
+    <div v-else-if="isHomeSectionEnabled('scene_groups')" class="scene-groups" :style="homeSectionStyle('scene_groups')">
       <section v-for="group in groupedEntries" :key="`scene-${group.sceneKey}`" class="scene-group">
         <header class="scene-group-header">
           <button class="scene-toggle" @click="toggleSceneGroup(group.sceneKey)">
@@ -521,6 +521,17 @@ const workspaceLayoutSections = computed(() => {
   });
   return map;
 });
+const homeSectionOrderMap = computed(() => {
+  const source = Array.isArray(workspaceLayout.value.sections) ? workspaceLayout.value.sections : [];
+  const map = new Map<string, number>();
+  source.forEach((item, idx) => {
+    if (!item || typeof item !== 'object') return;
+    const key = asText((item as Record<string, unknown>).key);
+    if (!key || map.has(key)) return;
+    map.set(key, idx + 1);
+  });
+  return map;
+});
 const workspaceHero = computed(() => (workspaceHome.value.hero && typeof workspaceHome.value.hero === 'object'
   ? workspaceHome.value.hero as Record<string, unknown>
   : {}));
@@ -634,6 +645,12 @@ function isHomeSectionEnabled(key: string) {
   const sectionMap = workspaceLayoutSections.value;
   if (!sectionMap.size) return true;
   return sectionMap.get(key) !== false;
+}
+
+function homeSectionStyle(key: string) {
+  const order = homeSectionOrderMap.value.get(key);
+  if (!order) return {};
+  return { order: String(order) };
 }
 
 function asText(value: unknown) {
