@@ -1425,6 +1425,10 @@ verify.frontend.page_contract.sections_coverage.guard: guard.prod.forbid
 verify.frontend.page_contract.key_consistency.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_page_contract_key_consistency_guard.py
 
+.PHONY: verify.frontend.page_contract.section_tag_coverage.guard
+verify.frontend.page_contract.section_tag_coverage.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_page_contract_section_tag_coverage_guard.py
+
 .PHONY: verify.page_contract.sections_schema.guard
 verify.page_contract.sections_schema.guard: guard.prod.forbid
 	@python3 scripts/verify/page_contract_sections_schema_guard.py
@@ -1466,6 +1470,7 @@ verify.frontend.product.ready: guard.prod.forbid \
 	verify.frontend.page_contract_boundary.guard \
 	verify.frontend.page_contract.sections_coverage.guard \
 	verify.frontend.page_contract.key_consistency.guard \
+	verify.frontend.page_contract.section_tag_coverage.guard \
 	verify.page_contract.sections_schema.guard \
 	verify.list.surface.clean \
 	verify.frontend.scene_record_semantics.guard \
