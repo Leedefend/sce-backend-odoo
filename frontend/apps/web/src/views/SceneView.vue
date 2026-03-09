@@ -53,8 +53,8 @@ const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
 const { error, clearError, setError } = useStatus();
 const errorCopy = ref(resolveErrorCopy(null, pageText('error_fallback', '场景加载失败')));
 const forbiddenCopy = ref({
-  title: '能力未开通',
-  message: '当前角色无法进入该场景。',
+  title: pageText('forbidden_title', '能力未开通'),
+  message: pageText('forbidden_message', '当前角色无法进入该场景。'),
   hint: '',
 });
 
@@ -201,10 +201,13 @@ async function resolveScene() {
         .slice(0, 4);
       const level = String(session.productFacts.license?.level || '').trim();
       forbiddenCopy.value = {
-        title: policy.state === 'disabled_permission' ? '权限不足' : '能力未开通',
+        title:
+          policy.state === 'disabled_permission'
+            ? pageText('forbidden_title_permission', '权限不足')
+            : pageText('forbidden_title', '能力未开通'),
         message: details.length
           ? `缺少能力：${details.join('、')}`
-          : '当前角色能力范围不包含该场景所需能力。',
+          : pageText('forbidden_message_scope_missing', '当前角色能力范围不包含该场景所需能力。'),
         hint: level && level !== 'enterprise' ? `当前 License：${level}，可联系管理员评估升级或开通。` : '可联系管理员开通对应能力。',
       };
       status.value = 'forbidden';
@@ -335,11 +338,18 @@ async function resolveScene() {
       }
     }
 
-    setError(new Error('scene target unsupported'), 'scene target unsupported', ErrorCodes.SCENE_KIND_UNSUPPORTED);
+    setError(
+      new Error(pageText('error_scene_target_unsupported', 'scene target unsupported')),
+      pageText('error_scene_target_unsupported', 'scene target unsupported'),
+      ErrorCodes.SCENE_KIND_UNSUPPORTED,
+    );
     errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
     status.value = 'error';
   } catch (err) {
-    setError(err instanceof Error ? err : new Error('scene resolve failed'), 'scene resolve failed');
+    setError(
+      err instanceof Error ? err : new Error(pageText('error_scene_resolve_failed', 'scene resolve failed')),
+      pageText('error_scene_resolve_failed', 'scene resolve failed'),
+    );
     errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
     status.value = 'error';
   }

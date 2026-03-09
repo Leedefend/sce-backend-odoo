@@ -218,7 +218,7 @@ async function loadHealth() {
 async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' | 'export_contract') {
   const reason = governanceReason.value.trim();
   if (!reason) {
-    errorText.value = 'reason is required for governance action';
+    errorText.value = pageText('error_reason_required', 'reason is required for governance action');
     statusError.value = { message: errorText.value };
     return;
   }
@@ -251,7 +251,7 @@ async function runGovernance(action: 'set_channel' | 'rollback' | 'pin_stable' |
     governanceTraceId.value = response.data.trace_id || response.traceId || '';
     await loadHealth();
   } catch (err) {
-    errorText.value = err instanceof Error ? err.message : 'governance action failed';
+    errorText.value = err instanceof Error ? err.message : pageText('error_governance_failed', 'governance action failed');
     statusError.value = buildStatusError(err, errorText.value);
     errorTraceId.value = statusError.value.traceId || '';
   } finally {

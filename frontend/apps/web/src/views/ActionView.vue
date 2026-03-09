@@ -676,10 +676,10 @@ const kanbanTitleField = computed(() => {
   return found || kanbanFields.value[0] || 'id';
 });
 const statusLabel = computed(() => {
-  if (status.value === 'loading') return '加载中';
-  if (status.value === 'error') return '加载失败';
-  if (status.value === 'empty') return '暂无数据';
-  return '已就绪';
+  if (status.value === 'loading') return pageText('status_loading', '加载中');
+  if (status.value === 'error') return pageText('status_error', '加载失败');
+  if (status.value === 'empty') return pageText('status_empty', '暂无数据');
+  return pageText('status_ready', '已就绪');
 });
 const pageStatus = computed<'loading' | 'ok' | 'empty' | 'error'>(() =>
   status.value === 'idle' ? 'loading' : status.value,
@@ -715,7 +715,7 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
   const key = surfaceKey.value;
   if (key.includes('risk') || key.includes('风险')) {
     return {
-      title: '风险驾驶舱：先处理严重与逾期风险',
+      title: pageText('intent_title_risk', '风险驾驶舱：先处理严重与逾期风险'),
       summary: '优先完成分派、关闭或发起审批，避免风险停留在“仅可见”状态。',
       actions: [
         { label: '待我处理风险', to: '/my-work', query: { section: 'todo', source: 'project.risk', search: '风险' } },
@@ -729,7 +729,7 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
   }
   if (key.includes('contract') || key.includes('合同')) {
     return {
-      title: '合同执行：优先识别付款与变更风险',
+      title: pageText('intent_title_contract', '合同执行：优先识别付款与变更风险'),
       summary: '先看执行率与付款状态，再进入异常合同处理。',
       actions: [
         { label: '处理合同待办', to: '/my-work', query: { section: 'todo', search: '合同' } },
@@ -743,7 +743,7 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
   }
   if (key.includes('cost') || key.includes('成本')) {
     return {
-      title: '成本执行：先回答是否超支',
+      title: pageText('intent_title_cost', '成本执行：先回答是否超支'),
       summary: '优先关注超支金额与超支项，再下钻到具体偏差来源。',
       actions: [
         { label: '处理成本待办', to: '/my-work', query: { section: 'todo', search: '成本' } },
@@ -757,7 +757,7 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
   }
   if (key.includes('project') || key.includes('项目')) {
     return {
-      title: '项目视角：先判断是否可控',
+      title: pageText('intent_title_project', '项目视角：先判断是否可控'),
       summary: '优先查看风险、审批与经营指标，再决定下一步动作。',
       actions: [
         { label: '查看项目待办', to: '/my-work', query: { section: 'todo', search: '项目' } },
@@ -770,27 +770,27 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
     };
   }
   return {
-    title: '业务列表：先看状态，再执行动作',
+    title: pageText('intent_title_default', '业务列表：先看状态，再执行动作'),
     summary: '通过快速筛选与快捷操作，优先处理最关键事项。',
     actions: [
       { label: '工作台', to: '/' },
       { label: '我的工作', to: '/my-work' },
     ],
-    emptyTitle: '当前视图暂无数据',
-    emptyHint: '建议切换到我的工作或风险驾驶舱继续处理。',
+    emptyTitle: pageText('empty_title_default', '当前视图暂无数据'),
+    emptyHint: pageText('empty_hint_default', '建议切换到我的工作或风险驾驶舱继续处理。'),
     primaryAction: { label: '去我的工作', to: '/my-work' },
     secondaryAction: { label: '去风险驾驶舱', to: '/s/projects.dashboard' },
   };
 });
 const emptyReasonText = computed(() => {
   if (searchTerm.value.trim() || activeContractFilterKey.value) {
-    return '可能由当前筛选条件导致无数据，建议先清除筛选后重试。';
+    return pageText('empty_reason_filter', '可能由当前筛选条件导致无数据，建议先清除筛选后重试。');
   }
   const modelText = effectiveSurfaceModel.value;
   if (modelText === 'construction.work.breakdown') {
     return '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。';
   }
-  return '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。';
+  return pageText('empty_reason_default', '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。');
 });
 const showHud = computed(() => isHudEnabled(route));
 const errorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
