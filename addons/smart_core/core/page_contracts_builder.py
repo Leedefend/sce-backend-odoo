@@ -216,7 +216,7 @@ def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
             {"key": "open_menu", "label": "打开菜单", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
         ]
-    if key in {"scene_health", "usage_analytics"}:
+    if key in {"scene_health", "usage_analytics", "scene_packages"}:
         return [
             {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
             {"key": "refresh_page", "label": "刷新", "intent": "api.data"},
