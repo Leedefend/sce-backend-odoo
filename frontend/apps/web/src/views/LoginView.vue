@@ -1,8 +1,8 @@
 <template>
   <main class="page">
-    <section v-if="pageSectionEnabled('card', true)" class="card">
+    <section v-if="pageSectionEnabled('card', true)" class="card" :style="pageSectionStyle('card')">
       <h1>{{ pageText('title', 'Login') }}</h1>
-      <form v-if="pageSectionEnabled('form', true)" @submit.prevent="onSubmit">
+      <form v-if="pageSectionEnabled('form', true)" :style="pageSectionStyle('form')" @submit.prevent="onSubmit">
         <label>
           {{ pageText('username_label', 'Username') }}
           <input v-model="username" autocomplete="username" />
@@ -12,7 +12,7 @@
           <input v-model="password" type="password" autocomplete="current-password" />
         </label>
         <button type="submit" :disabled="loading">{{ loading ? pageText('submit_loading', 'Signing in...') : pageText('submit_idle', 'Sign in') }}</button>
-        <p v-if="pageSectionEnabled('error', true) && error" class="error">{{ error }}</p>
+        <p v-if="pageSectionEnabled('error', true) && error" class="error" :style="pageSectionStyle('error')">{{ error }}</p>
       </form>
     </section>
   </main>
@@ -30,6 +30,7 @@ const session = useSessionStore();
 const pageContract = usePageContract('login');
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
+const pageSectionStyle = pageContract.sectionStyle;
 
 const username = ref('');
 const password = ref('');
