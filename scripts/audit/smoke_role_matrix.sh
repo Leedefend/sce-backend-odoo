@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PYTHONUNBUFFERED=1
 
 DB_NAME=${DB_NAME:-sc_demo}
 ODOO_BASE_URL="${ODOO_BASE_URL:-${BASE_URL:-http://localhost:8069}}"
@@ -82,12 +83,12 @@ PY
     return
   fi
 
-  until [ "$(curl -s -o /dev/null -w '%{http_code}' "${base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
-        curl -s -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${base}/jsonrpc"; do
+  until [ "$(curl -s --connect-timeout 2 --max-time 4 -o /dev/null -w '%{http_code}' "${base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
+        curl -s --connect-timeout 2 --max-time 4 -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${base}/jsonrpc"; do
     n=$((n+1))
     if [ -n "${fallback_base}" ] && \
-       [ "$(curl -s -o /dev/null -w '%{http_code}' "${fallback_base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
-       curl -s -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${fallback_base}/jsonrpc"; then
+       [ "$(curl -s --connect-timeout 2 --max-time 4 -o /dev/null -w '%{http_code}' "${fallback_base}/web/webclient/version_info")" -lt 500 ] 2>/dev/null && \
+       curl -s --connect-timeout 2 --max-time 4 -o /dev/null -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"call","params":{"service":"common","method":"version","args":[]},"id":1}' "${fallback_base}/jsonrpc"; then
       export ODOO_BASE_URL="${fallback_base}"
       export BASE_URL="${fallback_base}"
       return
@@ -110,9 +111,14 @@ python3 - <<'PY'
 import json
 import os
 import urllib.request
+import urllib.error
+import socket
+import time
 
 BASE = os.environ.get("BASE_URL", "http://localhost:8069")
 DB = os.environ.get("DB_NAME", "sc_demo")
+RPC_TIMEOUT = float(os.environ.get("ROLE_MATRIX_RPC_TIMEOUT", "12"))
+RPC_RETRIES = int(os.environ.get("ROLE_MATRIX_RPC_RETRIES", "2"))
 
 READ_USER = os.environ.get("READ_USER", "demo_role_project_read")
 READ_PWD = os.environ.get("READ_PWD", "demo")
@@ -141,11 +147,18 @@ def jsonrpc(service, method, args):
         data=payload,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req) as resp:
-        data = json.loads(resp.read().decode())
-    if "error" in data:
-        raise RuntimeError(data["error"])
-    return data.get("result")
+    last_err = None
+    for _ in range(max(1, RPC_RETRIES + 1)):
+        try:
+            with urllib.request.urlopen(req, timeout=RPC_TIMEOUT) as resp:
+                data = json.loads(resp.read().decode())
+            if "error" in data:
+                raise RuntimeError(data["error"])
+            return data.get("result")
+        except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            last_err = exc
+            time.sleep(0.5)
+    raise RuntimeError(f"jsonrpc timeout/transport error: {service}.{method}: {last_err}")
 
 def login(user, pwd):
     return jsonrpc("common", "login", [DB, user, pwd])
@@ -154,7 +167,7 @@ def exec_kw(uid, pwd, model, method, args, kwargs=None):
     return jsonrpc("object", "execute_kw", [DB, uid, pwd, model, method, args, kwargs or {}])
 
 def step(msg):
-    print("==", msg)
+    print("==", msg, flush=True)
 
 step("env check")
 jsonrpc("common", "version", [])
