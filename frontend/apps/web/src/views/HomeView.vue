@@ -201,14 +201,14 @@
 
     <section v-if="isHomeSectionEnabled('filters')" class="filters">
       <div v-if="enterError" class="status-panel" role="status" aria-live="polite">
-        <p class="status-title">进入失败：{{ enterError.message }}</p>
+        <p class="status-title">{{ pageText('entry_error_title_prefix', '进入失败：') }}{{ enterError.message }}</p>
         <p class="status-detail">{{ enterError.hint }}</p>
         <p v-if="isHudEnabled" class="status-meta">
           code={{ enterError.code || '-' }} · trace_id={{ enterError.traceId || '-' }}
         </p>
         <div class="status-actions">
-          <button v-if="lastFailedEntry" @click="retryOpen">重试</button>
-          <button @click="clearEnterError">知道了</button>
+          <button v-if="lastFailedEntry" @click="retryOpen">{{ pageText('action_retry', '重试') }}</button>
+          <button @click="clearEnterError">{{ pageText('action_acknowledge', '知道了') }}</button>
         </div>
       </div>
       <div class="search-row">
@@ -216,61 +216,61 @@
           v-model.trim="searchText"
           class="search-input"
           type="search"
-          placeholder="搜索功能名称或说明"
+          :placeholder="pageText('search_placeholder', '搜索功能名称或说明')"
         />
-        <button v-if="searchText.trim()" class="search-clear-btn" @click="clearSearchText">清空搜索</button>
+        <button v-if="searchText.trim()" class="search-clear-btn" @click="clearSearchText">{{ pageText('search_clear', '清空搜索') }}</button>
       </div>
       <p class="result-summary">{{ resultSummaryText }}</p>
       <label class="ready-only">
         <input v-model="readyOnly" type="checkbox" />
-        仅显示可进入功能
+        {{ pageText('ready_only_label', '仅显示可进入功能') }}
       </label>
       <div class="state-filters">
         <button :class="{ active: stateFilter === 'ALL' }" @click="stateFilter = 'ALL'">
-          全部 {{ allCount }}
+          {{ pageText('state_all', '全部') }} {{ allCount }}
         </button>
         <button :class="{ active: stateFilter === 'READY' }" @click="stateFilter = 'READY'">
-          可进入 {{ stateCounts.READY }}
+          {{ pageText('state_ready', '可进入') }} {{ stateCounts.READY }}
         </button>
         <button
           :class="{ active: stateFilter === 'LOCKED' }"
           :disabled="readyOnly"
           @click="stateFilter = 'LOCKED'"
         >
-          暂不可用 {{ stateCounts.LOCKED }}
+          {{ pageText('state_locked', '暂不可用') }} {{ stateCounts.LOCKED }}
         </button>
         <button
           :class="{ active: stateFilter === 'PREVIEW' }"
           :disabled="readyOnly"
           @click="stateFilter = 'PREVIEW'"
         >
-          即将开放 {{ stateCounts.PREVIEW }}
+          {{ pageText('state_preview', '即将开放') }} {{ stateCounts.PREVIEW }}
         </button>
       </div>
       <div v-if="!isDeliveryMode" class="state-filters">
         <button :class="{ active: capabilityStateFilter === 'ALL' }" @click="capabilityStateFilter = 'ALL'">
-          功能语义：全部
+          {{ pageText('capability_state_all', '功能语义：全部') }}
         </button>
         <button :class="{ active: capabilityStateFilter === 'allow' }" @click="capabilityStateFilter = 'allow'">
-          可用 {{ capabilityStateCounts.allow }}
+          {{ pageText('capability_state_allow', '可用') }} {{ capabilityStateCounts.allow }}
         </button>
         <button :class="{ active: capabilityStateFilter === 'readonly' }" @click="capabilityStateFilter = 'readonly'">
-          只读 {{ capabilityStateCounts.readonly }}
+          {{ pageText('capability_state_readonly', '只读') }} {{ capabilityStateCounts.readonly }}
         </button>
         <button :class="{ active: capabilityStateFilter === 'deny' }" @click="capabilityStateFilter = 'deny'">
-          禁止 {{ capabilityStateCounts.deny }}
+          {{ pageText('capability_state_deny', '禁止') }} {{ capabilityStateCounts.deny }}
         </button>
         <button :class="{ active: capabilityStateFilter === 'pending' }" @click="capabilityStateFilter = 'pending'">
-          待开放 {{ capabilityStateCounts.pending }}
+          {{ pageText('capability_state_pending', '待开放') }} {{ capabilityStateCounts.pending }}
         </button>
         <button :class="{ active: capabilityStateFilter === 'coming_soon' }" @click="capabilityStateFilter = 'coming_soon'">
-          建设中 {{ capabilityStateCounts.coming_soon }}
+          {{ pageText('capability_state_coming_soon', '建设中') }} {{ capabilityStateCounts.coming_soon }}
         </button>
       </div>
-      <p v-if="readyOnly" class="filter-tip">已启用“仅显示可进入功能”，暂不可用与即将开放不会展示。</p>
+      <p v-if="readyOnly" class="filter-tip">{{ pageText('filter_tip_ready_only', '已启用“仅显示可进入功能”，暂不可用与即将开放不会展示。') }}</p>
       <div v-if="lockedReasonOptions.length" class="reason-filters">
         <button :class="{ active: lockReasonFilter === 'ALL' }" @click="lockReasonFilter = 'ALL'">
-          锁定原因：全部
+          {{ pageText('lock_reason_all', '锁定原因：全部') }}
         </button>
         <button
           v-for="item in lockedReasonOptions"
@@ -290,12 +290,12 @@
         >
           {{ chip.label }} ×
         </button>
-        <button class="filter-chip filter-chip-clear" @click="clearSearchAndFilters">清空全部筛选</button>
+        <button class="filter-chip filter-chip-clear" @click="clearSearchAndFilters">{{ pageText('action_clear_all_filters', '清空全部筛选') }}</button>
       </div>
       <div v-if="groupedEntries.length" class="group-actions">
-        <button @click="expandAllSceneGroups">展开全部分组</button>
-        <button @click="collapseAllSceneGroups">折叠全部分组</button>
-        <button v-if="hasRecentGroup" @click="clearRecentEntries">清空最近使用</button>
+        <button @click="expandAllSceneGroups">{{ pageText('action_expand_all_groups', '展开全部分组') }}</button>
+        <button @click="collapseAllSceneGroups">{{ pageText('action_collapse_all_groups', '折叠全部分组') }}</button>
+        <button v-if="hasRecentGroup" @click="clearRecentEntries">{{ pageText('action_clear_recent', '清空最近使用') }}</button>
       </div>
     </section>
 
@@ -304,29 +304,29 @@
         <p>
           {{
             readyOnlyNoResult
-              ? '当前启用了“仅显示可进入功能”，暂时没有可进入功能。'
+              ? pageText('empty_ready_only_no_result', '当前启用了“仅显示可进入功能”，暂时没有可进入功能。')
               : searchKeyword
-                ? `未找到与“${searchKeyword}”相关的功能，请调整筛选条件。`
-                : '未找到相关功能，请调整筛选条件。'
+                ? `${pageText('empty_search_no_result_prefix', '未找到与“')}${searchKeyword}${pageText('empty_search_no_result_suffix', '”相关的功能，请调整筛选条件。')}`
+                : pageText('empty_filter_no_result', '未找到相关功能，请调整筛选条件。')
           }}
         </p>
         <div class="empty-actions">
-          <button v-if="lockReasonFilter !== 'ALL'" class="empty-btn" @click="clearLockReasonFilter">清除锁定原因</button>
-          <button v-if="readyOnlyNoResult" class="empty-btn" @click="showAllCapabilities">显示全部功能</button>
-          <button class="empty-btn" @click="clearSearchAndFilters">清空搜索与筛选</button>
+          <button v-if="lockReasonFilter !== 'ALL'" class="empty-btn" @click="clearLockReasonFilter">{{ pageText('action_clear_lock_reason', '清除锁定原因') }}</button>
+          <button v-if="readyOnlyNoResult" class="empty-btn" @click="showAllCapabilities">{{ pageText('action_show_all_capabilities', '显示全部功能') }}</button>
+          <button class="empty-btn" @click="clearSearchAndFilters">{{ pageText('action_clear_search_filters', '清空搜索与筛选') }}</button>
         </div>
       </template>
       <template v-else>
-        <p>当前账号暂无可用功能，可能因为角色权限未开通或工作台尚未配置。</p>
+        <p>{{ pageText('empty_no_capability', '当前账号暂无可用功能，可能因为角色权限未开通或工作台尚未配置。') }}</p>
         <div class="empty-actions">
-          <button v-if="hasRoleSwitch" class="empty-btn" @click="goToMyWork">切换角色</button>
-          <button class="empty-btn" @click="goHome">返回首页</button>
+          <button v-if="hasRoleSwitch" class="empty-btn" @click="goToMyWork">{{ pageText('action_switch_role', '切换角色') }}</button>
+          <button class="empty-btn" @click="goHome">{{ pageText('action_back_home', '返回首页') }}</button>
           <button class="empty-btn secondary" @click="toggleEmptyHelp">
-            {{ showEmptyHelp ? '收起帮助' : '查看帮助' }}
+            {{ showEmptyHelp ? pageText('action_collapse_help', '收起帮助') : pageText('action_expand_help', '查看帮助') }}
           </button>
         </div>
         <p v-if="showEmptyHelp" class="empty-help">
-          建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置工作台目录。
+          {{ pageText('empty_help_detail', '建议先点击“切换角色”确认当前角色；若仍无功能，请联系管理员开通角色权限或配置工作台目录。') }}
         </p>
       </template>
     </div>
@@ -364,7 +364,7 @@
                 <span v-if="entry.state !== 'READY'" class="state">{{ stateLabel(entry.state) }}</span>
               </p>
               <p class="subtitle" :title="entry.reason || entry.subtitle">
-                <template v-for="(part, index) in highlightParts(entry.subtitle || '无说明')" :key="`sub-${entry.id}-${index}`">
+                <template v-for="(part, index) in highlightParts(entry.subtitle || pageText('entry_subtitle_empty', '无说明'))" :key="`sub-${entry.id}-${index}`">
                   <span :class="{ hit: part.hit }">{{ part.text }}</span>
                 </template>
               </p>
@@ -467,6 +467,7 @@ const route = useRoute();
 const session = useSessionStore();
 const pageContract = usePageContract('home');
 const pageTextByPageContract = pageContract.text;
+const pageText = (key: string, fallback: string) => pageTextByPageContract(key, fallback);
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
 const stateFilter = ref<'ALL' | EntryState>('ALL');
@@ -523,8 +524,8 @@ const workspaceLayoutSections = computed(() => {
 const workspaceHero = computed(() => (workspaceHome.value.hero && typeof workspaceHome.value.hero === 'object'
   ? workspaceHome.value.hero as Record<string, unknown>
   : {}));
-const heroTitle = computed(() => asText(workspaceHero.value.title) || pageTextByPageContract('title', '工作台'));
-const heroLead = computed(() => asText(workspaceHero.value.lead) || '围绕项目经营、风险与审批，优先处理今天最关键事项。');
+const heroTitle = computed(() => asText(workspaceHero.value.title) || pageText('title', '工作台'));
+const heroLead = computed(() => asText(workspaceHero.value.lead) || pageText('hero_lead', '围绕项目经营、风险与审批，优先处理今天最关键事项。'));
 const heroProductTags = computed(() => {
   const raw = Array.isArray(workspaceHero.value.product_tags) ? workspaceHero.value.product_tags : [];
   return raw.map((item) => asText(item)).filter(Boolean);
@@ -536,9 +537,9 @@ const hasRoleSwitch = computed(() => Object.keys(session.roleSurfaceMap || {}).l
 const roleLabel = computed(() => {
   const raw = asText(roleSurface.value?.role_label) || asText(roleSurface.value?.role_code);
   const normalized = raw.toLowerCase();
-  if (!raw) return '负责人';
-  if (normalized === 'executive') return '高管';
-  if (normalized === 'owner') return '负责人';
+  if (!raw) return pageText('role_fallback_owner', '负责人');
+  if (normalized === 'executive') return pageText('role_label_executive', '高管');
+  if (normalized === 'owner') return pageText('role_label_owner', '负责人');
   return raw;
 });
 const sceneTitleMap = computed(() => {
@@ -583,7 +584,7 @@ const defaultSceneKey = computed(() => {
   return first ? asText(first.key) : '';
 });
 const roleLandingScene = computed(() => asText(roleSurface.value?.landing_scene_key) || defaultSceneKey.value);
-const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || '工作台首页');
+const roleLandingLabel = computed(() => sceneTitleMap.value.get(roleLandingScene.value) || pageText('role_landing_fallback', '工作台首页'));
 const internalTileCount = computed(() => {
   let count = 0;
   session.scenes.forEach((scene) => {
@@ -593,7 +594,7 @@ const internalTileCount = computed(() => {
     tiles.forEach((tile, tileIndex) => {
       const key = asText(tile.key);
       if (!key) return;
-      const title = asText((tile as { title?: string }).title) || `功能 ${tileIndex + 1}`;
+      const title = asText((tile as { title?: string }).title) || `${pageText('tile_title_fallback_prefix', '功能 ')}${tileIndex + 1}`;
       if (
         isInternalEntry({
           sceneKey,
@@ -676,8 +677,11 @@ function resolveSceneTitle(scene: { title?: unknown; key?: unknown }) {
   const title = asText(scene.title);
   if (title) return title;
   const key = asText(scene.key);
-  if (!key) return '未分类模块';
-  return isHudEnabled.value ? `未分类模块（${key}）` : '未分类模块';
+  if (!key) return pageText('scene_title_uncategorized', '未分类模块');
+  if (isHudEnabled.value) {
+    return `${pageText('scene_title_uncategorized_with_key_prefix', '未分类模块（')}${key}${pageText('scene_title_uncategorized_with_key_suffix', ')')}`;
+  }
+  return pageText('scene_title_uncategorized', '未分类模块');
 }
 
 function isInternalEntry(params: {
@@ -748,7 +752,7 @@ const entries = computed<CapabilityEntry[]>(() => {
       const title =
         asText((tile as { title?: string }).title) ||
         asText(capabilityMeta?.label) ||
-        (isHudEnabled.value ? key : `功能 ${sceneIndex + 1}-${tileIndex + 1}`);
+        (isHudEnabled.value ? key : `${pageText('tile_title_fallback_prefix', '功能 ')}${sceneIndex + 1}-${tileIndex + 1}`);
       if (
         !isHudEnabled.value &&
         isInternalEntry({
@@ -831,7 +835,7 @@ const coreMetrics = computed<CoreMetric[]>(() => {
       const level: MetricLevel = levelRaw === 'red' || levelRaw === 'amber' ? levelRaw : 'green';
       return {
         key: asText(row.key) || `metric-${idx + 1}`,
-        label: asText(row.label) || `指标 ${idx + 1}`,
+        label: asText(row.label) || `${pageText('metric_title_fallback_prefix', '指标 ')}${idx + 1}`,
         value: asText(row.value) || '0',
         level,
         delta: asText(row.delta) || '',
@@ -851,8 +855,8 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
     const statusRaw = asText(row.status).toLowerCase();
     return {
       id: asText(row.id) || `todo-${idx + 1}`,
-      title: asText(row.title) || `待办 ${idx + 1}`,
-      description: asText(row.description) || '点击进入处理',
+      title: asText(row.title) || `${pageText('todo_title_fallback_prefix', '待办 ')}${idx + 1}`,
+      description: asText(row.description) || pageText('todo_desc_fallback', '点击进入处理'),
       count: Number(row.count || 0),
       status: statusRaw === 'urgent' ? 'urgent' : 'normal',
       ready: matched ? matched.state === 'READY' : Boolean(row.ready),
@@ -894,7 +898,7 @@ const riskSummaryLine = computed(() => {
   const risk = (workspaceHome.value.risk && typeof workspaceHome.value.risk === 'object')
     ? workspaceHome.value.risk as Record<string, unknown>
     : {};
-  return asText(risk.summary) || '当前未出现严重风险，建议保持日常巡检节奏。';
+  return asText(risk.summary) || pageText('risk_summary_fallback', '当前未出现严重风险，建议保持日常巡检节奏。');
 });
 
 const riskActionItems = computed<RiskActionItem[]>(() => {
@@ -906,7 +910,7 @@ const riskActionItems = computed<RiskActionItem[]>(() => {
     const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
     return {
       id: asText(row.id) || `risk-${idx + 1}`,
-      title: asText(row.title) || `风险事项 ${idx + 1}`,
+      title: asText(row.title) || `${pageText('risk_action_title_fallback_prefix', '风险事项 ')}${idx + 1}`,
       description: asText(row.description) || '',
       entryKey: asText(row.entry_key),
       sceneKey: asText(row.scene_key),
@@ -924,7 +928,7 @@ const riskSources = computed(() => {
   return source.map((item, idx) => {
     const row = (item && typeof item === 'object') ? item as Record<string, unknown> : {};
     return {
-      label: asText(row.label) || `来源 ${idx + 1}`,
+      label: asText(row.label) || `${pageText('risk_source_label_fallback_prefix', '来源 ')}${idx + 1}`,
       count: Number(row.count || 0),
     };
   });
@@ -956,9 +960,9 @@ const opsKpi = computed(() => {
 });
 
 function levelLabel(level: MetricLevel) {
-  if (level === 'red') return '严重';
-  if (level === 'amber') return '关注';
-  return '正常';
+  if (level === 'red') return pageText('level_red', '严重');
+  if (level === 'amber') return pageText('level_amber', '关注');
+  return pageText('level_green', '正常');
 }
 
 function trendText(delta: number) {
@@ -996,7 +1000,7 @@ const systemAdvice = computed<AdviceItem[]>(() => {
     return {
       id: asText(row.id) || `advice-${idx + 1}`,
       level: levelRaw === 'red' || levelRaw === 'amber' ? levelRaw : 'green',
-      title: asText(row.title) || `建议 ${idx + 1}`,
+      title: asText(row.title) || `${pageText('advice_title_fallback_prefix', '建议 ')}${idx + 1}`,
       description: asText(row.description),
       actionLabel: asText(row.action_label),
       actionEntryId: asText(row.entry_id),
@@ -1112,12 +1116,14 @@ const capabilityStateCounts = computed(() => {
   return counts;
 });
 const resultSummaryText = computed(() => {
-  const parts = [`当前显示 ${filteredEntries.value.length} / ${entries.value.length} 项功能`];
-  if (stateFilter.value !== 'ALL') parts.push(`状态：${stateLabel(stateFilter.value)}`);
+  const parts = [
+    `${pageText('result_summary_prefix', '当前显示 ')}${filteredEntries.value.length}${pageText('result_summary_middle', ' / ')}${entries.value.length}${pageText('result_summary_suffix', ' 项功能')}`,
+  ];
+  if (stateFilter.value !== 'ALL') parts.push(`${pageText('result_summary_state_prefix', '状态：')}${stateLabel(stateFilter.value)}`);
   if (!isDeliveryMode.value && capabilityStateFilter.value !== 'ALL') {
-    parts.push(`功能语义：${capabilityStateLabel(capabilityStateFilter.value)}`);
+    parts.push(`${pageText('result_summary_capability_state_prefix', '功能语义：')}${capabilityStateLabel(capabilityStateFilter.value)}`);
   }
-  if (lockReasonFilter.value !== 'ALL') parts.push(`原因：${lockReasonLabel(lockReasonFilter.value)}`);
+  if (lockReasonFilter.value !== 'ALL') parts.push(`${pageText('result_summary_reason_prefix', '原因：')}${lockReasonLabel(lockReasonFilter.value)}`);
   return parts.join(' · ');
 });
 const readyOnlyNoResult = computed(
@@ -1134,14 +1140,17 @@ const emptyStateReason = computed(() => {
 const activeFilterChips = computed<FilterChip[]>(() => {
   const chips: FilterChip[] = [];
   const keyword = searchText.value.trim();
-  if (keyword) chips.push({ key: 'search', label: `搜索：${keyword}` });
-  if (readyOnly.value) chips.push({ key: 'ready-only', label: '仅显示可进入' });
-  if (stateFilter.value !== 'ALL') chips.push({ key: 'state', label: `状态：${stateLabel(stateFilter.value)}` });
+  if (keyword) chips.push({ key: 'search', label: `${pageText('chip_search_prefix', '搜索：')}${keyword}` });
+  if (readyOnly.value) chips.push({ key: 'ready-only', label: pageText('chip_ready_only', '仅显示可进入') });
+  if (stateFilter.value !== 'ALL') chips.push({ key: 'state', label: `${pageText('chip_state_prefix', '状态：')}${stateLabel(stateFilter.value)}` });
   if (!isDeliveryMode.value && capabilityStateFilter.value !== 'ALL') {
-    chips.push({ key: 'capability-state', label: `功能语义：${capabilityStateLabel(capabilityStateFilter.value)}` });
+    chips.push({
+      key: 'capability-state',
+      label: `${pageText('chip_capability_state_prefix', '功能语义：')}${capabilityStateLabel(capabilityStateFilter.value)}`,
+    });
   }
   if (lockReasonFilter.value !== 'ALL') {
-    chips.push({ key: 'reason', label: `锁定原因：${lockReasonLabel(lockReasonFilter.value)}` });
+    chips.push({ key: 'reason', label: `${pageText('chip_reason_prefix', '锁定原因：')}${lockReasonLabel(lockReasonFilter.value)}` });
   }
   return chips;
 });
@@ -1183,12 +1192,14 @@ const groupedEntries = computed(() => {
       const scenes = Array.from(sceneSetMap.get(group.sceneKey) || []);
       return {
         ...group,
-        sceneSummary: scenes.length > 1 ? `覆盖场景：${scenes.slice(0, 3).join('、')}${scenes.length > 3 ? '…' : ''}` : '',
+        sceneSummary: scenes.length > 1
+          ? `${pageText('scene_summary_prefix', '覆盖场景：')}${scenes.slice(0, 3).join('、')}${scenes.length > 3 ? pageText('scene_summary_more', '…') : ''}`
+          : '',
       };
     })
     .sort((a, b) => a.sceneTitle.localeCompare(b.sceneTitle));
   if (!recentItems.length) return grouped;
-  return [{ sceneKey: '__recent__', sceneTitle: '最近使用', sceneSummary: '', items: recentItems }, ...grouped];
+  return [{ sceneKey: '__recent__', sceneTitle: pageText('recent_group_title', '最近使用'), sceneSummary: '', items: recentItems }, ...grouped];
 });
 const hasRecentGroup = computed(() => groupedEntries.value.some((group) => group.sceneKey === '__recent__'));
 
@@ -1234,29 +1245,29 @@ function collapseAllSceneGroups() {
 
 function lockReasonLabel(reasonCode: string) {
   const code = String(reasonCode || '').toUpperCase();
-  if (code === 'PERMISSION_DENIED') return '权限不足';
-  if (code === 'FEATURE_DISABLED') return '订阅未开通';
-  if (code === 'ROLE_SCOPE_MISMATCH') return '角色范围不匹配';
-  if (code === 'CAPABILITY_SCOPE_MISSING') return '缺少前置条件';
-  if (code === 'CAPABILITY_SCOPE_CYCLE') return '功能依赖异常';
-  if (code === 'COMING_SOON') return '功能建设中';
-  if (code === 'PENDING_APPROVAL') return '待审批开放';
-  return '当前不可用';
+  if (code === 'PERMISSION_DENIED') return pageText('lock_reason_permission_denied', '权限不足');
+  if (code === 'FEATURE_DISABLED') return pageText('lock_reason_feature_disabled', '订阅未开通');
+  if (code === 'ROLE_SCOPE_MISMATCH') return pageText('lock_reason_role_scope_mismatch', '角色范围不匹配');
+  if (code === 'CAPABILITY_SCOPE_MISSING') return pageText('lock_reason_scope_missing', '缺少前置条件');
+  if (code === 'CAPABILITY_SCOPE_CYCLE') return pageText('lock_reason_scope_cycle', '功能依赖异常');
+  if (code === 'COMING_SOON') return pageText('lock_reason_coming_soon', '功能建设中');
+  if (code === 'PENDING_APPROVAL') return pageText('lock_reason_waiting_open', '待审批开放');
+  return pageText('lock_reason_default', '当前不可用');
 }
 
 function capabilityStateLabel(state: string) {
   const normalized = String(state || '').toLowerCase();
-  if (normalized === 'readonly') return '只读';
-  if (normalized === 'deny') return '禁止';
-  if (normalized === 'pending') return '待开放';
-  if (normalized === 'coming_soon') return '建设中';
-  return '可用';
+  if (normalized === 'readonly') return pageText('capability_state_readonly', '只读');
+  if (normalized === 'deny') return pageText('capability_state_deny', '禁止');
+  if (normalized === 'pending') return pageText('capability_state_pending', '待开放');
+  if (normalized === 'coming_soon') return pageText('capability_state_coming_soon', '建设中');
+  return pageText('capability_state_allow', '可用');
 }
 
 function stateLabel(state: EntryState) {
-  if (state === 'READY') return '可进入';
-  if (state === 'LOCKED') return '暂不可用';
-  return '即将开放';
+  if (state === 'READY') return pageText('state_ready', '可进入');
+  if (state === 'LOCKED') return pageText('state_locked', '暂不可用');
+  return pageText('state_preview', '即将开放');
 }
 
 function canEnter(entry: CapabilityEntry) {
@@ -1264,16 +1275,16 @@ function canEnter(entry: CapabilityEntry) {
 }
 
 function actionLabel(entry: CapabilityEntry) {
-  if (entry.state === 'LOCKED') return '暂不可用';
-  if (entry.state === 'PREVIEW') return '即将开放';
-  if (entry.capabilityState === 'readonly') return '只读进入';
+  if (entry.state === 'LOCKED') return pageText('action_enter_disabled', '暂不可用');
+  if (entry.state === 'PREVIEW') return pageText('action_enter_preview', '即将开放');
+  if (entry.capabilityState === 'readonly') return pageText('action_enter_readonly', '只读进入');
   const mergeText = `${entry.title} ${entry.subtitle} ${entry.key} ${entry.sceneKey}`.toLowerCase();
   if (includesAny(mergeText, ['payment', '付款', '支付', 'approval', '审批'])) return '审核付款申请';
   if (includesAny(mergeText, ['contract', '合同'])) return '查看合同异常';
   if (includesAny(mergeText, ['risk', '风险', '预警'])) return '处理风险事项';
   if (includesAny(mergeText, ['change', '变更'])) return '确认变更事项';
   if (includesAny(mergeText, ['task', '任务', 'todo', '待办'])) return '处理任务';
-  return '进入处理';
+  return pageText('action_enter_default', '进入处理');
 }
 
 async function openScene(entry: CapabilityEntry) {
@@ -1481,7 +1492,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 function resolveEnterErrorMessage(error: unknown) {
-  const message = asText((error as { message?: unknown })?.message) || '功能入口暂时不可用';
+  const message = asText((error as { message?: unknown })?.message) || pageText('enter_error_message_fallback', '功能入口暂时不可用');
   const lowered = message.toLowerCase();
   const code = lowered.includes('permission')
     ? 'PERMISSION_DENIED'
@@ -1495,10 +1506,10 @@ function resolveEnterErrorMessage(error: unknown) {
 }
 
 function resolveEnterErrorHint(code: string) {
-  if (code === 'PERMISSION_DENIED') return '请联系管理员开通对应权限后重试。';
-  if (code === 'ROUTE_NOT_FOUND') return '入口配置异常，请稍后重试或联系管理员。';
-  if (code === 'TIMEOUT') return '网络连接超时，请检查网络后点击重试。';
-  return '请稍后重试；如果问题持续，请联系管理员。';
+  if (code === 'PERMISSION_DENIED') return pageText('enter_error_hint_permission_denied', '请联系管理员开通对应权限后重试。');
+  if (code === 'ROUTE_NOT_FOUND') return pageText('enter_error_hint_route_not_found', '入口配置异常，请稍后重试或联系管理员。');
+  if (code === 'TIMEOUT') return pageText('enter_error_hint_timeout', '网络连接超时，请检查网络后点击重试。');
+  return pageText('enter_error_hint_default', '请稍后重试；如果问题持续，请联系管理员。');
 }
 
 onMounted(() => {
