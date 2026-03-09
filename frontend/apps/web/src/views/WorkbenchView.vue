@@ -2,12 +2,12 @@
   <section class="workbench">
     <header class="header">
       <div>
-        <p v-if="showHud" class="diagnostic">诊断页仅用于排查，不作为正式产品界面。</p>
+        <p v-if="showHud" class="diagnostic">{{ pageText('diagnostic_hint', '诊断页仅用于排查，不作为正式产品界面。') }}</p>
         <h2>{{ pageText('header_title', '页面暂时无法打开') }}</h2>
         <p class="meta">{{ pageText('header_subtitle', '我们已为你保留可继续操作的入口。') }}</p>
         <p v-if="hasContext" class="context-line">
-          推荐上下文：{{ workspaceContextSummary }}
-          <button class="ghost mini" @click="clearWorkspaceContext">清除</button>
+          {{ pageText('context_prefix', '推荐上下文：') }}{{ workspaceContextSummary }}
+          <button class="ghost mini" @click="clearWorkspaceContext">{{ pageText('action_clear_context', '清除') }}</button>
         </p>
       </div>
       <div class="actions">
@@ -43,50 +43,50 @@
 
     <div v-if="showHud" class="details">
       <div class="detail">
-        <span class="label">原因</span>
+        <span class="label">{{ pageText('hud_label_reason', '原因') }}</span>
         <span class="value">{{ reasonLabel }}</span>
       </div>
       <div class="detail">
-        <span class="label">菜单</span>
-        <span class="value">{{ menuId || 'N/A' }}</span>
+        <span class="label">{{ pageText('hud_label_menu', '菜单') }}</span>
+        <span class="value">{{ menuId || pageText('hud_value_na', 'N/A') }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">动作</span>
-        <span class="value">{{ actionId || 'N/A' }}</span>
+        <span class="label">{{ pageText('hud_label_action', '动作') }}</span>
+        <span class="value">{{ actionId || pageText('hud_value_na', 'N/A') }}</span>
       </div>
       <div class="detail">
-        <span class="label">路由</span>
+        <span class="label">{{ pageText('hud_label_route', '路由') }}</span>
         <span class="value">{{ route.fullPath }}</span>
       </div>
       <div v-if="diag" class="detail">
-        <span class="label">诊断</span>
+        <span class="label">{{ pageText('hud_label_diag', '诊断') }}</span>
         <span class="value">{{ diag }}</span>
       </div>
       <div v-if="showHud && diagActionType" class="detail">
-        <span class="label">动作类型</span>
+        <span class="label">{{ pageText('hud_label_action_type', '动作类型') }}</span>
         <span class="value">{{ diagActionType }}</span>
       </div>
       <div v-if="showHud && diagContractType" class="detail">
-        <span class="label">契约类型</span>
+        <span class="label">{{ pageText('hud_label_contract_type', '契约类型') }}</span>
         <span class="value">{{ diagContractType }}</span>
       </div>
       <div v-if="showHud && diagContractUrl" class="detail">
-        <span class="label">契约链接</span>
+        <span class="label">{{ pageText('hud_label_contract_url', '契约链接') }}</span>
         <span class="value">{{ diagContractUrl }}</span>
       </div>
       <div v-if="showHud && diagMetaUrl" class="detail">
-        <span class="label">元信息链接</span>
+        <span class="label">{{ pageText('hud_label_meta_url', '元信息链接') }}</span>
         <span class="value">{{ diagMetaUrl }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">最近意图</span>
-        <span class="value">{{ lastIntent || 'N/A' }}</span>
+        <span class="label">{{ pageText('hud_label_last_intent', '最近意图') }}</span>
+        <span class="value">{{ lastIntent || pageText('hud_value_na', 'N/A') }}</span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">追踪 ID</span>
+        <span class="label">{{ pageText('hud_label_trace_id', '追踪 ID') }}</span>
         <span class="value">
-          {{ lastTraceId || 'N/A' }}
-          <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">复制</button>
+          {{ lastTraceId || pageText('hud_value_na', 'N/A') }}
+          <button v-if="lastTraceId" class="ghost mini" @click="copyTrace">{{ pageText('action_copy', '复制') }}</button>
         </span>
       </div>
     </div>
@@ -214,17 +214,17 @@ const tiles = computed<EnrichedWorkbenchTile[]>(() => {
 const reasonLabel = computed(() => {
   switch (reason.value) {
     case ErrorCodes.NAV_MENU_NO_ACTION:
-      return '菜单分组（无可执行动作）';
+      return pageText('reason_nav_menu_no_action', '菜单分组（无可执行动作）');
     case ErrorCodes.ACT_NO_MODEL:
-      return '动作未绑定模型';
+      return pageText('reason_act_no_model', '动作未绑定模型');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return '动作类型暂不支持';
+      return pageText('reason_act_unsupported_type', '动作类型暂不支持');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
-      return '契约上下文缺失';
+      return pageText('reason_contract_context_missing', '契约上下文缺失');
     case ErrorCodes.CAPABILITY_MISSING:
-      return '缺少能力权限';
+      return pageText('reason_capability_missing', '缺少能力权限');
     default:
-      return reason.value || '未知原因';
+      return reason.value || pageText('reason_unknown', '未知原因');
   }
 });
 
