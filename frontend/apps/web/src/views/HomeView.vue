@@ -13,13 +13,13 @@
             <button class="inline-link" @click="openRoleLanding">{{ homeLayoutText('hero.open_landing_action', '打开默认入口') }}</button>
           </p>
           <div class="view-toggle">
-            <button class="my-work-btn" @click="goToMyWork">{{ homeLayoutText('hero.open_my_work_action', '我的工作') }}</button>
             <button
-              v-if="isAdmin"
+              v-for="action in heroQuickActions"
+              :key="`hero-action-${action.key}`"
               class="my-work-btn"
-              @click="goToUsageAnalytics"
+              @click="executeHeroAction(action.key)"
             >
-              {{ homeLayoutText('hero.open_usage_action', '使用分析') }}
+              {{ action.label }}
             </button>
             <button :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'">{{ homeLayoutText('hero.view_mode_card', '卡片') }}</button>
             <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">{{ homeLayoutText('hero.view_mode_list', '列表') }}</button>
@@ -399,6 +399,7 @@ import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { isDeliveryModeEnabled, isHudEnabled as resolveHudEnabled } from '../config/debug';
 import { usePageContract } from '../app/pageContract';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type MetricLevel = 'green' | 'amber' | 'red';
@@ -476,6 +477,9 @@ const route = useRoute();
 const session = useSessionStore();
 const pageContract = usePageContract('home');
 const pageTextByPageContract = pageContract.text;
+const pageActionIntent = pageContract.actionIntent;
+const pageActionTarget = pageContract.actionTarget;
+const pageGlobalActions = pageContract.globalActions;
 const pageText = (key: string, fallback: string) => pageTextByPageContract(key, fallback);
 const viewMode = ref<'card' | 'list'>('card');
 const searchText = ref('');
@@ -498,6 +502,20 @@ const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 const isAdmin = computed(() => {
   const groups = session.user?.groups_xmlids || [];
   return groups.includes('base.group_system') || groups.includes('smart_construction_core.group_sc_cap_config_admin');
+});
+const heroQuickActions = computed(() => {
+  const supported = new Set(['open_my_work', 'open_usage_analytics']);
+  const actions = pageGlobalActions.value.filter((item) => {
+    if (!supported.has(item.key)) return false;
+    if (item.key === 'open_usage_analytics' && !isAdmin.value) return false;
+    return true;
+  });
+  if (actions.length) return actions;
+  const fallback = [{ key: 'open_my_work', label: homeLayoutText('hero.open_my_work_action', '我的工作'), intent: 'ui.contract' }];
+  if (isAdmin.value) {
+    fallback.push({ key: 'open_usage_analytics', label: homeLayoutText('hero.open_usage_action', '使用分析'), intent: 'ui.contract' });
+  }
+  return fallback;
 });
 const productFacts = computed(() => session.productFacts);
 const roleSurface = computed(() => session.roleSurface);
@@ -1544,6 +1562,34 @@ function goToUsageAnalytics() {
     from: 'workspace.home',
   }).catch(() => {});
   router.push({ path: '/admin/usage-analytics' }).catch(() => {});
+}
+
+async function executeHeroAction(actionKey: string) {
+  void trackUsageEvent('workspace.nav_click', {
+    target: actionKey,
+    from: 'workspace.home',
+  }).catch(() => {});
+  const handled = await executePageContractAction({
+    actionKey,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: workspaceContextQuery.value,
+    onFallback: async (key) => {
+      if (key === 'open_my_work') {
+        router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
+        return true;
+      }
+      if (key === 'open_usage_analytics' && isAdmin.value) {
+        router.push({ path: '/admin/usage-analytics' }).catch(() => {});
+        return true;
+      }
+      return false;
+    },
+  });
+  if (!handled && actionKey === 'open_my_work') {
+    router.push({ path: '/my-work', query: workspaceContextQuery.value }).catch(() => {});
+  }
 }
 
 function goHome() {
