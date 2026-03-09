@@ -23,3 +23,18 @@ class TestCapabilityRegistryService(TransactionCase):
         self.assertIsInstance(sections, list)
         self.assertTrue(bool(sections))
         self.assertTrue(all(isinstance(section.get("items"), list) for section in sections if isinstance(section, dict)))
+
+    def test_custom_project_manager_role_maps_to_pm(self):
+        role_group = self.env.ref("smart_construction_custom.group_sc_role_project_manager", raise_if_not_found=False)
+        if not role_group:
+            self.skipTest("smart_construction_custom not installed")
+        user = self.env["res.users"].with_context(no_reset_password=True).create(
+            {
+                "name": "role-map-pm",
+                "login": "role_map_pm",
+                "email": "role_map_pm@example.com",
+                "groups_id": [(6, 0, [role_group.id])],
+            }
+        )
+        roles = capability_registry._resolve_role_codes_for_user(user)
+        self.assertIn("pm", roles)

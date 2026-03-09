@@ -634,12 +634,17 @@ const viewMode = computed(() => {
   return '';
 });
 const sortLabel = computed(() => sortValue.value || 'id asc');
-const surfaceKey = computed(() => `${sceneKey.value} ${model.value} ${pageTitle.value}`.toLowerCase());
+const effectiveSurfaceModel = computed(() => (resolvedModelRef.value || model.value || '').toLowerCase());
+const surfaceKey = computed(() => `${sceneKey.value} ${effectiveSurfaceModel.value} ${pageTitle.value}`.toLowerCase());
 const surfaceKind = computed<'risk' | 'contract' | 'cost' | 'project' | 'generic'>(() => {
   const key = surfaceKey.value;
+  const sceneKeyText = String(sceneKey.value || '').toLowerCase();
+  const modelText = effectiveSurfaceModel.value;
   if (key.includes('risk') || key.includes('风险')) return 'risk';
   if (key.includes('contract') || key.includes('合同')) return 'contract';
   if (key.includes('cost') || key.includes('成本')) return 'cost';
+  if (sceneKeyText.startsWith('projects.') || sceneKeyText.startsWith('project.')) return 'project';
+  if (modelText.startsWith('project.') || modelText.startsWith('construction.')) return 'project';
   if (key.includes('project') || key.includes('项目')) return 'project';
   return 'generic';
 });
@@ -777,6 +782,10 @@ const surfaceIntent = computed<SurfaceIntent>(() => {
 const emptyReasonText = computed(() => {
   if (searchTerm.value.trim() || activeContractFilterKey.value) {
     return '可能由当前筛选条件导致无数据，建议先清除筛选后重试。';
+  }
+  const modelText = effectiveSurfaceModel.value;
+  if (modelText === 'construction.work.breakdown') {
+    return '当前尚未生成执行结构数据，可先在项目立项或工程结构中创建后再查看。';
   }
   return '可能因为暂无业务数据、当前角色权限受限，或数据尚未生成。';
 });

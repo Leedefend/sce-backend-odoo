@@ -12,6 +12,7 @@ import os
 from typing import Dict, Any, List, Optional, Union, Iterable, Tuple
 from collections.abc import Mapping
 from odoo.exceptions import AccessError, MissingError
+from ..resolvers.action_resolver import ActionResolver
 
 _logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class NavDispatcher:
     def __init__(self, env, su_env):
         self.env = env       # 当前用户 env（用于 groups/权限过滤）
         self.su_env = su_env # sudo env（用于元数据与菜单树生成）
+        self.resolver = ActionResolver(env)
 
     def _diagnostics_enabled(self) -> bool:
         env_flag = (os.environ.get("ENV") or "").lower()
@@ -413,6 +415,19 @@ class NavDispatcher:
                 res_model = getattr(act_rec, "res_model", None)
                 if res_model:
                     node.setdefault("model", res_model)
+                # server action: try mapped/drilled target to expose model hint for shell routing.
+                if act_rec._name == "ir.actions.server" and not node.get("model"):
+                    resolved = self.resolver.map_server_to_window(act_rec.id, ax)
+                    if isinstance(resolved, dict):
+                        mapped_model = resolved.get("res_model")
+                        if mapped_model:
+                            node.setdefault("model", mapped_model)
+                        mapped_type = resolved.get("type") or resolved.get("_name")
+                        if mapped_type:
+                            node.setdefault("resolved_action_type", mapped_type)
+                        mapped_id = resolved.get("id")
+                        if mapped_id:
+                            node.setdefault("resolved_action_id", mapped_id)
                 if mode == "full" and act_rec._name == "ir.actions.act_window":
                     vm = (getattr(act_rec, "view_mode", None) or "").split(",")
                     vm = [v.strip() for v in vm if v and v.strip()]

@@ -273,9 +273,9 @@ class ActionResolver:
         - 如无定制映射，返回 None。
         """
         mapping = {
-            # 执行结构入口：原 server 动作会返回 display_notification + params.next，
-            # 对 portal shell 直接映射到生命周期看板以保证可打开。
-            "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_sc_project_kanban_lifecycle",
+            # 执行结构入口：server 动作返回 notification + next，前端无 next 语义；
+            # 直接落到执行结构窗口动作，避免误跳到项目台账链路触发无关能力门禁。
+            "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
         }
         target_xmlid = None
         if server_xmlid and server_xmlid in mapping:

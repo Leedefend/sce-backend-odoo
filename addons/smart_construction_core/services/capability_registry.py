@@ -138,7 +138,8 @@ def _resolve_role_codes_for_user(user) -> set[str]:
     for xmlid in group_xmlids:
         text = str(xmlid or "").strip()
         if text.startswith(ROLE_GROUP_PREFIX):
-            roles.add(text[len(ROLE_GROUP_PREFIX):])
+            suffix = text[len(ROLE_GROUP_PREFIX):]
+            roles.add(ROLE_SUFFIX_MAP.get(suffix, suffix))
             continue
         if text.startswith(ROLE_GROUP_PREFIX_CORE):
             suffix = text[len(ROLE_GROUP_PREFIX_CORE):]
