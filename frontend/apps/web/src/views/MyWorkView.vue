@@ -5,21 +5,21 @@
       <div class="hero-main">
         <div>
           <h2>{{ pageText('title', '我的工作') }}</h2>
-          <p>聚合待办并直接处理，默认从“待我处理”开工。</p>
+          <p>{{ pageText('hero_subtitle', '聚合待办并直接处理，默认从“待我处理”开工。') }}</p>
         </div>
         <div class="hero-tools">
-          <button class="secondary" @click="load">刷新</button>
+          <button class="secondary" @click="load">{{ pageText('action_refresh', '刷新') }}</button>
         </div>
       </div>
       <div v-if="!loading && !errorText && (generatedAtText || appliedPresetLabel || visibilityNotice)" class="hero-context">
         <span v-if="appliedPresetLabel" class="context-chip">
-          推荐视图：{{ appliedPresetLabel }}<span v-if="routeContextSource">（{{ routeContextSource }}）</span>
+          {{ pageText('context_preset_prefix', '推荐视图：') }}{{ appliedPresetLabel }}<span v-if="routeContextSource">（{{ routeContextSource }}）</span>
         </span>
-        <button v-if="appliedPresetLabel" class="link-btn mini-btn" @click="clearRoutePreset">清除推荐</button>
+        <button v-if="appliedPresetLabel" class="link-btn mini-btn" @click="clearRoutePreset">{{ pageText('action_clear_preset', '清除推荐') }}</button>
         <span v-if="visibilityNotice" class="context-chip warn">
           {{ visibilityNotice }}<span v-if="restrictedSourceText">（{{ restrictedSourceText }}）</span>
         </span>
-        <span v-if="generatedAtText" class="context-chip subtle">更新于 {{ generatedAtText }}</span>
+        <span v-if="generatedAtText" class="context-chip subtle">{{ pageText('context_updated_at_prefix', '更新于 ') }}{{ generatedAtText }}</span>
       </div>
     </header>
 
@@ -48,27 +48,27 @@
     </p>
     <details v-if="!loading && !errorText && retryFailedIds.length" class="retry-panel">
       <summary class="retry-bar">
-        <span>失败待办 {{ retryFailedIds.length }} 条</span>
-        <span v-if="lastBatchExecutionMode" class="meta-chip">模式: {{ lastBatchExecutionMode }}</span>
-        <span v-if="lastBatchReplay" class="meta-chip replay">重放结果</span>
-        <span class="retry-expand-hint">展开处理</span>
+        <span>{{ pageText('retry_failed_prefix', '失败待办 ') }}{{ retryFailedIds.length }}{{ pageText('retry_failed_suffix', ' 条') }}</span>
+        <span v-if="lastBatchExecutionMode" class="meta-chip">{{ pageText('retry_mode_prefix', '模式: ') }}{{ lastBatchExecutionMode }}</span>
+        <span v-if="lastBatchReplay" class="meta-chip replay">{{ pageText('retry_replay', '重放结果') }}</span>
+        <span class="retry-expand-hint">{{ pageText('retry_expand_hint', '展开处理') }}</span>
       </summary>
       <section v-if="retryFailedItems.length" class="retry-details">
-        <p class="retry-title">失败明细</p>
+        <p class="retry-title">{{ pageText('retry_title', '失败明细') }}</p>
         <div class="retry-actions">
-          <button class="link-btn" @click="selectRetryFailedItems">选中失败项</button>
-          <button class="link-btn" @click="selectAllFailedItems">选中全部失败项</button>
-          <button class="link-btn" @click="selectRetryableFailedItems">仅选可重试项</button>
-          <button class="link-btn" @click="selectNonRetryableFailedItems">仅选不可重试项</button>
-          <button class="link-btn done-btn" @click="retryFailedTodos">重试失败项</button>
-          <button class="link-btn" @click="copyRetrySummary">复制失败摘要</button>
-          <button class="link-btn" @click="copyVisibleRetrySummary">复制当前视图</button>
-          <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">导出失败 CSV</button>
-          <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">复制重试请求</button>
-          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">导出重试 JSON</button>
-          <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">主列表定位失败</button>
-          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">复制 Trace</button>
-          <button class="link-btn secondary-btn" @click="clearRetryFailed">忽略</button>
+          <button class="link-btn" @click="selectRetryFailedItems">{{ pageText('retry_action_select_failed', '选中失败项') }}</button>
+          <button class="link-btn" @click="selectAllFailedItems">{{ pageText('retry_action_select_all_failed', '选中全部失败项') }}</button>
+          <button class="link-btn" @click="selectRetryableFailedItems">{{ pageText('retry_action_select_retryable_only', '仅选可重试项') }}</button>
+          <button class="link-btn" @click="selectNonRetryableFailedItems">{{ pageText('retry_action_select_non_retryable_only', '仅选不可重试项') }}</button>
+          <button class="link-btn done-btn" @click="retryFailedTodos">{{ pageText('retry_action_retry_failed', '重试失败项') }}</button>
+          <button class="link-btn" @click="copyRetrySummary">{{ pageText('retry_action_copy_summary', '复制失败摘要') }}</button>
+          <button class="link-btn" @click="copyVisibleRetrySummary">{{ pageText('retry_action_copy_current_view', '复制当前视图') }}</button>
+          <button class="link-btn" :disabled="!retryFailedItems.length" @click="exportRetryFailedCsv">{{ pageText('retry_action_export_failed_csv', '导出失败 CSV') }}</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="copyRetryRequest">{{ pageText('retry_action_copy_retry_request', '复制重试请求') }}</button>
+          <button class="link-btn" :disabled="!retryRequestParams" @click="exportRetryRequestJson">{{ pageText('retry_action_export_retry_json', '导出重试 JSON') }}</button>
+          <button class="link-btn" :disabled="!retryFailedItems.length" @click="focusFailedInMainList">{{ pageText('retry_action_focus_in_main_list', '主列表定位失败') }}</button>
+          <button class="link-btn" :disabled="!lastBatchTraceId" @click="copyBatchTraceId">{{ pageText('retry_action_copy_trace', '复制 Trace') }}</button>
+          <button class="link-btn secondary-btn" @click="clearRetryFailed">{{ pageText('retry_action_ignore', '忽略') }}</button>
         </div>
       <details v-if="retryRequestParams" class="retry-request-preview">
         <summary>重试请求预览</summary>
