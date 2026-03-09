@@ -10,6 +10,7 @@ PAGE_BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 SCENE_HEALTH_VIEW = ROOT / "frontend/apps/web/src/views/SceneHealthView.vue"
 USAGE_ANALYTICS_VIEW = ROOT / "frontend/apps/web/src/views/UsageAnalyticsView.vue"
+HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
 PAGE_ACTION_RUNTIME = ROOT / "frontend/apps/web/src/app/pageContractActionRuntime.ts"
 
 
@@ -36,6 +37,7 @@ def main() -> int:
     workbench_text = _read(WORKBENCH_VIEW)
     scene_health_text = _read(SCENE_HEALTH_VIEW)
     usage_analytics_text = _read(USAGE_ANALYTICS_VIEW)
+    home_text = _read(HOME_VIEW)
     action_runtime_text = _read(PAGE_ACTION_RUNTIME)
     errors: list[str] = []
 
@@ -49,6 +51,8 @@ def main() -> int:
         errors.append(f"missing file: {SCENE_HEALTH_VIEW.relative_to(ROOT).as_posix()}")
     if not usage_analytics_text:
         errors.append(f"missing file: {USAGE_ANALYTICS_VIEW.relative_to(ROOT).as_posix()}")
+    if not home_text:
+        errors.append(f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}")
     if not action_runtime_text:
         errors.append(f"missing file: {PAGE_ACTION_RUNTIME.relative_to(ROOT).as_posix()}")
     if errors:
@@ -77,6 +81,10 @@ def main() -> int:
             '"action_schema": {"actions": action_schema_actions},',
             '"actions": _action_templates(section_key),',
             "def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:",
+            'if key == "home":',
+            '{"key": "open_usage_analytics", "label": "使用分析", "intent": "ui.contract"}',
+            'if key == "open_usage_analytics":',
+            '{"kind": "route.path", "path": "/admin/usage-analytics"}',
             '{"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"}',
             'if key in {"scene_health", "usage_analytics"}:',
         ],
@@ -89,6 +97,7 @@ def main() -> int:
             "export async function executePageContractAction(deps: ContractActionDeps): Promise<boolean> {",
             "if (kind === 'page.refresh') {",
             "if (kind === 'menu.first_reachable') {",
+            "if (kind === 'route.path') {",
             "if (intent === 'ui.contract' && scene) {",
             "if (deps.onFallback) {",
         ],
@@ -109,6 +118,23 @@ def main() -> int:
             "async function executeWorkbenchAction(actionKey: string) {",
             "const handled = await executePageContractAction({",
             "onOpenMenuFirstReachable: async () => {",
+        ],
+        errors,
+    )
+    _expect(
+        home_text,
+        "HomeView.vue",
+        [
+            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
+            "const pageActionIntent = pageContract.actionIntent;",
+            "const pageActionTarget = pageContract.actionTarget;",
+            "const pageGlobalActions = pageContract.globalActions;",
+            "const heroQuickActions = computed(() => {",
+            "v-for=\"action in heroQuickActions\"",
+            "@click=\"executeHeroAction(action.key)\"",
+            "async function executeHeroAction(actionKey: string) {",
+            "const handled = await executePageContractAction({",
+            "onFallback: async (key) => {",
         ],
         errors,
     )

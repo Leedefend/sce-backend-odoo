@@ -198,11 +198,18 @@ def _action_target(action_key: str, page_key: str) -> Dict[str, Any]:
         return {"kind": "menu.first_reachable"}
     if key == "refresh_page":
         return {"kind": "page.refresh"}
+    if key == "open_usage_analytics":
+        return {"kind": "route.path", "path": "/admin/usage-analytics"}
     return {"scene_key": page}
 
 
 def _default_page_actions(page_key: str) -> list[Dict[str, Any]]:
     key = str(page_key or "").strip().lower()
+    if key == "home":
+        return [
+            {"key": "open_my_work", "label": "我的工作", "intent": "ui.contract"},
+            {"key": "open_usage_analytics", "label": "使用分析", "intent": "ui.contract"},
+        ]
     if key == "workbench":
         return [
             {"key": "open_workbench", "label": "返回工作台", "intent": "ui.contract"},
