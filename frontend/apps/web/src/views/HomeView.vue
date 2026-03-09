@@ -44,11 +44,14 @@
         <p v-if="isHudEnabled" class="hud-line">
           HUD: internal_tiles={{ internalTileCount }} · visible_mode=show_all
         </p>
+        <p v-if="isHudEnabled" class="hud-line">
+          HUD: orchestration_blocks={{ orchestrationBlocks.length }} · role_variant={{ roleVariantCode || '-' }}
+        </p>
       </div>
     </header>
 
     <section v-if="isHomeSectionEnabled('metrics') && isHomeSectionTag('metrics', 'section')" class="value-grid" :style="homeSectionStyle('metrics')" :aria-label="homeLayoutText('metrics.aria_label', '核心价值区')">
-      <article v-for="metric in coreMetrics" :key="metric.key" class="value-card">
+      <article v-for="metric in coreMetrics" :key="metric.key" class="value-card" :class="[`tone-${metric.tone || 'neutral'}`, `progress-${metric.progress || 'running'}`]">
         <p class="value-label">{{ metric.label }}</p>
         <p class="value-number">{{ metric.value }}</p>
         <p class="value-meta">
@@ -65,7 +68,7 @@
         <p>{{ homeLayoutText('today_actions.subtitle', '点击可直接进入处理界面。') }}</p>
       </header>
       <div class="today-actions-grid">
-        <article v-for="item in concreteTodos" :key="item.id" class="today-card">
+        <article v-for="item in concreteTodos" :key="item.id" class="today-card" :class="[`tone-${item.tone || 'info'}`, `progress-${item.progress || 'pending'}`]">
           <p class="today-title">
             <span>{{ item.title }}</span>
             <span v-if="item.status" class="today-status" :class="`today-status-${item.status}`">
@@ -400,6 +403,8 @@ import { usePageContract } from '../app/pageContract';
 type EntryState = 'READY' | 'LOCKED' | 'PREVIEW';
 type MetricLevel = 'green' | 'amber' | 'red';
 type SuggestionStatus = 'urgent' | 'normal';
+type SemanticTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+type SemanticProgress = 'overdue' | 'blocked' | 'pending' | 'running' | 'completed';
 type CapabilityEntry = {
   id: string;
   key: string;
@@ -430,6 +435,8 @@ type SuggestionItem = {
   description: string;
   count?: number;
   status?: SuggestionStatus;
+  tone?: SemanticTone;
+  progress?: SemanticProgress;
   ready?: boolean;
   entryId: string;
 };
@@ -438,6 +445,8 @@ type CoreMetric = {
   label: string;
   value: string;
   level: MetricLevel;
+  tone?: SemanticTone;
+  progress?: SemanticProgress;
   delta: string;
   hint: string;
 };
@@ -535,6 +544,46 @@ const workspaceLayoutSections = computed(() => {
   });
   return map;
 });
+const workspacePageOrchestration = computed(() => (
+  workspaceHome.value.page_orchestration && typeof workspaceHome.value.page_orchestration === 'object'
+    ? workspaceHome.value.page_orchestration as Record<string, unknown>
+    : {}
+));
+const orchestrationBlocks = computed(() => {
+  const source = Array.isArray(workspacePageOrchestration.value.blocks)
+    ? workspacePageOrchestration.value.blocks
+    : [];
+  return source
+    .map((item) => (item && typeof item === 'object' ? item as Record<string, unknown> : null))
+    .filter((item): item is Record<string, unknown> => Boolean(item));
+});
+const roleVariantCode = computed(() => {
+  const roleVariant = workspaceHome.value.role_variant;
+  if (roleVariant && typeof roleVariant === 'object') {
+    const roleCode = asText((roleVariant as Record<string, unknown>).role_code);
+    if (roleCode) return roleCode;
+  }
+  const orchestrationPage = workspacePageOrchestration.value.page;
+  if (orchestrationPage && typeof orchestrationPage === 'object') {
+    return asText((orchestrationPage as Record<string, unknown>).role_code);
+  }
+  return '';
+});
+const orchestrationSectionOrderMap = computed(() => {
+  const map = new Map<string, number>();
+  orchestrationBlocks.value.forEach((block, idx) => {
+    const visible = typeof block.visible === 'boolean' ? block.visible : true;
+    if (!visible) return;
+    const sourcePath = asText(block.source_path);
+    if (!sourcePath) return;
+    const sectionKey = sourcePath.split('.')[0] || '';
+    if (!sectionKey || map.has(sectionKey)) return;
+    const orderRaw = Number(block.order);
+    const order = Number.isFinite(orderRaw) && orderRaw > 0 ? Math.trunc(orderRaw) : idx + 1;
+    map.set(sectionKey, order);
+  });
+  return map;
+});
 const homeSectionOrderMap = computed(() => {
   const source = Array.isArray(workspaceLayout.value.sections) ? workspaceLayout.value.sections : [];
   const map = new Map<string, number>();
@@ -542,7 +591,13 @@ const homeSectionOrderMap = computed(() => {
     if (!item || typeof item !== 'object') return;
     const key = asText((item as Record<string, unknown>).key);
     if (!key || map.has(key)) return;
-    map.set(key, idx + 1);
+    const orchestrationOrder = orchestrationSectionOrderMap.value.get(key);
+    map.set(key, orchestrationOrder || idx + 1);
+  });
+  orchestrationSectionOrderMap.value.forEach((order, key) => {
+    if (!map.has(key)) {
+      map.set(key, order);
+    }
   });
   return map;
 });
@@ -683,6 +738,28 @@ function asText(value: unknown) {
   const text = String(value ?? '').trim();
   if (!text || text.toLowerCase() === 'undefined' || text.toLowerCase() === 'null') return '';
   return text;
+}
+
+function normalizeTone(value: unknown, fallback: SemanticTone = 'neutral'): SemanticTone {
+  const tone = asText(value).toLowerCase();
+  if (tone === 'success' || tone === 'warning' || tone === 'danger' || tone === 'info' || tone === 'neutral') {
+    return tone;
+  }
+  return fallback;
+}
+
+function normalizeProgress(value: unknown, fallback: SemanticProgress = 'running'): SemanticProgress {
+  const progress = asText(value).toLowerCase();
+  if (
+    progress === 'overdue'
+    || progress === 'blocked'
+    || progress === 'pending'
+    || progress === 'running'
+    || progress === 'completed'
+  ) {
+    return progress;
+  }
+  return fallback;
 }
 
 function hasInternalTag(raw: unknown) {
@@ -888,6 +965,8 @@ const coreMetrics = computed<CoreMetric[]>(() => {
         label: asText(row.label) || `${pageText('metric_title_fallback_prefix', '指标 ')}${idx + 1}`,
         value: asText(row.value) || '0',
         level,
+        tone: normalizeTone(row.tone),
+        progress: normalizeProgress(row.progress),
         delta: asText(row.delta) || '',
         hint: asText(row.hint) || '',
       };
@@ -909,6 +988,8 @@ const concreteTodos = computed<SuggestionItem[]>(() => {
       description: asText(row.description) || pageText('todo_desc_fallback', '点击进入处理'),
       count: Number(row.count || 0),
       status: statusRaw === 'urgent' ? 'urgent' : 'normal',
+      tone: normalizeTone(row.tone, statusRaw === 'urgent' ? 'danger' : 'info'),
+      progress: normalizeProgress(row.progress, 'pending'),
       ready: matched ? matched.state === 'READY' : Boolean(row.ready),
       entryId: matched?.id || '',
     };
