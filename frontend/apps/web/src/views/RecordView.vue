@@ -65,10 +65,10 @@
     />
 
     <section v-else class="card" :class="{ editing: status === 'editing' }">
-      <div v-if="editTxState === 'saved'" class="banner success">
+      <div v-if="pageSectionEnabled('save_banner', true) && editTxState === 'saved'" class="banner success">
         {{ pageText('banner_saved', 'Saved. Changes have been applied.') }}
       </div>
-      <section v-if="showProjectSummary" class="record-l1">
+      <section v-if="pageSectionEnabled('project_summary', true) && showProjectSummary" class="record-l1">
         <article class="l1-card">
           <p class="l1-label">{{ pageText('summary_status_stage', '项目状态与阶段') }}</p>
           <p class="l1-value">{{ projectStatusSummary }}</p>
@@ -82,7 +82,7 @@
           <p class="l1-value">{{ projectFinanceSummary }}</p>
         </article>
       </section>
-      <section v-if="showProjectSummary" class="record-next">
+      <section v-if="pageSectionEnabled('next_actions', true) && showProjectSummary" class="record-next">
         <p class="next-label">{{ pageText('next_actions_title', '下一步动作') }}</p>
         <div class="next-actions">
           <button class="ghost" @click="openProjectAction('/my-work', { section: 'todo', search: '项目' })">{{ pageText('next_action_todo', '查看待办') }}</button>
@@ -92,7 +92,7 @@
         </div>
       </section>
       <div v-if="ribbon" class="ribbon">{{ ribbon.title || pageText('ribbon_fallback', 'Ribbon') }}</div>
-      <div v-if="statButtons.length" class="stat-buttons">
+      <div v-if="pageSectionEnabled('stat_buttons', true) && statButtons.length" class="stat-buttons">
         <button
           v-for="btn in statButtons"
           :key="btn.name ?? btn.string"
@@ -116,7 +116,7 @@
         :edit-mode="status === 'editing' ? 'all' : 'none'"
         @update:field="handleFieldUpdate"
       />
-      <section v-else class="fallback-fields">
+      <section v-else-if="pageSectionEnabled('details_fallback', true)" class="fallback-fields">
         <h3>{{ pageText('fallback_details_title', '项目详情') }}</h3>
         <ul>
           <li v-for="field in fields" :key="field.name">
@@ -125,7 +125,7 @@
           </li>
         </ul>
       </section>
-      <section v-if="hasChatter" class="chatter">
+      <section v-if="pageSectionEnabled('chatter', true) && hasChatter" class="chatter">
         <h3>{{ pageText('chatter_title', '协作时间线') }}</h3>
         <p v-if="chatterError" class="meta">{{ chatterError }}</p>
         <div class="chatter-compose">
@@ -162,7 +162,7 @@
     </section>
 
     <DevContextPanel
-      :visible="showHud"
+      :visible="showHud && pageSectionEnabled('dev_context', true)"
       :title="pageText('dev_context_title', 'Record Context')"
       :entries="hudEntries"
     />
@@ -305,6 +305,7 @@ const requestedSourceMode = computed(() => (
 const session = useSessionStore();
 const pageContract = usePageContract('record');
 const pageText = pageContract.text;
+const pageSectionEnabled = pageContract.sectionEnabled;
 const userGroups = computed(() => session.user?.groups_xmlids ?? []);
 const statusLabel = computed(() => {
   if (status.value === 'editing') return pageText('status_editing', 'Editing');
